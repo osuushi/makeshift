@@ -110,7 +110,8 @@ export function validateDecorators(document: SketchDocument): void {
   }
 }
 
-function applyDecorator(
+/** Infer settings and members for a local editor; this does not validate acceptance. */
+export function prepareBuiltinApplication(
   document: SketchDocument,
   edit: Extract<DecoratorEdit, { action: "apply" }>,
 ): readonly DecoratorInstance[] {
@@ -149,7 +150,6 @@ function applyDecorator(
             ),
     };
   });
-  for (const instance of added) validateBuiltin(document, instance);
   return [...previous, ...added];
 }
 
@@ -201,8 +201,12 @@ function continueBuiltin(
 export function editDecorators(document: SketchDocument, edit: DecoratorEdit): SketchDocument {
   const previous = document.decorators ?? [];
   let next: readonly DecoratorInstance[] = previous;
-  if (edit.action === "apply") next = applyDecorator(document, edit);
-  else if (edit.action === "settings") {
+  if (edit.action === "apply") {
+    next = prepareBuiltinApplication(document, edit);
+    for (const instance of next) {
+      if (!previous.includes(instance)) validateBuiltin(document, instance);
+    }
+  } else if (edit.action === "settings") {
     if (!edit.ids.length || edit.ids.some((id) => !previous.some((d) => d.id === id)))
       throw new Error("Select existing decorators");
     next = previous.map((instance) => {

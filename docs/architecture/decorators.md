@@ -45,6 +45,14 @@ mesh operations to native Manifold; clients without that capability retain WASM.
 
 1. Select faces and invoke Threads; show eligibility reasons in tool discovery.
 2. Create all inferred instances atomically with resolved settings and a preview.
+   If default thread settings fail geometry validation, open a provisional settings
+   editor with the error in context. Preset/profile/numeric changes remain local;
+   only valid settings display a preview and enable Apply thread decorator.
+   Apply accepts all inferred instances in one ordinary owner edit and Undo step.
+   Cancel/Escape discards the settings and preview before Apply is sent. While the
+   atomic application runs, the editor shows Applying and retains its interaction
+   lease until acceptance completes. Moving between fields does not accept them. Valid initial settings retain immediate application; reapplying to
+   already decorated faces opens their accepted settings.
 3. A right-side decorator panel shows instances touching the selection, aggregated
    by type. Equal fields show values; unequal fields show Mixed. A change patches
    only that field across affected instances, preserving every other setting.
