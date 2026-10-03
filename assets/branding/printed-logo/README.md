@@ -2,9 +2,9 @@
 
 The current [icon preview](icon.png), [oblique preview](icon-detail.png) and
 [64/96/128 px comparison](sizes.png) use the founder's `makeshift-logo-5.makeshift`,
-copied byte for byte as `source.makeshift`. V5 restores the solid white backing
-and raises the right side of the arrow as a third silhouette at Z=6–7 mm.
-The original orange and violet solids are identical to the preceding model.
+copied byte for byte as `source.makeshift`. The latest save revises the raised
+forms while preserving the solid white backing. All three raised silhouettes
+occupy Z=6–7 mm.
 The model is 39 × 39 × 7 mm, with 1 mm raised shapes, and contains four bodies.
 The detached right-side piece is orange, matching the founder's correction and
 its saved CAD appearance; the main arrow remains violet. Slicer profiles and all Blender
@@ -58,7 +58,7 @@ the model hash, selected IDs, angle, width, pattern and gap-fill limits.
 
 `icon-source.json` records the rendered G-code hash and geometry counts. Small
 PNGs use Lanczos downsampling of the 1024 px render. The comparison shows native
-sizes against the preceding v5 render with the detached piece in violet.
+sizes against the preceding v5 form with the same colors and slice/render settings.
 
 ## Appearance
 
