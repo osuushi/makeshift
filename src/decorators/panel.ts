@@ -246,7 +246,7 @@ export class DecoratorPanel {
       note.textContent = instances.find((d) => d.problem)?.problem ?? "";
       this.root.append(note);
     }
-    this.button("Remove threads from selected faces", () => {
+    this.button("Remove thread decorator from selected faces", () => {
       const keys = new Set(instances.flatMap((d) => d.faces.map(faceKey)));
       void this.edit({
         action: "remove",
@@ -262,7 +262,7 @@ export class DecoratorPanel {
     appendKnurlSettings(this.root, this.editor, instances, this.draft, (patch, preview) =>
       this.patch(patch, preview, instances),
     );
-    this.button("Remove knurling from selected faces", () => {
+    this.button("Remove knurling decorator from selected faces", () => {
       const keys = new Set(instances.flatMap((d) => d.faces.map(faceKey)));
       void this.edit({
         action: "remove",

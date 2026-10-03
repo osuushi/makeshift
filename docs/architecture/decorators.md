@@ -54,7 +54,7 @@ mesh operations to native Manifold; clients without that capability retain WASM.
    updates them in one Undo step. Numeric drafts preview; confirmation accepts;
    Escape cancels. Merely focusing a field should not change the document.
 5. Clicking a decorator selects its faces. Deselecting some and using the panel's
-   Remove threads action removes membership only from the still-selected faces.
+   Remove thread decorator action removes membership only from the still-selected faces.
    This must not be routed through the viewport's geometry Delete action.
 6. Continue threads adds selected faces only when they form one compatible
    continuation with the chosen instance. Otherwise use decorator-specific wording

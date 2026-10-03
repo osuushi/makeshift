@@ -55,7 +55,9 @@ export async function decoratorTransformRoute(page) {
   await page.getByRole("button", { name: "Select affected geometry", exact: true }).click();
   assert.equal((await inspect(page)).modelingSelection[0].kind, "face");
   assert.ok(await repair.isDisabled());
-  await page.getByRole("button", { name: "Remove unresolved threads", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Remove unresolved thread decorator", exact: true })
+    .click();
   assert.equal((await inspect(page)).document.decorators.length, 0);
   await chooseTool(page, "undo", "undo");
   assert.match((await inspect(page)).document.decorators[0].problem, /cylindrical/);

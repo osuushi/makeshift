@@ -70,7 +70,7 @@ export function appendDecoratorRepairs(
           reassign.title = result.reason ?? "";
         })
         .catch(() => {});
-    button(custom ? "Remove unresolved decorator" : "Remove unresolved threads", () => {
+    button(custom ? "Remove unresolved decorator" : "Remove unresolved thread decorator", () => {
       void edit({ action: "discard", id: instance.id });
     });
   }
