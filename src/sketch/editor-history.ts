@@ -7,7 +7,8 @@ export async function performHistory(
   const interaction = editor.interactions.current;
   if (interaction?.history) {
     if (interaction.captured || editor.blocked) return;
-    await interaction.history.navigate(direction);
+    if (direction === "undo" && !interaction.history.canUndo) await editor.interactions.cancel();
+    else await interaction.history.navigate(direction);
     editor.refresh();
     return;
   }

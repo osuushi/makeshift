@@ -173,13 +173,17 @@ Releasing a captured pointer, leaving a field and changing a discrete option
 complete a tweak. Intermediate pointer positions and keystrokes do not create
 separate checkpoints. Undo/Redo while the tool is active restore those parameters
 through the controller's ordinary preview path, without accepting geometry or
-leaving the tool. At the initial checkpoint Undo stops; it never reaches an older
-document edit. A changed tweak after Undo branches the local history. Unchanged
-focus changes preserve Redo. History navigation is disabled during held gestures
+leaving the tool. At the initial checkpoint, Undo cancels the temporary candidate
+and exits the tool without changing accepted geometry. That press does not also
+navigate document history; the next Undo follows ordinary document/selection
+history, including any selection restoration recorded by the tool's existing
+cancellation path. Undo remains available at this boundary through standard keyboard and
+menu routes, unless the tool is calculating or holding a pointer gesture. A changed
+tweak after Undo branches the local history. Unchanged focus changes preserve Redo. History navigation is disabled during held gestures
 and calculations. Focused text fields retain native text Undo until defocus.
 
 Controllers own these temporary parameter snapshots, not another geometry
-document. Accepting/exiting the tool still creates one backend document Undo step;
+document. Accepting/completing the tool still creates one backend document Undo step;
 Escape discards the candidate and the local checkpoints. Ordinary edits that
 already accept on release, including whole-body/sketch movement, retain that
 acceptance boundary. Their numeric previews can use local history before acceptance.

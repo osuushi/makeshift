@@ -85,7 +85,6 @@ test("editor history stays inside its interaction and refuses navigation while b
   editor.blocked = false;
   await run("undo");
   assert.equal(value, 0);
-  await run("undo");
   assert.equal(documentRequests, 0);
   await run("redo");
   assert.equal(value, 3);
