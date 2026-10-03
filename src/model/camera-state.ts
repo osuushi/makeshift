@@ -61,6 +61,7 @@ export function captureCamera(world: World): CameraState {
 }
 
 export function restoreCamera(world: World, state: CameraState | undefined): void {
+  world.navigation.clear();
   world.cancelCameraMotion();
   if (state) {
     world.camera.position.fromArray(state.position);

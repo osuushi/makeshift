@@ -109,6 +109,8 @@ class TabletInput {
     consume(event);
     this.suppressClickUntil = performance.now() + 1000;
     this.flushPair();
+    if (!this.touches.size && this.pen === null && this.world.canNavigate())
+      this.world.navigation.hold("touch");
     this.touches.set(event.pointerId, point(event));
     this.world.canvas.setPointerCapture(event.pointerId);
     if (this.pen === null && this.world.canNavigate()) this.world.cancelCameraMotion();
@@ -190,10 +192,12 @@ class TabletInput {
       this.world.canvas.releasePointerCapture(event.pointerId);
     this.rebase();
     if (level) this.world.levelHorizon();
+    if (!this.touches.size) this.world.navigation.release("touch");
   };
   private reset = (): void => {
     const ids = [...this.touches.keys()];
     this.touches.clear();
+    this.world.navigation.release("touch");
     this.pen = null;
     this.endOrbit();
     this.previous = null;

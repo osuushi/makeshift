@@ -33,6 +33,7 @@ export class CameraRoll {
     this.offset = offset;
   }
   start(radians: number, offset: Point, viewportHeight: number): void {
+    this.world.navigation.begin();
     this.world.cancelCameraMotion();
     this.offset = offset;
     const angle = snappedRoll(this.world, radians);

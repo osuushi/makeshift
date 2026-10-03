@@ -4,6 +4,7 @@ export async function performHistory(
   editor: SketchEditor,
   direction: "undo" | "redo",
 ): Promise<void> {
+  if (editor.world.navigation.dragging) return;
   const interaction = editor.interactions.current;
   if (interaction?.history) {
     if (interaction.captured || editor.blocked) return;
@@ -13,6 +14,7 @@ export async function performHistory(
     return;
   }
   if (interaction?.finish || editor.blocked || editor.isDragging) return;
+  editor.selectionHistory.finishNavigation();
   editor.numeric.cancel();
   await editor.interactions.cancel();
   await editor.store.settled();

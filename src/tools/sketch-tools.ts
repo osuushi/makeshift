@@ -39,6 +39,7 @@ export function sketchTools(editor: SketchEditor): () => void {
         shortcut: id === "undo" ? "⌘Z" : "⇧⌘Z",
         allowBusy: false,
         reason: () => {
+          if (editor.world.navigation.dragging) return "Finish the current view gesture first";
           const interaction = editor.interactions.current;
           if (interaction?.finish && !interaction.history) return `Nothing to ${id} in this tool`;
           if (interaction?.history && id === "undo") return null;

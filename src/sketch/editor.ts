@@ -105,6 +105,7 @@ export class SketchEditor {
     });
     installWorkspaceSync(this);
     this.store.selectionHistory = this.selectionHistory;
+    this.selectionHistory.connectNavigation();
     this.world.changed.add(() => this.selectionHistory.observe());
   }
 

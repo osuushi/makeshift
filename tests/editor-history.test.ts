@@ -25,7 +25,8 @@ function editorAtBaseline() {
         editor.interactions.current = null;
       },
     },
-    world: { active: false },
+    world: { active: false, navigation: { dragging: false } },
+    selectionHistory: { finishNavigation: () => {} },
     blocked: false,
     isDragging: false,
     numeric: { cancel: () => {} },

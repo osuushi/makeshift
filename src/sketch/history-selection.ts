@@ -1,3 +1,4 @@
+import type { NavigationChange } from "./history-navigation.js";
 import type { ModelingTarget } from "./model-selection-state.js";
 import type { PlaneFrame } from "./planes.js";
 import type { SelectionTarget } from "./selection-target.js";
@@ -10,7 +11,7 @@ export interface HistorySelection {
 }
 export interface SelectionChanges {
   baseline: HistorySelection;
-  steps: HistorySelection[];
+  steps: (HistorySelection | NavigationChange)[];
 }
 export const emptySelection = (): HistorySelection => ({
   workspace: null,

@@ -162,9 +162,57 @@ renderer supplies the editing workspace and ordered typed sketch and modeling
 targets; the backend owns their navigation snapshots alongside the
 geometry snapshots. Gesture previews and automatic result-selection updates do
 not create independent selection steps. Undo restores the operation's input
-selection and workspace; Redo restores its result selection. Tool state, camera,
-hover, chooser visibility and other transient controls are not replayed. These
+selection and workspace; Redo restores its result selection. Selection history does not replay tool state, hover or chooser visibility;
+ephemeral view history separately restores camera and workspace as described below. These
 selection snapshots are in-memory history, not saved document content.
+
+## Ephemeral view Undo (founder decision, 2026-10-03)
+
+A completed view gesture adds one transient entry to the existing DocumentStore
+history. It captures the before/after orthographic camera position, target, up and
+view height, editing workspace and ordered geometry selection. Camera and current
+UI remain renderer-owned; these serializable snapshots are contextual history
+beside accepted geometry, not another document or saved file format.
+
+Only the latest relevant view entry remains reversible. A later changed view
+replaces it. A changed selection or accepted geometry edit removes it, whether
+applied or undone. Moving beyond that entry into ordinary selection/geometry
+Undo or Redo also removes it. Both its snapshots and diagnostic record expire;
+ordinary attempted geometry/selection records retain their existing lifetimes.
+No-op navigation and failed/cancelled/no-op geometry attempts preserve the tip.
+View Undo restores its prior camera/workspace/selection; view Redo restores its
+result while it remains the tip, before older geometry Redo. Navigation never
+erases retained geometry Redo. Geometry Redo still restores that operation's
+result selection, and a new accepted geometry edit branches normally.
+
+Pointer orbit/roll, cube navigation, pan, zoom, canonical workspace entry and exit
+use the same contract. Continuous pointer or touch contacts complete once at
+release/cancellation, after any existing completion animation. Cancellation keeps
+its ordinary current view, so a moved canceled gesture can still be undone; a
+stationary canceled press adds no entry. Wheel, browser pinch and native twist
+reuse their existing 200 ms idle or explicit gesture-end lifetime, including
+release leveling. Intermediate frames and packets add no entries. Camera pose
+roundoff at the current viewport scale is not a view change. Projection range and
+viewport aspect remain derived rendering data.
+
+Workspace-driven synchronous selection clearing belongs to the view gesture.
+A later independent selection finishes the preceding view intent before recording
+its own change, which expires that view tip. Accepted geometry expires prior view
+history; if a navigation gesture is still held when the new result is published,
+its remaining movement rebases from the accepted camera and result-selection
+context. Its eventual Undo cannot restore targets from the previous document.
+The existing serialized selection-intent boundary also carries view intents;
+there is no additional request queue or history owner.
+
+Temporary modal parameter history retains priority over view history. Calculating
+or captured edit guards remain in force; an active captured view gesture also
+blocks history navigation. Undo during an uncaptured camera animation finishes
+its current visible pose before navigating. Restoring any history context
+suppresses workspace/camera recording, including later animation draws. New/Open
+starts fresh history and file camera restoration creates no navigation entry.
+Normal Save/Open retains the existing saved current-camera format; it does not
+persist view history. Automated emitted native events and SDK touch routes establish
+software behavior, not physical trackpad/iPad delivery or gesture feel.
 
 ## Temporary interaction history (founder decision, 2026-10-02)
 

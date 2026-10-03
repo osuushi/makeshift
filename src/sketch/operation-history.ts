@@ -2,7 +2,7 @@ import type { ModelRequest } from "./model-api.js";
 
 /** Diagnostic intent, not a replay command or a second geometry document. */
 export interface HistoryOperation {
-  kind: ModelRequest["kind"] | "script";
+  kind: ModelRequest["kind"] | "script" | "navigation";
   parameters: Record<string, unknown>;
 }
 export interface OperationHistoryEntry {

@@ -21,6 +21,7 @@ export function installTrackpad(world: World, signal: AbortSignal, snap: Trackpa
       { signal },
     );
   const zoom = (factor: number, x: number, y: number) => {
+    world.navigation.begin();
     const bounds = canvas.getBoundingClientRect();
     if (!Number.isFinite(x)) x = pointer?.x ?? bounds.left + bounds.width / 2;
     if (!Number.isFinite(y)) y = pointer?.y ?? bounds.top + bounds.height / 2;
@@ -62,6 +63,7 @@ function installGestures(
       (event) => {
         event.preventDefault();
         if (world.canNavigate() && !world.orbit.active) {
+          world.navigation.begin();
           world.cancelCameraMotion(true);
           setScale(1);
           snap.hold();
@@ -107,6 +109,8 @@ function installWheel(
       (event) => {
         event.preventDefault();
         if (!world.canNavigate() || world.orbit.active || pinching()) return;
+        if (!event.deltaX && !event.deltaY) return;
+        world.navigation.begin();
         world.cancelCameraMotion(true);
         const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.clientHeight : 1;
         if (event.ctrlKey || controlMode() === "mouse") {

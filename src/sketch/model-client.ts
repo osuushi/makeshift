@@ -98,10 +98,20 @@ export class ModelClient {
     return this.view.decoratorSources ?? [];
   }
   get canUndo() {
-    return this.selectionInFlight || !!this.selectionHistory?.pending || this.view.canUndo;
+    return (
+      this.selectionInFlight ||
+      !!this.selectionHistory?.pending ||
+      !!this.selectionHistory?.navigating ||
+      this.view.canUndo
+    );
   }
   get canRedo() {
-    return !this.selectionInFlight && !this.selectionHistory?.pending && this.view.canRedo;
+    return (
+      !this.selectionInFlight &&
+      !this.selectionHistory?.pending &&
+      !this.selectionHistory?.navigating &&
+      this.view.canRedo
+    );
   }
   get booleanTargets() {
     return this.view.booleanTargets ?? [];
@@ -209,28 +219,25 @@ export class ModelClient {
     try {
       await this.selectionSending;
       await this.flushSelection();
-      // Keep the history lookup and navigation inside the same busy interval.
       const direction = request.kind === "undo" || request.kind === "redo" ? request.kind : null;
-      const history = direction ? await this.readHistory() : [];
-      const entry =
-        direction === "undo"
-          ? history.reverse().find((entry) => entry.state === "applied")
-          : history.find((entry) => entry.state === "undone");
       if (this.cancelling || this.interrupted) return false;
       const reply = await call(request);
       if (this.interrupted) return false;
       this.view = reply.view;
       this.erosionAllowance = reply.erosionAllowance;
       if (reply.error) throw new Error(reply.error);
-      if (direction && entry) this.navigated?.(entry.operation, direction);
+      if (direction && reply.view.historyOperation)
+        this.navigated?.(reply.view.historyOperation, direction);
       const selection = reply.view.historySelection;
-      if (
+      if (direction && reply.view.historyNavigation)
+        this.selectionHistory?.restoreNavigation(reply.view.historyNavigation);
+      else if (
         selection &&
         (direction || (!this.initialized && (selection.sketch.length || selection.modeling.length)))
       )
         this.selectionHistory?.restore(selection);
       else if (request.kind === "new" || request.kind === "open" || reply.documentChanged)
-        this.selectionHistory?.accepted();
+        this.selectionHistory?.accepted(request.kind === "new" || request.kind === "open");
       this.initialized = true;
       this.error("");
       return true;
@@ -278,8 +285,9 @@ export class ModelClient {
   async documentReplaced(): Promise<void> {
     await this.selectionSending;
     this.initialized = false;
-    this.selectionHistory?.accepted();
+    this.selectionHistory?.accepted(true);
     await this.request({ kind: "read" });
+    this.selectionHistory?.accepted(true);
   }
   async settled(): Promise<void> {
     await this.waiting;
