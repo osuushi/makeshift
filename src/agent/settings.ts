@@ -39,7 +39,10 @@ export function agentSettings(
       .request({ kind: "browse" })
       .then((reply) => {
         if (reply.error) throw new Error(reply.error);
-        if (reply.executable) field("executable").value = reply.executable;
+        if (reply.executable) {
+          field("executable").value = reply.executable;
+          field("executable").dispatchEvent(new Event("input", { bubbles: true }));
+        }
       })
       .catch(report)
       .finally(() => pending(false));
@@ -71,7 +74,7 @@ export function agentSettings(
   return form;
 }
 
-function readPreferences(form: HTMLFormElement): AgentPreferences {
+export function readPreferences(form: HTMLFormElement): AgentPreferences {
   const field = (name: string) => String(new FormData(form).get(name) ?? "");
   const env: Record<string, string> = {};
   for (const line of field("env")

@@ -185,3 +185,16 @@
   justify-content: flex-end;
   gap: 8px;
 }
+
+.agent-setup {
+  border: 1px solid #c7cfda;
+  padding: 8px;
+  margin: 0 0 10px;
+}
+.agent-setup-output {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 130px;
+  overflow: auto;
+  font-size: 11px;
+}

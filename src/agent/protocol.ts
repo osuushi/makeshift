@@ -4,6 +4,17 @@ export interface AgentPreferences {
   args: string[];
   env: Record<string, string>;
 }
+export interface CodexExecutable {
+  path: string;
+  version: string;
+  source: "configured" | "standalone" | "application";
+}
+export interface CodexSetupStatus {
+  phase: "idle" | "downloading" | "installing" | "verifying" | "ready" | "failed" | "cancelled";
+  message: string;
+  output: string;
+  executable?: CodexExecutable;
+}
 export interface AgentStatus {
   running: boolean;
   workspace: string | null;
@@ -12,6 +23,9 @@ export interface AgentStatus {
 }
 export type AgentRequest =
   | { kind: "settings" }
+  | { kind: "discover-codex"; preferences: AgentPreferences }
+  | { kind: "install-codex" }
+  | { kind: "cancel-codex-install" }
   | { kind: "configure"; preferences: AgentPreferences }
   | { kind: "browse" }
   | { kind: "recover" }
@@ -24,6 +38,7 @@ export type AgentRequest =
   | { kind: "focus"; focused: boolean }
   | { kind: "stop" };
 export interface AgentReply extends AgentStatus {
+  setup?: CodexSetupStatus;
   attachment?: string;
   output?: string;
   clipboardText?: string;
