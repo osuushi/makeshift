@@ -308,3 +308,29 @@ it does not replace the existing selection defaults. It can start with two or mo
 selected sections or with an empty selection for in-tool collection. Its local card
 owns section order, correspondence and Smooth/Ruled controls, sharing the existing
 Boolean targets and temporary acceptance lifecycle.
+
+## Boolean operand collection (2026-10-03)
+
+Union, Subtract and Intersect can start with no selection or one complete body.
+Two or more complete preselected bodies retain their ordered preview route.
+Partial or mixed preselection stays unavailable; the operation itself still
+requires at least two complete accepted bodies. While choosing operands, viewport
+clicks add/remove whole bodies. The inline body chooser reaches enclosed or
+occluded bodies and omits hidden bodies. The first chosen body is Subtract's
+target; later bodies are tools. Change target cycles that order. Change bodies
+reopens collection; Done choosing or Enter ends collection, then Enter/check
+accepts a valid result. Empty/incomplete collection can exit without an edit.
+
+Translucent blue input/target surfaces and orange cutting-tool surfaces, with
+visible outlines, reveal operands through the solid result. Flipping the target
+updates their roles. A successful empty result is explicitly labeled and can be
+accepted; it does not mean calculation failed. Accepted body geometry and IDs
+remain authoritative; overlays and collection belong to the interaction lease.
+
+The inline keep-originals choice displays Keep/Remove tools for Subtract and
+Keep/Remove originals for Union/Intersect. Each mode remembers its last explicit
+choice in local window preferences, including after Cancel; unavailable storage
+falls back to that window's in-memory choice. Preference changes are outside
+both document and temporary interaction Undo. Subtract always consumes its target
+and optionally retains cutting tools; the other modes optionally retain all
+inputs. Acceptance/cancel and document Undo/Redo retain their ordinary semantics.

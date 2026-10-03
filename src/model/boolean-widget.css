@@ -1,6 +1,9 @@
 .boolean-widget {
   position: absolute;
   display: flex;
+  flex-wrap: wrap;
+  width: 650px;
+  max-width: calc(100vw - 32px);
   align-items: center;
   gap: 8px;
   padding: 7px;
@@ -41,4 +44,28 @@
 .boolean-status {
   font-size: 12px;
   white-space: nowrap;
+}
+
+.boolean-body-choices {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 650px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.boolean-body-choices > span {
+  flex-basis: 100%;
+  font-size: 12px;
+}
+.boolean-body-choices button[data-role="tool"][aria-pressed="true"] {
+  color: #8b571b;
+  border-color: #d08a35;
+  background: #fff1dc;
+}
+
+.boolean-roles {
+  flex-basis: 100%;
+  font-size: 12px;
 }

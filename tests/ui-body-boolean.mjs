@@ -18,7 +18,7 @@ async function undo(page) {
   await chooseTool(page, "undo", "undo");
   await inspect(page);
 }
-async function createOperands(page) {
+export async function createOperands(page) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
@@ -69,6 +69,17 @@ export async function bodyBooleanRoute(page, name, electron) {
   await page.getByRole("button", { name: "Change subtraction target" }).click();
   let state = await inspect(page);
   assert.equal(state.preview.bodies.length, 3); // two plate pieces plus unselected cutter
+  const ghosts = state.bodyRendering.booleanOperands;
+  for (const [index, role] of [
+    [0, "target"],
+    [1, "tool"],
+  ]) {
+    const surfaces = ghosts.filter((ghost) => ghost.body === original.bodies[index].id);
+    assert.ok(
+      surfaces.length &&
+        surfaces.every((ghost) => ghost.role === role && ghost.triangles > 0 && !ghost.depthTest),
+    );
+  }
   close(
     state.preview.bodies.reduce((n, b) => n + b.volume, 0),
     3040,
@@ -81,6 +92,11 @@ export async function bodyBooleanRoute(page, name, electron) {
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, original);
   await begin(page, "Subtract", [1, 2, 3]);
+  assert.equal(
+    await page.getByRole("button", { name: "Keep originals" }).getAttribute("aria-pressed"),
+    "true",
+  );
+  await page.getByRole("button", { name: "Keep originals" }).click();
   state = await inspect(page);
   assert.equal(state.preview.bodies.length, 3);
   close(
@@ -147,6 +163,8 @@ async function resultModes(page, original) {
   await undo(page);
   // Selecting another entity finishes the preview, then selects that entity.
   await begin(page, "Union", [1, 2]);
+  await page.getByRole("button", { name: "Keep originals" }).click();
+  await inspect(page);
   await page.getByRole("button", { name: "Select Body 3", exact: true }).click();
   state = await inspect(page);
   assert.equal(state.document.bodies.length, 2);

@@ -3,7 +3,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import type { Body, BodyBoolean } from "./body.js";
 import { featureEdges } from "./feature-edges.js";
 
-/** Temporary operand outlines remain visible even when a preview consumes them. */
+/** Temporary translucent operand surfaces and outlines remain visible even when a preview consumes them. */
 export class BooleanOperands {
   private group = new THREE.Group();
   constructor(private editor: SketchEditor) {
@@ -13,6 +13,24 @@ export class BooleanOperands {
     this.clear();
     bodies.forEach((body, index) => {
       const color = mode === "subtract" && index > 0 ? "#d08a35" : "#287cbd";
+      for (const face of body.faces) {
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute("position", new THREE.Float32BufferAttribute(face.vertices, 3));
+        const material = new THREE.MeshBasicMaterial({
+          color,
+          transparent: true,
+          opacity: 0.16,
+          depthTest: false,
+          depthWrite: false,
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.userData.booleanOperand = {
+          body: body.id,
+          role: mode === "subtract" ? (index > 0 ? "tool" : "target") : "input",
+        };
+        mesh.renderOrder = 8;
+        this.group.add(mesh);
+      }
       for (const edge of featureEdges(body)) {
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute("position", new THREE.Float32BufferAttribute(edge.points, 3));
@@ -31,10 +49,10 @@ export class BooleanOperands {
   }
   clear(): void {
     for (const object of [...this.group.children]) {
-      const line = object as THREE.Line<THREE.BufferGeometry, THREE.LineBasicMaterial>;
-      line.geometry.dispose();
-      line.material.dispose();
-      this.group.remove(line);
+      const drawable = object as THREE.Mesh<THREE.BufferGeometry, THREE.Material>;
+      drawable.geometry.dispose();
+      drawable.material.dispose();
+      this.group.remove(drawable);
     }
   }
   dispose(): void {

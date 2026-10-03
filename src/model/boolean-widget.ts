@@ -1,9 +1,15 @@
-import type { BodyBoolean } from "./body.js";
+import type { Body, BodyBoolean } from "./body.js";
 import { modeIcons } from "./boolean-icons.js";
 import { cleanupButton } from "./cleanup-button.js";
 import "./boolean-widget.css";
 
 export class BooleanWidget {
+  readonly collect = document.createElement("button");
+  choose: (body: Body) => void = () => {};
+  private operands = document.createElement("div");
+  private hint = document.createElement("span");
+  private choices = new Map<string, HTMLButtonElement>();
+  private roles = document.createElement("span");
   readonly cleanup = cleanupButton();
   readonly root = document.createElement("div");
   private keep = document.createElement("button");
@@ -29,13 +35,16 @@ export class BooleanWidget {
       this.root.append(button);
     }
     this.keep.setAttribute("aria-label", "Keep originals");
-    this.keep.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 8h13v13H8ZM3 16V3h13"/></svg>';
     this.keep.onclick = keep;
     this.target.setAttribute("aria-label", "Change subtraction target");
     this.target.title = "Cycle the target body; the other selected bodies are cutting tools";
     this.target.onclick = target;
     this.status.className = "boolean-status";
-    this.root.append(this.keep, this.target, this.status);
+    this.collect.setAttribute("aria-label", "Change Boolean bodies");
+    this.operands.className = "boolean-body-choices";
+    this.operands.append(this.hint);
+    this.roles.className = "boolean-roles";
+    this.root.append(this.keep, this.target, this.collect, this.status);
     for (const [name, symbol, action] of [
       ["Accept Boolean", '<path d="m5 12 4 4L20 5"/>', accept],
       ["Cancel Boolean", '<path d="m6 6 12 12M6 18 18 6"/>', cancel],
@@ -47,31 +56,97 @@ export class BooleanWidget {
       button.onclick = action;
       this.root.append(button);
     }
-    this.root.append(this.cleanup);
+    this.root.append(this.cleanup, this.roles, this.operands);
     overlay.append(this.root);
   }
-  update(operation: BodyBoolean, target: string, busy: boolean, valid: boolean, count: number) {
+  update(
+    operation: BodyBoolean,
+    target: string,
+    busy: boolean,
+    valid: boolean,
+    count: number,
+    collecting: boolean,
+    chosen: Body[],
+    available: { body: Body; number: number }[],
+  ) {
     this.root.hidden = false;
     this.keep.setAttribute("aria-pressed", String(operation.keepOriginals));
     this.keep.title =
       operation.mode === "subtract" ? "Keep original cutting tools" : "Keep all original bodies";
     this.target.hidden = operation.mode !== "subtract";
-    this.target.textContent = `Target: ${target} ↔`;
+    this.collect.textContent = collecting ? "Done choosing" : "Change bodies";
+    this.collect.setAttribute("aria-pressed", String(collecting));
+    this.keep.textContent =
+      operation.mode === "subtract"
+        ? operation.keepOriginals
+          ? "Keep tools"
+          : "Remove tools"
+        : operation.keepOriginals
+          ? "Keep originals"
+          : "Remove originals";
+    this.roles.textContent =
+      operation.mode === "subtract"
+        ? "Blue target · orange tools · solid result"
+        : "Blue inputs · solid result";
+    this.updateBodies(operation, chosen, available, collecting, busy);
+    this.target.textContent = chosen.length ? `Target: ${target} ↔` : "Target: choose a body";
     this.status.textContent = busy
       ? "Calculating…"
-      : !valid
-        ? "No valid result"
-        : count
-          ? `${count} result ${count === 1 ? "body" : "bodies"}`
-          : "Empty result · Enter to accept";
+      : chosen.length < 2
+        ? operation.mode === "subtract"
+          ? "Choose target, then cutting tools"
+          : "Choose at least two bodies"
+        : !valid
+          ? "No valid result"
+          : count
+            ? `${count} result ${count === 1 ? "body" : "bodies"}`
+            : collecting
+              ? "Empty result · Done choosing to accept"
+              : "Empty result · Enter to accept";
     for (const button of this.root.querySelectorAll("button")) {
       const name = button.getAttribute("aria-label");
       button.disabled =
         name === "Cancel Boolean"
           ? false
-          : busy || ((name === "Accept Boolean" || button === this.cleanup) && !valid);
+          : busy ||
+            ((name === "Accept Boolean" || button === this.cleanup) && (!valid || collecting)) ||
+            (button === this.target && chosen.length < 2);
       if (button.dataset.mode)
         button.setAttribute("aria-pressed", String(button.dataset.mode === operation.mode));
+    }
+  }
+  private updateBodies(
+    operation: BodyBoolean,
+    chosen: Body[],
+    available: { body: Body; number: number }[],
+    collecting: boolean,
+    busy: boolean,
+  ): void {
+    this.operands.hidden = !collecting;
+    this.hint.textContent =
+      operation.mode === "subtract"
+        ? "Blue target · orange cutting tools. Click a chosen body to remove it."
+        : "Blue inputs · solid result. Click a chosen body to remove it.";
+    for (const [id, button] of this.choices) {
+      if (available.some(({ body }) => body.id === id)) continue;
+      button.remove();
+      this.choices.delete(id);
+    }
+    for (const { body, number } of available) {
+      const order = chosen.findIndex((b) => b.id === body.id);
+      let button = this.choices.get(body.id);
+      if (!button) {
+        button = document.createElement("button");
+        this.choices.set(body.id, button);
+        this.operands.append(button);
+      }
+      button.setAttribute("aria-label", `Boolean Body ${number}`);
+      button.setAttribute("aria-pressed", String(order >= 0));
+      button.dataset.role =
+        order < 0 ? "available" : operation.mode === "subtract" && order > 0 ? "tool" : "target";
+      button.textContent = `Body ${number}${order < 0 ? "" : operation.mode === "subtract" ? (order === 0 ? " · Target" : " · Tool") : ` · Input ${order + 1}`}`;
+      button.disabled = busy;
+      button.onclick = () => this.choose(body);
     }
   }
   dispose() {
