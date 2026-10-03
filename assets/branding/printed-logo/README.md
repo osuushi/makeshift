@@ -1,10 +1,12 @@
 # Toolpath-rendered logo
 
 The current [icon preview](icon.png), [oblique preview](icon-detail.png) and
-[64/96/128 px comparison](sizes.png) use the founder's `makeshift-logo-3.makeshift`,
-copied byte for byte as `source.makeshift`. This revision changes the M/arrow
-silhouettes, recesses the right side into the white backing and reduces the raised
-shapes to 1 mm. The model is 39 × 39 × 7 mm and contains exactly three bodies.
+[64/96/128 px comparison](sizes.png) use the founder's `makeshift-logo-4.makeshift`,
+copied byte for byte as `source.makeshift`. This revision replaces the arrow-right
+indentation with a through hole in the white backing. Both raised colored bodies
+are identical to the preceding v3 model. The model is 39 × 39 × 7 mm, with 1 mm
+raised shapes, and contains exactly three bodies. Slicer profiles and all Blender
+appearance settings are unchanged from the preceding monotonic v3 render.
 The approved application icon remains in the parent folder. No image generation
 is involved.
 
@@ -37,8 +39,8 @@ in the root README and install OrcaSlicer, then run:
 
 ```sh
 source /Users/adacohen/.nvm/nvm.sh && nvm use
-node assets/branding/printed-logo/slice-infill.mjs 45 .cache/printed-logo/model-v3 1.5
-node assets/branding/printed-logo/render-gcode.mjs .cache/printed-logo/model-v3/plate_1.gcode .cache/printed-logo/model-v3/render icon
+node assets/branding/printed-logo/slice-infill.mjs 45 .cache/printed-logo/model-v4 1.5
+node assets/branding/printed-logo/render-gcode.mjs .cache/printed-logo/model-v4/plate_1.gcode .cache/printed-logo/model-v4/render icon
 ```
 
 Slice arguments are angle, output directory and nominal line width. The recipe
@@ -53,7 +55,7 @@ the model hash, selected IDs, angle, width, pattern and gap-fill limits.
 
 `icon-source.json` records the rendered G-code hash and geometry counts. Small
 PNGs use Lanczos downsampling of the 1024 px render. The comparison shows native
-sizes against the previous 1.5 mm monotonic-line slice of this model.
+sizes against the previous v3 indentation with the same monotonic slice settings.
 
 ## Appearance
 

@@ -14,10 +14,10 @@ if (!Number.isFinite(angle) || angle < 0 || angle >= 360) throw new Error("Expec
 const lineWidth = Number(process.argv[4] ?? 1.5);
 if (!Number.isFinite(lineWidth) || lineWidth < 0.2 || lineWidth >= 3)
   throw new Error("Invalid line width");
-const output = resolve(process.argv[3] ?? `${root}/.cache/printed-logo/model-v3`);
+const output = resolve(process.argv[3] ?? `${root}/.cache/printed-logo/model-v4`);
 const slicer = process.env.ORCA_SLICER ?? "/Applications/OrcaSlicer.app/Contents/MacOS/OrcaSlicer";
 const resources = process.env.ORCA_RESOURCES ?? resolve(dirname(slicer), "../Resources");
-// Explicit body selection from makeshift-logo-3: backing and both colored silhouettes.
+// Explicit body selection from makeshift-logo-4: backing and both colored silhouettes.
 const bodyIds = [
   "0af104d9-88f5-4cae-8049-37b1780956a9",
   "db057420-a968-4df6-96e0-2453aa601c98",

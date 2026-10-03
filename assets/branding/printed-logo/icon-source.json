@@ -1,12 +1,12 @@
 {
-  "input": "/Users/adacohen/.codex/worktrees/0293/freac/.cache/printed-logo/model-v3-monotonic/plate_1.gcode",
+  "input": "/Users/adacohen/.codex/worktrees/0293/freac/.cache/printed-logo/model-v4/plate_1.gcode",
   "appearance": "icon",
   "crownRatio": 0.35,
   "offset": [128.0265, 126],
   "filamentDiameter": 1.75,
-  "sha256": "c56ab9e68d5020460c8e8521930dc180f49464cf268f3d9c4abf991cdee8efc1",
-  "paths": 270,
-  "segments": 9037,
+  "sha256": "2da89bd57dfdbfbc916340ac1002ef66f19c8221a77108ee99c2dc3a2f00153a",
+  "paths": 287,
+  "segments": 12255,
   "layers": 35,
   "features": [
     "Perimeter",
