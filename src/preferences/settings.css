@@ -2,7 +2,7 @@
   pointer-events: auto;
 }
 .application-settings {
-  width: min(400px, calc(100vw - 24px));
+  width: min(520px, calc(100vw - 24px));
   max-height: calc(100dvh - 24px);
   overflow: auto;
   padding: 22px;
@@ -46,4 +46,45 @@
   justify-content: flex-end;
   gap: 8px;
   margin-top: 20px;
+}
+.decorator-display-settings {
+  border-top: 1px solid #d6dfe9;
+  margin-top: 20px;
+  padding-top: 12px;
+}
+.decorator-display-settings h3 {
+  font-size: 15px;
+}
+.decorator-display-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+}
+.decorator-display-row > label {
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+.decorator-display-row > span {
+  width: 64px;
+}
+.decorator-display-row input[type="color"] {
+  width: 44px;
+  height: 30px;
+  padding: 2px;
+}
+.decorator-display-row input[type="range"] {
+  width: 100px;
+}
+.decorator-color-value {
+  width: 70px;
+  font: inherit;
+  font-size: max(16px, calc(14px * var(--ui-scale, 1)));
+  padding: 4px;
+  border: 1px solid #d6dfe9;
+  border-radius: 4px;
+}
+.decorator-display-row output {
+  width: 36px;
 }

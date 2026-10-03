@@ -29,6 +29,26 @@ compatible faces into individual continuous thread instances; applying to severa
 rods creates several instances in one edit. Users normally see threads and their
 settings, not the internal grouping noun.
 
+## Preview display and pending work
+
+Application Settings offers shaded Detailed previews or Color only, plus separate
+thread/gear/knurling/custom colors and opacity. These are device preferences outside
+accepted attachments, files and Undo; they never turn decorators into native BRep.
+The compositor excludes only a surface's own supports when resolving occlusion,
+then blends its configured opacity once. Generated previews and attachment markers
+cannot intercept analytic face picking.
+
+When a signature changes, remove its old generated mesh immediately and show the
+current trimmed face tessellation in the decorator's color. This marks attachment,
+not the final profile. A matching coarse mesh remains visible while settled detail
+is being calculated, then a matching result replaces it. Busy feedback reports
+actual active/queued preview work. Stale replies cannot restore a moved, removed,
+unresolved or hidden attachment. Partial multi-body results only replace markers
+for bodies with a nonempty generated mesh. Color only retires pending workers and
+continues to follow current geometry without expensive preview jobs; export is
+unchanged. Live worker replies include transient durations and sampling hints for
+local measurements, not persisted document state or a performance guarantee.
+
 ## Ownership and geometry
 
 DocumentOwner owns accepted attachments, settings and bundled source through

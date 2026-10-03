@@ -8,6 +8,16 @@ outside accepted geometry, document files and Undo. Invalid stored values fall b
 to 100%; unavailable browser storage keeps the preference for the current window.
 Controls and agent launch configuration retain their existing separate settings.
 
+Decorator previews use the same Settings dialog. Detailed is the default; Color only
+marks current attached faces and does not schedule preview workers. Thread, gear,
+knurling and custom decorations have separate color and 20–100% opacity choices,
+with Reset decorator display restoring shaded defaults. These values are stored
+under `makeshift.decorator-display`, independently of interface scale, document
+files and Undo. Both the color picker and a keyboard-editable hexadecimal color
+field apply valid colors immediately. Invalid/incomplete text retains the last
+valid color and restores it on leaving the field. Final exports use the existing
+full geometry pipeline regardless of the display preference.
+
 ## Presentation and coordinates
 
 The same preference and settings surface run in Electron, standalone web and the

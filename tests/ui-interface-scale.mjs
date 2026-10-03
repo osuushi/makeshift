@@ -40,9 +40,15 @@ export async function preferencesRoute(page) {
   await settled(page);
   await page.locator(".settings-trigger").click();
   const dialog = page.getByRole("dialog", { name: "Settings", exact: true });
-  assert.equal(await dialog.getByRole("combobox").inputValue(), "1.5");
+  assert.equal(
+    await dialog.getByRole("combobox", { name: "User interface scale" }).inputValue(),
+    "1.5",
+  );
   await dialog.getByRole("button", { name: "Reset to 100%" }).click();
-  assert.equal(await dialog.getByRole("combobox").inputValue(), "1");
+  assert.equal(
+    await dialog.getByRole("combobox", { name: "User interface scale" }).inputValue(),
+    "1",
+  );
   await dialog.getByRole("button", { name: "Done", exact: true }).click();
   await page.reload();
   await settled(page);
