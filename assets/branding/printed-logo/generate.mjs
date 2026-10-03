@@ -8,7 +8,7 @@ import { build } from "esbuild";
 const directory = dirname(fileURLToPath(import.meta.url));
 const root = resolve(directory, "../../..");
 const source = resolve(process.argv[2] ?? `${directory}/source.makeshift`);
-const output = resolve(process.argv[3] ?? `${root}/.cache/printed-logo/final`);
+const output = resolve(process.argv[3] ?? `${root}/.cache/printed-logo/v2`);
 const resolution = process.argv[4] ?? "1024";
 const samples = process.argv[5] ?? "64";
 const slicer =
@@ -55,7 +55,7 @@ for (const [name, options] of [
         "solid-infill-extrusion",
         "top-infill-extrusion",
         "first-layer-extrusion",
-      ].flatMap((key) => [`--${key}-width`, "0.95"]),
+      ].flatMap((key) => [`--${key}-width`, "1.15"]),
     ],
   ],
 ]) {

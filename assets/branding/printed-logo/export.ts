@@ -19,12 +19,18 @@ try {
   });
   const bodies = materialize([], result);
   writeFileSync(output, exportBodies(bodies, "stl"));
-  const vertices = bodies.flatMap((body) => exportMesh(body).vertices);
-  const bounds = [0, 1, 2].map((axis) => [
-    Math.min(...vertices.map((point) => point[axis])),
-    Math.max(...vertices.map((point) => point[axis])),
-  ]);
-  writeFileSync(`${output}.json`, JSON.stringify({ bounds, bodies: bodies.length }, null, 2));
+  const meshes = bodies.map(exportMesh);
+  const boundsFor = (vertices: number[][]) =>
+    [0, 1, 2].map((axis) => [
+      Math.min(...vertices.map((point) => point[axis])),
+      Math.max(...vertices.map((point) => point[axis])),
+    ]);
+  const bounds = boundsFor(meshes.flatMap((mesh) => mesh.vertices));
+  const bodyBounds = meshes.map((mesh) => boundsFor(mesh.vertices));
+  writeFileSync(
+    `${output}.json`,
+    JSON.stringify({ bounds, bodyBounds, bodies: bodies.length }, null, 2),
+  );
   console.log(
     JSON.stringify({ bounds, triangles: bodies.flatMap((b) => exportMesh(b).triangles).length }),
   );

@@ -1,6 +1,6 @@
 # Toolpath-rendered logo
 
-First-review artwork from the founder's `makeshift-logo.makeshift`, copied here
+Updated artwork from the founder's `makeshift-logo-2.makeshift`, copied here
 as `source.makeshift`. The approved application icon remains in the parent folder.
 
 Review the [styled preview](styled.png), [fine preview](fine.png), and
@@ -21,12 +21,12 @@ node assets/branding/printed-logo/generate.mjs
 ```
 
 The default input is the committed model. Outputs go to
-`.cache/printed-logo/final/`: STL, both G-code files, bead geometry, transparent
+`.cache/printed-logo/v2/`: STL, both G-code files, bead geometry, transparent
 1024 px PNGs and editable Blender scenes. The script also records the source SHA-256.
 Arguments are input file, output directory, square resolution, and sample count:
 
 ```sh
-node assets/branding/printed-logo/generate.mjs assets/branding/printed-logo/source.makeshift .cache/printed-logo/final 1024 64
+node assets/branding/printed-logo/generate.mjs assets/branding/printed-logo/source.makeshift .cache/printed-logo/v2 1024 64
 ```
 
 `PRUSA_SLICER` and `BLENDER` can override executable paths. Defaults use their
@@ -35,13 +35,17 @@ installed macOS app binaries. This run used PrusaSlicer 2.6.0-alpha4 and Blender
 services. A sandboxed launch crashed in Metal initialization before Python ran.
 
 `fine` uses a 0.4 mm nozzle, 0.45 mm line width and 0.2 mm layers. `styled` uses
-a 0.8 mm nozzle, 0.95 mm line width and 0.4 mm layers. Both slice the same 40 × 40 ×
-8 mm solid. Wider lines are actual slicer settings, rather than a texture overlay.
+a 0.8 mm nozzle, 1.15 mm line width and 0.4 mm layers, about 21% wider than the
+previous styled preview. Both slice the revised 39 × 39 × 8 mm model, containing
+five bodies. Colours and lighting retain the first preview's settings. Wider lines
+are actual slicer settings, rather than a texture overlay. The first artwork and
+model remain recoverable in commit `d4d600a`; its generated scenes remain under
+`.cache/printed-logo/final/`.
 
 For an oblique view with visible side layers:
 
 ```sh
-/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --disable-autoexec --python assets/branding/printed-logo/render.py -- .cache/printed-logo/final/styled-beads.json .cache/printed-logo/final/detail.png 1024 64 detail
+/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --disable-autoexec --python assets/branding/printed-logo/render.py -- .cache/printed-logo/v2/styled-beads.json .cache/printed-logo/v2/detail.png 1024 64 detail
 ```
 
 ## Deposition and shading
