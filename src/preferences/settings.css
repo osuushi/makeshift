@@ -1,0 +1,49 @@
+.settings-trigger {
+  pointer-events: auto;
+}
+.application-settings {
+  width: min(400px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid #d6dfe9;
+  border-radius: 12px;
+  background: #fff;
+  color: #293547;
+  box-shadow: 0 8px 24px #24344b20;
+}
+.application-settings::backdrop {
+  background: #17283e40;
+}
+.application-settings h2 {
+  font-size: 18px;
+  margin: 0 0 20px;
+}
+.application-settings label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.application-settings select {
+  font: inherit;
+  /* Keep Safari input focus from zooming the page at smaller interface scales. */
+  font-size: max(16px, calc(14px * var(--ui-scale, 1)));
+  padding: 8px;
+  border: 1px solid #d6dfe9;
+  border-radius: 6px;
+  background: white;
+  color: inherit;
+}
+.application-settings p {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #647285;
+}
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}

@@ -1,0 +1,101 @@
+import type { SketchEditor } from "../sketch/editor.js";
+import { idleReason, toolCatalog } from "../tools/catalog.js";
+import { onUiScaleChange, setUiScale, uiScale, uiScaleChoices } from "./ui-scale.js";
+import "./settings.css";
+
+export function installSettings(editor: SketchEditor, app: HTMLElement): () => void {
+  const button = document.createElement("button");
+  button.textContent = "Settings";
+  button.className = "settings-trigger";
+  button.setAttribute("aria-label", "Application settings");
+  button.setAttribute("aria-haspopup", "dialog");
+  const dialog = settingsDialog();
+  const open = () => {
+    if (editor.blocked || editor.interactions.current) return;
+    if (!dialog.open) dialog.showModal();
+  };
+  button.onclick = open;
+  const header = app.querySelector("header");
+  header?.append(button);
+  const fitHeader = () => {
+    if (!header) return;
+    app.style.setProperty(
+      "--editor-header-bottom",
+      `${header.getBoundingClientRect().bottom - app.getBoundingClientRect().top}px`,
+    );
+  };
+  const headerObserver = new ResizeObserver(fitHeader);
+  if (header) headerObserver.observe(header);
+  fitHeader();
+  document.body.append(dialog);
+  const disposeTool = toolCatalog(editor).register({
+    id: "settings",
+    label: "Settings",
+    category: "View",
+    description: "Adjust user interface scale",
+    aliases: ["preferences", "user interface scale"],
+    reason: () => idleReason(editor),
+    run: open,
+  });
+  const update = () => {
+    button.disabled = editor.blocked || !!editor.interactions.current;
+  };
+  editor.world.changed.add(update);
+  const disposeScale = onUiScaleChange(() => {
+    // Refit geometry-relative controls to their new measured dimensions.
+    editor.world.draw();
+  });
+  const blockZoom = (event: KeyboardEvent) => {
+    if (
+      (event.metaKey || event.ctrlKey) &&
+      (["+", "=", "-", "_", "0"].includes(event.key) ||
+        ["NumpadAdd", "NumpadSubtract", "Numpad0"].includes(event.code))
+    ) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  };
+  document.addEventListener("keydown", blockZoom, true);
+  update();
+  return () => {
+    disposeTool();
+    disposeScale();
+    editor.world.changed.delete(update);
+    document.removeEventListener("keydown", blockZoom, true);
+    headerObserver.disconnect();
+    app.style.removeProperty("--editor-header-bottom");
+    button.remove();
+    dialog.remove();
+  };
+}
+
+function settingsDialog(): HTMLDialogElement {
+  const dialog = document.createElement("dialog");
+  dialog.className = "application-settings";
+  dialog.setAttribute("aria-labelledby", "settings-title");
+  dialog.innerHTML = `<form method="dialog"><h2 id="settings-title">Settings</h2>
+    <label>User interface scale<select aria-label="User interface scale"></select></label>
+    <p>Changes apply immediately and are saved on this device. Geometry and camera zoom stay independent.</p>
+    <div class="settings-actions"><button type="button" data-reset>Reset to 100%</button><button value="close">Done</button></div></form>`;
+  const select = dialog.querySelector<HTMLSelectElement>("select");
+  const reset = dialog.querySelector<HTMLButtonElement>("[data-reset]");
+  if (!select || !reset) throw new Error("Missing scale settings controls");
+  for (const scale of uiScaleChoices)
+    select.add(new Option(`${Math.round(scale * 100)}%`, String(scale)));
+  const update = () => {
+    select.value = String(uiScale());
+    reset.disabled = uiScale() === 1;
+  };
+  select.onchange = () => {
+    setUiScale(Number(select.value));
+    update();
+  };
+  reset.onclick = () => {
+    setUiScale(1);
+    update();
+    select.focus();
+  };
+  dialog.addEventListener("beforetoggle", update);
+  update();
+  return dialog;
+}

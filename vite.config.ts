@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { defineConfig } from "vite";
+import { uiScaleCss } from "./scripts/ui-scale-css.js";
 import { wasmAssets } from "./scripts/web/assets.js";
 import { sketchBackend } from "./src/backend/dev-plugin.js";
 import { fixtureCapture } from "./src/backend/fixture-plugin.js";
@@ -27,6 +28,7 @@ export default defineConfig(({ mode }) => ({
           },
         ]
       : [sketchBackend(), fixtureCapture(), meshBackend()],
+  css: { postcss: { plugins: [uiScaleCss()] } },
   resolve: {
     alias:
       mode === "web"

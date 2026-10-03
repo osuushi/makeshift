@@ -57,7 +57,16 @@ export function installDocumentMenu(
           { role: "selectAll" },
         ],
       },
-      { role: "viewMenu" },
+      {
+        label: "View",
+        submenu: [
+          { role: "reload" },
+          { role: "forceReload" },
+          { role: "toggleDevTools" },
+          { type: "separator" },
+          { role: "togglefullscreen" },
+        ],
+      },
       { role: "windowMenu" },
       {
         label: "Help",

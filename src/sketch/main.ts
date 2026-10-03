@@ -22,6 +22,7 @@ import { ScaleControls } from "../model/scale-controls.js";
 import { SectionControls } from "../model/section-controls.js";
 import { ShellControls } from "../model/shell-controls.js";
 import { TopologyMoveControls } from "../model/topology-move-controls.js";
+import { installSettings } from "../preferences/settings.js";
 import { TagControls } from "../tags/controls.js";
 import { ToolMenu } from "../tools/menu.js";
 import { installPlaneBounds } from "./plane-bounds.js";
@@ -190,6 +191,7 @@ const disposeHost =
     ? (await import("../web/chrome.js")).installWebChrome(editor, app)
     : (await import("./host-controls.js")).installHostControls(editor, app);
 const disposePlaneEntry = planeEntryTools(editor);
+const disposeSettings = installSettings(editor, app);
 const toolMenu = new ToolMenu(editor, app);
 world.changed.add(() => {
   const mode = app.querySelector(".mode-label");
@@ -218,6 +220,7 @@ window.addEventListener("pagehide", (event) => {
   decorators.dispose();
   disposeDecorators();
   disposeHost();
+  disposeSettings();
   toolMenu.dispose();
   modelingTools.dispose();
   disposeControls();
