@@ -13,7 +13,7 @@ function section(width, height) {
       ring.push([side * flat + radius * Math.cos(angle), (radius - crown) * Math.sin(angle)]);
     }
     // Very slightly crowned deposited surfaces avoid overlapping coplanar roofs
-    // at joins. Width still comes from slicer volume; footprint is a render approximation.
+    // at joins. Width uses slicer metadata or volume; footprint is a render approximation.
     for (let i = 1; i < 8; i++) {
       const t = 1 - i / 4;
       ring.push([side * flat * t, side * (radius - crown * t * t)]);

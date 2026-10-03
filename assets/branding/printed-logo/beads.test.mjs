@@ -27,8 +27,8 @@ test("E reset and relative XYZ preserve geometry while stationary priming adds n
 });
 
 test("unsupported motion fails explicitly", () => {
-  for (const code of ["G20", "G2 X3 E1", "G10", "T1"])
-    assert.throws(() => parseGcode(code), /Unsupported/);
+  for (const code of ["G20", "G10", "T1"]) assert.throws(() => parseGcode(code), /Unsupported/);
+  assert.throws(() => parseGcode("M83\nG1 Z.2\nG2 X3 E1"), /I\/J/);
 });
 
 test("acute return strokes form finite, closed, consistently oriented deposition shells", () => {

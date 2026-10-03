@@ -1,91 +1,96 @@
 # Toolpath-rendered logo
 
-Updated artwork from the founder's `makeshift-logo-2.makeshift`, copied here
-as `source.makeshift`. The approved application icon remains in the parent folder.
-
-Review the [styled preview](styled.png), [fine preview](fine.png), and
-[oblique layer view](detail.png).
-
-The complete route is saved Makeshift BRep → existing OCCT kernel inspection at
-0.01 mm deflection → closed, oriented STL export → PrusaSlicer G-code → deposited
-bead meshes → Blender Cycles. No image generation is involved.
+The current [top preview](styled.png) and [oblique preview](detail.png) render
+`source.gcode`, the founder's exact `makeshift-logo-2_PLA_20m27s.gcode` export from
+OrcaSlicer 2.4.2. It uses Arachne, nominal 1.15 mm extrusions, 0.2 mm layers and
+one outer wall on the top surfaces. The approved application icon remains in the
+parent folder. No image generation is involved.
 
 ## Reproduce
 
-Install the repository dependencies and build the native kernel following the
-root README. Install Blender and PrusaSlicer. From the repository root on macOS:
+Install the repository dependencies and Blender. From the repository root:
 
 ```sh
 source /Users/adacohen/.nvm/nvm.sh && nvm use
-node assets/branding/printed-logo/generate.mjs
+node assets/branding/printed-logo/render-gcode.mjs
 ```
 
-The default input is the committed model. Outputs go to
-`.cache/printed-logo/v2/`: STL, both G-code files, bead geometry, transparent
-1024 px PNGs and editable Blender scenes. The script also records the source SHA-256.
-Arguments are input file, output directory, square resolution, and sample count:
+Optional arguments are a G-code file and output directory. `BLENDER` overrides
+the default `/Applications/Blender.app/Contents/MacOS/Blender` executable.
+Outputs go to `.cache/printed-logo/orca/`: bead geometry, source hash and counts,
+transparent PNGs and editable Blender scenes. Only deposited object coordinates
+are centered; the source path shapes are preserved. This run rendered 395 paths,
+12,201 segments after arc subdivision, and 40 layers. `render-source.json` records
+the source SHA-256 and the applied XY translation.
 
-```sh
-node assets/branding/printed-logo/generate.mjs assets/branding/printed-logo/source.makeshift .cache/printed-logo/v2 1024 64
-```
+Blender 4.0.0 Beta rendered the previews with the existing satin plastic shaders,
+procedural microtexture, softbox lights and orthographic cameras. The background
+process requires macOS graphics services; a sandboxed launch crashed during Metal
+initialization before Python ran.
 
-`PRUSA_SLICER` and `BLENDER` can override executable paths. Defaults use their
-installed macOS app binaries. This run used PrusaSlicer 2.6.0-alpha4 and Blender
-4.0.0 Beta; the background Blender process requires access to macOS graphics
-services. A sandboxed launch crashed in Metal initialization before Python ran.
+## Contour correction
 
-`fine` uses a 0.4 mm nozzle, 0.45 mm line width and 0.2 mm layers. `styled` uses
-a 0.8 mm nozzle, 1.15 mm line width and 0.4 mm layers, about 21% wider than the
-previous styled preview. Both slice the revised 39 × 39 × 8 mm model, containing
-five bodies. Colours and lighting retain the first preview's settings. Wider lines
-are actual slicer settings, rather than a texture overlay. The first artwork and
-model remain recoverable in commit `d4d600a`; its generated scenes remain under
-`.cache/printed-logo/final/`.
+The previous standalone export included all five saved bodies in
+`source.makeshift`, including overlapping raised silhouettes. One included orange
+body already has the pointed tip: its STL extends to X=3.386 mm there. The old
+Prusa slice therefore had a pointed external perimeter before bead reconstruction.
+The file's other orange silhouette and the supplied Orca G-code have a rounded tip.
+The standalone exporter does not reproduce the app's visible-body selection.
 
-For an oblique view with visible side layers:
+The current render bypasses that ambiguous body selection and uses the supplied
+G-code directly. The rounded orange top perimeter reaches X=1.002 mm after
+centering; its regression fixture verifies both the decoded contour and the swept
+bead footprint. Materials and lighting were kept unchanged.
 
-```sh
-/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --disable-autoexec --python assets/branding/printed-logo/render.py -- .cache/printed-logo/v2/styled-beads.json .cache/printed-logo/v2/detail.png 1024 64 detail
-```
+`generate.mjs`, `export.ts`, `slicer.ini` and `fine.png` retain the earlier
+experimental Makeshift BRep → OCCT inspection → STL → PrusaSlicer route. That
+route exports every saved body and uses different slice settings; it is not the
+source of the current previews. Earlier images and scenes remain recoverable in
+Git and `.cache/printed-logo/v2/`.
 
 ## Deposition and shading
 
-The parser handles millimeter G0/G1, absolute/relative positioning and extrusion,
-G92 resets, retraction repayment and slicer height/type comments. It rejects arcs,
-inch units, firmware retractions, tool changes and non-planar extrusion. Travel
-and stationary priming generate no visible geometry.
+The parser handles millimeter G0/G1 motion, XY I/J-format G2/G3 arcs,
+absolute/relative positioning and extrusion, G92 resets, retraction repayment,
+and Prusa/Orca feature, height and width comments. Orca object markers exclude
+machine priming, calibration and shutdown. Printer commands are read as data;
+none are executed.
 
-Extruded filament volume divided by XY move length determines bead cross-sectional
-area. Width uses the [Slic3r rounded-rectangle flow model](https://manual.slic3r.org/advanced/flow-math).
-The rendered cross-section has a small crown (4% of layer height), rounded ends,
-and overlapping deposits at sharp turns. Those are geometric approximations:
-rendered mesh volume is not an exact conservation calculation. Crowning avoids
-coplanar surface interference at overlapping roofs. Individual deposits are
-closed oriented shells; they overlap and are not Boolean-fused into a print mesh.
+Arc subdivision uses a 0.005 mm chord tolerance and a maximum 5° step, retaining
+exact endpoints. Arc semantics follow the documented
+[center-format G2/G3 convention](https://www.linuxcnc.org/docs/stable/html/gcode/g-code.html#gcode:g2-g3);
+the implementation is independently authored. Unsupported deposited arc formats,
+non-planar extrusion, inch units, firmware retractions and tool changes fail
+explicitly within the object scope.
 
-This is a kinematic visualization, without a heat, pressure, cooling, sagging,
-shrinkage or material-fusion solver. It cannot predict physical print quality.
-An excessively wide nozzle also leaves slicer gaps in the model's narrow corners.
+Slicer-declared bead widths preserve the slicer's intended footprint, including
+its flow calibration. Without width metadata, width is inferred from deposited
+filament volume using the
+[Slic3r rounded-rectangle flow model](https://manual.slic3r.org/advanced/flow-math).
+The volume-derived width is also retained for audit when metadata is present.
 
-Colour is an art-directed shader assignment: backing through Z=6 mm is white;
-disconnected raised silhouettes receive orange and violet based on their exterior
-contours. This single-extruder G-code does not encode a three-colour fabrication
-plan. It is a geometry preview profile, without a printer's startup/purge routine.
+Cross-sections have a small crown (4% of layer height), rounded ends, and
+rounded overlapping deposits at sharp turns. Individual closed shells overlap;
+they are not Boolean-fused. This is a kinematic visualization, without heat,
+pressure, cooling, sagging, shrinkage or fusion simulation. Mesh volume is not
+an exact conservation calculation.
 
-`render.py` owns satin plastic shaders, procedural microtexture, softbox lighting,
-orthographic framing and RGBA output. Change these independently of slicing.
+Colour is an art-directed shader assignment: the backing through Z=6 mm is
+white; raised silhouettes receive orange and violet based on their exterior
+contours. The single-extruder G-code does not encode a three-colour fabrication
+plan. `render.py` owns shading and framing independently of toolpath decoding.
 
 ## Checks
 
 ```sh
 source /Users/adacohen/.nvm/nvm.sh && nvm use
-node --test assets/branding/printed-logo/beads.test.mjs
+node --test assets/branding/printed-logo/*.test.mjs
 node_modules/.bin/biome check assets/branding/printed-logo
 node_modules/.bin/tsc --ignoreConfig --noEmit --strict --module nodenext --target es2024 --types node --skipLibCheck assets/branding/printed-logo/export.ts
 npm exec --yes --package pyright@1.1.414 -- pyright --project assets/branding/printed-logo/pyrightconfig.json
 ```
 
-Tests cover volume reconstruction, E modes, resets, retractions, relative XYZ,
-unsupported motions and closure/orientation of sharp-return deposition shells.
-The real model was exported, sliced and rendered in Blender; the final PNGs were
-visually inspected and checked for clean alpha. No physical print was made.
+Tests cover circular arcs, the actual rounded tip and its bead footprint, object
+scope, declared widths, extrusion modes, resets, retractions, relative XYZ,
+unsupported motions and shell closure/orientation. Both current views were
+rendered in Blender and visually inspected. No physical print was made.
