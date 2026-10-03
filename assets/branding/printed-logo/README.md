@@ -1,14 +1,14 @@
 # Toolpath-rendered logo
 
 The current [icon preview](icon.png), [oblique preview](icon-detail.png) and
-[64/96/128 px comparison](sizes.png) use the founder's `makeshift-logo-4.makeshift`,
-copied byte for byte as `source.makeshift`. The latest save adds a fourth body
-forming a floor at Z=4 mm inside the previous through hole. It leaves a 2 mm
-recess below the white backing surface at Z=6 mm. Both raised colored bodies
-are identical to the preceding model. The model is 39 × 39 × 7 mm, with 1 mm
-raised shapes, and contains four bodies. The floor shares the art-directed white
-backing material; its saved CAD appearance is orange. Slicer profiles and all
-Blender appearance settings are unchanged from the preceding hole render.
+[64/96/128 px comparison](sizes.png) use the founder's `makeshift-logo-5.makeshift`,
+copied byte for byte as `source.makeshift`. V5 restores the solid white backing
+and raises the right side of the arrow as a third silhouette at Z=6–7 mm.
+The original orange and violet solids are identical to the preceding model.
+The model is 39 × 39 × 7 mm, with 1 mm raised shapes, and contains four bodies.
+The new arrow piece uses the same art-directed violet as the other right-side
+piece; its saved CAD appearance is orange. Slicer profiles and all Blender
+appearance settings are unchanged from the preceding v4 render.
 The approved application icon remains in the parent folder. No image generation
 is involved.
 
@@ -41,12 +41,13 @@ in the root README and install OrcaSlicer, then run:
 
 ```sh
 source /Users/adacohen/.nvm/nvm.sh && nvm use
-node assets/branding/printed-logo/slice-infill.mjs 45 .cache/printed-logo/model-v4 1.5
-node assets/branding/printed-logo/render-gcode.mjs .cache/printed-logo/model-v4/plate_1.gcode .cache/printed-logo/model-v4/render icon
+node assets/branding/printed-logo/slice-infill.mjs 45 .cache/printed-logo/model-v5 1.5
+node assets/branding/printed-logo/render-gcode.mjs .cache/printed-logo/model-v5/plate_1.gcode .cache/printed-logo/model-v5/render icon
 ```
 
 Slice arguments are angle, output directory and nominal line width. The recipe
-explicitly selects the four saved body IDs, including the new floor. It reads the installed Orca BBL
+explicitly selects the four saved body IDs, including the new raised arrow piece.
+It reads the installed Orca BBL
 printer/process/filament presets, applies configuration values from the founder's
 original `source.gcode`, overrides seven width settings, and fixes the solid
 infill direction rather than alternating it by layer. It also applies the
@@ -57,7 +58,7 @@ the model hash, selected IDs, angle, width, pattern and gap-fill limits.
 
 `icon-source.json` records the rendered G-code hash and geometry counts. Small
 PNGs use Lanczos downsampling of the 1024 px render. The comparison shows native
-sizes against the previous open-hole save with the same monotonic slice settings.
+sizes against the previous v4 recessed-floor save with the same monotonic slice settings.
 
 ## Appearance
 

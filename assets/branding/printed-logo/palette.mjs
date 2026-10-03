@@ -20,7 +20,7 @@ function outlineDistance(p, points) {
   return inside ? 0 : distance;
 }
 
-// This supplied model has a 6 mm white backing and two raised, disconnected pieces.
+// The supplied model has a 6 mm white backing and raised orange/violet silhouettes.
 // Colour is render art direction; it does not claim a multi-material printer plan.
 export function pathPalette(paths, baseHeight = 6) {
   const outlines = paths.filter((p) => p.z > baseHeight && p.type === "External perimeter");
