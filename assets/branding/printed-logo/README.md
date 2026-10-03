@@ -9,13 +9,25 @@ The approved application icon remains in the parent folder. No image generation
 is involved.
 
 The icon preset emphasizes actual bead geometry with a 35%-of-layer-height crown,
-a smaller top-left directional key across the print lines, restrained fill and
+a distant top-left area light across the print lines, restrained fill and
 slightly glossier plastic. It exaggerates vertical relief for legibility at small
 sizes. Line widths and layer heights retain the founder's slice settings. Across
 all 40 layers, the re-sliced external perimeters differ from the supplied G-code
 by at most 0.032 mm (symmetric distance between decoded paths).
 The previous [realistic view](styled.png) and [realistic oblique view](detail.png)
 remain available. They use `source.gcode`, the founder's exact original export.
+
+Both icon lights are ten times farther from their targets than the initial
+top-left setup. Their diameters scale by ten and power by 100, keeping comparable
+central brightness and angular softness while reducing light-direction variation
+and falloff across the logo. The icon render also scales vertical thickness to
+60%: the base becomes 3.6 mm and the raised shapes 1.2 mm, for 4.8 mm overall.
+This is a render transform applied to the existing G-code geometry. XY contours
+and extrusion widths remain unchanged. Shader normals compensate for the vertical
+compression to retain bead contrast while cast shadows use the thinner geometry.
+The top camera stays fixed; the oblique camera moves to the other front corner to
+avoid reflecting the distant key directly. The realistic preset keeps the original
+8 mm height and its existing camera and materials.
 
 ## Reproduce
 
@@ -41,7 +53,8 @@ are centered; the source path shapes are preserved. The current slice has 411
 deposited paths and 40 layers. `render-source.json` records
 the source SHA-256 and the applied XY translation. `icon-source.json` records the
 icon preset. Small PNGs use Lanczos downsampling of the 1024 px render; the size
-comparison shows them at native resolution alongside the previous bottom-left light.
+comparison shows them at native resolution alongside the previous close light
+and full thickness.
 
 To regenerate the rotated infill, build the Makeshift native kernel as described
 in the root README, then run:

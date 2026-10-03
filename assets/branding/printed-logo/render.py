@@ -10,6 +10,7 @@ from typing import Any, cast
 # Blender owns these APIs; keep the dynamic boundary out of typed helper inputs.
 bpy: Any = importlib.import_module("bpy")
 Vector: Any = importlib.import_module("mathutils").Vector
+ICON_THICKNESS_SCALE = 0.6
 
 
 def linear(hex_color: str) -> tuple[float, float, float, float]:
@@ -40,7 +41,18 @@ def plastic(name: str, color: str, icon: bool) -> Any:
     bump.inputs["Strength"].default_value = 0.12
     bump.inputs["Distance"].default_value = 0.012
     links.new(noise.outputs["Fac"], bump.inputs["Height"])
-    links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    normal = bump.outputs["Normal"]
+    if icon:
+        # Preserve bead shading relief after thinning the object; shadows use actual geometry.
+        compensate = nodes.new("ShaderNodeVectorMath")
+        compensate.operation = "MULTIPLY"
+        compensate.inputs[1].default_value = (1, 1, ICON_THICKNESS_SCALE)
+        links.new(normal, compensate.inputs[0])
+        normalize = nodes.new("ShaderNodeVectorMath")
+        normalize.operation = "NORMALIZE"
+        links.new(compensate.outputs["Vector"], normalize.inputs[0])
+        normal = normalize.outputs["Vector"]
+    links.new(normal, bsdf.inputs["Normal"])
     ramp = nodes.new("ShaderNodeMapRange")
     ramp.inputs["To Min"].default_value = 0.22 if icon else 0.27
     ramp.inputs["To Max"].default_value = 0.30 if icon else 0.36
@@ -64,8 +76,13 @@ def area(name: str, location: tuple[float, float, float],
 def lighting(scene: Any, icon: bool) -> None:
     scene.world.color = (0.07, 0.07, 0.07) if icon else (0.32, 0.32, 0.32)
     if icon:
-        area("Top-left key across rotated infill", (-28, 32, 38), 50000, 10, (0, 0, 6))
-        area("Soft restrained fill", (28, -8, 35), 8000, 36, (0, 0, 3))
+        key_height = 6 * ICON_THICKNESS_SCALE
+        fill_height = 3 * ICON_THICKNESS_SCALE
+        # Ten times farther from each target: scale diameter by 10 and power by 100.
+        area("Distant top-left key", (-280, 320, 320 + key_height),
+             5000000, 100, (0, 0, key_height))
+        area("Distant soft fill", (280, -80, 320 + fill_height),
+             800000, 360, (0, 0, fill_height))
     else:
         area("Upper-left softbox", (-24, 30, 48), 52000, 36, (0, 0, 3))
         area("Right fill", (28, 8, 35), 14000, 32, (0, 0, 3))
@@ -82,6 +99,8 @@ def setup(mesh_file: Path, output: Path, resolution: int, samples: int,
     mesh.update()
     obj = bpy.data.objects.new("Makeshift — simulated deposition", mesh)
     bpy.context.collection.objects.link(obj)
+    if icon:
+        obj.scale.z = ICON_THICKNESS_SCALE
     for name, color in [("Warm white PLA", "ECECE8"),
                         ("Orange PLA", "FF6808"), ("Violet PLA", "630AC2")]:
         obj.data.materials.append(plastic(name, color, icon))
@@ -111,7 +130,7 @@ def setup(mesh_file: Path, output: Path, resolution: int, samples: int,
     camera_obj.rotation_euler = (0, 0, 0)
     if detail:
         camera.ortho_scale = 57
-        camera_obj.location = (38, -50, 62)
+        camera_obj.location = (-38 if icon else 38, -50, 62)
         camera_obj.rotation_euler = (Vector((0, 0, 4)) - camera_obj.location).to_track_quat("-Z", "Y").to_euler()
     scene.camera = camera_obj
     lighting(scene, icon)

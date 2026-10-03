@@ -2,10 +2,7 @@
   "input": "/Users/adacohen/.codex/worktrees/0293/freac/assets/branding/printed-logo/icon.gcode",
   "appearance": "icon",
   "crownRatio": 0.35,
-  "offset": [
-    128,
-    126
-  ],
+  "offset": [128, 126],
   "filamentDiameter": 1.75,
   "sha256": "31093f2633955c5db5a8e8b532571401217b6518b33d1d063c3000d743c52719",
   "paths": 411,
