@@ -5,6 +5,9 @@ white printed base, with transparent surroundings. The product name is **Makeshi
 The built-in image generation and correction prompts are retained alongside it.
 Earlier branding assets remain as historical design sources.
 
+[Printed-logo experiment](printed-logo/README.md) contains the supplied modeled
+logo and a reproducible slicer → bead geometry → Blender pipeline for review.
+
 To regenerate the committed macOS ICNS, Windows ICO and browser/host PNG assets
 on macOS, from the repository root:
 
