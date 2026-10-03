@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import * as THREE from "three";
 import { project } from "./ui-blend-edit.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
+import { cubeSettled } from "./ui-orientation-cube-clicks.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 function projected(camera, point) {
@@ -80,10 +81,8 @@ export async function topWorkspace(page) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await inspect(page);
-  for (let i = 0; i < 2; i++) {
-    await page.getByRole("button", { name: "Top view", exact: true }).click();
-    await inspect(page);
-  }
+  await page.getByRole("button", { name: "Top view", exact: true }).dblclick();
+  await cubeSettled(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await inspect(page);
 }

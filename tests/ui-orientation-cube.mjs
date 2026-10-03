@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { drag, inspect, reset } from "./ui-helpers.mjs";
+import { cubeSettled } from "./ui-orientation-cube-clicks.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function orientationCubeRoute(page, name) {
@@ -10,7 +11,7 @@ export async function orientationCubeRoute(page, name) {
   const before = await inspect(page);
   assert.equal(before.document.sketches.length, 1, "Rectangle creation reaches the real solver");
   await page.getByRole("button", { name: "Top view", exact: true }).click();
-  assert.equal((await inspect(page)).activePlane, null);
+  assert.equal((await cubeSettled(page)).activePlane, null);
   const history = await page.evaluate(() => window.makeshiftHistory());
   const cube = page.locator(".orientation-cube");
   const bounds = await cube.boundingBox();
@@ -38,7 +39,7 @@ export async function orientationCubeRoute(page, name) {
     await assertFaceLabel(target);
     const beforeAlignment = await inspect(page);
     await target.locator("polygon").click();
-    const state = await inspect(page);
+    const state = await cubeSettled(page);
     const offset = state.camera.position.map((v, i) => v - state.camera.target[i]);
     const distance = Math.hypot(...offset);
     offset.forEach((v, i) => {
@@ -47,8 +48,8 @@ export async function orientationCubeRoute(page, name) {
     assert.deepEqual(state.camera.target, beforeAlignment.camera.target);
     assert.equal(state.camera.height, before.camera.height);
     assert.deepEqual(state.document, before.document);
-    await target.locator("polygon").click();
-    const canonical = (await inspect(page)).camera;
+    await target.locator("polygon").dblclick();
+    const canonical = (await cubeSettled(page)).camera;
     const expectedUp = face === "Top" ? [0, 1, 0] : face === "Bottom" ? [0, -1, 0] : [0, 0, 1];
     canonical.up.forEach((v, i) => {
       assert.ok(Math.abs(v - expectedUp[i]) < 1e-8);

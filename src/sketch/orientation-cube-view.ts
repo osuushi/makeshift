@@ -11,7 +11,7 @@ export function createOrientationCube(world: World) {
   cube.setAttribute("viewBox", "0 0 144 144");
   cube.setAttribute(
     "aria-label",
-    "Orientation cube. Drag to rotate; click a face or bevel to align.",
+    "Orientation cube. Drag to rotate; click to align; double-click a face for canonical roll.",
   );
   const entries = cubeSurfaces().map((face) => createSurface(cube, face));
   world.host.append(cube);
