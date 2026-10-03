@@ -63,9 +63,11 @@ G1 X128.705 Y126.45 E.04072`;
     point[0] -= 128;
     point[1] -= 126;
   }
-  const mesh = beadMesh([path]);
   // The former pointed perimeter reached X=2.236 before adding bead thickness.
   // This rounded tip's swept footprint must stay inside X=1.65, including miters.
-  assert.ok(mesh.vertices.every((point) => point.every(Number.isFinite)));
-  assert.ok(Math.max(...mesh.vertices.map((point) => point[0])) < 1.65);
+  for (const crownRatio of [0.04, 0.35]) {
+    const mesh = beadMesh([path], 6, crownRatio);
+    assert.ok(mesh.vertices.every((point) => point.every(Number.isFinite)));
+    assert.ok(Math.max(...mesh.vertices.map((point) => point[0])) < 1.65);
+  }
 });

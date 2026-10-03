@@ -8,7 +8,12 @@ import { beadMesh, parseGcode } from "./beads.mjs";
 const directory = dirname(fileURLToPath(import.meta.url));
 if (!process.version.startsWith("v24.")) throw new Error("Activate the repository .nvmrc first");
 const input = resolve(process.argv[2] ?? `${directory}/source.gcode`);
-const output = resolve(process.argv[3] ?? `${directory}/../../../.cache/printed-logo/orca`);
+const appearance = process.argv[4] ?? "icon";
+if (!["icon", "realistic"].includes(appearance)) throw new Error("Expected icon or realistic");
+const output = resolve(
+  process.argv[3] ?? `${directory}/../../../.cache/printed-logo/orca-${appearance}`,
+);
+const crownRatio = appearance === "icon" ? 0.35 : 0.04;
 const text = readFileSync(input, "utf8");
 const diameter = Number(text.match(/^; filament_diameter\s*[:=]\s*([\d.]+)/m)?.[1] ?? 1.75);
 const paths = parseGcode(text, diameter);
@@ -23,7 +28,7 @@ for (const path of paths)
     point[0] -= offset[0];
     point[1] -= offset[1];
   }
-const mesh = beadMesh(paths);
+const mesh = beadMesh(paths, 6, crownRatio);
 mkdirSync(output, { recursive: true });
 writeFileSync(`${output}/beads.json`, JSON.stringify(mesh));
 writeFileSync(
@@ -31,6 +36,8 @@ writeFileSync(
   JSON.stringify(
     {
       input,
+      appearance,
+      crownRatio,
       offset,
       filamentDiameter: diameter,
       sha256: createHash("sha256").update(text).digest("hex"),
@@ -58,6 +65,7 @@ for (const name of ["styled", "detail"]) {
       `${output}/${name}.png`,
       name === "styled" ? "1024" : "768",
       name === "styled" ? "64" : "32",
+      appearance,
       ...(name === "detail" ? ["detail"] : []),
     ],
     { stdio: "inherit" },

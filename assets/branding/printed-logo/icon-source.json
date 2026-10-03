@@ -1,0 +1,22 @@
+{
+  "input": "/Users/adacohen/.codex/worktrees/0293/freac/assets/branding/printed-logo/source.gcode",
+  "appearance": "icon",
+  "crownRatio": 0.35,
+  "offset": [
+    128,
+    126
+  ],
+  "filamentDiameter": 1.75,
+  "sha256": "6a0a671d0e0c6e026c56548e5a2db07e93239a26019c13d68dd83ccc88d34f95",
+  "paths": 395,
+  "segments": 12201,
+  "layers": 40,
+  "features": [
+    "Perimeter",
+    "External perimeter",
+    "Solid infill",
+    "Internal infill",
+    "Internal Bridge",
+    "Top solid infill"
+  ]
+}

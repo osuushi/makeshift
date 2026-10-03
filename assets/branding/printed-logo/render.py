@@ -19,7 +19,7 @@ def linear(hex_color: str) -> tuple[float, float, float, float]:
         for v in rgb) + (1.0,))
 
 
-def plastic(name: str, color: str) -> Any:
+def plastic(name: str, color: str, icon: bool) -> Any:
     material = bpy.data.materials.new(name)
     material.use_nodes = True
     nodes = material.node_tree.nodes
@@ -42,8 +42,8 @@ def plastic(name: str, color: str) -> Any:
     links.new(noise.outputs["Fac"], bump.inputs["Height"])
     links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
     ramp = nodes.new("ShaderNodeMapRange")
-    ramp.inputs["To Min"].default_value = 0.27
-    ramp.inputs["To Max"].default_value = 0.36
+    ramp.inputs["To Min"].default_value = 0.22 if icon else 0.27
+    ramp.inputs["To Max"].default_value = 0.30 if icon else 0.36
     links.new(noise.outputs["Fac"], ramp.inputs["Value"])
     links.new(ramp.outputs["Result"], bsdf.inputs["Roughness"])
     return material
@@ -61,7 +61,19 @@ def area(name: str, location: tuple[float, float, float],
     obj.rotation_euler = (Vector(target) - obj.location).to_track_quat("-Z", "Y").to_euler()
 
 
-def setup(mesh_file: Path, output: Path, resolution: int, samples: int, detail: bool) -> None:
+def lighting(scene: Any, icon: bool) -> None:
+    scene.world.color = (0.07, 0.07, 0.07) if icon else (0.32, 0.32, 0.32)
+    if icon:
+        area("Grazing key across print lines", (-28, -32, 38), 50000, 10, (0, 0, 6))
+        area("Soft restrained fill", (28, 8, 35), 8000, 36, (0, 0, 3))
+    else:
+        area("Upper-left softbox", (-24, 30, 48), 52000, 36, (0, 0, 3))
+        area("Right fill", (28, 8, 35), 14000, 32, (0, 0, 3))
+        area("Bottom broad fill", (0, -32, 28), 9000, 28, (0, 0, 3))
+
+
+def setup(mesh_file: Path, output: Path, resolution: int, samples: int,
+          detail: bool, icon: bool) -> None:
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
     data = cast(dict[str, Any], json.loads(mesh_file.read_text()))
@@ -72,7 +84,7 @@ def setup(mesh_file: Path, output: Path, resolution: int, samples: int, detail: 
     bpy.context.collection.objects.link(obj)
     for name, color in [("Warm white PLA", "ECECE8"),
                         ("Orange PLA", "FF6808"), ("Violet PLA", "630AC2")]:
-        obj.data.materials.append(plastic(name, color))
+        obj.data.materials.append(plastic(name, color, icon))
     for polygon, material in zip(mesh.polygons, data["materials"]):
         polygon.material_index = material
         polygon.use_smooth = True
@@ -81,7 +93,6 @@ def setup(mesh_file: Path, output: Path, resolution: int, samples: int, detail: 
     scene.cycles.samples = samples
     scene.cycles.use_denoising = True
     scene.cycles.max_bounces = 8
-    scene.world.color = (0.32, 0.32, 0.32)
     scene.render.film_transparent = True
     scene.render.resolution_x = resolution
     scene.render.resolution_y = resolution
@@ -103,9 +114,7 @@ def setup(mesh_file: Path, output: Path, resolution: int, samples: int, detail: 
         camera_obj.location = (38, -50, 62)
         camera_obj.rotation_euler = (Vector((0, 0, 4)) - camera_obj.location).to_track_quat("-Z", "Y").to_euler()
     scene.camera = camera_obj
-    area("Upper-left softbox", (-24, 30, 48), 52000, 36, (0, 0, 3))
-    area("Right fill", (28, 8, 35), 14000, 32, (0, 0, 3))
-    area("Bottom broad fill", (0, -32, 28), 9000, 28, (0, 0, 3))
+    lighting(scene, icon)
     scene.render.filepath = str(output)
     bpy.ops.wm.save_as_mainfile(filepath=str(output.with_suffix(".blend")))
     bpy.ops.render.render(write_still=True)
@@ -113,4 +122,4 @@ def setup(mesh_file: Path, output: Path, resolution: int, samples: int, detail: 
 
 args = sys.argv[sys.argv.index("--") + 1:]
 setup(Path(args[0]), Path(args[1]), int(args[2]) if len(args) > 2 else 1024,
-      int(args[3]) if len(args) > 3 else 64, len(args) > 4 and args[4] == "detail")
+      int(args[3]) if len(args) > 3 else 64, "detail" in args[4:], "icon" in args[4:])
