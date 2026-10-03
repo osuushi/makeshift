@@ -1,7 +1,8 @@
 {
-  "input": "/Users/adacohen/.codex/worktrees/0293/freac/.cache/printed-logo/model-v5/plate_1.gcode",
+  "input": "/Users/adacohen/.codex/worktrees/0293/freac/assets/branding/printed-logo/icon.gcode",
   "appearance": "icon",
   "crownRatio": 0.35,
+  "palette": "white backing, orange left and detached right, violet main arrow",
   "offset": [128, 126],
   "filamentDiameter": 1.75,
   "sha256": "796c201cbc2fe49efb4f2c40ee4d1631e0c5dc2d391b35ebc013fdaf4f110d9e",

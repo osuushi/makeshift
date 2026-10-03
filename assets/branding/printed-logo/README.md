@@ -6,8 +6,8 @@ copied byte for byte as `source.makeshift`. V5 restores the solid white backing
 and raises the right side of the arrow as a third silhouette at Z=6–7 mm.
 The original orange and violet solids are identical to the preceding model.
 The model is 39 × 39 × 7 mm, with 1 mm raised shapes, and contains four bodies.
-The new arrow piece uses the same art-directed violet as the other right-side
-piece; its saved CAD appearance is orange. Slicer profiles and all Blender
+The detached right-side piece is orange, matching the founder's correction and
+its saved CAD appearance; the main arrow remains violet. Slicer profiles and all Blender
 appearance settings are unchanged from the preceding v4 render.
 The approved application icon remains in the parent folder. No image generation
 is involved.
@@ -58,7 +58,7 @@ the model hash, selected IDs, angle, width, pattern and gap-fill limits.
 
 `icon-source.json` records the rendered G-code hash and geometry counts. Small
 PNGs use Lanczos downsampling of the 1024 px render. The comparison shows native
-sizes against the previous v4 recessed-floor save with the same monotonic slice settings.
+sizes against the preceding v5 render with the detached piece in violet.
 
 ## Appearance
 

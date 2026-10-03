@@ -40,6 +40,7 @@ writeFileSync(
       input,
       appearance,
       crownRatio,
+      palette: "white backing, orange left and detached right, violet main arrow",
       offset,
       filamentDiameter: diameter,
       sha256: createHash("sha256").update(text).digest("hex"),

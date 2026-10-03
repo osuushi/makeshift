@@ -37,6 +37,9 @@ export function pathPalette(paths, baseHeight = 6) {
       }
     }
     if (!nearest) throw new Error("Raised path has no exterior outline");
-    return nearest.points.reduce((sum, p) => sum + p[0], 0) / nearest.points.length < 0 ? 1 : 2;
+    const centerX = nearest.points.reduce((sum, p) => sum + p[0], 0) / nearest.points.length;
+    // V5's detached right piece lies beyond X=13 mm and uses the orange material.
+    const detachedRight = nearest.points.every(([x]) => x > 13);
+    return centerX < 0 || detachedRight ? 1 : 2;
   });
 }
