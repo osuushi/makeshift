@@ -28,7 +28,7 @@ function decode(value) {
   return value.replaceAll("\\n", "\n");
 }
 
-export function writeOrcaProfiles(resources, gcode, output, angle) {
+export function writeOrcaProfiles(resources, gcode, output, angle, lineWidth) {
   const config = Object.fromEntries(
     [...gcode.matchAll(/^; ([a-z0-9_]+) = (.*)$/gm)].map((m) => [m[1], m[2]]),
   );
@@ -55,6 +55,24 @@ export function writeOrcaProfiles(resources, gcode, output, angle) {
       }
       data.infill_direction = String(angle);
       data.solid_infill_direction = String(angle);
+      data.solid_infill_rotate_template = String(angle);
+      data.wall_generator = "arachne";
+      data.min_bead_width = "5%";
+      data.min_feature_size = "1%";
+      data.gap_fill_target = "everywhere";
+      data.filter_out_gap_fill = "0";
+      data.top_surface_pattern = "monotonic";
+      data.bottom_surface_pattern = "monotonic";
+      for (const key of [
+        "line_width",
+        "initial_layer_line_width",
+        "inner_wall_line_width",
+        "outer_wall_line_width",
+        "internal_solid_infill_line_width",
+        "sparse_infill_line_width",
+        "top_surface_line_width",
+      ])
+        data[key] = String(lineWidth);
     }
     writeFileSync(`${output}/${kind}.json`, JSON.stringify(data, null, 2));
   }

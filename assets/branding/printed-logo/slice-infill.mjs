@@ -9,16 +9,19 @@ import { writeOrcaProfiles } from "./orca-profiles.mjs";
 const directory = dirname(fileURLToPath(import.meta.url));
 const root = resolve(directory, "../../..");
 if (!process.version.startsWith("v24.")) throw new Error("Activate the repository .nvmrc first");
-const angle = Number(process.argv[2] ?? 135);
+const angle = Number(process.argv[2] ?? 45);
 if (!Number.isFinite(angle) || angle < 0 || angle >= 360) throw new Error("Expected angle 0–359°");
-const output = resolve(process.argv[3] ?? `${root}/.cache/printed-logo/infill-${angle}`);
+const lineWidth = Number(process.argv[4] ?? 1.5);
+if (!Number.isFinite(lineWidth) || lineWidth < 0.2 || lineWidth >= 3)
+  throw new Error("Invalid line width");
+const output = resolve(process.argv[3] ?? `${root}/.cache/printed-logo/model-v3`);
 const slicer = process.env.ORCA_SLICER ?? "/Applications/OrcaSlicer.app/Contents/MacOS/OrcaSlicer";
 const resources = process.env.ORCA_RESOURCES ?? resolve(dirname(slicer), "../Resources");
-// Backing plus rounded silhouettes in this supplied model; omit overlapping earlier shapes.
+// Explicit body selection from makeshift-logo-3: backing and both colored silhouettes.
 const bodyIds = [
   "0af104d9-88f5-4cae-8049-37b1780956a9",
   "db057420-a968-4df6-96e0-2453aa601c98",
-  "23a73301-6430-4ed5-a9d9-5ccbd20c0e26",
+  "e250592f-5588-4e95-a8de-220c0c634400",
 ];
 const original = readFileSync(`${directory}/source.makeshift`, "utf8");
 const saved = JSON.parse(original);
@@ -28,7 +31,13 @@ if (selected.length !== bodyIds.length)
 saved.document.bodies = selected;
 mkdirSync(output, { recursive: true });
 writeFileSync(`${output}/selected.makeshift`, JSON.stringify(saved));
-writeOrcaProfiles(resources, readFileSync(`${directory}/source.gcode`, "utf8"), output, angle);
+writeOrcaProfiles(
+  resources,
+  readFileSync(`${directory}/source.gcode`, "utf8"),
+  output,
+  angle,
+  lineWidth,
+);
 await build({
   entryPoints: [`${directory}/export.ts`],
   bundle: true,
@@ -72,6 +81,11 @@ writeFileSync(
     {
       modelSha256: createHash("sha256").update(original).digest("hex"),
       angle,
+      lineWidth,
+      topSurfacePattern: "monotonic",
+      minBeadWidth: "5%",
+      minFeatureSize: "1%",
+      gapFillTarget: "everywhere",
       bodyIds,
       resources,
     },

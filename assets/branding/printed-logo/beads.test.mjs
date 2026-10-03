@@ -31,6 +31,25 @@ test("unsupported motion fails explicitly", () => {
   assert.throws(() => parseGcode("M83\nG1 Z.2\nG2 X3 E1"), /I\/J/);
 });
 
+test("sub-layer-width strands retain a convex footprint at the declared width", () => {
+  const paths = parseGcode("M83\n; WIDTH: .02\nG1 Z.2\nG1 X10 E.001");
+  assert.equal(paths[0].widths[0], 0.02);
+  const mesh = beadMesh(paths, 6, 0.35);
+  assert.ok(mesh.vertices.flat().every(Number.isFinite));
+  const ring = mesh.vertices.slice(0, 32);
+  assert.ok(Math.abs(Math.max(...ring.map((v) => v[1])) - 0.01) < 1e-12);
+  assert.ok(Math.abs(Math.min(...ring.map((v) => v[1])) + 0.01) < 1e-12);
+  assert.ok(mesh.vertices.every(([, , z]) => z >= 0 && z <= 0.2));
+  for (let i = 0; i < ring.length; i++) {
+    const a = ring[i],
+      b = ring[(i + 1) % 32],
+      c = ring[(i + 2) % 32];
+    const cross = (b[1] - a[1]) * (c[2] - b[2]) - (b[2] - a[2]) * (c[1] - b[1]);
+    assert.ok(cross > 0, "section must remain convex and consistently oriented");
+  }
+  assert.throws(() => parseGcode("M83\n; WIDTH: 0\nG1 Z.2\nG1 X10 E.001"), /Invalid bead/);
+});
+
 test("acute return strokes form finite, closed, consistently oriented deposition shells", () => {
   const paths = parseGcode("M83\nG1 Z.2\nG1 X10 E.34\nG1 X0 Y.1 E.34\nG1 X10 E.34");
   const mesh = beadMesh(paths);

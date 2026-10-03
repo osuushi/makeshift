@@ -3,6 +3,13 @@ import { pathPalette } from "./palette.mjs";
 const ringSize = 32;
 
 function section(width, height, crownRatio) {
+  // Artistic thin strands can be narrower than a layer. An ellipse keeps their
+  // section convex; the usual rounded rectangle would fold inside out.
+  if (width < height)
+    return Array.from({ length: ringSize }, (_, i) => {
+      const angle = -Math.PI / 2 + (i * 2 * Math.PI) / ringSize;
+      return [(width / 2) * Math.cos(angle), (height / 2) * Math.sin(angle)];
+    });
   const radius = height / 2,
     flat = (width - height) / 2,
     crown = height * crownRatio,

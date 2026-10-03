@@ -1,138 +1,114 @@
 # Toolpath-rendered logo
 
-The current [icon preview](icon.png), [oblique preview](icon-detail.png), and
-[64/96/128 px comparison](sizes.png) render `icon.gcode`, a new OrcaSlicer 2.4.2
-slice of the rounded model bodies. Infill rotates from 45° to 135° so a top-left
-key light crosses the lines. The logo itself keeps its orientation. Arachne,
-nominal 1.15 mm extrusions, 0.2 mm layers and one top outer wall remain selected.
+The current [icon preview](icon.png), [oblique preview](icon-detail.png) and
+[64/96/128 px comparison](sizes.png) use the founder's `makeshift-logo-3.makeshift`,
+copied byte for byte as `source.makeshift`. This revision changes the M/arrow
+silhouettes, recesses the right side into the white backing and reduces the raised
+shapes to 1 mm. The model is 39 × 39 × 7 mm and contains exactly three bodies.
 The approved application icon remains in the parent folder. No image generation
 is involved.
 
-The icon preset emphasizes actual bead geometry with a 35%-of-layer-height crown,
-a distant top-left area light across the print lines, restrained fill and
-slightly glossier plastic. It exaggerates vertical relief for legibility at small
-sizes. Line widths and layer heights retain the founder's slice settings. Across
-all 40 layers, the re-sliced external perimeters differ from the supplied G-code
-by at most 0.032 mm (symmetric distance between decoded paths).
-The previous [realistic view](styled.png) and [realistic oblique view](detail.png)
-remain available. They use `source.gcode`, the founder's exact original export.
-
-Both icon lights are ten times farther from their targets than the initial
-top-left setup. Their diameters scale by ten and power by 100, keeping comparable
-central brightness and angular softness while reducing light-direction variation
-and falloff across the logo. The icon render also scales vertical thickness to
-60%: the base becomes 3.6 mm and the raised shapes 1.2 mm, for 4.8 mm overall.
-This is a render transform applied to the existing G-code geometry. XY contours
-and extrusion widths remain unchanged. Shader normals compensate for the vertical
-compression to retain bead contrast while cast shadows use the thinner geometry.
-The top camera stays fixed; the oblique camera moves to the other front corner to
-avoid reflecting the distant key directly. The realistic preset keeps the original
-8 mm height and its existing camera and materials.
+`icon.gcode` is a real OrcaSlicer 2.4.2 Arachne slice, with nominal 1.5 mm widths
+(up from 1.15 mm), 0.2 mm layers, and one top outer wall. Actual Arachne widths
+vary with local geometry. Top and bottom surfaces use monotonic infill rather
+than monotonic line. Arachne minimum bead width is 5%, minimum feature size is
+1%, and gap fill is enabled everywhere without length filtering. This artistic
+slice includes strands as narrow as 0.071 mm. Solid infill has a fixed 45° raster
+so visible surfaces at different layer heights all catch the top-left light. A fresh native export
+validated the closed oriented STL before slicing.
 
 ## Reproduce
 
-Install the repository dependencies and Blender. From the repository root:
+Install repository dependencies and Blender. From the repository root:
 
 ```sh
 source /Users/adacohen/.nvm/nvm.sh && nvm use
 node assets/branding/printed-logo/render-gcode.mjs
 ```
 
-Optional arguments are a G-code file, output directory and appearance (`icon`,
-the default, or `realistic`). To reproduce the previous flatter appearance:
-
-```sh
-node assets/branding/printed-logo/render-gcode.mjs assets/branding/printed-logo/source.gcode .cache/printed-logo/orca-realistic realistic
-```
-
-`BLENDER` overrides
-the default `/Applications/Blender.app/Contents/MacOS/Blender` executable.
-Outputs go to `.cache/printed-logo/orca-icon/` by default: bead geometry, source hash and counts,
+Optional arguments are G-code file, output directory and appearance (`icon`, the
+default, or `realistic`). `BLENDER` overrides the installed macOS binary. Outputs
+go to `.cache/printed-logo/orca-icon/`: bead geometry, source hash/counts,
 transparent PNGs and editable Blender scenes. Only deposited object coordinates
-are centered; the source path shapes are preserved. The current slice has 411
-deposited paths and 40 layers. `render-source.json` records
-the source SHA-256 and the applied XY translation. `icon-source.json` records the
-icon preset. Small PNGs use Lanczos downsampling of the 1024 px render; the size
-comparison shows them at native resolution alongside the previous close light
-and full thickness.
+are centered; the input path shapes and widths are retained.
 
-To regenerate the rotated infill, build the Makeshift native kernel as described
-in the root README, then run:
+To regenerate the current slice, build the Makeshift native kernel as described
+in the root README and install OrcaSlicer, then run:
 
 ```sh
 source /Users/adacohen/.nvm/nvm.sh && nvm use
-node assets/branding/printed-logo/slice-infill.mjs 135
-node assets/branding/printed-logo/render-gcode.mjs .cache/printed-logo/infill-135/plate_1.gcode .cache/printed-logo/infill-135/render icon
+node assets/branding/printed-logo/slice-infill.mjs 45 .cache/printed-logo/model-v3 1.5
+node assets/branding/printed-logo/render-gcode.mjs .cache/printed-logo/model-v3/plate_1.gcode .cache/printed-logo/model-v3/render icon
 ```
 
-The recipe explicitly selects the backing and the two rounded silhouettes by
-their saved body IDs. It reads the installed Orca BBL printer/process/filament
-presets, applies configuration values from the supplied G-code, and changes both
-infill direction settings to 135°. It writes all settings into the output cache
-and uses an isolated slicer data directory. User profiles are not edited.
-`ORCA_SLICER` and `ORCA_RESOURCES` override the binary and resource locations.
-The recipe was rerun independently and reproduced all 411 decoded deposited
-paths exactly; G-code headers can differ in timestamps and generated IDs.
+Slice arguments are angle, output directory and nominal line width. The recipe
+explicitly selects the three saved body IDs. It reads the installed Orca BBL
+printer/process/filament presets, applies configuration values from the founder's
+original `source.gcode`, overrides seven width settings, and fixes the solid
+infill direction rather than alternating it by layer. It also applies the
+monotonic surfaces and fine gap-fill limits above. Settings and slicer data
+stay inside the output cache; user profiles are not edited. `ORCA_SLICER` and
+`ORCA_RESOURCES` override binary and resource locations. Slice metadata records
+the model hash, selected IDs, angle, width, pattern and gap-fill limits.
 
-Blender 4.0.0 Beta rendered the previews with the existing satin plastic shaders,
-procedural microtexture, softbox lights and orthographic cameras. The background
-process requires macOS graphics services; a sandboxed launch crashed during Metal
-initialization before Python ran.
+`icon-source.json` records the rendered G-code hash and geometry counts. Small
+PNGs use Lanczos downsampling of the 1024 px render. The comparison shows native
+sizes against the previous 1.5 mm monotonic-line slice of this model.
 
-## Contour correction
+## Appearance
 
-The previous standalone export included all five saved bodies in
-`source.makeshift`, including overlapping raised silhouettes. One included orange
-body already has the pointed tip: its STL extends to X=3.386 mm there. The old
-Prusa slice therefore had a pointed external perimeter before bead reconstruction.
-The file's other orange silhouette and the supplied Orca G-code have a rounded tip.
-The standalone exporter does not reproduce the app's visible-body selection.
+The icon preset uses a 35%-of-layer-height bead crown, distant top-left area
+light, restrained fill and satin plastic. Both lights are ten times farther than
+the initial setup, with diameter scaled by ten and power by 100. Vertical render
+scale stays at 0.6: backing 3.6 mm, raised relief 0.6 mm, total height 4.2 mm for
+this model. Shader normals compensate vertical compression to preserve print-line
+contrast; cast shadows use the thinner geometry. The top camera stays fixed;
+the oblique camera avoids reflecting the key directly.
 
-The original corrected render bypassed that ambiguous body selection and used
-the supplied G-code directly. The rounded orange top perimeter reaches X=1.002 mm after
-centering; its regression fixture verifies both the decoded contour and the swept
-bead footprint in both appearance presets. Before the infill rotation, a full mesh
-comparison confirmed all 559,776 XY vertex positions and face topology were
-identical between the realistic and icon bead profiles. The current real reslice
-rotates infill while retaining the rounded silhouettes.
+Blender 4.0.0 Beta uses Cycles, procedural microtexture, orthographic framing and
+RGBA output. Background Blender needs macOS graphics services; a sandboxed
+launch crashed in Metal initialization before Python ran.
 
-`generate.mjs`, `export.ts`, `slicer.ini` and `fine.png` retain the earlier
-experimental Makeshift BRep → OCCT inspection → STL → PrusaSlicer route. That
-route exports every saved body and uses different slice settings; it is not the
-source of the current previews. Earlier images and scenes remain recoverable in
-Git and `.cache/printed-logo/v2/`.
-
-## Deposition and shading
+## Path reconstruction
 
 The parser handles millimeter G0/G1 motion, XY I/J-format G2/G3 arcs,
 absolute/relative positioning and extrusion, G92 resets, retraction repayment,
 and Prusa/Orca feature, height and width comments. Orca object markers exclude
-machine priming, calibration and shutdown. Printer commands are read as data;
-none are executed.
+priming, calibration and shutdown. Printer commands are read as data; none execute.
 
-Arc subdivision uses a 0.005 mm chord tolerance and a maximum 5° step, retaining
-exact endpoints. Arc semantics follow the documented
-[center-format G2/G3 convention](https://www.linuxcnc.org/docs/stable/html/gcode/g-code.html#gcode:g2-g3);
-the implementation is independently authored. Unsupported deposited arc formats,
-non-planar extrusion, inch units, firmware retractions and tool changes fail
-explicitly within the object scope.
+Arcs use 0.005 mm chord tolerance and a maximum 5° step, retaining exact endpoints.
+The independent implementation follows documented
+[center-format G2/G3 semantics](https://www.linuxcnc.org/docs/stable/html/gcode/g-code.html#gcode:g2-g3).
+Unsupported deposited arc formats, non-planar extrusion, inch units, firmware
+retractions and tool changes fail explicitly within object scope.
 
-Slicer-declared bead widths preserve the slicer's intended footprint, including
-its flow calibration. Without width metadata, width is inferred from deposited
-filament volume using the
+Declared widths preserve the slicer's intended footprint. Without width metadata,
+width is inferred from deposited volume using the
 [Slic3r rounded-rectangle flow model](https://manual.slic3r.org/advanced/flow-math).
-The volume-derived width is also retained for audit when metadata is present.
+Volume-derived width is also retained for audit. Cross-sections have rounded ends
+and overlapping shells at sharp turns. Strands narrower than the layer height
+use convex elliptical cross-sections instead of an inverted rounded rectangle.
+Shells are closed and oriented, but are not Boolean-fused. This is a kinematic
+visualization, without thermal, pressure,
+shrinkage or fusion simulation; mesh volume is not an exact conservation model.
 
-Cross-sections have a crown (4% of layer height in `realistic`, 35% in `icon`), rounded ends, and
-rounded overlapping deposits at sharp turns. Individual closed shells overlap;
-they are not Boolean-fused. This is a kinematic visualization, without heat,
-pressure, cooling, sagging, shrinkage or fusion simulation. Mesh volume is not
-an exact conservation calculation.
+Colours are art-directed: white backing through Z=6 mm, orange/violet raised
+silhouettes assigned from exterior contours. The single-extruder G-code does not
+encode three-colour fabrication. `render.py` owns shading independently of slicing.
 
-Colour is an art-directed shader assignment: the backing through Z=6 mm is
-white; raised silhouettes receive orange and violet based on their exterior
-contours. The single-extruder G-code does not encode a three-colour fabrication
-plan. `render.py` owns shading and framing independently of toolpath decoding.
+## Previous artwork and contour correction
+
+The previous [realistic view](styled.png) and [oblique view](detail.png) use the
+founder's original `source.gcode` and `makeshift-logo-2` geometry. Their provenance
+is in `render-source.json`; they are not previews of the new model. Earlier icon
+iterations, inputs and scenes remain in Git and `.cache/printed-logo/`.
+
+The old standalone export of `makeshift-logo-2` included five bodies, with
+an overlapping orange silhouette that already had the pointed tip in its STL.
+Rendering the supplied Orca G-code corrected that selection mismatch. The current
+model has three unambiguous bodies; the new slicing recipe selects them explicitly.
+`generate.mjs`, `slicer.ini` and `fine.png` retain the earlier Prusa experiment and
+do not produce the current previews.
 
 ## Checks
 
@@ -144,7 +120,8 @@ node_modules/.bin/tsc --ignoreConfig --noEmit --strict --module nodenext --targe
 npm exec --yes --package pyright@1.1.414 -- pyright --project assets/branding/printed-logo/pyrightconfig.json
 ```
 
-Tests cover circular arcs, the actual rounded tip and its bead footprint, object
-scope, declared widths, extrusion modes, resets, retractions, relative XYZ,
-unsupported motions and shell closure/orientation. Both current views were
-rendered in Blender and visually inspected. No physical print was made.
+Tests cover arcs, the original rounded-tip fixture and swept footprint, object
+scope, widths, E modes, resets, retractions, relative XYZ, unsupported motions and
+shell closure/orientation and convex sub-layer-width strands. Current top and
+oblique renders and native small-size previews were inspected. No physical print
+was made.

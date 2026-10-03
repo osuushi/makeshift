@@ -45,7 +45,7 @@ export function motion(state, values, diameter, command) {
     const area = (deposited * Math.PI * (diameter / 2) ** 2) / move.length;
     const volumeWidth = area / state.height + state.height * (1 - Math.PI / 4);
     const width = state.width ?? volumeWidth;
-    if (!(state.height > 0 && width >= state.height && width < 3))
+    if (!(Number.isFinite(state.height) && state.height > 0 && width > 0 && width < 3))
       throw new Error(`Invalid bead dimensions: ${width} × ${state.height}`);
     addDeposit(state, move.points, width, volumeWidth);
   } else if (move.length > 0 || isArc || deltaE < 0 || next[2] !== state.xyz[2]) state.path = null;
