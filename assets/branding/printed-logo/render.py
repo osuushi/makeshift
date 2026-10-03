@@ -64,8 +64,8 @@ def area(name: str, location: tuple[float, float, float],
 def lighting(scene: Any, icon: bool) -> None:
     scene.world.color = (0.07, 0.07, 0.07) if icon else (0.32, 0.32, 0.32)
     if icon:
-        area("Grazing key across print lines", (-28, -32, 38), 50000, 10, (0, 0, 6))
-        area("Soft restrained fill", (28, 8, 35), 8000, 36, (0, 0, 3))
+        area("Top-left key across rotated infill", (-28, 32, 38), 50000, 10, (0, 0, 6))
+        area("Soft restrained fill", (28, -8, 35), 8000, 36, (0, 0, 3))
     else:
         area("Upper-left softbox", (-24, 30, 48), 52000, 36, (0, 0, 3))
         area("Right fill", (28, 8, 35), 14000, 32, (0, 0, 3))

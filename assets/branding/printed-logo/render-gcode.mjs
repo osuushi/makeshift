@@ -7,9 +7,11 @@ import { beadMesh, parseGcode } from "./beads.mjs";
 
 const directory = dirname(fileURLToPath(import.meta.url));
 if (!process.version.startsWith("v24.")) throw new Error("Activate the repository .nvmrc first");
-const input = resolve(process.argv[2] ?? `${directory}/source.gcode`);
 const appearance = process.argv[4] ?? "icon";
 if (!["icon", "realistic"].includes(appearance)) throw new Error("Expected icon or realistic");
+const input = resolve(
+  process.argv[2] ?? `${directory}/${appearance === "icon" ? "icon" : "source"}.gcode`,
+);
 const output = resolve(
   process.argv[3] ?? `${directory}/../../../.cache/printed-logo/orca-${appearance}`,
 );
