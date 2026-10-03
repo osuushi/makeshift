@@ -141,11 +141,18 @@ invariants before changing snapshots or history, for manual edits, scripts and O
 
 The same DocumentStore history includes ordered selection snapshots. Completed
 selection changes remain individually undoable at the history tip, including
-blank-click clearing, point choices and modeling targets. Navigation through
+blank-click clearing, point choices and modeling targets. Selection-only
 Undo/Redo never evicts these entries. A newly accepted document change supersedes
 all selection entries, both applied and undone; its own before/after selection
 snapshots remain available. Failed, cancelled and no-op edits preserve history.
-A new selection after Undo branches normally, just like a new document change.
+A new selection after Undo supersedes undone selection steps while preserving
+undone geometry snapshots. Selection Redo in the current geometry precedes
+geometry Redo; it preserves the ordinary Undo/Redo route for intervening picks.
+Geometry Redo retires applied intervening selection steps and restores that
+operation's result selection, so later selection Undo cannot restore targets from
+the pre-Redo document. Original undone selection steps after that geometry remain
+replayable when no intervening selection superseded them. A new accepted geometry
+edit still supersedes both geometry Redo and all standalone selection entries.
 Double-click intermediate selections need no special history grouping.
 
 The renderer buffers completed selection intent, flushing between gestures and

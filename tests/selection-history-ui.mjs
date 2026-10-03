@@ -6,6 +6,7 @@ import { launchElectron } from "./native-documents.mjs";
 import { bodySelectionEntryRoute } from "./ui-body-selection-entry.mjs";
 import { modelFrustumSelectionRoute } from "./ui-model-frustum-selection.mjs";
 import { runtimeNames } from "./ui-runtime.mjs";
+import { selectionGeometryRedoRoute } from "./ui-selection-geometry-redo.mjs";
 import { selectionHistoryRoute } from "./ui-selection-history.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
@@ -33,6 +34,7 @@ try {
   page.on("pageerror", (error) => {
     throw error;
   });
+  await selectionGeometryRedoRoute(page, name);
   await selectionHistoryRoute(page, name);
   await bodySelectionEntryRoute(page, name);
   await modelFrustumSelectionRoute(page, name);

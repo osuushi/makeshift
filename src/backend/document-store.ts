@@ -12,6 +12,8 @@ interface HistoryRecord {
   entry: OperationHistoryEntry;
   change?: { before: SketchDocument; after: SketchDocument };
   selection?: { before: HistorySelection; after: HistorySelection };
+  // Standalone selections share their accepted snapshot; no document copy or owner.
+  selectionDocument?: SketchDocument;
 }
 
 /** One attempted-operation history. Only entries with an active change navigate. */
@@ -27,7 +29,7 @@ export class DocumentStore {
     if (latest?.selection) latest.selection.after = this.selection;
     for (const next of changes.steps) {
       if (JSON.stringify(next) === JSON.stringify(this.selection)) continue;
-      this.supersede();
+      this.supersede(false);
       const after = structuredClone(next);
       this.records.push({
         entry: {
@@ -35,16 +37,18 @@ export class DocumentStore {
           state: "applied",
         },
         selection: { before: this.selection, after },
+        selectionDocument: this.accepted,
       });
       this.selection = after;
     }
   }
-  private supersede(): void {
+  private supersede(geometry = true): void {
     for (const record of this.records) {
-      if (record.entry.state !== "undone") continue;
+      if (record.entry.state !== "undone" || (!geometry && record.change)) continue;
       record.entry.state = "superseded";
       delete record.change;
       delete record.selection;
+      delete record.selectionDocument;
     }
   }
   get data(): SketchDocument {
@@ -80,6 +84,7 @@ export class DocumentStore {
       if (record.entry.operation.kind !== "selection") continue;
       record.entry.state = "superseded";
       delete record.selection;
+      delete record.selectionDocument;
     }
     this.records.push({
       entry: { ...this.entry(operation, "changed"), state: "applied" },
@@ -97,9 +102,23 @@ export class DocumentStore {
     record.entry.state = "undone";
   }
   redo(): void {
-    const record = this.records.find((record) => record.entry.state === "undone");
+    // Selection navigation stays at its geometry state until its suffix is replayed.
+    const record =
+      this.records.find(
+        (record) => record.entry.state === "undone" && record.selectionDocument === this.accepted,
+      ) ?? this.records.find((record) => record.entry.state === "undone");
     if (!record) return;
-    if (record.change) this.accepted = record.change.after;
+    if (record.change) {
+      // Intervening selections describe the pre-Redo document. The restored
+      // operation's own result selection is authoritative in its new geometry.
+      for (const selection of this.records) {
+        if (!selection.selectionDocument || selection.entry.state !== "applied") continue;
+        selection.entry.state = "superseded";
+        delete selection.selection;
+        delete selection.selectionDocument;
+      }
+      this.accepted = record.change.after;
+    }
     if (record.selection) this.selection = record.selection.after;
     record.entry.state = "applied";
   }
