@@ -1,5 +1,5 @@
 {
-  "modelSha256": "3baf7992b2b0befc8d46c0ac444e454817735cc3fadfac4c4799a6800d904289",
+  "modelSha256": "bb5ad045e1cc99159fbcf7b0d95a29986282be07874d8c9cf49b673af7832ba9",
   "angle": 45,
   "lineWidth": 1.5,
   "topSurfacePattern": "monotonic",
@@ -9,7 +9,8 @@
   "bodyIds": [
     "0af104d9-88f5-4cae-8049-37b1780956a9",
     "db057420-a968-4df6-96e0-2453aa601c98",
-    "e250592f-5588-4e95-a8de-220c0c634400"
+    "e250592f-5588-4e95-a8de-220c0c634400",
+    "49779f96-a80b-480e-8d3d-0e61f379d626"
   ],
   "resources": "/Applications/OrcaSlicer.app/Contents/Resources"
 }

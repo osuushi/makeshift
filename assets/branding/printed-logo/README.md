@@ -2,11 +2,13 @@
 
 The current [icon preview](icon.png), [oblique preview](icon-detail.png) and
 [64/96/128 px comparison](sizes.png) use the founder's `makeshift-logo-4.makeshift`,
-copied byte for byte as `source.makeshift`. This revision replaces the arrow-right
-indentation with a through hole in the white backing. Both raised colored bodies
-are identical to the preceding v3 model. The model is 39 × 39 × 7 mm, with 1 mm
-raised shapes, and contains exactly three bodies. Slicer profiles and all Blender
-appearance settings are unchanged from the preceding monotonic v3 render.
+copied byte for byte as `source.makeshift`. The latest save adds a fourth body
+forming a floor at Z=4 mm inside the previous through hole. It leaves a 2 mm
+recess below the white backing surface at Z=6 mm. Both raised colored bodies
+are identical to the preceding model. The model is 39 × 39 × 7 mm, with 1 mm
+raised shapes, and contains four bodies. The floor shares the art-directed white
+backing material; its saved CAD appearance is orange. Slicer profiles and all
+Blender appearance settings are unchanged from the preceding hole render.
 The approved application icon remains in the parent folder. No image generation
 is involved.
 
@@ -44,7 +46,7 @@ node assets/branding/printed-logo/render-gcode.mjs .cache/printed-logo/model-v4/
 ```
 
 Slice arguments are angle, output directory and nominal line width. The recipe
-explicitly selects the three saved body IDs. It reads the installed Orca BBL
+explicitly selects the four saved body IDs, including the new floor. It reads the installed Orca BBL
 printer/process/filament presets, applies configuration values from the founder's
 original `source.gcode`, overrides seven width settings, and fixes the solid
 infill direction rather than alternating it by layer. It also applies the
@@ -55,7 +57,7 @@ the model hash, selected IDs, angle, width, pattern and gap-fill limits.
 
 `icon-source.json` records the rendered G-code hash and geometry counts. Small
 PNGs use Lanczos downsampling of the 1024 px render. The comparison shows native
-sizes against the previous v3 indentation with the same monotonic slice settings.
+sizes against the previous open-hole save with the same monotonic slice settings.
 
 ## Appearance
 
@@ -108,7 +110,7 @@ iterations, inputs and scenes remain in Git and `.cache/printed-logo/`.
 The old standalone export of `makeshift-logo-2` included five bodies, with
 an overlapping orange silhouette that already had the pointed tip in its STL.
 Rendering the supplied Orca G-code corrected that selection mismatch. The current
-model has three unambiguous bodies; the new slicing recipe selects them explicitly.
+model has four bodies; the new slicing recipe selects all four explicitly.
 `generate.mjs`, `slicer.ini` and `fine.png` retain the earlier Prusa experiment and
 do not produce the current previews.
 

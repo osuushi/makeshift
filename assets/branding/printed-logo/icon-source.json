@@ -1,12 +1,12 @@
 {
-  "input": "/Users/adacohen/.codex/worktrees/0293/freac/.cache/printed-logo/model-v4/plate_1.gcode",
+  "input": "/Users/adacohen/.codex/worktrees/0293/freac/.cache/printed-logo/model-v4-bb5ad045-floor/plate_1.gcode",
   "appearance": "icon",
   "crownRatio": 0.35,
   "offset": [128.0265, 126],
   "filamentDiameter": 1.75,
-  "sha256": "2da89bd57dfdbfbc916340ac1002ef66f19c8221a77108ee99c2dc3a2f00153a",
-  "paths": 287,
-  "segments": 12255,
+  "sha256": "15b4940c378112d1d66234c815db46b304c63c31a76e096edb5c2cd1259949f9",
+  "paths": 316,
+  "segments": 10022,
   "layers": 35,
   "features": [
     "Perimeter",
@@ -14,7 +14,7 @@
     "Solid infill",
     "Gap infill",
     "Internal infill",
-    "Internal Bridge",
-    "Top solid infill"
+    "Top solid infill",
+    "Internal Bridge"
   ]
 }
