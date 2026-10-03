@@ -81,14 +81,14 @@ async function dragLimit(page, mode) {
   const box = await handle.boundingBox();
   const y = box.y + box.height / 2,
     start = box.x + box.width / 2,
-    end = start - 300;
+    end = start + 300;
   await page.mouse.move(start, y);
   await page.mouse.down();
   await page.mouse.move(end, y);
   await inspect(page);
   const maximum = Number(await input.inputValue());
   assert.ok(maximum > 2 && maximum < 15, "Pointer overshoot stops at the feasible size");
-  await page.mouse.move(end + 20, y);
+  await page.mouse.move(end - 20, y);
   await inspect(page);
   const back = Number(await input.inputValue());
   assert.ok(back < maximum - 0.5, "Reversing at a limit responds without dead cursor travel");
