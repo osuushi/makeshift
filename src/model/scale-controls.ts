@@ -2,6 +2,7 @@ import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import type { Vector } from "../sketch/planes.js";
+import { installBodyTransformEnter } from "./body-transform-enter.js";
 import type { ScaleOperation, ScaleSource } from "./scale.js";
 import { ScaleGestures } from "./scale-gestures.js";
 import { scalePivot, scaleSelection } from "./scale-selection.js";
@@ -85,6 +86,7 @@ export class ScaleControls {
       };
     });
     this.events();
+    installBodyTransformEnter(editor, this.abort.signal);
     installTransformHandoff(
       editor,
       () => !!this.lease && !this.gestures.active,
