@@ -37,13 +37,23 @@ export class NavigationHistory {
   beginWorkspace(): void {
     if (this.suppressed) return;
     this.begin();
+    // Workspace entry freezes pre-entry selection, including a held gesture.
+    // Retire its deferred accepted-selection callback without changing its baseline.
+    if (this.before) this.before = structuredClone(this.before);
     this.changingWorkspace = true;
     queueMicrotask(() => {
       this.changingWorkspace = false;
     });
   }
-  rebase(): void {
-    if (this.before) this.before = this.capture();
+  rebase(): (() => void) | undefined {
+    if (!this.before) return;
+    const published = this.capture();
+    this.before = published;
+    // Controller completion may update result selection after publication. Keep
+    // the published camera and only refresh the same unfinished gesture.
+    return () => {
+      if (this.before === published) published.selection = structuredClone(this.readSelection());
+    };
   }
   hold(kind: string): void {
     this.begin();

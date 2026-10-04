@@ -12,6 +12,7 @@ export class SelectionHistory {
   private steps: SelectionChanges["steps"] = [];
   private latest = emptySelection();
   private settling = false;
+  private settleNavigation: (() => void) | undefined;
   private restoring = false;
   private timer: ReturnType<typeof setTimeout> | undefined;
   constructor(private editor: SketchEditor) {}
@@ -80,7 +81,7 @@ export class SelectionHistory {
   }
   accepted(replaced = false): void {
     if (replaced) this.editor.world.navigation.clear();
-    else this.editor.world.navigation.rebase();
+    this.settleNavigation = replaced ? undefined : this.editor.world.navigation.rebase();
     this.steps = [];
     this.settling = true;
     clearTimeout(this.timer);
@@ -91,7 +92,8 @@ export class SelectionHistory {
     clearTimeout(this.timer);
     this.baseline = this.capture();
     this.latest = this.baseline;
-    this.editor.world.navigation.rebase();
+    this.settleNavigation?.();
+    this.settleNavigation = undefined;
     this.settling = false;
     queueMicrotask(() => this.editor.store.syncSelection());
   }

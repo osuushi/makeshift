@@ -183,6 +183,7 @@ export class ProjectionControls {
       e.store.data.sketches.find((s) => s.id === result.id)?.curves.map((c) => c.id),
     );
     const ok = await e.accept();
+    if (ok) e.world.navigation.beginWorkspace();
     this.finish();
     if (ok) {
       e.workspaceEntry.enter({ key: "Projected sketch", frame: result.plane, sketchId: result.id });
