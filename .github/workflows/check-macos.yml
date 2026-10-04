@@ -193,10 +193,10 @@ jobs:
           npx playwright install webkit
           node tests/decorator-removal-ui.mjs
           node tests/selection-redo-ui.mjs
-          node tests/preview-action-readiness-ui.mjs
-          node tests/preview-seed-readiness-ui.mjs
           node tests/command-readiness-ui.mjs
           node tests/face-offset-readiness-ui.mjs
+          node tests/preview-action-readiness-ui.mjs
+          node tests/preview-seed-readiness-ui.mjs
           npm run test:current-tools
           node tests/ui-runtime-cleanup.mjs
       - name: Built Electron host smoke and Finder launch
