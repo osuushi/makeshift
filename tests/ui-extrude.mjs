@@ -98,13 +98,6 @@ async function undoModalExtrusion(page, pick) {
   await page.getByRole("textbox", { name: "Extrusion distance" }).fill("3");
   await page.keyboard.press("Enter");
   assert.ok((await inspect(page)).preview);
-  // The delayed topology probe can start after the geometry preview settles.
-  // History shortcuts are intentionally disabled until that calculation ends.
-  await page.waitForFunction(
-    () =>
-      document.querySelector(".extrude-controls .commit-cleanup")?.getAttribute("aria-busy") ===
-      "false",
-  );
   await page.keyboard.press("Meta+z");
   const state = await inspect(page);
   assert.equal(state.interaction.kind, "extrude");
