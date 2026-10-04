@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { parseArgs } from "node:util";
 import { arcRoute } from "./ui-arc.mjs";
 import { bezierRoute } from "./ui-bezier.mjs";
@@ -16,13 +17,17 @@ import { shellRoute } from "./ui-shell.mjs";
 import { transformRoute } from "./ui-transform.mjs";
 import { trimLineRoute } from "./ui-trim.mjs";
 
-const { values } = parseArgs({ options: { "mac-webkit-transform": { type: "boolean" } } });
+const { values } = parseArgs({
+  options: { "mac-webkit-transform": { type: "boolean" }, shard: { type: "string" } },
+});
+assert.ok(!values.shard || /^[1-3]\/3$/.test(values.shard), "Choose UI shard 1/3–3/3");
+const [shard, count] = (values.shard ?? "1/1").split("/").map(Number);
 
 // A bounded ordinary-control gate; captured geometry and async interleavings
 // stay in their dedicated suites. All routes use the real native owner path.
 await withUiRuntimes(
   async (page, name) => {
-    for (const route of [
+    for (const [index, route] of [
       rectangleRoute,
       lineRoute,
       circleRoute,
@@ -38,7 +43,8 @@ await withUiRuntimes(
       bodyChamferRoute,
       shellRoute,
       planeCutRoute,
-    ]) {
+    ].entries()) {
+      if (index % count !== shard - 1) continue;
       // The unchanged constrained-rotation assertion runs on Mac WebKit in CI.
       if (values["mac-webkit-transform"] && name === "webkit" && route === transformRoute) continue;
       console.log(`${name}: ${route.name}`);

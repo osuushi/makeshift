@@ -92,6 +92,7 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, webkit, electron]
+        shard: [1, 2, 3]
     env:
       MAKESHIFT_TEST_BROWSER: ${{ matrix.browser }}
       DEBUG: ${{ matrix.browser == 'electron' && 'pw:browser' || '' }}
@@ -102,10 +103,21 @@ jobs:
         run: npx playwright install --with-deps ${{ matrix.browser == 'electron' && 'chromium' || matrix.browser }}
       - name: Ordinary controls and runtime cleanup
         run: |
-          xvfb-run -a npm run test:current-tools -- --mac-webkit-transform
+          xvfb-run -a npm run test:current-tools -- --mac-webkit-transform --shard=${{ matrix.shard }}/3
           xvfb-run -a node tests/ui-runtime-cleanup.mjs
+  electron-host:
+    needs: linux-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      MAKESHIFT_TEST_BROWSER: electron
+      DEBUG: pw:browser
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: ./.github/actions/ci-linux-runtime
+      - name: Display dependencies
+        run: npx playwright install-deps chromium
       - name: Full hidden Electron host suite
-        if: matrix.browser == 'electron'
         run: xvfb-run -a npm run test:electron
   macos-smoke:
     needs: static
@@ -167,7 +179,7 @@ jobs:
   # Preserve the existing required check name; failed or skipped lanes cannot pass.
   check:
     if: always()
-    needs: [static, linux-build, model, controls, macos-smoke]
+    needs: [static, linux-build, model, controls, electron-host, macos-smoke]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
