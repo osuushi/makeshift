@@ -19,7 +19,8 @@ import {
   worldPoint,
 } from "./planes.js";
 import { sectionClip } from "./view-clipping.js";
-import { type ForegroundOverlay, SketchForeground } from "./world-foreground.js";
+import type { ForegroundOverlay } from "./world-foreground.js";
+import { WorldFrame } from "./world-frame.js";
 import { createGrids } from "./world-grid.js";
 import { installNavigation } from "./world-navigation.js";
 
@@ -64,7 +65,7 @@ export class World {
   private readonly removeNavigation: () => void;
   private cameraAnimation: number | null = null;
   private pendingDraw: number | null = null;
-  private readonly foreground = new SketchForeground();
+  private readonly frame = new WorldFrame(this, () => this.draw(true));
   private readonly sketchClip = new THREE.Plane();
   readonly rollAnimation = new CameraRoll(this);
   readonly orbit = new SmoothedTurntable();
@@ -104,12 +105,12 @@ export class World {
     this.removeNavigation = installNavigation(this);
     this.draw();
   }
-  draw(): void {
+  draw(forceFrame = false): void {
     if (this.pendingDraw !== null) cancelAnimationFrame(this.pendingDraw);
     this.pendingDraw = null;
     const width = this.host.clientWidth;
     const height = Math.max(1, this.host.clientHeight);
-    this.renderer.setSize(width, height, false);
+    this.frame.resize(width, height);
     const half = this.height / 2;
     this.camera.left = (-half * width) / height;
     this.camera.right = (half * width) / height;
@@ -128,18 +129,11 @@ export class World {
     );
     this.updateClipping();
     for (const listener of this.changed) listener();
-    this.renderer.render(this.scene, this.camera);
-    for (const render of this.renderOverlays) render();
-    if (this.activeFrame) {
-      this.foreground.render(
-        this.renderer,
-        this.scene,
-        this.camera,
-        this.sketchClip,
-        this.renderForegroundOverlays,
-      );
-    }
+    // Picking must keep current transforms even when tests defer GPU presentation.
+    this.scene.updateMatrixWorld();
+    this.frame.render(this.sketchClip, forceFrame);
   }
+
   private updateClipping(): void {
     const frame = this.activeFrame;
     if (!frame) {
@@ -291,7 +285,7 @@ export class World {
     this.observer.disconnect();
     this.removeNavigation();
     this.grids.dispose();
-    this.foreground.dispose();
+    this.frame.dispose();
     this.renderer.dispose();
     this.canvas.remove();
     this.changed.clear();

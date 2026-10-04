@@ -35,9 +35,14 @@ and latency assertions intact.
 The PR workflow builds the Linux native runtime once and shares a tar archive
 with the test jobs, preserving executable permissions and library symlinks.
 Chromium and hidden Electron controls each run in three serial route
-shards on separate Linux workers. Three more workers run the complete Electron
+shards on separate Linux workers. Seven more workers run the complete Electron
 host interaction suite under Xvfb, with serial routes and isolated apps in each,
 except two native navigation routes retained on Mac with their fixture sequence.
+Linux UI jobs select `MAKESHIFT_TEST_FRAME_MODE=on-demand`: input, native geometry,
+camera, picking and DOM updates run normally, while captures request fresh GPU frames.
+The demand-frame regression checks real input avoids GPU draws and screenshots
+render current pixels, including after reload. For local diagnosis, prefix a UI
+command with that environment variable; ordinary runs retain normal redraws.
 A small macOS job
 checks the built host/preload boundary, native geometry, document persistence,
 process handling and Finder PATH. Signing and notarization remain release checks.

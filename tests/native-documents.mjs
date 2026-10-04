@@ -2,6 +2,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { _electron } from "playwright";
+import { installTestFrames } from "./ui-test-frames.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const sessions = new WeakMap();
@@ -42,6 +43,7 @@ export async function launchElectron(options) {
     const firstWindow = app.firstWindow.bind(app);
     app.firstWindow = async (...args) => {
       const page = await firstWindow(...args);
+      await installTestFrames(page);
       sessions.set(page, { app, directory });
       return page;
     };

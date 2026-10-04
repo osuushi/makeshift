@@ -3,6 +3,7 @@ import { mkdir } from "node:fs/promises";
 import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
+import { installTestFrames } from "./ui-test-frames.mjs";
 
 export function runtimeNames(allowed = ["chromium", "webkit", "electron"], defaults = allowed) {
   const requested = process.env.MAKESHIFT_TEST_BROWSER;
@@ -58,6 +59,7 @@ export async function withUiRuntimes(
         } else {
           browser = await { chromium, webkit }[name].launch({ headless: true });
           page = await browser.newPage({ viewport, hasTouch });
+          await installTestFrames(page);
           await page.goto(server.resolvedUrls.local[0]);
         }
         page.setDefaultTimeout(timeout);

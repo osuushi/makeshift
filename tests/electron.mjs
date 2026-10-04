@@ -93,7 +93,7 @@ const { values } = parseArgs({
     "navigation-only": { type: "boolean" },
   },
 });
-assert.ok(!values.shard || /^[1-3]\/3$/.test(values.shard), "Choose Electron shard 1/3–3/3");
+assert.ok(!values.shard || /^[1-7]\/7$/.test(values.shard), "Choose Electron shard 1/7–7/7");
 assert.ok(!values["navigation-only"] || (!values.shard && !values["without-navigation"]));
 const [shard, count] = (values.shard ?? "1/1").split("/").map(Number);
 
@@ -208,8 +208,12 @@ try {
   // Each boundary starts a route that explicitly resets the document/camera.
   const boundaries = [
     0,
+    routes.findIndex(([route]) => route === pointEdgeRoute),
     routes.findIndex(([route]) => route === filletRoute),
+    routes.findIndex(([route]) => route === faceOffsetRoute),
     routes.findIndex(([route]) => route === bodyMoveRoute),
+    routes.findIndex(([route]) => route === circleRoute),
+    routes.findIndex(([route]) => route === movementSnappingRoute),
     routes.length,
   ];
   assert.ok(boundaries.every((value, index) => index === 0 || value > boundaries[index - 1]));
