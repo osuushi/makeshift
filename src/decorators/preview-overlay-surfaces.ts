@@ -25,7 +25,7 @@ export class PreviewOverlaySurfaces {
 
   constructor(private readonly editor: SketchEditor) {
     editor.world.renderOverlays.add(this.render);
-    editor.world.renderForegroundOverlays.add(this.render);
+    editor.world.renderForegroundOverlays.add(this.foreground);
     editor.world.scene.add(this.group);
   }
 
@@ -100,7 +100,7 @@ export class PreviewOverlaySurfaces {
     if (this.animation !== null) cancelAnimationFrame(this.animation);
     this.clear();
     this.editor.world.renderOverlays.delete(this.render);
-    this.editor.world.renderForegroundOverlays.delete(this.render);
+    this.editor.world.renderForegroundOverlays.delete(this.foreground);
     this.compositor.dispose();
     this.editor.world.scene.remove(this.group);
   }
@@ -129,6 +129,11 @@ export class PreviewOverlaySurfaces {
         this.editor.world.camera,
         this.surfaces,
       );
+  };
+
+  private readonly foreground = {
+    render: this.render,
+    hasContent: () => this.group.visible && this.surfaces.some(({ mesh }) => mesh.visible),
   };
 
   private animate(): void {

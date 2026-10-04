@@ -3,6 +3,30 @@ import * as THREE from "three";
 // Body surfaces, edges and their lights participate in this additional pass.
 export const foregroundBodyLayer = 1;
 
+export interface ForegroundOverlay {
+  render(): void;
+  hasContent(): boolean;
+}
+
+export function hasForegroundContent(
+  scene: THREE.Object3D,
+  overlays: ReadonlySet<ForegroundOverlay>,
+): boolean {
+  if ([...overlays].some((overlay) => overlay.hasContent())) return true;
+  let geometry = false;
+  scene.traverseVisible((object) => {
+    if (!object.layers.isEnabled(foregroundBodyLayer)) return;
+    if (
+      object instanceof THREE.Mesh ||
+      object instanceof THREE.Line ||
+      object instanceof THREE.Points ||
+      object instanceof THREE.Sprite
+    )
+      geometry = true;
+  });
+  return geometry;
+}
+
 export class SketchForeground {
   private readonly target = new THREE.WebGLRenderTarget(1, 1, {
     samples: 4,
@@ -31,8 +55,10 @@ export class SketchForeground {
     scene: THREE.Scene,
     camera: THREE.Camera,
     sketchClip: THREE.Plane,
-    overlays: ReadonlySet<() => void>,
+    overlays: ReadonlySet<ForegroundOverlay>,
   ): void {
+    // Lights and empty body groups do not need a full-screen MSAA/compositing pass.
+    if (!hasForegroundContent(scene, overlays)) return;
     renderer.getDrawingBufferSize(this.size);
     this.target.setSize(this.size.x, this.size.y);
     // Complement the main cut exactly, leaving its coplanar tolerance intact.
@@ -52,7 +78,7 @@ export class SketchForeground {
       renderer.setRenderTarget(this.target);
       renderer.autoClear = true;
       renderer.render(scene, camera);
-      for (const render of overlays) render();
+      for (const overlay of overlays) overlay.render();
       renderer.setRenderTarget(previousTarget);
       renderer.clippingPlanes = [];
       renderer.autoClear = false;

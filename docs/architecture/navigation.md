@@ -32,6 +32,9 @@ and composite over the main scene at 20% opacity. Overlapping foreground bodies
 therefore do not accumulate transparency. Sketch curves and grids do not enter
 this foreground pass. Coplanar and behind-plane geometry remain normally visible;
 a 0.0001 mm rendering tolerance retains coplanar geometry.
+Skip the empty foreground pass when no visible body geometry or decorator preview
+contributes. Lights and empty/hidden groups alone do not require compositing;
+showing their geometry restores the same full-resolution pass.
 The cutaway follows the current workspace frame and camera side, and clears on
 workspace exit. It changes no accepted geometry, selection identity or Undo.
 

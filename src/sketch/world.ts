@@ -19,7 +19,7 @@ import {
   worldPoint,
 } from "./planes.js";
 import { sectionClip } from "./view-clipping.js";
-import { SketchForeground } from "./world-foreground.js";
+import { type ForegroundOverlay, SketchForeground } from "./world-foreground.js";
 import { createGrids } from "./world-grid.js";
 import { installNavigation } from "./world-navigation.js";
 
@@ -37,7 +37,7 @@ export class World {
   depthBounds = (): THREE.Box3 => new THREE.Box3();
   readonly changed = new Set<() => void>();
   readonly renderOverlays = new Set<() => void>();
-  readonly renderForegroundOverlays = new Set<() => void>();
+  readonly renderForegroundOverlays = new Set<ForegroundOverlay>();
   readonly grids = createGrids(this.scene);
   workspace: { key: string; frame: PlaneFrame; sketchId?: string } | null = null;
   get active(): string | null {
