@@ -83,7 +83,7 @@ jobs:
           node scripts/clean-tests.mjs
           npx tsc -p tsconfig.test.json
       - name: Serial geometry tests, shard ${{ matrix.shard }}/4
-        run: node --test --test-concurrency=1 --test-shard=${{ matrix.shard }}/4 .cache/sketch-tests/tests/*.test.js
+        run: node scripts/ci-model-tests.mjs linux ${{ matrix.shard }}/4
   controls:
     needs: linux-build
     runs-on: ubuntu-24.04
@@ -102,7 +102,7 @@ jobs:
         run: npx playwright install --with-deps ${{ matrix.browser == 'electron' && 'chromium' || matrix.browser }}
       - name: Ordinary controls and runtime cleanup
         run: |
-          xvfb-run -a npm run test:current-tools
+          xvfb-run -a npm run test:current-tools -- --mac-webkit-transform
           xvfb-run -a node tests/ui-runtime-cleanup.mjs
       - name: Full hidden Electron host suite
         if: matrix.browser == 'electron'
@@ -151,6 +151,14 @@ jobs:
             .cache/sketch-tests/tests/native-calculator.test.js \
             .cache/sketch-tests/tests/native-mesh-protocol.test.js
           npm run test:setup
+      - name: Required platform-sensitive geometry cases
+        run: node scripts/ci-model-tests.mjs mac
+      - name: WebKit constrained transform
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: |
+          npx playwright install webkit
+          node tests/transform-ui.mjs
       - name: Built Electron host smoke and Finder launch
         run: |
           node tests/electron-smoke.mjs

@@ -43,6 +43,18 @@ fails or is skipped. Runtime artifacts expire after one day. A completed OCCT
 SDK is verified and cached even if compilation of an application calculator
 fails afterward; incomplete SDKs cannot enter the cache.
 
+The first Linux migration retains five required geometry files on Mac via
+`scripts/ci-model-tests.mjs`: special erosion and its placement boundaries,
+captured offset movement, offset thickness and exact projection. Linux currently
+differs on the filleted hemisphere's erosion validity, a captured plate's volume,
+an unchanged sphere's numerical signature and a conic projection reply. WebKit's
+constrained-transform route also remains required on Mac; Linux currently accepts
+the rotation that should reject. These are compatibility gaps, not relaxed
+assertions. Remove each partition exception only after its unchanged route passes
+on Linux. Normal `npm test` and `test:current-tools` still run every case.
+Linux Electron test apps use SwiftShader under Xvfb because the worker's Mesa
+renderer is blocklisted for WebGL; desktop application rendering is unchanged.
+
 Every routine run owns and closes its app, native child, browser, profile and port,
 including after failure. Visible windows are for deliberate founder review only.
 Founder instruction, 2026-09-20: do not inspect or control the founder's browser

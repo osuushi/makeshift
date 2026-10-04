@@ -12,7 +12,14 @@ export async function launchElectron(options) {
   try {
     app = await _electron.launch({
       ...options,
-      args: [...options.args, `--user-data-dir=${directory}`],
+      args: [
+        ...options.args,
+        // Linux CI has no physical GPU; use Chromium's software WebGL renderer.
+        ...(process.platform === "linux"
+          ? ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
+          : []),
+        `--user-data-dir=${directory}`,
+      ],
     });
     const close = app.close.bind(app);
     app.close = async () => {

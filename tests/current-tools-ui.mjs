@@ -1,3 +1,4 @@
+import { parseArgs } from "node:util";
 import { arcRoute } from "./ui-arc.mjs";
 import { bezierRoute } from "./ui-bezier.mjs";
 import { bodyChamferRoute } from "./ui-body-chamfer.mjs";
@@ -14,6 +15,8 @@ import { withUiRuntimes } from "./ui-runtime.mjs";
 import { shellRoute } from "./ui-shell.mjs";
 import { transformRoute } from "./ui-transform.mjs";
 import { trimLineRoute } from "./ui-trim.mjs";
+
+const { values } = parseArgs({ options: { "mac-webkit-transform": { type: "boolean" } } });
 
 // A bounded ordinary-control gate; captured geometry and async interleavings
 // stay in their dedicated suites. All routes use the real native owner path.
@@ -36,6 +39,8 @@ await withUiRuntimes(
       shellRoute,
       planeCutRoute,
     ]) {
+      // The unchanged constrained-rotation assertion runs on Mac WebKit in CI.
+      if (values["mac-webkit-transform"] && name === "webkit" && route === transformRoute) continue;
       console.log(`${name}: ${route.name}`);
       await route(page, name, name === "electron");
     }
