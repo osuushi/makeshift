@@ -1,5 +1,5 @@
-name: Build CI native runtime
-description: Restore verified SDK sources and build the real native calculators.
+name: Prepare CI native inputs
+description: Restore verified SDK sources and the platform-specific OCCT SDK cache.
 inputs:
   sdk-prefix:
     description: Platform and architecture namespace for the OCCT SDK cache
@@ -34,10 +34,3 @@ runs:
         if [ ! -f .cache/release-inputs/eigen.tar.gz ]; then
           gh release download native-sources-eigen-5.0.1 --pattern eigen.tar.gz --dir .cache/release-inputs
         fi
-    - name: Build native calculators and desktop renderer
-      shell: bash
-      run: |
-        npm run setup:native
-        npm run setup:kernel
-        npm run setup:mesh
-        npm run build

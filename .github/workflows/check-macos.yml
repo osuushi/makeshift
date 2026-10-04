@@ -40,6 +40,14 @@ jobs:
       - uses: ./.github/actions/ci-native
         with:
           sdk-prefix: occt-linux-x64
+      - name: Build solver
+        run: npm run setup:native
+      - name: Build OCCT SDK and kernel
+        run: npm run setup:kernel
+      - name: Build mesh calculator
+        run: npm run setup:mesh
+      - name: Build desktop renderer and host
+        run: npm run build
       - name: Archive runtime (preserve native permissions and library symlinks)
         run: |
           mkdir -p .cache/ci
@@ -112,6 +120,14 @@ jobs:
       - uses: ./.github/actions/ci-native
         with:
           sdk-prefix: occt-macos-arm64
+      - name: Build solver
+        run: npm run setup:native
+      - name: Build OCCT SDK and kernel
+        run: npm run setup:kernel
+      - name: Build mesh calculator
+        run: npm run setup:mesh
+      - name: Build desktop renderer and host
+        run: npm run build
       - name: Native host and macOS setup tests
         run: |
           npx tsc -p tsconfig.test.json
