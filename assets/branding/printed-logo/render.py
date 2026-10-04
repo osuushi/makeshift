@@ -135,18 +135,37 @@ def plastic(name: str, color: str, icon: bool, insets: list[dict[str, Any]],
 
 
 def area(name: str, location: tuple[float, float, float],
-         power: float, size: float, target: tuple[float, float, float]) -> None:
+         power: float, size: float, target: tuple[float, float, float],
+         color: tuple[float, float, float] = (1, 1, 1), height: float | None = None) -> None:
     light = bpy.data.lights.new(name, "AREA")
     light.energy = power
-    light.shape = "DISK"
+    light.color = color
+    light.shape = "DISK" if height is None else "RECTANGLE"
     light.size = size
+    if height is not None:
+        light.size_y = height
     obj = bpy.data.objects.new(name, light)
     bpy.context.collection.objects.link(obj)
     obj.location = location
     obj.rotation_euler = (Vector(target) - obj.location).to_track_quat("-Z", "Y").to_euler()
 
 
-def lighting(scene: Any, icon: bool, base_height: float) -> None:
+def lighting(scene: Any, icon: bool, base_height: float, preset: str) -> None:
+    if preset != "current":
+        presets = cast(dict[str, Any], json.loads(Path(__file__).with_name("lighting.json").read_text()))
+        if not icon or preset not in presets:
+            raise ValueError(f"Unknown icon lighting preset: {preset}")
+        rig = presets[preset]
+        scene.world.use_nodes = True
+        background = scene.world.node_tree.nodes.get("Background")
+        background.inputs["Color"].default_value = (*rig["ambientColor"], 1)
+        background.inputs["Strength"].default_value = rig["ambientStrength"]
+        target_height = base_height * ICON_THICKNESS_SCALE
+        for spec in rig["lights"]:
+            x, y, z = spec["position"]
+            area(spec["name"], (x, y, z + target_height), spec["power"], spec["width"],
+                 (0, 0, target_height), tuple(spec["color"]), spec.get("height"))
+        return
     scene.world.color = (0.07, 0.07, 0.07) if icon else (0.32, 0.32, 0.32)
     if icon:
         key_height = base_height * ICON_THICKNESS_SCALE
@@ -163,7 +182,7 @@ def lighting(scene: Any, icon: bool, base_height: float) -> None:
 
 
 def setup(mesh_file: Path, output: Path, resolution: int, samples: int,
-          detail: bool, icon: bool) -> None:
+          detail: bool, icon: bool, lighting_preset: str) -> None:
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
     data = cast(dict[str, Any], json.loads(mesh_file.read_text()))
@@ -217,12 +236,13 @@ def setup(mesh_file: Path, output: Path, resolution: int, samples: int,
         target_height = base_height * ICON_THICKNESS_SCALE if icon else 4
         camera_obj.rotation_euler = (Vector((0, 0, target_height)) - camera_obj.location).to_track_quat("-Z", "Y").to_euler()
     scene.camera = camera_obj
-    lighting(scene, icon, base_height)
+    lighting(scene, icon, base_height, lighting_preset)
     scene.render.filepath = str(output)
     bpy.ops.wm.save_as_mainfile(filepath=str(output.with_suffix(".blend")))
     bpy.ops.render.render(write_still=True)
 
 
 args = sys.argv[sys.argv.index("--") + 1:]
+lighting_preset = next((arg.split("=", 1)[1] for arg in args[4:] if arg.startswith("lighting=")), "current")
 setup(Path(args[0]), Path(args[1]), int(args[2]) if len(args) > 2 else 1024,
-      int(args[3]) if len(args) > 3 else 64, "detail" in args[4:], "icon" in args[4:])
+      int(args[3]) if len(args) > 3 else 64, "detail" in args[4:], "icon" in args[4:], lighting_preset)

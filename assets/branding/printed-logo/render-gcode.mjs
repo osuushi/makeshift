@@ -9,6 +9,10 @@ const directory = dirname(fileURLToPath(import.meta.url));
 if (!process.version.startsWith("v24.")) throw new Error("Activate the repository .nvmrc first");
 const appearance = process.argv[4] ?? "icon";
 if (!["icon", "realistic"].includes(appearance)) throw new Error("Expected icon or realistic");
+const lightingPreset = process.argv[5] ?? "current";
+const lightingPresets = JSON.parse(readFileSync(`${directory}/lighting.json`, "utf8"));
+if (lightingPreset !== "current" && (appearance !== "icon" || !lightingPresets[lightingPreset]))
+  throw new Error(`Unknown icon lighting preset: ${lightingPreset}`);
 const input = resolve(
   process.argv[2] ?? `${directory}/${appearance === "icon" ? "icon" : "source"}.gcode`,
 );
@@ -56,6 +60,8 @@ writeFileSync(
     {
       input,
       appearance,
+      lightingPreset,
+      lightingSettings: lightingPresets[lightingPreset] ?? null,
       crownRatio,
       beadProfile,
       beadSection: mesh.section,
@@ -89,6 +95,7 @@ for (const name of ["styled", "detail"]) {
       name === "styled" ? "1024" : "768",
       name === "styled" ? "64" : "32",
       appearance,
+      `lighting=${lightingPreset}`,
       ...(name === "detail" ? ["detail"] : []),
     ],
     { stdio: "inherit" },

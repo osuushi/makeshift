@@ -1,0 +1,62 @@
+{
+  "input": "/Users/adacohen/.codex/worktrees/0293/freac/assets/branding/printed-logo/icon.gcode",
+  "appearance": "icon",
+  "lightingPreset": "studio",
+  "lightingSettings": {
+    "label": "Soft studio",
+    "ambientColor": [0.12, 0.12, 0.12],
+    "ambientStrength": 0.5,
+    "lights": [
+      {
+        "name": "Broad silk key",
+        "position": [-320, 400, 380],
+        "power": 6200000,
+        "width": 300,
+        "height": 180,
+        "color": [1, 0.94, 0.86]
+      },
+      {
+        "name": "Cool soft fill",
+        "position": [300, -160, 320],
+        "power": 1300000,
+        "width": 360,
+        "color": [0.8, 0.9, 1]
+      }
+    ]
+  },
+  "crownRatio": 0,
+  "beadProfile": "ellipse",
+  "beadSection": {
+    "profile": "ellipse",
+    "minimumHeightToWidth": 0.4
+  },
+  "palette": [
+    {
+      "name": "Warm white PLA",
+      "color": "ECECE8"
+    },
+    {
+      "name": "Orange PLA",
+      "color": "FF6808"
+    },
+    {
+      "name": "Blue PLA",
+      "color": "0011FF"
+    }
+  ],
+  "baseHeight": 4,
+  "offset": [128, 126],
+  "filamentDiameter": 1.75,
+  "sha256": "9c5ce1da692c91d90b0d27f92ad9c799adbfa6bf5eacc8d326de30d61c8a594b",
+  "paths": 153,
+  "segments": 7784,
+  "layers": 25,
+  "features": [
+    "Perimeter",
+    "External perimeter",
+    "Solid infill",
+    "Internal infill",
+    "Gap infill",
+    "Top solid infill"
+  ]
+}

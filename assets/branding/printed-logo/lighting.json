@@ -1,0 +1,84 @@
+{
+  "studio": {
+    "label": "Soft studio",
+    "ambientColor": [0.12, 0.12, 0.12],
+    "ambientStrength": 0.5,
+    "lights": [
+      {
+        "name": "Broad silk key",
+        "position": [-320, 400, 380],
+        "power": 6200000,
+        "width": 300,
+        "height": 180,
+        "color": [1, 0.94, 0.86]
+      },
+      {
+        "name": "Cool soft fill",
+        "position": [300, -160, 320],
+        "power": 1300000,
+        "width": 360,
+        "color": [0.8, 0.9, 1]
+      }
+    ]
+  },
+  "warm-cool": {
+    "label": "Warm / cool",
+    "ambientColor": [0.04, 0.04, 0.04],
+    "ambientStrength": 1,
+    "lights": [
+      {
+        "name": "Amber key",
+        "position": [-340, 300, 340],
+        "power": 5000000,
+        "width": 160,
+        "height": 300,
+        "color": [1, 0.78, 0.55]
+      },
+      {
+        "name": "Cyan edge",
+        "position": [360, -260, 190],
+        "power": 3000000,
+        "width": 90,
+        "height": 420,
+        "color": [0.28, 0.7, 1]
+      },
+      {
+        "name": "Neutral overhead fill",
+        "position": [0, 0, 500],
+        "power": 900000,
+        "width": 450,
+        "color": [1, 1, 1]
+      }
+    ]
+  },
+  "violet-rim": {
+    "label": "Violet rim",
+    "ambientColor": [0.035, 0.035, 0.045],
+    "ambientStrength": 1,
+    "lights": [
+      {
+        "name": "Grazing strip key",
+        "position": [-320, 320, 160],
+        "power": 3200000,
+        "width": 80,
+        "height": 280,
+        "color": [1, 0.94, 0.88]
+      },
+      {
+        "name": "Violet rim",
+        "position": [320, 300, 140],
+        "power": 4000000,
+        "width": 100,
+        "height": 380,
+        "color": [0.65, 0.32, 1]
+      },
+      {
+        "name": "Soft overhead fill",
+        "position": [0, 0, 500],
+        "power": 700000,
+        "width": 500,
+        "color": [0.82, 0.9, 1]
+      }
+    ]
+  }
+}

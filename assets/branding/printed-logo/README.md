@@ -31,8 +31,9 @@ source /Users/adacohen/.nvm/nvm.sh && nvm use
 node assets/branding/printed-logo/render-gcode.mjs
 ```
 
-Rendering arguments are G-code, output directory and appearance (`icon`, default,
-or `realistic`). Outputs include bead geometry, source metadata, transparent PNGs
+Rendering arguments are G-code, output directory, appearance (`icon`, default,
+or `realistic`) and lighting preset (`current`, default). Outputs include bead
+geometry, source metadata, transparent PNGs
 and editable Blender scenes. `BLENDER` overrides the installed macOS binary.
 
 To regenerate the current slice and render:
@@ -82,6 +83,31 @@ Blender 4.0 Beta uses Cycles, procedural microtexture, orthographic framing and
 RGBA output. Blender's bundled NumPy rasterizes the footprint mask; no external
 Python runtime is required for rendering. Background Blender needs macOS graphics
 services; a sandboxed launch failed in Metal initialization before Python ran.
+
+## Lighting exploration
+
+[Comparison](lighting/comparison.png) shows the current render alongside three
+alternatives: [soft studio](lighting/studio/icon.png),
+[warm/cool](lighting/warm-cool/icon.png), and [violet rim](lighting/violet-rim/icon.png).
+[Small previews](lighting/sizes.png) show each on light and dark backgrounds.
+Each candidate also has an oblique render and JSON provenance in its folder.
+The canonical icon stays at the current lighting while these are being reviewed.
+
+The rigs in `lighting.json` use distant area lights, a top-left key and rectangular
+softboxes for broader or narrower highlights. Colors are linear RGB light tints.
+Ambient colors/strengths, light positions, powers and dimensions are recorded in
+each candidate's `source.json`. Model, G-code, bead geometry, materials, exposure
+and camera are identical across the comparison; only lighting changes.
+Light positions are relative to the rendered backing-top target; dimensions use
+the scene's millimeter units. Every creative light is more than 400 mm away.
+
+```sh
+source /Users/adacohen/.nvm/nvm.sh && nvm use
+node assets/branding/printed-logo/render-gcode.mjs assets/branding/printed-logo/icon.gcode .cache/printed-logo/lighting/warm-cool icon warm-cool
+```
+
+Available alternatives are `studio`, `warm-cool` and `violet-rim`. These presets
+apply to the icon appearance. Editable `.blend` scenes remain in the output cache.
 
 ## Path reconstruction
 
