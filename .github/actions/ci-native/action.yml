@@ -4,6 +4,13 @@ inputs:
   sdk-prefix:
     description: Platform and architecture namespace for the OCCT SDK cache
     required: true
+outputs:
+  sdk-key:
+    description: Verified SDK recipe and toolchain identity
+    value: ${{ steps.sdk.outputs.key }}
+  sdk-cache-hit:
+    description: Whether the exact SDK cache already exists
+    value: ${{ steps.sdk-cache.outputs.cache-hit }}
 runs:
   using: composite
   steps:
@@ -21,7 +28,8 @@ runs:
           .cache/mesh-inputs/tbb.tar.gz
           .cache/solver/source
         key: native-sources-${{ hashFiles('scripts/native-inputs.mjs', 'scripts/setup-native.mjs', 'scripts/setup-kernel.mjs', 'native/solver/sources.json', 'scripts/occt-recipe.json', 'scripts/mesh-inputs.mjs') }}
-    - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+    - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      id: sdk-cache
       with:
         path: .cache/kernel/sdk
         key: ${{ inputs.sdk-prefix }}-${{ steps.sdk.outputs.key }}

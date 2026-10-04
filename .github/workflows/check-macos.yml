@@ -38,12 +38,18 @@ jobs:
           cache: npm
       - run: npm ci
       - uses: ./.github/actions/ci-native
+        id: native
         with:
           sdk-prefix: occt-linux-x64
       - name: Build solver
         run: npm run setup:native
       - name: Build OCCT SDK and kernel
         run: npm run setup:kernel
+      - uses: ./.github/actions/ci-save-sdk
+        if: always() && !cancelled() && steps.native.outcome == 'success' && steps.native.outputs.sdk-cache-hit != 'true'
+        with:
+          sdk-prefix: occt-linux-x64
+          sdk-key: ${{ steps.native.outputs.sdk-key }}
       - name: Build mesh calculator
         run: npm run setup:mesh
       - name: Build desktop renderer and host
@@ -119,12 +125,18 @@ jobs:
           cache: npm
       - run: npm ci
       - uses: ./.github/actions/ci-native
+        id: native
         with:
           sdk-prefix: occt-macos-arm64
       - name: Build solver
         run: npm run setup:native
       - name: Build OCCT SDK and kernel
         run: npm run setup:kernel
+      - uses: ./.github/actions/ci-save-sdk
+        if: always() && !cancelled() && steps.native.outcome == 'success' && steps.native.outputs.sdk-cache-hit != 'true'
+        with:
+          sdk-prefix: occt-macos-arm64
+          sdk-key: ${{ steps.native.outputs.sdk-key }}
       - name: Build mesh calculator
         run: npm run setup:mesh
       - name: Build desktop renderer and host

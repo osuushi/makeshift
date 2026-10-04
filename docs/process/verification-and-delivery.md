@@ -39,7 +39,9 @@ Electron also runs the full host interaction suite under Xvfb. A small macOS job
 checks the built host/preload boundary, native geometry, document persistence,
 process handling and Finder PATH. Signing and notarization remain release checks.
 The final `check` job requires every lane to succeed, including after a lane
-fails or is skipped. Runtime artifacts expire after one day.
+fails or is skipped. Runtime artifacts expire after one day. A completed OCCT
+SDK is verified and cached even if compilation of an application calculator
+fails afterward; incomplete SDKs cannot enter the cache.
 
 Every routine run owns and closes its app, native child, browser, profile and port,
 including after failure. Visible windows are for deliberate founder review only.
