@@ -65,10 +65,19 @@ export async function withUiRuntimes(
         page.on("dialog", (dialog) =>
           dialog.type() === "beforeunload" ? dialog.accept() : dialog.dismiss(),
         );
-        page.on("pageerror", (error) => errors.push(error.message));
+        page.on("console", (message) => {
+          if (message.type() === "error") console.error(`${name}: ${message.text()}`);
+        });
+        page.on("pageerror", (error) => {
+          errors.push(error.message);
+          console.error(`${name}: renderer error`, error);
+        });
         await page.waitForFunction(() => Boolean(window.makeshiftInspect));
         await route(page, name);
         assert.deepEqual(errors, []);
+      } catch (error) {
+        console.error(`${name}: UI route failed`, error);
+        throw error;
       } finally {
         await browser?.close();
         await app?.close();
