@@ -17,3 +17,12 @@ runs:
     - name: Unpack runtime
       shell: bash
       run: tar -xzf .cache/ci/linux-runtime.tar.gz
+    - name: Verify native shared-library loading
+      shell: bash
+      run: |
+        for executable in .build/{host-native,solver,kernel,mesh}/bin/makeshift-*; do
+          echo "$executable"
+          libraries="$(ldd "$executable")"
+          printf '%s\n' "$libraries"
+          if [[ "$libraries" == *"not found"* ]]; then exit 1; fi
+        done

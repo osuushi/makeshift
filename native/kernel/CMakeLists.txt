@@ -13,6 +13,9 @@ else()
 endif()
 find_path(BOOST_INCLUDE_DIR boost/property_tree/json_parser.hpp REQUIRED)
 add_executable(makeshift-kernel main.cpp shell.cpp shell-validation.cpp shell-canonical.cpp extrude-draft.cpp cleanup.cpp delete-topology.cpp projection.cpp geometry.cpp loft.cpp loft-wire.cpp revolve.cpp screw-sweep.cpp axial-sections.cpp presentation.cpp transform.cpp booleans.cpp edge-finishes.cpp face-offset.cpp offset-contacts.cpp face-chains.cpp offset-validation.cpp blend-recognition.cpp blend-resize.cpp)
+# OCCT's installed libraries have no runtime search path of their own. Linux
+# RUNPATH only finds direct dependencies; RPATH also finds transitive STEP/OCAF libs.
+target_link_options(makeshift-kernel PRIVATE "$<$<PLATFORM_ID:Linux>:-Wl,--disable-new-dtags>")
 target_include_directories(makeshift-kernel SYSTEM PRIVATE ${OpenCASCADE_INCLUDE_DIR} ${BOOST_INCLUDE_DIR})
 target_sources(makeshift-kernel PRIVATE boundary-move.cpp boundary-selection.cpp boundary-edges.cpp boundary-faces.cpp boundary-cylinder.cpp boundary-filling.cpp boundary-polynomial.cpp)
 target_sources(makeshift-kernel PRIVATE offset-collapse.cpp)
