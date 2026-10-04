@@ -65,7 +65,7 @@ export class World {
   private readonly removeNavigation: () => void;
   private cameraAnimation: number | null = null;
   private pendingDraw: number | null = null;
-  private readonly frame = new WorldFrame(this, () => this.draw(true));
+  private readonly frame = new WorldFrame(this, () => this.present(true));
   private readonly sketchClip = new THREE.Plane();
   readonly rollAnimation = new CameraRoll(this);
   readonly orbit = new SmoothedTurntable();
@@ -105,7 +105,7 @@ export class World {
     this.removeNavigation = installNavigation(this);
     this.draw();
   }
-  draw(forceFrame = false): void {
+  draw(): void {
     if (this.pendingDraw !== null) cancelAnimationFrame(this.pendingDraw);
     this.pendingDraw = null;
     const width = this.host.clientWidth;
@@ -129,6 +129,11 @@ export class World {
     );
     this.updateClipping();
     for (const listener of this.changed) listener();
+    this.present();
+  }
+
+  /** Present current state without rerunning interaction refresh/hover invalidation. */
+  present(forceFrame = false): void {
     // Picking must keep current transforms even when tests defer GPU presentation.
     this.scene.updateMatrixWorld();
     this.frame.render(this.sketchClip, forceFrame);

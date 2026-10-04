@@ -218,5 +218,6 @@ in Chromium. Camera, geometry and viewport changes still trigger ordinary redraw
 Linux CI explicitly selects `MAKESHIFT_TEST_FRAME_MODE=on-demand`. The test driver
 sets the renderer flag on initial load and reload; camera animation, scene matrices,
 picking, geometry and DOM overlays keep updating. Only GPU presentation is deferred.
-Page captures and canvas pixel checks request a fresh, full-resolution frame before
-reading pixels. Ordinary app use and the Mac visual/navigation gate render normally.
+Page captures and canvas pixel checks present the current scene at full resolution
+before reading pixels, without rerunning interaction refresh callbacks that invalidate
+temporary hover highlights. Hover presentation uses the same GPU scheduling path. Ordinary app use and the Mac visual/navigation gate render normally.
