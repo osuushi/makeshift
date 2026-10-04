@@ -14,15 +14,14 @@ if (!Number.isFinite(angle) || angle < 0 || angle >= 360) throw new Error("Expec
 const lineWidth = Number(process.argv[4] ?? 1.5);
 if (!Number.isFinite(lineWidth) || lineWidth < 0.2 || lineWidth >= 3)
   throw new Error("Invalid line width");
-const output = resolve(process.argv[3] ?? `${root}/.cache/printed-logo/model-v5`);
+const output = resolve(process.argv[3] ?? `${root}/.cache/printed-logo/model-v7`);
 const slicer = process.env.ORCA_SLICER ?? "/Applications/OrcaSlicer.app/Contents/MacOS/OrcaSlicer";
 const resources = process.env.ORCA_RESOURCES ?? resolve(dirname(slicer), "../Resources");
-// makeshift-logo-5: backing, orange silhouette and both raised arrow pieces.
+// makeshift-logo-7: orange raised form, white backing and blue inset.
 const bodyIds = [
-  "0af104d9-88f5-4cae-8049-37b1780956a9",
-  "db057420-a968-4df6-96e0-2453aa601c98",
-  "e250592f-5588-4e95-a8de-220c0c634400",
-  "49779f96-a80b-480e-8d3d-0e61f379d626",
+  "5375df97-e555-4e23-aa40-9e09f321fd04",
+  "289cf227-d367-443a-9c81-e3341ad6eb24",
+  "d0ea065c-370a-446e-b1d9-dd5d41482ca4",
 ];
 const original = readFileSync(`${directory}/source.makeshift`, "utf8");
 const saved = JSON.parse(original);
@@ -76,6 +75,20 @@ run(slicer, [
   output,
   `${output}/logo.stl`,
 ]);
+const exported = JSON.parse(readFileSync(`${output}/logo.stl.json`, "utf8"));
+const backingIndex = exported.bodyIds.indexOf(bodyIds[1]);
+const colorRegions = [0, 2].map((selection) => {
+  const body = bodyIds[selection];
+  const i = exported.bodyIds.indexOf(body);
+  if (i < 0) throw new Error(`Export lost colored body ${body}`);
+  return {
+    body,
+    material: selection === 0 ? 1 : 2,
+    minZ: exported.bodyBounds[i][2][0],
+    maxZ: exported.bodyBounds[i][2][1],
+    triangles: exported.topTriangles[i],
+  };
+});
 writeFileSync(
   `${output}/slice-source.json`,
   JSON.stringify(
@@ -88,6 +101,19 @@ writeFileSync(
       minFeatureSize: "1%",
       gapFillTarget: "everywhere",
       bodyIds,
+      gcodeSha256: createHash("sha256")
+        .update(readFileSync(`${output}/plate_1.gcode`))
+        .digest("hex"),
+      zShift: exported.zShift,
+      meshPrecision: exported.precision,
+      baseHeight: exported.bodyBounds[backingIndex][2][1],
+      maskBounds: exported.bounds.slice(0, 2),
+      colorRegions,
+      palette: [
+        { name: "Warm white PLA", color: "ECECE8" },
+        { name: "Orange PLA", color: "FF6808" },
+        { name: "Blue PLA", color: "0011FF" },
+      ],
       resources,
     },
     null,

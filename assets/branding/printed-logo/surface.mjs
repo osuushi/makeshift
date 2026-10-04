@@ -125,10 +125,10 @@ function smoothPieces(path) {
   return pieces;
 }
 
-export function beadMesh(paths, baseHeight = 6, crownRatio = 0.04) {
+export function beadMesh(paths, baseHeight = 6, crownRatio = 0.04, regions = []) {
   if (!(crownRatio >= 0 && crownRatio < 0.5)) throw new Error("Invalid bead crown ratio");
   const mesh = { vertices: [], faces: [], materials: [] };
-  const palette = pathPalette(paths, baseHeight);
+  const palette = pathPalette(paths, baseHeight, regions);
   for (const [i, path] of paths.entries())
     for (const piece of smoothPieces(path)) sweep(mesh, piece, palette[i], crownRatio);
   return mesh;

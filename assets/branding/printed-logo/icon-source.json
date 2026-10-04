@@ -1,21 +1,34 @@
 {
-  "input": "/Users/adacohen/.codex/worktrees/0293/freac/.cache/printed-logo/model-v5-32ff1e3e/plate_1.gcode",
+  "input": "/Users/adacohen/.codex/worktrees/0293/freac/.cache/printed-logo/model-v7/plate_1.gcode",
   "appearance": "icon",
   "crownRatio": 0.35,
-  "palette": "white backing, orange left and detached right, violet main arrow",
+  "palette": [
+    {
+      "name": "Warm white PLA",
+      "color": "ECECE8"
+    },
+    {
+      "name": "Orange PLA",
+      "color": "FF6808"
+    },
+    {
+      "name": "Blue PLA",
+      "color": "0011FF"
+    }
+  ],
+  "baseHeight": 4,
   "offset": [128, 126],
   "filamentDiameter": 1.75,
-  "sha256": "eb8269146df648f15a3cf084a625c4939f91770c05a4a1fb848728a47cdf454e",
-  "paths": 237,
-  "segments": 7939,
-  "layers": 35,
+  "sha256": "4d2aac79eee0bcf32e6747779b06f1b8d7be4c5495cc577471efd6c3f393e31d",
+  "paths": 247,
+  "segments": 5979,
+  "layers": 25,
   "features": [
     "Perimeter",
     "External perimeter",
     "Solid infill",
     "Gap infill",
     "Internal infill",
-    "Internal Bridge",
     "Top solid infill"
   ]
 }

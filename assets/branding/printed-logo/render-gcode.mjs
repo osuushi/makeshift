@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { beadMesh, parseGcode } from "./beads.mjs";
@@ -30,7 +30,23 @@ for (const path of paths)
     point[0] -= offset[0];
     point[1] -= offset[1];
   }
-const mesh = beadMesh(paths, 6, crownRatio);
+const slicePath = `${dirname(input)}/slice-source.json`;
+const slice =
+  appearance === "icon" && existsSync(slicePath)
+    ? JSON.parse(readFileSync(slicePath, "utf8"))
+    : null;
+const sha256 = createHash("sha256").update(text).digest("hex");
+if (slice?.gcodeSha256 && slice.gcodeSha256 !== sha256)
+  throw new Error("Slice color metadata does not match the supplied G-code");
+const baseHeight = slice?.baseHeight ?? 6;
+const mesh = beadMesh(paths, baseHeight, crownRatio, slice?.colorRegions ?? []);
+if (slice?.palette) mesh.palette = slice.palette;
+mesh.baseHeight = baseHeight;
+mesh.colorRegions = slice?.colorRegions ?? [];
+mesh.maskBounds = slice?.maskBounds ?? [
+  [-20, 20],
+  [-20, 20],
+];
 mkdirSync(output, { recursive: true });
 writeFileSync(`${output}/beads.json`, JSON.stringify(mesh));
 writeFileSync(
@@ -40,10 +56,11 @@ writeFileSync(
       input,
       appearance,
       crownRatio,
-      palette: "white backing, orange left and detached right, violet main arrow",
+      palette: slice?.palette ?? "white backing, orange left and detached right, violet main arrow",
+      baseHeight,
       offset,
       filamentDiameter: diameter,
-      sha256: createHash("sha256").update(text).digest("hex"),
+      sha256,
       paths: paths.length,
       segments: paths.reduce((n, p) => n + p.widths.length, 0),
       layers: new Set(paths.map((p) => p.z)).size,

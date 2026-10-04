@@ -17,7 +17,21 @@ try {
     bodies: saved.document.bodies,
     deflection: 0.01,
   });
-  const bodies = materialize([], result);
+  const inspected = materialize([], result);
+  const sourcePoints = inspected.flatMap((body) => body.faces.flatMap((face) => face.vertices));
+  const zShift = -Math.min(...sourcePoints.filter((_, i) => i % 3 === 2));
+  // A 1 nm export grid collapses numerical seam slivers. The unmodified closed/
+  // oriented mesh validator still checks every body after rounding and bed placement.
+  const precision = 1e-6;
+  const bodies = inspected.map((body) => ({
+    ...body,
+    faces: body.faces.map((face) => ({
+      ...face,
+      vertices: face.vertices.map(
+        (value, i) => Math.round((value + (i % 3 === 2 ? zShift : 0)) / precision) * precision,
+      ),
+    })),
+  }));
   writeFileSync(output, exportBodies(bodies, "stl"));
   const meshes = bodies.map(exportMesh);
   const boundsFor = (vertices: number[][]) =>
@@ -29,7 +43,26 @@ try {
   const bodyBounds = meshes.map((mesh) => boundsFor(mesh.vertices));
   writeFileSync(
     `${output}.json`,
-    JSON.stringify({ bounds, bodyBounds, bodies: bodies.length }, null, 2),
+    JSON.stringify(
+      {
+        bounds,
+        bodyBounds,
+        bodies: bodies.length,
+        zShift,
+        precision,
+        bodyIds: bodies.map((body) => body.id),
+        topTriangles: meshes.map((mesh, i) =>
+          mesh.triangles.flatMap((triangle) => {
+            const points = triangle.map((index) => mesh.vertices[index]);
+            return points.every((point) => Math.abs(point[2] - bodyBounds[i][2][1]) < precision)
+              ? [points.flatMap((point) => point.slice(0, 2))]
+              : [];
+          }),
+        ),
+      },
+      null,
+      2,
+    ),
   );
   console.log(
     JSON.stringify({ bounds, triangles: bodies.flatMap((b) => exportMesh(b).triangles).length }),
