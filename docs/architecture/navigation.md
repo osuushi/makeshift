@@ -32,6 +32,9 @@ and composite over the main scene at 20% opacity. Overlapping foreground bodies
 therefore do not accumulate transparency. Sketch curves and grids do not enter
 this foreground pass. Coplanar and behind-plane geometry remain normally visible;
 a 0.0001 mm rendering tolerance retains coplanar geometry.
+Skip the empty foreground pass when no visible body geometry or decorator preview
+contributes. Lights and empty/hidden groups alone do not require compositing;
+showing their geometry restores the same full-resolution pass.
 The cutaway follows the current workspace frame and camera side, and clears on
 workspace exit. It changes no accepted geometry, selection identity or Undo.
 
@@ -211,3 +214,10 @@ loss stop without leveling. Active modeling gestures block cube navigation.
 The event-driven renderer retains its last WebGL drawing buffer between redraws.
 This keeps canvas captures available and prevents blank regions around local cards
 in Chromium. Camera, geometry and viewport changes still trigger ordinary redraws.
+
+Linux CI explicitly selects `MAKESHIFT_TEST_FRAME_MODE=on-demand`. The test driver
+sets the renderer flag on initial load and reload; camera animation, scene matrices,
+picking, geometry and DOM overlays keep updating. Only GPU presentation is deferred.
+Page captures and canvas pixel checks present the current scene at full resolution
+before reading pixels, without rerunning interaction refresh callbacks that invalidate
+temporary hover highlights. Hover presentation uses the same GPU scheduling path. Ordinary app use and the Mac visual/navigation gate render normally.

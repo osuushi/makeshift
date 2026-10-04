@@ -28,7 +28,49 @@ model. Maintain a compact inventory of visible controls and their checked routes
 
 `npm test` runs test files serially. Native geometry checks include wall-clock
 calculation limits; competing test workers can exhaust those limits on otherwise
-valid fixtures. Keep the actual geometry and latency assertions intact.
+valid fixtures. CI distributes the files across four Linux jobs using Node's
+`--test-shard`, with `--test-concurrency=1` in each job. Keep the actual geometry
+and latency assertions intact.
+
+The PR workflow builds the Linux native runtime once and shares a tar archive
+with the test jobs, preserving executable permissions and library symlinks.
+Chromium and hidden Electron controls each run in three serial route
+shards on separate Linux workers. Seven more workers run the complete Electron
+host interaction suite under Xvfb, with serial routes and isolated apps in each,
+except two native navigation routes retained on Mac with their fixture sequence.
+Linux UI jobs select `MAKESHIFT_TEST_FRAME_MODE=on-demand`: input, native geometry,
+camera, picking and DOM updates run normally, while captures request fresh GPU frames.
+The demand-frame regression checks real input avoids GPU draws and screenshots
+render current pixels, including after reload. For local diagnosis, prefix a UI
+command with that environment variable; ordinary runs retain normal redraws.
+A small macOS job
+checks the built host/preload boundary, native geometry, document persistence,
+process handling and Finder PATH. Signing and notarization remain release checks.
+The final `check` job requires every lane to succeed, including after a lane
+fails or is skipped. Runtime artifacts expire after one day. A completed OCCT
+SDK is verified and cached even if compilation of an application calculator
+fails afterward; incomplete SDKs cannot enter the cache.
+
+The first Linux migration retains six required geometry files on Mac via
+`scripts/ci-model-tests.mjs`: special erosion and its placement boundaries,
+captured offset movement, offset thickness, exact projection and captured erosion
+responsiveness. Linux currently
+differs on the filleted hemisphere's erosion validity, a captured plate's volume,
+an unchanged sphere's numerical signature and a conic projection reply. The
+captured erosion can exceed its existing calculation limit on Linux. WebKit's
+control suite remains required on Mac: Linux accepts a constrained rotation that
+should reject and reports unhandled selection fetch errors across reload in
+multiple routes. These are compatibility gaps, not relaxed
+assertions. Remove each partition exception only after its unchanged route passes
+on Linux. Normal `npm test` and `test:current-tools` still run every case.
+Linux Electron test apps use SwiftShader under Xvfb because the worker's Mesa
+renderer is blocklisted for WebGL. Hidden Linux test windows render offscreen:
+otherwise the compositor delivers about one frame per second despite disabled
+background throttling, making input slow and missing camera animation checks.
+Visible desktop application rendering is unchanged.
+Navigation over widgets and the native camera gesture route remain required on
+Mac through `test:electron -- --navigation-only`; offscreen Linux navigation is
+not yet accepted. Default `test:electron` still runs all 86 original routes.
 
 Every routine run owns and closes its app, native child, browser, profile and port,
 including after failure. Visible windows are for deliberate founder review only.

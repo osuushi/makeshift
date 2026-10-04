@@ -79,6 +79,8 @@ async function createWindow(): Promise<void> {
       nodeIntegration: false,
       // Hidden acceptance windows should paint like foreground review windows.
       backgroundThrottling: !hidden,
+      // Linux hidden windows throttle compositor frames even with backgroundThrottling off.
+      offscreen: hidden && process.platform === "linux",
     },
   });
   documentWindow = window;

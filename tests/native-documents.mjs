@@ -2,6 +2,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { _electron } from "playwright";
+import { installTestFrames } from "./ui-test-frames.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const sessions = new WeakMap();
@@ -12,7 +13,14 @@ export async function launchElectron(options) {
   try {
     app = await _electron.launch({
       ...options,
-      args: [...options.args, `--user-data-dir=${directory}`],
+      args: [
+        ...options.args,
+        // Linux CI has no physical GPU; use Chromium's software WebGL renderer.
+        ...(process.platform === "linux"
+          ? ["--use-gl=angle", "--use-angle=swiftshader-webgl", "--enable-unsafe-swiftshader"]
+          : []),
+        `--user-data-dir=${directory}`,
+      ],
     });
     const close = app.close.bind(app);
     app.close = async () => {
@@ -35,6 +43,7 @@ export async function launchElectron(options) {
     const firstWindow = app.firstWindow.bind(app);
     app.firstWindow = async (...args) => {
       const page = await firstWindow(...args);
+      await installTestFrames(page);
       sessions.set(page, { app, directory });
       return page;
     };

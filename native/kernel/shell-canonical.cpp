@@ -128,7 +128,8 @@ public:
         const auto cylinder = support(face);
         const auto converted = boundary(edge);
         if (!cylinder && !converted) return false;
-        const Handle(Geom_Surface) surface = cylinder ? cylinder->surface : BRep_Tool::Surface(face);
+        const Handle(Geom_Surface) surface = cylinder
+            ? Handle(Geom_Surface)(cylinder->surface) : BRep_Tool::Surface(face);
         double first, last;
         auto spatial = BRep_Tool::Curve(edge, first, last);
         if (converted) {
