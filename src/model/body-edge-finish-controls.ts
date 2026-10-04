@@ -7,12 +7,15 @@ import { EdgeFinishCleanup } from "./edge-finish-cleanup.js";
 import { selectedEdgeFrame } from "./edge-finish-direction.js";
 import { EdgeFinishDrag } from "./edge-finish-drag.js";
 import { PreviewRunner } from "./preview-runner.js";
+import { ReopenCompletion } from "./reopen-completion.js";
 
 export class BodyEdgeFinishControls {
   private cleanup: EdgeFinishCleanup;
+  private completion = new ReopenCompletion();
   private widget: BodyEdgeFinishWidget;
   private abort = new AbortController();
   private lease: InteractionLease | null = null;
+  private restoredSelection: SketchEditor["modeling"]["targets"] | undefined;
   private edges: BodyEdgeFinish["edges"] = [];
   private frame: ReturnType<typeof selectedEdgeFrame> = null;
   private size = 0;
@@ -62,6 +65,7 @@ export class BodyEdgeFinishControls {
       },
       size: (value) => this.queue(value),
     });
+    this.widget.panel.append(this.completion.root);
     this.widget.cleanup.onclick = () => void this.finish(true);
     const options = { signal: this.abort.signal };
     onModelKeydown(
@@ -95,11 +99,22 @@ export class BodyEdgeFinishControls {
     } else if (faces && this.begin(mode)) this.focus();
     this.editor.refresh();
   }
-  private begin(mode: BodyEdgeFinish["mode"]): boolean {
+  async reopen(operation: BodyEdgeFinish, cleanup: boolean): Promise<void> {
+    this.mode = operation.mode;
+    this.editor.modeling.setTool(operation.mode);
+    this.update();
+    if (!this.begin(operation.mode, operation, cleanup))
+      throw new Error("Cannot restore edge finish inputs");
+    this.queue(operation.size);
+    await this.previews.settle();
+    if (!this.valid) throw new Error("Cannot regenerate the accepted edge finish");
+    this.focus();
+  }
+  private begin(mode: BodyEdgeFinish["mode"], restored?: BodyEdgeFinish, cleanup = false): boolean {
     if (this.lease) return this.mode === mode && this.lease.phase === "editing";
     if (this.editor.blocked || this.editor.world.active) return false;
     this.mode = mode;
-    this.frame = selectedEdgeFrame(this.editor, mode);
+    this.frame = selectedEdgeFrame(this.editor, mode, restored?.edges);
     if (!this.frame) return false;
     this.edges = this.frame.edges;
     this.lease = this.editor.interactions.acquire(
@@ -109,23 +124,29 @@ export class BodyEdgeFinishControls {
       { navigation: "when-released" },
     );
     if (!this.lease) return false;
+    this.restoredSelection = restored ? structuredClone(this.editor.modeling.targets) : undefined;
     this.editor.modeling.targets = this.edges.map((edge) => ({ kind: "edge", ...edge }));
     this.editor.modeling.setTool(mode);
-    this.size = 0;
+    this.size = restored?.size ?? 0;
+    this.widget.input.value = String(this.size);
+    this.completion.reset();
+    if (restored) this.completion.begin(cleanup);
     this.valid = false;
     this.invalid = false;
     this.previews.clear();
     this.editor.notice = `${mode === "fillet" ? "Fillet" : "Chamfer"} · Drag or enter a size`;
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
-    this.previews.check(() => this.expandSelection());
+    if (!restored) this.previews.check(() => this.expandSelection());
     this.lease.trackHistory(
       this.widget.root,
       () => ({
-        size: this.previews.latest?.size ?? 0,
+        size: this.size,
         mode: this.mode,
+        cleanup: this.completion.cleanup,
       }),
       async (state) => {
+        this.completion.input.checked = state.cleanup;
         this.setMode(state.mode);
         this.widget.input.value = String(state.size);
         this.queue(state.size);
@@ -205,7 +226,7 @@ export class BodyEdgeFinishControls {
     }
     this.editor.refresh();
   }
-  private async finish(cleanup = false): Promise<boolean> {
+  private async finish(cleanup = this.completion.cleanup): Promise<boolean> {
     await this.previews.settle();
     const lease = this.lease;
     if (this.drag.active || !lease) return false;
@@ -242,10 +263,13 @@ export class BodyEdgeFinishControls {
     lease.show(null);
     await this.editor.store.cancelPreview();
     await this.previews.settle();
-    this.editor.modeling.targets = this.edges.map((edge) => ({ kind: "edge", ...edge }));
+    this.editor.modeling.targets =
+      this.restoredSelection ?? this.edges.map((edge) => ({ kind: "edge", ...edge }));
     this.end(lease);
   }
   private end(lease: InteractionLease): void {
+    this.restoredSelection = undefined;
+    this.completion.reset();
     this.widget.input.blur();
     this.cleanup.reset();
     this.lease = null;

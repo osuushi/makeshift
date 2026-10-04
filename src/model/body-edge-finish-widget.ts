@@ -16,7 +16,7 @@ interface EdgeFinishInput {
 
 export class BodyEdgeFinishWidget {
   direction: Point | null = null;
-  private panel = document.createElement("div");
+  readonly panel = document.createElement("div");
   readonly cleanup = cleanupButton();
   readonly root = document.createElement("div");
   readonly handles = {

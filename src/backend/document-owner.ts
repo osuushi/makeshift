@@ -3,6 +3,7 @@ import { cancellableCalculation } from "../sketch/calculation-state.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { ModelReply, ModelRequest, ModelView } from "../sketch/model-api.js";
 import { describeOperation, type HistoryOperation } from "../sketch/operation-history.js";
+import { acceptedParameters } from "./accepted-parameters.js";
 import { DecoratorSession } from "./decorator-session.js";
 import { editDocument, isDirectDocumentEdit } from "./document-edits.js";
 import { documentFailure } from "./document-failure.js";
@@ -59,6 +60,7 @@ export class DocumentOwner {
       historySelection: this.store.selection,
       historyNavigation: this.store.restoredNavigation,
       historyOperation: this.store.restoredOperation,
+      reopenOperation: this.store.reopenOperation,
       planeCutAvailable: this.planeCutAvailable,
       ...this.solids.offsetEdit.view,
       edgeSize: this.solids.edgeSize,
@@ -219,6 +221,10 @@ export class DocumentOwner {
       this.pendingOperation = operation;
       this.candidate = null;
       this.candidate = await this.solids.calculate(this.store.data, request);
+      this.pendingOperation = acceptedParameters(operation, {
+        edgeSize: this.solids.edgeSize,
+        offsetDistance: this.solids.offsetEdit.view.offsetDistance,
+      });
       if (request.kind === "transform-bodies") await this.accept();
       return;
     }
@@ -262,6 +268,9 @@ export class DocumentOwner {
         break;
       case "undo":
       case "redo":
+      case "reopen":
+        if (request.kind === "reopen" && this.candidate)
+          throw new Error("Finish the current edit first");
         this.pendingOperation = null;
         this.candidate = null;
         this.store[request.kind]();

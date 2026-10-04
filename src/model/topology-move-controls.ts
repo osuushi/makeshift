@@ -1,14 +1,14 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import { onModelKeydown } from "../sketch/model-keys.js";
-import { replayPointerModifiers } from "../sketch/modifier-pointer.js";
 import type { Vector } from "../sketch/planes.js";
-import { snapRotation } from "../sketch/rotation-snap.js";
 import { numericFocus } from "../tools/menu-focus.js";
+import type { EdgeMovement, FaceMovement } from "./body.js";
 import { dragFrame } from "./body-drag.js";
 import { BodyGizmo } from "./body-gizmo.js";
 import { BodyPivotDrag } from "./body-pivot-drag.js";
 import { axes } from "./body-placement.js";
+import { CurrentTransform } from "./current-transform.js";
+import { GizmoInputs, type GizmoPointer } from "./gizmo-inputs.js";
 import {
   createTopologyMoveActions,
   updateTopologyMovePresentation,
@@ -25,6 +25,7 @@ import {
 
 export class TopologyMoveControls {
   private gizmo: BodyGizmo;
+  private currentTransform: CurrentTransform;
   private pivotDrag: BodyPivotDrag;
   private accept: HTMLButtonElement;
   private cancelButton: HTMLButtonElement;
@@ -42,19 +43,37 @@ export class TopologyMoveControls {
   private pending: TopologyMovement | null = null;
   private latest: TopologyMovement | null = null;
   private running: Promise<void> | null = null;
-  private pointer: {
-    id: number;
-    x: number;
-    y: number;
-    moved: boolean;
-    frame: ReturnType<typeof dragFrame>;
-  } | null = null;
+  private pointer: GizmoPointer | null = null;
   constructor(
     private editor: SketchEditor,
     overlay: HTMLElement,
     private kind: "faces" | "edges" = "faces",
   ) {
     this.gizmo = new BodyGizmo(overlay, this.start, kind);
+    this.currentTransform = new CurrentTransform(
+      kind,
+      (translation, angle) => {
+        if (this.lease?.phase !== "editing") return;
+        const base = this.latest ?? this.verified ?? this.edit;
+        if (!base) return;
+        this.invalid = ![...translation, angle].every(Number.isFinite);
+        this.valid = false;
+        this.editor.notice = this.invalid
+          ? "Enter finite current transform values"
+          : `Move ${this.kind} · Enter to accept · Escape to cancel`;
+        if (this.invalid) {
+          this.pending = this.latest = null;
+          this.editor.refresh();
+          return;
+        }
+        this.edit = this.latest = this.pending = { ...base, translation, angle };
+        this.gizmo.input.value = "0";
+        if (!this.running) this.running = this.drain();
+        this.editor.refresh();
+      },
+      () => editor.refresh(),
+    );
+    this.gizmo.root.append(this.currentTransform.root);
     this.pivotDrag = new BodyPivotDrag(
       editor,
       this.gizmo.pivot,
@@ -77,9 +96,74 @@ export class TopologyMoveControls {
     );
     this.accept = actions.accept;
     this.cancelButton = actions.cancelButton;
-    this.events();
+    new GizmoInputs(editor, this.gizmo.input, this.abort.signal, {
+      gesture: () => (this.pointer ? { pointer: this.pointer, rotate: this.rotate } : null),
+      active: () => !!this.lease,
+      queue: (value) => this.queue(value),
+      release: (moved) => {
+        this.pointer = null;
+        this.lease?.releaseCapture();
+        if (!moved) {
+          this.gizmo.input.focus();
+          this.gizmo.input.select();
+        }
+        editor.refresh();
+      },
+      finish: () => this.finish(),
+      cancel: () => this.cancel(),
+    });
     editor.world.changed.add(this.update);
     this.update();
+  }
+  async reopen(operation: FaceMovement | EdgeMovement): Promise<void> {
+    const edit: TopologyMovement =
+      "faces" in operation
+        ? structuredClone(operation)
+        : {
+            ...structuredClone(operation),
+            pivot: movementCenter(this.editor, operation) ?? [0, 0, 0],
+            axis: [1, 0, 0],
+            angle: 0,
+          };
+    this.pivot = [...edit.pivot];
+    this.direction = edit.axis;
+    this.rotate = false;
+    if (!this.open(edit)) throw new Error("Cannot restore topology movement inputs");
+    this.currentTransform.show(edit);
+    this.editor.modeling.setTool("move");
+    this.pending = this.latest = edit;
+    this.gizmo.input.value = "0";
+    this.gizmo.input.setAttribute("aria-label", "Additional movement");
+    this.running = this.drain();
+    await this.running;
+    if (!this.valid) throw new Error("Cannot regenerate the accepted topology movement");
+    this.currentTransform.translation[0].focus();
+    this.currentTransform.translation[0].select();
+  }
+  private open(edit: TopologyMovement): boolean {
+    this.lease = this.editor.interactions.acquire(
+      this.kind === "faces" ? "face-move" : "edge-move",
+      () => this.cancel(),
+      () => this.finish(),
+      { navigation: "when-released" },
+    );
+    if (!this.lease) return false;
+    this.edit = edit;
+    this.lease.trackHistory(
+      this.gizmo.root,
+      () => this.latest ?? this.edit,
+      async (state) => {
+        if (!state) return;
+        this.edit = this.latest = this.pending = state;
+        this.valid = false;
+        this.gizmo.input.value = "0";
+        this.currentTransform.update(state, false, true);
+        this.editor.notice = `Move ${this.kind} · Enter to accept · Escape to cancel`;
+        if (!this.running) this.running = this.drain();
+        await this.running;
+      },
+    );
+    return true;
   }
   private start = (event: PointerEvent, axis: string, rotate: boolean): void => {
     if (event.button || this.editor.blocked || this.pointer || (rotate && this.kind === "edges"))
@@ -90,36 +174,19 @@ export class TopologyMoveControls {
         : axes[axis];
     if (!this.lease) {
       const targets = movementTargets(this.editor, this.kind);
-      if (!targets) return;
-      this.lease = this.editor.interactions.acquire(
-        this.kind === "faces" ? "face-move" : "edge-move",
-        () => this.cancel(),
-        () => this.finish(),
-        { navigation: "when-released" },
-      );
-      if (!this.lease) return;
-      this.edit = {
-        ...targets,
-        pivot: [...this.pivot],
-        axis: this.direction,
-        angle: 0,
-        translation: [0, 0, 0],
-      };
-      this.lease.trackHistory(
-        this.gizmo.root,
-        () => this.latest ?? this.edit,
-        async (state) => {
-          if (!state) return;
-          this.edit = state;
-          this.latest = this.pending = state;
-          this.valid = false;
-          this.gizmo.input.value = "0";
-          if (!this.running) this.running = this.drain();
-          await this.running;
-        },
-      );
+      if (
+        !targets ||
+        !this.open({
+          ...targets,
+          pivot: [...this.pivot],
+          axis: this.direction,
+          angle: 0,
+          translation: [0, 0, 0],
+        })
+      )
+        return;
     }
-    if (this.lease.phase !== "editing") return;
+    if (this.lease?.phase !== "editing") return;
     this.edit = this.verified ?? this.edit;
     this.rotate = rotate;
     if (event.pointerId !== -1)
@@ -189,18 +256,6 @@ export class TopologyMoveControls {
     this.running = null;
     this.editor.refresh();
   }
-  private move = (event: PointerEvent): void => {
-    const pointer = this.pointer;
-    if (!pointer || pointer.id !== event.pointerId) return;
-    pointer.moved ||= Math.hypot(event.clientX - pointer.x, event.clientY - pointer.y) > 3;
-    if (!pointer.moved) return;
-    const step = this.editor.world.spacing / (event.shiftKey ? 10 : 1);
-    let value = this.rotate
-      ? snapRotation(pointer.frame.angle(event.clientX, event.clientY), event.shiftKey)
-      : pointer.frame.translation(event.clientX, event.clientY);
-    if (!this.rotate && this.editor.gridSnap) value = Math.round(value / step) * step;
-    this.queue(value);
-  };
   private async finish(): Promise<boolean> {
     await this.running;
     const lease = this.lease;
@@ -234,6 +289,7 @@ export class TopologyMoveControls {
     this.end(lease);
   }
   private end(lease: InteractionLease): void {
+    this.currentTransform.reset();
     this.lease = null;
     this.edit = this.latest = this.pending = this.verified = null;
     this.invalid = false;
@@ -243,44 +299,11 @@ export class TopologyMoveControls {
     lease.release();
     this.editor.refresh();
   }
-  private events(): void {
-    const options = { signal: this.abort.signal };
-    window.addEventListener("pointermove", this.move, options);
-    replayPointerModifiers(this.abort.signal, () => !!this.pointer, this.move);
-    window.addEventListener(
-      "pointerup",
-      (event) => {
-        if (this.pointer?.id !== event.pointerId) return;
-        this.move(event);
-        const moved = this.pointer.moved;
-        this.pointer = null;
-        this.lease?.releaseCapture();
-        if (!moved) {
-          this.gizmo.input.focus();
-          this.gizmo.input.select();
-        }
-        this.editor.refresh();
-      },
-      options,
-    );
-    this.gizmo.input.addEventListener(
-      "input",
-      () => this.queue(this.gizmo.input.value.trim() ? Number(this.gizmo.input.value) : NaN),
-      options,
-    );
-    onModelKeydown(
-      (event) => {
-        if (!this.lease || !["Enter", "Escape"].includes(event.key)) return;
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        if (event.key === "Escape") void this.cancel();
-        else void this.finish();
-      },
-      { ...options, capture: true },
-    );
-    window.addEventListener("pointercancel", () => void this.cancel(), options);
-  }
   private update = (): void => {
+    this.currentTransform.update(
+      this.latest ?? this.verified ?? this.edit,
+      this.lease?.phase !== "editing",
+    );
     const targets = movementTargets(this.editor, this.kind),
       key = JSON.stringify(targets);
     if (!this.lease && key !== this.selection) {
@@ -303,6 +326,7 @@ export class TopologyMoveControls {
       this.accept,
       this.cancelButton,
     );
+    this.currentTransform.position();
   };
   dispose(): void {
     this.abort.abort();

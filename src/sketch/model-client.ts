@@ -97,6 +97,9 @@ export class ModelClient {
   get decoratorSources() {
     return this.view.decoratorSources ?? [];
   }
+  get reopenOperation() {
+    return this.view.reopenOperation;
+  }
   get canUndo() {
     return (
       this.selectionInFlight ||
@@ -197,9 +200,16 @@ export class ModelClient {
   async request(request: ModelRequest): Promise<boolean> {
     if (this.working || this.cancelling || this.scriptRunning) return false;
     if (
-      !["read", "accept", "discard", "undo", "redo", "check-cleanup", "check-plane-cut"].includes(
-        request.kind,
-      )
+      ![
+        "read",
+        "accept",
+        "discard",
+        "undo",
+        "redo",
+        "reopen",
+        "check-cleanup",
+        "check-plane-cut",
+      ].includes(request.kind)
     )
       this.lastEdit = request;
     this.working = true;
@@ -219,7 +229,12 @@ export class ModelClient {
     try {
       await this.selectionSending;
       await this.flushSelection();
-      const direction = request.kind === "undo" || request.kind === "redo" ? request.kind : null;
+      const direction =
+        request.kind === "reopen"
+          ? "undo"
+          : request.kind === "undo" || request.kind === "redo"
+            ? request.kind
+            : null;
       if (this.cancelling || this.interrupted) return false;
       const reply = await call(request);
       if (this.interrupted) return false;

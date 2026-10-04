@@ -56,6 +56,7 @@ const kinds: Record<HostModelRequest["kind"], true> = {
   discard: true,
   undo: true,
   redo: true,
+  reopen: true,
   preview: true,
   edit: true,
   remove: true,

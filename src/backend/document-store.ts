@@ -7,6 +7,8 @@ import {
 } from "../sketch/history-selection.js";
 import type { HistoryOperation, OperationHistoryEntry } from "../sketch/operation-history.js";
 
+import { reopenOperation } from "../sketch/reopen-operation.js";
+
 import { validateDocument } from "./document-validation.js";
 
 interface HistoryRecord {
@@ -85,6 +87,34 @@ export class DocumentStore {
   }
   get history(): OperationHistoryEntry[] {
     return structuredClone(this.records.map((record) => record.entry));
+  }
+  private get latestChange(): HistoryRecord | undefined {
+    return [...this.records]
+      .reverse()
+      .find((record) => record.change && record.entry.state === "applied");
+  }
+  get reopenOperation() {
+    const record = this.latestChange;
+    return record?.change?.after === this.accepted
+      ? reopenOperation(record.entry.operation)
+      : undefined;
+  }
+  reopen(): void {
+    const record = this.latestChange;
+    if (!record?.change || !this.reopenOperation)
+      throw new Error("The latest accepted edit cannot be reopened");
+    this.expireNavigation();
+    for (const selection of this.records) {
+      if (!selection.selectionDocument) continue;
+      selection.entry.state = "superseded";
+      delete selection.selection;
+      delete selection.selectionDocument;
+    }
+    this.restoredNavigation = undefined;
+    this.restoredOperation = record.entry.operation;
+    this.accepted = record.change.before;
+    if (record.selection) this.selection = structuredClone(record.selection.before);
+    record.entry.state = "undone";
   }
   get canUndo(): boolean {
     return this.records.some((record) => record.entry.state === "applied");

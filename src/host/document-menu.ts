@@ -60,8 +60,8 @@ export function installDocumentMenu(
       {
         label: "View",
         submenu: [
-          { role: "reload" },
-          { role: "forceReload" },
+          { role: "reload", accelerator: "CmdOrCtrl+Shift+R" },
+          { role: "forceReload", accelerator: "CmdOrCtrl+Alt+Shift+R" },
           { role: "toggleDevTools" },
           { type: "separator" },
           { role: "togglefullscreen" },

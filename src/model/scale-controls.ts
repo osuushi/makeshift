@@ -3,7 +3,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import type { Vector } from "../sketch/planes.js";
 import { installBodyTransformEnter } from "./body-transform-enter.js";
-import type { ScaleOperation, ScaleSource } from "./scale.js";
+import { type ScaleOperation, type ScaleSource, scaleFactors } from "./scale.js";
 import { ScaleGestures } from "./scale-gestures.js";
 import { scalePivot, scaleSelection } from "./scale-selection.js";
 import { ScaleWidget } from "./scale-widget.js";
@@ -23,6 +23,7 @@ export class ScaleControls {
   private box: TransformBox | null = null;
   private pivot: Vector = [0, 0, 0];
   private operationPivot: Vector = [0, 0, 0];
+  private preserveNumericPivot = false;
   private previousPivot: { x: number; y: number } | null = null;
   private originalIds = new Set<string>();
   private valid = false;
@@ -71,7 +72,7 @@ export class ScaleControls {
           this.widget.factors.forEach((other, i) => {
             if (i !== index) other.value = input.value;
           });
-        if (this.box) {
+        if (this.box && !this.preserveNumericPivot) {
           const box = this.box;
           const local = boxLocal(box, this.pivot);
           const factors = this.widget.values();
@@ -109,9 +110,18 @@ export class ScaleControls {
     editor.world.changed.add(this.update);
     this.update();
   }
-  private begin(): void {
+  async reopen(operation: ScaleOperation): Promise<void> {
+    this.begin(operation);
+    if (!this.lease) throw new Error("Cannot restore scale inputs");
+    this.queue();
+    await this.running;
+    if (!this.valid) throw new Error("Cannot regenerate the accepted scale");
+    this.widget.factors[0].focus();
+    this.widget.factors[0].select();
+  }
+  private begin(restored?: ScaleOperation): void {
     const e = this.editor,
-      source = scaleSelection(e);
+      source = restored ?? scaleSelection(e);
     if (!source || e.blocked || e.interactions.current) return;
     const box = selectionBox(e, source);
     if (!box) return;
@@ -124,8 +134,14 @@ export class ScaleControls {
     if (!this.lease) return;
     this.source = source;
     this.box = box;
-    this.pivot = e.transformAnchor?.point ?? scalePivot(e);
-    this.operationPivot = [...this.pivot];
+    this.pivot = restored ? [...restored.pivot] : (e.transformAnchor?.point ?? scalePivot(e));
+    this.preserveNumericPivot = !!restored;
+    this.operationPivot = [...(restored?.pivot ?? this.pivot)];
+    if (restored) {
+      const factors = scaleFactors(restored);
+      this.widget.setValues(factors);
+      this.widget.linked.checked = factors.every((value) => value === factors[0]);
+    }
     this.previousPivot = e.pivot;
     if (source.kind === "curves") {
       const local = boxLocal(box, this.pivot);
@@ -263,6 +279,7 @@ export class ScaleControls {
     this.box = null;
     this.previousPivot = null;
     this.operationPivot = [0, 0, 0];
+    this.preserveNumericPivot = false;
     this.widget.setValues([1, 1, 1]);
     this.widget.factors.forEach((input) => {
       input.setAttribute("aria-invalid", "false");

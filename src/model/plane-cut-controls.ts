@@ -78,9 +78,17 @@ export class PlaneCutControls {
     }
     return targets;
   }
-  private begin(mode: PlaneCut["mode"]): void {
+  async reopen(operation: PlaneCut): Promise<void> {
+    this.begin(operation.mode, operation);
+    if (!this.lease) throw new Error("Cannot restore cut inputs");
+    this.queue(operation.frame);
+    await this.running;
+    if (!this.valid) throw new Error("Cannot regenerate the accepted cut");
+    this.editor.world.canvas.focus();
+  }
+  private begin(mode: PlaneCut["mode"], restored?: PlaneCut): void {
     const e = this.editor,
-      targets = this.targets(mode);
+      targets = restored ? structuredClone(restored.targets) : this.targets(mode);
     if (!targets || e.blocked || e.interactions.current) return;
     this.lease = e.interactions.acquire(
       "plane-cut",
@@ -96,7 +104,7 @@ export class PlaneCutControls {
     this.pending = null;
     this.lease.trackHistory(
       e.world.canvas,
-      () => this.pending?.frame ?? null,
+      () => this.pending?.frame ?? restored?.frame ?? null,
       async (frame) => {
         if (frame) {
           this.queue(frame);

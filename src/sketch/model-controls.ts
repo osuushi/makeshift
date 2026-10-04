@@ -209,6 +209,18 @@ export class ModelControls {
       }
     }, options);
   }
+  reopenRevolve(
+    revolution: import("../model/body.js").Revolution,
+    cleanup: boolean,
+  ): Promise<void> {
+    return this.revolve.reopen(revolution, cleanup);
+  }
+  reopenLoft(operation: import("../model/loft.js").Loft, cleanup: boolean): Promise<void> {
+    return this.loft.reopen(operation, cleanup);
+  }
+  reopenExtrude(extrusion: import("../model/body.js").Extrusion, cleanup: boolean): Promise<void> {
+    return this.extrusion.reopen(extrusion, cleanup);
+  }
   activateLoft(): void {
     this.loft.begin();
   }

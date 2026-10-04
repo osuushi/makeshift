@@ -110,7 +110,9 @@ A failure or no-op after Undo preserves the redo path. A new accepted change
 marks the undone branch superseded and releases its snapshots, but retains its
 operation records for explanation. A failed preview records its actual attempt;
 successful preview updates remain temporary, and acceptance records the originating
-tool and final requested parameters (including explicit cleanup), not a bare Accept.
+tool and final accepted parameters (including explicit cleanup), not a bare Accept.
+Native-clamped edge finish and face offset measurements replace rejected overshoot
+values in accepted intent; input topology IDs and active radius/method choices stay intact.
 Cancellation records the abandoned pending operation without an Undo step.
 
 A read-only `read-history` request exposes cloned metadata without Undo snapshots;
@@ -136,6 +138,40 @@ immediately before publication. Open checks before replacing the document and it
 history. Cancelling after native computation has finished still abandons that edit.
 DocumentStore validates whole-document identities and current sketch/decorator
 invariants before changing snapshots or history, for manual edits, scripts and Open.
+
+## Reopen the latest accepted operation
+
+Viewport Cmd/Ctrl-R and Tools → Reopen last operation undo the latest accepted
+geometry operation to its exact input snapshot and ordered selection, then seed
+its ordinary modal controller before local parameter-history tracking. Selection
+and camera changes do not hide that operation. A newer unsupported changed edit,
+including metadata or direct sketch edits, blocks reentry rather than searching
+backward for an older supported operation. New/Open has no operation to reopen.
+Cancel leaves the operation undone with its original result available by ordinary
+Redo. Acceptance makes the normal new branch; no feature tree or replay is added.
+
+Recorded Extrude, Revolve, Loft, Boolean, Shell, Erode, edge finish, face offset,
+cleanup, Scale, Mirror, plane cut, Projection, ordinary body movement, face/edge
+movement and construction-plane edits have typed current-use reentry. Parameters
+are transient owner history, outside saved geometry. Older sketch placement and
+summarized mesh reconstruction lack sufficient interaction inputs; scripts and
+other nonmodal edits remain unsupported. Composite or arbitrary-axis body moves
+that a single ordinary body gesture cannot represent are also ineligible.
+
+History stores geometric intent, so omitted UI conventions use an honest canonical
+display: linked scale follows equal factors while the recorded pivot stays fixed;
+Mirror restores its final reference with zero additional offset; inactive erosion
+options use current defaults. Topology movement exposes cumulative translation
+and face angle, with exact axis/pivot readouts; the gizmo adds further deltas.
+Construction planes restore the exact final frame and stable ID, then ordinary
+handles add movement. Prior plane gesture ancestry is not inferred.
+
+Recorded cleanup remains a visible completion choice for Extrude, Revolve, Loft,
+Boolean, edge finish and face offset. API-only cleanup combinations for other
+controllers fail eligibility before rollback, because those ordinary interactions
+cannot retain that completion intent. Focused fields, native buttons, menus,
+dialogs, composition and the agent terminal retain keyboard ownership. Electron
+keeps explicit Reload on Shift-Cmd/Ctrl-R.
 
 ## Selection Undo (founder decision, 2026-09-22)
 

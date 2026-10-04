@@ -69,7 +69,7 @@ async function editAndArchive(page, runtime, accepted) {
   assert.equal(state.modelingSelection[0]?.face, face.id);
   await page.keyboard.press("m");
   await page.getByRole("button", { name: "Move faces Y", exact: true }).click();
-  await page.locator(".face-move-gizmo input").fill("-0.1");
+  await page.locator(".face-move-gizmo .face-transform-value").fill("-0.1");
   state = await inspect(page);
   assert(state.preview, await page.locator(".status").textContent());
   assert(Math.abs(state.preview.bodies[1].volume - cavity.volume) > 0.01);

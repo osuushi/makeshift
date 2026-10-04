@@ -18,6 +18,7 @@ import { ModelingTools } from "../model/modeling-tools.js";
 import { OverlapInput } from "../model/overlap-input.js";
 import { PlaneCutControls } from "../model/plane-cut-controls.js";
 import { ProjectionControls } from "../model/projection-controls.js";
+import { reopenControls } from "../model/reopen-controls.js";
 import { ScaleControls } from "../model/scale-controls.js";
 import { SectionControls } from "../model/section-controls.js";
 import { ShellControls } from "../model/shell-controls.js";
@@ -120,6 +121,29 @@ const edgeMoves = new TopologyMoveControls(editor, overlay, "edges");
 const bodyFinishes = new BodyEdgeFinishControls(editor, overlay);
 const booleans = new BooleanControls(editor, overlay);
 const bodyMove = new BodyMoveControls(editor, overlay);
+const disposeReopen = reopenControls(editor, async ({ request, cleanup: clean }) => {
+  if (request.kind === "extrude") await modelControls.reopenExtrude(request.extrusion, clean);
+  else if (request.kind === "boolean-bodies") await booleans.reopen(request.operation, clean);
+  else if (request.kind === "revolve") await modelControls.reopenRevolve(request.revolution, clean);
+  else if (request.kind === "loft") await modelControls.reopenLoft(request.operation, clean);
+  else if (request.kind === "shell") await shells.reopen(request.operation);
+  else if (request.kind === "erode") await erosion.reopen(request.operation);
+  else if (request.kind === "finish-edges") await bodyFinishes.reopen(request.operation, clean);
+  else if (request.kind === "offset-faces") await faceOffsets.reopen(request.operation, clean);
+  else if (request.kind === "cleanup") await cleanup.reopen(request.selection);
+  else if (request.kind === "scale") await scaling.reopen(request.operation);
+  else if (request.kind === "mirror") await mirror.reopen(request.operation);
+  else if (request.kind === "plane-cut") await planeCuts.reopen(request.operation);
+  else if (request.kind === "project") await projection.reopen(request.projection);
+  else if (request.kind === "transform-bodies") await bodyMove.reopen(request.transform);
+  else if (request.kind === "move-faces") await faceMoves.reopen(request.operation);
+  else if (request.kind === "move-edges") await edgeMoves.reopen(request.operation);
+  else if (request.kind === "construction-plane") await constructionPlanes.reopen(request.plane);
+  else {
+    const unsupported: never = request;
+    throw new Error(`Unsupported restored operation: ${JSON.stringify(unsupported)}`);
+  }
+});
 const cleanup = new CleanupControls(editor, overlay);
 const disposeModelHighlight = modelHighlight(editor);
 const disposeBodies = bodyView(editor);
@@ -225,6 +249,7 @@ window.addEventListener("pagehide", (event) => {
   modelingTools.dispose();
   disposeControls();
   disposeCalculation();
+  disposeReopen();
   modelControls.dispose();
   bodyMove.dispose();
   bodyActions.dispose();

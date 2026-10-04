@@ -86,7 +86,7 @@ export type ModelRequest =
       topology?: CleanupSelection[];
     }
   | { kind: "delete-sketch"; sketchId: string }
-  | { kind: "read" | "discard" | "undo" | "redo" | "new" }
+  | { kind: "read" | "discard" | "undo" | "redo" | "reopen" | "new" }
   | { kind: "preview" | "edit"; sketch: Sketch; intent?: EditIntent }
   | { kind: "remove" | "clear"; sketchId: string; ids?: string[] };
 export interface ModelView {
@@ -95,6 +95,7 @@ export interface ModelView {
   decoratorSources?: readonly import("../decorators/javascript-hooks.js").EnabledDefinition[];
   historyNavigation?: import("./history-navigation.js").HistoryNavigation;
   historyOperation?: HistoryOperation;
+  reopenOperation?: import("./reopen-operation.js").ReopenOperation;
   historySelection?: import("./history-selection.js").HistorySelection;
   planeCutAvailable?: boolean;
   data: SketchDocument;

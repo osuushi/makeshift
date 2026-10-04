@@ -1,0 +1,33 @@
+.current-transform {
+  position: absolute;
+  left: 175px;
+  top: 65px;
+  width: 220px;
+  padding: 8px;
+  border: 1px solid #c9d5df;
+  border-radius: 7px;
+  background: #fffffff0;
+  pointer-events: auto;
+}
+.current-transform summary {
+  cursor: pointer;
+}
+.current-transform label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 5px;
+}
+.current-transform input {
+  width: 110px;
+}
+.current-transform small {
+  display: block;
+  margin-top: 5px;
+}
+
+.current-transform input[aria-invalid="true"] {
+  color: #a83f27;
+  text-decoration: underline wavy;
+}

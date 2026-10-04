@@ -73,10 +73,14 @@ export function edgeSectionWidth(edge: Edge, anchor: Vector, outward: Vector): V
     : arrowWidthAxis(outward);
 }
 
-export function selectedEdgeFrame(editor: SketchEditor, mode: BodyEdgeFinish["mode"]) {
+export function selectedEdgeFrame(
+  editor: SketchEditor,
+  mode: BodyEdgeFinish["mode"],
+  restored?: BodyEdgeFinish["edges"],
+) {
   const resolution = editor.modeling.resolve(mode);
-  if (!resolution.available) return null;
-  const selected = resolution.inputs;
+  if (!restored && !resolution.available) return null;
+  const selected = restored ? structuredClone(restored) : resolution.inputs;
   const click = editor.modeling.lastEdgeClick;
   const target =
     selected.find((e) => e.body === click?.body && e.edge === click.edge) ??

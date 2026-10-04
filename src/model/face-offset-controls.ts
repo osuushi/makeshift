@@ -14,11 +14,14 @@ import { FaceOffsetWidget } from "./face-offset-widget.js";
 import { OffsetPlacement } from "./offset-placement.js";
 import { OffsetQuantity } from "./offset-quantity.js";
 import { PreviewRunner } from "./preview-runner.js";
+import { ReopenCompletion } from "./reopen-completion.js";
 
 export class FaceOffsetControls {
   private widget: FaceOffsetWidget;
+  private completion = new ReopenCompletion();
   private abort = new AbortController();
   private lease: InteractionLease | null = null;
+  private restoredSelection: SketchEditor["modeling"]["targets"] | undefined;
   private faces: BodyFaceOffset["faces"] = [];
   private axis: ReturnType<typeof offsetHandle> | null = null;
   private placement = new OffsetPlacement();
@@ -47,6 +50,7 @@ export class FaceOffsetControls {
     this.cleanup = new CleanupAvailability(this.widget.cleanup, () => {
       this.previews.check(() => this.checkCleanup());
     });
+    this.widget.options.append(this.completion.root);
     this.widget.cleanup.onclick = () => void this.finish(true);
     const options = { signal: this.abort.signal };
     this.drag = new AxialDrag(editor, this.widget.handle, this.abort.signal, {
@@ -103,7 +107,16 @@ export class FaceOffsetControls {
     editor.world.changed.add(this.update);
     this.update();
   }
-  private begin(): boolean {
+  async reopen(operation: BodyFaceOffset, cleanup: boolean): Promise<void> {
+    this.editor.modeling.setTool("offset");
+    this.update();
+    if (!this.begin(operation, cleanup)) throw new Error("Cannot restore offset inputs");
+    this.queue(operation.distance);
+    await this.previews.settle();
+    if (!this.valid) throw new Error("Cannot regenerate the accepted face offset");
+    this.focus();
+  }
+  private begin(restored?: BodyFaceOffset, cleanup = false): boolean {
     if (this.lease) return this.lease.phase === "editing";
     const selected = offsetTargets(this.editor);
     if (this.editor.blocked || this.editor.world.active || !selected || !this.axis) return false;
@@ -114,20 +127,30 @@ export class FaceOffsetControls {
       { navigation: "when-released" },
     );
     if (!this.lease) return false;
+    this.restoredSelection = restored ? structuredClone(this.editor.modeling.targets) : undefined;
     this.blend = sharedBlend(selected.faces);
-    this.faces = expandFaceTargets(this.editor, selected.targets, !!this.blend);
+    this.faces = restored
+      ? structuredClone(restored.faces)
+      : expandFaceTargets(this.editor, selected.targets, !!this.blend);
     this.editor.modeling.targets = this.faces.map((t) => ({ kind: "face", ...t }));
     this.quantity.configure(selected.faces, this.faces, this.blend);
-    this.distance = 0;
+    this.distance = restored?.distance ?? 0;
+    if (restored && !this.blend)
+      this.quantity.setMode(restored.radius !== undefined ? "radius" : "offset");
+    this.widget.input.value = String(this.quantity.value(this.distance));
+    this.completion.reset();
+    if (restored) this.completion.begin(cleanup);
     this.valid = true;
     this.previews.clear();
     this.lease.trackHistory(
       this.widget.root,
       () => ({
-        distance: this.previews.latest?.distance ?? this.distance,
+        distance: this.distance,
         mode: this.quantity.mode,
+        cleanup: this.completion.cleanup,
       }),
       async (state) => {
+        this.completion.input.checked = state.cleanup;
         this.quantity.setMode(state.mode);
         this.widget.input.value = String(this.quantity.value(state.distance));
         this.queue(state.distance);
@@ -209,7 +232,7 @@ export class FaceOffsetControls {
       this.cleanup.resolve(this.editor.store.cleanupAvailable, success);
     this.editor.refresh();
   }
-  private async finish(cleanup = false): Promise<boolean> {
+  private async finish(cleanup = this.completion.cleanup): Promise<boolean> {
     await this.previews.settle();
     const lease = this.lease;
     if (this.drag.active || !lease || !this.valid) return false;
@@ -236,10 +259,13 @@ export class FaceOffsetControls {
     lease.show(null);
     await this.editor.store.cancelPreview();
     await this.previews.settle();
-    this.editor.modeling.targets = this.faces.map((face) => ({ kind: "face", ...face }));
+    this.editor.modeling.targets =
+      this.restoredSelection ?? this.faces.map((face) => ({ kind: "face", ...face }));
     this.end(lease);
   }
   private end(lease: InteractionLease): void {
+    this.restoredSelection = undefined;
+    this.completion.reset();
     this.lease = null;
     this.widget.input.blur();
     this.cleanup.reset();

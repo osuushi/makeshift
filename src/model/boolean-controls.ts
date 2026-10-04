@@ -8,10 +8,12 @@ import { BooleanOperands } from "./boolean-operands.js";
 import { BooleanPreference } from "./boolean-preference.js";
 import { booleanStart } from "./boolean-start.js";
 import { BooleanWidget } from "./boolean-widget.js";
+import { ReopenCompletion } from "./reopen-completion.js";
 
 export class BooleanControls {
   private widget: BooleanWidget;
   private operands: BooleanOperands;
+  private completion = new ReopenCompletion();
   private abort = new AbortController();
   private lease: InteractionLease | null = null;
   private bodies: Body[] = [];
@@ -52,6 +54,7 @@ export class BooleanControls {
     this.widget.collect.onclick = () => this.setCollecting(!this.collecting);
     this.widget.choose = (body) => this.toggleBody(body);
     this.installPicking();
+    this.widget.root.append(this.completion.root);
     this.widget.cleanup.onclick = () => void this.finish(true);
     onModelKeydown(
       (event) => {
@@ -66,11 +69,23 @@ export class BooleanControls {
     );
     editor.world.changed.add(this.update);
   }
-  start = (mode: BodyBoolean["mode"]): void => {
+  async reopen(operation: BodyBoolean, cleanup: boolean): Promise<void> {
+    this.start(operation.mode, operation, cleanup);
+    if (!this.lease) throw new Error("Cannot restore Boolean inputs");
+    await this.running;
+    if (!this.valid) throw new Error("Cannot regenerate the accepted Boolean");
+    this.editor.world.canvas.focus();
+  }
+  start = (mode: BodyBoolean["mode"], restored?: BodyBoolean, cleanup = false): void => {
     if (this.editor.blocked || this.editor.world.active || this.editor.interactions.current) return;
     const resolution = booleanStart(this.editor);
     if (!resolution.available) return;
-    this.bodies = resolution.inputs;
+    this.bodies = restored
+      ? restored.ids.flatMap(
+          (id) => this.editor.store.data.bodies?.filter((body) => body.id === id) ?? [],
+        )
+      : resolution.inputs;
+    if (restored && this.bodies.length !== restored.ids.length) return;
     this.collecting = this.bodies.length < 2;
     this.lease = this.editor.interactions.acquire(
       "body-boolean",
@@ -79,15 +94,25 @@ export class BooleanControls {
       { navigation: "when-released" },
     );
     if (!this.lease) return;
-    this.operation = { ids: [], mode, keepOriginals: this.preference.get(mode) };
+    this.operation = restored
+      ? structuredClone(restored)
+      : { ids: [], mode, keepOriginals: this.preference.get(mode) };
+    this.completion.reset();
+    if (restored) this.completion.begin(cleanup);
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
     this.operation.ids = this.bodies.map((body) => body.id);
     this.lease.trackHistory(
       this.widget.root,
-      () => ({ ids: this.operation.ids, mode: this.operation.mode, collecting: this.collecting }),
+      () => ({
+        ids: this.operation.ids,
+        mode: this.operation.mode,
+        collecting: this.collecting,
+        cleanup: this.completion.cleanup,
+      }),
       async (operation) => {
         this.collecting = operation.collecting;
+        this.completion.input.checked = operation.cleanup;
         this.operation = {
           ids: operation.ids,
           mode: operation.mode,
@@ -180,7 +205,7 @@ export class BooleanControls {
     }
     this.editor.refresh();
   }
-  private async finish(cleanup = false): Promise<boolean> {
+  private async finish(cleanup = this.completion.cleanup): Promise<boolean> {
     await this.running;
     const lease = this.lease;
     if (!lease) return false;
@@ -219,6 +244,7 @@ export class BooleanControls {
   }
   private end(lease: InteractionLease): void {
     this.lease = null;
+    this.completion.reset();
     this.widget.root.hidden = true;
     this.editor.notice = this.editor.message = "";
     this.operands.clear();

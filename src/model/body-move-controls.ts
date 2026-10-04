@@ -1,9 +1,6 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import { onModelKeydown } from "../sketch/model-keys.js";
-import { replayPointerModifiers } from "../sketch/modifier-pointer.js";
 import type { Vector } from "../sketch/planes.js";
-import { snapRotation } from "../sketch/rotation-snap.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import type { BodyTransform } from "./body.js";
 import { selectedBodies } from "./body-actions.js";
@@ -11,6 +8,8 @@ import { bodySnap, dragFrame } from "./body-drag.js";
 import { BodyGizmo } from "./body-gizmo.js";
 import { BodyPivotDrag } from "./body-pivot-drag.js";
 import { axes, bodyCenter, placedDocument } from "./body-placement.js";
+import { GizmoInputs, type GizmoPointer } from "./gizmo-inputs.js";
+import { reopenBodyTransform } from "./reopen-body-transform.js";
 
 type Session = {
   edit: BodyTransform;
@@ -33,13 +32,7 @@ export class BodyMoveControls {
   private customPivot = false;
   private selection = "";
   private session: Session | null = null;
-  private pointer: {
-    id: number;
-    x: number;
-    y: number;
-    moved: boolean;
-    frame: ReturnType<typeof dragFrame>;
-  } | null = null;
+  private pointer: GizmoPointer | null = null;
   constructor(
     private editor: SketchEditor,
     overlay: HTMLElement,
@@ -62,7 +55,29 @@ export class BodyMoveControls {
     this.snap.className = "body-snap";
     this.snap.hidden = true;
     overlay.append(this.snap);
-    this.events();
+    new GizmoInputs(editor, this.gizmo.input, this.abort.signal, {
+      gesture: () =>
+        this.pointer ? { pointer: this.pointer, rotate: this.session?.rotate ?? false } : null,
+      active: () => !!this.session,
+      viewportOnly: true,
+      queue: (value) => this.preview(value),
+      modifiers: (event) => {
+        const s = this.session;
+        if (s) s.edit.duplicate = !s.pivotOnly && (s.explicitCopy || event.altKey);
+      },
+      snap: (event, value) => this.snapValue(event, value),
+      release: (moved) => {
+        this.pointer = null;
+        this.session?.lease.releaseCapture();
+        if (moved) void this.commit();
+        else {
+          this.gizmo.input.focus();
+          this.gizmo.input.select();
+        }
+      },
+      finish: () => this.commit(),
+      cancel: () => this.cancel(),
+    });
     editor.world.changed.add(this.update);
     this.update();
   }
@@ -78,7 +93,21 @@ export class BodyMoveControls {
     if (copy) this.open(true);
     this.editor.refresh();
   }
-  private open(duplicate: boolean): Session | null {
+  async reopen(edit: BodyTransform): Promise<void> {
+    const parameters = reopenBodyTransform(edit);
+    if (!parameters)
+      throw new Error("This body transform cannot use the ordinary movement controls");
+    this.editor.modeling.setTool("move");
+    this.pivotMode = false;
+    this.pivot = [...edit.pivot];
+    this.customPivot = true;
+    const session = this.open(edit.duplicate, edit);
+    if (!session) throw new Error("Cannot restore body movement inputs");
+    this.preview(parameters.value);
+    this.gizmo.input.focus();
+    this.gizmo.input.select();
+  }
+  private open(duplicate: boolean, restored?: BodyTransform): Session | null {
     const bodies = selectedBodies(this.editor, duplicate ? "duplicate" : "move");
     if (!bodies.length) return null;
     const lease = this.editor.interactions.acquire("body-move", () => this.cancel(), undefined, {
@@ -105,6 +134,23 @@ export class BodyMoveControls {
       },
     };
     const session = this.session;
+    if (restored) {
+      const parameters = reopenBodyTransform(restored);
+      if (!parameters) {
+        this.cancel();
+        return null;
+      }
+      session.edit = structuredClone(restored);
+      session.value = parameters.value;
+      session.axis = parameters.axis;
+      session.edit.axis = axes[parameters.axis];
+      session.rotate = parameters.rotate;
+      this.gizmo.input.value = String(parameters.value);
+      this.gizmo.input.setAttribute(
+        "aria-label",
+        `Body ${parameters.rotate ? "rotation" : "translation"} ${parameters.axis}`,
+      );
+    }
     lease.trackHistory(
       this.gizmo.root,
       () => ({
@@ -126,7 +172,7 @@ export class BodyMoveControls {
         this.preview(state.value);
       },
     );
-    this.preview(0);
+    this.preview(session.value);
     return this.session;
   }
   private start = (event: PointerEvent, axis: string, rotate: boolean): void => {
@@ -218,69 +264,19 @@ export class BodyMoveControls {
     this.snap.hidden = true;
     this.editor.refresh();
   }
-  private movePointer = (event: PointerEvent): void => {
-    const p = this.pointer,
-      s = this.session;
-    if (!p || !s || p.id !== event.pointerId) return;
-    s.edit.duplicate = !s.pivotOnly && (s.explicitCopy || event.altKey);
-    p.moved ||= Math.hypot(event.clientX - p.x, event.clientY - p.y) > 3;
-    if (!p.moved) return;
-    const step = this.editor.world.spacing / (event.shiftKey ? 10 : 1);
-    let value = s.rotate
-      ? snapRotation(p.frame.angle(event.clientX, event.clientY), event.shiftKey)
-      : p.frame.translation(event.clientX, event.clientY);
-    if (!s.rotate && this.editor.gridSnap) value = Math.round(value / step) * step;
+  private snapValue(event: PointerEvent, value: number): number {
+    const s = this.session;
     const snap =
-      !s.rotate && !event.shiftKey
+      s && !s.rotate && !event.shiftKey
         ? bodySnap(this.editor, s.pivotOnly ? [] : s.edit.ids, s.edit.pivot, s.axis, value)
         : null;
     this.snap.hidden = !snap;
     if (snap) {
-      value = snap.value;
-      const p = this.editor.world.project(snap.point);
-      this.snap.style.left = `${p.x}px`;
-      this.snap.style.top = `${p.y}px`;
+      const point = this.editor.world.project(snap.point);
+      this.snap.style.left = `${point.x}px`;
+      this.snap.style.top = `${point.y}px`;
     }
-    this.preview(value);
-  };
-  private events(): void {
-    const options = { signal: this.abort.signal };
-    window.addEventListener("pointermove", this.movePointer, options);
-    replayPointerModifiers(this.abort.signal, () => !!this.pointer, this.movePointer);
-    window.addEventListener(
-      "pointerup",
-      (event) => {
-        const p = this.pointer;
-        if (!p || p.id !== event.pointerId) return;
-        this.movePointer(event);
-        this.pointer = null;
-        this.session?.lease.releaseCapture();
-        if (p.moved) void this.commit();
-        else {
-          this.gizmo.input.focus();
-          this.gizmo.input.select();
-        }
-      },
-      options,
-    );
-    this.gizmo.input.addEventListener(
-      "input",
-      () => this.preview(this.gizmo.input.value.trim() ? Number(this.gizmo.input.value) : NaN),
-      options,
-    );
-    onModelKeydown(
-      (event) => {
-        if (this.editor.world.active) return;
-        if (this.session && (event.key === "Escape" || event.key === "Enter")) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          if (event.key === "Escape") this.cancel();
-          else void this.commit();
-        }
-      },
-      { ...options, capture: true },
-    );
-    window.addEventListener("pointercancel", () => this.cancel(), options);
+    return snap?.value ?? value;
   }
   private update = (): void => {
     const bodies = selectedBodies(this.editor),
