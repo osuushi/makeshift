@@ -101,3 +101,19 @@ test("coarse icon domes deepen into earlier layers without raising the model top
   assert.ok(Math.min(...zs) >= 0);
   assert.ok(Math.max(...zs) - Math.min(...zs) > 0.6, "wide beads need visible rounded depth");
 });
+
+test("a bend tighter than the bead radius never turns roof faces inside out", () => {
+  const paths = parseGcode("M83\n; WIDTH: 2\nG1 Z1\nG3 X.6 Y-.6 I.6 J0 E.34");
+  const mesh = beadMesh(paths, 6, 0, [], "ellipse");
+  const centerZ = 0.6;
+  let roofs = 0;
+  for (const face of mesh.faces) {
+    const points = face.map((i) => mesh.vertices[i]);
+    if (!points.every((p) => p[2] > centerZ + 1e-6)) continue;
+    const [a, b, c] = points;
+    const normalZ = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+    assert.ok(normalZ >= -1e-12, "roof normal must face upward through a tight bend");
+    roofs++;
+  }
+  assert.ok(roofs > 0);
+});

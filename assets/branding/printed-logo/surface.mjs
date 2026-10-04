@@ -113,7 +113,8 @@ function sweep(mesh, path, material, crownRatio, profile) {
   appendCaps(mesh, path, offset, material, crownRatio, profile);
 }
 
-// Split acute turns before sweeping: overlapping rounded deposits avoid folded miters.
+// Split acute turns and bends tighter than the bead radius. Offset rings inside
+// such curves reverse direction and fold through the roof; rounded deposits overlap instead.
 function smoothPieces(path) {
   const pieces = [];
   let start = 0;
@@ -123,8 +124,14 @@ function smoothPieces(path) {
       c = path.points[i + 1];
     const u = [b[0] - a[0], b[1] - a[1]],
       v = [c[0] - b[0], c[1] - b[1]];
-    const cosine = (u[0] * v[0] + u[1] * v[1]) / (Math.hypot(...u) * Math.hypot(...v));
-    if (cosine >= Math.SQRT1_2) continue;
+    const before = Math.hypot(...u),
+      after = Math.hypot(...v);
+    const cosine = (u[0] * v[0] + u[1] * v[1]) / (before * after);
+    const turn = Math.acos(Math.max(-1, Math.min(1, cosine)));
+    const inward =
+      (Math.max(path.widths[i - 1], path.widths[Math.min(i, path.widths.length - 1)]) / 2) *
+      Math.tan(turn / 2);
+    if (cosine >= Math.SQRT1_2 && inward * 2 < Math.min(before, after)) continue;
     pieces.push({
       ...path,
       points: path.points.slice(start, i + 1),

@@ -55,7 +55,8 @@ and precision, backing height, palette and projected cap triangles of the colore
 solids. The renderer checks that these color data match the supplied G-code hash.
 `icon-source.json` records the render's input hash, settings and geometry counts.
 The small PNGs use Lanczos downsampling of the 1024 px render. The comparison
-shows the preceding 1.5 mm v7 render against the updated 2 mm render.
+shows the 2 mm render before and after the tight-bend mesh repair. The
+[corner comparison](corner-comparison.png) enlarges both affected orange areas.
 
 ## Appearance and color boundaries
 
@@ -99,7 +100,10 @@ Declared widths preserve the slicer's footprint. Without width metadata, width
 is inferred from deposited volume using the
 [Slic3r rounded-rectangle flow model](https://manual.slic3r.org/advanced/flow-math).
 Volume-derived widths remain available for audit. Cross-sections have rounded
-ends and overlapping shells at sharp turns. Icon strands use convex ellipses;
+ends and overlapping shells at sharp turns or bends tighter than the bead radius.
+These tight bends otherwise reverse the inside offset rings, folding faces through
+the roof. The repair retains every slicer centerline/width and uses overlapping
+rounded deposits at those joins. The G-code is unchanged. Icon strands use convex ellipses;
 the realistic preset retains the lightly crowned stadium profile, with ellipses
 for strands narrower than their layer. Shells are closed and oriented but are
 not Boolean-fused.
@@ -125,7 +129,9 @@ npm exec --yes --package pyright@1.1.414 -- pyright --project assets/branding/pr
 
 Checks cover arcs, the original rounded-tip footprint, object scope, widths,
 extrusion modes, resets/retractions, unsupported motions, shell orientation and
-sub-layer-width strands, and elliptical icon footprints/bed and top bounds.
+sub-layer-width strands, elliptical icon footprints/bed and top bounds, and
+upward-facing roofs through bends tighter than the bead radius. The affected
+actual infill paths were also checked for finite, closed, consistently oriented shells.
 The current native export, top/oblique renders and small
 previews were inspected, including orange/blue/white pixel checks. No physical
 print was made.
