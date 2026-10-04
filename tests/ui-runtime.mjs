@@ -3,6 +3,7 @@ import { mkdir } from "node:fs/promises";
 import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
+import { failureContext } from "./ui-failure-context.mjs";
 import { installTestFrames } from "./ui-test-frames.mjs";
 
 export function runtimeNames(allowed = ["chromium", "webkit", "electron"], defaults = allowed) {
@@ -75,11 +76,13 @@ export async function withUiRuntimes(
           console.error(`${name}: renderer error`, error);
         });
         await page.waitForFunction(() => Boolean(window.makeshiftInspect));
-        await route(page, name);
-        assert.deepEqual(errors, []);
-      } catch (error) {
-        console.error(`${name}: UI route failed`, error);
-        throw error;
+        try {
+          await route(page, name);
+          assert.deepEqual(errors, []);
+        } catch (error) {
+          console.error(`${name}: UI failure context`, await failureContext(page, errors));
+          throw error;
+        }
       } finally {
         await browser?.close();
         await app?.close();

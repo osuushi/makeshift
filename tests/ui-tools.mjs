@@ -18,9 +18,22 @@ export async function chooseTool(page, query, id) {
     // Leave text editing so Undo/Delete apply to geometry, including committed modal parameters.
     const trigger = page.getByRole("button", { name: "Tools", exact: true });
     await trigger.focus();
-    await page.waitForFunction(() => !window.makeshiftInspect().busy);
+    await page.waitForFunction(() => {
+      const state = window.makeshiftInspect();
+      return (
+        !state.busy && state.commands.every((command) => command.unavailable !== "Switching tools…")
+      );
+    });
     await trigger.press(standardShortcuts[id]);
-    await page.waitForFunction(() => !window.makeshiftInspect().busy);
+    // File helpers answer native/file/unsaved prompts before their command can complete.
+    await page.waitForFunction((id) => {
+      const state = window.makeshiftInspect();
+      return (
+        !state.busy &&
+        (["new", "open", "save", "save-as", "close"].includes(id) ||
+          state.commands.every((command) => command.unavailable !== "Switching tools…"))
+      );
+    }, id);
     return;
   }
   await openTools(page);
@@ -28,7 +41,12 @@ export async function chooseTool(page, query, id) {
   const row = page.locator(`[data-command="${id}"]`);
   // Locator actionability waits through transient tool closure/calculation updates.
   await row.click();
-  await page.waitForFunction(() => !window.makeshiftInspect().busy);
+  await page.waitForFunction(() => {
+    const state = window.makeshiftInspect();
+    return (
+      !state.busy && state.commands.every((command) => command.unavailable !== "Switching tools…")
+    );
+  });
 }
 
 export async function browseTools(page, category) {

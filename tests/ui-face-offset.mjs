@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import * as THREE from "three";
 import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
-import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { at, close, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -39,6 +39,7 @@ export async function makePlate(page) {
   await page.keyboard.press("Enter");
   await inspect(page);
   await page.keyboard.press("Enter");
+  await modalCompleted(page);
   const state = await inspect(page);
   close(state.document.bodies[0].volume, (400 - Math.PI * 1.5 ** 2) * 5);
   return state.document;
@@ -150,6 +151,7 @@ async function holeOffset(page, name, electron, cleanup = false) {
     );
   }
   await page.getByRole("button", { name: "Accept face offset", exact: true }).click();
+  await modalCompleted(page);
   close(
     (await inspect(page)).document.bodies[0].faces.find((f) => f.id === hole.id).cylinder.radius,
     2.5,

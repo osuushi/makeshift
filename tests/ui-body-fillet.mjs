@@ -3,7 +3,7 @@ import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { cleanupAvailabilityRoute, settledBroom } from "./ui-cleanup-availability.mjs";
 import { directionalWidgetRoute } from "./ui-directional-widget.mjs";
-import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { at, close, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function plate(page) {
@@ -21,6 +21,7 @@ export async function plate(page) {
   await page.keyboard.press("Enter");
   await inspect(page);
   await page.keyboard.press("Enter");
+  await modalCompleted(page);
   await inspect(page);
   await page.mouse.click(top.x, top.y);
   await page.keyboard.down("Shift");

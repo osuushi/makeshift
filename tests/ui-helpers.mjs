@@ -6,6 +6,13 @@ export async function settled(page) {
     return state && !state.busy && !state.camera.moving;
   });
 }
+// Native busy can end before an ordinary modal acceptance continuation finishes.
+export async function modalCompleted(page) {
+  await page.waitForFunction(() => {
+    const state = window.makeshiftInspect();
+    return !state.busy && state.interaction === null;
+  });
+}
 export async function inspect(page) {
   await settled(page);
   return page.evaluate(() => window.makeshiftInspect());
