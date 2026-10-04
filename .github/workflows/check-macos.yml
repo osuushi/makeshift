@@ -271,8 +271,6 @@ jobs:
           node tests/reopen-operation-guards-ui.mjs
           node tests/reopen-operation-guard-boundaries-ui.mjs
           node tests/reopen-operation-mirror-history-ui.mjs
-          node tests/command-readiness-ui.mjs
-          node tests/face-offset-readiness-ui.mjs
           node tests/widget-layout-dom.mjs
           npm run test:widget-reachability
           node tests/widget-reachability-ui.mjs adjacent

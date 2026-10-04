@@ -306,7 +306,6 @@ export class TopologyMoveControls {
       this.latest ?? this.verified ?? this.edit,
       this.lease?.phase !== "editing",
     );
-    this.currentTransform.position();
     const targets = movementTargets(this.editor, this.kind),
       key = JSON.stringify(targets);
     if (!this.lease && key !== this.selection) {

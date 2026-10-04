@@ -69,12 +69,6 @@ export class CurrentTransform {
     this.axis.textContent = `Axis: ${vector(edit.axis)}`;
     this.pivot.textContent = `Transform pivot: ${vector(edit.pivot)}`;
   }
-  position(): void {
-    if (this.root.hidden || !this.root.parentElement) return;
-    const origin = this.root.parentElement.getBoundingClientRect();
-    this.root.style.left = `${Math.max(12 - origin.x, Math.min(175, innerWidth - 12 - origin.x - this.root.offsetWidth))}px`;
-    this.root.style.top = `${Math.max(12 - origin.y, Math.min(65, innerHeight - 12 - origin.y - this.root.offsetHeight))}px`;
-  }
   reset(): void {
     this.root.hidden = true;
     this.root.open = false;
