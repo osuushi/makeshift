@@ -179,6 +179,8 @@ jobs:
           MAKESHIFT_TEST_BROWSER: webkit
         run: |
           npx playwright install webkit
+          node tests/preview-action-readiness-ui.mjs
+          node tests/preview-seed-readiness-ui.mjs
           node tests/command-readiness-ui.mjs
           node tests/face-offset-readiness-ui.mjs
           npm run test:current-tools

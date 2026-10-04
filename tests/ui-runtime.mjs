@@ -4,6 +4,7 @@ import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
 import { failureContext } from "./ui-failure-context.mjs";
+import { installProfilePickTrace } from "./ui-profile-pick-trace.mjs";
 import { installTestFrames } from "./ui-test-frames.mjs";
 
 export function runtimeNames(allowed = ["chromium", "webkit", "electron"], defaults = allowed) {
@@ -76,11 +77,15 @@ export async function withUiRuntimes(
           console.error(`${name}: renderer error`, error);
         });
         await page.waitForFunction(() => Boolean(window.makeshiftInspect));
+        await installProfilePickTrace(page);
         try {
           await route(page, name);
           assert.deepEqual(errors, []);
         } catch (error) {
-          console.error(`${name}: UI failure context`, await failureContext(page, errors));
+          console.error(
+            `${name}: UI failure context`,
+            JSON.stringify(await failureContext(page, errors), null, 2),
+          );
           throw error;
         }
       } finally {

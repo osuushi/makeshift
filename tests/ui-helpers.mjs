@@ -25,6 +25,18 @@ export async function reset(page) {
     .getByRole("button", { name: "Don’t Save", exact: true });
   if (await discard.isVisible()) await discard.click();
   await settled(page);
+  // Idle alone does not establish that ordinary New replaced the document.
+  await page.waitForFunction(() => {
+    const state = window.makeshiftInspect();
+    return (
+      !state.busy &&
+      !state.camera.moving &&
+      state.interaction === null &&
+      state.document.sketches.length === 0 &&
+      (state.document.bodies?.length ?? 0) === 0 &&
+      (state.document.constructionPlanes?.length ?? 0) === 0
+    );
+  });
   await page.reload();
   await settled(page);
 }

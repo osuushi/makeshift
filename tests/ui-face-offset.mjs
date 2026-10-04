@@ -4,6 +4,7 @@ import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { at, close, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import { relativeOffsetInput } from "./ui-offset-input.mjs";
+import { previewActionReady } from "./ui-preview-readiness.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function worldClick(page, xyz, shift = false) {
@@ -150,6 +151,7 @@ async function holeOffset(page, name, electron, cleanup = false) {
       await page.getByRole("button", { name: "Commit and clean up", exact: true }).isDisabled(),
     );
   }
+  await previewActionReady(page, "Accept face offset");
   await page.getByRole("button", { name: "Accept face offset", exact: true }).click();
   await modalCompleted(page);
   close(
