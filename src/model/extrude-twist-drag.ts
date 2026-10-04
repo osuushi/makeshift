@@ -84,7 +84,8 @@ class TwistDrag {
   private start(event: PointerEvent, kind: "origin" | "angle", button: HTMLButtonElement): void {
     const tool = this.tool,
       frame = tool.frame;
-    if (event.button || !frame?.coplanar || !tool.origin || !tool.begin()) return;
+    if (event.button || button.disabled || !frame?.coplanar || !tool.origin || !tool.begin())
+      return;
     event.preventDefault();
     event.stopPropagation();
     const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(

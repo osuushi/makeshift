@@ -54,6 +54,7 @@ export class DocumentOwner {
   get view(): ModelView {
     return {
       data: this.store.data,
+      ...this.solids.previewQuality(this.candidate ? this.pendingOperation?.kind : undefined),
       decoratorSources: this.decorators.sources,
       historySelection: this.store.selection,
       planeCutAvailable: this.planeCutAvailable,

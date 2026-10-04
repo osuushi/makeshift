@@ -10,6 +10,25 @@
 #include <cmath>
 #include <stdexcept>
 
+namespace {
+// A cylinder closed by equal-radius spherical caps is a capsule side, not a
+// rolling-ball fillet between independent supports. Its ordinary offset grows
+// the tangent caps with it through the existing spherical offset route.
+bool capsuleSide(const BRepAdaptor_Surface& surface, const BlendFace& blend) {
+    if (surface.GetType() != GeomAbs_Cylinder || blend.supports.size() != 2) return false;
+    const auto cylinder = surface.Cylinder();
+    for (const auto& face : blend.supports) {
+        BRepAdaptor_Surface support(face);
+        if (support.GetType() != GeomAbs_Sphere) return false;
+        const auto sphere = support.Sphere();
+        if (std::abs(sphere.Radius()-cylinder.Radius()) > 1e-7) return false;
+        const gp_Vec delta(cylinder.Location(),sphere.Location());
+        if (delta.Crossed(gp_Vec(cylinder.Axis().Direction())).Magnitude() > 1e-7) return false;
+    }
+    return true;
+}
+}
+
 std::vector<BlendFace> recognizeBlends(const TopoDS_Shape& shape) {
     TopTools_IndexedMapOfShape faces;
     TopExp::MapShapes(shape, TopAbs_FACE, faces);
@@ -39,7 +58,7 @@ std::vector<BlendFace> recognizeBlends(const TopoDS_Shape& shape) {
                     blend.supports.push_back(other);
             }
         }
-        if (blend.supports.size() >= 2) result.push_back(blend);
+        if (blend.supports.size() >= 2 && !capsuleSide(surface, blend)) result.push_back(blend);
     }
     return result;
 }

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
+import { hold } from "./ui-overlap-gesture.mjs";
 import { browseTools, chooseTool } from "./ui-tools.mjs";
 
 export async function clearSelection(page) {
@@ -16,7 +17,7 @@ export async function pickAt(page, point, view) {
   await page.mouse.click(p.x, p.y);
   return inspect(page);
 }
-export async function pickFace(page, face) {
+export async function pickFace(page, face, chooser = false) {
   let area = -1,
     center,
     normal;
@@ -34,8 +35,19 @@ export async function pickFace(page, face) {
     normal = n.map((x) => x / size);
     center = a.map((x, j) => (x + b[j] + c[j]) / 3);
   }
-  const state = await pickAt(page, center, normal);
-  assert.equal(state.modelingSelection[0]?.face, face.id);
+  if (chooser) {
+    // A narrow face can share the rim's pointer hit region. Use the same explicit
+    // choice a user makes when the ordinary click prefers that nearby edge.
+    await clearSelection(page);
+    await orient(page, normal);
+    await hold(page, await project(page, center));
+    await page
+      .getByRole("dialog", { name: "Choose overlapping geometry" })
+      .locator(`[data-kind="face"][data-key="${face.id}"]`)
+      .hover();
+    await page.mouse.up();
+  } else await pickAt(page, center, normal);
+  assert.equal((await inspect(page)).modelingSelection[0]?.face, face.id);
 }
 export async function startMove(page) {
   await page.keyboard.press("m");

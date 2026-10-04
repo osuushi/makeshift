@@ -1,14 +1,33 @@
 #include "extrude-twist-curves.h"
+#include "circular-rim.h"
 #include <Approx_CurvilinearParameter.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
+#include <BRepBuilderAPI_NurbsConvert.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepTools_WireExplorer.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <TopExp.hxx>
 #include <TopoDS.hxx>
 #include <stdexcept>
+
+std::optional<gp_Pnt> twistCircleCenter(const TopoDS_Wire& wire) {
+    BRepTools_WireExplorer e(wire);
+    if (!e.More()) return {};
+    const auto circle = circularRim(e.Current());
+    if (!circle) return {};
+    e.Next();
+    if (e.More()) return {};
+    return circle->Location();
+}
+
+TopoDS_Wire twistLoftSection(const TopoDS_Wire& wire) {
+    // ThruSections approximates conics before lofting. Supplying the exact
+    // rational circle avoids its high-degree polynomial full-circle fit.
+    return twistCircleCenter(wire)
+        ? TopoDS::Wire(BRepBuilderAPI_NurbsConvert(wire, true).Shape()) : wire;
+}
 
 TopoDS_Wire twistSectionParameters(const TopoDS_Wire& wire) {
     // MakeDraft's section curves do not share the original Bézier parameter

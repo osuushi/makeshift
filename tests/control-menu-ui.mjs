@@ -1,14 +1,16 @@
 import assert from "node:assert/strict";
 import { chromium, webkit } from "playwright";
-import { createServer } from "vite";
+import { createServer, preview } from "vite";
 import { cameraRoute } from "./ui-camera.mjs";
 import { drag, inspect, reset } from "./ui-helpers.mjs";
 import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const names = runtimeNames(["chromium", "webkit"]);
-const server = await createServer({ server: { port: 0 } });
-await server.listen();
+const server = process.env.WEB_MODE
+  ? await preview({ mode: "web", preview: { port: 0 } })
+  : await createServer({ server: { port: 0 } });
+if ("listen" in server) await server.listen();
 try {
   for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) =>
     names.includes(name),
@@ -16,6 +18,7 @@ try {
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
+      page.on("dialog", (dialog) => dialog.accept());
       const errors = [];
       page.on("pageerror", (error) => errors.push(error.message));
       await page.goto(server.resolvedUrls.local[0]);
@@ -108,5 +111,6 @@ try {
     }
   }
 } finally {
-  await server.close();
+  if ("close" in server) await server.close();
+  else await new Promise((resolve) => server.httpServer.close(resolve));
 }

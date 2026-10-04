@@ -7,6 +7,7 @@ import { continueBodyMetadata } from "./body-metadata.js";
 import { pathSweepInput } from "./kernel-input.js";
 import { materialize } from "./kernel-result.js";
 import type { NativeSolver } from "./native-solver.js";
+import { scriptMeshFit } from "./script-mesh-fit.js";
 import { scriptModelingOperation } from "./script-modeling-operation.js";
 import { scriptSolidTool } from "./script-solid-tools.js";
 import { resolveTagOperation } from "./script-tags.js";
@@ -29,6 +30,7 @@ export async function scriptOperation(
 ): Promise<{ document: SketchDocument; result: ScriptResult }> {
   if (!operation || typeof operation !== "object" || !operation.input)
     throw new Error("Invalid script operation");
+  if (operation.kind === "fitMesh") return scriptMeshFit(document, operation.input, kernel);
   if (operation.kind === "taggedGroups") return { document, result: document.taggedGroups ?? [] };
   if (operation.kind === "editTaggedGroup") {
     const next = editTags(document, operation.input);

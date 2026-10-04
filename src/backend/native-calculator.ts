@@ -1,4 +1,5 @@
 import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process";
+import { resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { calculationTimeoutMs } from "../model/calculation-limits.js";
 
@@ -14,7 +15,13 @@ export class NativeCalculator<Input, Output> {
     private executable: string,
     private name: string,
     private deadlineMs = calculationTimeoutMs,
-  ) {}
+  ) {
+    this.executable = resolve(
+      process.platform === "win32" && !executable.endsWith(".exe")
+        ? `${executable}.exe`
+        : executable,
+    );
+  }
   private start(): void {
     const child = spawn(this.executable, [], { stdio: "pipe", windowsHide: true });
     this.child = child;

@@ -6,6 +6,17 @@ import { profilesFor } from "../src/sketch/profiles.js";
 
 type Probe = readonly [number, number, number, boolean];
 const probes: Record<string, readonly Probe[]> = {
+  "section-bores": [
+    [-7, 0, 6, false],
+    [-3.5, 0, 6, false],
+    [-2.2, 0, 6, true],
+    [7, 0, 6, false],
+    [9.9, 0, 6, false],
+    [10.8, 0, 6, true],
+    [0, 7, 1.7, true],
+    [0, 7, 0.8, false],
+  ],
+
   "long-thin-fin": [
     [30, 10, 5, false],
     [10, 10, 5, true],

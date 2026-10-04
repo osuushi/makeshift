@@ -34,7 +34,13 @@
     "package:mac": "npm run build && npm run release:prepare && electron-forge package --platform=darwin --arch=arm64",
     "make:mac": "npm run build && npm run release:prepare && electron-forge make --platform=darwin --arch=arm64",
     "test:release": "node --test tests/release-metadata.mjs",
-    "setup:mesh": "node scripts/setup-mesh.mjs"
+    "setup:mesh": "node scripts/setup-mesh.mjs",
+    "build:wasm": "node scripts/web/build-wasm.mjs",
+    "build:web": "npm run build:wasm && vite build --mode web && node scripts/web/notices.mjs",
+    "preview:web": "vite preview --mode web --host 127.0.0.1",
+    "test:web": "node tests/web-mode.mjs",
+    "size:web": "node scripts/web/size.mjs",
+    "release:web": "node scripts/web/release.mjs"
   },
   "dependencies": {
     "@jitl/quickjs-wasmfile-release-sync": "0.32.0",

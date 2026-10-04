@@ -346,3 +346,14 @@ Its own finite-domain validation is a product decision: supporting-line/circle
 incidence must not accept a point outside the visible segment or arc. Native
 fixtures now verify both initial selection orders, later solved edits and Undo
 for line, circle and arc targets. Pointer acceptance is tracked in the current brief.
+
+## Single-threaded WASM port, 2026-10-03
+
+Source observation: `System::diagnose()` launches both QR variants using
+[`std::async` with the default policy](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Sketcher/App/planegcs/GCS.cpp#L4937),
+then waits for the result. Makeshift adaptation: explicitly use
+`std::launch::deferred` under Emscripten so that the same numerical work executes
+on the calculator worker without pthreads or cross-origin isolation. Native
+builds retain the original policy. Runtime evidence: initialization stalled
+without this change; actual Chromium and WebKit rectangle creation, constraint
+application, dimension editing and extrusion now complete.

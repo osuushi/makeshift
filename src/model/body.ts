@@ -119,10 +119,16 @@ export interface BodyShell {
 
 /** Whole-body erosion; resulting bodies have independent geometry identities. */
 export interface BodyErosion {
+  /** Remesh uses mesh erosion and reconstruction; Analytic uses CAD offsets. Defaults to Remesh. */
+  method?: "fast" | "accurate";
   /** Retain inputs alongside new eroded bodies. Defaults to true. */
   keepOriginals?: boolean;
   ids: string[];
   thickness: number;
-  /** Maximum extra erosion, shared by simplification and reconstruction, in mm. */
-  allowance: number;
+  /** Analytic only: maximum extra erosion in mm. Defaults to zero; ignored by Remesh. */
+  allowance?: number;
+  /** Remesh only: geometry-sensitive sampling detail. Defaults to Standard. */
+  meshDetail?: "coarse" | "standard" | "fine";
+  /** Remesh only: maximum CAD faces per source body, 32–256. Defaults to 128. */
+  maxFaces?: number;
 }

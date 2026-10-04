@@ -11,6 +11,7 @@ import type {
   Revolution,
 } from "../model/body.js";
 import type { Loft } from "../model/loft.js";
+import type { MeshFitInput, MeshFitStatistics } from "../model/mesh-fit.js";
 import type { PathSweep } from "../model/path-sweep.js";
 import type { PlaneCut } from "../model/plane-cut.js";
 import type { ScaleOperation } from "../model/scale.js";
@@ -36,6 +37,9 @@ export interface SketchResult {
 export interface SolidResult {
   bodies: { id: string; volume: number; faces: string[]; edges: string[] }[];
 }
+export interface MeshFitResult extends SolidResult {
+  fit: MeshFitStatistics;
+}
 export interface PlaneInput {
   id?: string;
   frame: PlaneFrame;
@@ -52,11 +56,14 @@ export type ScriptResult =
   | BodyTopology
   | SketchResult
   | SolidResult
+  | MeshFitResult
   | ScaleResult
   | PlaneResult
   | { removed: string };
 /** All distances are mm, angles degrees. Await each call; parallel edits reject. */
 export interface ScriptApi extends DecoratorScriptApi, TagScriptApi {
+  /** Fit shared bicubic surfaces to a triangle mesh using a supplied closed quad layout. */
+  fitMesh(input: MeshFitInput): Promise<MeshFitResult>;
   topology(input: { body: string }): Promise<BodyTopology>;
   replaceFace(input: FaceReplacement): Promise<SolidResult>;
   /** Omit id to create; supply an existing plane id to reposition. Frames are copied. */
@@ -92,6 +99,7 @@ export interface ScriptApi extends DecoratorScriptApi, TagScriptApi {
   transformBodies(input: BodyTransform): Promise<SolidResult>;
 }
 export type ScriptOperation =
+  | { kind: "fitMesh"; input: MeshFitInput }
   | TagScriptOperation
   | { kind: "topology"; input: { body: string } }
   | { kind: "replaceFace"; input: FaceReplacement }

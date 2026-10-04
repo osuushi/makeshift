@@ -1,0 +1,10 @@
+{
+  "name": "Makeshift",
+  "short_name": "Makeshift",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8f9fb",
+  "theme_color": "#f8f9fb",
+  "icons": [{ "src": "./apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }]
+}

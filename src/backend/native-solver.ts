@@ -1,14 +1,8 @@
-import { resolve } from "node:path";
 import { NativeCalculator } from "./native-calculator.js";
 import type { SolverInput, SolverResult } from "./solver-input.js";
 
 export class NativeSolver extends NativeCalculator<SolverInput, SolverResult> {
-  constructor(
-    executable = resolve(
-      ".build/solver/bin",
-      process.platform === "win32" ? "makeshift-solver.exe" : "makeshift-solver",
-    ),
-  ) {
+  constructor(executable = ".build/solver/bin/makeshift-solver") {
     super(executable, "Sketch solver");
   }
   solve(input: SolverInput): Promise<SolverResult> {

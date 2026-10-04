@@ -51,7 +51,12 @@ export async function openDocument(page, file) {
   if (!session) {
     const chooser = page.waitForEvent("filechooser");
     await chooseTool(page, "open document", "open");
-    return (await chooser).setFiles(file);
+    await (await chooser).setFiles(file);
+    const discard = page
+      .getByRole("dialog", { name: "Unsaved changes" })
+      .getByRole("button", { name: "Don’t Save", exact: true });
+    if (await discard.isVisible()) await discard.click();
+    return;
   }
   let path = file;
   if (typeof file !== "string") {
@@ -68,6 +73,10 @@ export async function openDocument(page, file) {
 export async function saveDocument(page, path) {
   const session = sessions.get(page);
   if (!session) {
+    // Exercise the download path without opening an OS save panel in a headless test.
+    await page.evaluate(() => {
+      window.showSaveFilePicker = undefined;
+    });
     const downloaded = page.waitForEvent("download");
     await chooseTool(page, "save document", "save");
     await (await downloaded).saveAs(path);

@@ -1,0 +1,76 @@
+.mesh-import-widget {
+  position: absolute;
+  right: 24px;
+  bottom: 70px;
+  width: 268px;
+  max-width: calc(100vw - 48px);
+  max-height: calc(100vh - 150px);
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid var(--border, #d7dee8);
+  border-radius: 12px;
+  background: var(--panel, #fff);
+  color: var(--text, #26394c);
+  box-shadow: 0 5px 24px #24364c1a;
+  pointer-events: auto;
+  font:
+    13px system-ui,
+    sans-serif;
+}
+.mesh-import-widget[hidden] {
+  display: none;
+}
+.mesh-import-widget strong {
+  display: block;
+  overflow-wrap: anywhere;
+  margin-bottom: 12px;
+}
+.mesh-import-widget label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 8px 0;
+}
+.mesh-import-widget input,
+.mesh-import-widget select {
+  width: 126px;
+  padding: 6px;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid #b8c5d5;
+  border-radius: 5px;
+}
+.mesh-import-widget p {
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.mesh-import-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+.mesh-import-actions button {
+  padding: 7px 9px;
+  border: 1px solid #b8c5d5;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.mesh-import-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.mesh-import-legend {
+  display: block;
+  border-top: 6px solid;
+  border-image: linear-gradient(to right, #246db5, #e69720) 1;
+  padding-top: 5px;
+  line-height: 1.4;
+}
+.mesh-import-legend[hidden] {
+  display: none;
+}

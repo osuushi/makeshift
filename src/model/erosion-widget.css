@@ -1,5 +1,5 @@
 .erosion-widget .axial-panel {
-  width: 190px;
+  width: 330px;
   max-width: calc(100vw - 24px);
   box-sizing: border-box;
   white-space: normal;
@@ -8,7 +8,18 @@
   display: block;
   padding-top: 5px;
 }
-.erosion-status {
+.erosion-widget select {
+  width: 100%;
+  min-height: 30px;
+  margin-bottom: 3px;
+  color: inherit;
+  background: transparent;
+  border: 1px solid #bdccdc;
+  border-radius: 6px;
+  font: inherit;
+}
+.erosion-status,
+.erosion-quality {
   display: block;
   padding: 5px 0;
   line-height: 1.4;

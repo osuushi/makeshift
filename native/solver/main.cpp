@@ -207,4 +207,5 @@ int main() {
             std::cout << '\n' << std::flush;
         }
     }
+    return 0;
 }

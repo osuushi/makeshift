@@ -10,7 +10,7 @@ async function erode(owner: DocumentOwner, body: Body, thickness: number, allowa
   const before = owner.view.data;
   const result = await owner.call({
     kind: "erode",
-    operation: { ids: [body.id], thickness, allowance },
+    operation: { method: "accurate", ids: [body.id], thickness, allowance },
   });
   assert.equal(result.error, undefined);
   assert.deepEqual(result.view.data, before);
@@ -169,7 +169,10 @@ test("verified disappearance is valid and invalid requests cannot reuse a stale 
       { ids: [body.id, body.id], thickness: 0.4, allowance: 0.1 },
       { ids: ["missing"], thickness: 0.4, allowance: 0.1 },
     ]) {
-      const rejected = await owner.call({ kind: "erode", operation });
+      const rejected = await owner.call({
+        kind: "erode",
+        operation: { ...operation, method: "accurate" },
+      });
       assert.ok(rejected.error);
       assert.equal(rejected.view.candidate, null);
       assert.deepEqual(rejected.view.data, before);
@@ -188,7 +191,7 @@ test("script erosion creates ordinary copies atomically and invalid input preser
     owner.beginScript("cavity.ts");
     await owner.scripts.step({
       kind: "erode",
-      input: { ids: [body.id], thickness: 1, allowance: 0 },
+      input: { ids: [body.id], thickness: 1, allowance: 0, method: "accurate" },
     });
     assert.equal(owner.view.data, before);
     assert.equal(owner.scripts.finish(), true);
@@ -201,7 +204,7 @@ test("script erosion creates ordinary copies atomically and invalid input preser
     await assert.rejects(() =>
       owner.scripts.step({
         kind: "erode",
-        input: { ids: [body.id], thickness: 1, allowance: -1 },
+        input: { ids: [body.id], thickness: 1, allowance: -1, method: "accurate" },
       }),
     );
     await owner.scripts.cancel();
@@ -256,6 +259,7 @@ test("erosion can replace originals, including a verified empty result, in one U
       const reply = await owner.call({
         kind: "erode",
         operation: {
+          method: "accurate",
           ids: [source.id],
           thickness,
           allowance: 0.1,

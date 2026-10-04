@@ -912,6 +912,41 @@ numerical projection; it is not fitted approximation or weaker validation.
 Makeshift implementation uses the library API; no upstream code was copied.
 Runtime checks and measured timings belong in test results and the local brief.
 
+## Circular twist representation (2026-10-03)
+
+Source observation at configured OCCT commit
+`a016080bf6738d6aeae020badee4e888ad1540a5`:
+[`BRepOffsetAPI_ThruSections::EdgeToBSpline`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepOffsetAPI/BRepOffsetAPI_ThruSections.cxx#L1064-L1134)
+tries a `GeomConvert_ApproxCurve` fit for conics with degree limit 14 before
+falling back to rational conversion. Its
+[`TotalSurf`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepOffsetAPI/BRepOffsetAPI_ThruSections.cxx#L1253-L1286)
+constructs the loft from these prepared section splines. Existing public
+[`BRepBuilderAPI_NurbsConvert::Perform`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepBuilderAPI/BRepBuilderAPI_NurbsConvert.cxx#L47-L54)
+uses [`BRepTools_NurbsConvertModification::NewCurve`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepTools/BRepTools_NurbsConvertModification.cxx#L420-L478)
+to supply rational geometry before that conic-only branch. No upstream code was
+copied; these APIs belong to the already linked OCCT component.
+
+Makeshift inference: full circular sections can move their centers around an
+off-center twist axis while keeping their own seam orientation fixed. Their own
+spin does not change the section geometry. Supply exact rational circles to the
+smooth loft, retaining independent analytic mid-station samples and unchanged
+solid/interference checks. Centered circles/concentric circular boundaries use
+ordinary extrusion/draft. Rational quadratic rim recognition supplies a
+circle descriptor after per-knot-span radial/planar checks at 1e-8 mm; it changes
+neither accepted BRep curves nor their tolerances.
+
+Runtime observation on a fresh 10 mm-radius, 20 mm-deep circle twisted 90° around
+an axis displaced 5 mm: loft/accuracy/solid checks took roughly 40 ms, but two
+span-based volume calls accounted for almost all of a 35-second round trip.
+Fixed seams alone still took about 32 seconds. Rational sections reduced the
+round trip to about 2.9 seconds; profiling separates roughly 1 ms bounds queries
+from roughly 1.43-second integration calls. The result retains one periodic wall
+and two caps, with fewer display triangles. This establishes a representation
+bottleneck for the repro, not that volume integration is generally fast or that
+all circular sweeps are instantaneous. Native checks cover signed/multiple turns,
+draft, independent mid-height mesh sections, history, archive regeneration and
+subsequent cap extrusion.
+
 ## Sweep validation performance (2026-09-21)
 
 Source observation at the same pinned OCCT commit: [`BRepExtrema_ExtPF::Initialize/Perform`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepExtrema/BRepExtrema_ExtPF.cxx#L41-L108)
@@ -1043,7 +1078,19 @@ Independent point-classification probes compare original material with the
 returned pieces, supplementing the scalar-volume and closed-solid checks.
 These numerical checks are not a general proof of arbitrary split correctness.
 
+The 2026-10-03 Fast erosion workflow exposed a related case: a nested cavity wall
+returned a tiny negative face error (about -2.4e-21) from the nearest exterior plane.
+Source observation: the pinned
+[`volumePropertiesGK` face loop](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepGProp/BRepGProp.cxx#L630-L648)
+aborts on any negative face error before accumulating the remaining faces. Taking
+its absolute value would therefore accept incomplete mass properties. Makeshift
+instead retries distinct exterior reference planes at the same 1e-10 requested
+accuracy and rejects if every reference fails. Runtime verification includes the
+captured wall's subtraction-volume identity and Save/Open; exact STEP readback is
+also part of that regression route. No upstream implementation was copied.
+
 ## Rounded offset join precision (2026-09-23)
+
 
 Source observation at pinned OCCT `a016080bf6738d6aeae020badee4e888ad1540a5`:
 [`BRepOffset_MakeOffset` edge-pipe construction](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepOffset/BRepOffset_MakeOffset.cxx#L1995)
@@ -1097,3 +1144,93 @@ an inaccurate neighboring single-loop fill carrying a roughly 0.0059 mm vertex
 bound; reversing the edit then merged endpoints around a 0.0006 mm span. The ruled
 construction and measured boundary precision checks allow that move and its
 reverse after reopening, without increasing tolerances or relying on edit history.
+
+## Shared bicubic mesh reconstruction (2026-10-02)
+
+Source observation at configured OCCT commit
+`a016080bf6738d6aeae020badee4e888ad1540a5`:
+[`Geom_BezierSurface::Geom_BezierSurface`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/Geom/Geom_BezierSurface.hxx)
+accepts a rectangular array of poles, with polynomial degree one less than the
+pole count in each direction. A 4-by-4 array therefore represents a bicubic patch.
+[`BRepBuilderAPI_Sewing`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepBuilderAPI/BRepBuilderAPI_Sewing.hxx)
+accepts a connectivity tolerance and exposes free-edge and multiple-edge counts.
+These observations use public API declarations; no upstream implementation was copied.
+
+Makeshift inference: jointly fitted shared boundary poles allow the fitting
+allowance and kernel sewing tolerance to remain independent. Sewing alone does
+not certify target approximation, normal continuity, or solid validity. The
+mesh-fitting operation measures these separately and passes the assembled solid
+through the existing strict B-rep checks. See the current
+[mesh-fitting contract](../architecture/mesh-fitting.md) for sampling limitations.
+
+
+Automatic layout research: Kazhdan, Solomon and Ben-Chen, *Can Mean-Curvature
+Flow Be Modified to Be Non-singular?* (2012),
+[doi:10.1111/j.1467-8659.2012.03179.x](https://doi.org/10.1111/j.1467-8659.2012.03179.x),
+describes a conformalized flow using fixed stiffness and changing mass matrices.
+Makeshift implements that numerical idea independently with a consistent triangle
+mass matrix and a matrix-free conjugate-gradient solve. No upstream code was copied.
+
+Makeshift inference: a sphere map can transfer a coarse cube quad grid to a
+closed genus-zero target, but angle-preserving maps can compress bent extremities
+and undersample them. Makeshift adds its own spherical triangle area-distortion
+objective with orientation-preserving backtracking. Runtime tests on independently
+tessellated bent and waisted meshes support this bounded sampling strategy; neither
+the paper nor those tests guarantee mapping or reconstruction of arbitrary meshes.
+
+
+## Analytic mesh recovery (2026-10-02)
+
+Source observation at configured OCCT commit
+`a016080bf6738d6aeae020badee4e888ad1540a5`:
+[`BRepPrimAPI_MakeSphere`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepPrimAPI/BRepPrimAPI_MakeSphere.hxx)
+accepts a center and radius;
+[`BRepPrimAPI_MakeCylinder`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepPrimAPI/BRepPrimAPI_MakeCylinder.hxx)
+accepts a placed axis, radius and height and constructs a cylindrical side with
+planar caps. These are inspected public declarations, not copied implementations.
+
+Makeshift inference: fitting analytic parameters directly to the original mesh
+avoids compounding a previous bicubic approximation's error. A complete candidate
+still needs bidirectional checks against the faceted mesh and the ordinary strict
+solid checks; vertex agreement alone misses triangle chord error. Constructing
+compatible capsule supports together also avoids independently fitted mismatched
+equators. Runtime tests recover independently tessellated spheres, cylinders and
+capsules, including rotated/scaled inputs, and retain or reject distorted geometry
+instead of forcing it onto an analytic support. General regional segmentation and
+analytic/freeform joins are not established by those tests.
+
+## Bézier bounds and boundary reconnection (2026-10-02)
+
+Source observations at configured OCCT commit
+`a016080bf6738d6aeae020badee4e888ad1540a5`:
+[`BRepAdaptor_Surface::Bezier`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepAdaptor/BRepAdaptor_Surface.cxx#L290)
+returns a transformed copy of the surface.
+[`Geom_BezierSurface::Segment`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/Geom/Geom_BezierSurface.cxx#L917)
+reparameterizes a bounded portion through its pole representation.
+[`GeomFill_BezierCurves`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/GeomFill/GeomFill_BezierCurves.hxx)
+accepts contiguous polynomial boundary curves and a Coons filling style. These
+observations informed use of public APIs; no upstream implementation was copied.
+
+The same pinned source's
+[`GeomFill_BSplineCurves::Init`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/GeomFill/GeomFill_BSplineCurves.cxx#L294)
+arranges four contiguous spline boundaries, raises opposite degrees and aligns
+knot distributions before constructing a Coons surface. Makeshift uses this public
+API for nonrational multi-span boundaries; it does not copy the implementation or
+relax the existing boundary, correspondence or solid-validity checks. General
+rational-boundary interpolation is outside this path.
+
+Makeshift inference: nonrational subpatch control hulls enclose every surface point,
+so their boxes can accelerate conservative distance and crossing bounds. An actual
+point classified on a trimmed face supplies an independent upper bound. Runtime
+native tests compare these bounds to exact extrema on trimmed faces under both
+located and copied transformations, and ensure actual surface crossings remain
+possible. Bounds neither certify mesh fitting nor enlarge Erode's allowance.
+
+Runtime observation: general plate filling did not meet a moved reconstructed
+cubic face's neighboring rims within the existing boundary budget. Four-boundary
+polynomial interpolation permits a nonzero local face move and subsequent cavity
+subtraction. The captured periodic Remesh interior also passes nonzero face movement,
+Save/Open and final cavity subtraction after extending the exact construction to
+multi-span B-spline rims. Boundary correspondence, solid validity and persistence
+checks remain required; this construction alone promises neither tangent continuity
+nor a valid result for every edit.

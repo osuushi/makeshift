@@ -54,7 +54,52 @@ const twist = (angle, profile = square, offset = 0) => ({
   mode: "new",
   bodies: [],
 });
+const circle = {
+  outer: [{ kind: "circle", center: [0, 0, 0], radius: 10, normal: [0, 0, 1], axis: [1, 0, 0] }],
+  holes: [],
+};
+// Four exact quarter circles with short straight joins, as from sketch fillets.
+const roundedSquare = {
+  outer: [
+    { kind: "line", a: [-1, -10, 0], b: [1, -10, 0] },
+    {
+      kind: "arc",
+      a: [1, -10, 0],
+      mid: [1 + 9 / Math.sqrt(2), -1 - 9 / Math.sqrt(2), 0],
+      b: [10, -1, 0],
+    },
+    { kind: "line", a: [10, -1, 0], b: [10, 1, 0] },
+    {
+      kind: "arc",
+      a: [10, 1, 0],
+      mid: [1 + 9 / Math.sqrt(2), 1 + 9 / Math.sqrt(2), 0],
+      b: [1, 10, 0],
+    },
+    { kind: "line", a: [1, 10, 0], b: [-1, 10, 0] },
+    {
+      kind: "arc",
+      a: [-1, 10, 0],
+      mid: [-1 - 9 / Math.sqrt(2), 1 + 9 / Math.sqrt(2), 0],
+      b: [-10, 1, 0],
+    },
+    { kind: "line", a: [-10, 1, 0], b: [-10, -1, 0] },
+    {
+      kind: "arc",
+      a: [-10, -1, 0],
+      mid: [-1 - 9 / Math.sqrt(2), -1 - 9 / Math.sqrt(2), 0],
+      b: [-1, -10, 0],
+    },
+  ],
+  holes: [],
+};
+const circularTwist = (profile, origin) => ({
+  ...twist(90, profile),
+  twist: { angle: 90, origin },
+});
 const cases = [
+  ["circle-centered", circularTwist(circle, [0, 0, 0])],
+  ["circle-offset", circularTwist(circle, [5, 0, 0])],
+  ["rounded-square-offset", circularTwist(roundedSquare, [5, 0, 0])],
   ["revolve-360", revolve(360, 0)],
   ["helix-2", revolve(720, 2)],
   ["helix-18", revolve(6480, 18)],

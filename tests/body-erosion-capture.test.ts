@@ -19,7 +19,10 @@ for (const name of captures) {
         undefined,
       );
       const original = owner.view.data;
-      const result = await owner.call({ kind: "erode", operation: fixture.operation });
+      const result = await owner.call({
+        kind: "erode",
+        operation: { ...fixture.operation, method: "accurate" },
+      });
       assert.equal(result.error, undefined);
       assert.equal(result.view.data, original);
       const previous = new Set(original.bodies?.map((body) => body.id));
@@ -30,7 +33,7 @@ for (const name of captures) {
       assert.ok(body.faces.length <= 12, "Output remains compact, editable CAD geometry");
       assert.ok(body.faces.some((face) => face.cylinder));
       const t = fixture.operation.thickness,
-        e = fixture.operation.allowance;
+        e = fixture.operation.allowance ?? 0;
       assert.ok(body.bounds[2] >= t - 1e-6 && body.bounds[2] <= t + e + 1e-6);
       assert.ok(body.bounds[5] <= 34 - t + 1e-6 && body.bounds[5] >= 34 - t - e - 1e-6);
       if (name === "rounded-cylinder") {

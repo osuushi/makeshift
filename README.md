@@ -162,3 +162,9 @@ see the [development guide](docs/development.md).
 
 Contributors can start with the [architecture overview](docs/architecture.md)
 and [development process](docs/development-process.md).
+
+## Standalone web target
+
+See [web build and release](docs/web-build.md) for the local WASM build, static preview,
+Chromium/WebKit checks and independent GitHub Pages deployment. Web mode omits the
+agent pane and uses browser `.makeshift` opening/saving.

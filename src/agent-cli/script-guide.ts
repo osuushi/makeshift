@@ -1,4 +1,5 @@
 import { decoratorGuide } from "./decorator-guide.js";
+import { meshFitGuide } from "./mesh-fit-guide.js";
 import { topologyGuide } from "./topology-guide.js";
 export const scriptGuide = `
 Tagged groups: makeshift.taggedGroups() lists named face/edge sets, current members and
@@ -18,7 +19,11 @@ TypeScript compiler checks a source snapshot before execution; no separate Node 
 TypeScript install is needed. The global makeshift object has the API printed by makeshift types.
 Topology calls are topology and replaceFace; see the topology section below.
 Available modeling calls are createSketch, extrude, revolve, loft, moveFaces, offsetFaces, transformBodies,
-constructionPlane, deleteConstructionPlane, splitBody, imprint, scale, sweep, booleanBodies, finishEdges and shell.
+constructionPlane, deleteConstructionPlane, splitBody, imprint, scale, sweep, booleanBodies, finishEdges, shell and erode.
+erode takes ids, thickness in mm, optional keepOriginals (default true), and method: "fast" (default) or "accurate".
+Remesh uses target thickness, meshDetail ("coarse", "standard", "fine"; default "standard") and maxFaces (32–256; default 128).
+Remesh reconstructs an approximate inward level set as editable CAD; thickness is not a guaranteed minimum.
+Analytic uses minimum thickness plus allowance (maximum extra thickness in mm; default zero), and verifies both bounds.
 Decorator calls are decorators, inspectDecorator, editDecorator, editDecoratorDefinition and enableDecorator.
 Loft takes 2–256 ordered sources, ruled:false for Smooth or true for Ruled, and mode/targets.
 Optional alignment is one integer seam step per source after automatic correspondence.
@@ -182,5 +187,6 @@ the script does not silently accept a clamped offset. Run makeshift inspect/rend
 completion to check the accepted result.
 
 ${topologyGuide}
+${meshFitGuide}
 ${decoratorGuide}
 `;

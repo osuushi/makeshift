@@ -3,6 +3,7 @@ import type { DisplayDocument } from "../model/display-document.js";
 import { InteractionHistory } from "./interaction-history.js";
 
 type Kind =
+  | "mesh-import"
   | "tag-membership"
   | "entity-reorder"
   | "scale"

@@ -9,5 +9,5 @@
     "allowImportingTsExtensions": false,
     "types": ["node"]
   },
-  "include": ["tests/*.test.ts"]
+  "include": ["tests/*.test.ts", "src/agent-cli/script-worker.ts"]
 }

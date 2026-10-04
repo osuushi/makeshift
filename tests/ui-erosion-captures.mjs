@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { openDocument } from "./native-documents.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
+import { accurateErosion } from "./ui-erosion-method.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -21,12 +22,12 @@ export async function erosionCapturesRoute(page, runtime) {
       .getByRole("button", { name: /^Select Body / })
       .first()
       .click();
-    await chooseTool(page, "erode", "erode");
+    await accurateErosion(page);
     await page
       .getByRole("textbox", { name: "Extra thickness allowance", exact: true })
       .fill(String((fixture.operation.allowance / fixture.operation.thickness) * 100));
     await page
-      .getByRole("textbox", { name: "Minimum thickness", exact: true })
+      .getByRole("textbox", { name: "Erode by", exact: true })
       .fill(String(fixture.operation.thickness));
     const preview = await inspect(page);
     assert.ok(preview.preview, `${name}: ${await page.locator(".erosion-widget").textContent()}`);

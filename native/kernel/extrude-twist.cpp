@@ -125,6 +125,13 @@ struct Sections {
         }
         if (offset != 0 && !analytic()) contour = twistSectionParameters(contour);
         gp_Trsf transform; transform.SetRotation(axis, angle * t);
+        if (const auto center = twistCircleCenter(contour)) {
+            // A circular section's spin changes only its seam, not its geometry.
+            // Keep corresponding rim parameters fixed while its center orbits.
+            // This avoids a needlessly twisted periodic loft surface.
+            const auto moved = center->Transformed(transform);
+            transform.SetTranslation(gp_Vec(*center, moved));
+        }
         transform.SetTranslationPart(gp_Vec(transform.TranslationPart()) + travel * t);
         return TopoDS::Wire(BRepBuilderAPI_Transform(contour, transform, true).Shape());
     }
@@ -165,7 +172,7 @@ TopoDS_Shape sweepBoundary(const Sections& sections) {
         loft.SetParType(Approx_IsoParametric);
         loft.SetMaxDegree(8);
         loft.SetContinuity(GeomAbs_C2);
-        for (int i = 0; i <= count; ++i) loft.AddWire(sections.at(double(i) / count));
+        for (int i = 0; i <= count; ++i) loft.AddWire(twistLoftSection(sections.at(double(i) / count)));
         timing.phase("sections");
         loft.Build();
         timing.phase("loft");
@@ -194,6 +201,12 @@ TopoDS_Shape extrudeTwist(const TopoDS_Face& face, const gp_Vec& travel, const T
         throw std::runtime_error("Twist axis origin must lie in every source plane");
     const auto n = point(input.get_child("normal"));
     const gp_Ax1 axis(origin, gp_Dir(n.X(), n.Y(), n.Z()));
+    bool invariant = true;
+    for (TopExp_Explorer e(face, TopAbs_WIRE); e.More(); e.Next()) {
+        const auto center = twistCircleCenter(TopoDS::Wire(e.Current()));
+        invariant &= center && center->Distance(origin) <= tolerance;
+    }
+    if (invariant) return extrudeDraft(face, travel, input);
     const double angle = degrees * std::numbers::pi / 180;
     const double offset = extrusionDraftOffset(travel, input);
     const auto outer = BRepTools::OuterWire(face);

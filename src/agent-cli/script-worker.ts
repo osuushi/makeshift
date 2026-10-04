@@ -33,6 +33,7 @@ process.on(
       } else waiting?.resolve(message.value);
     } else if (message.kind === "start") {
       const api: ScriptApi = {
+        fitMesh: (input) => call({ kind: "fitMesh", input }) as ReturnType<ScriptApi["fitMesh"]>,
         taggedGroups: () =>
           call({ kind: "taggedGroups", input: {} }) as ReturnType<ScriptApi["taggedGroups"]>,
         editTaggedGroup: (input) =>

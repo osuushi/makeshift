@@ -1,4 +1,3 @@
-import { resolve } from "node:path";
 import { exactBodies } from "../model/exact-body.js";
 import type { KernelModelRequest, KernelReply } from "./kernel-reply.js";
 import { readKernelReply } from "./kernel-reply-validation.js";
@@ -6,10 +5,7 @@ import type { KernelRequest } from "./kernel-request.js";
 import { NativeCalculator } from "./native-calculator.js";
 
 export class SolidCalculator extends NativeCalculator<KernelRequest, unknown> {
-  static readonly executable = resolve(
-    ".build/kernel/bin",
-    process.platform === "win32" ? "makeshift-kernel.exe" : "makeshift-kernel",
-  );
+  static readonly executable = ".build/kernel/bin/makeshift-kernel";
   private superseded = false;
   constructor(executable = SolidCalculator.executable) {
     super(executable, "Solid kernel");

@@ -21,6 +21,7 @@ for (const entry of erosionSpecialCases) {
       const reply = await owner.call({
         kind: "erode",
         operation: {
+          method: "accurate",
           ids: [source.id],
           thickness: entry.thickness,
           allowance: entry.allowance,

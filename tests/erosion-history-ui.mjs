@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { plate } from "./ui-body-fillet.mjs";
+import { accurateErosion } from "./ui-erosion-method.mjs";
 import { close, inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -7,9 +8,9 @@ import { chooseTool } from "./ui-tools.mjs";
 await withUiRuntimes(async (page, name) => {
   await plate(page);
   await chooseTool(page, "select owning bodies", "selection-bodies");
-  await chooseTool(page, "erode", "erode");
+  await accurateErosion(page);
   const original = (await inspect(page)).document;
-  const thickness = page.getByRole("textbox", { name: "Minimum thickness", exact: true });
+  const thickness = page.getByRole("textbox", { name: "Erode by", exact: true });
   const allowance = page.getByRole("textbox", { name: "Extra thickness allowance", exact: true });
   const keep = page.getByRole("button", { name: "Keep originals", exact: true });
   async function values(t, a, k, volume) {
@@ -41,6 +42,10 @@ await withUiRuntimes(async (page, name) => {
   await history();
   await values(1, 50, true, 2592);
   await history();
+  assert.equal(await page.getByRole("combobox", { name: "Erosion method" }).inputValue(), "fast");
+  const fast = await inspect(page);
+  close(fast.preview.bodies[1].volume, 2592);
+  await history(true);
   await values(1, 50, true, 2592);
   await history(true);
   await values(2, 50, true, 1536);

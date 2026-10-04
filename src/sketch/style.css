@@ -115,19 +115,35 @@ button:focus-visible {
 .axis-Z {
   color: #4876b8;
 }
-.status {
+.workspace-footer {
   position: absolute;
   bottom: 22px;
   left: 26px;
-  color: #5c6c80;
-  font-size: 12px;
+  right: 26px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 24px;
   pointer-events: none;
 }
+.status {
+  max-width: 100%;
+  color: #5c6c80;
+  font-size: 12px;
+}
 .navigation-hint {
-  position: absolute;
-  bottom: 22px;
-  right: 26px;
+  max-width: 100%;
+  margin-left: auto;
   color: #8c96a4;
   font-size: 11px;
-  pointer-events: none;
+}
+
+@media (max-width: 1100px) {
+  .navigation-hint {
+    display: none;
+  }
+  .status {
+    right: 26px;
+  }
 }

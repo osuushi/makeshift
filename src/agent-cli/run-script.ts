@@ -57,6 +57,7 @@ async function executeScript(
   try {
     await new Promise<void>((resolve, reject) => {
       let polling = false;
+      let operation: Promise<unknown> | undefined;
       const fail = (error: unknown) =>
         reject(error instanceof Error ? error : new Error(String(error)));
       terminate = () => fail(new Error("Script interrupted"));
@@ -67,7 +68,12 @@ async function executeScript(
         if (polling) return;
         polling = true;
         void send("poll")
-          .catch(fail)
+          .catch((error) => {
+            // Session cleanup can beat the failed step's response. Preserve that
+            // operation's error; a successful step still cannot hide a lost runner.
+            if (operation) void operation.then(() => fail(error), fail);
+            else fail(error);
+          })
           .finally(() => {
             polling = false;
           });
@@ -80,11 +86,17 @@ async function executeScript(
           if (message.kind === "done") resolve();
           else if (message.kind === "error") fail(new Error(message.error));
           else if (message.kind === "operation") {
-            void send("step", message.operation).then(
+            const active = send("step", message.operation);
+            operation = active;
+            void active.then(
               (value) => {
+                if (operation === active) operation = undefined;
                 if (child.connected) child.send({ kind: "reply", value });
               },
-              (error) => fail(error),
+              (error) => {
+                if (operation === active) operation = undefined;
+                fail(error);
+              },
             );
           }
         },

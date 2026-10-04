@@ -13,6 +13,10 @@ export async function inspect(page) {
 export async function reset(page) {
   await settled(page);
   await chooseTool(page, "new document", "new");
+  const discard = page
+    .getByRole("dialog", { name: "Unsaved changes" })
+    .getByRole("button", { name: "Don’t Save", exact: true });
+  if (await discard.isVisible()) await discard.click();
   await settled(page);
   await page.reload();
   await settled(page);

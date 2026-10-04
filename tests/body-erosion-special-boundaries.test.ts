@@ -17,11 +17,7 @@ test("thin branch removal must preserve its root within the requested allowance"
       (
         await owner.call({
           kind: "erode",
-          operation: {
-            ids: [source.id],
-            thickness: 1,
-            allowance: 0.25,
-          },
+          operation: { method: "accurate", ids: [source.id], thickness: 1, allowance: 0.25 },
         })
       ).error,
       undefined,
@@ -31,11 +27,7 @@ test("thin branch removal must preserve its root within the requested allowance"
     await owner.call({ kind: "undo" });
     const reply = await owner.call({
       kind: "erode",
-      operation: {
-        ids: [source.id],
-        thickness: 1,
-        allowance: 0,
-      },
+      operation: { method: "accurate", ids: [source.id], thickness: 1, allowance: 0 },
     });
     assert.ok(reply.error, "A branch's disappearance does not justify discarding its thicker root");
     assert.equal(reply.view.candidate, null);
@@ -59,6 +51,7 @@ for (const [name, thickness] of [
       const reply = await owner.call({
         kind: "erode",
         operation: {
+          method: "accurate",
           ids: [source.id],
           thickness,
           allowance: 0,
@@ -87,7 +80,10 @@ for (const name of ["double-torus", "sphere-plane-fillet", "merging-cavities"]) 
         thickness: entry.thickness,
         allowance: entry.allowance,
       };
-      const first = await owner.call({ kind: "erode", operation });
+      const first = await owner.call({
+        kind: "erode",
+        operation: { ...operation, method: "accurate" },
+      });
       assert.equal(first.error, undefined);
       const original = first.view.candidate?.bodies?.filter((body) => body.id !== source.id) ?? [];
       await owner.call({ kind: "discard" });
@@ -107,7 +103,10 @@ for (const name of ["double-torus", "sphere-plane-fillet", "merging-cavities"]) 
         ).error,
         undefined,
       );
-      const moved = await owner.call({ kind: "erode", operation });
+      const moved = await owner.call({
+        kind: "erode",
+        operation: { ...operation, method: "accurate" },
+      });
       assert.equal(moved.error, undefined);
       const results = moved.view.candidate?.bodies?.filter((body) => body.id !== source.id) ?? [];
       assert.equal(results.length, original.length);

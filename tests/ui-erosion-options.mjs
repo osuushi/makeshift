@@ -1,19 +1,20 @@
 import assert from "node:assert/strict";
 import { plate } from "./ui-body-fillet.mjs";
+import { accurateErosion } from "./ui-erosion-method.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function erosionOptionsRoute(page, name) {
   await plate(page);
   await chooseTool(page, "select owning bodies", "selection-bodies");
-  await chooseTool(page, "erode", "erode");
-  const input = page.getByRole("textbox", { name: "Minimum thickness", exact: true });
+  await accurateErosion(page);
+  const input = page.getByRole("textbox", { name: "Erode by", exact: true });
   const allowance = page.getByRole("textbox", { name: "Extra thickness allowance", exact: true });
   assert.equal(await input.inputValue(), "1");
   assert.equal(await allowance.inputValue(), "50");
   assert.equal(await allowance.locator("..").locator("span").textContent(), "%");
   const original = (await inspect(page)).document;
-  const handle = page.getByRole("button", { name: "Erosion thickness handle" });
+  const handle = page.getByRole("button", { name: "Erosion distance handle" });
   assert.equal((await inspect(page)).preview.bodies.length, 2);
   await input.fill("2");
   await inspect(page);
@@ -47,7 +48,7 @@ export async function erosionOptionsRoute(page, name) {
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
-  await chooseTool(page, "erode", "erode");
+  await accurateErosion(page);
   assert.equal(await keep.getAttribute("aria-pressed"), "true", "Fresh edits reset Keep originals");
   await keep.click();
   await inspect(page);

@@ -70,6 +70,10 @@
   stroke-width: 1;
   stroke-dasharray: 4 4;
 }
+.extrude-twist-handle:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
 .extrude-controls[data-preview-pending="true"] .axial-panel {
   border-color: #398bc9;
 }

@@ -8,12 +8,13 @@ import {
   type Vector,
   worldPoint,
 } from "../sketch/planes.js";
+import { extrusionCircleCenter } from "./extrude-circle.js";
 import { expandedSelection, selectionContext } from "./selection-context.js";
 
 /** Display anchor only; curved boundaries are tessellated independently of body geometry. */
 export function extrusionAxis(
   editor: SketchEditor,
-): { center: Vector; normal: Vector; coplanar: boolean } | null {
+): { center: Vector; normal: Vector; coplanar: boolean; circleCenter?: Vector } | null {
   if (!editor.modeling.resolve("extrude").available) return null;
   const weighted = new THREE.Vector3();
   let total = 0;
@@ -67,11 +68,13 @@ export function extrusionAxis(
       }
     }
   }
+  const circleCenter = extrusionCircleCenter(editor);
   return total > 1e-10 && normal
     ? {
-        center: weighted.divideScalar(total).toArray() as Vector,
+        center: circleCenter ?? (weighted.divideScalar(total).toArray() as Vector),
         normal,
         coplanar,
+        circleCenter,
       }
     : null;
 }

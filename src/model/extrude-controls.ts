@@ -188,7 +188,7 @@ export class ExtrudeControls {
       !Number.isFinite(value) ||
       Math.abs(value) < 1e-8 ||
       !Number.isFinite(this.widget.draft.value.value) ||
-      !Number.isFinite(this.twist.angle)
+      !Number.isFinite(this.twist.value?.angle ?? 0)
     ) {
       this.cleanup.reset();
       this.distance = value;

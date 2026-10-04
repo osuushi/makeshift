@@ -94,17 +94,29 @@ async function undoModalExtrusion(page, pick) {
   await page.keyboard.press("e");
   if (!(await page.getByRole("textbox", { name: "Extrusion distance" }).isVisible()))
     await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
+  const original = (await inspect(page)).document;
   await page.getByRole("textbox", { name: "Extrusion distance" }).fill("3");
   await page.keyboard.press("Enter");
   assert.ok((await inspect(page)).preview);
+  // The delayed topology probe can start after the geometry preview settles.
+  // History shortcuts are intentionally disabled until that calculation ends.
+  await page.waitForFunction(
+    () =>
+      document.querySelector(".extrude-controls .commit-cleanup")?.getAttribute("aria-busy") ===
+      "false",
+  );
   await page.keyboard.press("Meta+z");
   const state = await inspect(page);
   assert.equal(state.interaction.kind, "extrude");
   assert.equal(state.preview, null);
   assert.equal(state.document.bodies.length, 1);
   close(state.document.bodies[0].volume, 3000);
+  assert.deepEqual(state.document, original);
   await page.keyboard.press("Meta+Shift+z");
-  assert.ok((await inspect(page)).preview);
+  const redone = await inspect(page);
+  assert.ok(redone.preview);
+  close(redone.preview.bodies[0].volume, 4800);
+  assert.deepEqual(redone.document, original);
   await page.keyboard.press("Escape");
   assert.equal((await inspect(page)).interaction, null);
   // Local navigation keeps the input selection; clear it before the next fresh pick.

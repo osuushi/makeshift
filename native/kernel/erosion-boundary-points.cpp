@@ -1,6 +1,9 @@
 #include "erosion-boundary-points.h"
 #include "geometry-policy.h"
 #include <BRepAdaptor_Curve.hxx>
+#include <BRepAdaptor_Surface.hxx>
+#include <BRepClass_FaceClassifier.hxx>
+#include <TopExp_Explorer.hxx>
 #include <BRep_Tool.hxx>
 #include <TopExp.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
@@ -25,6 +28,19 @@ erosion::BoundaryPoints::BoundaryPoints(const TopoDS_Shape& shape) {
         const double first = curve.FirstParameter(), last = curve.LastParameter();
         for (int j = 0; j <= 256; ++j)
             points.push_back(curve.Value(first+(last-first)*j/256));
+    }
+    for (TopExp_Explorer faces(shape, TopAbs_FACE); faces.More(); faces.Next()) {
+        const auto face = TopoDS::Face(faces.Current());
+        BRepAdaptor_Surface surface(face);
+        if (surface.GetType() != GeomAbs_BezierSurface) continue;
+        uncertainty = std::max(uncertainty, BRep_Tool::Tolerance(face));
+        for (int i = 0; i <= 24; ++i) for (int j = 0; j <= 24; ++j) {
+            const double u = surface.FirstUParameter()+(surface.LastUParameter()-surface.FirstUParameter())*i/24;
+            const double v = surface.FirstVParameter()+(surface.LastVParameter()-surface.FirstVParameter())*j/24;
+            BRepClass_FaceClassifier classifier(face, gp_Pnt2d(u,v), 1e-9);
+            if (classifier.State() == TopAbs_IN)
+                points.push_back(surface.Value(u,v));
+        }
     }
     partition(0, points.size(), 0);
 }

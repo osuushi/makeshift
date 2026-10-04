@@ -20,6 +20,7 @@ import type { OperationHistoryEntry } from "./operation-history.js";
 import type { PlaneFrame } from "./planes.js";
 
 export type ModelRequest =
+  | { kind: "reconstruct-mesh"; input: import("../model/mesh-fit.js").MeshReconstructionInput }
   | { kind: "tagged-group"; edit: import("../tags/model.js").TagEdit }
   | { kind: "export-step"; items: import("../model/step-export.js").StepItem[] }
   | { kind: "cancel-step-export" }
@@ -89,6 +90,8 @@ export type ModelRequest =
   | { kind: "preview" | "edit"; sketch: Sketch; intent?: EditIntent }
   | { kind: "remove" | "clear"; sketchId: string; ids?: string[] };
 export interface ModelView {
+  erosionQuality?: import("../model/erosion-quality.js").ErosionQuality[];
+  meshFit?: import("../model/mesh-fit.js").MeshFitStatistics;
   decoratorSources?: readonly import("../decorators/javascript-hooks.js").EnabledDefinition[];
   historySelection?: import("./history-selection.js").HistorySelection;
   planeCutAvailable?: boolean;

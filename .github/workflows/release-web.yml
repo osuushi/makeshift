@@ -1,0 +1,85 @@
+name: Release web mode
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: release-web
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    environment: web-release
+    permissions:
+      contents: write
+    env:
+      CMAKE_BUILD_PARALLEL_LEVEL: '4'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Check deployment configuration
+        env:
+          WEB_PAGES_REPOSITORY: ${{ vars.WEB_PAGES_REPOSITORY }}
+          WEB_PAGES_DEPLOY_KEY: ${{ secrets.WEB_PAGES_DEPLOY_KEY }}
+        run: |
+          test -n "$WEB_PAGES_REPOSITORY" || { echo 'Set WEB_PAGES_REPOSITORY'; exit 1; }
+          test -n "$WEB_PAGES_DEPLOY_KEY" || { echo 'Set WEB_PAGES_DEPLOY_KEY'; exit 1; }
+      - name: Install pinned Emscripten
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git .cache/emsdk
+          git -C .cache/emsdk checkout e4fe26ef59168ff44f4c23c466e497bf60b3411e
+          .cache/emsdk/emsdk install 4.0.20
+          .cache/emsdk/emsdk activate 4.0.20
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            .cache/release-inputs
+            .cache/solver/source
+            .cache/web
+            .build/web-solver
+            .build/web-kernel
+          key: wasm-linux-4.0.20-${{ hashFiles('scripts/web/build-wasm.mjs', 'scripts/web/sdk.mjs', 'scripts/occt-source.mjs', 'scripts/occt-recipe.json', 'scripts/native-inputs.mjs', 'scripts/solver-source.mjs', 'native/**') }}
+          restore-keys: wasm-linux-4.0.20-
+      - name: Fetch mirrored Eigen source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p .cache/release-inputs
+          if [ ! -f .cache/release-inputs/eigen.tar.gz ]; then
+            gh release download native-sources-eigen-5.0.1 --pattern eigen.tar.gz --dir .cache/release-inputs
+          fi
+      - name: Install web build dependencies
+        run: |
+          npm ci --ignore-scripts
+          npx playwright install --with-deps chromium webkit
+      - name: Build and verify static web mode
+        run: |
+          source .cache/emsdk/emsdk_env.sh
+          npm run build:web
+          npm run typecheck
+          npm run check
+          npm run test:web
+          WEB_MODE=1 node tests/control-menu-ui.mjs
+      - name: Prepare binary, source and license artifacts
+        id: release
+        run: |
+          source .cache/emsdk/emsdk_env.sh
+          node scripts/web/release.mjs
+      - name: Publish web release in the application repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          gh release create "$RELEASE_TAG" .build/web-release/* --target "$GITHUB_SHA" \
+            --prerelease --latest=false --title "Makeshift $RELEASE_TAG" \
+            --notes 'Standalone web mode. The ZIP contains the static site; the matching source archive includes rebuild instructions and LGPL component sources.'
+      - name: Deploy tested files to the static Pages repository
+        env:
+          WEB_PAGES_REPOSITORY: ${{ vars.WEB_PAGES_REPOSITORY }}
+          WEB_PAGES_DEPLOY_KEY: ${{ secrets.WEB_PAGES_DEPLOY_KEY }}
+        run: node scripts/web/publish.mjs

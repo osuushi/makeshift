@@ -149,6 +149,8 @@ TopoDS_Face rebuildFace(const TopoDS_Face& source, const Edit& edit) {
         }
     }
     if (holes.empty()) {
+        const auto cubic = polynomialQuad(face, edges);
+        if (!cubic.IsNull()) return cubic;
         const auto ruled = ruledQuad(face, edges);
         if (!ruled.IsNull()) return ruled;
     }

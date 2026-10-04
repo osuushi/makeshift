@@ -1,19 +1,17 @@
 #include "erosion.h"
+#include "erosion-coverage-cells.h"
+#include "erosion-section-classifier.h"
 #include "erosion-distance-bounds.h"
 #include "geometry-policy.h"
-#include <BRepAdaptor_Curve.hxx>
-#include <BRepAdaptor_Surface.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
-#include <BRep_Tool.hxx>
 #include <BRep_Builder.hxx>
 #include <Bnd_Box.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Compound.hxx>
-#include <gp_Pln.hxx>
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -25,63 +23,13 @@
 #include <stdexcept>
 
 namespace {
+using namespace erosion::coverage;
 constexpr double tolerance = geometry_policy::boundaryDistanceMm;
-struct Cell {
-    std::array<double, 3> low, high;
-    gp_Pnt center() const {
-        return {(low[0]+high[0])/2, (low[1]+high[1])/2, (low[2]+high[2])/2};
-    }
-    double radius() const {
-        return std::hypot(high[0]-low[0], high[1]-low[1], high[2]-low[2])/2;
-    }
-    Bnd_Box bounds() const {
-        Bnd_Box box;
-        box.Update(low[0], low[1], low[2], high[0], high[1], high[2]);
-        return box;
-    }
-    std::array<gp_Pnt, 8> corners() const {
-        std::array<gp_Pnt, 8> points;
-        for (int i = 0; i < 8; ++i)
-            points[i] = {i&1 ? high[0] : low[0], i&2 ? high[1] : low[1], i&4 ? high[2] : low[2]};
-        return points;
-    }
-};
-struct Plane {
-    gp_Pnt origin;
-    gp_Vec outward;
-    double clearance(const gp_Pnt& p) const { return -gp_Vec(origin, p).Dot(outward); }
-    double reach(const Cell& cell) const {
-        double result = 0;
-        for (int i = 0; i < 3; ++i)
-            result += std::abs(outward.Coord(i+1)) * (cell.high[i]-cell.low[i])/2;
-        return result;
-    }
-};
-
-// For an entirely planar convex solid, its oriented supporting half-spaces
-// provide exact box bounds, including the zero-allowance case.
-std::vector<Plane> convexPlanes(const TopoDS_Shape& solid) {
-    std::vector<Plane> planes;
-    for (TopExp_Explorer e(solid, TopAbs_EDGE); e.More(); e.Next())
-        if (BRepAdaptor_Curve(TopoDS::Edge(e.Current())).GetType() != GeomAbs_Line) return {};
-    for (TopExp_Explorer f(solid, TopAbs_FACE); f.More(); f.Next()) {
-        const auto face = TopoDS::Face(f.Current());
-        BRepAdaptor_Surface surface(face);
-        if (surface.GetType() != GeomAbs_Plane) return {};
-        const auto plane = surface.Plane();
-        gp_Vec normal(plane.Axis().Direction());
-        if (face.Orientation() == TopAbs_REVERSED) normal.Reverse();
-        planes.push_back({plane.Location(), normal});
-    }
-    for (TopExp_Explorer v(solid, TopAbs_VERTEX); v.More(); v.Next())
-        for (const auto& plane : planes)
-            if (plane.clearance(BRep_Tool::Pnt(TopoDS::Vertex(v.Current()))) < -tolerance) return {};
-    return planes;
-}
-
 class Distance {
     struct Ball { gp_Pnt center; double radius; bool inside; };
     std::vector<Ball> balls;
+    std::vector<erosion::SectionClassifier> sections;
+    bool hasSections = false;
     std::optional<std::pair<gp_Pnt, bool>> lastClassification;
     std::vector<std::pair<gp_Pnt, bool>> classifiedPoints;
     std::vector<std::unique_ptr<BRepClass3d_SolidClassifier>> classifiers;
@@ -94,9 +42,11 @@ public:
         if (shape.IsNull()) return;
         bounds = std::make_unique<erosion::BoundaryDistance>(shape);
         for (TopExp_Explorer s(shape, TopAbs_SOLID); s.More(); s.Next()) {
+            sections.emplace_back(s.Current());
             classifiers.push_back(std::make_unique<BRepClass3d_SolidClassifier>(s.Current()));
             convex.push_back(convexPlanes(s.Current()));
         }
+        hasSections = std::any_of(sections.begin(),sections.end(),[](const auto& section) { return section.supported(); });
         for (TopExp_Explorer f(shape, TopAbs_FACE); f.More(); f.Next()) {
             Bnd_Box box;
             BRepBndLib::AddOptimal(f.Current(), box, false, true);
@@ -106,7 +56,21 @@ public:
         extrema.LoadS2(erosion::boundary(shape));
         extrema.SetDeflection(tolerance/10);
     }
+    bool sectioned() const {
+        return !sections.empty() && std::all_of(sections.begin(),sections.end(),[](const auto& section) {
+            return section.supported();
+        });
+    }
     bool contains(const gp_Pnt& point) {
+        const double minimumDistance = hasSections ? bounds->lower(point) : 0;
+        bool complete = !sections.empty();
+        for (const auto& section : sections) {
+            const auto known = section.contains(point,minimumDistance);
+            if (known && *known) return true;
+            if (!known) complete = false;
+        }
+        if (complete) return false;
+
         for (const auto& ball : balls)
             if (point.SquareDistance(ball.center) < ball.radius*ball.radius) return ball.inside;
         if (lastClassification && point.SquareDistance(lastClassification->first) == 0) return lastClassification->second;
@@ -121,7 +85,14 @@ public:
             if (!bounds->crosses(span.corners())) return it->second;
         }
         bool inside = false;
+        size_t index = 0;
         for (auto& classifier : classifiers) {
+            const auto known = sections[index++].contains(point,minimumDistance);
+            if (known) {
+                if (*known) { inside = true; break; }
+                continue;
+            }
+
             classifier->Perform(point, tolerance/10);
             if (classifier->State() == TopAbs_IN || classifier->State() == TopAbs_ON) { inside = true; break; }
             if (classifier->State() != TopAbs_OUT)
@@ -134,7 +105,7 @@ public:
         if (radius > tolerance && balls.size() < 4096) balls.push_back({point, radius, inside});
         return inside;
     }
-    double upper(const Cell& cell, double limit = -1) {
+    double upper(const Cell& cell, double limit = -1, bool resolveTrim = false) {
         const double triangle = bounds->upper(cell.corners());
         if (triangle <= limit) return triangle;
         if (bounds->exact()) return std::min(triangle, clearance(cell.center()) + cell.radius());
@@ -143,13 +114,32 @@ public:
         const double upper = bounds->upper(center, limit-cell.radius()) + cell.radius();
         if (upper <= limit) return std::min(triangle, upper);
         if (!contains(center)) return std::min(triangle, cell.radius()-lower);
+        if (resolveTrim && limit > 0 && cell.radius() < limit/4 && upper-lower-cell.radius() > tolerance)
+            return std::min({triangle,upper,clearance(center)+cell.radius()});
         return std::min(triangle, upper);
     }
     bool deeper(const gp_Pnt& point, double depth) {
         return bounds->lower(point) > depth && contains(point);
     }
-    bool contains(const Cell& cell) {
+    bool childInside(const gp_Pnt& point, const gp_Pnt& parent, bool parentInside) {
+        if (classifiers.empty()) return false;
+        Cell span;
+        for (int axis = 0; axis < 3; ++axis) {
+            span.low[axis] = std::min(point.Coord(axis+1),parent.Coord(axis+1));
+            span.high[axis] = std::max(point.Coord(axis+1),parent.Coord(axis+1));
+        }
+        // Classification can follow a subdivision edge only when the exact
+        // surface bounds prove that its whole span is boundary-free.
+        if (!bounds->crosses(span.corners())) return parentInside;
+        return contains(point);
+    }
+    bool contains(const Cell& cell, std::optional<bool> centerInside = {}) {
+        if (centerInside && !*centerInside) return false;
         const auto center = cell.center();
+        const auto inside = [&] {
+            if (!centerInside) centerInside = contains(center);
+            return *centerInside;
+        };
         for (const auto& ball : balls) {
             const double reach = ball.radius-cell.radius();
             if (reach > 0 && center.SquareDistance(ball.center) < reach*reach) return ball.inside;
@@ -162,14 +152,14 @@ public:
         // With no boundary crossing, classification at one point applies to
         // the whole connected cell. Face bounds are conservative and enlarged.
         if (classifiers.empty()) return false;
-        if (!bounds->crosses(cell.corners())) return contains(center);
+        if (!bounds->crosses(cell.corners())) return inside();
         if (std::none_of(faces.begin(), faces.end(), [&](const Bnd_Box& f) { return !f.IsOut(box); }))
-            return contains(center);
+            return inside();
         const double lower = bounds->lower(center);
-        if (lower >= cell.radius() + tolerance && contains(center)) return true;
+        if (lower >= cell.radius() + tolerance && inside()) return true;
         // An upper bound below the cell radius cannot certify its distance
         // ball. Resolve remaining trimmed-face uncertainty with the kernel.
-        if (bounds->upper(center, cell.radius()) < cell.radius() || !contains(center)) return false;
+        if (bounds->upper(center, cell.radius()) < cell.radius() || !inside()) return false;
         return clearance(center) >= cell.radius() + tolerance/4;
     }
     double clearance(const gp_Pnt& point) {
@@ -194,26 +184,6 @@ public:
     }
 };
 
-Cell innerBounds(const TopoDS_Shape& shape, double depth) {
-    Bnd_Box box;
-    BRepBndLib::AddOptimal(shape, box, false, true);
-    Cell cell;
-    box.Get(cell.low[0], cell.low[1], cell.low[2], cell.high[0], cell.high[1], cell.high[2]);
-    for (int i = 0; i < 3; ++i) {
-        cell.low[i] += depth;
-        cell.high[i] -= depth;
-    }
-    return cell;
-}
-std::pair<Cell, Cell> subdivide(const Cell& cell) {
-    int axis = 0;
-    for (int i = 1; i < 3; ++i)
-        if (cell.high[i]-cell.low[i] > cell.high[axis]-cell.low[axis]) axis = i;
-    const double middle = (cell.low[axis]+cell.high[axis])/2;
-    auto left = cell, right = cell;
-    left.high[axis] = right.low[axis] = middle;
-    return {left, right};
-}
 }
 
 TopoDS_Shape erosion::boundary(const TopoDS_Shape& shape) {
@@ -232,26 +202,33 @@ void erosion::checkCoverage(const TopoDS_Shape& source, const TopoDS_Shape& cand
     const auto root = innerBounds(sourceFrame, depth);
     for (int i = 0; i < 3; ++i) if (root.high[i]-root.low[i] <= tolerance/4) return;
     Distance original(sourceFrame), result(candidateFrame);
+    const bool sectioned = result.sectioned();
     struct Region {
         Cell cell;
         double upper;
+        std::optional<bool> inside;
         bool operator<(const Region& other) const { return upper < other.upper; }
     };
     std::priority_queue<Region> pending;
     const double coveredDepth = depth + tolerance/4;
-    pending.push({root, original.upper(root, coveredDepth)});
+    pending.push({root, original.upper(root,coveredDepth,sectioned),
+                  sectioned ? std::optional(result.contains(root.center())) : std::nullopt});
     const auto start = std::chrono::steady_clock::now();
     size_t visits = 0;
+    const auto limit = std::chrono::seconds(sectioned ? 30 : 8);
     while (!pending.empty()) {
-        if (++visits > 100000 || std::chrono::steady_clock::now()-start > std::chrono::seconds(8)) {
+        if (++visits > 100000 || std::chrono::steady_clock::now()-start > limit) {
             throw CoverageFailure("Erosion could not verify this allowance within the calculation limit",
                                   pending.top().upper, true);
         }
         const auto region = pending.top(); pending.pop();
         const auto& cell = region.cell;
         if (region.upper <= coveredDepth) continue;
-        if (result.contains(cell)) continue;
-        if (original.deeper(cell.center(), depth + tolerance) && !result.contains(cell.center()))
+        // Section children were checked before queuing. For other geometry,
+        // retain source-first traversal and lazy point classification.
+        if (!sectioned && result.contains(cell)) continue;
+        if (original.deeper(cell.center(), depth + tolerance) &&
+            !(region.inside ? *region.inside : result.contains(cell.center())))
             throw CoverageFailure("Erosion needs more allowance to preserve the required interior",
                                   region.upper, false);
         if (cell.radius() <= tolerance/16) {
@@ -260,9 +237,17 @@ void erosion::checkCoverage(const TopoDS_Shape& source, const TopoDS_Shape& cand
         const auto [left, right] = subdivide(cell);
         // Largest unresolved clearance first: the queue's maximum is also a
         // conservative depth that covers every region not yet certified.
-        // Once a conservative upper bound certifies a cell, tighter distances
-        // cannot change its outcome. Avoid classifying its remaining supports.
-        pending.push({left, original.upper(left, coveredDepth)});
-        pending.push({right, original.upper(right, coveredDepth)});
+        // Cells wholly inside the result need no source-distance queries.
+        // Otherwise stop an upper-bound search as soon as it proves the cell
+        // is shallower than the required interior; its exact priority is moot.
+        for (const auto& child : {left,right}) {
+            std::optional<bool> inside;
+            if (sectioned) {
+                inside = result.childInside(child.center(),cell.center(),*region.inside);
+                if (result.contains(child,inside)) continue;
+            }
+            const double upper = original.upper(child,coveredDepth,sectioned);
+            if (upper > coveredDepth) pending.push({child,upper,inside});
+        }
     }
 }

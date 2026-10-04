@@ -55,6 +55,8 @@ export function fixtureResult(parent: HTMLElement) {
       file.download = saved.name;
       file.textContent = saved.name;
       result.value = saved.path;
+      result.hidden = !saved.path;
+      copy.hidden = !saved.path;
       output.hidden = false;
     },
     dispose() {

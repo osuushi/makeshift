@@ -1,51 +1,29 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
-import { BrowserArchive, downloadArchive } from "./browser-archive.js";
-import { captureCamera, restoreCamera } from "./camera-state.js";
-import { documentArchive } from "./document-archive.js";
+import { BrowserDocuments } from "./browser-documents.js";
 import { exportControls } from "./export-controls.js";
 import { fileShortcuts } from "./file-shortcuts.js";
 import { nativeFileControls } from "./native-file-controls.js";
-import type { PortableFiles } from "./portable-files.js";
 
 /** Data-only archive: opening never evaluates stored expressions or scripts. */
 export function fileControls(editor: SketchEditor, container: HTMLElement): () => void {
   if (window.makeshiftDocument) return nativeFileControls(editor, window.makeshiftDocument);
-  let files: PortableFiles = {};
-  const codec = new BrowserArchive();
+  const documents = new BrowserDocuments(editor);
   const input = document.createElement("input");
   input.type = "file";
   input.accept = ".makeshift,.freac,application/json";
   input.hidden = true;
   input.setAttribute("aria-label", "Open Makeshift file");
   container.append(input);
-  const disposeExport = exportControls(editor);
-  const blocked = () => editor.blocked || !!editor.interactions.current;
-  const save = async () => {
-    if (blocked()) return;
-    try {
-      const data = await codec.run(
-        {
-          kind: "write",
-          model: documentArchive(editor.store.data, captureCamera(editor.world)),
-          files,
-        },
-        editor,
-      );
-      if (!(data instanceof Uint8Array)) throw new Error("Invalid archive result.");
-      downloadArchive(data);
-    } catch (error) {
-      editor.message = String(error);
-      editor.refresh();
-    }
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    if (file) await documents.open(file);
+    input.value = "";
   };
-  input.onchange = () =>
-    void openBrowserFile(editor, input, codec, (loaded) => {
-      files = loaded;
-    });
+  const disposeExport = exportControls(editor);
   const reason = () => idleReason(editor);
   const catalog = toolCatalog(editor);
-  const disposeShortcuts = fileShortcuts(editor, ["new", "open", "save"]);
+  const disposeShortcuts = fileShortcuts(editor, ["new", "open", "save", "save-as"]);
   const disposers = [
     catalog.register({
       id: "save",
@@ -54,7 +32,20 @@ export function fileControls(editor: SketchEditor, container: HTMLElement): () =
       shortcut: "⌘S",
       category: "Document & Edit",
       reason,
-      run: save,
+      run: async () => {
+        await documents.save();
+      },
+    }),
+    catalog.register({
+      id: "save-as",
+      label: "Save document as…",
+      showInTools: false,
+      shortcut: "⇧⌘S",
+      category: "Document & Edit",
+      reason,
+      run: async () => {
+        await documents.save(true);
+      },
     }),
     catalog.register({
       id: "open",
@@ -72,58 +63,14 @@ export function fileControls(editor: SketchEditor, container: HTMLElement): () =
       shortcut: "⌘N",
       category: "Document & Edit",
       reason,
-      run: () => {
-        files = {};
-        return editor.newDocument().then(() => {
-          editor.world.exit();
-          restoreCamera(editor.world, undefined);
-        });
-      },
+      run: () => documents.newDocument(),
     }),
   ];
   return () => {
-    codec.dispose();
+    documents.dispose();
     disposeShortcuts();
     disposeExport();
     for (const dispose of disposers) dispose();
     input.remove();
   };
-}
-
-async function openBrowserFile(
-  editor: SketchEditor,
-  input: HTMLInputElement,
-  codec: BrowserArchive,
-  accept: (files: PortableFiles) => void,
-): Promise<void> {
-  const file = input.files?.[0];
-  if (!file || editor.blocked || editor.interactions.current) return;
-  editor.store.busy = true;
-  editor.message = "Opening document…";
-  editor.refresh();
-  try {
-    if (file.size > 72 * 1024 * 1024) throw new Error("Document is too large.");
-    const archive = await codec.run(
-      { kind: "read", bytes: new Uint8Array(await file.arrayBuffer()) },
-      editor,
-    );
-    if (archive instanceof Uint8Array) throw new Error("Invalid archive result.");
-    if (await editor.store.request({ kind: "open", document: archive.document })) {
-      accept(archive.files);
-      editor.bodiesVisible = true;
-      editor.visibility.reset();
-      editor.world.crossSection = null;
-      editor.modeling.targets = [];
-      editor.world.exit();
-      restoreCamera(editor.world, archive.camera);
-      editor.refresh();
-    }
-  } catch (error) {
-    editor.message = error instanceof Error ? error.message : String(error);
-    editor.refresh();
-  } finally {
-    editor.store.busy = false;
-    editor.refresh();
-    input.value = "";
-  }
 }

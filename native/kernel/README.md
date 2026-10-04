@@ -146,6 +146,28 @@ A lightweight swept-mesh display during motion, followed by exact construction
 and validation after a pause and before acceptance, is a proposed next experiment.
 It is not implemented or an approved change to accepted geometry/Undo semantics.
 
+### Circular twist (2026-10-03)
+
+The sweep benchmark also includes `circle-centered`, `circle-offset` and
+`rounded-square-offset`: radius 10 mm, depth 20 mm, twist 90°, and an axis
+displaced 5 mm for the latter two. The rounded square uses exact 9 mm corner
+fillets with 2 mm straight joins. On the development Mac, the saved baseline
+off-center circle took 35,008 ms (one warm sample after warmup); the revised
+circle took 2,882 ms median of three warm samples (2,868–2,886 ms). The centered
+case now takes 4.1 ms median and retains ordinary cylinder topology. Baseline
+rounded-square timing was 3,143 ms (one warm sample after warmup).
+
+Profiling places the circle's delay in span-based volume integration, called
+during solid extraction and presentation, rather than loft construction,
+interference checks or meshing. Keeping circular seams fixed alone took about
+32 seconds. Exact rational sections eliminate the expensive full-circle
+polynomial conic fit: the final off-center result retains three faces/three
+edges, with 1,000 display triangles versus 3,894 before. Integration still costs
+about 1.43 seconds per call on this origin-centered fixture; this improvement
+does not make every preview instantaneous. `volume bounds`/`integrate` timings
+distinguish bounds optimization from integration. See the pinned-source analysis
+in [kernel/topology](../../docs/freecad/kernel-topology.md#circular-twist-representation-2026-10-03).
+
 ## Periodic subtraction preparation
 
 A failed subtraction with invalid cylindrical result faces gets one bounded

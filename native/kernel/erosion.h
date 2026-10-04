@@ -30,4 +30,6 @@ TopoDS_Shape removeCollapsedFeatures(const TopoDS_Shape& source, double thicknes
 }
 
 std::vector<Result> erodeBodies(const Tree&, const std::vector<Operand>&,
-                               std::vector<std::string>&);
+                               std::vector<std::string>&,Tree* quality = nullptr);
+
+void writeErosionQuality(std::ostream&,const Tree&);

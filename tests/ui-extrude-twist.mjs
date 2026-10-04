@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
-import { at, drag, inspect, reset } from "./ui-helpers.mjs";
+import { at, drag, inspect, overlayPoint, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const field = (page, name) => page.getByRole("textbox", { name, exact: true });
@@ -25,12 +25,12 @@ async function moveSphere(page, target, cancel = false, bypass = false) {
 export async function extrudeTwistRoute(page, name) {
   page.setDefaultTimeout(120000);
   await reset(page);
-  await button(page, "Sketch on XY").click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -10], [10, 10]);
   let center = await at(page, 0, 0),
     corner = await at(page, 10, 10);
-  await button(page, "Modeling").click();
+  await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(center.x, center.y);
   const before = (await inspect(page)).document;
   await twistPlacement(page);
@@ -172,17 +172,18 @@ async function liveUpdates(page) {
 
 export async function cubicTwistRoute(page, name) {
   await reset(page);
-  await button(page, "Sketch on XY").click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("b");
   await drag(page, [0, 0], [10, 0]);
+  const drawn = await inspect(page);
+  assert.equal(drawn.document.sketches[0]?.curves[0]?.kind, "bezier");
   for (const [key, target] of [
     ["c1", [0, 10]],
     ["c2", [10, 10]],
   ]) {
-    const handle = await page.locator(`[data-handle="${key}"][data-curve]`).boundingBox();
-    assert.ok(handle);
+    const handle = await overlayPoint(page, `[data-handle="${key}"][data-curve]`);
     const point = await at(page, ...target);
-    await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+    await page.mouse.move(handle.x, handle.y);
     await page.mouse.down();
     await page.mouse.move(point.x, point.y, { steps: 8 });
     await page.mouse.up();
@@ -191,7 +192,7 @@ export async function cubicTwistRoute(page, name) {
   await page.keyboard.press("l");
   await drag(page, [10, 0], [0, 0]);
   const center = await at(page, 5, 3);
-  await button(page, "Modeling").click();
+  await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(center.x, center.y);
   await field(page, "Extrusion distance").fill("10");
   await inspect(page);

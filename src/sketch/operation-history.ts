@@ -14,6 +14,16 @@ export interface OperationHistoryEntry {
   error?: string;
 }
 export function describeOperation(request: ModelRequest): HistoryOperation {
+  if (request.kind === "reconstruct-mesh")
+    return {
+      kind: request.kind,
+      parameters: {
+        vertices: request.input.mesh?.vertices?.length,
+        triangles: request.input.mesh?.triangles?.length,
+        tolerance: request.input.tolerance,
+        maxPatches: request.input.maxPatches,
+      },
+    };
   if (request.kind === "open")
     return {
       kind: "open",

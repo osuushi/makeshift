@@ -72,9 +72,10 @@ the app available; New/Open or Dock activation can open its single window again.
 Quit and window close protect unsaved work. Autosave, crash recovery, file associations,
 recent-file menus and multiple windows remain outside this increment.
 
-Web continues to use download/upload with the same archive codec; native filesystem
-and dialog APIs stay behind the preload bridge. Browser unsaved-work/session restoration
-is not implemented by this native-host increment.
+Standalone [web mode](web.md) uses the same archive codec with upload/download and
+an optional browser save picker. New/Open protect unsaved changes; native filesystem
+and dialog APIs stay behind the preload bridge. Browser session restoration remains
+unimplemented; beforeunload cannot protect work from mobile tab eviction.
 
 ## Mesh export
 

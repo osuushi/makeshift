@@ -1,10 +1,5 @@
-import { installAgentDock } from "../agent/dock.js";
-import { installInspection } from "../agent/inspection-view.js";
-import { installScriptView } from "../agent-script/view.js";
 import { DecoratorPanel } from "../decorators/panel.js";
 import { decoratorOverlay } from "../decorators/preview.js";
-import { installTabletChrome } from "../ipad/connection-screen.js";
-import { installIPadButton } from "../ipad/desktop.js";
 import { BodyActions } from "../model/body-actions.js";
 import { BodyEdgeFinishControls } from "../model/body-edge-finish-controls.js";
 import { BodyMoveControls } from "../model/body-move-controls.js";
@@ -17,6 +12,7 @@ import { EntityViewer } from "../model/entity-viewer.js";
 import { ErosionControls } from "../model/erosion-controls.js";
 import { FaceOffsetControls } from "../model/face-offset-controls.js";
 import { MeasurementControls } from "../model/measurement-controls.js";
+import { MeshImportControls } from "../model/mesh-import-controls.js";
 import { MirrorControls } from "../model/mirror-controls.js";
 import { ModelingTools } from "../model/modeling-tools.js";
 import { OverlapInput } from "../model/overlap-input.js";
@@ -75,7 +71,7 @@ const app = document.querySelector<HTMLElement>("#app");
 if (!app) throw new Error("Missing app root");
 app.innerHTML = `<div id="world"></div><div id="overlay"></div>
   <header><div class="brand"><img src="./makeshift.png" alt=""/><strong>Makeshift</strong></div><span class="mode-label">Modeling</span></header>
-  <div class="status" role="status"></div><div class="navigation-hint">Two-finger scroll · pan &nbsp; ⌘-drag · orbit &nbsp; Pinch · zoom &nbsp; Hold · choose overlap</div>`;
+  <footer class="workspace-footer"><div class="status" role="status"></div><div class="navigation-hint">Two-finger scroll · pan &nbsp; ⌘-drag · orbit &nbsp; Pinch · zoom &nbsp; Hold · choose overlap</div></footer>`;
 const host = app.querySelector<HTMLElement>("#world"),
   overlay = app.querySelector<HTMLElement>("#overlay"),
   status = app.querySelector<HTMLElement>(".status");
@@ -116,6 +112,7 @@ const disposeLabels = worldLabels(
 const modelControls = new ModelControls(editor, overlay);
 const shells = new ShellControls(editor, overlay);
 const erosion = new ErosionControls(editor, overlay);
+const meshImport = new MeshImportControls(editor, overlay);
 const faceOffsets = new FaceOffsetControls(editor, overlay);
 const faceMoves = new TopologyMoveControls(editor, overlay);
 const edgeMoves = new TopologyMoveControls(editor, overlay, "edges");
@@ -188,11 +185,10 @@ const crossSection = new CrossSectionControls(editor, overlay, constructionPlane
 const measurements = new MeasurementControls(editor, app, readouts);
 const overlaps = new OverlapInput(editor, (plane) => constructionPlanes.select(plane));
 const planeCuts = new PlaneCutControls(editor, overlay, constructionPlanes.picker);
-const disposeAgent = installAgentDock(app);
-const disposeInspection = installInspection(editor);
-installIPadButton(editor, app);
-installTabletChrome(app);
-const disposeScript = installScriptView(editor, app);
+const disposeHost =
+  import.meta.env.MODE === "web"
+    ? (await import("../web/chrome.js")).installWebChrome(editor, app)
+    : (await import("./host-controls.js")).installHostControls(editor, app);
 const disposePlaneEntry = planeEntryTools(editor);
 const toolMenu = new ToolMenu(editor, app);
 world.changed.add(() => {
@@ -217,66 +213,62 @@ world.changed.add(() => {
 installViewInspection(editor, sections);
 world.draw();
 void editor.store.request({ kind: "read" });
-window.addEventListener(
-  "pagehide",
-  () => {
-    decorators.dispose();
-    disposeDecorators();
-    disposeAgent();
-    disposeInspection();
-    disposeScript();
-    toolMenu.dispose();
-    modelingTools.dispose();
-    disposeControls();
-    disposeCalculation();
-    modelControls.dispose();
-    bodyMove.dispose();
-    bodyActions.dispose();
-    cleanup.dispose();
-    deleteAction.dispose();
-    booleans.dispose();
-    faceOffsets.dispose();
-    shells.dispose();
-    erosion.dispose();
-    faceMoves.dispose();
-    edgeMoves.dispose();
-    bodyFinishes.dispose();
-    disposeModelHighlight();
-    disposeBodies();
-    bodyEdges.dispose();
-    projection.dispose();
-    sections.dispose();
-    mirror.dispose();
-    scaling.dispose();
-    disposeVisibility();
-    tags.dispose();
-    entities.dispose();
-    overlaps.dispose();
-    crossSection.dispose();
-    constructionPlanes.dispose();
-    planeCuts.dispose();
-    measurements.dispose();
-    gestures.dispose();
-    dimensions.dispose();
-    numeric.dispose();
-    disposeDrawing();
-    disposeFills();
-    selection.dispose();
-    transforms.dispose();
-    pointChooser.dispose();
-    pointEdge.dispose();
-    pointTangent.dispose();
-    constraints.dispose();
-    lineConstraints.dispose();
-    curvedConstraints.dispose();
-    fillets.dispose();
-    bows.dispose();
-    beziers.dispose();
-    trim.dispose();
-    offsets.dispose();
-    disposePlaneEntry();
-    disposeLabels();
-    world.dispose();
-  },
-  { once: true },
-);
+window.addEventListener("pagehide", (event) => {
+  if (event.persisted) return;
+  decorators.dispose();
+  disposeDecorators();
+  disposeHost();
+  toolMenu.dispose();
+  modelingTools.dispose();
+  disposeControls();
+  disposeCalculation();
+  modelControls.dispose();
+  bodyMove.dispose();
+  bodyActions.dispose();
+  cleanup.dispose();
+  deleteAction.dispose();
+  booleans.dispose();
+  faceOffsets.dispose();
+  shells.dispose();
+  erosion.dispose();
+  meshImport.dispose();
+  faceMoves.dispose();
+  edgeMoves.dispose();
+  bodyFinishes.dispose();
+  disposeModelHighlight();
+  disposeBodies();
+  bodyEdges.dispose();
+  projection.dispose();
+  sections.dispose();
+  mirror.dispose();
+  scaling.dispose();
+  disposeVisibility();
+  tags.dispose();
+  entities.dispose();
+  overlaps.dispose();
+  crossSection.dispose();
+  constructionPlanes.dispose();
+  planeCuts.dispose();
+  measurements.dispose();
+  gestures.dispose();
+  dimensions.dispose();
+  numeric.dispose();
+  disposeDrawing();
+  disposeFills();
+  selection.dispose();
+  transforms.dispose();
+  pointChooser.dispose();
+  pointEdge.dispose();
+  pointTangent.dispose();
+  constraints.dispose();
+  lineConstraints.dispose();
+  curvedConstraints.dispose();
+  fillets.dispose();
+  bows.dispose();
+  beziers.dispose();
+  trim.dispose();
+  offsets.dispose();
+  disposePlaneEntry();
+  disposeLabels();
+  world.dispose();
+});

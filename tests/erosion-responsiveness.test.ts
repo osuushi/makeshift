@@ -17,7 +17,10 @@ test("captured original erosion allowance produces a result that can be reopened
   try {
     assert.equal((await owner.call({ kind: "open", document: fixture.document })).error, undefined);
     const before = owner.view.data;
-    const result = await owner.call({ kind: "erode", operation: fixture.operation });
+    const result = await owner.call({
+      kind: "erode",
+      operation: { ...fixture.operation, method: "accurate" },
+    });
     assert.equal(result.error, undefined);
     assert.equal(result.view.candidate?.bodies?.length, 2);
     assert.equal(result.view.data, before);
@@ -38,7 +41,7 @@ test("captured erosion cancels promptly, preserves history and restarts the nati
     for (const kind of ["cancel-preview", "supersede-preview"] as const) {
       const pending = owner.call({
         kind: "erode",
-        operation: { ...fixture.operation, allowance: 0.1 },
+        operation: { method: "accurate", ...fixture.operation, allowance: 0.1 },
       });
       await delay(150);
       const started = performance.now();
@@ -69,7 +72,10 @@ test("captured tight allowance fails quickly and its suggested allowance succeed
     const before = owner.view.data;
     const operation = { ...fixture.operation, allowance: 0.1 };
     const started = performance.now();
-    const failed = await owner.call({ kind: "erode", operation });
+    const failed = await owner.call({
+      kind: "erode",
+      operation: { ...operation, method: "accurate" },
+    });
     assert.ok(
       performance.now() - started < 15000,
       "Do not repeat the same eight-second coverage failure",
@@ -79,7 +85,10 @@ test("captured tight allowance fails quickly and its suggested allowance succeed
     assert.equal(failed.view.data, before);
     const allowance = failed.erosionAllowance;
     assert.ok(allowance !== undefined && allowance > 0.1 && allowance <= 1);
-    const retried = await owner.call({ kind: "erode", operation: { ...operation, allowance } });
+    const retried = await owner.call({
+      kind: "erode",
+      operation: { method: "accurate", ...operation, allowance },
+    });
     assert.equal(retried.error, undefined);
     assert.equal(retried.erosionAllowance, undefined);
     assert.equal(retried.view.candidate?.bodies?.length, 2);

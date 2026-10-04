@@ -8,7 +8,10 @@ function erosionFeedback(error: unknown, operation: BodyErosion) {
     reply && typeof reply === "object" && "erosionAllowance" in reply
       ? reply.erosionAllowance
       : undefined;
-  return typeof value === "number" && Number.isFinite(value) && value > operation.allowance
+  return typeof value === "number" &&
+    Number.isFinite(value) &&
+    operation.method === "accurate" &&
+    value > (operation.allowance ?? 0)
     ? { erosionAllowance: value }
     : {};
 }

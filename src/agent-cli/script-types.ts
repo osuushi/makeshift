@@ -1,4 +1,5 @@
 import { decoratorTypes } from "./decorator-types.js";
+import { meshFitTypes } from "./mesh-fit-types.js";
 import { tagTypes } from "./tag-types.js";
 import { topologyTypes } from "./topology-types.js";
 /** Public script declarations, included in the actual pre-execution typecheck. */
@@ -6,6 +7,7 @@ export const scriptTypes = `
 ${tagTypes}
 ${decoratorTypes}
 ${topologyTypes}
+${meshFitTypes}
 export type Point = { x: number; y: number };
 export type ScriptCurve =
   | { kind: "segment"; a: Point; b: Point }
@@ -24,6 +26,8 @@ export interface SolidResult {
 }
 /** Distances mm, angles degrees. Await each call; parallel edits reject. */
 export interface MakeshiftScript extends DecoratorScriptApi, TagScriptApi {
+  /** Create an ordinary editable solid from a target mesh and supplied closed quad layout of the same genus. */
+  fitMesh(input: MeshFitInput): Promise<MeshFitResult>;
   /** Candidate topology, including analytic supports, trimmed loops and adjacency; no geometry edit. */
   topology(input: { body: string }): Promise<BodyTopology>;
   /** Coaxial complete cylinder/cone wall with two circular rims and perpendicular planar neighbors. */
@@ -43,7 +47,7 @@ export interface MakeshiftScript extends DecoratorScriptApi, TagScriptApi {
   finishEdges(input: { edges: { body: string; edge: string }[]; mode: "fillet" | "chamfer"; size: number }): Promise<SolidResult>;
   /** Negative thickness inward, positive outward. Empty faces means no opening. */
   shell(input: { selection: { body: string; faces: string[] }[]; thickness: number }): Promise<SolidResult>;
-  erode(input: { ids: string[]; thickness: number; allowance: number; keepOriginals?: boolean }): Promise<SolidResult>;
+  erode(input: { ids: string[]; thickness: number; allowance?: number; meshDetail?: "coarse" | "standard" | "fine"; maxFaces?: number; method?: "fast" | "accurate"; keepOriginals?: boolean }): Promise<SolidResult>;
   /** Captured when the script starts. Point owners are not whole-curve targets. */
   readonly selection: readonly Target[];
   createSketch(input: { plane: "XY" | "XZ" | "YZ" | Plane; curves: ScriptCurve[] }): Promise<SketchResult>;

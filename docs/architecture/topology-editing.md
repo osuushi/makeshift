@@ -46,7 +46,11 @@ NURBS construction, sheet-body insertion or independent face deletion/resewing A
 
 Shared boundary reconstruction validates individual faces, a closed one-shell solid,
 positive oriented volume, self-interference and edge correspondence. It does not
-silently grow tolerances to accept disconnected boundaries. Calculation runs on
+silently grow tolerances to accept disconnected boundaries. Four nonrational polynomial rims, including multi-span B-splines,
+can reconnect through an algebraic Coons patch before general plate filling;
+this preserves the requested boundary curves but does not impose tangent continuity.
+It enables local movement of reconstructed cubic faces under the same validity and
+identity checks. Calculation runs on
 DocumentOwner's temporary script candidate and uses the existing decorator continuation
 path; incompatible attachments retain ordinary unresolved-attachment handling.
 Success accepts once, failure/cancellation discards the candidate, and one Undo

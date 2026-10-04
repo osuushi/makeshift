@@ -395,11 +395,14 @@ support and collapse checks, with no thickness clamp. Unknown/duplicate targets
 reject before calculation. All calls share script atomicity, cancellation and Undo.
 These additions do not complete the broader command-catalog/control parity design.
 
-`erode({ids, thickness, allowance})` creates independent cavity copies while
-retaining the originals. Thickness is positive; allowance is nonnegative and bounds
-extra wall material. Cavities may split or disappear, but unverified kernel failures
-reject. Returned bodies include retained originals, unaffected bodies and new
-cavities. See [erosion](erosion.md) for construction and verification limits.
+`erode({ids, thickness, method, meshDetail, maxFaces, allowance, keepOriginals})`
+creates independent cavity copies and retains originals by default. Remesh (the default)
+uses target thickness, mesh detail and a CAD face budget; its thickness is approximate.
+Analytic uses minimum thickness and nonnegative extra allowance, both in millimeters.
+Cavities may split or disappear, but construction failures reject. Returned bodies
+include retained originals, unaffected bodies and new cavities. See
+[erosion](erosion.md) for defaults, conversion quality and verification limits.
+
 
 ### Mathematical path sweep
 
@@ -439,7 +442,10 @@ five seconds, including during native calculations. Limits are 15 minutes per sc
 100 modeling calls, 1000 curves per sketch and 256 KiB source/request payloads.
 Each native calculation has a five-minute watchdog. Agent replies outlive the
 corresponding operation budget by 15 seconds. Authenticated poll/cancel messages
-can pass during a pending calculation. Status reads metadata independently;
+can pass during a pending calculation. If session cleanup makes a heartbeat fail
+before an in-flight operation error arrives, the runner reports the operation error.
+A successful operation does not suppress an observed connection failure.
+Status reads metadata independently;
 inspection and modeling commands acquire one asynchronous lock because inspections
 share one measurement worker. Overlapping requests wait rather than returning busy.
 At most 16 commands may wait/run; status and script poll/cancel bypass the lock.

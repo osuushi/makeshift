@@ -45,13 +45,13 @@ export class BrowserArchive {
   }
 }
 
-export function downloadArchive(data: Uint8Array): void {
+export function downloadArchive(data: Uint8Array, filename = "Untitled.makeshift"): void {
   const url = URL.createObjectURL(
     new Blob([new Uint8Array(data)], { type: "application/octet-stream" }),
   );
   const link = document.createElement("a");
   link.href = url;
-  link.download = "Untitled.makeshift";
+  link.download = filename;
   link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

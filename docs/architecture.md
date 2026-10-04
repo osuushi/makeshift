@@ -32,6 +32,7 @@ is a later operation on current geometry, through ordinary Undo.
 | Area | Detail |
 | --- | --- |
 | Agent shell (proposal) | [Harness, portable workspace, CLI and scripting](architecture/agent-shell.md) |
+| Standalone web build | [Local WASM, browser files and independent Pages releases](architecture/web.md) |
 | iPad document handoff | [LAN transport, single editor, input and files](architecture/ipad.md) |
 | Ownership, model, code entry points | [Document model](architecture/model.md), [implementation map](architecture/implementation.md) |
 | Async edits, cancellation, history, files | [Edit lifecycle](architecture/edit-lifecycle.md), [persistence](architecture/persistence.md) |
@@ -47,9 +48,10 @@ is a later operation on current geometry, through ordinary Undo.
 | Native units and geometry budgets | [Numerical geometry](architecture/numerical-geometry.md) |
 | Bodies, modeling selection, tool switching | [Materialized solids](architecture/solids.md), [modeling tools](architecture/modeling-tools.md), [solid-loop design](sketch-solid-loop.md) |
 | Topology inspection and surface replacement | [Composable topology editing](architecture/topology-editing.md) |
+| Mesh reconstruction | [STL/OBJ import, analytic recovery, bicubic fitting and accuracy limits](architecture/mesh-fitting.md) |
 | Loft | [Ordered sections, correspondence and acceptance](architecture/loft.md) |
 | Shell | [Shell interaction and validation](architecture/shell.md) |
-| Erode | [Eroded bodies, allowance and coverage](architecture/erosion.md) |
+| Erode | [Remesh erosion quality and Analytic thickness bounds](architecture/erosion.md) |
 | Selection measurements | [Distances, gaps and relationships](architecture/measurements.md) |
 | Draft and cleanup | [Extrusion draft](architecture/extrusion-draft.md), [solid cleanup](architecture/solid-cleanup.md) |
 | Decorators | [Export-time mesh modifiers, threads and JavaScript extensions](architecture/decorators.md), [knurling](architecture/knurling.md) |

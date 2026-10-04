@@ -251,15 +251,16 @@ export class SketchEditor {
     if (sketch) await this.store.request({ kind: "clear", sketchId: sketch.id });
     this.clearSelection();
   }
-  async newDocument(): Promise<void> {
-    if (this.blocked || this.isDragging) return;
+  async newDocument(): Promise<boolean> {
+    if (this.blocked || this.isDragging) return false;
     this.numeric.cancel();
     await this.interactions.cancel();
-    await this.store.request({ kind: "new" });
+    if (!(await this.store.request({ kind: "new" }))) return false;
     this.bodiesVisible = true;
     this.visibility.reset();
     this.world.crossSection = null;
     this.clearSelection();
+    return true;
   }
   escape(): void {
     if (this.moveMode && !this.isDragging) {

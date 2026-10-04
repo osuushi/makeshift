@@ -115,6 +115,9 @@ try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
       page.setDefaultTimeout(30000);
       const errors = [];
+      page.on("dialog", (dialog) =>
+        dialog.type() === "beforeunload" ? dialog.accept() : dialog.dismiss(),
+      );
       page.on("pageerror", (error) => errors.push(error.message));
       page.on("console", (message) => {
         if (message.type() === "error") errors.push(message.text());

@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "circular-rim.h"
 #include "timing.h"
 #include "blends.h"
 #include "offset-thickness.h"
@@ -116,16 +117,16 @@ void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMap
     out << "{\"origin\":"; xyz(out, origin.XYZ()); out << ",\"u\":"; xyz(out, u.XYZ());
     out << ",\"v\":"; xyz(out, v.XYZ()); out << '}';
 }
-void analyticEdge(std::ostream& out, const BRepAdaptor_Curve& curve) {
+void analyticEdge(std::ostream& out, const TopoDS_Edge& shape, const BRepAdaptor_Curve& curve) {
     const double a = curve.FirstParameter(), b = curve.LastParameter();
     out << ",\"curve\":";
-    if (curve.GetType() != GeomAbs_Line && curve.GetType() != GeomAbs_Circle) { out << "null"; return; }
-    if (curve.GetType() == GeomAbs_Circle && std::abs(b - a) >= 2 * std::acos(-1.0) - 1e-8) {
-        const auto circle = curve.Circle();
+    if (const auto rim = circularRim(shape)) {
+        const auto circle = *rim;
         out << "{\"kind\":\"circle\",\"center\":"; xyz(out, circle.Location().XYZ());
         out << ",\"normal\":"; xyz(out, circle.Axis().Direction().XYZ());
         out << ",\"radius\":" << circle.Radius() << '}'; return;
     }
+    if (curve.GetType() != GeomAbs_Line && curve.GetType() != GeomAbs_Circle) { out << "null"; return; }
     out << "{\"kind\":" << quoted(curve.GetType() == GeomAbs_Line ? "line" : "arc") << ",\"a\":";
     xyz(out, curve.Value(a).XYZ()); out << ",\"b\":"; xyz(out, curve.Value(b).XYZ());
     if (curve.GetType() == GeomAbs_Circle) { out << ",\"mid\":"; xyz(out, curve.Value((a + b) / 2).XYZ()); }
@@ -133,7 +134,7 @@ void analyticEdge(std::ostream& out, const BRepAdaptor_Curve& curve) {
 }
 void edge(std::ostream& out, const TopoDS_Edge& shape) {
     BRepAdaptor_Curve curve(shape); const double a = curve.FirstParameter(), b = curve.LastParameter();
-    analyticEdge(out, curve);
+    analyticEdge(out, shape, curve);
     int count = 1;
     if (curve.GetType() == GeomAbs_Circle) {
         const double radius = curve.Circle().Radius();

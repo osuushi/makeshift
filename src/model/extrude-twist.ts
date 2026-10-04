@@ -7,7 +7,12 @@ import { numericFocus } from "../tools/menu-focus.js";
 import { installTwistDrag } from "./extrude-twist-drag.js";
 import { revolutionPoint } from "./revolve-axis.js";
 
-export type TwistFrame = { center: Vector; normal: Vector; coplanar: boolean };
+export type TwistFrame = {
+  center: Vector;
+  normal: Vector;
+  coplanar: boolean;
+  circleCenter?: Vector;
+};
 export class ExtrudeTwist {
   readonly input = document.createElement("input");
   readonly row = document.createElement("label");
@@ -58,9 +63,14 @@ export class ExtrudeTwist {
     this.angle = 0;
   }
   get value() {
-    return this.angle === 0 || !this.origin
+    return this.angle === 0 || !this.origin || this.invariant
       ? undefined
       : { angle: this.angle, origin: this.origin };
+  }
+  get invariant(): boolean {
+    const center = this.frame?.circleCenter;
+    const origin = this.origin;
+    return !!center && !!origin && Math.hypot(...center.map((v, i) => v - origin[i])) <= 1e-6;
   }
   update(
     frame: TwistFrame | null,
@@ -76,22 +86,42 @@ export class ExtrudeTwist {
     const available = !!frame?.coplanar;
     this.sphere.hidden = this.handle.hidden = !available;
     this.guide.style.display = available ? "" : "none";
-    this.input.disabled = !available;
-    this.row.title = available ? "" : "Twist needs profiles in one common plane";
+    if (available && frame) this.origin ??= [...frame.center];
+    this.input.disabled = this.handle.disabled = !available || this.invariant;
+    const reason = !available
+      ? "Twist needs profiles in one common plane"
+      : this.invariant
+        ? "Twisting a cylinder around its own axis does not change its shape. Move the axis to enable twist."
+        : "";
+    this.row.title = reason;
+    this.input.title = reason || "Total twist in degrees about the source normal";
+    this.handle.title =
+      reason || "Drag twist · Shift bypasses whole-degree snapping · click to type";
     if (!frame || !available) return;
-    this.origin ??= [...frame.center];
+    this.position(frame, distance, symmetric);
+    const invalid = active && distance !== 0 && !valid && !this.editor.store.working;
+    this.handle.dataset.geometryInvalid = String(invalid);
+    this.input.setAttribute("aria-invalid", String(invalid));
+    if (!numericFocus(this.input))
+      this.input.value = Number.isFinite(this.angle)
+        ? String(Number(this.angle.toPrecision(4)))
+        : "";
+  }
+  private position(frame: TwistFrame, distance: number, symmetric: boolean): void {
+    const origin = this.origin;
+    if (!origin) return;
     const safeDistance = (Number.isFinite(distance) ? distance : 0) / (symmetric ? 2 : 1);
     const parent = this.editor.world.project(
       revolutionPoint(
-        { origin: this.origin, direction: frame.normal },
+        { origin, direction: frame.normal },
         frame.center,
         (Number.isFinite(this.angle) ? this.angle : 0) / (symmetric ? 2 : 1),
         safeDistance,
       ),
     );
-    const start = this.editor.world.project(this.origin);
+    const start = this.editor.world.project(origin);
     const end = this.editor.world.project(
-      this.origin.map((v, i) => v + frame.normal[i] * safeDistance) as Vector,
+      origin.map((v, i) => v + frame.normal[i] * safeDistance) as Vector,
     );
     this.sphere.style.left = `${start.x - parent.x}px`;
     this.sphere.style.top = `${start.y - parent.y}px`;
@@ -105,16 +135,9 @@ export class ExtrudeTwist {
     this.handle.hidden = !rotationVisible(camera, frame.normal);
     const guideStart = symmetric
       ? this.editor.world.project(
-          this.origin.map((n, i) => n - frame.normal[i] * safeDistance) as Vector,
+          origin.map((n, i) => n - frame.normal[i] * safeDistance) as Vector,
         )
       : start;
     this.guide.innerHTML = `<path d="M${guideStart.x - parent.x} ${guideStart.y - parent.y}L${end.x - parent.x} ${end.y - parent.y}"/>`;
-    const invalid = active && distance !== 0 && !valid && !this.editor.store.working;
-    this.handle.dataset.geometryInvalid = String(invalid);
-    this.input.setAttribute("aria-invalid", String(invalid));
-    if (!numericFocus(this.input))
-      this.input.value = Number.isFinite(this.angle)
-        ? String(Number(this.angle.toPrecision(4)))
-        : "";
   }
 }

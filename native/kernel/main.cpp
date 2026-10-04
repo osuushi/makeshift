@@ -1,6 +1,7 @@
 #include "kernel.h"
 #include "erosion.h"
 #include "measurement.h"
+#include "mesh-fit.h"
 #include "timing.h"
 #include <boost/property_tree/json_parser.hpp>
 #include <BRepTools.hxx>
@@ -49,6 +50,7 @@ void validate(const TopoDS_Shape& shape) {
     if (shape.IsNull() || !BRepCheck_Analyzer(shape).IsValid()) throw std::runtime_error("Kernel produced invalid geometry");
 }
 double volume(const TopoDS_Shape& shape) {
+    KernelTiming timing("volume");
     if (shape.IsNull()) return 0;
     GProp_GProps props;
     bool planar = true;
@@ -58,22 +60,30 @@ double volume(const TopoDS_Shape& shape) {
     if (planar) error = BRepGProp::VolumeProperties(shape, props, 1e-10);
     else {
         Bnd_Box bounds; BRepBndLib::AddOptimal(shape, bounds, false, false);
+        timing.phase("bounds");
         if (bounds.IsVoid()) return 0;
         double lo[3], hi[3]; bounds.Get(lo[0], lo[1], lo[2], hi[0], hi[1], hi[2]);
         // Integrate across spline spans. Ordinary adaptive quadrature can converge
         // to different volumes for the same solid after its faces are repartitioned.
         // A nearby exterior plane avoids near-zero integrals on trimmed faces,
         // without amplifying boundary tolerances along the body's longest axis.
-        int axis = 0;
-        for (int i = 1; i < 3; ++i) if (hi[i]-lo[i] < hi[axis]-lo[axis]) axis = i;
-        gp_Pnt origin(lo[0], lo[1], lo[2]);
-        origin.SetCoord(axis+1, lo[axis]-1);
-        gp_Dir normal(axis == 0, axis == 1, axis == 2);
-        error = BRepGProp::VolumePropertiesGK(shape, props,
-            gp_Pln(origin, normal), 1e-10, false, true);
+        std::array<int,3> axes{0,1,2};
+        std::stable_sort(axes.begin(),axes.end(),[&](int a,int b) { return hi[a]-lo[a] < hi[b]-lo[b]; });
+        for (const int axis : axes) {
+            gp_Pnt origin(lo[0],lo[1],lo[2]);
+            origin.SetCoord(axis+1,lo[axis]-1);
+            const gp_Dir normal(axis == 0,axis == 1,axis == 2);
+            error = BRepGProp::VolumePropertiesGK(shape,props,gp_Pln(origin,normal),1e-10,false,true);
+            if (std::isfinite(error) && error >= 0) break;
+            // A failed face aborts GK before all properties are accumulated. Try a
+            // different integral reference, never accept its partial mass or error.
+            if (std::getenv("MAKESHIFT_KERNEL_TIMING"))
+                std::cerr << "volume integration reference " << axis << " failed: " << error << std::endl;
+        }
     }
     if (!std::isfinite(error) || error < 0) throw std::runtime_error("Solid volume integration failed");
     const double value = std::abs(props.Mass());
+    timing.phase("integrate");
     if (!std::isfinite(value)) throw std::runtime_error("Non-finite solid volume");
     return value;
 }
@@ -119,13 +129,76 @@ std::vector<Operand> operands(const Tree& input) {
     }
     return result;
 }
+namespace {
+void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
+    if (input.get<std::string>("kind") == "fit-mesh") {
+        std::ostringstream output; mesh_fit::reconstruct(output,input);
+        reply << output.str(); return;
+    }
+    if (input.get<std::string>("kind") == "export-step") {
+        std::ostringstream output; exportStep(output, input);
+        reply << output.str(); return;
+    }
+    const auto bodies = operands(input); std::string mode;
+    timing.phase("operands");
+    if (input.get<std::string>("kind") == "topology") {
+        std::ostringstream output; output << std::setprecision(17);
+        inspectTopology(output, input, bodies);
+        reply << output.str(); return;
+    }
+    if (input.get<std::string>("kind") == "measure") {
+        std::ostringstream output; measureSelection(output, input, bodies);
+        reply << output.str(); return;
+    }
+    if (input.get<std::string>("kind") == "edge-finish-selection") {
+        std::ostringstream output;
+        edgeFinishSelection(output, input, bodies);
+        reply << output.str(); return;
+    }
+    if (input.get<std::string>("kind") == "offset-sketch") {
+        std::ostringstream output; offsetSketch(output, input);
+        reply << output.str(); return;
+    }
+    if (input.get<std::string>("kind") == "sections") {
+        std::ostringstream output; sketchSections(output, input, bodies);
+        reply << output.str(); return;
+    }
+    if (input.get<std::string>("kind") == "project") {
+        std::ostringstream output; projectCurves(output, input, bodies);
+        reply << output.str(); return;
+    }
+    std::vector<std::string> participants;
+    Tree erosionQuality;
+    const bool erode = input.get<std::string>("kind") == "erode";
+    if (erode) mode = "new";
+    const auto results = erode ? erodeBodies(input,bodies,participants,&erosionQuality)
+        : calculate(input,bodies,mode,participants);
+
+    timing.phase("calculate");
+    std::ostringstream output; output << std::setprecision(17) << "{\"mode\":" << quoted(mode) << ",\"participants\":[";
+    for (size_t i = 0; i < participants.size(); i++) { if (i) output << ','; output << quoted(participants[i]); }
+    output << "],\"results\":[";
+    const double deflection = input.get<std::string>("kind") == "inspect"
+        ? input.get<double>("deflection", 0.05) : 0.05;
+    for (size_t i = 0; i < results.size(); i++) { if (i) output << ','; present(output, results[i], deflection); }
+    timing.phase("presentation");
+    output << ']';
+    if (erode && input.get<std::string>("method","fast") == "fast") writeErosionQuality(output,erosionQuality);
+    reply << output.str() << '}';
+    timing.phase("write");
+}
+}
 int main() {
     const char* configuredThreads = std::getenv("MAKESHIFT_KERNEL_THREADS");
     if (!configuredThreads) configuredThreads = std::getenv("FREAC_KERNEL_THREADS");
     const int processors = std::max(1, OSD_Parallel::NbLogicalProcessors());
     const int threads = configuredThreads ? std::clamp(std::atoi(configuredThreads), 1, processors)
         : processors;
+#ifdef __EMSCRIPTEN__
+    OSD_ThreadPool::DefaultPool(1);
+#else
     OSD_ThreadPool::DefaultPool(threads);
+#endif
     std::cout << std::setprecision(17);
     std::string line;
     while (std::getline(std::cin, line)) {
@@ -133,51 +206,9 @@ int main() {
         try {
             Tree input; std::istringstream stream(line); boost::property_tree::read_json(stream, input);
             timing.operation(input.get<std::string>("kind")); timing.phase("parse");
-            if (input.get<std::string>("kind") == "export-step") {
-                std::ostringstream output; exportStep(output, input);
-                std::cout << output.str() << std::endl; continue;
-            }
-            const auto bodies = operands(input); std::string mode;
-            timing.phase("operands");
-            if (input.get<std::string>("kind") == "topology") {
-                std::ostringstream output; output << std::setprecision(17);
-                inspectTopology(output, input, bodies);
-                std::cout << output.str() << std::endl; continue;
-            }
-            if (input.get<std::string>("kind") == "measure") {
-                std::ostringstream output; measureSelection(output, input, bodies);
-                std::cout << output.str() << std::endl; continue;
-            }
-            if (input.get<std::string>("kind") == "edge-finish-selection") {
-                std::ostringstream output;
-                edgeFinishSelection(output, input, bodies);
-                std::cout << output.str() << std::endl;
-                continue;
-            }
-            if (input.get<std::string>("kind") == "offset-sketch") {
-                std::ostringstream output; offsetSketch(output, input);
-                std::cout << output.str() << std::endl; continue;
-            }
-            if (input.get<std::string>("kind") == "sections") {
-                std::ostringstream output; sketchSections(output, input, bodies);
-                std::cout << output.str() << std::endl; continue;
-            }
-            if (input.get<std::string>("kind") == "project") {
-                std::ostringstream output; projectCurves(output, input, bodies);
-                std::cout << output.str() << std::endl; continue;
-            }
-            std::vector<std::string> participants;
-            const auto results = calculate(input, bodies, mode, participants);
-            timing.phase("calculate");
-            std::ostringstream output; output << std::setprecision(17) << "{\"mode\":" << quoted(mode) << ",\"participants\":[";
-            for (size_t i = 0; i < participants.size(); i++) { if (i) output << ','; output << quoted(participants[i]); }
-            output << "],\"results\":[";
-            const double deflection = input.get<std::string>("kind") == "inspect"
-                ? input.get<double>("deflection", 0.05) : 0.05;
-            for (size_t i = 0; i < results.size(); i++) { if (i) output << ','; present(output, results[i], deflection); }
-            timing.phase("presentation");
-            std::cout << output.str() << "]}" << std::endl;
-            timing.phase("write");
+            std::ostringstream output;
+            request(output,input,timing);
+            std::cout << output.str() << std::endl;
         } catch (const erosion::AllowanceFailure& e) {
             std::cout << "{\"error\":" << quoted(e.what());
             if (std::isfinite(e.allowance))

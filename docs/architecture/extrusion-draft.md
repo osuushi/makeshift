@@ -42,6 +42,26 @@ center stays 72 CSS pixels left of the sphere in screen space, independent of
 zoom and camera orientation; its location has no geometric meaning. The glyph
 retains its plane orientation and hover glow, without a rectangular hover fill.
 
+For one complete circular sketch region or circular planar face, the default
+anchor is the circle's analytic center. Twist's input and glyph are disabled
+while the anchor remains within 1e-6 mm of that center. Their hover tooltip
+explains that twisting a cylinder around its own axis does not change its shape
+and that moving the axis enables twist. The sphere remains available. Returning
+the anchor to the center suppresses twist in the temporary request; the previously
+entered angle remains available if the anchor moves away again. Length, draft,
+symmetry and acceptance retain their normal behavior. Partial circular regions,
+holes and multiple selections do not receive this single-disk UI guard.
+
+The kernel independently bypasses centered twist for a disk or concentric circular
+boundaries, using ordinary extrusion/draft. For off-center full circles, sections
+move their centers along the requested orbit without spinning their own seams.
+Exact rational circle sections bypass OCCT's polynomial conic approximation in
+the smooth loft. Mid-station contour, solid and interference checks retain their
+existing tolerances; neither profile sampling nor a polygon substitutes for the
+circle. The wall remains one periodic face. Circular rational quadratic rims are
+recognized from current geometry with per-span radial/planar checks at 1e-8 mm,
+so cap reselection retains circle controls after acceptance and reopening.
+
 Anchor dragging uses the source plane regardless of camera orientation and may
 place the axis outside the profile. Reuse Move's visible point-of-interest feedback
 and Command bypass, but accept only snap positions in the source plane. Do not

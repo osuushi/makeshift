@@ -12,6 +12,8 @@
 #include <iostream>
 #include <stdexcept>
 
+void bezierDistanceBounds();
+
 namespace {
 TopoDS_Shape empty() {
     TopoDS_Compound result; BRep_Builder().MakeCompound(result); return result;
@@ -78,6 +80,7 @@ void sphericalCoverage() {
 }
 }
 int main() {
+    bezierDistanceBounds();
     distanceBounds();
     sphericalCoverage();
     const auto source = BRepPrimAPI_MakeBox(20, 20, 10).Shape();

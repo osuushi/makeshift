@@ -6,6 +6,7 @@ import { documentArchive } from "../.cache/sketch-tests/src/model/document-archi
 import { erosionSpecialCases } from "../.cache/sketch-tests/tests/erosion-special-fixtures.js";
 import { openDocument } from "./native-documents.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
+import { accurateErosion } from "./ui-erosion-method.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -47,9 +48,9 @@ await withUiRuntimes(
         .getByRole("button", { name: /^Select Body / })
         .first()
         .click();
-      await chooseTool(page, "erode", "erode");
+      await accurateErosion(page);
       await page
-        .getByRole("textbox", { name: "Minimum thickness", exact: true })
+        .getByRole("textbox", { name: "Erode by", exact: true })
         .fill(String(entry.thickness));
       await page
         .getByRole("textbox", { name: "Extra thickness allowance", exact: true })

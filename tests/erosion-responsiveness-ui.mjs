@@ -7,7 +7,7 @@ import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const fixture = JSON.parse(await readFile("tests/fixtures/erosion-towers.json", "utf8"));
-const thickness = (page) => page.getByRole("textbox", { name: "Minimum thickness", exact: true });
+const thickness = (page) => page.getByRole("textbox", { name: /^Erode by$/ });
 const allowance = (page) =>
   page.getByRole("textbox", { name: "Extra thickness allowance", exact: true });
 
@@ -21,7 +21,14 @@ async function enter(page) {
     return state.interaction?.kind === "erode" && state.busy;
   });
   assert.equal(await thickness(page).inputValue(), "1");
-  assert.equal(await allowance(page).inputValue(), "50");
+  assert.equal(
+    await page.getByRole("combobox", { name: "Mesh detail", exact: true }).inputValue(),
+    "standard",
+  );
+  assert.equal(
+    await page.getByRole("textbox", { name: "CAD face budget", exact: true }).inputValue(),
+    "128",
+  );
   assert.equal(
     await page
       .getByRole("button", { name: "Keep originals", exact: true })
@@ -63,6 +70,9 @@ async function cancellation(page, original) {
 
 async function suggestedAllowance(page, name, original) {
   await enter(page);
+  await page
+    .getByRole("combobox", { name: "Erosion method", exact: true })
+    .selectOption("accurate");
   await thickness(page).fill("4");
   assert.equal(await allowance(page).inputValue(), "50", "Thickness edits retain the percentage");
   await allowance(page).fill("2.5"); // 0.1 mm extra at 4 mm minimum.

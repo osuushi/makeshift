@@ -62,6 +62,9 @@ export async function withUiRuntimes(
         }
         page.setDefaultTimeout(timeout);
         const errors = [];
+        page.on("dialog", (dialog) =>
+          dialog.type() === "beforeunload" ? dialog.accept() : dialog.dismiss(),
+        );
         page.on("pageerror", (error) => errors.push(error.message));
         await page.waitForFunction(() => Boolean(window.makeshiftInspect));
         await route(page, name);

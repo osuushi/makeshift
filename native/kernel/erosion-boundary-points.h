@@ -4,7 +4,7 @@
 #include <vector>
 
 namespace erosion {
-// Indexed points on exact boundary curves supply distance upper bounds only.
+// Indexed points on exact boundary curves and trimmed faces supply distance upper bounds only.
 // Sampling density affects speed of certification, never its correctness.
 class BoundaryPoints {
     std::vector<gp_Pnt> points;
