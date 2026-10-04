@@ -1,5 +1,4 @@
 import { numericFocus } from "../tools/menu-focus.js";
-import { cleanupButton } from "./cleanup-button.js";
 import { WidgetClearance } from "./widget-clearance.js";
 import "./revolve.css";
 import * as THREE from "three";
@@ -15,7 +14,6 @@ import { revolveSections } from "./revolve-sections.js";
 
 const svgNS = "http://www.w3.org/2000/svg";
 export class RevolveWidget {
-  readonly cleanup = cleanupButton();
   readonly root = document.createElement("div");
   private placement = new WidgetClearance(this.root);
   readonly entry = this.button("Revolve", '<path d="M19 12a7 7 0 1 1-2-5M19 3v5h-5M12 3v18"/>');
@@ -49,7 +47,6 @@ export class RevolveWidget {
       button.onclick = () => setMode(mode);
       this.options.append(button);
     }
-    this.options.append(this.cleanup);
     this.options.append(this.axis, this.accept);
     this.root.append(
       this.drawing,

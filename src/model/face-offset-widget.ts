@@ -1,20 +1,13 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
 import { numericFocus } from "../tools/menu-focus.js";
-import {
-  compactCleanup,
-  distanceField,
-  positionAxialPanel,
-  updateAxialArrow,
-} from "./axial-widget.js";
+import { distanceField, positionAxialPanel, updateAxialArrow } from "./axial-widget.js";
 import type { Face } from "./body.js";
-import { cleanupButton } from "./cleanup-button.js";
 import { projectedAxis } from "./extrude-axis.js";
 import type { OffsetQuantity } from "./offset-quantity.js";
 import { WidgetClearance } from "./widget-clearance.js";
 
 export class FaceOffsetWidget {
-  readonly cleanup = cleanupButton();
   readonly root = document.createElement("div");
   private placement = new WidgetClearance(this.root);
   readonly handle = document.createElement("button");
@@ -44,8 +37,7 @@ export class FaceOffsetWidget {
     this.options.className = "face-offset-options axial-panel";
     const actions = document.createElement("div");
     actions.className = "axial-actions";
-    compactCleanup(this.cleanup);
-    actions.append(this.quantity, this.accept, dismiss, this.cleanup);
+    actions.append(this.quantity, this.accept, dismiss);
     this.options.append(distanceField(this.input), actions);
     this.root.append(this.handle, this.options);
     overlay.append(this.root);

@@ -76,13 +76,8 @@ async function clampedOffset(page, cleanupChecks, original) {
   );
   await page.waitForTimeout(900);
   await inspect(page);
-  assert.equal(cleanupChecks() - count, 1, "exactly one cleanup query follows geometry");
-  assert.equal(
-    await page
-      .getByRole("button", { name: "Commit and clean up", exact: true })
-      .getAttribute("aria-busy"),
-    "false",
-  );
+  assert.equal(cleanupChecks() - count, 0, "Ordinary geometry does not schedule cleanup");
+  assert.equal(await page.locator(".commit-cleanup").count(), 0);
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, original);
 }
@@ -127,7 +122,7 @@ await withUiRuntimes(
     await extrusionCancelRoute(page);
     await offsetScheduling(page);
     console.log(
-      `${name}: real Extrude/Offset delayed delivery, coalescing, invalidation, cancellation, clamp feedback and cleanup serialization pass`,
+      `${name}: real Extrude/Offset delayed delivery, coalescing, invalidation, cancellation, clamp feedback and no completion-cleanup probes pass`,
     );
   },
   { allowed: ["chromium", "webkit"], timeout: 30000 },

@@ -3,15 +3,12 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import type { BodyEdgeFinish } from "./body.js";
 import { BodyEdgeFinishWidget } from "./body-edge-finish-widget.js";
-import { EdgeFinishCleanup } from "./edge-finish-cleanup.js";
 import { selectedEdgeFrame } from "./edge-finish-direction.js";
 import { EdgeFinishDrag } from "./edge-finish-drag.js";
 import { PreviewRunner } from "./preview-runner.js";
 import { ReopenCompletion } from "./reopen-completion.js";
 
 export class BodyEdgeFinishControls {
-  private cleanup: EdgeFinishCleanup;
-  private completion = new ReopenCompletion();
   private widget: BodyEdgeFinishWidget;
   private abort = new AbortController();
   private lease: InteractionLease | null = null;
@@ -26,7 +23,7 @@ export class BodyEdgeFinishControls {
     editing: () => this.lease?.phase === "editing",
     calculate: (request) => this.calculate(request),
     supersede: () => this.editor.store.supersedePreview(),
-    settled: (calculated) => this.cleanup.settled(calculated),
+    settled: () => this.editor.refresh(),
   });
   private drag: EdgeFinishDrag;
   constructor(
@@ -37,12 +34,6 @@ export class BodyEdgeFinishControls {
       overlay,
       () => void this.finish(),
       () => void this.cancel(),
-    );
-    this.cleanup = new EdgeFinishCleanup(
-      editor,
-      this.widget.cleanup,
-      this.previews,
-      () => this.valid && this.size > 0 && this.lease?.phase === "editing",
     );
     this.drag = new EdgeFinishDrag(
       editor,
@@ -65,8 +56,6 @@ export class BodyEdgeFinishControls {
       },
       size: (value) => this.queue(value),
     });
-    this.widget.panel.append(this.completion.root);
-    this.widget.cleanup.onclick = () => void this.finish(true);
     const options = { signal: this.abort.signal };
     onModelKeydown(
       (event) => {
@@ -86,7 +75,6 @@ export class BodyEdgeFinishControls {
     const faces =
       !this.lease && this.editor.modeling.targets.some((target) => target.kind === "face");
     if (this.mode === mode && !faces) return;
-    this.cleanup.reset();
     this.editor.modeling.setTool(mode);
     this.mode = mode;
     if (this.lease) {
@@ -188,7 +176,6 @@ export class BodyEdgeFinishControls {
       }
       return;
     }
-    this.cleanup.reset(Number.isFinite(size) && size > 0);
     this.valid = false;
     if (!Number.isFinite(size)) {
       this.previews.clear();
@@ -226,7 +213,7 @@ export class BodyEdgeFinishControls {
     }
     this.editor.refresh();
   }
-  private async finish(cleanup = this.completion.cleanup): Promise<boolean> {
+  private async finish(): Promise<boolean> {
     await this.previews.settle();
     const lease = this.lease;
     if (this.drag.active || !lease) return false;
@@ -241,7 +228,7 @@ export class BodyEdgeFinishControls {
     }
     if (!lease.close()) return false;
     const ids = new Set(this.edges.map((e) => e.body));
-    const success = await this.editor.accept(cleanup);
+    const success = await this.editor.accept();
     if (!success) {
       if (this.lease) this.lease.phase = "editing";
       this.editor.refresh();
@@ -271,14 +258,12 @@ export class BodyEdgeFinishControls {
     this.restoredSelection = undefined;
     this.completion.reset();
     this.widget.input.blur();
-    this.cleanup.reset();
     this.lease = null;
     this.editor.notice = "";
     lease.release();
     this.editor.refresh();
   }
   private update = (): void => {
-    this.cleanup.update(!!this.lease && this.size > 0, this.editor.blocked || !this.valid);
     if (!this.lease) {
       const tool = this.editor.modeling.tool;
       if (
@@ -310,7 +295,6 @@ export class BodyEdgeFinishControls {
   };
   dispose(): void {
     this.previews.clear();
-    this.cleanup.reset();
     this.abort.abort();
     this.editor.world.changed.delete(this.update);
     this.widget.dispose();

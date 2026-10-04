@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
-import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { standaloneOnly } from "./ui-cleanup-controls.mjs";
+import { at, close, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 import { widgetPresentation } from "./ui-widget-presentation.mjs";
 
@@ -9,7 +10,7 @@ async function value(page, name, value) {
   await page.getByRole("textbox", { name, exact: true }).fill(String(value));
   await inspect(page);
 }
-export async function revolveRoute(page, name, electron, cleanup = false) {
+export async function revolveRoute(page, name, electron, checkStandalone = false) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.mouse.move(640, 425);
@@ -76,9 +77,21 @@ export async function revolveRoute(page, name, electron, cleanup = false) {
     "revolve",
     "Field Enter only applies its value",
   );
-  if (cleanup) await page.getByRole("button", { name: "Commit and clean up", exact: true }).click();
-  else await page.keyboard.press("Enter");
+  await acceptRevolution(page, name, electron, checkStandalone, original);
+  console.log(
+    `${name}: explicit line/world revolve axes, partial/full/helix, angle drag, invalid recovery, accept and archive passed`,
+  );
+}
+
+async function acceptRevolution(page, name, electron, checkStandalone, original) {
+  const candidate = (await inspect(page)).preview;
+  if (checkStandalone) {
+    await standaloneOnly(page);
+    await page.getByRole("button", { name: "Accept revolution", exact: true }).click();
+  } else await page.keyboard.press("Enter");
+  await modalCompleted(page);
   const accepted = (await inspect(page)).document;
+  assert.deepEqual(accepted, candidate, "Ordinary revolution preserves candidate topology");
   assert.equal(accepted.bodies.length, 1);
   assert.equal((await inspect(page)).interaction, null);
   await chooseTool(page, "undo", "undo");
@@ -86,9 +99,6 @@ export async function revolveRoute(page, name, electron, cleanup = false) {
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, accepted);
   await bodyArchiveRoute(page, `${name}-helix`, electron);
-  console.log(
-    `${name}: explicit line/world revolve axes, partial/full/helix, angle drag, invalid recovery, accept and archive passed`,
-  );
 }
 
 async function spatialDrag(page) {

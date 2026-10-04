@@ -3,7 +3,6 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import { AxialDrag } from "./axial-drag.js";
 import type { BodyFaceOffset, Face } from "./body.js";
-import { CleanupAvailability } from "./cleanup-availability.js";
 import {
   expandFaceTargets,
   offsetHandle,
@@ -34,10 +33,9 @@ export class FaceOffsetControls {
     editing: () => this.lease?.phase === "editing",
     calculate: (request) => this.calculate(request),
     supersede: () => this.editor.store.supersedePreview(),
-    settled: (calculated) => this.previewSettled(calculated),
+    settled: () => this.editor.refresh(),
   });
   private drag: AxialDrag;
-  private cleanup: CleanupAvailability;
   constructor(
     private editor: SketchEditor,
     overlay: HTMLElement,
@@ -47,11 +45,6 @@ export class FaceOffsetControls {
       () => void this.finish(),
       () => void this.cancel(),
     );
-    this.cleanup = new CleanupAvailability(this.widget.cleanup, () => {
-      this.previews.check(() => this.checkCleanup());
-    });
-    this.widget.options.append(this.completion.root);
-    this.widget.cleanup.onclick = () => void this.finish(true);
     const options = { signal: this.abort.signal };
     this.drag = new AxialDrag(editor, this.widget.handle, this.abort.signal, {
       begin: () => this.begin(),
@@ -172,7 +165,6 @@ export class FaceOffsetControls {
   }
   private queue(distance: number): void {
     if (this.lease?.phase !== "editing" || this.previews.latest?.distance === distance) return;
-    this.cleanup.reset(Number.isFinite(distance) && distance !== 0);
     this.invalid = !Number.isFinite(distance);
     this.distance = distance;
     this.valid = false;
@@ -216,23 +208,7 @@ export class FaceOffsetControls {
     }
     this.editor.refresh();
   }
-  private previewSettled(calculated: boolean): void {
-    if (calculated) {
-      if (this.valid && this.distance !== 0 && this.lease?.phase === "editing")
-        this.cleanup.schedule();
-      else this.cleanup.reset();
-    }
-    this.editor.refresh();
-  }
-  private async checkCleanup(): Promise<void> {
-    const request = this.previews.latest;
-    if (!request || !this.valid || this.lease?.phase !== "editing") return;
-    const success = await this.editor.store.request({ kind: "check-cleanup" });
-    if (request === this.previews.latest && this.valid && this.lease?.phase === "editing")
-      this.cleanup.resolve(this.editor.store.cleanupAvailable, success);
-    this.editor.refresh();
-  }
-  private async finish(cleanup = this.completion.cleanup): Promise<boolean> {
+  private async finish(): Promise<boolean> {
     await this.previews.settle();
     const lease = this.lease;
     if (this.drag.active || !lease || !this.valid) return false;
@@ -241,7 +217,7 @@ export class FaceOffsetControls {
       return true;
     }
     if (!lease.close()) return false;
-    const success = await this.editor.accept(cleanup);
+    const success = await this.editor.accept();
     if (!success) {
       lease.phase = "editing";
       this.editor.refresh();
@@ -268,7 +244,6 @@ export class FaceOffsetControls {
     this.completion.reset();
     this.lease = null;
     this.widget.input.blur();
-    this.cleanup.reset();
     this.distance = 0;
     this.invalid = false;
     this.editor.notice = "";
@@ -276,7 +251,6 @@ export class FaceOffsetControls {
     this.editor.refresh();
   }
   private update = (): void => {
-    this.cleanup.update(!!this.lease && this.distance !== 0, this.editor.blocked || !this.valid);
     if (!this.lease) {
       const selected = offsetTargets(this.editor);
       if (
@@ -312,7 +286,6 @@ export class FaceOffsetControls {
   };
   dispose(): void {
     this.previews.clear();
-    this.cleanup.reset();
     this.abort.abort();
     this.editor.world.changed.delete(this.update);
     this.widget.dispose();

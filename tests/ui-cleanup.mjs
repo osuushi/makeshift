@@ -3,7 +3,8 @@ import { isDeepStrictEqual } from "node:util";
 import { openDocument } from "./native-documents.mjs";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
-import { at, drag, inspect, reset } from "./ui-helpers.mjs";
+import { standaloneOnly } from "./ui-cleanup-controls.mjs";
+import { at, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function selectBodies(page, count) {
@@ -47,19 +48,14 @@ export async function createStack(page) {
     await page.getByRole("textbox", { name: "Extrusion distance" }).fill("10");
     await inspect(page);
     if (i === 2) {
-      await page.waitForFunction(
-        () =>
-          document.querySelector(".extrude-controls .commit-cleanup")?.getAttribute("aria-busy") ===
-          "false",
-      );
-      assert.ok(
-        await page.getByRole("button", { name: "Commit and clean up", exact: true }).isDisabled(),
-      );
+      await standaloneOnly(page);
       await page.getByRole("button", { name: "Accept extrusion", exact: true }).click();
+      await modalCompleted(page);
     } else {
       await page.keyboard.press("Enter");
       await page.keyboard.press("Enter");
     }
+    await modalCompleted(page);
     assert.equal((await inspect(page)).document.bodies.length, i + 1);
   }
 }
@@ -74,6 +70,7 @@ async function cleanupSeamRoutes(page, joined, original, fixturePath) {
   let state = await clean(page);
   assert.equal(state.preview.bodies[0].faces.length, 13);
   await page.getByRole("button", { name: "Accept cleanup", exact: true }).click();
+  await modalCompleted(page);
   assert.equal((await inspect(page)).document.bodies[0].faces.length, 13);
   await undoTo(page, joined);
   const facePoint = await project(page, [0, -10, (seamZ + body.bounds[5]) / 2]);
@@ -107,6 +104,7 @@ export async function cleanupRoute(page, name, electron, fixturePath) {
   await chooseTool(page, "union", "union");
   await inspect(page);
   await page.getByRole("button", { name: "Accept Boolean", exact: true }).click();
+  await modalCompleted(page);
   const joined = (await inspect(page)).document;
   assert.equal(joined.bodies[0].faces.length, 14, "Ordinary commit preserves ribs");
   state = await clean(page);
@@ -122,14 +120,25 @@ export async function cleanupRoute(page, name, electron, fixturePath) {
   await selectBodies(page, 3);
   await chooseTool(page, "union", "union");
   await inspect(page);
-  await page.getByRole("button", { name: "Commit and clean up", exact: true }).click();
+  await standaloneOnly(page);
+  await page.getByRole("button", { name: "Accept Boolean", exact: true }).click();
+  await modalCompleted(page);
+  const ordinary = (await inspect(page)).document;
+  assert.equal(ordinary.bodies[0].faces.length, 14);
+  await clean(page);
+  await page.getByRole("button", { name: "Accept cleanup", exact: true }).click();
+  await modalCompleted(page);
   state = await inspect(page);
   assert.equal(state.document.bodies.length, 1);
   assert.equal(state.document.bodies[0].faces.length, 6);
   assert.equal(state.document.bodies[0].edges.length, 12);
   assert.ok(Math.abs(state.document.bodies[0].volume - volume) < 1e-6);
   const saved = state.document;
+  await undo(page);
+  assert.deepEqual((await inspect(page)).document, ordinary, "Cleanup has its own Undo step");
   await undoTo(page, original);
+  await chooseTool(page, "redo", "redo");
+  assert.deepEqual((await inspect(page)).document, ordinary);
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, saved);
   await selectBodies(page, 1);
@@ -141,13 +150,14 @@ export async function cleanupRoute(page, name, electron, fixturePath) {
   state = await clean(page);
   assert.deepEqual(state.preview, saved);
   await page.keyboard.press("Enter");
+  await modalCompleted(page);
   assert.deepEqual(await geometryHistory(), beforeNoOp, "No-op cleanup adds no geometry history");
-  await undoTo(page, original);
+  await undoTo(page, ordinary);
   await chooseTool(page, "redo", "redo");
   await inspect(page);
   await page.screenshot({ path: `.cache/sketch-review/${name}-cleanup.png` });
   await bodyArchiveRoute(page, `${name}-cleanup`, electron);
   console.log(
-    `${name}: cleanup body/face/edge, protected ribs, modal acceptance, cancel, no-op, Undo/Redo and archive passed`,
+    `${name}: cleanup body/face/edge, protected ribs, ordinary completion and separate cleanup, cancel, no-op, Undo/Redo and archive passed`,
   );
 }

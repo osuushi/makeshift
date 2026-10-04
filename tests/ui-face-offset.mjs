@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import * as THREE from "three";
 import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
+import { standaloneOnly } from "./ui-cleanup-controls.mjs";
 import { at, close, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { previewActionReady } from "./ui-preview-readiness.mjs";
@@ -141,16 +142,7 @@ async function holeOffset(page, name, electron, cleanup = false) {
   await page.mouse.wheel(20, 10);
   await inspect(page);
   assert.notDeepEqual((await inspect(page)).camera.target, before.target);
-  if (cleanup) {
-    await page.waitForFunction(
-      () =>
-        document.querySelector(".face-offset-widget .commit-cleanup")?.getAttribute("aria-busy") ===
-        "false",
-    );
-    assert.ok(
-      await page.getByRole("button", { name: "Commit and clean up", exact: true }).isDisabled(),
-    );
-  }
+  if (cleanup) await standaloneOnly(page);
   await previewActionReady(page, "Accept face offset");
   await page.getByRole("button", { name: "Accept face offset", exact: true }).click();
   await modalCompleted(page);
@@ -186,12 +178,7 @@ async function sharedOffset(page, name) {
   const preview = (await inspect(page)).preview;
   close(preview.bodies[0].volume, (420 - Math.PI * 1.5 ** 2) * 6);
   await page.screenshot({ path: `.cache/sketch-review/${name}-shared-offset.png` });
-  await page.waitForFunction(
-    () =>
-      !window.makeshiftInspect().busy &&
-      document.querySelector(".face-offset-widget .commit-cleanup")?.getAttribute("aria-busy") ===
-        "false",
-  );
+  await standaloneOnly(page);
   await worldClick(page, [-6, 4, 6]);
   let state = await inspect(page);
   assert.equal(state.interaction, null, "Next selection accepts the valid offset");

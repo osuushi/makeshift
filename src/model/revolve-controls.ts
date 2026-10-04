@@ -57,7 +57,6 @@ export class RevolveControls {
       editor.notice = "Choose a straight edge, cylindrical face or world axis in the profile plane";
       editor.refresh();
     };
-    this.widget.cleanup.onclick = () => void this.finish(true);
     this.widget.accept.onclick = () => void this.finish();
     for (const key of ["angle", "height"] as const)
       this.widget[key].addEventListener(
@@ -233,14 +232,14 @@ export class RevolveControls {
         ? ` · Showing last valid preview: ${this.lastGood}`
         : "");
   }
-  async finish(cleanup = this.completion.cleanup): Promise<boolean> {
+  async finish(): Promise<boolean> {
     await this.running;
     if (this.lease && this.picking && !this.latest) {
       await this.cancel();
       return true;
     }
     if (!this.valid || this.picking || !this.lease?.close()) return false;
-    const success = await this.editor.accept(cleanup);
+    const success = await this.editor.accept();
     if (!success) {
       if (this.lease) this.lease.phase = "editing";
       this.editor.refresh();
@@ -268,7 +267,6 @@ export class RevolveControls {
     this.editor.refresh();
   }
   private update = (): void => {
-    this.widget.cleanup.disabled = !this.valid || this.editor.blocked;
     const frame = this.active ? this.frame : extrusionAxis(this.editor);
     const mode = this.mode === "auto" ? this.editor.store.booleanMode : this.mode;
     this.widget.update(

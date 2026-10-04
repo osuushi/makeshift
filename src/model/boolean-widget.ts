@@ -1,7 +1,6 @@
 import type { Point } from "../sketch/planes.js";
 import type { Body, BodyBoolean } from "./body.js";
 import { modeIcons } from "./boolean-icons.js";
-import { cleanupButton } from "./cleanup-button.js";
 import { WidgetClearance } from "./widget-clearance.js";
 import "./boolean-widget.css";
 
@@ -12,7 +11,6 @@ export class BooleanWidget {
   private hint = document.createElement("span");
   private choices = new Map<string, HTMLButtonElement>();
   private roles = document.createElement("span");
-  readonly cleanup = cleanupButton();
   readonly root = document.createElement("div");
   private placement = new WidgetClearance(this.root);
   private keep = document.createElement("button");
@@ -59,7 +57,7 @@ export class BooleanWidget {
       button.onclick = action;
       this.root.append(button);
     }
-    this.root.append(this.cleanup, this.roles, this.operands);
+    this.root.append(this.roles, this.operands);
     overlay.append(this.root);
   }
   update(
@@ -113,7 +111,7 @@ export class BooleanWidget {
         name === "Cancel Boolean"
           ? false
           : busy ||
-            ((name === "Accept Boolean" || button === this.cleanup) && (!valid || collecting)) ||
+            (name === "Accept Boolean" && (!valid || collecting)) ||
             (button === this.target && chosen.length < 2);
       if (button.dataset.mode)
         button.setAttribute("aria-pressed", String(button.dataset.mode === operation.mode));

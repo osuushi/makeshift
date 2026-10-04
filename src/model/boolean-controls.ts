@@ -54,8 +54,6 @@ export class BooleanControls {
     this.widget.collect.onclick = () => this.setCollecting(!this.collecting);
     this.widget.choose = (body) => this.toggleBody(body);
     this.installPicking();
-    this.widget.root.append(this.completion.root);
-    this.widget.cleanup.onclick = () => void this.finish(true);
     onModelKeydown(
       (event) => {
         if (!this.lease || !["Enter", "Escape"].includes(event.key)) return;
@@ -205,7 +203,7 @@ export class BooleanControls {
     }
     this.editor.refresh();
   }
-  private async finish(cleanup = this.completion.cleanup): Promise<boolean> {
+  private async finish(): Promise<boolean> {
     await this.running;
     const lease = this.lease;
     if (!lease) return false;
@@ -220,7 +218,7 @@ export class BooleanControls {
     const retained = new Set(
       this.editor.store.data.bodies?.filter((b) => !consumed.includes(b.id)).map((b) => b.id),
     );
-    const success = await this.editor.accept(cleanup);
+    const success = await this.editor.accept();
     if (!success) {
       if (this.lease) this.lease.phase = "editing";
       this.editor.refresh();
@@ -252,7 +250,6 @@ export class BooleanControls {
     this.editor.refresh();
   }
   private update = (): void => {
-    this.widget.cleanup.disabled = !this.valid || this.editor.blocked;
     if (!this.lease) return;
     const target =
       (this.editor.store.data.bodies ?? []).findIndex((b) => b.id === this.bodies[0]?.id) + 1;
