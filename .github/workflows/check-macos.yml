@@ -295,6 +295,7 @@ jobs:
           node tests/reopen-operation-topology-ui.mjs
           node tests/common-shortcuts-ui.mjs
           node tests/modeling-shortcut-regressions-ui.mjs
+          npm run test:thread-presets
           npm run test:current-tools
           node tests/ui-runtime-cleanup.mjs
       - name: Navigation Undo and context boundaries

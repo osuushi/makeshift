@@ -72,12 +72,7 @@ export class ThreadApplication {
     const current = this.current;
     if (current?.lease.phase !== "editing") return;
     const settings = { ...current.settings };
-    const preset = patch.preset ?? current.instances[0]?.settings.preset;
-    const printer = preset === "print-upright" || preset === "print-sideways";
-    if (
-      (patch.preset && patch.preset !== "custom") ||
-      (printer && (patch.layerHeight !== undefined || patch.nozzleDiameter !== undefined))
-    ) {
+    if (patch.preset && patch.preset !== "custom") {
       for (const key of ["pitch", "profile", "clearance", "tipTruncation"]) delete settings[key];
     }
     current.settings = { ...settings, ...patch };

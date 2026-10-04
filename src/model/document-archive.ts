@@ -1,3 +1,4 @@
+import { normalizeThreadPreset, threadDefinition } from "../decorators/thread-settings.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { type CameraState, validateCameraState } from "./camera-state.js";
 import { exactBodies } from "./exact-body.js";
@@ -31,5 +32,16 @@ export function readFileArchive(data: string): { document: SketchDocument; camer
   )
     throw new Error("Unsupported Makeshift file format");
   const camera = validateCameraState(archive.camera);
-  return { document: archive.document, ...(camera ? { camera } : {}) };
+  const original: SketchDocument = archive.document;
+  const document = Array.isArray(original.decorators)
+    ? {
+        ...original,
+        decorators: original.decorators.map((instance) =>
+          instance?.definition === threadDefinition && instance.settings
+            ? { ...instance, settings: normalizeThreadPreset(instance.settings) }
+            : instance,
+        ),
+      }
+    : original;
+  return { document, ...(camera ? { camera } : {}) };
 }

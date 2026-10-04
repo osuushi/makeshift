@@ -139,9 +139,11 @@ snapping the modeled diameter. Use one deterministic lookup and tie rule for bot
 internal and external threads. Applying equal settings to equal reference
 diameters must resolve consistently, whether applied together or separately.
 
-Printing presets are explicit heuristics based on chosen layer/nozzle dimensions
-and intended orientation. Do not infer print direction from camera orientation or
-claim guaranteed physical fit. Preset values, not just a mutable preset name, are saved.
+FDM fine/coarse, Metric and Custom are the available presets. Preset values, not
+just a mutable preset name, are saved. Do not infer print direction from camera
+orientation or claim guaranteed physical fit. Separate Print upright/Print sideways
+presets were removed by the founder on 2026-10-04. Future orientation compensation
+within FDM settings requires a separate design; no physical calibration is included.
 
 Threads now default to FDM fine with 1 mm pitch; FDM coarse uses 1.5 mm pitch.
 Both derive from the founder's 1 mm radial triangular envelope. At the rod's
@@ -157,25 +159,23 @@ explicitly restores its default clearance and the 0.1 mm truncation.
 Saved explicit clearance values remain unchanged. The simple panel shows preset,
 handedness, Cut into and a Clearance field for this relief. Its hint asks users
 to adjust clearance for their printer and orientation.
-Pitch, profile, tip truncation, the older printer heuristic inputs, insets and
-tapers are in collapsed Advanced controls. Changing an FDM preset's pitch,
+Pitch, profile, tip truncation, insets and tapers are in collapsed Advanced controls. Changing an FDM preset's pitch,
 profile or tip truncation marks it Custom; clearance, handedness, cut and
 extent edits keep the chosen preset. Older documents without tip truncation
 retain their sharp profile until a preset is explicitly reapplied. Edits use
 the same owner/Undo path.
 
-Metric, Print upright, Print sideways and Custom remain available, including in
-older documents. The Metric 60° and rounded profiles retain their prior depth
-rule; the FDM triangle's 1 mm radial envelope is fixed across pitch edits.
+The Metric 60° and rounded profiles retain their prior depth rule; the FDM
+triangle's 1 mm radial envelope is fixed across pitch edits.
 
-The initial printing heuristic chooses the maximum of nearest coarse pitch,
-six layer heights and three nozzle diameters upright, or ten layer heights and
-five nozzle diameters sideways. It uses a rounded profile and radial hole relief
-of half the nozzle diameter. Layer/nozzle defaults are 0.2/0.4 mm. Explicit edits
-to these printing inputs re-resolve pitch/profile/relief; explicit values supplied
-in the same edit win. Other edits and geometry transforms retain resolved values.
-Printer controls appear only for printing presets; older saved settings without
-these inputs normalize to the defaults.
+Older saved `print-upright`/`print-sideways` settings open as Custom. The archive
+reader changes only the preset label; saved pitch, profile, clearance, handedness,
+cut, truncation and extent values remain unchanged. Settings read directly through
+other APIs use the same label normalization. Retained layer/nozzle values are inert
+compatibility metadata and are not shown as controls. Missing metadata remains
+absent. Neither metadata edits nor geometry changes reapply
+the retired heuristic. Explicitly choosing FDM fine/coarse or Metric applies that
+current preset's dimensions through the ordinary owner/Undo path.
 
 ## Thread extent and ends
 
@@ -531,7 +531,7 @@ is outside V1; warnings must describe what was actually checked.
    preview, save/open, Undo/Redo and validated STL/3MF. Benchmark final generation.
 2. Multi-selection, continuation/removal, interrupted/sloping domains, phase
    preservation and topology edits. This completes the requested geometry scope.
-3. Verified metric/printing presets, clearance, axial extent and end/runout controls,
+3. Verified Metric/FDM presets, clearance, axial extent and end/runout controls,
    and thread-specific highlighted diagnostics;
    finish print-oriented acceptance. No cross-decorator conflict detection.
 4. JavaScript module loading/portability, agent parity and a small independent
