@@ -93,12 +93,12 @@ alternatives: [soft studio](lighting/studio/icon.png),
 Each candidate also has an oblique render and JSON provenance in its folder.
 The canonical icon stays at the current lighting while these are being reviewed.
 
-The rigs in `lighting.json` use distant area lights, a top-left key and rectangular
+The rigs in `lighting.json` use distant lights, a top-left key and rectangular
 softboxes for broader or narrower highlights. Colors are linear RGB light tints.
 Ambient colors/strengths, light positions, powers and dimensions are recorded in
 each candidate's `source.json`. Model, G-code, bead geometry, materials, exposure
 and camera are identical across the comparison; only lighting changes.
-Light positions are relative to the rendered backing-top target; dimensions use
+Light positions and targets are relative to the origin at rendered backing-top height; dimensions use
 the scene's millimeter units. Every creative light is more than 400 mm away.
 
 ```sh
@@ -106,8 +106,24 @@ source /Users/adacohen/.nvm/nvm.sh && nvm use
 node assets/branding/printed-logo/render-gcode.mjs assets/branding/printed-logo/icon.gcode .cache/printed-logo/lighting/warm-cool icon warm-cool
 ```
 
-Available alternatives are `studio`, `warm-cool` and `violet-rim`. These presets
+Available alternatives are `studio`, `warm-cool`, `violet-rim`, `spot-soft` and
+`spot-focused`. These presets
 apply to the icon appearance. Editable `.blend` scenes remain in the output cache.
+
+The [soft spotlight](lighting/spot-soft/icon.png) and
+[tighter spotlight](lighting/spot-focused/icon.png) interpret the founder's
+localized highlight on the original neutral image. The
+[spotlight comparison](lighting/spot-comparison.png) includes the original;
+[small previews](lighting/spot-sizes.png) show the light/dark icon-size comparison.
+Each uses an actual Cycles SPOT light above-left, about 43 cm from its target,
+with a 6 mm emitter radius, neutral tint and reduced original area key/fill.
+The broad option has a 5.8° cone with 0.8 blend; the tighter option uses 4.5° and
+0.85 blend. Light power and position determine illumination in the 3D scene;
+there is no image-space brightness mask. The renderer retains its original
+art-directed bead geometry, materials and normal compensation.
+[Blender's spotlight controls](https://docs.blender.org/manual/en/4.1/render/lights/light_object.html#spot-light)
+describe the cone, blend and source-radius settings. Recorded rig values and
+editable scenes make the study reproducible.
 
 ## Path reconstruction
 

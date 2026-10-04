@@ -1,0 +1,72 @@
+{
+  "input": "/Users/adacohen/.codex/worktrees/0293/freac/assets/branding/printed-logo/icon.gcode",
+  "appearance": "icon",
+  "lightingPreset": "spot-focused",
+  "lightingSettings": {
+    "label": "Tighter focused pool",
+    "ambientColor": [0.035, 0.035, 0.035],
+    "ambientStrength": 1,
+    "lights": [
+      {
+        "name": "Top-left shaping key",
+        "position": [-280, 320, 320],
+        "power": 3000000,
+        "width": 100,
+        "color": [1, 1, 1]
+      },
+      {
+        "name": "Gentle distant fill",
+        "position": [280, -80, 320],
+        "power": 450000,
+        "width": 360,
+        "color": [1, 1, 1]
+      },
+      {
+        "name": "Focused pool",
+        "type": "SPOT",
+        "position": [-190, 240, 310],
+        "target": [-7, 1, 0],
+        "power": 6000000,
+        "coneDegrees": 4.5,
+        "blend": 0.85,
+        "radius": 6,
+        "color": [1, 1, 1]
+      }
+    ]
+  },
+  "crownRatio": 0,
+  "beadProfile": "ellipse",
+  "beadSection": {
+    "profile": "ellipse",
+    "minimumHeightToWidth": 0.4
+  },
+  "palette": [
+    {
+      "name": "Warm white PLA",
+      "color": "ECECE8"
+    },
+    {
+      "name": "Orange PLA",
+      "color": "FF6808"
+    },
+    {
+      "name": "Blue PLA",
+      "color": "0011FF"
+    }
+  ],
+  "baseHeight": 4,
+  "offset": [128, 126],
+  "filamentDiameter": 1.75,
+  "sha256": "9c5ce1da692c91d90b0d27f92ad9c799adbfa6bf5eacc8d326de30d61c8a594b",
+  "paths": 153,
+  "segments": 7784,
+  "layers": 25,
+  "features": [
+    "Perimeter",
+    "External perimeter",
+    "Solid infill",
+    "Internal infill",
+    "Gap infill",
+    "Top solid infill"
+  ]
+}

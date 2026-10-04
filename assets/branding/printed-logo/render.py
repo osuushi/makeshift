@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import importlib
 import json
+import math
 from pathlib import Path
 import sys
 from typing import Any, cast
@@ -150,6 +151,20 @@ def area(name: str, location: tuple[float, float, float],
     obj.rotation_euler = (Vector(target) - obj.location).to_track_quat("-Z", "Y").to_euler()
 
 
+def spot(spec: dict[str, Any], location: tuple[float, float, float],
+         target: tuple[float, float, float]) -> None:
+    light = bpy.data.lights.new(spec["name"], "SPOT")
+    light.energy = spec["power"]
+    light.color = tuple(spec["color"])
+    light.spot_size = math.radians(spec["coneDegrees"])
+    light.spot_blend = spec["blend"]
+    light.shadow_soft_size = spec["radius"]
+    obj = bpy.data.objects.new(spec["name"], light)
+    bpy.context.collection.objects.link(obj)
+    obj.location = location
+    obj.rotation_euler = (Vector(target) - obj.location).to_track_quat("-Z", "Y").to_euler()
+
+
 def lighting(scene: Any, icon: bool, base_height: float, preset: str) -> None:
     if preset != "current":
         presets = cast(dict[str, Any], json.loads(Path(__file__).with_name("lighting.json").read_text()))
@@ -163,8 +178,14 @@ def lighting(scene: Any, icon: bool, base_height: float, preset: str) -> None:
         target_height = base_height * ICON_THICKNESS_SCALE
         for spec in rig["lights"]:
             x, y, z = spec["position"]
-            area(spec["name"], (x, y, z + target_height), spec["power"], spec["width"],
-                 (0, 0, target_height), tuple(spec["color"]), spec.get("height"))
+            tx, ty, tz = spec.get("target", [0, 0, 0])
+            location = (x, y, z + target_height)
+            target = (tx, ty, tz + target_height)
+            if spec.get("type") == "SPOT":
+                spot(spec, location, target)
+            else:
+                area(spec["name"], location, spec["power"], spec["width"],
+                     target, tuple(spec["color"]), spec.get("height"))
         return
     scene.world.color = (0.07, 0.07, 0.07) if icon else (0.32, 0.32, 0.32)
     if icon:
