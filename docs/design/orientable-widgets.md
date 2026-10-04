@@ -269,7 +269,9 @@ physically too small to hold a glyph remains an explicit size limitation.
 When Scale and planar Move are visible together, Scale places against chrome and ordinary
 HTML controls first. Its completed placement or visibility change asks the registered
 planar renderer to redraw glyphs around current measured Scale knobs/cards. This fixed
-priority avoids mutual placement oscillation; the callback changes only overlay layout.
+priority avoids mutual placement oscillation. The callback repaints SVG glyphs against
+final HTML positions; it does not reset geometry-relative HTML anchors or undo the local
+control layout that keeps optional actions clear of drawable curves.
 
 Known limitation observed while checking projected controls: after pointer rotation,
 Undo restores the sketch geometry but a retained selection can keep the prior Move
