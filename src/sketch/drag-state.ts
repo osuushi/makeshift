@@ -44,6 +44,7 @@ export interface Drag {
   startSnapped: boolean;
   linkIds: [string, string];
   screen: Point;
+  displayOffset?: Point;
   anchor: Point;
   base: SketchDocument;
   sketch: Sketch;
@@ -127,8 +128,8 @@ function createGeometry(editor: SketchEditor, drag: Drag): void {
 }
 export function beginDrag(editor: SketchEditor, event: PointerEvent): Drag | null {
   if (!editor.world.activeFrame) return null;
-  const frame = editor.world.activeFrame,
-    point = editor.world.pointAt(frame, event.clientX, event.clientY);
+  const frame = editor.world.activeFrame;
+  let point = editor.world.pointAt(frame, event.clientX, event.clientY);
   if (!point) return null;
   if (editor.placingPivot) {
     editor.pivot = snapped(editor, point, new Set(), event.shiftKey);
@@ -144,6 +145,16 @@ export function beginDrag(editor: SketchEditor, event: PointerEvent): Drag | nul
     if (chosen.length) hits[0] = chosen[0];
   }
   const hit = hits[0];
+  const displayOffset =
+    hit?.kind === "rotate" || hit?.kind === "translate" ? hit.displayOffset : undefined;
+  if (displayOffset) {
+    point = editor.world.pointAt(
+      frame,
+      event.clientX - displayOffset.x,
+      event.clientY - displayOffset.y,
+    );
+    if (!point) return null;
+  }
   const sketch = editor.sketch ?? {
     ...emptySketch(frame),
     ...(editor.world.workspace?.sketchId ? { id: editor.world.workspace.sketchId } : {}),
@@ -157,6 +168,7 @@ export function beginDrag(editor: SketchEditor, event: PointerEvent): Drag | nul
     startSnapped: false,
     linkIds: [newId(), newId()],
     screen,
+    displayOffset,
     anchor: hit?.point ?? point,
     base,
     sketch,

@@ -1,6 +1,8 @@
+import type { Point } from "../sketch/planes.js";
 import type { Body, BodyBoolean } from "./body.js";
 import { modeIcons } from "./boolean-icons.js";
 import { cleanupButton } from "./cleanup-button.js";
+import { WidgetClearance } from "./widget-clearance.js";
 import "./boolean-widget.css";
 
 export class BooleanWidget {
@@ -12,6 +14,7 @@ export class BooleanWidget {
   private roles = document.createElement("span");
   readonly cleanup = cleanupButton();
   readonly root = document.createElement("div");
+  private placement = new WidgetClearance(this.root);
   private keep = document.createElement("button");
   private target = document.createElement("button");
   private status = document.createElement("span");
@@ -68,6 +71,7 @@ export class BooleanWidget {
     collecting: boolean,
     chosen: Body[],
     available: { body: Body; number: number }[],
+    point: Point,
   ) {
     this.root.hidden = false;
     this.keep.setAttribute("aria-pressed", String(operation.keepOriginals));
@@ -114,6 +118,9 @@ export class BooleanWidget {
       if (button.dataset.mode)
         button.setAttribute("aria-pressed", String(button.dataset.mode === operation.mode));
     }
+    this.root.style.left = `${point.x}px`;
+    this.root.style.top = `${point.y + 90}px`;
+    this.placement.fit([this.root]);
   }
   private updateBodies(
     operation: BodyBoolean,
@@ -150,6 +157,7 @@ export class BooleanWidget {
     }
   }
   dispose() {
+    this.placement.dispose();
     this.root.remove();
   }
 }

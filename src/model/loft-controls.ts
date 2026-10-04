@@ -291,7 +291,7 @@ export class LoftControls {
   dispose(): void {
     this.abort.abort();
     this.editor.world.changed.delete(this.update);
-    this.widget.root.remove();
+    this.widget.dispose();
     this.guides.root.remove();
   }
 }

@@ -273,6 +273,9 @@ jobs:
           node tests/reopen-operation-mirror-history-ui.mjs
           node tests/command-readiness-ui.mjs
           node tests/face-offset-readiness-ui.mjs
+          node tests/widget-layout-dom.mjs
+          npm run test:widget-reachability
+          node tests/widget-reachability-ui.mjs adjacent
           npm run test:current-tools
           node tests/ui-runtime-cleanup.mjs
       - name: Navigation Undo and context boundaries

@@ -5,6 +5,7 @@ import { beginDrag, type Drag, type Quantity, resolveDrag } from "./drag-state.j
 import { updateDrag } from "./drag-update.js";
 import type { SketchEditor } from "./editor.js";
 import { connectedSelection } from "./geometry.js";
+import { hoverPointer } from "./gesture-hover.js";
 import { GestureSolve } from "./gesture-solve.js";
 import type { DragQuantityEdit } from "./numeric-edit.js";
 import { pick } from "./picking.js";
@@ -15,7 +16,6 @@ import { selectHit } from "./selection-input.js";
 import { pointTarget } from "./selection-target.js";
 import { hitIds } from "./sketch-hit.js";
 import { validateSketch } from "./sketch-validation.js";
-import { snapped } from "./snapping.js";
 import { axisQuantity } from "./transform-handles.js";
 
 export class PointerGestures implements DragQuantityEdit {
@@ -123,43 +123,21 @@ export class PointerGestures implements DragQuantityEdit {
     this.solve ??= new GestureSolve(this.editor, this.interaction);
     this.solve.update(candidate, this.drag ? dragIntent(this.drag, candidate) : { kind: "direct" });
   }
-  private hover(event: PointerEvent): void {
-    const editor = this.editor;
-    if (editor.tool === "trim") return;
-    editor.pointer = { x: event.clientX, y: event.clientY };
-    if (!editor.world.activeFrame) return;
-    editor.hover = pick(editor, editor.pointer);
-    const point = editor.world.pointAt(editor.world.activeFrame, event.clientX, event.clientY);
-    if (point && editor.tool !== "select") snapped(editor, point, new Set(), event.shiftKey);
-    else editor.snap = null;
-    this.canvas.style.cursor =
-      editor.placingPivot || editor.creationArmed
-        ? "crosshair"
-        : editor.hover?.kind === "rotate"
-          ? "grab"
-          : editor.hover &&
-              (editor.tool === "select" ||
-                !pointKey(editor.hover) ||
-                pointKey(editor.hover) === editor.selected.firstPointKey)
-            ? "move"
-            : editor.tool === "select"
-              ? "default"
-              : "crosshair";
-    if (event.shiftKey && editor.hover && pointKey(editor.hover))
-      openPointMenu(editor, editor.hover, editor.pointer, true);
-    editor.refresh();
-  }
   private move = (event: PointerEvent): void => {
     if (this.releasing) return;
     const drag = this.drag,
       editor = this.editor;
     if (!drag) {
       if (editor.blocked) return;
-      this.hover(event);
+      hoverPointer(this.editor, event, this.canvas);
       return;
     }
     if (drag.id !== event.pointerId) return;
-    const point = editor.world.pointAt(drag.sketch.plane, event.clientX, event.clientY);
+    const point = editor.world.pointAt(
+      drag.sketch.plane,
+      event.clientX - (drag.displayOffset?.x ?? 0),
+      event.clientY - (drag.displayOffset?.y ?? 0),
+    );
     if (!point) return;
     drag.lastPoint = point;
     drag.bypass = event.shiftKey;

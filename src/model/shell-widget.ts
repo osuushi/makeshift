@@ -3,9 +3,11 @@ import type { Vector } from "../sketch/planes.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { distanceField, positionAxialPanel, toolAction, updateAxialArrow } from "./axial-widget.js";
 import { projectedAxis } from "./extrude-axis.js";
+import { WidgetClearance } from "./widget-clearance.js";
 
 export class ShellWidget {
   readonly root = document.createElement("div");
+  private placement = new WidgetClearance(this.root);
   readonly handle = document.createElement("button");
   readonly input = document.createElement("input");
   private panel = document.createElement("div");
@@ -58,8 +60,10 @@ export class ShellWidget {
     this.input.setAttribute("aria-invalid", String(invalid));
     this.accept.disabled = !active || !valid || thickness === 0 || editor.blocked;
     this.cancel.disabled = !active;
+    this.placement.fit([this.handle, this.panel]);
   }
   dispose(): void {
+    this.placement.dispose();
     this.root.remove();
   }
 }

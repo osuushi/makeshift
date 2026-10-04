@@ -73,12 +73,12 @@ from the anchor. Glyph orientations, geometric edit axes and rotation planes sta
 unchanged. The anchor and scale-box handles are obstacles. Stable handle priority
 makes the result deterministic, including coincident projections. Collision corrections
 settle with a 100 ms ease-out transition; ordinary camera/model tracking is immediate.
-Hover or press freezes the correction at its displayed position, including the hit
-region, until the pointer leaves and the press ends. Reduced-motion preferences
-disable the transition. This supersedes the earlier
-fixed-position rule for the 3D Move assembly. The planar sketch overlay retains its
-existing placement; other multi-widget tools can use the same clearance helper when
-adopting this treatment.
+A press freezes the displayed correction, including the hit region, through pointer
+leave until the gesture ends. Idle hover keeps that correction while the current
+footprint remains clear of viewport edges, chrome and sibling controls; unsafe idle
+tracking fits immediately. Reduced-motion preferences disable the transition. This supersedes the earlier fixed-position rule. The projected
+reachability contract below extends this treatment to active modeling assemblies
+and floating planar Move/rotation markers.
 
 Keep the widget's nominal size and outline weight constant in CSS pixels when zooming.
 A glyph still foreshortens along its meaningful axes; direction-only arrow widths
@@ -193,7 +193,7 @@ invalid/limit feedback supplement the white/black contours.
 
 Revolve retains a curved rotation symbol at the swept profile center and uses a
 capsule for axial height, 80 CSS-pixel world units along its axis and 32 across it.
-Spatial handles are not clamped to viewport edges. The rotation glyph and hit
+Spatial controls use the measured viewport placement below. The rotation glyph and hit
 target hide within 12° of edge-on; the angle field remains available. Standalone
 sketch rotation uses the same curved glyph and visibility rule with matching picking.
 
@@ -214,3 +214,67 @@ Chromium, WebKit and hidden Electron as appropriate; record device gaps accurate
 
 Bring the result back for visual review. The founder's approval of Move establishes
 a direction for new work, not blanket acceptance of other tools or new semantics.
+
+## Projected reachability (2026-10-03)
+
+Active 3D assemblies fit their measured CSS hit rectangles and numeric cards inside
+an 8px canvas margin, with 6px clearance from the header, Entities, orientation cube,
+agent dock and sibling controls. Move first retains its projected-ray separation;
+when that cannot fit, deterministic nearest free contact placement docks the control.
+Extrude, Twist and the extrusion axis are one assembly. Revolve angle/height, axial
+Offset/blend resize/Shell/Erode, Fillet/Chamfer, body/topology/whole-sketch/plane Move,
+and Scale use the same measured fitting. Scale yields to displayed body glyphs and
+ordinary HTML Move controls, reserving their complete silhouette corridor from the
+current displayed correction to its CSS target during animation. This prevents Scale
+from fitting into a position a moving body glyph will occupy. Floating planar glyphs
+yield to Scale as described below.
+Mirror, Boolean, cleanup and Loft cards use measured fitting without spatial glyphs.
+
+Docking changes display positions only. Actual model anchors, guides, geometry picking
+and box containment remain fixed. A dashed leader connects a displaced glyph to its
+nominal projection. The displayed correction is frozen on hover/press using the Move
+transition contract above. Rotation and source-axis plane rays compensate for the
+correction captured at press; relative distance/translation/scale gestures retain their
+ordinary delta mapping. The actual pressed target stays pinned through pointer leave or
+over. After release, a hovered HTML control or planar assembly keeps its correction
+only while its current footprints are clear of viewport edges, chrome and reserved controls. Unsafe
+idle hover fits immediately; a genuine safe hover remains stable. New or disclosed
+controls fit around current measured footprints; unpicked
+controls whose current tracking conflicts can move immediately. Resume uses these
+actual fitted positions rather than replaying an obsolete correction. Geometry snaps
+use the corresponding virtual pointer. Docking
+also keeps active controls available when the complete selection is offscreen. Idle
+corrections animate only when their swept footprints remain inside the canvas and
+clear of chrome and siblings. Unsafe paths fit the assembly immediately, preventing
+transient offscreen controls after an ordinary camera or geometry update.
+
+Measurements use viewport CSS pixels and actual DOM dimensions, so authored UI-scale
+changes require no viewport coordinate scaling. Oversized numeric cards can scroll.
+Existing edge-on rotation visibility and numeric fallback remain tool-specific; this
+placement does not introduce a new pointed-at-camera glyph. Geometry-based sketch
+point/curve handles and exact plane picking keep their original positions.
+
+Sketch floating Move and standalone rotation markers use one current display map
+owned by their overlay. Rendering writes measured targets and mathematical picking
+reads that same map. Hits preserve original local geometry points and carry only a
+temporary display correction; a drag captures it once for plane conversion and local
+snapping. A press or active drag keeps its captured correction through pointer leave.
+Idle hover keeps corrections only while the current full glyph footprints clear
+the viewport, chrome, Scale and sibling markers; otherwise the shared display map
+fits immediately. Geometry/camera projection continues tracking normally. Disposing the overlay deletes its matching UI registration.
+Direct point/curve/Bow picking stays at actual geometry. Numeric/action cards have
+priority in a narrow viewport and may use an unobstructed scroll strip. A viewport
+physically too small to hold a glyph remains an explicit size limitation.
+
+When Scale and planar Move are visible together, Scale places against chrome and ordinary
+HTML controls first. Its completed placement or visibility change asks the registered
+planar renderer to redraw glyphs around current measured Scale knobs/cards. This fixed
+priority avoids mutual placement oscillation; the callback changes only overlay layout.
+
+Known limitation observed while checking projected controls: after pointer rotation,
+Undo restores the sketch geometry but a retained selection can keep the prior Move
+Angle field value. Entering that same value can then do nothing. This was reproduced
+on the projected-reachability branch; the relevant selection-angle and numeric-entry
+source is identical on main, whose runtime has not yet been checked. Ordinary
+selection clearing and reselection establishes a fresh zero-angle reference. This
+placement work does not change that selection/history behavior.

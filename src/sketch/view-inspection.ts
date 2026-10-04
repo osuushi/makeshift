@@ -5,6 +5,7 @@ import { toolCatalog } from "../tools/catalog.js";
 import type { SketchEditor } from "./editor.js";
 import { inspectPlaneTargets } from "./plane-target-inspection.js";
 import { selectionFrame } from "./selection-frame.js";
+import { sketchWidgetTarget } from "./sketch-widget-layout.js";
 
 function decoratorPreviewBounds(world: SketchEditor["world"], fallback = false) {
   const bounds: { body: string; mesh: string; min: number[]; max: number[]; triangles: number }[] =
@@ -104,7 +105,9 @@ export function installViewInspection(editor: SketchEditor, sections: SectionCon
         snap: editor.snap,
         gridSnap: editor.gridSnap,
         pivot: editor.pivot,
-        rotationHandle: sketch && frame ? world.projectLocal(sketch.plane, frame.handle) : null,
+        rotationHandle:
+          sketchWidgetTarget(editor, "rotation")?.screen ??
+          (sketch && frame ? world.projectLocal(sketch.plane, frame.handle) : null),
         projection: world.activeFrame
           ? {
               origin: world.projectLocal(world.activeFrame, { x: 0, y: 0 }),

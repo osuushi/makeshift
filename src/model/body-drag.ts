@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
-import type { Vector } from "../sketch/planes.js";
+import type { Point, Vector } from "../sketch/planes.js";
 import { axes } from "./body-placement.js";
 import { projectedAxis } from "./extrude-axis.js";
 import { featureEdges } from "./feature-edges.js";
@@ -12,6 +12,7 @@ export function dragFrame(
   x: number,
   y: number,
   vector: Vector = axes[axis],
+  offset: Point = { x: 0, y: 0 },
 ) {
   const screen = editor.world.project(pivot),
     direction = projectedAxis(editor, pivot, vector);
@@ -20,8 +21,8 @@ export function dragFrame(
       ray = new THREE.Raycaster();
     ray.setFromCamera(
       new THREE.Vector2(
-        ((x - bounds.x) / bounds.width) * 2 - 1,
-        1 - ((y - bounds.y) / bounds.height) * 2,
+        ((x - offset.x - bounds.x) / bounds.width) * 2 - 1,
+        1 - ((y - offset.y - bounds.y) / bounds.height) * 2,
       ),
       editor.world.camera,
     );

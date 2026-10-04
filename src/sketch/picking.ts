@@ -7,6 +7,7 @@ import { pointHits, rectangleHandles } from "./point-query.js";
 import { rectangleFrame } from "./rectangle-edit.js";
 import { selectionFrame } from "./selection-frame.js";
 import type { Hit } from "./sketch-hit.js";
+import { sketchWidgetTarget } from "./sketch-widget-layout.js";
 import { sketchRotationVisible, transformHandles } from "./transform-handles.js";
 
 function selectedHandle(editor: SketchEditor, screen: Point): Hit | null {
@@ -38,20 +39,47 @@ function selectedHandle(editor: SketchEditor, screen: Point): Hit | null {
   }
   const widget = transformHandles(editor);
   if (widget) {
-    for (const handle of widget.axes)
-      if (distance(project(handle.point), screen) <= 22) return { kind: "translate", ...handle };
-    if (widget.rotationVisible && distance(project(widget.rotation), screen) <= 17 && local)
-      return { kind: "rotate", point: widget.rotation };
+    for (const handle of widget.axes) {
+      const target = sketchWidgetTarget(editor, handle.axis);
+      if (target && distance(target.screen, screen) <= target.radius)
+        return {
+          kind: "translate",
+          ...handle,
+          displayOffset: target.offset,
+          displayScreen: target.screen,
+        };
+    }
+    const target = sketchWidgetTarget(editor, "rotation");
+    if (
+      widget.rotationVisible &&
+      target &&
+      distance(target.screen, screen) <= target.radius &&
+      local
+    )
+      return {
+        kind: "rotate",
+        point: widget.rotation,
+        displayOffset: target.offset,
+        displayScreen: target.screen,
+      };
   }
   const selection = selectionFrame(editor);
+  const standalone = sketchWidgetTarget(editor, "rotation");
   if (
     !widget &&
     !editor.circle &&
     selection &&
     sketchRotationVisible(editor) &&
-    distance(project(selection.handle), screen) <= 17
-  )
-    return { kind: "rotate", point: selection.handle };
+    standalone &&
+    distance(standalone.screen, screen) <= standalone.radius
+  ) {
+    return {
+      kind: "rotate",
+      point: selection.handle,
+      displayOffset: standalone.offset,
+      displayScreen: standalone.screen,
+    };
+  }
   const group = editor.rectangleContext;
   if (group) {
     for (const { point, handle } of rectangleHandles(sketch, group))
@@ -76,7 +104,8 @@ export function pickCandidates(editor: SketchEditor, screen: Point): Hit[] {
     !(
       handle.kind === "rotate" &&
       nearby[0] &&
-      distance(project(nearby[0].point), screen) < distance(project(handle.point), screen)
+      distance(project(nearby[0].point), screen) <
+        distance(handle.displayScreen ?? project(handle.point), screen)
     )
   )
     return [handle];

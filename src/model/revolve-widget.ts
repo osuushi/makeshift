@@ -1,5 +1,6 @@
 import { numericFocus } from "../tools/menu-focus.js";
 import { cleanupButton } from "./cleanup-button.js";
+import { WidgetClearance } from "./widget-clearance.js";
 import "./revolve.css";
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
@@ -16,6 +17,7 @@ const svgNS = "http://www.w3.org/2000/svg";
 export class RevolveWidget {
   readonly cleanup = cleanupButton();
   readonly root = document.createElement("div");
+  private placement = new WidgetClearance(this.root);
   readonly entry = this.button("Revolve", '<path d="M19 12a7 7 0 1 1-2-5M19 3v5h-5M12 3v18"/>');
   readonly angleHandle = this.button(
     "Drag revolution angle",
@@ -109,7 +111,10 @@ export class RevolveWidget {
     ])
       (element as HTMLElement).hidden = !editing;
     this.drawing.replaceChildren();
-    if (!active || !axis) return;
+    if (!active || !axis) {
+      this.placement.fit([this.entry]);
+      return;
+    }
     this.line(
       editor,
       [-1, 1].map(
@@ -171,6 +176,13 @@ export class RevolveWidget {
       p.y + direction.y * 80 + 10,
     );
     this.place(this.options, p.x, p.y + 70);
+    this.placement.fit([
+      this.angleHandle,
+      this.heightHandle,
+      this.angle.parentElement as HTMLElement,
+      this.height.parentElement as HTMLElement,
+      this.options,
+    ]);
   }
   private direction(editor: SketchEditor, axis: RevolveAxis, center: Vector): void {
     const n = axis.direction;
@@ -204,5 +216,9 @@ export class RevolveWidget {
     );
     line.dataset.kind = kind;
     this.drawing.append(line);
+  }
+  dispose(): void {
+    this.placement.dispose();
+    this.root.remove();
   }
 }

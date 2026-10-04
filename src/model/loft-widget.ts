@@ -5,11 +5,13 @@ import { profilesFor } from "../sketch/profiles.js";
 import type { LiftSource } from "./body.js";
 import { modeIcons } from "./boolean-icons.js";
 import type { Loft } from "./loft.js";
+import { WidgetClearance } from "./widget-clearance.js";
 import "./loft.css";
 
 export type LoftSectionAction = "up" | "down" | "remove" | "previous" | "next";
 export class LoftWidget {
   readonly root = document.createElement("div");
+  private placement = new WidgetClearance(this.root);
   readonly sections = document.createElement("ol");
   readonly add = this.button("Add loft sections", "+ Sections");
   readonly automatic = this.button("Reset loft alignment", "Auto alignment");
@@ -156,5 +158,10 @@ export class LoftWidget {
     const y = Math.max(85, Math.min(innerHeight - this.root.offsetHeight - 20, position.y + 30));
     this.root.style.left = `${x}px`;
     this.root.style.top = `${y}px`;
+    this.placement.fit([this.root]);
+  }
+  dispose(): void {
+    this.placement.dispose();
+    this.root.remove();
   }
 }

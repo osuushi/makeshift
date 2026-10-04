@@ -10,6 +10,7 @@ import { BodyPivotDrag } from "./body-pivot-drag.js";
 import { axes, bodyCenter, placedDocument } from "./body-placement.js";
 import { GizmoInputs, type GizmoPointer } from "./gizmo-inputs.js";
 import { reopenBodyTransform } from "./reopen-body-transform.js";
+import { widgetPointerOffset } from "./widget-viewport.js";
 
 type Session = {
   edit: BodyTransform;
@@ -195,7 +196,15 @@ export class BodyMoveControls {
         x: event.clientX,
         y: event.clientY,
         moved: false,
-        frame: dragFrame(this.editor, this.pivot, axis, event.clientX, event.clientY),
+        frame: dragFrame(
+          this.editor,
+          this.pivot,
+          axis,
+          event.clientX,
+          event.clientY,
+          undefined,
+          widgetPointerOffset(event.currentTarget),
+        ),
       };
     this.gizmo.input.setAttribute(
       "aria-label",

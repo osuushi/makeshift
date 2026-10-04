@@ -7,6 +7,7 @@ import type { ErosionParameters } from "./erosion-parameters.js";
 import { erosionQualityText } from "./erosion-quality.js";
 import { projectedAxis } from "./extrude-axis.js";
 import { offsetHandle } from "./face-offset-targets.js";
+import { WidgetClearance } from "./widget-clearance.js";
 import "./erosion-widget.css";
 
 export function erosionAxis(editor: SketchEditor, body: Body): { center: Vector; normal: Vector } {
@@ -20,6 +21,7 @@ export function erosionAxis(editor: SketchEditor, body: Body): { center: Vector;
 
 export class ErosionWidget {
   readonly root = document.createElement("div");
+  private placement = new WidgetClearance(this.root);
   readonly handle = document.createElement("button");
   readonly thickness = document.createElement("input");
   readonly allowance = document.createElement("input");
@@ -192,8 +194,10 @@ export class ErosionWidget {
     this.keep.disabled = editor.blocked;
     this.accept.disabled = !active || !valid || values.thickness <= 0 || editor.blocked;
     this.cancel.disabled = !active;
+    this.placement.fit([this.handle, this.panel]);
   }
   dispose(): void {
+    this.placement.dispose();
     this.root.remove();
   }
 }
