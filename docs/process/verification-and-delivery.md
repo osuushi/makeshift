@@ -58,7 +58,10 @@ multiple routes. These are compatibility gaps, not relaxed
 assertions. Remove each partition exception only after its unchanged route passes
 on Linux. Normal `npm test` and `test:current-tools` still run every case.
 Linux Electron test apps use SwiftShader under Xvfb because the worker's Mesa
-renderer is blocklisted for WebGL; desktop application rendering is unchanged.
+renderer is blocklisted for WebGL. Hidden Linux test windows render offscreen:
+otherwise the compositor delivers about one frame per second despite disabled
+background throttling, making input slow and missing camera animation checks.
+Visible desktop application rendering is unchanged.
 
 Every routine run owns and closes its app, native child, browser, profile and port,
 including after failure. Visible windows are for deliberate founder review only.
