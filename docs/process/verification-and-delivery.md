@@ -34,7 +34,7 @@ and latency assertions intact.
 
 The PR workflow builds the Linux native runtime once and shares a tar archive
 with the test jobs, preserving executable permissions and library symlinks.
-Chromium, WebKit and hidden Electron controls each run in three serial route
+Chromium and hidden Electron controls each run in three serial route
 shards on separate Linux workers. Another worker runs the full Electron host
 interaction suite under Xvfb. A small macOS job
 checks the built host/preload boundary, native geometry, document persistence,
@@ -44,13 +44,16 @@ fails or is skipped. Runtime artifacts expire after one day. A completed OCCT
 SDK is verified and cached even if compilation of an application calculator
 fails afterward; incomplete SDKs cannot enter the cache.
 
-The first Linux migration retains five required geometry files on Mac via
+The first Linux migration retains six required geometry files on Mac via
 `scripts/ci-model-tests.mjs`: special erosion and its placement boundaries,
-captured offset movement, offset thickness and exact projection. Linux currently
+captured offset movement, offset thickness, exact projection and captured erosion
+responsiveness. Linux currently
 differs on the filleted hemisphere's erosion validity, a captured plate's volume,
-an unchanged sphere's numerical signature and a conic projection reply. WebKit's
-constrained-transform route also remains required on Mac; Linux currently accepts
-the rotation that should reject. These are compatibility gaps, not relaxed
+an unchanged sphere's numerical signature and a conic projection reply. The
+captured erosion can exceed its existing calculation limit on Linux. WebKit's
+control suite remains required on Mac: Linux accepts a constrained rotation that
+should reject and reports unhandled selection fetch errors across reload in
+multiple routes. These are compatibility gaps, not relaxed
 assertions. Remove each partition exception only after its unchanged route passes
 on Linux. Normal `npm test` and `test:current-tools` still run every case.
 Linux Electron test apps use SwiftShader under Xvfb because the worker's Mesa

@@ -9,6 +9,7 @@ const mac = new Set([
   "offset-move-capture.test.js",
   "offset-thickness.test.js",
   "projection.test.js",
+  "erosion-responsiveness.test.js",
 ]);
 const [platform, shard] = process.argv.slice(2);
 assert.ok(platform === "linux" || platform === "mac", "Choose linux or mac");

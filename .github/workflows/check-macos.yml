@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: check-linux-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   static:
@@ -91,7 +91,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browser: [chromium, webkit, electron]
+        browser: [chromium, electron]
         shard: [1, 2, 3]
     env:
       MAKESHIFT_TEST_BROWSER: ${{ matrix.browser }}
@@ -103,7 +103,7 @@ jobs:
         run: npx playwright install --with-deps ${{ matrix.browser == 'electron' && 'chromium' || matrix.browser }}
       - name: Ordinary controls and runtime cleanup
         run: |
-          xvfb-run -a npm run test:current-tools -- --mac-webkit-transform --shard=${{ matrix.shard }}/3
+          xvfb-run -a npm run test:current-tools -- --shard=${{ matrix.shard }}/3
           xvfb-run -a node tests/ui-runtime-cleanup.mjs
   electron-host:
     needs: linux-build
@@ -165,12 +165,13 @@ jobs:
           npm run test:setup
       - name: Required platform-sensitive geometry cases
         run: node scripts/ci-model-tests.mjs mac
-      - name: WebKit constrained transform
+      - name: WebKit controls and runtime cleanup
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: |
           npx playwright install webkit
-          node tests/transform-ui.mjs
+          npm run test:current-tools
+          node tests/ui-runtime-cleanup.mjs
       - name: Built Electron host smoke and Finder launch
         run: |
           node tests/electron-smoke.mjs
