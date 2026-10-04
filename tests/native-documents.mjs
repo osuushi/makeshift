@@ -16,7 +16,7 @@ export async function launchElectron(options) {
         ...options.args,
         // Linux CI has no physical GPU; use Chromium's software WebGL renderer.
         ...(process.platform === "linux"
-          ? ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
+          ? ["--use-gl=angle", "--use-angle=swiftshader-webgl", "--enable-unsafe-swiftshader"]
           : []),
         `--user-data-dir=${directory}`,
       ],
