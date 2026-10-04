@@ -1,12 +1,12 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { materialize } from "../../../src/backend/kernel-result.js";
 import { SolidCalculator } from "../../../src/backend/solid-calculator.js";
-import { exportMesh } from "../../../src/model/export-mesh.js";
-import { exportBodies } from "../../../src/model/mesh-export.js";
+import { exportMesh, validateMesh } from "../../../src/model/export-mesh.js";
+import { encodeMeshes } from "../../../src/model/mesh-export.js";
 
 const source = process.argv[2];
 const output = process.argv[3];
-if (!source || !output) throw new Error("Usage: export <document.makeshift> <output.stl>");
+if (!source || !output) throw new Error("Usage: export <document.makeshift> <output.3mf>");
 const saved = JSON.parse(readFileSync(source, "utf8"));
 if (saved.format !== "makeshift" || saved.version !== 1)
   throw new Error("Expected a Makeshift version 1 document");
@@ -20,20 +20,28 @@ try {
   const inspected = materialize([], result);
   const sourcePoints = inspected.flatMap((body) => body.faces.flatMap((face) => face.vertices));
   const zShift = -Math.min(...sourcePoints.filter((_, i) => i % 3 === 2));
-  // A 1 nm export grid collapses numerical seam slivers. The unmodified closed/
-  // oriented mesh validator still checks every body after rounding and bed placement.
-  const precision = 1e-6;
+  // Current fillets tessellate closed directly; preserve native coordinates.
+  const precision = 0;
   const bodies = inspected.map((body) => ({
     ...body,
     faces: body.faces.map((face) => ({
       ...face,
-      vertices: face.vertices.map(
-        (value, i) => Math.round((value + (i % 3 === 2 ? zShift : 0)) / precision) * precision,
-      ),
+      vertices: face.vertices.map((value, i) => value + (i % 3 === 2 ? zShift : 0)),
     })),
   }));
-  writeFileSync(output, exportBodies(bodies, "stl"));
   const meshes = bodies.map(exportMesh);
+  // Binary STL's float32 packing collapses a valid tiny fillet facet. 3MF retains
+  // native coordinates. One object keeps the three validated solids in assembly
+  // placement when Orca arranges the plate, rather than arranging them separately.
+  let vertexOffset = 0;
+  const triangles = meshes.flatMap((mesh) => {
+    const shifted = mesh.triangles.map((triangle) => triangle.map((i) => i + vertexOffset));
+    vertexOffset += mesh.vertices.length;
+    return shifted;
+  });
+  const assembly = { vertices: meshes.flatMap((mesh) => mesh.vertices), triangles };
+  validateMesh(assembly);
+  writeFileSync(output, encodeMeshes([assembly], "3mf"));
   const boundsFor = (vertices: number[][]) =>
     [0, 1, 2].map((axis) => [
       Math.min(...vertices.map((point) => point[axis])),
@@ -54,7 +62,7 @@ try {
         topTriangles: meshes.map((mesh, i) =>
           mesh.triangles.flatMap((triangle) => {
             const points = triangle.map((index) => mesh.vertices[index]);
-            return points.every((point) => Math.abs(point[2] - bodyBounds[i][2][1]) < precision)
+            return points.every((point) => Math.abs(point[2] - bodyBounds[i][2][1]) < 1e-6)
               ? [points.flatMap((point) => point.slice(0, 2))]
               : [];
           }),
@@ -64,9 +72,7 @@ try {
       2,
     ),
   );
-  console.log(
-    JSON.stringify({ bounds, triangles: bodies.flatMap((b) => exportMesh(b).triangles).length }),
-  );
+  console.log(JSON.stringify({ bounds, triangles: triangles.length }));
 } finally {
   kernel.close();
 }

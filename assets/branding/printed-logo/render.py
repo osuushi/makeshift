@@ -168,7 +168,7 @@ def setup(mesh_file: Path, output: Path, resolution: int, samples: int,
     bpy.ops.object.delete(use_global=False)
     data = cast(dict[str, Any], json.loads(mesh_file.read_text()))
     base_height = float(data.get("baseHeight", 6))
-    mesh = bpy.data.meshes.new("G-code deposited stadium beads")
+    mesh = bpy.data.meshes.new("G-code deposited beads")
     mesh.from_pydata(data["vertices"], [], data["faces"])
     mesh.update()
     obj = bpy.data.objects.new("Makeshift — simulated deposition", mesh)

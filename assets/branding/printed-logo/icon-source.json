@@ -1,7 +1,12 @@
 {
-  "input": "/Users/adacohen/.codex/worktrees/0293/freac/.cache/printed-logo/model-v7/plate_1.gcode",
+  "input": "/Users/adacohen/.codex/worktrees/0293/freac/.cache/printed-logo/model-v7-38a840aa/plate_1.gcode",
   "appearance": "icon",
-  "crownRatio": 0.35,
+  "crownRatio": 0,
+  "beadProfile": "ellipse",
+  "beadSection": {
+    "profile": "ellipse",
+    "minimumHeightToWidth": 0.4
+  },
   "palette": [
     {
       "name": "Warm white PLA",
@@ -19,16 +24,16 @@
   "baseHeight": 4,
   "offset": [128, 126],
   "filamentDiameter": 1.75,
-  "sha256": "4d2aac79eee0bcf32e6747779b06f1b8d7be4c5495cc577471efd6c3f393e31d",
-  "paths": 247,
-  "segments": 5979,
+  "sha256": "9c5ce1da692c91d90b0d27f92ad9c799adbfa6bf5eacc8d326de30d61c8a594b",
+  "paths": 153,
+  "segments": 7784,
   "layers": 25,
   "features": [
     "Perimeter",
     "External perimeter",
     "Solid infill",
-    "Gap infill",
     "Internal infill",
+    "Gap infill",
     "Top solid infill"
   ]
 }

@@ -11,7 +11,7 @@ const root = resolve(directory, "../../..");
 if (!process.version.startsWith("v24.")) throw new Error("Activate the repository .nvmrc first");
 const angle = Number(process.argv[2] ?? 45);
 if (!Number.isFinite(angle) || angle < 0 || angle >= 360) throw new Error("Expected angle 0–359°");
-const lineWidth = Number(process.argv[4] ?? 1.5);
+const lineWidth = Number(process.argv[4] ?? 2);
 if (!Number.isFinite(lineWidth) || lineWidth < 0.2 || lineWidth >= 3)
   throw new Error("Invalid line width");
 const output = resolve(process.argv[3] ?? `${root}/.cache/printed-logo/model-v7`);
@@ -54,7 +54,7 @@ function run(executable, args) {
 run(process.execPath, [
   `${output}/export.mjs`,
   `${output}/selected.makeshift`,
-  `${output}/logo.stl`,
+  `${output}/logo.3mf`,
 ]);
 run(slicer, [
   "--datadir",
@@ -73,9 +73,9 @@ run(slicer, [
   "0",
   "--outputdir",
   output,
-  `${output}/logo.stl`,
+  `${output}/logo.3mf`,
 ]);
-const exported = JSON.parse(readFileSync(`${output}/logo.stl.json`, "utf8"));
+const exported = JSON.parse(readFileSync(`${output}/logo.3mf.json`, "utf8"));
 const backingIndex = exported.bodyIds.indexOf(bodyIds[1]);
 const colorRegions = [0, 2].map((selection) => {
   const body = bodyIds[selection];

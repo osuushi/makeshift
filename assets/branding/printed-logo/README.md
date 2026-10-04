@@ -8,16 +8,18 @@ The approved application icon remains in the parent folder.
 
 The source occupies 40 × 40 × 5 mm, from Z=−2 to Z=3. Export shifts the whole
 assembly up 2 mm for the print bed: backing Z=0–4, orange Z=4–5 and blue Z=2–3.
-Relative geometry and the original BReps are preserved. A numerical seam sliver
-in the backing tessellation is resolved on a 0.000001 mm export grid; every solid
-still passes the existing closed/oriented mesh validator. No geometry-check
-bypass is used. The validated STL has 1,402 triangles.
+Relative geometry and the original BReps are preserved. The updated corner
+fillets tessellate closed directly; every solid and the combined assembly pass
+the existing closed/oriented mesh validator. Export uses 3MF to retain native
+coordinates: STL's float32 packing collapses a tiny valid fillet facet. The 3MF
+has 1,534 triangles in one object, keeping all three solids in assembly placement
+during Orca's plate arrangement. No coordinate rounding or validation bypass is used.
 
-`icon.gcode` is an actual OrcaSlicer 2.4.2 Arachne slice: 1.5 mm nominal widths,
+`icon.gcode` is an actual OrcaSlicer 2.4.2 Arachne slice: 2 mm nominal widths,
 0.2 mm layers, one top outer wall, monotonic surfaces and fixed 45° solid raster.
 Minimum bead width is 5%, minimum feature size is 1%, and gap fill is enabled
 everywhere without length filtering. Actual widths vary; this slice reaches
-0.095 mm. It contains 25 layers and 247 deposited paths. No AI imagery is involved.
+0.098 mm. It contains 25 layers and 153 deposited paths. No AI imagery is involved.
 
 ## Reproduce
 
@@ -37,7 +39,7 @@ To regenerate the current slice and render:
 
 ```sh
 source /Users/adacohen/.nvm/nvm.sh && nvm use
-node assets/branding/printed-logo/slice-infill.mjs 45 .cache/printed-logo/model-v7 1.5
+node assets/branding/printed-logo/slice-infill.mjs 45 .cache/printed-logo/model-v7 2
 node assets/branding/printed-logo/render-gcode.mjs .cache/printed-logo/model-v7/plate_1.gcode .cache/printed-logo/model-v7/render icon
 ```
 
@@ -53,12 +55,16 @@ and precision, backing height, palette and projected cap triangles of the colore
 solids. The renderer checks that these color data match the supplied G-code hash.
 `icon-source.json` records the render's input hash, settings and geometry counts.
 The small PNGs use Lanczos downsampling of the 1024 px render. The comparison
-shows v7 against the preceding v5 artwork.
+shows the preceding 1.5 mm v7 render against the updated 2 mm render.
 
 ## Appearance and color boundaries
 
-The icon preset keeps a 35%-of-layer-height bead crown, distant top-left area
-light, restrained fill, satin plastic and 0.6 vertical scale. Rendered height is
+The icon preset uses fully elliptical bead cross-sections, replacing the broad
+stadium roofs with curvature across the whole width. Their section height is at
+least 40% of width, extending downward into previous layers; it is clamped at the
+print bed. Declared widths, path spacing and bead top heights remain unchanged.
+This exaggerates rounding without raising the model. It keeps the distant
+top-left area light, restrained fill, satin plastic and 0.6 vertical scale. Rendered height is
 3 mm: backing top 2.4 mm, orange top 3 mm and blue inset top 1.8 mm. Shader normals
 compensate thinning to preserve print-line contrast; cast shadows use actual
 geometry. Light targets and the oblique camera target follow the backing height.
@@ -93,8 +99,10 @@ Declared widths preserve the slicer's footprint. Without width metadata, width
 is inferred from deposited volume using the
 [Slic3r rounded-rectangle flow model](https://manual.slic3r.org/advanced/flow-math).
 Volume-derived widths remain available for audit. Cross-sections have rounded
-ends and overlapping shells at sharp turns. Strands narrower than their layer
-use convex ellipses. Shells are closed and oriented but are not Boolean-fused.
+ends and overlapping shells at sharp turns. Icon strands use convex ellipses;
+the realistic preset retains the lightly crowned stadium profile, with ellipses
+for strands narrower than their layer. Shells are closed and oriented but are
+not Boolean-fused.
 This is a kinematic visualization without thermal, pressure, shrinkage or fusion
 simulation; mesh volume is not an exact conservation model.
 
@@ -117,6 +125,7 @@ npm exec --yes --package pyright@1.1.414 -- pyright --project assets/branding/pr
 
 Checks cover arcs, the original rounded-tip footprint, object scope, widths,
 extrusion modes, resets/retractions, unsupported motions, shell orientation and
-sub-layer-width strands. The current native export, top/oblique renders and small
+sub-layer-width strands, and elliptical icon footprints/bed and top bounds.
+The current native export, top/oblique renders and small
 previews were inspected, including orange/blue/white pixel checks. No physical
 print was made.

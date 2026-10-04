@@ -50,25 +50,54 @@ test("sub-layer-width strands retain a convex footprint at the declared width", 
   assert.throws(() => parseGcode("M83\n; WIDTH: 0\nG1 Z.2\nG1 X10 E.001"), /Invalid bead/);
 });
 
-test("acute return strokes form finite, closed, consistently oriented deposition shells", () => {
-  const paths = parseGcode("M83\nG1 Z.2\nG1 X10 E.34\nG1 X0 Y.1 E.34\nG1 X10 E.34");
-  const mesh = beadMesh(paths);
-  assert.ok(mesh.vertices.flat().every(Number.isFinite));
-  assert.equal(mesh.faces.length, mesh.materials.length);
-  const edges = new Map();
-  for (const face of mesh.faces) {
-    for (let i = 0; i < face.length; i++) {
-      const a = face[i],
-        b = face[(i + 1) % face.length];
-      const key = `${Math.min(a, b)},${Math.max(a, b)}`;
-      const edge = edges.get(key) ?? { count: 0, direction: 0 };
-      edge.count++;
-      edge.direction += a < b ? 1 : -1;
-      edges.set(key, edge);
+for (const profile of ["stadium", "ellipse"])
+  test(`acute return strokes form closed, oriented ${profile} shells`, () => {
+    const paths = parseGcode("M83\nG1 Z.2\nG1 X10 E.34\nG1 X0 Y.1 E.34\nG1 X10 E.34");
+    const mesh = beadMesh(paths, 6, 0.04, [], profile);
+    assert.ok(mesh.vertices.flat().every(Number.isFinite));
+    assert.equal(mesh.faces.length, mesh.materials.length);
+    const edges = new Map();
+    for (const face of mesh.faces) {
+      for (let i = 0; i < face.length; i++) {
+        const a = face[i],
+          b = face[(i + 1) % face.length];
+        const key = `${Math.min(a, b)},${Math.max(a, b)}`;
+        const edge = edges.get(key) ?? { count: 0, direction: 0 };
+        edge.count++;
+        edge.direction += a < b ? 1 : -1;
+        edges.set(key, edge);
+      }
+    }
+    assert.ok([...edges.values()].every((edge) => edge.count === 2 && edge.direction === 0));
+    assert.ok(
+      mesh.vertices.every(([x, y, z]) => x > -1 && x < 11 && y > -1 && y < 1 && z >= 0 && z <= 0.2),
+    );
+  });
+
+test("rounded icon beads preserve slicer widths and bed/top bounds for wide and narrow strands", () => {
+  for (const width of [0.02, 2]) {
+    const paths = parseGcode(`M83\n; WIDTH: ${width}\nG1 Z.2\nG1 X10 E.34`);
+    const mesh = beadMesh(paths, 6, 0, [], "ellipse");
+    assert.ok(mesh.vertices.flat().every(Number.isFinite));
+    const ring = mesh.vertices.slice(0, 32);
+    assert.ok(Math.abs(Math.max(...ring.map((v) => v[1])) - width / 2) < 1e-12);
+    assert.ok(Math.abs(Math.min(...ring.map((v) => v[1])) + width / 2) < 1e-12);
+    assert.ok(mesh.vertices.every(([, , z]) => z >= 0 && z <= 0.2));
+    for (let i = 0; i < ring.length; i++) {
+      const a = ring[i],
+        b = ring[(i + 1) % 32],
+        c = ring[(i + 2) % 32];
+      const cross = (b[1] - a[1]) * (c[2] - b[2]) - (b[2] - a[2]) * (c[1] - b[1]);
+      assert.ok(cross > 0, "rounded section must have no flat or folded roof segments");
     }
   }
-  assert.ok([...edges.values()].every((edge) => edge.count === 2 && edge.direction === 0));
-  assert.ok(
-    mesh.vertices.every(([x, y, z]) => x > -1 && x < 11 && y > -1 && y < 1 && z >= 0 && z <= 0.2),
-  );
+});
+
+test("coarse icon domes deepen into earlier layers without raising the model top", () => {
+  const paths = parseGcode("M83\n; HEIGHT: .2\n; WIDTH: 2\nG1 Z1\nG1 X10 E.34");
+  const mesh = beadMesh(paths, 6, 0, [], "ellipse");
+  const zs = mesh.vertices.map((p) => p[2]);
+  assert.equal(Math.max(...zs), 1);
+  assert.ok(Math.min(...zs) >= 0);
+  assert.ok(Math.max(...zs) - Math.min(...zs) > 0.6, "wide beads need visible rounded depth");
 });

@@ -15,7 +15,8 @@ const input = resolve(
 const output = resolve(
   process.argv[3] ?? `${directory}/../../../.cache/printed-logo/orca-${appearance}`,
 );
-const crownRatio = appearance === "icon" ? 0.35 : 0.04;
+const crownRatio = appearance === "icon" ? 0 : 0.04;
+const beadProfile = appearance === "icon" ? "ellipse" : "stadium";
 const text = readFileSync(input, "utf8");
 const diameter = Number(text.match(/^; filament_diameter\s*[:=]\s*([\d.]+)/m)?.[1] ?? 1.75);
 const paths = parseGcode(text, diameter);
@@ -39,7 +40,7 @@ const sha256 = createHash("sha256").update(text).digest("hex");
 if (slice?.gcodeSha256 && slice.gcodeSha256 !== sha256)
   throw new Error("Slice color metadata does not match the supplied G-code");
 const baseHeight = slice?.baseHeight ?? 6;
-const mesh = beadMesh(paths, baseHeight, crownRatio, slice?.colorRegions ?? []);
+const mesh = beadMesh(paths, baseHeight, crownRatio, slice?.colorRegions ?? [], beadProfile);
 if (slice?.palette) mesh.palette = slice.palette;
 mesh.baseHeight = baseHeight;
 mesh.colorRegions = slice?.colorRegions ?? [];
@@ -56,6 +57,8 @@ writeFileSync(
       input,
       appearance,
       crownRatio,
+      beadProfile,
+      beadSection: mesh.section,
       palette: slice?.palette ?? "white backing, orange left and detached right, violet main arrow",
       baseHeight,
       offset,

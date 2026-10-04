@@ -1,11 +1,20 @@
 import { pathPalette } from "./palette.mjs";
 
 const ringSize = 32;
+const ellipseHeightRatio = 0.4;
 
-function section(width, height, crownRatio) {
+function sectionHeight(width, path, profile) {
+  // Art-directed icon domes extend into prior layers rather than above the model.
+  // Clamp at the bed for low layers; the slicer's path Z remains the bead's top.
+  return profile === "ellipse"
+    ? Math.min(path.z, Math.max(path.height, width * ellipseHeightRatio))
+    : path.height;
+}
+
+function section(width, height, crownRatio, profile) {
   // Artistic thin strands can be narrower than a layer. An ellipse keeps their
   // section convex; the usual rounded rectangle would fold inside out.
-  if (width < height)
+  if (width < height || profile === "ellipse")
     return Array.from({ length: ringSize }, (_, i) => {
       const angle = -Math.PI / 2 + (i * 2 * Math.PI) / ringSize;
       return [(width / 2) * Math.cos(angle), (height / 2) * Math.sin(angle)];
@@ -29,7 +38,7 @@ function section(width, height, crownRatio) {
   return ring;
 }
 
-function appendCaps(mesh, path, offset, material, crownRatio) {
+function appendCaps(mesh, path, offset, material, crownRatio, profile) {
   const { vertices, faces, materials } = mesh;
   for (const end of [0, path.points.length - 1]) {
     const p = path.points[end],
@@ -38,21 +47,22 @@ function appendCaps(mesh, path, offset, material, crownRatio) {
     const start = offset + end * ringSize,
       cap = vertices.length;
     const width = path.widths[Math.min(end, path.widths.length - 1)];
+    const height = sectionHeight(width, path, profile);
     const direction = end === 0 ? -1 : 1;
     // Rounded endpoint footprint approximates deposition, without pressure/thermal physics.
-    for (const [lateral, vertical] of section(width, path.height, crownRatio)) {
+    for (const [lateral, vertical] of section(width, height, crownRatio, profile)) {
       const step = (width * Math.SQRT1_2) / 2;
       vertices.push([
         p[0] + Math.cos(angle) * step - direction * Math.sin(angle) * lateral * Math.SQRT1_2,
         p[1] + Math.sin(angle) * step + direction * Math.cos(angle) * lateral * Math.SQRT1_2,
-        p[2] - path.height / 2 + vertical * Math.SQRT1_2,
+        p[2] - height / 2 + vertical * Math.SQRT1_2,
       ]);
     }
     const tip = vertices.length;
     vertices.push([
       p[0] + (Math.cos(angle) * width) / 2,
       p[1] + (Math.sin(angle) * width) / 2,
-      p[2] - path.height / 2,
+      p[2] - height / 2,
     ]);
     for (let j = 0; j < ringSize; j++) {
       const k = (j + 1) % ringSize;
@@ -67,7 +77,7 @@ function appendCaps(mesh, path, offset, material, crownRatio) {
   }
 }
 
-function sweep(mesh, path, material, crownRatio) {
+function sweep(mesh, path, material, crownRatio, profile) {
   const { vertices, faces, materials } = mesh,
     offset = vertices.length;
   for (let i = 0; i < path.points.length; i++) {
@@ -84,11 +94,12 @@ function sweep(mesh, path, material, crownRatio) {
           : Math.atan2(Math.sin(before) + Math.sin(after), Math.cos(before) + Math.cos(after));
     const miter = i === 0 || i === path.points.length - 1 ? 1 : 1 / Math.cos(angle - before);
     const width = path.widths[Math.min(i, path.widths.length - 1)];
-    for (const [lateral, vertical] of section(width, path.height, crownRatio))
+    const height = sectionHeight(width, path, profile);
+    for (const [lateral, vertical] of section(width, height, crownRatio, profile))
       vertices.push([
         p[0] - Math.sin(angle) * lateral * miter,
         p[1] + Math.cos(angle) * lateral * miter,
-        p[2] - path.height / 2 + vertical,
+        p[2] - height / 2 + vertical,
       ]);
   }
   for (let i = 0; i < path.points.length - 1; i++) {
@@ -99,7 +110,7 @@ function sweep(mesh, path, material, crownRatio) {
       materials.push(material);
     }
   }
-  appendCaps(mesh, path, offset, material, crownRatio);
+  appendCaps(mesh, path, offset, material, crownRatio, profile);
 }
 
 // Split acute turns before sweeping: overlapping rounded deposits avoid folded miters.
@@ -125,11 +136,23 @@ function smoothPieces(path) {
   return pieces;
 }
 
-export function beadMesh(paths, baseHeight = 6, crownRatio = 0.04, regions = []) {
+export function beadMesh(
+  paths,
+  baseHeight = 6,
+  crownRatio = 0.04,
+  regions = [],
+  profile = "stadium",
+) {
   if (!(crownRatio >= 0 && crownRatio < 0.5)) throw new Error("Invalid bead crown ratio");
-  const mesh = { vertices: [], faces: [], materials: [] };
+  if (!["stadium", "ellipse"].includes(profile)) throw new Error("Invalid bead profile");
+  const mesh = {
+    vertices: [],
+    faces: [],
+    materials: [],
+    section: { profile, minimumHeightToWidth: profile === "ellipse" ? ellipseHeightRatio : null },
+  };
   const palette = pathPalette(paths, baseHeight, regions);
   for (const [i, path] of paths.entries())
-    for (const piece of smoothPieces(path)) sweep(mesh, piece, palette[i], crownRatio);
+    for (const piece of smoothPieces(path)) sweep(mesh, piece, palette[i], crownRatio, profile);
   return mesh;
 }
