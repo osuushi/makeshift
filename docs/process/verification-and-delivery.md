@@ -36,7 +36,8 @@ The PR workflow builds the Linux native runtime once and shares a tar archive
 with the test jobs, preserving executable permissions and library symlinks.
 Chromium and hidden Electron controls each run in three serial route
 shards on separate Linux workers. Three more workers run the complete Electron
-host interaction suite under Xvfb, with serial routes and isolated apps in each.
+host interaction suite under Xvfb, with serial routes and isolated apps in each,
+except two native navigation routes retained on Mac with their fixture sequence.
 A small macOS job
 checks the built host/preload boundary, native geometry, document persistence,
 process handling and Finder PATH. Signing and notarization remain release checks.
@@ -62,6 +63,9 @@ renderer is blocklisted for WebGL. Hidden Linux test windows render offscreen:
 otherwise the compositor delivers about one frame per second despite disabled
 background throttling, making input slow and missing camera animation checks.
 Visible desktop application rendering is unchanged.
+Navigation over widgets and the native camera gesture route remain required on
+Mac through `test:electron -- --navigation-only`; offscreen Linux navigation is
+not yet accepted. Default `test:electron` still runs all 86 original routes.
 
 Every routine run owns and closes its app, native child, browser, profile and port,
 including after failure. Visible windows are for deliberate founder review only.

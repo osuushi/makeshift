@@ -86,8 +86,15 @@ import { typedSelectionRoute } from "./ui-typed-selection.mjs";
 import { useEdgeRoute, useLineEdgeRoute } from "./ui-use-edge.mjs";
 import { widgetNavigationRoute } from "./ui-widget-navigation.mjs";
 
-const { values } = parseArgs({ options: { shard: { type: "string" } } });
+const { values } = parseArgs({
+  options: {
+    shard: { type: "string" },
+    "without-navigation": { type: "boolean" },
+    "navigation-only": { type: "boolean" },
+  },
+});
 assert.ok(!values.shard || /^[1-3]\/3$/.test(values.shard), "Choose Electron shard 1/3–3/3");
+assert.ok(!values["navigation-only"] || (!values.shard && !values["without-navigation"]));
 const [shard, count] = (values.shard ?? "1/1").split("/").map(Number);
 
 await mkdir(".cache/sketch-review", { recursive: true });
@@ -206,7 +213,12 @@ try {
     routes.length,
   ];
   assert.ok(boundaries.every((value, index) => index === 0 || value > boundaries[index - 1]));
-  const selected = count === 1 ? routes : routes.slice(boundaries[shard - 1], boundaries[shard]);
+  const navigation = new Set([widgetNavigationRoute, cameraRoute]);
+  const navigationFixture = new Set([bodyMoveRoute, bodySnapRoute, bodyAnchorRoute, ...navigation]);
+  const partition = count === 1 ? routes : routes.slice(boundaries[shard - 1], boundaries[shard]);
+  const selected = values["navigation-only"]
+    ? routes.filter(([route]) => navigationFixture.has(route))
+    : partition.filter(([route]) => !values["without-navigation"] || !navigation.has(route));
   console.log(`electron host: ${selected.length}/${routes.length} routes, shard ${shard}/${count}`);
   for (const [route, ...args] of selected) {
     console.log(`electron host: ${route.name}`);
@@ -214,6 +226,9 @@ try {
   }
   assert.deepEqual(errors, []);
   console.log("Hidden Electron: built renderer, plane entry and sandbox passed");
+} catch (error) {
+  console.error("electron host: route failed", error);
+  throw error;
 } finally {
   await app.close();
 }

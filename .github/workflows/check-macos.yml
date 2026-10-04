@@ -121,8 +121,8 @@ jobs:
       - uses: ./.github/actions/ci-linux-runtime
       - name: Display dependencies
         run: npx playwright install-deps chromium
-      - name: Full hidden Electron host suite
-        run: xvfb-run -a npm run test:electron -- --shard=${{ matrix.shard }}/3
+      - name: Hidden Electron host routes
+        run: xvfb-run -a npm run test:electron -- --shard=${{ matrix.shard }}/3 --without-navigation
   macos-smoke:
     needs: static
     runs-on: macos-15
@@ -181,6 +181,8 @@ jobs:
           node tests/electron-smoke.mjs
           node tests/ui-runtime-cleanup.mjs
           node tests/agent-finder-launch.mjs
+      - name: Native Electron navigation gestures
+        run: npm run test:electron -- --navigation-only
   # Preserve the existing required check name; failed or skipped lanes cannot pass.
   check:
     if: always()
