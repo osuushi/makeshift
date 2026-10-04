@@ -2,6 +2,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import type { Body, BodyBoolean } from "./body.js";
 import { booleanStart } from "./boolean-start.js";
+import { modelingShortcutLabel } from "./modeling-shortcuts.js";
 export class BodyActions {
   private disposers: (() => void)[] = [];
   constructor(
@@ -33,6 +34,7 @@ export class BodyActions {
           id: mode,
           label: `${mode[0].toUpperCase()}${mode.slice(1)}`,
           category: "Solid",
+          shortcut: modelingShortcutLabel(mode),
           aliases:
             mode === "union"
               ? ["join", "combine", "fuse bodies"]
