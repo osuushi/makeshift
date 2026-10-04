@@ -28,7 +28,18 @@ model. Maintain a compact inventory of visible controls and their checked routes
 
 `npm test` runs test files serially. Native geometry checks include wall-clock
 calculation limits; competing test workers can exhaust those limits on otherwise
-valid fixtures. Keep the actual geometry and latency assertions intact.
+valid fixtures. CI distributes the files across four Linux jobs using Node's
+`--test-shard`, with `--test-concurrency=1` in each job. Keep the actual geometry
+and latency assertions intact.
+
+The PR workflow builds the Linux native runtime once and shares a tar archive
+with the test jobs, preserving executable permissions and library symlinks.
+Chromium, WebKit and hidden Electron controls run on separate Linux workers;
+Electron also runs the full host interaction suite under Xvfb. A small macOS job
+checks the built host/preload boundary, native geometry, document persistence,
+process handling and Finder PATH. Signing and notarization remain release checks.
+The final `check` job requires every lane to succeed, including after a lane
+fails or is skipped. Runtime artifacts expire after one day.
 
 Every routine run owns and closes its app, native child, browser, profile and port,
 including after failure. Visible windows are for deliberate founder review only.

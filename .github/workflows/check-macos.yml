@@ -1,21 +1,103 @@
-name: Check macOS arm64
+name: Check
 on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: check-macos-${{ github.ref }}
+  group: check-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  check:
+  static:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npm run check
+      - run: npm run test:setup
+  linux-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      CMAKE_BUILD_PARALLEL_LEVEL: '4'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: ./.github/actions/ci-native
+        with:
+          sdk-prefix: occt-linux-x64
+      - name: Archive runtime (preserve native permissions and library symlinks)
+        run: |
+          mkdir -p .cache/ci
+          tar -czf .cache/ci/linux-runtime.tar.gz \
+            .build/host .build/renderer .build/host-native/bin \
+            .build/solver/bin .build/kernel/bin .build/mesh/bin .cache/kernel/sdk
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: linux-runtime
+          path: .cache/ci/linux-runtime.tar.gz
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
+  model:
+    needs: linux-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: ./.github/actions/ci-linux-runtime
+      - name: Compile tests
+        run: |
+          node scripts/clean-tests.mjs
+          npx tsc -p tsconfig.test.json
+      - name: Serial geometry tests, shard ${{ matrix.shard }}/4
+        run: node --test --test-concurrency=1 --test-shard=${{ matrix.shard }}/4 .cache/sketch-tests/tests/*.test.js
+  controls:
+    needs: linux-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit, electron]
+    env:
+      MAKESHIFT_TEST_BROWSER: ${{ matrix.browser }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: ./.github/actions/ci-linux-runtime
+      - name: Browser and display dependencies
+        run: npx playwright install --with-deps ${{ matrix.browser == 'electron' && 'chromium' || matrix.browser }}
+      - name: Ordinary controls and runtime cleanup
+        run: |
+          xvfb-run -a npm run test:current-tools
+          xvfb-run -a node tests/ui-runtime-cleanup.mjs
+      - name: Full hidden Electron host suite
+        if: matrix.browser == 'electron'
+        run: xvfb-run -a npm run test:electron
+  macos-smoke:
     runs-on: macos-15
-    timeout-minutes: 120
+    timeout-minutes: 60
     env:
       CMAKE_OSX_ARCHITECTURES: arm64
       MACOSX_DEPLOYMENT_TARGET: '14.0'
       CMAKE_BUILD_PARALLEL_LEVEL: '3'
+      MAKESHIFT_TEST_BROWSER: electron
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Select toolchain
@@ -24,45 +106,30 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - name: SDK cache key
-        id: sdk
-        run: echo "key=$(node scripts/release/cache-key.mjs)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      - run: npm ci
+      - uses: ./.github/actions/ci-native
         with:
-          path: |
-            .cache/release-inputs/eigen.tar.gz
-            .cache/release-inputs/boost.tar.bz2
-            .cache/kernel/occt.tar.gz
-            .cache/mesh-inputs/manifold.tar.gz
-            .cache/mesh-inputs/tbb.tar.gz
-            .cache/solver/source
-          key: native-sources-${{ hashFiles('scripts/native-inputs.mjs', 'scripts/setup-native.mjs', 'scripts/setup-kernel.mjs', 'native/solver/sources.json', 'scripts/occt-recipe.json', 'scripts/mesh-inputs.mjs') }}
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: .cache/kernel/sdk
-          key: occt-macos-arm64-${{ steps.sdk.outputs.key }}
-      - name: Fetch mirrored Eigen source
-        env:
-          GH_TOKEN: ${{ github.token }}
+          sdk-prefix: occt-macos-arm64
+      - name: Native host and macOS setup tests
         run: |
-          mkdir -p .cache/release-inputs
-          if [ ! -f .cache/release-inputs/eigen.tar.gz ]; then
-            gh release download native-sources-eigen-5.0.1 --pattern eigen.tar.gz --dir .cache/release-inputs
-          fi
-      - name: Build and check
-        run: |
-          npm ci
-          npm run setup:native
-          npm run setup:kernel
-          npm run setup:mesh
-          npm run build
-          npm run typecheck
-          npm run check
-          npm test
+          npx tsc -p tsconfig.test.json
+          node --test --test-concurrency=1 .cache/sketch-tests/tests/agent-shell-path.test.js .cache/sketch-tests/tests/agent-process-scope.test.js .cache/sketch-tests/tests/native-calculator.test.js
           npm run test:setup
-      - name: Ordinary controls and hidden desktop host
+      - name: Built Electron host smoke and Finder launch
         run: |
-          npx playwright install chromium webkit
-          npm run test:current-tools
+          node tests/electron-smoke.mjs
           node tests/ui-runtime-cleanup.mjs
-          npm run test:electron
+          node tests/agent-finder-launch.mjs
+  # Preserve the existing required check name; failed or skipped lanes cannot pass.
+  check:
+    if: always()
+    needs: [static, linux-build, model, controls, macos-smoke]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require every lane to pass
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS"
+          echo "$RESULTS" | jq -e 'all(.[]; .result == "success")'
