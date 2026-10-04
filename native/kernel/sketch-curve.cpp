@@ -20,7 +20,7 @@ Handle(Geom_Curve) sketchCurve(const Tree& c) {
     if (kind == "arc") {
         GC_MakeArcOfCircle arc(a, point(c.get_child("mid")), b);
         if (!arc.IsDone()) throw std::runtime_error("Cannot construct circular sketch span");
-        return arc.Value();
+        return Handle(Geom_Curve)(arc.Value());
     }
     TColgp_Array1OfPnt poles(1,4); poles(1)=a; poles(2)=point(c.get_child("c1")); poles(3)=point(c.get_child("c2")); poles(4)=b;
     return new Geom_BezierCurve(poles);

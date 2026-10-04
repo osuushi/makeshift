@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
+import { parseArgs } from "node:util";
 import { launchElectron } from "./native-documents.mjs";
 import { arcRoute } from "./ui-arc.mjs";
 import { arcLinkRoute } from "./ui-arc-links.mjs";
@@ -85,6 +86,17 @@ import { typedSelectionRoute } from "./ui-typed-selection.mjs";
 import { useEdgeRoute, useLineEdgeRoute } from "./ui-use-edge.mjs";
 import { widgetNavigationRoute } from "./ui-widget-navigation.mjs";
 
+const { values } = parseArgs({
+  options: {
+    shard: { type: "string" },
+    "without-navigation": { type: "boolean" },
+    "navigation-only": { type: "boolean" },
+  },
+});
+assert.ok(!values.shard || /^[1-7]\/7$/.test(values.shard), "Choose Electron shard 1/7–7/7");
+assert.ok(!values["navigation-only"] || (!values.shard && !values["without-navigation"]));
+const [shard, count] = (values.shard ?? "1/1").split("/").map(Number);
+
 await mkdir(".cache/sketch-review", { recursive: true });
 const app = await launchElectron({
   args: ["."],
@@ -104,94 +116,123 @@ try {
     false,
   );
   assert.equal(await page.evaluate(() => typeof window.require), "undefined");
-  await bowDirectionRoute(page, "electron");
-  await modelingRoute(page, "electron");
-  await entityDeleteRoute(page, "electron");
-  await modelToolsRoute(page, "electron");
-  await extrudeRoute(page, "electron", app);
-  await extrusionGestureRoute(page);
-  await booleanTargetsRoute(page);
-  await useEdgeRoute(page, "electron");
-  await useLineEdgeRoute(page);
-  await solidFacesRoute(page, "electron");
-  await jointBowRoute(page, "electron");
-  await constraintPanelRoute(page, "electron");
-  await interactionLifecycleRoute(page, "electron");
-  await editIntentRoute(page, "electron");
-  await typedSelectionRoute(page, "electron");
-  await drawingLinksRoute(page, "electron");
-  await pointEdgeRoute(page, "electron");
-  await moveToolRoute(page, "electron");
-  await pointLinkRoute(page, "electron");
-  await circleLinkRoute(page, "electron");
-  await arcLinkRoute(page, "electron");
-  await coincidenceRoute(page, "electron");
-  await cornerAngleRoute(page, "electron");
-  await concentricRoute(page, "electron");
-  await tangencyRoute(page, "electron");
-  await circularTangencyRoute(page, "electron");
-  await tangentJunctionRoute(page, "electron");
-  await filletGuideRoute(page, "electron");
-  await filletConsumptionRoute(page, "electron");
-  await curvedRoundingRoute(page, "electron");
-  await cornerFilletRoute(page, "electron");
-  await filletRoute(page, "electron");
-  await filletLossRoute(page, "electron");
-  await trimLineRoute(page, "electron");
-  await trimCircleRoute(page, "electron");
-  await trimConstraintRoute(page, "electron");
-  await trimArcRoute(page, "electron");
-  await relationRoute(page, "electron");
-  await lockRoute(page, "electron");
-  await extrusionWidgetRoute(page, "electron");
-  await bodyEdgesRoute(page, "electron");
-  await bodyFilletRoute(page, "electron", app);
-  await bodyChamferRoute(page, "electron", app);
-  await edgeChainRoute(page, "electron");
-  await faceOffsetRoute(page, "electron", app);
-  await blendEditRoute(page, "electron");
-  await offsetChainRoute(page, "electron");
-  await offsetContactRoute(page, "electron", app);
-  await revolveRoute(page, "electron", app);
-  await revolveSolidRoute(page, "electron");
-  await screwUnionRoute(page, "electron", app);
-  await bodyBooleanRoute(page, "electron", app);
-  await cleanupRoute(page, "electron", app);
-  await autoUnionRoute(page, "electron");
-  await extrudeDraftRoute(page, "electron", app);
-  await bodyMoveRoute(page, "electron");
-  await bodySnapRoute(page, "electron");
-  await bodyAnchorRoute(page, "electron");
-  await widgetNavigationRoute(page, "electron");
-  await bodyArchiveRoute(page, "electron", app);
-  await entitiesRoute(page, "electron");
-  await cameraRoute(page, "electron");
-  await bezierRoute(page, "electron");
-  await projectionRoute(page, "electron", app);
-  await projectionFacesRoute(page, "electron");
-  await arcRoute(page, "electron");
-  await pointChoiceRoute(page, "electron");
-  await circleRoute(page, "electron");
-  await curvedRegionRoute(page, "electron");
-  await rectangleBowRoute(page, "electron");
-  await constrainedBowRoute(page, "electron");
-  await tangentBowRoute(page, "electron");
-  await rectangleRoute(page, "electron");
-  await movementSnappingRoute(page, "electron");
-  await movementGeometrySnapRoute(page, "electron");
-  await rectangleEdgeRoute(page, "electron");
-  await rotatedEdgeRoute(page, "electron");
-  await lineRoute(page, "electron");
-  await pointIntentRoute(page, "electron");
-  await fillRoute(page, "electron");
-  await selectionRoute(page, "electron");
-  await transformRoute(page, "electron");
-  await offsetRoute(page, "electron");
-  await loopOffsetRoute(page, "electron");
-  await edgeCases(page, "electron");
-  await backendPersistence(page, "electron");
+  const routes = [
+    [bowDirectionRoute, "electron"],
+    [modelingRoute, "electron"],
+    [entityDeleteRoute, "electron"],
+    [modelToolsRoute, "electron"],
+    [extrudeRoute, "electron", app],
+    [extrusionGestureRoute],
+    [booleanTargetsRoute],
+    [useEdgeRoute, "electron"],
+    [useLineEdgeRoute],
+    [solidFacesRoute, "electron"],
+    [jointBowRoute, "electron"],
+    [constraintPanelRoute, "electron"],
+    [interactionLifecycleRoute, "electron"],
+    [editIntentRoute, "electron"],
+    [typedSelectionRoute, "electron"],
+    [drawingLinksRoute, "electron"],
+    [pointEdgeRoute, "electron"],
+    [moveToolRoute, "electron"],
+    [pointLinkRoute, "electron"],
+    [circleLinkRoute, "electron"],
+    [arcLinkRoute, "electron"],
+    [coincidenceRoute, "electron"],
+    [cornerAngleRoute, "electron"],
+    [concentricRoute, "electron"],
+    [tangencyRoute, "electron"],
+    [circularTangencyRoute, "electron"],
+    [tangentJunctionRoute, "electron"],
+    [filletGuideRoute, "electron"],
+    [filletConsumptionRoute, "electron"],
+    [curvedRoundingRoute, "electron"],
+    [cornerFilletRoute, "electron"],
+    [filletRoute, "electron"],
+    [filletLossRoute, "electron"],
+    [trimLineRoute, "electron"],
+    [trimCircleRoute, "electron"],
+    [trimConstraintRoute, "electron"],
+    [trimArcRoute, "electron"],
+    [relationRoute, "electron"],
+    [lockRoute, "electron"],
+    [extrusionWidgetRoute, "electron"],
+    [bodyEdgesRoute, "electron"],
+    [bodyFilletRoute, "electron", app],
+    [bodyChamferRoute, "electron", app],
+    [edgeChainRoute, "electron"],
+    [faceOffsetRoute, "electron", app],
+    [blendEditRoute, "electron"],
+    [offsetChainRoute, "electron"],
+    [offsetContactRoute, "electron", app],
+    [revolveRoute, "electron", app],
+    [revolveSolidRoute, "electron"],
+    [screwUnionRoute, "electron", app],
+    [bodyBooleanRoute, "electron", app],
+    [cleanupRoute, "electron", app],
+    [autoUnionRoute, "electron"],
+    [extrudeDraftRoute, "electron", app],
+    [bodyMoveRoute, "electron"],
+    [bodySnapRoute, "electron"],
+    [bodyAnchorRoute, "electron"],
+    [widgetNavigationRoute, "electron"],
+    [bodyArchiveRoute, "electron", app],
+    [entitiesRoute, "electron"],
+    [cameraRoute, "electron"],
+    [bezierRoute, "electron"],
+    [projectionRoute, "electron", app],
+    [projectionFacesRoute, "electron"],
+    [arcRoute, "electron"],
+    [pointChoiceRoute, "electron"],
+    [circleRoute, "electron"],
+    [curvedRegionRoute, "electron"],
+    [rectangleBowRoute, "electron"],
+    [constrainedBowRoute, "electron"],
+    [tangentBowRoute, "electron"],
+    [rectangleRoute, "electron"],
+    [movementSnappingRoute, "electron"],
+    [movementGeometrySnapRoute, "electron"],
+    [rectangleEdgeRoute, "electron"],
+    [rotatedEdgeRoute, "electron"],
+    [lineRoute, "electron"],
+    [pointIntentRoute, "electron"],
+    [fillRoute, "electron"],
+    [selectionRoute, "electron"],
+    [transformRoute, "electron"],
+    [offsetRoute, "electron"],
+    [loopOffsetRoute, "electron"],
+    [edgeCases, "electron"],
+    [backendPersistence, "electron"],
+  ];
+  // Preserve dependent fixture sequences (body Move → snapping → pivot, etc.).
+  // Each boundary starts a route that explicitly resets the document/camera.
+  const boundaries = [
+    0,
+    routes.findIndex(([route]) => route === pointEdgeRoute),
+    routes.findIndex(([route]) => route === filletRoute),
+    routes.findIndex(([route]) => route === faceOffsetRoute),
+    routes.findIndex(([route]) => route === bodyMoveRoute),
+    routes.findIndex(([route]) => route === circleRoute),
+    routes.findIndex(([route]) => route === movementSnappingRoute),
+    routes.length,
+  ];
+  assert.ok(boundaries.every((value, index) => index === 0 || value > boundaries[index - 1]));
+  const navigation = new Set([widgetNavigationRoute, cameraRoute]);
+  const navigationFixture = new Set([bodyMoveRoute, bodySnapRoute, bodyAnchorRoute, ...navigation]);
+  const partition = count === 1 ? routes : routes.slice(boundaries[shard - 1], boundaries[shard]);
+  const selected = values["navigation-only"]
+    ? routes.filter(([route]) => navigationFixture.has(route))
+    : partition.filter(([route]) => !values["without-navigation"] || !navigation.has(route));
+  console.log(`electron host: ${selected.length}/${routes.length} routes, shard ${shard}/${count}`);
+  for (const [route, ...args] of selected) {
+    console.log(`electron host: ${route.name}`);
+    await route(page, ...args);
+  }
   assert.deepEqual(errors, []);
   console.log("Hidden Electron: built renderer, plane entry and sandbox passed");
+} catch (error) {
+  console.error("electron host: route failed", error);
+  throw error;
 } finally {
   await app.close();
 }

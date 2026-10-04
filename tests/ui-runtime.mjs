@@ -3,6 +3,7 @@ import { mkdir } from "node:fs/promises";
 import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
+import { installTestFrames } from "./ui-test-frames.mjs";
 
 export function runtimeNames(allowed = ["chromium", "webkit", "electron"], defaults = allowed) {
   const requested = process.env.MAKESHIFT_TEST_BROWSER;
@@ -58,6 +59,7 @@ export async function withUiRuntimes(
         } else {
           browser = await { chromium, webkit }[name].launch({ headless: true });
           page = await browser.newPage({ viewport, hasTouch });
+          await installTestFrames(page);
           await page.goto(server.resolvedUrls.local[0]);
         }
         page.setDefaultTimeout(timeout);
@@ -65,10 +67,19 @@ export async function withUiRuntimes(
         page.on("dialog", (dialog) =>
           dialog.type() === "beforeunload" ? dialog.accept() : dialog.dismiss(),
         );
-        page.on("pageerror", (error) => errors.push(error.message));
+        page.on("console", (message) => {
+          if (message.type() === "error") console.error(`${name}: ${message.text()}`);
+        });
+        page.on("pageerror", (error) => {
+          errors.push(error.message);
+          console.error(`${name}: renderer error`, error);
+        });
         await page.waitForFunction(() => Boolean(window.makeshiftInspect));
         await route(page, name);
         assert.deepEqual(errors, []);
+      } catch (error) {
+        console.error(`${name}: UI route failed`, error);
+        throw error;
       } finally {
         await browser?.close();
         await app?.close();

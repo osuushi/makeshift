@@ -42,13 +42,13 @@ export class PlaneCutHover {
           : null;
     this.view.show(hit ? { ...planeReference(hit.frame), vertices: hit.vertices } : null);
     this.visible = !!hit;
-    this.editor.world.renderer.render(this.editor.world.scene, this.editor.world.camera);
+    this.editor.world.present();
   };
   clear = (): void => {
     if (!this.visible) return;
     this.visible = false;
     this.view.show(null);
-    this.editor.world.renderer.render(this.editor.world.scene, this.editor.world.camera);
+    this.editor.world.present();
   };
   dispose(): void {
     this.abort.abort();

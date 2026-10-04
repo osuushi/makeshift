@@ -1,0 +1,35 @@
+name: Save verified CI SDK
+description: Preserve a completed OCCT SDK even if a later calculator compilation fails.
+inputs:
+  sdk-prefix:
+    description: Platform and architecture cache namespace
+    required: true
+  sdk-key:
+    description: Expected recipe and toolchain identity
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Verify installed SDK before caching
+      id: verify
+      if: always()
+      shell: bash
+      env:
+        SDK_KEY: ${{ inputs.sdk-key }}
+      run: |
+        node --input-type=module <<'JS'
+        import { appendFile } from 'node:fs/promises';
+        import { verifySdk } from './scripts/sdk-provenance.mjs';
+        try {
+          const sdk = await verifySdk('.cache/kernel/sdk');
+          if (sdk.buildKey !== process.env.SDK_KEY) throw new Error('SDK build key mismatch');
+          await appendFile(process.env.GITHUB_OUTPUT, 'valid=true\n');
+        } catch (error) {
+          console.log(`SDK not ready for caching: ${error.message}`);
+        }
+        JS
+    - uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      if: always() && steps.verify.outputs.valid == 'true'
+      with:
+        path: .cache/kernel/sdk
+        key: ${{ inputs.sdk-prefix }}-${{ inputs.sdk-key }}
