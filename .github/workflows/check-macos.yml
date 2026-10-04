@@ -22,6 +22,8 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run typecheck
       - run: npm run check
+      # Launcher-selection checks import compiled host modules, but need no native build.
+      - run: npx tsc -p tsconfig.host.json
       - run: npm run test:setup
   linux-build:
     runs-on: ubuntu-24.04
@@ -113,7 +115,11 @@ jobs:
       - name: Native host and macOS setup tests
         run: |
           npx tsc -p tsconfig.test.json
-          node --test --test-concurrency=1 .cache/sketch-tests/tests/agent-shell-path.test.js .cache/sketch-tests/tests/agent-process-scope.test.js .cache/sketch-tests/tests/native-calculator.test.js
+          node --test --test-concurrency=1 \
+            .cache/sketch-tests/tests/agent-shell-path.test.js \
+            .cache/sketch-tests/tests/agent-process-scope.test.js \
+            .cache/sketch-tests/tests/native-calculator.test.js \
+            .cache/sketch-tests/tests/native-mesh-protocol.test.js
           npm run test:setup
       - name: Built Electron host smoke and Finder launch
         run: |
