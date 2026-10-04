@@ -26,6 +26,12 @@ Tests must not create, select or commit through hidden controller methods when
 claiming an ordinary user route. Read-only inspection can verify the resulting
 model. Maintain a compact inventory of visible controls and their checked routes.
 
+Run `npm run typecheck` and `npm run check` before native compilation.
+`typecheck:ui` checks UI JavaScript fixtures listed in `tsconfig.ui.json` with `// @ts-check`;
+annotate their Playwright `Page` parameters so nullable DOM measurements are checked.
+Offset opts in; other UI fixtures remain unchecked until they are annotated.
+Measure replacing SVG overlays with the bounded, atomic `overlayPoint` helper.
+
 `npm test` runs test files serially. Native geometry checks include wall-clock
 calculation limits; competing test workers can exhaust those limits on otherwise
 valid fixtures. CI distributes the files across four Linux jobs using Node's

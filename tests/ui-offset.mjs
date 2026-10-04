@@ -1,8 +1,23 @@
+// @ts-check
 import assert from "node:assert/strict";
-import { at, click, close, drag, inspect, pointEquals, reset } from "./ui-helpers.mjs";
+import {
+  at,
+  click,
+  close,
+  drag,
+  inspect,
+  overlayPoint,
+  pointEquals,
+  reset,
+} from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
+/** @param {import("playwright").Page} page */
 const sketch = async (page) => (await inspect(page)).document.sketches[0];
+/**
+ * @param {import("playwright").Page} page
+ * @param {number} value
+ */
 async function number(page, value) {
   await page.getByRole("button", { name: "Offset edge", exact: true }).click();
   const input = page.getByRole("textbox", { name: "Offset distance", exact: true });
@@ -10,19 +25,28 @@ async function number(page, value) {
   await page.keyboard.press("Enter");
   await inspect(page);
 }
+/**
+ * @param {import("playwright").Page} page
+ * @param {number} dx
+ * @param {number} dy
+ */
 async function offsetDrag(page, dx, dy) {
   await inspect(page); // Cancellation must settle before measuring the restored control.
-  const box = await page.getByRole("button", { name: "Offset edge", exact: true }).boundingBox();
+  const handle = await overlayPoint(page, '[aria-label="Offset edge"]');
   const a = await at(page, 0, 0),
     b = await at(page, dx, dy);
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.move(handle.x, handle.y);
   await page.mouse.down();
-  await page.mouse.move(box.x + box.width / 2 + b.x - a.x, box.y + box.height / 2 + b.y - a.y, {
+  await page.mouse.move(handle.x + b.x - a.x, handle.y + b.y - a.y, {
     steps: 8,
   });
   await page.mouse.up();
   await inspect(page);
 }
+/**
+ * @param {import("playwright").Page} page
+ * @param {string} name
+ */
 export async function offsetRoute(page, name) {
   for (const plane of ["XY", "XZ", "YZ"]) {
     await reset(page);
@@ -98,16 +122,16 @@ export async function offsetRoute(page, name) {
   );
 }
 
+/** @param {import("playwright").Page} page */
 async function arcOffsets(page) {
   for (const height of [2, 8]) {
     await reset(page);
     await chooseTool(page, "Sketch on XY", "sketch-xy");
     await page.keyboard.press("l");
     await drag(page, [-4, 0], [4, 0]);
-    await page.locator(".bow-handle").nth(1).waitFor({ state: "visible" });
-    const guide = await page.locator(".bow-handle").nth(1).boundingBox();
+    const guide = await overlayPoint(page, ".bow-handle", 1);
     const target = await at(page, 0, height);
-    await page.mouse.move(guide.x + guide.width / 2, guide.y + guide.height / 2);
+    await page.mouse.move(guide.x, guide.y);
     await page.mouse.down();
     await page.mouse.move(target.x, target.y, { steps: 8 });
     await page.mouse.up();

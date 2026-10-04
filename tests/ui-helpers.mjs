@@ -64,6 +64,12 @@ export async function click(page, x, y) {
   await page.mouse.click(point.x, point.y);
 }
 // Overlay refresh replaces SVG nodes. Resolve and measure in one browser turn.
+/**
+ * @param {import("playwright").Page} page
+ * @param {string} selector
+ * @param {number} [index]
+ * @returns {Promise<{ x: number, y: number }>}
+ */
 export async function overlayPoint(page, selector, index = 0) {
   const point = await page.waitForFunction(
     ({ selector, index }) => {
