@@ -1,6 +1,39 @@
 {
   "input": "/Users/adacohen/.codex/worktrees/0293/freac/assets/branding/printed-logo/icon.gcode",
   "appearance": "icon",
+  "lightingPreset": "spot-soft",
+  "lightingSettings": {
+    "label": "Soft focused pool",
+    "ambientColor": [0.035, 0.035, 0.035],
+    "ambientStrength": 1,
+    "lights": [
+      {
+        "name": "Top-left shaping key",
+        "position": [-280, 320, 320],
+        "power": 2400000,
+        "width": 100,
+        "color": [1, 1, 1]
+      },
+      {
+        "name": "Gentle distant fill",
+        "position": [280, -80, 320],
+        "power": 450000,
+        "width": 360,
+        "color": [1, 1, 1]
+      },
+      {
+        "name": "Focused pool",
+        "type": "SPOT",
+        "position": [-190, 240, 310],
+        "target": [-6, 0, 0],
+        "power": 8000000,
+        "coneDegrees": 5.8,
+        "blend": 0.8,
+        "radius": 6,
+        "color": [1, 1, 1]
+      }
+    ]
+  },
   "crownRatio": 0,
   "beadProfile": "ellipse",
   "beadSection": {

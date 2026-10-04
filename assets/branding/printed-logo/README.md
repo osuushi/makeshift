@@ -4,7 +4,8 @@ The current [icon](icon.png), [oblique view](icon-detail.png) and
 [64/96/128 px comparison](sizes.png) use `makeshift-logo-7.makeshift`, captured
 byte for byte as `source.makeshift`. The new concept has a raised orange form,
 a blue inset and a neutral backing. All three saved solids are included.
-The approved application icon remains in the parent folder.
+The approved application master in the parent folder is an exact copy of the
+soft spotlight render. The canonical PNGs here use that same approved lighting.
 
 The source occupies 40 × 40 × 5 mm, from Z=−2 to Z=3. Export shifts the whole
 assembly up 2 mm for the print bed: backing Z=0–4, orange Z=4–5 and blue Z=2–3.
@@ -32,7 +33,8 @@ node assets/branding/printed-logo/render-gcode.mjs
 ```
 
 Rendering arguments are G-code, output directory, appearance (`icon`, default,
-or `realistic`) and lighting preset (`current`, default). Outputs include bead
+or `realistic`) and lighting preset (`spot-soft` for icons, `current` for realistic
+renders by default). Outputs include bead
 geometry, source metadata, transparent PNGs
 and editable Blender scenes. `BLENDER` overrides the installed macOS binary.
 
@@ -56,7 +58,7 @@ and precision, backing height, palette and projected cap triangles of the colore
 solids. The renderer checks that these color data match the supplied G-code hash.
 `icon-source.json` records the render's input hash, settings and geometry counts.
 The small PNGs use Lanczos downsampling of the 1024 px render. The comparison
-shows the 2 mm render before and after the tight-bend mesh repair. The
+shows the previous application icon alongside the approved soft spotlight icon. The
 [corner comparison](corner-comparison.png) enlarges both affected orange areas.
 
 ## Appearance and color boundaries
@@ -91,7 +93,8 @@ alternatives: [soft studio](lighting/studio/icon.png),
 [warm/cool](lighting/warm-cool/icon.png), and [violet rim](lighting/violet-rim/icon.png).
 [Small previews](lighting/sizes.png) show each on light and dark backgrounds.
 Each candidate also has an oblique render and JSON provenance in its folder.
-The canonical icon stays at the current lighting while these are being reviewed.
+The founder selected the soft spotlight study below as the application icon.
+These earlier comparison boards retain the neutral baseline for reference.
 
 The rigs in `lighting.json` use distant lights, a top-left key and rectangular
 softboxes for broader or narrower highlights. Colors are linear RGB light tints.

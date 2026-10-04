@@ -264,6 +264,7 @@ def setup(mesh_file: Path, output: Path, resolution: int, samples: int,
 
 
 args = sys.argv[sys.argv.index("--") + 1:]
-lighting_preset = next((arg.split("=", 1)[1] for arg in args[4:] if arg.startswith("lighting=")), "current")
+lighting_preset = next((arg.split("=", 1)[1] for arg in args[4:] if arg.startswith("lighting=")),
+                      "spot-soft" if "icon" in args[4:] else "current")
 setup(Path(args[0]), Path(args[1]), int(args[2]) if len(args) > 2 else 1024,
       int(args[3]) if len(args) > 3 else 64, "detail" in args[4:], "icon" in args[4:], lighting_preset)

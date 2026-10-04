@@ -9,7 +9,7 @@ const directory = dirname(fileURLToPath(import.meta.url));
 if (!process.version.startsWith("v24.")) throw new Error("Activate the repository .nvmrc first");
 const appearance = process.argv[4] ?? "icon";
 if (!["icon", "realistic"].includes(appearance)) throw new Error("Expected icon or realistic");
-const lightingPreset = process.argv[5] ?? "current";
+const lightingPreset = process.argv[5] ?? (appearance === "icon" ? "spot-soft" : "current");
 const lightingPresets = JSON.parse(readFileSync(`${directory}/lighting.json`, "utf8"));
 if (lightingPreset !== "current" && (appearance !== "icon" || !lightingPresets[lightingPreset]))
   throw new Error(`Unknown icon lighting preset: ${lightingPreset}`);
