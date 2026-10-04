@@ -34,8 +34,9 @@ and latency assertions intact.
 
 The PR workflow builds the Linux native runtime once and shares a tar archive
 with the test jobs, preserving executable permissions and library symlinks.
-Chromium, WebKit and hidden Electron controls run on separate Linux workers;
-Electron also runs the full host interaction suite under Xvfb. A small macOS job
+Chromium, WebKit and hidden Electron controls each run in three serial route
+shards on separate Linux workers. Another worker runs the full Electron host
+interaction suite under Xvfb. A small macOS job
 checks the built host/preload boundary, native geometry, document persistence,
 process handling and Finder PATH. Signing and notarization remain release checks.
 The final `check` job requires every lane to succeed, including after a lane
