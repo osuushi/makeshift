@@ -101,6 +101,7 @@ jobs:
         if: matrix.browser == 'electron'
         run: xvfb-run -a npm run test:electron
   macos-smoke:
+    needs: static
     runs-on: macos-15
     timeout-minutes: 60
     env:
