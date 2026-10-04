@@ -37,6 +37,8 @@ async function route(page, name) {
       await originalSettle.call(this);
       window.offsetReadiness.reached = true;
       await held;
+      // The artificial hold can admit cleanup work after the first settle.
+      await originalSettle.call(this);
     };
   }, previewModule);
   let returned = false,
