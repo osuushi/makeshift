@@ -266,13 +266,13 @@ export class DecoratorPanel {
     });
   }
   dispose(): void {
+    this.editor.world.changed.delete(this.update);
     this.disposeLibrary();
     this.application.cancel();
     this.draft.cancel();
     this.unregister();
     this.unregisterGear();
     this.unregisterKnurl();
-    this.editor.world.changed.delete(this.update);
     this.root.remove();
   }
 }
