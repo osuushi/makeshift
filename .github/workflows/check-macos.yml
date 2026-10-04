@@ -109,6 +109,10 @@ jobs:
     needs: linux-build
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     env:
       MAKESHIFT_TEST_BROWSER: electron
       DEBUG: pw:browser
@@ -118,7 +122,7 @@ jobs:
       - name: Display dependencies
         run: npx playwright install-deps chromium
       - name: Full hidden Electron host suite
-        run: xvfb-run -a npm run test:electron
+        run: xvfb-run -a npm run test:electron -- --shard=${{ matrix.shard }}/3
   macos-smoke:
     needs: static
     runs-on: macos-15
