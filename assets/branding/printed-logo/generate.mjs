@@ -33,7 +33,7 @@ await build({
   format: "esm",
   outfile: `${output}/export.mjs`,
 });
-run(process.execPath, [`${output}/export.mjs`, source, `${output}/logo.stl`]);
+run(process.execPath, [`${output}/export.mjs`, source, `${output}/logo.3mf`]);
 for (const [name, options] of [
   ["fine", []],
   [
@@ -71,7 +71,7 @@ for (const [name, options] of [
     "--export-gcode",
     "--output",
     `${prefix}.gcode`,
-    `${output}/logo.stl`,
+    `${output}/logo.3mf`,
   ]);
   run(process.execPath, [`${directory}/beads.mjs`, `${prefix}.gcode`, `${prefix}-beads.json`]);
   run(blender, [
