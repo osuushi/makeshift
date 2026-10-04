@@ -22,9 +22,12 @@ export interface ToolDefinition {
   shortcut?: string;
   reason: () => string | null;
   run: () => unknown;
+  /** Finish the current edit before resolving this action against accepted geometry. */
+  finishEdit?: boolean | (() => boolean);
   allowBusy?: boolean;
   showInTools?: boolean;
 }
+export type ToolAction = Pick<ToolDefinition, "reason" | "run" | "finishEdit" | "allowBusy">;
 export interface ToolResult extends ToolDefinition {
   unavailable: string | null;
 }
@@ -53,10 +56,19 @@ export class ToolCatalog {
       this.recentIds = this.recentIds.filter((id) => id !== tool.id);
     };
   }
-  reason(tool: ToolDefinition): string | null {
+  get switching(): boolean {
+    return this.running;
+  }
+  private switches(tool: ToolAction): boolean {
+    return typeof tool.finishEdit === "function" ? tool.finishEdit() : !!tool.finishEdit;
+  }
+  reason(tool: ToolAction): string | null {
     if (this.running) return "Switching tools…";
     if (this.editor.isDragging) return "Finish the current drag first";
     if (this.editor.blocked && !tool.allowBusy) return "Wait for the current calculation";
+    const current = this.editor.interactions.current;
+    if (current && this.switches(tool))
+      return current.finish ? null : "Finish or cancel the current edit first";
     return tool.reason();
   }
   results(): ToolResult[] {
@@ -74,21 +86,43 @@ export class ToolCatalog {
   }
   async invoke(id: string): Promise<void> {
     const tool = this.entries.get(id);
-    if (!tool) return;
+    if (tool) await this.activate(tool);
+  }
+  async activate(tool: ToolAction): Promise<boolean> {
     const reason = this.reason(tool);
     if (reason) {
       this.editor.message = reason;
       this.editor.refresh();
-      return;
+      return false;
     }
     this.running = true;
+    this.editor.refresh();
     try {
+      const current = this.editor.interactions.current;
+      if (current && this.switches(tool)) {
+        if (!(await current.finish?.()) || this.editor.interactions.current) {
+          this.editor.message ||= "Correct or cancel the current edit before switching";
+          return false;
+        }
+        this.editor.refresh();
+        const unavailable = tool.reason();
+        if (unavailable) {
+          this.editor.message = unavailable;
+          return false;
+        }
+      }
       const result = await tool.run();
+      const registered = [...this.entries.values()].find((entry) => entry === tool);
       // Recency records an admitted invocation, not later geometry acceptance.
-      if (result !== false && tool.showInTools !== false && this.entries.get(id) === tool)
-        this.recentIds = [id, ...this.recentIds.filter((prior) => prior !== id)].slice(0, 10);
+      if (result !== false && registered && registered.showInTools !== false)
+        this.recentIds = [
+          registered.id,
+          ...this.recentIds.filter((prior) => prior !== registered.id),
+        ].slice(0, 10);
+      return result !== false;
     } catch (error) {
       this.editor.message = error instanceof Error ? error.message : String(error);
+      return false;
     } finally {
       this.running = false;
       this.editor.refresh();

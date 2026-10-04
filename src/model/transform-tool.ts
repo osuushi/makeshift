@@ -10,6 +10,7 @@ export function registerTransformTool(
 ): () => void {
   return toolCatalog(editor).register({
     id: "transform",
+    finishEdit: true,
     label: "Transform",
     category: "Transform",
     shortcut: "M",

@@ -14,7 +14,7 @@ const bindings = [
   ["erode", "e", true],
 ] as const;
 type ModelingShortcut = (typeof bindings)[number][0];
-const idleOnly = new Set<ModelingShortcut>(["union", "subtract", "intersect", "loft", "erode"]);
+const switches = new Set<ModelingShortcut>(["union", "subtract", "intersect", "loft", "erode"]);
 
 export function modelingShortcutLabel(id: ModelingShortcut): string {
   const binding = bindings.find(([tool]) => tool === id);
@@ -26,7 +26,7 @@ export function modelingShortcut(
     KeyboardEvent,
     "key" | "shiftKey" | "ctrlKey" | "metaKey" | "altKey" | "repeat" | "isComposing"
   >,
-  editing: boolean,
+  owner: { kind: string; canFinish: boolean } | null,
 ): ModelingShortcut | null {
   if (event.ctrlKey || event.metaKey || event.altKey || event.repeat || event.isComposing)
     return null;
@@ -35,6 +35,12 @@ export function modelingShortcut(
       key === event.key.toLowerCase() &&
       (shift === event.shiftKey || id === "offset" || id === "transform"),
   );
-  if (!binding || (editing && idleOnly.has(binding[0]))) return null;
+  if (!binding) return null;
+  if (owner && switches.has(binding[0])) {
+    if (!owner.canFinish) return null;
+    // Extrude owns U/S/I as local Boolean modes, including shifted key events.
+    if (owner.kind === "extrude" && ["union", "subtract", "intersect"].includes(binding[0]))
+      return null;
+  }
   return binding[0];
 }

@@ -14,6 +14,20 @@ The entire mutation lifecycle is:
    the accepted document and display the relevant error locally.
 4. Refresh derived geometry and controls, then accept the next edit.
 
+A deliberate mode/action switch accepts valid released settings through the current
+controller's ordinary asynchronous finisher, waits for ownership to release, then
+resolves the requested action against accepted geometry and refreshed selection.
+Each accepted edit retains its own ordinary Undo entry. A zero-change preview can
+exit without adding an edit. Invalid latest input or a failed acceptance retains
+the field, error and current owner; the requested action does not execute. Canvas
+gesture and numeric input owners exclude new edits until switching completes,
+including the interval after an old lease releases. Navigation keeps its ordinary
+route. Owners
+without a completion path require explicit completion or cancellation. Captured
+gestures and running calculations retain their guards. Local options inside the
+same controller keep their existing temporary-edit semantics. Merely opening or
+browsing Tools borrows focus and never accepts the edit.
+
 While a calculation is running, disable conflicting edits, including Undo, Clear,
 Open and tool changes that mutate geometry. Do not silently queue clicks or replay
 them later. If it exceeds about 150 ms, show a busy indicator; that delay is an
@@ -274,5 +288,8 @@ acceptance boundary. Their numeric previews can use local history before accepta
 
 This applies to Extrude (including draft, twist, axis, mode and targets), Shell, Erode,
 face/edge Move, Face Offset, Fillet/Chamfer, Scale, Revolve, Loft, Mirror, Boolean,
-construction-plane placement, plane cuts and cross-section placement. An active
-modal tool without tweak history does not accept itself just to service Undo.
+construction-plane placement, plane cuts and cross-section placement. Active
+modal tools without tweak history do not accept themselves just to service Undo.
+Projection and sketch Fillet/Offset retain their existing explicit exception:
+document Undo/Redo cancels their released preview first, then navigates accepted
+history. Their mode-switch finishers do not add local parameter checkpoints.

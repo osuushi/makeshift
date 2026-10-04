@@ -61,6 +61,7 @@ export class TagControls {
     app.append(this.panel);
     this.unregister = toolCatalog(editor).register({
       id: "tag-geometry",
+      finishEdit: true,
       label: "Tag geometry",
       category: "Reference",
       aliases: ["group", "named selection"],

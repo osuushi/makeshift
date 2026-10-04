@@ -36,6 +36,7 @@ export class ConstructionPlaneControls {
     );
     this.disposeTool = toolCatalog(editor).register({
       id: "construction-plane",
+      finishEdit: true,
       label: "Construction plane",
       category: "Reference",
       aliases: ["workplane", "reference plane"],

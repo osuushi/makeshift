@@ -32,6 +32,7 @@ export class ProjectionControls {
   ) {
     this.disposeTool = toolCatalog(editor).register({
       id: "project",
+      finishEdit: true,
       label: "Project",
       category: "Reference",
       aliases: ["projection"],
@@ -79,9 +80,15 @@ export class ProjectionControls {
     this.previousSelection = e.selected.targets;
     this.previousModels = e.modeling.targets;
     await e.numeric.commit();
-    this.lease = e.interactions.acquire("projection", () => this.cancel(), undefined, {
-      navigation: "when-released",
-    });
+    this.lease = e.interactions.acquire(
+      "projection",
+      () => this.cancel(),
+      () => this.accept(),
+      {
+        navigation: "when-released",
+        documentHistory: "cancel-preview",
+      },
+    );
     if (!this.lease) return;
     this.target = restored
       ? { frame: structuredClone(restored.frame), sketchId: restored.sketchId }
@@ -201,36 +208,44 @@ export class ProjectionControls {
     }
     e.refresh();
   }
-  private async accept(): Promise<void> {
+  private async accept(): Promise<boolean> {
     const e = this.editor,
       result = this.result,
       lease = this.lease;
-    if (!result || !lease || e.blocked || !lease.close()) return;
+    if (!lease || e.blocked) return false;
+    if (!result) {
+      e.message ||= "Choose projection sources and a valid destination before switching";
+      e.refresh();
+      return false;
+    }
+    if (!lease.close()) return false;
     const old = new Set(
       e.store.data.sketches.find((s) => s.id === result.id)?.curves.map((c) => c.id),
     );
     const ok = await e.accept();
-    if (ok) e.world.navigation.beginWorkspace();
-    this.finish();
-    if (ok) {
-      e.workspaceEntry.enter({ key: "Projected sketch", frame: result.plane, sketchId: result.id });
-      e.select(result.curves.filter((c) => !old.has(c.id)).map((c) => c.id));
-      e.tool = "select";
-      e.notice = "Projected independent curves · cubic approximation within 0.001 mm where needed";
+    if (!ok) {
+      lease.phase = "editing";
       e.refresh();
+      return false;
     }
+    e.world.navigation.beginWorkspace();
+    this.finish();
+    e.workspaceEntry.enter({ key: "Projected sketch", frame: result.plane, sketchId: result.id });
+    e.select(result.curves.filter((c) => !old.has(c.id)).map((c) => c.id));
+    e.tool = "select";
+    e.notice = "Projected independent curves · cubic approximation within 0.001 mm where needed";
+    e.refresh();
+    return true;
   }
   private async cancel(): Promise<void> {
     const lease = this.lease;
     if (!lease?.close()) return;
     await this.editor.store.cancelPreview();
     this.editor.message = "";
-    this.finish();
-    this.editor.selectTargets(this.previousSelection);
-    this.editor.modeling.targets = this.previousModels;
+    this.finish(true);
     this.editor.refresh();
   }
-  private finish(): void {
+  private finish(restoreSelection = false): void {
     const lease = this.lease;
     this.lease = null;
     this.sources = [];
@@ -242,6 +257,10 @@ export class ProjectionControls {
     this.picker.stop();
     this.editor.notice = "";
     this.editor.modeling.hover = null;
+    if (restoreSelection) {
+      this.editor.selectTargets(this.previousSelection);
+      this.editor.modeling.targets = this.previousModels;
+    }
     lease?.release();
   }
   private update = (): void => {

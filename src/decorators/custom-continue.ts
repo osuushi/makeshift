@@ -1,4 +1,5 @@
 import type { SketchEditor } from "../sketch/editor.js";
+import { toolCatalog } from "../tools/catalog.js";
 import type { DecoratorInstance, FaceReference } from "./types.js";
 
 export function appendCustomContinue(
@@ -45,16 +46,44 @@ export function appendCustomContinue(
     .catch((error) => {
       if (note.isConnected) note.textContent = String(error);
     });
-  button.onclick = async () => {
-    if (
-      await editor.store.request({
-        kind: "decorator",
-        edit: { action: "continue", id: instance.id, faces: selected },
-      })
-    ) {
-      const continued = editor.store.data.decorators?.find((d) => d.id === instance.id);
-      if (continued) editor.modeling.targets = continued.faces.map((f) => ({ kind: "face", ...f }));
-      editor.refresh();
-    }
-  };
+  button.onclick = () =>
+    void toolCatalog(editor).activate({
+      finishEdit: true,
+      reason: () => null,
+      run: () => continueDecorator(editor, instance.id),
+    });
+}
+async function continueDecorator(editor: SketchEditor, id: string): Promise<boolean> {
+  const current = editor.store.data.decorators?.find((instance) => instance.id === id);
+  if (!current) throw new Error("The decorator is no longer present");
+  const selected = editor.modeling.targets.flatMap((target) =>
+    target.kind === "face" ? [{ body: target.body, face: target.face }] : [],
+  );
+  const faces = [
+    ...current.faces,
+    ...selected.filter(
+      (face) => !current.faces.some((old) => old.body === face.body && old.face === face.face),
+    ),
+  ];
+  const result = await editor.store.inspectDecorator({
+    definition: current.definition,
+    version: current.version,
+    instanceId: id,
+    faces,
+  });
+  if (result.reason || result.groups.length !== 1)
+    throw new Error(
+      result.reason ?? "These faces cannot continue this decoration. Apply it separately.",
+    );
+  const accepted = await editor.store.request({
+    kind: "decorator",
+    edit: { action: "continue", id, faces: selected },
+  });
+  if (accepted) {
+    const continued = editor.store.data.decorators?.find((instance) => instance.id === id);
+    if (continued)
+      editor.modeling.targets = continued.faces.map((face) => ({ kind: "face", ...face }));
+    editor.refresh();
+  }
+  return accepted;
 }

@@ -93,3 +93,60 @@ test("editor history stays inside its interaction and refuses navigation while b
   await run("undo");
   assert.equal(value, 3);
 });
+
+test("legacy preview owners cancel before document history without accepting their finisher", async () => {
+  const { ActiveInteraction } = await import("../src/sketch/active-interaction.js");
+  const { performHistory } = await import("../src/sketch/editor-history.js");
+  for (const kind of ["projection", "fillet", "offset"] as const) {
+    for (const direction of ["undo", "redo"] as const) {
+      const events: string[] = [];
+      const interactions = new ActiveInteraction(() => events.push("released"));
+      const lease = interactions.acquire(
+        kind,
+        async () => {
+          events.push("cancel");
+          await Promise.resolve();
+          lease?.release();
+        },
+        async () => {
+          events.push("accept");
+          return true;
+        },
+        {
+          navigation: "when-released",
+          documentHistory: "cancel-preview",
+        },
+      );
+      const editor = {
+        interactions,
+        blocked: false,
+        get isDragging() {
+          return interactions.dragging;
+        },
+        numeric: { cancel: () => events.push("numeric-cancel") },
+        store: {
+          settled: async () => {
+            events.push("settled");
+          },
+          request: async ({ kind }: { kind: string }) => {
+            events.push(kind);
+          },
+        },
+        refresh: () => events.push("refresh"),
+      };
+      await performHistory(
+        editor as unknown as import("../src/sketch/editor.js").SketchEditor,
+        direction,
+      );
+      assert.equal(interactions.current, null);
+      assert.deepEqual(events, [
+        "numeric-cancel",
+        "cancel",
+        "released",
+        "settled",
+        direction,
+        "refresh",
+      ]);
+    }
+  }
+});

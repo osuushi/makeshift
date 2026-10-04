@@ -7,6 +7,7 @@ export function planeEntryTools(editor: SketchEditor): () => void {
   const disposers = planeIds.map((id) =>
     toolCatalog(editor).register({
       id: `sketch-${id.toLowerCase()}`,
+      finishEdit: true,
       label: `Sketch on ${id}`,
       category: "Sketch",
       reason: () => editor.workspaceEntry.reason(),

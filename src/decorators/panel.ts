@@ -46,6 +46,7 @@ export class DecoratorPanel {
     this.disposeLibrary = decoratorLibrary(editor, parent);
     this.unregister = toolCatalog(editor).register({
       id: "threads",
+      finishEdit: true,
       label: "Threads",
       category: "Solid",
       aliases: ["decorate", "screw", "thread"],
@@ -55,6 +56,7 @@ export class DecoratorPanel {
     });
     this.unregisterGear = toolCatalog(editor).register({
       id: "gear",
+      finishEdit: true,
       label: "Gear",
       category: "Solid",
       aliases: ["involute", "helical", "teeth"],
@@ -75,6 +77,7 @@ export class DecoratorPanel {
     });
     this.unregisterKnurl = toolCatalog(editor).register({
       id: "knurling",
+      finishEdit: true,
       label: "Knurling",
       category: "Solid",
       aliases: ["knurl", "grip", "diamond texture"],
@@ -111,6 +114,7 @@ export class DecoratorPanel {
     }
   }
   private expand(instances = this.instances()): void {
+    instances = this.fresh(instances);
     this.editor.modeling.targets = instances.flatMap((d) =>
       d.faces.map((f) => ({ kind: "face" as const, ...f })),
     );
@@ -135,19 +139,33 @@ export class DecoratorPanel {
   private async edit(edit: DecoratorEdit): Promise<boolean> {
     return this.editor.store.request({ kind: "decorator", edit });
   }
-  private button(label: string, action: () => void): HTMLButtonElement {
+  private button(label: string, action: () => unknown): HTMLButtonElement {
     const button = document.createElement("button");
     button.type = "button";
     button.textContent = label;
-    button.onclick = action;
+    button.onclick = () =>
+      void toolCatalog(this.editor).activate({
+        finishEdit: true,
+        reason: () => null,
+        run: action,
+      });
     this.root.append(button);
     return button;
   }
-  private patch(patch: Settings, preview: boolean, instances = this.instances()): void {
-    this.expand(instances);
-    const edit = { action: "settings" as const, ids: instances.map((d) => d.id), patch };
-    if (preview) this.draft.preview(edit);
-    else void this.edit(edit);
+  private fresh(instances: DecoratorInstance[]): DecoratorInstance[] {
+    const ids = new Set(instances.map((instance) => instance.id));
+    return (this.editor.store.data.decorators ?? []).filter((instance) => ids.has(instance.id));
+  }
+  private patch(patch: Settings, preview: boolean, instances = this.instances()) {
+    const run = () => {
+      const current = this.fresh(instances);
+      this.expand(current);
+      const edit = { action: "settings" as const, ids: current.map((d) => d.id), patch };
+      if (preview) this.draft.preview(edit);
+      else return this.edit(edit);
+    };
+    if (preview) run();
+    else return toolCatalog(this.editor).activate({ finishEdit: true, reason: () => null, run });
   }
   private update = (): void => {
     if (this.application.active) {
@@ -175,7 +193,10 @@ export class DecoratorPanel {
         input.dataset.unavailable === "true" ||
         this.editor.store.busy ||
         this.draft.waiting ||
-        (!!this.editor.interactions.current && !this.draft.active);
+        toolCatalog(this.editor).switching ||
+        (!!this.editor.interactions.current &&
+          !this.draft.active &&
+          (input instanceof HTMLInputElement || !this.editor.interactions.current.finish));
     if (this.draft.active) return;
     const key = JSON.stringify([
       instances,
@@ -204,7 +225,7 @@ export class DecoratorPanel {
           ? "Continue knurling onto selection"
           : "Continue threads onto selection",
         () => {
-          void this.edit({ action: "continue", id: last.id, faces: this.selected() });
+          return this.edit({ action: "continue", id: last.id, faces: this.selected() });
         },
       );
       return;
@@ -242,8 +263,8 @@ export class DecoratorPanel {
       this.root.append(note);
     }
     this.button("Remove thread decorator from selected faces", () => {
-      const keys = new Set(instances.flatMap((d) => d.faces.map(faceKey)));
-      void this.edit({
+      const keys = new Set(this.fresh(instances).flatMap((d) => d.faces.map(faceKey)));
+      return this.edit({
         action: "remove",
         faces: this.selected().filter((f) => keys.has(faceKey(f))),
       });
@@ -258,8 +279,8 @@ export class DecoratorPanel {
       this.patch(patch, preview, instances),
     );
     this.button("Remove knurling decorator from selected faces", () => {
-      const keys = new Set(instances.flatMap((d) => d.faces.map(faceKey)));
-      void this.edit({
+      const keys = new Set(this.fresh(instances).flatMap((d) => d.faces.map(faceKey)));
+      return this.edit({
         action: "remove",
         faces: this.selected().filter((f) => keys.has(faceKey(f))),
       });

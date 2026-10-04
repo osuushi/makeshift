@@ -1,4 +1,7 @@
+import { toolCatalog } from "../tools/catalog.js";
 import type { SketchEditor } from "./editor.js";
+import { connectedSelection } from "./geometry.js";
+import { pick } from "./picking.js";
 import { pointKey } from "./point-query.js";
 import { choosePoints, chosenPoints, togglePoint } from "./point-selection.js";
 import { type Hit, hitIds } from "./sketch-hit.js";
@@ -66,4 +69,23 @@ export function selectHit(
   }
   if (hit.kind === "handle") editor.activeHandle = hit.handle;
   return true;
+}
+
+/** Double-click selects the connected curve component through ordinary sketch picking. */
+export function selectConnected(editor: SketchEditor, event: MouseEvent): void {
+  if (
+    toolCatalog(editor).switching ||
+    editor.tool === "trim" ||
+    event.shiftKey ||
+    event.metaKey ||
+    event.ctrlKey
+  )
+    return;
+  const hit = pick(editor, { x: event.clientX, y: event.clientY }),
+    sketch = editor.sketch;
+  if (!editor.blocked && !editor.isDragging && hit && sketch && !pointKey(hit)) {
+    editor.select(connectedSelection(sketch, new Set(hitIds(hit))));
+    editor.overlaps = null;
+    editor.refresh();
+  }
 }

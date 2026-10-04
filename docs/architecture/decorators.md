@@ -72,6 +72,8 @@ mesh operations to native Manifold; clients without that capability retain WASM.
    If default thread settings fail geometry validation, open a provisional settings
    editor with the error in context. Preset/profile/numeric changes remain local;
    only valid settings display a preview and enable Apply thread decorator.
+   Switching to another mode/action also uses ordinary validated application;
+   invalid latest settings stay open with their error and block the switch.
    Apply accepts all inferred instances in one ordinary owner edit and Undo step.
    Cancel/Escape discards the settings and preview before Apply is sent. While the
    atomic application runs, the editor shows Applying and retains its interaction
@@ -85,6 +87,11 @@ mesh operations to native Manifold; clients without that capability retain WASM.
 4. Editing a setting first selects all faces of the affected instances, then
    updates them in one Undo step. Numeric drafts preview; confirmation accepts;
    Escape cancels. Merely focusing a field should not change the document.
+   A discrete preset/action first accepts a valid numeric draft or foreign geometry
+   preview, then rereads accepted instances and face references. Offset→Metric
+   therefore infers pitch from the accepted cylinder diameter. Numeric blur and
+   the requested action share one awaited acceptance; invalid input retains its
+   text/owner and does not apply an older preview.
 5. Clicking a decorator selects its faces. Deselecting some and using the panel's
    Remove thread decorator action removes membership only from the still-selected faces.
    This must not be routed through the viewport's geometry Delete action.

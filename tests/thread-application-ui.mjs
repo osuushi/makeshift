@@ -62,10 +62,10 @@ await withUiRuntimes(
     assert.equal(await apply.count(), 0);
     await page.getByRole("button", { name: "Offset faces", exact: true }).click();
     assert.equal(
-      await page.getByRole("combobox", { name: "Preset", exact: true }).isDisabled(),
+      await page.getByRole("combobox", { name: "Preset", exact: true }).isEnabled(),
       true,
     );
-    await page.keyboard.press("Escape");
+    // A zero-distance edit exits ordinarily before resolving the requested preset.
     await page.getByRole("combobox", { name: "Preset", exact: true }).selectOption("metric");
     assert.equal((await inspect(page)).document.decorators[0].settings.preset, "metric");
     assert.equal(await toolEnabled(page, "threads", "threads"), true);

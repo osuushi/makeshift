@@ -11,6 +11,7 @@ export class SelectionTools {
       this.disposers.push(
         toolCatalog(editor).register({
           id: `selection-${action}`,
+          finishEdit: true,
           label,
           category: "Select",
           reason: () => idleReason(editor) ?? this.reason(action),

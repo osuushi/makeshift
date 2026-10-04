@@ -149,6 +149,7 @@ export class SketchEditor {
   async setTool(tool: Tool): Promise<void> {
     if (this.blocked || this.isDragging) return;
     await this.numeric.commit();
+    if (this.interactions.current?.kind === "numeric") return;
     await this.interactions.cancel();
     this.selected.replacePoints([]);
     this.pointMenu = null;
@@ -169,6 +170,7 @@ export class SketchEditor {
   async activateMove(): Promise<void> {
     if (!this.selectionOwners.size || this.blocked || this.isDragging) return;
     await this.numeric.commit();
+    if (this.interactions.current?.kind === "numeric") return;
     this.tool = "select";
     this.creationArmed = false;
     this.moveMode = true;

@@ -15,6 +15,7 @@ export function sketchTools(editor: SketchEditor): () => void {
     disposers.push(
       catalog.register({
         id,
+        finishEdit: true,
         label,
         shortcut,
         aliases,
@@ -41,7 +42,8 @@ export function sketchTools(editor: SketchEditor): () => void {
         reason: () => {
           if (editor.world.navigation.dragging) return "Finish the current view gesture first";
           const interaction = editor.interactions.current;
-          if (interaction?.finish && !interaction.history) return `Nothing to ${id} in this tool`;
+          if (interaction?.finish && !interaction.history && !interaction.cancelBeforeHistory)
+            return `Nothing to ${id} in this tool`;
           if (interaction?.history && id === "undo") return null;
           const history = interaction?.history ?? editor.store;
           return (id === "undo" ? history.canUndo : history.canRedo) ? null : `Nothing to ${id}`;
@@ -63,6 +65,7 @@ export function sketchTools(editor: SketchEditor): () => void {
     }),
     catalog.register({
       id: "modeling",
+      finishEdit: true,
       label: "Return to Modeling",
       category: "View",
       aliases: ["exit sketch", "3d"],

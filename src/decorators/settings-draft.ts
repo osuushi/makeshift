@@ -15,6 +15,7 @@ interface Draft {
 /** One numeric gesture, shared by built-in and bundled decorator controls. */
 export class DecoratorSettingsDraft {
   private current: Draft | null = null;
+  private committing: Promise<boolean> | null = null;
   constructor(
     private editor: SketchEditor,
     private ended: () => void,
@@ -51,6 +52,7 @@ export class DecoratorSettingsDraft {
         draft.valid = true;
         this.editor.message = "";
       } catch (error) {
+        draft.lease.show(null);
         this.editor.message = error instanceof Error ? error.message : String(error);
       }
     }
@@ -96,9 +98,15 @@ export class DecoratorSettingsDraft {
   async blur(): Promise<void> {
     const draft = this.current;
     if (draft?.lease.phase !== "editing") return;
-    if (!(await this.commit()) && this.current === draft) this.cancel();
+    await this.commit();
   }
-  async commit(): Promise<boolean> {
+  commit(): Promise<boolean> {
+    this.committing ??= this.acceptCurrent().finally(() => {
+      this.committing = null;
+    });
+    return this.committing;
+  }
+  private async acceptCurrent(): Promise<boolean> {
     const draft = this.current;
     if (!draft) return true;
     if (!draft.lease.wait()) return false;
@@ -111,7 +119,14 @@ export class DecoratorSettingsDraft {
       return false;
     }
     const accepted = await this.editor.store.request({ kind: "decorator", edit: draft.edit });
-    if (this.current === draft) this.cancel();
+    if (this.current === draft) {
+      if (accepted) this.cancel();
+      else {
+        draft.lease.resume();
+        this.editor.message ||= "Could not apply these decorator settings";
+        this.editor.refresh();
+      }
+    }
     return accepted;
   }
 }

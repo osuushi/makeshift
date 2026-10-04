@@ -29,6 +29,7 @@ export class PlaneCutControls {
       this.disposers.push(
         toolCatalog(editor).register({
           id: mode,
+          finishEdit: () => this.source?.mode !== mode,
           label: mode === "split" ? "Split Body" : "Imprint",
           category: "Solid",
           aliases:

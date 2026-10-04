@@ -31,6 +31,7 @@ export function selectVisibleTools(editor: SketchEditor): () => void {
   ).map(([scope, label, shortcut, aliases]) =>
     toolCatalog(editor).register({
       id: `select-all-${scope}`,
+      finishEdit: true,
       label,
       shortcut,
       aliases,
