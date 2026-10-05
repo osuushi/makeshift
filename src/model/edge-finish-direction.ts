@@ -79,8 +79,12 @@ export function selectedEdgeFrame(
   restored?: BodyEdgeFinish["edges"],
 ) {
   const resolution = editor.modeling.resolve(mode);
-  if (!restored && !resolution.available) return null;
-  const selected = restored ? structuredClone(restored) : resolution.inputs;
+  const selected = restored
+    ? structuredClone(restored)
+    : resolution.available
+      ? resolution.inputs
+      : [];
+  if (!selected.length) return null;
   const click = editor.modeling.lastEdgeClick;
   const target =
     selected.find((e) => e.body === click?.body && e.edge === click.edge) ??

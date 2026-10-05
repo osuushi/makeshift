@@ -165,6 +165,16 @@ jobs:
       - name: Agent Settings discovery and setup UI
         if: matrix.shard == 3 && matrix.browser == 'chromium'
         run: xvfb-run -a node tests/agent-setup-ui.mjs
+      - name: Reopen accepted operation and mirror history
+        if: matrix.shard == 3
+        run: |
+          xvfb-run -a node tests/reopen-operation-ui.mjs
+          xvfb-run -a node tests/reopen-operation-mirror-history-ui.mjs
+      - name: Reopen guards and context boundaries
+        if: matrix.shard == 1
+        run: |
+          xvfb-run -a node tests/reopen-operation-guards-ui.mjs
+          xvfb-run -a node tests/reopen-operation-guard-boundaries-ui.mjs
       - name: Interface scale and camera independence
         if: matrix.shard == 3
         run: |
