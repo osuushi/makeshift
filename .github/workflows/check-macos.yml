@@ -354,7 +354,9 @@ jobs:
           node tests/thread-application-ui.mjs
           node tests/thread-correction-ui.mjs
       - name: Thread presets and saved-settings compatibility
-        if: matrix.lane == 'webkit-controls'
+        if: matrix.lane == 'geometry'
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
         run: npm run test:thread-presets
       - name: Modal Undo boundaries
         if: matrix.lane == 'geometry'
