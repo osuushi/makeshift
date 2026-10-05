@@ -53,14 +53,29 @@ export async function shortcutBooleans(page, name) {
     assert.equal((await inspect(page)).interaction.kind, "body-boolean");
     assert.equal((await inspect(page)).preview, null);
     await removeOriginals(page);
-    for (const point of [
-      [-10, 0, 5],
-      [1, 11, 5],
-    ]) {
+    // A new Subtract target demotes the previous target to a cutting tool.
+    const points =
+      mode === "subtract"
+        ? [
+            [1, 11, 5],
+            [-10, 0, 5],
+          ]
+        : [
+            [-10, 0, 5],
+            [1, 11, 5],
+          ];
+    for (const point of points) {
       const p = await project(page, point);
       await page.mouse.click(p.x, p.y);
       await inspect(page);
     }
+    if (mode === "subtract")
+      assert.equal(
+        await page
+          .getByRole("button", { name: "Select Body 1", exact: true })
+          .getAttribute("title"),
+        "Body 1 · Target",
+      );
     await previewVolume(page, expected);
     await page.keyboard.press("Enter"); // Apply the current operands.
     await modalCompleted(page);
