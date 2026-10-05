@@ -51,6 +51,8 @@ export function installTrackpadRotation(
       hit.closest("button, input, select, textarea, [contenteditable]")
     )
       return;
+    world.navigation.begin();
+    snap.postpone();
     const bounds = world.canvas.getBoundingClientRect();
     const now = performance.now();
     if (now - lastRotation >= trackpadIdleMs) turn.reset();

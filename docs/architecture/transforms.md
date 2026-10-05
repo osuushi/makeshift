@@ -170,7 +170,18 @@ Geometry movement/rotation retains its existing solver/kernel, preview and Undo 
 arrows, rotation markers and movable sphere anchor remain, with a bounding box
 for resizing. Move, rotate, resize and scale are search aliases for Transform.
 The earlier Move widget and Option-copy contracts above continue to govern its
-movement controls. Selected points still move as points; bounding-box scaling
+movement controls.
+
+In idle Modeling, Enter invokes the same Transform action for one or more selected
+whole-body targets. Fresh body selection already exposes Transform by default;
+Enter restores it after another idle tool choice without starting a geometry edit.
+Sketch and planar-face Enter retain their existing workspace-entry behavior.
+Numeric fields, editable text, native button/select actions, modal acceptance,
+captured drags and calculations retain ownership of Enter. Held-key repeats and
+modified Enter do not activate this alias. Movement/scaling, cancellation and Undo
+continue through the existing controls and document owner.
+
+Selected points still move as points; bounding-box scaling
 currently requires whole curves, whole sketches, bodies, faces or edges.
 
 Sketch boxes follow local workspace X/Y; modeling boxes use world X/Y/Z.

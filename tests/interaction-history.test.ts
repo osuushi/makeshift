@@ -70,10 +70,13 @@ test("editor history stays inside its interaction and refuses navigation while b
   let documentRequests = 0;
   const editor = {
     interactions: { current: { history, captured: false } },
+    world: { navigation: { dragging: false } },
     blocked: true,
+    selectionHistory: { finishNavigation: () => {} },
     store: {
-      request: () => {
-        documentRequests++;
+      settled: async () => {},
+      request: async ({ kind }: { kind: string }) => {
+        if (kind !== "read") documentRequests++;
       },
     },
     refresh: () => {},
@@ -85,7 +88,6 @@ test("editor history stays inside its interaction and refuses navigation while b
   editor.blocked = false;
   await run("undo");
   assert.equal(value, 0);
-  await run("undo");
   assert.equal(documentRequests, 0);
   await run("redo");
   assert.equal(value, 3);

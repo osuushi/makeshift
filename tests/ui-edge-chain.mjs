@@ -5,6 +5,8 @@ import { chooseTool } from "./ui-tools.mjs";
 export async function roundedPlate(page) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
+  // Short chain drags use grid-off precision; the large-body route covers default grid-on sizing.
+  if ((await inspect(page)).gridSnap) await chooseTool(page, "grid snap", "grid");
   await page.keyboard.press("r");
   await drag(page, [-10, -10], [10, 10]);
   await page.keyboard.press("v");
@@ -66,11 +68,12 @@ export async function edgeChainRoute(page, name) {
     const box = await tool.boundingBox();
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await page.mouse.down();
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - 18, { steps: 4 });
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 + 18, { steps: 4 });
     await page.mouse.up();
     state = await inspect(page);
     assert.equal(state.modelingSelection.length, 3);
     assert.ok(state.preview);
+    assert.ok(Number(await field.inputValue()) > 0, "The direct chain drag has a nonzero size");
     await page.keyboard.press("Enter");
     state = await inspect(page);
     assert.equal(state.interaction, null);

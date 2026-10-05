@@ -53,7 +53,10 @@ Whole bodies and complete face coverage both expose rigid Move/Rotate, Duplicate
 Boolean, [Mirror](transforms.md#mirror-founder-approved-interaction-2026-09-20),
 whole-body Delete/Cleanup, and applicable face operations. Offset expands
 the coverage to its faces. Projection uses the same whole-body interpretation for
-complete face coverage. Body selection does not implicitly select edges for Fillet.
+complete face coverage. Body selection does not implicitly select edges for Fillet
+or Chamfer. Explicitly invoking either tool on faces converts their boundaries to selected edges and opens
+the size control. Mixed faces and explicit edges use raw selection encounter order,
+deduplicating shared edges; Cancel preserves the resolved/expanded edge selection.
 For Move/Delete, edges already covered by a whole body add no second edit.
 
 Mixed whole-body and partial face movement transforms the complete bodies rigidly
@@ -86,10 +89,13 @@ digits without reducing model precision. Tab/Shift+Tab cycles visible numeric
 fields in both modeling and sketch controls. The operation anchor stays at the nearest
 displayed edge point from the last click among selected edges. Its outward direction
 is the incident faces' normal bisector, evaluated from nearby oriented presentation
-triangles. Its glyph uses a rigid geometry frame; the drag direction is projected
-into the viewport and normalized. Dragging along that direction
-increases size; each gesture holds its initial direction. Orbit reprojects the widget.
-A view directly along the outward axis offers typed size entry until orbit reveals
+triangles. Its glyph keeps that outward rigid geometry frame. Pointer size follows
+the resulting surface movement: increasing size cuts inward at convex edges and
+fills outward at concave edges. Nearby interior presentation samples determine
+that sign; conflicting, tangent, opposing or degenerate samples offer typed size
+entry. The signed drag direction is projected into the viewport and normalized;
+each gesture holds its initial direction. Orbit reprojects the widget. A view
+directly along the movement axis also offers typed size entry until orbit reveals
 a direction. The click anchor is UI state and clears when accepted body geometry changes.
 A white capsule fill and near-black outline follow the
 [orientable widget guide](../design/orientable-widgets.md). Blue hover and red
@@ -308,3 +314,36 @@ it does not replace the existing selection defaults. It can start with two or mo
 selected sections or with an empty selection for in-tool collection. Its local card
 owns section order, correspondence and Smooth/Ruled controls, sharing the existing
 Boolean targets and temporary acceptance lifecycle.
+
+## Boolean operands
+
+Union, Subtract and Intersect can start with no selection or one complete body.
+Two or more complete preselected bodies retain their ordered preview route.
+Partial or mixed preselection stays unavailable; the operation itself still
+requires at least two complete accepted bodies. While choosing operands, viewport
+clicks and existing Entities rows operate on whole bodies, including enclosed
+ones. Subtract clicks cycle unselected → target → cutting tool → unselected.
+Choosing a new target demotes the previous target to cutting tool. Preselected
+bodies start with their first body as target and the others as tools.
+Union/Intersect clicks toggle membership.
+Operand editing remains available throughout. Apply or Enter directly accepts
+the current valid preview; there is no separate collection-completion step.
+Empty/incomplete operands can exit without an edit.
+
+Translucent blue input/target surfaces and orange cutting-tool surfaces, with
+visible outlines, reveal operands through the solid result. Flipping the target
+updates their roles. Entities rows use the same blue/orange colors, without
+duplicating body choices or numbered input labels in the Boolean widget. The
+widget contains only Boolean type, Keep/Remove, Apply and Cancel. Instruction
+text, target-cycling controls, result counts and inline cleanup are absent.
+A successful empty result is labeled on Apply and can be
+accepted; it does not mean calculation failed. Accepted body geometry and IDs
+remain authoritative; overlays and collection belong to the interaction lease.
+
+The inline keep-originals choice displays Keep/Remove tools for Subtract and
+Keep/Remove originals for Union/Intersect. Each mode remembers its last explicit
+choice in local window preferences, including after Cancel; unavailable storage
+falls back to that window's in-memory choice. Preference changes are outside
+both document and temporary interaction Undo. Subtract always consumes its target
+and optionally retains cutting tools; the other modes optionally retain all
+inputs. Acceptance/cancel and document Undo/Redo retain their ordinary semantics.

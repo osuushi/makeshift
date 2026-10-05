@@ -110,7 +110,9 @@ A failure or no-op after Undo preserves the redo path. A new accepted change
 marks the undone branch superseded and releases its snapshots, but retains its
 operation records for explanation. A failed preview records its actual attempt;
 successful preview updates remain temporary, and acceptance records the originating
-tool and final requested parameters (including explicit cleanup), not a bare Accept.
+tool and final accepted parameters (including explicit cleanup), not a bare Accept.
+Native-clamped edge finish and face offset measurements replace rejected overshoot
+values in accepted intent; input topology IDs and active radius/method choices stay intact.
 Cancellation records the abandoned pending operation without an Undo step.
 
 A read-only `read-history` request exposes cloned metadata without Undo snapshots;
@@ -137,6 +139,43 @@ history. Cancelling after native computation has finished still abandons that ed
 DocumentStore validates whole-document identities and current sketch/decorator
 invariants before changing snapshots or history, for manual edits, scripts and Open.
 
+## Reopen the latest accepted operation
+
+Viewport Cmd/Ctrl-R and Tools → Reopen last operation undo the latest accepted
+geometry operation to its exact input snapshot and ordered selection, then seed
+its ordinary modal controller before local parameter-history tracking. The pending
+preview reuses the exact accepted result and its retained measurements; reopening
+does not recalculate geometry, cleanup or decorators. Changed parameters resume
+normal calculation. Unchanged acceptance retains the saved result. Selection
+and camera changes do not hide that operation. A newer unsupported changed edit,
+including metadata or direct sketch edits, blocks reentry rather than searching
+backward for an older supported operation. New/Open has no operation to reopen.
+Cancel leaves the operation undone with its original result available by ordinary
+Redo. Acceptance makes the normal new branch; no feature tree or replay is added.
+
+Recorded Extrude, Revolve, Loft, Boolean, Shell, Erode, edge finish, face offset,
+cleanup, Scale, Mirror, plane cut, Projection, ordinary body movement, face/edge
+movement and construction-plane edits have typed current-use reentry. Parameters
+are transient owner history, outside saved geometry. Older sketch placement and
+summarized mesh reconstruction lack sufficient interaction inputs; scripts and
+other nonmodal edits remain unsupported. Composite or arbitrary-axis body moves
+that a single ordinary body gesture cannot represent are also ineligible.
+
+History stores geometric intent, so omitted UI conventions use an honest canonical
+display: linked scale follows equal factors while the recorded pivot stays fixed;
+Mirror restores its final reference with zero additional offset; inactive erosion
+options use current defaults. Topology movement exposes cumulative translation
+and face angle, with exact axis/pivot readouts; the gizmo adds further deltas.
+Construction planes restore the exact final frame and stable ID, then ordinary
+handles add movement. Prior plane gesture ancestry is not inferred.
+
+Recorded cleanup remains a visible completion choice for Extrude, Revolve, Loft,
+Boolean, edge finish and face offset. API-only cleanup combinations for other
+controllers fail eligibility before rollback, because those ordinary interactions
+cannot retain that completion intent. Focused fields, native buttons, menus,
+dialogs, composition and the agent terminal retain keyboard ownership. Electron
+keeps explicit Reload on Shift-Cmd/Ctrl-R.
+
 ## Selection Undo (founder decision, 2026-09-22)
 
 The same DocumentStore history includes ordered selection snapshots. Completed
@@ -162,9 +201,70 @@ renderer supplies the editing workspace and ordered typed sketch and modeling
 targets; the backend owns their navigation snapshots alongside the
 geometry snapshots. Gesture previews and automatic result-selection updates do
 not create independent selection steps. Undo restores the operation's input
-selection and workspace; Redo restores its result selection. Tool state, camera,
-hover, chooser visibility and other transient controls are not replayed. These
+selection and workspace; Redo restores its result selection. Selection history does not replay tool state, hover or chooser visibility;
+ephemeral view history separately restores camera and workspace as described below. These
 selection snapshots are in-memory history, not saved document content.
+
+## Ephemeral view Undo (founder decision, 2026-10-03)
+
+A completed view gesture adds one transient entry to the existing DocumentStore
+history. It captures the before/after orthographic camera position, target, up and
+view height, editing workspace and ordered geometry selection. Camera and current
+UI remain renderer-owned; these serializable snapshots are contextual history
+beside accepted geometry, not another document or saved file format.
+
+Consecutive completed views form a trailing suffix of the full active history,
+including undone future entries. Undo/Redo traverses each view in that suffix.
+A new view after partial or full view Undo discards the entire former view suffix,
+including applied and undone entries, then starts a new suffix at the visible pose.
+A changed selection or accepted geometry edit removes all view entries. Moving
+beyond the suffix into ordinary selection/geometry Undo or Redo also removes all
+of them, including future entries. Their snapshots and diagnostic records expire;
+ordinary attempted geometry/selection records retain their existing lifetimes.
+No-op navigation and failed/cancelled/no-op geometry attempts preserve the suffix.
+View Undo restores its prior camera/workspace/selection; view Redo restores its
+result while it remains in the suffix, before older geometry Redo. Navigation never
+erases retained geometry Redo. Geometry Redo still restores that operation's
+result selection, and a new accepted geometry edit branches normally.
+Restoration animates camera position, orientation, target and zoom through the
+existing camera transition, then restores the exact endpoint. Undo/Redo animation
+creates no history entry; workspace changes from geometry/selection Undo retain
+their ordinary animated alignment. Reduced-motion preference remains respected.
+
+Cube navigation, face double-click alignment, pinch/twist/touch gestures and
+canonical workspace entry and exit use this contract. Ordinary pointer orbit/roll,
+pan, scroll pan and mouse-wheel zoom do not record view history; they expire stale
+view entries. A pointer orbit that exits a planar workspace records the full mode
+transition. Continuous pointer or touch contacts complete once at
+release/cancellation, after any existing completion animation. Cancellation keeps
+its ordinary current view, so a moved canceled gesture can still be undone; a
+stationary canceled press adds no entry. Browser pinch and native twist
+reuse their existing 200 ms idle or explicit gesture-end lifetime, including
+release leveling. Intermediate frames and packets add no entries. Camera pose
+roundoff at the current viewport scale is not a view change. Projection range and
+viewport aspect remain derived rendering data.
+
+Workspace-driven synchronous selection clearing belongs to the view gesture.
+A later independent selection finishes the preceding view intent before recording
+its own change, which expires that view tip. Accepted geometry expires prior view
+history; if a navigation gesture is still held when the new result is published,
+its remaining movement rebases from the accepted camera and result-selection
+context. Its eventual Undo cannot restore targets from the previous document.
+The existing serialized selection-intent boundary also carries view intents;
+there is no additional request queue or history owner.
+
+A trailing view change inside a modal takes priority over older temporary parameter
+history. View-only Undo/Redo preserves the tool, candidate and pending operation.
+A later parameter edit or local parameter Undo/Redo expires the view suffix,
+including undone future states. Calculating
+or captured edit guards remain in force; an active captured view gesture also
+blocks history navigation. Undo during an uncaptured camera animation finishes
+its current visible pose before navigating. Restoring any history context
+suppresses workspace/camera recording, including later animation draws. New/Open
+starts fresh history and file camera restoration creates no navigation entry.
+Normal Save/Open retains the existing saved current-camera format; it does not
+persist view history. Automated emitted native events and SDK touch routes establish
+software behavior, not physical trackpad/iPad delivery or gesture feel.
 
 ## Temporary interaction history (founder decision, 2026-10-02)
 
@@ -173,13 +273,17 @@ Releasing a captured pointer, leaving a field and changing a discrete option
 complete a tweak. Intermediate pointer positions and keystrokes do not create
 separate checkpoints. Undo/Redo while the tool is active restore those parameters
 through the controller's ordinary preview path, without accepting geometry or
-leaving the tool. At the initial checkpoint Undo stops; it never reaches an older
-document edit. A changed tweak after Undo branches the local history. Unchanged
-focus changes preserve Redo. History navigation is disabled during held gestures
+leaving the tool. At the initial checkpoint, Undo cancels the temporary candidate
+and exits the tool without changing accepted geometry. That press does not also
+navigate document history; the next Undo follows ordinary document/selection
+history, including any selection restoration recorded by the tool's existing
+cancellation path. Undo remains available at this boundary through standard keyboard and
+menu routes, unless the tool is calculating or holding a pointer gesture. A changed
+tweak after Undo branches the local history. Unchanged focus changes preserve Redo. History navigation is disabled during held gestures
 and calculations. Focused text fields retain native text Undo until defocus.
 
 Controllers own these temporary parameter snapshots, not another geometry
-document. Accepting/exiting the tool still creates one backend document Undo step;
+document. Accepting/completing the tool still creates one backend document Undo step;
 Escape discards the candidate and the local checkpoints. Ordinary edits that
 already accept on release, including whole-body/sketch movement, retain that
 acceptance boundary. Their numeric previews can use local history before acceptance.

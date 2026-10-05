@@ -35,6 +35,7 @@ export class PreviewQueue {
   constructor(
     private onResult: (response: PreviewResponse, request: PreviewRequest) => void,
     private onError: () => void,
+    private onBusy: (busy: boolean) => void = () => {},
   ) {}
 
   submit(
@@ -61,12 +62,14 @@ export class PreviewQueue {
     this.sourcesKey = nextSources;
     this.pending = { document, sources, live, signatures, fingerprint };
     this.pump();
+    this.onBusy(this.active !== null || this.pending !== null);
   }
 
   clear(): void {
     this.pending = null;
     this.completedFingerprint = "";
     this.interrupt();
+    this.onBusy(false);
   }
 
   dispose(): void {
@@ -95,6 +98,7 @@ export class PreviewQueue {
           this.onResult(event.data, finished);
         }
         this.pump();
+        this.onBusy(this.active !== null || this.pending !== null);
       };
       this.worker.onerror = () => {
         if (this.worker !== current) return;
@@ -102,6 +106,7 @@ export class PreviewQueue {
         this.worker = null;
         this.active = null;
         this.pending = null;
+        this.onBusy(false);
         this.onError();
       };
     }

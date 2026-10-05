@@ -2,38 +2,46 @@ import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import type { Body, BodyBoolean } from "./body.js";
+import { BodyPickProbe } from "./body-picking.js";
 import { bodyCenter } from "./body-placement.js";
 import { BooleanOperands } from "./boolean-operands.js";
+import { BooleanPreference } from "./boolean-preference.js";
+import { booleanStart } from "./boolean-start.js";
 import { BooleanWidget } from "./boolean-widget.js";
+import type { EntityViewer } from "./entity-viewer.js";
+import { ReopenCompletion } from "./reopen-completion.js";
 
 export class BooleanControls {
   private widget: BooleanWidget;
-  private outlines: BooleanOperands;
+  private operands: BooleanOperands;
+  private completion = new ReopenCompletion();
   private abort = new AbortController();
   private lease: InteractionLease | null = null;
   private bodies: Body[] = [];
   private operation: BodyBoolean = { ids: [], mode: "union", keepOriginals: false };
   private running: Promise<void> | null = null;
   private valid = false;
+  private targetId: string | null = null;
+  private preference = new BooleanPreference();
   private count = 0;
   constructor(
     private editor: SketchEditor,
     overlay: HTMLElement,
+    private entities: EntityViewer,
   ) {
-    this.outlines = new BooleanOperands(editor);
+    this.operands = new BooleanOperands(editor);
     this.widget = new BooleanWidget(
       overlay,
       (mode) =>
         this.change(() => {
           this.operation.mode = mode;
+          this.targetId ??= this.bodies[0]?.id ?? null;
+          this.operation.keepOriginals = this.preference.get(mode);
         }),
       () =>
         this.change(() => {
           this.operation.keepOriginals = !this.operation.keepOriginals;
-        }),
-      () =>
-        this.change(() => {
-          this.bodies.push(this.bodies.shift() as Body);
+          this.preference.set(this.operation.mode, this.operation.keepOriginals);
         }),
       () => {
         void this.finish();
@@ -42,7 +50,8 @@ export class BooleanControls {
         void this.cancel();
       },
     );
-    this.widget.cleanup.onclick = () => void this.finish(true);
+    this.installPicking();
+    this.widget.root.append(this.completion.root);
     onModelKeydown(
       (event) => {
         if (!this.lease || !["Enter", "Escape"].includes(event.key)) return;
@@ -55,12 +64,25 @@ export class BooleanControls {
     );
     editor.world.changed.add(this.update);
   }
-  start = (mode: BodyBoolean["mode"]): void => {
+  async reopen(operation: BodyBoolean, cleanup: boolean): Promise<void> {
+    this.start(operation.mode, operation, cleanup);
+    if (!this.lease) throw new Error("Cannot restore Boolean inputs");
+    await this.running;
+    if (!this.valid) throw new Error("Cannot regenerate the accepted Boolean");
+    this.editor.world.canvas.focus();
+  }
+  start = (mode: BodyBoolean["mode"], restored?: BodyBoolean, cleanup = false): void => {
     if (this.editor.blocked || this.editor.world.active || this.editor.interactions.current) return;
-    const resolution = this.editor.modeling.resolve("boolean");
+    const resolution = booleanStart(this.editor);
     if (!resolution.available) return;
-    this.bodies = resolution.inputs;
-    if (this.bodies.length < 2) return;
+    this.bodies = restored
+      ? restored.ids.flatMap(
+          (id) => this.editor.store.data.bodies?.filter((body) => body.id === id) ?? [],
+        )
+      : resolution.inputs;
+    if (restored && this.bodies.length !== restored.ids.length) return;
+    this.targetId = this.bodies[0]?.id ?? null;
+
     this.lease = this.editor.interactions.acquire(
       "body-boolean",
       () => this.cancel(),
@@ -68,15 +90,43 @@ export class BooleanControls {
       { navigation: "when-released" },
     );
     if (!this.lease) return;
-    this.operation = { ids: [], mode, keepOriginals: false };
+    this.entities.sourcePicker = {
+      choose: (target) => {
+        const body = this.editor.store.data.bodies?.find(
+          (b) => target.kind === "body" && b.id === target.body,
+        );
+        if (body) this.toggleBody(body);
+      },
+      hover: () => {},
+      selected: (target) => target.kind === "body" && this.bodies.some((b) => b.id === target.body),
+      available: (target) => target.kind === "body" && this.editor.visibility.visible(target.body),
+      role: (target) => (target.kind === "body" ? this.role(target.body) : undefined),
+    };
+    this.operation = restored
+      ? structuredClone(restored)
+      : { ids: [], mode, keepOriginals: this.preference.get(mode) };
+    this.completion.reset();
+    if (restored && cleanup) this.completion.begin(cleanup);
+
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
     this.operation.ids = this.bodies.map((body) => body.id);
     this.lease.trackHistory(
       this.widget.root,
-      () => this.operation,
+      () => ({
+        ids: this.operation.ids,
+        mode: this.operation.mode,
+        target: this.targetId,
+        cleanup: this.completion.cleanup,
+      }),
       async (operation) => {
-        this.operation = operation;
+        this.targetId = operation.target;
+        this.completion.input.checked = operation.cleanup;
+        this.operation = {
+          ids: operation.ids,
+          mode: operation.mode,
+          keepOriginals: this.preference.get(operation.mode),
+        };
         this.bodies = operation.ids.flatMap(
           (id) => this.editor.store.data.bodies?.filter((body) => body.id === id) ?? [],
         );
@@ -86,14 +136,67 @@ export class BooleanControls {
     );
     this.change(() => {});
   };
+  private role(id: string): "target" | "tool" | "input" | undefined {
+    if (!this.bodies.some((body) => body.id === id)) return undefined;
+    return this.operation.mode === "subtract"
+      ? id === this.targetId
+        ? "target"
+        : "tool"
+      : "input";
+  }
+  private toggleBody(body: Body): void {
+    this.change(() => {
+      const index = this.bodies.findIndex((b) => b.id === body.id);
+      if (index < 0) {
+        this.bodies.push(body);
+        if (this.operation.mode === "subtract" || !this.targetId) this.targetId = body.id;
+      } else if (this.operation.mode === "subtract" && body.id === this.targetId) {
+        this.targetId = null;
+      } else {
+        this.bodies.splice(index, 1);
+        if (body.id === this.targetId) this.targetId = null;
+      }
+      if (this.targetId)
+        this.bodies.sort((a, b) => Number(b.id === this.targetId) - Number(a.id === this.targetId));
+    });
+    this.lease?.history?.checkpoint();
+  }
+  private installPicking(): void {
+    this.editor.world.canvas.addEventListener(
+      "click",
+      (event) => {
+        if (!this.lease || event.button || event.metaKey || event.ctrlKey) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (this.editor.blocked) return;
+        const candidate = this.lease.candidate;
+        this.lease.show(null);
+        const hit = new BodyPickProbe(this.editor, {
+          x: event.clientX,
+          y: event.clientY,
+        }).faces()[0];
+        this.lease.show(candidate);
+        const body = this.editor.store.data.bodies?.find((b) => b.id === hit?.body);
+        if (body) this.toggleBody(body);
+      },
+      { signal: this.abort.signal, capture: true },
+    );
+  }
   private change(change: () => void): void {
     if (this.editor.blocked || this.lease?.phase !== "editing") return;
     change();
     this.operation.ids = this.bodies.map((b) => b.id);
-    this.outlines.show(this.bodies, this.operation.mode);
+    this.operands.show(this.bodies, this.operation.mode, this.targetId);
     this.valid = false;
     this.lease.show(null);
-    this.running = this.preview();
+    this.count = 0;
+    this.editor.message = "";
+    this.editor.notice = "";
+    this.running =
+      this.bodies.length >= 2 && (this.operation.mode !== "subtract" || this.targetId)
+        ? this.preview()
+        : null;
+    this.editor.refresh();
   }
   private async preview(): Promise<void> {
     const success = await this.editor.store.request({
@@ -116,10 +219,15 @@ export class BooleanControls {
     }
     this.editor.refresh();
   }
-  private async finish(cleanup = false): Promise<boolean> {
+  private async finish(cleanup = this.completion.cleanup): Promise<boolean> {
     await this.running;
     const lease = this.lease;
-    if (!lease || !this.valid || !lease.close()) return false;
+    if (!lease) return false;
+    if (this.bodies.length < 2) {
+      await this.cancel();
+      return true;
+    }
+    if (!this.valid || !lease.close()) return false;
     const consumed = this.operation.ids.filter(
       (_, i) => !this.operation.keepOriginals || (this.operation.mode === "subtract" && i === 0),
     );
@@ -150,31 +258,32 @@ export class BooleanControls {
   }
   private end(lease: InteractionLease): void {
     this.lease = null;
+    this.completion.reset();
+    this.entities.sourcePicker = null;
     this.widget.root.hidden = true;
-    this.outlines.clear();
+    this.editor.notice = this.editor.message = "";
+    this.operands.clear();
     lease.release();
     this.editor.refresh();
   }
   private update = (): void => {
-    this.widget.cleanup.disabled = !this.valid || this.editor.blocked;
     if (!this.lease) return;
-    const target =
-      (this.editor.store.data.bodies ?? []).findIndex((b) => b.id === this.bodies[0].id) + 1;
-    this.widget.update(
-      this.operation,
-      `Body ${target}`,
-      this.editor.blocked,
-      this.valid,
-      this.count,
-    );
-    const p = this.editor.world.project(bodyCenter(this.bodies));
-    this.widget.root.style.left = `${Math.max(260, Math.min(innerWidth - 260, p.x))}px`;
-    this.widget.root.style.top = `${Math.max(70, Math.min(innerHeight - 75, p.y + 90))}px`;
+    this.widget.update(this.operation, this.editor.blocked, this.valid, this.count);
+    const p = this.bodies.length
+      ? this.editor.world.project(bodyCenter(this.bodies))
+      : { x: innerWidth / 2, y: 80 };
+    const entities = this.widget.root.parentElement?.parentElement?.querySelector(".entity-viewer");
+    const bounds = entities?.getBoundingClientRect();
+    const left = bounds?.width ? bounds.right + 12 : 16;
+    this.widget.root.style.maxWidth = `${Math.max(200, innerWidth - left - 16)}px`;
+    const half = this.widget.root.offsetWidth / 2;
+    this.widget.root.style.left = `${Math.max(left + half, Math.min(innerWidth - half - 16, p.x))}px`;
+    this.widget.root.style.top = `${Math.max(70, Math.min(innerHeight - this.widget.root.offsetHeight - 16, p.y + 90))}px`;
   };
   dispose(): void {
     this.abort.abort();
     this.editor.world.changed.delete(this.update);
     this.widget.dispose();
-    this.outlines.dispose();
+    this.operands.dispose();
   }
 }

@@ -57,6 +57,7 @@ test("animation starts without a jump and follows monotonic easing at uneven fra
     camera,
     target: new THREE.Vector3(),
     height: 80,
+    navigation: { begin: () => {} },
     cancelCameraMotion: () => animation.cancel(),
     requestDraw: () => {},
   };

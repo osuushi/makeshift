@@ -22,6 +22,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run typecheck
       - run: npm run check
+      - run: node tests/ui-scale-css.mjs
       # Launcher-selection checks import compiled host modules, but need no native build.
       - run: npx tsc -p tsconfig.host.json
       - run: npm run test:setup
@@ -54,6 +55,11 @@ jobs:
         run: npm run setup:mesh
       - name: Build desktop renderer and host
         run: npm run build
+      - name: Conservative coverage and analytic span bounds
+        run: |
+          cmake -S native/kernel -B .build/kernel -DMAKESHIFT_KERNEL_TESTS=ON
+          cmake --build .build/kernel --target erosion-coverage-test --parallel "$CMAKE_BUILD_PARALLEL_LEVEL"
+          ctest --test-dir .build/kernel -R '^erosion-coverage$' --output-on-failure
       - name: Archive runtime (preserve native permissions and library symlinks)
         run: |
           mkdir -p .cache/ci
@@ -113,11 +119,73 @@ jobs:
           xvfb-run -a node tests/selection-redo-ui.mjs
           xvfb-run -a node tests/command-readiness-ui.mjs
           xvfb-run -a node tests/face-offset-readiness-ui.mjs
+      - name: Edge finish faces and surface movement
+        if: matrix.shard == 1
+        run: xvfb-run -a node tests/edge-finish-ui.mjs
+      - name: Decorator display, pending workers and exports
+        if: matrix.shard == 1
+        run: xvfb-run -a node tests/decorator-display-ui.mjs
+      - name: Decorator settings controls and narrow layouts
+        if: matrix.shard == 1 && matrix.browser == 'chromium'
+        run: |
+          xvfb-run -a node tests/decorator-settings-browser.mjs
+          xvfb-run -a node tests/decorator-settings-layout.mjs
       - name: Browser preview readiness
         if: matrix.shard == 1 && matrix.browser == 'chromium'
         run: |
           xvfb-run -a node tests/preview-action-readiness-ui.mjs
           xvfb-run -a node tests/preview-seed-readiness-ui.mjs
+      - name: Thread settings correction
+        if: matrix.shard == 2
+        run: |
+          xvfb-run -a node tests/thread-application-ui.mjs
+          xvfb-run -a node tests/thread-correction-ui.mjs
+      - name: Boolean operand collection and preferences
+        if: matrix.shard == 2
+        run: xvfb-run -a node tests/boolean-collection-ui.mjs
+      - name: Navigation Undo and context boundaries
+        if: matrix.shard == 2
+        run: |
+          xvfb-run -a node tests/navigation-history-ui.mjs
+          xvfb-run -a node tests/modeling-history-ui.mjs
+          xvfb-run -a node tests/projection-history-ui.mjs
+      - name: Tablet navigation delivery
+        if: matrix.shard == 2 && matrix.browser == 'chromium'
+        run: xvfb-run -a node tests/navigation-touch-ui.mjs
+      - name: Native cursor and navigation history transport
+        if: matrix.shard == 2 && matrix.browser == 'electron'
+        run: xvfb-run -a node tests/navigation-host-ui.mjs
+      - name: Modal Undo boundaries
+        if: matrix.shard == 3
+        run: xvfb-run -a node tests/modal-undo-boundary-ui.mjs
+      - name: Recent tools discovery and geometry invocation
+        if: matrix.shard == 3
+        run: xvfb-run -a node tests/recent-tools-ui.mjs
+      - name: Idle body Enter and Transform ownership
+        if: matrix.shard == 3
+        run: xvfb-run -a node tests/transform-enter-ui.mjs
+      - name: Agent Settings discovery and setup UI
+        if: matrix.shard == 3 && matrix.browser == 'chromium'
+        run: xvfb-run -a node tests/agent-setup-ui.mjs
+      - name: Reopen accepted operation and mirror history
+        if: matrix.shard == 3
+        run: |
+          xvfb-run -a node tests/reopen-operation-no-calculation-ui.mjs
+          xvfb-run -a node tests/reopen-operation-ui.mjs
+          xvfb-run -a node tests/reopen-operation-mirror-history-ui.mjs
+      - name: Reopen guards and context boundaries
+        if: matrix.shard == 1
+        run: |
+          xvfb-run -a node tests/reopen-operation-guards-ui.mjs
+          xvfb-run -a node tests/reopen-operation-guard-boundaries-ui.mjs
+      - name: Interface scale and camera independence
+        if: matrix.shard == 3
+        run: |
+          if [ "${{ matrix.browser }}" = electron ]; then
+            xvfb-run -a node tests/interface-scale-electron.mjs
+          else
+            xvfb-run -a node tests/interface-scale.mjs
+          fi
       - name: Demand rendering and fresh frame capture
         if: matrix.shard == 1
         run: xvfb-run -a node tests/ui-demand-frames.mjs
@@ -175,6 +243,11 @@ jobs:
         run: npm run setup:mesh
       - name: Build desktop renderer and host
         run: npm run build
+      - name: Conservative coverage and analytic span bounds
+        run: |
+          cmake -S native/kernel -B .build/kernel -DMAKESHIFT_KERNEL_TESTS=ON
+          cmake --build .build/kernel --target erosion-coverage-test --parallel "$CMAKE_BUILD_PARALLEL_LEVEL"
+          ctest --test-dir .build/kernel -R '^erosion-coverage$' --output-on-failure
       - name: Native host and macOS setup tests
         run: |
           npx tsc -p tsconfig.test.json
@@ -193,19 +266,93 @@ jobs:
           npx playwright install webkit
           node tests/decorator-removal-ui.mjs
           node tests/selection-redo-ui.mjs
-          node tests/preview-action-readiness-ui.mjs
-          node tests/preview-seed-readiness-ui.mjs
           node tests/command-readiness-ui.mjs
           node tests/face-offset-readiness-ui.mjs
+          node tests/preview-action-readiness-ui.mjs
+          node tests/preview-seed-readiness-ui.mjs
+          node tests/reopen-operation-no-calculation-ui.mjs
+          node tests/reopen-operation-ui.mjs
+          node tests/reopen-operation-guards-ui.mjs
+          node tests/reopen-operation-guard-boundaries-ui.mjs
+          node tests/reopen-operation-mirror-history-ui.mjs
           npm run test:current-tools
           node tests/ui-runtime-cleanup.mjs
+      - name: Navigation Undo and context boundaries
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: |
+          node tests/navigation-history-ui.mjs
+          node tests/modeling-history-ui.mjs
+          node tests/projection-history-ui.mjs
+          node tests/navigation-touch-ui.mjs
+      - name: Edge finish faces and surface movement
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: node tests/edge-finish-ui.mjs
+      - name: Thread settings correction
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: |
+          node tests/thread-application-ui.mjs
+          node tests/thread-correction-ui.mjs
+      - name: Modal Undo boundaries
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: node tests/modal-undo-boundary-ui.mjs
+      - name: Boolean operand collection and preferences
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: node tests/boolean-collection-ui.mjs
+      - name: Interface scale and camera independence
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: |
+          node tests/interface-scale.mjs
+          node tests/interface-scale-electron.mjs
       - name: Built Electron host smoke and Finder launch
         run: |
           node tests/electron-smoke.mjs
           node tests/ui-runtime-cleanup.mjs
           node tests/agent-finder-launch.mjs
+      - name: Orientation cube click and touch acceptance
+        run: |
+          MAKESHIFT_TEST_BROWSER=webkit node tests/orientation-cube-ui.mjs
+          MAKESHIFT_TEST_BROWSER=electron node tests/orientation-cube-ui.mjs
       - name: Native Electron navigation gestures
-        run: npm run test:electron -- --navigation-only
+        run: |
+          npm run test:electron -- --navigation-only
+          node tests/navigation-host-ui.mjs
+      - name: Recent tools discovery and geometry invocation
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: node tests/recent-tools-ui.mjs
+      - name: Decorator display, pending workers and settings
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: |
+          node tests/decorator-settings-browser.mjs
+          node tests/decorator-settings-layout.mjs
+          node tests/decorator-display-ui.mjs
+      - name: Built Electron decorator display and export
+        env:
+          MAKESHIFT_TEST_BROWSER: electron
+        run: node tests/decorator-display-ui.mjs
+      - name: Body Enter and Transform in WebKit
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: node tests/transform-enter-ui.mjs
+      - name: Body Enter and terminal ownership in Electron
+        env:
+          MAKESHIFT_TEST_BROWSER: electron
+        run: node tests/transform-enter-ui.mjs
+      - name: Agent Settings discovery and setup UI
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: node tests/agent-setup-ui.mjs
+      - name: Built Electron agent setup and owned process shutdown
+        env:
+          MAKESHIFT_TEST_BROWSER: electron
+        run: node tests/agent-setup-electron.mjs
   # Preserve the existing required check name; failed or skipped lanes cannot pass.
   check:
     if: always()

@@ -3,6 +3,7 @@ import { cancellableCalculation } from "../sketch/calculation-state.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { ModelReply, ModelRequest, ModelView } from "../sketch/model-api.js";
 import { describeOperation, type HistoryOperation } from "../sketch/operation-history.js";
+import { acceptedParameters } from "./accepted-parameters.js";
 import { DecoratorSession } from "./decorator-session.js";
 import { editDocument, isDirectDocumentEdit } from "./document-edits.js";
 import { documentFailure } from "./document-failure.js";
@@ -12,6 +13,7 @@ import { GeometryQueries, isGeometryQuery } from "./geometry-queries.js";
 import { NativeSolver } from "./native-solver.js";
 import { openDocument } from "./open-document.js";
 import { planeCutAvailable } from "./plane-cut.js";
+import { type ReopenPreview, reopenPreview } from "./reopen-preview.js";
 import { ScriptEdits } from "./script-edits.js";
 import { SolidCalculator } from "./solid-calculator.js";
 import { isSolidRequest, SolidEdits } from "./solid-edits.js";
@@ -26,6 +28,7 @@ export class DocumentOwner {
   private store = new DocumentStore();
   private pendingOperation: HistoryOperation | null = null;
   private candidate: SketchDocument | null = null;
+  private reopenedPreview: ReopenPreview | null = null;
   private active: { kind: ModelRequest["kind"]; promise: Promise<ModelReply> } | null = null;
   private cancelling = false;
   private solveCount = 0;
@@ -54,9 +57,14 @@ export class DocumentOwner {
   get view(): ModelView {
     return {
       data: this.store.data,
+      canUndoView: this.store.canNavigateView("undo"),
+      canRedoView: this.store.canNavigateView("redo"),
       ...this.solids.previewQuality(this.candidate ? this.pendingOperation?.kind : undefined),
       decoratorSources: this.decorators.sources,
       historySelection: this.store.selection,
+      historyNavigation: this.store.restoredNavigation,
+      historyOperation: this.store.restoredOperation,
+      reopenOperation: this.store.reopenOperation,
       planeCutAvailable: this.planeCutAvailable,
       ...this.solids.offsetEdit.view,
       edgeSize: this.solids.edgeSize,
@@ -64,6 +72,7 @@ export class DocumentOwner {
       edgeSelection: this.solids.edgeSelection,
       booleanMode: this.solids.booleanMode,
       booleanTargets: this.solids.booleanTargets,
+      ...this.reopenedPreview,
       canUndo: this.store.canUndo,
       canRedo: this.store.canRedo,
       candidate: this.candidate,
@@ -79,6 +88,7 @@ export class DocumentOwner {
     if (request.kind === "edit") await this.accept();
   }
   private replaceDocument(document?: SketchDocument): void {
+    this.reopenedPreview = null;
     this.store = new DocumentStore(document);
     this.decorators.clear();
     this.pendingOperation = null;
@@ -143,6 +153,7 @@ export class DocumentOwner {
       if (this.pendingOperation) this.store.record(this.pendingOperation, "cancelled");
       this.candidate = null;
       this.pendingOperation = null;
+      this.reopenedPreview = null;
       return { view: this.view };
     } finally {
       this.cancelling = false;
@@ -150,19 +161,26 @@ export class DocumentOwner {
   }
   private async accept(cleanup = false): Promise<void> {
     if (!this.candidate) throw new Error("No valid edit to accept");
-    if (cleanup)
+    if (cleanup && (!this.reopenedPreview || this.pendingOperation?.parameters.cleanup !== true)) {
+      this.reopenedPreview = null;
       this.candidate = await this.solids.removeTopology(
         this.candidate,
         operationCleanup(this.store.data.bodies ?? [], this.candidate.bodies ?? []),
       );
-    this.candidate = await this.decorators.continue(this.candidate);
+    }
+    if (!this.reopenedPreview) this.candidate = await this.decorators.continue(this.candidate);
     this.checkCancellation();
-    this.store.accept(this.candidate, {
-      ...(this.pendingOperation ?? describeOperation({ kind: "accept" })),
-      ...(cleanup ? { parameters: { ...this.pendingOperation?.parameters, cleanup: true } } : {}),
-    });
+    this.store.accept(
+      this.candidate,
+      {
+        ...(this.pendingOperation ?? describeOperation({ kind: "accept" })),
+        ...(cleanup ? { parameters: { ...this.pendingOperation?.parameters, cleanup: true } } : {}),
+      },
+      reopenPreview(this.view),
+    );
     this.candidate = null;
     this.pendingOperation = null;
+    this.reopenedPreview = null;
   }
   private async execute(request: ModelRequest): Promise<ModelReply> {
     const before = this.store.data;
@@ -180,7 +198,8 @@ export class DocumentOwner {
           this.kernel,
         );
       else await this.dispatch(request, operation);
-      if (this.candidate) this.candidate = await this.decorators.continue(this.candidate);
+      if (this.candidate && !this.reopenedPreview)
+        this.candidate = await this.decorators.continue(this.candidate);
       this.checkCancellation();
       return { view: this.view, documentChanged: before !== this.store.data };
     } catch (error) {
@@ -199,6 +218,8 @@ export class DocumentOwner {
     }
   }
   private async dispatch(request: ModelRequest, operation: HistoryOperation): Promise<void> {
+    if (!["read", "reopen", "accept", "check-cleanup", "navigation-history"].includes(request.kind))
+      this.reopenedPreview = null;
     this.cleanupAvailable = false;
     const decoratorEdit =
       request.kind === "decorator" || request.kind === "decorator-enable"
@@ -217,6 +238,10 @@ export class DocumentOwner {
       this.pendingOperation = operation;
       this.candidate = null;
       this.candidate = await this.solids.calculate(this.store.data, request);
+      this.pendingOperation = acceptedParameters(operation, {
+        edgeSize: this.solids.edgeSize,
+        offsetDistance: this.solids.offsetEdit.view.offsetDistance,
+      });
       if (request.kind === "transform-bodies") await this.accept();
       return;
     }
@@ -228,7 +253,7 @@ export class DocumentOwner {
     }
     switch (request.kind) {
       case "check-cleanup":
-        if (this.candidate)
+        if (this.candidate && !this.reopenedPreview)
           this.cleanupAvailable = await this.solids.checkCleanup(this.store.data, this.candidate);
         break;
       case "cleanup":
@@ -258,11 +283,13 @@ export class DocumentOwner {
         this.pendingOperation = null;
         this.candidate = null;
         break;
+      case "reopen":
       case "undo":
       case "redo":
-        this.pendingOperation = null;
-        this.candidate = null;
-        this.store[request.kind]();
+        this.navigateHistory(request.kind);
+        break;
+      case "navigation-history":
+        this.store.navigateView(request.direction);
         break;
       case "new":
         this.replaceDocument();
@@ -274,6 +301,19 @@ export class DocumentOwner {
         break;
       default:
         throw new Error("Unknown sketch operation");
+    }
+  }
+  private navigateHistory(direction: "reopen" | "undo" | "redo"): void {
+    if (direction === "reopen") {
+      if (this.candidate) throw new Error("Finish the current edit first");
+      const restored = this.store.reopen();
+      this.candidate = restored.candidate;
+      this.pendingOperation = this.store.restoredOperation ?? null;
+      this.reopenedPreview = restored.preview ?? {};
+    } else {
+      this.pendingOperation = null;
+      this.candidate = null;
+      this.store[direction]();
     }
   }
   private async deleteEntities(

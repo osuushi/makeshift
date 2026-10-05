@@ -1,6 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
-import { type Category, categories, toolCatalog } from "./catalog.js";
+import { type Category, categories, type ToolResult, toolCatalog } from "./catalog.js";
 import { borrowToolFocus, restoreToolFocus, toolMenuOpen } from "./menu-focus.js";
+import { ToolMenuList, toolShortcut } from "./menu-list.js";
 import { searchTools } from "./search.js";
 import "./menu.css";
 
@@ -13,15 +14,14 @@ export class ToolMenu {
   private list = document.createElement("div");
   private abort = new AbortController();
   private category: Category | null = null;
-  private rows: { id: string; element: HTMLButtonElement; activate: () => void }[] = [];
-  private selected = 0;
+  private results = new ToolMenuList(this.list, this.input);
   private signature = "";
   constructor(
     private editor: SketchEditor,
     app: HTMLElement,
   ) {
     this.trigger.className = "tools-trigger";
-    this.trigger.innerHTML = `Tools <kbd>${this.shortcut("⌘F")}</kbd>`;
+    this.trigger.innerHTML = `Tools <kbd>${toolShortcut("⌘F")}</kbd>`;
     this.trigger.setAttribute("aria-label", "Tools");
     this.trigger.setAttribute("aria-haspopup", "dialog");
     this.trigger.setAttribute("aria-expanded", "false");
@@ -137,24 +137,29 @@ export class ToolMenu {
     if (["Escape", "ArrowDown", "ArrowUp", "Enter", "Tab"].includes(key)) event.preventDefault();
     if (key === "Escape") this.close();
     else if (key === "ArrowDown" || key === "ArrowUp") {
-      this.selected =
-        (this.selected + (key === "ArrowDown" ? 1 : -1) + this.rows.length) %
-        Math.max(1, this.rows.length);
-      this.highlight();
+      this.results.selected =
+        (this.results.selected + (key === "ArrowDown" ? 1 : -1) + this.results.rows.length) %
+        Math.max(1, this.results.rows.length);
+      this.results.highlight();
     } else if (key === "Enter" && document.activeElement === this.back) {
       this.category = null;
       this.input.value = "";
       this.render(true);
       this.input.focus();
-    } else if (key === "Enter") this.rows[this.selected]?.activate();
+    } else if (key === "Enter") this.results.rows[this.results.selected]?.activate();
     else if (key === "ArrowLeft" && document.activeElement !== this.input && this.category) {
       event.preventDefault();
       this.category = null;
       this.render(true);
       this.input.focus();
-    } else if (key === "ArrowRight" && !this.input.value && !this.category) {
+    } else if (
+      key === "ArrowRight" &&
+      !this.input.value &&
+      !this.category &&
+      categories.some(([category]) => category === this.results.rows[this.results.selected]?.id)
+    ) {
       event.preventDefault();
-      this.rows[this.selected]?.activate();
+      this.results.rows[this.results.selected]?.activate();
     } else if (key === "Tab") {
       const controls = [this.input, ...(this.back.hidden ? [] : [this.back])];
       const index = controls.indexOf(document.activeElement as HTMLInputElement);
@@ -165,26 +170,31 @@ export class ToolMenu {
     if (toolMenuOpen()) this.render(false);
   };
   private render(reset: boolean): void {
-    const tools = toolCatalog(this.editor)
-      .results()
-      .filter((tool) => tool.showInTools !== false);
+    const catalog = toolCatalog(this.editor);
+    const recent = catalog.recent();
+    const tools = catalog.results().filter((tool) => tool.showInTools !== false);
     const query = this.input.value;
     const signature = JSON.stringify([
       query,
       this.category,
+      recent.map((tool) => tool.id),
       tools.map((t) => [t.id, t.label, t.unavailable]),
     ]);
     if (!reset && signature === this.signature) return;
     this.signature = signature;
-    const prior = reset ? null : this.rows[this.selected]?.id;
-    this.rows = [];
-    this.list.replaceChildren();
+    const prior = reset ? null : this.results.rows[this.results.selected]?.id;
+    this.results.reset();
     this.back.hidden = !this.category;
     this.back.textContent = `‹ All tools / ${this.category ?? ""}`;
     if (!query.trim() && !this.category) {
+      if (recent.length) {
+        this.results.heading("Recent");
+        for (const tool of recent) this.toolRow(tool);
+        this.results.heading("Categories");
+      }
       for (const [category, description] of categories) {
         if (!tools.some((t) => t.category === category)) continue;
-        this.row(category, category, description, false, "›", () => {
+        this.results.row(category, category, description, false, "›", () => {
           this.category = category;
           this.render(true);
           this.input.focus();
@@ -199,25 +209,9 @@ export class ToolMenu {
       for (const { tool, explanation } of results) {
         if (tool.unavailable && !disabled) {
           disabled = true;
-          const divider = document.createElement("div");
-          divider.className = "tool-menu-divider";
-          divider.textContent = "Unavailable in this context";
-          this.list.append(divider);
+          this.results.heading("Unavailable in this context");
         }
-        this.row(
-          tool.id,
-          tool.label,
-          [tool.category, explanation || tool.description, tool.unavailable]
-            .filter(Boolean)
-            .join(" · "),
-          !!tool.unavailable,
-          tool.shortcut ?? "",
-          () => {
-            if (toolCatalog(this.editor).reason(tool)) return;
-            this.close();
-            void toolCatalog(this.editor).invoke(tool.id);
-          },
-        );
+        this.toolRow(tool, explanation);
       }
       if (!results.length) {
         const empty = document.createElement("p");
@@ -225,62 +219,27 @@ export class ToolMenu {
         this.list.append(empty);
       }
     }
-    this.selected = Math.max(
+    this.results.selected = Math.max(
       0,
-      this.rows.findIndex((r) => r.id === prior),
+      this.results.rows.findIndex((r) => r.id === prior),
     );
-    this.highlight();
+    this.results.highlight();
   }
-  private row(
-    id: string,
-    label: string,
-    detail: string,
-    disabled: boolean,
-    key: string,
-    activate: () => void,
-  ): void {
-    const element = document.createElement("button");
-    element.type = "button";
-    element.tabIndex = -1;
-    element.id = `tool-result-${this.rows.length}`;
-    element.dataset.command = id;
-    element.setAttribute("role", "option");
-    element.setAttribute("aria-label", label);
-    element.setAttribute("aria-disabled", String(disabled));
-    const title = document.createElement("strong"),
-      description = document.createElement("small"),
-      shortcut = document.createElement("kbd");
-    title.textContent = label;
-    description.textContent = detail;
-    shortcut.textContent = this.shortcut(key);
-    element.append(title, shortcut, description);
-    const index = this.rows.length;
-    element.onclick = () => {
-      this.selected = index;
-      this.highlight(false);
-      activate();
-    };
-    element.onpointermove = () => {
-      this.selected = index;
-      this.highlight(false);
-    };
-    this.rows.push({ id, element, activate });
-    this.list.append(element);
-  }
-  private highlight(scroll = true): void {
-    this.rows.forEach((row, index) => {
-      row.element.setAttribute("aria-selected", String(index === this.selected));
-    });
-    const row = this.rows[this.selected];
-    if (row) {
-      this.input.setAttribute("aria-activedescendant", row.element.id);
-      if (scroll) row.element.scrollIntoView({ block: "nearest" });
-    } else this.input.removeAttribute("aria-activedescendant");
-  }
-  private shortcut(value: string): string {
-    return /Mac|iPhone|iPad/.test(navigator.platform)
-      ? value
-      : value.replaceAll("⇧", "Shift+").replaceAll("⌘", "Ctrl+");
+  private toolRow(tool: ToolResult, explanation?: string): void {
+    this.results.row(
+      tool.id,
+      tool.label,
+      [tool.category, explanation || tool.description, tool.unavailable]
+        .filter(Boolean)
+        .join(" · "),
+      !!tool.unavailable,
+      tool.shortcut ?? "",
+      () => {
+        if (toolCatalog(this.editor).reason(tool)) return;
+        this.close();
+        void toolCatalog(this.editor).invoke(tool.id);
+      },
+    );
   }
   dispose(): void {
     if (toolMenuOpen()) this.close();

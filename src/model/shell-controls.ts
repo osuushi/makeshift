@@ -73,12 +73,21 @@ export class ShellControls {
     this.widget.input.focus();
     this.widget.input.select();
   }
-  private begin(): boolean {
+  async reopen(operation: BodyShell): Promise<void> {
+    this.editor.modeling.setTool("shell");
+    this.update();
+    if (!this.begin(operation)) throw new Error("Cannot restore shell inputs");
+    this.queue(operation.thickness);
+    await this.running;
+    if (!this.valid) throw new Error("Cannot regenerate the accepted shell");
+    this.focus();
+  }
+  private begin(restored?: BodyShell): boolean {
     if (this.lease) return this.lease.phase === "editing";
     const resolved = this.editor.modeling.resolve("shell");
     if (this.editor.blocked || !resolved.available || !this.axis) return false;
     this.original = [...this.editor.modeling.targets];
-    this.selection = resolved.inputs;
+    this.selection = restored ? structuredClone(restored.selection) : resolved.inputs;
     this.lease = this.editor.interactions.acquire(
       "shell",
       () => this.cancel(),
@@ -86,7 +95,8 @@ export class ShellControls {
       { navigation: "when-released" },
     );
     if (!this.lease) return false;
-    this.thickness = 0;
+    this.thickness = restored?.thickness ?? 0;
+    this.widget.input.value = String(this.thickness);
     this.valid = this.invalid = false;
     this.latest = this.pending = null;
     this.lease.trackHistory(

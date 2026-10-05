@@ -10,7 +10,7 @@ export async function modalMoveHistory(page) {
   await worldClick(page, [0, 1.5, 2.5]);
   const hole = original.bodies[0].faces.find((face) => face.cylinder);
   await page.keyboard.press("m");
-  const input = page.locator(".face-move-gizmo input");
+  const input = page.locator(".face-move-gizmo .face-transform-value");
   await page.getByRole("button", { name: "Move faces X", exact: true }).click();
   await input.fill("2");
   await inspect(page);

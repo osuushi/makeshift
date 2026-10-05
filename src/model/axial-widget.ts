@@ -39,8 +39,8 @@ export function updateAxialArrow(
   handle.classList.add("orientable-handle");
   handle.innerHTML = directionalWidget(camera, normal, shape, width);
   const offset = directionalOffset(camera, normal);
-  handle.style.left = `${offset.x - 32}px`;
-  handle.style.top = `${offset.y - 32}px`;
+  handle.style.left = `${offset.x}px`;
+  handle.style.top = `${offset.y}px`;
   handle.dataset.directionX = String(direction.x);
   handle.dataset.directionY = String(direction.y);
   handle.dataset.geometryInvalid = String(invalid);

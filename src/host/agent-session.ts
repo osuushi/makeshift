@@ -15,6 +15,7 @@ import {
   personalSkillOverrides,
   workspaceTrustOverride,
 } from "./agent-settings.js";
+import { AgentSetup } from "./agent-setup.js";
 import { prepareAgentSkills } from "./agent-skills.js";
 import { AgentWorkspace } from "./agent-workspace.js";
 import { codexResumeArgs, copyCodexLocalState } from "./codex-workspace.js";
@@ -26,6 +27,7 @@ export class AgentSession {
   canUseDesktop = () => true;
   private process = new AgentProcess(nativeExecutable("agent-scope"));
   private settings = new AgentSettings(app.getPath("userData"));
+  readonly setup = new AgentSetup(this.settings, app);
   readonly workspace = new AgentWorkspace(join(app.getPath("userData"), "agent", "workspaces"));
   private codexHome: string | null = null;
   private window: BrowserWindow | null = null;
@@ -59,7 +61,7 @@ export class AgentSession {
     });
   }
   get status(): AgentReply {
-    return { ...this.process.status, workspace: this.workspace.cwd };
+    return { ...this.process.status, workspace: this.workspace.cwd, setup: this.setup.status };
   }
   attach(window: BrowserWindow): void {
     this.window = window;
@@ -95,6 +97,12 @@ export class AgentSession {
       this.process.resize(request.cols, request.rows);
       return this.status;
     }
+    if (request.kind === "cancel-codex-install") {
+      await this.setup.request(request);
+      return this.status;
+    }
+    if (this.setup.conflicts(request))
+      throw new Error("Wait for or cancel Codex installation before changing agent setup.");
     if (this.busy || this.replacing)
       throw new Error("An agent lifecycle operation is already in progress.");
     this.busy = true;
@@ -107,6 +115,7 @@ export class AgentSession {
   private async lifecycle(request: AgentRequest): Promise<AgentReply> {
     const window = this.window;
     if (!window) throw new Error("The document window is closed.");
+    if (await this.setup.request(request, this.process.status.running)) return this.status;
     switch (request.kind) {
       case "settings":
         return {
@@ -208,7 +217,10 @@ export class AgentSession {
               ...orientationOverrides(env),
             ]
           : [];
-      const executable = await agentExecutable(preferences.executable, cwd, env);
+      const executable =
+        preferences.preset === "codex"
+          ? await this.setup.executable(preferences, cwd, env)
+          : await agentExecutable(preferences.executable, cwd, env);
       await this.process.start(
         executable,
         [

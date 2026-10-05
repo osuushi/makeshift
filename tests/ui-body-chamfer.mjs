@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { circularFinish, plate } from "./ui-body-fillet.mjs";
 import { at, drag, inspect } from "./ui-helpers.mjs";
+import { previewActionReady } from "./ui-preview-readiness.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function bodyChamferRoute(page, name, electron) {
@@ -48,6 +49,7 @@ export async function bodyChamferRoute(page, name, electron) {
   await page.getByRole("button", { name: "Chamfer edges", exact: true }).click();
   await input.fill("2");
   await inspect(page);
+  await previewActionReady(page, "Accept chamfer");
   await page.getByRole("button", { name: "Accept chamfer", exact: true }).click();
   const accepted = (await inspect(page)).document;
   await chooseTool(page, "undo", "undo");
@@ -81,14 +83,14 @@ async function dragLimit(page, mode) {
   const box = await handle.boundingBox();
   const y = box.y + box.height / 2,
     start = box.x + box.width / 2,
-    end = start - 300;
+    end = start + 300;
   await page.mouse.move(start, y);
   await page.mouse.down();
   await page.mouse.move(end, y);
   await inspect(page);
   const maximum = Number(await input.inputValue());
   assert.ok(maximum > 2 && maximum < 15, "Pointer overshoot stops at the feasible size");
-  await page.mouse.move(end + 20, y);
+  await page.mouse.move(end - 20, y);
   await inspect(page);
   const back = Number(await input.inputValue());
   assert.ok(back < maximum - 0.5, "Reversing at a limit responds without dead cursor travel");

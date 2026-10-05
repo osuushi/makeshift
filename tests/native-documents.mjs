@@ -5,7 +5,18 @@ import { _electron } from "playwright";
 import { installTestFrames } from "./ui-test-frames.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
+/** Linux CI has no physical GPU; keep software WebGL consistent across test launchers. */
+export function electronTestArguments(args) {
+  return [
+    ...args,
+    ...(process.platform === "linux"
+      ? ["--use-gl=angle", "--use-angle=swiftshader-webgl", "--enable-unsafe-swiftshader"]
+      : []),
+  ];
+}
+
 const sessions = new WeakMap();
+export const electronSession = (page) => sessions.get(page);
 /** Existing geometry suites discard between cases; lifecycle tests answer prompts explicitly. */
 export async function launchElectron(options) {
   const directory = await mkdtemp(join(tmpdir(), "makeshift-ui-"));
@@ -13,14 +24,7 @@ export async function launchElectron(options) {
   try {
     app = await _electron.launch({
       ...options,
-      args: [
-        ...options.args,
-        // Linux CI has no physical GPU; use Chromium's software WebGL renderer.
-        ...(process.platform === "linux"
-          ? ["--use-gl=angle", "--use-angle=swiftshader-webgl", "--enable-unsafe-swiftshader"]
-          : []),
-        `--user-data-dir=${directory}`,
-      ],
+      args: [...electronTestArguments(options.args), `--user-data-dir=${directory}`],
     });
     const close = app.close.bind(app);
     app.close = async () => {
@@ -136,4 +140,25 @@ export async function exportDocument(page, format, path, stepChoice) {
       .click();
   const download = await waiting;
   if (download) await download.saveAs(path);
+}
+
+/** Exercise the ordinary native Edit menu or the browser File/Edit menu. */
+export async function historyMenu(page, direction = "undo") {
+  await page.getByRole("button", { name: "Tools", exact: true }).focus();
+  const session = sessions.get(page);
+  if (session) {
+    await session.app.evaluate(({ Menu }, direction) => {
+      const label = direction === "undo" ? "Undo" : "Redo";
+      Menu.getApplicationMenu()
+        .items.find((item) => item.label === "Edit")
+        .submenu.items.find((item) => item.label === label)
+        .click();
+    }, direction);
+  } else {
+    await page.getByRole("button", { name: "File / Edit", exact: true }).click();
+    await page
+      .getByRole("menu", { name: "File and edit", exact: true })
+      .locator(`[data-command="${direction}"]`)
+      .click();
+  }
 }

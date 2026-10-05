@@ -2,9 +2,10 @@ import { numericFocus } from "../tools/menu-focus.js";
 import { cleanupButton } from "./cleanup-button.js";
 import { directionalOffset, directionalWidget } from "./directional-widget.js";
 import "./body-edge-finish-widget.css";
-import type * as THREE from "three";
-import type { Point, Vector } from "../sketch/planes.js";
+import type { Point } from "../sketch/planes.js";
+import type { World } from "../sketch/world.js";
 import type { BodyEdgeFinish } from "./body.js";
+import { type EdgeFinishFrame, edgeViewportDirection } from "./edge-finish-direction.js";
 
 interface EdgeFinishInput {
   begin: () => void;
@@ -15,7 +16,7 @@ interface EdgeFinishInput {
 
 export class BodyEdgeFinishWidget {
   direction: Point | null = null;
-  private panel = document.createElement("div");
+  readonly panel = document.createElement("div");
   readonly cleanup = cleanupButton();
   readonly root = document.createElement("div");
   readonly handles = {
@@ -36,7 +37,7 @@ export class BodyEdgeFinishWidget {
     for (const mode of ["fillet", "chamfer"] as const) {
       const handle = this.handles[mode],
         name = mode === "fillet" ? "Fillet" : "Chamfer";
-      handle.title = `${name} edges · drag along the arrow to increase size, or click to type`;
+      handle.title = `${name} edges · drag with the surface to increase size, or click to type`;
       handle.setAttribute("aria-label", `${name} edges`);
       handle.className = "edge-size-handle orientable-handle";
     }
@@ -88,11 +89,8 @@ export class BodyEdgeFinishWidget {
     );
   }
   update(
-    camera: THREE.Camera,
-    outward: Vector,
-    width: Vector,
-    point: Point,
-    direction: Point | null,
+    world: World,
+    frame: EdgeFinishFrame,
     mode: BodyEdgeFinish["mode"],
     active: boolean,
     size: number,
@@ -100,18 +98,24 @@ export class BodyEdgeFinishWidget {
     busy: boolean,
     invalid: boolean,
   ) {
+    const { camera } = world;
+    const { outward, width } = frame;
+    const point = world.project(frame.anchor);
+    const direction = frame.motion
+      ? edgeViewportDirection(frame.anchor, frame.motion, (point) => world.project(point))
+      : null;
     const name = mode === "chamfer" ? "Chamfer" : "Fillet";
     const quantity = mode === "chamfer" ? "distance" : "radius";
     for (const kind of ["fillet", "chamfer"] as const) this.handles[kind].hidden = kind !== mode;
     this.direction = direction;
     const handle = this.handles[mode];
     handle.title = direction
-      ? `${name} edges · drag along the arrow to increase size, or click to type`
+      ? `${name} edges · drag with the surface to increase size, or click to type`
       : `${name} edges · click to type, or orbit to reveal the drag direction`;
     handle.innerHTML = directionalWidget(camera, outward, mode ?? "fillet", width);
     const offset = directionalOffset(camera, outward);
-    handle.style.left = `${offset.x - 32}px`;
-    handle.style.top = `${offset.y - 32}px`;
+    handle.style.left = `${offset.x}px`;
+    handle.style.top = `${offset.y}px`;
     handle.dataset.directionX = String(direction?.x ?? 0);
     handle.dataset.directionY = String(direction?.y ?? 0);
     for (const kind of ["fillet", "chamfer"] as const) {

@@ -99,7 +99,7 @@ async function dragCancelAndAccept(page, name) {
   const box = await handle.boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
-  await page.mouse.move(box.x + box.width / 2 - 24, box.y + box.height / 2, { steps: 5 });
+  await page.mouse.move(box.x + box.width / 2 + 24, box.y + box.height / 2, { steps: 5 });
   await page.mouse.up();
   let state = await inspect(page);
   assert.ok(state.preview);
@@ -115,7 +115,9 @@ async function dragCancelAndAccept(page, name) {
   await page.mouse.wheel(0, 15);
   assert.notDeepEqual((await inspect(page)).camera.position, before.position);
   await page.mouse.wheel(0, -15);
+  await previewActionReady(page, "Accept fillet");
   await page.mouse.click(points.center.x, points.center.y);
+  await modalCompleted(page);
   assert.equal((await inspect(page)).interaction, null);
   assert.ok((await inspect(page)).document.bodies[0].volume < original.bodies[0].volume);
   await page.screenshot({ path: `.cache/sketch-review/${name}-shared-edge-fillet.png` });
@@ -139,6 +141,8 @@ export async function circularFinish(page, name, mode = "fillet") {
   await page.mouse.click(rim.x, rim.y);
   const nameLabel = mode === "fillet" ? "Fillet" : "Chamfer";
   if (mode === "chamfer") await page.keyboard.press("Shift+F");
+  // Reproject a curved-edge idle widget through ordinary camera gestures before editing.
+  await orient(page, [0.5, 0.5, 1]);
   await page.getByRole("button", { name: `${nameLabel} edges`, exact: true }).click();
   await page
     .getByRole("textbox", { name: `${nameLabel} ${mode === "fillet" ? "radius" : "distance"}` })

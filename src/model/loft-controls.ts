@@ -8,10 +8,12 @@ import type { Loft } from "./loft.js";
 import { LoftGuides } from "./loft-guides.js";
 import { type LoftSectionAction, LoftWidget } from "./loft-widget.js";
 import { resolveOperation } from "./operation-selection.js";
+import { ReopenCompletion } from "./reopen-completion.js";
 
 export class LoftControls {
   readonly widget: LoftWidget;
   private guides = new LoftGuides();
+  private completion = new ReopenCompletion();
   private lease: InteractionLease | null = null;
   private sources: LiftSource[] = [];
   private alignment: number[] | undefined;
@@ -36,7 +38,7 @@ export class LoftControls {
         this.queue();
       },
     );
-    this.widget.root.append(this.targets.root);
+    this.widget.root.append(this.targets.root, this.completion.root);
     overlay.append(this.guides.root, this.widget.root);
     this.widget.add.onclick = () => {
       this.collecting = !this.collecting;
@@ -54,12 +56,24 @@ export class LoftControls {
     editor.world.changed.add(this.update);
     this.update();
   }
-  begin(): void {
+  async reopen(operation: Loft, cleanup: boolean): Promise<void> {
+    this.editor.modeling.setTool("loft");
+    this.begin(operation, cleanup);
+    if (!this.lease) throw new Error("Cannot restore loft sections");
+    await this.running;
+    if (!this.valid) throw new Error("Cannot regenerate the accepted loft");
+    this.widget.shape.focus();
+  }
+  begin(restored?: Loft, cleanup = false): void {
     const editor = this.editor;
     if (editor.blocked || editor.world.active || editor.interactions.current) return;
     const resolution = editor.modeling.resolve("loft");
     if (editor.modeling.targets.length && !resolution.available) return;
-    this.sources = resolution.available ? [...resolution.inputs] : [];
+    this.sources = restored
+      ? structuredClone(restored.sources)
+      : resolution.available
+        ? [...resolution.inputs]
+        : [];
     this.lease = editor.interactions.acquire(
       "loft",
       () => this.cancel(),
@@ -67,13 +81,17 @@ export class LoftControls {
       { navigation: "when-released" },
     );
     if (!this.lease) return;
-    this.alignment = undefined;
-    this.collecting = this.sources.length < 2;
-    this.widget.shape.value = "smooth";
-    this.mode = "auto";
+    this.alignment = restored?.alignment;
+    this.collecting = !restored && this.sources.length < 2;
+    this.widget.shape.value = restored?.ruled ? "ruled" : "smooth";
+    this.mode = restored?.mode ?? "auto";
+    this.completion.reset();
+    if (restored) this.completion.begin(cleanup);
     this.valid = false;
     this.latest = this.pending = null;
     this.targets.reset();
+    this.targets.selected = restored?.targets;
+    this.targets.restoredEligible = restored?.eligibleTargets;
     this.lease.trackHistory(
       this.widget.root,
       () => ({
@@ -83,8 +101,10 @@ export class LoftControls {
         shape: this.widget.shape.value,
         mode: this.mode,
         targets: this.targets.selected,
+        cleanup: this.completion.cleanup,
       }),
       async (state) => {
+        this.completion.input.checked = state.cleanup;
         this.sources = state.sources;
         this.alignment = state.alignment;
         this.collecting = state.collecting;
@@ -230,7 +250,7 @@ export class LoftControls {
       return true;
     }
     if (!this.valid || this.collecting || !this.lease?.close()) return false;
-    if (!(await this.editor.accept())) {
+    if (!(await this.editor.accept(this.completion.cleanup))) {
       this.lease.phase = "editing";
       this.editor.refresh();
       return false;
@@ -247,6 +267,7 @@ export class LoftControls {
     this.release();
   }
   private release(): void {
+    this.completion.reset();
     this.lease?.release();
     this.lease = null;
     this.editor.notice = this.editor.message = "";

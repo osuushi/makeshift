@@ -27,6 +27,7 @@
 }
 .orientation-cube text {
   fill: #151515;
+  /* ui-scale: viewbox */
   font-size: 10px;
   font-weight: 600;
   text-anchor: middle;

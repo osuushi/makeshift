@@ -9,6 +9,7 @@ import { AppUpdates } from "./host/app-updates.js";
 import { configureApplicationIdentity } from "./host/application-identity.js";
 import { DocumentSession } from "./host/document-session.js";
 import { installFixtureCapture } from "./host/fixture-capture.js";
+import { lockInterfaceZoom } from "./host/interface-zoom.js";
 import { IPadSession } from "./host/ipad-session.js";
 import { nativeExecutable } from "./host/native-paths.js";
 import { rememberWindowSize, restoreWindowSize } from "./host/window-size.js";
@@ -84,6 +85,7 @@ async function createWindow(): Promise<void> {
     },
   });
   documentWindow = window;
+  lockInterfaceZoom(window.webContents);
   rememberWindowSize(window);
   window.on("rotate-gesture", (_event, rotation) => {
     if (documents.remote?.active() || !Number.isFinite(rotation)) return;

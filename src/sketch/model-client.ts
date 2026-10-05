@@ -97,11 +97,30 @@ export class ModelClient {
   get decoratorSources() {
     return this.view.decoratorSources ?? [];
   }
+  get reopenOperation() {
+    return this.view.reopenOperation;
+  }
   get canUndo() {
-    return this.selectionInFlight || !!this.selectionHistory?.pending || this.view.canUndo;
+    return (
+      this.selectionInFlight ||
+      !!this.selectionHistory?.pending ||
+      !!this.selectionHistory?.navigating ||
+      this.view.canUndo
+    );
   }
   get canRedo() {
-    return !this.selectionInFlight && !this.selectionHistory?.pending && this.view.canRedo;
+    return (
+      !this.selectionInFlight &&
+      !this.selectionHistory?.pending &&
+      !this.selectionHistory?.navigating &&
+      this.view.canRedo
+    );
+  }
+  get canUndoView(): boolean {
+    return !!this.view.canUndoView;
+  }
+  get canRedoView(): boolean {
+    return !!this.view.canRedoView;
   }
   get booleanTargets() {
     return this.view.booleanTargets ?? [];
@@ -184,12 +203,34 @@ export class ModelClient {
     if (!reply.measurement) throw new Error("Measurement unavailable");
     return reply.measurement;
   }
+  private restoringReopen: ModelRequest["kind"] | null = null;
+  async restoreReopen(kind: ModelRequest["kind"], restore: () => Promise<void>): Promise<void> {
+    this.restoringReopen = kind;
+    try {
+      await restore();
+    } finally {
+      this.restoringReopen = null;
+    }
+  }
   async request(request: ModelRequest): Promise<boolean> {
+    // Controllers seed their ordinary local preview state from the accepted owner snapshot.
+    if (this.restoringReopen) {
+      if ([this.restoringReopen, "check-cleanup", "discard"].includes(request.kind)) return true;
+      throw new Error("Unexpected request while restoring accepted operation");
+    }
     if (this.working || this.cancelling || this.scriptRunning) return false;
     if (
-      !["read", "accept", "discard", "undo", "redo", "check-cleanup", "check-plane-cut"].includes(
-        request.kind,
-      )
+      ![
+        "read",
+        "accept",
+        "discard",
+        "undo",
+        "redo",
+        "reopen",
+        "navigation-history",
+        "check-cleanup",
+        "check-plane-cut",
+      ].includes(request.kind)
     )
       this.lastEdit = request;
     this.working = true;
@@ -209,28 +250,32 @@ export class ModelClient {
     try {
       await this.selectionSending;
       await this.flushSelection();
-      // Keep the history lookup and navigation inside the same busy interval.
-      const direction = request.kind === "undo" || request.kind === "redo" ? request.kind : null;
-      const history = direction ? await this.readHistory() : [];
-      const entry =
-        direction === "undo"
-          ? history.reverse().find((entry) => entry.state === "applied")
-          : history.find((entry) => entry.state === "undone");
+      const direction =
+        request.kind === "reopen"
+          ? "undo"
+          : request.kind === "navigation-history"
+            ? request.direction
+            : request.kind === "undo" || request.kind === "redo"
+              ? request.kind
+              : null;
       if (this.cancelling || this.interrupted) return false;
       const reply = await call(request);
       if (this.interrupted) return false;
       this.view = reply.view;
       this.erosionAllowance = reply.erosionAllowance;
       if (reply.error) throw new Error(reply.error);
-      if (direction && entry) this.navigated?.(entry.operation, direction);
+      if (direction && reply.view.historyOperation)
+        this.navigated?.(reply.view.historyOperation, direction);
       const selection = reply.view.historySelection;
-      if (
+      if (direction && reply.view.historyNavigation)
+        this.selectionHistory?.restoreNavigation(reply.view.historyNavigation);
+      else if (
         selection &&
         (direction || (!this.initialized && (selection.sketch.length || selection.modeling.length)))
       )
         this.selectionHistory?.restore(selection);
       else if (request.kind === "new" || request.kind === "open" || reply.documentChanged)
-        this.selectionHistory?.accepted();
+        this.selectionHistory?.accepted(request.kind === "new" || request.kind === "open");
       this.initialized = true;
       this.error("");
       return true;
@@ -278,8 +323,9 @@ export class ModelClient {
   async documentReplaced(): Promise<void> {
     await this.selectionSending;
     this.initialized = false;
-    this.selectionHistory?.accepted();
+    this.selectionHistory?.accepted(true);
     await this.request({ kind: "read" });
+    this.selectionHistory?.accepted(true);
   }
   async settled(): Promise<void> {
     await this.waiting;

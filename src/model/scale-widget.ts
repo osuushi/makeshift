@@ -142,9 +142,11 @@ export class ScaleWidget {
     const right = Math.max(...points.map((p) => p.x)),
       left = Math.min(...points.map((p) => p.x));
     const top = Math.min(...points.map((p) => p.y));
-    const x = right + 28 < bounds.width - 175 ? right + 28 : left - 175;
-    this.card.style.left = `${Math.min(bounds.width - 175, Math.max(8, x))}px`;
-    this.card.style.top = `${Math.min(bounds.height - 205, Math.max(8, top + 28))}px`;
+    const width = this.card.offsetWidth,
+      height = this.card.offsetHeight;
+    const x = right + 28 < bounds.width - width ? right + 28 : left - width;
+    this.card.style.left = `${Math.min(bounds.width - width - 8, Math.max(8, x))}px`;
+    this.card.style.top = `${Math.min(bounds.height - height - 8, Math.max(8, top + 28))}px`;
     const zLabel = this.factors[2].parentElement;
     if (zLabel) zLabel.hidden = !!box.frame;
   }

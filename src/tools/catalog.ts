@@ -43,11 +43,15 @@ export function idleReason(editor: SketchEditor): string | null {
 export class ToolCatalog {
   private entries = new Map<string, ToolDefinition>();
   private running = false;
+  private recentIds: string[] = [];
   constructor(private editor: SketchEditor) {}
   register(tool: ToolDefinition): () => void {
     if (this.entries.has(tool.id)) throw new Error(`Duplicate tool: ${tool.id}`);
     this.entries.set(tool.id, tool);
-    return () => this.entries.delete(tool.id);
+    return () => {
+      this.entries.delete(tool.id);
+      this.recentIds = this.recentIds.filter((id) => id !== tool.id);
+    };
   }
   reason(tool: ToolDefinition): string | null {
     if (this.running) return "Switching tools…";
@@ -57,6 +61,16 @@ export class ToolCatalog {
   }
   results(): ToolResult[] {
     return [...this.entries.values()].map((tool) => ({ ...tool, unavailable: this.reason(tool) }));
+  }
+  recent(): ToolResult[] {
+    this.recentIds = this.recentIds.filter((id) => {
+      const tool = this.entries.get(id);
+      return tool && tool.showInTools !== false;
+    });
+    return this.recentIds.map((id) => {
+      const tool = this.entries.get(id) as ToolDefinition;
+      return { ...tool, unavailable: this.reason(tool) };
+    });
   }
   async invoke(id: string): Promise<void> {
     const tool = this.entries.get(id);
@@ -69,7 +83,10 @@ export class ToolCatalog {
     }
     this.running = true;
     try {
-      await tool.run();
+      const result = await tool.run();
+      // Recency records an admitted invocation, not later geometry acceptance.
+      if (result !== false && tool.showInTools !== false && this.entries.get(id) === tool)
+        this.recentIds = [id, ...this.recentIds.filter((prior) => prior !== id)].slice(0, 10);
     } catch (error) {
       this.editor.message = error instanceof Error ? error.message : String(error);
     } finally {

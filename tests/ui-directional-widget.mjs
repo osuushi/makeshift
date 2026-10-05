@@ -22,8 +22,8 @@ export async function directionalWidgetRoute(page, plate) {
   const handle = page.getByRole("button", { name: "Fillet edges", exact: true });
   assert.equal(await page.locator(".edge-size-handle:visible").count(), 1);
   for (const [x, y, dx, dy] of [
-    [6, 10, 0, -1],
-    [-10, -5, -1, 0],
+    [6, 10, 0, 1],
+    [-10, -5, 1, 0],
   ]) {
     const scale = (points.top.y - points.center.y) / 10;
     const click = { x: points.center.x - x * scale, y: points.center.y + y * scale };
@@ -38,7 +38,7 @@ export async function directionalWidgetRoute(page, plate) {
   const box = await handle.boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
-  await page.mouse.move(box.x + box.width / 2 - 20, box.y + box.height / 2, { steps: 5 });
+  await page.mouse.move(box.x + box.width / 2 + 20, box.y + box.height / 2, { steps: 5 });
   await page.mouse.up();
   await inspect(page);
   assert.ok(Number(await page.getByRole("textbox", { name: "Fillet radius" }).inputValue()) > 0);
@@ -66,7 +66,7 @@ export async function directionalWidgetRoute(page, plate) {
   const dx = Number(await chamfer.getAttribute("data-direction-x"));
   const dy = Number(await chamfer.getAttribute("data-direction-y"));
   assert.ok(Math.abs(Math.hypot(dx, dy) - 1) < 1e-6);
-  assert.ok(Math.abs(dy - before) > 0.01, "Orbit reprojects the outward direction");
+  assert.ok(Math.abs(dy - before) > 0.01, "Orbit reprojects the surface movement direction");
   await page.screenshot({ path: ".cache/sketch-review/directional-widget.png" });
   const selection = await inspect(page);
   const body = selection.document.bodies[0];

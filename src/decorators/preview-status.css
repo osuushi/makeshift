@@ -1,0 +1,14 @@
+.decorator-preview-status {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  border: 1px solid #bfd0dc;
+  border-radius: 8px;
+  background: #fffffff2;
+  color: #345469;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 8;
+}

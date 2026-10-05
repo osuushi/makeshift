@@ -47,7 +47,9 @@ const operations: Operation[] = [
 ];
 
 test("complete face coverage and body tokens have identical operation inputs and defaults", () => {
-  for (const operation of operations)
+  for (const operation of operations.filter(
+    (operation) => operation !== "fillet" && operation !== "chamfer",
+  ))
     assert.deepEqual(
       resolveOperation(operation, faces(a), document),
       resolveOperation(operation, [whole(a)], document),
@@ -148,4 +150,42 @@ test("shell resolves partial faces as openings and complete coverage as closed h
     ],
   });
   assert.equal(resolveOperation("shell", [whole(a), edge(a)], document).available, false);
+});
+
+test("Fillet and Chamfer convert ordered faces to unique boundary edges without expanding body tokens", () => {
+  const rich: Body = {
+    ...a,
+    faces: [
+      { ...a.faces[0], edges: ["ab", "shared", "ab"] },
+      { ...a.faces[1], edges: ["shared", "bc"] },
+    ],
+    edges: ["ab", "shared", "bc", "explicit"].map((id) => ({ ...a.edges[0], id })),
+  };
+  const doc = { ...document, bodies: [rich, b] };
+  const targets: ModelingTarget[] = [
+    { kind: "edge", body: rich.id, edge: "explicit" },
+    ...faces(rich),
+    { kind: "edge", body: rich.id, edge: "ab" },
+  ];
+  for (const mode of ["fillet", "chamfer"] as const) {
+    assert.deepEqual(resolveOperation(mode, targets, doc), {
+      available: true,
+      inputs: ["explicit", "ab", "shared", "bc"].map((edge) => ({ body: rich.id, edge })),
+    });
+    assert.deepEqual(resolveOperation(mode, faces(rich), doc), {
+      available: true,
+      inputs: ["ab", "shared", "bc"].map((edge) => ({ body: rich.id, edge })),
+    });
+    assert.equal(resolveOperation(mode, [whole(rich)], doc).available, false);
+    assert.equal(resolveOperation(mode, [whole(rich), ...targets], doc).available, false);
+    const broken = { ...rich, faces: [{ ...rich.faces[0], edges: ["missing"] }] };
+    assert.equal(
+      resolveOperation(mode, faces(broken), { ...doc, bodies: [broken] }).available,
+      false,
+    );
+    assert.equal(
+      resolveOperation(mode, [{ kind: "sketch", sketch: "missing" }, ...targets], doc).available,
+      false,
+    );
+  }
 });

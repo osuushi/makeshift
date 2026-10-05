@@ -19,9 +19,11 @@
     "test": "node scripts/clean-tests.mjs && tsc -p tsconfig.test.json && node --test --test-concurrency=1 .cache/sketch-tests/tests/*.test.js",
     "test:ui": "node tests/ui.mjs",
     "test:current-tools": "node tests/current-tools-ui.mjs",
+    "test:booleans": "node tests/boolean-collection-ui.mjs",
     "test:setup": "node --test tests/sdk-provenance.mjs tests/ui-runtime-selection.mjs tests/worktree-dependencies.mjs",
     "test:selection-history": "node tests/selection-history-ui.mjs",
     "test:reconnection": "node tests/boundary-reconnection-ui.mjs",
+    "test:edge-finish": "node tests/edge-finish-ui.mjs",
     "test:edge-move": "node tests/edge-move-ui.mjs",
     "test:face-move": "node tests/face-move-ui.mjs",
     "test:electron": "node tests/electron.mjs",
@@ -40,7 +42,10 @@
     "preview:web": "vite preview --mode web --host 127.0.0.1",
     "test:web": "node tests/web-mode.mjs",
     "size:web": "node scripts/web/size.mjs",
-    "release:web": "node scripts/web/release.mjs"
+    "release:web": "node scripts/web/release.mjs",
+    "test:navigation-history": "node tests/navigation-history-ui.mjs",
+    "test:navigation-host": "node tests/navigation-host-ui.mjs",
+    "test:navigation-touch": "node tests/navigation-touch-ui.mjs"
   },
   "dependencies": {
     "@jitl/quickjs-wasmfile-release-sync": "0.32.0",
@@ -63,6 +68,8 @@
     "electron": "44.3.0",
     "manifold-3d": "3.5.3",
     "playwright": "1.62.1",
+    "postcss": "8.5.28",
+    "postcss-value-parser": "4.2.0",
     "vite": "8.3.0"
   },
   "license": "LGPL-2.1-or-later",

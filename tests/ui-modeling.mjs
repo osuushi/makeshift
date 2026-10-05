@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import {
+  activeModelingHistoryChecks,
+  captureAcceptedRotation,
+} from "./ui-modeling-history-checks.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function numericPlacement(page, action, axis, value) {
@@ -46,7 +50,9 @@ export async function modelingRoute(page, name) {
   let moved = (await inspect(page)).document.sketches[0];
   assert.deepEqual(moved.plane.origin, [0, 0, 10]);
   assert.deepEqual(moved.curves, original.curves);
-  await numericPlacement(page, "Rotate", "X", 30);
+  const { beforeRotation, rotationId } = await captureAcceptedRotation(page, () =>
+    numericPlacement(page, "Rotate", "X", 30),
+  );
   moved = (await inspect(page)).document.sketches[0];
   close(moved.plane.v[2], 0.5);
   assert.deepEqual(moved.constraints, original.constraints);
@@ -59,10 +65,9 @@ export async function modelingRoute(page, name) {
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document.sketches[0], moved);
   await placementDragChecks(page, moved);
-  await chooseTool(page, "edit sketch", "edit-sketch");
+  await activeModelingHistoryChecks(page, beforeRotation, rotationId);
   assert.equal((await inspect(page)).activeSketch, original.id);
   assert.equal(await page.locator(".mode-label").textContent(), "Sketching");
-  await activeHistoryChecks(page, moved);
   await page.keyboard.press("l");
   await drag(page, [20, 0], [30, 0]);
   assert.equal((await inspect(page)).document.sketches.length, 1);
@@ -115,23 +120,6 @@ async function placementDragChecks(page, original) {
   assert.equal(await input.getAttribute("aria-invalid"), "true");
   assert.deepEqual((await inspect(page)).document.sketches[0], original);
   await page.keyboard.press("Escape");
-}
-async function activeHistoryChecks(page, original) {
-  const cameraUp = (await inspect(page)).camera.up;
-  let state;
-  let steps = 0;
-  do {
-    await chooseTool(page, "undo", "undo");
-    state = await inspect(page);
-    steps++;
-  } while (state.document.sketches[0].plane.v[2] !== 0 && steps < 5);
-  assert.deepEqual(state.document.sketches[0].plane.v, [0, 1, 0]);
-  assert.equal(state.activePlane, null, "Undo restores the prior modeling context");
-  assert.deepEqual(state.camera.up, cameraUp, "Undo leaves the modeling camera unchanged");
-  for (let i = 0; i < steps; i++) await chooseTool(page, "redo", "redo");
-  state = await inspect(page);
-  assert.deepEqual(state.document.sketches[0], original);
-  assert.deepEqual(state.camera.up, original.plane.v);
 }
 
 async function deleteSketchCheck(page, point, id) {

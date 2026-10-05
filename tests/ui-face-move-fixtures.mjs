@@ -5,23 +5,14 @@ import { worldClick } from "./ui-face-offset.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-export async function makeFeature(page, pocket = false, sides = 4, through = false) {
-  await reset(page);
-  await chooseTool(page, "Sketch on XY", "sketch-xy");
-  await page.keyboard.press("r");
-  await drag(page, [-10, -10], [10, 10]);
-  const pick = await at(page, 6, 6);
-  await chooseTool(page, "return to modeling", "modeling");
-  await page.mouse.click(pick.x, pick.y);
-  await page.getByRole("textbox", { name: "Extrusion distance" }).fill("5");
-  await inspect(page);
-  await page.getByRole("button", { name: "Accept extrusion", exact: true }).click();
-  await inspect(page);
-  await worldClick(page, [6, 6, 5]);
-  const stock = (await inspect(page)).document.bodies[0];
-  const top = stock.faces.find((face) =>
-    face.vertices.every((v, i) => i % 3 !== 2 || Math.abs(v - 5) < 1e-6),
-  );
+export async function makeFeature(
+  page,
+  pocket = false,
+  sides = 4,
+  through = false,
+  precise = false,
+) {
+  const { stock, top } = await createFeatureStock(page, precise);
   await chooseTool(page, "sketch on face", "sketch-on-face");
   const local = (point) => {
     const delta = new THREE.Vector3(...point).sub(new THREE.Vector3(...top.plane.origin));
@@ -30,7 +21,7 @@ export async function makeFeature(page, pocket = false, sides = 4, through = fal
       delta.dot(new THREE.Vector3(...top.plane.v)),
     ];
   };
-  await drawFeatureProfile(page, local, sides);
+  await drawFeatureProfile(page, local, sides, precise);
   const center = await at(page, ...local(sides === -6 ? [-1, -1, 5] : [0, 0, 5]));
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(center.x, center.y);
@@ -68,7 +59,12 @@ export async function makeFeature(page, pocket = false, sides = 4, through = fal
   const faces = body.faces.filter(
     (face) =>
       ![0, 1, 2].some((axis) =>
-        (axis === 2 ? [0, 5] : [-10, 10]).some((value) =>
+        (precise
+          ? [stock.bounds[axis], stock.bounds[axis + 3]]
+          : axis === 2
+            ? [0, 5]
+            : [-10, 10]
+        ).some((value) =>
           face.vertices.every((n, i) => i % 3 !== axis || Math.abs(n - value) < 1e-6),
         ),
       ),
@@ -83,10 +79,47 @@ export async function makeFeature(page, pocket = false, sides = 4, through = fal
   }
   return { body, faces };
 }
-async function drawFeatureProfile(page, local, sides) {
-  if (sides === 4) {
+/** Create and pick the stock's accepted top support before drawing the feature profile. */
+async function createFeatureStock(page, precise) {
+  await reset(page);
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
+  await drawFeatureRectangle(page, [-10, -10], [10, 10], precise);
+  const pick = await at(page, 6, 6);
+  await chooseTool(page, "return to modeling", "modeling");
+  await page.mouse.click(pick.x, pick.y);
+  await page.getByRole("textbox", { name: "Extrusion distance" }).fill("5");
+  await inspect(page);
+  await page.getByRole("button", { name: "Accept extrusion", exact: true }).click();
+  await inspect(page);
+  await worldClick(page, [6, 6, 5]);
+  const stock = (await inspect(page)).document.bodies[0];
+  const top = stock.faces.find((face) =>
+    face.vertices.every((v, i) => i % 3 !== 2 || Math.abs(v - 5) < 1e-6),
+  );
+  return { stock, top };
+}
+/** Keep precise seed creation on ordinary controls and restore its prior grid setting. */
+async function drawFeatureRectangle(page, from, to, precise) {
+  const grid = precise ? (await inspect(page)).gridSnap : false;
+  if (grid) await chooseTool(page, "grid snap", "grid");
+  try {
     await page.keyboard.press("r");
-    await drag(page, local([-2, -3, 5]), local([2, 3, 5]));
+    await drag(page, from, to, precise ? ["Shift"] : []);
+    if (precise) {
+      for (const [axis, label] of ["Width", "Height"].entries()) {
+        const input = page.getByRole("textbox", { name: label, exact: true });
+        await input.fill(String(Math.abs(to[axis] - from[axis])));
+        await input.press("Enter");
+        await inspect(page);
+      }
+    }
+  } finally {
+    if (grid) await chooseTool(page, "grid snap", "grid");
+  }
+}
+async function drawFeatureProfile(page, local, sides, precise = false) {
+  if (sides === 4) {
+    await drawFeatureRectangle(page, local([-2, -3, 5]), local([2, 3, 5]), precise);
   } else if (!sides) {
     await page.keyboard.press("c");
     await drag(page, local([0, 0, 5]), local([2, 0, 5]));

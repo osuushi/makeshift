@@ -64,6 +64,16 @@ export function validateBuiltin(document: DisplayDocument, instance: DecoratorIn
     throw new Error("Knurl depth is too large for this cylinder");
 }
 
+/** Only geometry-validation failures can be repaired by changing settings alone. */
+export function hasSettingsProblem(instance: DecoratorInstance): boolean {
+  if (!instance.problem || !isBuiltinDecorator(instance.definition)) return false;
+  return [
+    "Thread profile is too deep for this cylinder",
+    "Thread insets leave no threaded length",
+    "Knurl depth is too large for this cylinder",
+  ].includes(instance.problem);
+}
+
 function validateReferences(refs: readonly FaceReference[]): void {
   if (
     !Array.isArray(refs) ||
@@ -110,7 +120,8 @@ export function validateDecorators(document: SketchDocument): void {
   }
 }
 
-function applyDecorator(
+/** Infer settings and members for a local editor; this does not validate acceptance. */
+export function prepareBuiltinApplication(
   document: SketchDocument,
   edit: Extract<DecoratorEdit, { action: "apply" }>,
 ): readonly DecoratorInstance[] {
@@ -149,7 +160,6 @@ function applyDecorator(
             ),
     };
   });
-  for (const instance of added) validateBuiltin(document, instance);
   return [...previous, ...added];
 }
 
@@ -201,8 +211,12 @@ function continueBuiltin(
 export function editDecorators(document: SketchDocument, edit: DecoratorEdit): SketchDocument {
   const previous = document.decorators ?? [];
   let next: readonly DecoratorInstance[] = previous;
-  if (edit.action === "apply") next = applyDecorator(document, edit);
-  else if (edit.action === "settings") {
+  if (edit.action === "apply") {
+    next = prepareBuiltinApplication(document, edit);
+    for (const instance of next) {
+      if (!previous.includes(instance)) validateBuiltin(document, instance);
+    }
+  } else if (edit.action === "settings") {
     if (!edit.ids.length || edit.ids.some((id) => !previous.some((d) => d.id === id)))
       throw new Error("Select existing decorators");
     next = previous.map((instance) => {
@@ -212,6 +226,7 @@ export function editDecorators(document: SketchDocument, edit: DecoratorEdit): S
       const radius = resolveFaces(document.bodies ?? [], instance.faces)[0].cylinder.radius;
       const updated = {
         ...instance,
+        problem: hasSettingsProblem(instance) ? undefined : instance.problem,
         settings:
           instance.definition === knurlDefinition
             ? patchKnurlSettings(instance.settings, edit.patch)

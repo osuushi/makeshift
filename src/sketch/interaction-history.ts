@@ -6,6 +6,7 @@ export class InteractionHistory<T> {
   constructor(
     private read: () => T,
     private restore: (value: T) => void | Promise<void>,
+    private changedHistory: () => void = () => {},
   ) {
     this.entries = [structuredClone(read())];
   }
@@ -23,12 +24,14 @@ export class InteractionHistory<T> {
     this.entries.splice(this.index + 1);
     this.entries.push(structuredClone(this.read()));
     this.index++;
+    this.changedHistory();
   }
   async navigate(direction: "undo" | "redo"): Promise<void> {
     if (this.restoring) return;
     this.checkpoint();
     const next = this.index + (direction === "undo" ? -1 : 1);
     if (next < 0 || next >= this.entries.length) return;
+    this.changedHistory();
     this.restoring = true;
     try {
       await this.restore(structuredClone(this.entries[next]));

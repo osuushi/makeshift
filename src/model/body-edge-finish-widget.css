@@ -81,6 +81,7 @@
   opacity: 0.4;
 }
 .body-edge-finish-widget .edge-size-handle {
+  transform: translate(-50%, -50%);
   position: absolute;
   width: 64px;
   height: 64px;

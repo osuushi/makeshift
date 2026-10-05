@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { BodyPivotDrag } from "../model/body-pivot-drag.js";
 import { cameraFacingWidth } from "../model/widget-frame.js";
+import { uiScale } from "../preferences/ui-scale.js";
 import type { SketchEditor } from "./editor.js";
 import { markerMarkup } from "./move-widget/geometry.js";
 import { worldPoint } from "./planes.js";
@@ -126,15 +127,16 @@ export class TransformOverlay {
     this.pivot.setAttribute("aria-pressed", String(e.placingPivot));
   };
   private marker(x: number, y: number, markup: string, axis: string): void {
+    const size = 48 * uiScale();
     const group = this.node("g", {
-      transform: `translate(${x - 24} ${y - 24})`,
+      transform: `translate(${x - size / 2} ${y - size / 2})`,
       "data-move-marker": axis,
     });
     group.innerHTML = markup;
     const svg = group.firstElementChild;
     if (!svg) return;
-    svg.setAttribute("width", "48");
-    svg.setAttribute("height", "48");
+    svg.setAttribute("width", String(size));
+    svg.setAttribute("height", String(size));
   }
   dispose(): void {
     this.anchorDrag.dispose();

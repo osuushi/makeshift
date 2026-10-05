@@ -83,12 +83,22 @@ export class ErosionControls {
     this.widget.thickness.focus();
     this.widget.thickness.select();
   }
-  private begin(): boolean {
+  async reopen(operation: BodyErosion): Promise<void> {
+    const body = this.editor.store.data.bodies?.find((b) => b.id === operation.ids[0]);
+    if (!body) throw new Error("Cannot restore erosion inputs");
+    this.axis = erosionAxis(this.editor, body);
+    if (!this.begin(operation)) throw new Error("Cannot restore erosion inputs");
+    this.editor.modeling.setTool("erode");
+    await this.running;
+    if (!this.valid) throw new Error("Cannot regenerate the accepted erosion");
+    this.focus();
+  }
+  private begin(restored?: BodyErosion): boolean {
     if (this.lease) return this.lease.phase === "editing";
     const resolved = this.editor.modeling.resolve("erode");
     if (this.editor.blocked || !resolved.available || !this.axis) return false;
     this.original = [...this.editor.modeling.targets];
-    this.ids = resolved.inputs.map((body) => body.id);
+    this.ids = restored ? [...restored.ids] : resolved.inputs.map((body) => body.id);
     this.lease = this.editor.interactions.acquire(
       "erode",
       () => this.cancel(),
@@ -97,7 +107,8 @@ export class ErosionControls {
     );
     if (!this.lease) return false;
     this.valid = this.invalid = false;
-    this.parameters.reset();
+    if (restored) this.parameters.restore(restored);
+    else this.parameters.reset();
     this.count = null;
     this.suggestedAllowance = null;
     this.latest = this.pending = null;
