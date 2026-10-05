@@ -11,7 +11,6 @@ export class AgentSetupControls {
     host: AgentHost,
     preferences: () => AgentPreferences,
     private report: (error: unknown) => void,
-    launch: () => Promise<void>,
   ) {
     const section = this.section;
     section.className = "agent-setup";
@@ -22,8 +21,7 @@ export class AgentSetupControls {
       <button type="button" data-cancel-codex hidden>Cancel installation</button>
       <p class="agent-setup-status" role="status"></p><pre class="agent-setup-output" hidden></pre>
       <button type="button" data-use-codex hidden>Use found CLI</button>
-      <button type="button" data-launch-codex hidden>Launch Codex</button>
-      <p>Launch opens Makeshift’s separate Codex configuration. Follow the CLI’s sign-in prompts; your app login is not copied. <a href="https://learn.chatgpt.com/docs/codex/cli" target="_blank" rel="noreferrer">Official installation instructions</a></p>`;
+      <p>Start opens Makeshift’s separate Codex configuration. Follow the CLI’s sign-in prompts; your app login is not copied. <a href="https://learn.chatgpt.com/docs/codex/cli" target="_blank" rel="noreferrer">Official installation instructions</a></p>`;
     form.prepend(section);
     this.button("find").onclick = () =>
       void this.begin(() => host.request({ kind: "discover-codex", preferences: preferences() }));
@@ -31,12 +29,6 @@ export class AgentSetupControls {
       void this.begin(() => host.request({ kind: "install-codex" }));
     this.button("cancel").onclick = () =>
       void this.action(() => host.request({ kind: "cancel-codex-install" }));
-    this.button("launch").onclick = () =>
-      void this.action(async () => {
-        const reply = await host.request({ kind: "configure", preferences: preferences() });
-        if (!reply.error) await launch();
-        return reply;
-      });
     this.button("use").onclick = () => {
       const path = this.latest.setup?.executable?.path;
       if (path && !this.custom) this.executable.value = path;
@@ -71,14 +63,13 @@ export class AgentSetupControls {
     const active = !!setup && ["downloading", "installing", "verifying"].includes(setup.phase);
     const custom = this.custom;
     this.button("find").disabled = this.waiting || active || custom;
+    this.button("install").hidden = custom || !!setup?.executable;
     this.button("install").disabled = this.waiting || active || custom || reply.running;
     this.button("cancel").hidden = !active;
     this.button("cancel").disabled = this.waiting;
     this.button("use").hidden =
       !setup?.executable || custom || this.executable.value === setup.executable.path;
     this.button("use").disabled = this.waiting || active;
-    this.button("launch").hidden = !setup?.executable;
-    this.button("launch").disabled = this.waiting || active || custom || reply.running;
     const installLabel =
       setup?.phase === "failed" || setup?.phase === "cancelled"
         ? "Retry installation"

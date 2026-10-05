@@ -34,11 +34,13 @@ function fakeAgentHost() {
       }
       if (request.kind === "browse") return { ...status(), executable: "/fixture/browsed" };
       if (request.kind === "discover-codex") {
-        if (!["/fixture/browsed", "codex"].includes(request.preferences.executable))
+        if (!["/fixture/browsed", "codex"].includes(request.preferences.executable)) {
+          setup = { phase: "failed", message: "Cannot use the configured Codex path.", output: "" };
           return {
             ...status(),
             error: "Cannot use the configured Codex path. Browse or install Codex.",
           };
+        }
         setup = {
           phase: "ready",
           message: "Found Codex CLI0.159.2. Sign in using Makeshift’s separate configuration.",
@@ -119,8 +121,12 @@ async function discoveryAndCustom(page) {
     await page.getByLabel("Executable", { exact: true }).inputValue(),
     "/fixture/browsed",
   );
+  assert.equal(await page.getByRole("button", { name: "Install Codex", exact: true }).count(), 0);
+  assert.equal(await page.getByRole("button", { name: "Launch Codex", exact: true }).count(), 0);
   await page.getByLabel("Executable", { exact: true }).fill("/fixture/manual");
-  await page.getByRole("button", { name: "Launch Codex", exact: true }).click();
+  await page.getByRole("button", { name: "Save settings", exact: true }).click();
+  assert.equal(await page.locator(".agent-settings").isVisible(), false);
+  await page.getByRole("button", { name: "Start", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
   const configured = await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }));
   assert.equal(configured.preferences.preset, "codex");
@@ -131,16 +137,14 @@ async function discoveryAndCustom(page) {
   );
   await page.getByRole("button", { name: "Stop", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Stopped" }).waitFor();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByLabel("Preset", { exact: true }).selectOption("custom");
   await page.getByLabel("Executable", { exact: true }).fill("/fixture/custom");
   assert.equal(
     await page.getByRole("button", { name: "Find Codex", exact: true }).isDisabled(),
     true,
   );
-  assert.equal(
-    await page.getByRole("button", { name: "Install Codex", exact: true }).isDisabled(),
-    true,
-  );
+  assert.equal(await page.getByRole("button", { name: "Install Codex", exact: true }).count(), 0);
   await page.getByRole("button", { name: "Save settings", exact: true }).click();
   await page.getByRole("button", { name: "Start", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
@@ -171,8 +175,10 @@ async function installAndLaunch(page) {
     "Unedited default auto-configures verified discovery",
   );
   await page.getByLabel("Executable", { exact: true }).fill("/fixture/missing");
+  await page.getByRole("button", { name: "Find Codex", exact: true }).click();
+  await page.locator(".agent-message").filter({ hasText: "configured Codex path" }).waitFor();
   assert.equal(await page.getByLabel("Preset", { exact: true }).inputValue(), "codex");
-  const install = page.getByRole("button", { name: "Install Codex", exact: true });
+  const install = page.getByRole("button", { name: "Retry installation", exact: true });
   assert.equal(await install.isEnabled(), true, "Completed Stop allows installation");
   const box = await install.boundingBox();
   const reads = await page.evaluate(() => window.agentSetupReads);
@@ -217,7 +223,9 @@ async function installAndLaunch(page) {
     await page.getByLabel("Executable", { exact: true }).inputValue(),
     "/fixture/installed",
   );
-  await page.getByRole("button", { name: "Launch Codex", exact: true }).click();
+  await page.getByRole("button", { name: "Save settings", exact: true }).click();
+  assert.equal(await page.locator(".agent-settings").isVisible(), false);
+  await page.getByRole("button", { name: "Start", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
   await page.getByRole("button", { name: "Stop", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Stopped" }).waitFor();
