@@ -303,12 +303,13 @@ export class ExtrudeControls {
         (this.mode === "auto" ? editor.store.booleanMode : this.mode) !== "new" &&
         !!editor.store.data.bodies?.length,
     );
+    this.widget.fit();
   };
   dispose(): void {
     this.previews.clear();
     this.cleanup.reset();
     this.abort.abort();
     this.editor.world.changed.delete(this.update);
-    this.root.remove();
+    this.widget.dispose();
   }
 }

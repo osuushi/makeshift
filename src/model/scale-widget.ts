@@ -8,10 +8,12 @@ import {
   boxWorld,
   type TransformBox,
 } from "./transform-box.js";
+import { WidgetClearance } from "./widget-clearance.js";
 import "./scale.css";
 
 export class ScaleWidget {
   readonly root = document.createElement("div");
+  private placement = new WidgetClearance(this.root);
   readonly card = document.createElement("div");
   readonly factors = [0, 1, 2].map(() => document.createElement("input"));
   readonly linked = document.createElement("input");
@@ -123,14 +125,10 @@ export class ScaleWidget {
       this.svg.append(line);
     }
     this.geometry = new Map(boxHandles(box).map((handle) => [handle.key, handle]));
-    const anchor = editor.world.project(widgetPivot);
-    this.positionHandles(project, boxLocal(box, widgetPivot), {
-      x: anchor.x - bounds.left,
-      y: anchor.y - bounds.top,
-    });
+    this.positionHandles(project, boxLocal(box, widgetPivot));
     const points = [...this.geometry.values()].map((handle) => project(handle.point));
     for (const control of this.root.parentElement?.querySelectorAll(
-      ".body-axis-handle, [data-move-marker], .move-anchor",
+      ".body-axis-handle, .move-control, .pivot-control, .move-anchor",
     ) ?? []) {
       const rect = control.getBoundingClientRect();
       if (!rect.width || !rect.height) continue;
@@ -149,21 +147,13 @@ export class ScaleWidget {
     this.card.style.top = `${Math.min(bounds.height - height - 8, Math.max(8, top + 28))}px`;
     const zLabel = this.factors[2].parentElement;
     if (zLabel) zLabel.hidden = !!box.frame;
+    this.placement.fit([...this.buttons.values(), this.card]);
   }
   private positionHandles(
     project: (point: Vector) => { x: number; y: number },
     local: Vector,
-    anchor: { x: number; y: number },
   ): void {
     const occupied: { x: number; y: number }[] = [];
-    const bounds = this.root.getBoundingClientRect();
-    const rotations = [
-      ...(this.root.parentElement?.querySelectorAll(
-        '.body-rotate-handle, [data-move-marker="rotation"]',
-      ) ?? []),
-    ]
-      .map((control) => control.getBoundingClientRect())
-      .filter((rect) => rect.width && rect.height);
     for (const [key, button] of this.buttons)
       if (!this.geometry.has(key)) {
         button.remove();
@@ -186,14 +176,6 @@ export class ScaleWidget {
       }
       const p = project(handle.point);
       button.hidden =
-        Math.hypot(p.x - anchor.x, p.y - anchor.y) < 22 ||
-        rotations.some(
-          (rect) =>
-            p.x + bounds.left > rect.left - 10 &&
-            p.x + bounds.left < rect.right + 10 &&
-            p.y + bounds.top > rect.top - 10 &&
-            p.y + bounds.top < rect.bottom + 10,
-        ) ||
         handle.axes.every((axis) => Math.abs(handle.point[axis] - local[axis]) < 1e-8) ||
         handle.axes.every((axis) => {
           const point = [...handle.point] as Vector;
@@ -225,6 +207,7 @@ export class ScaleWidget {
     });
   }
   dispose(): void {
+    this.placement.dispose();
     this.root.remove();
   }
 }

@@ -11,10 +11,12 @@ import type { Face } from "./body.js";
 import { cleanupButton } from "./cleanup-button.js";
 import { projectedAxis } from "./extrude-axis.js";
 import type { OffsetQuantity } from "./offset-quantity.js";
+import { WidgetClearance } from "./widget-clearance.js";
 
 export class FaceOffsetWidget {
   readonly cleanup = cleanupButton();
   readonly root = document.createElement("div");
+  private placement = new WidgetClearance(this.root);
   readonly handle = document.createElement("button");
   readonly input = document.createElement("input");
   readonly quantity = document.createElement("select");
@@ -117,8 +119,10 @@ export class FaceOffsetWidget {
     this.input.setAttribute("aria-invalid", String(active && invalid && !valid && !editor.blocked));
     this.accept.disabled = !active || !valid || distance === 0 || editor.blocked;
     this.dismiss.disabled = !active || editor.blocked;
+    this.placement.fit([this.handle, this.options]);
   }
   dispose() {
+    this.placement.dispose();
     this.root.remove();
   }
 }

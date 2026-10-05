@@ -20,10 +20,11 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
   header?.append(button);
   const fitHeader = () => {
     if (!header) return;
-    app.style.setProperty(
-      "--editor-header-bottom",
-      `${header.getBoundingClientRect().bottom - app.getBoundingClientRect().top}px`,
-    );
+    const bottom = `${header.getBoundingClientRect().bottom - app.getBoundingClientRect().top}px`;
+    if (app.style.getPropertyValue("--editor-header-bottom") === bottom) return;
+    app.style.setProperty("--editor-header-bottom", bottom);
+    // Entities moves with this offset after the viewport's resize draw.
+    editor.world.requestDraw();
   };
   const headerObserver = new ResizeObserver(fitHeader);
   if (header) headerObserver.observe(header);

@@ -7,12 +7,14 @@ import { anchorSnap } from "./anchor-snapping.js";
 import { MovementShadows } from "./movement-shadows.js";
 import { scaleSelection } from "./scale-selection.js";
 import { pointOnTransformPlane, transformPlane } from "./transform-plane.js";
+import { widgetPointerOffset } from "./widget-viewport.js";
 
 /** The anchor is UI state. Dragging it never edits body geometry or Undo. */
 export class BodyPivotDrag {
   private shadows: MovementShadows;
   private abort = new AbortController();
   private drag: {
+    offset: { x: number; y: number };
     id: number;
     x: number;
     y: number;
@@ -99,6 +101,7 @@ export class BodyPivotDrag {
     );
     if (!lease) return;
     this.drag = {
+      offset: widgetPointerOffset(this.button),
       id: event.pointerId,
       x: event.clientX,
       y: event.clientY,
@@ -122,7 +125,10 @@ export class BodyPivotDrag {
     if (!drag.moved) return;
     const snap = event.metaKey
       ? null
-      : anchorSnap(this.editor, { x: event.clientX, y: event.clientY });
+      : anchorSnap(this.editor, {
+          x: event.clientX - drag.offset.x,
+          y: event.clientY - drag.offset.y,
+        });
     this.button.dataset.snapped = String(!!snap);
     if (snap) {
       this.set(snap);

@@ -61,6 +61,7 @@
   border-color: #4486c1;
 }
 .loft-controls .extrude-targets {
+  position: static;
   margin-top: 8px;
 }
 .loft-guides {

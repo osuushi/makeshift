@@ -1,8 +1,10 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { selectionAnchor } from "./selection-anchor.js";
+import { WidgetClearance } from "./widget-clearance.js";
 
 export class MirrorWidget {
   readonly root = document.createElement("div");
+  private placement = new WidgetClearance(this.root);
   readonly offset = document.createElement("input");
   readonly keep = document.createElement("input");
   readonly accept = document.createElement("button");
@@ -46,8 +48,10 @@ export class MirrorWidget {
     this.accept.disabled = !valid || busy;
     this.offset.disabled = closing;
     this.keep.disabled = closing;
+    this.placement.fit([this.root]);
   }
   dispose(): void {
+    this.placement.dispose();
     this.root.remove();
   }
 }

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { arcControlsClear } from "./ui-arc-controls.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { pixels, tinted } from "./ui-fill.mjs";
 import {
@@ -97,10 +98,16 @@ export async function arcRoute(page, name) {
     await page.mouse.up();
     assert.deepEqual((await inspect(page)).document, saved);
     await page.keyboard.press("v");
+    await arcControlsClear(page, plane);
     await drag(page, [-4, 0], [-6, 0]);
     arc = (await curves(page)).at(-1);
     pointEquals(arc.a, [-6, 0]);
     pointEquals(arc.b, [4, 0]);
+    const moved = (await inspect(page)).document;
+    await chooseTool(page, "undo", "undo");
+    assert.deepEqual((await inspect(page)).document, saved);
+    await chooseTool(page, "redo", "redo");
+    assert.deepEqual((await inspect(page)).document, moved);
     await orient(page, [0.5, 0.5, 1]);
     await page.waitForFunction(() => window.makeshiftInspect().activePlane === null);
   }

@@ -8,6 +8,7 @@ import {
 } from "./axial-widget.js";
 import { cleanupButton } from "./cleanup-button.js";
 import { ExtrudeDraft } from "./extrude-draft.js";
+import { WidgetClearance } from "./widget-clearance.js";
 import "./extrude-widget.css";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
@@ -20,6 +21,7 @@ export class ExtrudeWidget {
   readonly cleanup = cleanupButton();
   readonly draft: ExtrudeDraft;
   readonly root = document.createElement("div");
+  private placement = new WidgetClearance(this.root);
   readonly handle = document.createElement("button");
   readonly input = document.createElement("input");
   readonly symmetric = document.createElement("input");
@@ -127,5 +129,16 @@ export class ExtrudeWidget {
       this.input.value = Number.isFinite(distance) ? String(Number(distance.toPrecision(4))) : "";
     for (const button of this.options.querySelectorAll<HTMLButtonElement>("[data-mode]"))
       button.setAttribute("aria-pressed", String(button.dataset.mode === mode));
+  }
+  fit(): void {
+    this.placement.fit(
+      [...this.root.children].filter(
+        (element): element is HTMLElement => element instanceof HTMLElement,
+      ),
+    );
+  }
+  dispose(): void {
+    this.placement.dispose();
+    this.root.remove();
   }
 }

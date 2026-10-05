@@ -3,21 +3,21 @@ import { orient, project } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { at, drag, inspect, overlayPoint, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
+import { widgetPresentation } from "./ui-widget-presentation.mjs";
 
 const field = (page, name) => page.getByRole("textbox", { name, exact: true });
 const button = (page, name) => page.getByRole("button", { name, exact: true });
 const near = (a, b, tolerance = 1e-3) => assert.ok(Math.abs(a - b) < tolerance, `${a} != ${b}`);
 async function spherePoint(page) {
-  const box = await button(page, "Position extrusion axis").boundingBox();
-  assert.ok(box);
-  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  return (await widgetPresentation(page, "Position extrusion axis")).virtual;
 }
 async function moveSphere(page, target, cancel = false, bypass = false) {
-  const p = await spherePoint(page);
+  const p = (await widgetPresentation(page, "Position extrusion axis")).displayed;
   if (bypass) await page.keyboard.down("Meta");
   await page.mouse.move(p.x, p.y);
+  const { offset } = await widgetPresentation(page, "Position extrusion axis");
   await page.mouse.down();
-  await page.mouse.move(target.x, target.y, { steps: 5 });
+  await page.mouse.move(target.x + offset.x, target.y + offset.y, { steps: 5 });
   if (cancel) await page.keyboard.press("Escape");
   await page.mouse.up();
   if (bypass) await page.keyboard.up("Meta");
@@ -97,10 +97,12 @@ async function twistPlacement(page) {
     await orient(page, direction);
     const origin = await spherePoint(page);
     const handle = button(page, "Drag extrusion twist");
-    const box = await handle.boundingBox();
-    assert.ok(box);
-    near(box.x + box.width / 2, origin.x - 72, 0.1);
-    near(box.y + box.height / 2, origin.y, 0.1);
+    const { virtual } = await widgetPresentation(page, "Drag extrusion twist");
+    const worldOrigin = await project(page, [0, 0, 0]);
+    near(origin.x, worldOrigin.x, 0.1);
+    near(origin.y, worldOrigin.y, 0.1);
+    near(virtual.x, origin.x - 72, 0.1);
+    near(virtual.y, origin.y, 0.1);
     await handle.hover();
     assert.equal(
       await handle.evaluate((el) => getComputedStyle(el).backgroundColor),
@@ -112,7 +114,7 @@ async function twistPlacement(page) {
 
 async function twistDragControls(page, center, corner) {
   await page.keyboard.press("Enter");
-  const anchor = await spherePoint(page);
+  const anchor = await project(page, [10, 10, 0]);
   const start = await button(page, "Drag extrusion twist").evaluate((handle) => {
     const path = handle.querySelector("path");
     const points = [0.1, 0.4, 0.7, 0.9].map((t) => {
@@ -124,14 +126,15 @@ async function twistDragControls(page, center, corner) {
         throw new Error("Visible twist glyph must take precedence over underlying geometry");
     return { x: points[1].x, y: points[1].y };
   });
-  const dx = start.x - anchor.x,
-    dy = start.y - anchor.y,
-    radians = Math.PI / 6;
   await page.mouse.move(start.x, start.y);
+  const { offset } = await widgetPresentation(page, "Drag extrusion twist");
+  const dx = start.x - offset.x - anchor.x,
+    dy = start.y - offset.y - anchor.y,
+    radians = Math.PI / 6;
   await page.mouse.down();
   await page.mouse.move(
-    anchor.x + dx * Math.cos(radians) - dy * Math.sin(radians),
-    anchor.y + dx * Math.sin(radians) + dy * Math.cos(radians),
+    anchor.x + dx * Math.cos(radians) - dy * Math.sin(radians) + offset.x,
+    anchor.y + dx * Math.sin(radians) + dy * Math.cos(radians) + offset.y,
     { steps: 8 },
   );
   await page.mouse.up();

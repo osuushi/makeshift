@@ -2,6 +2,7 @@ import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import type { Vector } from "../sketch/planes.js";
+import { redrawSketchWidgets } from "../sketch/sketch-widget-layout.js";
 import { installBodyTransformEnter } from "./body-transform-enter.js";
 import { type ScaleOperation, type ScaleSource, scaleFactors } from "./scale.js";
 import { ScaleGestures } from "./scale-gestures.js";
@@ -311,6 +312,7 @@ export class ScaleControls {
         factors.every((v) => Number.isFinite(v) && v > 0) ? factors : [1, 1, 1],
       );
     }
+    redrawSketchWidgets(e);
   };
   dispose(): void {
     this.abort.abort();

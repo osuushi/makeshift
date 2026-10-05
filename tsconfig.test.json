@@ -9,5 +9,10 @@
     "allowImportingTsExtensions": false,
     "types": ["node"]
   },
-  "include": ["tests/*.test.ts", "src/agent-cli/script-worker.ts"]
+  "include": [
+    "tests/*.test.ts",
+    "src/agent-cli/script-worker.ts",
+    "src/sketch/move-widget/marker.ts",
+    "src/sketch/sketch-widget-layout.ts"
+  ]
 }

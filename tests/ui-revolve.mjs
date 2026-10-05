@@ -3,6 +3,7 @@ import { orient, project } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
+import { widgetPresentation } from "./ui-widget-presentation.mjs";
 
 async function value(page, name, value) {
   await page.getByRole("textbox", { name, exact: true }).fill(String(value));
@@ -44,11 +45,12 @@ export async function revolveRoute(page, name, electron, cleanup = false) {
   await orient(page, [0, 0, 1]);
   assert.equal(await handle.isVisible(), false);
   await orient(page, [0, 1, 0]);
-  const box = await handle.boundingBox();
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  const { displayed } = await widgetPresentation(page, "Drag revolution angle");
+  await page.mouse.move(displayed.x, displayed.y);
+  const { offset } = await widgetPresentation(page, "Drag revolution angle");
   await page.mouse.down();
   const around = await project(page, [3, 1, -3 * Math.sqrt(3)]);
-  await page.mouse.move(around.x, around.y, { steps: 5 });
+  await page.mouse.move(around.x + offset.x, around.y + offset.y, { steps: 5 });
   await page.mouse.up();
   state = await inspect(page);
   assert.deepEqual(state.document, original);
@@ -91,13 +93,12 @@ export async function revolveRoute(page, name, electron, cleanup = false) {
 
 async function spatialDrag(page) {
   await orient(page, [0, 1, 0]);
-  const ring = await page
-    .getByRole("button", { name: "Drag revolution angle", exact: true })
-    .boundingBox();
+  const { displayed } = await widgetPresentation(page, "Drag revolution angle");
   const around = await project(page, [6 * Math.SQRT1_2, 11, -6 * Math.SQRT1_2]);
-  await page.mouse.move(ring.x + ring.width / 2, ring.y + ring.height / 2);
+  await page.mouse.move(displayed.x, displayed.y);
+  const { offset } = await widgetPresentation(page, "Drag revolution angle");
   await page.mouse.down();
-  await page.mouse.move(around.x, around.y, { steps: 8 });
+  await page.mouse.move(around.x + offset.x, around.y + offset.y, { steps: 8 });
   await page.mouse.up();
   await inspect(page);
   assert.equal(

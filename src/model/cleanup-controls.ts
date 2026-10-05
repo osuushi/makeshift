@@ -4,10 +4,12 @@ import { onModelKeydown } from "../sketch/model-keys.js";
 import type { Vector } from "../sketch/planes.js";
 import type { CleanupSelection } from "./cleanup.js";
 import { selectionAnchor } from "./selection-anchor.js";
+import { WidgetClearance } from "./widget-clearance.js";
 import "./cleanup.css";
 
 export class CleanupControls {
   private root = document.createElement("div");
+  private placement = new WidgetClearance(this.root);
   private status = document.createElement("span");
   private accept = document.createElement("button");
   private lease: InteractionLease | null = null;
@@ -129,10 +131,12 @@ export class CleanupControls {
     const p = this.editor.world.project(this.center);
     this.root.style.left = `${Math.max(220, Math.min(innerWidth - 220, p.x))}px`;
     this.root.style.top = `${Math.max(60, Math.min(innerHeight - 70, p.y + 110))}px`;
+    this.placement.fit([this.root]);
   };
   dispose(): void {
     this.abort.abort();
     this.editor.world.changed.delete(this.update);
+    this.placement.dispose();
     this.root.remove();
   }
 }

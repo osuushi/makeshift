@@ -3,6 +3,7 @@ import { BodyGizmo } from "../model/body-gizmo.js";
 import { BodyPivotDrag } from "../model/body-pivot-drag.js";
 import { axes } from "../model/body-placement.js";
 import { selectionAnchor } from "../model/selection-anchor.js";
+import { widgetPointerOffset } from "../model/widget-viewport.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import type { InteractionLease } from "./active-interaction.js";
 import { copySketch } from "./copy-selection.js";
@@ -140,7 +141,15 @@ export class PlacementControls {
       rotate,
       start: { x: event.clientX, y: event.clientY },
       pivot: this.currentPivot(),
-      frame: dragFrame(this.editor, this.currentPivot(), axis, event.clientX, event.clientY),
+      frame: dragFrame(
+        this.editor,
+        this.currentPivot(),
+        axis,
+        event.clientX,
+        event.clientY,
+        undefined,
+        widgetPointerOffset(event.currentTarget),
+      ),
       pointer: event.pointerId,
       held: true,
       moved: false,
