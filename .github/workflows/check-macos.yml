@@ -159,6 +159,11 @@ jobs:
       - name: Standalone cleanup and separate geometry history
         if: matrix.shard == 3
         run: xvfb-run -a npm run test:standalone-cleanup
+      - name: Drawable decorator preview fallback and adjacent settings
+        if: matrix.shard == 1
+        run: |
+          xvfb-run -a npm run test:preview-fallback
+          xvfb-run -a node tests/preview-fallback-adjacent-ui.mjs
       - name: Measured widget DOM layouts
         if: matrix.shard == 1 && matrix.browser == 'chromium'
         run: |
@@ -304,6 +309,7 @@ jobs:
           npm run test:thread-presets
           npm run test:standalone-cleanup
           npm run test:preview-fallback
+          node tests/preview-fallback-adjacent-ui.mjs
           npm run test:current-tools
           node tests/ui-runtime-cleanup.mjs
       - name: Navigation Undo and context boundaries
