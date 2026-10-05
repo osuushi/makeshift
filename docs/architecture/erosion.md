@@ -151,7 +151,9 @@ only. Nonrational Bézier and B-spline faces additionally use boxes enclosing su
 hulls for conservative lower bounds and boundary-crossing exclusion. These boxes
 are based on the actual surfaces, independent of display tessellation. Certified
 interior/exterior distance balls and boundary-free spans reuse classifications
-across neighboring cells. Recognized section solids use exact cubic cross-section
+across neighboring cells. Repeated queries at an identical subdivision center reuse
+the immutable boundary lower bound and exact classification within that coverage check.
+Recognized section solids use exact cubic cross-section
 ray intersections. Uncertain roots, seams, nonmonotone heights and exterior answers
 without sufficient boundary separation fall back to OCCT classification. Trimmed
 surface witnesses provide upper bounds, with exact distance fallback for section
