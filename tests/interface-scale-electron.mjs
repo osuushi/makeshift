@@ -23,17 +23,38 @@ async function launch() {
   await installTestFrames(page);
   return page;
 }
-async function close() {
+async function close(graceful = false) {
   if (!app) return;
   const current = app;
   app = undefined;
-  const timeout = setTimeout(() => current.process().kill("SIGKILL"), 10000);
+  let timedOut = false;
+  const timeout = setTimeout(() => {
+    timedOut = true;
+    current.process().kill("SIGKILL");
+  }, 10000);
   try {
-    await current.close();
+    if (graceful) {
+      const closed = current.waitForEvent("close");
+      await current.evaluate(({ app }) => app.quit());
+      await closed;
+    } else await current.close();
+    assert.equal(timedOut, false, "Owned scale-test Electron must exit without being killed");
   } finally {
     clearTimeout(timeout);
   }
 }
+
+async function agentSettled(page, running) {
+  const deadline = Date.now() + 30000;
+  while (Date.now() < deadline) {
+    const state = await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }));
+    if (state.running === running && !state.error && state.preferences) return;
+    // A stopped PTY can precede workspace refresh; guard errors are not completion.
+    await page.waitForTimeout(100);
+  }
+  throw new Error("Agent lifecycle did not settle");
+}
+
 try {
   const page = await launch();
   page.setDefaultTimeout(30000);
@@ -71,7 +92,7 @@ try {
   await agentScaleRoute(page);
   assert.deepEqual(errors, []);
   await changeScale(page, 1.5);
-  await close();
+  await close(true);
   const reopened = await launch();
   await settled(reopened);
   await reopened.locator(".settings-trigger").click();
@@ -140,9 +161,7 @@ async function agentScaleRoute(page) {
   );
   const original = await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }));
   await page.getByRole("button", { name: "Open agent terminal" }).click();
-  await page.waitForFunction(
-    async () => (await window.makeshiftAgent.request({ kind: "settings" })).running,
-  );
+  await agentSettled(page, true);
   const terminal = page.locator(".agent-screen canvas");
   await terminal.waitFor();
   for (const scale of [0.8, 1.5]) {
@@ -169,9 +188,7 @@ async function agentScaleRoute(page) {
     await settled(page);
   }
   await page.getByRole("button", { name: "Stop", exact: true }).click();
-  await page.waitForFunction(
-    async () => !(await window.makeshiftAgent.request({ kind: "settings" })).running,
-  );
+  await agentSettled(page, false);
   await page.locator(".settings-trigger").click();
   const dialog = page.getByRole("dialog", { name: "Settings", exact: true });
   await dialog.getByRole("button", { name: "Reset to 100%" }).click();
