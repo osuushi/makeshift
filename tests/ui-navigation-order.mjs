@@ -7,7 +7,7 @@ import {
   navigationRoundTrip,
   navigationTips,
 } from "./ui-navigation-history.mjs";
-import { wheel } from "./ui-navigation-inputs.mjs";
+import { pinchStep } from "./ui-navigation-inputs.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function extrusion(page) {
@@ -29,14 +29,14 @@ async function extrusion(page) {
 }
 export async function navigationOrderRoute(page, name) {
   const accepted = await extrusion(page);
-  await navigationRoundTrip(page, () => wheel(page, 35, 20), "View after accepted extrusion");
+  await navigationRoundTrip(page, () => pinchStep(page, 35, 20), "View after accepted extrusion");
   await navigationHistory(page);
   const geometryUndo = await navigationHistory(page);
   assert.equal(geometryUndo.document.bodies?.length ?? 0, 0, "Second Undo reaches extrusion");
   assert.equal((await navigationTips(page)).length, 0, "Older view redo expires at geometry Undo");
   assert.deepEqual((await navigationHistory(page, true)).document, accepted.document);
   const undone = await navigationHistory(page);
-  await navigationRoundTrip(page, () => wheel(page, 25, 15), "View after geometry Undo");
+  await navigationRoundTrip(page, () => pinchStep(page, 25, 15), "View after geometry Undo");
   const restored = await navigationHistory(page, true);
   assert.deepEqual(restored.document, accepted.document, "Geometry Redo survives view Undo/Redo");
   assert.deepEqual(restored.modelingSelection, accepted.modelingSelection);
@@ -44,7 +44,7 @@ export async function navigationOrderRoute(page, name) {
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   const picked = await navigationIdle(page);
   assert.ok(picked.modelingSelection.length);
-  await navigationRoundTrip(page, () => wheel(page, 25, 15), "Selection expiration setup");
+  await navigationRoundTrip(page, () => pinchStep(page, 25, 15), "Selection expiration setup");
   const panned = await navigationIdle(page);
   await page.mouse.click(1050, 700);
   const cleared = await navigationIdle(page);
@@ -65,7 +65,7 @@ export async function navigationOrderRoute(page, name) {
   assert.deepEqual((await navigationHistory(page)).document, undone.document);
   await page.getByRole("button", { name: "Select Sketch 1", exact: true }).click();
   assert.ok((await navigationIdle(page)).modelingSelection.length);
-  await navigationRoundTrip(page, () => wheel(page, 20, 10), "Undone-view expiration setup");
+  await navigationRoundTrip(page, () => pinchStep(page, 20, 10), "Undone-view expiration setup");
   await navigationHistory(page);
   await page.mouse.click(1050, 700);
   await navigationIdle(page);

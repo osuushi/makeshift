@@ -59,6 +59,11 @@ export function bodyView(editor: SketchEditor): () => void {
         hover?.kind === "face" ? hover.face : hover?.kind === "body" && hover.body === body.id,
         editor.world.activeFrame ?? editor.world.crossSection,
         editor.display.bodyAppearances?.find((entry) => entry.body === body.id),
+        new Set(
+          editor.display.decorators?.flatMap((d) =>
+            d.problem ? d.faces.filter((f) => f.body === body.id).map((f) => f.face) : [],
+          ),
+        ),
       );
       // A finish preview can consume its source edge; preserve the accepted chain highlight.
       const source =

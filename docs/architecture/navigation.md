@@ -189,7 +189,10 @@ establish physical trackpad or iPad touch behavior.
 ### Orientation cube
 
 The upper-right cube follows the current camera. Drag with the primary pointer to
-use the same turntable rotation, Option-roll and release leveling as Command-drag; a face click
+use the same turntable rotation and release leveling as Command-drag. Option-drag
+roll measures pointer bearing around the cube center, one-to-one in angle; radial
+motion adds no roll. Viewport Option-drag retains its model/selection-centered bearing.
+A face click
 aligns Front (−Y), Back (+Y), Left (−X), Right (+X), Top (+Z), or Bottom (−Z).
 The white/near-black cube has six inset labeled faces, twelve edge bevels and eight
 corner bevels. The face half-width is 0.58 of the cube half-width, leaving wider
@@ -210,7 +213,9 @@ or orbit. Enter/Space remain immediate: nearest roll on approach, canonical roll
 when the face is already aligned. Focused cube keys take precedence over
 canonical-plane entry shortcuts. Canonical side and diagonal views keep Z upright;
 canonical Top uses +Y up and Bottom uses −Y up. Bevel views retain canonical roll.
-All visible surfaces support Tab and Enter/Space. Alignment animates over 280 ms
+Cube surfaces are excluded from sequential Tab navigation; Tab is reserved for
+editing controls. Direct accessibility activation retains Enter/Space support.
+Alignment animates over 280 ms
 with cubic ease-out, using the shared camera transition. Reduced motion applies
 the orientation immediately; subsequent navigation interrupts the animation.
 Navigation retains the view target, distance

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import * as THREE from "three";
 import { drag, inspect, reset } from "./ui-helpers.mjs";
 import { navigationRoundTrip, navigationTips } from "./ui-navigation-history.mjs";
 import { cubeSettled } from "./ui-orientation-cube-clicks.mjs";
@@ -74,7 +75,7 @@ export async function orientationCubeRoute(page, name) {
     geometric(history),
     "Cube gestures leave accepted geometry history unchanged",
   );
-  assert.equal((await navigationTips(page)).length, 1, "Cube gestures replace one live view tip");
+  assert.ok((await navigationTips(page)).length > 1, "Cube gestures retain the view suffix");
   await page.mouse.move(center.x, center.y);
   await page.mouse.down();
   await page.mouse.move(center.x + 24, center.y + 18, { steps: 6 });
@@ -110,17 +111,39 @@ async function assertFaceLabel(target) {
 
 async function cubeRoll(page, center) {
   const before = await inspect(page);
-  await page.mouse.move(center.x, center.y);
+  await page.mouse.move(center.x + 24, center.y);
   await page.keyboard.down("Alt");
   await page.mouse.down();
-  await page.mouse.move(center.x + 20, center.y, { steps: 4 });
+  await page.mouse.move(center.x + 40, center.y, { steps: 4 });
+  const radial = await inspect(page);
+  assert.ok(
+    new THREE.Vector3(...radial.camera.up).distanceTo(new THREE.Vector3(...before.camera.up)) <
+      1e-10,
+    "Radial cube drag adds no roll",
+  );
+  for (let i = 1; i <= 12; i++) {
+    const angle = (i * Math.PI) / 24;
+    await page.mouse.move(center.x + 40 * Math.cos(angle), center.y + 40 * Math.sin(angle));
+  }
   const during = await inspect(page);
+  const axis = new THREE.Vector3(...before.camera.position)
+    .sub(new THREE.Vector3(...before.camera.target))
+    .normalize();
+  const expected = new THREE.Vector3(...before.camera.up).applyAxisAngle(axis, Math.PI / 2);
+  assert.ok(
+    new THREE.Vector3(...during.camera.up).distanceTo(expected) < 1e-8,
+    "Quarter-circle around cube center produces exactly a quarter-turn",
+  );
   await page.mouse.up();
   await page.keyboard.up("Alt");
   const after = await inspect(page);
   assert.notDeepEqual(during.camera.up, before.camera.up);
-  assert.notDeepEqual(after.camera.up, during.camera.up, "Cube Option roll snaps on release");
-  for (let i = 0; i < 3; i++)
-    assert.ok(Math.abs(after.camera.position[i] - before.camera.position[i]) < 1e-8);
+  const afterAxis = new THREE.Vector3(...after.camera.position)
+    .sub(new THREE.Vector3(...after.camera.target))
+    .normalize();
+  assert.ok(
+    afterAxis.distanceTo(axis) < 1e-8,
+    "Roll preserves view direction around its geometry pivot",
+  );
   assert.deepEqual(after.document, before.document);
 }
