@@ -2,7 +2,8 @@ import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import { arrowWidthAxis } from "../sketch/move-widget/geometry.js";
 import type { Point, Vector } from "../sketch/planes.js";
-import type { Body, Edge } from "./body.js";
+import type { Body, BodyEdgeFinish, Edge } from "./body.js";
+import { edgeSurfaceMotion } from "./edge-finish-motion.js";
 
 /** Outward bisector of the incident faces at the picked edge point. */
 export function edgeOutward(body: Body, edge: Edge, point: Vector): Vector {
@@ -30,13 +31,13 @@ export function edgeOutward(body: Body, edge: Edge, point: Vector): Vector {
 
 export function edgeViewportDirection(
   point: Vector,
-  outward: Vector,
+  movement: Vector,
   project: (point: Vector) => Point,
 ): Point | null {
   const a = project(point);
-  const b = project(point.map((v, i) => v + outward[i]) as Vector);
+  const b = project(point.map((v, i) => v + movement[i]) as Vector);
   const length = Math.hypot(b.x - a.x, b.y - a.y);
-  // Looking directly along the outward axis has no viewport drag direction.
+  // Looking directly along the surface movement axis has no viewport drag direction.
   return length < 1e-6 ? null : { x: (b.x - a.x) / length, y: (b.y - a.y) / length };
 }
 
@@ -72,8 +73,10 @@ export function edgeSectionWidth(edge: Edge, anchor: Vector, outward: Vector): V
     : arrowWidthAxis(outward);
 }
 
-export function selectedEdgeFrame(editor: SketchEditor) {
-  const selected = editor.modeling.targets.filter((t) => t.kind === "edge");
+export function selectedEdgeFrame(editor: SketchEditor, mode: BodyEdgeFinish["mode"]) {
+  const resolution = editor.modeling.resolve(mode);
+  if (!resolution.available) return null;
+  const selected = resolution.inputs;
   const click = editor.modeling.lastEdgeClick;
   const target =
     selected.find((e) => e.body === click?.body && e.edge === click.edge) ??
@@ -87,5 +90,13 @@ export function selectedEdgeFrame(editor: SketchEditor) {
       ? click.point
       : (edge.points.slice(i, i + 3) as Vector);
   const outward = edgeOutward(body, edge, anchor);
-  return { anchor, outward, width: edgeSectionWidth(edge, anchor, outward) };
+  return {
+    edges: selected,
+    anchor,
+    outward,
+    width: edgeSectionWidth(edge, anchor, outward),
+    motion: edgeSurfaceMotion(body, edge, anchor, outward),
+  };
 }
+
+export type EdgeFinishFrame = NonNullable<ReturnType<typeof selectedEdgeFrame>>;

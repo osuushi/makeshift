@@ -1,23 +1,20 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
-import type { Vector } from "../sketch/planes.js";
 import type { BodyEdgeFinish } from "./body.js";
 import { BodyEdgeFinishWidget } from "./body-edge-finish-widget.js";
-import { CleanupAvailability } from "./cleanup-availability.js";
-import { edgeViewportDirection, selectedEdgeFrame } from "./edge-finish-direction.js";
+import { EdgeFinishCleanup } from "./edge-finish-cleanup.js";
+import { selectedEdgeFrame } from "./edge-finish-direction.js";
 import { EdgeFinishDrag } from "./edge-finish-drag.js";
 import { PreviewRunner } from "./preview-runner.js";
 
 export class BodyEdgeFinishControls {
-  private cleanup: CleanupAvailability;
+  private cleanup: EdgeFinishCleanup;
   private widget: BodyEdgeFinishWidget;
   private abort = new AbortController();
   private lease: InteractionLease | null = null;
   private edges: BodyEdgeFinish["edges"] = [];
-  private anchor: Vector = [0, 0, 0];
-  private outward: Vector = [0, 0, 0];
-  private width: Vector = [1, 0, 0];
+  private frame: ReturnType<typeof selectedEdgeFrame> = null;
   private size = 0;
   private mode: BodyEdgeFinish["mode"] = "fillet";
   private valid = false;
@@ -26,7 +23,7 @@ export class BodyEdgeFinishControls {
     editing: () => this.lease?.phase === "editing",
     calculate: (request) => this.calculate(request),
     supersede: () => this.editor.store.supersedePreview(),
-    settled: (calculated) => this.previewSettled(calculated),
+    settled: (calculated) => this.cleanup.settled(calculated),
   });
   private drag: EdgeFinishDrag;
   constructor(
@@ -38,9 +35,12 @@ export class BodyEdgeFinishControls {
       () => void this.finish(),
       () => void this.cancel(),
     );
-    this.cleanup = new CleanupAvailability(this.widget.cleanup, () => {
-      this.previews.check(() => this.checkCleanup());
-    });
+    this.cleanup = new EdgeFinishCleanup(
+      editor,
+      this.widget.cleanup,
+      this.previews,
+      () => this.valid && this.size > 0 && this.lease?.phase === "editing",
+    );
     this.drag = new EdgeFinishDrag(
       editor,
       this.widget,
@@ -77,13 +77,11 @@ export class BodyEdgeFinishControls {
     editor.world.changed.add(this.update);
     this.update();
   }
-  private selected(): BodyEdgeFinish["edges"] {
-    const resolution = this.editor.modeling.resolve(this.mode);
-    return resolution.available ? resolution.inputs : [];
-  }
-
   setMode(mode: BodyEdgeFinish["mode"]): void {
-    if (this.editor.blocked || this.drag.active || this.mode === mode) return;
+    if (this.editor.blocked || this.drag.active) return;
+    const faces =
+      !this.lease && this.editor.modeling.targets.some((target) => target.kind === "face");
+    if (this.mode === mode && !faces) return;
     this.cleanup.reset();
     this.editor.modeling.setTool(mode);
     this.mode = mode;
@@ -94,14 +92,16 @@ export class BodyEdgeFinishControls {
       this.previews.check(() => this.expandSelection());
       this.queue(this.size);
       this.lease.history?.checkpoint();
-    }
+    } else if (faces && this.begin(mode)) this.focus();
     this.editor.refresh();
   }
   private begin(mode: BodyEdgeFinish["mode"]): boolean {
     if (this.lease) return this.mode === mode && this.lease.phase === "editing";
-    if (this.editor.blocked || this.editor.world.active || !this.selected().length) return false;
+    if (this.editor.blocked || this.editor.world.active) return false;
     this.mode = mode;
-    this.edges = this.selected();
+    this.frame = selectedEdgeFrame(this.editor, mode);
+    if (!this.frame) return false;
+    this.edges = this.frame.edges;
     this.lease = this.editor.interactions.acquire(
       "body-edge-finish",
       () => this.cancel(),
@@ -109,6 +109,8 @@ export class BodyEdgeFinishControls {
       { navigation: "when-released" },
     );
     if (!this.lease) return false;
+    this.editor.modeling.targets = this.edges.map((edge) => ({ kind: "edge", ...edge }));
+    this.editor.modeling.setTool(mode);
     this.size = 0;
     this.valid = false;
     this.invalid = false;
@@ -203,21 +205,6 @@ export class BodyEdgeFinishControls {
     }
     this.editor.refresh();
   }
-  private previewSettled(calculated: boolean): void {
-    if (calculated) {
-      if (this.valid && this.size > 0 && this.lease?.phase === "editing") this.cleanup.schedule();
-      else this.cleanup.reset();
-    }
-    this.editor.refresh();
-  }
-  private async checkCleanup(): Promise<void> {
-    const request = this.previews.latest;
-    if (!this.valid || this.lease?.phase !== "editing") return;
-    const success = await this.editor.store.request({ kind: "check-cleanup" });
-    if (request === this.previews.latest && this.valid && this.lease?.phase === "editing")
-      this.cleanup.resolve(this.editor.store.cleanupAvailable, success);
-    this.editor.refresh();
-  }
   private async finish(cleanup = false): Promise<boolean> {
     await this.previews.settle();
     const lease = this.lease;
@@ -269,33 +256,26 @@ export class BodyEdgeFinishControls {
   private update = (): void => {
     this.cleanup.update(!!this.lease && this.size > 0, this.editor.blocked || !this.valid);
     if (!this.lease) {
-      const selected = this.selected();
       const tool = this.editor.modeling.tool;
       if (
         this.editor.world.active ||
         this.editor.interactions.current ||
-        !selected.length ||
         (tool !== "fillet" && tool !== "chamfer")
       ) {
         this.widget.root.hidden = true;
         return;
       }
       this.mode = tool;
-      const frame = selectedEdgeFrame(this.editor);
-      if (!frame) {
-        this.widget.root.hidden = true;
-        return;
-      }
-      this.anchor = frame.anchor;
-      this.outward = frame.outward;
-      this.width = frame.width;
+      this.frame = selectedEdgeFrame(this.editor, tool);
+    }
+    const frame = this.frame;
+    if (!frame) {
+      this.widget.root.hidden = true;
+      return;
     }
     this.widget.update(
-      this.editor.world.camera,
-      this.outward,
-      this.width,
-      this.editor.world.project(this.anchor),
-      edgeViewportDirection(this.anchor, this.outward, (p) => this.editor.world.project(p)),
+      this.editor.world,
+      frame,
       this.mode,
       !!this.lease,
       this.lease ? this.size : 0,

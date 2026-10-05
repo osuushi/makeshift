@@ -83,8 +83,8 @@ export class ModelingTools {
         erode: "Select complete bodies to erode",
         offset: "Select faces or bodies to offset",
         move: "Select bodies, faces or edges to move",
-        fillet: "Select solid edges to round",
-        chamfer: "Select solid edges to bevel",
+        fillet: "Select solid faces or edges to round",
+        chamfer: "Select solid faces or edges to bevel",
         extrude: "Select a closed profile or planar face",
         revolve: "Select a closed profile or planar face",
         loft: "Choose ordered sections",
@@ -118,6 +118,11 @@ export class ModelingTools {
     editor.notice = "";
     if (tool === "revolve") this.revolve();
     if (tool === "loft") this.loft();
+    if (
+      (tool === "fillet" || tool === "chamfer") &&
+      editor.modeling.targets.some((target) => target.kind === "face")
+    )
+      this.edgeMode(tool);
     editor.refresh();
   }
   dispose(): void {

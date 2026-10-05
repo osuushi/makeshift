@@ -102,10 +102,31 @@ function wholeBodySelection(c: SelectionContext): Resolution<Body[]> {
     return unavailable("Select complete bodies");
   return available(c.complete);
 }
-function edgeSelection(c: SelectionContext): Resolution<BodyEdgeFinish["edges"]> {
-  return c.ordered.every((t) => t.kind === "edge")
-    ? available(c.edges.map(({ body, edge }) => ({ body, edge })))
-    : unavailable("Select explicit edges");
+function edgeSelection(
+  c: SelectionContext,
+  document: SketchDocument,
+): Resolution<BodyEdgeFinish["edges"]> {
+  if (!c.ordered.every((target) => target.kind === "edge" || target.kind === "face"))
+    return unavailable("Select solid faces or explicit edges");
+  const edges: BodyEdgeFinish["edges"] = [];
+  const seen = new Set<string>();
+  for (const target of c.ordered) {
+    if (target.kind !== "edge" && target.kind !== "face") continue;
+    const body = document.bodies?.find((body) => body.id === target.body);
+    const ids =
+      target.kind === "edge"
+        ? [target.edge]
+        : (body?.faces.find((face) => face.id === target.face)?.edges ?? []);
+    if (!ids.length || ids.some((id) => !body?.edges.some((edge) => edge.id === id)))
+      return unavailable("A selected face has no valid boundary edges");
+    for (const id of ids) {
+      const key = `${target.body}:${id}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      edges.push({ body: target.body, edge: id });
+    }
+  }
+  return available(edges);
 }
 function offsetSelection(
   c: SelectionContext,
