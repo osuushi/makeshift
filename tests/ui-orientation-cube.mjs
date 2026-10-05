@@ -75,7 +75,7 @@ export async function orientationCubeRoute(page, name) {
     geometric(history),
     "Cube gestures leave accepted geometry history unchanged",
   );
-  assert.equal((await navigationTips(page)).length, 1, "Cube gestures replace one live view tip");
+  assert.ok((await navigationTips(page)).length > 1, "Cube gestures retain the view suffix");
   await page.mouse.move(center.x, center.y);
   await page.mouse.down();
   await page.mouse.move(center.x + 24, center.y + 18, { steps: 6 });

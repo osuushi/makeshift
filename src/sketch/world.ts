@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { type CameraState, restoreCamera } from "../model/camera-state.js";
 import { fitCameraDepth } from "./camera-depth.js";
 import { alignCameraToPlane, type CameraFraming, planeCameraPose } from "./camera-motion.js";
 import { levelOrientation, type OrbitPointer, SmoothedTurntable } from "./camera-orbit.js";
@@ -193,6 +194,22 @@ export class World {
       distance: this.camera.position.distanceTo(this.target),
       height: this.height,
     });
+  }
+  animateCamera(state: CameraState): void {
+    const camera = new THREE.OrthographicCamera();
+    camera.position.fromArray(state.position);
+    camera.up.fromArray(state.up);
+    const target = new THREE.Vector3(...state.target);
+    camera.lookAt(target);
+    this.motion.start(
+      {
+        target,
+        quaternion: camera.quaternion,
+        distance: camera.position.distanceTo(target),
+        height: state.height,
+      },
+      () => restoreCamera(this, state),
+    );
   }
   levelHorizon(): void {
     if (this.rollAnimation.active) return;

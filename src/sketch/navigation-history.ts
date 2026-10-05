@@ -98,10 +98,12 @@ export class NavigationHistory {
     snapshot: HistoryNavigation,
     restoreSelection: (selection: HistorySelection) => void,
   ): void {
+    const before = captureCamera(this.world);
     this.clear();
     this.withoutRecording(() => {
       restoreSelection(snapshot.selection);
-      restoreCamera(this.world, snapshot.camera);
+      restoreCamera(this.world, before);
+      this.world.animateCamera(snapshot.camera);
     });
   }
 }

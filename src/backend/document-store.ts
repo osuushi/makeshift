@@ -58,7 +58,8 @@ export class DocumentStore {
   private navigate(change: NavigationChange): void {
     const { before, after } = change.navigation;
     if (JSON.stringify(before) === JSON.stringify(after)) return;
-    this.expireNavigation();
+    if (this.records.some((record) => record.navigation && record.entry.state === "undone"))
+      this.expireNavigation();
     this.records.push({
       entry: { ...this.entry({ kind: "navigation", parameters: {} }, "changed"), state: "applied" },
       navigation: structuredClone(change.navigation),

@@ -28,33 +28,75 @@ const tips = (store: DocumentStore) =>
       entry.operation.kind === "navigation" && ["applied", "undone"].includes(entry.state ?? ""),
   );
 
-test("only the latest view tip remains reversible, including workspace and selection", () => {
+test("the full trailing view suffix navigates in order and expires when crossed", () => {
   const store = new DocumentStore();
   store.accept(document);
   const before = view(0, { ...pick("input"), workspace: { key: "XY", frame: planes.XY } });
-  const after = view(10);
-  navigation(store, before, after);
-  const expiredId = tips(store)[0].id;
-  navigation(store, after, view(20));
-  assert.equal(tips(store).length, 1);
-  assert.equal(
-    store.history.some((entry) => entry.id === expiredId),
-    false,
-  );
+  const middle = view(10);
+  const after = view(20);
+  navigation(store, before, middle);
+  navigation(store, middle, after);
+  assert.equal(tips(store).length, 2);
   store.undo();
-  assert.deepEqual(store.restoredNavigation, after);
-  assert.equal(store.restoredOperation?.kind, "navigation");
+  assert.deepEqual(store.restoredNavigation, middle);
+  store.undo();
+  assert.deepEqual(store.restoredNavigation, before);
   assert.deepEqual(store.data, document);
+  assert.equal(tips(store).length, 2, "Undone entries remain eligible in the full history tail");
   store.redo();
-  assert.deepEqual(store.restoredNavigation, view(20));
+  assert.deepEqual(store.restoredNavigation, middle);
+  store.redo();
+  assert.deepEqual(store.restoredNavigation, after);
   store.undo();
   store.undo();
-  assert.equal(store.data.sketches.length, 0, "No older view tip stands before geometry Undo");
-  assert.equal(tips(store).length, 0);
+  store.undo();
+  assert.equal(store.data.sketches.length, 0);
+  assert.equal(tips(store).length, 0, "Crossing into geometry removes the entire future suffix");
   assert.equal(store.restoredNavigation, undefined);
   store.redo();
   assert.deepEqual(store.data, document);
   assert.equal(store.canRedo, false);
+});
+
+test("new views after partial or full view Undo discard all former view states", () => {
+  for (const count of [1, 2]) {
+    const store = new DocumentStore(document);
+    navigation(store, view(0), view(10));
+    navigation(store, view(10), view(20));
+    const oldIds = tips(store).map((entry) => entry.id);
+    for (let i = 0; i < count; i++) store.undo();
+    const baseline = count === 1 ? view(10) : view(0);
+    navigation(store, baseline, view(30));
+    assert.equal(tips(store).length, 1);
+    assert.ok(store.history.every((entry) => !oldIds.includes(entry.id)));
+    store.undo();
+    assert.deepEqual(store.restoredNavigation, baseline);
+    store.undo();
+    assert.equal(tips(store).length, 0);
+    assert.equal(store.canUndo, false);
+    assert.equal(store.canRedo, false);
+  }
+});
+
+test("Undoing an edit never exposes a view from before that edit", () => {
+  const store = new DocumentStore();
+  store.accept(document);
+  navigation(store, view(0), view(10));
+  navigation(store, view(10), view(20));
+  const changed = { units: "mm" as const, sketches: [emptySketch(planes.XZ)] };
+  store.accept(changed);
+  store.undo();
+  assert.deepEqual(store.data, document);
+  store.undo();
+  assert.equal(store.restoredNavigation, undefined);
+  assert.equal(store.data.sketches.length, 0);
+  assert.equal(tips(store).length, 0);
+  navigation(store, view(20), view(30));
+  store.undo();
+  store.undo();
+  assert.equal(tips(store).length, 0);
+  store.redo();
+  assert.deepEqual(store.data, document, "The old future views cannot preempt geometry Redo");
 });
 
 test("geometry Undo, view Undo/Redo and retained geometry Redo have coherent order", () => {
