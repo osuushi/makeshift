@@ -4,18 +4,22 @@ import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { settled } from "./ui-helpers.mjs";
 import { changeScale, geometryScaleRoute, preferencesRoute } from "./ui-interface-scale.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
+import { installTestFrames } from "./ui-test-frames.mjs";
 
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 await mkdir(".cache/sketch-review", { recursive: true });
 try {
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  for (const name of runtimeNames(["chromium", "webkit"])) {
+    const engine = { chromium, webkit }[name];
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({
         viewport: { width: 1280, height: 800 },
         deviceScaleFactor: 2,
       });
+      await installTestFrames(page);
       page.setDefaultTimeout(30000);
       const errors = [];
       page.on("pageerror", (error) => errors.push(error.message));

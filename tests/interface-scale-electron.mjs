@@ -3,21 +3,25 @@ import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { _electron } from "playwright";
+import { electronTestArguments } from "./native-documents.mjs";
 import { settled } from "./ui-helpers.mjs";
 import { changeScale, geometryScaleRoute, preferencesRoute } from "./ui-interface-scale.mjs";
+import { installTestFrames } from "./ui-test-frames.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
 const directory = await mkdtemp(join(tmpdir(), "makeshift-interface-scale-"));
 let app;
 async function launch() {
   app = await _electron.launch({
-    args: [".", `--user-data-dir=${directory}`],
+    args: electronTestArguments([".", `--user-data-dir=${directory}`]),
     env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
   });
   await app.evaluate(({ dialog }) => {
     dialog.showMessageBox = async () => ({ response: 2 });
   });
-  return app.firstWindow();
+  const page = await app.firstWindow();
+  await installTestFrames(page);
+  return page;
 }
 async function close() {
   if (!app) return;
