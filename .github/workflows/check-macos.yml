@@ -307,7 +307,6 @@ jobs:
           node scripts/clean-tests.mjs
           npx tsc -p tsconfig.test.json
       - name: Install WebKit
-        if: startsWith(matrix.lane, 'webkit-')
         run: npx playwright install webkit
       - name: Native host and macOS setup tests
         if: matrix.lane == 'geometry'
@@ -340,7 +339,7 @@ jobs:
           npm run test:current-tools
           node tests/ui-runtime-cleanup.mjs
       - name: Navigation Undo and context boundaries
-        if: matrix.lane == 'webkit-controls'
+        if: matrix.lane == 'electron-host'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: |
@@ -349,35 +348,37 @@ jobs:
           node tests/projection-history-ui.mjs
           node tests/navigation-touch-ui.mjs
       - name: Edge finish faces and surface movement
-        if: matrix.lane == 'webkit-controls'
+        if: matrix.lane == 'electron-host'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: node tests/edge-finish-ui.mjs
       - name: Thread settings correction
-        if: matrix.lane == 'webkit-controls'
+        if: matrix.lane == 'geometry'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: |
           node tests/thread-application-ui.mjs
           node tests/thread-correction-ui.mjs
       - name: Thread presets and saved-settings compatibility
-        if: matrix.lane == 'webkit-controls'
+        if: matrix.lane == 'geometry'
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
         run: npm run test:thread-presets
       - name: Standalone cleanup and separate geometry history
         if: matrix.lane == 'webkit-controls'
         run: npm run test:standalone-cleanup
       - name: Modal Undo boundaries
-        if: matrix.lane == 'webkit-controls'
+        if: matrix.lane == 'geometry'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: node tests/modal-undo-boundary-ui.mjs
       - name: Boolean operand collection and preferences
-        if: matrix.lane == 'webkit-controls'
+        if: matrix.lane == 'geometry'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: node tests/boolean-collection-ui.mjs
       - name: Interface scale and camera independence
-        if: matrix.lane == 'webkit-controls'
+        if: matrix.lane == 'geometry'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: |
@@ -389,7 +390,9 @@ jobs:
           node tests/ui-runtime-cleanup.mjs
           node tests/agent-finder-launch.mjs
       - name: Orientation cube click and touch acceptance
-        if: matrix.lane == 'webkit-controls'
+        if: matrix.lane == 'geometry'
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
         run: |
           MAKESHIFT_TEST_BROWSER=webkit node tests/orientation-cube-ui.mjs
       - name: Native Electron navigation gestures
@@ -398,7 +401,7 @@ jobs:
           npm run test:electron -- --navigation-only
           node tests/navigation-host-ui.mjs
       - name: Recent tools discovery and geometry invocation
-        if: matrix.lane == 'webkit-controls'
+        if: matrix.lane == 'geometry'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: node tests/recent-tools-ui.mjs
