@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { electronSession } from "./native-documents.mjs";
 import { plate } from "./ui-body-fillet.mjs";
+import { standaloneOnly } from "./ui-cleanup-controls.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { reopen } from "./ui-reopen-first.mjs";
-import { completed } from "./ui-reopen-state.mjs";
+import { completed, ready } from "./ui-reopen-state.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 
 await withUiRuntimes(
@@ -19,19 +20,12 @@ await withUiRuntimes(
         accepted,
         "exact accepted IDs, BRep and decorators are reused",
       );
-      // Wait for the ordinary settled cleanup indicator, rather than sampling before its debounce.
-      await page.waitForFunction(
-        () =>
-          document.querySelector(".extrude-controls .commit-cleanup")?.getAttribute("aria-busy") ===
-          "false",
-      );
+      await standaloneOnly(page);
+      await ready(page, "Accept extrusion");
       const requests = await trace.requests();
       assert.ok(requests.includes("reopen"));
       assert.deepEqual(
-        requests.filter(
-          (kind) =>
-            !["reopen", "read", "read-history", "selection", "check-cleanup"].includes(kind),
-        ),
+        requests.filter((kind) => !["reopen", "read", "read-history", "selection"].includes(kind)),
         [],
       );
       await page.getByRole("textbox", { name: "Extrusion distance", exact: true }).fill("12");
