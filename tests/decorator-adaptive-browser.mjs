@@ -37,6 +37,12 @@ try {
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage();
+      const requestedRate = Number(process.env.MAKESHIFT_PREVIEW_CPU_RATE ?? 1);
+      const pressure = name === "chromium" && requestedRate > 1 ? requestedRate : 1;
+      if (pressure > 1) {
+        const session = await page.context().newCDPSession(page);
+        await session.send("Emulation.setCPUThrottlingRate", { rate: pressure });
+      }
       await page.goto(server.resolvedUrls.local[0]);
       const results = await page.evaluate(
         async ({ document, path, signaturePath, placementPath }) => {
@@ -57,6 +63,7 @@ try {
                     workerMs: Math.round(event.data.elapsedMs),
                     triangles: event.data.meshes.map(({ indices }) => indices.length / 3),
                     processedIds: event.data.processedIds,
+                    samples: event.data.samples,
                   });
               };
               worker.onerror = (event) => {
@@ -131,7 +138,10 @@ try {
         results.live.at(-1).triangles.every((count, i) => count >= results.live[0].triangles[i]),
         `${name}: measured headroom should raise live detail`,
       );
-      console.log(`${name}: adaptive live and full-quality settled previews passed`, results);
+      console.log(
+        `${name}: adaptive live and full-quality settled previews passed (requested page CPU throttle ${pressure}x; measured worker timing, not tester hardware)`,
+        JSON.stringify(results),
+      );
     } finally {
       await browser.close();
     }

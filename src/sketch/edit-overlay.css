@@ -191,11 +191,13 @@
 .point-chooser polyline {
   fill: none;
   stroke: currentColor;
+  /* ui-scale: viewbox */
   stroke-width: 1.8px;
 }
 .point-chooser circle {
   fill: currentColor;
   stroke: white;
+  /* ui-scale: viewbox */
   stroke-width: 1px;
 }
 .point-choice-hint {

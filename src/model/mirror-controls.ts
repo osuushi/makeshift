@@ -69,9 +69,22 @@ export class MirrorControls {
     const result = e.modeling.resolve("mirror");
     return result.available ? { kind: "bodies", ids: result.inputs.map((b) => b.id) } : null;
   }
-  private begin(): void {
+  async reopen(operation: MirrorOperation): Promise<void> {
+    this.begin(operation);
+    if (!this.lease) throw new Error("Cannot restore mirror inputs");
+    this.queue();
+    await this.running;
+    if (!this.valid) throw new Error("Cannot regenerate the accepted mirror");
+    this.widget.offset.focus();
+    this.widget.offset.select();
+  }
+  private begin(restored?: MirrorOperation): void {
     const e = this.editor,
-      source = this.selected();
+      source = restored
+        ? restored.kind === "sketch"
+          ? { kind: "sketch" as const, sketchId: restored.sketchId, ids: [...restored.ids] }
+          : { kind: "bodies" as const, ids: [...restored.ids] }
+        : this.selected();
     if (!source || e.blocked || e.interactions.current) return;
     this.lease = e.interactions.acquire(
       "mirror",
@@ -83,10 +96,15 @@ export class MirrorControls {
     this.source = source;
     this.previousSelection = e.selected.targets;
     this.previousModels = e.modeling.targets;
-    this.reference = null;
+    this.reference = restored
+      ? restored.kind === "sketch"
+        ? { kind: "line", line: structuredClone(restored.line) }
+        : { kind: "plane", plane: structuredClone(restored.plane) }
+      : null;
     this.valid = false;
     this.latest = this.pending = null;
     this.widget.open(e);
+    if (restored) this.widget.keep.checked = restored.keepOriginal;
     this.lease.trackHistory(
       this.widget.root,
       () => ({
@@ -169,6 +187,8 @@ export class MirrorControls {
     );
     onModelKeydown((event) => {
       if (!this.lease) return;
+      if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "z")
+        return;
       if (event.key === "Escape" || event.key === "Enter") {
         event.preventDefault();
         if (event.key === "Escape") void this.cancel();

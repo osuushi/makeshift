@@ -6,6 +6,7 @@ import {
 } from "../model/cleanup.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
+import type { HistoryOperation } from "../sketch/operation-history.js";
 import { continueBodyMetadata } from "./body-metadata.js";
 import { EdgeSizeLimit } from "./edge-size-limit.js";
 import { FaceOffsetEdit } from "./face-offset-edit.js";
@@ -60,7 +61,7 @@ export class SolidEdits {
   booleanTargets: string[] = [];
   booleanMode: BooleanMode | undefined;
   constructor(private kernel: SolidCalculator) {}
-  previewQuality(kind: ModelRequest["kind"] | "script" | undefined) {
+  previewQuality(kind: HistoryOperation["kind"] | undefined) {
     return {
       meshFit: kind === "reconstruct-mesh" ? this.meshFit : undefined,
       erosionQuality: kind === "erode" ? this.erosionQuality : undefined,

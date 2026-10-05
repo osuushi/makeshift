@@ -4,6 +4,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 export class ExtrudeTargets {
   readonly root = document.createElement("div");
   selected: string[] | undefined;
+  restoredEligible: string[] | undefined;
   private key = "";
   constructor(
     private editor: SketchEditor,
@@ -12,12 +13,14 @@ export class ExtrudeTargets {
     this.root.className = "extrude-targets";
   }
   get eligible(): string[] {
+    if (this.restoredEligible) return this.restoredEligible;
     return (this.editor.store.data.bodies ?? [])
       .filter((body) => this.editor.bodiesVisible && this.editor.visibility.visible(body.id))
       .map((body) => body.id);
   }
   reset(): void {
     this.selected = undefined;
+    this.restoredEligible = undefined;
     this.key = "";
   }
   update(visible: boolean): void {

@@ -73,7 +73,7 @@ Freeze the pivot throughout the drag and rotate both camera position and view
 target about it, preserving the pivot's screen location and reversibility. Release
 leveling retains the view-axis roll behavior described below. Cube face
 clicks retain their existing view target. These are transient camera decisions,
-with no model edits or document Undo entries.
+using the ephemeral view Undo contract in [edit lifecycle](edit-lifecycle.md#ephemeral-view-undo-founder-decision-2026-10-03).
 
 ### Uniform turntable and explicit roll
 
@@ -112,7 +112,7 @@ Animate over 280 ms with cubic ease-out, or immediately with reduced motion. Vie
 and zoom stay fixed; only roll changes. New navigation interrupts the animation.
 Cancellation, Escape and focus loss end the drag without snapping. Releasing Command
 mid-drag retains capture. Capture blocks editing, trailing clicks and wheel/pinch.
-Camera changes never modify the document or Undo. On macOS, Electron’s native
+Camera gestures retain accepted geometry and use the ephemeral view Undo contract. On macOS, Electron’s native
 [rotate-gesture event](https://www.electronjs.org/docs/latest/api/browser-window/#event-rotate-gesture-macos)
 recognizes a two-finger twist as one 90° view turn about the cursor. The host sends
 the current native cursor position with each packet, converted from screen DIP
@@ -164,7 +164,7 @@ Two-finger scrolling pans without leaving the sketch plane. Command-click-and-dr
 invokes turntable rotation and exits sketch mode.
 Two-finger click-and-drag (secondary-button drag) pans.
 Pinching zooms about the pointer. Pan and zoom retain the current sketch plane;
-orbit exits sketch mode. Camera edits never alter document geometry or Undo.
+orbit exits sketch mode. Camera gestures retain accepted geometry and use the ephemeral view Undo contract.
 Middle-button drag remains a mouse pan fallback. The founder selected
 secondary-button pan after the three-finger DOM input experiment; no native
 trackpad integration or Shift-scroll fallback is needed for this mapping.
@@ -189,23 +189,37 @@ establish physical trackpad or iPad touch behavior.
 ### Orientation cube
 
 The upper-right cube follows the current camera. Drag with the primary pointer to
-use the same turntable rotation, Option-roll and release leveling as Command-drag; a face click
+use the same turntable rotation and release leveling as Command-drag. Option-drag
+roll measures pointer bearing around the cube center, one-to-one in angle; radial
+motion adds no roll. Viewport Option-drag retains its model/selection-centered bearing.
+A face click
 aligns Front (−Y), Back (+Y), Left (−X), Right (+X), Top (+Z), or Bottom (−Z).
 The white/near-black cube has six inset labeled faces, twelve edge bevels and eight
-corner bevels. Labels are projected in each face plane, rotating and foreshortening
-with the rigid cube. Edge clicks align to the equal-weight diagonal of their two
+corner bevels. The face half-width is 0.58 of the cube half-width, leaving wider
+bevel polygons as the actual pointer/touch targets without overlapping hit regions.
+Labels are projected in each face plane, rotating and foreshortening with the rigid
+cube. Edge clicks align to the equal-weight diagonal of their two
 axes (flat 45°); corner clicks align to the equal-weight three-axis isometric view.
 Bevels have tooltips and accessible names but no visible labels.
-A face click from an oblique view chooses the nearest of its four quarter-turn
-orientations, avoiding an unnecessary roll. Clicking an already face-aligned view
-again resets it to canonical roll. Canonical side and diagonal views keep Z upright;
+A single face click chooses the nearest of its four quarter-turn orientations,
+including when already face-aligned. Pointer face clicks wait 250 ms after release;
+a second press on the same face within that interval (within 16 CSS px for mouse/pen
+or 24 CSS px for touch) suppresses the single-click and aligns directly to canonical
+roll on its release. A second press can be held beyond the interval without an
+intermediate view change. A drag, pointer cancellation, Escape, blur, another
+pointer interaction or wheel/gesture navigation cancels the pending alignment.
+Delayed callbacks also reject changed camera/workspace state and active editing
+or orbit. Enter/Space remain immediate: nearest roll on approach, canonical roll
+when the face is already aligned. Focused cube keys take precedence over
+canonical-plane entry shortcuts. Canonical side and diagonal views keep Z upright;
 canonical Top uses +Y up and Bottom uses −Y up. Bevel views retain canonical roll.
-All visible surfaces support Tab and Enter/Space. Alignment animates over 280 ms
+Cube surfaces are excluded from sequential Tab navigation; Tab is reserved for
+editing controls. Direct accessibility activation retains Enter/Space support.
+Alignment animates over 280 ms
 with cubic ease-out, using the shared camera transition. Reduced motion applies
 the orientation immediately; subsequent navigation interrupts the animation.
 Navigation retains the view target, distance
-and zoom, and exits the planar workspace. It creates no geometry edit or camera
-Undo step; normal sketch exit still clears selection through selection history.
+and zoom, and exits the planar workspace. Its camera/workspace/selection change uses the ephemeral view Undo contract and creates no geometry edit.
 Pointer capture retains drags outside the cube; Escape, cancellation and focus
 loss stop without leveling. Active modeling gestures block cube navigation.
 

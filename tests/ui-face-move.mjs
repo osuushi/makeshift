@@ -9,7 +9,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 async function quantity(page, label, value) {
   await page.getByRole("button", { name: label, exact: true }).click();
-  await page.locator(".face-move-gizmo input").fill(String(value));
+  await page.locator(".face-move-gizmo .face-transform-value").fill(String(value));
   await inspect(page);
 }
 export async function faceMoveRoute(page, name, electron) {

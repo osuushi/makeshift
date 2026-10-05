@@ -18,7 +18,7 @@ export class FaceOffsetWidget {
   readonly handle = document.createElement("button");
   readonly input = document.createElement("input");
   readonly quantity = document.createElement("select");
-  private options = document.createElement("div");
+  readonly options = document.createElement("div");
   private dismiss = document.createElement("button");
   private accept = document.createElement("button");
   constructor(overlay: HTMLElement, accept: () => void, cancel: () => void) {

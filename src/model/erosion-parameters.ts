@@ -1,5 +1,12 @@
 import type { BodyErosion } from "./body.js";
-import type { ErosionWidget } from "./erosion-widget.js";
+
+interface ErosionInputs {
+  thickness: HTMLInputElement;
+  allowance: HTMLInputElement;
+  maxFaces: HTMLInputElement;
+  method: HTMLSelectElement;
+  meshDetail: HTMLSelectElement;
+}
 export class ErosionParameters {
   thickness = 1;
   allowancePercent = 50;
@@ -7,7 +14,7 @@ export class ErosionParameters {
   method: "fast" | "accurate" = "fast";
   meshDetail: "coarse" | "standard" | "fine" = "standard";
   maxFaces = 128;
-  bind(widget: ErosionWidget, begin: () => boolean, queue: () => void, signal: AbortSignal): void {
+  bind(widget: ErosionInputs, begin: () => boolean, queue: () => void, signal: AbortSignal): void {
     const options = { signal };
     for (const [input, key] of [
       [widget.thickness, "thickness"],
@@ -43,6 +50,18 @@ export class ErosionParameters {
       },
       options,
     );
+  }
+  restore(operation: BodyErosion): void {
+    this.reset();
+    this.thickness = operation.thickness;
+    this.method = operation.method ?? "fast";
+    this.keepOriginals = operation.keepOriginals ?? true;
+    if (this.method === "accurate")
+      this.allowancePercent = operation.thickness
+        ? (100 * (operation.allowance ?? 0)) / operation.thickness
+        : 0;
+    this.meshDetail = operation.meshDetail ?? "standard";
+    this.maxFaces = operation.maxFaces ?? 128;
   }
   reset(): void {
     Object.assign(this, new ErosionParameters());

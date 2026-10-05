@@ -4,6 +4,7 @@ import { launchElectron } from "./native-documents.mjs";
 import { project } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { assertPivot, makePivotBox, pressOnPlane } from "./ui-orbit-pivot.mjs";
+import { cubeSettled } from "./ui-orientation-cube-clicks.mjs";
 import { assertRollAnchor, assertSmoothRoll, recordRoll } from "./ui-roll-animation.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -56,10 +57,8 @@ async function route(page, name) {
   const touch = await touchDriver(page, name);
   try {
     for (const outside of [false, true]) {
-      for (let i = 0; i < 2; i++) {
-        await page.getByRole("button", { name: "Top view", exact: true }).click();
-        await inspect(page);
-      }
+      await page.getByRole("button", { name: "Top view", exact: true }).dblclick();
+      await cubeSettled(page);
       const sample = await pressOnPlane(page, outside ? [24, 2, 12] : [5, 4, 12]);
       const expected = outside ? [16, sample.point[1], 12] : sample.point;
       await page.mouse.move(30, 700);

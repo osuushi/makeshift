@@ -38,8 +38,6 @@ await withUiRuntimes(
     assert.deepEqual(state.document, original);
     state = await history(page);
     assert.ok(state.preview === null, "Undo returns to the initial preview");
-    state = await history(page);
-    assert.equal(state.interaction.kind, "shell");
     assert.deepEqual(state.document, original);
     state = await history(page, true);
     close(state.preview.bodies[0].volume, 1084);

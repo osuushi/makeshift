@@ -5,6 +5,14 @@ import type { World } from "./world.js";
 
 type CubeView = ReturnType<typeof createOrientationCube>;
 type Face = CubeView["entries"][number]["face"];
+const clickDelay = 250;
+type PendingClick = {
+  face: Face;
+  event: PointerEvent;
+  released: number;
+  timer: ReturnType<typeof setTimeout>;
+  unchanged: () => boolean;
+};
 
 export function installOrientationCube(world: World): () => void {
   const view = createOrientationCube(world);
@@ -20,7 +28,13 @@ export function installOrientationCube(world: World): () => void {
 
 class CubeInput {
   private abort = new AbortController();
-  private press: { event: PointerEvent; bounds: DOMRect; dragging: boolean } | null = null;
+  private press: {
+    event: PointerEvent;
+    bounds: DOMRect;
+    dragging: boolean;
+    canonical: boolean;
+  } | null = null;
+  private pending: PendingClick | null = null;
   private suppressClick = false;
 
   constructor(
@@ -32,55 +46,106 @@ class CubeInput {
     cube.addEventListener("pointerdown", this.start, options);
     cube.addEventListener("pointermove", this.move, options);
     cube.addEventListener("pointerup", this.release, options);
-    cube.addEventListener("pointercancel", this.stop, options);
-    cube.addEventListener("lostpointercapture", this.stop, options);
-    window.addEventListener("blur", this.stop, options);
+    this.installCancellation(options);
+    this.installActivation(options);
+  }
+  private installCancellation(options: { signal: AbortSignal }): void {
+    const cube = this.view.cube;
+    cube.addEventListener("pointercancel", this.cancel, options);
+    cube.addEventListener(
+      "lostpointercapture",
+      (event) => {
+        if (this.press?.event.pointerId === event.pointerId) this.cancel();
+      },
+      options,
+    );
+    window.addEventListener("blur", this.cancel, options);
+    window.addEventListener("wheel", this.cancelPending, { ...options, capture: true });
+    window.addEventListener("gesturestart", this.cancelPending, { ...options, capture: true });
+    window.addEventListener(
+      "pointerdown",
+      (event) => {
+        if (!(event.target instanceof Node) || !cube.contains(event.target)) this.cancelPending();
+      },
+      { ...options, capture: true },
+    );
     window.addEventListener(
       "keydown",
       (event) => {
-        if (event.key === "Escape" && this.press) {
+        if (event.key === "Escape" && (this.press || this.pending)) {
           event.preventDefault();
           event.stopImmediatePropagation();
-          this.stop();
+          this.cancel();
         }
       },
       { ...options, capture: true },
     );
-    for (const { face, group } of view.entries) {
+  }
+  private installActivation(options: { signal: AbortSignal }): void {
+    // Own the focused cube key before canonical-plane capture shortcuts.
+    window.addEventListener(
+      "keydown",
+      (event) => {
+        if ((event.key !== "Enter" && event.key !== " ") || !(event.target instanceof Node)) return;
+        const entry = this.view.entries.find(({ group }) => group.contains(event.target as Node));
+        if (!entry) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        this.keyboardAlign(entry.face);
+      },
+      { ...options, capture: true },
+    );
+    for (const { face, group } of this.view.entries) {
       group.addEventListener(
         "click",
         (event) => {
           event.stopPropagation();
-          if (!this.suppressClick) this.align(face);
-        },
-        options,
-      );
-      group.addEventListener(
-        "keydown",
-        (event) => {
-          if (event.key !== "Enter" && event.key !== " ") return;
-          event.preventDefault();
-          event.stopPropagation();
-          this.align(face);
+          if (!this.suppressClick) this.keyboardAlign(face);
         },
         options,
       );
     }
   }
-  private align(face: Face): void {
+  private keyboardAlign(face: Face): void {
+    this.cancelPending();
+    const direction = face.normal
+      .clone()
+      .applyQuaternion(this.world.camera.quaternion.clone().invert());
+    this.align(face, direction.z > 1 - 1e-8);
+  }
+  private align(face: Face, canonical = false): void {
     const world = this.world;
     if (!world.canNavigate() || world.orbit.active) return;
     world.exit();
-    const quaternion = cubeAlignment(face, world.camera.quaternion);
+    const quaternion = cubeAlignment(face, world.camera.quaternion, canonical);
     world.animateOrientation(quaternion);
   }
   private start = (event: PointerEvent): void => {
     event.stopPropagation();
     this.suppressClick = true;
-    if (event.button !== 0 || this.press || !this.world.canNavigate() || this.world.orbit.active)
+    if (event.button !== 0 || this.press || !this.world.canNavigate() || this.world.orbit.active) {
+      this.cancelPending();
       return;
+    }
+    const face = this.faceAt(event);
+    const pending = this.pending;
+    const canonical = Boolean(
+      pending &&
+        pending.face === face &&
+        pending.event.pointerType === event.pointerType &&
+        performance.now() - pending.released <= clickDelay &&
+        pending.unchanged() &&
+        Math.hypot(event.clientX - pending.event.clientX, event.clientY - pending.event.clientY) <=
+          (event.pointerType === "touch" ? 24 : 16),
+    );
+    this.cancelPending();
     this.world.cancelCameraMotion();
-    this.press = { event, bounds: this.view.cube.getBoundingClientRect(), dragging: false };
+    this.press = {
+      event,
+      bounds: this.view.cube.getBoundingClientRect(),
+      dragging: false,
+      canonical,
+    };
     this.view.cube.setPointerCapture(event.pointerId);
   };
   private move = (event: PointerEvent): void => {
@@ -95,7 +160,7 @@ class CubeInput {
         return;
       press.dragging = true;
       this.world.beginOrbit(
-        coordinates(start, press.bounds, this.world.canvas.getBoundingClientRect()),
+        coordinates(start, press.bounds),
         {
           x: start.clientX,
           y: start.clientY,
@@ -104,11 +169,7 @@ class CubeInput {
       );
       this.view.cube.classList.add("dragging");
     }
-    this.world.orbit.drag(
-      this.world,
-      coordinates(event, press.bounds, this.world.canvas.getBoundingClientRect()),
-      event.altKey,
-    );
+    this.world.orbit.drag(this.world, coordinates(event, press.bounds), event.altKey);
     this.world.requestDraw();
   };
   private release = (event: PointerEvent): void => {
@@ -118,11 +179,43 @@ class CubeInput {
     if (press.dragging) {
       this.world.levelHorizon();
     } else {
-      const entry = this.view.entries.find(({ group }) =>
-        group.contains(press.event.target as Node),
-      );
-      if (entry) this.align(entry.face);
+      const face = this.faceAt(press.event);
+      if (face) {
+        if (press.canonical || face.kind !== "face") this.align(face, press.canonical);
+        else this.queueClick(face, event);
+      }
     }
+  };
+  private faceAt(event: PointerEvent): Face | undefined {
+    return this.view.entries.find(({ group }) => group.contains(event.target as Node))?.face;
+  }
+  private queueClick(face: Face, event: PointerEvent): void {
+    const world = this.world;
+    const orientation = world.camera.quaternion.clone();
+    const target = world.target.clone();
+    const height = world.height;
+    const workspace = world.workspace;
+    const unchanged = () =>
+      orientation.equals(world.camera.quaternion) &&
+      target.equals(world.target) &&
+      height === world.height &&
+      workspace === world.workspace &&
+      !world.cameraTransitioning;
+    const timer = setTimeout(() => {
+      this.cancelPending();
+      if (unchanged()) this.align(face);
+    }, clickDelay);
+    this.pending = { face, event, released: performance.now(), timer, unchanged };
+    this.view.cube.setAttribute("aria-busy", "true");
+  }
+  private cancelPending = (): void => {
+    if (this.pending) clearTimeout(this.pending.timer);
+    this.pending = null;
+    this.view.cube.setAttribute("aria-busy", "false");
+  };
+  private cancel = (): void => {
+    this.cancelPending();
+    this.stop();
   };
   private stop = (): void => {
     const previous = this.press;
@@ -136,18 +229,14 @@ class CubeInput {
     this.world.requestDraw();
   };
   dispose(): void {
-    this.stop();
+    this.cancel();
     this.abort.abort();
   }
 }
 
-function coordinates(event: PointerEvent, bounds: DOMRect, viewport: DOMRect) {
-  const radius = Math.max(1, Math.min(viewport.width, viewport.height) / 2);
+function coordinates(event: PointerEvent, bounds: DOMRect) {
   return {
-    viewport: {
-      x: (event.clientX - viewport.left - viewport.width / 2) / radius,
-      y: -(event.clientY - viewport.top - viewport.height / 2) / radius,
-    },
+    rollCenter: { x: 0, y: 0 },
     x: (event.clientX - bounds.left - bounds.width / 2) / (bounds.width / 2),
     y: -(event.clientY - bounds.top - bounds.height / 2) / (bounds.height / 2),
   };

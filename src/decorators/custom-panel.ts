@@ -89,17 +89,21 @@ export function appendCustomDecorators(
         );
       }
     }
-    button(root, `Remove ${definition?.name ?? first.definition} from selected faces`, () => {
-      const selected = new Set(
-        editor.modeling.targets.flatMap((t) => (t.kind === "face" ? [t.face] : [])),
-      );
-      void editor.store.request({
-        kind: "decorator",
-        edit: {
-          action: "remove",
-          faces: group.flatMap((d) => d.faces.filter((f) => selected.has(f.face))),
-        },
-      });
-    });
+    button(
+      root,
+      `Remove ${definition?.name ?? first.definition} decorator from selected faces`,
+      () => {
+        const selected = new Set(
+          editor.modeling.targets.flatMap((t) => (t.kind === "face" ? [t.face] : [])),
+        );
+        void editor.store.request({
+          kind: "decorator",
+          edit: {
+            action: "remove",
+            faces: group.flatMap((d) => d.faces.filter((f) => selected.has(f.face))),
+          },
+        });
+      },
+    );
   }
 }

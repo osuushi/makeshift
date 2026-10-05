@@ -28,7 +28,7 @@ export async function knurlMembershipRoute(page) {
   await clearSelection(page);
   await worldClick(page, [0, -8, 2]);
   await page
-    .getByRole("button", { name: "Remove knurling from selected faces", exact: true })
+    .getByRole("button", { name: "Remove knurling decorator from selected faces", exact: true })
     .click();
   let state = await inspect(page);
   assert.equal(state.document.decorators[0].faces.length, 1);
@@ -48,7 +48,7 @@ export async function knurlMembershipRoute(page) {
   await clearSelection(page);
   await worldClick(page, [0, -8, 2]);
   await page
-    .getByRole("button", { name: "Remove knurling from selected faces", exact: true })
+    .getByRole("button", { name: "Remove knurling decorator from selected faces", exact: true })
     .click();
   assert.equal((await inspect(page)).document.decorators[0].faces.length, 1);
   await worldClick(page, [0, -8, 8]);

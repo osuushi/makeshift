@@ -18,10 +18,12 @@ import { ModelingTools } from "../model/modeling-tools.js";
 import { OverlapInput } from "../model/overlap-input.js";
 import { PlaneCutControls } from "../model/plane-cut-controls.js";
 import { ProjectionControls } from "../model/projection-controls.js";
+import { reopenControls } from "../model/reopen-controls.js";
 import { ScaleControls } from "../model/scale-controls.js";
 import { SectionControls } from "../model/section-controls.js";
 import { ShellControls } from "../model/shell-controls.js";
 import { TopologyMoveControls } from "../model/topology-move-controls.js";
+import { installSettings } from "../preferences/settings.js";
 import { TagControls } from "../tags/controls.js";
 import { ToolMenu } from "../tools/menu.js";
 import { installPlaneBounds } from "./plane-bounds.js";
@@ -117,8 +119,33 @@ const faceOffsets = new FaceOffsetControls(editor, overlay);
 const faceMoves = new TopologyMoveControls(editor, overlay);
 const edgeMoves = new TopologyMoveControls(editor, overlay, "edges");
 const bodyFinishes = new BodyEdgeFinishControls(editor, overlay);
-const booleans = new BooleanControls(editor, overlay);
+const tags = new TagControls(editor, app);
+const entities = new EntityViewer(editor, app, tags);
+const booleans = new BooleanControls(editor, overlay, entities);
 const bodyMove = new BodyMoveControls(editor, overlay);
+const disposeReopen = reopenControls(editor, async ({ request, cleanup: clean }) => {
+  if (request.kind === "extrude") await modelControls.reopenExtrude(request.extrusion, clean);
+  else if (request.kind === "boolean-bodies") await booleans.reopen(request.operation, clean);
+  else if (request.kind === "revolve") await modelControls.reopenRevolve(request.revolution, clean);
+  else if (request.kind === "loft") await modelControls.reopenLoft(request.operation, clean);
+  else if (request.kind === "shell") await shells.reopen(request.operation);
+  else if (request.kind === "erode") await erosion.reopen(request.operation);
+  else if (request.kind === "finish-edges") await bodyFinishes.reopen(request.operation, clean);
+  else if (request.kind === "offset-faces") await faceOffsets.reopen(request.operation, clean);
+  else if (request.kind === "cleanup") await cleanup.reopen(request.selection);
+  else if (request.kind === "scale") await scaling.reopen(request.operation);
+  else if (request.kind === "mirror") await mirror.reopen(request.operation);
+  else if (request.kind === "plane-cut") await planeCuts.reopen(request.operation);
+  else if (request.kind === "project") await projection.reopen(request.projection);
+  else if (request.kind === "transform-bodies") await bodyMove.reopen(request.transform);
+  else if (request.kind === "move-faces") await faceMoves.reopen(request.operation);
+  else if (request.kind === "move-edges") await edgeMoves.reopen(request.operation);
+  else if (request.kind === "construction-plane") await constructionPlanes.reopen(request.plane);
+  else {
+    const unsupported: never = request;
+    throw new Error(`Unsupported restored operation: ${JSON.stringify(unsupported)}`);
+  }
+});
 const cleanup = new CleanupControls(editor, overlay);
 const disposeModelHighlight = modelHighlight(editor);
 const disposeBodies = bodyView(editor);
@@ -153,8 +180,6 @@ const bodyActions = new BodyActions(
 );
 const deleteAction = new DeleteTopologyAction(editor);
 const mirror = new MirrorControls(editor, overlay);
-const tags = new TagControls(editor, app);
-const entities = new EntityViewer(editor, app, tags);
 const constructionPlanes = new ConstructionPlaneControls(editor, overlay, entities.referenceRows);
 const scaling = new ScaleControls(
   editor,
@@ -190,6 +215,7 @@ const disposeHost =
     ? (await import("../web/chrome.js")).installWebChrome(editor, app)
     : (await import("./host-controls.js")).installHostControls(editor, app);
 const disposePlaneEntry = planeEntryTools(editor);
+const disposeSettings = installSettings(editor, app);
 const toolMenu = new ToolMenu(editor, app);
 world.changed.add(() => {
   const mode = app.querySelector(".mode-label");
@@ -218,10 +244,12 @@ window.addEventListener("pagehide", (event) => {
   decorators.dispose();
   disposeDecorators();
   disposeHost();
+  disposeSettings();
   toolMenu.dispose();
   modelingTools.dispose();
   disposeControls();
   disposeCalculation();
+  disposeReopen();
   modelControls.dispose();
   bodyMove.dispose();
   bodyActions.dispose();

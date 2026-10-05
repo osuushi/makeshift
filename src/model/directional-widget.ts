@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { uiScale } from "../preferences/ui-scale.js";
 import { arrowWidthAxis, markerMarkup } from "../sketch/move-widget/geometry.js";
 import type { Vector } from "../sketch/planes.js";
 import "./directional-widget.css";
@@ -116,8 +117,8 @@ export function directionalOffset(
   width: Vector = arrowWidthAxis(normal),
 ) {
   const p = new THREE.Vector3(...normal)
-    .multiplyScalar(distance)
-    .addScaledVector(new THREE.Vector3(...width), 32)
+    .multiplyScalar(distance * uiScale())
+    .addScaledVector(new THREE.Vector3(...width), 32 * uiScale())
     .applyQuaternion(camera.quaternion.clone().invert());
   return { x: p.x, y: -p.y };
 }

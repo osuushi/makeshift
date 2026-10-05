@@ -1,12 +1,18 @@
-import type { DecoratorSettingsDraft } from "./settings-draft.js";
 import type { DecoratorField, DecoratorInstance, Settings } from "./types.js";
+
+/** Field lifecycle shared by accepted numeric edits and provisional application. */
+export interface DecoratorFieldDraft {
+  blur(): Promise<void>;
+  commit(): Promise<boolean>;
+  cancel(): void;
+}
 
 export function decoratorField(
   root: HTMLElement,
   schema: DecoratorField,
   instances: DecoratorInstance[],
   patch: (patch: Settings, preview: boolean) => void,
-  draft: DecoratorSettingsDraft,
+  draft: DecoratorFieldDraft,
 ) {
   const values = instances.map((d) => d.settings[schema.key] ?? schema.default);
   const mixed = values.some((v) => v !== values[0]);

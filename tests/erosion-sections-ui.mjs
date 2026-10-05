@@ -136,7 +136,7 @@ async function editCurvedFace(page, runtime) {
   await page.screenshot({ path: `.cache/sketch-review/${runtime}-erosion-curved-face.png` });
   await page.keyboard.press("m");
   await page.getByRole("button", { name: "Move faces Y", exact: true }).click();
-  await page.locator(".face-move-gizmo input").fill("-0.1");
+  await page.locator(".face-move-gizmo .face-transform-value").fill("-0.1");
   const preview = await inspect(page);
   assert(preview.preview, await page.locator(".status").textContent());
   assert(Math.abs(preview.preview.bodies[1].volume - cavity.volume) > 0.01);

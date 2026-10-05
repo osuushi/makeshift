@@ -1,16 +1,17 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import { AxialDrag } from "./axial-drag.js";
 import type { Extrusion, LiftSource } from "./body.js";
 import { CleanupAvailability } from "./cleanup-availability.js";
-import { extrudeKeys } from "./extrude-keys.js";
+import { ExtrudeInputs } from "./extrude-inputs.js";
 import { ExtrudeTargets } from "./extrude-targets.js";
 import { ExtrudeTwist } from "./extrude-twist.js";
 import { ExtrudeWidget } from "./extrude-widget.js";
 import { PreviewRunner } from "./preview-runner.js";
+import { ReopenCompletion } from "./reopen-completion.js";
 
 export class ExtrudeControls {
   private widget: ExtrudeWidget;
+  private completion = new ReopenCompletion();
   get root(): HTMLDivElement {
     return this.widget.root;
   }
@@ -31,7 +32,7 @@ export class ExtrudeControls {
     settled: (calculated) => this.previewSettled(calculated),
   });
   private valid = false;
-  private drag: AxialDrag;
+  private inputs: ExtrudeInputs;
   private cleanup: CleanupAvailability;
   private twist: ExtrudeTwist;
   get active(): boolean {
@@ -73,75 +74,56 @@ export class ExtrudeControls {
       this.abort.signal,
     );
     this.widget.addQuantity(this.twist.row);
+    this.widget.addQuantity(this.completion.root);
     this.cleanup = new CleanupAvailability(this.widget.cleanup, () => {
       if (this.previews.latest && this.valid) this.previews.check(() => this.checkCleanup());
     });
     this.widget.cleanup.onclick = () => void this.finish(true);
     this.root.append(this.targets.root);
     overlay.append(this.root);
-    this.drag = new AxialDrag(editor, this.widget.handle, this.abort.signal, {
-      begin: () => this.begin(),
-      lease: () => this.lease,
-      axis: () => this.widget.axis,
-      value: () => this.distance,
-      queue: (value, symmetric) => this.queue(value, symmetric),
-      symmetric: () => this.symmetric,
-      focus: () => {
-        this.widget.input.focus();
-        this.widget.input.select();
-      },
-      modifySelection: true,
-    });
-    this.installInputs();
-    editor.world.changed.add(this.update);
-    this.update();
-  }
-  private installInputs(): void {
-    const editor = this.editor;
-    const options = { signal: this.abort.signal };
-    this.widget.handle.addEventListener(
-      "click",
-      (event) => {
-        if (event.detail === 0 && this.begin()) {
-          editor.refresh();
-          this.input.focus();
-          this.input.select();
-        }
-      },
-      options,
-    );
-    this.input.addEventListener("focus", () => this.begin(), options);
-    this.widget.draft.root.addEventListener("focusin", () => this.begin(), options);
-    this.input.addEventListener(
-      "input",
-      () => {
-        if (this.begin()) this.queue(this.input.value.trim() ? Number(this.input.value) : NaN);
-      },
-      options,
-    );
-    extrudeKeys(
+    this.inputs = new ExtrudeInputs(
       editor,
-      this.root,
+      this.widget,
       {
+        begin: () => this.begin(),
+        lease: () => this.lease,
         active: () => this.active,
-        cancel: () => void this.cancel(),
-        finish: () => void this.finish(),
+        distance: () => this.distance,
+        symmetric: () => this.symmetric,
+        queue: (value, symmetric) => this.queue(value, symmetric),
         mode: (mode) => {
           this.mode = mode;
           this.queue(this.distance);
           this.lease?.history?.checkpoint();
         },
+        finish: () => void this.finish(),
+        cancel: () => void this.cancel(),
       },
       this.abort.signal,
     );
+    editor.world.changed.add(this.update);
+    this.update();
   }
-  private begin(): boolean {
+  async reopen(extrusion: Extrusion, cleanup: boolean): Promise<void> {
+    this.editor.modeling.setTool("extrude");
+    if (!this.begin(extrusion, cleanup)) throw new Error("Cannot restore extrusion inputs");
+    this.queue(this.distance, this.symmetric);
+    await this.previews.settle();
+    if (!this.valid) throw new Error("Cannot regenerate the accepted extrusion");
+    this.input.focus();
+    this.input.select();
+  }
+  private begin(restored?: Extrusion, cleanup = false): boolean {
     if (this.lease) return this.lease.phase === "editing";
     if (this.editor.blocked || this.editor.world.active || this.editor.modeling.tool !== "extrude")
       return false;
     const resolution = this.editor.modeling.resolve("extrude");
-    if (!resolution.available) return false;
-    this.sources = resolution.inputs;
+    if (!restored && !resolution.available) return false;
+    this.sources = restored
+      ? structuredClone(restored.sources)
+      : resolution.available
+        ? resolution.inputs
+        : [];
     if (!this.sources.length) return false;
     this.lease = this.editor.interactions.acquire(
       "extrude",
@@ -151,12 +133,20 @@ export class ExtrudeControls {
     );
     this.previews.clear();
     this.targets.reset();
-    this.mode = "auto";
-    this.widget.draft.reset();
-    this.distance = 0;
-    this.symmetric = false;
+    this.completion.reset();
+    if (restored) this.completion.begin(cleanup);
+    this.mode = restored?.mode ?? "auto";
+    this.widget.draft.restore(restored?.draft ?? { mode: "angle", value: 0 });
+    this.distance = restored?.distance ?? 0;
+    this.symmetric = restored?.symmetric ?? false;
     this.valid = false;
-    this.twist.origin ??= this.widget.axis ? [...this.widget.axis.center] : null;
+    this.twist.angle = restored?.twist?.angle ?? 0;
+    this.twist.origin =
+      restored?.twist?.origin ?? (this.widget.axis ? [...this.widget.axis.center] : null);
+    this.twist.input.value = String(this.twist.angle);
+    this.targets.selected = restored?.targets;
+    this.targets.restoredEligible = restored?.eligibleTargets;
+    this.input.value = String(this.distance);
     this.lease?.trackHistory(
       this.root,
       () => ({
@@ -167,8 +157,10 @@ export class ExtrudeControls {
         angle: this.twist.angle,
         origin: this.twist.origin,
         targets: this.targets.selected,
+        cleanup: this.completion.cleanup,
       }),
       async (state) => {
+        this.completion.input.checked = state.cleanup;
         this.mode = state.mode;
         this.widget.draft.restore(state.draft);
         this.twist.angle = state.angle;
@@ -241,7 +233,7 @@ export class ExtrudeControls {
       this.cleanup.resolve(this.editor.store.cleanupAvailable, success);
     this.editor.refresh();
   }
-  async finish(cleanup = false): Promise<boolean> {
+  async finish(cleanup = this.completion.cleanup): Promise<boolean> {
     await this.previews.settle();
     if (this.lease && !this.previews.latest && this.distance === 0) {
       await this.cancel();
@@ -262,6 +254,7 @@ export class ExtrudeControls {
     this.distance = 0;
     this.symmetric = false;
     this.twist.reset();
+    this.completion.reset();
     this.editor.refresh();
     return success;
   }
@@ -269,7 +262,7 @@ export class ExtrudeControls {
     const lease = this.lease;
     if (!lease?.close()) return;
     this.previews.clear();
-    this.drag.reset();
+    this.inputs.reset();
     lease.releaseCapture();
     lease.show(null);
     await this.editor.store.cancelPreview();
@@ -281,6 +274,7 @@ export class ExtrudeControls {
     this.distance = 0;
     this.symmetric = false;
     this.twist.reset();
+    this.completion.reset();
     this.editor.refresh();
   }
   private update = (): void => {

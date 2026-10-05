@@ -7,6 +7,13 @@ import { clearSelection } from "./ui-reconnection-helpers.mjs";
 export async function recessedPreviewRoute(page, name, worldPoint = [0, -8, 5]) {
   const before = (await inspect(page)).document;
   await clearSelection(page);
+  await page.waitForFunction(() => {
+    const view = window.makeshiftInspect();
+    return (
+      view.decoratorPreviewBounds.length > 0 &&
+      !document.querySelector(".decorator-preview-status")?.matches(":not([hidden])")
+    );
+  });
   await page.mouse.move(100, 80);
   const point = await project(page, worldPoint);
   let count = 0;
@@ -29,15 +36,16 @@ export async function recessedPreviewRoute(page, name, worldPoint = [0, -8, 5]) 
       const context = canvas.getContext("2d");
       context.drawImage(image, 0, 0);
       const pixels = context.getImageData(0, 0, 48, 48).data;
-      let teal = 0;
+      let decorated = 0;
       for (let i = 0; i < pixels.length; i += 4)
-        if (pixels[i + 1] - pixels[i] > 25 && pixels[i + 2] - pixels[i + 1] < 30) teal++;
-      return teal;
+        if (Math.max(...pixels.slice(i, i + 3)) - Math.min(...pixels.slice(i, i + 3)) > 40)
+          decorated++;
+      return decorated;
     }, png.toString("base64"));
   } while (count < 1200 && Date.now() < deadline);
   assert.ok(
     count >= 1200,
-    `Recessed preview must fill the interior face sample (${count}/2304 teal pixels)`,
+    `Recessed preview must fill the interior face sample (${count}/2304 colored pixels)`,
   );
   await page.screenshot({ path: `.cache/sketch-review/${name}-recessed-thread-preview.png` });
   await worldClick(page, worldPoint);

@@ -1,11 +1,12 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import { onModelKeydown } from "../sketch/model-keys.js";
 import type { LiftSource, Revolution } from "./body.js";
 import { extrusionAxis } from "./extrude-axis.js";
 import { ExtrudeTargets } from "./extrude-targets.js";
-import { axisInPlane, pickRevolveAxis, type RevolveAxis } from "./revolve-axis.js";
+import { ReopenCompletion } from "./reopen-completion.js";
+import type { RevolveAxis } from "./revolve-axis.js";
 import { installRevolveDrag } from "./revolve-drag.js";
+import { RevolveInputs } from "./revolve-inputs.js";
 import { RevolveWidget } from "./revolve-widget.js";
 
 export class RevolveControls {
@@ -15,6 +16,7 @@ export class RevolveControls {
   axis: RevolveAxis | null = null;
   angle = 360;
   height = 0;
+  private completion = new ReopenCompletion();
   private picking = false;
   private hover: RevolveAxis | null = null;
   private abort = new AbortController();
@@ -42,7 +44,7 @@ export class RevolveControls {
       this.mode = mode;
       this.queue();
     });
-    this.widget.options.append(this.targets.root);
+    this.widget.options.append(this.targets.root, this.completion.root);
     overlay.append(this.widget.root);
     this.widget.entry.onclick = () => this.begin();
     this.widget.axis.onclick = () => {
@@ -67,20 +69,54 @@ export class RevolveControls {
         },
         { signal: this.abort.signal },
       );
-    this.installPicking();
-    this.installKeys();
+    new RevolveInputs(editor, this.abort.signal, {
+      state: () => ({
+        lease: this.lease,
+        frame: this.frame,
+        picking: this.picking,
+        hover: this.hover,
+      }),
+      hover: (axis) => {
+        this.hover = axis;
+        editor.refresh();
+      },
+      choose: (axis) => {
+        this.axis = axis;
+        this.picking = false;
+        editor.notice = "Revolve · angle and total height · Enter accepts · Escape cancels";
+        this.queue();
+        this.lease?.history?.checkpoint();
+      },
+      mode: (mode) => {
+        this.mode = mode;
+        this.queue();
+        this.lease?.history?.checkpoint();
+      },
+      cancel: () => this.cancel(),
+      finish: () => this.finish(),
+    });
     installRevolveDrag(this, this.abort.signal);
     editor.world.changed.add(this.update);
     this.update();
   }
-  begin(): void {
+  async reopen(revolution: Revolution, cleanup: boolean): Promise<void> {
+    this.editor.modeling.setTool("revolve");
+    this.begin(revolution, cleanup);
+    if (!this.lease) throw new Error("Cannot restore revolution inputs");
+    this.queue();
+    await this.running;
+    if (!this.valid) throw new Error("Cannot regenerate the accepted revolution");
+    this.widget.angle.focus();
+    this.widget.angle.select();
+  }
+  begin(restored?: Revolution, cleanup = false): void {
     const editor = this.editor;
     if (editor.blocked || editor.interactions.current || editor.world.active) return;
     this.frame = extrusionAxis(editor);
     if (!this.frame) return;
     const resolution = editor.modeling.resolve("revolve");
     if (!resolution.available) return;
-    this.sources = resolution.inputs;
+    this.sources = restored ? structuredClone(restored.sources) : resolution.inputs;
     this.lease = editor.interactions.acquire(
       "revolve",
       () => this.cancel(),
@@ -88,14 +124,21 @@ export class RevolveControls {
       { navigation: "when-released" },
     );
     if (!this.lease) return;
-    this.axis = this.hover = null;
+    this.hover = null;
+    this.axis = restored?.axis ?? null;
     this.lastGood = this.inputError = "";
-    this.angle = 360;
-    this.height = 0;
-    this.mode = "auto";
-    this.picking = true;
+    this.angle = restored?.angle ?? 360;
+    this.height = restored?.height ?? 0;
+    this.mode = restored?.mode ?? "auto";
+    this.picking = !restored;
+    this.widget.angle.value = String(this.angle);
+    this.widget.height.value = String(this.height);
+    this.completion.reset();
+    if (restored) this.completion.begin(cleanup);
     this.valid = false;
     this.targets.reset();
+    this.targets.selected = restored?.targets;
+    this.targets.restoredEligible = restored?.eligibleTargets;
     this.latest = null;
     this.lease.trackHistory(
       this.widget.root,
@@ -106,8 +149,10 @@ export class RevolveControls {
         mode: this.mode,
         targets: this.targets.selected,
         picking: this.picking,
+        cleanup: this.completion.cleanup,
       }),
       async (state) => {
+        this.completion.input.checked = state.cleanup;
         this.axis = state.axis;
         this.angle = state.angle;
         this.height = state.height;
@@ -129,84 +174,6 @@ export class RevolveControls {
     );
     editor.notice = "Choose a straight edge, cylindrical face or world axis in the profile plane";
     editor.refresh();
-  }
-  private installPicking(): void {
-    const canvas = this.editor.world.canvas,
-      options = { signal: this.abort.signal, capture: true };
-    canvas.addEventListener(
-      "pointermove",
-      (event) => {
-        if (!this.picking || !this.lease || event.buttons) return;
-        const axis = pickRevolveAxis(this.editor, { x: event.clientX, y: event.clientY });
-        this.hover =
-          axis && this.frame && axisInPlane(axis, this.frame.center, this.frame.normal)
-            ? axis
-            : null;
-        this.editor.refresh();
-      },
-      options,
-    );
-    canvas.addEventListener(
-      "pointerleave",
-      () => {
-        if (!this.picking || !this.hover) return;
-        this.hover = null;
-        this.editor.refresh();
-      },
-      options,
-    );
-    canvas.addEventListener(
-      "click",
-      (event) => {
-        if (!this.picking || !this.lease || event.button || event.metaKey || event.ctrlKey) return;
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        const axis = pickRevolveAxis(this.editor, { x: event.clientX, y: event.clientY });
-        if (!axis || !this.frame) return;
-        if (!axisInPlane(axis, this.frame.center, this.frame.normal)) {
-          this.editor.message = "Choose an axis in the profile plane";
-          this.editor.refresh();
-          return;
-        }
-        this.axis = axis;
-        this.picking = false;
-        this.editor.notice = "Revolve · angle and total height · Enter accepts · Escape cancels";
-        this.queue();
-        this.lease.history?.checkpoint();
-      },
-      options,
-    );
-  }
-  private installKeys(): void {
-    onModelKeydown(
-      (event) => {
-        if (!this.lease) return;
-        if (event.key === "Escape") {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          void this.cancel();
-        } else if (event.key === "Enter") {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          if (event.target instanceof HTMLInputElement) {
-            event.target.blur();
-            this.editor.world.canvas.focus();
-          } else void this.finish();
-        } else if (!(event.target instanceof HTMLInputElement)) {
-          const mode = ({ u: "union", s: "subtract", i: "intersect", n: "new" } as const)[
-            event.key.toLowerCase() as "u"
-          ];
-          if (mode) {
-            event.preventDefault();
-            this.mode = mode;
-            this.queue();
-            this.lease.history?.checkpoint();
-          }
-          if (mode) event.stopImmediatePropagation();
-        }
-      },
-      { signal: this.abort.signal, capture: true },
-    );
   }
   queue(): void {
     if (!this.axis || !this.lease || this.picking) return;
@@ -266,7 +233,7 @@ export class RevolveControls {
         ? ` · Showing last valid preview: ${this.lastGood}`
         : "");
   }
-  async finish(cleanup = false): Promise<boolean> {
+  async finish(cleanup = this.completion.cleanup): Promise<boolean> {
     await this.running;
     if (this.lease && this.picking && !this.latest) {
       await this.cancel();
@@ -292,6 +259,7 @@ export class RevolveControls {
     this.release();
   }
   private release(): void {
+    this.completion.reset();
     this.picking = false;
     this.lease?.release();
     this.lease = null;

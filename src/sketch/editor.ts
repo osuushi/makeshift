@@ -77,7 +77,10 @@ export class SketchEditor {
   hover: Hit | null = null;
   selectionBox: { a: Point; b: Point } | null = null;
   overlaps: { hits: Hit[]; screen: Point } | null = null;
-  readonly interactions = new ActiveInteraction(() => this.refresh());
+  readonly interactions = new ActiveInteraction(
+    () => this.refresh(),
+    () => this.world.navigation.unrecorded(),
+  );
   readonly workspaceEntry = new WorkspaceEntry(this);
   get candidate(): DisplayDocument | null {
     return this.interactions.candidate;
@@ -105,6 +108,7 @@ export class SketchEditor {
     });
     installWorkspaceSync(this);
     this.store.selectionHistory = this.selectionHistory;
+    this.selectionHistory.connectNavigation();
     this.world.changed.add(() => this.selectionHistory.observe());
   }
 

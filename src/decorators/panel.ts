@@ -4,14 +4,15 @@ import { isBuiltinDecorator, knurlDefinition } from "./builtins.js";
 import { appendCustomContinue } from "./custom-continue.js";
 import { appendCustomDecorators } from "./custom-panel.js";
 import { resolveFaces } from "./cylinder.js";
-import { faceKey } from "./edits.js";
+import { editDecorators, faceKey, hasSettingsProblem } from "./edits.js";
 import { appendKnurlSettings } from "./knurl-panel.js";
 import { decoratorLibrary } from "./library.js";
 import { appendThreadInformation } from "./panel-information.js";
 import { appendDecoratorRepairs } from "./repair-panel.js";
 import { DecoratorSettingsDraft } from "./settings-draft.js";
-import { decoratorField } from "./settings-field.js";
-import { threadDefinition, threadFields } from "./thread-settings.js";
+import { ThreadApplication } from "./thread-application.js";
+import { appendThreadSettings } from "./thread-panel.js";
+import { threadDefinition } from "./thread-settings.js";
 import type { DecoratorEdit, DecoratorInstance, FaceReference, Settings } from "./types.js";
 import "./panel.css";
 import { gearFaces } from "./gear-faces.js";
@@ -28,11 +29,15 @@ export class DecoratorPanel {
   private last: string | null = null;
   private advancedOpen = false;
   private draft: DecoratorSettingsDraft;
+  private application: ThreadApplication;
   constructor(
     private editor: SketchEditor,
     parent: HTMLElement,
   ) {
     this.draft = new DecoratorSettingsDraft(editor, () => {
+      this.key = "";
+    });
+    this.application = new ThreadApplication(editor, this.root, () => {
       this.key = "";
     });
     this.root.className = "decorator-panel";
@@ -113,7 +118,16 @@ export class DecoratorPanel {
   }
   private async apply(definition = threadDefinition): Promise<void> {
     const faces = this.selected();
-    if (await this.edit({ action: "apply", definition, faces })) {
+    const edit = { action: "apply" as const, definition, faces };
+    if (definition === threadDefinition) {
+      try {
+        editDecorators(this.editor.store.data, edit);
+      } catch {
+        this.application.start(faces);
+        return;
+      }
+    }
+    if (await this.edit(edit)) {
       this.expand();
       this.editor.refresh();
     }
@@ -136,8 +150,15 @@ export class DecoratorPanel {
     else void this.edit(edit);
   }
   private update = (): void => {
+    if (this.application.active) {
+      this.root.hidden = false;
+      this.application.update();
+      return;
+    }
     const instances = this.instances();
-    const problems = (this.editor.store.data.decorators ?? []).filter((d) => d.problem);
+    const problems = (this.editor.store.data.decorators ?? []).filter(
+      (d) => d.problem && d.definition !== threadDefinition,
+    );
     const last = this.editor.store.data.decorators?.find((d) => d.id === this.last);
     const canContinue =
       !!last &&
@@ -209,44 +230,24 @@ export class DecoratorPanel {
       this.editor.refresh();
     });
     appendThreadInformation(this.root, this.editor, instances);
-    if (!instances.some((d) => d.problem)) {
-      const advanced = document.createElement("details");
-      advanced.className = "thread-advanced";
-      advanced.open = this.advancedOpen;
-      const summary = document.createElement("summary");
-      summary.textContent = "Advanced";
-      advanced.append(summary);
-      for (const field of threadFields) {
-        if (
-          field.visibleWhen &&
-          !instances.some((d) =>
-            field.visibleWhen?.values.includes(d.settings[field.visibleWhen.key]),
-          )
-        )
-          continue;
-        const basic = ["preset", "hand", "cut", "clearance"].includes(field.key);
-        decoratorField(
-          basic ? this.root : advanced,
-          field,
-          instances,
-          (patch, preview) => this.patch(patch, preview, instances),
-          this.draft,
-        );
-        if (field.key === "clearance") {
-          const hint = document.createElement("p");
-          hint.className = "thread-clearance-hint";
-          hint.textContent =
-            "Moves hole threads outward, away from the rod. FDM fine starts at 0.25 mm; adjust for your printer and orientation.";
-          this.root.append(hint);
-        }
-      }
-      this.root.append(advanced);
-    } else {
+    const problem = instances.find((d) => d.problem)?.problem;
+    if (problem) {
       const note = document.createElement("p");
-      note.textContent = instances.find((d) => d.problem)?.problem ?? "";
+      note.className = "decorator-warning";
+      note.setAttribute("role", "status");
+      note.textContent = `⚠ Threads need correction: ${problem}.`;
+      if (instances.every((d) => !d.problem || hasSettingsProblem(d)))
+        note.textContent += " Adjust the settings below.";
       this.root.append(note);
     }
-    this.button("Remove threads from selected faces", () => {
+    appendThreadSettings(
+      this.root,
+      instances,
+      (patch, preview) => this.patch(patch, preview, instances),
+      this.draft,
+      this.advancedOpen || !!problem,
+    );
+    this.button("Remove thread decorator from selected faces", () => {
       const keys = new Set(instances.flatMap((d) => d.faces.map(faceKey)));
       void this.edit({
         action: "remove",
@@ -262,7 +263,7 @@ export class DecoratorPanel {
     appendKnurlSettings(this.root, this.editor, instances, this.draft, (patch, preview) =>
       this.patch(patch, preview, instances),
     );
-    this.button("Remove knurling from selected faces", () => {
+    this.button("Remove knurling decorator from selected faces", () => {
       const keys = new Set(instances.flatMap((d) => d.faces.map(faceKey)));
       void this.edit({
         action: "remove",
@@ -272,6 +273,7 @@ export class DecoratorPanel {
   }
   dispose(): void {
     this.disposeLibrary();
+    this.application.cancel();
     this.draft.cancel();
     this.unregister();
     this.unregisterGear();

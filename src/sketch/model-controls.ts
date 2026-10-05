@@ -165,7 +165,8 @@ export class ModelControls {
       editor.modeling.alternatives = [];
       this.placement.enabled = false;
       editor.refresh();
-    } else if (target && !event.shiftKey && !event.metaKey && !event.ctrlKey) this.enter();
+    } else if (target && !event.shiftKey && !event.metaKey && !event.ctrlKey)
+      void toolCatalog(editor).invoke("edit-sketch");
   }
   private installKeys(options: { signal: AbortSignal }): void {
     const editor = this.editor;
@@ -189,7 +190,9 @@ export class ModelControls {
         !(event.target instanceof HTMLTextAreaElement)
       ) {
         event.preventDefault();
-        this.enter();
+        void toolCatalog(editor).invoke(
+          editor.modeling.targets[0]?.kind === "face" ? "sketch-on-face" : "edit-sketch",
+        );
       }
       if (event.key === "Escape") {
         // An operation owns its own cancellation and keeps its selection. This
@@ -205,6 +208,18 @@ export class ModelControls {
         editor.refresh();
       }
     }, options);
+  }
+  reopenRevolve(
+    revolution: import("../model/body.js").Revolution,
+    cleanup: boolean,
+  ): Promise<void> {
+    return this.revolve.reopen(revolution, cleanup);
+  }
+  reopenLoft(operation: import("../model/loft.js").Loft, cleanup: boolean): Promise<void> {
+    return this.loft.reopen(operation, cleanup);
+  }
+  reopenExtrude(extrusion: import("../model/body.js").Extrusion, cleanup: boolean): Promise<void> {
+    return this.extrusion.reopen(extrusion, cleanup);
   }
   activateLoft(): void {
     this.loft.begin();
@@ -223,8 +238,10 @@ export class ModelControls {
     this.placement.enabled = true;
     this.editor.refresh();
   }
-  private enter(fresh = false): void {
-    if (this.editor.workspaceEntry.selected(fresh)) this.placement.enabled = false;
+  private enter(fresh = false): boolean {
+    if (!this.editor.workspaceEntry.selected(fresh)) return false;
+    this.placement.enabled = false;
+    return true;
   }
   dispose(): void {
     for (const dispose of this.disposers) dispose();

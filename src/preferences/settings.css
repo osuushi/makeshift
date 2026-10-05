@@ -1,0 +1,90 @@
+.settings-trigger {
+  pointer-events: auto;
+}
+.application-settings {
+  width: min(520px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid #d6dfe9;
+  border-radius: 12px;
+  background: #fff;
+  color: #293547;
+  box-shadow: 0 8px 24px #24344b20;
+}
+.application-settings::backdrop {
+  background: #17283e40;
+}
+.application-settings h2 {
+  font-size: 18px;
+  margin: 0 0 20px;
+}
+.application-settings label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.application-settings select {
+  font: inherit;
+  /* Keep Safari input focus from zooming the page at smaller interface scales. */
+  font-size: max(16px, calc(14px * var(--ui-scale, 1)));
+  padding: 8px;
+  border: 1px solid #d6dfe9;
+  border-radius: 6px;
+  background: white;
+  color: inherit;
+}
+.application-settings p {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #647285;
+}
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+.decorator-display-settings {
+  border-top: 1px solid #d6dfe9;
+  margin-top: 20px;
+  padding-top: 12px;
+}
+.decorator-display-settings h3 {
+  font-size: 15px;
+}
+.decorator-display-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+}
+.decorator-display-row > label {
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+.decorator-display-row > span {
+  width: 64px;
+}
+.decorator-display-row input[type="color"] {
+  width: 44px;
+  height: 30px;
+  padding: 2px;
+}
+.decorator-display-row input[type="range"] {
+  width: 100px;
+}
+.decorator-color-value {
+  width: 70px;
+  font: inherit;
+  font-size: max(16px, calc(14px * var(--ui-scale, 1)));
+  padding: 4px;
+  border: 1px solid #d6dfe9;
+  border-radius: 4px;
+}
+.decorator-display-row output {
+  width: 36px;
+}

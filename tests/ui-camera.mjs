@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { navigationIdle } from "./ui-navigation-history.mjs";
 import { findRaycastPoint } from "./ui-plane-targets.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -162,9 +163,9 @@ async function animatedEntry(page, name) {
   const interrupted = await inspect(page);
   await page.waitForTimeout(350);
   assert.deepEqual(
-    await page.evaluate(() => window.makeshiftInspect().camera),
-    interrupted.camera,
-    "Navigation interruption prevents a late camera jump",
+    (await navigationIdle(page)).camera,
+    { ...interrupted.camera, navigationPending: false },
+    "Navigation interruption prevents a late camera jump and completes its intent",
   );
 }
 

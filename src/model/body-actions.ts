@@ -1,6 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import type { Body, BodyBoolean } from "./body.js";
+import { booleanStart } from "./boolean-start.js";
 export class BodyActions {
   private disposers: (() => void)[] = [];
   constructor(
@@ -11,7 +12,8 @@ export class BodyActions {
   ) {
     const reason = (operation: "duplicate" | "boolean" | "cleanup") => {
       if (editor.world.active) return "Select solid geometry in Modeling";
-      const resolution = editor.modeling.resolve(operation);
+      const resolution =
+        operation === "boolean" ? booleanStart(editor) : editor.modeling.resolve(operation);
       return idleReason(editor) ?? (resolution.available ? null : resolution.reason);
     };
     const catalog = toolCatalog(editor);

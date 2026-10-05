@@ -57,7 +57,7 @@ export async function mixedDecoratorTypesRoute(page) {
   await worldClick(page, side);
   await worldClick(page, top, true);
   await page
-    .getByRole("button", { name: "Remove threads from selected faces", exact: true })
+    .getByRole("button", { name: "Remove thread decorator from selected faces", exact: true })
     .click();
   assert.deepEqual((await inspect(page)).document.decorators, [pad]);
   await chooseTool(page, "undo", "undo");

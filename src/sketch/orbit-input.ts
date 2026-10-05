@@ -76,6 +76,7 @@ class OrbitDrag {
           y: start.clientY,
         },
         event.altKey,
+        false,
       );
       this.world.canvas.setPointerCapture(start.pointerId);
     }

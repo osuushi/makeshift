@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { openDocument, saveDocument } from "./native-documents.mjs";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
+import { assertNavigation, navigationHistory, navigationIdle } from "./ui-navigation-history.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 export async function projectionRoute(page, name) {
   await reset(page);
@@ -44,7 +45,7 @@ export async function projectionRoute(page, name) {
   );
   assert.ok(projected);
   await page.getByRole("button", { name: "Accept projection", exact: true }).click();
-  state = await inspect(page);
+  state = await navigationIdle(page);
   assert.equal(state.activeSketch, projected.id);
   assert.ok(
     state.document.sketches
@@ -52,11 +53,20 @@ export async function projectionRoute(page, name) {
       .curves.some((c) => c.kind === "bezier"),
   );
   const accepted = state.document;
+  const acceptedView = state;
+  const beforeView = await navigationHistory(page);
+  assert.deepEqual(beforeView.document, accepted, "Projection view Undo retains geometry");
+  assertNavigation(await navigationHistory(page, true), acceptedView, "Projection view Redo");
+  await navigationHistory(page);
   await chooseTool(page, "undo", "undo");
   state = await inspect(page);
   assert.ok(!state.document.sketches.some((s) => s.curves.some((c) => c.kind === "bezier")));
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, accepted);
+  const targetIndex = accepted.sketches.findIndex((sketch) => sketch.id === projected.id) + 1;
+  await page.getByRole("button", { name: `Select Sketch ${targetIndex}`, exact: true }).click();
+  await page.keyboard.press("Enter");
+  assert.equal((await navigationIdle(page)).activeSketch, projected.id);
   await projectActiveEdge(page, projected.id);
   await page.screenshot({ path: `.cache/sketch-review/${name}-projection.png` });
   await archive(page, name);

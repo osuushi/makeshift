@@ -91,7 +91,7 @@ try {
       await exportKnurl(page, name, app);
       await page.screenshot({ path: `.cache/sketch-review/${name}-knurling.png` });
       await page
-        .getByRole("button", { name: "Remove knurling from selected faces", exact: true })
+        .getByRole("button", { name: "Remove knurling decorator from selected faces", exact: true })
         .click();
       assert.equal((await inspect(page)).document.decorators.length, 0);
       await chooseTool(page, "undo", "undo");

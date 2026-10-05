@@ -1,0 +1,14 @@
+.reopen-completion {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.reopen-completion[hidden] {
+  display: none;
+}
+.reopen-completion input[type="checkbox"] {
+  flex: none;
+  width: auto;
+}

@@ -7,7 +7,8 @@ export type CubeSurface = {
   up: THREE.Vector3;
   vertices: THREE.Vector3[];
 };
-const inset = 0.68;
+// Wider bevels share the same visible polygons and pointer/touch targets.
+const inset = 0.58;
 const axes = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)];
 const names = [
   ["Left", "Right"],

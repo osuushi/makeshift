@@ -10,6 +10,39 @@ specify executable, arguments and environment, with an isolated Codex preset and
 an explicit ordinary-environment option. Other presets, Claude-specific support,
 Git, detached windows and future body/tab organization are deferred.
 
+Codex setup verifies an existing executable and its `--version` before launch.
+The default command checks the prepared PATH, the standalone user installation,
+and, on macOS, known installed ChatGPT application locations. Application bundle
+layout is a discovery candidate, not a packaging guarantee. An explicit configured
+path is never replaced on failure; Custom retains its ordinary executable semantics.
+The current minimum is CLI 0.155.1, the existing Makeshift runtime/portability baseline;
+version recognition does not guarantee compatibility with every future CLI change.
+Windows npm `.cmd`/`.bat` candidates use a fixed system `cmd.exe` invocation for
+`--version`; native executables use a direct process. Wrapper paths containing
+quotes, newlines or command expansion/metacharacter hazards are rejected with a
+native-executable/standalone-install alternative. The quote plan follows
+[Node 24.15 process guidance](https://nodejs.org/download/release/v24.15.0/docs/api/child_process.html#spawning-bat-and-cmd-files-on-windows)
+and [Microsoft cmd rules](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/cmd);
+actual Windows execution remains unverified.
+
+Find/Install/Cancel/Retry controls remain machine-local, outside drawings and
+Undo. An unchanged default `codex` field can bind a verified discovery result; explicit
+paths and edits made while setup runs remain intact, with **Use found CLI** as a
+separate choice. Save settings persists the current form and closes it; the terminal
+header’s existing Start/Stop controls own launch and termination. There is no
+second Launch button in setup. Install is hidden after discovery or ordinary
+launch verifies an existing CLI, and for Custom. Install is an explicit
+user action using the official standalone vendor script
+for macOS/Linux or Windows, with its normal user installation and PATH effects.
+The host owns a bounded, cancellable child process, fixed vendor URL and direct argument
+array; setup never accepts shell commands or download URLs from the renderer. Ordinary
+modeling and document replacement remain available; conflicting agent launch/configuration
+waits for installation, and application shutdown cancels and drains it. After verification,
+Launch uses the existing separate Makeshift Codex configuration and ordinary CLI sign-in.
+App credentials are not copied or assumed to authenticate the CLI. Development acceptance
+uses temporary injected downloads/processes only; no vendor installer runs on the developer
+machine. Windows/Linux runtime acceptance remains separate from platform plan tests.
+
 The terminal docks right or below, resizes and collapses to a visible header.
 Collapsing preserves the process and output; stopping is a separate action.
 Founder accepted session continuity on 2026-09-20: collapse keeps the agent running,

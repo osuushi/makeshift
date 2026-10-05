@@ -5,6 +5,7 @@ export type HostModelRequest = ModelRequest & {
   kind: Exclude<ModelRequest["kind"], "new" | "open">;
 };
 const kinds: Record<HostModelRequest["kind"], true> = {
+  "navigation-history": true,
   "tagged-group": true,
   "export-geometry": true,
   "export-step": true,
@@ -56,6 +57,7 @@ const kinds: Record<HostModelRequest["kind"], true> = {
   discard: true,
   undo: true,
   redo: true,
+  reopen: true,
   preview: true,
   edit: true,
   remove: true,

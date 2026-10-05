@@ -1,7 +1,8 @@
 import { agentAttachments } from "./attachments.js";
 import { dockLayout } from "./dock-layout.js";
 import type { AgentHost, AgentReply } from "./protocol.js";
-import { agentSettings } from "./settings.js";
+import { agentSettings, readPreferences } from "./settings.js";
+import { AgentSetupControls } from "./setup.js";
 import { AgentTerminal } from "./terminal.js";
 import "./style.css";
 
@@ -34,6 +35,7 @@ class AgentDock {
   private pending = false;
   private configuring = false;
   private launchOnReady = true;
+  private setup: AgentSetupControls | null = null;
   private status: AgentReply = { running: false, workspace: null };
   constructor(
     app: HTMLElement,
@@ -54,6 +56,12 @@ class AgentDock {
       }
     });
     this.element(".agent-body").prepend(settings);
+    this.setup = new AgentSetupControls(
+      settings,
+      host,
+      () => readPreferences(settings),
+      this.report,
+    );
     this.attachments = agentAttachments(
       this.panel,
       host,
@@ -101,13 +109,17 @@ class AgentDock {
     return this.element(`[data-${name}]`) as HTMLButtonElement;
   }
   private report = (error: unknown): void => {
+    if (error instanceof Error) this.setup?.reveal();
     this.element(".agent-message").textContent =
       error instanceof Error ? error.message : String(error);
   };
   private update = (reply: AgentReply): void => {
     this.status = reply;
+    this.setup?.update(reply);
     this.unread ||= this.collapsed && !!reply.output;
-    this.button("start").disabled = this.pending || this.configuring || reply.running;
+    const installing =
+      !!reply.setup && ["downloading", "installing", "verifying"].includes(reply.setup.phase);
+    this.button("start").disabled = this.pending || this.configuring || reply.running || installing;
     this.button("stop").disabled = this.pending || this.configuring || !reply.running;
     this.button("settings").disabled = this.pending || this.configuring;
     this.button("attach").disabled = this.pending || this.configuring || !reply.running;

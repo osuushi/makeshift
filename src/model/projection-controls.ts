@@ -5,7 +5,7 @@ import { coplanar, type PlaneFrame } from "../sketch/planes.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import type { EntityViewer } from "./entity-viewer.js";
 import type { PlaneReferencePicker } from "./plane-reference-picker.js";
-import type { ProjectionSource } from "./projection.js";
+import type { Projection, ProjectionSource } from "./projection.js";
 import { sourceProjectionNormal } from "./projection-direction.js";
 import { ProjectionInput } from "./projection-input.js";
 import { projectionKey, projectionSelection, projectionSource } from "./projection-selection.js";
@@ -67,10 +67,15 @@ export class ProjectionControls {
     editor.world.changed.add(this.update);
     this.update();
   }
-  private async begin(): Promise<void> {
+  async reopen(projection: Projection): Promise<void> {
+    await this.begin(projection);
+    if (!this.lease || !this.result) throw new Error("Cannot regenerate the accepted projection");
+    this.editor.world.canvas.focus();
+  }
+  private async begin(restored?: Projection): Promise<void> {
     const e = this.editor;
     if (e.blocked || e.interactions.current) return;
-    this.sources = projectionSelection(e);
+    this.sources = restored ? [...structuredClone(restored.sources)] : projectionSelection(e);
     this.previousSelection = e.selected.targets;
     this.previousModels = e.modeling.targets;
     await e.numeric.commit();
@@ -78,9 +83,29 @@ export class ProjectionControls {
       navigation: "when-released",
     });
     if (!this.lease) return;
-    this.target = e.world.activeFrame ? this.destination(e.world.activeFrame, e.sketch?.id) : null;
+    this.target = restored
+      ? { frame: structuredClone(restored.frame), sketchId: restored.sketchId }
+      : e.world.activeFrame
+        ? this.destination(e.world.activeFrame, e.sketch?.id)
+        : null;
     e.message = "";
-    this.direction = "target-normal";
+    this.direction = restored?.direction ?? "target-normal";
+    if (restored)
+      this.lease.trackHistory(
+        this.root,
+        () => ({ sources: this.sources, target: this.target, direction: this.direction }),
+        async (saved) => {
+          const state = structuredClone(saved);
+          this.sources = state.sources;
+          this.target = state.target;
+          this.direction = state.direction;
+          this.hover = null;
+          this.view.show(this.sources, null);
+          this.configurePicker();
+          await this.preview();
+          e.refresh();
+        },
+      );
     this.entities.sourcePicker = {
       choose: (target) => this.toggle(projectionSource(target)),
       hover: (target) => this.hoverSource(target ? projectionSource(target) : null),
@@ -101,6 +126,7 @@ export class ProjectionControls {
     this.picker.start(
       (frame) => {
         if (this.editor.blocked || this.lease?.phase !== "editing") return;
+        this.lease.history?.checkpoint();
         this.target = this.destination(frame);
         this.hover = null;
         this.view.show(this.sources, null);
@@ -129,6 +155,7 @@ export class ProjectionControls {
   private toggle(source: ProjectionSource): void {
     const e = this.editor;
     if (!this.lease || e.blocked) return;
+    this.lease.history?.checkpoint();
     const key = projectionKey(source);
     this.sources = this.sources.some((s) => projectionKey(s) === key)
       ? this.sources.filter((s) => projectionKey(s) !== key)
@@ -183,6 +210,7 @@ export class ProjectionControls {
       e.store.data.sketches.find((s) => s.id === result.id)?.curves.map((c) => c.id),
     );
     const ok = await e.accept();
+    if (ok) e.world.navigation.beginWorkspace();
     this.finish();
     if (ok) {
       e.workspaceEntry.enter({ key: "Projected sketch", frame: result.plane, sketchId: result.id });

@@ -20,6 +20,7 @@ export class ConstructionPlaneControls {
   private lease: InteractionLease | null = null;
   private plane: ConstructionPlane | null = null;
   private valid = true;
+  private restoredSelection: SketchEditor["modeling"]["targets"] | undefined;
   constructor(
     private editor: SketchEditor,
     overlay: HTMLElement,
@@ -172,6 +173,16 @@ export class ConstructionPlaneControls {
       e.refresh();
     }
   }
+  async reopen(plane: ConstructionPlane): Promise<void> {
+    const selection = structuredClone(this.editor.modeling.targets);
+    this.begin(plane);
+    if (!this.lease) throw new Error("Cannot restore construction plane");
+    this.restoredSelection = selection;
+    this.editor.notice =
+      "Reopened construction plane · Recorded frame restored; handles add movement";
+    this.editor.world.canvas.focus();
+    this.editor.refresh();
+  }
   private begin(existing?: ConstructionPlane, reference?: PlaneFrame): void {
     const e = this.editor;
     if (e.blocked || e.interactions.current || e.world.active) return;
@@ -246,12 +257,16 @@ export class ConstructionPlaneControls {
     return true;
   }
   private cancel(): void {
-    if (this.lease?.close()) this.end();
+    if (this.lease?.close()) {
+      if (this.restoredSelection) this.editor.modeling.targets = this.restoredSelection;
+      this.end();
+    }
   }
   private end(): void {
     const lease = this.lease;
     this.lease = null;
     this.plane = null;
+    this.restoredSelection = undefined;
     this.picker.stop();
     this.placement.reset();
     this.editor.notice = "";

@@ -6,13 +6,17 @@ import type { SketchEditor } from "./editor.js";
 import { inspectPlaneTargets } from "./plane-target-inspection.js";
 import { selectionFrame } from "./selection-frame.js";
 
-function decoratorPreviewBounds(world: SketchEditor["world"]) {
+function decoratorPreviewBounds(world: SketchEditor["world"], fallback = false) {
   const bounds: { body: string; mesh: string; min: number[]; max: number[]; triangles: number }[] =
     [];
   world.scene.traverse((object) => {
     if (
       typeof object.userData.body !== "string" ||
-      object.userData.previewCurrent === false ||
+      (fallback
+        ? object.userData.previewFallback !== true
+        : object.userData.previewCurrent === false) ||
+      !object.visible ||
+      object.parent?.visible === false ||
       !object.layers.isEnabled(decoratorPreviewLayer)
     )
       return;
@@ -51,6 +55,7 @@ export function installViewInspection(editor: SketchEditor, sections: SectionCon
         solver: editor.store.statistics,
         preview: editor.candidate,
         decoratorPreviewBounds: decoratorPreviewBounds(world),
+        decoratorFallbackBounds: decoratorPreviewBounds(world, true),
         bodyRendering: inspectBodyRendering(world.scene),
         gpuGeometries: world.renderer.info.memory.geometries,
         interaction: editor.interactions.current
@@ -84,6 +89,7 @@ export function installViewInspection(editor: SketchEditor, sections: SectionCon
           near: world.camera.near,
           far: world.camera.far,
           moving: world.cameraMoving,
+          navigationPending: world.navigation.active,
           orbitActive: world.orbit.active,
           orbitPivot: world.orbit.active ? world.currentOrbitPivot.toArray() : null,
         },

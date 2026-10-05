@@ -37,6 +37,7 @@ is a later operation on current geometry, through ordinary Undo.
 | Ownership, model, code entry points | [Document model](architecture/model.md), [implementation map](architecture/implementation.md) |
 | Async edits, cancellation, history, files | [Edit lifecycle](architecture/edit-lifecycle.md), [persistence](architecture/persistence.md) |
 | Camera, plane entry, picking, point chooser | [Navigation](architecture/navigation.md), [selection](architecture/selection.md) |
+| Interface scale and local settings | [Interface preferences](architecture/interface-preferences.md) |
 | Creation, circle/arc editing | [Curve editing](architecture/curve-editing.md), [curved controls](architecture/curved-controls.md) |
 | Orientable widget visuals | [Design language and implementation references](design/orientable-widgets.md) |
 | Tool search and discovery | [Panel replacement, matching and menu interaction](design/tool-menu.md) |

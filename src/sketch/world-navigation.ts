@@ -11,6 +11,7 @@ export function installNavigation(world: World): () => void {
   const abort = new AbortController();
   const options = { signal: abort.signal };
   const snap = new TrackpadSnap(world, abort.signal);
+  world.navigation.stopCompletion = () => snap.stop();
   const removeCube = installOrientationCube(world);
   installTabletInput(world, abort.signal);
   let drag: { id: number; x: number; y: number } | null = null;
@@ -22,6 +23,7 @@ export function installNavigation(world: World): () => void {
         if ((event.button !== 1 && event.button !== 2) || drag || !world.canNavigate()) return;
         event.preventDefault();
         event.stopPropagation();
+        world.navigation.hold("pan", false);
         world.cancelCameraMotion();
         drag = { id: event.pointerId, x: event.clientX, y: event.clientY };
         canvas.setPointerCapture(event.pointerId);
@@ -46,6 +48,7 @@ export function installNavigation(world: World): () => void {
     const id = drag?.id;
     drag = null;
     if (id !== undefined && canvas.hasPointerCapture(id)) canvas.releasePointerCapture(id);
+    if (id !== undefined) world.navigation.release("pan");
   };
   canvas.addEventListener("pointerup", stop, options);
   canvas.addEventListener("pointercancel", stop, options);

@@ -71,7 +71,7 @@
 }
 .agent-screen textarea {
   /* Prevent Safari's automatic zoom when focusing the hidden terminal input. */
-  font-size: 16px;
+  font-size: max(16px, calc(16px * var(--ui-scale, 1)));
 }
 .agent-message {
   color: #805016;
@@ -184,4 +184,17 @@
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.agent-setup {
+  border: 1px solid #c7cfda;
+  padding: 8px;
+  margin: 0 0 10px;
+}
+.agent-setup-output {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 130px;
+  overflow: auto;
+  font-size: 11px;
 }

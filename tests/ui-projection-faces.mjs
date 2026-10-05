@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
+import { assertNavigation, navigationHistory, navigationIdle } from "./ui-navigation-history.mjs";
 import { pickPlane } from "./ui-plane-targets.mjs";
 import { chooseTool, toolEnabled } from "./ui-tools.mjs";
 export async function projectionFacesRoute(page, name) {
@@ -57,12 +58,17 @@ export async function projectionFacesRoute(page, name) {
   await chooseTool(page, "project", "project");
   await inspect(page);
   await pickPlane(page, "XY");
-  await inspect(page);
+  const beforeEntry = await navigationIdle(page);
   await page.getByRole("button", { name: "Accept projection", exact: true }).click();
-  state = await inspect(page);
+  state = await navigationIdle(page);
   assert.equal(state.document.sketches.length, 1);
   assert.equal(state.document.sketches[0].curves.length, 8);
   assert.equal(state.document.sketches[0].constraints.length, 8);
+  const viewUndone = await navigationHistory(page);
+  assert.deepEqual(viewUndone.document, state.document, "Projection view Undo retains both faces");
+  assertNavigation(viewUndone, beforeEntry, "Projection view Undo restores source selection");
+  assertNavigation(await navigationHistory(page, true), state, "Projection view Redo");
+  await navigationHistory(page);
   await chooseTool(page, "undo", "undo");
   assert.equal((await inspect(page)).document.sketches.length, 0);
   await chooseTool(page, "redo", "redo");

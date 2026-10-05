@@ -43,12 +43,19 @@ export class CleanupControls {
     );
     editor.world.changed.add(this.update);
   }
-  start = (): void => {
+  async reopen(selection: CleanupSelection[]): Promise<void> {
+    this.start(selection);
+    if (!this.lease) throw new Error("Cannot restore cleanup selection");
+    await this.running;
+    if (!this.valid) throw new Error("Cannot regenerate the accepted cleanup");
+    this.accept.focus();
+  }
+  start = (restored?: CleanupSelection[]): void => {
     const editor = this.editor;
     if (editor.blocked || editor.world.active || editor.interactions.current) return;
     const resolution = editor.modeling.resolve("cleanup");
     if (!resolution.available) return;
-    this.selection = resolution.inputs;
+    this.selection = restored ? structuredClone(restored) : resolution.inputs;
     if (!this.selection.length) return;
     this.center = selectionAnchor(editor);
     this.lease = editor.interactions.acquire(
@@ -58,6 +65,13 @@ export class CleanupControls {
       { navigation: "when-released" },
     );
     if (!this.lease) return;
+    // Reopened cleanup has no editable parameters; baseline Undo cancels it.
+    if (restored)
+      this.lease.trackHistory(
+        this.root,
+        () => null,
+        () => {},
+      );
     this.valid = false;
     this.status.textContent = "Cleaning up…";
     this.root.hidden = false;

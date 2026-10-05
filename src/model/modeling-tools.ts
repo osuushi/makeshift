@@ -83,8 +83,8 @@ export class ModelingTools {
         erode: "Select complete bodies to erode",
         offset: "Select faces or bodies to offset",
         move: "Select bodies, faces or edges to move",
-        fillet: "Select solid edges to round",
-        chamfer: "Select solid edges to bevel",
+        fillet: "Select solid faces or edges to round",
+        chamfer: "Select solid faces or edges to bevel",
         extrude: "Select a closed profile or planar face",
         revolve: "Select a closed profile or planar face",
         loft: "Choose ordered sections",
@@ -97,28 +97,34 @@ export class ModelingTools {
     if (current && !current.finish) return "Finish or cancel the current edit first";
     return null;
   }
-  private async choose(tool: ModelingTool): Promise<void> {
+  private async choose(tool: ModelingTool): Promise<boolean> {
     const editor = this.editor;
-    if (editor.blocked || editor.isDragging || this.reason(tool)) return;
+    if (editor.blocked || editor.isDragging || this.reason(tool)) return false;
     if (
       editor.interactions.current?.kind === "body-edge-finish" &&
       (tool === "fillet" || tool === "chamfer")
     ) {
       this.edgeMode(tool);
-      return;
+      return true;
     }
-    if (editor.modeling.tool === tool && editor.interactions.current) return;
+    if (editor.modeling.tool === tool && editor.interactions.current) return true;
     const current = editor.interactions.current;
     if (current && !(await current.finish?.())) {
       editor.message ||= "Finish or cancel the current edit before switching tools";
-      return;
+      return false;
     }
-    if (this.reason(tool)) return;
+    if (this.reason(tool)) return false;
     editor.modeling.setTool(tool);
     editor.notice = "";
     if (tool === "revolve") this.revolve();
     if (tool === "loft") this.loft();
+    if (
+      (tool === "fillet" || tool === "chamfer") &&
+      editor.modeling.targets.some((target) => target.kind === "face")
+    )
+      this.edgeMode(tool);
     editor.refresh();
+    return true;
   }
   dispose(): void {
     this.abort.abort();
