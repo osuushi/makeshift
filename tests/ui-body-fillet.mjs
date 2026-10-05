@@ -115,7 +115,9 @@ async function dragCancelAndAccept(page, name) {
   await page.mouse.wheel(0, 15);
   assert.notDeepEqual((await inspect(page)).camera.position, before.position);
   await page.mouse.wheel(0, -15);
+  await previewActionReady(page, "Accept fillet");
   await page.mouse.click(points.center.x, points.center.y);
+  await modalCompleted(page);
   assert.equal((await inspect(page)).interaction, null);
   assert.ok((await inspect(page)).document.bodies[0].volume < original.bodies[0].volume);
   await page.screenshot({ path: `.cache/sketch-review/${name}-shared-edge-fillet.png` });
