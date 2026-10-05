@@ -365,7 +365,9 @@ jobs:
           MAKESHIFT_TEST_BROWSER: webkit
         run: npm run test:thread-presets
       - name: Standalone cleanup and separate geometry history
-        if: matrix.lane == 'webkit-controls'
+        if: matrix.lane == 'electron-host'
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
         run: npm run test:standalone-cleanup
       - name: Modal Undo boundaries
         if: matrix.lane == 'geometry'
