@@ -5,7 +5,8 @@ import { at, close, drag, inspect, reset, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function history(page, redo = false) {
-  await page.keyboard.press(redo ? "Meta+Shift+z" : "Meta+z");
+  const id = redo ? "redo" : "undo";
+  await chooseTool(page, id, id);
   await settled(page);
 }
 
