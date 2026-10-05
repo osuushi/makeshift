@@ -110,8 +110,8 @@ export class BodyEdgeFinishWidget {
       : `${name} edges · click to type, or orbit to reveal the drag direction`;
     handle.innerHTML = directionalWidget(camera, outward, mode ?? "fillet", width);
     const offset = directionalOffset(camera, outward);
-    handle.style.left = `${offset.x - 32}px`;
-    handle.style.top = `${offset.y - 32}px`;
+    handle.style.left = `${offset.x}px`;
+    handle.style.top = `${offset.y}px`;
     handle.dataset.directionX = String(direction?.x ?? 0);
     handle.dataset.directionY = String(direction?.y ?? 0);
     for (const kind of ["fillet", "chamfer"] as const) {

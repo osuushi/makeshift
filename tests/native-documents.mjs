@@ -5,6 +5,16 @@ import { _electron } from "playwright";
 import { installTestFrames } from "./ui-test-frames.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
+/** Linux CI has no physical GPU; keep software WebGL consistent across test launchers. */
+export function electronTestArguments(args) {
+  return [
+    ...args,
+    ...(process.platform === "linux"
+      ? ["--use-gl=angle", "--use-angle=swiftshader-webgl", "--enable-unsafe-swiftshader"]
+      : []),
+  ];
+}
+
 const sessions = new WeakMap();
 /** Existing geometry suites discard between cases; lifecycle tests answer prompts explicitly. */
 export async function launchElectron(options) {
@@ -13,14 +23,7 @@ export async function launchElectron(options) {
   try {
     app = await _electron.launch({
       ...options,
-      args: [
-        ...options.args,
-        // Linux CI has no physical GPU; use Chromium's software WebGL renderer.
-        ...(process.platform === "linux"
-          ? ["--use-gl=angle", "--use-angle=swiftshader-webgl", "--enable-unsafe-swiftshader"]
-          : []),
-        `--user-data-dir=${directory}`,
-      ],
+      args: [...electronTestArguments(options.args), `--user-data-dir=${directory}`],
     });
     const close = app.close.bind(app);
     app.close = async () => {

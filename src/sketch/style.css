@@ -40,7 +40,9 @@ header {
   left: 26px;
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 10px 22px;
+  flex-wrap: wrap;
+  max-width: calc(100% - 350px);
   pointer-events: none;
 }
 header .brand {

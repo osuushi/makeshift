@@ -22,6 +22,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run typecheck
       - run: npm run check
+      - run: node tests/ui-scale-css.mjs
       # Launcher-selection checks import compiled host modules, but need no native build.
       - run: npx tsc -p tsconfig.host.json
       - run: npm run test:setup
@@ -129,6 +130,14 @@ jobs:
       - name: Modal Undo boundaries
         if: matrix.shard == 3
         run: xvfb-run -a node tests/modal-undo-boundary-ui.mjs
+      - name: Interface scale and camera independence
+        if: matrix.shard == 3
+        run: |
+          if [ "${{ matrix.browser }}" = electron ]; then
+            xvfb-run -a node tests/interface-scale-electron.mjs
+          else
+            xvfb-run -a node tests/interface-scale.mjs
+          fi
       - name: Demand rendering and fresh frame capture
         if: matrix.shard == 1
         run: xvfb-run -a node tests/ui-demand-frames.mjs
@@ -224,6 +233,12 @@ jobs:
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: node tests/boolean-collection-ui.mjs
+      - name: Interface scale and camera independence
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: |
+          node tests/interface-scale.mjs
+          node tests/interface-scale-electron.mjs
       - name: Built Electron host smoke and Finder launch
         run: |
           node tests/electron-smoke.mjs

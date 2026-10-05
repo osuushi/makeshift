@@ -1,6 +1,6 @@
 .entity-viewer {
   position: absolute;
-  top: 85px;
+  top: max(85px, calc(var(--editor-header-bottom, 0px) + 12px));
   left: 20px;
   width: 190px;
   max-height: calc(100vh - 230px);

@@ -37,6 +37,13 @@ class Distance {
     std::vector<Bnd_Box> faces;
     BRepExtrema_DistShapeShape extrema;
     std::unique_ptr<erosion::BoundaryDistance> bounds;
+    // This immutable boundary is queried repeatedly at each subdivision center.
+    std::optional<std::pair<gp_Pnt, double>> lastLower;
+    double lower(const gp_Pnt& point) {
+        if (!lastLower || point.SquareDistance(lastLower->first) != 0)
+            lastLower = std::pair{point, bounds->lower(point)};
+        return lastLower->second;
+    }
 public:
     explicit Distance(const TopoDS_Shape& shape) {
         if (shape.IsNull()) return;
@@ -62,7 +69,9 @@ public:
         });
     }
     bool contains(const gp_Pnt& point) {
-        const double minimumDistance = hasSections ? bounds->lower(point) : 0;
+        if (lastClassification && point.SquareDistance(lastClassification->first) == 0)
+            return lastClassification->second;
+        const double minimumDistance = hasSections ? lower(point) : 0;
         bool complete = !sections.empty();
         for (const auto& section : sections) {
             const auto known = section.contains(point,minimumDistance);
@@ -73,7 +82,6 @@ public:
 
         for (const auto& ball : balls)
             if (point.SquareDistance(ball.center) < ball.radius*ball.radius) return ball.inside;
-        if (lastClassification && point.SquareDistance(lastClassification->first) == 0) return lastClassification->second;
         // A segment enclosed by a boundary-free box preserves classification,
         // even when a trimmed support gives a poor inscribed-ball bound.
         for (auto it = classifiedPoints.rbegin(); it != classifiedPoints.rend(); ++it) {
@@ -101,7 +109,7 @@ public:
         lastClassification = std::pair{point, inside};
         if (classifiedPoints.size() == 64) classifiedPoints.erase(classifiedPoints.begin());
         classifiedPoints.emplace_back(point, inside);
-        const double radius = bounds ? bounds->lower(point)-tolerance : 0;
+        const double radius = bounds ? lower(point)-tolerance : 0;
         if (radius > tolerance && balls.size() < 4096) balls.push_back({point, radius, inside});
         return inside;
     }
@@ -110,16 +118,16 @@ public:
         if (triangle <= limit) return triangle;
         if (bounds->exact()) return std::min(triangle, clearance(cell.center()) + cell.radius());
         const auto center = cell.center();
-        const double lower = bounds->lower(center);
+        const double minimum = lower(center);
         const double upper = bounds->upper(center, limit-cell.radius()) + cell.radius();
         if (upper <= limit) return std::min(triangle, upper);
-        if (!contains(center)) return std::min(triangle, cell.radius()-lower);
-        if (resolveTrim && limit > 0 && cell.radius() < limit/4 && upper-lower-cell.radius() > tolerance)
+        if (!contains(center)) return std::min(triangle, cell.radius()-minimum);
+        if (resolveTrim && limit > 0 && cell.radius() < limit/4 && upper-minimum-cell.radius() > tolerance)
             return std::min({triangle,upper,clearance(center)+cell.radius()});
         return std::min(triangle, upper);
     }
     bool deeper(const gp_Pnt& point, double depth) {
-        return bounds->lower(point) > depth && contains(point);
+        return lower(point) > depth && contains(point);
     }
     bool childInside(const gp_Pnt& point, const gp_Pnt& parent, bool parentInside) {
         if (classifiers.empty()) return false;
@@ -155,8 +163,8 @@ public:
         if (!bounds->crosses(cell.corners())) return inside();
         if (std::none_of(faces.begin(), faces.end(), [&](const Bnd_Box& f) { return !f.IsOut(box); }))
             return inside();
-        const double lower = bounds->lower(center);
-        if (lower >= cell.radius() + tolerance && inside()) return true;
+        const double minimum = lower(center);
+        if (minimum >= cell.radius() + tolerance && inside()) return true;
         // An upper bound below the cell radius cannot certify its distance
         // ball. Resolve remaining trimmed-face uncertainty with the kernel.
         if (bounds->upper(center, cell.radius()) < cell.radius() || !inside()) return false;
@@ -170,7 +178,7 @@ public:
             return distance; // Also an upper bound outside this convex solid.
         }
         if (bounds->exact()) {
-            const double distance = bounds->lower(point);
+            const double distance = lower(point);
             return contains(point) ? distance : -distance;
         }
         extrema.LoadS1(BRepBuilderAPI_MakeVertex(point).Shape());
