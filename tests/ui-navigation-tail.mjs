@@ -6,7 +6,7 @@ import {
   navigationIdle,
   navigationTips,
 } from "./ui-navigation-history.mjs";
-import { wheel } from "./ui-navigation-inputs.mjs";
+import { pinchStep } from "./ui-navigation-inputs.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function animatedHistory(page, redo = false) {
@@ -43,9 +43,9 @@ async function animatedHistory(page, redo = false) {
 async function trailingViews(page) {
   await reset(page);
   const before = await navigationIdle(page);
-  await wheel(page, 30, 20);
+  await pinchStep(page, 30, 20);
   const middle = await navigationIdle(page);
-  await wheel(page, 45, 25);
+  await pinchStep(page, 45, 25);
   const after = await navigationIdle(page);
   assert.equal((await navigationTips(page)).length, 2);
   assertNavigation(await animatedHistory(page), middle);
@@ -66,7 +66,7 @@ async function trailingViews(page) {
   assertNavigation(await navigationHistory(page, true), after);
   await navigationHistory(page);
   const oldIds = (await navigationTips(page)).map((entry) => entry.id);
-  await wheel(page, -25, -15);
+  await pinchStep(page, -25, -15);
   await navigationIdle(page);
   const replacement = await navigationTips(page);
   assert.equal(replacement.length, 1);
@@ -80,9 +80,9 @@ async function editBoundary(page) {
   await page.keyboard.press("r");
   await drag(page, [-15, -10], [15, 10]);
   const first = await navigationIdle(page);
-  await wheel(page, 25, 15);
+  await pinchStep(page, 25, 15);
   await navigationIdle(page);
-  await wheel(page, 30, 20);
+  await pinchStep(page, 30, 20);
   await navigationIdle(page);
   assert.equal((await navigationTips(page)).length, 2);
   await page.keyboard.press("r");

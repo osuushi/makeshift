@@ -121,3 +121,20 @@ test("accepted context rebases an unfinished gesture while retaining its lifetim
   assert.deepEqual(changes[0].navigation.before.selection, selection);
   assert.equal(changes[0].navigation.after.camera.target[0], 9);
 });
+
+test("unrecorded movement expires pending view intent while retaining the pan drag guard", async () => {
+  const { world, navigation, changes } = fixture();
+  let expirations = 0;
+  navigation.discarded = () => expirations++;
+  navigation.begin();
+  world.target.x = 5;
+  navigation.hold("pan", false);
+  assert.equal(navigation.active, false);
+  assert.equal(navigation.dragging, true);
+  world.target.x = 10;
+  navigation.release("pan");
+  await tick();
+  assert.equal(expirations, 1);
+  assert.equal(changes.length, 0);
+  assert.equal(navigation.dragging, false);
+});

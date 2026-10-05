@@ -20,6 +20,7 @@ export class NavigationHistory {
     workspace: this.world.workspace,
   });
   completed: (change: NavigationChange) => void = () => {};
+  discarded: () => void = () => {};
   constructor(private world: World) {}
   get active(): boolean {
     return this.before !== null;
@@ -55,8 +56,13 @@ export class NavigationHistory {
       if (this.before === published) published.selection = structuredClone(this.readSelection());
     };
   }
-  hold(kind: string): void {
-    this.begin();
+  unrecorded(): void {
+    this.clear();
+    this.discarded();
+  }
+  hold(kind: string, record = true): void {
+    if (record) this.begin();
+    else this.unrecorded();
     if (!this.suppressed) this.holds.add(kind);
   }
   release(kind: string): void {

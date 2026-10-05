@@ -73,8 +73,9 @@ export class World {
   get currentOrbitPivot(): THREE.Vector3 {
     return this.rotationPivot.clone();
   }
-  beginOrbit(pointer: OrbitPointer, press: Point, roll = false): void {
-    this.navigation.begin();
+  beginOrbit(pointer: OrbitPointer, press: Point, roll = false, record = true): void {
+    if (record || this.active) this.navigation.begin();
+    else this.navigation.unrecorded();
     this.cancelCameraMotion();
     this.rotationPivot.copy(this.orbitPivot(press));
     const rollPivot = this.rollPivot();
@@ -186,8 +187,8 @@ export class World {
   private animateTo(frame: PlaneFrame, framing: CameraFraming): void {
     this.motion.start(planeCameraPose(this, frame, framing));
   }
-  animateOrientation(quaternion: THREE.Quaternion): void {
-    this.navigation.begin();
+  animateOrientation(quaternion: THREE.Quaternion, record = true): void {
+    if (record) this.navigation.begin();
     this.motion.start({
       target: this.target.clone(),
       quaternion,
@@ -213,7 +214,7 @@ export class World {
   }
   levelHorizon(): void {
     if (this.rollAnimation.active) return;
-    this.animateOrientation(levelOrientation(this));
+    this.animateOrientation(levelOrientation(this), this.navigation.active);
   }
   cancelCameraMotion(preserveRoll = false): void {
     if (!preserveRoll) this.rollAnimation.cancel();

@@ -175,3 +175,25 @@ test("transient navigation belongs to history rather than accepted or saved geom
   assert.deepEqual(opened.history, []);
   assert.equal(opened.canUndo, false);
 });
+
+test("view-only navigation never falls through into geometry and expiration preserves geometry Redo", () => {
+  const store = new DocumentStore();
+  store.accept(document);
+  store.navigateView("undo");
+  assert.deepEqual(store.data, document);
+  assert.equal(store.canNavigateView("undo"), false);
+  navigation(store, view(0), view(10));
+  store.navigateView("undo");
+  assert.deepEqual(store.restoredNavigation, view(0));
+  assert.equal(store.canNavigateView("redo"), true);
+  store.navigateView("undo");
+  assert.equal(store.restoredNavigation, undefined);
+  assert.deepEqual(store.data, document);
+  store.selections({ baseline: pick(), steps: [{ expireNavigation: true }] });
+  assert.equal(store.canNavigateView("redo"), false);
+  assert.equal(tips(store).length, 0);
+  store.undo();
+  store.navigateView("redo");
+  assert.equal(store.data.sketches.length, 0);
+  assert.equal(store.canRedo, true);
+});

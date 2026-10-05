@@ -20,8 +20,9 @@ export function installTrackpad(world: World, signal: AbortSignal, snap: Trackpa
       },
       { signal },
     );
-  const zoom = (factor: number, x: number, y: number) => {
-    world.navigation.begin();
+  const zoom = (factor: number, x: number, y: number, record = true) => {
+    if (record) world.navigation.begin();
+    else world.navigation.unrecorded();
     const bounds = canvas.getBoundingClientRect();
     if (!Number.isFinite(x)) x = pointer?.x ?? bounds.left + bounds.width / 2;
     if (!Number.isFinite(y)) y = pointer?.y ?? bounds.top + bounds.height / 2;
@@ -32,9 +33,9 @@ export function installTrackpad(world: World, signal: AbortSignal, snap: Trackpa
       bounds.height,
     );
     world.requestDraw();
-    snap.request();
+    if (record) snap.request();
   };
-  installWheel(world, canvas, [canvas, world.overlay], () => scale !== null, zoom, snap, options);
+  installWheel(world, canvas, [canvas, world.overlay], () => scale !== null, zoom, options);
   installGestures(
     world,
     [canvas, world.overlay],
@@ -53,7 +54,7 @@ function installGestures(
   surfaces: readonly HTMLElement[],
   getScale: () => number | null,
   setScale: (value: number | null) => void,
-  zoom: (factor: number, x: number, y: number) => void,
+  zoom: (factor: number, x: number, y: number, record?: boolean) => void,
   snap: TrackpadSnap,
   options: AddEventListenerOptions,
 ): void {
@@ -99,8 +100,7 @@ function installWheel(
   canvas: HTMLCanvasElement,
   surfaces: readonly HTMLElement[],
   pinching: () => boolean,
-  zoom: (factor: number, x: number, y: number) => void,
-  snap: TrackpadSnap,
+  zoom: (factor: number, x: number, y: number, record?: boolean) => void,
   options: AddEventListenerOptions,
 ): void {
   for (const surface of surfaces)
@@ -110,15 +110,14 @@ function installWheel(
         event.preventDefault();
         if (!world.canNavigate() || world.orbit.active || pinching()) return;
         if (!event.deltaX && !event.deltaY) return;
-        world.navigation.begin();
         world.cancelCameraMotion(true);
         const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.clientHeight : 1;
         if (event.ctrlKey || controlMode() === "mouse") {
           const speed = event.ctrlKey ? 0.01 : 0.002;
-          zoom(Math.exp(event.deltaY * unit * speed), event.clientX, event.clientY);
+          zoom(Math.exp(event.deltaY * unit * speed), event.clientX, event.clientY, event.ctrlKey);
         } else {
           if (!event.deltaX && !event.deltaY) return;
-          snap.postpone();
+          world.navigation.unrecorded();
           panCamera(world, -event.deltaX * unit, -event.deltaY * unit, canvas.clientHeight);
           world.requestDraw();
         }

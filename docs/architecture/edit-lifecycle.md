@@ -192,11 +192,14 @@ existing camera transition, then restores the exact endpoint. Undo/Redo animatio
 creates no history entry; workspace changes from geometry/selection Undo retain
 their ordinary animated alignment. Reduced-motion preference remains respected.
 
-Pointer orbit/roll, cube navigation, pan, zoom, canonical workspace entry and exit
-use the same contract. Continuous pointer or touch contacts complete once at
+Cube navigation, face double-click alignment, pinch/twist/touch gestures and
+canonical workspace entry and exit use this contract. Ordinary pointer orbit/roll,
+pan, scroll pan and mouse-wheel zoom do not record view history; they expire stale
+view entries. A pointer orbit that exits a planar workspace records the full mode
+transition. Continuous pointer or touch contacts complete once at
 release/cancellation, after any existing completion animation. Cancellation keeps
 its ordinary current view, so a moved canceled gesture can still be undone; a
-stationary canceled press adds no entry. Wheel, browser pinch and native twist
+stationary canceled press adds no entry. Browser pinch and native twist
 reuse their existing 200 ms idle or explicit gesture-end lifetime, including
 release leveling. Intermediate frames and packets add no entries. Camera pose
 roundoff at the current viewport scale is not a view change. Projection range and
@@ -211,7 +214,10 @@ context. Its eventual Undo cannot restore targets from the previous document.
 The existing serialized selection-intent boundary also carries view intents;
 there is no additional request queue or history owner.
 
-Temporary modal parameter history retains priority over view history. Calculating
+A trailing view change inside a modal takes priority over older temporary parameter
+history. View-only Undo/Redo preserves the tool, candidate and pending operation.
+A later parameter edit or local parameter Undo/Redo expires the view suffix,
+including undone future states. Calculating
 or captured edit guards remain in force; an active captured view gesture also
 blocks history navigation. Undo during an uncaptured camera animation finishes
 its current visible pose before navigating. Restoring any history context
