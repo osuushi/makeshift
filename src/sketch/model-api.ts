@@ -86,10 +86,13 @@ export type ModelRequest =
       topology?: CleanupSelection[];
     }
   | { kind: "delete-sketch"; sketchId: string }
+  | { kind: "navigation-history"; direction: "undo" | "redo" }
   | { kind: "read" | "discard" | "undo" | "redo" | "reopen" | "new" }
   | { kind: "preview" | "edit"; sketch: Sketch; intent?: EditIntent }
   | { kind: "remove" | "clear"; sketchId: string; ids?: string[] };
 export interface ModelView {
+  canUndoView?: boolean;
+  canRedoView?: boolean;
   erosionQuality?: import("../model/erosion-quality.js").ErosionQuality[];
   meshFit?: import("../model/mesh-fit.js").MeshFitStatistics;
   decoratorSources?: readonly import("../decorators/javascript-hooks.js").EnabledDefinition[];

@@ -55,6 +55,8 @@ export class DocumentOwner {
   get view(): ModelView {
     return {
       data: this.store.data,
+      canUndoView: this.store.canNavigateView("undo"),
+      canRedoView: this.store.canNavigateView("redo"),
       ...this.solids.previewQuality(this.candidate ? this.pendingOperation?.kind : undefined),
       decoratorSources: this.decorators.sources,
       historySelection: this.store.selection,
@@ -274,6 +276,9 @@ export class DocumentOwner {
         this.pendingOperation = null;
         this.candidate = null;
         this.store[request.kind]();
+        break;
+      case "navigation-history":
+        this.store.navigateView(request.direction);
         break;
       case "new":
         this.replaceDocument();

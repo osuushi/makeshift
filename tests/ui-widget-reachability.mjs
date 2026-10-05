@@ -137,7 +137,7 @@ export async function sweepWidgets(page, anchor, selector, label, { orbit = true
       await assertWidgetTargets(page, selector, `${label} zoom`);
     }
     await panTo(page, anchor, { x: -40, y: canvas.height / 2 });
-    await waitWidgetNavigation(page);
+    await waitWidgetNavigation(page, true);
     await assertWidgetTargets(page, selector, label);
     const frames = await page.evaluate(() => {
       window.widgetFrameWatch.active = false;

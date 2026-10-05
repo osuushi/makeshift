@@ -21,7 +21,7 @@ export function createOrientationCube(world: World) {
       const direction = face.normal.clone().applyQuaternion(inverse);
       const visible = direction.z > 0.015;
       group.style.display = visible ? "" : "none";
-      group.setAttribute("tabindex", visible ? "0" : "-1");
+      group.setAttribute("tabindex", "-1");
       if (!visible) continue;
       const points = face.vertices.map((vertex) => {
         const p = vertex.clone().applyQuaternion(inverse);
