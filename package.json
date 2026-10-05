@@ -23,6 +23,7 @@
     "test:setup": "node --test tests/sdk-provenance.mjs tests/ui-runtime-selection.mjs tests/worktree-dependencies.mjs",
     "test:selection-history": "node tests/selection-history-ui.mjs",
     "test:reconnection": "node tests/boundary-reconnection-ui.mjs",
+    "test:standalone-cleanup": "node tests/standalone-cleanup-ui.mjs",
     "test:widget-reachability": "node tests/widget-reachability-ui.mjs",
     "test:edge-finish": "node tests/edge-finish-ui.mjs",
     "test:edge-move": "node tests/edge-move-ui.mjs",

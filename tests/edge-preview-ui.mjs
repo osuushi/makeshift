@@ -60,12 +60,6 @@ async function modeAndClamp(page, cleanupChecks, original, timeline) {
   await page.getByRole("button", { name: "Switch to chamfer", exact: true }).click();
   const input = page.getByRole("textbox", { name: "Chamfer distance", exact: true });
   assert.ok((await inspect(page)).preview.bodies[0].faces.every((face) => face.plane));
-  await page.waitForFunction(
-    () =>
-      document
-        .querySelector('.body-edge-finish-widget [aria-label="Commit and clean up"]')
-        ?.getAttribute("aria-busy") === "false",
-  );
   await inspect(page);
   const count = cleanupChecks();
   await input.fill("100");
@@ -76,8 +70,8 @@ async function modeAndClamp(page, cleanupChecks, original, timeline) {
   await inspect(page);
   assert.equal(
     cleanupChecks() - count,
-    1,
-    `Geometry schedules one cleanup query: ${JSON.stringify(timeline)}`,
+    0,
+    `Geometry does not schedule cleanup: ${JSON.stringify(timeline)}`,
   );
   await input.fill("100");
   await inspect(page);
@@ -166,7 +160,7 @@ await withUiRuntimes(
   async (page, name) => {
     await edgeScheduling(page);
     console.log(
-      `${name}: real edge expansion, size coalescing, invalidation, cancellation, mode/limits and cleanup pass`,
+      `${name}: real edge expansion, size coalescing, invalidation, cancellation, mode/limits and no completion-cleanup probes pass`,
     );
   },
   { allowed: ["chromium", "webkit"], timeout: 30000 },

@@ -90,9 +90,9 @@ captured gestures; grid snapping retains its independent toggle. Fillet's local 
 switches to Chamfer and back, including recalculating an active candidate.
 The edge-size control uses a capsule arrow with a rounded fillet or beveled chamfer contour;
 the compact panel uses distinct corner icons in fixed Fillet, Chamfer order with
-an active highlight, followed by accept, cancel and icon-only cleanup. The size
-field stays visible above the buttons, including at zero; check and cleanup are
-disabled without a valid nonzero change. Unfocused sizes display four significant
+an active highlight, followed by accept and cancel. The size
+field stays visible above the buttons, including at zero; acceptance is
+disabled without a valid nonzero change. Cleanup is a separate standalone tool. Unfocused sizes display four significant
 digits without reducing model precision. Tab/Shift+Tab cycles visible numeric
 fields in both modeling and sketch controls. The operation anchor stays at the nearest
 displayed edge point from the last click among selected edges. Its outward direction
@@ -119,7 +119,7 @@ positive direction is the projected extrusion axis or material-outward face norm
 when viewed end-on, the existing upward drag fallback remains available. Each drag
 holds its starting projection and scale. Distance fields remain visible at zero;
 extrusion retains its draft row and fixed Boolean mode icons, followed by accept,
-cancel and cleanup. Offset defaults to absolute thickness for planar walls with a
+and cancel. Clean up is a separate selection tool. Offset defaults to absolute thickness for planar walls with a
 directly reachable parallel face, or cylindrical/spherical walls with a directly
 reachable concentric face in the same body. A labeled mode dropdown offers Thickness,
 Radius and Offset where applicable; switching units preserves the preview. Radius
@@ -142,9 +142,8 @@ A complete one-face spherical shell can change radius through an exact centered
 scale when the ordinary offset builder cannot process its closed shells. Only the
 selected shell changes; stable topology correspondence, signed parallel-surface
 checks, strict solid/interference validation and the existing volume checks apply.
-Draft display rounding does not change the driving value. Both tools probe exact
-cleanup availability after a trailing 250 ms debounce, preserving preview and Undo;
-the broom spins while pending and disables for no-op cleanup. Rejected extrusion
+Draft display rounding does not change the driving value. Ordinary completion
+preserves subdivisions; neither tool probes cleanup availability. Rejected extrusion
 and rejected/clamped offset requests turn their arrows red. Sketch-entry actions sit
 below the card so the larger arrow cannot cover them.
 

@@ -1,16 +1,10 @@
 import assert from "node:assert/strict";
-import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { project } from "./ui-blend-edit.mjs";
+import { cleanBodySeparately, standaloneOnly, undoToDocument } from "./ui-cleanup-controls.mjs";
+import { at, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import { relativeOffsetInput } from "./ui-offset-input.mjs";
+import { clearSelection } from "./ui-reconnection-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
-
-async function settledBroom(page, root) {
-  await page.waitForFunction(
-    (selector) =>
-      document.querySelector(`${selector} .commit-cleanup`)?.getAttribute("aria-busy") === "false",
-    root,
-  );
-  return page.getByRole("button", { name: "Commit and clean up", exact: true });
-}
 
 export async function axialCleanupRoute(page) {
   await reset(page);
@@ -28,10 +22,11 @@ export async function axialCleanupRoute(page) {
   const center = await at(page, 0, 0);
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(center.x, center.y);
+  const beforeExtrusion = (await inspect(page)).document;
   const distance = page.getByRole("textbox", { name: "Extrusion distance", exact: true });
   assert.equal(await distance.inputValue(), "0");
   assert.ok(await page.getByRole("button", { name: "Accept extrusion", exact: true }).isDisabled());
-  assert.ok(await (await settledBroom(page, ".extrude-controls")).isDisabled());
+  await standaloneOnly(page);
   await page.keyboard.press("Tab");
   assert.ok(await distance.evaluate((el) => document.activeElement === el));
   await page.keyboard.press("Tab");
@@ -49,21 +44,22 @@ export async function axialCleanupRoute(page) {
   assert.ok(await distance.evaluate((el) => document.activeElement === el));
   await distance.fill("10");
   const preview = (await inspect(page)).preview;
-  const broom = await settledBroom(page, ".extrude-controls");
-  assert.ok(await broom.isEnabled(), "Split extrusion wall is cleanable");
-  assert.deepEqual((await inspect(page)).preview, preview);
-  await broom.click();
-  const cleaned = (await inspect(page)).document;
-  assert.ok(cleaned.bodies[0].faces.length < preview.bodies[0].faces.length);
-  close(cleaned.bodies[0].volume, preview.bodies[0].volume);
-  await chooseTool(page, "undo", "undo");
-  assert.equal((await inspect(page)).document.bodies?.length ?? 0, 0);
-  await page.mouse.click(center.x, center.y);
-  await distance.fill("10");
-  await inspect(page);
+  await standaloneOnly(page);
   await page.getByRole("button", { name: "Accept extrusion", exact: true }).click();
+  await modalCompleted(page);
   const original = (await inspect(page)).document;
-  await page.mouse.click(center.x, center.y);
+  assert.deepEqual(original, preview, "Ordinary extrusion preserves split walls");
+  await cleanBodySeparately(page, original);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
+  // Whole-body cleanup retains selection and its gizmo can cover the cap.
+  assert.deepEqual((await inspect(page)).modelingSelection, [
+    { kind: "body", body: original.bodies[0].id },
+  ]);
+  await clearSelection(page);
+  const cap = await project(page, [6, 6, 10]);
+  await page.mouse.click(cap.x, cap.y);
+  assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   const offset = await relativeOffsetInput(page);
   assert.equal(await offset.inputValue(), "0");
   assert.ok(
@@ -73,11 +69,16 @@ export async function axialCleanupRoute(page) {
   assert.ok(await offset.evaluate((el) => document.activeElement === el));
   await offset.fill("1");
   const changed = (await inspect(page)).preview;
-  assert.ok(await (await settledBroom(page, ".face-offset-widget")).isEnabled());
-  await page.getByRole("button", { name: "Commit and clean up", exact: true }).click();
+  await standaloneOnly(page);
+  await page.getByRole("button", { name: "Accept face offset", exact: true }).click();
+  await modalCompleted(page);
   const accepted = (await inspect(page)).document;
-  assert.ok(accepted.bodies[0].faces.length < changed.bodies[0].faces.length);
-  close(accepted.bodies[0].volume, changed.bodies[0].volume);
+  assert.deepEqual(accepted, changed, "Ordinary offset preserves its candidate topology");
+  await cleanBodySeparately(page, accepted);
   await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, accepted);
+  await undoToDocument(page, original);
   assert.deepEqual((await inspect(page)).document, original);
+  await undoToDocument(page, beforeExtrusion);
+  assert.deepEqual((await inspect(page)).document, beforeExtrusion);
 }

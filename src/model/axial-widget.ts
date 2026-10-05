@@ -13,11 +13,6 @@ export function toolAction(label: string, path: string, action: () => void): HTM
   return button;
 }
 
-export function compactCleanup(button: HTMLButtonElement): void {
-  button.innerHTML =
-    '<svg viewBox="0 0 24 24"><path d="m15 3-5 10M7 12l7 3-2 6H3l4-9Z M7 16l-1 5M10 17l-1 4"/></svg>';
-}
-
 export function distanceField(input: HTMLInputElement): HTMLLabelElement {
   const label = document.createElement("label");
   label.className = "axial-distance";

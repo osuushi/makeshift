@@ -47,7 +47,7 @@ export async function reopenOffset(page, name, blend = false) {
     kind: "offset-faces",
     selection,
     sketchSelection,
-    completionPanel: ".face-offset-options",
+    parameterPanel: ".face-offset-options",
     cancel: "Cancel face offset",
     accept: "Accept face offset",
     name: `${name}-${blend ? "radius" : "distance"}`,

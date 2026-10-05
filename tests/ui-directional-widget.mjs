@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { orient } from "./ui-blend-edit.mjs";
+import { standaloneOnly } from "./ui-cleanup-controls.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { orientableArrowViews } from "./ui-orientable-tools.mjs";
 
@@ -9,9 +10,7 @@ export async function directionalWidgetRoute(page, plate) {
   const input = page.getByRole("textbox", { name: "Fillet radius", exact: true });
   assert.equal(await input.inputValue(), "0");
   assert.ok(await page.getByRole("button", { name: "Accept fillet", exact: true }).isDisabled());
-  assert.ok(
-    await page.getByRole("button", { name: "Commit and clean up", exact: true }).isDisabled(),
-  );
+  await standaloneOnly(page);
   for (const key of ["Tab", "Tab", "Shift+Tab"]) {
     await page.keyboard.press(key);
     await inspect(page);
@@ -51,9 +50,7 @@ export async function directionalWidgetRoute(page, plate) {
   await input.fill("0");
   await inspect(page);
   assert.ok(await page.getByRole("button", { name: "Accept fillet", exact: true }).isDisabled());
-  assert.ok(
-    await page.getByRole("button", { name: "Commit and clean up", exact: true }).isDisabled(),
-  );
+  await standaloneOnly(page);
   await input.fill("1");
   await inspect(page);
   await page.getByRole("button", { name: "Switch to chamfer", exact: true }).click();

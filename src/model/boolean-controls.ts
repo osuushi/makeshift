@@ -9,12 +9,10 @@ import { BooleanPreference } from "./boolean-preference.js";
 import { booleanStart } from "./boolean-start.js";
 import { BooleanWidget } from "./boolean-widget.js";
 import type { EntityViewer } from "./entity-viewer.js";
-import { ReopenCompletion } from "./reopen-completion.js";
 
 export class BooleanControls {
   private widget: BooleanWidget;
   private operands: BooleanOperands;
-  private completion = new ReopenCompletion();
   private abort = new AbortController();
   private lease: InteractionLease | null = null;
   private bodies: Body[] = [];
@@ -51,7 +49,6 @@ export class BooleanControls {
       },
     );
     this.installPicking();
-    this.widget.root.append(this.completion.root);
     onModelKeydown(
       (event) => {
         if (!this.lease || !["Enter", "Escape"].includes(event.key)) return;
@@ -64,14 +61,14 @@ export class BooleanControls {
     );
     editor.world.changed.add(this.update);
   }
-  async reopen(operation: BodyBoolean, cleanup: boolean): Promise<void> {
-    this.start(operation.mode, operation, cleanup);
+  async reopen(operation: BodyBoolean): Promise<void> {
+    this.start(operation.mode, operation);
     if (!this.lease) throw new Error("Cannot restore Boolean inputs");
     await this.running;
     if (!this.valid) throw new Error("Cannot regenerate the accepted Boolean");
     this.editor.world.canvas.focus();
   }
-  start = (mode: BodyBoolean["mode"], restored?: BodyBoolean, cleanup = false): void => {
+  start = (mode: BodyBoolean["mode"], restored?: BodyBoolean): void => {
     if (this.editor.blocked || this.editor.world.active || this.editor.interactions.current) return;
     const resolution = booleanStart(this.editor);
     if (!resolution.available) return;
@@ -105,8 +102,6 @@ export class BooleanControls {
     this.operation = restored
       ? structuredClone(restored)
       : { ids: [], mode, keepOriginals: this.preference.get(mode) };
-    this.completion.reset();
-    if (restored && cleanup) this.completion.begin(cleanup);
 
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
@@ -117,11 +112,9 @@ export class BooleanControls {
         ids: this.operation.ids,
         mode: this.operation.mode,
         target: this.targetId,
-        cleanup: this.completion.cleanup,
       }),
       async (operation) => {
         this.targetId = operation.target;
-        this.completion.input.checked = operation.cleanup;
         this.operation = {
           ids: operation.ids,
           mode: operation.mode,
@@ -219,7 +212,7 @@ export class BooleanControls {
     }
     this.editor.refresh();
   }
-  private async finish(cleanup = this.completion.cleanup): Promise<boolean> {
+  private async finish(): Promise<boolean> {
     await this.running;
     const lease = this.lease;
     if (!lease) return false;
@@ -234,7 +227,7 @@ export class BooleanControls {
     const retained = new Set(
       this.editor.store.data.bodies?.filter((b) => !consumed.includes(b.id)).map((b) => b.id),
     );
-    const success = await this.editor.accept(cleanup);
+    const success = await this.editor.accept();
     if (!success) {
       if (this.lease) this.lease.phase = "editing";
       this.editor.refresh();
@@ -258,7 +251,6 @@ export class BooleanControls {
   }
   private end(lease: InteractionLease): void {
     this.lease = null;
-    this.completion.reset();
     this.entities.sourcePicker = null;
     this.widget.root.hidden = true;
     this.editor.notice = this.editor.message = "";

@@ -9,12 +9,20 @@ async function measureCard({ css, factor, narrow }) {
   document.documentElement.style.setProperty("--ui-scale", String(factor));
   const root = document.querySelector(".revolve-controls"),
     card = root.querySelector(".revolve-options");
-  for (const label of ["Union", "Subtract", "Intersect", "New body", "Cleanup", "Axis", "Accept"]) {
+  for (const label of [
+    "Union",
+    "Subtract",
+    "Intersect",
+    "New body",
+    "Extended test action",
+    "Axis",
+    "Accept",
+  ]) {
     const button = document.createElement("button");
     button.setAttribute("aria-label", label);
-    if (label === "Cleanup") {
-      button.className = "commit-cleanup";
-      button.textContent = "✓ Clean up";
+    if (label === "Extended test action") {
+      button.style.cssText = "width:auto;min-width:max-content;padding:5px 9px;font-size:12px";
+      button.textContent = "Extended test action";
     } else button.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 12h16"/></svg>';
     card.append(button);
   }
