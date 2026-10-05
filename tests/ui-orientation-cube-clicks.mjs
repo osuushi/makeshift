@@ -62,10 +62,7 @@ async function sidewaysTop(page, oblique) {
   await page.mouse.move(x + 20, y);
   await page.keyboard.down("Alt");
   await page.mouse.down();
-  const viewport = await page.getByLabel("Modeling viewport", { exact: true }).boundingBox();
-  const cx = viewport.x + viewport.width / 2,
-    cy = viewport.y + viewport.height / 2;
-  await page.mouse.move(cx - (y - cy), cy + (x + 20 - cx), { steps: 12 });
+  await page.mouse.move(x, y - 20, { steps: 12 });
   await page.keyboard.press("Escape");
   await page.mouse.up();
   await page.keyboard.up("Alt");
@@ -133,6 +130,15 @@ async function cancellation(page) {
 }
 
 async function keyboard(page) {
+  await page.getByLabel("Modeling viewport", { exact: true }).focus();
+  for (let i = 0; i < 30; i++) {
+    await page.keyboard.press("Tab");
+    assert.equal(
+      await page.evaluate(() => !!document.activeElement?.closest(".orientation-cube")),
+      false,
+      "Cube controls never consume sequential Tab focus",
+    );
+  }
   await sidewaysTop(page, true);
   const top = page.getByRole("button", { name: "Top view", exact: true });
   await top.focus();

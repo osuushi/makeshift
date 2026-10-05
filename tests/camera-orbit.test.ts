@@ -231,3 +231,19 @@ test("radial travel and crossing the roll center cannot flip the camera", () => 
   orbit.drag(state, { x: 0, y: -1 }, true);
   assert.ok(state.camera.up.distanceTo(new THREE.Vector3(-1, 0, 0)) < 1e-10);
 });
+
+test("cube-centered bearing controls roll independently of a selected model pivot", () => {
+  const state = view(),
+    orbit = new SmoothedTurntable();
+  const pivot = new THREE.Vector3(2, 1, 0);
+  state.camera.updateMatrixWorld();
+  const projected = pivot.clone().project(state.camera);
+  orbit.begin(state, { x: 0.5, y: 0, rollCenter: { x: 0, y: 0 } }, state.target, true, pivot);
+  orbit.drag(state, { x: 1, y: 0, rollCenter: { x: 0, y: 0 } }, true);
+  assert.ok(state.camera.up.distanceTo(new THREE.Vector3(0, 1, 0)) < 1e-10);
+  orbit.drag(state, { x: 0, y: -1, rollCenter: { x: 0, y: 0 } }, true);
+  assert.ok(state.camera.up.distanceTo(new THREE.Vector3(-1, 0, 0)) < 1e-10);
+  state.camera.lookAt(state.target);
+  state.camera.updateMatrixWorld();
+  assert.ok(pivot.clone().project(state.camera).distanceTo(projected) < 1e-10);
+});
