@@ -143,6 +143,9 @@ jobs:
       - name: Modal Undo boundaries
         if: matrix.shard == 3
         run: xvfb-run -a node tests/modal-undo-boundary-ui.mjs
+      - name: Recent tools discovery and geometry invocation
+        if: matrix.shard == 3
+        run: xvfb-run -a node tests/recent-tools-ui.mjs
       - name: Interface scale and camera independence
         if: matrix.shard == 3
         run: |
@@ -275,6 +278,10 @@ jobs:
         run: |
           npm run test:electron -- --navigation-only
           node tests/navigation-host-ui.mjs
+      - name: Recent tools discovery and geometry invocation
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: node tests/recent-tools-ui.mjs
   # Preserve the existing required check name; failed or skipped lanes cannot pass.
   check:
     if: always()
