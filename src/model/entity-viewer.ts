@@ -13,6 +13,8 @@ export class EntityViewer {
     choose: (target: ModelingTarget) => void;
     hover: (target: ModelingTarget | null) => void;
     selected: (target: ModelingTarget) => boolean;
+    available?: (target: ModelingTarget) => boolean;
+    role?: (target: ModelingTarget) => "target" | "tool" | "input" | undefined;
   } | null = null;
   readonly referenceRows = document.createElement("section");
   private root = document.createElement("aside");
@@ -75,12 +77,8 @@ export class EntityViewer {
     this.editor.notice = "Merged sketch";
     this.editor.refresh();
   }
-  private row(id: string, name: string, target: ModelingTarget): HTMLElement {
-    this.selectionRows.push(target);
-    const row = document.createElement("div");
-    row.className = "entity-row";
-    const select = document.createElement("button"),
-      eye = document.createElement("button");
+  private label(id: string, name: string, target: ModelingTarget): HTMLButtonElement {
+    const select = document.createElement("button");
     select.textContent = name;
     select.setAttribute("aria-label", `Select ${name}`);
     select.onclick = (event) => this.select(target, event);
@@ -91,6 +89,14 @@ export class EntityViewer {
         return;
       renameEntity(this.editor, select, id);
     };
+    return select;
+  }
+  private row(id: string, name: string, target: ModelingTarget): HTMLElement {
+    this.selectionRows.push(target);
+    const row = document.createElement("div");
+    row.className = "entity-row";
+    const select = this.label(id, name, target),
+      eye = document.createElement("button");
     new EntityReorder(this.editor, row, select, id, target.kind);
 
     eye.onclick = () => {
@@ -123,6 +129,11 @@ export class EntityViewer {
     }
     let shown: boolean | undefined;
     this.refreshRows.push(() => {
+      const role = this.sourcePicker?.role?.(target);
+      row.dataset.booleanRole = role ?? "";
+      select.title = role
+        ? `${name} · ${role === "input" ? "Selected" : role === "target" ? "Target" : "Cutting tool"}`
+        : name;
       const selected = this.editor.modeling.targets.some((t) =>
         target.kind === "sketch"
           ? t.sketch === id
@@ -153,6 +164,7 @@ export class EntityViewer {
       }
       select.disabled =
         this.editor.blocked ||
+        this.sourcePicker?.available?.(target) === false ||
         (!!this.editor.interactions.current &&
           !this.editor.interactions.current.finish &&
           !this.sourcePicker);

@@ -15,9 +15,26 @@ export function inspectBodyRendering(scene: THREE.Scene) {
     stencil: number;
     decoratorInvalid: boolean;
   }[] = [];
+  const booleanOperands: {
+    body: string;
+    role: string;
+    opacity: number;
+    depthTest: boolean;
+    triangles: number;
+  }[] = [];
   let created = 0,
     disposed = 0;
   scene.traverse((object) => {
+    const operand = object.userData.booleanOperand;
+    if (operand) {
+      const mesh = object as THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+      booleanOperands.push({
+        ...operand,
+        opacity: mesh.material.opacity,
+        depthTest: mesh.material.depthTest,
+        triangles: mesh.geometry.attributes.position.count / 3,
+      });
+    }
     const stats = object.userData.bodyDrawableStats;
     if (stats) {
       created += stats.created;
@@ -43,5 +60,5 @@ export function inspectBodyRendering(scene: THREE.Scene) {
       decoratorInvalid: mesh.userData.decoratorInvalid === true,
     });
   });
-  return { faces, created, disposed };
+  return { faces, booleanOperands, created, disposed };
 }

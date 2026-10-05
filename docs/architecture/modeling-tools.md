@@ -308,3 +308,36 @@ it does not replace the existing selection defaults. It can start with two or mo
 selected sections or with an empty selection for in-tool collection. Its local card
 owns section order, correspondence and Smooth/Ruled controls, sharing the existing
 Boolean targets and temporary acceptance lifecycle.
+
+## Boolean operands
+
+Union, Subtract and Intersect can start with no selection or one complete body.
+Two or more complete preselected bodies retain their ordered preview route.
+Partial or mixed preselection stays unavailable; the operation itself still
+requires at least two complete accepted bodies. While choosing operands, viewport
+clicks and existing Entities rows operate on whole bodies, including enclosed
+ones. Subtract clicks cycle unselected → target → cutting tool → unselected.
+Choosing a new target demotes the previous target to cutting tool. Preselected
+bodies start with their first body as target and the others as tools.
+Union/Intersect clicks toggle membership.
+Operand editing remains available throughout. Apply or Enter directly accepts
+the current valid preview; there is no separate collection-completion step.
+Empty/incomplete operands can exit without an edit.
+
+Translucent blue input/target surfaces and orange cutting-tool surfaces, with
+visible outlines, reveal operands through the solid result. Flipping the target
+updates their roles. Entities rows use the same blue/orange colors, without
+duplicating body choices or numbered input labels in the Boolean widget. The
+widget contains only Boolean type, Keep/Remove, Apply and Cancel. Instruction
+text, target-cycling controls, result counts and inline cleanup are absent.
+A successful empty result is labeled on Apply and can be
+accepted; it does not mean calculation failed. Accepted body geometry and IDs
+remain authoritative; overlays and collection belong to the interaction lease.
+
+The inline keep-originals choice displays Keep/Remove tools for Subtract and
+Keep/Remove originals for Union/Intersect. Each mode remembers its last explicit
+choice in local window preferences, including after Cancel; unavailable storage
+falls back to that window's in-memory choice. Preference changes are outside
+both document and temporary interaction Undo. Subtract always consumes its target
+and optionally retains cutting tools; the other modes optionally retain all
+inputs. Acceptance/cancel and document Undo/Redo retain their ordinary semantics.

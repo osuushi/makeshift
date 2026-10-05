@@ -1,6 +1,9 @@
 .boolean-widget {
   position: absolute;
   display: flex;
+  flex-wrap: wrap;
+  width: max-content;
+  max-width: calc(100vw - 32px);
   align-items: center;
   gap: 8px;
   padding: 7px;
@@ -28,17 +31,10 @@
   background: #dcecff;
   border-color: #528ec9;
 }
-.boolean-widget button[aria-label="Change subtraction target"] {
-  color: #246fb8;
-}
 .boolean-widget svg {
   width: 20px;
   height: 20px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.7;
-}
-.boolean-status {
-  font-size: 12px;
-  white-space: nowrap;
 }

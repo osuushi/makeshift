@@ -146,16 +146,22 @@ async function booleanBoundary(page) {
   const keep = page.getByRole("button", { name: "Keep originals", exact: true });
   await keep.click();
   assert.equal((await inspect(page)).preview.bodies.length, 4);
+  const second = page.getByRole("button", { name: "Select Body 2", exact: true });
+  await second.click();
+  assert.equal((await inspect(page)).preview, null, "One operand cannot produce a Boolean");
   await history(page);
-  assert.equal(await keep.getAttribute("aria-pressed"), "false");
+  assert.equal(await second.getAttribute("aria-pressed"), "true");
+  assert.equal((await inspect(page)).preview.bodies.length, 4);
+  assert.equal(await keep.getAttribute("aria-pressed"), "true", "Preferences stay outside Undo");
   await history(page, true);
-  assert.equal(await keep.getAttribute("aria-pressed"), "true");
+  assert.equal(await second.getAttribute("aria-pressed"), "false");
+  assert.equal((await inspect(page)).preview, null);
   await history(page);
   assert.equal((await inspect(page)).interaction.kind, "body-boolean");
   assert.equal(
     (await inspect(page)).preview.bodies.length,
-    2,
-    "Initial Boolean can have a valid preview",
+    4,
+    "Initial Boolean retains a valid preview and its explicit preference",
   );
   await exitAtBaseline(page, original, true);
 }

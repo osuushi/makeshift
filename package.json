@@ -19,6 +19,7 @@
     "test": "node scripts/clean-tests.mjs && tsc -p tsconfig.test.json && node --test --test-concurrency=1 .cache/sketch-tests/tests/*.test.js",
     "test:ui": "node tests/ui.mjs",
     "test:current-tools": "node tests/current-tools-ui.mjs",
+    "test:booleans": "node tests/boolean-collection-ui.mjs",
     "test:setup": "node --test tests/sdk-provenance.mjs tests/ui-runtime-selection.mjs tests/worktree-dependencies.mjs",
     "test:selection-history": "node tests/selection-history-ui.mjs",
     "test:reconnection": "node tests/boundary-reconnection-ui.mjs",
