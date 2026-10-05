@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import { inspect, reset } from "./ui-helpers.mjs";
+import { navigationIdle } from "./ui-navigation-history.mjs";
 
 export async function cubeSettled(page) {
   await page.waitForFunction(
     () => document.querySelector(".orientation-cube").getAttribute("aria-busy") !== "true",
   );
-  return inspect(page);
+  return navigationIdle(page);
 }
 
 export async function cubeClicksRoute(page, name) {
@@ -76,7 +77,7 @@ async function sidewaysTop(page, oblique) {
     await page.keyboard.press("Escape");
     await page.mouse.up();
   }
-  await inspect(page);
+  await navigationIdle(page);
 }
 
 async function repeatedClicks(page) {
@@ -113,7 +114,11 @@ async function cancellation(page) {
     if (action === "viewport") await page.mouse.click(700, 500);
     const canceled = (await inspect(page)).camera;
     await page.waitForTimeout(300);
-    assert.deepEqual((await inspect(page)).camera, canceled, `${action} cancels pending alignment`);
+    assert.deepEqual(
+      (await navigationIdle(page)).camera,
+      { ...canceled, navigationPending: false },
+      `${action} cancels pending alignment and completes navigation`,
+    );
   }
   await sidewaysTop(page, true);
   const point = await surfacePoint(page, "Top");
@@ -123,7 +128,7 @@ async function cancellation(page) {
   assert.equal((await inspect(page)).camera.orbitActive, true);
   await page.keyboard.press("Escape");
   await page.mouse.up();
-  const canceled = (await inspect(page)).camera;
+  const canceled = (await navigationIdle(page)).camera;
   await page.waitForTimeout(300);
   assert.deepEqual(
     (await inspect(page)).camera,
