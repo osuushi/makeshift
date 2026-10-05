@@ -16,7 +16,7 @@ import type { Projection } from "../model/projection.js";
 import type { Sketch, SketchDocument } from "./document.js";
 import type { EditIntent } from "./edit-intent.js";
 
-import type { OperationHistoryEntry } from "./operation-history.js";
+import type { HistoryOperation, OperationHistoryEntry } from "./operation-history.js";
 import type { PlaneFrame } from "./planes.js";
 
 export type ModelRequest =
@@ -86,13 +86,18 @@ export type ModelRequest =
       topology?: CleanupSelection[];
     }
   | { kind: "delete-sketch"; sketchId: string }
+  | { kind: "navigation-history"; direction: "undo" | "redo" }
   | { kind: "read" | "discard" | "undo" | "redo" | "new" }
   | { kind: "preview" | "edit"; sketch: Sketch; intent?: EditIntent }
   | { kind: "remove" | "clear"; sketchId: string; ids?: string[] };
 export interface ModelView {
+  canUndoView?: boolean;
+  canRedoView?: boolean;
   erosionQuality?: import("../model/erosion-quality.js").ErosionQuality[];
   meshFit?: import("../model/mesh-fit.js").MeshFitStatistics;
   decoratorSources?: readonly import("../decorators/javascript-hooks.js").EnabledDefinition[];
+  historyNavigation?: import("./history-navigation.js").HistoryNavigation;
+  historyOperation?: HistoryOperation;
   historySelection?: import("./history-selection.js").HistorySelection;
   planeCutAvailable?: boolean;
   data: SketchDocument;

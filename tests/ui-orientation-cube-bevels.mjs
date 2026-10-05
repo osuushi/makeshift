@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { inspect } from "./ui-helpers.mjs";
+import { navigationIdle } from "./ui-navigation-history.mjs";
 import { cubeSettled } from "./ui-orientation-cube-clicks.mjs";
 
 export async function bevelViewsRoute(page, name) {
@@ -114,8 +115,8 @@ async function animationInterruption(page) {
   const interrupted = await inspect(page);
   await page.waitForTimeout(350);
   assert.deepEqual(
-    (await inspect(page)).camera,
-    interrupted.camera,
+    (await navigationIdle(page)).camera,
+    { ...interrupted.camera, navigationPending: false },
     "Pan cancels the old transition",
   );
   await page.emulateMedia({ reducedMotion: "reduce" });

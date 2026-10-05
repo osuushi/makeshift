@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { drag, inspect, reset } from "./ui-helpers.mjs";
+import { navigationRoundTrip, navigationTips } from "./ui-navigation-history.mjs";
 import { cubeSettled } from "./ui-orientation-cube-clicks.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -67,9 +68,14 @@ export async function orientationCubeRoute(page, name) {
   assert.deepEqual((await inspect(page)).camera, canceled.camera);
   const visible = cube.locator('[role="button"]:visible').first();
   await visible.focus();
-  await page.keyboard.press("Enter");
-  await inspect(page);
-  assert.deepEqual(await page.evaluate(() => window.makeshiftHistory()), history);
+  await navigationRoundTrip(page, () => page.keyboard.press("Enter"), "Cube keyboard activation");
+  const geometric = (entries) => entries.filter((entry) => entry.operation.kind !== "navigation");
+  assert.deepEqual(
+    geometric(await page.evaluate(() => window.makeshiftHistory())),
+    geometric(history),
+    "Cube gestures leave accepted geometry history unchanged",
+  );
+  assert.ok((await navigationTips(page)).length > 1, "Cube gestures retain the view suffix");
   await page.mouse.move(center.x, center.y);
   await page.mouse.down();
   await page.mouse.move(center.x + 24, center.y + 18, { steps: 6 });
@@ -78,7 +84,7 @@ export async function orientationCubeRoute(page, name) {
   await cubeRoll(page, center);
   await page.screenshot({ path: `.cache/sketch-review/${name}-orientation-cube.png` });
   console.log(
-    `${name}: cube face alignment, drag, Escape, keyboard and unchanged geometry/history passed`,
+    `${name}: cube face alignment, drag, Escape, keyboard view Undo/Redo and unchanged geometry history passed`,
   );
 }
 

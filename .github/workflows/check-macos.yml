@@ -55,6 +55,11 @@ jobs:
         run: npm run setup:mesh
       - name: Build desktop renderer and host
         run: npm run build
+      - name: Conservative coverage and analytic span bounds
+        run: |
+          cmake -S native/kernel -B .build/kernel -DMAKESHIFT_KERNEL_TESTS=ON
+          cmake --build .build/kernel --target erosion-coverage-test --parallel "$CMAKE_BUILD_PARALLEL_LEVEL"
+          ctest --test-dir .build/kernel -R '^erosion-coverage$' --output-on-failure
       - name: Archive runtime (preserve native permissions and library symlinks)
         run: |
           mkdir -p .cache/ci
@@ -130,6 +135,18 @@ jobs:
       - name: Boolean operand collection and preferences
         if: matrix.shard == 2
         run: xvfb-run -a node tests/boolean-collection-ui.mjs
+      - name: Navigation Undo and context boundaries
+        if: matrix.shard == 2
+        run: |
+          xvfb-run -a node tests/navigation-history-ui.mjs
+          xvfb-run -a node tests/modeling-history-ui.mjs
+          xvfb-run -a node tests/projection-history-ui.mjs
+      - name: Tablet navigation delivery
+        if: matrix.shard == 2 && matrix.browser == 'chromium'
+        run: xvfb-run -a node tests/navigation-touch-ui.mjs
+      - name: Native cursor and navigation history transport
+        if: matrix.shard == 2 && matrix.browser == 'electron'
+        run: xvfb-run -a node tests/navigation-host-ui.mjs
       - name: Modal Undo boundaries
         if: matrix.shard == 3
         run: xvfb-run -a node tests/modal-undo-boundary-ui.mjs
@@ -198,6 +215,11 @@ jobs:
         run: npm run setup:mesh
       - name: Build desktop renderer and host
         run: npm run build
+      - name: Conservative coverage and analytic span bounds
+        run: |
+          cmake -S native/kernel -B .build/kernel -DMAKESHIFT_KERNEL_TESTS=ON
+          cmake --build .build/kernel --target erosion-coverage-test --parallel "$CMAKE_BUILD_PARALLEL_LEVEL"
+          ctest --test-dir .build/kernel -R '^erosion-coverage$' --output-on-failure
       - name: Native host and macOS setup tests
         run: |
           npx tsc -p tsconfig.test.json
@@ -222,6 +244,14 @@ jobs:
           node tests/preview-seed-readiness-ui.mjs
           npm run test:current-tools
           node tests/ui-runtime-cleanup.mjs
+      - name: Navigation Undo and context boundaries
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: |
+          node tests/navigation-history-ui.mjs
+          node tests/modeling-history-ui.mjs
+          node tests/projection-history-ui.mjs
+          node tests/navigation-touch-ui.mjs
       - name: Edge finish faces and surface movement
         env:
           MAKESHIFT_TEST_BROWSER: webkit
@@ -256,7 +286,9 @@ jobs:
           MAKESHIFT_TEST_BROWSER=webkit node tests/orientation-cube-ui.mjs
           MAKESHIFT_TEST_BROWSER=electron node tests/orientation-cube-ui.mjs
       - name: Native Electron navigation gestures
-        run: npm run test:electron -- --navigation-only
+        run: |
+          npm run test:electron -- --navigation-only
+          node tests/navigation-host-ui.mjs
   # Preserve the existing required check name; failed or skipped lanes cannot pass.
   check:
     if: always()

@@ -4,7 +4,19 @@ export async function performHistory(
   editor: SketchEditor,
   direction: "undo" | "redo",
 ): Promise<void> {
+  if (editor.world.navigation.dragging) return;
   const interaction = editor.interactions.current;
+  if (interaction && !interaction.captured && !editor.blocked) {
+    interaction.history?.checkpoint();
+    editor.selectionHistory.finishNavigation();
+    await editor.store.settled();
+    await editor.store.request({ kind: "read" });
+    if (direction === "undo" ? editor.store.canUndoView : editor.store.canRedoView) {
+      await editor.store.request({ kind: "navigation-history", direction });
+      editor.refresh();
+      return;
+    }
+  }
   if (interaction?.history) {
     if (interaction.captured || editor.blocked) return;
     if (direction === "undo" && !interaction.history.canUndo) await editor.interactions.cancel();
@@ -13,6 +25,7 @@ export async function performHistory(
     return;
   }
   if (interaction?.finish || editor.blocked || editor.isDragging) return;
+  editor.selectionHistory.finishNavigation();
   editor.numeric.cancel();
   await editor.interactions.cancel();
   await editor.store.settled();

@@ -25,7 +25,8 @@ function editorAtBaseline() {
         editor.interactions.current = null;
       },
     },
-    world: { active: false },
+    world: { active: false, navigation: { dragging: false } },
+    selectionHistory: { finishNavigation: () => {} },
     blocked: false,
     isDragging: false,
     numeric: { cancel: () => {} },
@@ -34,7 +35,7 @@ function editorAtBaseline() {
       canRedo: false,
       settled: async () => {},
       request: async ({ kind }: { kind: string }) => {
-        requests.push(kind);
+        if (kind !== "read") requests.push(kind);
       },
     },
     refresh: () => {},
@@ -123,4 +124,15 @@ test("shared command catalog enables initial modal Undo but preserves busy/drag 
   } finally {
     dispose();
   }
+});
+
+test("view history inside a modal precedes parameter history without cancelling", async () => {
+  const context = editorAtBaseline();
+  context.tweak(2);
+  Object.assign(context.editor.store, { canUndoView: true, canRedoView: true });
+  await context.editor.history("undo");
+  await context.editor.history("redo");
+  assert.deepEqual(context.requests, ["navigation-history", "navigation-history"]);
+  assert.equal(context.value(), 2);
+  assert.equal(context.cancellations(), 0);
 });

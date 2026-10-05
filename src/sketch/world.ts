@@ -1,14 +1,11 @@
 import * as THREE from "three";
+import { type CameraState, restoreCamera } from "../model/camera-state.js";
 import { fitCameraDepth } from "./camera-depth.js";
-import {
-  alignCameraToPlane,
-  applyCameraPose,
-  type CameraFraming,
-  type CameraPose,
-  planeCameraPose,
-} from "./camera-motion.js";
+import { alignCameraToPlane, type CameraFraming, planeCameraPose } from "./camera-motion.js";
 import { levelOrientation, type OrbitPointer, SmoothedTurntable } from "./camera-orbit.js";
 import { CameraRoll } from "./camera-roll.js";
+import { CameraTransition } from "./camera-transition.js";
+import { NavigationHistory } from "./navigation-history.js";
 import { minimumPlaneBounds, type PlaneBounds } from "./plane-bounds.js";
 import {
   type PlaneFrame,
@@ -63,7 +60,8 @@ export class World {
   selectedPlane: PlaneId | null = null;
   private readonly observer: ResizeObserver;
   private readonly removeNavigation: () => void;
-  private cameraAnimation: number | null = null;
+  private readonly motion = new CameraTransition(this);
+  readonly navigation = new NavigationHistory(this);
   private pendingDraw: number | null = null;
   private readonly frame = new WorldFrame(this, () => this.present(true));
   private readonly sketchClip = new THREE.Plane();
@@ -75,7 +73,9 @@ export class World {
   get currentOrbitPivot(): THREE.Vector3 {
     return this.rotationPivot.clone();
   }
-  beginOrbit(pointer: OrbitPointer, press: Point, roll = false): void {
+  beginOrbit(pointer: OrbitPointer, press: Point, roll = false, record = true): void {
+    if (record || this.active) this.navigation.begin();
+    else this.navigation.unrecorded();
     this.cancelCameraMotion();
     this.rotationPivot.copy(this.orbitPivot(press));
     const rollPivot = this.rollPivot();
@@ -83,7 +83,7 @@ export class World {
     this.orbit.begin(this, pointer, this.rotationPivot, roll, rollPivot);
   }
   get cameraTransitioning(): boolean {
-    return this.cameraAnimation !== null || this.rollAnimation.active;
+    return this.motion.active || this.rollAnimation.active;
   }
   get cameraMoving(): boolean {
     return this.cameraTransitioning || this.pendingDraw !== null;
@@ -130,6 +130,7 @@ export class World {
     this.updateClipping();
     for (const listener of this.changed) listener();
     this.present();
+    this.navigation.settled();
   }
 
   /** Present current state without rerunning interaction refresh/hover invalidation. */
@@ -173,6 +174,7 @@ export class World {
     workspace: { key: string; frame: PlaneFrame; sketchId?: string },
     framing: CameraFraming = {},
   ): void {
+    this.navigation.beginWorkspace();
     this.workspace = workspace;
     this.animateTo(workspace.frame, framing);
   }
@@ -183,66 +185,40 @@ export class World {
     alignCameraToPlane(this, frame);
   }
   private animateTo(frame: PlaneFrame, framing: CameraFraming): void {
-    this.animatePose(planeCameraPose(this, frame, framing));
+    this.motion.start(planeCameraPose(this, frame, framing));
   }
-  animateOrientation(quaternion: THREE.Quaternion): void {
-    this.animatePose({
+  animateOrientation(quaternion: THREE.Quaternion, record = true): void {
+    if (record) this.navigation.begin();
+    this.motion.start({
       target: this.target.clone(),
       quaternion,
       distance: this.camera.position.distanceTo(this.target),
       height: this.height,
     });
   }
-  private animatePose(end: CameraPose): void {
-    this.cancelCameraMotion();
-    this.camera.lookAt(this.target);
-    this.camera.updateMatrixWorld();
-    const start = {
-      target: this.target.clone(),
-      quaternion: this.camera.quaternion.clone(),
-      distance: this.camera.position.distanceTo(this.target),
-      height: this.height,
-    };
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      applyCameraPose(this, end);
-      this.draw();
-      return;
-    }
-    const started = performance.now();
-    this.cameraAnimation = requestAnimationFrame((now) =>
-      this.cameraStep(start, end, started, now),
+  animateCamera(state: CameraState): void {
+    const camera = new THREE.OrthographicCamera();
+    camera.position.fromArray(state.position);
+    camera.up.fromArray(state.up);
+    const target = new THREE.Vector3(...state.target);
+    camera.lookAt(target);
+    this.motion.start(
+      {
+        target,
+        quaternion: camera.quaternion,
+        distance: camera.position.distanceTo(target),
+        height: state.height,
+      },
+      () => restoreCamera(this, state),
     );
-    this.draw();
   }
   levelHorizon(): void {
     if (this.rollAnimation.active) return;
-    this.animateOrientation(levelOrientation(this));
-  }
-  private cameraStep(
-    start: ReturnType<typeof planeCameraPose>,
-    end: ReturnType<typeof planeCameraPose>,
-    started: number,
-    now: number,
-  ): void {
-    const progress = Math.min(1, (now - started) / 280),
-      amount = 1 - (1 - progress) ** 3;
-    applyCameraPose(this, {
-      target: start.target.clone().lerp(end.target, amount),
-      quaternion: start.quaternion.clone().slerp(end.quaternion, amount),
-      distance: THREE.MathUtils.lerp(start.distance, end.distance, amount),
-      height: THREE.MathUtils.lerp(start.height, end.height, amount),
-    });
-    this.cameraAnimation =
-      progress < 1
-        ? requestAnimationFrame((next) => this.cameraStep(start, end, started, next))
-        : null;
-    this.draw();
+    this.animateOrientation(levelOrientation(this), this.navigation.active);
   }
   cancelCameraMotion(preserveRoll = false): void {
     if (!preserveRoll) this.rollAnimation.cancel();
-    if (this.cameraAnimation === null) return;
-    cancelAnimationFrame(this.cameraAnimation);
-    this.cameraAnimation = null;
+    this.motion.cancel();
   }
 
   axisName(axis: "x" | "y"): string {
@@ -250,6 +226,7 @@ export class World {
     return key && key in planes ? key[axis === "x" ? 0 : 1] : axis.toUpperCase();
   }
   exit(): void {
+    if (this.workspace) this.navigation.beginWorkspace();
     this.cancelCameraMotion();
     this.workspace = null;
     this.draw();
@@ -285,6 +262,7 @@ export class World {
     return { x: hit.dot(u), y: hit.dot(v) };
   }
   dispose(): void {
+    this.navigation.clear();
     this.cancelCameraMotion();
     if (this.pendingDraw !== null) cancelAnimationFrame(this.pendingDraw);
     this.observer.disconnect();

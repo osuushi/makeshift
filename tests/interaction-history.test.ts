@@ -70,10 +70,13 @@ test("editor history stays inside its interaction and refuses navigation while b
   let documentRequests = 0;
   const editor = {
     interactions: { current: { history, captured: false } },
+    world: { navigation: { dragging: false } },
     blocked: true,
+    selectionHistory: { finishNavigation: () => {} },
     store: {
-      request: () => {
-        documentRequests++;
+      settled: async () => {},
+      request: async ({ kind }: { kind: string }) => {
+        if (kind !== "read") documentRequests++;
       },
     },
     refresh: () => {},

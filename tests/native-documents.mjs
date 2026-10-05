@@ -16,6 +16,7 @@ export function electronTestArguments(args) {
 }
 
 const sessions = new WeakMap();
+export const electronSession = (page) => sessions.get(page);
 /** Existing geometry suites discard between cases; lifecycle tests answer prompts explicitly. */
 export async function launchElectron(options) {
   const directory = await mkdtemp(join(tmpdir(), "makeshift-ui-"));

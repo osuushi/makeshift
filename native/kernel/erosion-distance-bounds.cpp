@@ -1,4 +1,5 @@
 #include "erosion-distance-bounds.h"
+#include "erosion-analytic-spans.h"
 #include "geometry-policy.h"
 #include "erosion-boundary-points.h"
 #include "erosion-bezier-bounds.h"
@@ -200,18 +201,10 @@ struct Support {
             }
             return low <= tolerance && high >= -tolerance;
         }
-        if (surface.GetType() == GeomAbs_Cylinder) {
-            const auto cylinder = surface.Cylinder();
-            const gp_Vec axis(cylinder.Axis().Direction());
-            double maximum = 0;
-            for (const auto& p : points) {
-                const gp_Vec v(cylinder.Location(), p);
-                maximum = std::max(maximum, (v-axis*v.Dot(axis)).Magnitude());
-            }
-            // Distance to an axis is convex. If every box corner is strictly
-            // within the cylinder, its surface cannot cross any of the cell.
-            if (maximum < cylinder.Radius()-tolerance) return false;
-        }
+        if (surface.GetType() == GeomAbs_Cylinder &&
+            !erosion::cylinderCrosses(surface.Cylinder(), points, tolerance)) return false;
+        if (surface.GetType() == GeomAbs_Torus &&
+            !erosion::torusCrosses(surface.Torus(), points, tolerance)) return false;
         if (surface.GetType() == GeomAbs_Sphere) {
             const auto sphere = surface.Sphere();
             gp_Pnt nearest;

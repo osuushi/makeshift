@@ -1,5 +1,8 @@
 #include "erosion.h"
+#include "geometry-policy.h"
 #include "erosion-distance-bounds.h"
+#include "erosion-analytic-spans.h"
+#include "erosion-coverage-cells.h"
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
@@ -7,6 +10,7 @@
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepPrimAPI_MakeCylinder.hxx>
 #include <BRepPrimAPI_MakeSphere.hxx>
+#include <BRepPrimAPI_MakeTorus.hxx>
 #include <BRep_Builder.hxx>
 #include <TopoDS_Compound.hxx>
 #include <iostream>
@@ -22,6 +26,61 @@ void rejected(const TopoDS_Shape& source, const TopoDS_Shape& candidate, double 
     try { erosion::checkCoverage(source, candidate, depth); }
     catch (const std::runtime_error&) { return; }
     throw std::runtime_error("Accepted missing interior beyond allowance");
+}
+void cylinderSpans() {
+    constexpr double tolerance = geometry_policy::boundaryDistanceMm;
+    const gp_Cylinder cylinder(gp_Ax3(),5);
+    for (const auto& direction : {gp_Dir(0,0,1),gp_Dir(1,.2,.1)}) {
+        const gp_Ax3 frame(gp_Pnt(15,-8,23),direction);
+        const gp_Cylinder tilted(frame,5);
+        for (const double radius : {4.5,5.0,5.5}) {
+            const gp_Pnt center = frame.Location().Translated(
+                gp_Vec(frame.XDirection())*radius+gp_Vec(direction)*6);
+            erosion::coverage::Cell cell;
+            for (int axis=0;axis<3;++axis) {
+                cell.low[axis]=center.Coord(axis+1)-.01;
+                cell.high[axis]=center.Coord(axis+1)+.01;
+            }
+            if (erosion::cylinderCrosses(tilted,cell.corners(),tolerance) != (radius==5))
+                throw std::runtime_error("Cylinder span missed a boundary or failed to certify radial separation");
+        }
+    }
+    // A diagonal exterior lies inside the cylinder's Cartesian bounding box.
+    const erosion::coverage::Cell exterior{{3.95,3.95,4.95},{4.05,4.05,5.05}};
+    erosion::BoundaryDistance bounds(BRepPrimAPI_MakeCylinder(5,10).Shape());
+    if (bounds.crosses(exterior.corners()))
+        throw std::runtime_error("Separated cylinder span still requires point classification");
+    const erosion::coverage::Cell tangent{{5-tolerance/2,-tolerance/2,5-tolerance/2},
+                                        {5+tolerance/2,tolerance/2,5+tolerance/2}};
+    if (!erosion::cylinderCrosses(cylinder,tangent.corners(),tolerance))
+        throw std::runtime_error("Cylinder span discarded its boundary tolerance band");
+}
+void torusSpans() {
+    constexpr double tolerance = geometry_policy::boundaryDistanceMm;
+    for (const auto& direction : {gp_Dir(0,0,1),gp_Dir(1,.2,.1)}) {
+        const gp_Ax3 frame(gp_Pnt(15,-8,23),direction);
+        const gp_Torus torus(frame,5,1);
+        for (const auto& sample : {std::array<double,3>{0,0,0}, {5,0,0}, {6,0,1}, {5.6,.9,0}}) {
+            const gp_Pnt center = frame.Location().Translated(
+                gp_Vec(frame.XDirection())*sample[0]+gp_Vec(direction)*sample[1]);
+            erosion::coverage::Cell cell;
+            for (int axis=0;axis<3;++axis) {
+                cell.low[axis]=center.Coord(axis+1)-.01;
+                cell.high[axis]=center.Coord(axis+1)+.01;
+            }
+            if (erosion::torusCrosses(torus,cell.corners(),tolerance) != bool(sample[2]))
+                throw std::runtime_error("Torus span missed a boundary or failed to certify tube separation");
+        }
+    }
+    const erosion::coverage::Cell hole{{-.01,-.01,-.01},{.01,.01,.01}};
+    erosion::BoundaryDistance bounds(BRepPrimAPI_MakeTorus(5,1).Shape());
+    if (bounds.crosses(hole.corners()))
+        throw std::runtime_error("Separated torus hole still requires point classification");
+    const erosion::coverage::Cell tangent{{6-tolerance/2,-tolerance/2,-tolerance/2},
+                                        {6+tolerance/2,tolerance/2,tolerance/2}};
+    if (!erosion::torusCrosses(gp_Torus(gp_Ax3(),5,1),tangent.corners(),tolerance) ||
+        !erosion::torusCrosses(gp_Torus(gp_Ax3(),.5,1),hole.corners(),tolerance))
+        throw std::runtime_error("Torus span discarded its tolerance band or unsupported spindle");
 }
 void distanceBounds() {
     const auto vertical = BRepPrimAPI_MakeCylinder(5, 12).Shape();
@@ -81,6 +140,8 @@ void sphericalCoverage() {
 }
 int main() {
     bezierDistanceBounds();
+    cylinderSpans();
+    torusSpans();
     distanceBounds();
     sphericalCoverage();
     const auto source = BRepPrimAPI_MakeBox(20, 20, 10).Shape();
