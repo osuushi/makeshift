@@ -238,7 +238,11 @@ nominal projection. The displayed correction is frozen on hover/press using the 
 transition contract above. Rotation and source-axis plane rays compensate for the
 correction captured at press; relative distance/translation/scale gestures retain their
 ordinary delta mapping. The actual pressed target stays pinned through pointer leave or
-over. After release, a hovered HTML control or planar assembly keeps its correction
+over. Every press freezes the currently displayed correction again, including an animation
+that began while the pointer stayed within the same widget assembly. Blurring a numeric
+field within the application does not release a held press; actual window blur does.
+After release, a hovered
+HTML control or planar assembly keeps its correction
 only while its current footprints are clear of viewport edges, chrome and reserved controls. Unsafe
 idle hover fits immediately; a genuine safe hover remains stable. New or disclosed
 controls fit around current measured footprints; unpicked
