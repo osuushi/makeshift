@@ -89,7 +89,7 @@ test("captured tight allowance fails quickly and its suggested allowance succeed
       kind: "erode",
       operation: { method: "accurate", ...operation, allowance },
     });
-    assert.equal(retried.error, undefined);
+    assert.equal(retried.error, undefined, `Suggested allowance ${allowance} must succeed`);
     assert.equal(retried.erosionAllowance, undefined);
     assert.equal(retried.view.candidate?.bodies?.length, 2);
     assert.equal(retried.view.data, before);
