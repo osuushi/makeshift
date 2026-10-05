@@ -128,6 +128,18 @@ jobs:
       - name: Boolean operand collection and preferences
         if: matrix.shard == 2
         run: xvfb-run -a node tests/boolean-collection-ui.mjs
+      - name: Navigation Undo and context boundaries
+        if: matrix.shard == 2
+        run: |
+          xvfb-run -a node tests/navigation-history-ui.mjs
+          xvfb-run -a node tests/modeling-history-ui.mjs
+          xvfb-run -a node tests/projection-history-ui.mjs
+      - name: Tablet navigation delivery
+        if: matrix.shard == 2 && matrix.browser == 'chromium'
+        run: xvfb-run -a node tests/navigation-touch-ui.mjs
+      - name: Native cursor and navigation history transport
+        if: matrix.shard == 2 && matrix.browser == 'electron'
+        run: xvfb-run -a node tests/navigation-host-ui.mjs
       - name: Modal Undo boundaries
         if: matrix.shard == 3
         run: xvfb-run -a node tests/modal-undo-boundary-ui.mjs
@@ -218,9 +230,16 @@ jobs:
           node tests/face-offset-readiness-ui.mjs
           node tests/preview-action-readiness-ui.mjs
           node tests/preview-seed-readiness-ui.mjs
-          node tests/projection-history-ui.mjs
           npm run test:current-tools
           node tests/ui-runtime-cleanup.mjs
+      - name: Navigation Undo and context boundaries
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: |
+          node tests/navigation-history-ui.mjs
+          node tests/modeling-history-ui.mjs
+          node tests/projection-history-ui.mjs
+          node tests/navigation-touch-ui.mjs
       - name: Edge finish faces and surface movement
         env:
           MAKESHIFT_TEST_BROWSER: webkit
@@ -253,7 +272,9 @@ jobs:
           MAKESHIFT_TEST_BROWSER=webkit node tests/orientation-cube-ui.mjs
           MAKESHIFT_TEST_BROWSER=electron node tests/orientation-cube-ui.mjs
       - name: Native Electron navigation gestures
-        run: npm run test:electron -- --navigation-only
+        run: |
+          npm run test:electron -- --navigation-only
+          node tests/navigation-host-ui.mjs
   # Preserve the existing required check name; failed or skipped lanes cannot pass.
   check:
     if: always()

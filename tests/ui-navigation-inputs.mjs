@@ -49,6 +49,8 @@ export async function navigationInputRoute(page, name) {
   );
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await navigationIdle(page);
+  await orbit(page);
+  await navigationIdle(page);
   await navigationRoundTrip(
     page,
     () => page.getByRole("button", { name: "Top view", exact: true }).click(),

@@ -8,6 +8,7 @@ export async function navigationIdle(page) {
       !s.busy &&
       !s.camera.moving &&
       !s.camera.navigationPending &&
+      document.querySelector(".orientation-cube")?.getAttribute("aria-busy") !== "true" &&
       !s.commands.some((command) => command.unavailable === "Switching tools…")
     );
   });

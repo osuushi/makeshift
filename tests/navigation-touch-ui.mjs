@@ -3,6 +3,8 @@ import { chromium, webkit } from "playwright";
 import { launchElectron } from "./native-documents.mjs";
 import { drag } from "./ui-helpers.mjs";
 import { navigationIdle, navigationRoundTrip } from "./ui-navigation-history.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
+import { installTestFrames } from "./ui-test-frames.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function touchDriver(page, name) {
@@ -126,7 +128,8 @@ try {
   await desktop.getByRole("button", { name: "Trackpad", exact: true }).click();
   await desktop.getByRole("button", { name: "Tablet", exact: true }).click();
   const url = await desktop.locator(".ipad-addresses a").first().getAttribute("href");
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  for (const name of runtimeNames(["chromium", "webkit"])) {
+    const engine = { chromium, webkit }[name];
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({
@@ -146,6 +149,7 @@ try {
               { capture: true },
             );
         });
+      await installTestFrames(page);
       await page.goto(url);
       await page.waitForFunction(() => Boolean(window.makeshiftInspect));
       await navigationIdle(page);
