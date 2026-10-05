@@ -82,6 +82,17 @@ function assertDead(pid) {
     "Owned installer descendant drained",
   );
 }
+async function launchHome(root) {
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const home = await readFile(join(root, "launch-home"), "utf8").catch((error) => {
+      if (error.code === "ENOENT") return "";
+      throw error;
+    });
+    if (home) return home;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  throw new Error("Owned fixture CLI did not record its launched Codex home");
+}
 async function setupRoute(page, app, root) {
   await page.getByRole("button", { name: "Open agent terminal", exact: true }).click();
   await page.locator(".agent-message").filter({ hasText: "Could not start" }).waitFor();
@@ -123,7 +134,7 @@ async function setupRoute(page, app, root) {
   );
   const status = await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }));
   assert.equal(status.preferences.preset, "codex");
-  const home = await readFile(join(root, "launch-home"), "utf8");
+  const home = await launchHome(root);
   assert.ok(
     home.startsWith(status.workspace.replace(/\/workspace$/, "")),
     "Launch uses the owned document Codex home",
