@@ -11,6 +11,7 @@ import {
   setDecoratorDisplay,
 } from "../src/preferences/decorator-display.js";
 import type { SketchEditor } from "../src/sketch/editor.js";
+import { hasForegroundContent } from "../src/sketch/world-foreground.js";
 
 const vertices = [0, 0, 0, 1, 0, 0, 0, 1, 0];
 function documentAt(x = 0): DisplayDocument {
@@ -76,7 +77,13 @@ function previewScene() {
     },
   } as unknown as SketchEditor;
   const overlay = new PreviewOverlaySurfaces(editor);
-  return { scene, hidden, overlay, group: scene.children[0] };
+  return {
+    scene,
+    hidden,
+    overlay,
+    group: scene.children[0],
+    foreground: editor.world.renderForegroundOverlays,
+  };
 }
 const signature = (value: string) => new Map([["decorator", value]]);
 
@@ -114,10 +121,25 @@ test("parameter drafts reuse trimmed faces and current decorator type controls t
 });
 
 test("current-face fallback follows placement, isolates body visibility, and rejects stale meshes", () => {
-  const { scene, hidden, overlay, group } = previewScene();
+  const { scene, hidden, overlay, group, foreground } = previewScene();
   try {
+    assert.equal(hasForegroundContent(scene, foreground), false);
     overlay.sync(signature("original"), documentAt());
     assert.equal(group.children.length, 2);
+    assert.equal(
+      hasForegroundContent(scene, foreground),
+      true,
+      "Fallback faces need foreground rendering without a base body",
+    );
+    hidden.add("a");
+    hidden.add("b");
+    overlay.updateVisibility();
+    assert.equal(
+      hasForegroundContent(scene, foreground),
+      false,
+      "Hidden attachments need no foreground pass",
+    );
+    hidden.clear();
     hidden.add("b");
     overlay.sync(signature("original"), documentAt());
     assert.deepEqual(
@@ -168,6 +190,7 @@ test("current-face fallback follows placement, isolates body visibility, and rej
     );
     overlay.sync(new Map(), { ...documentAt(), decorators: [] });
     assert.equal(group.children.length, 0);
+    assert.equal(hasForegroundContent(scene, foreground), false);
   } finally {
     overlay.dispose();
     resetDecoratorDisplay();

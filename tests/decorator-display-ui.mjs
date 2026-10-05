@@ -11,13 +11,17 @@ import {
   delayedSettingsRoute,
 } from "./ui-decorator-display.mjs";
 import { installPreviewControl, previewStats } from "./ui-decorator-worker-control.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
+import { installTestFrames } from "./ui-test-frames.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
-const native = process.env.MAKESHIFT_TEST_BROWSER === "electron";
+const names = runtimeNames(["chromium", "webkit", "electron"], ["chromium", "webkit"]);
+const native = names[0] === "electron";
 const server = native ? null : await createServer({ server: { port: 0, watch: null, hmr: false } });
 await server?.listen();
 try {
-  for (const [name, engine] of Object.entries(native ? { electron: null } : { chromium, webkit })) {
+  for (const name of names) {
+    const engine = { chromium, webkit }[name];
     const app = native
       ? await launchElectron({ args: ["."], env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" } })
       : null;
@@ -26,7 +30,9 @@ try {
       const page = app
         ? await app.firstWindow()
         : await browser.newPage({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 2 });
+      if (app) await page.setViewportSize({ width: 1280, height: 900 });
       page.setDefaultTimeout(30000);
+      await installTestFrames(page);
       await installPreviewControl(page);
       const errors = [];
       page.on("pageerror", (error) => errors.push(error.message));

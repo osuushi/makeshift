@@ -117,6 +117,14 @@ jobs:
       - name: Edge finish faces and surface movement
         if: matrix.shard == 1
         run: xvfb-run -a node tests/edge-finish-ui.mjs
+      - name: Decorator display, pending workers and exports
+        if: matrix.shard == 1
+        run: xvfb-run -a node tests/decorator-display-ui.mjs
+      - name: Decorator settings controls and narrow layouts
+        if: matrix.shard == 1 && matrix.browser == 'chromium'
+        run: |
+          xvfb-run -a node tests/decorator-settings-browser.mjs
+          xvfb-run -a node tests/decorator-settings-layout.mjs
       - name: Browser preview readiness
         if: matrix.shard == 1 && matrix.browser == 'chromium'
         run: |
@@ -282,6 +290,17 @@ jobs:
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: node tests/recent-tools-ui.mjs
+      - name: Decorator display, pending workers and settings
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: |
+          node tests/decorator-settings-browser.mjs
+          node tests/decorator-settings-layout.mjs
+          node tests/decorator-display-ui.mjs
+      - name: Built Electron decorator display and export
+        env:
+          MAKESHIFT_TEST_BROWSER: electron
+        run: node tests/decorator-display-ui.mjs
   # Preserve the existing required check name; failed or skipped lanes cannot pass.
   check:
     if: always()
