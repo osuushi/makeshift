@@ -248,15 +248,20 @@ decorator assignments together. Body deletion removes its decorations.
 
 Invalid decorators show red warning stripes on surviving affected faces, including
 when deselected; selection lightens the red while retaining the pattern. Geometry
-validation failures such as excessive thread depth do not open a global repair panel.
+Threads never open the automatic repair panel or its select/reassign/discard controls.
 Selecting the face opens the normal thread fields with the validation message and
 advanced controls expanded. A valid settings edit clears that validation failure
 in the same Undo step. Settings edits do not clear topology ambiguity or lost supports.
+Geometry edits revalidate stored settings failures: restoring a valid radius or
+length clears the error in the temporary candidate and accepted result without
+changing thread parameters. Undo/Redo restores validity with the geometry.
 
 Unresolved topology attachments remain in the document with their repair reason, even when
-their original faces no longer exist. The panel can select surviving affected
+their original faces no longer exist. For non-thread decorators the panel can select surviving affected
 geometry, reassign an attachment to selected compatible faces, or remove that
 individual attachment. Unresolved attachments reserve no active face assignment.
+Threads with surviving faces use their ordinary selection editor and removal action;
+there is currently no thread reassignment UI for lost or ambiguous supports.
 They block export until repaired or removed, but do not hide valid previews on
 other faces. Kept Boolean originals retain their own attachments; resulting bodies
 receive independent identities through the same correspondence rules.

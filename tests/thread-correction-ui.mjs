@@ -39,6 +39,30 @@ await withUiRuntimes(
       true,
     );
     await page.screenshot({ path: `.cache/sketch-review/${name}-thread-error-editor.png` });
+    // Radius recovery must clear the error in both temporary and accepted geometry.
+    await page.getByRole("button", { name: "Offset faces", exact: true }).click();
+    await (await relativeOffsetInput(page)).fill("5");
+    await previewActionReady(page, "Accept face offset");
+    assert.equal((await inspect(page)).preview.decorators[0].problem, undefined);
+    await page.getByRole("button", { name: "Accept face offset", exact: true }).click();
+    const restored = (await inspect(page)).document;
+    assert.equal(restored.decorators[0].problem, undefined);
+    assert.deepEqual(restored.decorators[0].settings, before.settings);
+    assert.equal(
+      (await inspect(page)).bodyRendering.faces.some((f) => f.decoratorInvalid),
+      false,
+    );
+    for (const label of [
+      "Select affected geometry",
+      "Use selected faces for these threads",
+      "Remove unresolved thread decorator",
+    ])
+      assert.equal(await page.getByRole("button", { name: label, exact: true }).count(), 0);
+    await chooseTool(page, "undo", "undo");
+    assert.deepEqual((await inspect(page)).document, resized);
+    await chooseTool(page, "redo", "redo");
+    assert.deepEqual((await inspect(page)).document, restored);
+    await chooseTool(page, "undo", "undo");
     await page.getByRole("combobox", { name: "Preset", exact: true }).selectOption("metric");
     const corrected = (await inspect(page)).document;
     assert.equal(corrected.decorators[0].problem, undefined);
@@ -53,7 +77,7 @@ await withUiRuntimes(
     await chooseTool(page, "redo", "redo");
     assert.deepEqual((await inspect(page)).document, corrected);
     console.log(
-      `${name}: resized invalid thread stays selectable, normal fields repair settings, one-step Undo/Redo passed`,
+      `${name}: invalid thread fields, radius recovery in preview/acceptance, no thread repair controls, settings correction and Undo/Redo passed`,
     );
   },
   { timeout: 30000 },

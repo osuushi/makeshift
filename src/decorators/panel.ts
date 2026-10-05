@@ -157,9 +157,7 @@ export class DecoratorPanel {
     }
     const instances = this.instances();
     const problems = (this.editor.store.data.decorators ?? []).filter(
-      (d) =>
-        d.problem &&
-        !(d.definition === threadDefinition && hasSettingsProblem(this.editor.store.data, d)),
+      (d) => d.problem && d.definition !== threadDefinition,
     );
     const last = this.editor.store.data.decorators?.find((d) => d.id === this.last);
     const canContinue =
@@ -238,19 +236,17 @@ export class DecoratorPanel {
       note.className = "decorator-warning";
       note.setAttribute("role", "status");
       note.textContent = `⚠ Threads need correction: ${problem}.`;
-      if (instances.every((d) => !d.problem || hasSettingsProblem(this.editor.store.data, d)))
+      if (instances.every((d) => !d.problem || hasSettingsProblem(d)))
         note.textContent += " Adjust the settings below.";
       this.root.append(note);
     }
-    if (instances.every((d) => !d.problem || hasSettingsProblem(this.editor.store.data, d))) {
-      appendThreadSettings(
-        this.root,
-        instances,
-        (patch, preview) => this.patch(patch, preview, instances),
-        this.draft,
-        this.advancedOpen || !!problem,
-      );
-    }
+    appendThreadSettings(
+      this.root,
+      instances,
+      (patch, preview) => this.patch(patch, preview, instances),
+      this.draft,
+      this.advancedOpen || !!problem,
+    );
     this.button("Remove thread decorator from selected faces", () => {
       const keys = new Set(instances.flatMap((d) => d.faces.map(faceKey)));
       void this.edit({

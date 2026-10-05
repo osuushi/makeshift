@@ -65,25 +65,13 @@ export function validateBuiltin(document: DisplayDocument, instance: DecoratorIn
 }
 
 /** Only geometry-validation failures can be repaired by changing settings alone. */
-export function hasSettingsProblem(
-  document: DisplayDocument,
-  instance: DecoratorInstance,
-): boolean {
+export function hasSettingsProblem(instance: DecoratorInstance): boolean {
   if (!instance.problem || !isBuiltinDecorator(instance.definition)) return false;
-  if (
-    ![
-      "Thread profile is too deep for this cylinder",
-      "Thread insets leave no threaded length",
-      "Knurl depth is too large for this cylinder",
-    ].includes(instance.problem)
-  )
-    return false;
-  try {
-    validateBuiltin(document, instance);
-  } catch (error) {
-    return error instanceof Error && error.message === instance.problem;
-  }
-  return false;
+  return [
+    "Thread profile is too deep for this cylinder",
+    "Thread insets leave no threaded length",
+    "Knurl depth is too large for this cylinder",
+  ].includes(instance.problem);
 }
 
 function validateReferences(refs: readonly FaceReference[]): void {
@@ -238,7 +226,7 @@ export function editDecorators(document: SketchDocument, edit: DecoratorEdit): S
       const radius = resolveFaces(document.bodies ?? [], instance.faces)[0].cylinder.radius;
       const updated = {
         ...instance,
-        problem: hasSettingsProblem(document, instance) ? undefined : instance.problem,
+        problem: hasSettingsProblem(instance) ? undefined : instance.problem,
         settings:
           instance.definition === knurlDefinition
             ? patchKnurlSettings(instance.settings, edit.patch)
