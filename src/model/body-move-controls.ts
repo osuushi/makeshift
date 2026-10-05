@@ -105,6 +105,7 @@ export class BodyMoveControls {
     const session = this.open(edit.duplicate, edit);
     if (!session) throw new Error("Cannot restore body movement inputs");
     this.preview(parameters.value);
+    session.lease.show(this.editor.store.candidate);
     this.gizmo.input.focus();
     this.gizmo.input.select();
   }

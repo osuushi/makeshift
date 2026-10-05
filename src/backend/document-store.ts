@@ -8,12 +8,13 @@ import {
 import type { HistoryOperation, OperationHistoryEntry } from "../sketch/operation-history.js";
 
 import { reopenOperation } from "../sketch/reopen-operation.js";
-
 import { validateDocument } from "./document-validation.js";
+import type { ReopenPreview } from "./reopen-preview.js";
 
 interface HistoryRecord {
   entry: OperationHistoryEntry;
   change?: { before: SketchDocument; after: SketchDocument };
+  preview?: ReopenPreview;
   selection?: { before: HistorySelection; after: HistorySelection };
   // Standalone selections share their accepted snapshot; no document copy or owner.
   selectionDocument?: SketchDocument;
@@ -94,6 +95,7 @@ export class DocumentStore {
       record.entry.state = "superseded";
       delete record.navigation;
       delete record.change;
+      delete record.preview;
       delete record.selection;
       delete record.selectionDocument;
     }
@@ -115,7 +117,7 @@ export class DocumentStore {
       ? reopenOperation(record.entry.operation)
       : undefined;
   }
-  reopen(): void {
+  reopen(): { candidate: SketchDocument; preview?: ReopenPreview } {
     const record = this.latestChange;
     if (!record?.change || !this.reopenOperation)
       throw new Error("The latest accepted edit cannot be reopened");
@@ -131,6 +133,7 @@ export class DocumentStore {
     this.accepted = record.change.before;
     if (record.selection) this.selection = structuredClone(record.selection.before);
     record.entry.state = "undone";
+    return { candidate: record.change.after, preview: record.preview };
   }
   get canUndo(): boolean {
     return this.records.some((record) => record.entry.state === "applied");
@@ -148,6 +151,7 @@ export class DocumentStore {
   accept(
     candidate: SketchDocument,
     operation: HistoryOperation = { kind: "accept", parameters: {} },
+    preview?: ReopenPreview,
   ): boolean {
     validateDocument(candidate);
     if (JSON.stringify(candidate) === JSON.stringify(this.accepted)) {
@@ -165,6 +169,7 @@ export class DocumentStore {
     this.records.push({
       entry: { ...this.entry(operation, "changed"), state: "applied" },
       change: { before: this.accepted, after: candidate },
+      preview: preview ? structuredClone(preview) : undefined,
       selection: { before: this.selection, after: this.selection },
     });
     this.accepted = candidate;

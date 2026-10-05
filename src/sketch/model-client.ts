@@ -203,7 +203,21 @@ export class ModelClient {
     if (!reply.measurement) throw new Error("Measurement unavailable");
     return reply.measurement;
   }
+  private restoringReopen: ModelRequest["kind"] | null = null;
+  async restoreReopen(kind: ModelRequest["kind"], restore: () => Promise<void>): Promise<void> {
+    this.restoringReopen = kind;
+    try {
+      await restore();
+    } finally {
+      this.restoringReopen = null;
+    }
+  }
   async request(request: ModelRequest): Promise<boolean> {
+    // Controllers seed their ordinary local preview state from the accepted owner snapshot.
+    if (this.restoringReopen) {
+      if ([this.restoringReopen, "check-cleanup", "discard"].includes(request.kind)) return true;
+      throw new Error("Unexpected request while restoring accepted operation");
+    }
     if (this.working || this.cancelling || this.scriptRunning) return false;
     if (
       ![
