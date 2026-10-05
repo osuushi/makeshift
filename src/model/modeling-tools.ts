@@ -2,18 +2,19 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import type { ModelingTool } from "../sketch/model-selection-state.js";
 import { toolCatalog } from "../tools/catalog.js";
+import { modelingShortcut, modelingShortcutLabel } from "./modeling-shortcuts.js";
 import { SelectionTools } from "./selection-tools.js";
 
 const entries = [
-  ["extrude", "Extrude", "E", ["extrusion"], ["twist", "draft", "push pull"]],
-  ["offset", "Offset faces", "O", ["face offset"], ["thickness", "resize"]],
-  ["shell", "Shell", "S", ["thickness", "hollow"], ["wall"]],
-  ["erode", "Erode", "", ["erosion", "cavity", "shrink body"], ["interior", "minimum thickness"]],
-  ["move", "Move", "M", ["translate", "rotate"], []],
-  ["fillet", "Fillet", "F", ["round", "rounding"], []],
-  ["chamfer", "Chamfer", "⇧F", ["bevel"], []],
-  ["loft", "Loft", "", ["sections", "blend profiles"], ["smooth", "ruled"]],
-  ["revolve", "Revolve", "⇧R", ["revolution", "lathe"], ["screw", "helix"]],
+  ["extrude", "Extrude", ["extrusion"], ["twist", "draft", "push pull"]],
+  ["offset", "Offset faces", ["face offset"], ["thickness", "resize"]],
+  ["shell", "Shell", ["thickness", "hollow"], ["wall"]],
+  ["erode", "Erode", ["erosion", "cavity", "shrink body"], ["interior", "minimum thickness"]],
+  ["move", "Move", ["translate", "rotate"], []],
+  ["fillet", "Fillet", ["round", "rounding"], []],
+  ["chamfer", "Chamfer", ["bevel"], []],
+  ["loft", "Loft", ["sections", "blend profiles"], ["smooth", "ruled"]],
+  ["revolve", "Revolve", ["revolution", "lathe"], ["screw", "helix"]],
 ] as const;
 export class ModelingTools {
   private menu: SelectionTools;
@@ -26,13 +27,13 @@ export class ModelingTools {
     private edgeMode: (mode: "fillet" | "chamfer") => void,
   ) {
     const catalog = toolCatalog(editor);
-    for (const [tool, label, shortcut, aliases, related] of entries) {
+    for (const [tool, label, aliases, related] of entries) {
       if (tool === "move") continue;
       this.disposers.push(
         catalog.register({
           id: tool,
           label,
-          shortcut,
+          shortcut: modelingShortcutLabel(tool),
           aliases,
           related,
           category: "Solid",
@@ -53,24 +54,12 @@ export class ModelingTools {
             (event.target.matches("input, select, textarea") || event.target.isContentEditable))
         )
           return;
-        const key = event.key.toLowerCase();
-        const tool =
-          key === "r" && event.shiftKey
-            ? "revolve"
-            : key === "f"
-              ? event.shiftKey
-                ? "chamfer"
-                : "fillet"
-              : (
-                  { e: "extrude", o: "offset", m: "move", s: "shell" } as Record<
-                    string,
-                    ModelingTool
-                  >
-                )[key];
+        if (editor.isDragging) return;
+        const tool = modelingShortcut(event, !!editor.interactions.current);
         if (!tool) return;
         event.preventDefault();
         event.stopImmediatePropagation();
-        void catalog.invoke(tool === "move" ? "transform" : tool);
+        void catalog.invoke(tool);
       },
       { signal: this.abort.signal, capture: true },
     );

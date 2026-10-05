@@ -58,13 +58,17 @@ export async function recentDiscoveryRoute(page, name) {
     "sketch-yz",
     "modeling",
   ]) {
-    if (id === "line") await shortcut(page, "l");
-    else await chooseTool(page, id, id);
+    await chooseTool(page, id, id);
     expected.unshift(id);
     expected.splice(10);
     assert.deepEqual(await recentIds(page), expected);
     await dismissed(page);
   }
+  // L owns Loft in idle Modeling; explicitly enter Sketch before promoting Line.
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
+  expected.splice(0, expected.length, "sketch-xy", ...expected.filter((id) => id !== "sketch-xy"));
+  assert.deepEqual(await recentIds(page), expected);
+  await dismissed(page);
   await shortcut(page, "l");
   assert.deepEqual(await recentIds(page), ["line", ...expected.filter((id) => id !== "line")]);
   await page.locator('[data-command="circle"]').click();

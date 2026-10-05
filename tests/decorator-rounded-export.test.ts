@@ -7,7 +7,7 @@ import { type ExportMesh, validateMesh } from "../src/model/export-mesh.js";
 import { encodeMeshes } from "../src/model/mesh-export.js";
 import { roundBody } from "./decorator-domain-fixtures.js";
 
-test("rounded printing presets export complementary surfaces in both cut modes", async () => {
+test("saved rounded thread dimensions export complementary surfaces in both cut modes", async () => {
   const runtime = await initializeMeshRuntime();
   const owner = new DocumentOwner();
   try {
@@ -27,7 +27,7 @@ test("rounded printing presets export complementary surfaces in both cut modes",
       undefined,
     );
     const ids = owner.view.data.decorators?.map((d) => d.id) ?? [];
-    for (const preset of ["print-upright", "print-sideways"])
+    for (const pitch of [1.8, 3])
       for (const cut of ["rod", "hole"]) {
         assert.equal(
           (
@@ -36,7 +36,16 @@ test("rounded printing presets export complementary surfaces in both cut modes",
               edit: {
                 action: "settings",
                 ids,
-                patch: { preset, cut, layerHeight: 0.3, nozzleDiameter: 0.6, hand: "left" },
+                patch: {
+                  preset: "custom",
+                  profile: "rounded",
+                  pitch,
+                  clearance: 0.3,
+                  cut,
+                  layerHeight: 0.3,
+                  nozzleDiameter: 0.6,
+                  hand: "left",
+                },
               },
             })
           ).error,
@@ -51,7 +60,7 @@ test("rounded printing presets export complementary surfaces in both cut modes",
         try {
           meshes = decoratedMeshes(runtime, snapshot);
         } catch (error) {
-          throw new Error(`${preset}/${cut}: ${error}`);
+          throw new Error(`${pitch}/${cut}: ${error}`);
         }
         for (const mesh of meshes) validateMesh(mesh);
         for (const format of ["stl", "3mf"] as const)
@@ -75,7 +84,7 @@ test("rounded printing presets export complementary surfaces in both cut modes",
               assert.equal(collision.status(), "NoError");
               assert.ok(
                 collision.volume() < 1e-6,
-                `${preset}/${cut} rounded threads collide during screw motion`,
+                `${pitch}/${cut} rounded threads collide during screw motion`,
               );
             } finally {
               collision.delete();

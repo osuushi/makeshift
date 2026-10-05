@@ -6,6 +6,7 @@ import {
   patchThreadSettings,
   threadDefaults,
   threadDepth,
+  threadFields,
   threadSettings,
 } from "../src/decorators/thread-settings.js";
 
@@ -63,46 +64,47 @@ test("FDM presets flatten the rod crest and hole groove without filling the hole
   assert.equal(patchThreadSettings(10.3, coarse, { tipTruncation: 0 }).preset, "custom");
 });
 
-test("printing inputs resolve complementary profiles independent of material side", () => {
-  for (const preset of ["print-upright", "print-sideways"] as const) {
-    const settings = patchThreadSettings(10.3, threadDefaults(10.3), {
+test("only current presets are offered and legacy orientation dimensions remain unchanged", () => {
+  assert.deepEqual(
+    threadFields.find((field) => field.key === "preset")?.options?.map((option) => option.value),
+    ["fdm-fine", "fdm-coarse", "metric", "custom"],
+  );
+  assert.ok(threadFields.every((field) => !["layerHeight", "nozzleDiameter"].includes(field.key)));
+  for (const preset of ["print-upright", "print-sideways"]) {
+    const legacy = {
+      ...threadDefaults(10.3, "metric"),
       preset,
+      profile: "rounded",
+      pitch: preset === "print-upright" ? 1.8 : 3,
+      clearance: 0.3,
       layerHeight: 0.3,
       nozzleDiameter: 0.6,
-    });
-    assert.equal(settings.profile, "rounded");
-    assert.equal(settings.clearance, 0.3);
-    assert.ok(Math.abs(settings.pitch - (preset === "print-upright" ? 1.8 : 3)) < 1e-12);
-    for (const cut of ["rod", "hole"] as const)
-      for (const angle of [0, 0.9, 2.1])
-        for (const z of [1, 2.7, 5]) {
-          const s = { ...settings, cut };
-          assert.ok(
-            Math.abs(
-              threadRadius(5.15, angle, z, s, -1, [0, 10]) -
-                threadRadius(5.15, angle, z, s, 1, [0, 10]) -
-                s.clearance,
-            ) < 1e-12,
-          );
-        }
-    const edited = patchThreadSettings(10.3, settings, { nozzleDiameter: 0.8 });
-    assert.equal(edited.clearance, 0.4);
-    assert.ok(edited.pitch > settings.pitch);
-    assert.deepEqual(patchThreadSettings(20, edited, { hand: "left" }), {
-      ...edited,
+    };
+    const expected = { ...legacy, preset: "custom" };
+    assert.deepEqual(threadSettings(legacy), expected);
+    assert.equal(legacy.preset, preset);
+    assert.deepEqual(patchThreadSettings(20, legacy, { hand: "left" }), {
+      ...expected,
       hand: "left",
     });
-    assert.equal(patchThreadSettings(10.3, edited, { preset, pitch: 4 }).pitch, 4);
+    assert.deepEqual(patchThreadSettings(20, legacy, { nozzleDiameter: 0.8 }), {
+      ...expected,
+      nozzleDiameter: 0.8,
+    });
+    assert.throws(
+      () => patchThreadSettings(10.3, threadDefaults(10.3), { preset }),
+      /no longer available/,
+    );
   }
 });
 
-test("legacy settings normalize printing defaults and reject invalid printer edits", () => {
+test("legacy printer metadata is validated without changing thread dimensions", () => {
   const legacy = { ...threadDefaults(10) };
   delete (legacy as Partial<typeof legacy>).layerHeight;
   delete (legacy as Partial<typeof legacy>).nozzleDiameter;
   delete (legacy as Partial<typeof legacy>).tipTruncation;
-  assert.equal(threadSettings(legacy).layerHeight, 0.2);
-  assert.equal(threadSettings(legacy).nozzleDiameter, 0.4);
+  assert.equal(threadSettings(legacy).layerHeight, undefined);
+  assert.equal(threadSettings(legacy).nozzleDiameter, undefined);
   assert.equal(threadSettings(legacy).tipTruncation, 0);
   assert.equal(threadRadius(5, 0, 0.5, threadSettings(legacy), 1, [0, 10]), 4);
   assert.equal(patchThreadSettings(10, legacy, { preset: "fdm-fine" }).tipTruncation, 0.1);
