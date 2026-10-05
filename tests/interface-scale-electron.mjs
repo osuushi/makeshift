@@ -98,7 +98,10 @@ try {
   await settled(reopened);
   await reopened.locator(".settings-trigger").click();
   const restored = reopened.getByRole("dialog", { name: "Settings", exact: true });
-  assert.equal(await restored.getByRole("combobox").inputValue(), "1.5");
+  assert.equal(
+    await restored.getByRole("combobox", { name: "User interface scale" }).inputValue(),
+    "1.5",
+  );
   await restored.getByRole("button", { name: "Reset to 100%" }).click();
   await restored.getByRole("button", { name: "Done", exact: true }).click();
   console.log(

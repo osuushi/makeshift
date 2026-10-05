@@ -1,5 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
+import { decoratorSettings } from "./decorator-settings.js";
 import { onUiScaleChange, setUiScale, uiScale, uiScaleChoices } from "./ui-scale.js";
 import "./settings.css";
 
@@ -32,8 +33,8 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
     id: "settings",
     label: "Settings",
     category: "View",
-    description: "Adjust user interface scale",
-    aliases: ["preferences", "user interface scale"],
+    description: "Adjust interface scale and decorator display",
+    aliases: ["preferences", "user interface scale", "decorator display"],
     reason: () => idleReason(editor),
     run: open,
   });
@@ -80,6 +81,7 @@ function settingsDialog(): HTMLDialogElement {
   const select = dialog.querySelector<HTMLSelectElement>("select");
   const reset = dialog.querySelector<HTMLButtonElement>("[data-reset]");
   if (!select || !reset) throw new Error("Missing scale settings controls");
+  dialog.querySelector(".settings-actions")?.before(decoratorSettings());
   for (const scale of uiScaleChoices)
     select.add(new Option(`${Math.round(scale * 100)}%`, String(scale)));
   const update = () => {

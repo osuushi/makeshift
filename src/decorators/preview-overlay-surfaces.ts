@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import type { DisplayDocument } from "../model/display-document.js";
+import { decoratorAppearance, decoratorPreviewMode } from "../preferences/decorator-display.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import {
   DecoratorPreviewCompositor,
@@ -6,25 +8,24 @@ import {
   type PreviewSurface,
   previewFaceKey,
 } from "./preview-compositor.js";
-import { PreviewFade } from "./preview-fade.js";
+import { PreviewFallback } from "./preview-fallback.js";
 import type { PackedPreviewMesh } from "./preview-wire.js";
 import type { FaceReference } from "./types.js";
 
-interface FadingSurface extends PreviewSurface {
-  fade: PreviewFade;
+interface GeneratedSurface extends PreviewSurface {
   id: string;
   signature: string;
-  live: boolean;
+  definition: string;
 }
 
 export class PreviewOverlaySurfaces {
   private readonly group = new THREE.Group();
   private readonly compositor = new DecoratorPreviewCompositor();
-  private readonly surfaces: FadingSurface[] = [];
-  private animation: number | null = null;
+  private readonly fallback = new PreviewFallback(this.group, this.compositor);
+  private readonly surfaces: GeneratedSurface[] = [];
+  private definitions = new Map<string, string>();
 
   constructor(private readonly editor: SketchEditor) {
-    editor.world.changed.add(this.update);
     editor.world.renderOverlays.add(this.render);
     editor.world.renderForegroundOverlays.add(this.foreground);
     editor.world.scene.add(this.group);
@@ -32,20 +33,23 @@ export class PreviewOverlaySurfaces {
 
   updateVisibility(): void {
     this.group.visible = this.editor.bodiesVisible;
-    for (const child of this.group.children)
-      child.visible = this.editor.visibility.visible(child.userData.body);
+    this.style();
   }
 
-  sync(signatures: ReadonlyMap<string, string>): void {
-    const now = performance.now();
-    let changing = false;
-    for (const surface of this.surfaces) {
-      if (!surface.fade.current) continue;
-      if (surface.signature === signatures.get(surface.id)) surface.fade.restore(now);
-      else surface.fade.stale(now);
-      changing ||= surface.fade.animating(now);
+  sync(signatures: ReadonlyMap<string, string>, document?: DisplayDocument): void {
+    // Never leave a generated surface at its old placement or on removed faces.
+    for (let index = this.surfaces.length - 1; index >= 0; index--)
+      if (this.surfaces[index].signature !== signatures.get(this.surfaces[index].id)) {
+        this.remove(this.surfaces[index]);
+        this.surfaces.splice(index, 1);
+      }
+    if (document) {
+      this.definitions = new Map(
+        document.decorators?.map((instance) => [instance.id, instance.definition]),
+      );
+      this.fallback.sync(document, signatures);
     }
-    if (changing) this.animate();
+    this.style();
   }
 
   replace(
@@ -53,16 +57,14 @@ export class PreviewOverlaySurfaces {
     processedIds: readonly string[],
     signatures: ReadonlyMap<string, string>,
     current: ReadonlyMap<string, string>,
-    live: boolean,
-  ) {
-    const now = performance.now();
+  ): void {
     const applicable = new Set(
       processedIds.filter((id) => signatures.has(id) && signatures.get(id) === current.get(id)),
     );
-    for (const surface of this.surfaces)
-      if (surface.fade.current && applicable.has(surface.id)) {
-        surface.fade.replace(now);
-        surface.mesh.userData.previewCurrent = false;
+    for (let index = this.surfaces.length - 1; index >= 0; index--)
+      if (applicable.has(this.surfaces[index].id)) {
+        this.remove(this.surfaces[index]);
+        this.surfaces.splice(index, 1);
       }
     for (const { id, body, faces, positions, indices } of meshes) {
       const signature = signatures.get(id);
@@ -71,82 +73,72 @@ export class PreviewOverlaySurfaces {
       geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
       geometry.setIndex(new THREE.BufferAttribute(indices, 1));
       geometry.computeVertexNormals();
-      const overlay = new THREE.Mesh(geometry, this.compositor.previewMaterial());
-      overlay.userData.body = body;
-      overlay.userData.previewCurrent = true;
-      overlay.raycast = () => {};
-      overlay.layers.set(decoratorPreviewLayer);
-      overlay.visible = this.editor.visibility.visible(body);
-      this.group.add(overlay);
-      const fade = new PreviewFade(now);
+      const mesh = new THREE.Mesh(geometry, this.compositor.previewMaterial());
+      mesh.userData.body = body;
+      mesh.userData.previewCurrent = true;
+      mesh.userData.decorator = id;
+      mesh.raycast = () => {};
+      mesh.layers.set(decoratorPreviewLayer);
+      this.group.add(mesh);
       this.surfaces.push({
-        mesh: overlay,
-        faces: new Set(faces.map((f) => previewFaceKey(f.body, f.face))),
-        fade,
+        mesh,
+        faces: new Set(faces.map((face) => previewFaceKey(face.body, face.face))),
         id,
         signature,
-        live,
+        definition: this.definitions.get(id) ?? "custom",
       });
     }
-    this.animate();
+    this.style();
     this.editor.world.requestDraw();
   }
 
   clear(): void {
     for (const surface of this.surfaces) this.remove(surface);
     this.surfaces.length = 0;
+    this.fallback.clear();
   }
 
   dispose(): void {
-    if (this.animation !== null) cancelAnimationFrame(this.animation);
     this.clear();
-    this.editor.world.changed.delete(this.update);
     this.editor.world.renderOverlays.delete(this.render);
     this.editor.world.renderForegroundOverlays.delete(this.foreground);
     this.compositor.dispose();
     this.editor.world.scene.remove(this.group);
   }
 
-  private remove(surface: FadingSurface): void {
-    const mesh = surface.mesh as THREE.Mesh<THREE.BufferGeometry, THREE.Material>;
-    mesh.geometry.dispose();
-    mesh.material.dispose();
-    this.group.remove(mesh);
+  private remove(surface: GeneratedSurface): void {
+    this.group.remove(surface.mesh);
+    surface.mesh.geometry.dispose();
+    (surface.mesh.material as THREE.Material).dispose();
   }
 
-  private readonly update = () => {
-    const now = performance.now();
-    for (let index = this.surfaces.length - 1; index >= 0; index--) {
-      const surface = this.surfaces[index];
-      surface.opacity = surface.fade.opacity(now);
-      if (surface.opacity === 0 && !surface.fade.animating(now)) {
-        this.surfaces.splice(index, 1);
-        this.remove(surface);
-      }
+  private style(): PreviewSurface[] {
+    const detailed = decoratorPreviewMode() === "detailed";
+    const ready = new Set<string>();
+    for (const surface of this.surfaces) {
+      surface.mesh.visible = detailed && this.editor.visibility.visible(surface.mesh.userData.body);
+      const appearance = decoratorAppearance(surface.definition);
+      (surface.mesh.material as THREE.MeshStandardMaterial).color.set(appearance.color);
+      surface.displayOpacity = appearance.opacity;
+      if (surface.mesh.visible && surface.mesh.geometry.attributes.position.count > 0)
+        ready.add(`${surface.id}/${surface.mesh.userData.body}`);
     }
-  };
+    return this.fallback.visible(this.editor, ready);
+  }
 
   private readonly render = () => {
+    const attached = this.style();
     if (this.group.visible)
       this.compositor.render(
         this.editor.world.renderer,
         this.editor.world.scene,
         this.editor.world.camera,
-        this.surfaces,
+        [...this.surfaces, ...attached],
       );
   };
 
   private readonly foreground = {
     render: this.render,
-    hasContent: () => this.group.visible && this.surfaces.some(({ mesh }) => mesh.visible),
+    hasContent: () => this.group.visible && this.group.children.some((mesh) => mesh.visible),
   };
-
-  private animate(): void {
-    if (this.animation !== null) return;
-    this.animation = requestAnimationFrame(() => {
-      this.animation = null;
-      this.editor.world.requestDraw();
-      if (this.surfaces.some(({ fade }) => fade.animating(performance.now()))) this.animate();
-    });
-  }
 }
