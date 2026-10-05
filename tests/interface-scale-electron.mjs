@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { _electron } from "playwright";
 import { electronTestArguments } from "./native-documents.mjs";
+import { failureContext } from "./ui-failure-context.mjs";
 import { settled } from "./ui-helpers.mjs";
 import { changeScale, geometryScaleRoute, preferencesRoute } from "./ui-interface-scale.mjs";
 import { installTestFrames } from "./ui-test-frames.mjs";
@@ -11,6 +12,7 @@ import { installTestFrames } from "./ui-test-frames.mjs";
 await mkdir(".cache/sketch-review", { recursive: true });
 const directory = await mkdtemp(join(tmpdir(), "makeshift-interface-scale-"));
 let app;
+const errors = [];
 async function launch() {
   app = await _electron.launch({
     args: electronTestArguments([".", `--user-data-dir=${directory}`]),
@@ -60,7 +62,6 @@ try {
   page.setDefaultTimeout(30000);
   await page.setViewportSize({ width: 1280, height: 800 });
   await settled(page);
-  const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   const zoomRoles = await app.evaluate(({ BrowserWindow, Menu }) => {
     assertHidden(BrowserWindow.getAllWindows()[0]);
@@ -107,13 +108,7 @@ try {
   const page = await app?.firstWindow();
   if (page) {
     await page.screenshot({ path: ".cache/sketch-review/electron-interface-scale-failure.png" });
-    console.log(
-      await page.evaluate(() => ({
-        formHidden: document.querySelector(".agent-settings")?.hidden,
-        message: document.querySelector(".agent-message")?.textContent,
-        header: document.querySelector(".agent-header")?.textContent,
-      })),
-    );
+    console.error("Electron scale failure context", await failureContext(page, errors));
   }
   throw error;
 } finally {

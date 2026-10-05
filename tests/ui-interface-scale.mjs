@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { project } from "./ui-blend-edit.mjs";
 import { at, click, close, corners, drag, inspect, reset, settled } from "./ui-helpers.mjs";
+import { previewActionReady } from "./ui-preview-readiness.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function changeScale(page, value, tools = false) {
@@ -90,6 +91,7 @@ export async function geometryScaleRoute(page, scale, name) {
   await page.getByRole("textbox", { name: "Extrusion distance" }).fill("5");
   await page.keyboard.press("Enter");
   close((await inspect(page)).preview.bodies[0].volume, 1200);
+  await previewActionReady(page, "Accept extrusion");
   await page.getByRole("button", { name: "Accept extrusion", exact: true }).click();
   await page.waitForFunction(() => window.makeshiftInspect().document.bodies?.length === 1);
   close((await inspect(page)).document.bodies[0].volume, 1200);
