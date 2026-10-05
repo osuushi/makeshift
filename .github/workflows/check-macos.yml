@@ -55,6 +55,11 @@ jobs:
         run: npm run setup:mesh
       - name: Build desktop renderer and host
         run: npm run build
+      - name: Conservative coverage and analytic span bounds
+        run: |
+          cmake -S native/kernel -B .build/kernel -DMAKESHIFT_KERNEL_TESTS=ON
+          cmake --build .build/kernel --target erosion-coverage-test --parallel "$CMAKE_BUILD_PARALLEL_LEVEL"
+          ctest --test-dir .build/kernel -R '^erosion-coverage$' --output-on-failure
       - name: Archive runtime (preserve native permissions and library symlinks)
         run: |
           mkdir -p .cache/ci
@@ -156,6 +161,9 @@ jobs:
       - name: Recent tools discovery and geometry invocation
         if: matrix.shard == 3
         run: xvfb-run -a node tests/recent-tools-ui.mjs
+      - name: Idle body Enter and Transform ownership
+        if: matrix.shard == 3
+        run: xvfb-run -a node tests/transform-enter-ui.mjs
       - name: Interface scale and camera independence
         if: matrix.shard == 3
         run: |
@@ -221,6 +229,11 @@ jobs:
         run: npm run setup:mesh
       - name: Build desktop renderer and host
         run: npm run build
+      - name: Conservative coverage and analytic span bounds
+        run: |
+          cmake -S native/kernel -B .build/kernel -DMAKESHIFT_KERNEL_TESTS=ON
+          cmake --build .build/kernel --target erosion-coverage-test --parallel "$CMAKE_BUILD_PARALLEL_LEVEL"
+          ctest --test-dir .build/kernel -R '^erosion-coverage$' --output-on-failure
       - name: Native host and macOS setup tests
         run: |
           npx tsc -p tsconfig.test.json
@@ -305,6 +318,14 @@ jobs:
         env:
           MAKESHIFT_TEST_BROWSER: electron
         run: node tests/decorator-display-ui.mjs
+      - name: Body Enter and Transform in WebKit
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: node tests/transform-enter-ui.mjs
+      - name: Body Enter and terminal ownership in Electron
+        env:
+          MAKESHIFT_TEST_BROWSER: electron
+        run: node tests/transform-enter-ui.mjs
   # Preserve the existing required check name; failed or skipped lanes cannot pass.
   check:
     if: always()
