@@ -126,3 +126,15 @@
 .body-color-dialog button {
   margin-right: 8px;
 }
+
+.entity-row[data-boolean-role="target"] .entity-label,
+.entity-row[data-boolean-role="input"] .entity-label {
+  background: #dcecff;
+  color: #246fb8;
+  border-color: #528ec9;
+}
+.entity-row[data-boolean-role="tool"] .entity-label {
+  background: #fff1dc;
+  color: #8b571b;
+  border-color: #d08a35;
+}

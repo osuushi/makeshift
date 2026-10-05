@@ -18,7 +18,6 @@ import {
 import { AgentSetup } from "./agent-setup.js";
 import { prepareAgentSkills } from "./agent-skills.js";
 import { AgentWorkspace } from "./agent-workspace.js";
-import { discoverCodex } from "./codex-discovery.js";
 import { codexResumeArgs, copyCodexLocalState } from "./codex-workspace.js";
 import { nativeExecutable } from "./native-paths.js";
 import { sessionDialogs as dialog } from "./session-dialogs.js";
@@ -220,7 +219,7 @@ export class AgentSession {
           : [];
       const executable =
         preferences.preset === "codex"
-          ? (await discoverCodex(preferences, cwd, env)).path
+          ? await this.setup.executable(preferences, cwd, env)
           : await agentExecutable(preferences.executable, cwd, env);
       await this.process.start(
         executable,

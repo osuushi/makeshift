@@ -160,7 +160,7 @@ class CubeInput {
         return;
       press.dragging = true;
       this.world.beginOrbit(
-        coordinates(start, press.bounds, this.world.canvas.getBoundingClientRect()),
+        coordinates(start, press.bounds),
         {
           x: start.clientX,
           y: start.clientY,
@@ -169,11 +169,7 @@ class CubeInput {
       );
       this.view.cube.classList.add("dragging");
     }
-    this.world.orbit.drag(
-      this.world,
-      coordinates(event, press.bounds, this.world.canvas.getBoundingClientRect()),
-      event.altKey,
-    );
+    this.world.orbit.drag(this.world, coordinates(event, press.bounds), event.altKey);
     this.world.requestDraw();
   };
   private release = (event: PointerEvent): void => {
@@ -238,13 +234,9 @@ class CubeInput {
   }
 }
 
-function coordinates(event: PointerEvent, bounds: DOMRect, viewport: DOMRect) {
-  const radius = Math.max(1, Math.min(viewport.width, viewport.height) / 2);
+function coordinates(event: PointerEvent, bounds: DOMRect) {
   return {
-    viewport: {
-      x: (event.clientX - viewport.left - viewport.width / 2) / radius,
-      y: -(event.clientY - viewport.top - viewport.height / 2) / radius,
-    },
+    rollCenter: { x: 0, y: 0 },
     x: (event.clientX - bounds.left - bounds.width / 2) / (bounds.width / 2),
     y: -(event.clientY - bounds.top - bounds.height / 2) / (bounds.height / 2),
   };

@@ -35,6 +35,10 @@ export class DocumentStore {
     this.selection = structuredClone(changes.baseline);
     if (latest?.selection && !latest.navigation) latest.selection.after = this.selection;
     for (const next of changes.steps) {
+      if ("expireNavigation" in next) {
+        this.expireNavigation();
+        continue;
+      }
       if ("navigation" in next) {
         this.navigate(next);
         continue;
@@ -57,10 +61,22 @@ export class DocumentStore {
   private expireNavigation(): void {
     this.records = this.records.filter((record) => !record.navigation);
   }
+  canNavigateView(direction: "undo" | "redo"): boolean {
+    return direction === "undo"
+      ? [...this.records].reverse().find((r) => r.entry.state === "applied")?.navigation !==
+          undefined
+      : this.records.some((r) => r.navigation && r.entry.state === "undone");
+  }
+  navigateView(direction: "undo" | "redo"): void {
+    this.restoredNavigation = undefined;
+    this.restoredOperation = undefined;
+    if (this.canNavigateView(direction)) this[direction]();
+  }
   private navigate(change: NavigationChange): void {
     const { before, after } = change.navigation;
     if (JSON.stringify(before) === JSON.stringify(after)) return;
-    this.expireNavigation();
+    if (this.records.some((record) => record.navigation && record.entry.state === "undone"))
+      this.expireNavigation();
     this.records.push({
       entry: { ...this.entry({ kind: "navigation", parameters: {} }, "changed"), state: "applied" },
       navigation: structuredClone(change.navigation),

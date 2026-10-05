@@ -13,7 +13,7 @@ export class CameraTransition {
     if (this.frame !== null) cancelAnimationFrame(this.frame);
     this.frame = null;
   }
-  start(end: CameraPose): void {
+  start(end: CameraPose, completed: () => void = () => {}): void {
     const world = this.world;
     world.cancelCameraMotion();
     world.camera.lookAt(world.target);
@@ -26,6 +26,7 @@ export class CameraTransition {
     };
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
       applyCameraPose(world, end);
+      completed();
       world.draw();
       return;
     }
@@ -40,6 +41,7 @@ export class CameraTransition {
         height: THREE.MathUtils.lerp(start.height, end.height, amount),
       });
       this.frame = progress < 1 ? requestAnimationFrame(step) : null;
+      if (progress === 1) completed();
       world.draw();
     };
     this.frame = requestAnimationFrame(step);

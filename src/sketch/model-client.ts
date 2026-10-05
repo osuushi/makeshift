@@ -116,6 +116,12 @@ export class ModelClient {
       this.view.canRedo
     );
   }
+  get canUndoView(): boolean {
+    return !!this.view.canUndoView;
+  }
+  get canRedoView(): boolean {
+    return !!this.view.canRedoView;
+  }
   get booleanTargets() {
     return this.view.booleanTargets ?? [];
   }
@@ -207,6 +213,7 @@ export class ModelClient {
         "undo",
         "redo",
         "reopen",
+        "navigation-history",
         "check-cleanup",
         "check-plane-cut",
       ].includes(request.kind)
@@ -232,9 +239,11 @@ export class ModelClient {
       const direction =
         request.kind === "reopen"
           ? "undo"
-          : request.kind === "undo" || request.kind === "redo"
-            ? request.kind
-            : null;
+          : request.kind === "navigation-history"
+            ? request.direction
+            : request.kind === "undo" || request.kind === "redo"
+              ? request.kind
+              : null;
       if (this.cancelling || this.interrupted) return false;
       const reply = await call(request);
       if (this.interrupted) return false;
