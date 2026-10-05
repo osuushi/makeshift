@@ -47,10 +47,11 @@ mesh operations to native Manifold; clients without that capability retain WASM.
 2. Create all inferred instances atomically with resolved settings and a preview.
    If default thread settings fail geometry validation, open a provisional settings
    editor with the error in context. Preset/profile/numeric changes remain local;
-   only valid settings display a preview and enable Apply thread decorator.
-   Apply accepts all inferred instances in one ordinary owner edit and Undo step.
-   Cancel/Escape discards the settings and preview before Apply is sent. While the
-   atomic application runs, the editor shows Applying and retains its interaction
+   only valid settings display a preview and enable Create threads. The editor
+   explains that the defaults do not fit and nothing is added until confirmation.
+   Create threads accepts all inferred instances in one ordinary owner edit and Undo step.
+   Cancel/Escape discards the settings and preview before creation is sent. While the
+   atomic application runs, the editor shows Creating threads and retains its interaction
    lease until acceptance completes. Moving between fields does not accept them. Valid initial settings retain immediate application; reapplying to
    already decorated faces opens their accepted settings.
 3. A right-side decorator panel shows instances touching the selection, aggregated
@@ -245,7 +246,14 @@ Consume immediate operation correspondence when accepting the geometry edit;
 do not add a persistent operation-history graph. Undo restores geometry and
 decorator assignments together. Body deletion removes its decorations.
 
-Unresolved attachments remain in the document with their repair reason, even when
+Invalid decorators show red warning stripes on surviving affected faces, including
+when deselected; selection lightens the red while retaining the pattern. Geometry
+validation failures such as excessive thread depth do not open a global repair panel.
+Selecting the face opens the normal thread fields with the validation message and
+advanced controls expanded. A valid settings edit clears that validation failure
+in the same Undo step. Settings edits do not clear topology ambiguity or lost supports.
+
+Unresolved topology attachments remain in the document with their repair reason, even when
 their original faces no longer exist. The panel can select surviving affected
 geometry, reassign an attachment to selected compatible faces, or remove that
 individual attachment. Unresolved attachments reserve no active face assignment.

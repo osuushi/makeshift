@@ -4,7 +4,7 @@ import { isBuiltinDecorator, knurlDefinition } from "./builtins.js";
 import { appendCustomContinue } from "./custom-continue.js";
 import { appendCustomDecorators } from "./custom-panel.js";
 import { resolveFaces } from "./cylinder.js";
-import { editDecorators, faceKey } from "./edits.js";
+import { editDecorators, faceKey, hasSettingsProblem } from "./edits.js";
 import { appendKnurlSettings } from "./knurl-panel.js";
 import { decoratorLibrary } from "./library.js";
 import { appendThreadInformation } from "./panel-information.js";
@@ -156,7 +156,11 @@ export class DecoratorPanel {
       return;
     }
     const instances = this.instances();
-    const problems = (this.editor.store.data.decorators ?? []).filter((d) => d.problem);
+    const problems = (this.editor.store.data.decorators ?? []).filter(
+      (d) =>
+        d.problem &&
+        !(d.definition === threadDefinition && hasSettingsProblem(this.editor.store.data, d)),
+    );
     const last = this.editor.store.data.decorators?.find((d) => d.id === this.last);
     const canContinue =
       !!last &&
@@ -228,18 +232,24 @@ export class DecoratorPanel {
       this.editor.refresh();
     });
     appendThreadInformation(this.root, this.editor, instances);
-    if (!instances.some((d) => d.problem)) {
+    const problem = instances.find((d) => d.problem)?.problem;
+    if (problem) {
+      const note = document.createElement("p");
+      note.className = "decorator-warning";
+      note.setAttribute("role", "status");
+      note.textContent = `⚠ Threads need correction: ${problem}.`;
+      if (instances.every((d) => !d.problem || hasSettingsProblem(this.editor.store.data, d)))
+        note.textContent += " Adjust the settings below.";
+      this.root.append(note);
+    }
+    if (instances.every((d) => !d.problem || hasSettingsProblem(this.editor.store.data, d))) {
       appendThreadSettings(
         this.root,
         instances,
         (patch, preview) => this.patch(patch, preview, instances),
         this.draft,
-        this.advancedOpen,
+        this.advancedOpen || !!problem,
       );
-    } else {
-      const note = document.createElement("p");
-      note.textContent = instances.find((d) => d.problem)?.problem ?? "";
-      this.root.append(note);
     }
     this.button("Remove thread decorator from selected faces", () => {
       const keys = new Set(instances.flatMap((d) => d.faces.map(faceKey)));

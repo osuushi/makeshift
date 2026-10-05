@@ -13,6 +13,7 @@ export function inspectBodyRendering(scene: THREE.Scene) {
     depthWrite: boolean;
     visible: boolean;
     stencil: number;
+    decoratorInvalid: boolean;
   }[] = [];
   let created = 0,
     disposed = 0;
@@ -39,6 +40,7 @@ export function inspectBodyRendering(scene: THREE.Scene) {
       depthWrite: mesh.material.depthWrite,
       visible,
       stencil: mesh.material.stencilRef,
+      decoratorInvalid: mesh.userData.decoratorInvalid === true,
     });
   });
   return { faces, created, disposed };
