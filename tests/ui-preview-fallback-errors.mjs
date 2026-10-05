@@ -35,10 +35,25 @@ export async function invalidAndRemoved(page, name) {
     await page.getByRole("button", { name: "Accept transform scale", exact: true }).click();
     const invalid = (await completed(page)).document;
     assert.match(invalid.decorators[0].problem, /cylindrical/);
-    await page.getByText(invalid.decorators[0].problem, { exact: true }).first().waitFor();
+    assert.deepEqual(
+      (await inspect(page)).bodyRendering.faces
+        .filter((face) => face.decoratorInvalid)
+        .map(({ body, face }) => `${body}/${face}`)
+        .sort(),
+      invalid.decorators[0].faces.map(({ body, face }) => `${body}/${face}`).sort(),
+      "Every surviving invalid support stays visibly marked before face selection",
+    );
+    await worldClick(page, [0, -8, 5]);
+    assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
+    const panel = page.getByRole("region", { name: "Decorators", exact: true });
+    await panel
+      .getByText(`⚠ Threads need correction: ${invalid.decorators[0].problem}.`, { exact: true })
+      .waitFor();
     assert.equal(await page.locator(".decorator-preview-status").isVisible(), false);
     await page.screenshot({ path: `.cache/sketch-review/${name}-invalid-attachment-explicit.png` });
-    await command(page, "undo", "undo");
+    await command(page, "undo", "undo"); // Undo the explicit affected-face selection.
+    assert.deepEqual((await completed(page)).document, invalid);
+    await command(page, "undo", "undo"); // Undo the scale that invalidated the support.
     assert.deepEqual((await completed(page)).document, before);
     await marker(page, before);
     await releaseDetail(page, before);
