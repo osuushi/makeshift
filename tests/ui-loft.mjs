@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { at, close, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
+import { captureTestFrame } from "./ui-test-frames.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function createSections(page) {
@@ -158,6 +159,7 @@ async function acceptPreselection(page, points, original, ruledVolume, name, sta
   await page.getByRole("combobox", { name: "Loft shape", exact: true }).selectOption("ruled");
   await inspect(page);
   await orient(page, [1, 1, 1]);
+  await captureTestFrame(page);
   await page.evaluate(
     () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
   );
