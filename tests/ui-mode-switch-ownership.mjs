@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import { decoratorCylinder } from "./ui-decorator-cylinder.mjs";
 import { close, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
-import { appliedSwitchHistory, switchUndoRedo } from "./ui-mode-switch-history.mjs";
+import {
+  appliedSwitchHistory,
+  switchUndoRedo,
+  switchViewUndoRedo,
+} from "./ui-mode-switch-history.mjs";
+import { navigationIdle } from "./ui-navigation-history.mjs";
 import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { findRaycastPoint } from "./ui-plane-targets.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -55,8 +60,11 @@ export async function geometrySwitchRoute(page, name) {
   assert.equal(state.activeSketch, null, "Consumed sketch remains hidden in canonical workspace");
   assert.ok(state.projection, "Canonical XY workspace has a planar projection");
   assert.deepEqual(state.document.sketches, planeBefore.document.sketches);
+  const entered = await navigationIdle(page);
   await chooseTool(page, "return to modeling", "modeling");
-  const planeAccepted = (await inspect(page)).document;
+  const left = await navigationIdle(page),
+    planeAccepted = left.document;
+  await switchViewUndoRedo(page, entered, left);
   const planeSide = planeAccepted.bodies[0].faces.find((face) => face.cylinder);
   await switchUndoRedo(
     page,

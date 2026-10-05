@@ -157,8 +157,10 @@ invariants before changing snapshots or history, for manual edits, scripts and O
 
 Viewport Cmd/Ctrl-R and Tools → Reopen last operation undo the latest accepted
 geometry operation to its exact input snapshot and ordered selection, then seed
-its ordinary modal controller before local parameter-history tracking. Selection
-and camera changes do not hide that operation. A newer unsupported changed edit,
+its ordinary modal controller before local parameter-history tracking. View gestures
+must be released, and Reopen requires an idle edit owner; it does
+not accept a preview as part of its history rollback.
+Selection and camera changes do not hide that operation. A newer unsupported changed edit,
 including metadata or direct sketch edits, blocks reentry rather than searching
 backward for an older supported operation. New/Open has no operation to reopen.
 Cancel leaves the operation undone with its original result available by ordinary

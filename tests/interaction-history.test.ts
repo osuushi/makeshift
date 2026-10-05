@@ -119,6 +119,8 @@ test("legacy preview owners cancel before document history without accepting the
       );
       const editor = {
         interactions,
+        world: { navigation: { dragging: false } },
+        selectionHistory: { finishNavigation: () => events.push("finish-navigation") },
         blocked: false,
         get isDragging() {
           return interactions.dragging;
@@ -140,6 +142,7 @@ test("legacy preview owners cancel before document history without accepting the
       );
       assert.equal(interactions.current, null);
       assert.deepEqual(events, [
+        "finish-navigation",
         "numeric-cancel",
         "cancel",
         "released",

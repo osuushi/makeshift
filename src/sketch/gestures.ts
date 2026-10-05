@@ -8,7 +8,6 @@ import type { SketchEditor } from "./editor.js";
 import { hoverPointer } from "./gesture-hover.js";
 import { GestureSolve } from "./gesture-solve.js";
 import type { DragQuantityEdit } from "./numeric-edit.js";
-import { pick } from "./picking.js";
 import { distance } from "./point-math.js";
 import { pointKey } from "./point-query.js";
 import { choosePoints, chosenPoints, openPointMenu } from "./point-selection.js";

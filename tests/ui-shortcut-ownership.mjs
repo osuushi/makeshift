@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
+import { orient } from "./ui-blend-edit.mjs";
 import { plate } from "./ui-body-fillet.mjs";
 import { commonKeys, keyTool } from "./ui-common-shortcuts.mjs";
 import { at, close, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
+import { pickPlane } from "./ui-plane-targets.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function unchanged(page, before) {
@@ -95,18 +97,35 @@ async function modalOwnership(page) {
     await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
     const original = (await inspect(page)).document;
     await chooseTool(page, tool, tool);
-    // The ordinary scale handle opens its card and acquires the modal lease.
+    // Released valid edits may now switch; latest invalid settings keep ownership.
     if (tool === "transform") {
       await page.locator(".transform-box-handle:visible").last().click();
-      await page.getByRole("textbox", { name: "Transform scale X", exact: true }).focus();
+      await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("0");
+    } else {
+      await orient(page, [1, 1, 1]);
+      await pickPlane(page, "YZ");
+      const preview = (await inspect(page)).preview;
+      assert.equal(preview.bodies.length, 2);
+      close(preview.bodies[1].volume, original.bodies[0].volume);
+      await page.getByRole("textbox", { name: "Mirror offset", exact: true }).fill("");
     }
     const before = await inspect(page);
     assert.equal(before.interaction.kind, tool === "mirror" ? "mirror" : "scale");
     assert.deepEqual(before.document, original);
     for (const key of commonKeys) await keyTool(page, key);
     await unchanged(page, before);
+    assert.equal(
+      await page
+        .getByRole("textbox", {
+          name: tool === "mirror" ? "Mirror offset" : "Transform scale X",
+          exact: true,
+        })
+        .getAttribute("aria-invalid"),
+      "true",
+    );
     await page.keyboard.press("Escape");
     await modalCompleted(page);
+    assert.deepEqual((await inspect(page)).document, original);
   }
 }
 async function extrudeOwnership(page) {
@@ -128,9 +147,13 @@ async function extrudeOwnership(page) {
     assert.equal((await inspect(page)).interaction.kind, "extrude");
     assert.deepEqual((await inspect(page)).document, before.document);
   }
-  for (const key of ["Shift+E", "l"]) await keyTool(page, key);
-  await unchanged(page, before);
   const input = page.getByRole("textbox", { name: "Extrusion distance", exact: true });
+  await input.fill("");
+  const invalid = await inspect(page);
+  assert.equal(invalid.preview, null);
+  for (const key of ["Shift+E", "l"]) await keyTool(page, key);
+  await unchanged(page, invalid);
+  assert.equal(await input.inputValue(), "");
   await input.fill("12");
   for (const key of commonKeys) await page.keyboard.press(key);
   assert.equal(await input.inputValue(), "12USIlE");

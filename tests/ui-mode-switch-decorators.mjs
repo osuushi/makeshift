@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import { decoratorCylinder } from "./ui-decorator-cylinder.mjs";
 import { close, inspect, modalCompleted } from "./ui-helpers.mjs";
-import { appliedSwitchHistory, switchUndoRedo } from "./ui-mode-switch-history.mjs";
+import {
+  appliedSwitchHistory,
+  switchUndoRedo,
+  switchViewUndoRedo,
+} from "./ui-mode-switch-history.mjs";
+import { navigationIdle } from "./ui-navigation-history.mjs";
 import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { browseTools, chooseTool } from "./ui-tools.mjs";
 
@@ -140,7 +145,10 @@ export async function threadApplicationSwitchRoute(page, name) {
   assert.equal(state.document.decorators[0].settings.pitch, 0.25);
   assert.deepEqual(state.document.bodies, original.bodies);
   const accepted = state.document;
+  const entered = await navigationIdle(page);
   await chooseTool(page, "return to modeling", "modeling");
+  const left = await navigationIdle(page);
+  await switchViewUndoRedo(page, entered, left);
   await switchUndoRedo(page, name, before, prior, accepted, "decorator", {
     sketch: before.selectionTargets,
     modeling: before.modelingSelection,

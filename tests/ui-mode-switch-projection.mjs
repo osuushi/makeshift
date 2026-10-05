@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import { orient } from "./ui-blend-edit.mjs";
 import { at, close, drag, inspect, modalCompleted, pointEquals, reset } from "./ui-helpers.mjs";
-import { switchUndoRedo } from "./ui-mode-switch-history.mjs";
+import { switchUndoRedo, switchViewUndoRedo } from "./ui-mode-switch-history.mjs";
 import {
   browsePreview,
   knownPreviewHistory,
   rejectPreviewSwitch,
   undoPreview,
 } from "./ui-mode-switch-preview-helpers.mjs";
+import { navigationIdle } from "./ui-navigation-history.mjs";
 import { pickPlane } from "./ui-plane-targets.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -65,13 +66,15 @@ export async function projectionSwitchRoute(page, name) {
   const projected = geometry(preview, before.document);
   await browsePreview(page, "projection", before.document, preview);
   await rejectPreviewSwitch(page, "projection", before, preview);
+  const beforeEntry = await navigationIdle(page);
   await chooseTool(page, "Rectangle", "rectangle");
   await modalCompleted(page);
-  state = await inspect(page);
+  state = await navigationIdle(page);
   assert.equal(state.tool, "rectangle");
   assert.equal(state.activeSketch, projected.id);
   geometry(state.document, before.document);
   assert.deepEqual(state.document, preview);
+  await switchViewUndoRedo(page, beforeEntry, state);
   await switchUndoRedo(page, name, before, history.prior, state.document, "project", {
     sketch: [{ kind: "curve", curve: projected.curves[0].id }],
     modeling: [],

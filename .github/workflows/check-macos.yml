@@ -27,6 +27,7 @@ jobs:
       - run: npx tsc -p tsconfig.host.json
       - run: npm run test:setup
   linux-build:
+    needs: static
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
@@ -153,6 +154,16 @@ jobs:
         run: |
           xvfb-run -a node tests/common-shortcuts-ui.mjs
           xvfb-run -a node tests/modeling-shortcut-regressions-ui.mjs
+      - name: Mode switches, acceptance and ownership readiness
+        if: matrix.shard == 3
+        run: |
+          xvfb-run -a node tests/mode-switch-readiness-ui.mjs
+          xvfb-run -a node tests/mode-switch-ui.mjs
+      - name: Mode switch model and preview regressions
+        if: matrix.shard == 2
+        run: |
+          xvfb-run -a node tests/mode-switch-regressions-ui.mjs
+          xvfb-run -a node tests/mode-switch-preview-regressions-ui.mjs
       - name: Thread presets and saved-settings compatibility
         if: matrix.shard == 3
         run: xvfb-run -a npm run test:thread-presets

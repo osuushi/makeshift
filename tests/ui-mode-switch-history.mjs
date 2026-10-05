@@ -1,11 +1,26 @@
 import assert from "node:assert/strict";
 import { inspect } from "./ui-helpers.mjs";
+import { assertNavigation, navigationHistory, navigationTips } from "./ui-navigation-history.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function appliedSwitchHistory(page) {
   return page.evaluate(async () =>
     (await window.makeshiftHistory()).filter((entry) => entry.state === "applied"),
   );
+}
+
+/** Verify the known workspace view tip, then expose geometry Undo underneath it. */
+export async function switchViewUndoRedo(page, beforeEntry, switched) {
+  assert.equal((await navigationTips(page)).length, 1);
+  const undone = await navigationHistory(page);
+  assert.deepEqual(undone.document, switched.document);
+  assertNavigation(undone, beforeEntry, "mode-switch view Undo");
+  const redone = await navigationHistory(page, true);
+  assert.deepEqual(redone.document, switched.document);
+  assertNavigation(redone, switched, "mode-switch view Redo");
+  const geometryContext = await navigationHistory(page);
+  assert.deepEqual(geometryContext.document, switched.document);
+  assertNavigation(geometryContext, beforeEntry);
 }
 
 /** Verify the known edit and only its explicitly observed selection suffix. */
