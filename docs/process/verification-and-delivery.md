@@ -43,9 +43,12 @@ camera, picking and DOM updates run normally, while captures request fresh GPU f
 The demand-frame regression checks real input avoids GPU draws and screenshots
 render current pixels, including after reload. For local diagnosis, prefix a UI
 command with that environment variable; ordinary runs retain normal redraws.
-A small macOS job
-checks the built host/preload boundary, native geometry, document persistence,
-process handling and Finder PATH. Signing and notarization remain release checks.
+macOS also builds its runtime once and shares an archive from the same run. Four
+parallel workers retain the full acceptance suite: platform-sensitive geometry,
+WebKit controls, WebKit widget placement and Reopen topology, and the built
+Electron host/preload boundary, document persistence, process handling and Finder
+PATH. Each worker runs its routes serially to preserve geometry calculation limits.
+Signing and notarization remain release checks.
 The final `check` job requires every lane to succeed, including after a lane
 fails or is skipped. Runtime artifacts expire after one day. A completed OCCT
 SDK is verified and cached even if compilation of an application calculator
