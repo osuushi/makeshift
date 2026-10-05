@@ -390,7 +390,9 @@ jobs:
           MAKESHIFT_TEST_BROWSER: webkit
         run: npm run test:standalone-cleanup
       - name: Mode switches, acceptance and ownership readiness
-        if: matrix.lane == 'webkit-controls'
+        if: matrix.lane == 'webkit-widgets'
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
         run: |
           node tests/mode-switch-readiness-ui.mjs
           node tests/mode-switch-ui.mjs
@@ -486,7 +488,9 @@ jobs:
           npm run test:preview-fallback
           node tests/preview-fallback-adjacent-ui.mjs
       - name: Mode switch model and preview regressions
-        if: matrix.lane == 'webkit-widgets'
+        if: matrix.lane == 'webkit-controls'
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
         run: |
           node tests/mode-switch-regressions-ui.mjs
           node tests/mode-switch-preview-regressions-ui.mjs
