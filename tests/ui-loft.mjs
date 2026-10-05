@@ -218,6 +218,11 @@ async function deleteAndClear(page) {
   assert.deepEqual((await inspect(page)).document, original);
   await page.getByRole("button", { name: "Select Sketch 1", exact: true }).click();
   await chooseTool(page, "edit sketch", "edit-sketch");
+  // Complete workspace navigation before asserting a single geometry Undo.
+  await page.waitForFunction(() => {
+    const state = window.makeshiftInspect();
+    return !state.camera.moving && !state.camera.navigationPending;
+  });
   await chooseTool(page, "clear sketch", "clear-sketch");
   state = await inspect(page);
   assert.equal(state.document.sketches[0].curves.length, 0);
