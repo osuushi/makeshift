@@ -118,6 +118,9 @@ jobs:
         run: |
           xvfb-run -a node tests/preview-action-readiness-ui.mjs
           xvfb-run -a node tests/preview-seed-readiness-ui.mjs
+      - name: Thread settings correction
+        if: matrix.shard == 2
+        run: xvfb-run -a node tests/thread-application-ui.mjs
       - name: Demand rendering and fresh frame capture
         if: matrix.shard == 1
         run: xvfb-run -a node tests/ui-demand-frames.mjs
@@ -199,6 +202,10 @@ jobs:
           node tests/preview-seed-readiness-ui.mjs
           npm run test:current-tools
           node tests/ui-runtime-cleanup.mjs
+      - name: Thread settings correction
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: node tests/thread-application-ui.mjs
       - name: Built Electron host smoke and Finder launch
         run: |
           node tests/electron-smoke.mjs
