@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { orient, project } from "./ui-blend-edit.mjs";
-import { at, drag, inspect, reset } from "./ui-helpers.mjs";
+import { at, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
+import { previewActionReady } from "./ui-preview-readiness.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function edgeFinishPrism(page, concave = false) {
@@ -31,6 +32,7 @@ export async function edgeFinishPrism(page, concave = false) {
   await page.keyboard.press("Enter");
   await inspect(page);
   await page.keyboard.press("Enter");
+  await modalCompleted(page);
   const original = (await inspect(page)).document;
   assert.ok(Math.abs(original.bodies[0].volume - (concave ? 3000 : 4000)) < 1e-6);
   await page.keyboard.press("Escape");
@@ -74,7 +76,9 @@ export async function dragSize(page, mode, distance = 20) {
 }
 
 export async function finishHistory(page, mode, original) {
+  await previewActionReady(page, `Accept ${mode}`);
   await page.getByRole("button", { name: `Accept ${mode}`, exact: true }).click();
+  await modalCompleted(page);
   const accepted = (await inspect(page)).document;
   assert.notDeepEqual(accepted, original);
   assert.deepEqual((await inspect(page)).modelingSelection, [

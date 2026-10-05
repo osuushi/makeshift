@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { orient } from "./ui-blend-edit.mjs";
 import { dragSize, finishHistory, pickWorld, sizeInput } from "./ui-edge-finish-fixtures.mjs";
 import { assertSurfaceMovement } from "./ui-edge-finish-motion.mjs";
-import { at, drag, inspect, reset } from "./ui-helpers.mjs";
+import { at, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function largeGridPlate(page) {
@@ -22,6 +22,7 @@ async function largeGridPlate(page) {
   await page.keyboard.press("Enter");
   await inspect(page);
   await page.keyboard.press("Enter");
+  await modalCompleted(page);
   const original = (await inspect(page)).document;
   assert.ok(Math.abs(original.bodies[0].volume - 32000) < 1e-6);
   await page.keyboard.press("Escape");
