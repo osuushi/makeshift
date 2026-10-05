@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import * as THREE from "three";
-import { captureCamera } from "../src/model/camera-state.js";
+import { type CameraState, captureCamera, restoreCamera } from "../src/model/camera-state.js";
 import { type NavigationChange, sameNavigation } from "../src/sketch/history-navigation.js";
 import { emptySelection } from "../src/sketch/history-selection.js";
 import { NavigationHistory } from "../src/sketch/navigation-history.js";
@@ -23,6 +23,7 @@ function fixture() {
       world.cameraTransitioning = false;
     },
     draw: () => navigation.settled(),
+    animateCamera: (state: CameraState) => restoreCamera(world as unknown as World, state),
   };
   const navigation = new NavigationHistory(world as unknown as World);
   Object.assign(world, { navigation });
@@ -119,4 +120,21 @@ test("accepted context rebases an unfinished gesture while retaining its lifetim
   assert.equal(changes[0].navigation.before.camera.target[0], 5);
   assert.deepEqual(changes[0].navigation.before.selection, selection);
   assert.equal(changes[0].navigation.after.camera.target[0], 9);
+});
+
+test("unrecorded movement expires pending view intent while retaining the pan drag guard", async () => {
+  const { world, navigation, changes } = fixture();
+  let expirations = 0;
+  navigation.discarded = () => expirations++;
+  navigation.begin();
+  world.target.x = 5;
+  navigation.hold("pan", false);
+  assert.equal(navigation.active, false);
+  assert.equal(navigation.dragging, true);
+  world.target.x = 10;
+  navigation.release("pan");
+  await tick();
+  assert.equal(expirations, 1);
+  assert.equal(changes.length, 0);
+  assert.equal(navigation.dragging, false);
 });

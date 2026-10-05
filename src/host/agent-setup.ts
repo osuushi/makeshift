@@ -1,6 +1,11 @@
 import { homedir } from "node:os";
 import type { App } from "electron";
-import type { AgentRequest, CodexExecutable, CodexSetupStatus } from "../agent/protocol.js";
+import type {
+  AgentPreferences,
+  AgentRequest,
+  CodexExecutable,
+  CodexSetupStatus,
+} from "../agent/protocol.js";
 import { type AgentSettings, agentPreferences } from "./agent-settings.js";
 import { discoverCodex } from "./codex-discovery.js";
 import { CodexInstaller } from "./codex-installer.js";
@@ -33,6 +38,23 @@ export class AgentSetup {
   get active(): boolean {
     return this.installer.active;
   }
+  async executable(
+    preferences: AgentPreferences,
+    cwd: string,
+    env: NodeJS.ProcessEnv,
+  ): Promise<string> {
+    const executable = await discoverCodex(preferences, cwd, env);
+    this.verified(executable);
+    return executable.path;
+  }
+  private verified(executable: CodexExecutable): void {
+    this.discovered = {
+      phase: "ready",
+      message: `Found Codex CLI ${executable.version}. Use Start in the terminal header and sign in using Makeshift’s separate configuration.`,
+      executable,
+      output: "",
+    };
+  }
   async request(request: AgentRequest, running = false): Promise<boolean> {
     if (request.kind === "cancel-codex-install") {
       await this.installer.cancel();
@@ -64,12 +86,7 @@ export class AgentSetup {
       };
       throw error;
     }
-    this.discovered = {
-      phase: "ready",
-      message: `Found Codex CLI ${executable.version}. Launch and sign in using Makeshift’s separate configuration.`,
-      executable,
-      output: "",
-    };
+    this.verified(executable);
     return true;
   }
 }

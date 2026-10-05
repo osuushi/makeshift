@@ -7,7 +7,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 const keep = (page) => page.getByRole("button", { name: "Keep originals", exact: true });
 const body = (page, number) =>
-  page.getByRole("button", { name: `Boolean Body ${number}`, exact: true });
+  page.getByRole("button", { name: `Select Body ${number}`, exact: true });
 async function clear(page) {
   if ((await inspect(page)).modelingSelection.length)
     await chooseTool(page, "clear selection", "selection-clear");
@@ -35,11 +35,19 @@ async function start(page, mode) {
   );
   await chooseTool(page, mode, mode);
   assert.equal((await inspect(page)).interaction.kind, "body-boolean");
+  assert.equal(await page.locator(".boolean-widget button").count(), 6);
+  assert.equal(
+    await page.locator(".boolean-body-choices, .boolean-roles, .boolean-status").count(),
+    0,
+  );
+  assert.equal(
+    await page.getByRole("button", { name: "Change Boolean bodies", exact: true }).count(),
+    0,
+  );
 }
 async function accept(page) {
   await inspect(page);
-  await page.keyboard.press("Enter"); // Done choosing
-  await page.keyboard.press("Enter"); // Accept
+  await page.keyboard.press("Enter"); // Apply
   await page.waitForFunction(() => window.makeshiftInspect().interaction === null);
   return inspect(page);
 }
@@ -55,6 +63,10 @@ async function toolFirst(page, name) {
     assert.equal(await body(page, 1).getAttribute("aria-pressed"), "true");
     assert.equal(await page.getByRole("button", { name: "Accept Boolean" }).isEnabled(), false);
     await pick(page, [-10, 0, 5]);
+    if (mode === "subtract") {
+      assert.equal(await body(page, 1).getAttribute("title"), "Body 1 · Cutting tool");
+      await pick(page, [-10, 0, 5]);
+    }
     assert.equal(await body(page, 1).getAttribute("aria-pressed"), "false");
     await pick(page, [-10, 0, 5]);
     // Reach the portion of the cutter outside the plate by a real viewport click.
@@ -71,10 +83,10 @@ async function toolFirst(page, name) {
     assert.deepEqual((await inspect(page)).document, result);
     await chooseTool(page, "undo", "undo");
   }
-  // One preselected body starts collection while preserving its target role.
+  // One preselected body preserves its target role.
   await page.getByRole("button", { name: "Select Body 2", exact: true }).click();
   await chooseTool(page, "subtract", "subtract");
-  assert.match(await body(page, 2).textContent(), /Target/);
+  assert.match(await body(page, 2).getAttribute("title"), /Target/);
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, original);
   await start(page, "union");
@@ -138,22 +150,49 @@ function ghosts(state, target, tool) {
     );
   }
 }
+async function cycleTarget(page, target, tool) {
+  assert.equal(
+    await body(page, 2).evaluate((button) => button.closest(".entity-row").dataset.booleanRole),
+    "target",
+  );
+  assert.equal(
+    await body(page, 1).evaluate((button) => button.closest(".entity-row").dataset.booleanRole),
+    "tool",
+  );
+  await body(page, 2).click();
+  assert.equal(await body(page, 2).getAttribute("title"), "Body 2 · Cutting tool");
+  assert.equal((await inspect(page)).preview, null);
+  await body(page, 2).click();
+  assert.equal(await body(page, 2).getAttribute("aria-pressed"), "false");
+  assert.equal((await inspect(page)).preview, null);
+  assert.equal(
+    await page.getByRole("button", { name: "Accept Boolean", exact: true }).isDisabled(),
+    true,
+  );
+  await body(page, 2).click();
+  ghosts(await inspect(page), tool.id, target.id);
+}
 async function enclosed(page, name) {
   await enclosedOperands(page);
   const original = (await inspect(page)).document;
   const [target, tool] = original.bodies;
   await start(page, "subtract");
   await setKeep(page, false);
-  await body(page, 1).click();
-  await body(page, 2).press("Space");
+  await body(page, 2).click();
+  await body(page, 1).press("Space");
   let state = await inspect(page);
   close(state.preview.bodies[0].volume, target.volume - tool.volume);
   ghosts(state, target.id, tool.id);
-  await page.getByRole("button", { name: "Change subtraction target" }).click();
+  await body(page, 2).click();
+  await body(page, 2).click();
   state = await inspect(page);
   assert.equal(state.preview.bodies.length, 0);
-  assert.match(await page.locator(".boolean-status").textContent(), /Empty result/);
+  assert.match(
+    await page.getByRole("button", { name: "Accept Boolean", exact: true }).textContent(),
+    /empty result/,
+  );
   ghosts(state, tool.id, target.id);
+  await cycleTarget(page, target, tool);
   await accept(page);
   assert.equal((await inspect(page)).document.bodies.length, 0);
   await chooseTool(page, "undo", "undo");
@@ -161,9 +200,11 @@ async function enclosed(page, name) {
   await start(page, "subtract");
   await body(page, 2).click();
   await body(page, 1).click();
+  await body(page, 2).click();
+  await body(page, 2).click();
   await inspect(page);
   await page.screenshot({ path: `.cache/sketch-review/${name}-boolean-enclosed-empty.png` });
-  await page.getByRole("button", { name: "Change subtraction target" }).click();
+  await body(page, 1).click();
   await setKeep(page, true);
   await chooseTool(page, "undo", "undo"); // Restore target order, not the preference.
   await inspect(page);
@@ -184,8 +225,8 @@ async function enclosed(page, name) {
   await inspect(page);
   await start(page, "subtract");
   assert.equal(await keep(page).getAttribute("aria-pressed"), "true");
-  await body(page, 1).click();
   await body(page, 2).click();
+  await body(page, 1).click();
   await accept(page);
   const kept = (await inspect(page)).document;
   assert.equal(kept.bodies.length, 2);
@@ -198,8 +239,8 @@ async function enclosed(page, name) {
   await start(page, "subtract");
   assert.equal(await keep(page).getAttribute("aria-pressed"), "true");
   await setKeep(page, false);
-  await body(page, 1).click();
   await body(page, 2).click();
+  await body(page, 1).click();
   await accept(page);
   assert.equal((await inspect(page)).document.bodies.length, 1);
   await chooseTool(page, "undo", "undo");

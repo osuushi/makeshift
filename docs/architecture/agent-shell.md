@@ -25,10 +25,13 @@ native-executable/standalone-install alternative. The quote plan follows
 and [Microsoft cmd rules](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/cmd);
 actual Windows execution remains unverified.
 
-Find/Install/Cancel/Retry/Launch controls remain machine-local, outside drawings and
+Find/Install/Cancel/Retry controls remain machine-local, outside drawings and
 Undo. An unchanged default `codex` field can bind a verified discovery result; explicit
 paths and edits made while setup runs remain intact, with **Use found CLI** as a
-separate choice. Launch reads the current form preferences. Install is an explicit
+separate choice. Save settings persists the current form and closes it; the terminal
+header’s existing Start/Stop controls own launch and termination. There is no
+second Launch button in setup. Install is hidden after discovery or ordinary
+launch verifies an existing CLI, and for Custom. Install is an explicit
 user action using the official standalone vendor script
 for macOS/Linux or Windows, with its normal user installation and PATH effects.
 The host owns a bounded, cancellable child process, fixed vendor URL and direct argument

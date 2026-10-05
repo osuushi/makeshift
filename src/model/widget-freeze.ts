@@ -39,6 +39,7 @@ export class WidgetFreeze {
       window.addEventListener(
         type,
         (event) => {
+          if (type === "blur" && event.target !== window) return;
           this.pressed = false;
           this.picked =
             type === "pointerup" && event instanceof PointerEvent
@@ -57,7 +58,8 @@ export class WidgetFreeze {
   }
   private hold(event?: PointerEvent): void {
     if (!this.pressed && event) this.picked = this.target(event.target);
-    if (this.hovering) return;
+    // A new press also freezes animations begun while the pointer stayed in this assembly.
+    if (this.hovering && !this.pressed) return;
     this.hovering = true;
     for (const element of this.targets.keys()) {
       const translation = getComputedStyle(element).translate;

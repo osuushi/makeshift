@@ -42,6 +42,7 @@ export function sketchTools(editor: SketchEditor): () => void {
         reason: () => {
           if (editor.world.navigation.dragging) return "Finish the current view gesture first";
           const interaction = editor.interactions.current;
+          if (id === "undo" ? editor.store.canUndoView : editor.store.canRedoView) return null;
           if (interaction?.finish && !interaction.history && !interaction.cancelBeforeHistory)
             return `Nothing to ${id} in this tool`;
           if (interaction?.history && id === "undo") return null;

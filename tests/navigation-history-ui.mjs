@@ -3,9 +3,11 @@ import { navigationFileBoundary } from "./ui-navigation-files.mjs";
 import { navigationInputRoute } from "./ui-navigation-inputs.mjs";
 import { navigationInterruptionRoute } from "./ui-navigation-interruption.mjs";
 import { navigationOrderRoute } from "./ui-navigation-order.mjs";
+import { navigationTailRoute } from "./ui-navigation-tail.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 
 const routes = {
+  tail: navigationTailRoute,
   inputs: navigationInputRoute,
   order: navigationOrderRoute,
   modal: navigationModalPriority,

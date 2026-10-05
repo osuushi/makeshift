@@ -8,7 +8,7 @@ await withUiRuntimes(
   async (page, name) => {
     const original = await decoratorCylinder(page, 0.5, 1);
     const panel = page.getByRole("region", { name: "Decorators", exact: true });
-    const apply = page.getByRole("button", { name: "Apply thread decorator", exact: true });
+    const apply = page.getByRole("button", { name: "Create threads", exact: true });
     await chooseTool(page, "threads", "threads");
     assert.match(await panel.innerText(), /Thread profile is too deep/);
     assert.equal(await apply.isDisabled(), true);
@@ -29,7 +29,7 @@ await withUiRuntimes(
     assert.equal((await inspect(page)).preview, null);
     assert.match(await panel.innerText(), /Invalid thread pitch/);
     await pitch.fill("0.25");
-    await page.getByRole("button", { name: "Cancel thread decorator", exact: true }).click();
+    await panel.getByRole("button", { name: "Cancel", exact: true }).click();
     assert.deepEqual((await inspect(page)).document, original);
     assert.equal((await inspect(page)).interaction, null);
     await chooseTool(page, "threads", "threads");

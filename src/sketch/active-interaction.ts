@@ -44,7 +44,10 @@ interface InteractionCapabilities {
 }
 export class ActiveInteraction {
   private active: InteractionLease | null = null;
-  constructor(private changed: () => void) {}
+  constructor(
+    private changed: () => void,
+    readonly edited: () => void = () => {},
+  ) {}
   get current(): InteractionLease | null {
     return this.active;
   }
@@ -108,7 +111,7 @@ export class InteractionLease {
     read: () => T,
     restore: (value: T) => void | Promise<void>,
   ): void {
-    this.history = new InteractionHistory(read, restore);
+    this.history = new InteractionHistory(read, restore, this.owner.edited);
     for (const type of ["focusout", "change", "click"] as const)
       root.addEventListener(
         type,

@@ -6,6 +6,17 @@ export async function performHistory(
 ): Promise<void> {
   if (editor.world.navigation.dragging) return;
   const interaction = editor.interactions.current;
+  if (interaction && !interaction.captured && !editor.blocked) {
+    interaction.history?.checkpoint();
+    editor.selectionHistory.finishNavigation();
+    await editor.store.settled();
+    await editor.store.request({ kind: "read" });
+    if (direction === "undo" ? editor.store.canUndoView : editor.store.canRedoView) {
+      await editor.store.request({ kind: "navigation-history", direction });
+      editor.refresh();
+      return;
+    }
+  }
   if (interaction?.history) {
     if (interaction.captured || editor.blocked) return;
     if (direction === "undo" && !interaction.history.canUndo) await editor.interactions.cancel();
