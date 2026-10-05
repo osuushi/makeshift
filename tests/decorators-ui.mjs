@@ -104,7 +104,7 @@ try {
       await orient(page, [0, -1, 0.3]);
       await worldClick(page, [0, -8, 5]);
       await page
-        .getByRole("button", { name: "Remove threads from selected faces", exact: true })
+        .getByRole("button", { name: "Remove thread decorator from selected faces", exact: true })
         .click();
       assert.equal((await inspect(page)).document.decorators.length, 0);
       await decoratorMembershipRoute(page);

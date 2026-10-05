@@ -3,7 +3,8 @@ import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { cleanupAvailabilityRoute, settledBroom } from "./ui-cleanup-availability.mjs";
 import { directionalWidgetRoute } from "./ui-directional-widget.mjs";
-import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { at, close, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
+import { previewActionReady } from "./ui-preview-readiness.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function plate(page) {
@@ -21,6 +22,7 @@ export async function plate(page) {
   await page.keyboard.press("Enter");
   await inspect(page);
   await page.keyboard.press("Enter");
+  await modalCompleted(page);
   await inspect(page);
   await page.mouse.click(top.x, top.y);
   await page.keyboard.down("Shift");
@@ -143,7 +145,9 @@ export async function circularFinish(page, name, mode = "fillet") {
     .fill("2");
   await inspect(page);
   assert.equal((await inspect(page)).preview.bodies[0].faces.length, 4);
+  await previewActionReady(page, `Accept ${mode}`);
   await page.getByRole("button", { name: `Accept ${mode}`, exact: true }).click();
+  await modalCompleted(page);
   await orient(page, [0.5, 0.5, 1]);
   await page.screenshot({ path: `.cache/sketch-review/${name}-circular-${mode}.png` });
 }

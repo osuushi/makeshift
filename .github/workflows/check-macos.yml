@@ -106,6 +106,17 @@ jobs:
         run: |
           xvfb-run -a npm run test:current-tools -- --shard=${{ matrix.shard }}/3
           xvfb-run -a node tests/ui-runtime-cleanup.mjs
+      - name: Decorator removal and command readiness
+        if: matrix.shard == 1
+        run: |
+          xvfb-run -a node tests/decorator-removal-ui.mjs
+          xvfb-run -a node tests/command-readiness-ui.mjs
+          xvfb-run -a node tests/face-offset-readiness-ui.mjs
+      - name: Browser preview readiness
+        if: matrix.shard == 1 && matrix.browser == 'chromium'
+        run: |
+          xvfb-run -a node tests/preview-action-readiness-ui.mjs
+          xvfb-run -a node tests/preview-seed-readiness-ui.mjs
       - name: Demand rendering and fresh frame capture
         if: matrix.shard == 1
         run: xvfb-run -a node tests/ui-demand-frames.mjs
@@ -179,6 +190,11 @@ jobs:
           MAKESHIFT_TEST_BROWSER: webkit
         run: |
           npx playwright install webkit
+          node tests/decorator-removal-ui.mjs
+          node tests/preview-action-readiness-ui.mjs
+          node tests/preview-seed-readiness-ui.mjs
+          node tests/command-readiness-ui.mjs
+          node tests/face-offset-readiness-ui.mjs
           npm run test:current-tools
           node tests/ui-runtime-cleanup.mjs
       - name: Built Electron host smoke and Finder launch

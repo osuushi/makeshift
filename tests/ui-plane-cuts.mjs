@@ -3,9 +3,10 @@ import { resolve } from "node:path";
 import { openDocument, saveDocument } from "./native-documents.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
-import { at, drag, inspect, reset, settled } from "./ui-helpers.mjs";
+import { at, drag, inspect, modalCompleted, reset, settled } from "./ui-helpers.mjs";
 import { planeHover } from "./ui-plane-hover.mjs";
 import { pickPlane } from "./ui-plane-targets.mjs";
+import { previewActionReady } from "./ui-preview-readiness.mjs";
 import { chooseTool, toolEnabled } from "./ui-tools.mjs";
 
 async function startCut(page, mode) {
@@ -39,7 +40,9 @@ export async function planeCutRoute(page, name) {
   await page.mouse.click(center.x, center.y);
   await page.getByRole("textbox", { name: "Extrusion distance", exact: true }).fill("20");
   await settled(page);
+  await previewActionReady(page, "Accept extrusion");
   await page.getByRole("button", { name: "Accept extrusion", exact: true }).click();
+  await modalCompleted(page);
   await worldClick(page, [0, 0, 20]);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   await chooseTool(page, "construction plane", "construction-plane");

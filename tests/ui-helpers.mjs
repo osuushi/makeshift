@@ -6,6 +6,13 @@ export async function settled(page) {
     return state && !state.busy && !state.camera.moving;
   });
 }
+// Native busy can end before an ordinary modal acceptance continuation finishes.
+export async function modalCompleted(page) {
+  await page.waitForFunction(() => {
+    const state = window.makeshiftInspect();
+    return !state.busy && state.interaction === null;
+  });
+}
 export async function inspect(page) {
   await settled(page);
   return page.evaluate(() => window.makeshiftInspect());
@@ -18,6 +25,18 @@ export async function reset(page) {
     .getByRole("button", { name: "Don’t Save", exact: true });
   if (await discard.isVisible()) await discard.click();
   await settled(page);
+  // Idle alone does not establish that ordinary New replaced the document.
+  await page.waitForFunction(() => {
+    const state = window.makeshiftInspect();
+    return (
+      !state.busy &&
+      !state.camera.moving &&
+      state.interaction === null &&
+      state.document.sketches.length === 0 &&
+      (state.document.bodies?.length ?? 0) === 0 &&
+      (state.document.constructionPlanes?.length ?? 0) === 0
+    );
+  });
   await page.reload();
   await settled(page);
 }

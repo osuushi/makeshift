@@ -9,7 +9,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function customContinueRoute(page, app) {
   await page
-    .getByRole("button", { name: "Remove Raised pad from selected faces", exact: true })
+    .getByRole("button", { name: "Remove Raised pad decorator from selected faces", exact: true })
     .click();
   await inspect(page);
   await chooseTool(page, "decorator library", "decorator-library");

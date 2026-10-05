@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { circularFinish, plate } from "./ui-body-fillet.mjs";
-import { close, inspect } from "./ui-helpers.mjs";
+import { close, inspect, modalCompleted } from "./ui-helpers.mjs";
 import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { orientWithTurntable } from "./ui-orbit-orient.mjs";
+import { previewActionReady } from "./ui-preview-readiness.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function project(page, xyz) {
@@ -96,7 +97,9 @@ async function flatChamferDrag(page, name) {
   await page.getByRole("button", { name: "Chamfer edges", exact: true }).click();
   await page.getByRole("textbox", { name: "Chamfer distance" }).fill("4");
   await inspect(page);
+  await previewActionReady(page, "Accept chamfer");
   await page.getByRole("button", { name: "Accept chamfer" }).click();
+  await modalCompleted(page);
   const original = (await inspect(page)).document;
   const face = original.bodies[0].faces.find((f) => {
     if (!f.plane) return false;

@@ -98,7 +98,7 @@ try {
       await worldClick(page, [0, -10, 5]);
       assert.equal(await teeth.inputValue(), "36");
       await page
-        .getByRole("button", { name: "Remove Gear from selected faces", exact: true })
+        .getByRole("button", { name: "Remove Gear decorator from selected faces", exact: true })
         .click();
       assert.equal((await inspect(page)).document.decorators.length, 0);
       await orient(page, [0, 0, 1]);
