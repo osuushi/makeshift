@@ -459,7 +459,9 @@ jobs:
           node tests/common-shortcuts-ui.mjs
           node tests/modeling-shortcut-regressions-ui.mjs
       - name: Drawable decorator preview fallback and adjacent settings
-        if: matrix.lane == 'webkit-widgets'
+        if: matrix.lane == 'geometry'
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
         run: |
           npm run test:preview-fallback
           node tests/preview-fallback-adjacent-ui.mjs
