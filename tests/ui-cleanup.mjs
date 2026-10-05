@@ -16,19 +16,15 @@ async function clean(page) {
   await chooseTool(page, "clean up", "cleanup");
   return inspect(page);
 }
-async function undo(page) {
-  await chooseTool(page, "undo", "undo");
-  return inspect(page);
-}
-async function undoTo(page, target) {
+async function historyTo(page, target, direction = "undo") {
   const depth = (await page.evaluate(() => window.makeshiftHistory())).length;
   for (let i = 0; i < depth; i++) {
     if (isDeepStrictEqual((await inspect(page)).document, target)) return;
-    await undo(page);
+    await chooseTool(page, direction, direction);
   }
   assert.ok(
     isDeepStrictEqual((await inspect(page)).document, target),
-    "Undo reaches target geometry",
+    `${direction} reaches target geometry`,
   );
 }
 export async function createStack(page) {
@@ -75,7 +71,7 @@ async function cleanupSeamRoutes(page, joined, original, fixturePath) {
   assert.equal(state.preview.bodies[0].faces.length, 13);
   await page.getByRole("button", { name: "Accept cleanup", exact: true }).click();
   assert.equal((await inspect(page)).document.bodies[0].faces.length, 13);
-  await undoTo(page, joined);
+  await historyTo(page, joined);
   const facePoint = await project(page, [0, -10, (seamZ + body.bounds[5]) / 2]);
   await page.mouse.click(facePoint.x, facePoint.y);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
@@ -83,7 +79,7 @@ async function cleanupSeamRoutes(page, joined, original, fixturePath) {
   assert.equal(state.preview.bodies[0].faces.length, 13);
   await page.keyboard.press("Escape");
   // Undo through selection history to the pre-Boolean geometry.
-  await undoTo(page, original);
+  await historyTo(page, original);
 }
 export async function cleanupRoute(page, name, electron, fixturePath) {
   if (fixturePath) {
@@ -122,15 +118,17 @@ export async function cleanupRoute(page, name, electron, fixturePath) {
   await selectBodies(page, 3);
   await chooseTool(page, "union", "union");
   await inspect(page);
-  await page.getByRole("button", { name: "Commit and clean up", exact: true }).click();
+  await page.getByRole("button", { name: "Accept Boolean", exact: true }).click();
+  await clean(page);
+  await page.getByRole("button", { name: "Accept cleanup", exact: true }).click();
   state = await inspect(page);
   assert.equal(state.document.bodies.length, 1);
   assert.equal(state.document.bodies[0].faces.length, 6);
   assert.equal(state.document.bodies[0].edges.length, 12);
   assert.ok(Math.abs(state.document.bodies[0].volume - volume) < 1e-6);
   const saved = state.document;
-  await undoTo(page, original);
-  await chooseTool(page, "redo", "redo");
+  await historyTo(page, original);
+  await historyTo(page, saved, "redo");
   assert.deepEqual((await inspect(page)).document, saved);
   await selectBodies(page, 1);
   const geometryHistory = async () =>
@@ -142,8 +140,8 @@ export async function cleanupRoute(page, name, electron, fixturePath) {
   assert.deepEqual(state.preview, saved);
   await page.keyboard.press("Enter");
   assert.deepEqual(await geometryHistory(), beforeNoOp, "No-op cleanup adds no geometry history");
-  await undoTo(page, original);
-  await chooseTool(page, "redo", "redo");
+  await historyTo(page, original);
+  await historyTo(page, saved, "redo");
   await inspect(page);
   await page.screenshot({ path: `.cache/sketch-review/${name}-cleanup.png` });
   await bodyArchiveRoute(page, `${name}-cleanup`, electron);

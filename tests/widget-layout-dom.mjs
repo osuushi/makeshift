@@ -6,6 +6,7 @@ import { runtimeNames } from "./ui-runtime.mjs";
 import { cardFootprintDom } from "./widget-card-footprint-dom.mjs";
 import { frozenLayoutDom } from "./widget-frozen-layout-dom.mjs";
 import { planarLayoutDom } from "./widget-planar-layout-dom.mjs";
+import { pressedCardDom } from "./widget-pressed-card-dom.mjs";
 import { sweptLayoutDom } from "./widget-swept-layout-dom.mjs";
 
 // A blank DOM exercises the actual placement class without booting a document,
@@ -192,6 +193,7 @@ try {
       await cardFootprintDom(page, name);
       await page.goto(`http://127.0.0.1:${server.address().port}`);
       await frozenLayoutDom(page, name);
+      await pressedCardDom(page, name);
       await page.goto(`http://127.0.0.1:${server.address().port}`);
       await sweptLayoutDom(page, name);
       await page.goto(`http://127.0.0.1:${server.address().port}`);

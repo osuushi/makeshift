@@ -119,7 +119,9 @@ const faceOffsets = new FaceOffsetControls(editor, overlay);
 const faceMoves = new TopologyMoveControls(editor, overlay);
 const edgeMoves = new TopologyMoveControls(editor, overlay, "edges");
 const bodyFinishes = new BodyEdgeFinishControls(editor, overlay);
-const booleans = new BooleanControls(editor, overlay);
+const tags = new TagControls(editor, app);
+const entities = new EntityViewer(editor, app, tags);
+const booleans = new BooleanControls(editor, overlay, entities);
 const bodyMove = new BodyMoveControls(editor, overlay);
 const disposeReopen = reopenControls(editor, async ({ request, cleanup: clean }) => {
   if (request.kind === "extrude") await modelControls.reopenExtrude(request.extrusion, clean);
@@ -178,8 +180,6 @@ const bodyActions = new BodyActions(
 );
 const deleteAction = new DeleteTopologyAction(editor);
 const mirror = new MirrorControls(editor, overlay);
-const tags = new TagControls(editor, app);
-const entities = new EntityViewer(editor, app, tags);
 const constructionPlanes = new ConstructionPlaneControls(editor, overlay, entities.referenceRows);
 const scaling = new ScaleControls(
   editor,

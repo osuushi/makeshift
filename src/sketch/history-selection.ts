@@ -11,7 +11,7 @@ export interface HistorySelection {
 }
 export interface SelectionChanges {
   baseline: HistorySelection;
-  steps: (HistorySelection | NavigationChange)[];
+  steps: (HistorySelection | NavigationChange | { expireNavigation: true })[];
 }
 export const emptySelection = (): HistorySelection => ({
   workspace: null,

@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { openDocument, saveDocument } from "./native-documents.mjs";
 import { drag, reset } from "./ui-helpers.mjs";
 import { navigationIdle, navigationTips } from "./ui-navigation-history.mjs";
-import { wheel } from "./ui-navigation-inputs.mjs";
+import { pinchStep } from "./ui-navigation-inputs.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function navigationFileBoundary(page, name) {
@@ -14,7 +14,7 @@ export async function navigationFileBoundary(page, name) {
   const saved = await navigationIdle(page);
   const file = resolve(`.cache/sketch-review/${name}-navigation.makeshift`);
   await saveDocument(page, file);
-  await wheel(page, 35, 20);
+  await pinchStep(page, 35, 20);
   await navigationIdle(page);
   assert.equal((await navigationTips(page)).length, 1);
   await openDocument(page, file);
