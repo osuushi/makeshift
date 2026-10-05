@@ -12,11 +12,10 @@ const event = (key: string, shiftKey = false) => ({
   isComposing: false,
 });
 
-test("common shortcuts distinguish shifted Boolean/Erode from existing keys", () => {
+test("common shortcuts distinguish shifted Boolean from existing keys", () => {
   for (const [key, shift, id, label] of [
     ["e", false, "extrude", "E"],
     ["s", false, "shell", "S"],
-    ["E", true, "erode", "⇧E"],
     ["S", true, "subtract", "⇧S"],
     ["U", true, "union", "⇧U"],
     ["I", true, "intersect", "⇧I"],
@@ -30,6 +29,8 @@ test("common shortcuts distinguish shifted Boolean/Erode from existing keys", ()
     assert.equal(modelingShortcut(event(key, shift), false), id);
     assert.equal(modelingShortcutLabel(id), label);
   }
+  assert.equal(modelingShortcut(event("E", true), false), null);
+  assert.equal(modelingShortcutLabel("erode"), "");
   assert.equal(modelingShortcut(event("O", true), false), "offset");
   assert.equal(modelingShortcut(event("M", true), false), "transform");
   for (const key of ["u", "i", "n", "r"]) assert.equal(modelingShortcut(event(key), false), null);
