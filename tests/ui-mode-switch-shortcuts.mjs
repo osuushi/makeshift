@@ -42,7 +42,13 @@ export async function loftErodeSwitchRoute(page, name) {
   state = await inspect(page);
   close(state.preview.bodies[0].volume, Math.PI * 9 ** 2 * 12, "whole-cylinder offset preview");
   assert.deepEqual(state.document, original);
+  const offsetPreview = state.preview;
   await keySwitch(page, "Shift+E");
+  state = await inspect(page);
+  assert.equal(state.interaction.kind, "face-offset", "Unassigned Shift-E retains Offset");
+  assert.deepEqual(state.document, original);
+  assert.deepEqual(state.preview, offsetPreview);
+  await chooseTool(page, "Erode", "erode");
   await page.waitForFunction(() => {
     const state = window.makeshiftInspect();
     return (
@@ -75,7 +81,7 @@ export async function loftErodeSwitchRoute(page, name) {
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, accepted);
   console.log(
-    `${name}: L accepts numeric edit/rechecks prerequisites and opens collection; ShiftE accepts geometry before Erode, exact Undo/Redo passed`,
+    `${name}: L accepts numeric edit/rechecks prerequisites and opens collection; unassigned ShiftE retains the draft; Tools accepts geometry before Erode, exact Undo/Redo passed`,
   );
 }
 

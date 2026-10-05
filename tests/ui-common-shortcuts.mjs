@@ -5,7 +5,7 @@ import { plate } from "./ui-body-fillet.mjs";
 import { close, inspect, modalCompleted } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-export const commonKeys = ["Shift+U", "Shift+S", "Shift+I", "l", "Shift+E"];
+export const commonKeys = ["Shift+U", "Shift+S", "Shift+I", "l"];
 export async function keyTool(page, key) {
   await page.getByRole("button", { name: "Tools", exact: true }).focus();
   await page.keyboard.press(key);
@@ -108,12 +108,18 @@ export async function shortcutBooleans(page, name) {
   await modalCompleted(page);
   assert.deepEqual((await inspect(page)).document, original);
 }
-export async function shortcutErode(page, name) {
+export async function toolsErode(page, name) {
   await plate(page);
   await chooseTool(page, "select owning bodies", "selection-bodies");
   const original = (await inspect(page)).document;
   close(original.bodies[0].volume, 4000);
+  const idle = await inspect(page);
   await keyTool(page, "Shift+E");
+  const unchanged = await inspect(page);
+  assert.equal(unchanged.interaction, null);
+  assert.equal(unchanged.modelingTool, idle.modelingTool);
+  assert.deepEqual(unchanged.document, original);
+  await chooseTool(page, "Erode", "erode");
   assert.equal((await inspect(page)).modelingTool, "erode");
   await page
     .getByRole("combobox", { name: "Erosion method", exact: true })
@@ -132,13 +138,13 @@ export async function shortcutErode(page, name) {
   close((await inspect(page)).document.bodies[0].volume, 16 * 16 * 6);
   await history(page, original);
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
-  await keyTool(page, "Shift+E");
+  await chooseTool(page, "Erode", "erode");
   await inspect(page);
   assert.equal(await thickness.inputValue(), "1");
   await page.keyboard.press("Escape");
   await modalCompleted(page);
   assert.deepEqual((await inspect(page)).document, original);
   console.log(
-    `${name}: Erode shortcut, Analytic fields, exact volume, reselection/cancel and Undo/Redo passed`,
+    `${name}: Erode through Tools, unassigned Shift-E, Analytic fields, exact volume, reselection/cancel and Undo/Redo passed`,
   );
 }

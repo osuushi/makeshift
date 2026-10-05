@@ -12,11 +12,10 @@ const event = (key: string, shiftKey = false) => ({
   isComposing: false,
 });
 
-test("common shortcuts distinguish shifted Boolean/Erode from existing keys", () => {
+test("common shortcuts distinguish shifted Boolean from existing keys", () => {
   for (const [key, shift, id, label] of [
     ["e", false, "extrude", "E"],
     ["s", false, "shell", "S"],
-    ["E", true, "erode", "⇧E"],
     ["S", true, "subtract", "⇧S"],
     ["U", true, "union", "⇧U"],
     ["I", true, "intersect", "⇧I"],
@@ -30,6 +29,8 @@ test("common shortcuts distinguish shifted Boolean/Erode from existing keys", ()
     assert.equal(modelingShortcut(event(key, shift), null), id);
     assert.equal(modelingShortcutLabel(id), label);
   }
+  assert.equal(modelingShortcut(event("E", true), null), null);
+  assert.equal(modelingShortcutLabel("erode"), "");
   assert.equal(modelingShortcut(event("O", true), null), "offset");
   assert.equal(modelingShortcut(event("M", true), null), "transform");
   for (const key of ["u", "i", "n", "r"]) assert.equal(modelingShortcut(event(key), null), null);
@@ -61,11 +62,11 @@ test("host modifiers, key repeat and IME composition never activate modeling sho
 });
 
 test("released finish-capable edits offer global switches, retaining Extrude local Boolean keys", () => {
+  assert.equal(modelingShortcut(event("E", true), { kind: "face-offset", canFinish: true }), null);
   for (const [key, shift, id] of [
     ["U", true, "union"],
     ["S", true, "subtract"],
     ["I", true, "intersect"],
-    ["E", true, "erode"],
     ["l", false, "loft"],
   ] as const) {
     assert.equal(modelingShortcut(event(key, shift), { kind: "face-offset", canFinish: true }), id);

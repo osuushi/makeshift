@@ -79,14 +79,14 @@ interaction means filled regions, not whole sketch objects or empty planes.
 Mixed target kinds have no automatic editing tool. Show one tool's local handles
 at a time; toolbar buttons and E/O/M/F explicitly choose Extrude/Offset/Move/Fillet.
 Shift+F chooses Chamfer, Shift+R chooses Revolve. Shift+U/S/I choose Union/Subtract/Intersect,
-L chooses Loft, and Shift+E chooses Erode. Shared shortcut metadata supplies Tools
-badges and dispatch. Released finish-capable foreign tools can switch through
-ordinary acceptance; Extrude retains U/S/I as local Boolean modes, including
-shifted keys. Held gestures, fields, search, terminal, key repeat and composition
-retain keyboard ownership. Sketch L remains Line. Focused buttons permit CAD letter
-shortcuts while retaining ordinary Space/Enter activation. Shift+O/M remain compatibility
-aliases. Shift bypasses geometry snaps during captured gestures; grid snapping retains
-its independent toggle. Fillet's local small icon button
+L chooses Loft. Erode is available through Tools without a keyboard shortcut. Shared
+shortcut metadata supplies Tools badges and dispatch. Released finish-capable foreign
+tools can switch through ordinary acceptance; Extrude retains U/S/I as local Boolean
+modes, including shifted keys. Held gestures, fields, search, terminal, key repeat and
+composition retain keyboard ownership. Sketch L remains Line. Focused buttons permit
+CAD letter shortcuts while retaining ordinary Space/Enter activation. Shift+O/M remain
+compatibility aliases. Shift bypasses geometry snaps during captured gestures; grid
+snapping retains its independent toggle. Fillet's local small icon button
 switches to Chamfer and back, including recalculating an active candidate.
 The edge-size control uses a capsule arrow with a rounded fillet or beveled chamfer contour;
 the compact panel uses distinct corner icons in fixed Fillet, Chamfer order with
