@@ -55,6 +55,11 @@ jobs:
         run: npm run setup:mesh
       - name: Build desktop renderer and host
         run: npm run build
+      - name: Conservative coverage and analytic span bounds
+        run: |
+          cmake -S native/kernel -B .build/kernel -DMAKESHIFT_KERNEL_TESTS=ON
+          cmake --build .build/kernel --target erosion-coverage-test --parallel "$CMAKE_BUILD_PARALLEL_LEVEL"
+          ctest --test-dir .build/kernel -R '^erosion-coverage$' --output-on-failure
       - name: Archive runtime (preserve native permissions and library symlinks)
         run: |
           mkdir -p .cache/ci
@@ -213,6 +218,11 @@ jobs:
         run: npm run setup:mesh
       - name: Build desktop renderer and host
         run: npm run build
+      - name: Conservative coverage and analytic span bounds
+        run: |
+          cmake -S native/kernel -B .build/kernel -DMAKESHIFT_KERNEL_TESTS=ON
+          cmake --build .build/kernel --target erosion-coverage-test --parallel "$CMAKE_BUILD_PARALLEL_LEVEL"
+          ctest --test-dir .build/kernel -R '^erosion-coverage$' --output-on-failure
       - name: Native host and macOS setup tests
         run: |
           npx tsc -p tsconfig.test.json
