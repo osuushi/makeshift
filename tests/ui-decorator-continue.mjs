@@ -58,7 +58,7 @@ export async function customContinueRoute(page, app) {
   await clearSelection(page);
   await worldClick(page, bottom);
   await page
-    .getByRole("button", { name: "Remove Linked pads from selected faces", exact: true })
+    .getByRole("button", { name: "Remove Linked pads decorator from selected faces", exact: true })
     .click();
   state = await inspect(page);
   assert.equal(state.document.decorators[0].faces.length, 1);

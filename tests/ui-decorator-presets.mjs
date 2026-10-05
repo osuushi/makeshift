@@ -7,6 +7,15 @@ export async function decoratorPresetRoute(page, name) {
   const clearance = page.getByRole("spinbutton", { name: "Clearance", exact: true });
   const pitch = page.getByRole("spinbutton", { name: "Pitch", exact: true });
   const nozzle = page.getByRole("spinbutton", { name: "Nozzle diameter", exact: true });
+  const layer = page.getByRole("spinbutton", { name: "Layer height", exact: true });
+  assert.deepEqual(await preset.locator("option").allTextContents(), [
+    "FDM fine",
+    "FDM coarse",
+    "Metric",
+    "Custom",
+  ]);
+  assert.equal(await nozzle.count(), 0);
+  assert.equal(await layer.count(), 0);
   const advanced = page.locator("details.thread-advanced");
   assert.equal(await preset.inputValue(), "fdm-fine");
   assert.equal(await clearance.inputValue(), "0.25");
@@ -45,23 +54,10 @@ export async function decoratorPresetRoute(page, name) {
   assert.equal(settings.preset, "fdm-fine");
   await advanced.locator("summary").click();
   assert.equal(await nozzle.count(), 0);
-  await preset.selectOption("print-sideways");
-  await inspect(page);
-  assert.equal(await nozzle.isVisible(), false);
-  await advanced.locator("summary").click();
-  assert.equal(await nozzle.inputValue(), "0.4");
-  await nozzle.fill("0.6");
-  await nozzle.press("Escape");
-  assert.equal((await inspect(page)).document.decorators[0].settings.nozzleDiameter, 0.4);
-  await nozzle.fill("0.6");
-  await nozzle.press("Enter");
-  settings = (await inspect(page)).document.decorators[0].settings;
-  assert.equal(settings.nozzleDiameter, 0.6);
-  assert.equal(settings.pitch, 3);
-  assert.equal(settings.clearance, 0.3);
-  assert.equal(settings.profile, "rounded");
   await preset.selectOption("metric");
   await inspect(page);
   assert.equal(await nozzle.count(), 0);
+  assert.equal(await layer.count(), 0);
+  await advanced.locator("summary").click();
   assert.equal(await pitch.isVisible(), true);
 }

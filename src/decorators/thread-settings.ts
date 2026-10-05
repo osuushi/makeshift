@@ -2,7 +2,7 @@ import type { DecoratorField, Settings } from "./types.js";
 
 export const threadDefinition = "freac.threads";
 export interface ThreadSettings extends Settings {
-  preset: "fdm-fine" | "fdm-coarse" | "metric" | "print-upright" | "print-sideways" | "custom";
+  preset: "fdm-fine" | "fdm-coarse" | "metric" | "custom";
   pitch: number;
   profile: "triangle" | "metric" | "rounded";
   hand: "right" | "left";
@@ -13,8 +13,6 @@ export interface ThreadSettings extends Settings {
   end: number;
   startTaper: number;
   endTaper: number;
-  layerHeight: number;
-  nozzleDiameter: number;
 }
 
 export const threadFields: readonly DecoratorField[] = [
@@ -26,30 +24,8 @@ export const threadFields: readonly DecoratorField[] = [
       { value: "fdm-fine", label: "FDM fine" },
       { value: "fdm-coarse", label: "FDM coarse" },
       { value: "metric", label: "Metric" },
-      { value: "print-upright", label: "Print upright" },
-      { value: "print-sideways", label: "Print sideways" },
       { value: "custom", label: "Custom" },
     ],
-  },
-  {
-    key: "layerHeight",
-    label: "Layer height",
-    type: "number",
-    unit: "mm",
-    min: 0.01,
-    max: 5,
-    default: 0.2,
-    visibleWhen: { key: "preset", values: ["print-upright", "print-sideways"] },
-  },
-  {
-    key: "nozzleDiameter",
-    label: "Nozzle diameter",
-    type: "number",
-    unit: "mm",
-    min: 0.05,
-    max: 10,
-    default: 0.4,
-    visibleWhen: { key: "preset", values: ["print-upright", "print-sideways"] },
   },
   { key: "pitch", label: "Pitch", type: "number", unit: "mm", min: 0.05, max: 100 },
   {
@@ -96,6 +72,35 @@ export const threadFields: readonly DecoratorField[] = [
   { key: "startTaper", label: "Start taper", type: "number", unit: "mm", min: 0 },
   { key: "endTaper", label: "End taper", type: "number", unit: "mm", min: 0 },
 ];
+
+// Optional compatibility metadata; neither required nor exposed as current controls.
+const legacyPrinterFields: readonly DecoratorField[] = [
+  {
+    key: "layerHeight",
+    label: "Layer height",
+    type: "number",
+    unit: "mm",
+    min: 0.01,
+    max: 5,
+  },
+  {
+    key: "nozzleDiameter",
+    label: "Nozzle diameter",
+    type: "number",
+    unit: "mm",
+    min: 0.05,
+    max: 10,
+  },
+];
+
+function legacyPreset(value: Settings[string]): boolean {
+  return value === "print-upright" || value === "print-sideways";
+}
+
+/** Rename only: never re-resolve the dimensions saved by an older orientation preset. */
+export function normalizeThreadPreset(settings: Settings): Settings {
+  return legacyPreset(settings.preset) ? { ...settings, preset: "custom" } : settings;
+}
 
 // ISO metric coarse nominal diameter/pitch pairs; tie goes to the smaller diameter.
 // Reference table: https://sg.misumi-ec.com/tech-info/categories/technical_data/td01/a0063.html
@@ -155,33 +160,15 @@ export function threadDepth(settings: ThreadSettings): number {
 export function threadDefaults(
   diameter: number,
   preset: ThreadSettings["preset"] = "fdm-fine",
-  printing: { layerHeight: number; nozzleDiameter: number } = {
-    layerHeight: 0.2,
-    nozzleDiameter: 0.4,
-  },
 ): ThreadSettings {
-  const print = preset === "print-upright" || preset === "print-sideways";
-  const sideways = preset === "print-sideways";
   const fdm = preset === "fdm-fine" || preset === "fdm-coarse";
   return {
-    layerHeight: printing.layerHeight,
-    nozzleDiameter: printing.nozzleDiameter,
     preset,
-    pitch: fdm
-      ? preset === "fdm-fine"
-        ? 1
-        : 1.5
-      : print
-        ? Math.max(
-            coarseMetric(diameter).pitch,
-            printing.layerHeight * (sideways ? 10 : 6),
-            printing.nozzleDiameter * (sideways ? 5 : 3),
-          )
-        : coarseMetric(diameter).pitch,
-    profile: fdm ? "triangle" : print ? "rounded" : "metric",
+    pitch: fdm ? (preset === "fdm-fine" ? 1 : 1.5) : coarseMetric(diameter).pitch,
+    profile: fdm ? "triangle" : "metric",
     hand: "right",
     cut: "rod",
-    clearance: preset === "fdm-fine" ? 0.25 : fdm ? 0.1 : print ? printing.nozzleDiameter / 2 : 0.1,
+    clearance: preset === "fdm-fine" ? 0.25 : 0.1,
     tipTruncation: fdm ? 0.1 : 0,
     start: 0,
     end: 0,
@@ -192,13 +179,13 @@ export function threadDefaults(
 
 export function threadSettings(settings: Settings): ThreadSettings {
   const normalized: Settings = {
-    layerHeight: 0.2,
-    nozzleDiameter: 0.4,
     tipTruncation: 0,
-    ...settings,
+    ...normalizeThreadPreset(settings),
   };
-  for (const field of threadFields) {
+  const fields = [...threadFields, ...legacyPrinterFields];
+  for (const field of fields) {
     const value = normalized[field.key];
+    if (legacyPrinterFields.includes(field) && value === undefined) continue;
     if (field.type === "number") {
       if (
         typeof value !== "number" ||
@@ -210,29 +197,22 @@ export function threadSettings(settings: Settings): ThreadSettings {
     } else if (!field.options?.some((option) => option.value === value))
       throw new Error(`Invalid thread ${field.label.toLowerCase()}`);
   }
-  if (Object.keys(settings).some((key) => !threadFields.some((field) => field.key === key)))
+  if (Object.keys(settings).some((key) => !fields.some((field) => field.key === key)))
     throw new Error("Unknown thread setting");
   return normalized as ThreadSettings;
 }
 
-/** Resolve a preset only on explicit preset/printer edits, never on geometry changes. */
+/** Resolve a preset only when explicitly chosen, never on geometry or metadata edits. */
 export function patchThreadSettings(
   diameter: number,
   settings: Settings,
   patch: Settings,
 ): ThreadSettings {
+  if (legacyPreset(patch.preset)) throw new Error("This thread preset is no longer available");
   const merged = threadSettings({ ...threadSettings(settings), ...patch });
-  const printing = merged.preset === "print-upright" || merged.preset === "print-sideways";
   let resolved = merged;
-  if (
-    (patch.preset && patch.preset !== "custom") ||
-    (printing && (patch.layerHeight !== undefined || patch.nozzleDiameter !== undefined))
-  ) {
-    const { pitch, profile, clearance, tipTruncation } = threadDefaults(
-      diameter,
-      merged.preset,
-      merged,
-    );
+  if (patch.preset && patch.preset !== "custom") {
+    const { pitch, profile, clearance, tipTruncation } = threadDefaults(diameter, merged.preset);
     resolved = threadSettings({ ...merged, pitch, profile, clearance, tipTruncation, ...patch });
   }
   if (resolved.preset === "fdm-fine" || resolved.preset === "fdm-coarse") {

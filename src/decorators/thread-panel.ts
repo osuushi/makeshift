@@ -1,5 +1,5 @@
 import { type DecoratorFieldDraft, decoratorField } from "./settings-field.js";
-import { threadFields } from "./thread-settings.js";
+import { normalizeThreadPreset, threadFields } from "./thread-settings.js";
 import type { DecoratorInstance, Settings } from "./types.js";
 
 export function appendThreadSettings(
@@ -9,6 +9,10 @@ export function appendThreadSettings(
   draft: DecoratorFieldDraft,
   advancedOpen: boolean,
 ): void {
+  instances = instances.map((instance) => ({
+    ...instance,
+    settings: normalizeThreadPreset(instance.settings),
+  }));
   const advanced = document.createElement("details");
   advanced.className = "thread-advanced";
   advanced.open = advancedOpen;
