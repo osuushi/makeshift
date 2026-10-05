@@ -54,7 +54,10 @@ platform builds start independently of static checks. Four
 parallel workers retain the full acceptance suite: platform-sensitive geometry,
 WebKit controls, WebKit widget placement and Reopen topology, and the built
 Electron host/preload boundary, document persistence, process handling and Finder
-PATH. Each worker runs its routes serially to preserve geometry calculation limits.
+PATH. All four workers install WebKit; its acceptance blocks are distributed alongside
+geometry and Electron work using measured hosted step durations. Every moved
+WebKit block explicitly selects WebKit. Each worker runs its routes serially to
+preserve geometry calculation limits.
 Signing and notarization remain release checks.
 The final `check` job requires every lane to succeed, including after a lane
 fails or is skipped. Cancelled runs skip that final check so it cannot hold a
