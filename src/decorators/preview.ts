@@ -56,6 +56,7 @@ class DecoratorOverlay {
       // Re-enter Detailed after clearing the worker even when document bytes are unchanged.
       this.previous = null;
       this.update();
+      editor.world.requestDraw();
     });
     editor.world.changed.add(this.update);
   }

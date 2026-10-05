@@ -50,7 +50,6 @@ export class PreviewOverlaySurfaces {
       this.fallback.sync(document, signatures);
     }
     this.style();
-    this.editor.world.requestDraw();
   }
 
   replace(
