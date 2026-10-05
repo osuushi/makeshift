@@ -164,6 +164,9 @@ jobs:
       - name: Idle body Enter and Transform ownership
         if: matrix.shard == 3
         run: xvfb-run -a node tests/transform-enter-ui.mjs
+      - name: Agent Settings discovery and setup UI
+        if: matrix.shard == 3 && matrix.browser == 'chromium'
+        run: xvfb-run -a node tests/agent-setup-ui.mjs
       - name: Interface scale and camera independence
         if: matrix.shard == 3
         run: |
@@ -326,6 +329,14 @@ jobs:
         env:
           MAKESHIFT_TEST_BROWSER: electron
         run: node tests/transform-enter-ui.mjs
+      - name: Agent Settings discovery and setup UI
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: node tests/agent-setup-ui.mjs
+      - name: Built Electron agent setup and owned process shutdown
+        env:
+          MAKESHIFT_TEST_BROWSER: electron
+        run: node tests/agent-setup-electron.mjs
   # Preserve the existing required check name; failed or skipped lanes cannot pass.
   check:
     if: always()
