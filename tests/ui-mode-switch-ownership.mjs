@@ -64,7 +64,7 @@ export async function geometrySwitchRoute(page, name) {
   await chooseTool(page, "return to modeling", "modeling");
   const left = await navigationIdle(page),
     planeAccepted = left.document;
-  await switchViewUndoRedo(page, entered, left);
+  await switchViewUndoRedo(page, entered, left, planeBefore);
   const planeSide = planeAccepted.bodies[0].faces.find((face) => face.cylinder);
   await switchUndoRedo(
     page,

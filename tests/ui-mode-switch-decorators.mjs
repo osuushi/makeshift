@@ -148,7 +148,7 @@ export async function threadApplicationSwitchRoute(page, name) {
   const entered = await navigationIdle(page);
   await chooseTool(page, "return to modeling", "modeling");
   const left = await navigationIdle(page);
-  await switchViewUndoRedo(page, entered, left);
+  await switchViewUndoRedo(page, entered, left, before);
   await switchUndoRedo(page, name, before, prior, accepted, "decorator", {
     sketch: before.selectionTargets,
     modeling: before.modelingSelection,

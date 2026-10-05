@@ -145,6 +145,9 @@ test("legacy preview owners cancel before document history without accepting the
       assert.equal(interactions.current, null);
       assert.deepEqual(events, [
         "finish-navigation",
+        "settled",
+        "read",
+        "finish-navigation",
         "numeric-cancel",
         "cancel",
         "released",

@@ -10,17 +10,30 @@ export async function appliedSwitchHistory(page) {
 }
 
 /** Verify the known workspace view tip, then expose geometry Undo underneath it. */
-export async function switchViewUndoRedo(page, beforeEntry, switched) {
-  assert.equal((await navigationTips(page)).length, 1);
+export async function switchViewUndoRedo(page, beforeEntry, switched, beforeWorkspace) {
+  assert.equal((await navigationTips(page)).length, beforeWorkspace ? 2 : 1);
   const undone = await navigationHistory(page);
   assert.deepEqual(undone.document, switched.document);
   assertNavigation(undone, beforeEntry, "mode-switch view Undo");
+  if (beforeWorkspace) {
+    const original = await navigationHistory(page);
+    assert.deepEqual(original.document, switched.document);
+    assertNavigation(original, beforeWorkspace, "workspace entry Undo");
+    const entered = await navigationHistory(page, true);
+    assert.deepEqual(entered.document, switched.document);
+    assertNavigation(entered, beforeEntry, "workspace entry Redo");
+  }
   const redone = await navigationHistory(page, true);
   assert.deepEqual(redone.document, switched.document);
   assertNavigation(redone, switched, "mode-switch view Redo");
   const geometryContext = await navigationHistory(page);
   assert.deepEqual(geometryContext.document, switched.document);
   assertNavigation(geometryContext, beforeEntry);
+  if (beforeWorkspace) {
+    const original = await navigationHistory(page);
+    assert.deepEqual(original.document, switched.document);
+    assertNavigation(original, beforeWorkspace, "Geometry Undo context");
+  }
 }
 
 /** Verify the known edit and only its explicitly observed selection suffix. */
