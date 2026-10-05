@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { type CameraState, restoreCamera } from "../model/camera-state.js";
 import { fitCameraDepth } from "./camera-depth.js";
 import { alignCameraToPlane, type CameraFraming, planeCameraPose } from "./camera-motion.js";
 import { levelOrientation, type OrbitPointer, SmoothedTurntable } from "./camera-orbit.js";
@@ -72,8 +73,9 @@ export class World {
   get currentOrbitPivot(): THREE.Vector3 {
     return this.rotationPivot.clone();
   }
-  beginOrbit(pointer: OrbitPointer, press: Point, roll = false): void {
-    this.navigation.begin();
+  beginOrbit(pointer: OrbitPointer, press: Point, roll = false, record = true): void {
+    if (record || this.active) this.navigation.begin();
+    else this.navigation.unrecorded();
     this.cancelCameraMotion();
     this.rotationPivot.copy(this.orbitPivot(press));
     const rollPivot = this.rollPivot();
@@ -185,8 +187,8 @@ export class World {
   private animateTo(frame: PlaneFrame, framing: CameraFraming): void {
     this.motion.start(planeCameraPose(this, frame, framing));
   }
-  animateOrientation(quaternion: THREE.Quaternion): void {
-    this.navigation.begin();
+  animateOrientation(quaternion: THREE.Quaternion, record = true): void {
+    if (record) this.navigation.begin();
     this.motion.start({
       target: this.target.clone(),
       quaternion,
@@ -194,9 +196,25 @@ export class World {
       height: this.height,
     });
   }
+  animateCamera(state: CameraState): void {
+    const camera = new THREE.OrthographicCamera();
+    camera.position.fromArray(state.position);
+    camera.up.fromArray(state.up);
+    const target = new THREE.Vector3(...state.target);
+    camera.lookAt(target);
+    this.motion.start(
+      {
+        target,
+        quaternion: camera.quaternion,
+        distance: camera.position.distanceTo(target),
+        height: state.height,
+      },
+      () => restoreCamera(this, state),
+    );
+  }
   levelHorizon(): void {
     if (this.rollAnimation.active) return;
-    this.animateOrientation(levelOrientation(this));
+    this.animateOrientation(levelOrientation(this), this.navigation.active);
   }
   cancelCameraMotion(preserveRoll = false): void {
     if (!preserveRoll) this.rollAnimation.cancel();

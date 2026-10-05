@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { orient } from "./ui-blend-edit.mjs";
-import { inspect } from "./ui-helpers.mjs";
+import { inspect, modalCompleted } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 import {
   restoreWidgetNavigation,
@@ -137,7 +137,7 @@ export async function sweepWidgets(page, anchor, selector, label, { orbit = true
       await assertWidgetTargets(page, selector, `${label} zoom`);
     }
     await panTo(page, anchor, { x: -40, y: canvas.height / 2 });
-    await waitWidgetNavigation(page);
+    await waitWidgetNavigation(page, true);
     await assertWidgetTargets(page, selector, label);
     const frames = await page.evaluate(() => {
       window.widgetFrameWatch.active = false;
@@ -192,6 +192,7 @@ export async function directionDrag(page, handle, distance = 18) {
 }
 export async function acceptHistory(page, button, before) {
   await button.click();
+  await modalCompleted(page);
   const after = (await inspect(page)).document;
   assert.notDeepEqual(after, before);
   await chooseTool(page, "undo", "undo");

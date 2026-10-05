@@ -199,7 +199,12 @@ export async function reopenBoolean(page, name) {
     before = source.document;
   await chooseTool(page, "Subtract", "subtract");
   await inspect(page);
-  assert.equal(await button(page, "Change subtraction target").textContent(), "Target: Body 2 ↔");
+  assert.equal(
+    await button(page, "Select Body 2").evaluate(
+      (button) => button.closest(".entity-row").dataset.booleanRole,
+    ),
+    "target",
+  );
   await standaloneOnly(page);
   await button(page, "Accept Boolean").click();
   const accepted = (await completed(page)).document;
@@ -210,7 +215,12 @@ export async function reopenBoolean(page, name) {
   assert.equal(state.interaction.kind, "body-boolean");
   assert.deepEqual(state.document, before);
   selections(state, source);
-  assert.equal(await button(page, "Change subtraction target").textContent(), "Target: Body 2 ↔");
+  assert.equal(
+    await button(page, "Select Body 2").evaluate(
+      (button) => button.closest(".entity-row").dataset.booleanRole,
+    ),
+    "target",
+  );
   assert.equal(await button(page, "Keep originals").getAttribute("aria-pressed"), "false");
   await standaloneOnly(page);
   await button(page, "Cancel Boolean").click();

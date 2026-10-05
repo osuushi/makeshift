@@ -9,10 +9,10 @@ export class BooleanOperands {
   constructor(private editor: SketchEditor) {
     editor.world.scene.add(this.group);
   }
-  show(bodies: Body[], mode: BodyBoolean["mode"]): void {
+  show(bodies: Body[], mode: BodyBoolean["mode"], target: string | null): void {
     this.clear();
-    bodies.forEach((body, index) => {
-      const color = mode === "subtract" && index > 0 ? "#d08a35" : "#287cbd";
+    bodies.forEach((body) => {
+      const color = mode === "subtract" && body.id !== target ? "#d08a35" : "#287cbd";
       for (const face of body.faces) {
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute("position", new THREE.Float32BufferAttribute(face.vertices, 3));
@@ -26,7 +26,7 @@ export class BooleanOperands {
         const mesh = new THREE.Mesh(geometry, material);
         mesh.userData.booleanOperand = {
           body: body.id,
-          role: mode === "subtract" ? (index > 0 ? "tool" : "target") : "input",
+          role: mode === "subtract" ? (body.id !== target ? "tool" : "target") : "input",
         };
         mesh.renderOrder = 8;
         this.group.add(mesh);

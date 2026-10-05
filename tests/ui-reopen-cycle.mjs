@@ -67,7 +67,11 @@ export async function cycle(
   const state = await reopen(page);
   assert.deepEqual(state.document, before);
   assert.ok(state.preview);
-  sameGeometry(state.preview, accepted);
+  // Erode adds temporary opacity to its retained input; accepted geometry and IDs stay exact.
+  const { bodyAppearances: acceptedAppearance, ...acceptedGeometry } = accepted;
+  const { bodyAppearances: previewAppearance, ...previewGeometry } = state.preview;
+  assert.deepEqual(previewGeometry, acceptedGeometry, "reopening reuses exact accepted geometry");
+  if (kind !== "erode") assert.deepEqual(previewAppearance, acceptedAppearance);
   await check(parameters, state, accepted);
   await standaloneOnly(page);
   if (parameterPanel) await assertWidgetTargets(page, parameterPanel, "reopened parameter card");

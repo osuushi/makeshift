@@ -134,15 +134,22 @@ async function groupDragAndSketch(page) {
 }
 
 async function ringDrag(page, bodies) {
-  const button = await page
-    .getByRole("button", { name: "Rotate body Z", exact: true })
-    .boundingBox();
+  const handle = page.getByRole("button", { name: "Rotate body Z", exact: true });
+  await handle.hover();
+  const button = await handle.boundingBox();
+  const offset = await handle.evaluate((element) => {
+    const values = getComputedStyle(element).translate.split(" ").map(Number.parseFloat);
+    return { x: values[0] || 0, y: values[1] || 0 };
+  });
   const mass = bodies.reduce((n, b) => n + b.volume, 0);
   const center = [0, 1, 2].map(
     (i) => bodies.reduce((n, b) => n + b.center[i] * b.volume, 0) / mass,
   );
   const projection = await topProjection(page);
-  const { x, y } = projection.at(center[0], center[1]);
+  const pivot = projection.at(center[0], center[1]);
+  // A docked ring uses the display correction frozen at press for its plane ray.
+  const x = pivot.x + offset.x,
+    y = pivot.y + offset.y;
   const dx = button.x + button.width / 2 - x,
     dy = button.y + button.height / 2 - y;
   await page.evaluate(() => {

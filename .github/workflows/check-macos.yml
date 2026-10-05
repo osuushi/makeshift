@@ -137,7 +137,9 @@ jobs:
           xvfb-run -a node tests/preview-seed-readiness-ui.mjs
       - name: Thread settings correction
         if: matrix.shard == 2
-        run: xvfb-run -a node tests/thread-application-ui.mjs
+        run: |
+          xvfb-run -a node tests/thread-application-ui.mjs
+          xvfb-run -a node tests/thread-correction-ui.mjs
       - name: Boolean operand collection and preferences
         if: matrix.shard == 2
         run: xvfb-run -a node tests/boolean-collection-ui.mjs
@@ -176,6 +178,12 @@ jobs:
       - name: Native cursor and navigation history transport
         if: matrix.shard == 2 && matrix.browser == 'electron'
         run: xvfb-run -a node tests/navigation-host-ui.mjs
+      - name: Thread presets and saved-settings compatibility
+        if: matrix.lane == 'webkit-controls'
+        run: npm run test:thread-presets
+      - name: Standalone cleanup and separate geometry history
+        if: matrix.lane == 'webkit-controls'
+        run: npm run test:standalone-cleanup
       - name: Modal Undo boundaries
         if: matrix.shard == 3
         run: xvfb-run -a node tests/modal-undo-boundary-ui.mjs
@@ -191,6 +199,7 @@ jobs:
       - name: Reopen accepted operation and mirror history
         if: matrix.shard == 3
         run: |
+          xvfb-run -a node tests/reopen-operation-no-calculation-ui.mjs
           xvfb-run -a node tests/reopen-operation-ui.mjs
           xvfb-run -a node tests/reopen-operation-mirror-history-ui.mjs
       - name: Reopen guards and context boundaries
@@ -228,15 +237,13 @@ jobs:
         run: npx playwright install-deps chromium
       - name: Hidden Electron host routes
         run: xvfb-run -a npm run test:electron -- --shard=${{ matrix.shard }}/7 --without-navigation
-  macos-smoke:
-    needs: static
+  macos-build:
     runs-on: macos-15
     timeout-minutes: 60
     env:
       CMAKE_OSX_ARCHITECTURES: arm64
       MACOSX_DEPLOYMENT_TARGET: '14.0'
       CMAKE_BUILD_PARALLEL_LEVEL: '3'
-      MAKESHIFT_TEST_BROWSER: electron
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Select toolchain
@@ -268,9 +275,43 @@ jobs:
           cmake -S native/kernel -B .build/kernel -DMAKESHIFT_KERNEL_TESTS=ON
           cmake --build .build/kernel --target erosion-coverage-test --parallel "$CMAKE_BUILD_PARALLEL_LEVEL"
           ctest --test-dir .build/kernel -R '^erosion-coverage$' --output-on-failure
-      - name: Native host and macOS setup tests
+      - name: Archive runtime (preserve native permissions and library symlinks)
         run: |
+          mkdir -p .cache/ci
+          tar -czf .cache/ci/macos-runtime.tar.gz \
+            .build/host .build/renderer .build/host-native/bin \
+            .build/solver/bin .build/kernel/bin .build/mesh/bin .cache/kernel/sdk
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: macos-runtime
+          path: .cache/ci/macos-runtime.tar.gz
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
+  macos-acceptance:
+    needs: macos-build
+    runs-on: macos-15
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        lane: [geometry, webkit-controls, webkit-widgets, electron-host]
+    env:
+      MAKESHIFT_TEST_BROWSER: ${{ startsWith(matrix.lane, 'webkit-') && 'webkit' || 'electron' }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: ./.github/actions/ci-macos-runtime
+      - name: Compile tests
+        run: |
+          node scripts/clean-tests.mjs
           npx tsc -p tsconfig.test.json
+      - name: Install WebKit
+        if: startsWith(matrix.lane, 'webkit-')
+        run: npx playwright install webkit
+      - name: Native host and macOS setup tests
+        if: matrix.lane == 'geometry'
+        run: |
           node --test --test-concurrency=1 \
             .cache/sketch-tests/tests/agent-shell-path.test.js \
             .cache/sketch-tests/tests/agent-process-scope.test.js \
@@ -278,34 +319,28 @@ jobs:
             .cache/sketch-tests/tests/native-mesh-protocol.test.js
           npm run test:setup
       - name: Required platform-sensitive geometry cases
+        if: matrix.lane == 'geometry'
         run: node scripts/ci-model-tests.mjs mac
       - name: WebKit controls and runtime cleanup
+        if: matrix.lane == 'webkit-controls'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: |
-          npx playwright install webkit
           node tests/decorator-removal-ui.mjs
           node tests/selection-redo-ui.mjs
           node tests/command-readiness-ui.mjs
           node tests/face-offset-readiness-ui.mjs
           node tests/preview-action-readiness-ui.mjs
           node tests/preview-seed-readiness-ui.mjs
+          node tests/reopen-operation-no-calculation-ui.mjs
           node tests/reopen-operation-ui.mjs
           node tests/reopen-operation-guards-ui.mjs
           node tests/reopen-operation-guard-boundaries-ui.mjs
           node tests/reopen-operation-mirror-history-ui.mjs
-          node tests/widget-layout-dom.mjs
-          npm run test:widget-reachability
-          node tests/widget-reachability-ui.mjs adjacent
-          node tests/arc-control-clearance-ui.mjs
-          node tests/reopen-operation-topology-ui.mjs
-          node tests/common-shortcuts-ui.mjs
-          node tests/modeling-shortcut-regressions-ui.mjs
-          npm run test:thread-presets
-          npm run test:standalone-cleanup
           npm run test:current-tools
           node tests/ui-runtime-cleanup.mjs
       - name: Navigation Undo and context boundaries
+        if: matrix.lane == 'webkit-controls'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: |
@@ -314,45 +349,61 @@ jobs:
           node tests/projection-history-ui.mjs
           node tests/navigation-touch-ui.mjs
       - name: Edge finish faces and surface movement
+        if: matrix.lane == 'webkit-controls'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: node tests/edge-finish-ui.mjs
       - name: Thread settings correction
+        if: matrix.lane == 'webkit-controls'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
-        run: node tests/thread-application-ui.mjs
+        run: |
+          node tests/thread-application-ui.mjs
+          node tests/thread-correction-ui.mjs
+      - name: Thread presets and saved-settings compatibility
+        if: matrix.lane == 'webkit-controls'
+        run: npm run test:thread-presets
+      - name: Standalone cleanup and separate geometry history
+        if: matrix.lane == 'webkit-controls'
+        run: npm run test:standalone-cleanup
       - name: Modal Undo boundaries
+        if: matrix.lane == 'webkit-controls'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: node tests/modal-undo-boundary-ui.mjs
       - name: Boolean operand collection and preferences
+        if: matrix.lane == 'webkit-controls'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: node tests/boolean-collection-ui.mjs
       - name: Interface scale and camera independence
+        if: matrix.lane == 'webkit-controls'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: |
           node tests/interface-scale.mjs
-          node tests/interface-scale-electron.mjs
       - name: Built Electron host smoke and Finder launch
+        if: matrix.lane == 'electron-host'
         run: |
           node tests/electron-smoke.mjs
           node tests/ui-runtime-cleanup.mjs
           node tests/agent-finder-launch.mjs
       - name: Orientation cube click and touch acceptance
+        if: matrix.lane == 'webkit-controls'
         run: |
           MAKESHIFT_TEST_BROWSER=webkit node tests/orientation-cube-ui.mjs
-          MAKESHIFT_TEST_BROWSER=electron node tests/orientation-cube-ui.mjs
       - name: Native Electron navigation gestures
+        if: matrix.lane == 'electron-host'
         run: |
           npm run test:electron -- --navigation-only
           node tests/navigation-host-ui.mjs
       - name: Recent tools discovery and geometry invocation
+        if: matrix.lane == 'webkit-controls'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: node tests/recent-tools-ui.mjs
       - name: Decorator display, pending workers and settings
+        if: matrix.lane == 'webkit-controls'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: |
@@ -360,29 +411,52 @@ jobs:
           node tests/decorator-settings-layout.mjs
           node tests/decorator-display-ui.mjs
       - name: Built Electron decorator display and export
+        if: matrix.lane == 'electron-host'
         env:
           MAKESHIFT_TEST_BROWSER: electron
         run: node tests/decorator-display-ui.mjs
       - name: Body Enter and Transform in WebKit
+        if: matrix.lane == 'webkit-controls'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: node tests/transform-enter-ui.mjs
       - name: Body Enter and terminal ownership in Electron
+        if: matrix.lane == 'electron-host'
         env:
           MAKESHIFT_TEST_BROWSER: electron
         run: node tests/transform-enter-ui.mjs
       - name: Agent Settings discovery and setup UI
+        if: matrix.lane == 'webkit-controls'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: node tests/agent-setup-ui.mjs
       - name: Built Electron agent setup and owned process shutdown
+        if: matrix.lane == 'electron-host'
         env:
           MAKESHIFT_TEST_BROWSER: electron
         run: node tests/agent-setup-electron.mjs
+      - name: WebKit widget placement, pressed controls and Reopen topology
+        if: matrix.lane == 'webkit-widgets'
+        run: |
+          node tests/widget-layout-dom.mjs
+          npm run test:widget-reachability
+          node tests/widget-reachability-ui.mjs adjacent
+          node tests/arc-control-clearance-ui.mjs
+          node tests/reopen-operation-topology-ui.mjs
+      - name: Common modeling shortcuts and key ownership
+        if: matrix.lane == 'webkit-widgets'
+        run: |
+          node tests/common-shortcuts-ui.mjs
+          node tests/modeling-shortcut-regressions-ui.mjs
+      - name: Built Electron interface scale and orientation cube
+        if: matrix.lane == 'electron-host'
+        run: |
+          MAKESHIFT_TEST_BROWSER=webkit node tests/interface-scale-electron.mjs
+          node tests/orientation-cube-ui.mjs
   # Preserve the existing required check name; failed or skipped lanes cannot pass.
   check:
-    if: always()
-    needs: [static, linux-build, model, controls, electron-host, macos-smoke]
+    if: always() && !cancelled()
+    needs: [static, linux-build, model, controls, electron-host, macos-build, macos-acceptance]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
