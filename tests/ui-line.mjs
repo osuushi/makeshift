@@ -44,10 +44,21 @@ export async function lineRoute(page, name) {
   assert.equal((await inspect(page)).document.sketches[0].curves.length, 3);
   assert.equal((await inspect(page)).tool, "line");
   await page.keyboard.press("Delete");
+  await commandCompleted(page);
   assert.equal((await inspect(page)).document.sketches[0].curves.length, 2);
   await page.keyboard.press("Control+z");
+  await commandCompleted(page);
   assert.equal((await inspect(page)).document.sketches[0].curves.length, 3);
   console.log(
     `${name}: independent line drags, retained tool, selection/endpoint precedence, dimensions and Delete/Undo passed`,
   );
+}
+
+async function commandCompleted(page) {
+  await page.waitForFunction(() => {
+    const state = window.makeshiftInspect();
+    return (
+      !state.busy && state.commands.every((command) => command.unavailable !== "Switching tools…")
+    );
+  });
 }

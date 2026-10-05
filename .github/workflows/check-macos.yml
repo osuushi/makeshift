@@ -150,7 +150,9 @@ jobs:
           xvfb-run -a node tests/reopen-operation-topology-ui.mjs
       - name: Measured widget DOM layouts
         if: matrix.shard == 1 && matrix.browser == 'chromium'
-        run: xvfb-run -a node tests/widget-layout-dom.mjs
+        run: |
+          npx tsc -p tsconfig.test.json
+          xvfb-run -a node tests/widget-layout-dom.mjs
       - name: Navigation Undo and context boundaries
         if: matrix.shard == 2
         run: |
