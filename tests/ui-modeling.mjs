@@ -26,9 +26,11 @@ export async function modelingRoute(page, name) {
   await page.keyboard.press("c");
   await drag(page, [0, 0], [3, 0]);
   const original = (await inspect(page)).document.sketches[0];
-  const holeArea = Math.PI * original.curves.find((curve) => curve.kind === "circle").radius ** 2;
+  const holeRadius = original.curves.find((curve) => curve.kind === "circle").radius;
+  const holeArea = Math.PI * holeRadius ** 2;
   const outside = await at(page, 8, 0),
-    hole = await at(page, 0, 0);
+    // The axis sphere can dock over the circle center. Pick visible profile interior.
+    hole = await at(page, -holeRadius / 2, holeRadius / 4);
   await chooseTool(page, "return to modeling", "modeling");
   assert.equal(await page.locator(".mode-label").textContent(), "Modeling");
   assert.equal(await page.getByRole("button", { name: "Rectangle (R)" }).isVisible(), false);
@@ -38,11 +40,24 @@ export async function modelingRoute(page, name) {
   assert.equal(selected[0].holes, 1);
   close(selected[0].area, 600 - holeArea);
   await page.screenshot({ path: `.cache/sketch-review/${name}-selected-profile.png` });
+  await page.evaluate(() => {
+    window.addEventListener(
+      "pointerdown",
+      (event) => {
+        window.profileSelectionHit = event.target?.outerHTML?.slice(0, 240);
+      },
+      { capture: true, once: true },
+    );
+  });
   await page.keyboard.down("Shift");
   await page.mouse.click(hole.x, hole.y);
   await page.keyboard.up("Shift");
   selected = (await inspect(page)).modelingSelection;
-  assert.equal(selected.length, 2);
+  assert.equal(
+    selected.length,
+    2,
+    JSON.stringify({ hit: await page.evaluate(() => window.profileSelectionHit), selected }),
+  );
   close(selected[1].area, holeArea);
   await chooseTool(page, "transform", "transform");
   await orient(page, [1, 1, 1]);
