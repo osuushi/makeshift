@@ -73,3 +73,40 @@ test("multi-cylinder correction keeps per-diameter defaults and applies atomical
   );
   assert.equal(document.decorators, undefined);
 });
+
+test("settings repair a resized thread without replacing its attachment or analytic body", () => {
+  const document: SketchDocument = { units: "mm", sketches: [], bodies: [cylinder("body", 10)] };
+  const threaded = editDecorators(document, {
+    action: "apply",
+    definition: threadDefinition,
+    faces: [{ body: "body", face: "side" }],
+  });
+  const instance = threaded.decorators?.[0];
+  assert.ok(instance);
+  const resized = {
+    ...threaded,
+    bodies: [cylinder("body", 0.5)],
+    decorators: [{ ...instance, problem: "Thread profile is too deep for this cylinder" }],
+  };
+  const corrected = editDecorators(resized, {
+    action: "settings",
+    ids: [instance.id],
+    patch: { preset: "metric" },
+  });
+  assert.equal(corrected.decorators?.[0].problem, undefined);
+  assert.equal(corrected.decorators?.[0].id, instance.id);
+  assert.deepEqual(corrected.decorators?.[0].faces, instance.faces);
+  assert.equal(corrected.bodies, resized.bodies);
+  const ambiguous = {
+    ...resized,
+    decorators: [{ ...instance, problem: "A face merged with other geometry" }],
+  };
+  assert.equal(
+    editDecorators(ambiguous, {
+      action: "settings",
+      ids: [instance.id],
+      patch: { preset: "metric" },
+    }).decorators?.[0].problem,
+    "A face merged with other geometry",
+  );
+});
