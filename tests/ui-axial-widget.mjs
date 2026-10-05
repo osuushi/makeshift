@@ -3,6 +3,7 @@ import { project } from "./ui-blend-edit.mjs";
 import { cleanBodySeparately, standaloneOnly, undoToDocument } from "./ui-cleanup-controls.mjs";
 import { at, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import { relativeOffsetInput } from "./ui-offset-input.mjs";
+import { clearSelection } from "./ui-reconnection-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function axialCleanupRoute(page) {
@@ -51,7 +52,11 @@ export async function axialCleanupRoute(page) {
   await cleanBodySeparately(page, original);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);
-  // Whole-body cleanup retains body selection; its pivot occupies the cap center.
+  // Whole-body cleanup retains selection and its gizmo can cover the cap.
+  assert.deepEqual((await inspect(page)).modelingSelection, [
+    { kind: "body", body: original.bodies[0].id },
+  ]);
+  await clearSelection(page);
   const cap = await project(page, [6, 6, 10]);
   await page.mouse.click(cap.x, cap.y);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
