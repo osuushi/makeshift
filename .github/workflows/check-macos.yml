@@ -226,7 +226,6 @@ jobs:
       - name: Hidden Electron host routes
         run: xvfb-run -a npm run test:electron -- --shard=${{ matrix.shard }}/7 --without-navigation
   macos-build:
-    needs: static
     runs-on: macos-15
     timeout-minutes: 60
     env:
@@ -438,7 +437,7 @@ jobs:
           node tests/orientation-cube-ui.mjs
   # Preserve the existing required check name; failed or skipped lanes cannot pass.
   check:
-    if: always()
+    if: always() && !cancelled()
     needs: [static, linux-build, model, controls, electron-host, macos-build, macos-acceptance]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
