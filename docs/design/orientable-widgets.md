@@ -218,8 +218,8 @@ a direction for new work, not blanket acceptance of other tools or new semantics
 ## Projected reachability (2026-10-03)
 
 Active 3D assemblies fit their measured CSS hit rectangles and numeric cards inside
-an 8px canvas margin, with 6px clearance from the header, Entities, orientation cube,
-agent dock and sibling controls. Move first retains its projected-ray separation;
+an 8px canvas margin, with 6px clearance from the header, the separate Tools trigger,
+Entities, orientation cube, agent dock and sibling controls. Move first retains its projected-ray separation;
 when that cannot fit, deterministic nearest free contact placement docks the control.
 Extrude, Twist and the extrusion axis are one assembly. Revolve angle/height, axial
 Offset/blend resize/Shell/Erode, Fillet/Chamfer, body/topology/whole-sketch/plane Move,
@@ -229,6 +229,8 @@ current displayed correction to its CSS target during animation. This prevents S
 from fitting into a position a moving body glyph will occupy. Floating planar glyphs
 yield to Scale as described below.
 Mirror, Boolean, cleanup and Loft cards use measured fitting without spatial glyphs.
+The restored Current transform card is updated before the topology gizmo's shared
+layout pass, so it participates alongside the glyphs and action controls.
 
 Docking changes display positions only. Actual model anchors, guides, geometry picking
 and box containment remain fixed. A dashed leader connects a displaced glyph to its

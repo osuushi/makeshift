@@ -141,6 +141,16 @@ jobs:
       - name: Boolean operand collection and preferences
         if: matrix.shard == 2
         run: xvfb-run -a node tests/boolean-collection-ui.mjs
+      - name: Floating widget reachability and adjacent tools
+        if: matrix.shard == 2
+        run: |
+          xvfb-run -a npm run test:widget-reachability
+          xvfb-run -a node tests/widget-reachability-ui.mjs adjacent
+          xvfb-run -a node tests/arc-control-clearance-ui.mjs
+          xvfb-run -a node tests/reopen-operation-topology-ui.mjs
+      - name: Measured widget DOM layouts
+        if: matrix.shard == 1 && matrix.browser == 'chromium'
+        run: xvfb-run -a node tests/widget-layout-dom.mjs
       - name: Navigation Undo and context boundaries
         if: matrix.shard == 2
         run: |
@@ -274,6 +284,8 @@ jobs:
           node tests/widget-layout-dom.mjs
           npm run test:widget-reachability
           node tests/widget-reachability-ui.mjs adjacent
+          node tests/arc-control-clearance-ui.mjs
+          node tests/reopen-operation-topology-ui.mjs
           npm run test:current-tools
           node tests/ui-runtime-cleanup.mjs
       - name: Navigation Undo and context boundaries

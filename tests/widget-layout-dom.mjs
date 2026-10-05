@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { chromium, webkit } from "playwright";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { cardFootprintDom } from "./widget-card-footprint-dom.mjs";
 import { frozenLayoutDom } from "./widget-frozen-layout-dom.mjs";
 import { planarLayoutDom } from "./widget-planar-layout-dom.mjs";
@@ -38,7 +39,8 @@ const server = createServer(async (request, response) => {
 });
 await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 try {
-  for (const [name, runtime] of Object.entries({ chromium, webkit })) {
+  for (const name of runtimeNames(["chromium", "webkit"])) {
+    const runtime = { chromium, webkit }[name];
     const browser = await runtime.launch({ headless: true });
     try {
       const page = await browser.newPage({
@@ -158,6 +160,34 @@ try {
         true,
         "Primary actions and the first chooser actions remain hittable",
       );
+      await page.goto(`http://127.0.0.1:${server.address().port}`);
+      const toolsObstacle = await page.evaluate(async () => {
+        const header = document.querySelector("header");
+        header.style.width = "100px";
+        header.style.zIndex = "2";
+        const tools = document.createElement("button");
+        tools.textContent = "Tools";
+        tools.className = "tools-trigger";
+        tools.style.cssText =
+          "position:absolute;left:160px;top:10px;width:100px;height:40px;z-index:2";
+        document.body.append(tools);
+        const root = document.querySelector("#root");
+        root.querySelector("#options").remove();
+        const handle = document.createElement("button");
+        handle.style.cssText = "position:absolute;left:160px;top:10px;pointer-events:auto";
+        root.append(handle);
+        const { WidgetClearance } = await import("/widget-clearance.js");
+        const placement = new WidgetClearance(root);
+        placement.fit([handle]);
+        const rect = handle.getBoundingClientRect();
+        const hittable = handle.contains(
+          document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2),
+        );
+        const result = { hittable, fit: handle.dataset.widgetFit };
+        placement.dispose();
+        return result;
+      });
+      assert.deepEqual(toolsObstacle, { hittable: true, fit: "clear" });
       await page.goto(`http://127.0.0.1:${server.address().port}`);
       await cardFootprintDom(page, name);
       await page.goto(`http://127.0.0.1:${server.address().port}`);

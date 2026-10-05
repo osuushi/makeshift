@@ -214,7 +214,7 @@ export function widgetViewport(root: HTMLElement): {
     height: Math.max(0, r.height - 16),
   };
   const chrome =
-    "header, .entity-viewer, .orientation-cube, .exit-isolation, .agent-dock, .agent-toggle, .workspace-footer, .selection-readouts, .calculation-progress";
+    "header, .tools-trigger, .entity-viewer, .orientation-cube, .exit-isolation, .agent-dock, .agent-toggle, .workspace-footer, .selection-readouts, .calculation-progress";
   const controls = ".body-axis-handle, .move-control, .pivot-control, .move-anchor";
   const scale = root.classList.contains("scale-widget");
   const selector = scale ? `${chrome}, ${controls}` : chrome;
