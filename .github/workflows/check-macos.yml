@@ -153,6 +153,9 @@ jobs:
         run: |
           xvfb-run -a node tests/common-shortcuts-ui.mjs
           xvfb-run -a node tests/modeling-shortcut-regressions-ui.mjs
+      - name: Thread presets and saved-settings compatibility
+        if: matrix.shard == 3
+        run: xvfb-run -a npm run test:thread-presets
       - name: Measured widget DOM layouts
         if: matrix.shard == 1 && matrix.browser == 'chromium'
         run: |
