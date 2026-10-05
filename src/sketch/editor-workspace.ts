@@ -1,3 +1,4 @@
+import { toolCatalog } from "../tools/catalog.js";
 import type { CameraFraming } from "./camera-motion.js";
 import { newId, samePlane } from "./document.js";
 import type { SketchEditor } from "./editor.js";
@@ -82,7 +83,7 @@ export function installWorkspaceSync(editor: SketchEditor): void {
   world.canNavigate = () => !editor.isDragging;
   world.canEnterSketch = () => editor.workspaceEntry.reason() === null;
   world.sketchEntry = (id) => {
-    editor.workspaceEntry.canonical(id);
+    void toolCatalog(editor).invoke(`sketch-${id.toLowerCase()}`);
   };
   let previous: string | null = null;
   editor.world.changed.add(() => {

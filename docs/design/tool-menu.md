@@ -22,6 +22,17 @@ agent dock keep their purposes. They are not replacement tool catalogs.
 
 - The Tools button supports mouse, touch and Pencil. Ctrl-F is the Windows/Linux
   equivalent. Each opening starts with an empty, focused search box.
+- On an empty root query, show a separate Recent section above Categories when
+  tools have been invoked. Keep ten unique visible tools, newest first; invoking
+  a listed tool moves it to the top. Recent retains unavailable tools with current
+  prerequisite feedback and ordinary keyboard/pointer guards. Typing and category
+  browsing retain their deterministic ranking and fixed order.
+- Recent belongs to the current window's UI catalog, outside the document, Undo and
+  saved files. Record admitted explicit invocations after the activation callback
+  settles; unavailable commands, thrown errors and explicit refusal do not promote.
+  Later preview/geometry acceptance is independent of invocation success. Remove
+  disposed or hidden commands; omit standard file/edit actions. Automatic contextual
+  tool selection and local parameter/mode changes do not count as invocations.
 - Show named categories with example tool names. Opening one replaces the list
   with its tools and a breadcrumb/Back control; avoid cascading flyouts. Categories
   remain browsable even when all their tools are unavailable.

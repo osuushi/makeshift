@@ -28,7 +28,7 @@ export function registerTransformTool(
       const current = editor.interactions.current;
       if (current && !(await current.finish?.())) {
         editor.message ||= "Finish or cancel the current edit before switching tools";
-        return;
+        return false;
       }
       await activate();
     },
