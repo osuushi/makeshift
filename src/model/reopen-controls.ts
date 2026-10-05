@@ -30,7 +30,7 @@ export function reopenControls(
       editor.overlaps = null;
       editor.activeHandle = undefined;
       try {
-        await restore(operation);
+        await editor.store.restoreReopen(operation.request.kind, () => restore(operation));
         return true;
       } catch (error) {
         // The exact original result remains available through ordinary Redo.

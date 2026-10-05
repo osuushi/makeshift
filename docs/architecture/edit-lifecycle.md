@@ -143,7 +143,10 @@ invariants before changing snapshots or history, for manual edits, scripts and O
 
 Viewport Cmd/Ctrl-R and Tools → Reopen last operation undo the latest accepted
 geometry operation to its exact input snapshot and ordered selection, then seed
-its ordinary modal controller before local parameter-history tracking. Selection
+its ordinary modal controller before local parameter-history tracking. The pending
+preview reuses the exact accepted result and its retained measurements; reopening
+does not recalculate geometry, cleanup or decorators. Changed parameters resume
+normal calculation. Unchanged acceptance retains the saved result. Selection
 and camera changes do not hide that operation. A newer unsupported changed edit,
 including metadata or direct sketch edits, blocks reentry rather than searching
 backward for an older supported operation. New/Open has no operation to reopen.
