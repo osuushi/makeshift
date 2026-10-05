@@ -1,14 +1,38 @@
 import assert from "node:assert/strict";
-import { click, drag, inspect, pointEquals, reset, settled } from "./ui-helpers.mjs";
+import {
+  click,
+  drag,
+  inspect,
+  modalCompleted,
+  pointEquals,
+  reset,
+  settled,
+} from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function lineRoute(page, name) {
   await reset(page);
   const tool = page.getByRole("button", { name: "Line (L)" });
   assert.equal(await tool.isVisible(), false);
+  const blank = (await inspect(page)).document;
+  // Modeling L opens Loft; Line requires an explicit sketch workspace.
   await page.keyboard.press("l");
+  await page.waitForFunction(() => window.makeshiftInspect().interaction?.kind === "loft");
   assert.equal((await inspect(page)).activePlane, null);
+  assert.equal((await inspect(page)).interaction.kind, "loft");
+  await page.keyboard.press("Escape");
+  await modalCompleted(page);
+  assert.deepEqual((await inspect(page)).document, blank);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
+  await page.keyboard.press("l");
+  await page.waitForFunction(() => {
+    const state = window.makeshiftInspect();
+    return (
+      state.tool === "line" && state.commands.every((c) => c.unavailable !== "Switching tools…")
+    );
+  });
+  await settled(page);
+  assert.equal((await inspect(page)).tool, "line");
   await drag(page, [-10, 0], [0, 0]);
   assert.equal((await inspect(page)).tool, "line");
   // A click after release must neither extend the line nor commit another one.

@@ -94,6 +94,8 @@ function installShortcuts(
           v: "select",
         } as Record<string, string>
       )[event.key.toLowerCase()];
+      // Modeling owns L, including while a local solid tool is active.
+      if (tool === "line" && !editor.world.active) return;
       if (tool && (!event.shiftKey || tool !== "rectangle")) {
         event.preventDefault();
         void toolCatalog(editor).invoke(tool);
