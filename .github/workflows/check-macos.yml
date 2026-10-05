@@ -211,6 +211,10 @@ jobs:
           node tests/electron-smoke.mjs
           node tests/ui-runtime-cleanup.mjs
           node tests/agent-finder-launch.mjs
+      - name: Orientation cube click and touch acceptance
+        run: |
+          MAKESHIFT_TEST_BROWSER=webkit node tests/orientation-cube-ui.mjs
+          MAKESHIFT_TEST_BROWSER=electron node tests/orientation-cube-ui.mjs
       - name: Native Electron navigation gestures
         run: npm run test:electron -- --navigation-only
   # Preserve the existing required check name; failed or skipped lanes cannot pass.
