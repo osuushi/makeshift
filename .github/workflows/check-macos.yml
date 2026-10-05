@@ -110,6 +110,7 @@ jobs:
         if: matrix.shard == 1
         run: |
           xvfb-run -a node tests/decorator-removal-ui.mjs
+          xvfb-run -a node tests/selection-redo-ui.mjs
           xvfb-run -a node tests/command-readiness-ui.mjs
           xvfb-run -a node tests/face-offset-readiness-ui.mjs
       - name: Browser preview readiness
@@ -191,6 +192,7 @@ jobs:
         run: |
           npx playwright install webkit
           node tests/decorator-removal-ui.mjs
+          node tests/selection-redo-ui.mjs
           node tests/preview-action-readiness-ui.mjs
           node tests/preview-seed-readiness-ui.mjs
           node tests/command-readiness-ui.mjs
