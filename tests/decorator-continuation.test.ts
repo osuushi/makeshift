@@ -46,6 +46,59 @@ const approximate = (a: number[], b: number[]) =>
     `${a} != ${b}`,
   );
 
+test("radius recovery revalidates invalid threads in preview and acceptance without changing settings", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const body = await decoratedCylinder(owner);
+    const original = instances(owner)[0];
+    const offset = async (distance: number) => {
+      const response = await owner.call({
+        kind: "offset-faces",
+        operation: { faces: [...original.faces], distance },
+      });
+      assert.equal(response.error, undefined);
+      return response.view.candidate;
+    };
+    assert.match((await offset(-4.5))?.decorators?.[0].problem ?? "", /too deep/);
+    assert.equal((await owner.call({ kind: "accept" })).error, undefined);
+    const invalid = documentArchive(owner.view.data);
+    assert.match(instances(owner)[0].problem ?? "", /too deep/);
+    const candidate = await offset(5);
+    assert.equal(candidate?.decorators?.[0].problem, undefined);
+    assert.equal((await owner.call({ kind: "accept" })).error, undefined);
+    const restored = instances(owner)[0];
+    assert.equal(restored.problem, undefined);
+    assert.equal(restored.id, original.id);
+    assert.deepEqual(restored.settings, original.settings);
+    assert.equal(owner.view.data.bodies?.[0].id, body.id);
+    await owner.call({ kind: "undo" });
+    assert.equal(documentArchive(owner.view.data), invalid);
+    await owner.call({ kind: "redo" });
+    assert.equal(instances(owner)[0].problem, undefined);
+    for (const factor of [0.1, 10]) {
+      const scaled = await owner.call({
+        kind: "scale",
+        operation: {
+          kind: "solids",
+          ids: [body.id],
+          faces: [],
+          edges: [],
+          pivot: [0, 0, 0],
+          factor,
+        },
+      });
+      assert.equal(scaled.error, undefined);
+      if (factor === 10) assert.equal(scaled.view.candidate?.decorators?.[0].problem, undefined);
+      assert.equal((await owner.call({ kind: "accept" })).error, undefined);
+      if (factor === 0.1) assert.match(instances(owner)[0].problem ?? "", /too deep/);
+    }
+    assert.equal(instances(owner)[0].problem, undefined);
+    assert.deepEqual(instances(owner)[0].settings, original.settings);
+  } finally {
+    owner.close();
+  }
+});
+
 test("moving and copying threads transports the helix frame while copies get independent identities", async () => {
   const owner = new DocumentOwner();
   try {
