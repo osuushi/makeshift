@@ -8,6 +8,7 @@ import {
   close,
   drag,
   inspect,
+  modalCompleted,
   overlayPoint,
   pointEquals,
   reset,
@@ -35,6 +36,19 @@ async function bow(page, side, target) {
   await page.mouse.up();
   await inspect(page);
 }
+async function rejectedRadius(page) {
+  const before = (await inspect(page)).document;
+  await radius(page, 3);
+  assert.deepEqual((await inspect(page)).document, before);
+  const input = page.getByRole("textbox", { name: "Radius", exact: true });
+  assert.equal(await input.inputValue(), "3");
+  assert.equal(await input.getAttribute("aria-invalid"), "true");
+  assert.equal((await inspect(page)).interaction.kind, "numeric");
+  await page.keyboard.press("Escape");
+  await modalCompleted(page);
+  assert.deepEqual((await inspect(page)).document, before);
+}
+
 export async function arcRoute(page, name) {
   await reset(page);
   for (const plane of ["XY", "XZ", "YZ"]) {
@@ -53,9 +67,7 @@ export async function arcRoute(page, name) {
     close(radiusOf(arc), 5);
     await radius(page, 6);
     close(radiusOf((await curves(page)).at(-1)), 6);
-    const before = (await inspect(page)).document;
-    await radius(page, 3);
-    assert.deepEqual((await inspect(page)).document, before);
+    await rejectedRadius(page);
     await chooseTool(page, "undo", "undo");
     close(radiusOf((await curves(page)).at(-1)), 5);
     await chooseTool(page, "undo", "undo");

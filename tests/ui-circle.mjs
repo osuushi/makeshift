@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import { orient } from "./ui-blend-edit.mjs";
 import { circleFeedback } from "./ui-circle-feedback.mjs";
-import { at, click, close, drag, inspect, pointEquals, reset } from "./ui-helpers.mjs";
+import {
+  at,
+  click,
+  close,
+  drag,
+  inspect,
+  modalCompleted,
+  pointEquals,
+  reset,
+} from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const circles = async (page) =>
@@ -44,6 +53,13 @@ export async function circleRoute(page, name) {
     close(circle.radius, 6);
     const before = (await inspect(page)).document;
     await radius(page, -1);
+    assert.deepEqual((await inspect(page)).document, before);
+    const input = page.getByRole("textbox", { name: "Radius", exact: true });
+    assert.equal(await input.inputValue(), "-1");
+    assert.equal(await input.getAttribute("aria-invalid"), "true");
+    assert.equal((await inspect(page)).interaction.kind, "numeric");
+    await page.keyboard.press("Escape");
+    await modalCompleted(page);
     assert.deepEqual((await inspect(page)).document, before);
     await chooseTool(page, "undo", "undo");
     close((await circles(page)).at(-1).radius, 12);
