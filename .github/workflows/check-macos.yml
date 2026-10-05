@@ -156,6 +156,9 @@ jobs:
       - name: Thread presets and saved-settings compatibility
         if: matrix.shard == 3
         run: xvfb-run -a npm run test:thread-presets
+      - name: Standalone cleanup and separate geometry history
+        if: matrix.shard == 3
+        run: xvfb-run -a npm run test:standalone-cleanup
       - name: Measured widget DOM layouts
         if: matrix.shard == 1 && matrix.browser == 'chromium'
         run: |

@@ -3,6 +3,7 @@ import { axialCleanupRoute } from "./ui-axial-widget.mjs";
 import { plate } from "./ui-body-fillet.mjs";
 import { cleanupRoute } from "./ui-cleanup.mjs";
 import { cleanupCompletionRoute } from "./ui-cleanup-completion.mjs";
+import { reopenCleanup } from "./ui-reopen-reference.mjs";
 import { revolveRoute } from "./ui-revolve.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 
@@ -24,6 +25,10 @@ await withUiRuntimes(
       console.log(`${name}: Revolve ordinary completion passed`);
       await cleanupCompletionRoute(page, plate);
       console.log(`${name}: Fillet/Chamfer ordinary completion + standalone cleanup passed`);
+      await reopenCleanup(page, name);
+      console.log(
+        `${name}: standalone Cleanup Reopen retains recorded selection and exact history`,
+      );
       assert.deepEqual(probes, [], "Modeling UI never probes completion cleanup");
     } finally {
       await page.unroute("**/sketch-api", record);

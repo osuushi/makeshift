@@ -6,11 +6,9 @@ import { ExtrudeTargets } from "./extrude-targets.js";
 import { ExtrudeTwist } from "./extrude-twist.js";
 import { ExtrudeWidget } from "./extrude-widget.js";
 import { PreviewRunner } from "./preview-runner.js";
-import { ReopenCompletion } from "./reopen-completion.js";
 
 export class ExtrudeControls {
   private widget: ExtrudeWidget;
-  private completion = new ReopenCompletion();
   get root(): HTMLDivElement {
     return this.widget.root;
   }
@@ -97,16 +95,16 @@ export class ExtrudeControls {
     editor.world.changed.add(this.update);
     this.update();
   }
-  async reopen(extrusion: Extrusion, cleanup: boolean): Promise<void> {
+  async reopen(extrusion: Extrusion): Promise<void> {
     this.editor.modeling.setTool("extrude");
-    if (!this.begin(extrusion, cleanup)) throw new Error("Cannot restore extrusion inputs");
+    if (!this.begin(extrusion)) throw new Error("Cannot restore extrusion inputs");
     this.queue(this.distance, this.symmetric);
     await this.previews.settle();
     if (!this.valid) throw new Error("Cannot regenerate the accepted extrusion");
     this.input.focus();
     this.input.select();
   }
-  private begin(restored?: Extrusion, cleanup = false): boolean {
+  private begin(restored?: Extrusion): boolean {
     if (this.lease) return this.lease.phase === "editing";
     if (this.editor.blocked || this.editor.world.active || this.editor.modeling.tool !== "extrude")
       return false;
@@ -126,8 +124,6 @@ export class ExtrudeControls {
     );
     this.previews.clear();
     this.targets.reset();
-    this.completion.reset();
-    if (restored) this.completion.begin(cleanup);
     this.mode = restored?.mode ?? "auto";
     this.widget.draft.restore(restored?.draft ?? { mode: "angle", value: 0 });
     this.distance = restored?.distance ?? 0;
@@ -150,10 +146,8 @@ export class ExtrudeControls {
         angle: this.twist.angle,
         origin: this.twist.origin,
         targets: this.targets.selected,
-        cleanup: this.completion.cleanup,
       }),
       async (state) => {
-        this.completion.input.checked = state.cleanup;
         this.mode = state.mode;
         this.widget.draft.restore(state.draft);
         this.twist.angle = state.angle;
@@ -228,7 +222,6 @@ export class ExtrudeControls {
     this.distance = 0;
     this.symmetric = false;
     this.twist.reset();
-    this.completion.reset();
     this.editor.refresh();
     return success;
   }
@@ -247,7 +240,6 @@ export class ExtrudeControls {
     this.distance = 0;
     this.symmetric = false;
     this.twist.reset();
-    this.completion.reset();
     this.editor.refresh();
   }
   private update = (): void => {

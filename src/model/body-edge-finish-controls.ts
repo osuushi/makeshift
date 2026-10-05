@@ -6,7 +6,6 @@ import { BodyEdgeFinishWidget } from "./body-edge-finish-widget.js";
 import { selectedEdgeFrame } from "./edge-finish-direction.js";
 import { EdgeFinishDrag } from "./edge-finish-drag.js";
 import { PreviewRunner } from "./preview-runner.js";
-import { ReopenCompletion } from "./reopen-completion.js";
 
 export class BodyEdgeFinishControls {
   private widget: BodyEdgeFinishWidget;
@@ -87,18 +86,18 @@ export class BodyEdgeFinishControls {
     } else if (faces && this.begin(mode)) this.focus();
     this.editor.refresh();
   }
-  async reopen(operation: BodyEdgeFinish, cleanup: boolean): Promise<void> {
+  async reopen(operation: BodyEdgeFinish): Promise<void> {
     this.mode = operation.mode;
     this.editor.modeling.setTool(operation.mode);
     this.update();
-    if (!this.begin(operation.mode, operation, cleanup))
+    if (!this.begin(operation.mode, operation))
       throw new Error("Cannot restore edge finish inputs");
     this.queue(operation.size);
     await this.previews.settle();
     if (!this.valid) throw new Error("Cannot regenerate the accepted edge finish");
     this.focus();
   }
-  private begin(mode: BodyEdgeFinish["mode"], restored?: BodyEdgeFinish, cleanup = false): boolean {
+  private begin(mode: BodyEdgeFinish["mode"], restored?: BodyEdgeFinish): boolean {
     if (this.lease) return this.mode === mode && this.lease.phase === "editing";
     if (this.editor.blocked || this.editor.world.active) return false;
     this.mode = mode;
@@ -117,8 +116,6 @@ export class BodyEdgeFinishControls {
     this.editor.modeling.setTool(mode);
     this.size = restored?.size ?? 0;
     this.widget.input.value = String(this.size);
-    this.completion.reset();
-    if (restored) this.completion.begin(cleanup);
     this.valid = false;
     this.invalid = false;
     this.previews.clear();
@@ -131,10 +128,8 @@ export class BodyEdgeFinishControls {
       () => ({
         size: this.size,
         mode: this.mode,
-        cleanup: this.completion.cleanup,
       }),
       async (state) => {
-        this.completion.input.checked = state.cleanup;
         this.setMode(state.mode);
         this.widget.input.value = String(state.size);
         this.queue(state.size);
@@ -256,7 +251,6 @@ export class BodyEdgeFinishControls {
   }
   private end(lease: InteractionLease): void {
     this.restoredSelection = undefined;
-    this.completion.reset();
     this.widget.input.blur();
     this.lease = null;
     this.editor.notice = "";

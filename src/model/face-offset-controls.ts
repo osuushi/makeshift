@@ -13,11 +13,9 @@ import { FaceOffsetWidget } from "./face-offset-widget.js";
 import { OffsetPlacement } from "./offset-placement.js";
 import { OffsetQuantity } from "./offset-quantity.js";
 import { PreviewRunner } from "./preview-runner.js";
-import { ReopenCompletion } from "./reopen-completion.js";
 
 export class FaceOffsetControls {
   private widget: FaceOffsetWidget;
-  private completion = new ReopenCompletion();
   private abort = new AbortController();
   private lease: InteractionLease | null = null;
   private restoredSelection: SketchEditor["modeling"]["targets"] | undefined;
@@ -100,16 +98,16 @@ export class FaceOffsetControls {
     editor.world.changed.add(this.update);
     this.update();
   }
-  async reopen(operation: BodyFaceOffset, cleanup: boolean): Promise<void> {
+  async reopen(operation: BodyFaceOffset): Promise<void> {
     this.editor.modeling.setTool("offset");
     this.update();
-    if (!this.begin(operation, cleanup)) throw new Error("Cannot restore offset inputs");
+    if (!this.begin(operation)) throw new Error("Cannot restore offset inputs");
     this.queue(operation.distance);
     await this.previews.settle();
     if (!this.valid) throw new Error("Cannot regenerate the accepted face offset");
     this.focus();
   }
-  private begin(restored?: BodyFaceOffset, cleanup = false): boolean {
+  private begin(restored?: BodyFaceOffset): boolean {
     if (this.lease) return this.lease.phase === "editing";
     const selected = offsetTargets(this.editor);
     if (this.editor.blocked || this.editor.world.active || !selected || !this.axis) return false;
@@ -131,8 +129,6 @@ export class FaceOffsetControls {
     if (restored && !this.blend)
       this.quantity.setMode(restored.radius !== undefined ? "radius" : "offset");
     this.widget.input.value = String(this.quantity.value(this.distance));
-    this.completion.reset();
-    if (restored) this.completion.begin(cleanup);
     this.valid = true;
     this.previews.clear();
     this.lease.trackHistory(
@@ -140,10 +136,8 @@ export class FaceOffsetControls {
       () => ({
         distance: this.distance,
         mode: this.quantity.mode,
-        cleanup: this.completion.cleanup,
       }),
       async (state) => {
-        this.completion.input.checked = state.cleanup;
         this.quantity.setMode(state.mode);
         this.widget.input.value = String(this.quantity.value(state.distance));
         this.queue(state.distance);
@@ -241,7 +235,6 @@ export class FaceOffsetControls {
   }
   private end(lease: InteractionLease): void {
     this.restoredSelection = undefined;
-    this.completion.reset();
     this.lease = null;
     this.widget.input.blur();
     this.distance = 0;

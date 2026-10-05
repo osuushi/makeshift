@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { plate } from "./ui-body-fillet.mjs";
+import { standaloneOnly } from "./ui-cleanup-controls.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { acceptedOperation, button, completed, cycle, field, ready } from "./ui-reopen-cycle.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -114,11 +115,8 @@ export async function reopenFinish(page, name, mode) {
   await ready(page, `Accept ${mode}`);
   const verified = Number(await field(page, quantity).inputValue());
   assert.ok(verified > 0 && verified < 100, "accepted size is a verified clamp");
-  await page.waitForFunction(() => {
-    const broom = document.querySelector(".body-edge-finish-widget .commit-cleanup");
-    return broom?.getAttribute("aria-busy") === "false" && !broom.disabled;
-  });
-  await button(page, "Commit and clean up").click();
+  await standaloneOnly(page);
+  await button(page, `Accept ${mode}`).click();
   await completed(page);
   const parameters = await acceptedOperation(page, "finish-edges");
   assert.equal(
@@ -126,13 +124,13 @@ export async function reopenFinish(page, name, mode) {
     verified,
     "accepted native clamp equals the focused field value",
   );
-  assert.equal(parameters.cleanup, true);
+  assert.equal(parameters.cleanup, undefined);
   await cycle(page, {
     before,
     kind: "finish-edges",
     selection: source.modelingSelection,
     sketchSelection: source.selectionTargets,
-    completionPanel: ".edge-finish-panel",
+    parameterPanel: ".edge-finish-panel",
     cancel: `Cancel ${mode}`,
     accept: `Accept ${mode}`,
     name: `${name}-${mode}`,
@@ -147,13 +145,9 @@ export async function reopenFinish(page, name, mode) {
         Number(await field(page, quantity).inputValue()),
         Number(parameters.operation.size.toPrecision(4)),
       );
-      assert.equal(
-        await page.getByRole("checkbox", { name: "Clean up on acceptance" }).isChecked(),
-        true,
-      );
+      await standaloneOnly(page);
     },
     change: async () => {
-      await page.getByRole("checkbox", { name: "Clean up on acceptance" }).uncheck();
       await field(page, quantity).fill("1");
     },
     validate: async (geometry, changed, original, accepted) => {

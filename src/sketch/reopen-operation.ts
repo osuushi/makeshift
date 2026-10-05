@@ -2,16 +2,6 @@ import { reopenBodyTransform } from "../model/reopen-body-transform.js";
 import type { ModelRequest } from "./model-api.js";
 import type { HistoryOperation } from "./operation-history.js";
 
-// Only current modal completion controls can preserve this accepted choice.
-const cleanupKinds = new Set([
-  "extrude",
-  "revolve",
-  "loft",
-  "boolean-bodies",
-  "finish-edges",
-  "offset-faces",
-]);
-
 /** Parameters from the existing accepted history, not a saved feature tree. */
 export type ReopenRequest =
   | Extract<
@@ -43,7 +33,9 @@ export interface ReopenOperation {
 }
 export function reopenOperation(operation: HistoryOperation): ReopenOperation | undefined {
   const { cleanup, ...parameters } = operation.parameters;
-  if (cleanup === true && !cleanupKinds.has(operation.kind)) return;
+  // Ordinary controls cannot preserve an API-only combined cleanup operation.
+  // Reject it before rollback rather than silently changing its completion intent.
+  if (cleanup === true) return;
   const payload = {
     extrude: "extrusion",
     "boolean-bodies": "operation",
@@ -73,6 +65,6 @@ export function reopenOperation(operation: HistoryOperation): ReopenOperation | 
     return;
   return {
     request: structuredClone({ kind: operation.kind, ...parameters }) as ReopenRequest,
-    cleanup: cleanup === true,
+    cleanup: false,
   };
 }

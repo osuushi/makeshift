@@ -166,10 +166,10 @@ and face angle, with exact axis/pivot readouts; the gizmo adds further deltas.
 Construction planes restore the exact final frame and stable ID, then ordinary
 handles add movement. Prior plane gesture ancestry is not inferred.
 
-Recorded cleanup remains a visible completion choice for Extrude, Revolve, Loft,
-Boolean, edge finish and face offset. API-only cleanup combinations for other
-controllers fail eligibility before rollback, because those ordinary interactions
-cannot retain that completion intent. Focused fields, native buttons, menus,
+Standalone Cleanup can be reopened with its recorded selection. API-only combined
+cleanup operations fail eligibility before rollback for every controller: ordinary
+completion controls cannot retain that intent. Native/script flags and normal
+Undo/Redo of those accepted results remain supported. Focused fields, native buttons, menus,
 dialogs, composition and the agent terminal retain keyboard ownership. Electron
 keeps explicit Reload on Shift-Cmd/Ctrl-R.
 

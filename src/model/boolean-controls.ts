@@ -8,12 +8,10 @@ import { BooleanOperands } from "./boolean-operands.js";
 import { BooleanPreference } from "./boolean-preference.js";
 import { booleanStart } from "./boolean-start.js";
 import { BooleanWidget } from "./boolean-widget.js";
-import { ReopenCompletion } from "./reopen-completion.js";
 
 export class BooleanControls {
   private widget: BooleanWidget;
   private operands: BooleanOperands;
-  private completion = new ReopenCompletion();
   private abort = new AbortController();
   private lease: InteractionLease | null = null;
   private bodies: Body[] = [];
@@ -67,14 +65,14 @@ export class BooleanControls {
     );
     editor.world.changed.add(this.update);
   }
-  async reopen(operation: BodyBoolean, cleanup: boolean): Promise<void> {
-    this.start(operation.mode, operation, cleanup);
+  async reopen(operation: BodyBoolean): Promise<void> {
+    this.start(operation.mode, operation);
     if (!this.lease) throw new Error("Cannot restore Boolean inputs");
     await this.running;
     if (!this.valid) throw new Error("Cannot regenerate the accepted Boolean");
     this.editor.world.canvas.focus();
   }
-  start = (mode: BodyBoolean["mode"], restored?: BodyBoolean, cleanup = false): void => {
+  start = (mode: BodyBoolean["mode"], restored?: BodyBoolean): void => {
     if (this.editor.blocked || this.editor.world.active || this.editor.interactions.current) return;
     const resolution = booleanStart(this.editor);
     if (!resolution.available) return;
@@ -95,8 +93,6 @@ export class BooleanControls {
     this.operation = restored
       ? structuredClone(restored)
       : { ids: [], mode, keepOriginals: this.preference.get(mode) };
-    this.completion.reset();
-    if (restored) this.completion.begin(cleanup);
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
     this.operation.ids = this.bodies.map((body) => body.id);
@@ -106,11 +102,9 @@ export class BooleanControls {
         ids: this.operation.ids,
         mode: this.operation.mode,
         collecting: this.collecting,
-        cleanup: this.completion.cleanup,
       }),
       async (operation) => {
         this.collecting = operation.collecting;
-        this.completion.input.checked = operation.cleanup;
         this.operation = {
           ids: operation.ids,
           mode: operation.mode,
@@ -242,7 +236,6 @@ export class BooleanControls {
   }
   private end(lease: InteractionLease): void {
     this.lease = null;
-    this.completion.reset();
     this.widget.root.hidden = true;
     this.editor.notice = this.editor.message = "";
     this.operands.clear();

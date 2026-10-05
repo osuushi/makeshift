@@ -9,6 +9,7 @@ export async function standaloneOnly(page) {
     0,
   );
   assert.equal(await page.locator(".commit-cleanup").count(), 0);
+  assert.equal(await page.getByRole("checkbox", { name: "Clean up on acceptance" }).count(), 0);
 }
 
 export async function cleanBodySeparately(page, original) {

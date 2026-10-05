@@ -209,17 +209,14 @@ export class ModelControls {
       }
     }, options);
   }
-  reopenRevolve(
-    revolution: import("../model/body.js").Revolution,
-    cleanup: boolean,
-  ): Promise<void> {
-    return this.revolve.reopen(revolution, cleanup);
+  reopenRevolve(revolution: import("../model/body.js").Revolution): Promise<void> {
+    return this.revolve.reopen(revolution);
   }
-  reopenLoft(operation: import("../model/loft.js").Loft, cleanup: boolean): Promise<void> {
-    return this.loft.reopen(operation, cleanup);
+  reopenLoft(operation: import("../model/loft.js").Loft): Promise<void> {
+    return this.loft.reopen(operation);
   }
-  reopenExtrude(extrusion: import("../model/body.js").Extrusion, cleanup: boolean): Promise<void> {
-    return this.extrusion.reopen(extrusion, cleanup);
+  reopenExtrude(extrusion: import("../model/body.js").Extrusion): Promise<void> {
+    return this.extrusion.reopen(extrusion);
   }
   activateLoft(): void {
     this.loft.begin();
