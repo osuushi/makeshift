@@ -121,6 +121,9 @@ jobs:
       - name: Thread settings correction
         if: matrix.shard == 2
         run: xvfb-run -a node tests/thread-application-ui.mjs
+      - name: Boolean operand collection and preferences
+        if: matrix.shard == 2
+        run: xvfb-run -a node tests/boolean-collection-ui.mjs
       - name: Modal Undo boundaries
         if: matrix.shard == 3
         run: xvfb-run -a node tests/modal-undo-boundary-ui.mjs
@@ -213,6 +216,10 @@ jobs:
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: node tests/modal-undo-boundary-ui.mjs
+      - name: Boolean operand collection and preferences
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: node tests/boolean-collection-ui.mjs
       - name: Built Electron host smoke and Finder launch
         run: |
           node tests/electron-smoke.mjs
