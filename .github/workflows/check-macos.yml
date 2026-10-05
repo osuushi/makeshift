@@ -154,6 +154,9 @@ jobs:
       - name: Recent tools discovery and geometry invocation
         if: matrix.shard == 3
         run: xvfb-run -a node tests/recent-tools-ui.mjs
+      - name: Idle body Enter and Transform ownership
+        if: matrix.shard == 3
+        run: xvfb-run -a node tests/transform-enter-ui.mjs
       - name: Interface scale and camera independence
         if: matrix.shard == 3
         run: |
@@ -301,6 +304,14 @@ jobs:
         env:
           MAKESHIFT_TEST_BROWSER: electron
         run: node tests/decorator-display-ui.mjs
+      - name: Body Enter and Transform in WebKit
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: node tests/transform-enter-ui.mjs
+      - name: Body Enter and terminal ownership in Electron
+        env:
+          MAKESHIFT_TEST_BROWSER: electron
+        run: node tests/transform-enter-ui.mjs
   # Preserve the existing required check name; failed or skipped lanes cannot pass.
   check:
     if: always()
