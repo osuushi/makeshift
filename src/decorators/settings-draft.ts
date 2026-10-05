@@ -51,6 +51,7 @@ export class DecoratorSettingsDraft {
         draft.valid = true;
         this.editor.message = "";
       } catch (error) {
+        draft.lease.show(null);
         this.editor.message = error instanceof Error ? error.message : String(error);
       }
     }

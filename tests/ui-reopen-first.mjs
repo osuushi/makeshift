@@ -198,8 +198,13 @@ export async function reopenBoolean(page, name) {
     before = source.document;
   await chooseTool(page, "Subtract", "subtract");
   await inspect(page);
-  assert.equal(await button(page, "Change subtraction target").textContent(), "Target: Body 2 ↔");
-  await button(page, "Commit and clean up").click();
+  assert.equal(
+    await button(page, "Select Body 2").evaluate(
+      (button) => button.closest(".entity-row").dataset.booleanRole,
+    ),
+    "target",
+  );
+  await button(page, "Accept Boolean").click();
   const accepted = (await completed(page)).document;
   const acceptedResult = await resultState(page, accepted);
   assert.equal(accepted.bodies.length, 1);
@@ -208,10 +213,15 @@ export async function reopenBoolean(page, name) {
   assert.equal(state.interaction.kind, "body-boolean");
   assert.deepEqual(state.document, before);
   selections(state, source);
-  assert.equal(await button(page, "Change subtraction target").textContent(), "Target: Body 2 ↔");
+  assert.equal(
+    await button(page, "Select Body 2").evaluate(
+      (button) => button.closest(".entity-row").dataset.booleanRole,
+    ),
+    "target",
+  );
   assert.equal(await button(page, "Keep originals").getAttribute("aria-pressed"), "false");
-  const completion = page.getByRole("checkbox", { name: "Clean up on acceptance" });
-  assert.equal(await completion.isChecked(), true);
+  assert.equal(await page.getByRole("checkbox", { name: "Clean up on acceptance" }).count(), 0);
+
   await button(page, "Cancel Boolean").click();
   selections(await resultState(page, before), source);
   await chooseTool(page, "redo", "redo");
@@ -225,7 +235,6 @@ export async function reopenBoolean(page, name) {
   await button(page, "Keep originals").click();
   state = await inspect(page);
   assert.equal(state.preview.bodies.length, 2);
-  await completion.uncheck();
   await button(page, "Accept Boolean").click();
   const alternative = (await completed(page)).document;
   const alternativeResult = await resultState(page, alternative);

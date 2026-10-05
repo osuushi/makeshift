@@ -1,5 +1,10 @@
 import * as THREE from "three";
-export type OrbitPointer = { x: number; y: number; viewport?: { x: number; y: number } };
+export type OrbitPointer = {
+  x: number;
+  y: number;
+  viewport?: { x: number; y: number };
+  rollCenter?: { x: number; y: number };
+};
 type OrbitView = { camera: THREE.OrthographicCamera; target: THREE.Vector3 };
 
 const rotationPerRadius = 2;
@@ -51,7 +56,10 @@ export class SmoothedTurntable {
       roll,
       orbitPivot: orbitPivot.clone(),
       rollPivot: rollPivot?.clone() ?? null,
-      rollCenter: { x: (center.x * width) / diameter, y: (center.y * height) / diameter },
+      rollCenter: from.rollCenter ?? {
+        x: (center.x * width) / diameter,
+        y: (center.y * height) / diameter,
+      },
       rollAngle: 0,
       last: { ...from },
     };

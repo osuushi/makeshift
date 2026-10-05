@@ -27,7 +27,7 @@ try {
           {
             blocked: false,
             interactions: { current: null },
-            world: { changed: new Set(), draw() {} },
+            world: { changed: new Set(), draw() {}, requestDraw() {} },
           },
           document.querySelector("main"),
         );

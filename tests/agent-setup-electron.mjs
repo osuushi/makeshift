@@ -125,7 +125,11 @@ async function setupRoute(page, app, root) {
   await page
     .getByLabel("Environment · NAME=value, one per line")
     .fill(`PATH=/usr/bin:/bin\nMAKESHIFT_SETUP_MARKER=${join(root, "launch-home")}`);
-  await page.getByRole("button", { name: "Launch Codex", exact: true }).click();
+  assert.equal(await page.getByRole("button", { name: "Install Codex", exact: true }).count(), 0);
+  assert.equal(await page.getByRole("button", { name: "Launch Codex", exact: true }).count(), 0);
+  await page.getByRole("button", { name: "Save settings", exact: true }).click();
+  assert.equal(await page.locator(".agent-settings").isVisible(), false);
+  await page.getByRole("button", { name: "Start", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
   await page.waitForFunction(
     () =>
@@ -134,6 +138,11 @@ async function setupRoute(page, app, root) {
   );
   const status = await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }));
   assert.equal(status.preferences.preset, "codex");
+  assert.equal(
+    status.setup.executable.path,
+    status.preferences.executable,
+    "Start publishes verified CLI state",
+  );
   const home = await launchHome(root);
   assert.ok(
     home.startsWith(status.workspace.replace(/\/workspace$/, "")),
@@ -228,6 +237,13 @@ try {
   await setupRoute(page, app, root);
   await hostGuards(app, page);
   assert.deepEqual(await page.evaluate(() => window.makeshiftInspect().document), before);
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  // Simulate the installed fixture CLI being absent before testing quit during a new install.
+  await app.evaluate(() => {
+    const fixture = globalThis.agentSetupFixture;
+    fixture.session.setup.discovered = null;
+    fixture.installer.status = { phase: "idle", message: "Fixture CLI missing", output: "" };
+  });
   await page.getByRole("button", { name: "Install Codex", exact: true }).click();
   const quitChild = await readChild(root, 4);
   await app.evaluate(async ({ dialog }) => {

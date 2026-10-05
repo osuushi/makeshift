@@ -61,7 +61,6 @@ class AgentDock {
       host,
       () => readPreferences(settings),
       this.report,
-      () => this.action(() => this.terminal.start()),
     );
     this.attachments = agentAttachments(
       this.panel,

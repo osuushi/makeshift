@@ -62,8 +62,7 @@ export async function shortcutBooleans(page, name) {
       await inspect(page);
     }
     await previewVolume(page, expected);
-    await page.keyboard.press("Enter"); // Done choosing
-    await page.keyboard.press("Enter"); // Accept
+    await page.keyboard.press("Enter"); // Apply the current operands.
     await modalCompleted(page);
     await inspect(page);
     await history(page, original);
@@ -86,9 +85,9 @@ export async function shortcutBooleans(page, name) {
   await clear(page);
   await page.getByRole("button", { name: "Select Body 2", exact: true }).click();
   await keyTool(page, "Shift+S");
-  assert.match(
-    await page.getByRole("button", { name: "Boolean Body 2", exact: true }).textContent(),
-    /Target/,
+  assert.equal(
+    await page.getByRole("button", { name: "Select Body 2", exact: true }).getAttribute("title"),
+    "Body 2 · Target",
   );
   await page.keyboard.press("Escape");
   await modalCompleted(page);

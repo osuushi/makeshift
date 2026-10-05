@@ -20,11 +20,19 @@ export async function watchWidgetNavigation(page) {
     };
   });
 }
-export async function waitWidgetNavigation(page) {
-  await page.waitForFunction(() => {
+export async function waitWidgetNavigation(page, requirePinch = false) {
+  // Ordinary pans are unrecorded and schedule no snap; pinch still must be observed.
+  await page.waitForFunction((requirePinch) => {
     const snap = window.widgetNavigationState();
-    return snap.observed && !snap.pending && !snap.held && !window.makeshiftInspect().camera.moving;
-  });
+    const camera = window.makeshiftInspect().camera;
+    return (
+      (!requirePinch || snap.observed) &&
+      !snap.pending &&
+      !snap.held &&
+      !camera.moving &&
+      !camera.navigationPending
+    );
+  }, requirePinch);
 }
 export async function restoreWidgetNavigation(page) {
   await page.evaluate(() => window.widgetNavigationRestore?.());

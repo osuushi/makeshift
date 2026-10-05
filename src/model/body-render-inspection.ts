@@ -13,6 +13,7 @@ export function inspectBodyRendering(scene: THREE.Scene) {
     depthWrite: boolean;
     visible: boolean;
     stencil: number;
+    decoratorInvalid: boolean;
   }[] = [];
   const booleanOperands: {
     body: string;
@@ -56,6 +57,7 @@ export function inspectBodyRendering(scene: THREE.Scene) {
       depthWrite: mesh.material.depthWrite,
       visible,
       stencil: mesh.material.stencilRef,
+      decoratorInvalid: mesh.userData.decoratorInvalid === true,
     });
   });
   return { faces, booleanOperands, created, disposed };
