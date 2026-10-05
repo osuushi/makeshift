@@ -35,9 +35,12 @@ async function idleGuards(page) {
   await unchanged(page, before);
   await page.keyboard.press("Shift+L");
   await unchanged(page, before);
-  await keyTool(page, "Shift+E"); // Unavailable uses the ordinary catalog reason.
+  await keyTool(page, "Shift+E"); // Unassigned even in idle Modeling.
   await unchanged(page, before);
-  assert.match(await page.getByRole("status").textContent(), /Select complete bodies to erode/);
+  assert.doesNotMatch(
+    await page.getByRole("status").textContent(),
+    /Select complete bodies to erode/,
+  );
   await keyTool(page, "l");
   assert.equal((await inspect(page)).interaction.kind, "loft");
   await keyTool(page, "l");
@@ -55,7 +58,6 @@ async function menuOwnership(page) {
     ["subtract", "⇧S"],
     ["intersect", "⇧I"],
     ["loft", "L"],
-    ["erode", "⇧E"],
   ]) {
     await search.fill(id);
     const actual = await page.locator(`[data-command="${id}"] kbd`).textContent();
@@ -64,9 +66,11 @@ async function menuOwnership(page) {
       badge.startsWith("⇧") && actual.startsWith("Shift+") ? badge.replace("⇧", "Shift+") : badge,
     );
   }
+  await search.fill("erode");
+  assert.equal(await page.locator('[data-command="erode"] kbd').textContent(), "");
   await search.fill("");
   for (const key of commonKeys) await page.keyboard.press(key);
-  assert.equal(await search.inputValue(), "USIlE");
+  assert.equal(await search.inputValue(), "USIl");
   await unchanged(page, before);
   await page.keyboard.press("Escape");
   const fileMenu = page.getByRole("button", { name: "File / Edit", exact: true });
@@ -133,7 +137,7 @@ async function extrudeOwnership(page) {
   const input = page.getByRole("textbox", { name: "Extrusion distance", exact: true });
   await input.fill("12");
   for (const key of commonKeys) await page.keyboard.press(key);
-  assert.equal(await input.inputValue(), "12USIlE");
+  assert.equal(await input.inputValue(), "12USIl");
   assert.equal((await inspect(page)).interaction.kind, "extrude");
   assert.deepEqual((await inspect(page)).document, before.document);
   await input.fill("0");
@@ -190,7 +194,7 @@ async function sketchGestureOwnership(page) {
 async function nativeFieldOwnership(page) {
   await plate(page);
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
-  await keyTool(page, "Shift+E");
+  await chooseTool(page, "Erode", "erode");
   const method = page.getByRole("combobox", { name: "Erosion method", exact: true });
   await method.focus();
   const before = await inspect(page);
