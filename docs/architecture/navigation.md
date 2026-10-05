@@ -189,18 +189,33 @@ establish physical trackpad or iPad touch behavior.
 ### Orientation cube
 
 The upper-right cube follows the current camera. Drag with the primary pointer to
-use the same turntable rotation, Option-roll and release leveling as Command-drag; a face click
+use the same turntable rotation and release leveling as Command-drag. Option-drag
+roll measures pointer bearing around the cube center, one-to-one in angle; radial
+motion adds no roll. Viewport Option-drag retains its model/selection-centered bearing.
+A face click
 aligns Front (−Y), Back (+Y), Left (−X), Right (+X), Top (+Z), or Bottom (−Z).
 The white/near-black cube has six inset labeled faces, twelve edge bevels and eight
-corner bevels. Labels are projected in each face plane, rotating and foreshortening
-with the rigid cube. Edge clicks align to the equal-weight diagonal of their two
+corner bevels. The face half-width is 0.58 of the cube half-width, leaving wider
+bevel polygons as the actual pointer/touch targets without overlapping hit regions.
+Labels are projected in each face plane, rotating and foreshortening with the rigid
+cube. Edge clicks align to the equal-weight diagonal of their two
 axes (flat 45°); corner clicks align to the equal-weight three-axis isometric view.
 Bevels have tooltips and accessible names but no visible labels.
-A face click from an oblique view chooses the nearest of its four quarter-turn
-orientations, avoiding an unnecessary roll. Clicking an already face-aligned view
-again resets it to canonical roll. Canonical side and diagonal views keep Z upright;
+A single face click chooses the nearest of its four quarter-turn orientations,
+including when already face-aligned. Pointer face clicks wait 250 ms after release;
+a second press on the same face within that interval (within 16 CSS px for mouse/pen
+or 24 CSS px for touch) suppresses the single-click and aligns directly to canonical
+roll on its release. A second press can be held beyond the interval without an
+intermediate view change. A drag, pointer cancellation, Escape, blur, another
+pointer interaction or wheel/gesture navigation cancels the pending alignment.
+Delayed callbacks also reject changed camera/workspace state and active editing
+or orbit. Enter/Space remain immediate: nearest roll on approach, canonical roll
+when the face is already aligned. Focused cube keys take precedence over
+canonical-plane entry shortcuts. Canonical side and diagonal views keep Z upright;
 canonical Top uses +Y up and Bottom uses −Y up. Bevel views retain canonical roll.
-All visible surfaces support Tab and Enter/Space. Alignment animates over 280 ms
+Cube surfaces are excluded from sequential Tab navigation; Tab is reserved for
+editing controls. Direct accessibility activation retains Enter/Space support.
+Alignment animates over 280 ms
 with cubic ease-out, using the shared camera transition. Reduced motion applies
 the orientation immediately; subsequent navigation interrupts the animation.
 Navigation retains the view target, distance

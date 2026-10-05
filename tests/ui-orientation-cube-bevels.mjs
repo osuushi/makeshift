@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { inspect } from "./ui-helpers.mjs";
+import { cubeSettled } from "./ui-orientation-cube-clicks.mjs";
 
 export async function bevelViewsRoute(page, name) {
   const before = await inspect(page);
@@ -59,7 +60,25 @@ async function reveal(page, target) {
   for (let i = 0; i < 48; i++) {
     if (await target.isVisible()) {
       const box = await target.locator("polygon").boundingBox();
-      if (box.width > 6 && box.height > 6) return;
+      const hittable = await target.locator("polygon").evaluate((polygon) => {
+        const points = Array.from(polygon.points);
+        const area =
+          Math.abs(
+            points.reduce((sum, p, i) => {
+              const q = points[(i + 1) % points.length];
+              return sum + p.x * q.y - q.x * p.y;
+            }, 0),
+          ) / 2;
+        const center = new DOMPoint(
+          points.reduce((sum, p) => sum + p.x, 0) / points.length,
+          points.reduce((sum, p) => sum + p.y, 0) / points.length,
+        ).matrixTransform(polygon.getScreenCTM());
+        return (
+          area >= 60 &&
+          document.elementFromPoint(center.x, center.y)?.closest("g") === polygon.parentElement
+        );
+      });
+      if (box.width > 6 && box.height > 6 && hittable) return;
     }
     await page.mouse.move(x, y);
     await page.mouse.down();
@@ -101,7 +120,7 @@ async function animationInterruption(page) {
   );
   await page.emulateMedia({ reducedMotion: "reduce" });
   await clickSurface(page, top);
-  const reduced = await page.evaluate(() => window.makeshiftInspect().camera);
+  const reduced = (await cubeSettled(page)).camera;
   assert.equal(reduced.moving, false, "Reduced motion applies the pose immediately");
   await page.emulateMedia({ reducedMotion: "no-preference" });
 }

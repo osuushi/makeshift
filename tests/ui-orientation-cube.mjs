@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
+import * as THREE from "three";
 import { drag, inspect, reset } from "./ui-helpers.mjs";
+import { cubeSettled } from "./ui-orientation-cube-clicks.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function orientationCubeRoute(page, name) {
@@ -10,7 +12,7 @@ export async function orientationCubeRoute(page, name) {
   const before = await inspect(page);
   assert.equal(before.document.sketches.length, 1, "Rectangle creation reaches the real solver");
   await page.getByRole("button", { name: "Top view", exact: true }).click();
-  assert.equal((await inspect(page)).activePlane, null);
+  assert.equal((await cubeSettled(page)).activePlane, null);
   const history = await page.evaluate(() => window.makeshiftHistory());
   const cube = page.locator(".orientation-cube");
   const bounds = await cube.boundingBox();
@@ -38,7 +40,7 @@ export async function orientationCubeRoute(page, name) {
     await assertFaceLabel(target);
     const beforeAlignment = await inspect(page);
     await target.locator("polygon").click();
-    const state = await inspect(page);
+    const state = await cubeSettled(page);
     const offset = state.camera.position.map((v, i) => v - state.camera.target[i]);
     const distance = Math.hypot(...offset);
     offset.forEach((v, i) => {
@@ -47,8 +49,8 @@ export async function orientationCubeRoute(page, name) {
     assert.deepEqual(state.camera.target, beforeAlignment.camera.target);
     assert.equal(state.camera.height, before.camera.height);
     assert.deepEqual(state.document, before.document);
-    await target.locator("polygon").click();
-    const canonical = (await inspect(page)).camera;
+    await target.locator("polygon").dblclick();
+    const canonical = (await cubeSettled(page)).camera;
     const expectedUp = face === "Top" ? [0, 1, 0] : face === "Bottom" ? [0, -1, 0] : [0, 0, 1];
     canonical.up.forEach((v, i) => {
       assert.ok(Math.abs(v - expectedUp[i]) < 1e-8);
@@ -103,17 +105,39 @@ async function assertFaceLabel(target) {
 
 async function cubeRoll(page, center) {
   const before = await inspect(page);
-  await page.mouse.move(center.x, center.y);
+  await page.mouse.move(center.x + 24, center.y);
   await page.keyboard.down("Alt");
   await page.mouse.down();
-  await page.mouse.move(center.x + 20, center.y, { steps: 4 });
+  await page.mouse.move(center.x + 40, center.y, { steps: 4 });
+  const radial = await inspect(page);
+  assert.ok(
+    new THREE.Vector3(...radial.camera.up).distanceTo(new THREE.Vector3(...before.camera.up)) <
+      1e-10,
+    "Radial cube drag adds no roll",
+  );
+  for (let i = 1; i <= 12; i++) {
+    const angle = (i * Math.PI) / 24;
+    await page.mouse.move(center.x + 40 * Math.cos(angle), center.y + 40 * Math.sin(angle));
+  }
   const during = await inspect(page);
+  const axis = new THREE.Vector3(...before.camera.position)
+    .sub(new THREE.Vector3(...before.camera.target))
+    .normalize();
+  const expected = new THREE.Vector3(...before.camera.up).applyAxisAngle(axis, Math.PI / 2);
+  assert.ok(
+    new THREE.Vector3(...during.camera.up).distanceTo(expected) < 1e-8,
+    "Quarter-circle around cube center produces exactly a quarter-turn",
+  );
   await page.mouse.up();
   await page.keyboard.up("Alt");
   const after = await inspect(page);
   assert.notDeepEqual(during.camera.up, before.camera.up);
-  assert.notDeepEqual(after.camera.up, during.camera.up, "Cube Option roll snaps on release");
-  for (let i = 0; i < 3; i++)
-    assert.ok(Math.abs(after.camera.position[i] - before.camera.position[i]) < 1e-8);
+  const afterAxis = new THREE.Vector3(...after.camera.position)
+    .sub(new THREE.Vector3(...after.camera.target))
+    .normalize();
+  assert.ok(
+    afterAxis.distanceTo(axis) < 1e-8,
+    "Roll preserves view direction around its geometry pivot",
+  );
   assert.deepEqual(after.document, before.document);
 }

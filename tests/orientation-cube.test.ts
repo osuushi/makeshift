@@ -34,7 +34,7 @@ test("beveled cube is closed with planar surfaces for all 26 canonical direction
   for (const count of edges.values()) assert.equal(count, 2, "Each edge joins two surfaces");
 });
 
-test("sideways Top first aligns without a quarter-turn, then resets to canonical on repeat", () => {
+test("sideways Top preserves nearest roll on single clicks and resets on double click", () => {
   const top = cubeSurfaces().find((s) => s.name === "Top");
   assert.ok(top);
   const current = new THREE.Quaternion().setFromRotationMatrix(
@@ -50,7 +50,8 @@ test("sideways Top first aligns without a quarter-turn, then resets to canonical
     new THREE.Vector3(0, 1, 0).applyQuaternion(first).distanceTo(new THREE.Vector3(1, 0, 0)) <
       1e-12,
   );
-  const second = cubeAlignment(top, first);
+  assert.ok(cubeAlignment(top, first).angleTo(first) < 1e-7);
+  const second = cubeAlignment(top, first, true);
   assert.ok(new THREE.Vector3(0, 1, 0).applyQuaternion(second).distanceTo(top.up) < 1e-12);
 });
 
@@ -69,7 +70,24 @@ test("each face preserves its nearest quarter-turn on approach", () => {
         .clone()
         .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.3));
       assert.ok(cubeAlignment(face, tilted).angleTo(aligned) < 1e-7);
-      assert.ok(cubeAlignment(face, aligned).angleTo(canonical) < 1e-7);
+      assert.ok(cubeAlignment(face, aligned).angleTo(aligned) < 1e-7);
+      assert.ok(cubeAlignment(face, tilted, true).angleTo(canonical) < 1e-7);
+      assert.ok(cubeAlignment(face, aligned, true).angleTo(canonical) < 1e-7);
+    }
+  }
+});
+
+test("bevels have wider target spans while faces retain readable normal-scale space", () => {
+  for (const surface of cubeSurfaces()) {
+    const lengths = surface.vertices.map(
+      (v, i) => v.distanceTo(surface.vertices[(i + 1) % surface.vertices.length]) * 38,
+    );
+    if (surface.kind === "face") assert.ok(Math.min(...lengths) >= 44);
+    if (surface.kind === "edge") assert.ok(Math.min(...lengths) >= 22);
+    if (surface.kind === "corner") {
+      const [a, b, c] = surface.vertices;
+      const area = b.clone().sub(a).cross(c.clone().sub(a)).length() / 2;
+      assert.ok(area >= 0.15, "Corner triangles are larger than the previous 0.089 square units");
     }
   }
 });
