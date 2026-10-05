@@ -1,6 +1,7 @@
 import { numericFocus } from "../tools/menu-focus.js";
 import { cleanupButton } from "./cleanup-button.js";
 import { directionalOffset, directionalWidget } from "./directional-widget.js";
+import { WidgetClearance } from "./widget-clearance.js";
 import "./body-edge-finish-widget.css";
 import type { Point } from "../sketch/planes.js";
 import type { World } from "../sketch/world.js";
@@ -19,6 +20,7 @@ export class BodyEdgeFinishWidget {
   readonly panel = document.createElement("div");
   readonly cleanup = cleanupButton();
   readonly root = document.createElement("div");
+  private placement = new WidgetClearance(this.root);
   readonly handles = {
     fillet: document.createElement("button"),
     chamfer: document.createElement("button"),
@@ -150,8 +152,10 @@ export class BodyEdgeFinishWidget {
     this.input.setAttribute("aria-invalid", String(active && invalid && !valid && !busy));
     if (!numericFocus(this.input))
       this.input.value = Number.isFinite(size) ? String(Number(size.toPrecision(4))) : "";
+    this.placement.fit([this.handles[mode], this.panel]);
   }
   dispose() {
+    this.placement.dispose();
     this.root.remove();
   }
 }

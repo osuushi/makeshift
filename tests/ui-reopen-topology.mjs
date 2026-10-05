@@ -5,29 +5,49 @@ import { makeFeature, pickFeatureFace } from "./ui-face-move-fixtures.mjs";
 import { close, inspect } from "./ui-helpers.mjs";
 import { button, completed, cycle, field, ready, sameGeometry } from "./ui-reopen-cycle.mjs";
 import { chooseTool } from "./ui-tools.mjs";
+import { assertWidgetTargets } from "./ui-widget-reachability.mjs";
 
 async function reachableDisclosure(page, name) {
   const viewport = page.viewportSize();
+  const before = (await inspect(page)).document;
   await page.setViewportSize({ width: 390, height: 600 });
   await page.mouse.move(180, 320);
   await page.mouse.wheel(200, 90);
   await inspect(page);
-  const fits = await page.locator(".current-transform:visible").evaluate((root) => {
+  await assertWidgetTargets(page, ".current-transform:not([hidden])", "Restored transform card");
+  const layout = await page.locator(".current-transform:visible").evaluate((root) => {
     const r = root.getBoundingClientRect();
-    return (
-      r.left >= 11 &&
-      r.right <= innerWidth - 11 &&
-      r.top >= 11 &&
-      r.bottom <= innerHeight - 11 &&
-      Array.from(root.querySelectorAll("input"))
+    return {
+      bounds: { left: r.left, right: r.right, top: r.top, bottom: r.bottom },
+      viewport: { width: innerWidth, height: innerHeight },
+      fit: root.dataset.widgetFit,
+      scrolling: { height: root.scrollHeight, client: root.clientHeight, top: root.scrollTop },
+      inputs: Array.from(root.querySelectorAll("input")).map((input) => {
+        const b = input.getBoundingClientRect();
+        return {
+          name: input.getAttribute("aria-label"),
+          bounds: { left: b.left, right: b.right, top: b.top, bottom: b.bottom },
+          hit: document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2)?.tagName,
+        };
+      }),
+      hits: Array.from(root.querySelectorAll("input"))
         .filter((input) => !input.closest("[hidden]"))
         .every((input) => {
           const b = input.getBoundingClientRect();
           return document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2) === input;
-        })
-    );
+        }),
+    };
   });
-  assert.ok(fits, "moved projected anchor keeps cumulative fields reachable at narrow viewport");
+  assert.ok(
+    layout.bounds.left >= 8 &&
+      layout.bounds.right <= layout.viewport.width - 8 &&
+      layout.bounds.top >= 8 &&
+      layout.bounds.bottom <= layout.viewport.height - 8 &&
+      layout.fit === "clear" &&
+      layout.hits,
+    `moved projected anchor keeps cumulative fields reachable: ${JSON.stringify(layout)}`,
+  );
+  assert.deepEqual((await inspect(page)).document, before);
   await page.screenshot({ path: `.cache/sketch-review/${name}-reopen-topology-narrow.png` });
   await page.mouse.wheel(-200, -90);
   await inspect(page);

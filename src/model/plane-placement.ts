@@ -6,6 +6,7 @@ import { snapRotation } from "../sketch/rotation-snap.js";
 import { type PlacementAxis, placedFrame } from "../sketch/sketch-placement.js";
 import { dragFrame } from "./body-drag.js";
 import { BodyGizmo } from "./body-gizmo.js";
+import { widgetPointerOffset } from "./widget-viewport.js";
 
 export class PlanePlacement {
   private gizmo: BodyGizmo;
@@ -79,7 +80,15 @@ export class PlanePlacement {
       rotate,
       pointer: event.pointerId,
       held: true,
-      measurement: dragFrame(this.editor, frame.origin, axis, event.clientX, event.clientY),
+      measurement: dragFrame(
+        this.editor,
+        frame.origin,
+        axis,
+        event.clientX,
+        event.clientY,
+        undefined,
+        widgetPointerOffset(event.currentTarget),
+      ),
     };
     this.gizmo.input.value = "0";
     this.gizmo.input.removeAttribute("aria-invalid");

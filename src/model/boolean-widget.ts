@@ -1,9 +1,12 @@
+import type { Point } from "../sketch/planes.js";
 import type { BodyBoolean } from "./body.js";
 import { modeIcons } from "./boolean-icons.js";
+import { WidgetClearance } from "./widget-clearance.js";
 import "./boolean-widget.css";
 
 export class BooleanWidget {
   readonly root = document.createElement("div");
+  private placement = new WidgetClearance(this.root);
   private keep = document.createElement("button");
   private apply = document.createElement("button");
   constructor(
@@ -36,7 +39,7 @@ export class BooleanWidget {
     this.root.append(this.keep, this.apply, dismiss);
     overlay.append(this.root);
   }
-  update(operation: BodyBoolean, busy: boolean, valid: boolean, count: number): void {
+  update(operation: BodyBoolean, busy: boolean, valid: boolean, count: number, point: Point): void {
     this.root.hidden = false;
     this.root.setAttribute("aria-busy", String(busy));
     this.keep.setAttribute("aria-pressed", String(operation.keepOriginals));
@@ -60,8 +63,12 @@ export class BooleanWidget {
       if (button.dataset.mode)
         button.setAttribute("aria-pressed", String(button.dataset.mode === operation.mode));
     }
+    this.root.style.left = `${point.x}px`;
+    this.root.style.top = `${point.y + 90}px`;
+    this.placement.fit([this.root]);
   }
   dispose(): void {
+    this.placement.dispose();
     this.root.remove();
   }
 }

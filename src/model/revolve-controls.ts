@@ -291,6 +291,6 @@ export class RevolveControls {
   dispose(): void {
     this.abort.abort();
     this.editor.world.changed.delete(this.update);
-    this.widget.root.remove();
+    this.widget.dispose();
   }
 }

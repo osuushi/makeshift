@@ -22,6 +22,7 @@ import {
   movementTargets,
   type TopologyMovement,
 } from "./topology-movement.js";
+import { widgetPointerOffset } from "./widget-viewport.js";
 
 export class TopologyMoveControls {
   private gizmo: BodyGizmo;
@@ -202,6 +203,7 @@ export class TopologyMoveControls {
           event.clientX,
           event.clientY,
           this.direction,
+          widgetPointerOffset(event.currentTarget),
         ),
       };
     this.gizmo.input.setAttribute(
@@ -326,7 +328,6 @@ export class TopologyMoveControls {
       this.accept,
       this.cancelButton,
     );
-    this.currentTransform.position();
   };
   dispose(): void {
     this.abort.abort();

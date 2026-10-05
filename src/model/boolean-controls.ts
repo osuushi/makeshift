@@ -268,17 +268,15 @@ export class BooleanControls {
   }
   private update = (): void => {
     if (!this.lease) return;
-    this.widget.update(this.operation, this.editor.blocked, this.valid, this.count);
-    const p = this.bodies.length
-      ? this.editor.world.project(bodyCenter(this.bodies))
-      : { x: innerWidth / 2, y: 80 };
-    const entities = this.widget.root.parentElement?.parentElement?.querySelector(".entity-viewer");
-    const bounds = entities?.getBoundingClientRect();
-    const left = bounds?.width ? bounds.right + 12 : 16;
-    this.widget.root.style.maxWidth = `${Math.max(200, innerWidth - left - 16)}px`;
-    const half = this.widget.root.offsetWidth / 2;
-    this.widget.root.style.left = `${Math.max(left + half, Math.min(innerWidth - half - 16, p.x))}px`;
-    this.widget.root.style.top = `${Math.max(70, Math.min(innerHeight - this.widget.root.offsetHeight - 16, p.y + 90))}px`;
+    this.widget.update(
+      this.operation,
+      this.editor.blocked,
+      this.valid,
+      this.count,
+      this.bodies.length
+        ? this.editor.world.project(bodyCenter(this.bodies))
+        : { x: innerWidth / 2, y: 80 },
+    );
   };
   dispose(): void {
     this.abort.abort();

@@ -5,9 +5,11 @@ import { arrowWidthAxis } from "../sketch/move-widget/geometry.js";
 import type { Vector } from "../sketch/planes.js";
 import { anchorSnap } from "./anchor-snapping.js";
 import type { ExtrudeTwist, TwistFrame } from "./extrude-twist.js";
+import { widgetPointerOffset } from "./widget-viewport.js";
 
 class TwistDrag {
   private drag: {
+    offset: { x: number; y: number };
     id: number;
     kind: "origin" | "angle";
     origin: Vector;
@@ -62,14 +64,18 @@ class TwistDrag {
       { once: true },
     );
   }
-  private point(event: PointerEvent, plane: THREE.Plane): THREE.Vector3 | null {
+  private point(
+    event: PointerEvent,
+    plane: THREE.Plane,
+    offset = { x: 0, y: 0 },
+  ): THREE.Vector3 | null {
     const world = this.tool.editor.world;
     const bounds = world.canvas.getBoundingClientRect(),
       ray = new THREE.Raycaster();
     ray.setFromCamera(
       new THREE.Vector2(
-        (2 * (event.clientX - bounds.x)) / bounds.width - 1,
-        1 - (2 * (event.clientY - bounds.y)) / bounds.height,
+        (2 * (event.clientX - offset.x - bounds.x)) / bounds.width - 1,
+        1 - (2 * (event.clientY - offset.y - bounds.y)) / bounds.height,
       ),
       world.camera,
     );
@@ -92,10 +98,12 @@ class TwistDrag {
       new THREE.Vector3(...frame.normal),
       new THREE.Vector3(...frame.center),
     );
-    const hit = this.point(event, plane);
+    const offset = widgetPointerOffset(button);
+    const hit = this.point(event, plane, offset);
     if (!hit) return;
     if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();
     this.drag = {
+      offset,
       id: event.pointerId,
       kind,
       origin: [...tool.origin],
@@ -117,12 +125,16 @@ class TwistDrag {
     if (!drag || event.pointerId !== drag.id || tool.lease()?.phase !== "editing") return;
     drag.moved ||= Math.hypot(event.clientX - drag.x, event.clientY - drag.y) > 3;
     if (!drag.moved) return;
-    const hit = this.point(event, drag.plane);
+    const hit = this.point(event, drag.plane, drag.offset);
     if (!hit) return;
     if (drag.kind === "origin") {
       const snap = event.metaKey
         ? null
-        : anchorSnap(tool.editor, { x: event.clientX, y: event.clientY }, drag.frame);
+        : anchorSnap(
+            tool.editor,
+            { x: event.clientX - drag.offset.x, y: event.clientY - drag.offset.y },
+            drag.frame,
+          );
       tool.sphere.dataset.snapped = String(!!snap);
       tool.origin =
         snap ?? (new THREE.Vector3(...drag.origin).add(hit.sub(drag.hit)).toArray() as Vector);

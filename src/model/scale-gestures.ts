@@ -5,6 +5,7 @@ import type { Vector } from "../sketch/planes.js";
 import { anchorSnap } from "./anchor-snapping.js";
 import type { ScaleWidget } from "./scale-widget.js";
 import { type BoxHandle, boxLocal, boxWorld, type TransformBox } from "./transform-box.js";
+import { widgetPointerOffset } from "./widget-viewport.js";
 
 interface State {
   pivot: Vector;
@@ -14,6 +15,7 @@ interface State {
   lease: InteractionLease;
 }
 type Drag = State & {
+  offset: { x: number; y: number };
   id: number;
   x: number;
   y: number;
@@ -74,6 +76,7 @@ export class ScaleGestures {
     });
     this.drag = {
       ...state,
+      offset: widgetPointerOffset(event.currentTarget),
       factors: [...state.factors],
       id: event.pointerId,
       x: event.clientX,
@@ -103,7 +106,7 @@ export class ScaleGestures {
       }
     const snap = event.shiftKey
       ? null
-      : anchorSnap(this.editor, { x: event.clientX, y: event.clientY });
+      : anchorSnap(this.editor, { x: event.clientX - d.offset.x, y: event.clientY - d.offset.y });
     if (snap) {
       const p = this.editor.world.project(boxWorld(d.box, d.start)),
         q = this.editor.world.project(snap);

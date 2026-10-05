@@ -10,12 +10,18 @@ export type PointHit =
   | { kind: "circleCenter"; curve: string; point: Point };
 export type Hit =
   | PointHit
-  | { kind: "translate"; axis: "x" | "y"; point: Point }
+  | {
+      kind: "translate";
+      axis: "x" | "y";
+      point: Point;
+      displayOffset?: Point;
+      displayScreen?: Point;
+    }
   | { kind: "bow"; curve: string; side: number; point: Point }
   | { kind: "group"; group: EditingGroup; point: Point }
   | { kind: "curve"; curve: string; point: Point; group?: EditingGroup }
   | { kind: "circleBody"; curve: string; point: Point }
-  | { kind: "rotate"; point: Point };
+  | { kind: "rotate"; point: Point; displayOffset?: Point; displayScreen?: Point };
 export const hitIds = (hit: Hit): readonly string[] =>
   hit.kind === "rotate" || hit.kind === "translate"
     ? []

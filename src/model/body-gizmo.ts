@@ -107,11 +107,12 @@ export class BodyGizmo {
         end.y = origin.y + boundary.y * 144;
       }
       const local = { x: end.x - origin.x, y: end.y - origin.y };
+      handle.button.innerHTML = markerMarkup(world.camera, u, v, handle.rotate);
+      const hit = handle.button.getBoundingClientRect();
       entries.push({
         element: handle.button,
-        nominal: { ...local, size: handle.rotate ? 30 : 48 },
+        nominal: { ...local, size: Math.max(hit.width, hit.height) },
       });
-      handle.button.innerHTML = markerMarkup(world.camera, u, v, handle.rotate);
     }
     const source = scaleSelection(editor);
     const box = source && selectionBox(editor, source);
@@ -121,7 +122,15 @@ export class BodyGizmo {
         const point = world.project(boxWorld(box, handle.point));
         obstacles.push({ x: point.x - origin.x, y: point.y - origin.y, size: 16 });
       }
-    this.clearance.update(entries, obstacles);
+    this.clearance.update(
+      entries,
+      obstacles,
+      [...this.root.children].filter(
+        (element): element is HTMLElement =>
+          element instanceof HTMLElement &&
+          !this.handles.some((handle) => handle.button === element),
+      ),
+    );
   }
   dispose(): void {
     this.clearance.dispose();
