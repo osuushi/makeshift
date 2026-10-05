@@ -41,6 +41,7 @@ export function sketchTools(editor: SketchEditor): () => void {
         reason: () => {
           const interaction = editor.interactions.current;
           if (interaction?.finish && !interaction.history) return `Nothing to ${id} in this tool`;
+          if (interaction?.history && id === "undo") return null;
           const history = interaction?.history ?? editor.store;
           return (id === "undo" ? history.canUndo : history.canRedo) ? null : `Nothing to ${id}`;
         },
