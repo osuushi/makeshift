@@ -7,7 +7,7 @@ import {
   navigationIdle,
   navigationTips,
 } from "./ui-navigation-history.mjs";
-import { wheel } from "./ui-navigation-inputs.mjs";
+import { cubeDrag } from "./ui-navigation-inputs.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function temporaryExtrusion(page) {
@@ -18,6 +18,8 @@ async function temporaryExtrusion(page) {
   const profile = await at(page, 5, 3);
   await chooseTool(page, "Return to Modeling", "modeling");
   await page.mouse.click(profile.x, profile.y);
+  await cubeDrag(page);
+  await navigationIdle(page);
   await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
   await page.getByRole("textbox", { name: "Extrusion distance", exact: true }).fill("5");
   await page.keyboard.press("Enter");
@@ -26,26 +28,45 @@ async function temporaryExtrusion(page) {
 export async function navigationModalPriority(page, name) {
   const initial = await temporaryExtrusion(page);
   const distance = page.getByRole("textbox", { name: "Extrusion distance", exact: true });
+  await page.getByRole("button", { name: "Top view", exact: true }).click();
+  const top = await navigationIdle(page);
+  assert.equal((await navigationTips(page)).length, 1);
+  const undo = await navigationHistory(page);
+  assert.equal(undo.interaction.kind, "extrude");
+  assert.deepEqual(undo.preview, initial.preview, "View Undo retains temporary extrusion");
+  assertNavigation(undo, initial, "Modal view Undo");
+  const redo = await navigationHistory(page, true);
+  assert.equal(redo.interaction.kind, "extrude");
+  assert.deepEqual(redo.preview, initial.preview);
+  assertNavigation(redo, top, "Modal view Redo");
   await distance.fill("7");
   await page.getByRole("button", { name: "Tools", exact: true }).focus();
   await navigationIdle(page);
-  await wheel(page, 30, 20);
-  const panned = await navigationIdle(page);
-  const tips = await navigationTips(page);
-  assert.equal(tips.length, 1);
-  const undo = await navigationHistory(page);
-  assert.equal(
-    undo.interaction.kind,
-    "extrude",
-    "Local checkpoint takes precedence over view Undo",
+  const parameterUndo = await navigationHistory(page);
+  assert.equal((await navigationTips(page)).length, 0, "Parameter edit expires earlier view tail");
+  assert.equal(parameterUndo.interaction.kind, "extrude");
+  assert.ok(
+    Math.abs(parameterUndo.preview.bodies[0].volume - initial.preview.bodies[0].volume) < 1e-6,
   );
-  assert.ok(Math.abs(undo.preview.bodies[0].volume - initial.preview.bodies[0].volume) < 1e-6);
-  assertNavigation(undo, panned, "Local Undo retains view");
-  assert.deepEqual(await navigationTips(page), tips);
+  assertNavigation(parameterUndo, top, "Parameter Undo retains current view");
   await navigationHistory(page, true);
   await page.keyboard.press("Escape");
   assert.deepEqual((await navigationIdle(page)).document, initial.document);
-  console.log(`${name}: modal parameter Undo/Redo retains priority over the ephemeral view tip`);
+  const next = await temporaryExtrusion(page);
+  await page.getByRole("button", { name: "Top view", exact: true }).click();
+  await navigationIdle(page);
+  await navigationHistory(page);
+  await page.getByLabel("Modeling viewport", { exact: true }).focus();
+  await page.keyboard.press("Enter");
+  const accepted = await navigationIdle(page);
+  assert.equal(accepted.interaction, null);
+  assert.equal(accepted.document.bodies[0].volume, next.preview.bodies[0].volume);
+  const history = await page.evaluate(() => window.makeshiftHistory());
+  assert.equal(history.at(-1).operation.kind, "extrude", "View Undo preserves pending operation");
+  assert.equal((await navigationHistory(page)).document.bodies?.length ?? 0, 0);
+  console.log(
+    `${name}: modal view Undo/Redo preserves extrusion; later parameter edit expires view tail`,
+  );
 }
 export async function navigationDuringAcceptance(page, name) {
   await temporaryExtrusion(page);
@@ -83,18 +104,21 @@ export async function navigationDuringAcceptance(page, name) {
     await page.mouse.move(920, 550, { steps: 5 });
     await page.mouse.up({ button: "right" });
     const final = await navigationIdle(page);
-    assert.equal((await navigationTips(page)).length, 1);
+    assert.equal((await navigationTips(page)).length, 0);
     assert.deepEqual(final.document, rebased.document);
+    assert.notDeepEqual(
+      final.camera.target,
+      rebased.camera.target,
+      "Pan continues through acceptance",
+    );
     const restored = await navigationHistory(page);
-    assertNavigation(restored, rebased, "Held gesture rebased at accepted context");
-    assert.deepEqual(restored.document, rebased.document, "View Undo retains accepted extrusion");
     assert.equal(
-      (await navigationHistory(page)).document.bodies?.length ?? 0,
+      restored.document.bodies?.length ?? 0,
       0,
-      "Next Undo reaches accepted extrusion",
+      "Undo reaches accepted extrusion directly",
     );
     console.log(
-      `${name}: real acceptance publication retains pan capture and rebases its remaining view gesture`,
+      `${name}: real acceptance publication retains ordinary pan capture without recording view history`,
     );
   } finally {
     await page.mouse.up({ button: "right" });

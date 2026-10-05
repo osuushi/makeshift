@@ -6,7 +6,7 @@ import type { ModelRequest } from "../sketch/model-api.js";
 import { isBuiltinDecorator } from "./builtins.js";
 import { pendingCustomContinuation } from "./custom-continuation.js";
 import { cross, sameCylinder, subtract } from "./cylinder.js";
-import { validateBuiltin } from "./edits.js";
+import { hasSettingsProblem, validateBuiltin } from "./edits.js";
 import { threadReference } from "./thread-extent.js";
 import { threadDefinition } from "./thread-settings.js";
 import { transformedAxialReference, transformedThreadFrame } from "./transform-frame.js";
@@ -27,7 +27,7 @@ function descendants(
   );
   if (!faces.length) return null;
   const frame = unchanged ? instance.frame : transformedThreadFrame(instance, request);
-  let problem = instance.problem;
+  let problem = hasSettingsProblem(instance) ? undefined : instance.problem;
   if (faces.some((face) => origins?.faces.get(face.id)?.some((id) => !oldFaces.has(id))))
     problem = "A face merged with other geometry. Reassign the decoration to the intended faces.";
   if (!isBuiltinDecorator(instance.definition)) {

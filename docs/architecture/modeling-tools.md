@@ -315,21 +315,28 @@ selected sections or with an empty selection for in-tool collection. Its local c
 owns section order, correspondence and Smooth/Ruled controls, sharing the existing
 Boolean targets and temporary acceptance lifecycle.
 
-## Boolean operand collection (2026-10-03)
+## Boolean operands
 
 Union, Subtract and Intersect can start with no selection or one complete body.
 Two or more complete preselected bodies retain their ordered preview route.
 Partial or mixed preselection stays unavailable; the operation itself still
 requires at least two complete accepted bodies. While choosing operands, viewport
-clicks add/remove whole bodies. The inline body chooser reaches enclosed or
-occluded bodies and omits hidden bodies. The first chosen body is Subtract's
-target; later bodies are tools. Change target cycles that order. Change bodies
-reopens collection; Done choosing or Enter ends collection, then Enter/check
-accepts a valid result. Empty/incomplete collection can exit without an edit.
+clicks and existing Entities rows operate on whole bodies, including enclosed
+ones. Subtract clicks cycle unselected → target → cutting tool → unselected.
+Choosing a new target demotes the previous target to cutting tool. Preselected
+bodies start with their first body as target and the others as tools.
+Union/Intersect clicks toggle membership.
+Operand editing remains available throughout. Apply or Enter directly accepts
+the current valid preview; there is no separate collection-completion step.
+Empty/incomplete operands can exit without an edit.
 
 Translucent blue input/target surfaces and orange cutting-tool surfaces, with
 visible outlines, reveal operands through the solid result. Flipping the target
-updates their roles. A successful empty result is explicitly labeled and can be
+updates their roles. Entities rows use the same blue/orange colors, without
+duplicating body choices or numbered input labels in the Boolean widget. The
+widget contains only Boolean type, Keep/Remove, Apply and Cancel. Instruction
+text, target-cycling controls, result counts and inline cleanup are absent.
+A successful empty result is labeled on Apply and can be
 accepted; it does not mean calculation failed. Accepted body geometry and IDs
 remain authoritative; overlays and collection belong to the interaction lease.
 

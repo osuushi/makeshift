@@ -9,6 +9,7 @@ import { stableClipping } from "../sketch/stable-clipping.js";
 import { foregroundBodyLayer } from "../sketch/world-foreground.js";
 import type { BodyGeometry, Edge } from "./body.js";
 import { defaultBodyAppearance } from "./body-appearance.js";
+import { decoratorErrorMaterial, setDecoratorError } from "./decorator-error-material.js";
 import { featureEdges } from "./feature-edges.js";
 
 interface Counts {
@@ -98,6 +99,7 @@ export class BodyDrawable {
     const source = body;
     for (const face of source.faces) {
       const mesh = new THREE.Mesh(faceGeometry(face.vertices), faceMaterial());
+      decoratorErrorMaterial(mesh.material);
       mesh.userData.bodyFace = { body: source.id, face: face.id };
       mesh.userData.decoratorFace = previewFaceKey(source.id, face.id);
       this.faces.push(mesh);
@@ -127,9 +129,13 @@ export class BodyDrawable {
     hover: string | boolean | undefined,
     section: PlaneFrame | null,
     appearance = defaultBodyAppearance,
+    invalidFaces: ReadonlySet<string> = new Set(),
   ): void {
     this.faces.forEach((mesh, i) => {
       const face = this.source.faces[i];
+      const selected = selectedBodies.has(this.source.id) || selectedFaces.has(face.id);
+      setDecoratorError(mesh.material, invalidFaces.has(face.id), selected);
+      mesh.userData.decoratorInvalid = invalidFaces.has(face.id);
       mesh.material.color.set(
         selectedBodies.has(this.source.id) || selectedFaces.has(face.id)
           ? "#82b5e0"

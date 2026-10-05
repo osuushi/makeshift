@@ -19,6 +19,7 @@ export class SelectionHistory {
   connectNavigation(): void {
     const navigation = this.editor.world.navigation;
     navigation.readSelection = () => this.capture();
+    navigation.discarded = () => this.expireNavigation();
     navigation.completed = (change: NavigationChange) => {
       if (this.settling) return;
       this.steps.push(change);
@@ -32,6 +33,10 @@ export class SelectionHistory {
   finishNavigation(): void {
     this.editor.world.navigation.finish();
     this.editor.world.navigation.withoutRecording(() => this.editor.world.cancelCameraMotion());
+  }
+  expireNavigation(): void {
+    this.steps.push({ expireNavigation: true });
+    queueMicrotask(() => this.editor.store.syncSelection());
   }
   get pending(): boolean {
     return this.steps.length > 0;

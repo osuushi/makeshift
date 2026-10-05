@@ -49,6 +49,7 @@ export async function navigationTips(page) {
 export async function navigationRoundTrip(page, action, label) {
   const before = await navigationIdle(page);
   const history = await page.evaluate(() => window.makeshiftHistory());
+  const previousTips = await navigationTips(page);
   await action();
   const after = await navigationIdle(page);
   const entries = await page.evaluate(() => window.makeshiftHistory());
@@ -58,7 +59,8 @@ export async function navigationRoundTrip(page, action, label) {
     ["navigation"],
     `${label}: one intent`,
   );
-  assert.equal((await navigationTips(page)).length, 1, `${label}: one live tip`);
+  const retained = previousTips.some((entry) => entry.state === "undone") ? 0 : previousTips.length;
+  assert.equal((await navigationTips(page)).length, retained + 1, `${label}: trailing view suffix`);
   assert.deepEqual(after.document, before.document, `${label}: accepted geometry unchanged`);
   const undone = await navigationHistory(page);
   assertNavigation(undone, before, `${label}: Undo`);

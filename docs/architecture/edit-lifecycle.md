@@ -174,22 +174,32 @@ view height, editing workspace and ordered geometry selection. Camera and curren
 UI remain renderer-owned; these serializable snapshots are contextual history
 beside accepted geometry, not another document or saved file format.
 
-Only the latest relevant view entry remains reversible. A later changed view
-replaces it. A changed selection or accepted geometry edit removes it, whether
-applied or undone. Moving beyond that entry into ordinary selection/geometry
-Undo or Redo also removes it. Both its snapshots and diagnostic record expire;
+Consecutive completed views form a trailing suffix of the full active history,
+including undone future entries. Undo/Redo traverses each view in that suffix.
+A new view after partial or full view Undo discards the entire former view suffix,
+including applied and undone entries, then starts a new suffix at the visible pose.
+A changed selection or accepted geometry edit removes all view entries. Moving
+beyond the suffix into ordinary selection/geometry Undo or Redo also removes all
+of them, including future entries. Their snapshots and diagnostic records expire;
 ordinary attempted geometry/selection records retain their existing lifetimes.
-No-op navigation and failed/cancelled/no-op geometry attempts preserve the tip.
+No-op navigation and failed/cancelled/no-op geometry attempts preserve the suffix.
 View Undo restores its prior camera/workspace/selection; view Redo restores its
-result while it remains the tip, before older geometry Redo. Navigation never
+result while it remains in the suffix, before older geometry Redo. Navigation never
 erases retained geometry Redo. Geometry Redo still restores that operation's
 result selection, and a new accepted geometry edit branches normally.
+Restoration animates camera position, orientation, target and zoom through the
+existing camera transition, then restores the exact endpoint. Undo/Redo animation
+creates no history entry; workspace changes from geometry/selection Undo retain
+their ordinary animated alignment. Reduced-motion preference remains respected.
 
-Pointer orbit/roll, cube navigation, pan, zoom, canonical workspace entry and exit
-use the same contract. Continuous pointer or touch contacts complete once at
+Cube navigation, face double-click alignment, pinch/twist/touch gestures and
+canonical workspace entry and exit use this contract. Ordinary pointer orbit/roll,
+pan, scroll pan and mouse-wheel zoom do not record view history; they expire stale
+view entries. A pointer orbit that exits a planar workspace records the full mode
+transition. Continuous pointer or touch contacts complete once at
 release/cancellation, after any existing completion animation. Cancellation keeps
 its ordinary current view, so a moved canceled gesture can still be undone; a
-stationary canceled press adds no entry. Wheel, browser pinch and native twist
+stationary canceled press adds no entry. Browser pinch and native twist
 reuse their existing 200 ms idle or explicit gesture-end lifetime, including
 release leveling. Intermediate frames and packets add no entries. Camera pose
 roundoff at the current viewport scale is not a view change. Projection range and
@@ -204,7 +214,10 @@ context. Its eventual Undo cannot restore targets from the previous document.
 The existing serialized selection-intent boundary also carries view intents;
 there is no additional request queue or history owner.
 
-Temporary modal parameter history retains priority over view history. Calculating
+A trailing view change inside a modal takes priority over older temporary parameter
+history. View-only Undo/Redo preserves the tool, candidate and pending operation.
+A later parameter edit or local parameter Undo/Redo expires the view suffix,
+including undone future states. Calculating
 or captured edit guards remain in force; an active captured view gesture also
 blocks history navigation. Undo during an uncaptured camera animation finishes
 its current visible pose before navigating. Restoring any history context

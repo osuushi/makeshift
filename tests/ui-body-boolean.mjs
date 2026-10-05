@@ -63,10 +63,11 @@ export async function bodyBooleanRoute(page, name, electron) {
   // Reversed picking order must propose the first picked body, not document order.
   await begin(page, "Subtract", [2, 1]);
   assert.equal(
-    await page.getByRole("button", { name: "Change subtraction target" }).textContent(),
-    "Target: Body 2 ↔",
+    await page.getByRole("button", { name: "Select Body 2", exact: true }).getAttribute("title"),
+    "Body 2 · Target",
   );
-  await page.getByRole("button", { name: "Change subtraction target" }).click();
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   let state = await inspect(page);
   assert.equal(state.preview.bodies.length, 3); // two plate pieces plus unselected cutter
   const ghosts = state.bodyRendering.booleanOperands;
@@ -138,11 +139,11 @@ async function resultModes(page, original) {
   await undo(page);
   // Intersection of all three is empty, but is a successful, deliberate edit.
   await begin(page, "Intersect", [1, 2, 3]);
-  assert.equal(
-    await page.getByRole("button", { name: "Change subtraction target" }).isVisible(),
-    false,
+  assert.equal(await page.getByRole("button", { name: "Change subtraction target" }).count(), 0);
+  assert.match(
+    await page.getByRole("button", { name: "Accept Boolean", exact: true }).textContent(),
+    /empty result/,
   );
-  assert.match(await page.locator(".boolean-status").textContent(), /Empty result/);
   assert.equal((await inspect(page)).preview.bodies.length, 0);
   await page.keyboard.press("Enter");
   assert.equal((await inspect(page)).document.bodies.length, 0);
@@ -161,18 +162,27 @@ async function resultModes(page, original) {
   ]);
   assert.equal(new Set(ids).size, ids.length);
   await undo(page);
-  // Selecting another entity finishes the preview, then selects that entity.
+  // Entity rows edit operands while the tool remains open; Apply accepts explicitly.
   await begin(page, "Union", [1, 2]);
   await page.getByRole("button", { name: "Keep originals" }).click();
   await inspect(page);
   await page.getByRole("button", { name: "Select Body 3", exact: true }).click();
   state = await inspect(page);
-  assert.equal(state.document.bodies.length, 2);
-  assert.equal(state.interaction, null);
-  assert.equal(state.modelingSelection[0].body, original.bodies[2].id);
+  assert.deepEqual(state.document, original);
+  assert.equal(state.interaction.kind, "body-boolean");
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Select Body 3", exact: true })
+      .getAttribute("aria-pressed"),
+    "true",
+  );
+  await page.getByRole("button", { name: "Accept Boolean", exact: true }).click();
+  assert.equal((await inspect(page)).interaction, null);
   await undo(page);
   await begin(page, "Subtract", [1, 2, 3]);
-  await page.mouse.click(940, 710); // finish through the ordinary viewport route
+  await page.mouse.click(940, 710); // Empty viewport space does not finish the tool.
+  assert.equal((await inspect(page)).interaction.kind, "body-boolean");
+  await page.keyboard.press("Enter");
   state = await inspect(page);
   assert.equal(state.document.bodies.length, 3);
   assert.equal(state.interaction, null);
