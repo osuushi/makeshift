@@ -22,7 +22,8 @@ curves use OCCT's draft sweep to the end plane. General curves use the kernel's
 surface approximation tolerances; they are not polygon replacements. Zero draft
 retains the ordinary prism path. Accepted bodies remain materialized geometry,
 with no extrusion recipe or permanent relation to the source sketch. Boolean
-mode, target selection, completion/cleanup and single-step Undo are unchanged.
+mode, target selection, ordinary completion and single-step Undo are unchanged.
+Cleanup remains an explicit standalone tool with its own Undo step.
 
 ## Twisted extrusion (founder request, 2026-09-21)
 

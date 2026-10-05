@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { plate } from "./ui-body-fillet.mjs";
+import { standaloneOnly } from "./ui-cleanup-controls.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { completed } from "./ui-reopen-state.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -204,6 +205,7 @@ export async function reopenBoolean(page, name) {
     ),
     "target",
   );
+  await standaloneOnly(page);
   await button(page, "Accept Boolean").click();
   const accepted = (await completed(page)).document;
   const acceptedResult = await resultState(page, accepted);
@@ -220,8 +222,7 @@ export async function reopenBoolean(page, name) {
     "target",
   );
   assert.equal(await button(page, "Keep originals").getAttribute("aria-pressed"), "false");
-  assert.equal(await page.getByRole("checkbox", { name: "Clean up on acceptance" }).count(), 0);
-
+  await standaloneOnly(page);
   await button(page, "Cancel Boolean").click();
   selections(await resultState(page, before), source);
   await chooseTool(page, "redo", "redo");

@@ -123,15 +123,15 @@ const tags = new TagControls(editor, app);
 const entities = new EntityViewer(editor, app, tags);
 const booleans = new BooleanControls(editor, overlay, entities);
 const bodyMove = new BodyMoveControls(editor, overlay);
-const disposeReopen = reopenControls(editor, async ({ request, cleanup: clean }) => {
-  if (request.kind === "extrude") await modelControls.reopenExtrude(request.extrusion, clean);
-  else if (request.kind === "boolean-bodies") await booleans.reopen(request.operation, clean);
-  else if (request.kind === "revolve") await modelControls.reopenRevolve(request.revolution, clean);
-  else if (request.kind === "loft") await modelControls.reopenLoft(request.operation, clean);
+const disposeReopen = reopenControls(editor, async ({ request }) => {
+  if (request.kind === "extrude") await modelControls.reopenExtrude(request.extrusion);
+  else if (request.kind === "boolean-bodies") await booleans.reopen(request.operation);
+  else if (request.kind === "revolve") await modelControls.reopenRevolve(request.revolution);
+  else if (request.kind === "loft") await modelControls.reopenLoft(request.operation);
   else if (request.kind === "shell") await shells.reopen(request.operation);
   else if (request.kind === "erode") await erosion.reopen(request.operation);
-  else if (request.kind === "finish-edges") await bodyFinishes.reopen(request.operation, clean);
-  else if (request.kind === "offset-faces") await faceOffsets.reopen(request.operation, clean);
+  else if (request.kind === "finish-edges") await bodyFinishes.reopen(request.operation);
+  else if (request.kind === "offset-faces") await faceOffsets.reopen(request.operation);
   else if (request.kind === "cleanup") await cleanup.reopen(request.selection);
   else if (request.kind === "scale") await scaling.reopen(request.operation);
   else if (request.kind === "mirror") await mirror.reopen(request.operation);

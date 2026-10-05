@@ -15,11 +15,7 @@ async function checkpoint(page, input, value) {
   return inspect(page);
 }
 async function history(page, redo = false) {
-  await page.waitForFunction(() =>
-    [...document.querySelectorAll(".commit-cleanup")].every(
-      (button) => !button.getClientRects().length || button.getAttribute("aria-busy") !== "true",
-    ),
-  );
+  await inspect(page);
   await page.keyboard.press(redo ? "Meta+Shift+z" : "Meta+z");
   return inspect(page);
 }

@@ -1,6 +1,7 @@
-export async function holdCleanup(page) {
+// Hold one real native result at the HTTP delivery boundary; never mock geometry.
+export async function holdPreview(page, kind) {
   await page.evaluate(() => {
-    window.previewCleanupHeld = false;
+    window.previewResponseHeld = false;
   });
   let release,
     heldOnce = false;
@@ -8,12 +9,11 @@ export async function holdCleanup(page) {
     release = resolve;
   });
   const intercept = async (route) => {
-    if (heldOnce || route.request().postDataJSON()?.kind !== "check-cleanup")
-      return route.continue();
+    if (heldOnce || route.request().postDataJSON()?.kind !== kind) return route.continue();
     heldOnce = true;
     const response = await route.fetch();
     await page.evaluate(() => {
-      window.previewCleanupHeld = true;
+      window.previewResponseHeld = true;
     });
     await held;
     await route.fulfill({ response });

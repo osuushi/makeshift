@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { orient, project } from "./ui-blend-edit.mjs";
+import { standaloneOnly } from "./ui-cleanup-controls.mjs";
 import { drag, inspect, reset } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -120,12 +121,7 @@ await withUiRuntimes(
     await twist(page).fill("90");
     await inspect(page);
     await page.screenshot({ path: `.cache/sketch-review/${name}-circle-twist.png` });
-    // The delayed cleanup probe can briefly disable Accept during a click.
-    await page.waitForFunction(
-      () =>
-        document.querySelector(".extrude-controls .commit-cleanup")?.getAttribute("aria-busy") ===
-        "false",
-    );
+    await standaloneOnly(page);
     await page.getByRole("button", { name: "Accept extrusion", exact: true }).click();
     await page.waitForFunction(() => {
       const state = window.makeshiftInspect();

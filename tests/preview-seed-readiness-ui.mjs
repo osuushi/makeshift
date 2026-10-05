@@ -1,42 +1,41 @@
 import assert from "node:assert/strict";
-import { holdCleanup } from "./ui-held-cleanup.mjs";
+import { standaloneOnly } from "./ui-cleanup-controls.mjs";
+import { holdPreview } from "./ui-held-preview.mjs";
 import { at, close, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import { previewActionReady } from "./ui-preview-readiness.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-async function acceptAfterCleanup(page, label, kind, original, preview, cleanup) {
+async function acceptHeldPreview(page, label, kind, request, original, change) {
+  const held = await holdPreview(page, request);
   let ready = false;
-  const pending = await page.evaluate(() =>
-    [...document.querySelectorAll(".commit-cleanup")].some(
-      (button) => button.getClientRects().length && button.getAttribute("aria-busy") === "true",
-    ),
-  );
-  assert.equal(pending, true, "Real cleanup must still be pending when readiness starts");
-  const readiness = previewActionReady(page, label).then(() => {
-    ready = true;
-  });
-  void readiness.catch(() => {});
-  await page.waitForFunction(() => window.previewCleanupHeld);
-  const during = await page.evaluate(() => window.makeshiftInspect());
-  assert.equal(ready, false, "Readiness must wait for real cleanup to finish");
-  assert.equal(during.busy, true);
-  assert.equal(during.solving, true);
-  assert.equal(during.interaction.kind, kind);
-  assert.equal(during.interaction.phase, "editing");
-  assert.deepEqual(during.document, original);
-  assert.deepEqual(during.preview, preview);
-  cleanup.release();
-  await readiness;
-  await page.getByRole("button", { name: label, exact: true }).click();
-  await modalCompleted(page);
-  const accepted = await inspect(page);
-  assert.deepEqual(
-    accepted.document,
-    preview,
-    "One physical click accepts the exact verified candidate",
-  );
-  return accepted.document;
+  try {
+    await change();
+    await page.waitForFunction(() => window.previewResponseHeld);
+    const readiness = previewActionReady(page, label).then(() => {
+      ready = true;
+    });
+    void readiness.catch(() => {});
+    const during = await page.evaluate(() => window.makeshiftInspect());
+    assert.equal(ready, false, "Readiness waits for real preview delivery");
+    assert.equal(during.busy, true);
+    assert.equal(during.solving, true);
+    assert.equal(during.interaction.kind, kind);
+    assert.equal(during.interaction.phase, "editing");
+    assert.deepEqual(during.document, original);
+    await standaloneOnly(page);
+    held.release();
+    await readiness;
+    const preview = (await inspect(page)).preview;
+    assert.ok(preview);
+    await page.getByRole("button", { name: label, exact: true }).click();
+    await modalCompleted(page);
+    const accepted = (await inspect(page)).document;
+    assert.deepEqual(accepted, preview, "One physical click accepts the exact verified candidate");
+    return accepted;
+  } finally {
+    await held.close();
+  }
 }
 
 async function extrudeSeed(page, name) {
@@ -48,31 +47,16 @@ async function extrudeSeed(page, name) {
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(center.x, center.y);
   const original = (await inspect(page)).document;
-  const cleanup = await holdCleanup(page);
-  try {
-    await page.getByRole("textbox", { name: "Extrusion distance", exact: true }).fill("20");
-    await page.waitForFunction(() => {
-      const state = window.makeshiftInspect();
-      return (
-        Math.abs((state.preview?.bodies?.[0]?.volume ?? 0) - 8000) < 1e-6 &&
-        document.querySelector('[aria-label="Extrusion distance"]')?.value === "20"
-      );
-    });
-    const preview = await page.evaluate(() => window.makeshiftInspect().preview);
-    close(preview.bodies[0].volume, 8000);
-    const accepted = await acceptAfterCleanup(
-      page,
-      "Accept extrusion",
-      "extrude",
-      original,
-      preview,
-      cleanup,
-    );
-    close(accepted.bodies[0].volume, 8000);
-    console.log(`${name}: extrusion waits for held real cleanup before one exact-volume Accept`);
-  } finally {
-    await cleanup.close();
-  }
+  const accepted = await acceptHeldPreview(
+    page,
+    "Accept extrusion",
+    "extrude",
+    "extrude",
+    original,
+    () => page.getByRole("textbox", { name: "Extrusion distance", exact: true }).fill("20"),
+  );
+  close(accepted.bodies[0].volume, 8000);
+  console.log(`${name}: extrusion drains held native seed before one exact-volume Accept`);
 }
 
 async function filletSeed(page, name) {
@@ -94,37 +78,20 @@ async function filletSeed(page, name) {
   close(original.bodies[0].volume, 640 * Math.PI);
   await page.mouse.click(rim.x, rim.y);
   await page.getByRole("button", { name: "Fillet edges", exact: true }).click();
-  const cleanup = await holdCleanup(page);
-  try {
-    await page.getByRole("textbox", { name: "Fillet radius", exact: true }).fill("2");
-    await page.waitForFunction(() => {
-      const state = window.makeshiftInspect();
-      const body = state.preview?.bodies?.[0];
-      return (
-        body?.faces.length === 4 &&
-        body.faces.some((face) => face.blend?.radius === 2) &&
-        document.querySelector('[aria-label="Fillet radius"]')?.value === "2"
-      );
-    });
-    const preview = await page.evaluate(() => window.makeshiftInspect().preview);
-    assert.equal(preview.bodies[0].faces.length, 4);
-    close(preview.bodies[0].faces.find((face) => face.blend).blend.radius, 2);
-    assert.ok(preview.bodies[0].volume < original.bodies[0].volume);
-    const accepted = await acceptAfterCleanup(
-      page,
-      "Accept fillet",
-      "body-edge-finish",
-      original,
-      preview,
-      cleanup,
-    );
-    close(accepted.bodies[0].faces.find((face) => face.blend).blend.radius, 2);
-    close(accepted.bodies[0].volume, preview.bodies[0].volume);
-    console.log(`${name}: fillet waits for held real cleanup before one exact-candidate Accept`);
-  } finally {
-    await cleanup.close();
-  }
+  const accepted = await acceptHeldPreview(
+    page,
+    "Accept fillet",
+    "body-edge-finish",
+    "finish-edges",
+    original,
+    () => page.getByRole("textbox", { name: "Fillet radius", exact: true }).fill("2"),
+  );
+  assert.equal(accepted.bodies[0].faces.length, 4);
+  close(accepted.bodies[0].faces.find((face) => face.blend).blend.radius, 2);
+  assert.ok(accepted.bodies[0].volume < original.bodies[0].volume);
+  console.log(`${name}: fillet drains held native seed before one exact-candidate Accept`);
 }
+
 await withUiRuntimes(
   async (page, name) => {
     await extrudeSeed(page, name);

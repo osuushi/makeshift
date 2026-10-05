@@ -63,8 +63,7 @@ completes and exits the tool. Its split bodies are temporary until then. Both
 lifecycles use the same simple edit acceptance and Undo mechanism.
 Extrude, Face Offset and body Fillet/Chamfer share a bounded PreviewRunner: one
 running calculation, one latest waiting parameter set and a serial slot for
-selection/cleanup queries. It does
-not own accepted data, candidates, validity or completion. Extrude interrupts
+selection queries. It does not own accepted data, candidates, validity or completion. Extrude interrupts
 superseded calculations. Erode also interrupts superseded parameter calculations
 and uses the shared cancellation path, with no late candidate publication after
 its lease closes. Offset retains its established noninterrupting policy,
@@ -72,8 +71,9 @@ last verified distance and selection feedback. Fillet/Chamfer similarly retain v
 size-limit feedback; their pending sizes use the expanded edge selection when
 calculation starts. Each controller checks its lease
 and request identity before changing presentation. Invalid input clears waiting
-targets; cancellation closes the lease before awaiting native cleanup. Settling a
-cleanup query alone does not schedule another query.
+targets; cancellation closes the lease before awaiting native cancellation. Modeling
+controls never schedule completion-cleanup probes. Standalone Clean up previews and
+accepts its own ordinary edit; compatible native/script cleanup flags remain available.
 
 Unconstrained movement and transforms that preserve every existing constraint
 exactly can run directly. Use the solver for coupled constrained edits; do not
@@ -169,10 +169,10 @@ and face angle, with exact axis/pivot readouts; the gizmo adds further deltas.
 Construction planes restore the exact final frame and stable ID, then ordinary
 handles add movement. Prior plane gesture ancestry is not inferred.
 
-Recorded cleanup remains a visible completion choice for Extrude, Revolve, Loft,
-Boolean, edge finish and face offset. API-only cleanup combinations for other
-controllers fail eligibility before rollback, because those ordinary interactions
-cannot retain that completion intent. Focused fields, native buttons, menus,
+Standalone Cleanup can be reopened with its recorded selection. API-only combined
+cleanup operations fail eligibility before rollback for every controller: ordinary
+completion controls cannot retain that intent. Native/script flags and normal
+Undo/Redo of those accepted results remain supported. Focused fields, native buttons, menus,
 dialogs, composition and the agent terminal retain keyboard ownership. Electron
 keeps explicit Reload on Shift-Cmd/Ctrl-R.
 

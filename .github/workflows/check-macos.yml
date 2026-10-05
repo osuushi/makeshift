@@ -158,6 +158,9 @@ jobs:
       - name: Thread presets and saved-settings compatibility
         if: matrix.shard == 3
         run: xvfb-run -a npm run test:thread-presets
+      - name: Standalone cleanup and separate geometry history
+        if: matrix.shard == 3
+        run: xvfb-run -a npm run test:standalone-cleanup
       - name: Measured widget DOM layouts
         if: matrix.shard == 1 && matrix.browser == 'chromium'
         run: |
@@ -178,6 +181,9 @@ jobs:
       - name: Thread presets and saved-settings compatibility
         if: matrix.lane == 'webkit-controls'
         run: npm run test:thread-presets
+      - name: Standalone cleanup and separate geometry history
+        if: matrix.lane == 'webkit-controls'
+        run: npm run test:standalone-cleanup
       - name: Modal Undo boundaries
         if: matrix.shard == 3
         run: xvfb-run -a node tests/modal-undo-boundary-ui.mjs
@@ -358,6 +364,11 @@ jobs:
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: npm run test:thread-presets
+      - name: Standalone cleanup and separate geometry history
+        if: matrix.lane == 'electron-host'
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: npm run test:standalone-cleanup
       - name: Modal Undo boundaries
         if: matrix.lane == 'geometry'
         env:

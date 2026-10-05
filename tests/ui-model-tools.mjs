@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { plate } from "./ui-body-fillet.mjs";
+import { standaloneOnly } from "./ui-cleanup-controls.mjs";
 import { close, inspect } from "./ui-helpers.mjs";
 import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -150,17 +151,7 @@ async function faceToolSwitchRoute(page, center) {
   await button(page, "Drag extrusion").click();
   await page.getByRole("textbox", { name: "Extrusion distance", exact: true }).fill("1");
   await inspect(page);
-  // The trailing cleanup probe temporarily disables tool switching.
-  await page.waitForFunction(() => {
-    const brooms = [...document.querySelectorAll(".commit-cleanup")].filter(
-      (b) => b.getClientRects().length,
-    );
-    return (
-      brooms.length === 1 &&
-      brooms[0].getAttribute("aria-busy") === "false" &&
-      !window.makeshiftInspect().busy
-    );
-  });
+  await standaloneOnly(page);
   await page.keyboard.press("Enter");
   await page.keyboard.press("o");
   const state = await inspect(page);

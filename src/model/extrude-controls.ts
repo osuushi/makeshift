@@ -1,17 +1,14 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Extrusion, LiftSource } from "./body.js";
-import { CleanupAvailability } from "./cleanup-availability.js";
 import { ExtrudeInputs } from "./extrude-inputs.js";
 import { ExtrudeTargets } from "./extrude-targets.js";
 import { ExtrudeTwist } from "./extrude-twist.js";
 import { ExtrudeWidget } from "./extrude-widget.js";
 import { PreviewRunner } from "./preview-runner.js";
-import { ReopenCompletion } from "./reopen-completion.js";
 
 export class ExtrudeControls {
   private widget: ExtrudeWidget;
-  private completion = new ReopenCompletion();
   get root(): HTMLDivElement {
     return this.widget.root;
   }
@@ -29,11 +26,10 @@ export class ExtrudeControls {
     editing: () => this.lease?.phase === "editing",
     calculate: (request) => this.calculate(request),
     supersede: () => this.editor.store.supersedePreview(true),
-    settled: (calculated) => this.previewSettled(calculated),
+    settled: () => this.editor.refresh(),
   });
   private valid = false;
   private inputs: ExtrudeInputs;
-  private cleanup: CleanupAvailability;
   private twist: ExtrudeTwist;
   get active(): boolean {
     return !!this.lease;
@@ -74,11 +70,6 @@ export class ExtrudeControls {
       this.abort.signal,
     );
     this.widget.addQuantity(this.twist.row);
-    this.widget.addQuantity(this.completion.root);
-    this.cleanup = new CleanupAvailability(this.widget.cleanup, () => {
-      if (this.previews.latest && this.valid) this.previews.check(() => this.checkCleanup());
-    });
-    this.widget.cleanup.onclick = () => void this.finish(true);
     this.root.append(this.targets.root);
     overlay.append(this.root);
     this.inputs = new ExtrudeInputs(
@@ -104,16 +95,16 @@ export class ExtrudeControls {
     editor.world.changed.add(this.update);
     this.update();
   }
-  async reopen(extrusion: Extrusion, cleanup: boolean): Promise<void> {
+  async reopen(extrusion: Extrusion): Promise<void> {
     this.editor.modeling.setTool("extrude");
-    if (!this.begin(extrusion, cleanup)) throw new Error("Cannot restore extrusion inputs");
+    if (!this.begin(extrusion)) throw new Error("Cannot restore extrusion inputs");
     this.queue(this.distance, this.symmetric);
     await this.previews.settle();
     if (!this.valid) throw new Error("Cannot regenerate the accepted extrusion");
     this.input.focus();
     this.input.select();
   }
-  private begin(restored?: Extrusion, cleanup = false): boolean {
+  private begin(restored?: Extrusion): boolean {
     if (this.lease) return this.lease.phase === "editing";
     if (this.editor.blocked || this.editor.world.active || this.editor.modeling.tool !== "extrude")
       return false;
@@ -133,8 +124,6 @@ export class ExtrudeControls {
     );
     this.previews.clear();
     this.targets.reset();
-    this.completion.reset();
-    if (restored) this.completion.begin(cleanup);
     this.mode = restored?.mode ?? "auto";
     this.widget.draft.restore(restored?.draft ?? { mode: "angle", value: 0 });
     this.distance = restored?.distance ?? 0;
@@ -157,10 +146,8 @@ export class ExtrudeControls {
         angle: this.twist.angle,
         origin: this.twist.origin,
         targets: this.targets.selected,
-        cleanup: this.completion.cleanup,
       }),
       async (state) => {
-        this.completion.input.checked = state.cleanup;
         this.mode = state.mode;
         this.widget.draft.restore(state.draft);
         this.twist.angle = state.angle;
@@ -182,7 +169,6 @@ export class ExtrudeControls {
       !Number.isFinite(this.widget.draft.value.value) ||
       !Number.isFinite(this.twist.value?.angle ?? 0)
     ) {
-      this.cleanup.reset();
       this.distance = value;
       this.valid = false;
       this.previews.clear();
@@ -203,7 +189,6 @@ export class ExtrudeControls {
     };
     // Pointer events within one grid step do not require another calculation.
     if (JSON.stringify(request) === JSON.stringify(this.previews.latest)) return;
-    this.cleanup.reset(Number.isFinite(value) && value !== 0);
     this.distance = value;
     this.valid = false;
     this.previews.enqueue(request);
@@ -217,30 +202,14 @@ export class ExtrudeControls {
     }
     this.editor.refresh();
   }
-  private previewSettled(calculated: boolean): void {
-    if (calculated) {
-      if (this.valid && this.distance !== 0 && this.lease?.phase === "editing")
-        this.cleanup.schedule();
-      else this.cleanup.reset();
-    }
-    this.editor.refresh();
-  }
-  private async checkCleanup(): Promise<void> {
-    const request = this.previews.latest;
-    if (!request || !this.valid || this.lease?.phase !== "editing") return;
-    const success = await this.editor.store.request({ kind: "check-cleanup" });
-    if (request === this.previews.latest && this.valid && this.lease?.phase === "editing")
-      this.cleanup.resolve(this.editor.store.cleanupAvailable, success);
-    this.editor.refresh();
-  }
-  async finish(cleanup = this.completion.cleanup): Promise<boolean> {
+  async finish(): Promise<boolean> {
     await this.previews.settle();
     if (this.lease && !this.previews.latest && this.distance === 0) {
       await this.cancel();
       return true;
     }
     if (!this.lease || !this.valid || !this.lease.close()) return false;
-    const success = await this.editor.accept(cleanup);
+    const success = await this.editor.accept();
     if (!success) {
       if (this.lease) this.lease.phase = "editing";
       this.editor.refresh();
@@ -250,11 +219,9 @@ export class ExtrudeControls {
     this.lease.release();
     this.lease = null;
     this.input.blur();
-    this.cleanup.reset();
     this.distance = 0;
     this.symmetric = false;
     this.twist.reset();
-    this.completion.reset();
     this.editor.refresh();
     return success;
   }
@@ -270,15 +237,12 @@ export class ExtrudeControls {
     lease.release();
     this.lease = null;
     this.input.blur();
-    this.cleanup.reset();
     this.distance = 0;
     this.symmetric = false;
     this.twist.reset();
-    this.completion.reset();
     this.editor.refresh();
   }
   private update = (): void => {
-    this.cleanup.update(!!this.lease && this.distance !== 0, this.editor.blocked || !this.valid);
     const editor = this.editor;
     this.widget.update(
       editor,
@@ -307,7 +271,6 @@ export class ExtrudeControls {
   };
   dispose(): void {
     this.previews.clear();
-    this.cleanup.reset();
     this.abort.abort();
     this.editor.world.changed.delete(this.update);
     this.widget.dispose();

@@ -1,5 +1,4 @@
 import { numericFocus } from "../tools/menu-focus.js";
-import { cleanupButton } from "./cleanup-button.js";
 import { directionalOffset, directionalWidget } from "./directional-widget.js";
 import { WidgetClearance } from "./widget-clearance.js";
 import "./body-edge-finish-widget.css";
@@ -17,8 +16,7 @@ interface EdgeFinishInput {
 
 export class BodyEdgeFinishWidget {
   direction: Point | null = null;
-  readonly panel = document.createElement("div");
-  readonly cleanup = cleanupButton();
+  private panel = document.createElement("div");
   readonly root = document.createElement("div");
   private placement = new WidgetClearance(this.root);
   readonly handles = {
@@ -61,10 +59,7 @@ export class BodyEdgeFinishWidget {
       button.innerHTML = `<svg viewBox="0 0 24 24"><path d="${path}"/></svg>`;
       button.onclick = action;
     }
-    this.cleanup.innerHTML =
-      '<svg viewBox="0 0 24 24"><path d="m15 3-5 10M7 12l7 3-2 6H3l4-9Z M7 16l-1 5M10 17l-1 4"/></svg>';
     this.options.append(this.modeButtons.fillet, this.modeButtons.chamfer, this.accept, dismiss);
-    this.options.append(this.cleanup);
     this.panel.className = "edge-finish-panel";
     this.panel.append(field, this.options);
     this.root.append(this.handles.fillet, this.handles.chamfer, this.panel);

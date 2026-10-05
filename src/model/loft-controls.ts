@@ -8,12 +8,10 @@ import type { Loft } from "./loft.js";
 import { LoftGuides } from "./loft-guides.js";
 import { type LoftSectionAction, LoftWidget } from "./loft-widget.js";
 import { resolveOperation } from "./operation-selection.js";
-import { ReopenCompletion } from "./reopen-completion.js";
 
 export class LoftControls {
   readonly widget: LoftWidget;
   private guides = new LoftGuides();
-  private completion = new ReopenCompletion();
   private lease: InteractionLease | null = null;
   private sources: LiftSource[] = [];
   private alignment: number[] | undefined;
@@ -38,7 +36,7 @@ export class LoftControls {
         this.queue();
       },
     );
-    this.widget.root.append(this.targets.root, this.completion.root);
+    this.widget.root.append(this.targets.root);
     overlay.append(this.guides.root, this.widget.root);
     this.widget.add.onclick = () => {
       this.collecting = !this.collecting;
@@ -56,15 +54,15 @@ export class LoftControls {
     editor.world.changed.add(this.update);
     this.update();
   }
-  async reopen(operation: Loft, cleanup: boolean): Promise<void> {
+  async reopen(operation: Loft): Promise<void> {
     this.editor.modeling.setTool("loft");
-    this.begin(operation, cleanup);
+    this.begin(operation);
     if (!this.lease) throw new Error("Cannot restore loft sections");
     await this.running;
     if (!this.valid) throw new Error("Cannot regenerate the accepted loft");
     this.widget.shape.focus();
   }
-  begin(restored?: Loft, cleanup = false): void {
+  begin(restored?: Loft): void {
     const editor = this.editor;
     if (editor.blocked || editor.world.active || editor.interactions.current) return;
     const resolution = editor.modeling.resolve("loft");
@@ -85,8 +83,6 @@ export class LoftControls {
     this.collecting = !restored && this.sources.length < 2;
     this.widget.shape.value = restored?.ruled ? "ruled" : "smooth";
     this.mode = restored?.mode ?? "auto";
-    this.completion.reset();
-    if (restored) this.completion.begin(cleanup);
     this.valid = false;
     this.latest = this.pending = null;
     this.targets.reset();
@@ -101,10 +97,8 @@ export class LoftControls {
         shape: this.widget.shape.value,
         mode: this.mode,
         targets: this.targets.selected,
-        cleanup: this.completion.cleanup,
       }),
       async (state) => {
-        this.completion.input.checked = state.cleanup;
         this.sources = state.sources;
         this.alignment = state.alignment;
         this.collecting = state.collecting;
@@ -250,7 +244,7 @@ export class LoftControls {
       return true;
     }
     if (!this.valid || this.collecting || !this.lease?.close()) return false;
-    if (!(await this.editor.accept(this.completion.cleanup))) {
+    if (!(await this.editor.accept())) {
       this.lease.phase = "editing";
       this.editor.refresh();
       return false;
@@ -267,7 +261,6 @@ export class LoftControls {
     this.release();
   }
   private release(): void {
-    this.completion.reset();
     this.lease?.release();
     this.lease = null;
     this.editor.notice = this.editor.message = "";

@@ -9,7 +9,7 @@ await withUiRuntimes(
     console.log(`${name}: symmetric distance/draft unit/twist and restored modal baseline passed`);
     await reopenBoolean(page, name);
     console.log(
-      `${name}: ordered Boolean inputs, consumed-body restoration, Keep originals and completion choice passed`,
+      `${name}: ordered Boolean inputs, consumed-body restoration, Keep originals and ordinary completion passed`,
     );
   },
   { timeout: 120000 },

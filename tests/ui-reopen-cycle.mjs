@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { standaloneOnly } from "./ui-cleanup-controls.mjs";
 import { close, inspect } from "./ui-helpers.mjs";
 import {
   assertNavigation,
@@ -9,6 +10,7 @@ import {
 import { reopen } from "./ui-reopen-first.mjs";
 import { completed, ready } from "./ui-reopen-state.mjs";
 import { chooseTool } from "./ui-tools.mjs";
+import { assertWidgetTargets } from "./ui-widget-reachability.mjs";
 export const field = (page, name) => page.getByRole("textbox", { name, exact: true });
 export const button = (page, name) => page.getByRole("button", { name, exact: true });
 export { completed, ready } from "./ui-reopen-state.mjs";
@@ -46,7 +48,7 @@ export async function cycle(
     before,
     selection,
     sketchSelection,
-    completionPanel,
+    parameterPanel,
     navigationBefore,
     kind,
     cancel,
@@ -71,7 +73,8 @@ export async function cycle(
   assert.deepEqual(previewGeometry, acceptedGeometry, "reopening reuses exact accepted geometry");
   if (kind !== "erode") assert.deepEqual(previewAppearance, acceptedAppearance);
   await check(parameters, state, accepted);
-  if (completionPanel) await completionContained(page, completionPanel);
+  await standaloneOnly(page);
+  if (parameterPanel) await assertWidgetTargets(page, parameterPanel, "reopened parameter card");
   await originalRoundTrip(page, {
     before,
     accepted,
@@ -85,7 +88,8 @@ export async function cycle(
   const candidate = (await ready(page, accept)).preview;
   assert.ok(candidate);
   await validate(candidate, null, parameters, accepted);
-  if (completionPanel) await completionContained(page, completionPanel);
+  await standaloneOnly(page);
+  if (parameterPanel) await assertWidgetTargets(page, parameterPanel, "changed parameter card");
   await page.screenshot({ path: `.cache/sketch-review/${name}-reopen-${kind}.png` });
   const alternativeBeforeEntry = navigationBefore ? await navigationIdle(page) : null;
   if (accept) await button(page, accept).click();
@@ -121,51 +125,6 @@ export async function cycle(
     );
   console.log(
     `${name}: ${kind} restored inputs, changed candidate/accepted geometry, exact Cancel/Redo and branch Undo/Redo passed`,
-  );
-}
-
-async function completionContained(page, panelSelector) {
-  const label = page.locator(".reopen-completion:not([hidden])");
-  assert.equal(await label.count(), 1);
-  const measured = await label.evaluate((label, selector) => {
-    const checkbox = label.querySelector("input[type=checkbox]");
-    const panel = label.parentElement;
-    const box = label.getBoundingClientRect(),
-      input = checkbox.getBoundingClientRect();
-    const inside = (inner, outer) =>
-      inner.width > 0 &&
-      inner.height > 0 &&
-      inner.left >= outer.left - 0.5 &&
-      inner.top >= outer.top - 0.5 &&
-      inner.right <= outer.right + 0.5 &&
-      inner.bottom <= outer.bottom + 0.5;
-    const centerHit = (rect) =>
-      document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
-    const text = Array.from(label.childNodes).find((node) => node.nodeType === Node.TEXT_NODE);
-    const range = document.createRange();
-    range.selectNodeContents(text);
-    return {
-      card: panel.matches(selector),
-      label: inside(box, panel.getBoundingClientRect()),
-      checkbox: inside(input, box),
-      text: inside(range.getBoundingClientRect(), box),
-      checkboxHit: centerHit(input) === checkbox,
-      labelHit: label.contains(centerHit(box)),
-      singleLine: range.getClientRects().length === 1,
-    };
-  }, panelSelector);
-  assert.deepEqual(
-    measured,
-    {
-      card: true,
-      label: true,
-      checkbox: true,
-      text: true,
-      checkboxHit: true,
-      labelHit: true,
-      singleLine: true,
-    },
-    "reopened completion remains in its current parameter card and pointer-reachable",
   );
 }
 

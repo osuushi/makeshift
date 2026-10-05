@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
-import { cleanupAvailabilityRoute, settledBroom } from "./ui-cleanup-availability.mjs";
+import { cleanupCompletionRoute } from "./ui-cleanup-completion.mjs";
+import { standaloneOnly } from "./ui-cleanup-controls.mjs";
 import { directionalWidgetRoute } from "./ui-directional-widget.mjs";
 import { at, close, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import { previewActionReady } from "./ui-preview-readiness.mjs";
@@ -36,7 +37,7 @@ async function radius(page, value) {
   await inspect(page);
 }
 export async function bodyFilletRoute(page, name, electron, cleanup = false) {
-  await cleanupAvailabilityRoute(page, plate);
+  await cleanupCompletionRoute(page, plate);
   await directionalWidgetRoute(page, plate);
   await plate(page);
   const original = (await inspect(page)).document;
@@ -57,12 +58,11 @@ export async function bodyFilletRoute(page, name, electron, cleanup = false) {
     await page.getByRole("textbox", { name: "Fillet radius" }).getAttribute("aria-invalid"),
     "false",
   );
-  // The deferred cleanup probe briefly owns the same calculation slot.
-  await settledBroom(page);
+  await standaloneOnly(page);
   assert.ok(await page.getByRole("button", { name: "Accept fillet" }).isEnabled());
   await radius(page, 1);
   if (cleanup) {
-    assert.ok(await (await settledBroom(page)).isDisabled(), "A plain fillet has no cleanup work");
+    await standaloneOnly(page);
     await page.getByRole("button", { name: "Accept fillet", exact: true }).click();
   } else await page.keyboard.press("Enter");
   const accepted = (await inspect(page)).document;

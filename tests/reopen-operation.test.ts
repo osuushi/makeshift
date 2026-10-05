@@ -25,7 +25,7 @@ const extrusion = {
   targets: ["b", "a"],
   eligibleTargets: ["a", "b"],
 };
-const extrude = { kind: "extrude" as const, parameters: { extrusion, cleanup: true } };
+const extrude = { kind: "extrude" as const, parameters: { extrusion } };
 const boolean = describeOperation({
   kind: "boolean-bodies",
   operation: { ids: ["b", "a"], mode: "subtract", keepOriginals: false },
@@ -83,7 +83,7 @@ for (const operation of [extrude, boolean]) {
   });
 }
 
-test("failed, cancelled and no-op attempts preserve copied parameters and cleanup intent", () => {
+test("failed, cancelled and no-op attempts preserve copied parameters", () => {
   const store = new DocumentStore(document("before")),
     after = document("after");
   store.accept(after, extrude);
@@ -92,11 +92,10 @@ test("failed, cancelled and no-op attempts preserve copied parameters and cleanu
   store.accept(after, boolean);
   const intent = store.reopenOperation;
   assert.ok(intent && intent.request.kind === "extrude");
-  assert.equal(intent.cleanup, true);
+  assert.equal(intent.cleanup, false);
   assert.deepEqual(intent.request.extrusion, extrusion);
   intent.request.extrusion.targets?.reverse();
   intent.request.extrusion.distance = 999;
-  intent.cleanup = false;
   assert.deepEqual(store.reopenOperation, reopenOperation(extrude));
 });
 
@@ -148,6 +147,12 @@ test("fresh/replaced owners and incomplete diagnostic intents cannot reopen", ()
 
 test("latest API-only cleanup combinations fail before rollback without skipping older eligible geometry", () => {
   const unsupported = [
+    "extrude",
+    "revolve",
+    "loft",
+    "boolean-bodies",
+    "finish-edges",
+    "offset-faces",
     "shell",
     "erode",
     "scale",
@@ -169,6 +174,8 @@ test("latest API-only cleanup combinations fail before rollback without skipping
       kind,
       parameters: {
         cleanup: true,
+        extrusion,
+        revolution: {},
         operation: { selection: [{ body: "a", faces: [] }], thickness: -1 },
         projection: {},
         selection: [],
@@ -185,20 +192,14 @@ test("latest API-only cleanup combinations fail before rollback without skipping
     assert.equal(store.canRedo, false);
     store.undo();
     assert.deepEqual(store.reopenOperation, reopenOperation(extrude));
-  }
-  for (const kind of [
-    "extrude",
-    "revolve",
-    "loft",
-    "boolean-bodies",
-    "finish-edges",
-    "offset-faces",
-  ] as const)
+    store.redo();
+    assert.equal(store.data, after, "API-only cleanup result remains exactly redoable");
+    assert.equal(store.reopenOperation, undefined);
     assert.equal(
-      reopenOperation({
-        kind,
-        parameters: { cleanup: true, extrusion: {}, revolution: {}, operation: {} },
-      })?.cleanup,
+      [...store.history].reverse().find((entry) => entry.operation.kind === kind)?.operation
+        .parameters.cleanup,
       true,
+      "Accepted cleanup intent remains in owner history",
     );
+  }
 });

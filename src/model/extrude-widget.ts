@@ -1,12 +1,5 @@
 import { numericFocus } from "../tools/menu-focus.js";
-import {
-  compactCleanup,
-  distanceField,
-  positionAxialPanel,
-  toolAction,
-  updateAxialArrow,
-} from "./axial-widget.js";
-import { cleanupButton } from "./cleanup-button.js";
+import { distanceField, positionAxialPanel, toolAction, updateAxialArrow } from "./axial-widget.js";
 import { ExtrudeDraft } from "./extrude-draft.js";
 import { WidgetClearance } from "./widget-clearance.js";
 import "./extrude-widget.css";
@@ -18,7 +11,6 @@ import { extrusionAxis, projectedAxis } from "./extrude-axis.js";
 import { revolutionPoint } from "./revolve-axis.js";
 
 export class ExtrudeWidget {
-  readonly cleanup = cleanupButton();
   readonly draft: ExtrudeDraft;
   readonly root = document.createElement("div");
   private placement = new WidgetClearance(this.root);
@@ -77,8 +69,7 @@ export class ExtrudeWidget {
       button.onclick = () => setMode(mode);
       actions.append(button);
     }
-    compactCleanup(this.cleanup);
-    actions.append(this.accept, this.dismiss, this.cleanup);
+    actions.append(this.accept, this.dismiss);
     this.options.append(actions);
     this.root.append(this.handle, this.options);
   }

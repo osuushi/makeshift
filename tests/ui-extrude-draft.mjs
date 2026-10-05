@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
+import { standaloneOnly } from "./ui-cleanup-controls.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -117,12 +118,6 @@ async function draftDragCancel(page) {
 }
 
 async function acceptCleanDraft(page) {
-  const broom = page.getByRole("button", { name: "Commit and clean up", exact: true });
-  await page.waitForFunction(
-    () =>
-      document.querySelector(".extrude-controls .commit-cleanup")?.getAttribute("aria-busy") ===
-      "false",
-  );
-  assert.equal(await broom.isDisabled(), true);
+  await standaloneOnly(page);
   await page.getByRole("button", { name: "Accept extrusion", exact: true }).click();
 }

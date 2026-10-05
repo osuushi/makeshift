@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { orient } from "./ui-blend-edit.mjs";
 import { makePlate, worldClick } from "./ui-face-offset.mjs";
-import { holdCleanup } from "./ui-held-cleanup.mjs";
+import { holdPreview } from "./ui-held-preview.mjs";
 import { close, inspect, modalCompleted } from "./ui-helpers.mjs";
 import { previewActionReady } from "./ui-preview-readiness.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
@@ -13,50 +13,40 @@ async function route(page, name) {
   await worldClick(page, [0, 1.5, 2.5]);
   assert.equal((await inspect(page)).modelingSelection[0]?.face, hole.id);
   await page.getByRole("button", { name: "Offset faces", exact: true }).click();
-  await page.getByRole("textbox", { name: "Face radius", exact: true }).fill("2.5");
-  const preview = (await inspect(page)).preview;
-  close(preview.bodies[0].volume, (400 - Math.PI * 2.5 ** 2) * 5);
-  const cleanup = await holdCleanup(page);
+  const held = await holdPreview(page, "offset-faces");
   let ready = false;
   try {
-    const pending = await page.evaluate(() => ({
-      busy: window.makeshiftInspect().busy,
-      cleanup: document
-        .querySelector(".face-offset-widget .commit-cleanup")
-        ?.getAttribute("aria-busy"),
-    }));
-    assert.equal(pending.busy, false);
-    assert.equal(
-      pending.cleanup,
-      "true",
-      "Real cleanup must still be pending when readiness starts",
-    );
+    await page.getByRole("textbox", { name: "Face radius", exact: true }).fill("2.5");
+    await page.waitForFunction(() => window.previewResponseHeld);
     const readiness = previewActionReady(page, "Accept face offset").then(() => {
       ready = true;
     });
     void readiness.catch(() => {});
-    await page.waitForFunction(() => window.previewCleanupHeld);
     const during = await page.evaluate(() => window.makeshiftInspect());
-    assert.equal(ready, false, "Readiness must not return before pending cleanup finishes");
+    assert.equal(ready, false, "Readiness must wait for real preview delivery");
     assert.equal(during.busy, true);
     assert.equal(during.solving, true);
     assert.equal(during.interaction.kind, "face-offset");
     assert.equal(during.interaction.phase, "editing");
     assert.deepEqual(during.document, original);
-    assert.deepEqual(during.preview, preview);
-    cleanup.release();
+    held.release();
     await readiness;
+    const preview = (await inspect(page)).preview;
+    close(preview.bodies[0].volume, (400 - Math.PI * 2.5 ** 2) * 5);
     await page.getByRole("button", { name: "Accept face offset", exact: true }).click();
     await modalCompleted(page);
     const accepted = await inspect(page);
+    assert.deepEqual(accepted.document, preview);
     close(
       accepted.document.bodies[0].faces.find((face) => face.id === hole.id).cylinder.radius,
       2.5,
     );
     close(accepted.document.bodies[0].volume, (400 - Math.PI * 2.5 ** 2) * 5);
-    console.log(`${name}: readiness drains held real cleanup before one physical Accept click`);
+    console.log(
+      `${name}: readiness drains held real offset preview before one exact-candidate Accept`,
+    );
   } finally {
-    await cleanup.close();
+    await held.close();
   }
 }
 await withUiRuntimes(route, {

@@ -3,7 +3,6 @@ import type { SketchEditor } from "../sketch/editor.js";
 import type { LiftSource, Revolution } from "./body.js";
 import { extrusionAxis } from "./extrude-axis.js";
 import { ExtrudeTargets } from "./extrude-targets.js";
-import { ReopenCompletion } from "./reopen-completion.js";
 import type { RevolveAxis } from "./revolve-axis.js";
 import { installRevolveDrag } from "./revolve-drag.js";
 import { RevolveInputs } from "./revolve-inputs.js";
@@ -16,7 +15,6 @@ export class RevolveControls {
   axis: RevolveAxis | null = null;
   angle = 360;
   height = 0;
-  private completion = new ReopenCompletion();
   private picking = false;
   private hover: RevolveAxis | null = null;
   private abort = new AbortController();
@@ -44,7 +42,7 @@ export class RevolveControls {
       this.mode = mode;
       this.queue();
     });
-    this.widget.options.append(this.targets.root, this.completion.root);
+    this.widget.options.append(this.targets.root);
     overlay.append(this.widget.root);
     this.widget.entry.onclick = () => this.begin();
     this.widget.axis.onclick = () => {
@@ -57,7 +55,6 @@ export class RevolveControls {
       editor.notice = "Choose a straight edge, cylindrical face or world axis in the profile plane";
       editor.refresh();
     };
-    this.widget.cleanup.onclick = () => void this.finish(true);
     this.widget.accept.onclick = () => void this.finish();
     for (const key of ["angle", "height"] as const)
       this.widget[key].addEventListener(
@@ -99,9 +96,9 @@ export class RevolveControls {
     editor.world.changed.add(this.update);
     this.update();
   }
-  async reopen(revolution: Revolution, cleanup: boolean): Promise<void> {
+  async reopen(revolution: Revolution): Promise<void> {
     this.editor.modeling.setTool("revolve");
-    this.begin(revolution, cleanup);
+    this.begin(revolution);
     if (!this.lease) throw new Error("Cannot restore revolution inputs");
     this.queue();
     await this.running;
@@ -109,7 +106,7 @@ export class RevolveControls {
     this.widget.angle.focus();
     this.widget.angle.select();
   }
-  begin(restored?: Revolution, cleanup = false): void {
+  begin(restored?: Revolution): void {
     const editor = this.editor;
     if (editor.blocked || editor.interactions.current || editor.world.active) return;
     this.frame = extrusionAxis(editor);
@@ -133,8 +130,6 @@ export class RevolveControls {
     this.picking = !restored;
     this.widget.angle.value = String(this.angle);
     this.widget.height.value = String(this.height);
-    this.completion.reset();
-    if (restored) this.completion.begin(cleanup);
     this.valid = false;
     this.targets.reset();
     this.targets.selected = restored?.targets;
@@ -149,10 +144,8 @@ export class RevolveControls {
         mode: this.mode,
         targets: this.targets.selected,
         picking: this.picking,
-        cleanup: this.completion.cleanup,
       }),
       async (state) => {
-        this.completion.input.checked = state.cleanup;
         this.axis = state.axis;
         this.angle = state.angle;
         this.height = state.height;
@@ -233,14 +226,14 @@ export class RevolveControls {
         ? ` · Showing last valid preview: ${this.lastGood}`
         : "");
   }
-  async finish(cleanup = this.completion.cleanup): Promise<boolean> {
+  async finish(): Promise<boolean> {
     await this.running;
     if (this.lease && this.picking && !this.latest) {
       await this.cancel();
       return true;
     }
     if (!this.valid || this.picking || !this.lease?.close()) return false;
-    const success = await this.editor.accept(cleanup);
+    const success = await this.editor.accept();
     if (!success) {
       if (this.lease) this.lease.phase = "editing";
       this.editor.refresh();
@@ -259,7 +252,6 @@ export class RevolveControls {
     this.release();
   }
   private release(): void {
-    this.completion.reset();
     this.picking = false;
     this.lease?.release();
     this.lease = null;
@@ -268,7 +260,6 @@ export class RevolveControls {
     this.editor.refresh();
   }
   private update = (): void => {
-    this.widget.cleanup.disabled = !this.valid || this.editor.blocked;
     const frame = this.active ? this.frame : extrusionAxis(this.editor);
     const mode = this.mode === "auto" ? this.editor.store.booleanMode : this.mode;
     this.widget.update(
