@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { drag, reset } from "./ui-helpers.mjs";
-import { navigationIdle, navigationRoundTrip } from "./ui-navigation-history.mjs";
+import { navigationIdle, navigationRoundTrip, navigationTips } from "./ui-navigation-history.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function navigationInputRoute(page, name) {
@@ -13,8 +13,8 @@ export async function navigationInputRoute(page, name) {
   await page.keyboard.press("r");
   await drag(page, [-15, -10], [15, 10]);
   await navigationIdle(page);
-  await navigationRoundTrip(page, () => wheel(page, 30, 20), "Scroll pan");
-  await navigationRoundTrip(
+  await ordinaryNavigation(page, () => wheel(page, 30, 20), "Scroll pan");
+  await ordinaryNavigation(
     page,
     async () => {
       await page.mouse.move(1000, 600);
@@ -24,6 +24,13 @@ export async function navigationInputRoute(page, name) {
     },
     "Secondary pan",
   );
+  await page.getByRole("button", { name: "Trackpad", exact: true }).click();
+  await page.getByRole("radio", { name: "Mouse", exact: true }).check();
+  await page.keyboard.press("Escape");
+  await ordinaryNavigation(page, () => wheel(page, 0, 30), "Mouse wheel zoom");
+  await page.getByRole("button", { name: "Mouse", exact: true }).click();
+  await page.getByRole("radio", { name: "Trackpad", exact: true }).check();
+  await page.keyboard.press("Escape");
   await navigationRoundTrip(page, () => pinch(page), "Ctrl-wheel pinch");
   await navigationRoundTrip(
     page,
@@ -36,7 +43,8 @@ export async function navigationInputRoute(page, name) {
     "WebKit gesture-scale pinch",
   );
   await navigationRoundTrip(page, () => orbit(page), "Command orbit with workspace/selection");
-  await navigationRoundTrip(page, () => orbit(page, true), "Option roll");
+  await ordinaryNavigation(page, () => orbit(page), "Same-mode orbit");
+  await ordinaryNavigation(page, () => orbit(page, true), "Same-mode Option roll");
   await navigationRoundTrip(
     page,
     () => chooseTool(page, "Sketch on XZ", "sketch-xz"),
@@ -66,11 +74,7 @@ export async function navigationInputRoute(page, name) {
     "Cube keyboard alignment",
   );
   await noOpNavigation(page);
-  await navigationRoundTrip(
-    page,
-    () => orbit(page, true, true),
-    "Canceled moved orbit keeps a reversible view",
-  );
+  await ordinaryNavigation(page, () => orbit(page, true, true), "Canceled same-mode orbit");
   console.log(
     `${name}: entry/exit, scroll/secondary pan, browser/WebKit pinch, orbit/roll, cube click/drag/keyboard Undo/Redo passed`,
   );
@@ -80,8 +84,11 @@ export async function wheel(page, x, y) {
   await page.mouse.wheel(x, y);
 }
 export async function pinch(page) {
+  await pinchStep(page, 0, -12);
+}
+export async function pinchStep(page, x, y) {
   await page.keyboard.down("Control");
-  await wheel(page, 0, -12);
+  await wheel(page, x, y);
   await page.keyboard.up("Control");
 }
 function gesture(page, type, scale) {
@@ -118,7 +125,7 @@ async function orbit(page, roll = false, cancel = false) {
   if (roll) await page.keyboard.up("Alt");
   await page.keyboard.up("Meta");
 }
-async function cubeDrag(page) {
+export async function cubeDrag(page) {
   const box = await page.locator(".orientation-cube").boundingBox();
   const x = box.x + box.width / 2,
     y = box.y + box.height / 2;
@@ -126,6 +133,14 @@ async function cubeDrag(page) {
   await page.mouse.down();
   await page.mouse.move(x + 28, y + 18, { steps: 6 });
   await page.mouse.up();
+}
+async function ordinaryNavigation(page, action, label) {
+  const before = await navigationIdle(page);
+  await action();
+  const after = await navigationIdle(page);
+  assert.notDeepEqual(after.camera, before.camera, `${label} moves the camera`);
+  assert.deepEqual(after.document, before.document);
+  assert.equal((await navigationTips(page)).length, 0, `${label} leaves no view history`);
 }
 async function noOpNavigation(page) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");

@@ -8,6 +8,7 @@ import { BooleanOperands } from "./boolean-operands.js";
 import { BooleanPreference } from "./boolean-preference.js";
 import { booleanStart } from "./boolean-start.js";
 import { BooleanWidget } from "./boolean-widget.js";
+import type { EntityViewer } from "./entity-viewer.js";
 
 export class BooleanControls {
   private widget: BooleanWidget;
@@ -18,12 +19,13 @@ export class BooleanControls {
   private operation: BodyBoolean = { ids: [], mode: "union", keepOriginals: false };
   private running: Promise<void> | null = null;
   private valid = false;
-  private collecting = false;
+  private targetId: string | null = null;
   private preference = new BooleanPreference();
   private count = 0;
   constructor(
     private editor: SketchEditor,
     overlay: HTMLElement,
+    private entities: EntityViewer,
   ) {
     this.operands = new BooleanOperands(editor);
     this.widget = new BooleanWidget(
@@ -31,16 +33,13 @@ export class BooleanControls {
       (mode) =>
         this.change(() => {
           this.operation.mode = mode;
+          this.targetId ??= this.bodies[0]?.id ?? null;
           this.operation.keepOriginals = this.preference.get(mode);
         }),
       () =>
         this.change(() => {
           this.operation.keepOriginals = !this.operation.keepOriginals;
           this.preference.set(this.operation.mode, this.operation.keepOriginals);
-        }),
-      () =>
-        this.change(() => {
-          this.bodies.push(this.bodies.shift() as Body);
         }),
       () => {
         void this.finish();
@@ -49,17 +48,13 @@ export class BooleanControls {
         void this.cancel();
       },
     );
-    this.widget.collect.onclick = () => this.setCollecting(!this.collecting);
-    this.widget.choose = (body) => this.toggleBody(body);
     this.installPicking();
-    this.widget.cleanup.onclick = () => void this.finish(true);
     onModelKeydown(
       (event) => {
         if (!this.lease || !["Enter", "Escape"].includes(event.key)) return;
         event.preventDefault();
         event.stopImmediatePropagation();
         if (event.key === "Escape") void this.cancel();
-        else if (this.collecting) this.setCollecting(false);
         else void this.finish();
       },
       { signal: this.abort.signal, capture: true },
@@ -71,7 +66,7 @@ export class BooleanControls {
     const resolution = booleanStart(this.editor);
     if (!resolution.available) return;
     this.bodies = resolution.inputs;
-    this.collecting = this.bodies.length < 2;
+    this.targetId = this.bodies[0]?.id ?? null;
     this.lease = this.editor.interactions.acquire(
       "body-boolean",
       () => this.cancel(),
@@ -79,15 +74,27 @@ export class BooleanControls {
       { navigation: "when-released" },
     );
     if (!this.lease) return;
+    this.entities.sourcePicker = {
+      choose: (target) => {
+        const body = this.editor.store.data.bodies?.find(
+          (b) => target.kind === "body" && b.id === target.body,
+        );
+        if (body) this.toggleBody(body);
+      },
+      hover: () => {},
+      selected: (target) => target.kind === "body" && this.bodies.some((b) => b.id === target.body),
+      available: (target) => target.kind === "body" && this.editor.visibility.visible(target.body),
+      role: (target) => (target.kind === "body" ? this.role(target.body) : undefined),
+    };
     this.operation = { ids: [], mode, keepOriginals: this.preference.get(mode) };
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
     this.operation.ids = this.bodies.map((body) => body.id);
     this.lease.trackHistory(
       this.widget.root,
-      () => ({ ids: this.operation.ids, mode: this.operation.mode, collecting: this.collecting }),
+      () => ({ ids: this.operation.ids, mode: this.operation.mode, target: this.targetId }),
       async (operation) => {
-        this.collecting = operation.collecting;
+        this.targetId = operation.target;
         this.operation = {
           ids: operation.ids,
           mode: operation.mode,
@@ -102,25 +109,28 @@ export class BooleanControls {
     );
     this.change(() => {});
   };
-  private notice(): void {
-    const roles = this.operation.mode === "subtract" ? " · first body is the target" : "";
-    this.editor.notice = this.collecting
-      ? `${this.operation.mode} · click bodies to add/remove${roles} · Done choosing to accept`
-      : "Boolean · Change bodies to adjust operands · Enter accepts · Escape cancels";
-  }
-  private setCollecting(collecting: boolean): void {
-    if (this.editor.blocked || !this.lease) return;
-    this.collecting = collecting;
-    this.notice();
-    this.lease.history?.checkpoint();
-    this.editor.refresh();
+  private role(id: string): "target" | "tool" | "input" | undefined {
+    if (!this.bodies.some((body) => body.id === id)) return undefined;
+    return this.operation.mode === "subtract"
+      ? id === this.targetId
+        ? "target"
+        : "tool"
+      : "input";
   }
   private toggleBody(body: Body): void {
-    if (!this.collecting) return;
     this.change(() => {
       const index = this.bodies.findIndex((b) => b.id === body.id);
-      if (index < 0) this.bodies.push(body);
-      else this.bodies.splice(index, 1);
+      if (index < 0) {
+        this.bodies.push(body);
+        if (this.operation.mode === "subtract" || !this.targetId) this.targetId = body.id;
+      } else if (this.operation.mode === "subtract" && body.id === this.targetId) {
+        this.targetId = null;
+      } else {
+        this.bodies.splice(index, 1);
+        if (body.id === this.targetId) this.targetId = null;
+      }
+      if (this.targetId)
+        this.bodies.sort((a, b) => Number(b.id === this.targetId) - Number(a.id === this.targetId));
     });
     this.lease?.history?.checkpoint();
   }
@@ -128,8 +138,7 @@ export class BooleanControls {
     this.editor.world.canvas.addEventListener(
       "click",
       (event) => {
-        if (!this.lease || !this.collecting || event.button || event.metaKey || event.ctrlKey)
-          return;
+        if (!this.lease || event.button || event.metaKey || event.ctrlKey) return;
         event.preventDefault();
         event.stopImmediatePropagation();
         if (this.editor.blocked) return;
@@ -150,13 +159,16 @@ export class BooleanControls {
     if (this.editor.blocked || this.lease?.phase !== "editing") return;
     change();
     this.operation.ids = this.bodies.map((b) => b.id);
-    this.operands.show(this.bodies, this.operation.mode);
+    this.operands.show(this.bodies, this.operation.mode, this.targetId);
     this.valid = false;
     this.lease.show(null);
     this.count = 0;
     this.editor.message = "";
-    this.notice();
-    this.running = this.bodies.length >= 2 ? this.preview() : null;
+    this.editor.notice = "";
+    this.running =
+      this.bodies.length >= 2 && (this.operation.mode !== "subtract" || this.targetId)
+        ? this.preview()
+        : null;
     this.editor.refresh();
   }
   private async preview(): Promise<void> {
@@ -180,7 +192,7 @@ export class BooleanControls {
     }
     this.editor.refresh();
   }
-  private async finish(cleanup = false): Promise<boolean> {
+  private async finish(): Promise<boolean> {
     await this.running;
     const lease = this.lease;
     if (!lease) return false;
@@ -188,14 +200,14 @@ export class BooleanControls {
       await this.cancel();
       return true;
     }
-    if (this.collecting || !this.valid || !lease.close()) return false;
+    if (!this.valid || !lease.close()) return false;
     const consumed = this.operation.ids.filter(
       (_, i) => !this.operation.keepOriginals || (this.operation.mode === "subtract" && i === 0),
     );
     const retained = new Set(
       this.editor.store.data.bodies?.filter((b) => !consumed.includes(b.id)).map((b) => b.id),
     );
-    const success = await this.editor.accept(cleanup);
+    const success = await this.editor.accept();
     if (!success) {
       if (this.lease) this.lease.phase = "editing";
       this.editor.refresh();
@@ -219,6 +231,7 @@ export class BooleanControls {
   }
   private end(lease: InteractionLease): void {
     this.lease = null;
+    this.entities.sourcePicker = null;
     this.widget.root.hidden = true;
     this.editor.notice = this.editor.message = "";
     this.operands.clear();
@@ -226,22 +239,8 @@ export class BooleanControls {
     this.editor.refresh();
   }
   private update = (): void => {
-    this.widget.cleanup.disabled = !this.valid || this.editor.blocked;
     if (!this.lease) return;
-    const target =
-      (this.editor.store.data.bodies ?? []).findIndex((b) => b.id === this.bodies[0]?.id) + 1;
-    this.widget.update(
-      this.operation,
-      `Body ${target}`,
-      this.editor.blocked,
-      this.valid,
-      this.count,
-      this.collecting,
-      this.bodies,
-      (this.editor.store.data.bodies ?? []).flatMap((body, index) =>
-        this.editor.visibility.visible(body.id) ? [{ body, number: index + 1 }] : [],
-      ),
-    );
+    this.widget.update(this.operation, this.editor.blocked, this.valid, this.count);
     const p = this.bodies.length
       ? this.editor.world.project(bodyCenter(this.bodies))
       : { x: innerWidth / 2, y: 80 };
