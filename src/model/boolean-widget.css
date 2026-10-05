@@ -2,7 +2,7 @@
   position: absolute;
   display: flex;
   flex-wrap: wrap;
-  width: 650px;
+  width: max-content;
   max-width: calc(100vw - 32px);
   align-items: center;
   gap: 8px;
@@ -31,41 +31,10 @@
   background: #dcecff;
   border-color: #528ec9;
 }
-.boolean-widget button[aria-label="Change subtraction target"] {
-  color: #246fb8;
-}
 .boolean-widget svg {
   width: 20px;
   height: 20px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.7;
-}
-.boolean-status {
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.boolean-body-choices {
-  flex-basis: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  max-width: 650px;
-  max-height: 180px;
-  overflow-y: auto;
-}
-.boolean-body-choices > span {
-  flex-basis: 100%;
-  font-size: 12px;
-}
-.boolean-body-choices button[data-role="tool"][aria-pressed="true"] {
-  color: #8b571b;
-  border-color: #d08a35;
-  background: #fff1dc;
-}
-
-.boolean-roles {
-  flex-basis: 100%;
-  font-size: 12px;
 }
