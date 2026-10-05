@@ -146,9 +146,7 @@ async function booleanBoundary(page) {
   const keep = page.getByRole("button", { name: "Keep originals", exact: true });
   await keep.click();
   assert.equal((await inspect(page)).preview.bodies.length, 4);
-  const choosing = page.getByRole("button", { name: "Change Boolean bodies", exact: true });
-  const second = page.getByRole("button", { name: "Boolean Body 2", exact: true });
-  await choosing.click();
+  const second = page.getByRole("button", { name: "Select Body 2", exact: true });
   await second.click();
   assert.equal((await inspect(page)).preview, null, "One operand cannot produce a Boolean");
   await history(page);
@@ -159,8 +157,6 @@ async function booleanBoundary(page) {
   assert.equal(await second.getAttribute("aria-pressed"), "false");
   assert.equal((await inspect(page)).preview, null);
   await history(page);
-  await history(page);
-  assert.equal(await choosing.getAttribute("aria-pressed"), "false");
   assert.equal((await inspect(page)).interaction.kind, "body-boolean");
   assert.equal(
     (await inspect(page)).preview.bodies.length,

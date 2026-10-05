@@ -114,11 +114,15 @@ export class ThreadApplication {
     if (!current) return;
     this.root.replaceChildren();
     const heading = document.createElement("h2");
-    heading.textContent = "Thread decorator settings";
+    heading.textContent = "Create threads";
     this.status = document.createElement("p");
     this.status.setAttribute("role", "status");
     this.status.className = "decorator-warning";
     this.root.append(heading, this.status);
+    const explanation = document.createElement("p");
+    explanation.textContent =
+      "The default settings do not fit this cylinder. Adjust them below, then create the threads. Nothing is added until you confirm.";
+    this.root.append(explanation);
     appendThreadInformation(this.root, this.editor, current.instances);
     const fields = current.parsed
       ? current.instances
@@ -129,11 +133,11 @@ export class ThreadApplication {
     appendThreadSettings(this.root, fields, this.patch, this, true);
     this.accept = document.createElement("button");
     this.accept.type = "button";
-    this.accept.textContent = "Apply thread decorator";
+    this.accept.textContent = "Create threads";
     this.accept.onclick = () => void this.commit();
     const cancel = document.createElement("button");
     cancel.type = "button";
-    cancel.textContent = "Cancel thread decorator";
+    cancel.textContent = "Cancel";
     cancel.onclick = () => this.cancel();
     this.root.append(this.accept, cancel);
     this.update();
@@ -143,8 +147,8 @@ export class ThreadApplication {
     if (!current) return;
     const waiting = current.lease.phase !== "editing" || this.editor.store.busy;
     this.status.textContent = waiting
-      ? "Applying thread decorator…"
-      : current.error || "Preview only. Apply to keep these settings.";
+      ? "Creating threads…"
+      : current.error || "Preview only. Create threads to keep these settings.";
     for (const control of this.root.querySelectorAll<HTMLInputElement>("input, select, button"))
       control.disabled = waiting;
     this.accept.disabled = waiting || !!current.error;

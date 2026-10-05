@@ -23,7 +23,7 @@ export function installNavigation(world: World): () => void {
         if ((event.button !== 1 && event.button !== 2) || drag || !world.canNavigate()) return;
         event.preventDefault();
         event.stopPropagation();
-        world.navigation.hold("pan");
+        world.navigation.hold("pan", false);
         world.cancelCameraMotion();
         drag = { id: event.pointerId, x: event.clientX, y: event.clientY };
         canvas.setPointerCapture(event.pointerId);

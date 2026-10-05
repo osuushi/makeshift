@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test, { type TestContext } from "node:test";
 import * as THREE from "three";
-import { captureCamera } from "../src/model/camera-state.js";
+import { type CameraState, captureCamera, restoreCamera } from "../src/model/camera-state.js";
 import type { NavigationChange } from "../src/sketch/history-navigation.js";
 import { emptySelection } from "../src/sketch/history-selection.js";
 import { NavigationHistory } from "../src/sketch/navigation-history.js";
@@ -34,6 +34,7 @@ function fixture(t: TestContext) {
       world.cameraTransitioning = false;
     },
     draw: () => navigation.settled(),
+    animateCamera: (state: CameraState) => restoreCamera(world as unknown as World, state),
     levelHorizon: () => {
       levels++;
       world.cameraTransitioning = true;
