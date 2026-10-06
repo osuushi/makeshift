@@ -53,7 +53,9 @@ agent dock keep their purposes. They are not replacement tool catalogs.
   prior focus. Typing/navigation cannot fire CAD shortcuts. Agent focus retains
   its own key handling rather than opening CAD Tools from the terminal.
 - Execution uses ordinary activation: finish a valid pending edit only when the
-  requested switch requires it; explain incompatible/invalid switches. Recheck
+  requested switch requires it. Await ordinary acceptance and ownership release;
+  invalid latest input stays open with its error, and unfinished owners require
+  explicit completion/cancellation. Recheck
   availability after asynchronous finishing and prevent repeat activation. Merely
   opening the menu never finishes an edit.
 - Do not open during captured geometry drags. During calculations allow discovery,

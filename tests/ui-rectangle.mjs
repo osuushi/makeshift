@@ -1,5 +1,15 @@
 import assert from "node:assert/strict";
-import { at, click, close, corners, inspect, pointEquals, reset, settled } from "./ui-helpers.mjs";
+import {
+  at,
+  click,
+  close,
+  corners,
+  inspect,
+  modalCompleted,
+  pointEquals,
+  reset,
+  settled,
+} from "./ui-helpers.mjs";
 import { rotatedHandles } from "./ui-rotated-handles.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -97,6 +107,15 @@ async function rectangleDimensionsAndHistory(page, name) {
   const beforeInvalid = JSON.stringify((await inspect(page)).document);
   await page.getByRole("textbox", { name: "Width", exact: true }).fill("0");
   await page.keyboard.press("Enter");
+  assert.equal(JSON.stringify((await inspect(page)).document), beforeInvalid);
+  const invalidWidth = page.getByRole("textbox", { name: "Width", exact: true });
+  assert.equal(await invalidWidth.inputValue(), "0");
+  assert.equal(await invalidWidth.getAttribute("aria-invalid"), "true");
+  assert.equal((await inspect(page)).interaction.kind, "numeric");
+  assert.equal((await inspect(page)).interaction.phase, "editing");
+  await page.keyboard.press("Escape");
+  await modalCompleted(page);
+  assert.equal(await invalidWidth.inputValue(), "40");
   assert.equal(JSON.stringify((await inspect(page)).document), beforeInvalid);
   await chooseTool(page, "undo", "undo");
   points = await corners(page);

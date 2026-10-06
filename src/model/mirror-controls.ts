@@ -39,6 +39,7 @@ export class MirrorControls {
   ) {
     this.disposeTool = toolCatalog(editor).register({
       id: "mirror",
+      finishEdit: true,
       label: "Mirror",
       category: "Transform",
       aliases: ["reflect", "reflection"],

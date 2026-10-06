@@ -21,6 +21,7 @@ export class BodyActions {
     this.disposers.push(
       catalog.register({
         id: "duplicate",
+        finishEdit: true,
         label: "Duplicate bodies",
         category: "Transform",
         aliases: ["copy bodies"],
@@ -32,6 +33,7 @@ export class BodyActions {
       this.disposers.push(
         catalog.register({
           id: mode,
+          finishEdit: true,
           label: `${mode[0].toUpperCase()}${mode.slice(1)}`,
           category: "Solid",
           shortcut: modelingShortcutLabel(mode),
@@ -48,6 +50,7 @@ export class BodyActions {
     this.disposers.push(
       catalog.register({
         id: "cleanup",
+        finishEdit: true,
         label: "Clean up",
         category: "Solid",
         aliases: ["refine", "remove seams"],

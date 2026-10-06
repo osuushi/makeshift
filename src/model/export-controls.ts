@@ -178,6 +178,7 @@ export function exportControls(editor: SketchEditor): () => void {
   const disposers = (["stl", "3mf", "step"] as const).map((format) =>
     toolCatalog(editor).register({
       id: `export-${format}`,
+      finishEdit: true,
       label: `Export ${format.toUpperCase()}`,
       aliases: format === "step" ? ["stp"] : undefined,
       category: "Document & Edit",

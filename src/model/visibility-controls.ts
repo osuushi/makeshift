@@ -6,20 +6,11 @@ export function visibilityControls(
   selectedPlane: () => string | undefined,
 ): () => void {
   const catalog = toolCatalog(editor);
-  const exitButton = document.createElement("button");
-  exitButton.className = "exit-isolation";
-  exitButton.textContent = "Exit isolation";
-  exitButton.hidden = true;
-  exitButton.onclick = () => void catalog.invoke("end-isolation");
-  editor.world.host.append(exitButton);
-  const updateButton = () => {
-    exitButton.hidden = !editor.visibility.isolating;
-    exitButton.disabled = editor.blocked || editor.isDragging || !!editor.interactions.current;
-  };
-  editor.world.changed.add(updateButton);
+  const disposeButton = isolationButton(editor);
   const dispose = [true, false].map((visible) =>
     catalog.register({
       id: visible ? "show-bodies" : "hide-bodies",
+      finishEdit: true,
       label: visible ? "Show bodies" : "Hide bodies",
       category: "View",
       reason: () =>
@@ -42,6 +33,7 @@ export function visibilityControls(
   dispose.push(
     catalog.register({
       id: "isolate",
+      finishEdit: true,
       label: "Isolate selection",
       category: "View",
       aliases: ["isolate"],
@@ -59,6 +51,7 @@ export function visibilityControls(
     }),
     catalog.register({
       id: "end-isolation",
+      finishEdit: true,
       label: "Exit isolation",
       category: "View",
       aliases: ["show all after isolation"],
@@ -71,9 +64,31 @@ export function visibilityControls(
     }),
   );
   return () => {
+    disposeButton();
+    for (const remove of dispose) remove();
+  };
+}
+
+function isolationButton(editor: SketchEditor): () => void {
+  const catalog = toolCatalog(editor);
+  const exitButton = document.createElement("button");
+  exitButton.className = "exit-isolation";
+  exitButton.textContent = "Exit isolation";
+  exitButton.hidden = true;
+  exitButton.onclick = () => void catalog.invoke("end-isolation");
+  editor.world.host.append(exitButton);
+  const updateButton = () => {
+    exitButton.hidden = !editor.visibility.isolating;
+    exitButton.disabled =
+      editor.blocked ||
+      editor.isDragging ||
+      catalog.switching ||
+      (!!editor.interactions.current && !editor.interactions.current.finish);
+  };
+  editor.world.changed.add(updateButton);
+  return () => {
     editor.world.changed.delete(updateButton);
     exitButton.remove();
-    for (const remove of dispose) remove();
   };
 }
 

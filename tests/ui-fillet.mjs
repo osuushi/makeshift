@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import { isDeepStrictEqual } from "node:util";
 import { filletGuidePoint } from "./ui-fillet-guide-helpers.mjs";
-import { at, click, close, drag, inspect, pointEquals, reset } from "./ui-helpers.mjs";
+import {
+  at,
+  click,
+  close,
+  drag,
+  inspect,
+  modalCompleted,
+  pointEquals,
+  reset,
+} from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const data = async (page) => (await inspect(page)).document.sketches[0];
@@ -37,6 +46,15 @@ export async function filletRoute(page, name) {
   const beforeInvalid = sketch;
   await page.getByRole("textbox", { name: "Radius", exact: true }).fill("-1");
   await page.keyboard.press("Enter");
+  assert.deepEqual(await data(page), beforeInvalid);
+  const invalidRadius = page.getByRole("textbox", { name: "Radius", exact: true });
+  assert.equal(await invalidRadius.inputValue(), "-1");
+  assert.equal(await invalidRadius.getAttribute("aria-invalid"), "true");
+  assert.equal((await inspect(page)).interaction.kind, "numeric");
+  assert.equal((await inspect(page)).interaction.phase, "editing");
+  await page.keyboard.press("Escape");
+  await modalCompleted(page);
+  assert.equal(await invalidRadius.inputValue(), "3");
   assert.deepEqual(await data(page), beforeInvalid);
   await undoTo(page, original);
   await page.keyboard.press("v");

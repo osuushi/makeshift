@@ -39,6 +39,8 @@ type Kind =
 interface InteractionCapabilities {
   /** Captured gestures always exclude navigation, including otherwise settled tools. */
   navigation: "blocked" | "when-released";
+  /** Preserve owners whose ordinary document Undo first cancels their preview. */
+  documentHistory?: "cancel-preview";
 }
 export class ActiveInteraction {
   private active: InteractionLease | null = null;
@@ -89,6 +91,7 @@ export class InteractionLease {
     "canUndo" | "canRedo" | "checkpoint" | "navigate"
   > | null = null;
   readonly navigationAllowed: boolean;
+  readonly cancelBeforeHistory: boolean;
   phase: "editing" | "waiting" | "closing" = "editing";
   candidate: DisplayDocument | null = null;
   private captureTarget: { element: Element; id: number } | null = null;
@@ -101,6 +104,7 @@ export class InteractionLease {
     capabilities: InteractionCapabilities = { navigation: "blocked" },
   ) {
     this.navigationAllowed = capabilities.navigation === "when-released";
+    this.cancelBeforeHistory = capabilities.documentHistory === "cancel-preview";
   }
   trackHistory<T>(
     root: HTMLElement,

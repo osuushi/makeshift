@@ -15,6 +15,10 @@ Enter or viewport double-click for sketch entry, and Delete/Backspace for deleti
 These use the existing selection affordances; there is no floating plane action bar.
 Visibility remains view state.
 
+While Revolve is choosing an axis, its own canvas hover and click take priority
+over ordinary canonical-plane selection. World-axis clicks therefore stay with
+the revolution rather than becoming plane selection or sketch entry.
+
 A sketch begun on a plane copies its evaluated frame and is created on the first
 completed drawing gesture. Subsequent plane movement or deletion does not move or
 delete sketches or solids. There is no dependency on the original reference face.

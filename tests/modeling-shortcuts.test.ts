@@ -26,14 +26,14 @@ test("common shortcuts distinguish shifted Boolean from existing keys", () => {
     ["o", false, "offset", "O"],
     ["m", false, "transform", "M"],
   ] as const) {
-    assert.equal(modelingShortcut(event(key, shift), false), id);
+    assert.equal(modelingShortcut(event(key, shift), null), id);
     assert.equal(modelingShortcutLabel(id), label);
   }
-  assert.equal(modelingShortcut(event("E", true), false), null);
+  assert.equal(modelingShortcut(event("E", true), null), null);
   assert.equal(modelingShortcutLabel("erode"), "");
-  assert.equal(modelingShortcut(event("O", true), false), "offset");
-  assert.equal(modelingShortcut(event("M", true), false), "transform");
-  for (const key of ["u", "i", "n", "r"]) assert.equal(modelingShortcut(event(key), false), null);
+  assert.equal(modelingShortcut(event("O", true), null), "offset");
+  assert.equal(modelingShortcut(event("M", true), null), "transform");
+  for (const key of ["u", "i", "n", "r"]) assert.equal(modelingShortcut(event(key), null), null);
 });
 
 test("new global entries leave active tools in control before event interception", () => {
@@ -44,13 +44,40 @@ test("new global entries leave active tools in control before event interception
     ["e", true],
     ["l", false],
   ] as const)
-    assert.equal(modelingShortcut(event(key, shift), true), null);
-  assert.equal(modelingShortcut(event("e"), true), "extrude");
-  assert.equal(modelingShortcut(event("F", true), true), "chamfer");
+    assert.equal(
+      modelingShortcut(event(key, shift), { kind: "projection", canFinish: false }),
+      null,
+    );
+  assert.equal(modelingShortcut(event("e"), { kind: "projection", canFinish: false }), "extrude");
+  assert.equal(
+    modelingShortcut(event("F", true), { kind: "projection", canFinish: false }),
+    "chamfer",
+  );
 });
 
 test("host modifiers, key repeat and IME composition never activate modeling shortcuts", () => {
   for (const modifier of ["ctrlKey", "metaKey", "altKey", "repeat", "isComposing"] as const)
-    assert.equal(modelingShortcut({ ...event("U", true), [modifier]: true }, false), null);
-  assert.equal(modelingShortcut(event("Shift", true), false), null);
+    assert.equal(modelingShortcut({ ...event("U", true), [modifier]: true }, null), null);
+  assert.equal(modelingShortcut(event("Shift", true), null), null);
+});
+
+test("released finish-capable edits offer global switches, retaining Extrude local Boolean keys", () => {
+  assert.equal(modelingShortcut(event("E", true), { kind: "face-offset", canFinish: true }), null);
+  for (const [key, shift, id] of [
+    ["U", true, "union"],
+    ["S", true, "subtract"],
+    ["I", true, "intersect"],
+    ["l", false, "loft"],
+  ] as const) {
+    assert.equal(modelingShortcut(event(key, shift), { kind: "face-offset", canFinish: true }), id);
+    assert.equal(
+      modelingShortcut(event(key, shift), { kind: "face-offset", canFinish: false }),
+      null,
+    );
+    const local = ["union", "subtract", "intersect"].includes(id);
+    assert.equal(
+      modelingShortcut(event(key, shift), { kind: "extrude", canFinish: true }),
+      local ? null : id,
+    );
+  }
 });

@@ -24,7 +24,12 @@ export async function performHistory(
     editor.refresh();
     return;
   }
-  if (interaction?.finish || editor.blocked || editor.isDragging) return;
+  if (
+    (interaction?.finish && !interaction.cancelBeforeHistory) ||
+    editor.blocked ||
+    editor.isDragging
+  )
+    return;
   editor.selectionHistory.finishNavigation();
   editor.numeric.cancel();
   await editor.interactions.cancel();

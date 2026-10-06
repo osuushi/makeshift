@@ -29,6 +29,7 @@ export class CrossSectionControls {
   ) {
     this.disposeTool = toolCatalog(editor).register({
       id: "cross-section",
+      finishEdit: () => !this.lease,
       label: "Cross section",
       category: "View",
       aliases: ["section view", "clipping plane", "cutaway"],

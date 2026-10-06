@@ -1,20 +1,18 @@
+import { toolCatalog } from "../tools/catalog.js";
 import type { InteractionLease } from "./active-interaction.js";
 import { curveBounds } from "./curve-geometry.js";
 import { dragIntent } from "./drag-intent.js";
 import { beginDrag, type Drag, type Quantity, resolveDrag } from "./drag-state.js";
 import { updateDrag } from "./drag-update.js";
 import type { SketchEditor } from "./editor.js";
-import { connectedSelection } from "./geometry.js";
 import { hoverPointer } from "./gesture-hover.js";
 import { GestureSolve } from "./gesture-solve.js";
 import type { DragQuantityEdit } from "./numeric-edit.js";
-import { pick } from "./picking.js";
 import { distance } from "./point-math.js";
 import { pointKey } from "./point-query.js";
 import { choosePoints, chosenPoints, openPointMenu } from "./point-selection.js";
-import { selectHit } from "./selection-input.js";
+import { selectConnected, selectHit } from "./selection-input.js";
 import { pointTarget } from "./selection-target.js";
-import { hitIds } from "./sketch-hit.js";
 import { validateSketch } from "./sketch-validation.js";
 import { axisQuantity } from "./transform-handles.js";
 
@@ -38,20 +36,7 @@ export class PointerGestures implements DragQuantityEdit {
     this.canvas.addEventListener("pointercancel", this.cancelAndDraw, options);
     window.addEventListener("keydown", this.modifiers, options);
     window.addEventListener("keyup", this.modifiers, options);
-    this.canvas.addEventListener(
-      "dblclick",
-      (event) => {
-        if (editor.tool === "trim" || event.shiftKey || event.metaKey || event.ctrlKey) return;
-        const hit = pick(editor, { x: event.clientX, y: event.clientY }),
-          sketch = editor.sketch;
-        if (!editor.blocked && !editor.isDragging && hit && sketch && !pointKey(hit)) {
-          editor.select(connectedSelection(sketch, new Set(hitIds(hit))));
-          editor.overlaps = null;
-          editor.refresh();
-        }
-      },
-      options,
-    );
+    this.canvas.addEventListener("dblclick", (event) => selectConnected(editor, event), options);
   }
   editQuantity(quantity: Quantity, value: number): void {
     if (!this.drag) throw new Error("No active geometry drag");
@@ -91,6 +76,7 @@ export class PointerGestures implements DragQuantityEdit {
   private start = async (event: PointerEvent): Promise<void> => {
     if (
       event.button !== 0 ||
+      toolCatalog(this.editor).switching ||
       this.drag ||
       this.editor.isDragging ||
       this.editor.tool === "trim" ||
@@ -104,6 +90,8 @@ export class PointerGestures implements DragQuantityEdit {
     this.failure = "";
     this.canvas.focus();
     await this.editor.numeric.commit();
+    if (toolCatalog(this.editor).switching || this.editor.interactions.current?.kind === "numeric")
+      return;
     this.drag = beginDrag(this.editor, event);
     if (this.drag) {
       const interaction = this.editor.interactions.acquire("pointer", this.cancel);

@@ -82,6 +82,7 @@ export async function withUiRuntimes(
           await route(page, name);
           assert.deepEqual(errors, []);
         } catch (error) {
+          console.error(`${name}: UI route failed`, error);
           console.error(
             `${name}: UI failure context`,
             JSON.stringify(await failureContext(page, errors), null, 2),
