@@ -39,7 +39,7 @@ async function typeFillet(page) {
   const input = sizeInput(page, "fillet");
   await input.click();
   assert.ok(await input.evaluate((element) => document.activeElement === element));
-  await input.press("Meta+a");
+  await input.press("ControlOrMeta+a");
   await page.keyboard.type("0.0001");
   await previewActionReady(page, "Accept fillet");
   assert.ok(
@@ -82,13 +82,20 @@ export async function edgeFinishPeriodicRoute(page, name) {
   assert.deepEqual((await inspect(page)).modelingSelection, state.modelingSelection);
   const input = sizeInput(page, "chamfer");
   await input.click();
-  await input.press("Meta+a");
+  await input.press("ControlOrMeta+a");
   await page.keyboard.press("Backspace");
   assert.ok(await input.evaluate((element) => document.activeElement === element));
   assert.equal(await input.getAttribute("aria-invalid"), "true");
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, original);
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await chooseTool(page, "delete", "delete");
+  assert.equal((await inspect(page)).document.bodies.length, 0);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
+  await reset(page);
   console.log(
-    `${name}: captured periodic face excludes its seam, retains typed focus, matches explicit rims and preserves Cancel/Undo/Redo; Chamfer conversion/focus also passes`,
+    `${name}: captured periodic face excludes its seam, retains typed focus, matches explicit rims and preserves Cancel/Undo/Redo; Chamfer conversion/focus and Delete/Undo/New also pass`,
   );
 }
