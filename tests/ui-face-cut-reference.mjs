@@ -108,7 +108,40 @@ export async function faceCutReferenceRoute(page, name) {
     (await inspect(page)).document.bodies.map((body) => body.edges.map((edge) => edge.id)),
     split.bodies.map((body) => body.edges.map((edge) => edge.id)),
   );
+  await editSplitPiece(page);
   console.log(
-    `${name}: curved face reference picking, hover, Split, Imprint, cancel, history and Reopen passed`,
+    `${name}: curved face reference picking, hover, Split, Imprint, cancel, history, Reopen and result editing passed`,
   );
+}
+
+/** Curved Split results remain ordinary independently editable bodies. */
+async function editSplitPiece(page) {
+  const before = (await inspect(page)).document;
+  const index = before.bodies.findIndex((body) => Math.abs(body.volume - Math.PI * 25 * 20) < 1e-6);
+  assert.ok(index >= 0);
+  const core = before.bodies[index];
+  const select = () =>
+    page.getByRole("button", { name: `Select Body ${index + 1}`, exact: true }).click();
+  await select();
+  await chooseTool(page, "transform", "transform");
+  await page.getByRole("button", { name: "Move body X", exact: true }).click();
+  await page.locator(".body-transform-value").fill("2");
+  await page.keyboard.press("Enter");
+  await inspect(page);
+  await page.keyboard.press("Enter");
+  const moved = (await inspect(page)).document.bodies.find((body) => body.id === core.id);
+  assert.ok(moved);
+  assert.ok(Math.abs(moved.center[0] - 2) < 1e-6);
+  assert.ok(Math.abs(moved.volume - Math.PI * 25 * 20) < 1e-6);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, before);
+  await select();
+  await page.locator("#world canvas").focus();
+  await page.keyboard.press("Backspace");
+  const deleted = (await inspect(page)).document;
+  assert.equal(deleted.bodies.length, 2);
+  assert.ok(deleted.bodies.every((body) => body.id !== core.id));
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, before);
+  await reset(page);
 }
