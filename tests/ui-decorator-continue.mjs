@@ -51,6 +51,7 @@ export async function customContinueRoute(page, app) {
   await page
     .getByRole("button", { name: "Continue decorator onto selection", exact: true })
     .click();
+  await continuedSelection(page);
   let state = await inspect(page);
   assert.equal(state.document.decorators.length, 1);
   assert.equal(state.document.decorators[0].faces.length, 2);
@@ -65,5 +66,16 @@ export async function customContinueRoute(page, app) {
   await page
     .getByRole("button", { name: "Continue decorator onto selection", exact: true })
     .click();
+  await continuedSelection(page);
   assert.equal((await inspect(page)).document.decorators[0].faces.length, 2);
+}
+
+async function continuedSelection(page) {
+  // Read-only validation can leave the owner idle before continuation accepts.
+  await page.waitForFunction(() => {
+    const state = window.makeshiftInspect();
+    return (
+      state.document.decorators?.[0]?.faces.length === 2 && state.modelingSelection.length === 2
+    );
+  });
 }
