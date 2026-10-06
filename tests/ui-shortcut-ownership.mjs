@@ -41,7 +41,7 @@ async function idleGuards(page) {
   await unchanged(page, before);
   assert.doesNotMatch(
     await page.getByRole("status").textContent(),
-    /Select complete bodies to erode/,
+    /Select bodies, faces or edges to erode/,
   );
   await keyTool(page, "l");
   assert.equal((await inspect(page)).interaction.kind, "loft");

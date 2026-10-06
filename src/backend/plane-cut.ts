@@ -10,9 +10,9 @@ export async function cutWithPlane(
   operation: PlaneCut,
   kernel: SolidCalculator,
 ): Promise<SketchDocument> {
-  validateFrame(operation.frame);
+  validateCutReference(document, operation);
   if (!["split", "imprint"].includes(operation.mode) || !operation.targets.length)
-    throw new Error("Select bodies or faces to cut with a plane");
+    throw new Error("Select bodies or faces to cut with a surface");
   const bodies = document.bodies ?? [];
   const result = await kernel.calculate({ ...operation, kind: "plane-cut", bodies });
   if (!result.participants.length) return document;
@@ -30,7 +30,7 @@ export async function planeCutAvailable(
   kernel: SolidCalculator,
 ): Promise<boolean> {
   try {
-    validateFrame(operation.frame);
+    validateCutReference(document, operation);
     const result = await kernel.calculate({
       ...operation,
       kind: "plane-cut",
@@ -40,4 +40,18 @@ export async function planeCutAvailable(
   } catch {
     return false;
   }
+}
+
+function validateCutReference(document: SketchDocument, operation: PlaneCut): void {
+  if (!!operation.frame === !!operation.surface)
+    throw new Error("Choose one cutting plane or face");
+  if (operation.frame) validateFrame(operation.frame);
+  else if (
+    !document.bodies?.some(
+      (body) =>
+        body.id === operation.surface?.body &&
+        body.faces.some((face) => face.id === operation.surface?.face),
+    )
+  )
+    throw new Error("Unknown cutting face");
 }

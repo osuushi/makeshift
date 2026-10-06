@@ -54,11 +54,11 @@ export async function scriptModelingOperation(
       throw new Error("Invalid script scale targets");
     next = await scaleDocument(document, o, kernel);
   } else {
-    const { targets, frame } = operation.input;
+    const { targets, frame, surface } = operation.input;
     validateCut(document, operation);
     next = await cutWithPlane(
       document,
-      { targets, frame, mode: operation.kind === "splitBody" ? "split" : "imprint" },
+      { targets, frame, surface, mode: operation.kind === "splitBody" ? "split" : "imprint" },
       kernel,
     );
   }

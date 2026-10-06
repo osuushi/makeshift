@@ -6,6 +6,7 @@ import { bodyChamferRoute } from "./ui-body-chamfer.mjs";
 import { bodyFilletRoute } from "./ui-body-fillet.mjs";
 import { circleRoute } from "./ui-circle.mjs";
 import { extrudeRoute } from "./ui-extrude.mjs";
+import { faceCutReferenceRoute } from "./ui-face-cut-reference.mjs";
 import { faceOffsetRoute } from "./ui-face-offset.mjs";
 import { lineRoute } from "./ui-line.mjs";
 import { normalExtrudeRoute } from "./ui-normal-extrude.mjs";
@@ -45,6 +46,7 @@ await withUiRuntimes(
       bodyChamferRoute,
       shellRoute,
       planeCutRoute,
+      faceCutReferenceRoute,
     ].entries()) {
       if (index % count !== shard - 1) continue;
       console.log(`${name}: ${route.name}`);

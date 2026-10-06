@@ -35,8 +35,8 @@ export interface MakeshiftScript extends DecoratorScriptApi, TagScriptApi {
   /** Omit id to create, or provide an existing plane id to reposition it. */
   constructionPlane(input: { id?: string; frame: Plane }): Promise<{ plane: string; frame: Plane }>;
   deleteConstructionPlane(input: { id: string }): Promise<{ removed: string }>;
-  splitBody(input: { targets: { body: string }[]; frame: Plane }): Promise<SolidResult>;
-  imprint(input: { targets: { body: string; faces: string[] }[]; frame: Plane }): Promise<SolidResult>;
+  splitBody(input: { targets: { body: string }[]; frame?: Plane; surface?: { body: string; face: string } }): Promise<SolidResult>;
+  imprint(input: { targets: { body: string; faces: string[] }[]; frame?: Plane; surface?: { body: string; face: string } }): Promise<SolidResult>;
   scale(input: ({ kind: "curves"; sketchId: string; ids: string[] } |
     { kind: "sketches"; ids: string[] } |
     { kind: "solids"; ids: string[]; faces: { body: string; face: string }[]; edges: { body: string; edge: string }[] }) &

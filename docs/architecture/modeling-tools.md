@@ -60,6 +60,15 @@ the size control. Mixed faces and explicit edges use raw selection encounter ord
 deduplicating shared edges; Cancel preserves the resolved/expanded edge selection.
 For Move/Delete, edges already covered by a whole body add no second edit.
 
+Explicit Boolean, Duplicate, Mirror and Erode invocations expand selected solid
+faces and edges to their owning bodies. Split bodies does the same for cutting
+targets. Body order follows the first selected target of each body, and repeated
+faces/edges contribute only one operand. Eligibility and operation inputs share
+this interpretation; stale topology and mixed sketch/profile targets still reject.
+Boolean operand collection and Duplicate/Erode selection show complete bodies.
+Move/Delete retain partial topology edits, Shell retains selected opening faces,
+and face/edge operations retain their own input interpretation.
+
 Mixed whole-body and partial face movement transforms the complete bodies rigidly
 and reconnects the partial bodies, using the same translation/pivot/rotation. Mixed
 whole-body and edge movement supports translation. A request computes all results
@@ -325,11 +334,11 @@ Boolean targets and temporary acceptance lifecycle.
 
 ## Boolean operands
 
-Union, Subtract and Intersect can start with no selection or one complete body.
-Two or more complete preselected bodies retain their ordered preview route.
-Partial or mixed preselection stays unavailable; the operation itself still
-requires at least two complete accepted bodies. While choosing operands, viewport
-clicks and existing Entities rows operate on whole bodies, including enclosed
+Union, Subtract and Intersect can start with no selection or geometry from one body.
+Two or more owning bodies retain their ordered preview route. Selected solid
+faces/edges expand to those bodies; mixed sketch/profile targets stay unavailable.
+The operation itself requires at least two complete accepted bodies. While choosing
+operands, viewport clicks and existing Entities rows operate on whole bodies, including enclosed
 ones. Subtract clicks cycle unselected → target → cutting tool → unselected.
 Choosing a new target demotes the previous target to cutting tool. Preselected
 bodies start with their first body as target and the others as tools.
