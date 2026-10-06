@@ -62,7 +62,7 @@ one `frame` or `surface: {body, face}` for Split Body and Imprint.
 
 Clicking a valid reference produces a temporary exact preview. Magenta lines show
 Imprint's newly created section edges and Split's result section borders, including
-borders already imprinted before splitting; off-plane boundary subdivisions and
+borders already imprinted before splitting; boundary subdivisions outside the section and
 periodic seams are excluded. Invalid/no-op picks keep the inputs visible, clear
 result highlights and disable Apply. Explicit Apply or Enter keeps the highlighted
 exact edges selected for subsequent editing; the status confirms application.

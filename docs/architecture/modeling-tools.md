@@ -31,11 +31,12 @@ shortcuts and operation controllers use this same resolution. Applicability does
 not promise that every parameter value will succeed; the exact kernel remains the
 geometry authority. Unsupported selections never silently drop targets.
 
-Extrude and Revolve accept parallel supports with either normal orientation. The
+Planar Extrude and Revolve accept parallel supports with either normal orientation. The
 first selected support sets the common extrusion direction; signed distance retains
 its meaning when source order changes. Revolve uses that support for its section
 frame and requires its selected axis to lie in the section plane. Manual and script
-paths use the same parallel-normal predicate. Nonparallel supports remain unavailable.
+paths use the same parallel-normal predicate. Nonparallel planar supports remain unavailable.
+Curved-face Extrude uses the bounded normal-face route described below.
 
 A tool is the interactive parameter-gathering and preview route for an operation.
 `tool-policy.ts` owns the interactive tool IDs and default preference separately
@@ -55,7 +56,9 @@ whole-body Delete/Cleanup, and applicable face operations. Offset expands
 the coverage to its faces. Projection uses the same whole-body interpretation for
 complete face coverage. Body selection does not implicitly select edges for Fillet
 or Chamfer. Explicitly invoking either tool on faces converts their boundaries to selected edges and opens
-the size control. Mixed faces and explicit edges use raw selection encounter order,
+the size control. Periodic seam edges, used twice in a face wire, are excluded from
+that face's modeling boundaries; explicit edge targets retain kernel validation.
+Mixed faces and explicit edges use raw selection encounter order,
 deduplicating shared edges; Cancel preserves the resolved/expanded edge selection.
 For Move/Delete, edges already covered by a whole body add no second edit.
 
@@ -363,3 +366,28 @@ falls back to that window's in-memory choice. Preference changes are outside
 both document and temporary interaction Undo. Subtract always consumes its target
 and optionally retains cutting tools; the other modes optionally retain all
 inputs. Acceptance/cancel and document Undo/Redo retain their ordinary semantics.
+
+## Bounded normal face extrusion (2026-10-06)
+
+Extrude/E also accepts supported curved solid faces. It constructs material between
+those exact trimmed faces and their normal offsets, closing their boundary with new
+faces. It does not expand selection to Offset's tangent neighbors. Pulling one of
+two coaxial cylinder bands therefore creates an annular shoulder and changes only
+that band's radius. Positive signed distance adds material through automatic Union;
+negative distance removes it through automatic Subtract. The existing explicit
+Boolean modes and targets remain available. Radius is the default quantity when
+selected cylinders/spheres share a radius and orientation; Distance is signed
+material-outward travel. Switching quantity preserves the candidate.
+
+Planar faces and sketch regions retain their existing common-direction extrusion.
+Curved-face normal extrusion requires face-only selection, and hides planar draft,
+twist and symmetry controls. Mixed curved faces and sketch regions reject. Native
+construction copies each selected face, builds and orients a closed layer, then
+runs strict solid/interference/tolerance validation before the existing Boolean
+path. Offset construction and self-intersection limits can still reject curved
+faces or distances; failed requests do not alter accepted geometry. Preview,
+release, acceptance, tool switching, Cancel and one-step Undo use the existing
+Extrusion lifecycle. Bodies continue to store materialized BRep rather than a
+feature dependency on the original face.
+The offset surface carries face correspondence through the Boolean, retaining
+one-to-one face identity and selection. New shoulder faces receive new identities.

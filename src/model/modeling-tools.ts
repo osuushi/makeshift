@@ -85,7 +85,7 @@ export class ModelingTools {
         move: "Select bodies, faces or edges to move",
         fillet: "Select solid faces or edges to round",
         chamfer: "Select solid faces or edges to bevel",
-        extrude: "Select a closed profile or planar face",
+        extrude: "Select a closed profile or solid face",
         revolve: "Select a closed profile or planar face",
         loft: "Choose ordered sections",
       }[tool];

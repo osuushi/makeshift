@@ -3,6 +3,7 @@ import type { ModelingTarget } from "../sketch/model-selection-state.js";
 import { parallelNormals, planeNormal, type Vector } from "../sketch/planes.js";
 import type { Body, BodyEdgeFinish, BodyFaceOffset, BodyShell, Face, LiftSource } from "./body.js";
 import { type CleanupSelection, cleanupSelection } from "./cleanup.js";
+import { featureEdges } from "./feature-edges.js";
 import { expandedSelection, type SelectionContext, selectionContext } from "./selection-context.js";
 
 export interface MovementSelection {
@@ -71,7 +72,7 @@ const resolvers: { [K in Operation]: Resolver<K> } = {
   offset: offsetSelection,
   fillet: edgeSelection,
   chamfer: edgeSelection,
-  extrude: liftSelection,
+  extrude: extrusionSelection,
   revolve: liftSelection,
   loft: loftSelection,
   cleanup: (c) =>
@@ -116,9 +117,14 @@ function edgeSelection(
       target.kind === "edge"
         ? [target.edge]
         : (body?.faces.find((face) => face.id === target.face)?.edges ?? []);
-    if (!ids.length || ids.some((id) => !body?.edges.some((edge) => edge.id === id)))
+    if (!body || !ids.length || ids.some((id) => !body.edges.some((edge) => edge.id === id)))
       return unavailable("A selected face has no valid boundary edges");
-    for (const id of ids) {
+    // Periodic seams occur twice in a face wire, but are not modeling boundaries.
+    // Explicit edge targets still reach the kernel's ordinary eligibility check.
+    const features = new Set(featureEdges(body).map((edge) => edge.id));
+    const boundary = target.kind === "edge" ? ids : ids.filter((id) => features.has(id));
+    if (!boundary.length) return unavailable("A selected face has no valid boundary edges");
+    for (const id of boundary) {
       const key = `${target.body}:${id}`;
       if (seen.has(key)) continue;
       seen.add(key);
@@ -184,6 +190,25 @@ function liftSelection(c: SelectionContext, document: SketchDocument): Resolutio
     if (t.kind === "profile") sources.push({ sketch: t.sketch, profile: t.profile.key });
   }
   return available(sources);
+}
+
+function extrusionSelection(
+  c: SelectionContext,
+  document: SketchDocument,
+): Resolution<LiftSource[]> {
+  const targets = expandedSelection(c);
+  const faces = targets.flatMap((t) =>
+    t.kind === "face"
+      ? (document.bodies?.flatMap((b) => b.faces).filter((f) => f.id === t.face) ?? [])
+      : [],
+  );
+  if (!faces.some((face) => !face.plane)) return liftSelection(c, document);
+  if (
+    faces.length !== targets.length ||
+    faces.some((face) => !face.offsetHandle && !face.cylinder && !face.plane)
+  )
+    return unavailable("Normal extrusion requires supported solid faces only");
+  return available(faces.map((face) => ({ face: face.id })));
 }
 
 function shellSelection(c: SelectionContext): Resolution<BodyShell["selection"]> {

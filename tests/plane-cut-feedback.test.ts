@@ -40,6 +40,15 @@ test("Imprint highlights new edges even when another target already has coincide
       for (let i = 2; i < edge.points.length; i += 3)
         assert.ok(Math.abs(edge.points[i] - 10) < 1e-5);
     assert.deepEqual(owner.view.data, before, "Inspecting highlights never accepts geometry");
+    await owner.call({ kind: "accept" });
+    const accepted = owner.view.data;
+    assert.equal((await owner.call({ kind: "plane-cut", operation })).error, undefined);
+    assert.deepEqual(owner.view.candidate, accepted);
+    assert.equal(
+      owner.view.cutEdges,
+      undefined,
+      "A no-op never reuses the previous cut highlights",
+    );
   } finally {
     owner.close();
   }

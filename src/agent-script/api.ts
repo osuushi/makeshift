@@ -85,7 +85,7 @@ export interface ScriptApi extends DecoratorScriptApi, TagScriptApi {
   readonly selection: readonly InspectionTarget[];
   /** Ordinary editable curves on an explicit plane; IDs assigned by Makeshift. */
   createSketch(input: SketchInput): Promise<SketchResult>;
-  /** Extrude explicit closed profiles or planar faces using the ordinary solid kernel. */
+  /** Extrude closed profiles or solid faces; curved faces follow their local normals. */
   extrude(input: Extrusion): Promise<SolidResult>;
   /** Revolve or sweep helically: height is total axial travel, not pitch per turn. */
   revolve(input: Revolution): Promise<SolidResult>;

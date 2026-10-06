@@ -55,7 +55,9 @@ export class ExtrudeInputs {
       "input",
       () => {
         if (actions.begin())
-          actions.queue(widget.input.value.trim() ? Number(widget.input.value) : NaN);
+          actions.queue(
+            widget.quantity.distance(widget.input.value.trim() ? Number(widget.input.value) : NaN),
+          );
       },
       options,
     );

@@ -19,7 +19,7 @@ std::string quoted(const std::string& value);
 std::string encode(const TopoDS_Shape& shape);
 TopoDS_Shape decode(const std::string& data);
 std::vector<Operand> operands(const Tree& input);
-TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies);
+TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies, std::vector<SourceEntity>& origins);
 std::vector<Result> calculate(const Tree& input, const std::vector<Operand>& bodies, std::string& mode, std::vector<std::string>& participants);
 void present(std::ostream& out, const Result& result, double deflection = 0.05);
 double volume(const TopoDS_Shape& shape);

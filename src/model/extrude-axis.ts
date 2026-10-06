@@ -9,13 +9,35 @@ import {
   worldPoint,
 } from "../sketch/planes.js";
 import { extrusionCircleCenter } from "./extrude-circle.js";
+import { offsetHandle } from "./face-offset-targets.js";
 import { expandedSelection, selectionContext } from "./selection-context.js";
 
+interface ExtrusionAxis {
+  center: Vector;
+  normal: Vector;
+  coplanar: boolean;
+  normalExtrusion?: boolean;
+  circleCenter?: Vector;
+}
+
 /** Display anchor only; curved boundaries are tessellated independently of body geometry. */
-export function extrusionAxis(
-  editor: SketchEditor,
-): { center: Vector; normal: Vector; coplanar: boolean; circleCenter?: Vector } | null {
+export function extrusionAxis(editor: SketchEditor): ExtrusionAxis | null {
   if (!editor.modeling.resolve("extrude").available) return null;
+  const selectedFaces = expandedSelection(
+    selectionContext(editor.modeling.targets, editor.store.data),
+  ).flatMap((target) =>
+    target.kind === "face"
+      ? (editor.store.data.bodies
+          ?.flatMap((body) => body.faces)
+          .filter((face) => face.id === target.face) ?? [])
+      : [],
+  );
+  if (selectedFaces.some((face) => !face.plane))
+    return { ...offsetHandle(editor, selectedFaces[0]), coplanar: false, normalExtrusion: true };
+  return planarExtrusionAxis(editor);
+}
+
+function planarExtrusionAxis(editor: SketchEditor): ExtrusionAxis | null {
   const weighted = new THREE.Vector3();
   let total = 0;
   let normal: Vector | null = null;

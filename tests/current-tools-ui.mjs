@@ -9,6 +9,7 @@ import { extrudeRoute } from "./ui-extrude.mjs";
 import { faceCutReferenceRoute } from "./ui-face-cut-reference.mjs";
 import { faceOffsetRoute } from "./ui-face-offset.mjs";
 import { lineRoute } from "./ui-line.mjs";
+import { normalExtrudeRoute } from "./ui-normal-extrude.mjs";
 import { planeCutRoute } from "./ui-plane-cuts.mjs";
 import { pointLinkRoute } from "./ui-point-links.mjs";
 import { rectangleRoute } from "./ui-rectangle.mjs";
@@ -38,6 +39,7 @@ await withUiRuntimes(
       trimLineRoute,
       transformRoute,
       extrudeRoute,
+      normalExtrudeRoute,
       revolveRoute,
       faceOffsetRoute,
       bodyFilletRoute,

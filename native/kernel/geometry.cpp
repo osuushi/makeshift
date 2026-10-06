@@ -3,6 +3,7 @@
 #include "boundary-move.h"
 #include "sketch-curve.h"
 #include "geometry-policy.h"
+#include "normal-extrude.h"
 #include <BRepAdaptor_Curve.hxx>
 #include <ShapeFix_Wire.hxx>
 #include <ShapeExtend_WireData.hxx>
@@ -63,7 +64,7 @@ TopoDS_Face profileFace(const Tree& profile, const std::vector<Operand>& bodies)
     }
     return face;
 }
-TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies) {
+TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies, std::vector<SourceEntity>& origins) {
     const double distance = input.get<double>("distance");
     if (!std::isfinite(distance) || std::abs(distance) < 1e-8) throw std::runtime_error("Extrusion needs a nonzero distance");
     const auto direction = point(input.get_child("normal"));
@@ -72,10 +73,12 @@ TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies) {
     vector *= distance; TopoDS_Shape tool;
     for (const auto& item : input.get_child("profiles")) {
         const auto face = profileFace(item.second, bodies);
-        const auto shape = extrudeProfile(face, vector, input);
+        const auto shape = input.get<bool>("normalExtrusion", false)
+            ? normalExtrude(face, distance, item.second.get<std::string>("face"), origins)
+            : extrudeProfile(face, vector, input);
         validate(shape);
         if (tool.IsNull()) tool = shape;
-        else { std::vector<SourceEntity> unused; tool = booleanShape(tool, shape, "union", unused); }
+        else tool = booleanShape(tool, shape, "union", origins);
     }
     if (tool.IsNull()) throw std::runtime_error("Select at least one closed region or face");
     return tool;
@@ -83,15 +86,16 @@ TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies) {
 namespace {
 std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>& bodies,
                                    std::string& mode, std::vector<std::string>& participants) {
+    std::vector<SourceEntity> toolOrigins;
     const auto tool = input.get<std::string>("kind") == "loft"
         ? loftSections(input, bodies) : input.get<std::string>("kind") == "revolve"
         ? revolve(input, bodies) : input.get<std::string>("kind") == "path-sweep"
-            ? pathSweep(input, bodies) : sweep(input, bodies);
+            ? pathSweep(input, bodies) : sweep(input, bodies, toolOrigins);
     mode = input.get<std::string>("mode");
     if (mode != "auto" && mode != "new" && mode != "union" && mode != "subtract" && mode != "intersect")
         throw std::runtime_error("Unknown Boolean mode");
     std::vector<Result> results;
-    if (mode == "new") { solids(results, tool, {}, {}); return results; }
+    if (mode == "new") { solids(results, tool, toolOrigins, {}); return results; }
     Bnd_Box toolBounds; BRepBndLib::Add(tool, toolBounds, false); toolBounds.Enlarge(1e-7);
     std::vector<const Operand*> positive, contact, explicitTargets;
     const auto eligible = input.get_child_optional("eligibleTargets");
@@ -126,7 +130,7 @@ std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>
     const auto& selected = targetList ? explicitTargets : mode == "union" ? contact : positive;
     if (selected.empty() && mode != "union") throw std::runtime_error("The swept shape does not intersect a target body");
     if (mode == "union") {
-        auto shape = tool; std::vector<SourceEntity> origins;
+        auto shape = tool; auto origins = toolOrigins;
         for (const auto* body : selected) {
             participants.push_back(body->id); origins.insert(origins.end(), body->entities.begin(), body->entities.end());
             shape = booleanShape(shape, body->shape, mode, origins);
@@ -134,6 +138,7 @@ std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>
         solids(results, shape, origins, participants);
     } else for (const auto* body : selected) {
         participants.push_back(body->id); auto origins = body->entities;
+        origins.insert(origins.end(), toolOrigins.begin(), toolOrigins.end());
         const auto shape = booleanShape(body->shape, tool, mode, origins);
         solids(results, shape, origins, {body->id});
     }
