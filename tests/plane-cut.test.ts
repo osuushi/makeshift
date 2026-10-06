@@ -3,6 +3,7 @@ import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import { documentArchive, readArchive } from "../src/model/document-archive.js";
 import { featureEdges } from "../src/model/feature-edges.js";
+import { planeCutEdges } from "../src/model/plane-cut-edges.js";
 import { emptySketch, type Sketch } from "../src/sketch/document.js";
 import { rectangle } from "../src/sketch/geometry.js";
 import { type PlaneFrame, planes } from "../src/sketch/planes.js";
@@ -114,6 +115,10 @@ for (const kind of ["box", "cylinder", "hollow", "partial"])
       assert.equal((await owner.call({ kind: "plane-cut", operation: split })).error, undefined);
       const pieces = owner.view.candidate?.bodies;
       assert.equal(pieces?.length, 2);
+      assert.ok(owner.view.candidate);
+      const splitEdges = planeCutEdges(before, owner.view.candidate, split);
+      assert.ok(splitEdges.length > 0, "Split exposes new section borders");
+      if (kind === "box") assert.equal(splitEdges.length, 8);
       assert.ok(Math.abs((pieces ?? []).reduce((n, b) => n + b.volume, 0) - body.volume) < 1e-6);
       await owner.call({ kind: "discard" });
       assert.deepEqual(owner.view.data, before);
@@ -123,6 +128,13 @@ for (const kind of ["box", "cylinder", "hollow", "partial"])
       assert.ok(result);
       assert.equal(result.id, body.id);
       assert.ok(result.faces.length > body.faces.length);
+      assert.ok(owner.view.candidate);
+      const imprintEdges = planeCutEdges(before, owner.view.candidate, operation);
+      assert.ok(imprintEdges.length > 0);
+      if (kind === "box") assert.equal(imprintEdges.length, 4);
+      for (const { edge } of imprintEdges)
+        for (let i = 2; i < edge.points.length; i += 3)
+          assert.ok(Math.abs(edge.points[i] - 10) < 1e-5);
       assert.ok(Math.abs(result.volume - body.volume) < 1e-6);
       const oldEdges = new Set(body.edges.map((e) => e.id));
       assert.ok(featureEdges(result).some((e) => !oldEdges.has(e.id)));
@@ -155,6 +167,17 @@ for (const kind of ["box", "cylinder", "hollow", "partial"])
         );
         assert.deepEqual(owner.view.candidate, unchanged);
         await owner.call({ kind: "discard" });
+      }
+      if (kind === "box") {
+        const imprinted = owner.view.data;
+        assert.equal((await owner.call({ kind: "plane-cut", operation: split })).error, undefined);
+        assert.ok(owner.view.candidate);
+        assert.equal(
+          planeCutEdges(imprinted, owner.view.candidate, split).length,
+          8,
+          "Split highlights both sets of borders even after Imprint",
+        );
+        assert.deepEqual(owner.view.data, imprinted);
       }
     } finally {
       owner.close();

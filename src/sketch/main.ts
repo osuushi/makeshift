@@ -209,7 +209,7 @@ const crossSection = new CrossSectionControls(editor, overlay, constructionPlane
 );
 const measurements = new MeasurementControls(editor, app, readouts);
 const overlaps = new OverlapInput(editor, (plane) => constructionPlanes.select(plane));
-const planeCuts = new PlaneCutControls(editor, overlay, constructionPlanes.picker);
+const planeCuts = new PlaneCutControls(editor, overlay, constructionPlanes.picker, entities);
 const disposeHost =
   import.meta.env.MODE === "web"
     ? (await import("../web/chrome.js")).installWebChrome(editor, app)

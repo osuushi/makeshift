@@ -10,12 +10,13 @@ import { EntityReorder } from "./entity-reorder.js";
 
 export class EntityViewer {
   sourcePicker: {
-    choose: (target: ModelingTarget) => void;
+    choose?: (target: ModelingTarget) => void;
     hover: (target: ModelingTarget | null) => void;
     selected: (target: ModelingTarget) => boolean;
     available?: (target: ModelingTarget) => boolean;
     role?: (target: ModelingTarget) => "target" | "tool" | "input" | undefined;
   } | null = null;
+  readonly operationRows = document.createElement("section");
   readonly referenceRows = document.createElement("section");
   private root = document.createElement("aside");
   private key = "";
@@ -37,7 +38,7 @@ export class EntityViewer {
   }
   private async select(target: ModelingTarget, event: MouseEvent): Promise<void> {
     if (this.editor.blocked) return;
-    if (this.sourcePicker) {
+    if (this.sourcePicker?.choose) {
       this.sourcePicker.choose(target);
       return;
     }
@@ -195,7 +196,7 @@ export class EntityViewer {
     this.selectionRows = [];
     const title = document.createElement("h2");
     title.textContent = "Entities";
-    this.root.append(title);
+    this.root.append(title, this.operationRows);
     for (const [label, rows] of [
       [
         "Bodies",

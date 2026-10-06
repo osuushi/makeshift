@@ -3,8 +3,11 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import type { PlaneFrame } from "../sketch/planes.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
+import type { EntityViewer } from "./entity-viewer.js";
 import type { PlaneCut } from "./plane-cut.js";
 import { planeCrossesBounds } from "./plane-cut-bounds.js";
+import { planeCutEdges } from "./plane-cut-edges.js";
+import { PlaneCutFeedback } from "./plane-cut-feedback.js";
 import { PlaneCandidateView, planeCandidates, planeKey } from "./plane-reference-candidates.js";
 import type { PlaneReferencePicker } from "./plane-reference-picker.js";
 import { selectionContext } from "./selection-context.js";
@@ -20,10 +23,12 @@ export class PlaneCutControls {
   private running: Promise<void> | null = null;
   private available = new Set<string>();
   private view: PlaneCandidateView;
+  private feedback: PlaneCutFeedback;
   constructor(
     private editor: SketchEditor,
     overlay: HTMLElement,
     private picker: PlaneReferencePicker,
+    entities: EntityViewer,
   ) {
     for (const mode of ["split", "imprint"] as const) {
       this.disposers.push(
@@ -50,6 +55,13 @@ export class PlaneCutControls {
       );
     }
     this.view = new PlaneCandidateView(editor, overlay);
+    this.feedback = new PlaneCutFeedback(
+      editor,
+      overlay,
+      entities,
+      () => void this.finish(),
+      () => void this.cancel(),
+    );
     onModelKeydown(
       (event) => {
         if (!this.lease || !["Escape", "Enter"].includes(event.key)) return;
@@ -105,8 +117,12 @@ export class PlaneCutControls {
     this.pending = null;
     this.lease.trackHistory(
       e.world.canvas,
-      () => this.pending?.frame ?? restored?.frame ?? null,
-      async (frame) => {
+      () => ({
+        frame: this.pending?.frame ?? restored?.frame ?? null,
+        reference: this.picker.reference,
+      }),
+      async ({ frame, reference }) => {
+        this.picker.reference = reference;
         if (frame) {
           this.queue(frame);
           await this.running;
@@ -114,6 +130,7 @@ export class PlaneCutControls {
           this.pending = null;
           this.valid = false;
           this.lease?.show(null);
+          this.feedback.show(null, null, null);
           await e.store.request({ kind: "discard" });
         }
       },
@@ -126,6 +143,7 @@ export class PlaneCutControls {
       () => void this.deselect(),
     );
     e.message = "";
+    this.feedback.begin(this.source);
     this.findReferences();
     e.refresh();
   }
@@ -153,6 +171,7 @@ export class PlaneCutControls {
     this.valid = false;
     this.lease.show(null);
     this.pending = { ...this.source, frame };
+    this.feedback.show(frame, this.picker.reference, null);
     this.running = this.preview();
   }
   private async preview(): Promise<void> {
@@ -166,6 +185,7 @@ export class PlaneCutControls {
         !!candidate &&
         JSON.stringify(candidate) !== JSON.stringify(this.editor.store.data);
       this.lease.show(this.valid ? candidate : null);
+      this.feedback.show(operation.frame, this.picker.reference, this.valid ? candidate : null);
       if (this.valid) this.editor.notice = "Enter or deselect to accept · Escape cancels";
       else if (success)
         this.editor.notice = "This plane does not cut the selection · Pick another plane";
@@ -188,13 +208,21 @@ export class PlaneCutControls {
       return true;
     }
     if (!lease.close()) return false;
+    const edges =
+      this.pending && lease.candidate
+        ? planeCutEdges(this.editor.store.data, lease.candidate, this.pending)
+        : [];
     if (!(await this.editor.accept())) {
       lease.phase = "editing";
       this.editor.refresh();
       return false;
     }
-    this.editor.modeling.targets = [];
-    this.end();
+    this.editor.modeling.targets = edges.map(({ body, edge }) => ({
+      kind: "edge",
+      body: body.id,
+      edge: edge.id,
+    }));
+    this.end(`${this.pending?.mode === "split" ? "Split Body" : "Imprint"} applied`);
     return true;
   }
   private async cancel(): Promise<void> {
@@ -205,20 +233,22 @@ export class PlaneCutControls {
     this.editor.modeling.targets = this.previous;
     this.end();
   }
-  private end(): void {
+  private end(notice = ""): void {
     const lease = this.lease;
     this.lease = null;
     this.source = null;
     this.pending = null;
     this.picker.stop();
     this.view.show([]);
-    this.editor.notice = "";
+    this.feedback.clear();
+    this.editor.notice = notice;
     lease?.release();
     this.editor.refresh();
   }
   dispose(): void {
     this.abort.abort();
     this.view.dispose();
+    this.feedback.dispose();
     for (const dispose of this.disposers) dispose();
   }
 }

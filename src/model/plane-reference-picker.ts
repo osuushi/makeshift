@@ -1,7 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { type PlaneFrame, planes } from "../sketch/planes.js";
 import { PlaneCutHover } from "./plane-cut-hover.js";
-import { pickPlaneInterior } from "./plane-interior-pick.js";
+import { type PlaneReferenceSource, pickPlaneInterior } from "./plane-interior-pick.js";
 
 /** A tool consumes an evaluated frame; picking never creates a dependency. */
 export class PlaneReferencePicker {
@@ -10,7 +10,8 @@ export class PlaneReferencePicker {
   accepts: ((frame: PlaneFrame) => boolean) | undefined;
   private leave: (() => void) | undefined;
   private hoverEnabled: ((event: PointerEvent) => boolean) | undefined;
-  choose: ((frame: PlaneFrame) => void) | null = null;
+  reference: PlaneReferenceSource | null = null;
+  choose: ((frame: PlaneFrame, source?: PlaneReferenceSource) => void) | null = null;
   constructor(private editor: SketchEditor) {
     this.hover = new PlaneCutHover(editor, (event) =>
       this.hoverEnabled && !this.hoverEnabled(event) ? undefined : this.accepts,
@@ -33,7 +34,7 @@ export class PlaneReferencePicker {
         event.stopImmediatePropagation();
         if (editor.blocked) return;
         const hit = pickPlaneInterior(editor, { x: event.clientX, y: event.clientY }, this.accepts);
-        if (hit) this.choose(structuredClone(hit.frame));
+        if (hit) this.choose(structuredClone(hit.frame), hit.source);
         else this.leave?.();
       },
       options,
@@ -49,17 +50,21 @@ export class PlaneReferencePicker {
     this.leave = leave;
     this.hoverEnabled = hoverEnabled;
     this.editor.world.planePickerAccept = this.accepts;
-    this.choose = (frame) => {
+    this.reference = null;
+    this.choose = (frame, source) => {
       if (this.accepts && !this.accepts(frame)) return;
       this.hover.clear();
+      this.reference = source ?? null;
       choose(frame);
       this.editor.interactions.current?.history?.checkpoint();
     };
     this.editor.world.planePickerLabel = "Use plane";
-    this.editor.world.planePicker = (id) => this.choose?.(structuredClone(planes[id]));
+    this.editor.world.planePicker = (id) =>
+      this.choose?.(structuredClone(planes[id]), { kind: "world-plane", id });
   }
   stop(): void {
     this.choose = null;
+    this.reference = null;
     this.accepts = undefined;
     this.leave = undefined;
     this.hoverEnabled = undefined;

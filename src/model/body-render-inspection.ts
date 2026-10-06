@@ -22,9 +22,13 @@ export function inspectBodyRendering(scene: THREE.Scene) {
     depthTest: boolean;
     triangles: number;
   }[] = [];
+  const planeCutTargets: { body: string; face: string }[] = [];
+  const planeCutEdges: { body: string; edge: string }[] = [];
   let created = 0,
     disposed = 0;
   scene.traverse((object) => {
+    if (object.userData.planeCutTarget) planeCutTargets.push(object.userData.planeCutTarget);
+    if (object.userData.planeCutEdge) planeCutEdges.push(object.userData.planeCutEdge);
     const operand = object.userData.booleanOperand;
     if (operand) {
       const mesh = object as THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
@@ -60,5 +64,5 @@ export function inspectBodyRendering(scene: THREE.Scene) {
       decoratorInvalid: mesh.userData.decoratorInvalid === true,
     });
   });
-  return { faces, booleanOperands, created, disposed };
+  return { faces, booleanOperands, planeCutTargets, planeCutEdges, created, disposed };
 }

@@ -1,0 +1,54 @@
+.plane-cut-widget {
+  position: absolute;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 270px;
+  padding: 10px;
+  transform: translateX(-50%);
+  background: #fffffff0;
+  border: 1px solid #d4dee7;
+  border-radius: 10px;
+  pointer-events: auto;
+  color: #344657;
+  font-size: 12px;
+}
+.plane-cut-widget[hidden] {
+  display: none;
+}
+.plane-cut-widget strong,
+.plane-cut-status {
+  width: 100%;
+}
+.plane-cut-status {
+  line-height: 1.5;
+}
+.plane-cut-widget button {
+  height: 32px;
+  padding: 5px 10px;
+  border: 1px solid #c9d5df;
+  border-radius: 6px;
+  background: white;
+  color: #344657;
+}
+.plane-cut-widget button:disabled {
+  opacity: 0.5;
+}
+.plane-cut-inputs {
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+.plane-cut-inputs p {
+  margin: 5px 0;
+  line-height: 1.5;
+}
+.plane-cut-inputs [data-role="target"] {
+  color: #246fb8;
+}
+.plane-cut-inputs [data-role="tool"] {
+  color: #8b571b;
+}
+.plane-cut-inputs [data-role="result"] {
+  color: #a32b8c;
+}

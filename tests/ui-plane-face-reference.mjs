@@ -30,6 +30,16 @@ export async function planeFaceReferenceRoute(page, name) {
   await worldClick(page, [28, -2, 10]);
   const preview = (await inspect(page)).preview;
   assert.ok(preview);
+  assert.match(
+    await page.locator(".plane-cut-inputs").textContent(),
+    /Cutter · Body 2 · planar face/,
+  );
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Select Body 2", exact: true })
+      .evaluate((button) => button.closest(".entity-row").dataset.booleanRole),
+    "tool",
+  );
   assert.equal(preview.bodies[0].faces.length, before.bodies[0].faces.length + 1);
   assert.deepEqual((await inspect(page)).document, before);
   await page.keyboard.press("Enter");

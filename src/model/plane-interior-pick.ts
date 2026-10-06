@@ -1,15 +1,20 @@
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import { minimumPlaneBounds, type PlaneBounds, planeCorners } from "../sketch/plane-bounds.js";
-import { type PlaneFrame, type Point, planes } from "../sketch/planes.js";
+import { type PlaneFrame, type PlaneId, type Point, planes } from "../sketch/planes.js";
 import { pickFace } from "./body-picking.js";
+
+export type PlaneReferenceSource =
+  | { kind: "face"; body: string; face: string }
+  | { kind: "plane"; id: string }
+  | { kind: "world-plane"; id: PlaneId };
 
 /** Pick the displayed patches, not their infinite support or SVG outline. */
 export function pickPlaneInterior(
   editor: SketchEditor,
   screen: Point,
   accepts: (frame: PlaneFrame) => boolean,
-): { frame: PlaneFrame; vertices: number[] } | null {
+): { frame: PlaneFrame; vertices: number[]; source: PlaneReferenceSource } | null {
   const rect = editor.world.canvas.getBoundingClientRect();
   const ray = new THREE.Raycaster();
   ray.setFromCamera(
@@ -25,17 +30,33 @@ export function pickPlaneInterior(
     editor.display.bodies
       ?.find((body) => body.id === faceHit.body)
       ?.faces.find((face) => face.id === faceHit.face);
-  let closest =
+  let closest: {
+    frame: PlaneFrame;
+    depth: number;
+    vertices: number[];
+    source: PlaneReferenceSource;
+  } | null =
     faceHit && face?.plane && accepts(face.plane)
-      ? { frame: face.plane, depth: faceHit.depth, vertices: face.vertices }
+      ? {
+          frame: face.plane,
+          depth: faceHit.depth,
+          vertices: face.vertices,
+          source: { kind: "face", body: faceHit.body, face: faceHit.face },
+        }
       : null;
   const frames = [
-    ...Object.values(planes),
+    ...Object.entries(planes).map(([id, frame]) => ({
+      frame,
+      source: { kind: "world-plane", id: id as PlaneId } as PlaneReferenceSource,
+    })),
     ...(editor.store.data.constructionPlanes ?? [])
       .filter((plane) => editor.visibility.visible(plane.id))
-      .map((plane) => plane.frame),
+      .map((plane) => ({
+        frame: plane.frame,
+        source: { kind: "plane", id: plane.id } as PlaneReferenceSource,
+      })),
   ];
-  for (const frame of frames) {
+  for (const { frame, source } of frames) {
     if (!accepts(frame)) continue;
     const origin = new THREE.Vector3(...frame.origin);
     const u = new THREE.Vector3(...frame.u),
@@ -54,7 +75,7 @@ export function pickPlaneInterior(
       continue;
     const depth = hit.distanceTo(editor.world.camera.position);
     if (!closest || depth < closest.depth - 1e-5)
-      closest = { frame, depth, vertices: planePatchVertices(frame, bounds) };
+      closest = { frame, depth, vertices: planePatchVertices(frame, bounds), source };
   }
   return closest;
 }

@@ -134,7 +134,12 @@ export class ConstructionPlaneControls {
   select(plane: ConstructionPlane | PlaneId): void {
     if (this.editor.blocked) return;
     if (this.picker.choose) {
-      this.picker.choose(structuredClone(typeof plane === "string" ? planes[plane] : plane.frame));
+      this.picker.choose(
+        structuredClone(typeof plane === "string" ? planes[plane] : plane.frame),
+        typeof plane === "string"
+          ? { kind: "world-plane", id: plane }
+          : { kind: "plane", id: plane.id },
+      );
       return;
     }
     if (this.editor.interactions.current) return;

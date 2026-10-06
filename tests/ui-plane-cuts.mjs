@@ -23,6 +23,15 @@ async function startCut(page, mode) {
     "Picking references must not run native trial cuts",
   );
   assert.equal(await page.locator(".plane-widget").count(), 0);
+  assert.equal(await page.locator(".plane-cut-widget").isVisible(), true);
+  assert.equal(
+    await page.getByRole("button", { name: `Accept ${mode}`, exact: true }).isDisabled(),
+    true,
+  );
+  assert.match(await page.locator(".plane-cut-inputs").textContent(), /Target · Body 1/);
+  assert.match(await page.locator(".plane-cut-inputs").textContent(), /Cutter · Choose a plane/);
+  const state = await inspect(page);
+  assert.ok(state.bodyRendering.planeCutTargets.length, "Targets stay visible while picking");
   assert.ok(await page.locator(".plane-candidate-outlines polyline").count());
   assert.equal(
     (await inspect(page)).planeTargets.find((p) => p.id === "XY").visible,
@@ -107,6 +116,13 @@ async function faceSubset(page, original, name) {
   let s = await inspect(page);
   assert.equal(s.preview.bodies[0].faces.length, 8);
   assert.deepEqual(s.document, original);
+  assert.equal(
+    s.bodyRendering.planeCutTargets.length,
+    2,
+    "Only Imprint's selected faces are tinted",
+  );
+  await assertFeedback(page, s, "Plane 1");
+  await page.screenshot({ path: `.cache/plane-probe/${name}-imprint-preview.png` });
   await planeHover(page, [0, -16, 16], `${name}-world`);
   await worldClick(page, [0, -16, 16]);
   assert.equal(
@@ -116,9 +132,16 @@ async function faceSubset(page, original, name) {
   );
   await page.getByRole("button", { name: "Use Plane 1", exact: true }).first().click();
   assert.equal((await inspect(page)).preview.bodies[0].faces.length, 8);
-  await page.keyboard.press("Escape");
+  await chooseTool(page, "undo", "undo");
+  assert.equal((await inspect(page)).preview.bodies[0].faces.length, 7);
+  assert.match(await page.locator(".plane-cut-inputs").textContent(), /Cutter · YZ world plane/);
+  await chooseTool(page, "redo", "redo");
+  await assertFeedback(page, await inspect(page), "Plane 1");
+  await page.getByRole("button", { name: "Cancel plane cut", exact: true }).click();
   assert.deepEqual((await inspect(page)).document, original);
   assert.equal((await inspect(page)).modelingSelection.length, 2);
+  assert.equal(await page.locator(".plane-cut-widget").isVisible(), false);
+  assert.deepEqual((await inspect(page)).bodyRendering.planeCutEdges, []);
   await startCut(page, "Imprint");
   await page.getByRole("button", { name: "Use Plane 1", exact: true }).first().click();
   await settled(page);
@@ -146,7 +169,18 @@ async function splitBody(page, name) {
   await startCut(page, "Split Body");
   await page.getByRole("button", { name: "Use Plane 1", exact: true }).first().click();
   assert.equal((await inspect(page)).preview.bodies.length, 2);
-  await page.keyboard.press("Enter");
+  const preview = await inspect(page);
+  await assertFeedback(page, preview, "Plane 1");
+  await page.screenshot({ path: `.cache/plane-probe/${name}-split-preview.png` });
+  await page.getByRole("button", { name: "Accept Split Body", exact: true }).click();
+  const accepted = await inspect(page);
+  assert.equal(accepted.modelingSelection.length, preview.bodyRendering.planeCutEdges.length);
+  assert.ok(
+    accepted.modelingSelection.every((target) => target.kind === "edge"),
+    "Apply keeps section edges selected",
+  );
+  assert.equal(await page.locator(".plane-cut-inputs").count(), 0);
+  assert.deepEqual(accepted.bodyRendering.planeCutTargets, []);
   const split = (await inspect(page)).document;
   assert.equal(split.bodies.length, 2);
   assert.ok(Math.abs(split.bodies.reduce((n, b) => n + b.volume, 0) - 8000) < 1e-6);
@@ -170,6 +204,12 @@ async function falsePositiveReference(page, original) {
     original,
     "Broad-phase false positive preserves geometry",
   );
+  assert.match(await page.locator(".plane-cut-status").textContent(), /no valid preview/);
+  assert.equal(
+    await page.getByRole("button", { name: "Accept Imprint", exact: true }).isDisabled(),
+    true,
+  );
+  assert.deepEqual((await inspect(page)).bodyRendering.planeCutEdges, []);
   await pickPlane(page, "YZ");
   assert.equal(
     (await inspect(page)).preview.bodies[0].faces.length,
@@ -178,4 +218,31 @@ async function falsePositiveReference(page, original) {
   );
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, original);
+}
+
+async function assertFeedback(page, state, cutter) {
+  assert.match(
+    await page.locator(".plane-cut-inputs").textContent(),
+    new RegExp(`Cutter · ${cutter}`),
+  );
+  assert.match(
+    await page.locator(".plane-cut-status").textContent(),
+    /Preview · [1-9]\d* section edges highlighted/,
+  );
+  const highlighted = state.bodyRendering.planeCutEdges;
+  assert.ok(highlighted.length);
+  for (const target of highlighted) {
+    const edge = state.preview.bodies
+      .find((b) => b.id === target.body)
+      .edges.find((e) => e.id === target.edge);
+    assert.ok(edge, "Each highlight identifies an exact selectable result edge");
+    for (let i = 2; i < edge.points.length; i += 3) assert.ok(Math.abs(edge.points[i] - 10) < 1e-5);
+  }
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Use Plane 1", exact: true })
+      .evaluate((button) => button.closest(".entity-row").dataset.booleanRole),
+    "tool",
+    "Saved cutter has the same role coloring as Boolean cutters",
+  );
 }

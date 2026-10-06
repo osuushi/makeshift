@@ -26,7 +26,15 @@ delete sketches or solids. There is no dependency on the original reference face
 Imprint is enabled only for one or more selected faces. Split Body uses the bodies
 identified by selected faces or whole-body selections. Both pick a world/saved
 plane or planar face directly, using its infinite support rather than its visible
-boundary. The cut tools have no panel or separate offset value.
+boundary. A compact local preview card shows picking/calculating/preview state, section-edge
+count and Apply/Cancel; Split also shows the result body count. It stays above the
+target's projected bounds, with the shared viewport clearance rules. There is no
+separate offset value. Entities lists the target bodies (and selected-face count
+for Imprint) and the chosen world plane, saved plane or planar-face cutter. Target
+rows and original target surfaces/outlines are blue; the cutter row and evaluated
+support-plane patch/outline are amber. Imprint highlights only its selected faces.
+The source identities are temporary presentation state; operations still copy a
+frame without introducing document dependencies.
 
 Before picking, synchronous infinite-plane/bounding-box checks identify references
 crossing any selected body's bounds. No native operations run during reference
@@ -43,8 +51,14 @@ Picking stays on the canvas so camera gestures remain available. World/saved pat
 share adaptive bounds and have no floating labels; saved references remain available
 in Entities. At coincident hit depths, an eligible face wins the tie against a patch.
 
-Clicking a valid reference produces a temporary exact preview. Enter, clicking away,
-selecting another entity or toggling the active command accepts in one Undo step;
+Clicking a valid reference produces a temporary exact preview. Magenta lines show
+Imprint's newly created section edges and Split's result section borders, including
+borders already imprinted before splitting; off-plane boundary subdivisions and
+periodic seams are excluded. Invalid/no-op picks keep the inputs visible, clear
+result highlights and disable Apply. Explicit Apply or Enter keeps the highlighted
+exact edges selected for subsequent editing; the status confirms application.
+Clicking away still clears selection.
+Apply, Enter, clicking away, selecting another entity or toggling the active command accepts in one Undo step;
 Escape cancels and restores the original selection. Another valid reference replaces
 the preview. Leaving before a valid preview exits without changing geometry.
 
