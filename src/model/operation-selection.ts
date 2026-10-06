@@ -3,6 +3,7 @@ import type { ModelingTarget } from "../sketch/model-selection-state.js";
 import { parallelNormals, planeNormal, type Vector } from "../sketch/planes.js";
 import type { Body, BodyEdgeFinish, BodyFaceOffset, BodyShell, Face, LiftSource } from "./body.js";
 import { type CleanupSelection, cleanupSelection } from "./cleanup.js";
+import { featureEdges } from "./feature-edges.js";
 import { expandedSelection, type SelectionContext, selectionContext } from "./selection-context.js";
 
 export interface MovementSelection {
@@ -117,9 +118,14 @@ function edgeSelection(
       target.kind === "edge"
         ? [target.edge]
         : (body?.faces.find((face) => face.id === target.face)?.edges ?? []);
-    if (!ids.length || ids.some((id) => !body?.edges.some((edge) => edge.id === id)))
+    if (!body || !ids.length || ids.some((id) => !body.edges.some((edge) => edge.id === id)))
       return unavailable("A selected face has no valid boundary edges");
-    for (const id of ids) {
+    // Periodic seams occur twice in a face wire, but are not modeling boundaries.
+    // Explicit edge targets still reach the kernel's ordinary eligibility check.
+    const features = new Set(featureEdges(body).map((edge) => edge.id));
+    const boundary = target.kind === "edge" ? ids : ids.filter((id) => features.has(id));
+    if (!boundary.length) return unavailable("A selected face has no valid boundary edges");
+    for (const id of boundary) {
       const key = `${target.body}:${id}`;
       if (seen.has(key)) continue;
       seen.add(key);

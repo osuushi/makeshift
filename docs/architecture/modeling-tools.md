@@ -55,7 +55,9 @@ whole-body Delete/Cleanup, and applicable face operations. Offset expands
 the coverage to its faces. Projection uses the same whole-body interpretation for
 complete face coverage. Body selection does not implicitly select edges for Fillet
 or Chamfer. Explicitly invoking either tool on faces converts their boundaries to selected edges and opens
-the size control. Mixed faces and explicit edges use raw selection encounter order,
+the size control. Periodic seam edges, used twice in a face wire, are excluded from
+that face's modeling boundaries; explicit edge targets retain kernel validation.
+Mixed faces and explicit edges use raw selection encounter order,
 deduplicating shared edges; Cancel preserves the resolved/expanded edge selection.
 For Move/Delete, edges already covered by a whole body add no second edit.
 

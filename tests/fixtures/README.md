@@ -1,5 +1,12 @@
 # Periodic cylinder
 
+`periodic-face-fillet.json` retains exact BRep and topology IDs/signatures from the
+founder's `makeshift-fixture-2026-10-06T03-28-08-927Z.json` capture. The short inner
+cylindrical wall has two circular rims and a doubled seam occurrence. Ordinary Open
+regenerates presentation; the UI regression checks face-to-Fillet/Chamfer conversion,
+numeric focus, real preview, explicit rim equivalence and Cancel/Undo/Redo.
+Sketches, meshes and history are omitted; this is user-created Makeshift geometry.
+
 `threaded-flange-move.json` retains one exact body, topology IDs/signatures and the
 three-face +2 mm Z movement from the founder's `2026-09-19T22-25-11-439Z-84f23788`
 capture. The rounded flange adjoins a cylindrical neck with a threaded lower

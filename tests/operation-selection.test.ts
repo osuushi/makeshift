@@ -156,7 +156,7 @@ test("Fillet and Chamfer convert ordered faces to unique boundary edges without 
   const rich: Body = {
     ...a,
     faces: [
-      { ...a.faces[0], edges: ["ab", "shared", "ab"] },
+      { ...a.faces[0], edges: ["ab", "shared"] },
       { ...a.faces[1], edges: ["shared", "bc"] },
     ],
     edges: ["ab", "shared", "bc", "explicit"].map((id) => ({ ...a.edges[0], id })),
@@ -187,5 +187,33 @@ test("Fillet and Chamfer convert ordered faces to unique boundary edges without 
       resolveOperation(mode, [{ kind: "sketch", sketch: "missing" }, ...targets], doc).available,
       false,
     );
+  }
+});
+
+test("face-based edge finishes exclude periodic seams while preserving explicit targets", () => {
+  const periodic: Body = {
+    ...a,
+    faces: [
+      { ...a.faces[0], edges: ["top", "seam", "bottom", "seam"] },
+      { ...a.faces[1], edges: ["top"] },
+    ],
+    edges: ["top", "seam", "bottom"].map((id) => ({ ...a.edges[0], id })),
+  };
+  const doc = { ...document, bodies: [periodic] };
+  const side = faces(periodic)[0];
+  for (const mode of ["fillet", "chamfer"] as const) {
+    assert.deepEqual(resolveOperation(mode, [side], doc), {
+      available: true,
+      inputs: ["top", "bottom"].map((edge) => ({ body: periodic.id, edge })),
+    });
+    assert.deepEqual(
+      resolveOperation(mode, [side, { kind: "edge", body: periodic.id, edge: "seam" }], doc),
+      {
+        available: true,
+        inputs: ["top", "bottom", "seam"].map((edge) => ({ body: periodic.id, edge })),
+      },
+    );
+    const noBoundary = { ...periodic, faces: [{ ...periodic.faces[0], edges: ["seam", "seam"] }] };
+    assert.equal(resolveOperation(mode, [side], { ...doc, bodies: [noBoundary] }).available, false);
   }
 });
