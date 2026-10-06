@@ -29,6 +29,10 @@ jobs:
         run: |
           test -n "$WEB_PAGES_REPOSITORY" || { echo 'Set WEB_PAGES_REPOSITORY'; exit 1; }
           test -n "$WEB_PAGES_DEPLOY_KEY" || { echo 'Set WEB_PAGES_DEPLOY_KEY'; exit 1; }
+          key_path=$(mktemp)
+          trap 'rm -f "$key_path"' EXIT
+          printf '%s\n' "$WEB_PAGES_DEPLOY_KEY" > "$key_path"
+          ssh-keygen -y -f "$key_path" > /dev/null
       - name: Install pinned Emscripten
         run: |
           git clone https://github.com/emscripten-core/emsdk.git .cache/emsdk

@@ -17,7 +17,9 @@ const credentials = await mkdtemp(resolve(tmpdir(), "makeshift-pages-"));
 try {
   const identity = resolve(credentials, "identity");
   const hosts = resolve(credentials, "known_hosts");
-  await writeFile(identity, key, { mode: 0o600 });
+  // Secret entry and shell substitution can strip OpenSSH's required final newline.
+  await writeFile(identity, `${key.trim()}\n`, { mode: 0o600 });
+  execFileSync("ssh-keygen", ["-y", "-f", identity], { stdio: "ignore" });
   // Get GitHub's public host keys over authenticated HTTPS, rather than trusting ssh-keyscan.
   const response = await fetch("https://api.github.com/meta");
   if (!response.ok) throw new Error("Could not verify GitHub SSH host keys");
