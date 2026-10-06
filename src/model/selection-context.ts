@@ -9,6 +9,8 @@ export interface SelectionContext {
   /** Whole-body tokens expanded, with existing face order retained. */
   faces: FaceTarget[];
   edges: EdgeTarget[];
+  /** Owning bodies in first target encounter order, regardless of coverage. */
+  owners: Body[];
   complete: Body[];
   partialFaces: FaceTarget[];
   valid: boolean;
@@ -56,17 +58,16 @@ export function selectionContext(
     }
   }
   const bodyOrder = [...new Set(ordered.flatMap((t) => ("body" in t ? [t.body] : [])))];
-  const complete = bodyOrder.flatMap((id) => {
-    const body = bodies.get(id);
-    return body?.faces.length && body.faces.every((f) => faces.has(`face:${id}:${f.id}`))
-      ? [body]
-      : [];
-  });
+  const owners = bodyOrder.flatMap((id) => bodies.get(id) ?? []);
+  const complete = owners.filter(
+    (body) => body.faces.length && body.faces.every((f) => faces.has(`face:${body.id}:${f.id}`)),
+  );
   const whole = new Set(complete.map((b) => b.id));
   return {
     ordered,
     faces: [...faces.values()],
     edges,
+    owners,
     complete,
     valid,
     partialFaces: [...faces.values()].filter((t) => !whole.has(t.body)),

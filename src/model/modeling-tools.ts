@@ -80,7 +80,7 @@ export class ModelingTools {
     if (!this.editor.modeling.targets.length && tool !== "loft")
       return {
         shell: "Select a body or faces to shell",
-        erode: "Select complete bodies to erode",
+        erode: "Select bodies, faces or edges to erode",
         offset: "Select faces or bodies to offset",
         move: "Select bodies, faces or edges to move",
         fillet: "Select solid faces or edges to round",
@@ -114,6 +114,11 @@ export class ModelingTools {
       return false;
     }
     if (this.reason(tool)) return false;
+    if (tool === "erode") {
+      const result = editor.modeling.resolve("erode");
+      if (!result.available) return false;
+      editor.modeling.targets = result.inputs.map((body) => ({ kind: "body", body: body.id }));
+    }
     editor.modeling.setTool(tool);
     editor.notice = "";
     if (tool === "revolve") this.revolve();

@@ -43,7 +43,7 @@ export class PlaneCutControls {
                 (this.targets(mode)
                   ? null
                   : mode === "split"
-                    ? "Select bodies or faces in Modeling"
+                    ? "Select bodies, faces or edges in Modeling"
                     : "Select faces in Modeling")),
           run: () => (this.source?.mode === mode ? this.deselect() : this.begin(mode)),
         }),
@@ -67,8 +67,8 @@ export class PlaneCutControls {
     const context = selectionContext(e.modeling.targets, e.store.data);
     if (!context.valid || !context.ordered.length) return null;
     if (mode === "split") {
-      if (!context.ordered.every((t) => t.kind === "body" || t.kind === "face")) return null;
-      return [...new Set(context.faces.map((t) => t.body))].map((body) => ({ body }));
+      if (!context.ordered.every((t) => "body" in t)) return null;
+      return context.owners.map((body) => ({ body: body.id }));
     }
     if (!context.ordered.every((t) => t.kind === "face")) return null;
     const targets: PlaneCut["targets"] = [];
