@@ -57,8 +57,25 @@ export function kernelInput(
   extrusion: Extrusion,
   bodies: readonly Body[],
 ) {
+  const faces = extrusion.sources.flatMap((source) =>
+    "face" in source
+      ? bodies.flatMap((body) => body.faces).filter((face) => face.id === source.face)
+      : [],
+  );
+  const normalExtrusion = faces.some((face) => !face.plane);
+  if (
+    normalExtrusion &&
+    (faces.length !== extrusion.sources.length ||
+      extrusion.symmetric ||
+      (extrusion.draft?.value ?? 0) !== 0 ||
+      (extrusion.twist?.angle ?? 0) !== 0)
+  )
+    throw new Error("Normal face extrusion requires solid faces without draft, twist or symmetry");
   return {
-    ...profileInput(document, extrusion.sources, bodies),
+    ...(normalExtrusion
+      ? { normal: [0, 0, 1] as Vector, profiles: extrusion.sources, bodies: exactBodies(bodies) }
+      : profileInput(document, extrusion.sources, bodies)),
+    normalExtrusion,
     kind: "extrude" as const,
     mode: extrusion.mode,
     distance: extrusion.distance,

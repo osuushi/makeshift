@@ -71,7 +71,7 @@ const resolvers: { [K in Operation]: Resolver<K> } = {
   offset: offsetSelection,
   fillet: edgeSelection,
   chamfer: edgeSelection,
-  extrude: liftSelection,
+  extrude: extrusionSelection,
   revolve: liftSelection,
   loft: loftSelection,
   cleanup: (c) =>
@@ -185,6 +185,25 @@ function liftSelection(c: SelectionContext, document: SketchDocument): Resolutio
     if (t.kind === "profile") sources.push({ sketch: t.sketch, profile: t.profile.key });
   }
   return available(sources);
+}
+
+function extrusionSelection(
+  c: SelectionContext,
+  document: SketchDocument,
+): Resolution<LiftSource[]> {
+  const targets = expandedSelection(c);
+  const faces = targets.flatMap((t) =>
+    t.kind === "face"
+      ? (document.bodies?.flatMap((b) => b.faces).filter((f) => f.id === t.face) ?? [])
+      : [],
+  );
+  if (!faces.some((face) => !face.plane)) return liftSelection(c, document);
+  if (
+    faces.length !== targets.length ||
+    faces.some((face) => !face.offsetHandle && !face.cylinder && !face.plane)
+  )
+    return unavailable("Normal extrusion requires supported solid faces only");
+  return available(faces.map((face) => ({ face: face.id })));
 }
 
 function shellSelection(c: SelectionContext): Resolution<BodyShell["selection"]> {

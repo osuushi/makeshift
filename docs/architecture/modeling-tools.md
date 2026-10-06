@@ -354,3 +354,28 @@ falls back to that window's in-memory choice. Preference changes are outside
 both document and temporary interaction Undo. Subtract always consumes its target
 and optionally retains cutting tools; the other modes optionally retain all
 inputs. Acceptance/cancel and document Undo/Redo retain their ordinary semantics.
+
+## Bounded normal face extrusion (2026-10-06)
+
+Extrude/E also accepts supported curved solid faces. It constructs material between
+those exact trimmed faces and their normal offsets, closing their boundary with new
+faces. It does not expand selection to Offset's tangent neighbors. Pulling one of
+two coaxial cylinder bands therefore creates an annular shoulder and changes only
+that band's radius. Positive signed distance adds material through automatic Union;
+negative distance removes it through automatic Subtract. The existing explicit
+Boolean modes and targets remain available. Radius is the default quantity when
+selected cylinders/spheres share a radius and orientation; Distance is signed
+material-outward travel. Switching quantity preserves the candidate.
+
+Planar faces and sketch regions retain their existing common-direction extrusion.
+Curved-face normal extrusion requires face-only selection, and hides planar draft,
+twist and symmetry controls. Mixed curved faces and sketch regions reject. Native
+construction copies each selected face, builds and orients a closed layer, then
+runs strict solid/interference/tolerance validation before the existing Boolean
+path. Offset construction and self-intersection limits can still reject curved
+faces or distances; failed requests do not alter accepted geometry. Preview,
+release, acceptance, tool switching, Cancel and one-step Undo use the existing
+Extrusion lifecycle. Bodies continue to store materialized BRep rather than a
+feature dependency on the original face.
+The offset surface carries face correspondence through the Boolean, retaining
+one-to-one face identity and selection. New shoulder faces receive new identities.

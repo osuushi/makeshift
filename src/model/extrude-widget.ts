@@ -1,6 +1,7 @@
 import { numericFocus } from "../tools/menu-focus.js";
 import { distanceField, positionAxialPanel, toolAction, updateAxialArrow } from "./axial-widget.js";
 import { ExtrudeDraft } from "./extrude-draft.js";
+import { ExtrudeQuantity } from "./extrude-quantity.js";
 import { WidgetClearance } from "./widget-clearance.js";
 import "./extrude-widget.css";
 import type { SketchEditor } from "../sketch/editor.js";
@@ -12,6 +13,7 @@ import { revolutionPoint } from "./revolve-axis.js";
 
 export class ExtrudeWidget {
   readonly draft: ExtrudeDraft;
+  readonly quantity: ExtrudeQuantity;
   readonly root = document.createElement("div");
   private placement = new WidgetClearance(this.root);
   readonly handle = document.createElement("button");
@@ -35,6 +37,7 @@ export class ExtrudeWidget {
     cancel: () => void,
   ) {
     this.draft = new ExtrudeDraft(draftChanged);
+    this.quantity = new ExtrudeQuantity(draftChanged);
     this.root.className = "extrude-controls axial-widget";
     this.handle.className = "extrude-arrow axial-arrow";
     this.handle.setAttribute("aria-label", "Drag extrusion");
@@ -50,7 +53,7 @@ export class ExtrudeWidget {
     symmetry.className = "extrude-symmetry";
     symmetry.append(this.symmetric, "Symmetric");
     symmetry.title = "Center about source plane · distance is total depth · Option while dragging";
-    this.options.append(distanceField(this.input), symmetry, this.draft.root);
+    this.options.append(distanceField(this.input), this.quantity.select, symmetry, this.draft.root);
     const actions = document.createElement("div");
     actions.className = "axial-actions";
     this.accept = toolAction("Accept extrusion", "m5 12 4 4L19 6", finish);
@@ -84,14 +87,21 @@ export class ExtrudeWidget {
   ) {
     if (!active || !this.currentAxis) this.currentAxis = extrusionAxis(editor);
     const axis = this.axis;
+    this.quantity.configure(editor, active, !!axis?.normalExtrusion);
     this.root.hidden = !!editor.world.active || !axis;
     this.options.hidden = false;
     this.symmetric.checked = symmetric;
     const capDistance = distance / (symmetric ? 2 : 1);
     this.draft.update(capDistance);
-    this.input.title = symmetric
-      ? "Total symmetric extrusion depth (mm)"
-      : "Extrusion distance (mm)";
+    this.draft.root.hidden = !!axis?.normalExtrusion;
+    if (this.symmetric.parentElement) this.symmetric.parentElement.hidden = !!axis?.normalExtrusion;
+    this.input.title = axis?.normalExtrusion
+      ? this.quantity.mode === "radius"
+        ? "Absolute face radius (mm)"
+        : "Signed material-outward extrusion (mm)"
+      : symmetric
+        ? "Total symmetric extrusion depth (mm)"
+        : "Extrusion distance (mm)";
     if (!axis) return;
     const straight = axis.center.map(
       (v, i) => v + axis.normal[i] * (Number.isFinite(capDistance) ? capDistance : 0),
@@ -117,7 +127,9 @@ export class ExtrudeWidget {
     this.accept.disabled = !active || !valid || distance === 0 || editor.blocked;
     this.dismiss.disabled = !active;
     if (!numericFocus(this.input))
-      this.input.value = Number.isFinite(distance) ? String(Number(distance.toPrecision(4))) : "";
+      this.input.value = Number.isFinite(distance)
+        ? String(Number(this.quantity.display(distance).toPrecision(4)))
+        : "";
     for (const button of this.options.querySelectorAll<HTMLButtonElement>("[data-mode]"))
       button.setAttribute("aria-pressed", String(button.dataset.mode === mode));
   }

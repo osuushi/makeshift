@@ -51,6 +51,7 @@ export class ExtrudeControls {
       },
       () => {
         if (this.begin()) this.queue(this.distance);
+        editor.refresh();
       },
       (symmetric) => {
         if (this.begin()) this.queue(this.distance, symmetric);
@@ -135,11 +136,12 @@ export class ExtrudeControls {
     this.twist.input.value = String(this.twist.angle);
     this.targets.selected = restored?.targets;
     this.targets.restoredEligible = restored?.eligibleTargets;
-    this.input.value = String(this.distance);
+    this.input.value = String(this.widget.quantity.display(this.distance));
     this.lease?.trackHistory(
       this.root,
       () => ({
         distance: this.distance,
+        quantity: this.widget.quantity.mode,
         symmetric: this.symmetric,
         mode: this.mode,
         draft: this.widget.draft.value,
@@ -148,13 +150,14 @@ export class ExtrudeControls {
         targets: this.targets.selected,
       }),
       async (state) => {
+        this.widget.quantity.setMode(state.quantity);
         this.mode = state.mode;
         this.widget.draft.restore(state.draft);
         this.twist.angle = state.angle;
         this.twist.origin = state.origin;
         this.twist.input.value = String(state.angle);
         this.targets.selected = state.targets;
-        this.input.value = String(state.distance);
+        this.input.value = String(this.widget.quantity.display(state.distance));
         this.queue(state.distance, state.symmetric);
         await this.previews.settle();
       },
@@ -162,7 +165,7 @@ export class ExtrudeControls {
     return !!this.lease;
   }
   private queue(value: number, symmetric = this.symmetric): void {
-    this.symmetric = symmetric;
+    this.symmetric = this.widget.axis?.normalExtrusion ? false : symmetric;
     if (
       !Number.isFinite(value) ||
       Math.abs(value) < 1e-8 ||
@@ -254,6 +257,7 @@ export class ExtrudeControls {
       this.symmetric,
     );
     this.twist.update(this.widget.axis, this.active, this.distance, this.valid, this.symmetric);
+    this.twist.row.hidden = !!this.widget.axis?.normalExtrusion;
     this.root.dataset.previewPending = String(
       this.active && !!this.previews.latest && !this.valid && this.editor.store.working,
     );
