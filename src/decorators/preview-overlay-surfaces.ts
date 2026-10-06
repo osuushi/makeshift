@@ -116,12 +116,15 @@ export class PreviewOverlaySurfaces {
     const detailed = decoratorPreviewMode() === "detailed";
     const ready = new Set<string>();
     for (const surface of this.surfaces) {
-      surface.mesh.visible = detailed && this.editor.visibility.visible(surface.mesh.userData.body);
+      const drawable =
+        surface.mesh.geometry.attributes.position.count >= 3 &&
+        (surface.mesh.geometry.index?.count ?? 0) >= 3;
+      surface.mesh.visible =
+        detailed && drawable && this.editor.visibility.visible(surface.mesh.userData.body);
       const appearance = decoratorAppearance(surface.definition);
       (surface.mesh.material as THREE.MeshStandardMaterial).color.set(appearance.color);
       surface.displayOpacity = appearance.opacity;
-      if (surface.mesh.visible && surface.mesh.geometry.attributes.position.count > 0)
-        ready.add(`${surface.id}/${surface.mesh.userData.body}`);
+      if (surface.mesh.visible) ready.add(`${surface.id}/${surface.mesh.userData.body}`);
     }
     return this.fallback.visible(this.editor, ready);
   }

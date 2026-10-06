@@ -48,7 +48,8 @@
     "test:navigation-history": "node tests/navigation-history-ui.mjs",
     "test:navigation-host": "node tests/navigation-host-ui.mjs",
     "test:navigation-touch": "node tests/navigation-touch-ui.mjs",
-    "test:thread-presets": "node tests/thread-presets-ui.mjs"
+    "test:thread-presets": "node tests/thread-presets-ui.mjs",
+    "test:preview-fallback": "node tests/preview-fallback-ui.mjs"
   },
   "dependencies": {
     "@jitl/quickjs-wasmfile-release-sync": "0.32.0",
