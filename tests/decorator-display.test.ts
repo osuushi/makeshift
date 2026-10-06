@@ -197,3 +197,46 @@ test("current-face fallback follows placement, isolates body visibility, and rej
   }
   assert.equal(scene.children.length, 0);
 });
+
+test("vertex-only generated results retain the attachment marker until drawable triangles arrive", () => {
+  const { overlay, group } = previewScene();
+  try {
+    overlay.sync(signature("current"), documentAt());
+    const mesh = {
+      id: "decorator",
+      body: "a",
+      faces: [{ body: "a", face: "face" }],
+      positions: new Float32Array(vertices),
+      indices: new Uint32Array(),
+    };
+    overlay.replace([mesh], ["decorator"], signature("current"), signature("current"));
+    assert.deepEqual(
+      group.children.filter((child) => child.visible).map((child) => child.userData.body),
+      ["a", "b"],
+      "A custom preview may return vertices without triangles; both markers remain visible",
+    );
+    assert.ok(
+      group.children
+        .filter((child) => child.visible)
+        .every((child) => child.userData.previewFallback),
+    );
+    overlay.replace(
+      [{ ...mesh, indices: new Uint32Array([0, 1, 2]) }],
+      ["decorator"],
+      signature("current"),
+      signature("current"),
+    );
+    assert.equal(
+      group.children.filter((child) => child.visible && child.userData.previewFallback).length,
+      1,
+    );
+    assert.equal(
+      group.children.filter((child) => child.visible && child.userData.previewCurrent).length,
+      1,
+    );
+    overlay.sync(signature("next"), documentAt(2));
+    assert.ok(group.children.every((child) => child.userData.previewFallback));
+  } finally {
+    overlay.dispose();
+  }
+});

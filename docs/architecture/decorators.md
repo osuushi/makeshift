@@ -44,7 +44,11 @@ not the final profile. A matching coarse mesh remains visible while settled deta
 is being calculated, then a matching result replaces it. Busy feedback reports
 actual active/queued preview work. Stale replies cannot restore a moved, removed,
 unresolved or hidden attachment. Partial multi-body results only replace markers
-for bodies with a nonempty generated mesh. Color only retires pending workers and
+for bodies with a drawable generated mesh containing indexed triangles. Custom
+previews containing only vertices or no mesh keep the attachment marker. A valid
+attachment also keeps its current-face coloring after a preview worker error; the
+error notice is explicit and does not claim successful generation. Invalid or
+detached attachments use the repair/problem interface instead of a success marker. Color only retires pending workers and
 continues to follow current geometry without expensive preview jobs; export is
 unchanged. Live worker replies include transient durations and sampling hints for
 local measurements, not persisted document state or a performance guarantee.

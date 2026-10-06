@@ -161,6 +161,11 @@ jobs:
       - name: Standalone cleanup and separate geometry history
         if: matrix.shard == 3
         run: xvfb-run -a npm run test:standalone-cleanup
+      - name: Drawable decorator preview fallback and adjacent settings
+        if: matrix.shard == 1
+        run: |
+          xvfb-run -a npm run test:preview-fallback
+          xvfb-run -a node tests/preview-fallback-adjacent-ui.mjs
       - name: Measured widget DOM layouts
         if: matrix.shard == 1 && matrix.browser == 'chromium'
         run: |
@@ -453,6 +458,13 @@ jobs:
         run: |
           node tests/common-shortcuts-ui.mjs
           node tests/modeling-shortcut-regressions-ui.mjs
+      - name: Drawable decorator preview fallback and adjacent settings
+        if: matrix.lane == 'geometry'
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: |
+          npm run test:preview-fallback
+          node tests/preview-fallback-adjacent-ui.mjs
       - name: Built Electron interface scale and orientation cube
         if: matrix.lane == 'electron-host'
         run: |
