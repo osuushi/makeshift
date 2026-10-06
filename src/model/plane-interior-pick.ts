@@ -9,7 +9,8 @@ export function pickPlaneInterior(
   editor: SketchEditor,
   screen: Point,
   accepts: (frame: PlaneFrame) => boolean,
-): { frame: PlaneFrame; vertices: number[] } | null {
+  faceHit: ReturnType<typeof pickFace> | null = pickFace(editor, screen),
+): { frame: PlaneFrame; vertices: number[]; depth: number } | null {
   const rect = editor.world.canvas.getBoundingClientRect();
   const ray = new THREE.Raycaster();
   ray.setFromCamera(
@@ -19,7 +20,6 @@ export function pickPlaneInterior(
     ),
     editor.world.camera,
   );
-  const faceHit = pickFace(editor, screen);
   const face =
     faceHit &&
     editor.display.bodies

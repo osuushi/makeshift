@@ -25,23 +25,32 @@ delete sketches or solids. There is no dependency on the original reference face
 
 Imprint is enabled only for one or more selected faces. Split Body uses the bodies
 identified by selected faces or whole-body selections. Both pick a world/saved
-plane or planar face directly, using its infinite support rather than its visible
-boundary. The cut tools have no panel or separate offset value.
+plane or any face directly. Plane and analytic face references use their natural
+support surface rather than the visible trimmed boundary: cylinders extend along
+their axes, cones retain their conical support, and spheres/tori retain their
+complete curved support. Bounded spline surfaces retain their native parameter domain; no planar
+approximation or speculative spline extrapolation is introduced.
+The cut tools have no panel or separate offset value.
 
 Before picking, synchronous infinite-plane/bounding-box checks identify references
-crossing any selected body's bounds. No native operations run during reference
-discovery. Disjoint and box-tangent planes and hidden references are excluded.
+crossing any selected body's bounds. Curved faces remain broad candidates; their
+exact intersection is evaluated only after picking. No native operations run
+during reference discovery. Disjoint and box-tangent planes and hidden references are excluded.
 This is a broad filter: concavities, selected-face coverage and existing imprints
 may leave ineffective references selectable. Exact validation runs only on picking
 a reference. World/saved patches retain their normal translucent fills; candidate
 outlines remain visible. Hover adds a blue fill to exactly the reference the shared
-click picker would choose, including a planar face's actual boundary. Entities rows highlight their own saved reference. Hover clears on leaving, navigation or tool
-exit and never changes geometry. Discovery does not create previews or alter history.
+click picker would choose, including a face's actual visible surface. Entities rows highlight their own saved
+reference. Hover clears on leaving, navigation or tool exit and never changes geometry. Discovery does not create previews or alter history.
 World and saved plane patches can be picked throughout their displayed interiors,
 using the nearest eligible reference when patches and planar faces overlap.
 Picking stays on the canvas so camera gestures remain available. World/saved patches
 share adaptive bounds and have no floating labels; saved references remain available
 in Entities. At coincident hit depths, an eligible face wins the tie against a patch.
+Curved reference inputs store document-local body/face IDs and resolve exact
+supports, including face placement, in the original document used for the edit.
+Reopen restores these inputs through the same preview path. Scripts supply exactly
+one `frame` or `surface: {body, face}` for Split Body and Imprint.
 
 Clicking a valid reference produces a temporary exact preview. Enter, clicking away,
 selecting another entity or toggling the active command accepts in one Undo step;
