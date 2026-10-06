@@ -266,6 +266,10 @@ its own change, which expires that view tip. Accepted geometry expires prior vie
 history; if a navigation gesture is still held when the new result is published,
 its remaining movement rebases from the accepted camera and result-selection
 context. Its eventual Undo cannot restore targets from the previous document.
+Workspace view completion waits for the accepting controller's result selection
+to settle. Reduced-motion entry can finish its camera motion immediately and still
+retains the same independent entry and exit Undo steps as animated entry.
+Projection's workspace gesture also retains its final result curve selection.
 The existing serialized selection-intent boundary also carries view intents;
 there is no additional request queue or history owner.
 

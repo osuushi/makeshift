@@ -36,6 +36,16 @@ const routes = {
   draft: decoratorDraftSwitchRoute,
   application: threadApplicationSwitchRoute,
   threads: offsetThreadsRoute,
+  reduced: async (page, name) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    try {
+      await projectionSwitchRoute(page, `${name}-projection`);
+      await geometrySwitchRoute(page, `${name}-geometry`);
+      await threadApplicationSwitchRoute(page, `${name}-application`);
+    } finally {
+      await page.emulateMedia({ reducedMotion: null });
+    }
+  },
 };
 const requested = process.argv[2];
 assert.ok(!requested || routes[requested], `Unknown mode-switch route: ${requested}`);
