@@ -11,6 +11,7 @@ import { exportTolerance } from "./precision.js";
 import type { PreviewFeedback } from "./preview-feedback.js";
 import { threadDomain } from "./thread-domain.js";
 import { nextThreadResolution } from "./thread-preview.js";
+import { threadPreviewSurface } from "./thread-preview-surface.js";
 import type { ThreadPreviewResolution } from "./thread-sampling.js";
 import type { DecoratorInstance } from "./types.js";
 
@@ -79,16 +80,20 @@ function renderThreadPreview(
   const prepared = prepareThreadGeometry(document, instance, "preview", resolution);
   if (!prepared) return { mesh: { vertices: [], triangles: [] }, state: null };
   const { body, faces, geometry } = prepared;
-  // A complete cylindrical face already has the preview shell. Clipping is
-  // needed only for a partial face domain.
-  if (!geometry.masks) return { mesh: geometry.fill, state: geometry.resolution };
+  // Clip partial domains as closed volumes, then display their threaded surfaces.
+  const surface = (mesh: ExportMesh) =>
+    threadPreviewSurface(mesh, instance.frame, faces, body.faces, {
+      radius: geometry.previewAuxiliaryRadius,
+      segments: geometry.resolution.segments,
+    });
+  if (!geometry.masks) return { mesh: surface(geometry.fill), state: geometry.resolution };
   if (!runtime) throw new PreviewRuntimeRequired();
   const scope = new MeshScope(runtime, body.center);
   try {
     const mask = threadDomain(scope, body, faces, geometry);
     const generated = scope.from(geometry.fill);
     return {
-      mesh: scope.mesh(scope.keep(generated.intersect(mask))),
+      mesh: surface(scope.mesh(scope.keep(generated.intersect(mask)))),
       state: geometry.resolution,
     };
   } finally {

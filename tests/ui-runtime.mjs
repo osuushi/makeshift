@@ -30,6 +30,7 @@ export async function withUiRuntimes(
     viewport = { width: 1280, height: 850 },
     timeout = 12000,
     hasTouch = false,
+    deviceScaleFactor = 1,
   } = {},
 ) {
   const names = runtimeNames(allowed, defaults);
@@ -60,7 +61,7 @@ export async function withUiRuntimes(
           );
         } else {
           browser = await { chromium, webkit }[name].launch({ headless: true });
-          page = await browser.newPage({ viewport, hasTouch });
+          page = await browser.newPage({ viewport, hasTouch, deviceScaleFactor });
           await installTestFrames(page);
           await page.goto(server.resolvedUrls.local[0]);
         }

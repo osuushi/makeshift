@@ -37,6 +37,13 @@ accepted attachments, files and Undo; they never turn decorators into native BRe
 The compositor excludes only a surface's own supports when resolving occlusion,
 then blends its configured opacity once. Generated previews and attachment markers
 cannot intercept analytic face picking.
+Thread previews omit the auxiliary cylindrical skin and volume-closing facets at
+axial ends and adjacent planar boundaries, so those helper surfaces do not color
+over rims or end faces. Clipping still uses closed volumes; threaded extent and
+exported geometry are unchanged.
+Shader clipping keeps a half-pixel display margin at adjacent planar ends to keep
+antialias coverage off the end face. Occlusion uses solid depth without its edge-line
+display offset; that offset is restored for ordinary drawing.
 
 When a signature changes, remove its old generated mesh immediately and show the
 current trimmed face tessellation in the decorator's color. This marks attachment,

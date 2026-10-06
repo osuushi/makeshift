@@ -10,6 +10,8 @@ import {
 } from "./preview-compositor.js";
 import { PreviewFallback } from "./preview-fallback.js";
 import type { PackedPreviewMesh } from "./preview-wire.js";
+import { threadPreviewPlanes } from "./thread-preview-surface.js";
+import { threadDefinition } from "./thread-settings.js";
 import type { FaceReference } from "./types.js";
 
 interface GeneratedSurface extends PreviewSurface {
@@ -24,6 +26,7 @@ export class PreviewOverlaySurfaces {
   private readonly fallback = new PreviewFallback(this.group, this.compositor);
   private readonly surfaces: GeneratedSurface[] = [];
   private definitions = new Map<string, string>();
+  private clipping = new Map<string, THREE.Plane[]>();
 
   constructor(private readonly editor: SketchEditor) {
     editor.world.renderOverlays.add(this.render);
@@ -46,6 +49,29 @@ export class PreviewOverlaySurfaces {
     if (document) {
       this.definitions = new Map(
         document.decorators?.map((instance) => [instance.id, instance.definition]),
+      );
+      this.clipping = new Map(
+        document.decorators?.flatMap((instance) => {
+          if (instance.definition !== threadDefinition) return [];
+          const bodies = document.bodies ?? [];
+          const faces = instance.faces.flatMap((reference) => {
+            const face = bodies
+              .find((body) => body.id === reference.body)
+              ?.faces.find((face) => face.id === reference.face);
+            return face ? [face] : [];
+          });
+          const adjacent = bodies
+            .filter((body) => instance.faces.some((reference) => reference.body === body.id))
+            .flatMap((body) => body.faces);
+          return [
+            [
+              instance.id,
+              threadPreviewPlanes(faces, adjacent).map(
+                ({ normal, constant }) => new THREE.Plane(new THREE.Vector3(...normal), constant),
+              ),
+            ] as const,
+          ];
+        }),
       );
       this.fallback.sync(document, signatures);
     }
@@ -124,6 +150,7 @@ export class PreviewOverlaySurfaces {
       const appearance = decoratorAppearance(surface.definition);
       (surface.mesh.material as THREE.MeshStandardMaterial).color.set(appearance.color);
       surface.displayOpacity = appearance.opacity;
+      surface.clipPlanes = this.clipping.get(surface.id);
       if (surface.mesh.visible) ready.add(`${surface.id}/${surface.mesh.userData.body}`);
     }
     return this.fallback.visible(this.editor, ready);

@@ -163,6 +163,7 @@ export function threadMeshes(
   };
   return {
     resolution: { segments, samples },
+    previewAuxiliaryRadius: cylinder.outward > 0 ? low : high,
     ...threadToolMeshes(frame, bandGrid, cylinder, settings, low, high, tolerance),
     tolerance,
     masks: complete ? null : faces.map((face) => faceMask(frame, [face], low, high)),
