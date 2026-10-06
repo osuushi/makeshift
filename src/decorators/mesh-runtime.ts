@@ -82,7 +82,10 @@ function renderThreadPreview(
   const { body, faces, geometry } = prepared;
   // Clip partial domains as closed volumes, then display their threaded surfaces.
   const surface = (mesh: ExportMesh) =>
-    threadPreviewSurface(mesh, instance.frame, faces, body.faces);
+    threadPreviewSurface(mesh, instance.frame, faces, body.faces, {
+      radius: geometry.previewAuxiliaryRadius,
+      segments: geometry.resolution.segments,
+    });
   if (!geometry.masks) return { mesh: surface(geometry.fill), state: geometry.resolution };
   if (!runtime) throw new PreviewRuntimeRequired();
   const scope = new MeshScope(runtime, body.center);

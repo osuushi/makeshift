@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import { cross, dot, subtract } from "../src/decorators/cylinder.js";
 import { decoratorPreview, initializeMeshRuntime } from "../src/decorators/mesh-runtime.js";
+import { threadPreviewPlanes } from "../src/decorators/thread-preview-surface.js";
 import { threadDefinition } from "../src/decorators/thread-settings.js";
+import type { SketchDocument } from "../src/sketch/document.js";
 import type { Vector } from "../src/sketch/planes.js";
 import { retainHalf, roundBody } from "./decorator-domain-fixtures.js";
 
@@ -60,3 +63,33 @@ for (const sloping of [false, true])
       owner.close();
     }
   });
+
+test("captured tube previews contain only the actual male and female thread envelopes", async () => {
+  const { document } = JSON.parse(
+    await readFile("tests/fixtures/thread-preview-rim.json", "utf8"),
+  ) as { document: SketchDocument };
+  const runtime = await initializeMeshRuntime();
+  const before = JSON.stringify(document);
+  for (const instance of document.decorators ?? []) {
+    const body = document.bodies?.[0];
+    assert.ok(body);
+    const faces = body.faces.filter((face) =>
+      instance.faces.some((reference) => reference.face === face.id),
+    );
+    const boundaries = threadPreviewPlanes(faces, body.faces);
+    assert.equal(boundaries.length, 2, "Both end faces bound the displayed profile");
+    assert.ok(boundaries.every(({ normal, constant }) => dot(normal, [0, 0, 13]) + constant > 0));
+    assert.ok(boundaries.some(({ normal, constant }) => dot(normal, [0, 0, 26]) + constant < 0));
+    const mesh = decoratorPreview(runtime, document, instance);
+    const internal = instance.settings.cut === "rod";
+    const [low, high] = internal ? [7.24, 8.26] : [13.9, 15.01];
+    assert.ok(mesh.triangles.length > 100);
+    for (const triangle of mesh.triangles)
+      for (const index of triangle) {
+        const [x, y] = mesh.vertices[index];
+        const radius = Math.hypot(x, y);
+        assert.ok(radius >= low && radius <= high, `Auxiliary preview skin at radius ${radius}`);
+      }
+  }
+  assert.equal(JSON.stringify(document), before);
+});

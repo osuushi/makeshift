@@ -6,6 +6,7 @@ import { worldClick } from "./ui-face-offset.mjs";
 import { inspect, modalCompleted } from "./ui-helpers.mjs";
 import { clearSelection } from "./ui-reconnection-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
+import { capturedThreadRim } from "./ui-thread-preview-capture.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function tealPixels(page, worldPoint, size = 6) {
@@ -26,7 +27,7 @@ async function tealPixels(page, worldPoint, size = 6) {
       const canvas = document.createElement("canvas");
       canvas.width = canvas.height = size;
       const context = canvas.getContext("2d");
-      context.drawImage(image, 0, 0);
+      context.drawImage(image, 0, 0, size, size);
       const pixels = context.getImageData(0, 0, size, size).data;
       let teal = 0;
       for (let i = 0; i < pixels.length; i += 4)
@@ -85,6 +86,7 @@ await withUiRuntimes(
         `${name}: ${kind} threaded rim clear; full extent and top-face picking preserved`,
       );
     }
+    await capturedThreadRim(page, name);
   },
-  { allowed: ["chromium", "webkit"], timeout: 30000 },
+  { allowed: ["chromium", "webkit"], timeout: 30000, deviceScaleFactor: 2 },
 );

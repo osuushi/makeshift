@@ -127,7 +127,9 @@ jobs:
         run: xvfb-run -a node tests/decorator-display-ui.mjs
       - name: Thread preview end-face boundaries
         if: matrix.shard == 1 && matrix.browser == 'chromium'
-        run: xvfb-run -a node tests/thread-preview-rim-ui.mjs
+        run: |
+          xvfb-run -a node tests/thread-preview-rim-ui.mjs
+          xvfb-run -a node tests/decorator-preview-render.mjs
       - name: Decorator settings controls and narrow layouts
         if: matrix.shard == 1 && matrix.browser == 'chromium'
         run: |
@@ -446,6 +448,7 @@ jobs:
           node tests/decorator-settings-layout.mjs
           node tests/decorator-display-ui.mjs
           node tests/thread-preview-rim-ui.mjs
+          node tests/decorator-preview-render.mjs
       - name: Built Electron decorator display and export
         if: matrix.lane == 'electron-host'
         env:

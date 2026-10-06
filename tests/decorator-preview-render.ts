@@ -37,29 +37,13 @@ export function previewRenderChecks() {
   const red = surface("red", 0),
     green = surface("lime", 0.4);
   green.mesh.visible = false;
-  const pixel = (surfaces: PreviewSurface[], x = 32, y = 32) => {
-    renderer.setRenderTarget(target);
-    renderer.render(scene, camera);
-    const background = scene.background,
-      clip = renderer.clippingPlanes;
-    compositor.render(renderer, scene, camera, surfaces);
-    if (
-      renderer.getRenderTarget() !== target ||
-      scene.background !== background ||
-      renderer.clippingPlanes !== clip ||
-      camera.layers.mask !== 1 ||
-      !renderer.autoClear
-    )
-      throw new Error("Compositor did not restore renderer state");
-    const bytes = new Uint8Array(4);
-    renderer.readRenderTargetPixels(target, x, y, 1, 1, bytes);
-    return [...bytes];
-  };
+  const pixel = pixelReader(renderer, target, compositor, scene, camera);
   try {
     const revealed = pixel([red]);
     if (revealed[0] < revealed[1] + 50)
       throw new Error(`Recessed preview remains occluded: ${revealed}`);
     const faded = checkOpacity(red, pixel, revealed);
+    const coincident = checkCoplanarFace(scene, red, pixel);
     const blocker = new THREE.Mesh(
       new THREE.PlaneGeometry(3, 3),
       new THREE.MeshBasicMaterial({ color: "blue" }),
@@ -81,13 +65,81 @@ export function previewRenderChecks() {
     if (renderer.getContext().getError() !== 0) throw new Error("WebGL error");
     blocker.geometry.dispose();
     blocker.material.dispose();
-    return { revealed, faded, blocked, hiddenBlocker, resized, ...results };
+    return { revealed, faded, coincident, blocked, hiddenBlocker, resized, ...results };
   } finally {
     disposeMeshes(scene);
     target.dispose();
     compositor.dispose();
     renderer.dispose();
     renderer.domElement.remove();
+  }
+}
+
+function pixelReader(
+  renderer: THREE.WebGLRenderer,
+  target: THREE.WebGLRenderTarget,
+  compositor: DecoratorPreviewCompositor,
+  scene: THREE.Scene,
+  camera: THREE.Camera,
+) {
+  return (surfaces: PreviewSurface[], x = 32, y = 32) => {
+    renderer.setRenderTarget(target);
+    renderer.render(scene, camera);
+    const background = scene.background,
+      clip = renderer.clippingPlanes;
+    compositor.render(renderer, scene, camera, surfaces);
+    if (
+      renderer.getRenderTarget() !== target ||
+      scene.background !== background ||
+      renderer.clippingPlanes !== clip ||
+      camera.layers.mask !== 1 ||
+      !renderer.autoClear
+    )
+      throw new Error("Compositor did not restore renderer state");
+    const bytes = new Uint8Array(4);
+    renderer.readRenderTargetPixels(target, x, y, 1, 1, bytes);
+    return [...bytes];
+  };
+}
+
+function checkCoplanarFace(
+  scene: THREE.Scene,
+  surface: PreviewSurface,
+  pixel: (surfaces: PreviewSurface[]) => number[],
+) {
+  const face = new THREE.Mesh(
+    new THREE.PlaneGeometry(3, 3),
+    new THREE.MeshBasicMaterial({
+      color: "white",
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 1,
+    }),
+  );
+  face.userData.decoratorFace = "neighbor";
+  face.position.copy(surface.mesh.position);
+  face.rotation.y = surface.mesh.rotation.y = 0.35;
+  scene.add(face);
+  try {
+    surface.clipPlanes = [
+      new THREE.Plane(new THREE.Vector3(0, 0, -1).applyQuaternion(surface.mesh.quaternion), -1e-6),
+    ];
+    const coincident = pixel([surface]);
+    if (coincident.slice(0, 3).some((value) => value < 250))
+      throw new Error(`Thread profile leaked through its adjacent coplanar face: ${coincident}`);
+    surface.clipPlanes = undefined;
+    face.position.z -= 0.01;
+    const protruding = pixel([surface]);
+    if (protruding[0] < protruding[1] + 50)
+      throw new Error(`A profile in front of the adjacent face was lost: ${protruding}`);
+    if (!face.material.polygonOffset) throw new Error("Face display offset was not restored");
+    return coincident;
+  } finally {
+    surface.clipPlanes = undefined;
+    surface.mesh.rotation.y = 0;
+    scene.remove(face);
+    face.geometry.dispose();
+    face.material.dispose();
   }
 }
 

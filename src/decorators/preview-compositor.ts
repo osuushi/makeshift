@@ -7,6 +7,7 @@ export interface PreviewSurface {
   faces: ReadonlySet<string>;
   opacity?: number;
   displayOpacity?: number;
+  clipPlanes?: readonly THREE.Plane[];
 }
 export const previewFaceKey = (body: string, face: string) => `${body}/${face}`;
 
@@ -48,15 +49,24 @@ export class DecoratorPreviewCompositor {
       }),
     );
     const clip = material.onBeforeCompile;
+    const endPlanes = { value: 0 };
+    material.userData.decoratorEndPlanes = endPlanes;
     material.onBeforeCompile = (shader, renderer) => {
       clip.call(material, shader, renderer);
+      shader.uniforms.decoratorEndPlanes = endPlanes;
       shader.uniforms.decoratorOcclusion = { value: this.occlusion.depthTexture };
       shader.uniforms.decoratorResolution = { value: this.size };
-      shader.fragmentShader = `uniform sampler2D decoratorOcclusion;
+      shader.fragmentShader = `uniform int decoratorEndPlanes;
+uniform sampler2D decoratorOcclusion;
 uniform vec2 decoratorResolution;\n${shader.fragmentShader}`.replace(
         "#include <alphatest_fragment>",
         `#include <alphatest_fragment>
 if (gl_FragCoord.z > texture2D(decoratorOcclusion, gl_FragCoord.xy / decoratorResolution).r + 0.0000001) discard;`,
+      );
+      // Reserve half a pixel at end planes so MSAA coverage cannot color the rim.
+      shader.fragmentShader = shader.fragmentShader.replaceAll(
+        "vClipDistance[ i ] > 0.0",
+        "vClipDistance[ i ] > (UNROLLED_LOOP_INDEX >= NUM_CLIPPING_PLANES - decoratorEndPlanes ? -0.5 * fwidth(vClipDistance[ i ]) : 0.0)",
       );
     };
     material.customProgramCacheKey = () => "decorator-occlusion-stable-clip";
@@ -120,21 +130,39 @@ if (gl_FragCoord.z > texture2D(decoratorOcclusion, gl_FragCoord.xy / decoratorRe
     layers: number,
   ): void {
     const hidden = supports.filter((object) => surface.faces.has(object.userData.decoratorFace));
+    const offsets = supports.flatMap((object) =>
+      object instanceof THREE.Mesh
+        ? (Array.isArray(object.material) ? object.material : [object.material]).filter(
+            (material: THREE.Material) => material.polygonOffset,
+          )
+        : [],
+    );
     try {
       for (const object of hidden) object.visible = false;
+      // Preserve display offsets for edge lines, but use actual solid depth for occlusion.
+      for (const material of offsets) material.polygonOffset = false;
       camera.layers.mask = layers;
       renderer.setRenderTarget(this.occlusion);
       renderer.autoClear = true;
       renderer.render(scene, camera);
     } finally {
       for (const object of hidden) object.visible = true;
+      for (const material of offsets) material.polygonOffset = true;
     }
     try {
       surface.mesh.visible = true;
       camera.layers.set(decoratorPreviewLayer);
       renderer.setRenderTarget(this.previews);
       renderer.autoClear = false;
-      renderer.render(scene, camera);
+      const clipping = renderer.clippingPlanes;
+      try {
+        (surface.mesh.material as THREE.Material).userData.decoratorEndPlanes.value =
+          surface.clipPlanes?.length ?? 0;
+        renderer.clippingPlanes = [...clipping, ...(surface.clipPlanes ?? [])];
+        renderer.render(scene, camera);
+      } finally {
+        renderer.clippingPlanes = clipping;
+      }
     } finally {
       surface.mesh.visible = false;
     }

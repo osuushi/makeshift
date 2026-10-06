@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
+import { runtimeNames } from "./ui-runtime.mjs";
 
 const server = await createServer({
   configFile: false,
@@ -11,7 +12,10 @@ const server = await createServer({
 });
 await server.listen();
 try {
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  const names = runtimeNames(["chromium", "webkit"]);
+  for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) =>
+    names.includes(name),
+  )) {
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage();
