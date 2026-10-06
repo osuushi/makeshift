@@ -101,6 +101,7 @@ export interface ModelView {
   reopenOperation?: import("./reopen-operation.js").ReopenOperation;
   historySelection?: import("./history-selection.js").HistorySelection;
   planeCutAvailable?: boolean;
+  cutEdges?: BodyEdgeFinish["edges"];
   data: SketchDocument;
   offsetDistance?: number;
   offsetSelection?: BodyFaceOffset["faces"];

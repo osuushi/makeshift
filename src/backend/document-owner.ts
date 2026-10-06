@@ -4,6 +4,7 @@ import type { SketchDocument } from "../sketch/document.js";
 import type { ModelReply, ModelRequest, ModelView } from "../sketch/model-api.js";
 import { describeOperation, type HistoryOperation } from "../sketch/operation-history.js";
 import { acceptedParameters } from "./accepted-parameters.js";
+import { cutEdgeHighlights } from "./cut-edge-highlights.js";
 import { DecoratorSession } from "./decorator-session.js";
 import { editDocument, isDirectDocumentEdit } from "./document-edits.js";
 import { documentFailure } from "./document-failure.js";
@@ -76,6 +77,10 @@ export class DocumentOwner {
       canUndo: this.store.canUndo,
       canRedo: this.store.canRedo,
       candidate: this.candidate,
+      cutEdges:
+        this.candidate && this.candidate !== this.store.data
+          ? (this.reopenedPreview?.cutEdges ?? cutEdgeHighlights.get(this.candidate))
+          : undefined,
       solveCount: this.solveCount,
       solveMs: this.solveMs,
     };
@@ -168,7 +173,9 @@ export class DocumentOwner {
         operationCleanup(this.store.data.bodies ?? [], this.candidate.bodies ?? []),
       );
     }
+    const feedback = this.view.cutEdges;
     if (!this.reopenedPreview) this.candidate = await this.decorators.continue(this.candidate);
+    if (feedback) cutEdgeHighlights.set(this.candidate, feedback);
     this.checkCancellation();
     this.store.accept(
       this.candidate,

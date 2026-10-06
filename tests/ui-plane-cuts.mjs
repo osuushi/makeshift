@@ -29,7 +29,10 @@ async function startCut(page, mode) {
     true,
   );
   assert.match(await page.locator(".plane-cut-inputs").textContent(), /Target · Body 1/);
-  assert.match(await page.locator(".plane-cut-inputs").textContent(), /Cutter · Choose a plane/);
+  assert.match(
+    await page.locator(".plane-cut-inputs").textContent(),
+    /Cutter · Choose a reference/,
+  );
   const state = await inspect(page);
   assert.ok(state.bodyRendering.planeCutTargets.length, "Targets stay visible while picking");
   assert.ok(await page.locator(".plane-candidate-outlines polyline").count());
@@ -179,6 +182,7 @@ async function splitBody(page, name) {
     accepted.modelingSelection.every((target) => target.kind === "edge"),
     "Apply keeps section edges selected",
   );
+  assert.match(await page.getByRole("status").textContent(), /Split Body applied/);
   assert.equal(await page.locator(".plane-cut-inputs").count(), 0);
   assert.deepEqual(accepted.bodyRendering.planeCutTargets, []);
   const split = (await inspect(page)).document;
@@ -189,6 +193,16 @@ async function splitBody(page, name) {
   await chooseTool(page, "redo", "redo");
   assert.equal((await inspect(page)).document.bodies.length, 2);
   await page.screenshot({ path: `.cache/plane-probe/${name}-cuts.png` });
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await chooseTool(page, "clear selection", "selection-clear");
+  assert.deepEqual((await inspect(page)).modelingSelection, []);
+  assert.deepEqual((await inspect(page)).document, split);
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await page.keyboard.press("Delete");
+  await settled(page);
+  assert.equal((await inspect(page)).document.bodies.length, 1, "Result bodies remain deletable");
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, split, "Undo restores both split bodies");
 }
 
 async function falsePositiveReference(page, original) {

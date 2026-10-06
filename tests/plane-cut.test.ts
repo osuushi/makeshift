@@ -4,75 +4,8 @@ import { DocumentOwner } from "../src/backend/document-owner.js";
 import { documentArchive, readArchive } from "../src/model/document-archive.js";
 import { featureEdges } from "../src/model/feature-edges.js";
 import { planeCutEdges } from "../src/model/plane-cut-edges.js";
-import { emptySketch, type Sketch } from "../src/sketch/document.js";
-import { rectangle } from "../src/sketch/geometry.js";
-import { type PlaneFrame, planes } from "../src/sketch/planes.js";
-import { profilesFor } from "../src/sketch/profiles.js";
+import { planeCutFixture as fixture, middleCut as middle } from "./plane-cut-fixture.js";
 
-const middle: PlaneFrame = { ...planes.XY, origin: [0, 0, 10] };
-async function fixture(owner: DocumentOwner, kind = "box") {
-  const base = emptySketch(planes.XY);
-  const sketch: Sketch =
-    kind === "box" || kind === "twisted"
-      ? rectangle(base, { x: 0, y: 0 }, { x: 20, y: 20 }).sketch
-      : {
-          ...base,
-          curves: [
-            {
-              id: "outer",
-              kind: "circle",
-              center: { x: 0, y: 0 },
-              radius: 10,
-              construction: false,
-            },
-            ...(kind === "hollow"
-              ? [
-                  {
-                    id: "inner",
-                    kind: "circle" as const,
-                    center: { x: 0, y: 0 },
-                    radius: 5,
-                    construction: false,
-                  },
-                ]
-              : []),
-            ...(kind === "partial"
-              ? [
-                  {
-                    id: "chord",
-                    kind: "segment" as const,
-                    a: { x: 0, y: -10 },
-                    b: { x: 0, y: 10 },
-                    construction: false,
-                  },
-                ]
-              : []),
-          ],
-        };
-  assert.equal((await owner.call({ kind: "edit", sketch })).error, undefined);
-  const profile = profilesFor(sketch).find((p) => kind !== "hollow" || p.holes.length === 1);
-  assert.ok(profile);
-  assert.equal(
-    (
-      await owner.call({
-        kind: "extrude",
-        extrusion: {
-          sources: [{ sketch: sketch.id, profile: profile.key }],
-          distance: 20,
-          mode: "new",
-          ...(kind === "twisted"
-            ? { twist: { angle: 90, origin: [0, 0, 0] as [number, number, number] } }
-            : {}),
-        },
-      })
-    ).error,
-    undefined,
-  );
-  await owner.call({ kind: "accept" });
-  const body = owner.view.data.bodies?.[0];
-  assert.ok(body);
-  return body;
-}
 test("construction planes validate, persist, undo and never move existing sketches", async () => {
   const owner = new DocumentOwner();
   try {
@@ -116,7 +49,7 @@ for (const kind of ["box", "cylinder", "hollow", "partial"])
       const pieces = owner.view.candidate?.bodies;
       assert.equal(pieces?.length, 2);
       assert.ok(owner.view.candidate);
-      const splitEdges = planeCutEdges(before, owner.view.candidate, split);
+      const splitEdges = planeCutEdges(owner.view.candidate, owner.view.cutEdges ?? []);
       assert.ok(splitEdges.length > 0, "Split exposes new section borders");
       if (kind === "box") assert.equal(splitEdges.length, 8);
       assert.ok(Math.abs((pieces ?? []).reduce((n, b) => n + b.volume, 0) - body.volume) < 1e-6);
@@ -129,7 +62,7 @@ for (const kind of ["box", "cylinder", "hollow", "partial"])
       assert.equal(result.id, body.id);
       assert.ok(result.faces.length > body.faces.length);
       assert.ok(owner.view.candidate);
-      const imprintEdges = planeCutEdges(before, owner.view.candidate, operation);
+      const imprintEdges = planeCutEdges(owner.view.candidate, owner.view.cutEdges ?? []);
       assert.ok(imprintEdges.length > 0);
       if (kind === "box") assert.equal(imprintEdges.length, 4);
       for (const { edge } of imprintEdges)
@@ -173,7 +106,7 @@ for (const kind of ["box", "cylinder", "hollow", "partial"])
         assert.equal((await owner.call({ kind: "plane-cut", operation: split })).error, undefined);
         assert.ok(owner.view.candidate);
         assert.equal(
-          planeCutEdges(imprinted, owner.view.candidate, split).length,
+          planeCutEdges(owner.view.candidate, owner.view.cutEdges ?? []).length,
           8,
           "Split highlights both sets of borders even after Imprint",
         );

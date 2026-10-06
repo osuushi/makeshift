@@ -1,5 +1,5 @@
 import type { SketchEditor } from "../sketch/editor.js";
-import { type PlaneFrame, planes } from "../sketch/planes.js";
+import { planes } from "../sketch/planes.js";
 import { bodyCenter } from "./body-placement.js";
 import type { DisplayDocument } from "./display-document.js";
 import { entityRows } from "./entity-presentation.js";
@@ -14,8 +14,8 @@ import { planeKey } from "./plane-reference-candidates.js";
 export class PlaneCutFeedback {
   readonly widget: PlaneCutWidget;
   private view: PlaneCutView;
-  private source: Omit<PlaneCut, "frame"> | null = null;
-  private frame: PlaneFrame | null = null;
+  private source: Pick<PlaneCut, "mode" | "targets"> | null = null;
+  private cutter: Pick<PlaneCut, "frame" | "surface"> | null = null;
   private reference: PlaneReferenceSource | null = null;
   private status = "";
   private valid = false;
@@ -32,7 +32,7 @@ export class PlaneCutFeedback {
     this.inputs.className = "plane-cut-inputs";
     editor.world.changed.add(this.update);
   }
-  begin(source: Omit<PlaneCut, "frame">): void {
+  begin(source: Pick<PlaneCut, "mode" | "targets">): void {
     this.source = source;
     this.entities.operationRows.append(this.inputs);
     this.entities.sourcePicker = {
@@ -58,18 +58,15 @@ export class PlaneCutFeedback {
     this.show(null, null, null);
   }
   show(
-    frame: PlaneFrame | null,
+    cutter: Pick<PlaneCut, "frame" | "surface"> | null,
     reference: PlaneReferenceSource | null,
     candidate: DisplayDocument | null,
   ): void {
-    this.frame = frame;
-    this.reference = reference;
+    this.cutter = cutter;
+    this.reference = reference ?? (cutter?.surface ? { kind: "face", ...cutter.surface } : null);
     this.valid = !!candidate;
-    const edges =
-      frame && candidate && this.source
-        ? planeCutEdges(this.editor.store.data, candidate, { ...this.source, frame })
-        : [];
-    this.view.showCutter(frame);
+    const edges = candidate ? planeCutEdges(candidate, this.editor.store.cutEdges) : [];
+    this.showCutter();
     this.view.showEdges(edges);
     const count =
       candidate?.bodies?.filter(
@@ -81,10 +78,16 @@ export class PlaneCutFeedback {
       ).length ?? 0;
     this.status = candidate
       ? `Preview · ${edges.length} section edges highlighted${this.source?.mode === "split" ? ` · ${count} result bodies` : ""}`
-      : frame
-        ? "This cutter has no valid preview · Pick another plane"
-        : "Pick an outlined plane or planar face";
+      : cutter
+        ? "This cutter has no valid preview · Pick another reference"
+        : "Pick an outlined plane or face";
     this.update();
+  }
+  private showCutter(): void {
+    const surface = this.cutter?.surface;
+    const body = this.editor.store.data.bodies?.find((b) => b.id === surface?.body);
+    const face = body?.faces.find((f) => f.id === surface?.face);
+    this.view.showCutter(this.cutter?.frame ?? null, body && face ? { body, face } : undefined);
   }
   private name(id: string, kind: "Body" | "Plane"): string {
     const data = this.editor.store.data;
@@ -95,10 +98,15 @@ export class PlaneCutFeedback {
   private cutterName(): string {
     if (this.reference?.kind === "world-plane") return `${this.reference.id} world plane`;
     if (this.reference?.kind === "plane") return this.name(this.reference.id, "Plane");
-    if (this.reference?.kind === "face")
-      return `${this.name(this.reference.body, "Body")} · planar face`;
-    const frame = this.frame;
-    if (!frame) return "Choose a plane";
+    if (this.reference?.kind === "face") {
+      const ref = this.reference;
+      const face = this.editor.store.data.bodies
+        ?.find((b) => b.id === ref.body)
+        ?.faces.find((f) => f.id === ref.face);
+      return `${this.name(ref.body, "Body")} · ${face?.plane ? "planar" : "curved"} face`;
+    }
+    const frame = this.cutter?.frame;
+    if (!frame) return "Choose a reference";
     const saved = this.editor.store.data.constructionPlanes?.find(
       (p) => planeKey(p.frame) === planeKey(frame),
     );
@@ -153,13 +161,13 @@ export class PlaneCutFeedback {
       }),
     );
     const center = this.editor.world.project(bodyCenter(bodies));
-    this.view.showCutter(this.frame);
+    this.showCutter();
     this.widget.update(title, status, busy, this.valid, { x: center.x, y: top });
     this.view.resize();
   };
   clear(): void {
     this.source = null;
-    this.frame = null;
+    this.cutter = null;
     this.reference = null;
     this.entities.sourcePicker = null;
     this.inputs.remove();

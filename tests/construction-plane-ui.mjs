@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { openDocument, saveDocument } from "./native-documents.mjs";
 import { orient } from "./ui-blend-edit.mjs";
+import { faceCutReferenceRoute } from "./ui-face-cut-reference.mjs";
 import { drag, inspect, reset, settled } from "./ui-helpers.mjs";
 import { planeCutRoute } from "./ui-plane-cuts.mjs";
 import { planeFaceReferenceRoute } from "./ui-plane-face-reference.mjs";
@@ -95,4 +96,5 @@ await withUiRuntimes(async (page, name) => {
   await route(page, name);
   await planeCutRoute(page, name);
   await planeFaceReferenceRoute(page, name);
+  await faceCutReferenceRoute(page, name);
 });

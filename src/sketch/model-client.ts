@@ -128,6 +128,9 @@ export class ModelClient {
   get booleanMode() {
     return this.view.booleanMode;
   }
+  get cutEdges() {
+    return this.view.cutEdges ?? [];
+  }
   get candidate() {
     return this.view.candidate;
   }

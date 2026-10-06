@@ -1,7 +1,6 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
-import type { PlaneFrame } from "../sketch/planes.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import type { EntityViewer } from "./entity-viewer.js";
 import type { PlaneCut } from "./plane-cut.js";
@@ -16,7 +15,7 @@ export class PlaneCutControls {
   private disposers: (() => void)[] = [];
   private abort = new AbortController();
   private lease: InteractionLease | null = null;
-  private source: Omit<PlaneCut, "frame"> | null = null;
+  private source: Pick<PlaneCut, "mode" | "targets"> | null = null;
   private previous: SketchEditor["modeling"]["targets"] = [];
   private valid = false;
   private pending: PlaneCut | null = null;
@@ -48,7 +47,7 @@ export class PlaneCutControls {
                 (this.targets(mode)
                   ? null
                   : mode === "split"
-                    ? "Select bodies or faces in Modeling"
+                    ? "Select bodies, faces or edges in Modeling"
                     : "Select faces in Modeling")),
           run: () => (this.source?.mode === mode ? this.deselect() : this.begin(mode)),
         }),
@@ -79,8 +78,8 @@ export class PlaneCutControls {
     const context = selectionContext(e.modeling.targets, e.store.data);
     if (!context.valid || !context.ordered.length) return null;
     if (mode === "split") {
-      if (!context.ordered.every((t) => t.kind === "body" || t.kind === "face")) return null;
-      return [...new Set(context.faces.map((t) => t.body))].map((body) => ({ body }));
+      if (!context.ordered.every((t) => "body" in t)) return null;
+      return context.owners.map((body) => ({ body: body.id }));
     }
     if (!context.ordered.every((t) => t.kind === "face")) return null;
     const targets: PlaneCut["targets"] = [];
@@ -94,7 +93,7 @@ export class PlaneCutControls {
   async reopen(operation: PlaneCut): Promise<void> {
     this.begin(operation.mode, operation);
     if (!this.lease) throw new Error("Cannot restore cut inputs");
-    this.queue(operation.frame);
+    this.queue(operation);
     await this.running;
     if (!this.valid) throw new Error("Cannot regenerate the accepted cut");
     this.editor.world.canvas.focus();
@@ -117,14 +116,11 @@ export class PlaneCutControls {
     this.pending = null;
     this.lease.trackHistory(
       e.world.canvas,
-      () => ({
-        frame: this.pending?.frame ?? restored?.frame ?? null,
-        reference: this.picker.reference,
-      }),
-      async ({ frame, reference }) => {
+      () => ({ operation: this.pending ?? restored ?? null, reference: this.picker.reference }),
+      async ({ operation, reference }) => {
         this.picker.reference = reference;
-        if (frame) {
-          this.queue(frame);
+        if (operation) {
+          this.queue(operation);
           await this.running;
         } else {
           this.pending = null;
@@ -138,9 +134,18 @@ export class PlaneCutControls {
     this.available.clear();
     e.modeling.hover = null;
     this.picker.start(
-      (frame) => this.queue(frame),
+      (frame) => this.queue({ frame }),
       (frame) => this.available.has(planeKey(frame)),
       () => void this.deselect(),
+      undefined,
+      {
+        accepts: (surface) =>
+          this.editor.store.data.bodies?.some(
+            (body) =>
+              body.id === surface.body && body.faces.some((face) => face.id === surface.face),
+          ) ?? false,
+        choose: (surface) => this.queue({ surface }),
+      },
     );
     e.message = "";
     this.feedback.begin(this.source);
@@ -157,21 +162,27 @@ export class PlaneCutControls {
       .map((body) => body.bounds);
     const candidates = planeCandidates(this.editor);
     for (const candidate of candidates) {
-      const key = planeKey(candidate.frame);
-      if (bounds.some((box) => planeCrossesBounds(candidate.frame, box))) this.available.add(key);
+      const frame = candidate.frame;
+      if (!frame) continue;
+      const key = planeKey(frame);
+      if (bounds.some((box) => planeCrossesBounds(frame, box))) this.available.add(key);
     }
-    this.view.show(candidates.filter((c) => this.available.has(planeKey(c.frame))));
-    this.editor.notice = this.available.size
-      ? "Pick an outlined plane or planar face · Escape cancels"
-      : "No visible plane crosses the selection bounds · Escape cancels";
+    this.view.show(
+      candidates.filter((c) => c.surface || (c.frame && this.available.has(planeKey(c.frame)))),
+    );
+    const curved = candidates.some((candidate) => candidate.surface);
+    this.editor.notice =
+      this.available.size || curved
+        ? "Pick an outlined plane or face · Escape cancels"
+        : "No visible reference crosses the selection bounds · Escape cancels";
     this.editor.refresh();
   }
-  private queue(frame: PlaneFrame): void {
+  private queue(reference: Pick<PlaneCut, "frame" | "surface">): void {
     if (this.lease?.phase !== "editing" || !this.source || this.running) return;
     this.valid = false;
     this.lease.show(null);
-    this.pending = { ...this.source, frame };
-    this.feedback.show(frame, this.picker.reference, null);
+    this.pending = { ...this.source, ...reference };
+    this.feedback.show(this.pending, this.picker.reference, null);
     this.running = this.preview();
   }
   private async preview(): Promise<void> {
@@ -185,10 +196,10 @@ export class PlaneCutControls {
         !!candidate &&
         JSON.stringify(candidate) !== JSON.stringify(this.editor.store.data);
       this.lease.show(this.valid ? candidate : null);
-      this.feedback.show(operation.frame, this.picker.reference, this.valid ? candidate : null);
+      this.feedback.show(operation, this.picker.reference, this.valid ? candidate : null);
       if (this.valid) this.editor.notice = "Enter or deselect to accept · Escape cancels";
       else if (success)
-        this.editor.notice = "This plane does not cut the selection · Pick another plane";
+        this.editor.notice = "This surface does not cut the selection · Pick another reference";
     }
     this.running = null;
     this.editor.refresh();
@@ -210,7 +221,7 @@ export class PlaneCutControls {
     if (!lease.close()) return false;
     const edges =
       this.pending && lease.candidate
-        ? planeCutEdges(this.editor.store.data, lease.candidate, this.pending)
+        ? planeCutEdges(lease.candidate, this.editor.store.cutEdges)
         : [];
     if (!(await this.editor.accept())) {
       lease.phase = "editing";

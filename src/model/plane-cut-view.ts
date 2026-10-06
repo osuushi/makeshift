@@ -4,7 +4,7 @@ import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { PlaneFrame } from "../sketch/planes.js";
-import type { BodyGeometry, Edge } from "./body.js";
+import type { BodyGeometry, Edge, Face } from "./body.js";
 import { featureEdges } from "./feature-edges.js";
 import { planePatchVertices } from "./plane-interior-pick.js";
 
@@ -31,16 +31,22 @@ export class PlaneCutView {
         this.targets.add(this.line(edge.points, "#287cbd", 1.5, 0.65));
     }
   }
-  showCutter(frame: PlaneFrame | null): void {
-    const vertices = frame ? planePatchVertices(frame, this.editor.world.planeBounds(frame)) : [];
+  showCutter(frame: PlaneFrame | null, surface?: { body: BodyGeometry; face: Face }): void {
+    const vertices =
+      surface?.face.vertices ??
+      (frame ? planePatchVertices(frame, this.editor.world.planeBounds(frame)) : []);
     const key = JSON.stringify(vertices);
     if (key === this.cutterKey) return;
     this.cutterKey = key;
     this.clear(this.cutter);
-    if (!frame) return;
+    if (!frame && !surface) return;
     this.cutter.add(this.surface(vertices, "#d08a35", 0.22));
-    const outline = [...vertices.slice(0, 9), ...vertices.slice(15, 18), ...vertices.slice(0, 3)];
-    this.cutter.add(this.line(outline, "#d08a35", 2.5, 1));
+    const outlines = surface
+      ? featureEdges(surface.body)
+          .filter((edge) => surface.face.edges.includes(edge.id))
+          .map((edge) => edge.points)
+      : [[...vertices.slice(0, 9), ...vertices.slice(15, 18), ...vertices.slice(0, 3)]];
+    for (const outline of outlines) this.cutter.add(this.line(outline, "#d08a35", 2.5, 1));
   }
   showEdges(edges: { body: BodyGeometry; edge: Edge }[]): void {
     this.clear(this.edges);

@@ -1,20 +1,24 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { type PlaneFrame, planes } from "../sketch/planes.js";
+import { type CutFacePicker, pickCutReference } from "./cut-face-reference.js";
 import { PlaneCutHover } from "./plane-cut-hover.js";
-import { type PlaneReferenceSource, pickPlaneInterior } from "./plane-interior-pick.js";
+import type { PlaneReferenceSource } from "./plane-interior-pick.js";
 
-/** A tool consumes an evaluated frame; picking never creates a dependency. */
+/** Tools receive evaluated planes or document-local cutting faces. */
 export class PlaneReferencePicker {
   private abort = new AbortController();
   private hover: PlaneCutHover;
   accepts: ((frame: PlaneFrame) => boolean) | undefined;
+  private faces: CutFacePicker | undefined;
   private leave: (() => void) | undefined;
   private hoverEnabled: ((event: PointerEvent) => boolean) | undefined;
   reference: PlaneReferenceSource | null = null;
   choose: ((frame: PlaneFrame, source?: PlaneReferenceSource) => void) | null = null;
   constructor(private editor: SketchEditor) {
-    this.hover = new PlaneCutHover(editor, (event) =>
-      this.hoverEnabled && !this.hoverEnabled(event) ? undefined : this.accepts,
+    this.hover = new PlaneCutHover(
+      editor,
+      (event) => (this.hoverEnabled && !this.hoverEnabled(event) ? undefined : this.accepts),
+      () => this.faces,
     );
     const options = { signal: this.abort.signal, capture: true };
     editor.world.canvas.addEventListener(
@@ -33,8 +37,18 @@ export class PlaneReferencePicker {
         event.preventDefault();
         event.stopImmediatePropagation();
         if (editor.blocked) return;
-        const hit = pickPlaneInterior(editor, { x: event.clientX, y: event.clientY }, this.accepts);
-        if (hit) this.choose(structuredClone(hit.frame), hit.source);
+        const hit = pickCutReference(
+          editor,
+          { x: event.clientX, y: event.clientY },
+          this.accepts,
+          this.faces,
+        );
+        if (hit && "surface" in hit) {
+          this.hover.clear();
+          this.reference = { kind: "face", ...hit.surface };
+          this.faces?.choose(structuredClone(hit.surface));
+          editor.interactions.current?.history?.checkpoint();
+        } else if (hit) this.choose(structuredClone(hit.frame), hit.source);
         else this.leave?.();
       },
       options,
@@ -45,7 +59,9 @@ export class PlaneReferencePicker {
     accepts?: (frame: PlaneFrame) => boolean,
     leave?: () => void,
     hoverEnabled?: (event: PointerEvent) => boolean,
+    faces?: CutFacePicker,
   ): void {
+    this.faces = faces;
     this.accepts = accepts ?? (() => true);
     this.leave = leave;
     this.hoverEnabled = hoverEnabled;
@@ -63,6 +79,7 @@ export class PlaneReferencePicker {
       this.choose?.(structuredClone(planes[id]), { kind: "world-plane", id });
   }
   stop(): void {
+    this.faces = undefined;
     this.choose = null;
     this.reference = null;
     this.accepts = undefined;
