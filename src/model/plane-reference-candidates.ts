@@ -1,9 +1,11 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { minimumPlaneBounds, type PlaneBounds, planeCorners } from "../sketch/plane-bounds.js";
 import { type PlaneFrame, planes, type Vector } from "../sketch/planes.js";
+import { featureEdges } from "./feature-edges.js";
 
 export interface PlaneCandidate {
-  frame: PlaneFrame;
+  frame?: PlaneFrame;
+  surface?: { body: string; face: string };
   outline: Vector[][];
 }
 export const planeKey = (frame: PlaneFrame): string => JSON.stringify(frame);
@@ -15,7 +17,7 @@ export function planeOutline(
   return [[...corners, corners[0]]];
 }
 export function planeCandidates(editor: SketchEditor): PlaneCandidate[] {
-  const result = Object.values(planes).map((frame) => ({
+  const result: PlaneCandidate[] = Object.values(planes).map((frame) => ({
     frame,
     outline: planeOutline(frame, editor.world.planeBounds(frame)),
   }));
@@ -28,9 +30,9 @@ export function planeCandidates(editor: SketchEditor): PlaneCandidate[] {
   if (editor.bodiesVisible)
     for (const body of editor.store.data.bodies ?? []) {
       if (!editor.visibility.visible(body.id)) continue;
+      const edges = featureEdges(body);
       for (const face of body.faces) {
-        if (!face.plane) continue;
-        const outline = body.edges
+        const outline = edges
           .filter((edge) => face.edges.includes(edge.id))
           .map((edge) => {
             const points: Vector[] = [];
@@ -38,7 +40,11 @@ export function planeCandidates(editor: SketchEditor): PlaneCandidate[] {
               points.push(edge.points.slice(i, i + 3) as Vector);
             return points;
           });
-        result.push({ frame: face.plane, outline });
+        result.push({
+          frame: face.plane ?? undefined,
+          ...(face.plane ? {} : { surface: { body: body.id, face: face.id } }),
+          outline,
+        });
       }
     }
   return result;

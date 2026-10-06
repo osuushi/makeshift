@@ -13,6 +13,8 @@
 #include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopoDS.hxx>
 #include <gp_Pln.hxx>
+#include <Precision.hxx>
+#include <Geom_RectangularTrimmedSurface.hxx>
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -103,11 +105,11 @@ void unchangedSupport(const TopoDS_Shape& source, const TopoDS_Shape& result) {
         if (!found) throw std::runtime_error("Imprint changed a support surface");
     }
 }
-std::vector<Result> imprint(const Operand& body, const Tree& target, const gp_Pln& plane) {
+std::vector<Result> imprint(const Operand& body, const Tree& target, const TopoDS_Face& cutter) {
     const auto selected = selectedFaces(body, target);
-    BRepAlgoAPI_Section section(body.shape, plane, false);
+    BRepAlgoAPI_Section section(body.shape, cutter, false);
     section.SetNonDestructive(true); section.ComputePCurveOn1(true); section.Build();
-    if (!section.IsDone() || section.HasErrors()) throw std::runtime_error("Cannot intersect selected faces with the plane");
+    if (!section.IsDone() || section.HasErrors()) throw std::runtime_error("Cannot intersect selected faces with the cutting surface");
     BRepFeat_SplitShape split(body.shape); int edges = 0;
     for (TopExp_Explorer e(section.Shape(), TopAbs_EDGE); e.More(); e.Next()) {
         TopoDS_Shape face;
@@ -131,32 +133,55 @@ std::vector<Result> imprint(const Operand& body, const Tree& target, const gp_Pl
     }
     return {{result, correspondence(body, split), {body.id}}};
 }
-std::vector<Result> splitBody(const Operand& body, const gp_Pln& plane) {
+std::vector<Result> splitBody(const Operand& body, const TopoDS_Face& cutter) {
     BRepAlgoAPI_Splitter split; TopTools_ListOfShape arguments, tools;
-    arguments.Append(body.shape); tools.Append(BRepBuilderAPI_MakeFace(plane).Face());
+    arguments.Append(body.shape); tools.Append(cutter);
     split.SetArguments(arguments); split.SetTools(tools); split.SetNonDestructive(true); split.Build();
-    if (!split.IsDone() || split.HasErrors()) throw std::runtime_error("Cannot split body with the plane");
+    if (!split.IsDone() || split.HasErrors()) throw std::runtime_error("Cannot split body with the cutting surface");
     if (count(split.Shape(), TopAbs_SOLID) < 2) return {};
     std::vector<Result> result; solids(result, split.Shape(), correspondence(body, split), {body.id});
     return result;
 }
+TopoDS_Face cuttingSurface(const Tree& input, const std::vector<Operand>& bodies) {
+    const auto frame = input.get_child_optional("frame"), surface = input.get_child_optional("surface");
+    if (bool(frame) == bool(surface)) throw std::runtime_error("Choose one cutting plane or face");
+    if (frame) {
+        const gp_Vec u(gp_Pnt(0,0,0), point(frame->get_child("u"))), v(gp_Pnt(0,0,0), point(frame->get_child("v")));
+        if (std::abs(u.Magnitude()-1) > 1e-7 || std::abs(v.Magnitude()-1) > 1e-7 || std::abs(u.Dot(v)) > 1e-7)
+            throw std::runtime_error("Invalid cutting plane frame");
+        return BRepBuilderAPI_MakeFace(gp_Pln(point(frame->get_child("origin")), gp_Dir(u.Crossed(v)))).Face();
+    }
+    const auto body = std::find_if(bodies.begin(), bodies.end(), [&](const auto& b) {
+        return b.id == surface->get<std::string>("body");
+    });
+    if (body == bodies.end()) throw std::runtime_error("Unknown cutting body");
+    const auto face = std::find_if(body->entities.begin(), body->entities.end(), [&](const auto& e) {
+        return e.id == surface->get<std::string>("face") && e.shape.ShapeType() == TopAbs_FACE;
+    });
+    if (face == body->entities.end()) throw std::runtime_error("Unknown cutting face");
+    // The one-argument Surface overload applies the face location to the support.
+    auto surfaceSupport = BRep_Tool::Surface(TopoDS::Face(face->shape));
+    // Remove face-level rectangular trims; bounded basis surfaces keep their native domain.
+    while (const auto trimmed = Handle(Geom_RectangularTrimmedSurface)::DownCast(surfaceSupport))
+        surfaceSupport = trimmed->BasisSurface();
+    BRepBuilderAPI_MakeFace support(surfaceSupport, Precision::Confusion());
+    if (!support.IsDone()) throw std::runtime_error("Cannot construct cutting support surface");
+    return support.Face();
+}
+
 }
 std::vector<Result> cutWithPlane(const Tree& input, const std::vector<Operand>& bodies,
                                std::vector<std::string>& participants) {
     const auto mode = input.get<std::string>("mode");
     if (mode != "split" && mode != "imprint") throw std::runtime_error("Unknown plane cut mode");
-    const auto& frame = input.get_child("frame");
-    const gp_Vec u(gp_Pnt(0,0,0), point(frame.get_child("u"))), v(gp_Pnt(0,0,0), point(frame.get_child("v")));
-    if (std::abs(u.Magnitude()-1) > 1e-7 || std::abs(v.Magnitude()-1) > 1e-7 || std::abs(u.Dot(v)) > 1e-7)
-        throw std::runtime_error("Invalid cutting plane frame");
-    const gp_Pln plane(point(frame.get_child("origin")), gp_Dir(u.Crossed(v)));
+    const auto cutter = cuttingSurface(input, bodies);
     std::set<std::string> seen; std::vector<Result> results;
     for (const auto& item : input.get_child("targets")) {
         const auto id = item.second.get<std::string>("body");
         const auto found = std::find_if(bodies.begin(), bodies.end(), [&](const auto& b) { return b.id == id; });
         if (found == bodies.end() || !seen.insert(id).second) throw std::runtime_error("Select distinct existing bodies");
         if (mode == "split" && item.second.get_child_optional("faces")) throw std::runtime_error("Split Body requires complete bodies");
-        auto parts = mode == "split" ? splitBody(*found, plane) : imprint(*found, item.second, plane);
+        auto parts = mode == "split" ? splitBody(*found, cutter) : imprint(*found, item.second, cutter);
         if (parts.empty()) continue;
         for (const auto& part : parts) validate(part.shape);
         if (!conservesVolume(found->shape, parts, false) &&
