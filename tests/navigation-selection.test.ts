@@ -48,6 +48,36 @@ function fixture() {
 }
 const tick = () => new Promise<void>((resolve) => queueMicrotask(resolve));
 
+test("immediate workspace completion waits for accepted result selection", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const { world, navigation, history, modeling } = fixture();
+  modeling.targets = [{ kind: "body", body: "source" }];
+  history.observe();
+  history.take();
+  history.accepted();
+  modeling.targets = [{ kind: "body", body: "accepted" }];
+  navigation.beginWorkspace();
+  world.workspace = { key: "XY", frame: planes.XY };
+  modeling.targets = [];
+  world.draw();
+  await tick();
+  assert.equal(history.pending, false, "Acceptance still owns its result-selection baseline");
+  assert.equal(navigation.active, true, "Immediate view completion waits for that baseline");
+  t.mock.timers.tick(1);
+  await tick();
+  const changes = history.take();
+  assert.deepEqual(changes.baseline.modeling, []);
+  assert.equal(changes.steps.length, 1, "Immediate completion retains the workspace intent");
+  const intent = changes.steps[0];
+  assert.ok("navigation" in intent);
+  assert.deepEqual(intent.navigation.before.selection.modeling, [
+    { kind: "body", body: "accepted" },
+  ]);
+  assert.equal(intent.navigation.before.selection.workspace, null);
+  assert.deepEqual(intent.navigation.after.selection.workspace, world.workspace);
+  assert.deepEqual(intent.navigation.after.selection.modeling, []);
+});
+
 test("workspace entry absorbs its synchronous target clearing into one navigation intent", async () => {
   const { world, navigation, history, modeling } = fixture();
   modeling.targets = [{ kind: "body", body: "input" }];

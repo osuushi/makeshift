@@ -44,6 +44,7 @@ export function updateDimensionLock(
 export async function toggleDimensionLock(editor: SketchEditor, quantity: Quantity): Promise<void> {
   if (editor.blocked || editor.isDragging) return;
   await editor.numeric.commit();
+  if (editor.interactions.current?.kind === "numeric") return;
   const sketch = editor.sketch,
     target = dimensionLockTarget(editor, quantity);
   if (!sketch || !target) return;

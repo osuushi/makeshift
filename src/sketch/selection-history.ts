@@ -18,6 +18,7 @@ export class SelectionHistory {
   constructor(private editor: SketchEditor) {}
   connectNavigation(): void {
     const navigation = this.editor.world.navigation;
+    navigation.canComplete = () => !this.settling;
     navigation.readSelection = () => this.capture();
     navigation.discarded = () => this.expireNavigation();
     navigation.completed = (change: NavigationChange) => {
@@ -31,6 +32,7 @@ export class SelectionHistory {
     return this.editor.world.navigation.active;
   }
   finishNavigation(): void {
+    if (this.settling) this.settle();
     this.editor.world.navigation.finish();
     this.editor.world.navigation.withoutRecording(() => this.editor.world.cancelCameraMotion());
   }
@@ -100,6 +102,7 @@ export class SelectionHistory {
     this.settleNavigation?.();
     this.settleNavigation = undefined;
     this.settling = false;
+    this.editor.world.navigation.settled();
     queueMicrotask(() => this.editor.store.syncSelection());
   }
   restoreNavigation(snapshot: HistoryNavigation): void {

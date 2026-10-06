@@ -1,11 +1,11 @@
 import { idleReason, toolCatalog } from "../tools/catalog.js";
-import { numericFocus, toolMenuOpen } from "../tools/menu-focus.js";
-import type { InteractionLease } from "./active-interaction.js";
+import { numericFocus } from "../tools/menu-focus.js";
 import { layoutLocalControls } from "./control-layout.js";
 import { cornerLock } from "./corner-angle.js";
 import { selectedCorner, toggleCornerLock } from "./corner-angle-controls.js";
+import { type DimensionField, DimensionFieldDraft } from "./dimension-field-draft.js";
 import { dimensionLock, dimensionLockTarget, toggleDimensionLock } from "./dimension-locks.js";
-import { changeDimension, dimensionValues } from "./dimension-values.js";
+import { dimensionValues } from "./dimension-values.js";
 import type { Quantity } from "./drag-state.js";
 import type { SketchEditor } from "./editor.js";
 import type { NumericFields } from "./numeric-edit.js";
@@ -15,20 +15,18 @@ import { sketchIcon } from "./sketch-icons.js";
 export class Dimensions implements NumericFields {
   private key = "";
   private disposeTools: () => void;
-  private duplicate = false;
-  private interaction: InteractionLease | null = null;
-  private committing: Promise<void> | null = null;
-  private fields: {
-    quantity: Quantity;
-    label: HTMLLabelElement;
-    input: HTMLInputElement;
-    lock: HTMLButtonElement;
-  }[] = [];
+  private draft: DimensionFieldDraft;
+  private fields: DimensionField[] = [];
   private readonly abort = new AbortController();
   constructor(
     private editor: SketchEditor,
     private overlay: HTMLElement,
   ) {
+    this.draft = new DimensionFieldDraft(
+      editor,
+      () => this.fields,
+      (value) => this.format(value),
+    );
     const disposers = (["width", "height", "length", "radius", "cornerAngle"] as const).map(
       (quantity) =>
         toolCatalog(editor).register({
@@ -36,6 +34,7 @@ export class Dimensions implements NumericFields {
           label: `Toggle ${quantity === "cornerAngle" ? "corner angle" : quantity} lock`,
           category: "Constrain",
           aliases: [`constrain ${quantity}`],
+          finishEdit: true,
           reason: () =>
             (editor.interactions.current?.kind === "numeric" ? null : idleReason(editor)) ??
             ((
@@ -76,10 +75,10 @@ export class Dimensions implements NumericFields {
       ? `${this.editor.sketch?.id}/${[...this.editor.selectionOwners].sort().join()}/${values.map((v) => v.quantity).join()}`
       : "";
     if (key !== this.key) {
-      if (!this.committing) this.cancel();
+      this.key = key;
+      if (!this.draft.waiting) this.cancel();
       for (const field of this.fields) field.label.remove();
       this.fields = [];
-      this.key = key;
       for (const value of values) this.addField(value.quantity, value.label, value.unit);
     }
     const bounds = this.editor.world.canvas.getBoundingClientRect();
@@ -102,7 +101,8 @@ export class Dimensions implements NumericFields {
       field.lock.setAttribute("aria-pressed", String(locked));
       field.label.style.left = `${Math.max(50, Math.min(bounds.width - 50, value.screen.x - bounds.left))}px`;
       field.label.style.top = `${Math.max(70, Math.min(bounds.height - 60, value.screen.y - bounds.top))}px`;
-      if (!numericFocus(field.input)) field.input.value = this.format(value.value);
+      if (!numericFocus(field.input) && !this.draft.owns(field.input))
+        field.input.value = this.format(value.value);
     }
     layoutLocalControls(this.editor, this.overlay);
   };
@@ -126,112 +126,22 @@ export class Dimensions implements NumericFields {
     // Keep the field focused until the click can commit it and then toggle the lock.
     lock.addEventListener("pointerdown", (event) => event.preventDefault());
     lock.addEventListener("click", async () => {
-      if (quantity === "cornerAngle") await toggleCornerLock(this.editor);
-      else await toggleDimensionLock(this.editor, quantity);
-      input.blur();
+      await toolCatalog(this.editor).invoke(`lock-${quantity}`);
+      if (!this.draft.owns(input)) input.blur();
     });
     label.append(input, unit, lock);
     this.overlay.append(label);
-    this.fields.push({ quantity, label, input, lock });
-    input.addEventListener("focus", () => {
-      if (toolMenuOpen()) return;
-      this.interaction ??= this.editor.interactions.acquire(
-        "numeric",
-        () => this.cancel(),
-        undefined,
-        { navigation: "when-released" },
-      );
-      input.dataset.original = input.value;
-      input.select();
+    const field = { quantity, label, input, lock };
+    this.fields.push(field);
+    this.draft.bind(field, async (reverse) => {
+      if (!(await this.focusTransform(reverse))) focusNumericField(this.overlay, reverse);
     });
-    input.addEventListener("blur", async () => {
-      if (toolMenuOpen()) return;
-      await this.commit(input, quantity);
-      this.editor.refresh();
-    });
-    input.addEventListener("keydown", async (event) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopPropagation();
-        this.cancel();
-        input.blur();
-      }
-      if (event.key === "Enter") {
-        event.preventDefault();
-        event.stopPropagation();
-        await this.commit(input, quantity);
-        input.blur();
-      }
-      if (event.key === "Tab") {
-        event.preventDefault();
-        await this.commit(input, quantity);
-        if (!(await this.focusTransform(event.shiftKey)))
-          focusNumericField(this.overlay, event.shiftKey);
-      }
-    });
-  }
-  private commit(input: HTMLInputElement, quantity: Quantity): Promise<void> {
-    if (this.committing) return this.committing;
-    const interaction = this.interaction;
-    if (input.value === input.dataset.original) {
-      this.interaction = null;
-      this.duplicate = false;
-      interaction?.release();
-      return Promise.resolve();
-    }
-    interaction?.close();
-    this.committing = this.apply(input, quantity).finally(() => {
-      this.committing = null;
-      if (this.interaction === interaction) this.interaction = null;
-      this.duplicate = false;
-      interaction?.release();
-    });
-    return this.committing;
-  }
-  private async apply(input: HTMLInputElement, quantity: Quantity): Promise<void> {
-    if (input.value === input.dataset.original) return;
-    const current = dimensionValues(this.editor).find((item) => item.quantity === quantity);
-    if (!current) return;
-    const value = Number(input.value.trim());
-    if (value === current.value && !(this.editor.line && quantity === "radius")) return;
-    try {
-      if (!input.value.trim()) throw new Error("Enter a number");
-      input.dataset.original = input.value;
-      await changeDimension(
-        this.editor,
-        quantity,
-        value,
-        this.interaction ?? undefined,
-        this.duplicate,
-      );
-      input.removeAttribute("aria-invalid");
-    } catch (error) {
-      input.value = this.format(current.value);
-      input.dataset.original = input.value;
-      input.setAttribute("aria-invalid", "true");
-      this.editor.message = error instanceof Error ? error.message : String(error);
-      this.editor.refresh();
-    }
   }
   async commitFocused(): Promise<void> {
-    const field = this.fields.find((item) => item.input === document.activeElement);
-    if (field) await this.commit(field.input, field.quantity);
+    await this.draft.finish();
   }
   cancel(): void {
-    if (this.committing) return;
-    this.duplicate = false;
-    const interaction = this.interaction;
-    this.interaction = null;
-    const values = dimensionValues(this.editor);
-    for (const field of this.fields) {
-      const value = values.find((item) => item.quantity === field.quantity);
-      if (value) {
-        field.input.value = this.format(value.value);
-        field.input.dataset.original = field.input.value;
-        field.input.removeAttribute("aria-invalid");
-      }
-    }
-    interaction?.release();
+    this.draft.cancel();
   }
   async focusTransform(reverse = false): Promise<boolean> {
     const e = this.editor;
@@ -249,7 +159,7 @@ export class Dimensions implements NumericFields {
         : e.transformAxis === "x"
           ? 0
           : -1;
-    await this.commitFocused();
+    if (!(await this.draft.finish())) return false;
     const next = index < 0 ? (reverse ? 2 : 0) : (index + (reverse ? 2 : 1)) % 3;
     e.transformAxis = next === 0 ? "x" : next === 1 ? "y" : null;
     e.transformRotation = next === 2;
@@ -259,7 +169,7 @@ export class Dimensions implements NumericFields {
   }
   focus(quantity: Quantity, duplicate = false): void {
     this.fields.find((field) => field.quantity === quantity)?.input.focus();
-    this.duplicate = duplicate;
+    this.draft.duplicate = duplicate;
   }
   focusFirst(initial?: string): void {
     const input = this.fields[0]?.input;

@@ -155,6 +155,16 @@ jobs:
         run: |
           xvfb-run -a node tests/common-shortcuts-ui.mjs
           xvfb-run -a node tests/modeling-shortcut-regressions-ui.mjs
+      - name: Mode switches, acceptance and ownership readiness
+        if: matrix.shard == 3
+        run: |
+          xvfb-run -a node tests/mode-switch-readiness-ui.mjs
+          xvfb-run -a node tests/mode-switch-ui.mjs
+      - name: Mode switch model and preview regressions
+        if: matrix.shard == 2
+        run: |
+          xvfb-run -a node tests/mode-switch-regressions-ui.mjs
+          xvfb-run -a node tests/mode-switch-preview-regressions-ui.mjs
       - name: Thread presets and saved-settings compatibility
         if: matrix.shard == 3
         run: xvfb-run -a npm run test:thread-presets
@@ -189,6 +199,11 @@ jobs:
       - name: Standalone cleanup and separate geometry history
         if: matrix.lane == 'webkit-controls'
         run: npm run test:standalone-cleanup
+      - name: Mode switches, acceptance and ownership readiness
+        if: matrix.lane == 'webkit-controls'
+        run: |
+          node tests/mode-switch-readiness-ui.mjs
+          node tests/mode-switch-ui.mjs
       - name: Modal Undo boundaries
         if: matrix.shard == 3
         run: xvfb-run -a node tests/modal-undo-boundary-ui.mjs
@@ -374,6 +389,13 @@ jobs:
         env:
           MAKESHIFT_TEST_BROWSER: webkit
         run: npm run test:standalone-cleanup
+      - name: Mode switches, acceptance and ownership readiness
+        if: matrix.lane == 'webkit-widgets'
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: |
+          node tests/mode-switch-readiness-ui.mjs
+          node tests/mode-switch-ui.mjs
       - name: Modal Undo boundaries
         if: matrix.lane == 'geometry'
         env:
@@ -465,6 +487,13 @@ jobs:
         run: |
           npm run test:preview-fallback
           node tests/preview-fallback-adjacent-ui.mjs
+      - name: Mode switch model and preview regressions
+        if: matrix.lane == 'webkit-controls'
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+        run: |
+          node tests/mode-switch-regressions-ui.mjs
+          node tests/mode-switch-preview-regressions-ui.mjs
       - name: Built Electron interface scale and orientation cube
         if: matrix.lane == 'electron-host'
         run: |

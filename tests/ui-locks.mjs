@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import { pixels } from "./ui-fill.mjs";
-import { at, click, close, drag, inspect, pointEquals, reset } from "./ui-helpers.mjs";
+import {
+  at,
+  click,
+  close,
+  drag,
+  inspect,
+  modalCompleted,
+  pointEquals,
+  reset,
+} from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const sketch = async (page) => (await inspect(page)).document.sketches[0];
@@ -127,6 +136,7 @@ async function radiusLocks(page) {
   const arc = (await sketch(page)).curves[0];
   assert.ok(Math.abs(arc.bulge) > 1, "Major branch preserved");
   close((await locks(page))[0].value, 6);
+  const accepted = (await inspect(page)).document;
   await number(page, "Radius", 3);
   assert.deepEqual(
     (await sketch(page)).curves[0],
@@ -134,6 +144,16 @@ async function radiusLocks(page) {
     "Impossible radius retains geometry and lock",
   );
   close((await locks(page))[0].value, 6);
+  const input = page.getByRole("textbox", { name: "Radius", exact: true });
+  assert.equal(await input.inputValue(), "3");
+  assert.equal(await input.getAttribute("aria-invalid"), "true");
+  assert.equal((await inspect(page)).interaction.kind, "numeric");
+  await button(page, "Unlock Radius");
+  assert.deepEqual((await inspect(page)).document, accepted);
+  assert.equal(await input.inputValue(), "3");
+  await page.keyboard.press("Escape");
+  await modalCompleted(page);
+  assert.deepEqual((await inspect(page)).document, accepted);
   await button(page, "Unlock Radius");
   await number(page, "Radius", 5);
   assert.equal((await locks(page)).length, 0);

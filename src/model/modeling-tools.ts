@@ -32,6 +32,11 @@ export class ModelingTools {
       this.disposers.push(
         catalog.register({
           id: tool,
+          finishEdit: () =>
+            !(
+              editor.interactions.current?.kind === "body-edge-finish" &&
+              (tool === "fillet" || tool === "chamfer")
+            ) && editor.interactions.current?.kind !== (tool === "offset" ? "face-offset" : tool),
           label,
           shortcut: modelingShortcutLabel(tool),
           aliases,
@@ -55,7 +60,13 @@ export class ModelingTools {
         )
           return;
         if (editor.isDragging) return;
-        const tool = modelingShortcut(event, !!editor.interactions.current);
+        const current = editor.interactions.current;
+        const tool = modelingShortcut(
+          event,
+          current
+            ? { kind: current.kind, canFinish: !!current.finish && current.phase === "editing" }
+            : null,
+        );
         if (!tool) return;
         event.preventDefault();
         event.stopImmediatePropagation();

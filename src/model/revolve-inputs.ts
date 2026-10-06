@@ -31,11 +31,12 @@ export class RevolveInputs {
   }
   private picking(options: AddEventListenerOptions): void {
     const canvas = this.editor.world.canvas;
-    canvas.addEventListener(
+    window.addEventListener(
       "pointermove",
       (event) => {
         const state = this.actions.state();
-        if (!state.picking || !state.lease || event.buttons) return;
+        if (event.target !== canvas || !state.picking || !state.lease || event.buttons) return;
+        event.stopImmediatePropagation();
         const axis = pickRevolveAxis(this.editor, { x: event.clientX, y: event.clientY });
         this.actions.hover(
           axis && state.frame && axisInPlane(axis, state.frame.center, state.frame.normal)
@@ -53,11 +54,19 @@ export class RevolveInputs {
       },
       options,
     );
-    canvas.addEventListener(
+    // Axis picking owns its canvas click before ordinary canonical-plane selection.
+    window.addEventListener(
       "click",
       (event) => {
         const state = this.actions.state();
-        if (!state.picking || !state.lease || event.button || event.metaKey || event.ctrlKey)
+        if (
+          event.target !== canvas ||
+          !state.picking ||
+          !state.lease ||
+          event.button ||
+          event.metaKey ||
+          event.ctrlKey
+        )
           return;
         event.preventDefault();
         event.stopImmediatePropagation();

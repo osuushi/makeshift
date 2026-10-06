@@ -25,6 +25,7 @@ export function nativeFileControls(editor: SketchEditor, host: DocumentHost): ()
   const disposers = (["new", "open", "save", "save-as", "close"] as const).map((command) =>
     toolCatalog(editor).register({
       id: command,
+      finishEdit: true,
       label: {
         new: "New document",
         open: "Open document",
@@ -39,7 +40,13 @@ export function nativeFileControls(editor: SketchEditor, host: DocumentHost): ()
     }),
   );
   const disposeCommands = host.onCommand((command) => {
-    void editor.store.settled().then(() => run(command));
+    // Native File menu and keyboard/header actions share ordinary switch acceptance.
+    if (
+      ["new", "open", "save", "save-as", "close"].includes(command) &&
+      !(command === "close" && editor.store.scriptRunning)
+    )
+      void editor.store.settled().then(() => toolCatalog(editor).invoke(command));
+    else void editor.store.settled().then(() => run(command));
   });
   const disposeStatus = host.onStatus(status);
   let initialized = false;

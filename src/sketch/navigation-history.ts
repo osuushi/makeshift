@@ -21,6 +21,7 @@ export class NavigationHistory {
   });
   completed: (change: NavigationChange) => void = () => {};
   discarded: () => void = () => {};
+  canComplete: () => boolean = () => true;
   constructor(private world: World) {}
   get active(): boolean {
     return this.before !== null;
@@ -74,7 +75,14 @@ export class NavigationHistory {
     this.scheduled = true;
     queueMicrotask(() => {
       this.scheduled = false;
-      if (!this.holds.size && !this.world.orbit.active && !this.world.cameraTransitioning)
+      // Reduced motion can finish before an accepting controller chooses result selection.
+      // Changed intents wait for that context; a no-op can retire immediately.
+      if (
+        !this.holds.size &&
+        !this.world.orbit.active &&
+        !this.world.cameraTransitioning &&
+        (this.canComplete() || (this.before && sameNavigation(this.before, this.capture())))
+      )
         this.finish();
     });
   }

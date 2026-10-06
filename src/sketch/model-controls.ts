@@ -31,6 +31,7 @@ export class ModelControls {
       editor,
       overlay,
       () =>
+        !toolCatalog(editor).switching &&
         !this.extrusion.active &&
         (!editor.interactions.current || editor.interactions.current.kind === "tag-membership"),
     );
@@ -52,6 +53,7 @@ export class ModelControls {
     this.disposers.push(
       catalog.register({
         id: "edit-sketch",
+        finishEdit: true,
         label: "Edit sketch",
         category: "Sketch",
         aliases: ["open sketch"],
@@ -60,6 +62,7 @@ export class ModelControls {
       }),
       catalog.register({
         id: "new-sketch-on-plane",
+        finishEdit: true,
         label: "New sketch on this plane",
         category: "Sketch",
         aliases: ["new sketch", "same plane"],
@@ -68,6 +71,7 @@ export class ModelControls {
       }),
       catalog.register({
         id: "sketch-on-face",
+        finishEdit: true,
         label: "Sketch on face",
         category: "Sketch",
         shortcut: "Enter",
@@ -85,6 +89,7 @@ export class ModelControls {
       }),
       catalog.register({
         id: "select-face",
+        finishEdit: true,
         label: "Select face",
         category: "Select",
         description: "Choose the solid face underneath the selected sketch region",
@@ -110,6 +115,7 @@ export class ModelControls {
       (event) => {
         if (
           editor.world.active ||
+          toolCatalog(editor).switching ||
           editor.isDragging ||
           editor.blocked ||
           this.extrusion.active ||
@@ -133,6 +139,7 @@ export class ModelControls {
       async (event) => {
         if (
           editor.world.active ||
+          toolCatalog(editor).switching ||
           editor.isDragging ||
           editor.blocked ||
           ["body-move", "placement"].includes(editor.interactions.current?.kind ?? "")
@@ -141,6 +148,7 @@ export class ModelControls {
         const interaction = editor.interactions.current;
         if (interaction?.finish && !(await interaction.finish())) return;
         if (this.extrusion.active && !(await this.extrusion.finish())) return;
+        if (toolCatalog(editor).switching) return;
         const hits = pickModels(editor, { x: event.clientX, y: event.clientY });
         editor.modeling.alternatives = hits.slice(1);
         editor.modeling.choose(hits[0] ?? null, event.shiftKey, event.metaKey || event.ctrlKey);
@@ -152,7 +160,13 @@ export class ModelControls {
   }
   private doubleClick(event: MouseEvent, before: ModelingTarget[]): void {
     const editor = this.editor;
-    if (editor.world.active || editor.blocked || editor.isDragging || editor.interactions.current)
+    if (
+      toolCatalog(editor).switching ||
+      editor.world.active ||
+      editor.blocked ||
+      editor.isDragging ||
+      editor.interactions.current
+    )
       return;
     const target = pickModel(editor, { x: event.clientX, y: event.clientY });
     if (target?.kind === "face" || target?.kind === "edge" || target?.kind === "body") {
@@ -173,6 +187,7 @@ export class ModelControls {
     onModelKeydown((event) => {
       if (
         editor.world.active ||
+        toolCatalog(editor).switching ||
         event.target instanceof HTMLInputElement ||
         editor.blocked ||
         editor.isDragging

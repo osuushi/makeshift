@@ -1,12 +1,12 @@
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import type { InteractionLease } from "./active-interaction.js";
-import { type Constraint, type Curve, newId, type Sketch } from "./document.js";
+import { type Constraint, newId, type Sketch } from "./document.js";
 import type { SketchEditor } from "./editor.js";
 import { GestureSolve } from "./gesture-solve.js";
-import { hasClosedEndpoints } from "./loop-boundary.js";
 import { onModelKeydown } from "./model-keys.js";
 import { offsetDistance } from "./offset-geometry.js";
+import { selectedOffsetCurves } from "./offset-selection.js";
 import { type OffsetTarget, offsetLinks, offsetPreview, prepareOffset } from "./offset-target.js";
 import { placeOffsetWidget } from "./offset-widget.js";
 import type { Point } from "./planes.js";
@@ -44,12 +44,13 @@ export class OffsetControls {
   ) {
     this.disposeTool = toolCatalog(editor).register({
       id: "sketch-offset",
+      finishEdit: true,
       label: "Offset sketch curves",
       category: "Sketch",
       aliases: ["offset sketch", "parallel curve"],
       reason: () =>
         idleReason(editor) ??
-        (this.selected()
+        (selectedOffsetCurves(this.editor)
           ? null
           : editor.sketch?.curves.some(
                 (c) => c.kind === "bezier" && editor.selectionOwners.has(c.id),
@@ -84,6 +85,7 @@ export class OffsetControls {
     onModelKeydown(
       (event) => {
         if (!this.session) return;
+        if (event.key !== "Escape" && event.key !== "Enter") return;
         event.stopImmediatePropagation();
         if (event.key === "Escape") {
           event.preventDefault();
@@ -109,29 +111,13 @@ export class OffsetControls {
     editor.world.changed.add(this.update);
     this.update();
   }
-  private selected(): Curve[] | undefined {
-    const e = this.editor;
-    if (
-      !e.selectionOwners.size ||
-      (e.rectangleContext && e.selectionOwners.size !== e.rectangleContext.members.length) ||
-      e.selected.firstPointKey ||
-      e.pointMenu ||
-      e.selected.pointKeys?.size
-    )
-      return undefined;
-    const curves = e.sketch?.curves.filter((c) => e.selectionOwners.has(c.id));
-    return curves &&
-      ((curves.length === 1 && curves[0].kind !== "bezier") || hasClosedEndpoints(curves))
-      ? curves
-      : undefined;
-  }
   private start = (event: PointerEvent): void => {
     if (event.button !== 0) return;
     event.preventDefault();
     this.begin({ x: event.clientX, y: event.clientY }, event.pointerId);
   };
   private begin(point: Point, pointer?: number): void {
-    const curves = this.selected(),
+    const curves = selectedOffsetCurves(this.editor),
       sketch = this.editor.sketch;
     if (this.session || this.editor.blocked || this.editor.isDragging || !curves || !sketch) return;
     let target: OffsetTarget;
@@ -145,7 +131,12 @@ export class OffsetControls {
     const start = this.editor.world.pointAt(sketch.plane, point.x, point.y);
     if (!start) return;
     const ids = curves.map(() => newId());
-    const interaction = this.editor.interactions.acquire("offset", () => this.cancel());
+    const interaction = this.editor.interactions.acquire(
+      "offset",
+      () => this.cancel(),
+      () => this.commit(),
+      { navigation: "when-released", documentHistory: "cancel-preview" },
+    );
     if (!interaction) return;
     this.interaction = interaction;
     this.session = {
@@ -225,28 +216,32 @@ export class OffsetControls {
       this.input.select();
     }
   };
-  private async commit(): Promise<void> {
+  private async commit(): Promise<boolean> {
     const s = this.session,
       interaction = this.interaction;
-    if (!s || !interaction?.wait()) return;
+    if (!s || !interaction || interaction.captured || !interaction.wait()) return false;
     const valid = await s.solve.flush();
-    if (this.session !== s || interaction.phase !== "waiting") return;
+    if (this.session !== s || interaction.phase !== "waiting") return false;
     if (!s.valid || !valid) {
       interaction.resume();
       this.editor.refresh();
-      return;
+      return false;
     }
-    if (!interaction.close()) return;
-    if (await this.editor.accept())
-      this.editor.select(
-        s.target.native
-          ? (this.editor.sketch?.curves
-              .filter((c) => !s.sketch.curves.some((old) => old.id === c.id))
-              .map((c) => c.id) ?? [])
-          : s.ids,
-      );
-    else this.editor.selectTargets(s.selection);
+    if (!interaction.close()) return false;
+    if (!(await this.editor.accept())) {
+      interaction.phase = "editing";
+      this.editor.refresh();
+      return false;
+    }
+    this.editor.select(
+      s.target.native
+        ? (this.editor.sketch?.curves
+            .filter((c) => !s.sketch.curves.some((old) => old.id === c.id))
+            .map((c) => c.id) ?? [])
+        : s.ids,
+    );
     this.finish();
+    return true;
   }
   private async cancel(): Promise<void> {
     const s = this.session;
@@ -263,7 +258,7 @@ export class OffsetControls {
   }
   private update = (): void => {
     const s = this.session,
-      curves = this.selected(),
+      curves = selectedOffsetCurves(this.editor),
       sketch = s?.sketch ?? this.editor.sketch;
     this.root.hidden = (!s && (!curves || this.editor.moveMode)) || !sketch;
     if (!sketch || (!s && !curves)) return;

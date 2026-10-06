@@ -27,6 +27,7 @@ export function fileControls(editor: SketchEditor, container: HTMLElement): () =
   const disposers = [
     catalog.register({
       id: "save",
+      finishEdit: true,
       label: "Save document",
       showInTools: false,
       shortcut: "⌘S",
@@ -38,6 +39,7 @@ export function fileControls(editor: SketchEditor, container: HTMLElement): () =
     }),
     catalog.register({
       id: "save-as",
+      finishEdit: true,
       label: "Save document as…",
       showInTools: false,
       shortcut: "⇧⌘S",
@@ -49,6 +51,7 @@ export function fileControls(editor: SketchEditor, container: HTMLElement): () =
     }),
     catalog.register({
       id: "open",
+      finishEdit: true,
       label: "Open document",
       showInTools: false,
       shortcut: "⌘O",
@@ -58,6 +61,7 @@ export function fileControls(editor: SketchEditor, container: HTMLElement): () =
     }),
     catalog.register({
       id: "new",
+      finishEdit: true,
       label: "New document",
       showInTools: false,
       shortcut: "⌘N",

@@ -5,7 +5,13 @@ import { ToolCatalog, type ToolDefinition } from "../src/tools/catalog.js";
 import { searchTools } from "../src/tools/search.js";
 
 function fixture() {
-  const state = { isDragging: false, blocked: false, message: "", refresh() {} };
+  const state = {
+    interactions: { current: null },
+    isDragging: false,
+    blocked: false,
+    message: "",
+    refresh() {},
+  };
   return { state, catalog: new ToolCatalog(state as SketchEditor) };
 }
 function entry(id: string, extra: Partial<ToolDefinition> = {}): ToolDefinition {

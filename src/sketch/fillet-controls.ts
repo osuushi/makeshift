@@ -45,6 +45,7 @@ export class FilletControls {
   ) {
     this.disposeTool = toolCatalog(editor).register({
       id: "sketch-fillet",
+      finishEdit: true,
       label: "Fillet sketch corner",
       category: "Sketch",
       aliases: ["round sketch corner"],
@@ -75,6 +76,7 @@ export class FilletControls {
     onModelKeydown(
       (event) => {
         if (!this.session) return;
+        if (event.key !== "Escape" && event.key !== "Enter") return;
         event.stopImmediatePropagation();
         if (event.key === "Escape") {
           event.preventDefault();
@@ -113,7 +115,12 @@ export class FilletControls {
     const corner = this.corner(),
       sketch = this.editor.sketch;
     if (this.session || this.editor.blocked || !corner || !sketch) return;
-    const interaction = this.editor.interactions.acquire("fillet", () => this.cancel());
+    const interaction = this.editor.interactions.acquire(
+      "fillet",
+      () => this.cancel(),
+      () => this.commit(),
+      { navigation: "when-released", documentHistory: "cancel-preview" },
+    );
     if (!interaction) return;
     this.interaction = interaction;
     this.session = {
@@ -141,10 +148,12 @@ export class FilletControls {
       session.radius = radius;
       session.solve.update(result.sketch);
       this.editor.message = "";
+      this.input.removeAttribute("aria-invalid");
       if (!numericFocus(this.input)) this.input.value = String(Number(radius.toFixed(4)));
     } catch (error) {
       session.valid = false;
       session.solve.invalidate();
+      this.input.setAttribute("aria-invalid", "true");
       this.editor.message = error instanceof Error ? error.message : String(error);
     }
     this.editor.refresh();
@@ -168,25 +177,30 @@ export class FilletControls {
     this.interaction?.releaseCapture();
     void this.commit();
   };
-  private async commit(): Promise<void> {
+  private async commit(): Promise<boolean> {
     const s = this.session,
       interaction = this.interaction;
-    if (!s || !interaction?.wait()) return;
+    if (!s || !interaction || interaction.captured || !interaction.wait()) return false;
     const valid = await s.solve.flush();
-    if (this.session !== s || interaction.phase !== "waiting") return;
+    if (this.session !== s || interaction.phase !== "waiting") return false;
     if (!s.valid || !valid) {
       if (s.pointer >= 0) {
         await this.cancel();
-        return;
+        return false;
       }
       interaction.resume();
       this.editor.refresh();
-      return;
+      return false;
     }
-    if (!interaction.close()) return;
-    if (await this.editor.accept()) this.editor.select([s.id]);
-    else this.editor.selectTargets(s.selection);
+    if (!interaction.close()) return false;
+    if (!(await this.editor.accept())) {
+      interaction.phase = "editing";
+      this.editor.refresh();
+      return false;
+    }
+    this.editor.select([s.id]);
     this.finish();
+    return true;
   }
   private async cancel(): Promise<void> {
     const s = this.session;
