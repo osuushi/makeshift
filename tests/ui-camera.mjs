@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { blockedDuringDrawing } from "./ui-camera-drawing.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { navigationIdle } from "./ui-navigation-history.mjs";
 import { findRaycastPoint } from "./ui-plane-targets.mjs";
@@ -236,39 +237,6 @@ async function safariPinchEvents(page) {
   assert.equal(after.activeSketch, after.document.sketches[0].id);
   assert.ok([...after.camera.position, ...after.camera.target].every(Number.isFinite));
   assert.deepEqual(after.document, before.document);
-}
-
-async function blockedDuringDrawing(page) {
-  await page.keyboard.press("l");
-  const target = (await inspect(page)).camera.target;
-  const start = await at(page, target[0] + 2, target[1] + 2),
-    end = await at(page, target[0] + 7, target[1] + 7);
-  await page.mouse.move(start.x, start.y);
-  await page.mouse.down();
-  await page.mouse.move(end.x, end.y, { steps: 5 });
-  const before = await inspect(page);
-  assert.equal(
-    before.interaction?.kind,
-    "pointer",
-    "Start a real drawing gesture in the visible viewport",
-  );
-  await page.mouse.wheel(80, 50);
-  await page.keyboard.down("Alt");
-  await page.mouse.wheel(80, 50);
-  await page.keyboard.up("Alt");
-  await page.keyboard.down("Control");
-  await page.mouse.wheel(0, -30);
-  await page.keyboard.up("Control");
-  await page.evaluate(
-    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
-  );
-  assert.deepEqual(
-    (await inspect(page)).camera,
-    before.camera,
-    "Pan/pinch cannot move the camera during a modeling drag",
-  );
-  await page.keyboard.press("Escape");
-  await page.mouse.up();
 }
 
 async function orbitChecks(page, state, document) {

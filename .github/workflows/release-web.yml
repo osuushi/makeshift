@@ -36,6 +36,7 @@ jobs:
           .cache/emsdk/emsdk install 4.0.20
           .cache/emsdk/emsdk activate 4.0.20
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        id: wasm-cache
         with:
           path: |
             .cache/release-inputs
@@ -57,10 +58,23 @@ jobs:
         run: |
           npm ci --ignore-scripts
           npx playwright install --with-deps chromium webkit
-      - name: Build and verify static web mode
+      - name: Build static web mode
         run: |
           source .cache/emsdk/emsdk_env.sh
           npm run build:web
+      - name: Preserve completed WASM build before browser verification
+        if: steps.wasm-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            .cache/release-inputs
+            .cache/solver/source
+            .cache/web
+            .build/web-solver
+            .build/web-kernel
+          key: wasm-linux-4.0.20-${{ hashFiles('scripts/web/build-wasm.mjs', 'scripts/web/sdk.mjs', 'scripts/occt-source.mjs', 'scripts/occt-recipe.json', 'scripts/native-inputs.mjs', 'scripts/solver-source.mjs', 'native/**') }}
+      - name: Verify static web mode
+        run: |
           npm run typecheck
           npm run check
           npm run test:web
