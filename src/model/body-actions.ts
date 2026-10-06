@@ -26,7 +26,13 @@ export class BodyActions {
         category: "Transform",
         aliases: ["copy bodies"],
         reason: () => reason("duplicate"),
-        run: () => enable(true),
+        run: () => {
+          const result = editor.modeling.resolve("duplicate");
+          if (!result.available) return;
+          editor.modeling.targets = result.inputs.map((body) => ({ kind: "body", body: body.id }));
+          editor.refresh();
+          enable(true);
+        },
       }),
     );
     for (const mode of ["union", "subtract", "intersect"] as const)

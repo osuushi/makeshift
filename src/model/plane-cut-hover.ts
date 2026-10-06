@@ -1,8 +1,9 @@
 import type { SketchEditor } from "../sketch/editor.js";
-import type { PlaneFrame } from "../sketch/planes.js";
+import { type PlaneFrame, planes } from "../sketch/planes.js";
+import { type CutFacePicker, pickCutReference } from "./cut-face-reference.js";
 import { planeReference } from "./mirror-reference.js";
 import { MirrorReferenceView } from "./mirror-reference-view.js";
-import { pickPlaneInterior, planePatchVertices } from "./plane-interior-pick.js";
+import { planePatchVertices } from "./plane-interior-pick.js";
 
 /** Presentation uses the same hit as clicking; Entities rows retain their saved target. */
 export class PlaneCutHover {
@@ -12,6 +13,7 @@ export class PlaneCutHover {
   constructor(
     private editor: SketchEditor,
     private accepts: (event: PointerEvent) => ((frame: PlaneFrame) => boolean) | undefined,
+    private faces?: () => CutFacePicker | undefined,
   ) {
     this.view = new MirrorReferenceView(editor, true);
     const options = { capture: true, signal: this.abort.signal };
@@ -38,9 +40,18 @@ export class PlaneCutHover {
       frame && accepts(frame) && !(label instanceof HTMLButtonElement && label.disabled)
         ? { frame, vertices: planePatchVertices(frame, this.editor.world.planeBounds(frame)) }
         : target === this.editor.world.canvas
-          ? pickPlaneInterior(this.editor, { x: event.clientX, y: event.clientY }, accepts)
+          ? pickCutReference(
+              this.editor,
+              { x: event.clientX, y: event.clientY },
+              accepts,
+              this.faces?.(),
+            )
           : null;
-    this.view.show(hit ? { ...planeReference(hit.frame), vertices: hit.vertices } : null);
+    this.view.show(
+      hit
+        ? { ...planeReference("frame" in hit ? hit.frame : planes.XY), vertices: hit.vertices }
+        : null,
+    );
     this.visible = !!hit;
     this.editor.world.present();
   };

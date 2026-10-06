@@ -33,7 +33,8 @@ constructionPlane({frame}) returns {plane,frame}; pass id to reposition an exist
 Sketches copy frames and remain independent when a plane moves or is deleted.
 Inspect lists saved constructionPlanes and inspect ID returns their frames.
 splitBody({targets:[{body}],frame}) cuts entire bodies; imprint requires explicit
-faces in each target and preserves material. Frames describe infinite cutting planes.
+faces in each target and preserves material. Supply exactly one frame (infinite plane)
+or surface:{body,face} (exact face support, including curved surfaces).
 scale accepts curves, sketches, or solids (whole bodies, faces or edges), a positive
 factor and a world-space pivot. ScaleResult returns current sketch/profile IDs and
 body topology for chaining; re-read these after changing geometry.

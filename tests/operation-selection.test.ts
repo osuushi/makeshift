@@ -74,7 +74,39 @@ test("overlap is deduplicated while first selected body order controls Boolean i
   );
 });
 
-test("mixed movement covers every target and does not expose body-only actions", () => {
+test("body-only operations expand faces and edges without changing topology-specific selection", () => {
+  const targets = [edge(b), faces(a)[0], faces(b)[1], edge(a), edge(b)];
+  const original = structuredClone(targets);
+  for (const operation of ["duplicate", "mirror", "erode", "boolean"] as const) {
+    assert.deepEqual(resolveOperation(operation, targets, document), {
+      available: true,
+      inputs: [b, a],
+    });
+    assert.equal(
+      resolveOperation(operation, [...targets, { kind: "sketch", sketch: "sketch" }], {
+        ...document,
+        sketches: [{ id: "sketch", plane: planes.XY, curves: [], constraints: [], groups: [] }],
+      }).available,
+      false,
+    );
+    assert.equal(
+      resolveOperation(
+        operation,
+        [...targets, { kind: "edge", body: a.id, edge: "missing" }],
+        document,
+      ).available,
+      false,
+    );
+  }
+  assert.deepEqual(targets, original);
+  assert.equal(resolveOperation("boolean", [edge(a), faces(a)[0]], document).available, false);
+  assert.deepEqual(resolveOperation("offset", [faces(a)[0]], document), {
+    available: true,
+    inputs: { targets: [{ body: a.id, face: a.faces[0].id }], faces: [a.faces[0]] },
+  });
+});
+
+test("mixed movement retains partial targets while body-only actions expand them", () => {
   const targets = [whole(a), faces(b)[0]];
   const result = resolveOperation("move", targets, document);
   assert.ok(result.available);
@@ -83,7 +115,10 @@ test("mixed movement covers every target and does not expose body-only actions",
     faces: [{ body: b.id, face: b.faces[0].id }],
     edges: [],
   });
-  assert.equal(resolveOperation("duplicate", targets, document).available, false);
+  assert.deepEqual(resolveOperation("duplicate", targets, document), {
+    available: true,
+    inputs: [a, b],
+  });
   assert.equal(defaultModelingTool(targets, document), null);
   assert.equal(resolveOperation("move", [...targets, edge(b)], document).available, false);
   assert.equal(resolveOperation("move", [whole(a), edge(b)], document).available, true);

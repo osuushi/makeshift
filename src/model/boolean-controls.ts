@@ -179,6 +179,7 @@ export class BooleanControls {
     if (this.editor.blocked || this.lease?.phase !== "editing") return;
     change();
     this.operation.ids = this.bodies.map((b) => b.id);
+    this.editor.modeling.targets = this.operation.ids.map((body) => ({ kind: "body", body }));
     this.operands.show(this.bodies, this.operation.mode, this.targetId);
     this.valid = false;
     this.lease.show(null);

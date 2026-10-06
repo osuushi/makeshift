@@ -64,7 +64,7 @@ const resolvers: { [K in Operation]: Resolver<K> } = {
   boolean: (c) => {
     const result = wholeBodySelection(c);
     return result.available && result.inputs.length < 2
-      ? unavailable("Select at least two complete bodies")
+      ? unavailable("Select geometry from at least two bodies")
       : result;
   },
   shell: shellSelection,
@@ -99,9 +99,8 @@ function movementSelection(c: SelectionContext): Resolution<MovementSelection> {
   });
 }
 function wholeBodySelection(c: SelectionContext): Resolution<Body[]> {
-  if (!solidOnly(c) || c.partialFaces.length || uncoveredEdges(c).length || !c.complete.length)
-    return unavailable("Select complete bodies");
-  return available(c.complete);
+  if (!solidOnly(c) || !c.owners.length) return unavailable("Select solid bodies, faces or edges");
+  return available(c.owners);
 }
 function edgeSelection(
   c: SelectionContext,

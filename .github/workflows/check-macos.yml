@@ -142,7 +142,9 @@ jobs:
           xvfb-run -a node tests/thread-correction-ui.mjs
       - name: Boolean operand collection and preferences
         if: matrix.shard == 2
-        run: xvfb-run -a node tests/boolean-collection-ui.mjs
+        run: |
+          xvfb-run -a node tests/boolean-collection-ui.mjs
+          xvfb-run -a node tests/body-operation-selection-ui.mjs
       - name: Floating widget reachability and adjacent tools
         if: matrix.shard == 2
         run: |
@@ -405,7 +407,9 @@ jobs:
         if: matrix.lane == 'geometry'
         env:
           MAKESHIFT_TEST_BROWSER: webkit
-        run: node tests/boolean-collection-ui.mjs
+        run: |
+          node tests/boolean-collection-ui.mjs
+          node tests/body-operation-selection-ui.mjs
       - name: Interface scale and camera independence
         if: matrix.lane == 'geometry'
         env:
