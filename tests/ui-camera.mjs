@@ -240,7 +240,7 @@ async function safariPinchEvents(page) {
 }
 
 async function orbitChecks(page, state, document) {
-  const radius = Math.hypot(...state.camera.position.map((v, i) => v - state.camera.target[i]));
+  const height = state.camera.height;
   for (const [dx, dy] of [
     [50, 25],
     [50, -10],
@@ -258,7 +258,9 @@ async function orbitChecks(page, state, document) {
     }, previous);
     state = await inspect(page);
     assert.equal(state.activePlane, null);
-    close(Math.hypot(...state.camera.position.map((v, i) => v - state.camera.target[i])), radius);
+    // Orthographic zoom is viewport height. Depth fitting can retreat the camera
+    // to keep full-view planes ahead of its near clip without changing that zoom.
+    close(state.camera.height, height, "Orbit preserves orthographic zoom");
     assert.deepEqual(state.document, document);
   }
 }
