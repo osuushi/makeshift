@@ -87,5 +87,5 @@ await withUiRuntimes(
       `${name}: panel drag, camera stability, cancel, reload and keyboard placement passed`,
     );
   },
-  { allowed: ["chromium", "webkit"] },
+  { allowed: ["chromium", "webkit"], viewport: { width: 1280, height: 800 } },
 );

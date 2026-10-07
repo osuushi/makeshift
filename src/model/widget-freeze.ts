@@ -26,6 +26,7 @@ export class WidgetFreeze {
       },
       options,
     );
+    // Stop compositor motion before press observers and control handlers measure the card.
     window.addEventListener(
       "pointerdown",
       (event) => {
