@@ -25,7 +25,7 @@
     radial-gradient(circle at 3px 4px, #ffffffbf 0.8px, transparent 1.3px);
   background-size: 6px 6px;
   filter: blur(0.3px);
-  mask-image: linear-gradient(transparent, #000 30%, #000 70%, transparent);
+  mask-image: linear-gradient(transparent, #000 21%, #000 79%, transparent);
   pointer-events: none;
 }
 .parameter-panel-grip:active {
