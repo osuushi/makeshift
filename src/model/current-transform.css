@@ -21,6 +21,9 @@
 }
 .current-transform input {
   width: 110px;
+  min-width: 0;
+  max-width: 110px;
+  flex: 1;
 }
 .current-transform small {
   display: block;

@@ -1,3 +1,4 @@
+import { placeFloatingPanel } from "../preferences/panel-placement.js";
 import { displayPoints } from "./curve-geometry.js";
 import type { SketchEditor } from "./editor.js";
 import type { Point } from "./planes.js";
@@ -52,6 +53,10 @@ export function layoutLocalControls(editor: SketchEditor, overlay: HTMLElement):
   );
   for (const control of controls) {
     if (control.hidden || !control.getClientRects().length) continue;
+    if (placeFloatingPanel(control)) {
+      occupied.push(control.getBoundingClientRect());
+      continue;
+    }
     const initial = control.getBoundingClientRect();
     let best = { dx: 0, dy: 0, score: Number.POSITIVE_INFINITY, box: initial as Box };
     for (const dx of [0, -36, 36, -72, 72, -108, 108, -144, 144]) {

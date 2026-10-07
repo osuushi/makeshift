@@ -5,6 +5,19 @@ import { standaloneOnly } from "./ui-cleanup-controls.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { orientableArrowViews } from "./ui-orientable-tools.mjs";
 
+async function switchToChamfer(page, input) {
+  const switchMode = page.getByRole("button", { name: "Switch to chamfer", exact: true });
+  const modeIcon = await switchMode.locator("svg").elementHandle();
+  await input.fill("1");
+  await inspect(page);
+  assert.ok(
+    await modeIcon.evaluate((icon) => icon.isConnected),
+    "Preview refresh preserves the mode click target",
+  );
+  await switchMode.click();
+  await inspect(page);
+}
+
 export async function directionalWidgetRoute(page, plate) {
   const points = await plate(page);
   const input = page.getByRole("textbox", { name: "Fillet radius", exact: true });
@@ -51,10 +64,7 @@ export async function directionalWidgetRoute(page, plate) {
   await inspect(page);
   assert.ok(await page.getByRole("button", { name: "Accept fillet", exact: true }).isDisabled());
   await standaloneOnly(page);
-  await input.fill("1");
-  await inspect(page);
-  await page.getByRole("button", { name: "Switch to chamfer", exact: true }).click();
-  await inspect(page);
+  await switchToChamfer(page, input);
   assert.equal(await page.locator(".edge-size-handle:visible").count(), 1);
   const chamfer = page.getByRole("button", { name: "Chamfer edges", exact: true });
   const before = Number(await chamfer.getAttribute("data-direction-y"));

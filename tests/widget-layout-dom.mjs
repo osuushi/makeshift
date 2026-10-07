@@ -16,15 +16,19 @@ const server = createServer(async (request, response) => {
     "/widget-clearance.js": "model/widget-clearance.js",
     "/widget-freeze.js": "model/widget-freeze.js",
     "/widget-viewport.js": "model/widget-viewport.js",
+    "/preferences/panel-placement.js": "preferences/panel-placement.js",
     "/model/widget-viewport.js": "model/widget-viewport.js",
     "/sketch/sketch-widget-layout.js": "sketch/sketch-widget-layout.js",
   };
-  if (modules[request.url]) {
+  if (request.url === "/panel-placement.css") {
+    response.setHeader("Content-Type", "text/css");
+    response.end(await readFile("src/preferences/panel-placement.css"));
+  } else if (modules[request.url]) {
     response.setHeader("Content-Type", "text/javascript");
     response.end(await readFile(`.cache/sketch-tests/src/${modules[request.url]}`));
   } else {
     response.setHeader("Content-Type", "text/html");
-    response.end(`<style>
+    response.end(`<link rel="stylesheet" href="/panel-placement.css"><style>
       *{box-sizing:border-box}body{margin:0}canvas{width:1000px;height:700px}
       #root{position:absolute;inset:0;pointer-events:none}
       #options{position:absolute;left:1200px;top:800px;width:240px;height:36px;

@@ -8,6 +8,14 @@ outside accepted geometry, document files and Undo. Invalid stored values fall b
 to 100%; unavailable browser storage keeps the preference for the current window.
 Controls and agent launch configuration retain their existing separate settings.
 
+Floating tool parameter cards have a dimpled left grip. Dragging it (or focusing
+it and using arrow keys) stores a screen position per card type under
+`makeshift.panel-positions`. Manually placed cards keep that position through
+geometry and camera updates and restore it across reloads, including Cmd-R.
+Viewport fitting keeps a 24px inset from the sides and bottom and 80px clearance
+at the top after dragging or resizing the window. These positions
+are local presentation preferences, independent of document files and Undo.
+
 Viewport opacity controls independently adjust canonical plane patches and all
 coordinate grids from 0–100%. Defaults preserve the original appearance (planes
 22.4%, active grid 40%); canonical grids remain proportionally fainter. Hover and
