@@ -148,3 +148,20 @@ test("panned oblique views center full-view plane bounds on the actual viewing r
   assert.ok(bounds.minX < center.x && bounds.maxX > center.x);
   assert.ok(bounds.minY < center.y && bounds.maxY > center.y);
 });
+
+test("slow rendered frames continue fading instead of remaining permanently unsettled", () => {
+  const camera = new THREE.OrthographicCamera();
+  camera.position.set(0, 0, 50);
+  camera.lookAt(0, 0, 0);
+  camera.updateMatrixWorld();
+  const visibility = new CanonicalPlaneVisibility();
+  visibility.update(camera, settings, 0);
+  camera.position.set(50, 0, 0);
+  camera.lookAt(0, 0, 0);
+  camera.updateMatrixWorld();
+  visibility.update(camera, settings, 10000);
+  assert.equal(visibility.states.XY.opacity, 1);
+  visibility.update(camera, settings, 10200);
+  assert.equal(visibility.states.XY.opacity, 0);
+  assert.equal(visibility.states.YZ.opacity, 1);
+});

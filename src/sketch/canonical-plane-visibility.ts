@@ -44,15 +44,19 @@ export class CanonicalPlaneVisibility {
     const direction = camera.getWorldDirection(new THREE.Vector3());
     // An event-driven renderer may have been idle for minutes. Start a fresh
     // fade on that first frame instead of counting idle time toward the new target.
-    const gap = this.previous === null ? Infinity : now - this.previous;
-    const elapsed = this.previous !== null && gap > 100 ? 0 : gap;
+    const first = this.previous === null;
+    const gap = first ? Infinity : now - (this.previous as number);
     this.previous = now;
     let moving = false;
     for (const id of planeIds) {
       const frame = planes[id];
       const normal = new THREE.Vector3(...frame.u).cross(new THREE.Vector3(...frame.v));
       const state = this.states[id];
-      state.target = planeVisibilityTarget(direction.dot(normal), settings);
+      const target = planeVisibilityTarget(direction.dot(normal), settings);
+      // Slow rendered frames still advance an existing fade. Only a new target
+      // after a genuinely idle viewport starts with no accumulated time.
+      const elapsed = !first && gap > 1000 && state.target !== target ? 0 : gap;
+      state.target = target;
       state.opacity = mixPlaneVisibility(
         state.opacity,
         state.target,
