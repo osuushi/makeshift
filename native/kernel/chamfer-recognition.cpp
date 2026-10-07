@@ -55,6 +55,9 @@ std::vector<BlendFace> recognizeChamfers(const TopoDS_Shape& shape) {
                 if (other.IsSame(face) || contains(supports, other)) continue;
                 BRepAdaptor_Surface support(other);
                 if (support.GetType() != GeomAbs_Plane && support.GetType() != GeomAbs_Cylinder) continue;
+                // Planar chamfers only recognize planar supports below. A cylinder's
+                // radial normal is undefined when a diameter-cut face samples its axis.
+                if (surface.GetType() == GeomAbs_Plane && support.GetType() != GeomAbs_Plane) continue;
                 const auto cosine = n.Dot(supportNormal(other, support, sample));
                 if (std::abs(cosine) < 1e-6 || std::abs(cosine) > 1-1e-6) continue;
                 if (surface.GetType() == GeomAbs_Cone && std::abs(std::abs(cosine) - std::sqrt(0.5)) > 1e-6) continue;

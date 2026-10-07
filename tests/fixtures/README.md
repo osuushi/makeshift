@@ -128,3 +128,10 @@ retains the exact broken body and topology identities from the matching
 `2026-10-02T12-06-33-981Z-3b86b0d2` post-extrusion capture. It ensures incomplete
 historic geometry still rejects atomically on Open; it is not silently repaired
 from a lost operation recipe. Both captures are user-created Freac geometry.
+
+`cylinder-diameter-split.json` retains the accepted document and XZ Split Body
+request from the founder's `2026-10-07T21-55-36-966Z-d6e8c146` capture. The
+radius-5, height-9 cylinder failed with a zero radial normal while presenting its
+diameter-cut faces to chamfer recognition. History and transient presentation
+are omitted; regressions preserve the exact BRep and check both XZ/YZ cuts,
+half-volumes, absence of false chamfers, cancellation and Undo/Redo.
