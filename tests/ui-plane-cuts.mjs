@@ -126,6 +126,7 @@ async function faceSubset(page, original, name) {
   );
   await assertFeedback(page, s, "Plane 1");
   await page.screenshot({ path: `.cache/plane-probe/${name}-imprint-preview.png` });
+  await orient(page, [1, -0.2, 0.2]);
   await planeHover(page, [0, -16, 16], `${name}-world`);
   await worldClick(page, [0, -16, 16]);
   assert.equal(

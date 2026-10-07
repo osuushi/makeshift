@@ -51,4 +51,4 @@ makeshift settings '{"viewDisplay":{"gridLineWidth":1.5}}'
 
 For palette changes, first read preferences and preserve palettes while merging a
 new named palette. Reset plane grids restores defaults and colors but keeps
-saved palettes. Reset viewport opacity restores only grid opacity and thickness.
+saved palettes. Reset grid display restores grid opacity and thickness.

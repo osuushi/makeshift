@@ -3,7 +3,6 @@ import { readFile } from "node:fs/promises";
 import { openDocument } from "./native-documents.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
-import { worldClick } from "./ui-face-offset.mjs";
 import { inspect, reset } from "./ui-helpers.mjs";
 import { pickPlane } from "./ui-plane-targets.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -24,11 +23,12 @@ export async function planeCutCaptureRoute(page, name) {
     if (!(await inspect(page)).modelingSelection.length)
       await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
     await chooseTool(page, "Split Body", "split");
-    // The XY label is occluded by the captured body; pick its exposed patch.
-    if (plane === "XY") await worldClick(page, [-18, -18, 0]);
-    else await pickPlane(page, plane);
+    await pickPlane(page, plane);
     const state = await inspect(page);
-    assert.ok(state.preview?.bodies.length >= 2, state.notice);
+    assert.ok(
+      state.preview?.bodies.length >= 2,
+      `${name} ${plane}: ${state.notice}; ${await page.locator(".plane-cut-widget").textContent()}`,
+    );
     assert.deepEqual(state.document, original);
     await page.keyboard.press("Escape");
     assert.deepEqual((await inspect(page)).document, original);
