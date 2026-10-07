@@ -26,9 +26,10 @@ export class WidgetFreeze {
       },
       options,
     );
-    root.addEventListener(
+    window.addEventListener(
       "pointerdown",
       (event) => {
+        if (!(event.target instanceof Node) || !root.contains(event.target)) return;
         this.picked = this.target(event.target);
         this.pressed = true;
         this.hold();
