@@ -134,6 +134,7 @@ jobs:
         if: matrix.shard == 1 && matrix.browser == 'chromium'
         run: |
           xvfb-run -a node tests/decorator-settings-browser.mjs
+          xvfb-run -a node tests/view-settings-browser.mjs
           xvfb-run -a node tests/decorator-settings-layout.mjs
       - name: Browser preview readiness
         if: matrix.shard == 1 && matrix.browser == 'chromium'
@@ -450,6 +451,7 @@ jobs:
           MAKESHIFT_TEST_BROWSER: webkit
         run: |
           node tests/decorator-settings-browser.mjs
+          node tests/view-settings-browser.mjs
           node tests/decorator-settings-layout.mjs
           node tests/decorator-display-ui.mjs
           node tests/thread-preview-rim-ui.mjs

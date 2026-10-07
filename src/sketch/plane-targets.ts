@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { viewDisplay } from "../preferences/view-display.js";
 import {
   createPlaneTargets,
   disposePlaneTarget,
@@ -101,7 +102,7 @@ class PlaneTargetInteraction {
       t.mesh.userData.hovered = t === this.hovered;
       t.mesh.userData.selected = selected;
       t.mesh.material.color.set(active ? "#83b9ee" : planeTargetBaseColor(t.id));
-      t.mesh.material.opacity = active ? 0.43 : 0.224;
+      t.mesh.material.opacity = Math.min(1, viewDisplay().planes * (active ? 0.43 / 0.224 : 1));
       t.mesh.material.stencilWrite = !selected && !this.world.planePicker;
     }
   }

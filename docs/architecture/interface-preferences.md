@@ -16,6 +16,15 @@ Viewport fitting keeps a 24px inset from the sides and bottom and 80px clearance
 at the top after dragging or resizing the window. These positions
 are local presentation preferences, independent of document files and Undo.
 
+Viewport opacity controls independently adjust canonical plane patches and all
+coordinate grids from 0–100%. Defaults preserve the original appearance (planes
+22.4%, active grid 40%); canonical grids remain proportionally fainter. Hover and
+selection emphasis, axis emphasis and grid fading scale with the chosen opacity.
+Reset viewport opacity restores both defaults. Changes apply immediately and are
+stored under `makeshift.view-display`, outside document files and Undo. Zero
+opacity leaves plane entry and grid snapping available. Invalid stored values use
+defaults; unavailable storage retains choices for the current window.
+
 Decorator previews use the same Settings dialog. Detailed is the default; Color only
 marks current attached faces and does not schedule preview workers. Thread, gear,
 knurling and custom decorations have separate color and 20–100% opacity choices,
