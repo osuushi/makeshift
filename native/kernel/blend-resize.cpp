@@ -71,7 +71,7 @@ std::vector<SourceEntity> recoveredEdges(const Operand& body, BRepAlgoAPI_Defeat
 }
 Result resize(const Operand& body, const std::vector<TopoDS_Face>& seeds, double radius, bool chamfer) {
     const auto blends = chamfer ? recognizeChamfers(body.shape) : recognizeBlends(body.shape);
-    const auto selected = chamfer ? seeds : blendGroup(blends, seeds);
+    const auto selected = chamfer ? tangentFaceChain(body.shape, seeds) : blendGroup(blends, seeds);
     for (const auto& seed : selected)
         if (std::none_of(blends.begin(), blends.end(), [&](const auto& b) { return b.face.IsSame(seed); }))
             throw std::runtime_error("Select an existing equal-distance chamfer face");

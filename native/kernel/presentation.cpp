@@ -98,8 +98,17 @@ void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMap
     }
     out << ",\"chamfer\":";
     const auto chamfer = std::find_if(chamfers.begin(), chamfers.end(), [&](const auto& c) { return c.face.IsSame(shape); });
-    if (chamfer == chamfers.end()) out << "null";
-    else out << "{\"distance\":" << chamfer->radius << ",\"distanceScale\":" << chamfer->distanceScale << ",\"outward\":" << chamfer->outward << ",\"faceIndexes\":[" << faces.FindIndex(shape)-1 << "]}";
+    const bool chamferChain = chamfer != chamfers.end() && std::all_of(chain.begin(), chain.end(), [&](const auto& face) {
+        return std::any_of(chamfers.begin(), chamfers.end(), [&](const auto& c) {
+            return c.face.IsSame(face) && std::abs(c.radius-chamfer->radius) < 1e-6;
+        });
+    });
+    if (!chamferChain) out << "null";
+    else {
+        out << "{\"distance\":" << chamfer->radius << ",\"distanceScale\":" << chamfer->distanceScale << ",\"outward\":" << chamfer->outward << ",\"faceIndexes\":[";
+        for (size_t i=0; i<chain.size(); ++i) { if (i) out << ','; out << faces.FindIndex(chain[i])-1; }
+        out << "]}";
+    }
     out << ",\"offsetHandle\":";
     if (surface.GetType() == GeomAbs_Cone || surface.GetType() == GeomAbs_Sphere || blend != blends.end()) {
         gp_Pnt center; gp_Vec du, dv;

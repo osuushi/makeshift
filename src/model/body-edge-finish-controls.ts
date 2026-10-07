@@ -212,7 +212,7 @@ export class BodyEdgeFinishControls {
     await this.previews.settle();
     const lease = this.lease;
     if (this.drag.active || !lease) return false;
-    if (!this.previews.latest && this.size === 0) {
+    if (this.size === 0 && (!this.restoredSelection || !this.previews.latest)) {
       await this.cancel();
       return true;
     }
@@ -278,7 +278,7 @@ export class BodyEdgeFinishControls {
       this.mode,
       !!this.lease,
       this.lease ? this.size : 0,
-      this.valid,
+      this.valid && (this.size > 0 || !!this.restoredSelection),
       this.editor.blocked,
       !!this.lease && this.invalid,
     );

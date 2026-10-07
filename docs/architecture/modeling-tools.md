@@ -145,7 +145,9 @@ resizing retains its radius control. A zero fillet radius heals the complete
 recognized blend group back to its supporting edges. Equal-setback chamfers between
 planar supports, and 45-degree chamfers between a coaxial cylinder and its cap,
 offer a chamfer distance control derived from current geometry. It rebuilds the
-chamfer at a positive distance and heals it at zero. Normal drag travel converts
+chamfer at a positive distance and heals it at zero. A tangent chamfer strip
+resizes and heals together when every face has the same recognized setback;
+partially recognized strips retain ordinary Offset. Normal drag travel converts
 to setback distance using the supporting angle; dragging past zero stops at the
 hard edge. Failed healing rejects without changing accepted geometry. Removal
 retains body identity, selects affected bodies, and supports Cancel and Undo.
