@@ -95,8 +95,8 @@ class FloatingPanel {
     const translation = getComputedStyle(this.element).translate.split(" ");
     const x = Number.parseFloat(translation[0]) || 0;
     const y = Number.parseFloat(translation[1]) || 0;
-    const left = Math.max(8, Math.min(innerWidth - rect.width - 8, position.x));
-    const top = Math.max(65, Math.min(innerHeight - rect.height - 8, position.y));
+    const left = Math.max(24, Math.min(innerWidth - rect.width - 24, position.x));
+    const top = Math.max(80, Math.min(innerHeight - rect.height - 24, position.y));
     this.element.style.transition = "none";
     this.element.style.translate = `${x + left - rect.x}px ${y + top - rect.y}px`;
     return true;

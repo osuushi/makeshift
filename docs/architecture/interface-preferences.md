@@ -12,7 +12,8 @@ Floating tool parameter cards have a dimpled left grip. Dragging it (or focusing
 it and using arrow keys) stores a screen position per card type under
 `makeshift.panel-positions`. Manually placed cards keep that position through
 geometry and camera updates and restore it across reloads, including Cmd-R.
-Viewport fitting keeps the card reachable after a window resize. These positions
+Viewport fitting keeps a 24px inset from the sides and bottom and 80px clearance
+at the top after dragging or resizing the window. These positions
 are local presentation preferences, independent of document files and Undo.
 
 Decorator previews use the same Settings dialog. Detailed is the default; Color only

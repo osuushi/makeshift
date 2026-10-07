@@ -76,6 +76,13 @@ await withUiRuntimes(
     assert.ok(Math.abs(dimensionEdited.x - dimensionMoved.x) < 2);
     assert.ok(Math.abs(dimensionEdited.y - dimensionMoved.y) < 2);
     assert.equal(await width.inputValue(), "26");
+    const edgeGrip = await dimension.locator(".parameter-panel-grip").boundingBox();
+    await page.mouse.move(edgeGrip.x + 8, edgeGrip.y + 8);
+    await page.mouse.down();
+    await page.mouse.move(0, 0, { steps: 6 });
+    await page.mouse.up();
+    const inset = await dimension.boundingBox();
+    assert.ok(inset.x >= 23.98 && inset.y >= 79.98, JSON.stringify(inset));
     console.log(
       `${name}: panel drag, camera stability, cancel, reload and keyboard placement passed`,
     );
