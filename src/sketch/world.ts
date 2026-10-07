@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import { type CameraState, restoreCamera } from "../model/camera-state.js";
 import { canonicalPlanes } from "../preferences/canonical-planes.js";
-import { fitCameraDepth } from "./camera-depth.js";
 import { alignCameraToPlane, type CameraFraming, planeCameraPose } from "./camera-motion.js";
 import { levelOrientation, type OrbitPointer, SmoothedTurntable } from "./camera-orbit.js";
 import { CameraRoll } from "./camera-roll.js";
@@ -18,6 +17,7 @@ import {
   worldPoint,
 } from "./planes.js";
 import { sectionClip } from "./view-clipping.js";
+import { fitWorldCameraDepth } from "./world-camera-depth.js";
 import type { ForegroundOverlay } from "./world-foreground.js";
 import { WorldFrame } from "./world-frame.js";
 import { createGrids } from "./world-grid.js";
@@ -119,7 +119,7 @@ export class World {
     this.camera.right = (half * width) / height;
     this.camera.top = half;
     this.camera.bottom = -half;
-    fitCameraDepth(this.camera, this.target, this.height, this.depthBounds());
+    fitWorldCameraDepth(this);
     this.camera.lookAt(this.target);
     this.camera.updateProjectionMatrix();
     this.camera.updateMatrixWorld();
@@ -171,7 +171,7 @@ export class World {
   }
   requestDraw(): void {
     // Subsequent input events need the latest basis and picking depth before the next paint.
-    fitCameraDepth(this.camera, this.target, this.height, this.depthBounds());
+    fitWorldCameraDepth(this);
     this.camera.updateProjectionMatrix();
     this.camera.lookAt(this.target);
     this.camera.updateMatrixWorld();
