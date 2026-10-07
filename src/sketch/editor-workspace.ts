@@ -85,6 +85,7 @@ export function installWorkspaceSync(editor: SketchEditor): void {
     !editor.blocked &&
     !editor.isDragging &&
     !toolCatalog(editor).switching &&
+    editor.interactions.current?.kind !== "body-boolean" &&
     (!editor.interactions.current || !!editor.interactions.current.finish);
   world.sketchEntry = (id) => {
     void toolCatalog(editor).invoke(`sketch-${id.toLowerCase()}`);

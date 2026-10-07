@@ -359,6 +359,8 @@ bodies start with their first body as target and the others as tools.
 Union/Intersect clicks toggle membership.
 Operand editing remains available throughout. Apply or Enter directly accepts
 the current valid preview; there is no separate collection-completion step.
+Reference planes do not intercept viewport clicks or double-clicks during operand
+collection; empty-space clicks leave the Boolean tool open.
 Empty/incomplete operands can exit without an edit.
 
 Translucent blue input/target surfaces and orange cutting-tool surfaces, with

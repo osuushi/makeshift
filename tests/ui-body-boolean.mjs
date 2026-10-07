@@ -182,6 +182,11 @@ async function resultModes(page, original) {
   await begin(page, "Subtract", [1, 2, 3]);
   await page.mouse.click(940, 710); // Empty viewport space does not finish the tool.
   assert.equal((await inspect(page)).interaction.kind, "body-boolean");
+  await page.mouse.dblclick(940, 710); // Reference planes cannot steal operand collection.
+  state = await inspect(page);
+  assert.equal(state.interaction.kind, "body-boolean");
+  assert.equal(state.activePlane, null);
+  assert.deepEqual(state.document, original);
   await page.keyboard.press("Enter");
   state = await inspect(page);
   assert.equal(state.document.bodies.length, 3);

@@ -23,6 +23,8 @@ export async function selectReferencePlane(
     return;
   }
   const interaction = editor.interactions.current;
+  // Boolean viewport clicks belong to operand collection, including empty space.
+  if (interaction?.kind === "body-boolean") return;
   if (interaction && (!interaction.finish || !(await interaction.finish()))) return;
   if (editor.interactions.current) return;
   // A double-click is one workspace-entry intent. Keep the pre-entry model
