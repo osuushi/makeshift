@@ -2,6 +2,7 @@ import { app, type BrowserWindow, ipcMain } from "electron";
 import type { InspectionView } from "../agent/inspection-protocol.js";
 import type { DocumentOwner } from "../backend/document-owner.js";
 import { ScriptSession } from "../backend/script-session.js";
+import type { RemoteDocumentEditor } from "../ipad/protocol.js";
 import { type CameraState, validateCameraState } from "../model/camera-state.js";
 import type { DocumentCommand } from "../model/document-host.js";
 import { inspectDrawing } from "./agent-inspection.js";
@@ -23,13 +24,7 @@ export class DocumentSession {
     this.closing = false;
     this.needsRestore = false;
   }
-  remote?: {
-    active(): boolean;
-    connected(): boolean;
-    emit(method: string, value: unknown): void;
-    inspect(render: boolean, acquireScript?: boolean, selection?: string): Promise<InspectionView>;
-    close(): Promise<void>;
-  };
+  remote?: RemoteDocumentEditor;
   private files: DocumentFiles;
   private script: ScriptSession;
   private window: BrowserWindow | null = null;
@@ -76,7 +71,7 @@ export class DocumentSession {
         entity,
         directory,
         () => !this.busy && this.window === window && agent.workspace.root === root,
-        (render, selection) => this.readView(render, false, selection),
+        (render, selection, settings) => this.readView(render, false, selection, settings),
       );
     };
     agent.workspace.changed = () => this.update();
@@ -113,10 +108,12 @@ export class DocumentSession {
     render: boolean,
     acquireScript = false,
     selection?: string,
+    settings?: string,
   ): Promise<InspectionView> {
-    if (this.remote?.active()) return this.remote.inspect(render, acquireScript, selection);
+    if (this.remote?.active())
+      return this.remote.inspect(render, acquireScript, selection, settings);
     if (!this.window) throw new Error("Drawing window closed");
-    return readInspectionView(this.window, render, acquireScript, selection);
+    return readInspectionView(this.window, render, acquireScript, selection, settings);
   }
   private send(method: string, value: unknown): void {
     if (this.remote?.active()) this.remote.emit(method, value);

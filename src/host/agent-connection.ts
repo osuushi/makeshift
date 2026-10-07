@@ -85,15 +85,17 @@ export class AgentConnection {
           "select",
           "faces",
           "context",
+          "settings",
           "script",
         ].includes(request.command)
       )
         throw new Error("Unknown Makeshift command; run makeshift help.");
       if (
         request.entity !== undefined &&
-        (!["inspect", "select"].includes(request.command as string) ||
+        (!["inspect", "select", "settings"].includes(request.command as string) ||
           typeof request.entity !== "string" ||
-          request.entity.length > (request.command === "select" ? 65536 : 256))
+          request.entity.length >
+            (request.command === "select" || request.command === "settings" ? 65536 : 256))
       )
         throw new Error("Invalid inspection ID.");
       if (!this.active) return;

@@ -173,7 +173,7 @@ export class PlaneCutControls {
     const curved = candidates.some((candidate) => candidate.surface);
     this.editor.notice =
       this.available.size || curved
-        ? "Pick an outlined plane or face · Escape cancels"
+        ? "Pick a plane grid or an outlined face · Escape cancels"
         : "No visible reference crosses the selection bounds · Escape cancels";
     this.editor.refresh();
   }

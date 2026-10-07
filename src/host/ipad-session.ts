@@ -32,8 +32,13 @@ export class IPadSession {
       active: () => this.server.active || this.switching,
       connected: () => this.server.status.connected,
       emit: (method, value) => this.server.emit(method, value),
-      inspect: (render, acquireScript, selection) =>
-        this.server.request<InspectionView>("inspect", { render, acquireScript, selection }),
+      inspect: (render, acquireScript, selection, settings) =>
+        this.server.request<InspectionView>("inspect", {
+          render,
+          acquireScript,
+          selection,
+          settings,
+        }),
       close: () => this.stop(),
     };
     agent.canUseDesktop = () => !this.server.active && !this.switching;

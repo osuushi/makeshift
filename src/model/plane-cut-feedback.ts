@@ -80,7 +80,7 @@ export class PlaneCutFeedback {
       ? `Preview · ${edges.length} section edges highlighted${this.source?.mode === "split" ? ` · ${count} result bodies` : ""}`
       : cutter
         ? "This cutter has no valid preview · Pick another reference"
-        : "Pick an outlined plane or face";
+        : "Pick a plane grid or an outlined face";
     this.update();
   }
   private showCutter(): void {

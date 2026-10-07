@@ -44,6 +44,7 @@ export async function prepareOrientation(
         "view",
         "faces",
         "context",
+        "settings",
       ],
     };
   });

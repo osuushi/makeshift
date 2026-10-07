@@ -9,6 +9,7 @@ import { ConstructionPlaneView } from "./construction-plane-view.js";
 import { PlanePlacement } from "./plane-placement.js";
 import { PlaneReferencePicker } from "./plane-reference-picker.js";
 import { planeSelectionKey } from "./plane-selection-key.js";
+import { selectReferencePlane } from "./reference-plane-selection.js";
 import { savedPlaneInteraction } from "./saved-plane-picking.js";
 
 export class ConstructionPlaneControls {
@@ -65,7 +66,7 @@ export class ConstructionPlaneControls {
       (plane) => this.sketch(plane),
     );
     this.bindEvents();
-    editor.world.planeSelection = (id) => this.select(id);
+    editor.world.planeSelection = (id, entering) => this.select(id, entering);
     editor.world.changed.add(this.update);
     this.update();
   }
@@ -131,24 +132,8 @@ export class ConstructionPlaneControls {
       },
     });
   }
-  select(plane: ConstructionPlane | PlaneId): void {
-    if (this.editor.blocked) return;
-    if (this.picker.choose) {
-      this.picker.choose(
-        structuredClone(typeof plane === "string" ? planes[plane] : plane.frame),
-        typeof plane === "string"
-          ? { kind: "world-plane", id: plane }
-          : { kind: "plane", id: plane.id },
-      );
-      return;
-    }
-    if (this.editor.interactions.current) return;
-    this.editor.world.exit();
-    this.editor.modeling.targets = [];
-    this.view.selected = typeof plane === "string" ? null : plane.id;
-    this.editor.world.selectedPlane = typeof plane === "string" ? plane : null;
-    this.editor.modeling.alternatives = [];
-    this.editor.refresh();
+  select(plane: ConstructionPlane | PlaneId, entering?: () => boolean): Promise<void> {
+    return selectReferencePlane(this.editor, this.picker, this.view, plane, entering);
   }
   private sketch(plane: ConstructionPlane): void {
     if (this.editor.workspaceEntry.reason()) return;

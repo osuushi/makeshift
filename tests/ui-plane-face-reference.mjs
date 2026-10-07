@@ -24,7 +24,7 @@ export async function planeFaceReferenceRoute(page, name) {
   await worldClick(page, [3, -10, 10]);
   const before = (await inspect(page)).document;
   await chooseTool(page, "imprint", "imprint");
-  await page.getByRole("status").filter({ hasText: "Pick an outlined" }).waitFor();
+  await page.getByRole("status").filter({ hasText: "Pick a plane grid" }).waitFor();
   // Adaptive XZ now crosses the cap center; pick on the exposed front half.
   await planeHover(page, [28, -2, 10], `${name}-face`);
   await worldClick(page, [28, -2, 10]);
@@ -48,7 +48,7 @@ export async function planeFaceReferenceRoute(page, name) {
   await worldClick(page, [3, -10, 10]);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   await chooseTool(page, "split body", "split");
-  await page.getByRole("status").filter({ hasText: "Pick an outlined" }).waitFor();
+  await page.getByRole("status").filter({ hasText: "Pick a plane grid" }).waitFor();
   await worldClick(page, [28, -2, 10]);
   assert.equal((await inspect(page)).preview.bodies.length, 3);
   await page.getByRole("button", { name: "Select Body 2", exact: true }).click();

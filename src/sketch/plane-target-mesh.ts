@@ -1,10 +1,10 @@
 import * as THREE from "three";
+import { canonicalPlanes } from "../preferences/canonical-planes.js";
 import type { PlaneBounds } from "./plane-bounds.js";
 import { type PlaneFrame, type PlaneId, planeIds, planes } from "./planes.js";
 import { stableClipping } from "./stable-clipping.js";
 import type { World } from "./world.js";
 
-const colors: Record<PlaneId, string> = { XY: "#8fa8c4", XZ: "#91b5a4", YZ: "#c2a27b" };
 export type PlanePatch = THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
 export type PlaneTarget = { id: PlaneId; frame: PlaneFrame; mesh: PlanePatch };
 export function planePatch(color: string): PlanePatch {
@@ -40,7 +40,7 @@ export function positionPlanePatch(mesh: PlanePatch, frame: PlaneFrame, bounds: 
 }
 export function createPlaneTargets(world: World): PlaneTarget[] {
   return planeIds.map((id) => {
-    const mesh = planePatch(colors[id]);
+    const mesh = planePatch(planeTargetBaseColor(id));
     mesh.userData.planeTarget = id;
     world.scene.add(mesh);
     return { id, frame: planes[id], mesh };
@@ -52,5 +52,5 @@ export function disposePlaneTarget(world: World, target: PlaneTarget): void {
   target.mesh.material.dispose();
 }
 export function planeTargetBaseColor(id: PlaneId): string {
-  return colors[id];
+  return canonicalPlanes().colors[id];
 }

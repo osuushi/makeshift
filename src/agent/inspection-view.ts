@@ -1,3 +1,7 @@
+import {
+  applicationPreferences,
+  configurePreferences,
+} from "../preferences/application-preferences.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { worldPoint } from "../sketch/planes.js";
 
@@ -30,6 +34,7 @@ export function inspectionView(editor: SketchEditor, render: boolean): Inspectio
             : { ...t },
       );
   const result: InspectionView = {
+    preferences: applicationPreferences(),
     mode: world.active ? "sketch" : "modeling",
     activeSketch: sketch?.id ?? null,
     selection,
@@ -90,10 +95,14 @@ function captureViewport(editor: SketchEditor): NonNullable<InspectionView["imag
 
 export function installInspection(editor: SketchEditor): () => void {
   return (
-    window.makeshiftInspection?.onRequest((render, acquireScript, selection) => {
+    window.makeshiftInspection?.onRequest((render, acquireScript, selection, settings) => {
       let view = inspectionView(editor, render);
       if (selection !== undefined) {
         changeAgentSelection(editor, selection);
+        view = inspectionView(editor, render);
+      }
+      if (settings !== undefined) {
+        configurePreferences(settings);
         view = inspectionView(editor, render);
       }
       if (acquireScript) editor.store.scriptState(true);

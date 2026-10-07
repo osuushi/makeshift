@@ -45,15 +45,20 @@ do not search for another session's endpoint or target the current drawing by na
 Live commands use a private temporary file channel, requiring temporary-file writes
 (Codex workspace-write supports this). The Codex preset defaults to workspace-write
 with automatic approval review; explicit user arguments can override those defaults.
+Settings apply immediately on the editing device, outside document files and Undo.
+Read makeshift settings first; patch only requested values with makeshift settings 'JSON'
+or await makeshift.settings(patch) in a view script. See the makeshift-settings skill
+when users complain about plane clutter, faint planes or accidental selection.
 ${scriptGuide}`;
 
 export const help = `Makeshift — document-bound CAD assistant interface
-Usage: makeshift [help | docs | types | status | selection | select [OPTIONS] [ID...] | inspect [ID] | render | run script.ts | view script.ts | faces | context]
+Usage: makeshift [help | docs | types | status | selection | select [OPTIONS] [ID...] | inspect [ID] | render | run script.ts | view script.ts | faces | context | settings [JSON]]
 
   help     Show available commands
   docs     Print the current interface and workspace guide
   types    Print TypeScript declarations for CLI JSON results
   status   Read this drawing's current name, saved/edited state and capabilities
+  settings [JSON]  Read or patch device-local plane visibility, colors and viewport opacity
   context  Read view context without measurements
   faces    Query all accepted faces with typed surface metadata and visibility
   selection  Read ordered selection, geometry and available measurements

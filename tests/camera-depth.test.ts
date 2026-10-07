@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import * as THREE from "three";
 import { fitCameraDepth } from "../src/sketch/camera-depth.js";
+import { planes } from "../src/sketch/planes.js";
 
 // Camera and body bounds from founder Capture fixture 2026-09-27T02:17:43.103Z.
 const position = [56.7357904025683, -26.274571002704292, 73.23082556143513];
@@ -78,4 +79,42 @@ test("ordinary in-range geometry and empty scenes do not move the camera", () =>
   assert.ok(camera.position.equals(before));
   fit(camera, new THREE.Box3().setFromPoints(points.slice(0, 16)));
   assert.ok(camera.position.equals(before));
+});
+
+test("full-view reference intersections stay in front of the camera at every viewport corner", () => {
+  const pivot = new THREE.Vector3(-25.924250097, -4.379583638, 20.08206411);
+  const camera = new THREE.OrthographicCamera(-60, 60, 40, -40, 0.1, 10000);
+  camera.position.set(43.357775649, -73.661620519, 89.364098391);
+  camera.up.set(0.4082482923, 0.8164965539, 0.4082483426);
+  camera.lookAt(pivot);
+  camera.updateMatrixWorld();
+  const corners: THREE.Vector3[] = [];
+  for (const frame of Object.values(planes)) {
+    const normal = new THREE.Vector3(...frame.u).cross(new THREE.Vector3(...frame.v));
+    for (const x of [-1, 1])
+      for (const y of [-1, 1]) {
+        const ray = new THREE.Raycaster();
+        ray.setFromCamera(new THREE.Vector2(x, y), camera);
+        const distance = -ray.ray.origin.dot(normal) / ray.ray.direction.dot(normal);
+        corners.push(ray.ray.origin.clone().addScaledVector(ray.ray.direction, distance));
+      }
+  }
+  const before = corners.map((p) => p.clone().project(camera));
+  assert.ok(
+    before.some((p) => p.z < -1),
+    "Demo pose clips the lower-left reference fill",
+  );
+  fitCameraDepth(camera, pivot, 80, new THREE.Box3(), Object.values(planes));
+  camera.lookAt(pivot);
+  camera.updateMatrixWorld();
+  camera.updateProjectionMatrix();
+  for (const [index, point] of corners.entries()) {
+    const after = point.clone().project(camera);
+    assert.ok(after.z > -1 && after.z < 1);
+    assert.ok(Math.abs(after.x - before[index].x) < 1e-10);
+    assert.ok(Math.abs(after.y - before[index].y) < 1e-10);
+  }
+  const fitted = camera.position.clone();
+  fitCameraDepth(camera, pivot, 80, new THREE.Box3(), Object.values(planes));
+  assert.ok(camera.position.distanceTo(fitted) < 1e-10);
 });

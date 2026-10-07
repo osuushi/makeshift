@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { viewDisplay } from "../preferences/view-display.js";
+import { canonicalPlaneBounds, canonicalPlaneSelectable } from "./canonical-plane-bounds.js";
 import {
   createPlaneTargets,
   disposePlaneTarget,
@@ -30,6 +31,12 @@ class PlaneTargetInteraction {
   private raycaster = new THREE.Raycaster();
   private abort = new AbortController();
   private hovered: PlaneTarget | null = null;
+  private selecting: {
+    done: Promise<void>;
+    target: PlaneTarget;
+    point: Point;
+    entering: boolean;
+  } | null = null;
   constructor(
     private world: World,
     private targets: PlaneTarget[],
@@ -46,8 +53,9 @@ class PlaneTargetInteraction {
     for (const target of this.targets) {
       target.mesh.visible =
         !this.world.active &&
+        this.world.canonicalVisibility.states[target.id].opacity > 0 &&
         (!this.world.planePickerAccept || this.world.planePickerAccept(target.frame));
-      positionPlanePatch(target.mesh, target.frame, this.world.planeBounds(target.frame));
+      positionPlanePatch(target.mesh, target.frame, canonicalPlaneBounds(this.world, target.frame));
     }
     if (this.hovered && !this.available(this.hovered)) this.hovered = null;
     this.paint();
@@ -55,6 +63,8 @@ class PlaneTargetInteraction {
   private available(target: PlaneTarget): boolean {
     return (
       target.mesh.visible &&
+      canonicalPlaneSelectable(this.world, target.id) &&
+      (viewDisplay().planes > 0 || viewDisplay().grid > 0) &&
       (this.world.planePicker ? this.world.canNavigate() : this.world.canEnterSketch())
     );
   }
@@ -85,24 +95,60 @@ class PlaneTargetInteraction {
   };
   private click = (event: MouseEvent): void => {
     if (event.button || event.metaKey || event.ctrlKey || this.world.planePickerAccept) return;
+    const pending = this.selecting;
+    if (
+      event.type === "dblclick" &&
+      pending &&
+      Math.hypot(event.clientX - pending.point.x, event.clientY - pending.point.y) <= 4
+    ) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      pending.entering = true;
+      // The first click may still be accepting native geometry. Preserve the
+      // double-click entry intent instead of losing it while the editor is busy.
+      void pending.done.then(() => {
+        if (!this.abort.signal.aborted && this.world.canEnterSketch()) this.enter(pending.target);
+      });
+      return;
+    }
     if (this.world.planePicker && event.type !== "click") return;
     const target = this.hit({ x: event.clientX, y: event.clientY });
     if (!target) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     if (this.world.planePicker) this.world.planePicker(target.id);
-    else if (event.type === "click") this.world.planeSelection?.(target.id);
-    else if (this.world.sketchEntry) this.world.sketchEntry(target.id);
-    else this.world.enter(target.id);
+    else if (event.type === "click") {
+      const selection = {
+        done: Promise.resolve(),
+        target,
+        point: { x: event.clientX, y: event.clientY },
+        entering: false,
+      };
+      const done = this.world.planeSelection?.(target.id, () => selection.entering);
+      if (done) {
+        selection.done = done;
+        this.selecting = selection;
+        void done.finally(() => {
+          if (this.selecting === selection) this.selecting = null;
+        });
+      }
+    } else this.enter(target);
   };
+  private enter(target: PlaneTarget): void {
+    if (this.world.sketchEntry) this.world.sketchEntry(target.id);
+    else this.world.enter(target.id);
+  }
   private paint(): void {
     for (const t of this.targets) {
       const selected = t.id === this.world.selectedPlane;
       const active = selected || t === this.hovered;
       t.mesh.userData.hovered = t === this.hovered;
       t.mesh.userData.selected = selected;
+      t.mesh.userData.selectable = this.available(t);
+      t.mesh.userData.visibility = this.world.canonicalVisibility.states[t.id].opacity;
       t.mesh.material.color.set(active ? "#83b9ee" : planeTargetBaseColor(t.id));
-      t.mesh.material.opacity = Math.min(1, viewDisplay().planes * (active ? 0.43 / 0.224 : 1));
+      t.mesh.material.opacity =
+        viewDisplay().planes * this.world.canonicalVisibility.states[t.id].opacity;
       t.mesh.material.stencilWrite = !selected && !this.world.planePicker;
     }
   }

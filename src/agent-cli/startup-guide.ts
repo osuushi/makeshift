@@ -15,6 +15,7 @@ Common commands (already on PATH):
 - makeshift faces — all faces with typed analytic support and body visibility.
 - makeshift inspect [ID] — inventory or details of a specific entity.
 - makeshift render — viewport PNG path; open with your image viewer when visual evidence is needed.
+- makeshift settings — read device-local plane display preferences; optional JSON patch changes them.
 - makeshift view script.ts — typed face queries and selection, without geometry edits.
 - makeshift run script.ts — typed modeling; successful geometry changes form one Undo step.
 - makeshift help / docs / types — commands, reference and TypeScript API.

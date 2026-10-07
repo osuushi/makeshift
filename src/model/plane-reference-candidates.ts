@@ -19,7 +19,7 @@ export function planeOutline(
 export function planeCandidates(editor: SketchEditor): PlaneCandidate[] {
   const result: PlaneCandidate[] = Object.values(planes).map((frame) => ({
     frame,
-    outline: planeOutline(frame, editor.world.planeBounds(frame)),
+    outline: [],
   }));
   for (const plane of editor.store.data.constructionPlanes ?? [])
     if (editor.visibility.visible(plane.id))

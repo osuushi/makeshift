@@ -44,16 +44,32 @@ contextBridge.exposeInMainWorld("makeshiftScript", {
 
 contextBridge.exposeInMainWorld("makeshiftInspection", {
   onRequest: (
-    callback: (render: boolean, acquireScript?: boolean, selection?: string) => InspectionView,
+    callback: (
+      render: boolean,
+      acquireScript?: boolean,
+      selection?: string,
+      settings?: string,
+    ) => InspectionView,
   ) => {
     const listener = (
       _event: Electron.IpcRendererEvent,
-      request: { id: string; render: boolean; acquireScript?: boolean; selection?: string },
+      request: {
+        id: string;
+        render: boolean;
+        acquireScript?: boolean;
+        selection?: string;
+        settings?: string;
+      },
     ) => {
       try {
         ipcRenderer.send("agent-inspection-reply", {
           id: request.id,
-          view: callback(request.render, request.acquireScript, request.selection),
+          view: callback(
+            request.render,
+            request.acquireScript,
+            request.selection,
+            request.settings,
+          ),
         });
       } catch (error) {
         ipcRenderer.send("agent-inspection-reply", {

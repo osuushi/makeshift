@@ -135,6 +135,7 @@ jobs:
         run: |
           xvfb-run -a node tests/decorator-settings-browser.mjs
           xvfb-run -a node tests/view-settings-browser.mjs
+          xvfb-run -a node tests/canonical-plane-fades-ui.mjs
           xvfb-run -a node tests/decorator-settings-layout.mjs
       - name: Browser preview readiness
         if: matrix.shard == 1 && matrix.browser == 'chromium'
@@ -452,6 +453,7 @@ jobs:
         run: |
           node tests/decorator-settings-browser.mjs
           node tests/view-settings-browser.mjs
+          node tests/canonical-plane-fades-ui.mjs
           node tests/decorator-settings-layout.mjs
           node tests/decorator-display-ui.mjs
           node tests/thread-preview-rim-ui.mjs
@@ -480,7 +482,9 @@ jobs:
         if: matrix.lane == 'electron-host'
         env:
           MAKESHIFT_TEST_BROWSER: electron
-        run: node tests/agent-setup-electron.mjs
+        run: |
+          node tests/agent-setup-electron.mjs
+          node tests/agent-plane-settings-electron.mjs
       - name: WebKit widget placement, pressed controls and Reopen topology
         if: matrix.lane == 'webkit-widgets'
         run: |

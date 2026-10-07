@@ -8,7 +8,7 @@ export interface Plane { origin: Vector; u: Vector; v: Vector }
 export interface MakeshiftStatus {
   application: "Makeshift";
   document: { name: string; saved: boolean; edited: boolean; units: "mm" };
-  capabilities: readonly ("help" | "docs" | "types" | "status" | "selection" | "select" | "inspect" | "render" | "run" | "view" | "faces" | "context")[];
+  capabilities: readonly ("help" | "docs" | "types" | "status" | "selection" | "select" | "inspect" | "render" | "run" | "view" | "faces" | "context" | "settings")[];
 }
 export type Target =
   | { kind: "tagged-group"; taggedGroup: string }

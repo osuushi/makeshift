@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { orient } from "./ui-blend-edit.mjs";
 import { decoratorCylinder } from "./ui-decorator-cylinder.mjs";
 import { close, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import {
@@ -48,6 +49,7 @@ export async function geometrySwitchRoute(page, name) {
   });
   // A separate Offset finishes before direct canonical-plane entry.
   await decoratorCylinder(page, 8);
+  await orient(page, [0, 0, 1]);
   const planeBefore = await inspect(page),
     planePrior = await appliedSwitchHistory(page);
   await offset(page);
@@ -120,9 +122,16 @@ export async function sketchNumericSwitchRoute(page, name) {
 
 export async function offsetInvalidSwitchRoute(page, name) {
   const original = await decoratorCylinder(page, 8);
+  await orient(page, [0, 0, 1]);
   const input = await offset(page, "");
   let state = await inspect(page);
   assert.equal(state.preview, null);
+  const plane = await findRaycastPoint(page, "XY");
+  await page.mouse.dblclick(plane.x, plane.y);
+  state = await inspect(page);
+  assert.equal(state.activePlane, null, "Invalid preview blocks plane entry");
+  assert.equal(state.interaction.kind, "face-offset");
+  assert.deepEqual(state.document, original);
   await chooseTool(page, "threads", "threads");
   state = await inspect(page);
   assert.deepEqual(state.document, original);

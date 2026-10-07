@@ -1,5 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
+import { canonicalPlaneSettings } from "./canonical-plane-settings.js";
+import { onCanonicalPlanesChange } from "./canonical-planes.js";
 import { decoratorSettings } from "./decorator-settings.js";
 import { onUiScaleChange, setUiScale, uiScale, uiScaleChoices } from "./ui-scale.js";
 import { onViewDisplayChange } from "./view-display.js";
@@ -43,6 +45,8 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
       "decorator display",
       "grid opacity",
       "plane opacity",
+      "plane visibility",
+      "plane palette",
     ],
     reason: () => idleReason(editor),
     run: open,
@@ -55,7 +59,13 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
     // Refit geometry-relative controls to their new measured dimensions.
     editor.world.draw();
   });
-  const disposeView = onViewDisplayChange(() => editor.world.requestDraw());
+  const refreshPreferences = () => {
+    editor.world.requestDraw();
+    for (const panel of dialog.querySelectorAll(".view-display-settings"))
+      panel.dispatchEvent(new Event("preferences-refresh"));
+  };
+  const disposeView = onViewDisplayChange(refreshPreferences);
+  const disposePlanes = onCanonicalPlanesChange(refreshPreferences);
   const blockZoom = (event: KeyboardEvent) => {
     if (
       (event.metaKey || event.ctrlKey) &&
@@ -72,6 +82,7 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
     disposeTool();
     disposeScale();
     disposeView();
+    disposePlanes();
     editor.world.changed.delete(update);
     document.removeEventListener("keydown", blockZoom, true);
     headerObserver.disconnect();
@@ -92,7 +103,9 @@ function settingsDialog(): HTMLDialogElement {
   const select = dialog.querySelector<HTMLSelectElement>("select");
   const reset = dialog.querySelector<HTMLButtonElement>("[data-reset]");
   if (!select || !reset) throw new Error("Missing scale settings controls");
-  dialog.querySelector(".settings-actions")?.before(viewSettings(), decoratorSettings());
+  dialog
+    .querySelector(".settings-actions")
+    ?.before(viewSettings(), canonicalPlaneSettings(), decoratorSettings());
   for (const scale of uiScaleChoices)
     select.add(new Option(`${Math.round(scale * 100)}%`, String(scale)));
   const update = () => {
