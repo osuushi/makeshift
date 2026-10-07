@@ -25,6 +25,8 @@ async function call(command: string, entity?: string): Promise<unknown> {
 }
 Object.defineProperty(globalThis, "makeshift", {
   value: Object.freeze({
+    settings: (patch?: unknown) =>
+      call("settings", patch === undefined ? undefined : JSON.stringify(patch)),
     faces: async () => ((await call("faces")) as { faces: unknown[] }).faces,
     context: async () => ((await call("context")) as { context: unknown }).context,
     select: (ids: unknown, mode: unknown = "replace") => {

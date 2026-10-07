@@ -43,6 +43,12 @@ test("managed skill is available in the document Codex home without replacing us
     await mkdir(join(root, "skills", "personal"), { recursive: true });
     await writeFile(join(root, "skills", "personal", "SKILL.md"), "keep");
     await prepareAgentSkills(root, resolve("."));
+    const settingsSkill = await readFile(
+      join(root, "skills", "makeshift-settings", "SKILL.md"),
+      "utf8",
+    );
+    assert.match(settingsSkill, /name: makeshift-settings/);
+    assert.match(settingsSkill, /makeshift settings/);
     const skill = join(root, "skills", "makeshift-mesh-recovery", "SKILL.md");
     assert.match(await readFile(skill, "utf8"), /name: mesh-recovery/);
     await writeFile(skill, "old generated version");

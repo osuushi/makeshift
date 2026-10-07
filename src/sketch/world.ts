@@ -1,10 +1,12 @@
 import * as THREE from "three";
 import { type CameraState, restoreCamera } from "../model/camera-state.js";
+import { canonicalPlanes } from "../preferences/canonical-planes.js";
 import { fitCameraDepth } from "./camera-depth.js";
 import { alignCameraToPlane, type CameraFraming, planeCameraPose } from "./camera-motion.js";
 import { levelOrientation, type OrbitPointer, SmoothedTurntable } from "./camera-orbit.js";
 import { CameraRoll } from "./camera-roll.js";
 import { CameraTransition } from "./camera-transition.js";
+import { CanonicalPlaneVisibility } from "./canonical-plane-visibility.js";
 import { NavigationHistory } from "./navigation-history.js";
 import { minimumPlaneBounds, type PlaneBounds } from "./plane-bounds.js";
 import {
@@ -36,6 +38,7 @@ export class World {
   readonly changed = new Set<() => void>();
   readonly renderOverlays = new Set<() => void>();
   readonly renderForegroundOverlays = new Set<ForegroundOverlay>();
+  readonly canonicalVisibility = new CanonicalPlaneVisibility();
   readonly grids = createGrids(this.scene);
   workspace: { key: string; frame: PlaneFrame; sketchId?: string } | null = null;
   get active(): string | null {
@@ -120,16 +123,24 @@ export class World {
     this.camera.lookAt(this.target);
     this.camera.updateProjectionMatrix();
     this.camera.updateMatrixWorld();
+    const fading = this.canonicalVisibility.update(
+      this.camera,
+      canonicalPlanes(),
+      performance.now(),
+      matchMedia("(prefers-reduced-motion: reduce)").matches,
+    );
     this.spacing = this.grids.update(
       this.camera,
       this.target,
       this.height,
       this.activeFrame,
       height,
+      this.canonicalVisibility.states,
     );
     this.updateClipping();
     for (const listener of this.changed) listener();
     this.present();
+    if (fading) this.requestDraw();
     this.navigation.settled();
   }
 

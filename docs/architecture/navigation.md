@@ -8,7 +8,10 @@ Cubic editing/projection (2026-09-16) supersedes any earlier spline exclusion.
 
 In Modeling, a single click on a canonical plane selects that reference, clearing
 geometry and saved-plane selection. Its blue highlight persists after hover leaves.
-Enter or double-click enters its sketch workspace; Escape or a blank click clears it.
+Plane fill and grids cover the viewport and fade together by viewing angle; only
+references above their selectable visibility threshold accept canvas input. See
+[interface preferences](interface-preferences.md) for controls and presets.
+Enter or double-click enters its sketch workspace; Escape or a click without a selectable reference or geometry clears it.
 Canonical references remain fixed, while construction planes support placement edits.
 Explicit plane-selection modes continue to accept a plane on a single click.
 In Mirror and Projection, a nearer planar solid face takes precedence over a

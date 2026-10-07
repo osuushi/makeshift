@@ -25,6 +25,7 @@ export function viewSettings(): HTMLElement {
       row.output.textContent = `${row.input.value}%`;
     }
   };
+  section.addEventListener("preferences-refresh", update);
   const reset = document.createElement("button");
   reset.type = "button";
   reset.textContent = "Reset viewport opacity";

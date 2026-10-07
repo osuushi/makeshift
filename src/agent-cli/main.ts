@@ -5,7 +5,10 @@ import { runView } from "./run-view.js";
 
 try {
   const args = process.argv.slice(2);
-  if (args[0] !== "select" && args.length > (["inspect", "run", "view"].includes(args[0]) ? 2 : 1))
+  if (
+    args[0] !== "select" &&
+    args.length > (["inspect", "run", "view", "settings"].includes(args[0]) ? 2 : 1)
+  )
     throw new Error("Unexpected arguments; run makeshift help.");
   switch (args[0] ?? "help") {
     case "help":
@@ -30,6 +33,7 @@ try {
     case "select":
       console.log(JSON.stringify(await request("select", JSON.stringify(args.slice(1))), null, 2));
       break;
+    case "settings":
     case "status":
     case "faces":
     case "context":

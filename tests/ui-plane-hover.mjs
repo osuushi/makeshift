@@ -5,7 +5,7 @@ import { captureTestFrame } from "./ui-test-frames.mjs";
 
 export async function planeHover(page, xyz, name) {
   const before = await inspect(page);
-  await page.mouse.move(30, 35);
+  await page.getByRole("button", { name: "Application settings" }).hover();
   const canvas = page.locator("canvas");
   await captureTestFrame(page);
   const baseline = await canvas.screenshot();
@@ -25,7 +25,7 @@ export async function planeHover(page, xyz, name) {
   );
   assert.deepEqual((await inspect(page)).document, before.document, "Hover does not edit geometry");
   await page.screenshot({ path: `.cache/plane-probe/${name}-hover.png` });
-  await page.mouse.move(30, 35);
+  await page.getByRole("button", { name: "Application settings" }).hover();
   await captureTestFrame(page);
   assert.equal(
     (await canvas.screenshot()).equals(baseline),

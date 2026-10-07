@@ -20,10 +20,11 @@ export async function inspectDrawing(
   entity: string | undefined,
   directory: string,
   isCurrent: () => boolean,
-  readView: (render: boolean, selection?: string) => Promise<InspectionView> = (
+  readView: (render: boolean, selection?: string, settings?: string) => Promise<InspectionView> = (
     render,
     selection,
-  ) => readInspectionView(window, render, false, selection),
+    settings,
+  ) => readInspectionView(window, render, false, selection, settings),
 ): Promise<unknown> {
   const document = owner.view.data;
   const check = () => {
@@ -32,9 +33,14 @@ export async function inspectDrawing(
   };
   check();
   if (command === "select" && entity === undefined) throw new Error("Missing selection arguments.");
-  const view = await readView(command === "render", command === "select" ? entity : undefined);
+  const view = await readView(
+    command === "render",
+    command === "select" ? entity : undefined,
+    command === "settings" ? entity : undefined,
+  );
   check();
   const { image, ...context } = view;
+  if (command === "settings") return view.preferences;
   if (command === "faces") return { units: "mm", faces: queryFaces(document, view) };
   if (command === "context" || command === "select") return { units: "mm", context };
   if (command === "render") {

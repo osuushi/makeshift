@@ -7,6 +7,7 @@ export async function planeTargetsRoute(page, name) {
   for (const id of ["XY", "XZ", "YZ"]) {
     await reset(page);
     const before = await inspect(page);
+    await orient(page, { XY: [0.2, 0.2, 1], XZ: [0.2, 1, 0.2], YZ: [1, 0.2, 0.2] }[id]);
     await assertTargetContainsOrigin(page, id);
     const hit = await findRaycastPoint(page, id);
     assert.deepEqual((await inspect(page)).document, before.document, "Hover is presentation only");
@@ -15,12 +16,13 @@ export async function planeTargetsRoute(page, name) {
     await page.mouse.click(hit.x, hit.y);
     assert.equal((await inspect(page)).activePlane, null, "Single-click stays in Modeling");
     assert.equal((await inspect(page)).planeTargets.find((p) => p.id === id).selected, true);
-    await page.mouse.move(30, 35);
+    await page.getByRole("button", { name: "Application settings" }).hover();
     assert.equal((await inspect(page)).planeTargets.find((p) => p.id === id).hovered, false);
     assert.equal((await inspect(page)).planeTargets.find((p) => p.id === id).selected, true);
     await page.keyboard.press("Enter");
     assert.equal((await inspect(page)).activePlane, id, "Enter uses the selected reference");
     await reset(page);
+    await orient(page, { XY: [0.2, 0.2, 1], XZ: [0.2, 1, 0.2], YZ: [1, 0.2, 0.2] }[id]);
     const doubleClick = await findRaycastPoint(page, id);
     await page.mouse.dblclick(doubleClick.x, doubleClick.y);
     assert.equal((await inspect(page)).activePlane, id, "Double-click enters its plane");
@@ -65,12 +67,13 @@ async function assertTargetContainsOrigin(page, id) {
 }
 
 export async function findRaycastPoint(page, id) {
+  const canvas = await page.getByLabel("Modeling viewport", { exact: true }).boundingBox();
   const { origin, points } = await page.evaluate(targetGeometry, id),
     bounds = {
-      left: Math.min(...points.map((point) => point.x)),
-      right: Math.max(...points.map((point) => point.x)),
-      top: Math.min(...points.map((point) => point.y)),
-      bottom: Math.max(...points.map((point) => point.y)),
+      left: Math.max(canvas.x, Math.min(...points.map((point) => point.x))),
+      right: Math.min(canvas.x + canvas.width, Math.max(...points.map((point) => point.x))),
+      top: Math.max(canvas.y, Math.min(...points.map((point) => point.y))),
+      bottom: Math.min(canvas.y + canvas.height, Math.max(...points.map((point) => point.y))),
     },
     candidates = points.flatMap((point) =>
       [0.85, 0.65, 0.45].map((weight) => ({
@@ -123,7 +126,16 @@ function inside(point, polygon) {
 
 /** Pick a displayed reference patch through the actual canvas, including explicit tool modes. */
 export async function pickPlane(page, id) {
-  const { points } = await page.evaluate(targetGeometry, id);
+  // Full-view references overlap everywhere; face the requested plane for an
+  // unambiguous pointer route, rather than relying on finite origin-patch corners.
+  await orient(page, { XY: [0.2, 0.2, 1], XZ: [0.2, 1, 0.2], YZ: [1, 0.2, 0.2] }[id]);
+  const box = await page.getByLabel("Modeling viewport", { exact: true }).boundingBox();
+  const points = [
+    { x: box.x + 12, y: box.y + box.height * 0.25 },
+    { x: box.x + box.width - 12, y: box.y + box.height * 0.25 },
+    { x: box.x + box.width - 12, y: box.y + box.height - 12 },
+    { x: box.x + 12, y: box.y + box.height - 12 },
+  ];
   const center = points.reduce((p, q) => ({ x: p.x + q.x / 4, y: p.y + q.y / 4 }), { x: 0, y: 0 });
   // Outer corners avoid model faces and intersecting reference planes.
   for (const weight of [0.9, 0.7, 0.5, 0.3])
@@ -135,7 +147,9 @@ export async function pickPlane(page, id) {
       const hit = await page.evaluate(
         ({ p, id }) => {
           if (document.elementFromPoint(p.x, p.y)?.tagName !== "CANVAS") return false;
-          const targets = window.makeshiftInspect().planeTargets.filter((t) => t.visible);
+          const targets = window
+            .makeshiftInspect()
+            .planeTargets.filter((t) => t.visible && t.selectable);
           // Reject points inside another reference patch: depth cannot make these ambiguous.
           const inside = (polygon) => {
             let result = false;

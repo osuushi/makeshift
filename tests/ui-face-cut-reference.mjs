@@ -45,7 +45,7 @@ async function pickReference(page) {
   await worldClick(page, [3, -3, 20]);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   await chooseTool(page, "imprint", "imprint");
-  await page.getByRole("status").filter({ hasText: "Pick an outlined" }).waitFor();
+  await page.getByRole("status").filter({ hasText: "Pick a plane grid" }).waitFor();
   await planeHover(page, [0, -5, 32], "curved-face");
   await worldClick(page, [0, -5, 32]);
 }

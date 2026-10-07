@@ -10,9 +10,11 @@ const references = {
   YZ: { origin: [0, 0, 0], u: [0, 1, 0], v: [0, 0, 1] },
 };
 async function select(page, id) {
+  if (!(await inspect(page)).planeTargets.find((p) => p.id === id)?.selectable)
+    await orient(page, { XY: [0.2, 0.2, 1], XZ: [0.2, 1, 0.2], YZ: [1, 0.2, 0.2] }[id]);
   const point = await findRaycastPoint(page, id);
   await page.mouse.click(point.x, point.y);
-  await page.mouse.move(30, 35);
+  await page.getByRole("button", { name: "Application settings" }).hover();
   const state = await inspect(page);
   assert.equal(state.activePlane, null);
   assert.equal(state.planeTargets.find((p) => p.id === id).selected, true);
@@ -31,8 +33,13 @@ export async function canonicalPlanesRoute(page, name) {
     const canvas = await page.locator("canvas").boundingBox();
     await page.mouse.click(canvas.x + 8, canvas.y + canvas.height - 8);
     assert.ok(
+      (await inspect(page)).planeTargets.some((p) => p.selected),
+      "Full-view references remain selectable far from origin",
+    );
+    await page.keyboard.press("Escape");
+    assert.ok(
       (await inspect(page)).planeTargets.every((p) => !p.selected),
-      "Blank clears selection",
+      "Escape clears selection",
     );
     await select(page, id);
     await chooseTool(page, "cross section", "cross-section");

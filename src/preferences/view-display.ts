@@ -2,7 +2,7 @@ export interface ViewDisplay {
   planes: number;
   grid: number;
 }
-const defaults: ViewDisplay = { planes: 0.224, grid: 0.4 };
+const defaults: ViewDisplay = { planes: 0.06, grid: 0.4 };
 const key = "makeshift.view-display";
 const listeners = new Set<() => void>();
 let value = { ...defaults };

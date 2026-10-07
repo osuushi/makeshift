@@ -19,7 +19,12 @@ class BrowserConnection {
   private screen = new ConnectionScreen("Connect to Makeshift", "Reconnect");
   private listeners = new Map<string, Set<(value: never) => void>>();
   private inspect:
-    | ((render: boolean, acquireScript?: boolean, selection?: string) => InspectionView)
+    | ((
+        render: boolean,
+        acquireScript?: boolean,
+        selection?: string,
+        settings?: string,
+      ) => InspectionView)
     | null = null;
   private socket = new WebSocket(
     `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/connect`,
@@ -76,8 +81,18 @@ class BrowserConnection {
     if (method === "dialog") return showRemoteDialog(value as DialogRequest, this.rpc);
     if (method === "inspect") {
       if (!this.inspect) throw new Error("Wait for the iPad editor to finish loading.");
-      const request = value as { render: boolean; acquireScript?: boolean; selection?: string };
-      return this.inspect(request.render, request.acquireScript, request.selection);
+      const request = value as {
+        render: boolean;
+        acquireScript?: boolean;
+        selection?: string;
+        settings?: string;
+      };
+      return this.inspect(
+        request.render,
+        request.acquireScript,
+        request.selection,
+        request.settings,
+      );
     }
     throw new Error("Unknown host request");
   };

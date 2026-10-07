@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { viewDisplay } from "../preferences/view-display.js";
+import { canonicalPlaneBounds, canonicalPlaneSelectable } from "./canonical-plane-bounds.js";
 import {
   createPlaneTargets,
   disposePlaneTarget,
@@ -46,8 +47,9 @@ class PlaneTargetInteraction {
     for (const target of this.targets) {
       target.mesh.visible =
         !this.world.active &&
+        this.world.canonicalVisibility.states[target.id].opacity > 0 &&
         (!this.world.planePickerAccept || this.world.planePickerAccept(target.frame));
-      positionPlanePatch(target.mesh, target.frame, this.world.planeBounds(target.frame));
+      positionPlanePatch(target.mesh, target.frame, canonicalPlaneBounds(this.world, target.frame));
     }
     if (this.hovered && !this.available(this.hovered)) this.hovered = null;
     this.paint();
@@ -55,6 +57,8 @@ class PlaneTargetInteraction {
   private available(target: PlaneTarget): boolean {
     return (
       target.mesh.visible &&
+      canonicalPlaneSelectable(this.world, target.id) &&
+      (viewDisplay().planes > 0 || viewDisplay().grid > 0) &&
       (this.world.planePicker ? this.world.canNavigate() : this.world.canEnterSketch())
     );
   }
@@ -101,8 +105,11 @@ class PlaneTargetInteraction {
       const active = selected || t === this.hovered;
       t.mesh.userData.hovered = t === this.hovered;
       t.mesh.userData.selected = selected;
+      t.mesh.userData.selectable = this.available(t);
+      t.mesh.userData.visibility = this.world.canonicalVisibility.states[t.id].opacity;
       t.mesh.material.color.set(active ? "#83b9ee" : planeTargetBaseColor(t.id));
-      t.mesh.material.opacity = Math.min(1, viewDisplay().planes * (active ? 0.43 / 0.224 : 1));
+      t.mesh.material.opacity =
+        viewDisplay().planes * this.world.canonicalVisibility.states[t.id].opacity;
       t.mesh.material.stencilWrite = !selected && !this.world.planePicker;
     }
   }

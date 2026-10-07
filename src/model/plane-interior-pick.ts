@@ -1,4 +1,9 @@
 import * as THREE from "three";
+import { viewDisplay } from "../preferences/view-display.js";
+import {
+  canonicalPlaneBounds,
+  canonicalPlaneSelectable,
+} from "../sketch/canonical-plane-bounds.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { minimumPlaneBounds, type PlaneBounds, planeCorners } from "../sketch/plane-bounds.js";
 import { type PlaneFrame, type PlaneId, type Point, planes } from "../sketch/planes.js";
@@ -9,7 +14,7 @@ export type PlaneReferenceSource =
   | { kind: "plane"; id: string }
   | { kind: "world-plane"; id: PlaneId };
 
-/** Pick the displayed patches, not their infinite support or SVG outline. */
+/** Canonical references cover the view; saved planes retain their displayed bounds. */
 export function pickPlaneInterior(
   editor: SketchEditor,
   screen: Point,
@@ -58,6 +63,12 @@ export function pickPlaneInterior(
   ];
   for (const { frame, source } of frames) {
     if (!accepts(frame)) continue;
+    if (
+      source.kind === "world-plane" &&
+      (!canonicalPlaneSelectable(editor.world, source.id) ||
+        (viewDisplay().planes === 0 && viewDisplay().grid === 0))
+    )
+      continue;
     const origin = new THREE.Vector3(...frame.origin);
     const u = new THREE.Vector3(...frame.u),
       v = new THREE.Vector3(...frame.v);
@@ -65,7 +76,10 @@ export function pickPlaneInterior(
     const hit = ray.ray.intersectPlane(plane, new THREE.Vector3());
     if (!hit || !editor.world.visiblePoint(hit)) continue;
     const local = hit.clone().sub(origin);
-    const bounds = editor.world.planeBounds(frame);
+    const bounds =
+      source.kind === "world-plane"
+        ? canonicalPlaneBounds(editor.world, frame)
+        : editor.world.planeBounds(frame);
     if (
       local.dot(u) < bounds.minX ||
       local.dot(u) > bounds.maxX ||

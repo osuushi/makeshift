@@ -46,14 +46,14 @@ exact intersection is evaluated only after picking. No native operations run
 during reference discovery. Disjoint and box-tangent planes and hidden references are excluded.
 This is a broad filter: concavities, selected-face coverage and existing imprints
 may leave ineffective references selectable. Exact validation runs only on picking
-a reference. World/saved patches retain their normal translucent fills; candidate
-outlines remain visible. Hover adds a blue fill to exactly the reference the shared
+a reference. Canonical grids/fills retain their angular fades and selectable thresholds; saved
+plane and face candidate outlines remain visible. Hover adds a blue fill to exactly the reference the shared
 click picker would choose, including a face's actual visible surface. Entities rows highlight their own saved
 reference. Hover clears on leaving, navigation or tool exit and never changes geometry. Discovery does not create previews or alter history.
-World and saved plane patches can be picked throughout their displayed interiors,
+Canonical references cover the viewport; saved plane patches can be picked throughout their displayed interiors,
 using the nearest eligible reference when patches and planar faces overlap.
-Picking stays on the canvas so camera gestures remain available. World/saved patches
-share adaptive bounds and have no floating labels; saved references remain available
+Picking stays on the canvas so camera gestures remain available. Canonical references use viewport bounds and saved patches retain adaptive geometry
+bounds. Neither has floating labels; saved references remain available
 in Entities. At coincident hit depths, an eligible face wins the tie against a patch.
 Curved reference inputs store document-local body/face IDs and resolve exact
 supports, including face placement, in the original document used for the edit.

@@ -1,3 +1,5 @@
+import type { InspectionView } from "../agent/inspection-protocol.js";
+
 export const wifiWarning = "Only use on secure Wi-Fi";
 export const wifiDetail =
   "This connection is not encrypted or protected against interception. Anyone who intercepts it may control this document, access files on this computer, and use the agent. Do not use public or shared untrusted Wi-Fi.";
@@ -33,4 +35,18 @@ declare global {
     makeshiftIPad?: IPadHost;
     makeshiftRemote?: boolean;
   }
+}
+
+/** Host adapter for the browser that currently owns document interaction. */
+export interface RemoteDocumentEditor {
+  active(): boolean;
+  connected(): boolean;
+  emit(method: string, value: unknown): void;
+  inspect(
+    render: boolean,
+    acquireScript?: boolean,
+    selection?: string,
+    settings?: string,
+  ): Promise<InspectionView>;
+  close(): Promise<void>;
 }
