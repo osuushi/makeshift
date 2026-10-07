@@ -1,3 +1,4 @@
+import { placeFloatingPanel } from "../preferences/panel-placement.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import type { InteractionLease } from "./active-interaction.js";
 import { selectedBowCurves } from "./arc-edit.js";
@@ -198,6 +199,7 @@ export class BowControls {
     const bounds = this.editor.world.canvas.getBoundingClientRect();
     this.root.style.left = `${Math.max(12, Math.min(bounds.width - 260, p.x - bounds.left + 30))}px`;
     this.root.style.top = `${Math.max(70, Math.min(bounds.height - 100, p.y - bounds.top + 35))}px`;
+    if (!this.root.hidden) placeFloatingPanel(this.root);
     this.input.setAttribute("aria-invalid", String(!s.valid));
   };
   dispose(): void {

@@ -35,7 +35,7 @@ export function validateScriptSolid(document: SketchDocument, operation: SolidOp
       !Array.isArray(o.faces) ||
       !o.faces.length ||
       o.faces.length > 1000 ||
-      (o.radius !== undefined && (!Number.isFinite(o.radius) || o.radius <= 0))
+      (o.radius !== undefined && (!Number.isFinite(o.radius) || o.radius < 0))
     )
       throw new Error("Invalid script face offset");
     for (const t of o.faces)

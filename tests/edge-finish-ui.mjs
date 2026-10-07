@@ -6,9 +6,10 @@ import { edgeFinishGridRoute } from "./ui-edge-finish-grid.mjs";
 import { edgeFinishMotionRoute } from "./ui-edge-finish-motion.mjs";
 import { edgeFinishPeriodicRoute } from "./ui-edge-finish-periodic.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
+import { zeroCornerRoute } from "./ui-zero-corner.mjs";
 
 const subset = process.argv[2];
-if (subset && !["faces", "motion", "grid", "adjacent", "periodic"].includes(subset))
+if (subset && !["faces", "motion", "grid", "adjacent", "periodic", "zero"].includes(subset))
   throw new Error(`Unknown edge-finish route: ${subset}`);
 await withUiRuntimes(
   async (page, name) => {
@@ -22,6 +23,10 @@ await withUiRuntimes(
       await edgeChainRoute(page, name);
       await bodyFilletRoute(page, name, name === "electron");
       await bodyChamferRoute(page, name, name === "electron");
+    }
+    if (!subset || subset === "zero") {
+      await page.setViewportSize({ width: 1280, height: 850 });
+      await zeroCornerRoute(page, name);
     }
   },
   { viewport: { width: 1280, height: 800 }, timeout: 15000 },

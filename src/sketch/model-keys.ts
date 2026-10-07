@@ -7,6 +7,12 @@ export function onModelKeydown(
   window.addEventListener(
     "keydown",
     (event) => {
+      if (
+        event.target instanceof Element &&
+        event.target.closest(".parameter-panel-grip") &&
+        ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)
+      )
+        return;
       if (event.target instanceof Element && event.target.closest(".agent-dock, dialog[open]"))
         return;
       if (

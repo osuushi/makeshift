@@ -28,6 +28,7 @@
     "test:standalone-cleanup": "node tests/standalone-cleanup-ui.mjs",
     "test:widget-reachability": "node tests/widget-reachability-ui.mjs",
     "test:edge-finish": "node tests/edge-finish-ui.mjs",
+    "test:zero-corner": "node tests/zero-corner-ui.mjs",
     "test:edge-move": "node tests/edge-move-ui.mjs",
     "test:face-move": "node tests/face-move-ui.mjs",
     "test:electron": "node tests/electron.mjs",

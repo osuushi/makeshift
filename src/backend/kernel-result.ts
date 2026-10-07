@@ -9,12 +9,18 @@ export interface KernelResult<Mode extends BooleanMode | "inspect" = BooleanMode
   results: (Omit<Body, "id" | "faces" | "edges"> & {
     copy?: boolean;
     predecessorBodies: string[];
-    faces: (Descendant<Omit<Face, "edges" | "blend" | "offsetFaces" | "thickness">> & {
+    faces: (Descendant<Omit<Face, "edges" | "blend" | "chamfer" | "offsetFaces" | "thickness">> & {
       thickness?: { faceIndex: number; distance: number; slope: 1 | -1 } | null;
       edgeIndexes: number[];
       offsetFaceIndexes?: number[];
       offsetSelected?: boolean;
       blend?: { radius: number; outward: 1 | -1; faceIndexes: number[] } | null;
+      chamfer?: {
+        distance: number;
+        distanceScale: number;
+        outward: 1 | -1;
+        faceIndexes: number[];
+      } | null;
     })[];
     edges: Descendant<Edge>[];
   })[];
@@ -58,12 +64,21 @@ function materializeFace(
     offsetFaceIndexes,
     offsetSelected: _offsetSelected,
     blend,
+    chamfer,
     thickness,
     ...face
   } = source;
   return {
     ...face,
     id,
+    chamfer: chamfer
+      ? {
+          distance: chamfer.distance,
+          distanceScale: chamfer.distanceScale,
+          outward: chamfer.outward,
+          faces: chamfer.faceIndexes.map((i) => reference(faceIds, i, "blend")),
+        }
+      : null,
     thickness: thickness
       ? {
           face: reference(faceIds, thickness.faceIndex, "thickness"),

@@ -1,3 +1,4 @@
+import { placeFloatingPanel } from "../preferences/panel-placement.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import type { InteractionLease } from "./active-interaction.js";
@@ -143,7 +144,10 @@ export class FilletControls {
     const session = this.session;
     if (!session || this.closing) return;
     try {
-      const result = createFillet(session.sketch, session.corner, radius, session.id);
+      const result =
+        radius === 0
+          ? { sketch: session.sketch }
+          : createFillet(session.sketch, session.corner, radius, session.id);
       session.valid = true;
       session.radius = radius;
       session.solve.update(result.sketch);
@@ -198,7 +202,7 @@ export class FilletControls {
       this.editor.refresh();
       return false;
     }
-    this.editor.select([s.id]);
+    this.editor.select(s.radius === 0 ? [s.corner.a.id, s.corner.b.id] : [s.id]);
     this.finish();
     return true;
   }
@@ -225,6 +229,7 @@ export class FilletControls {
     const bounds = this.editor.world.canvas.getBoundingClientRect();
     this.root.style.left = `${Math.max(12, Math.min(bounds.width - 220, p.x - bounds.left + 24))}px`;
     this.root.style.top = `${Math.max(70, Math.min(bounds.height - 100, p.y - bounds.top + 28))}px`;
+    if (!this.root.hidden) placeFloatingPanel(this.root);
     this.input.hidden = !this.session;
     const disabled = this.closing || (!this.session && this.editor.blocked);
     this.handle.setAttribute("aria-disabled", String(disabled));

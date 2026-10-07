@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import * as THREE from "three";
 import { circularFinish, plate } from "./ui-body-fillet.mjs";
 import { close, inspect, modalCompleted } from "./ui-helpers.mjs";
-import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { orientWithTurntable } from "./ui-orbit-orient.mjs";
 import { previewActionReady } from "./ui-preview-readiness.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -24,7 +23,7 @@ export async function orient(page, normal) {
   await orientWithTurntable(page, normal);
 }
 
-async function selectSurface(page, face) {
+export async function selectSurface(page, face) {
   const { center, normal } = face.offsetHandle;
   // A selected body owns a transform box that can cover a narrow blend face.
   await page.keyboard.press("Escape");
@@ -57,20 +56,20 @@ async function roundEdit(page, name, mode) {
   await page.keyboard.up("Control");
   await page.waitForFunction(() => window.makeshiftInspect().camera.height < 40);
   const original = (await inspect(page)).document;
-  const face = original.bodies[0].faces.find((f) => (mode === "fillet" ? f.blend : f.offsetHandle));
+  const face = original.bodies[0].faces.find((f) => (mode === "fillet" ? f.blend : f.chamfer));
   assert.ok(face);
   await selectSurface(page, face);
-  const action = mode === "fillet" ? "Resize fillet" : "Offset faces";
+  const action = mode === "fillet" ? "Resize fillet" : "Resize chamfer";
   await page.getByRole("button", { name: action, exact: true }).click();
   const input = page.getByRole("textbox", {
-    name: mode === "fillet" ? "Fillet face radius" : "Face offset distance",
+    name: mode === "fillet" ? "Fillet face radius" : "Chamfer face distance",
   });
-  await input.fill(mode === "fillet" ? "3" : "0.5");
+  await input.fill("3");
   let state = await inspect(page);
   assert.deepEqual(state.document, original);
   assert.ok(state.preview);
   if (mode === "fillet") close(state.preview.bodies[0].faces.find((f) => f.blend).blend.radius, 3);
-  else assert.ok(state.preview.bodies[0].volume > original.bodies[0].volume);
+  else close(state.preview.bodies[0].faces.find((f) => f.chamfer).chamfer.distance, 3);
   await page.getByRole("button", { name: "Accept face offset" }).click();
   await inspect(page);
   await chooseTool(page, "undo", "undo");
@@ -83,7 +82,7 @@ async function roundEdit(page, name, mode) {
     "Outward drag adds material",
   );
   if (mode === "fillet") assert.ok(Number(await input.inputValue()) < 2);
-  else assert.ok(Number(await input.inputValue()) > 0);
+  else assert.ok(Number(await input.inputValue()) < 2);
   await page.screenshot({ path: `.cache/sketch-review/${name}-${mode}-face-drag.png` });
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, original);
@@ -114,9 +113,11 @@ async function flatChamferDrag(page, name) {
   const normal = b.clone().sub(a).cross(c.clone().sub(a)).normalize().toArray();
   const target = { ...face, offsetHandle: { center: [-8, -8, 5], normal } };
   await selectSurface(page, target);
-  const state = await outwardDrag(page, "Offset faces", target, 2);
+  const state = await outwardDrag(page, "Resize chamfer", target, 2);
   assert.ok(state.preview.bodies[0].volume > original.bodies[0].volume);
-  assert.ok(Number(await (await relativeOffsetInput(page)).inputValue()) > 0);
+  assert.ok(
+    Number(await page.getByRole("textbox", { name: "Chamfer face distance" }).inputValue()) < 4,
+  );
   await page.screenshot({ path: `.cache/sketch-review/${name}-chamfer-outward-drag.png` });
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, original);

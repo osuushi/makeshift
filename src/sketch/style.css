@@ -1,4 +1,5 @@
 @import "./orientation-cube.css";
+@import "../preferences/panel-placement.css";
 
 * {
   box-sizing: border-box;

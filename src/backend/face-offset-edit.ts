@@ -17,7 +17,11 @@ export class FaceOffsetEdit {
     operation: BodyFaceOffset,
     calculate: (distance: number) => Promise<KernelResult>,
   ): Promise<SketchDocument> {
-    const key = JSON.stringify([operation.faces, operation.radius !== undefined]);
+    const key = JSON.stringify([
+      operation.faces,
+      operation.radius !== undefined,
+      operation.chamfer,
+    ]);
     if (this.document !== document || this.key !== key) {
       this.document = document;
       this.key = key;
@@ -44,7 +48,13 @@ export class FaceOffsetEdit {
           )
         : [];
     });
-    if (selection.length) this.offsetSelection = selection;
+    this.offsetSelection = selection.length
+      ? selection
+      : operation.faces.filter((target) =>
+          bodies.some(
+            (body) => body.id === target.body && body.faces.some((face) => face.id === target.face),
+          ),
+        );
     return { ...document, bodies };
   }
   private async limit(distance: number, calculate: (distance: number) => Promise<KernelResult>) {

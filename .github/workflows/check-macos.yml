@@ -190,6 +190,7 @@ jobs:
         run: |
           npx tsc -p tsconfig.test.json
           xvfb-run -a node tests/widget-layout-dom.mjs
+          xvfb-run -a node tests/panel-placement-ui.mjs
       - name: Navigation Undo and context boundaries
         if: matrix.shard == 2
         run: |
@@ -488,6 +489,7 @@ jobs:
         if: matrix.lane == 'webkit-widgets'
         run: |
           node tests/widget-layout-dom.mjs
+          node tests/panel-placement-ui.mjs
           npm run test:widget-reachability
           node tests/widget-reachability-ui.mjs adjacent
           node tests/arc-control-clearance-ui.mjs

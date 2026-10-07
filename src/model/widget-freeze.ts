@@ -26,9 +26,11 @@ export class WidgetFreeze {
       },
       options,
     );
-    root.addEventListener(
+    // Stop compositor motion before press observers and control handlers measure the card.
+    window.addEventListener(
       "pointerdown",
       (event) => {
+        if (!(event.target instanceof Node) || !root.contains(event.target)) return;
         this.picked = this.target(event.target);
         this.pressed = true;
         this.hold();

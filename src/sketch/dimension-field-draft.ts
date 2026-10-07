@@ -111,6 +111,8 @@ export class DimensionFieldDraft {
           this.lease ?? undefined,
           this.duplicate,
         );
+      const accepted = dimensionValues(this.editor).find((item) => item.quantity === quantity);
+      if (accepted) input.value = this.format(accepted.value);
       input.dataset.original = input.value;
       input.removeAttribute("aria-invalid");
       return true;
