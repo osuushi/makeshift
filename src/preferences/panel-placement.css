@@ -18,8 +18,8 @@
   position: absolute;
   left: 3px;
   right: 2px;
-  top: 10px;
-  bottom: 10px;
+  top: 4px;
+  bottom: 4px;
   background:
     radial-gradient(circle at 3px 3px, #63758a40 0.8px, transparent 1.2px),
     radial-gradient(circle at 3px 4px, #ffffffbf 0.8px, transparent 1.3px);
