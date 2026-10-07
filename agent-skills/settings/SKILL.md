@@ -31,7 +31,7 @@ All fractional values below are 0–1; time is 0–2000 milliseconds.
 | palettes | Map of saved names (1–60 characters) to complete color maps, up to 30. Read and merge to preserve other palettes. |
 
 Threshold fractions refer to configured visibility, rather than absolute fill alpha.
-`viewDisplay.planes` is maximum fill opacity (default 0.06) and `viewDisplay.grid`
+`viewDisplay.planes` is maximum fill opacity (default 0.15) and `viewDisplay.grid`
 is grid opacity (default 0.4). A zero fill still allows entry through visible grids;
 zero grid still allows entry through visible fill. Setting both to zero prevents
 canvas plane picking. Explicit Tools/keyboard entry and long-press reference choices

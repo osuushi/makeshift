@@ -117,7 +117,7 @@ async function orbitDemo(page, capture) {
   await label(
     page,
     "Head on: full configured visibility",
-    "Default preset · 6% maximum fill · edge-on planes fade away.",
+    "Default preset · 15% maximum fill · edge-on planes fade away.",
   );
   await capture.hold(1.6);
   await label(

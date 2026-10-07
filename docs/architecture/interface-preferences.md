@@ -31,7 +31,7 @@ in Mirror/Projection/plane-reference tools. Tools and long-press alternatives re
 “Usually one plane” (cutoff/width 0.45/0.3) and “Usually two planes” (0.25/0.4)
 are parameter presets, not hard plane-count limits. Isometric views can show three;
 the camera is always orthographic, so facing angle determines the count.
-Plane fill defaults to 6%, with independent grid opacity at 40%. Colors tint fill
+Plane fill defaults to 15%, with independent grid opacity at 40%. Colors tint fill
 and grid lines; coordinate axes retain their usual colors. The active sketch has
 its own grid and hides canonical references. A zero fill remains selectable through
 visible grids, and vice versa; zeroing both disables canvas reference picking.

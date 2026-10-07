@@ -47,7 +47,7 @@ await withUiRuntimes(
     const state = await inspect(page);
     const xy = state.planeTargets.find((p) => p.id === "XY");
     assert.equal(xy.color, "#123456");
-    assert.equal(xy.fillOpacity, 0.06);
+    assert.equal(xy.fillOpacity, 0.15);
     assert.equal(xy.selectable, true);
     assert.ok(
       state.planeTargets.filter((p) => p.id !== "XY").every((p) => !p.selectable && !p.visible),
@@ -76,7 +76,7 @@ async function opacitySettingsRoute(page) {
   const done = () => page.getByRole("button", { name: "Done", exact: true }).click();
   const slider = (title) => page.getByRole("slider", { name: title, exact: true });
   await open();
-  assert.equal(await slider("Canonical planes opacity").inputValue(), "6");
+  assert.equal(await slider("Canonical planes opacity").inputValue(), "15");
   assert.equal(await slider("Grid opacity").inputValue(), "40");
   await slider("Canonical planes opacity").press("Home");
   await slider("Grid opacity").press("End");
