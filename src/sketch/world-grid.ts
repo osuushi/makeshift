@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { viewDisplay } from "../preferences/view-display.js";
 import { type PlaneFrame, planeIds, planes } from "./planes.js";
 
 export function createGrids(scene: THREE.Scene) {
@@ -15,6 +16,7 @@ export function createGrids(scene: THREE.Scene) {
       uniforms: {
         spacing: { value: 1 },
         strength: { value: 0.2 },
+        opacityScale: { value: 1 },
         radius: { value: 160 },
         center: { value: new THREE.Vector2() },
         uColor: { value: new THREE.Color(id === "YZ" ? "#43916b" : "#ca6470") },
@@ -25,6 +27,7 @@ export function createGrids(scene: THREE.Scene) {
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
       fragmentShader: `varying vec2 coordinate;
         uniform float spacing; uniform float strength; uniform float radius;
+        uniform float opacityScale;
         uniform vec2 center; uniform vec3 uColor; uniform vec3 vColor;
         float grid(float stepSize) {
           vec2 p = coordinate / stepSize;
@@ -40,7 +43,7 @@ export function createGrids(scene: THREE.Scene) {
           if(axes.y > 0.0) color = uColor;
           if(axes.x > 0.0) color = vColor;
           float alpha = max(lines*strength,max(axes.x,axes.y)*0.65)*fade;
-          gl_FragColor = vec4(color,alpha);
+          gl_FragColor = vec4(color,min(1.0,alpha*opacityScale));
         }`,
     });
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(100000, 100000), material);
@@ -87,6 +90,7 @@ export function createGrids(scene: THREE.Scene) {
         }
         const facing = Math.abs(direction.dot(grid.normal));
         grid.material.uniforms.spacing.value = spacing;
+        grid.material.uniforms.opacityScale.value = viewDisplay().grid / 0.4;
         grid.material.uniforms.strength.value =
           (grid.id === "work" ? 0.4 : 0.22) * Math.min(1, facing * 5);
         grid.material.uniforms.radius.value = height * 1.15;
