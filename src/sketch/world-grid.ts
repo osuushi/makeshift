@@ -48,6 +48,7 @@ export function createGrids(scene: THREE.Scene) {
         );
         const facing = Math.abs(direction.dot(grid.normal));
         grid.material.uniforms.spacing.value = spacing;
+        grid.material.uniforms.lineWidth.value = viewDisplay().gridLineWidth;
         grid.material.uniforms.opacityScale.value =
           (viewDisplay().grid / 0.4) * (grid.id === "work" ? 1 : visibility[grid.id].opacity);
         grid.material.uniforms.strength.value =

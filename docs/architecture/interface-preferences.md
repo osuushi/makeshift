@@ -17,31 +17,21 @@ at the top after dragging or resizing the window. These positions
 are local presentation preferences, independent of document files and Undo.
 
 Canonical XY/XZ/YZ references cover the viewport, including far from the origin.
-Fill and grid visibility share a smooth angular target based on the absolute dot
-product of the view direction and plane normal. Settings exposes the cutoff (0.45)
-and fade width (0.3), a minimum selectable fraction (0.15), an optional full-opacity
-jump above the preview ceiling (1 disables it), and smooth mixing time (120 ms).
-The angular endpoint is capped at 1; zero width gives a step. Head-on references
-reach their configured maximum except when cutoff is 1 (hide all). Reduced motion
-and zero time apply immediately. Both current and target visibility must meet the
-selectable minimum; positive visibility is always required. Hover cannot increase
-an otherwise non-selectable plane's visibility. This also applies to direct picking
-in Mirror/Projection/plane-reference tools. Tools and long-press alternatives remain.
+References render only colored grid lines; their invisible meshes remain picking targets.
+The “Usually one plane” behavior uses cutoff 0.45, fade width 0.3, selectable fraction
+0.15 and smooth mixing time 120 ms. These are tendencies rather than plane-count
+limits: an isometric view can show three. Settings keeps this simple behavior and
+exposes grid opacity, line thickness (0.5–3 pixels, default 1), colors and saved palettes.
+Grid colors default to XY #d4ae3a, XZ #55bb6e and YZ #b325c1; axes retain their colors.
+Thickness also applies to the active sketch grid. Zero grid opacity disables canvas
+reference picking. Explicit tool/keyboard plane entry remains available.
 
-“Usually one plane” (cutoff/width 0.45/0.3) and “Usually two planes” (0.25/0.4)
-are parameter presets, not hard plane-count limits. Isometric views can show three;
-the camera is always orthographic, so facing angle determines the count.
-Plane fill defaults to 15%, with independent grid opacity at 40%. Colors tint fill
-and grid lines; coordinate axes retain their usual colors. The active sketch has
-its own grid and hides canonical references. A zero fill remains selectable through
-visible grids, and vice versa; zeroing both disables canvas reference picking.
-
-Settings saves visibility, colors and named palettes under `makeshift.canonical-planes`,
-and opacity under `makeshift.view-display`. All are local to the editing device,
-outside drawing files and Undo. Reset plane visibility preserves named palettes;
-Reset viewport opacity restores only the two opacity values. Existing stored opacity
-choices are retained. Invalid stored fields use defaults and unavailable storage
-keeps window-local settings. Settings controls refresh after agent changes.
+Preferences live on the editing device, outside document files and Undo. On the first
+load of the grid-only presentation, previous visibility choices reset to the focused
+behavior and old default colors migrate; custom colors and named palettes survive.
+Reset plane grids restores visibility and colors while preserving palettes. Reset
+grid display restores opacity and thickness. Advanced fade parameters remain available
+through the settings API; the legacy planes opacity field always reads zero.
 
 `makeshift settings [JSON]` reads or validates and patches these preferences through
 the current renderer; typed view scripts expose `makeshift.settings(patch?)`.

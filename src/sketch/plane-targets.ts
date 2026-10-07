@@ -64,7 +64,7 @@ class PlaneTargetInteraction {
     return (
       target.mesh.visible &&
       canonicalPlaneSelectable(this.world, target.id) &&
-      (viewDisplay().planes > 0 || viewDisplay().grid > 0) &&
+      viewDisplay().grid > 0 &&
       (this.world.planePicker ? this.world.canNavigate() : this.world.canEnterSketch())
     );
   }

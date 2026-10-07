@@ -108,7 +108,7 @@ test("agent settings validate atomically and return independent snapshots", () =
   assert.throws(() => configurePreferences('{"canonicalPlanes":{"colors":{"XY":"red"}}}'));
   configurePreferences('{"canonicalPlanes":{"angleCutoff":0.5},"viewDisplay":{"planes":0.04}}');
   assert.equal(applicationPreferences().canonicalPlanes.angleCutoff, 0.5);
-  assert.equal(applicationPreferences().viewDisplay.planes, 0.04);
+  assert.equal(applicationPreferences().viewDisplay.planes, 0);
   configurePreferences(JSON.stringify(before));
 });
 
@@ -164,4 +164,14 @@ test("slow rendered frames continue fading instead of remaining permanently unse
   visibility.update(camera, settings, 10200);
   assert.equal(visibility.states.XY.opacity, 0);
   assert.equal(visibility.states.YZ.opacity, 1);
+});
+
+test("grid thickness validation is atomic and fill opacity stays disabled", () => {
+  const original = applicationPreferences();
+  configurePreferences('{"viewDisplay":{"gridLineWidth":2.5,"planes":0.9}}');
+  assert.equal(applicationPreferences().viewDisplay.gridLineWidth, 2.5);
+  assert.equal(applicationPreferences().viewDisplay.planes, 0);
+  assert.throws(() => configurePreferences('{"viewDisplay":{"grid":0.1,"gridLineWidth":0.4}}'));
+  assert.equal(applicationPreferences().viewDisplay.grid, original.viewDisplay.grid);
+  configurePreferences(JSON.stringify(original));
 });

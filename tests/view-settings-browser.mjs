@@ -5,22 +5,22 @@ import { withUiRuntimes } from "./ui-runtime.mjs";
 
 await withUiRuntimes(
   async (page, name) => {
+    await migrationRoute(page);
     await opacitySettingsRoute(page);
     const open = () => page.getByRole("button", { name: "Application settings" }).click();
     const done = () => page.getByRole("button", { name: "Done", exact: true }).click();
     const slider = (title) => page.getByRole("slider", { name: title, exact: true });
-    await page.getByRole("button", { name: "Reset viewport opacity" }).click();
-    await page.getByRole("combobox", { name: "Plane visibility preset" }).selectOption("choice");
-    assert.equal(await slider("Angle cutoff").inputValue(), "25");
-    assert.equal(await slider("Angular fade width").inputValue(), "40");
-    await slider("Minimum selectable visibility").press("End");
-    await slider("Maximum preview visibility").press("Home");
-    await slider("Fade time").press("Home");
+    await page.getByRole("button", { name: "Reset grid display" }).click();
+    assert.equal(await page.getByRole("combobox", { name: "Plane visibility preset" }).count(), 0);
+    assert.equal(await slider("Angle cutoff").count(), 0);
+    const thickness = slider("Grid line thickness");
+    assert.equal(await thickness.inputValue(), "1");
+    await thickness.press("End");
     const color = page.getByLabel("XY plane color", { exact: true });
     await color.fill("#123456");
     await color.dispatchEvent("input");
     await page.getByRole("textbox", { name: "Plane palette name" }).fill("My planes");
-    await page.getByRole("button", { name: "Save plane palette" }).click();
+    await page.getByRole("button", { name: "Save palette" }).click();
     await color.fill("#654321");
     await color.dispatchEvent("input");
     await page.getByRole("combobox", { name: "Saved plane palette" }).selectOption("My planes");
@@ -30,11 +30,9 @@ await withUiRuntimes(
     await settled(page);
     await open();
     assert.equal(await color.inputValue(), "#123456");
-    assert.equal(await slider("Minimum selectable visibility").inputValue(), "100");
-    assert.equal(await slider("Maximum preview visibility").inputValue(), "0");
-    assert.equal(await slider("Fade time").inputValue(), "0");
-    await page.getByRole("button", { name: "Reset plane visibility" }).click();
-    assert.equal(await color.inputValue(), "#8fa8c4");
+    assert.equal(await thickness.inputValue(), "3", "Grid thickness persists across reload");
+    await page.getByRole("button", { name: "Reset plane grids" }).click();
+    assert.equal(await color.inputValue(), "#d4ae3a");
     await page.getByRole("combobox", { name: "Saved plane palette" }).selectOption("My planes");
     assert.equal(await color.inputValue(), "#123456", "Reset preserves saved palettes");
     assert.equal(
@@ -47,23 +45,31 @@ await withUiRuntimes(
     const state = await inspect(page);
     const xy = state.planeTargets.find((p) => p.id === "XY");
     assert.equal(xy.color, "#123456");
-    assert.equal(xy.fillOpacity, 0.15);
+    assert.equal(xy.fillOpacity, 0);
     assert.equal(xy.selectable, true);
     assert.ok(
       state.planeTargets.filter((p) => p.id !== "XY").every((p) => !p.selectable && !p.visible),
     );
+    const thickGrid = await page.locator("canvas").screenshot();
     await open();
+    await thickness.press("Home");
+    await done();
+    await settled(page);
+    const thinGrid = await page.locator("canvas").screenshot();
+    assert.notDeepEqual(thickGrid, thinGrid, "Thickness changes rendered grid pixels");
+    await open();
+    await page.screenshot({ path: `.cache/sketch-review/${name}-grid-settings-dialog.png` });
     await page.getByRole("combobox", { name: "Saved plane palette" }).selectOption("My planes");
-    await page.getByRole("button", { name: "Delete plane palette" }).click();
+    await page.getByRole("button", { name: "Delete palette" }).click();
     assert.equal(
       await page.getByRole("combobox", { name: "Saved plane palette" }).locator("option").count(),
       1,
     );
-    await page.getByRole("button", { name: "Reset plane visibility" }).click();
+    await page.getByRole("button", { name: "Reset plane grids" }).click();
     await done();
     await page.screenshot({ path: `.cache/sketch-review/${name}-plane-visibility-settings.png` });
     console.log(
-      `${name}: real Settings controls, renderer, thresholds, palettes, reload and reset passed`,
+      `${name}: real Settings controls, renderer, grid thickness, palettes, reload and reset passed`,
     );
   },
   { defaults: ["chromium", "webkit"] },
@@ -76,9 +82,8 @@ async function opacitySettingsRoute(page) {
   const done = () => page.getByRole("button", { name: "Done", exact: true }).click();
   const slider = (title) => page.getByRole("slider", { name: title, exact: true });
   await open();
-  assert.equal(await slider("Canonical planes opacity").inputValue(), "15");
+  assert.equal(await slider("Canonical planes opacity").count(), 0);
   assert.equal(await slider("Grid opacity").inputValue(), "40");
-  await slider("Canonical planes opacity").press("Home");
   await slider("Grid opacity").press("End");
   await done();
   await settled(page);
@@ -92,7 +97,6 @@ async function opacitySettingsRoute(page) {
   await page.reload();
   await settled(page);
   await open();
-  assert.equal(await slider("Canonical planes opacity").inputValue(), "0");
   assert.equal(await slider("Grid opacity").inputValue(), "100");
   await slider("Grid opacity").press("Home");
   await done();
@@ -102,4 +106,33 @@ async function opacitySettingsRoute(page) {
     "Invisible fill and grid never intercept input",
   );
   await open();
+}
+
+async function migrationRoute(page) {
+  await page.evaluate(() => {
+    localStorage.removeItem("makeshift.plane-grids-version");
+    localStorage.setItem(
+      "makeshift.canonical-planes",
+      JSON.stringify({
+        angleCutoff: 0.25,
+        fadeWidth: 0.4,
+        colors: { XY: "#8fa8c4", XZ: "#123456", YZ: "#c2a27b" },
+        palettes: { Kept: { XY: "#123456", XZ: "#123456", YZ: "#123456" } },
+      }),
+    );
+  });
+  await page.reload();
+  await settled(page);
+  await page.getByRole("button", { name: "Application settings" }).click();
+  assert.equal(await page.getByLabel("XY plane color", { exact: true }).inputValue(), "#d4ae3a");
+  assert.equal(await page.getByLabel("XZ plane color", { exact: true }).inputValue(), "#123456");
+  await page.getByRole("combobox", { name: "Saved plane palette" }).selectOption("Kept");
+  await page.getByRole("button", { name: "Delete palette" }).click();
+  await page.getByRole("button", { name: "Reset plane grids" }).click();
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await orient(page, [0.9, 0.4, Math.sqrt(0.03)]);
+  assert.deepEqual(
+    (await inspect(page)).planeTargets.filter((p) => p.selectable).map((p) => p.id),
+    ["YZ"],
+  );
 }

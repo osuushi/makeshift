@@ -66,17 +66,14 @@ try {
     "settings",
     JSON.stringify({
       canonicalPlanes: { angleCutoff: 0.6, fadeWidth: 0.2 },
-      viewDisplay: { planes: 0.04 },
+      viewDisplay: { gridLineWidth: 2 },
     }),
   );
   assert.equal(changed.canonicalPlanes.angleCutoff, 0.6);
+  assert.equal(await page.getByRole("slider", { name: "Angle cutoff", exact: true }).count(), 0);
   assert.equal(
-    await page.getByRole("slider", { name: "Angle cutoff", exact: true }).inputValue(),
-    "60",
-  );
-  assert.equal(
-    await page.getByRole("slider", { name: "Canonical planes opacity", exact: true }).inputValue(),
-    "4",
+    await page.getByRole("slider", { name: "Grid line thickness", exact: true }).inputValue(),
+    "2",
   );
   await assert.rejects(
     () => query("settings", '{"viewDisplay":{"grid":0.1},"canonicalPlanes":{"fadeWidth":-1}}'),

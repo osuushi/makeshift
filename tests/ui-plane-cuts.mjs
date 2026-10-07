@@ -154,7 +154,7 @@ async function faceSubset(page, original, name) {
   assert.equal(s.document.bodies[0].faces.length, 8, "Deselect accepts preview");
   assert.equal(s.modelingSelection.length, 0);
   await page.getByRole("button", { name: "Application settings" }).click();
-  await page.getByRole("button", { name: "Reset viewport opacity" }).click();
+  await page.getByRole("button", { name: "Reset grid display" }).click();
   await page.getByRole("button", { name: "Done", exact: true }).click();
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);
@@ -165,7 +165,6 @@ async function hideCanonicalReferences(page) {
   // Full-view references occupy the old blank corner. Hide them to exercise
   // the actual empty-canvas deselection/acceptance route.
   await page.getByRole("button", { name: "Application settings" }).click();
-  await page.getByRole("slider", { name: "Canonical planes opacity", exact: true }).press("Home");
   await page.getByRole("slider", { name: "Grid opacity", exact: true }).press("Home");
   await page.getByRole("button", { name: "Done", exact: true }).click();
   await settled(page);

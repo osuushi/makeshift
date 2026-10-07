@@ -10,6 +10,7 @@ export function gridMaterial(id: PlaneId | "work"): THREE.ShaderMaterial {
     uniforms: {
       extent: { value: 1 },
       spacing: { value: 1 },
+      lineWidth: { value: 1 },
       strength: { value: 0.2 },
       opacityScale: { value: 1 },
       radius: { value: 160 },
@@ -22,12 +23,12 @@ export function gridMaterial(id: PlaneId | "work"): THREE.ShaderMaterial {
         void main() { coordinate = position.xy * extent + center;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
     fragmentShader: `varying vec2 coordinate;
-        uniform float spacing; uniform float strength; uniform float radius;
+        uniform float spacing; uniform float lineWidth; uniform float strength; uniform float radius;
         uniform float opacityScale;
         uniform vec2 center; uniform vec3 gridColor; uniform vec3 uColor; uniform vec3 vColor;
         float grid(float stepSize) {
           vec2 p = coordinate / stepSize;
-          vec2 width = max(fwidth(p), vec2(0.00001));
+          vec2 width = max(fwidth(p) * lineWidth, vec2(0.00001));
           vec2 d = abs(fract(p - 0.5) - 0.5) / width;
           return 1.0 - min(min(d.x, d.y), 1.0);
         }

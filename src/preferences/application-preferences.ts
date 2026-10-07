@@ -21,8 +21,12 @@ export function configurePreferences(json: string): void {
   const patch = JSON.parse(json) as ApplicationPreferencesPatch;
   object(patch, ["canonicalPlanes", "viewDisplay"]);
   if (patch.viewDisplay !== undefined) {
-    object(patch.viewDisplay, ["planes", "grid"]);
-    for (const value of Object.values(patch.viewDisplay)) number(value, 1);
+    object(patch.viewDisplay, ["planes", "grid", "gridLineWidth"]);
+    for (const [field, value] of Object.entries(patch.viewDisplay)) {
+      number(value, field === "gridLineWidth" ? 3 : 1);
+      if (field === "gridLineWidth" && value < 0.5)
+        throw new Error("Grid line thickness must be at least 0.5 pixels.");
+    }
   }
   if (patch.canonicalPlanes !== undefined) {
     const planes = patch.canonicalPlanes;
