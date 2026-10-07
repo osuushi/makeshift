@@ -1,3 +1,4 @@
+import { placeFloatingPanel } from "../preferences/panel-placement.js";
 import { WidgetFreeze } from "./widget-freeze.js";
 import {
   fitFrozenWidgets,
@@ -93,6 +94,14 @@ export class WidgetClearance {
 
   fit(elements: HTMLElement[], baseline = new Map<HTMLElement, { x: number; y: number }>()): void {
     if (this.root.hidden) return;
+    const { viewport, obstacles } = widgetViewport(this.root);
+    for (const element of elements) this.constrain(element, viewport);
+    const pinned = elements.filter(
+      (element) =>
+        !element.hidden && element.getClientRects().length && placeFloatingPanel(element),
+    );
+    for (const element of pinned) this.targets.delete(element);
+    elements = elements.filter((element) => !pinned.includes(element));
     const visible = elements.filter((element) => {
       const rect = element.getBoundingClientRect();
       return rect.width > 0 && rect.height > 0;
@@ -100,8 +109,7 @@ export class WidgetClearance {
     // Parameter/action cards have priority in a small viewport; glyphs retain
     // their typed fallback when the available space cannot hold both.
     visible.sort((a, b) => Number(a.matches("button")) - Number(b.matches("button")));
-    const { viewport, obstacles } = widgetViewport(this.root);
-    for (const element of visible) this.constrain(element, viewport);
+    obstacles.push(...pinned.map(measuredControlRect));
     const frozen = this.freeze.active;
     const held = this.freeze.heldControls(visible, obstacles, viewport);
     const measure = () => {

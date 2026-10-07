@@ -8,6 +8,13 @@ outside accepted geometry, document files and Undo. Invalid stored values fall b
 to 100%; unavailable browser storage keeps the preference for the current window.
 Controls and agent launch configuration retain their existing separate settings.
 
+Floating tool parameter cards have a dimpled left grip. Dragging it (or focusing
+it and using arrow keys) stores a screen position per card type under
+`makeshift.panel-positions`. Manually placed cards keep that position through
+geometry and camera updates and restore it across reloads, including Cmd-R.
+Viewport fitting keeps the card reachable after a window resize. These positions
+are local presentation preferences, independent of document files and Undo.
+
 Decorator previews use the same Settings dialog. Detailed is the default; Color only
 marks current attached faces and does not schedule preview workers. Thread, gear,
 knurling and custom decorations have separate color and 20–100% opacity choices,

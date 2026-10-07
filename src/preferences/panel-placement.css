@@ -1,0 +1,22 @@
+.draggable-parameter-panel.draggable-parameter-panel {
+  padding-left: 24px;
+}
+.parameter-panel-grip {
+  position: absolute;
+  left: 2px;
+  top: 3px;
+  bottom: 3px;
+  width: 17px;
+  border-radius: 5px;
+  background: radial-gradient(circle, #8d9aab 1px, transparent 1.5px) center / 6px 6px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  pointer-events: auto;
+}
+.parameter-panel-grip:active {
+  cursor: grabbing;
+}
+.parameter-panel-grip:focus-visible {
+  outline: 2px solid #3981ca;
+}
