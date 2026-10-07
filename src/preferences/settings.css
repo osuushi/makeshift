@@ -88,3 +88,26 @@
 .decorator-display-row output {
   width: 36px;
 }
+.view-display-settings {
+  border-top: 1px solid #d6dfe9;
+  margin-top: 20px;
+  padding-top: 12px;
+}
+.view-display-settings h3 {
+  font-size: 15px;
+}
+.view-display-settings label {
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.view-display-settings label > span {
+  flex: 1;
+}
+.view-display-settings input {
+  width: 140px;
+  max-width: 100%;
+}
+.view-display-settings output {
+  width: 48px;
+  text-align: right;
+}
