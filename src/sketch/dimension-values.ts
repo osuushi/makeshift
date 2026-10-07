@@ -120,7 +120,8 @@ export async function changeDimension(
 ): Promise<void> {
   if (
     !Number.isFinite(value) ||
-    (!["angle", "cornerAngle", "translateX", "translateY"].includes(quantity) && value <= 0)
+    (!["angle", "cornerAngle", "translateX", "translateY"].includes(quantity) &&
+      (value < 0 || (value === 0 && quantity !== "radius")))
   )
     throw new Error("Enter a valid dimension");
   if (editor.isDragging) {

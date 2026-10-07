@@ -2,8 +2,8 @@ import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { distanceField, positionAxialPanel, updateAxialArrow } from "./axial-widget.js";
-import type { Face } from "./body.js";
 import { projectedAxis } from "./extrude-axis.js";
+import type { FaceFinish } from "./face-offset-targets.js";
 import type { OffsetQuantity } from "./offset-quantity.js";
 import { WidgetClearance } from "./widget-clearance.js";
 
@@ -50,7 +50,7 @@ export class FaceOffsetWidget {
     distance: number,
     quantity: OffsetQuantity,
     valid: boolean,
-    blend: Face["blend"],
+    blend: FaceFinish | null,
     invalid: boolean,
   ) {
     const center = axis.center.map(
@@ -60,11 +60,16 @@ export class FaceOffsetWidget {
       direction = projectedAxis(editor, center, axis.normal);
     this.root.hidden = false;
     positionAxialPanel(this.root, this.options, p);
-    this.handle.setAttribute("aria-label", blend ? "Resize fillet" : "Offset faces");
+    this.handle.setAttribute(
+      "aria-label",
+      blend ? (blend.chamfer ? "Resize chamfer" : "Resize fillet") : "Offset faces",
+    );
     this.handle.title = direction.endOn
       ? "Offset faces · looking along axis: drag up/down, or click to type"
       : blend
-        ? "Resize fillet · drag outward to add material, or click to enter radius"
+        ? blend.chamfer
+          ? "Resize chamfer · drag or click to enter distance"
+          : "Resize fillet · drag outward to add material, or click to enter radius"
         : "Offset faces · drag along arrow or click to type (positive adds material)";
     updateAxialArrow(
       this.handle,
@@ -90,7 +95,9 @@ export class FaceOffsetWidget {
     this.input.setAttribute(
       "aria-label",
       blend
-        ? "Fillet face radius"
+        ? blend.chamfer
+          ? "Chamfer face distance"
+          : "Fillet face radius"
         : quantity.mode === "thickness"
           ? "Face thickness"
           : quantity.mode === "radius"
@@ -98,7 +105,9 @@ export class FaceOffsetWidget {
             : "Face offset distance",
     );
     this.input.title = blend
-      ? "Existing fillet radius (mm)"
+      ? blend.chamfer
+        ? "Existing chamfer setback (mm)"
+        : "Existing fillet radius (mm)"
       : quantity.mode === "thickness"
         ? "Absolute distance to the reference wall (mm)"
         : quantity.mode === "radius"

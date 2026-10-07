@@ -143,7 +143,10 @@ export class FilletControls {
     const session = this.session;
     if (!session || this.closing) return;
     try {
-      const result = createFillet(session.sketch, session.corner, radius, session.id);
+      const result =
+        radius === 0
+          ? { sketch: session.sketch }
+          : createFillet(session.sketch, session.corner, radius, session.id);
       session.valid = true;
       session.radius = radius;
       session.solve.update(result.sketch);
@@ -198,7 +201,7 @@ export class FilletControls {
       this.editor.refresh();
       return false;
     }
-    this.editor.select([s.id]);
+    this.editor.select(s.radius === 0 ? [s.corner.a.id, s.corner.b.id] : [s.id]);
     this.finish();
     return true;
   }

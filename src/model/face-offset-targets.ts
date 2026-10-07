@@ -95,14 +95,28 @@ export function expandFaceTargets(
     const face = editor.store.data.bodies
       ?.find((b) => b.id === target.body)
       ?.faces.find((f) => f.id === target.face);
-    for (const id of (blend ? face?.blend?.faces : face?.offsetFaces) ?? [])
+    for (const id of (blend ? (face?.blend?.faces ?? face?.chamfer?.faces) : face?.offsetFaces) ??
+      [])
       if (!result.some((t) => t.body === target.body && t.face === id))
         result.push({ body: target.body, face: id });
   }
   return result;
 }
 
-export function sharedBlend(faces: readonly Face[]): Face["blend"] {
+export type FaceFinish = NonNullable<Face["blend"]> & { chamfer?: boolean; distanceScale?: number };
+export function sharedBlend(faces: readonly Face[]): FaceFinish | null {
+  const chamfer = faces[0]?.chamfer;
+  if (
+    chamfer &&
+    faces.every((f) => f.chamfer && Math.abs(f.chamfer.distance - chamfer.distance) < 1e-6)
+  )
+    return {
+      radius: chamfer.distance,
+      outward: chamfer.outward,
+      faces: chamfer.faces,
+      chamfer: true,
+      distanceScale: chamfer.distanceScale,
+    };
   const first = faces[0]?.blend;
   return first && faces.every((f) => f.blend && Math.abs(f.blend.radius - first.radius) < 1e-6)
     ? first

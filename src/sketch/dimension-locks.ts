@@ -33,7 +33,10 @@ export function updateDimensionLock(
   const existing = dimensionLock(editor, quantity);
   if (!existing) return sketch;
   const curve = sketch.curves.find((c) => c.id === existing.curve);
-  if (!curve) throw new Error("Locked curve no longer exists");
+  if (!curve) {
+    if (!sketch.constraints.some((c) => c.id === existing.id)) return sketch;
+    throw new Error("Locked curve no longer exists");
+  }
   return {
     ...sketch,
     constraints: sketch.constraints.map((c) =>

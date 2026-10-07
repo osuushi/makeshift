@@ -19,6 +19,7 @@ target_link_options(makeshift-kernel PRIVATE "$<$<PLATFORM_ID:Linux>:-Wl,--disab
 target_include_directories(makeshift-kernel SYSTEM PRIVATE ${OpenCASCADE_INCLUDE_DIR} ${BOOST_INCLUDE_DIR})
 target_sources(makeshift-kernel PRIVATE boundary-move.cpp boundary-selection.cpp boundary-edges.cpp boundary-faces.cpp boundary-cylinder.cpp boundary-filling.cpp boundary-polynomial.cpp)
 target_sources(makeshift-kernel PRIVATE offset-collapse.cpp)
+target_sources(makeshift-kernel PRIVATE chamfer-recognition.cpp)
 target_sources(makeshift-kernel PRIVATE offset-thickness.cpp)
 target_sources(makeshift-kernel PRIVATE spherical-face-offset.cpp)
 target_sources(makeshift-kernel PRIVATE offset-geometry.cpp offset-boundaries.cpp offset-result.cpp)

@@ -39,8 +39,14 @@ Founder-approved behavior for the next sketch increments:
   rectangle-specific representation defines the result.
   An arc with this unambiguous relationship pattern offers fillet-style radius
   editing after reselection; there is no separate fillet shape or duplicate center.
-  Removing the relationships restores ordinary arc editing. Radius drags use the
-  grid's current spacing when grid snapping is enabled. The validated rewrite accepts on drag release or numeric Enter; a bottom notice
+  Removing the relationships restores ordinary arc editing. The existing support
+  intersection defines the zero-radius hard corner. Dragging to zero
+  or entering zero extends the surviving supports to that corner, removes the
+  fillet arc and its relationships, and joins the recovered endpoints. A radius
+  lock on the removed arc disappears with it; Undo restores the entire fillet.
+  Zero during initial corner rounding keeps the original corner. Consumed supports
+  have no ancestry to recover; their resulting arc retains ordinary arc editing.
+  Radius drags use the grid's current spacing when grid snapping is enabled. The validated rewrite accepts on drag release or numeric Enter; a bottom notice
   reports removed relationships and Undo restores them. Surviving support directions and other branches
   of a point-link hub remain intact. Escape or clicking away cancels the draft.
   Multiple relationships added by one rewrite do not use the first-added pair's
