@@ -145,6 +145,7 @@ async function faceSubset(page, original, name) {
   assert.equal((await inspect(page)).modelingSelection.length, 2);
   assert.equal(await page.locator(".plane-cut-widget").isVisible(), false);
   assert.deepEqual((await inspect(page)).bodyRendering.planeCutEdges, []);
+  await hideCanonicalReferences(page);
   await startCut(page, "Imprint");
   await page.getByRole("button", { name: "Use Plane 1", exact: true }).first().click();
   await settled(page);
@@ -152,10 +153,22 @@ async function faceSubset(page, original, name) {
   s = await inspect(page);
   assert.equal(s.document.bodies[0].faces.length, 8, "Deselect accepts preview");
   assert.equal(s.modelingSelection.length, 0);
+  await page.getByRole("button", { name: "Application settings" }).click();
+  await page.getByRole("button", { name: "Reset viewport opacity" }).click();
+  await page.getByRole("button", { name: "Done", exact: true }).click();
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);
   await chooseTool(page, "redo", "redo");
   assert.equal((await inspect(page)).document.bodies[0].faces.length, 8);
+}
+async function hideCanonicalReferences(page) {
+  // Full-view references occupy the old blank corner. Hide them to exercise
+  // the actual empty-canvas deselection/acceptance route.
+  await page.getByRole("button", { name: "Application settings" }).click();
+  await page.getByRole("slider", { name: "Canonical planes opacity", exact: true }).press("Home");
+  await page.getByRole("slider", { name: "Grid opacity", exact: true }).press("Home");
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await settled(page);
 }
 async function splitBody(page, name) {
   await settled(page);
