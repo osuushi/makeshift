@@ -95,6 +95,8 @@ export class WidgetClearance {
   fit(elements: HTMLElement[], baseline = new Map<HTMLElement, { x: number; y: number }>()): void {
     if (this.root.hidden) return;
     const { viewport, obstacles } = widgetViewport(this.root);
+    for (const element of elements)
+      if (!element.hidden && element.getClientRects().length) placeFloatingPanel(element);
     for (const element of elements) this.constrain(element, viewport);
     const pinned = elements.filter(
       (element) =>
