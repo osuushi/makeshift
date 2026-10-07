@@ -40,6 +40,10 @@ export class BodyEdgeFinishWidget {
       handle.title = `${name} edges · drag with the surface to increase size, or click to type`;
       handle.setAttribute("aria-label", `${name} edges`);
       handle.className = "edge-size-handle orientable-handle";
+      const corner = mode === "fillet" ? "M3 21V11a8 8 0 0 1 8-8h10" : "M3 21V13L13 3h8";
+      // Keep the pressed SVG connected through preview and focus refreshes.
+      this.modeButtons[mode].innerHTML =
+        `<svg viewBox="0 0 24 24"><path d="${corner}"/><path d="M3 13V3h10" stroke-dasharray="2 2" opacity=".35"/></svg>`;
     }
     this.input.type = "text";
     this.input.inputMode = "decimal";
@@ -117,8 +121,6 @@ export class BodyEdgeFinishWidget {
     handle.dataset.directionY = String(direction?.y ?? 0);
     for (const kind of ["fillet", "chamfer"] as const) {
       const button = this.modeButtons[kind];
-      const corner = kind === "fillet" ? "M3 21V11a8 8 0 0 1 8-8h10" : "M3 21V13L13 3h8";
-      button.innerHTML = `<svg viewBox="0 0 24 24"><path d="${corner}"/><path d="M3 13V3h10" stroke-dasharray="2 2" opacity=".35"/></svg>`;
       button.title = kind === mode ? `${name} selected · click to edit size` : `Switch to ${kind}`;
       button.setAttribute("aria-label", button.title);
       button.setAttribute("aria-pressed", String(kind === mode));
