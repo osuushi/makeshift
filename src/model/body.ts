@@ -13,7 +13,17 @@ export interface Face {
   readonly offsetFaces?: readonly string[];
   readonly offsetHandle?: { center: Vector; normal: Vector } | null;
   /** Recognized current-geometry blend and its required tangent patches. */
-  readonly blend?: { radius: number; outward: 1 | -1; faces: readonly string[] } | null;
+  readonly blend?: {
+    radius: number;
+    outward: 1 | -1;
+    faces: readonly string[];
+  } | null;
+  readonly chamfer?: {
+    distance: number;
+    distanceScale: number;
+    outward: 1 | -1;
+    faces: readonly string[];
+  } | null;
   /** Derived analytic measurement; other surface classes remain ordinary faces. */
   readonly cylinder?: { origin: Vector; axis: Vector; radius: number; outward: 1 | -1 } | null;
   readonly sphere?: { radius: number; outward: 1 | -1 } | null;
@@ -95,6 +105,8 @@ export interface BodyEdgeFinish {
 export interface BodyFaceOffset {
   /** When present, rebuild a recognized blend at this radius instead of normal offset. */
   radius?: number;
+  /** Radius represents equal setback distance when rebuilding a chamfer. */
+  chamfer?: boolean;
   faces: { body: string; face: string }[];
   distance: number;
 }

@@ -2,9 +2,10 @@ import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import { AxialDrag } from "./axial-drag.js";
-import type { BodyFaceOffset, Face } from "./body.js";
+import type { BodyFaceOffset } from "./body.js";
 import {
   expandFaceTargets,
+  type FaceFinish,
   offsetHandle,
   offsetTargets,
   sharedBlend,
@@ -23,7 +24,7 @@ export class FaceOffsetControls {
   private axis: ReturnType<typeof offsetHandle> | null = null;
   private placement = new OffsetPlacement();
   private quantity = new OffsetQuantity();
-  private blend: Face["blend"] = null;
+  private blend: FaceFinish | null = null;
   private distance = 0;
   private valid = false;
   private invalid = false;
@@ -144,9 +145,7 @@ export class FaceOffsetControls {
         await this.previews.settle();
       },
     );
-    this.editor.notice = this.blend
-      ? "Resize fillet · drag outward to add material · enter radius · Enter to accept · Escape to cancel"
-      : "Offset faces · positive adds material · Enter to accept · Escape to cancel";
+    this.editor.notice = this.quantity.notice;
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
     this.editor.refresh();
@@ -158,6 +157,7 @@ export class FaceOffsetControls {
     this.widget.input.select();
   }
   private queue(distance: number): void {
+    distance = this.quantity.clamp(distance);
     if (this.lease?.phase !== "editing" || this.previews.latest?.distance === distance) return;
     this.invalid = !Number.isFinite(distance);
     this.distance = distance;
@@ -169,13 +169,11 @@ export class FaceOffsetControls {
       this.editor.refresh();
       return;
     }
-    this.editor.notice = this.blend
-      ? "Resize fillet · drag outward to add material · enter radius · Enter to accept · Escape to cancel"
-      : "Offset faces · positive adds material · Enter to accept · Escape to cancel";
+    this.editor.notice = this.quantity.notice;
     this.previews.enqueue({
       faces: this.faces,
       distance,
-      ...(this.blend ? { radius: this.blend.radius - distance * this.blend.outward } : {}),
+      ...this.quantity.finishInput(distance),
     });
     this.editor.refresh();
   }
@@ -216,6 +214,12 @@ export class FaceOffsetControls {
       lease.phase = "editing";
       this.editor.refresh();
       return false;
+    }
+    if (!this.editor.modeling.targets.length) {
+      const ids = new Set(this.faces.map((face) => face.body));
+      this.editor.modeling.targets = (this.editor.store.data.bodies ?? [])
+        .filter((body) => ids.has(body.id))
+        .map((body) => ({ kind: "body", body: body.id }));
     }
     this.end(lease);
     return success;

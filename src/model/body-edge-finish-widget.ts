@@ -143,7 +143,7 @@ export class BodyEdgeFinishWidget {
     this.root.style.top = `${point.y}px`;
     this.panel.style.left = `${Math.max(12, Math.min(innerWidth - 170 - this.panel.offsetWidth, point.x + 55)) - point.x}px`;
     this.panel.style.top = `${Math.max(65, Math.min(innerHeight - this.panel.offsetHeight - 12, point.y + 45)) - point.y}px`;
-    this.accept.disabled = !active || !valid || size === 0 || busy;
+    this.accept.disabled = !active || !valid || busy;
     this.input.setAttribute("aria-invalid", String(active && invalid && !valid && !busy));
     if (!numericFocus(this.input))
       this.input.value = Number.isFinite(size) ? String(Number(size.toPrecision(4))) : "";

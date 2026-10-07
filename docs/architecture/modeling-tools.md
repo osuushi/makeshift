@@ -103,7 +103,9 @@ switches to Chamfer and back, including recalculating an active candidate.
 The edge-size control uses a capsule arrow with a rounded fillet or beveled chamfer contour;
 the compact panel uses distinct corner icons in fixed Fillet, Chamfer order with
 an active highlight, followed by accept and cancel. The size
-field stays visible above the buttons, including at zero; acceptance is
+field stays visible above the buttons, including at zero; a valid zero preview can
+be accepted and restores the original hard edges when revising a finish operation.
+Acceptance is
 disabled without a valid nonzero change. Cleanup is a separate standalone tool. Unfocused sizes display four significant
 digits without reducing model precision. Tab/Shift+Tab cycles visible numeric
 fields in both modeling and sketch controls. The operation anchor stays at the nearest
@@ -139,7 +141,15 @@ sets the absolute cylindrical/spherical radius and defaults when no thickness re
 exists. Offset is the signed material-outward change. Multiple radius targets must
 share a radius and orientation response. Positive radii/thicknesses are required.
 Faces with neither measurement offer Offset only. Recognized fillet
-resizing retains its radius control. Parallel non-concentric cylinders do not qualify.
+resizing retains its radius control. A zero fillet radius heals the complete
+recognized blend group back to its supporting edges. Equal-setback chamfers between
+planar supports, and 45-degree chamfers between a coaxial cylinder and its cap,
+offer a chamfer distance control derived from current geometry. It rebuilds the
+chamfer at a positive distance and heals it at zero. Normal drag travel converts
+to setback distance using the supporting angle; dragging past zero stops at the
+hard edge. Failed healing rejects without changing accepted geometry. Removal
+retains body identity, selects affected bodies, and supports Cancel and Undo.
+Unrecognized chamfers retain ordinary face Offset. Parallel non-concentric cylinders do not qualify.
 The kernel sorts matching supports by normal separation, then checks exact trimmed
 ray intersections from 11×11 parameter grids on both faces, excluding intervening faces.
 Sampling the reference as well as the selected face recovers small recessed patches

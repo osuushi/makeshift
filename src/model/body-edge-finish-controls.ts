@@ -217,10 +217,6 @@ export class BodyEdgeFinishControls {
       return true;
     }
     if (!this.valid) return false;
-    if (this.size === 0) {
-      await this.cancel();
-      return true;
-    }
     if (!lease.close()) return false;
     const ids = new Set(this.edges.map((e) => e.body));
     const success = await this.editor.accept();

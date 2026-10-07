@@ -1,4 +1,5 @@
 import { arcCircle } from "./arc-geometry.js";
+import { constraintCurves } from "./constraint-geometry.js";
 import { type Arc, type Constraint, newId, type Sketch } from "./document.js";
 import { consumedFilletConstraints } from "./fillet-consumption.js";
 import { type FilletCorner, filletCorner, filletGeometry } from "./fillet-geometry.js";
@@ -91,6 +92,23 @@ export function existingFillet(sketch: Sketch, arc: Arc): FilletCorner | null {
 export function editFilletRadius(sketch: Sketch, arc: Arc, radius: number): Sketch | null {
   const corner = existingFillet(sketch, arc);
   if (!corner) return null;
+  if (radius === 0) {
+    const constraints = sketch.constraints.filter((c) => !constraintCurves(c).includes(arc.id));
+    constraints.push({
+      id: newId(),
+      kind: "coincident",
+      a: { curve: corner.a.id, end: corner.aEnd },
+      b: { curve: corner.b.id, end: corner.bEnd },
+    });
+    return {
+      ...sketch,
+      curves: sketch.curves
+        .filter((c) => c.id !== arc.id)
+        .map((c) => (c.id === corner.a.id ? corner.a : c.id === corner.b.id ? corner.b : c)),
+      groups: sketch.groups.filter((g) => !g.members.includes(arc.id)),
+      constraints,
+    };
+  }
   const geometry = filletGeometry(sketch.curves, corner, radius, arc.id);
   const changed = { ...sketch, curves: geometry.curves };
   return {

@@ -58,7 +58,7 @@ void analyticSurfaces(std::ostream& out, const TopoDS_Face& shape, const BRepAda
         out << ",\"outward\":" << ((shape.Orientation() == TopAbs_REVERSED ? -1 : 1) * (sphere.Direct() ? 1 : -1)) << '}';
     } else out << "null";
 }
-void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMapOfShape& edges, const std::vector<BlendFace>& blends, const TopTools_IndexedMapOfShape& faces, const TopoDS_Shape& body) {
+void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMapOfShape& edges, const std::vector<BlendFace>& blends, const std::vector<BlendFace>& chamfers, const TopTools_IndexedMapOfShape& faces, const TopoDS_Shape& body) {
     out << ",\"edgeIndexes\":[";
     bool first = true;
     for (TopExp_Explorer e(shape, TopAbs_EDGE); e.More(); e.Next()) {
@@ -96,6 +96,10 @@ void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMap
         for (size_t i=0; i<group.size(); ++i) { if (i) out << ','; out << faces.FindIndex(group[i])-1; }
         out << "]}";
     }
+    out << ",\"chamfer\":";
+    const auto chamfer = std::find_if(chamfers.begin(), chamfers.end(), [&](const auto& c) { return c.face.IsSame(shape); });
+    if (chamfer == chamfers.end()) out << "null";
+    else out << "{\"distance\":" << chamfer->radius << ",\"distanceScale\":" << chamfer->distanceScale << ",\"outward\":" << chamfer->outward << ",\"faceIndexes\":[" << faces.FindIndex(shape)-1 << "]}";
     out << ",\"offsetHandle\":";
     if (surface.GetType() == GeomAbs_Cone || surface.GetType() == GeomAbs_Sphere || blend != blends.end()) {
         gp_Pnt center; gp_Vec du, dv;
@@ -181,6 +185,7 @@ void present(std::ostream& out, const Result& result, double deflection) {
     TopTools_IndexedMapOfShape edges; TopExp::MapShapes(result.shape, TopAbs_EDGE, edges);
     TopTools_IndexedMapOfShape faces; TopExp::MapShapes(result.shape, TopAbs_FACE, faces);
     const auto blends = recognizeBlends(result.shape);
+    const auto chamfers = recognizeChamfers(result.shape);
     timing.phase("properties-and-blends");
     for (const auto type : {TopAbs_FACE, TopAbs_EDGE}) {
         out << (type == TopAbs_FACE ? ",\"faces\":[" : ",\"edges\":[");
@@ -194,7 +199,7 @@ void present(std::ostream& out, const Result& result, double deflection) {
                     [&](const TopoDS_Face& face) { return face.IsSame(shapes(i)); });
                 out << ",\"offsetSelected\":" << (selected ? "true" : "false");
             }
-            if (type == TopAbs_FACE) face(out, TopoDS::Face(shapes(i)), edges, blends, faces, result.shape); else edge(out, TopoDS::Edge(shapes(i)));
+            if (type == TopAbs_FACE) face(out, TopoDS::Face(shapes(i)), edges, blends, chamfers, faces, result.shape); else edge(out, TopoDS::Edge(shapes(i)));
             out << '}';
         }
         out << ']';

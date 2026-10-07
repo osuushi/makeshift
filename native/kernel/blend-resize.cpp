@@ -1,8 +1,10 @@
 #include "blends.h"
 #include <BRepAlgoAPI_Defeaturing.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
+#include <BRepFilletAPI_MakeChamfer.hxx>
 #include <TopExp.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
+#include <TopTools_MapOfShape.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopoDS.hxx>
@@ -26,29 +28,21 @@ std::vector<SourceEntity> trace(Operation& operation, const std::vector<SourceEn
     return result;
 }
 struct Pair { TopoDS_Face a, b; std::string origin; };
-Result resize(const Operand& body, const std::vector<TopoDS_Face>& seeds, double radius) {
-    const auto blends = recognizeBlends(body.shape);
-    const auto selected = blendGroup(blends, seeds);
-    std::vector<Pair> pairs;
-    for (const auto& blend : blends) {
-        if (!contains(selected, blend.face)) continue;
-        std::vector<TopoDS_Face> supports;
-        for (const auto& face : blend.supports) if (!contains(selected, face)) supports.push_back(face);
-        const auto origin = std::find_if(body.entities.begin(), body.entities.end(), [&](const SourceEntity& e) { return e.shape.IsSame(blend.face); });
-        if (supports.size() == 2 && origin != body.entities.end()) pairs.push_back({supports[0], supports[1], origin->id});
+Result finishResult(const Operand& body, const std::vector<TopoDS_Face>& selected,
+                    const TopoDS_Shape& shape, const std::vector<SourceEntity>& origins) {
+    for (const auto& original : body.entities) {
+        if (original.shape.ShapeType() != TopAbs_FACE || contains(selected, original.shape)) continue;
+        for (const auto& current : origins)
+            if (current.id == original.id && current.shape.ShapeType() == TopAbs_FACE)
+                checkUnselectedSupport(TopoDS::Face(original.shape), TopoDS::Face(current.shape));
     }
-    if (pairs.empty()) throw std::runtime_error("Could not resolve this fillet's supporting faces");
-    BRepAlgoAPI_Defeaturing remove;
-    remove.SetShape(body.shape);
-    remove.SetToFillHistory(true);
-    for (const auto& face : selected) remove.AddFaceToRemove(face);
-    remove.Build();
-    if (!remove.IsDone() || remove.HasErrors()) throw std::runtime_error("Could not recover the fillet's supporting edges");
-    validate(remove.Shape());
-    TopTools_IndexedMapOfShape remaining;
-    TopExp::MapShapes(remove.Shape(), TopAbs_FACE, remaining);
-    for (const auto& face : selected) if (remaining.Contains(face)) throw std::runtime_error("Could not remove this fillet for resizing");
-    auto origins = trace(remove, body.entities);
+    std::vector<Result> results;
+    solids(results, shape, origins, {body.id});
+    if (results.size() != 1) throw std::runtime_error("Edge finish edit must leave one valid solid");
+    return results[0];
+}
+std::vector<SourceEntity> recoveredEdges(const Operand& body, BRepAlgoAPI_Defeaturing& remove,
+                                         const std::vector<Pair>& pairs) {
     const auto images = [&](const TopoDS_Face& original, const TopoDS_Shape& current) {
         if (original.IsSame(current)) return true;
         for (TopTools_ListIteratorOfListOfShape i(remove.Modified(original)); i.More(); i.Next())
@@ -59,47 +53,73 @@ Result resize(const Operand& body, const std::vector<TopoDS_Face>& seeds, double
     TopExp::MapShapes(body.shape, TopAbs_EDGE, previousEdges);
     TopTools_IndexedDataMapOfShapeListOfShape adjacency;
     TopExp::MapShapesAndAncestors(remove.Shape(), TopAbs_EDGE, TopAbs_FACE, adjacency);
-    BRepFilletAPI_MakeFillet fillet(remove.Shape());
     std::vector<SourceEntity> replacementSeeds;
     for (int e = 1; e <= adjacency.Extent(); ++e) {
         const auto edge = TopoDS::Edge(adjacency.FindKey(e));
         if (previousEdges.Contains(edge)) continue;
-        bool added = false;
         for (const auto& pair : pairs) {
             bool a = false, b = false;
             for (TopTools_ListIteratorOfListOfShape i(adjacency.FindFromIndex(e)); i.More(); i.Next()) {
                 a |= images(pair.a, i.Value()); b |= images(pair.b, i.Value());
             }
             if (!a || !b) continue;
-            if (!added) fillet.Add(radius, edge);
-            added = true;
             replacementSeeds.push_back({pair.origin, edge});
         }
     }
-    if (replacementSeeds.empty()) throw std::runtime_error("Could not identify the recovered fillet edges");
-    fillet.Build();
-    if (!fillet.IsDone()) throw std::runtime_error("Fillet cannot use that radius with its current neighbors");
-    validate(fillet.Shape());
-    origins = trace(fillet, origins);
-    for (const auto& seed : replacementSeeds)
-        for (TopTools_ListIteratorOfListOfShape i(fillet.Generated(seed.shape)); i.More(); i.Next())
-            if (i.Value().ShapeType() == TopAbs_FACE) origins.push_back({seed.id, i.Value()});
-    for (const auto& original : body.entities) {
-        if (original.shape.ShapeType() != TopAbs_FACE || contains(selected, original.shape)) continue;
-        for (const auto& current : origins)
-            if (current.id == original.id && current.shape.ShapeType() == TopAbs_FACE)
-                checkUnselectedSupport(TopoDS::Face(original.shape), TopoDS::Face(current.shape));
+    if (replacementSeeds.empty()) throw std::runtime_error("Could not identify the recovered supporting edges");
+    return replacementSeeds;
+}
+Result resize(const Operand& body, const std::vector<TopoDS_Face>& seeds, double radius, bool chamfer) {
+    const auto blends = chamfer ? recognizeChamfers(body.shape) : recognizeBlends(body.shape);
+    const auto selected = chamfer ? seeds : blendGroup(blends, seeds);
+    for (const auto& seed : selected)
+        if (std::none_of(blends.begin(), blends.end(), [&](const auto& b) { return b.face.IsSame(seed); }))
+            throw std::runtime_error("Select an existing equal-distance chamfer face");
+    std::vector<Pair> pairs;
+    for (const auto& blend : blends) {
+        if (!contains(selected, blend.face)) continue;
+        std::vector<TopoDS_Face> supports;
+        for (const auto& face : blend.supports) if (!contains(selected, face)) supports.push_back(face);
+        const auto origin = std::find_if(body.entities.begin(), body.entities.end(), [&](const SourceEntity& e) { return e.shape.IsSame(blend.face); });
+        if (supports.size() == 2 && origin != body.entities.end()) pairs.push_back({supports[0], supports[1], origin->id});
     }
-    std::vector<Result> results;
-    solids(results, fillet.Shape(), origins, {body.id});
-    if (results.size() != 1) throw std::runtime_error("Fillet resize must leave a valid solid");
-    return results[0];
+    if (pairs.empty()) throw std::runtime_error("Could not resolve this edge finish's supporting faces");
+    BRepAlgoAPI_Defeaturing remove;
+    remove.SetShape(body.shape);
+    remove.SetToFillHistory(true);
+    for (const auto& face : selected) remove.AddFaceToRemove(face);
+    remove.Build();
+    if (!remove.IsDone() || remove.HasErrors() || remove.HasWarnings()) throw std::runtime_error("Could not recover the edge finish's supporting edges");
+    validate(remove.Shape());
+    TopTools_IndexedMapOfShape remaining;
+    TopExp::MapShapes(remove.Shape(), TopAbs_FACE, remaining);
+    for (const auto& face : selected) if (remaining.Contains(face)) throw std::runtime_error("Could not remove this edge finish for resizing");
+    auto origins = trace(remove, body.entities);
+    if (radius == 0) return finishResult(body, selected, remove.Shape(), origins);
+    const auto replacementSeeds = recoveredEdges(body, remove, pairs);
+    BRepFilletAPI_MakeFillet fillet(remove.Shape());
+    BRepFilletAPI_MakeChamfer bevel(remove.Shape());
+    TopTools_MapOfShape added;
+    for (const auto& seed : replacementSeeds) {
+        if (!added.Add(seed.shape)) continue;
+        if (chamfer) bevel.Add(radius, TopoDS::Edge(seed.shape));
+        else fillet.Add(radius, TopoDS::Edge(seed.shape));
+    }
+    BRepBuilderAPI_MakeShape& finish = chamfer ? static_cast<BRepBuilderAPI_MakeShape&>(bevel) : fillet;
+    if (chamfer) bevel.Build(); else fillet.Build();
+    if (!finish.IsDone()) throw std::runtime_error("Edge finish cannot use that size with its current neighbors");
+    validate(finish.Shape());
+    origins = chamfer ? trace(bevel, origins) : trace(fillet, origins);
+    for (const auto& seed : replacementSeeds)
+        for (TopTools_ListIteratorOfListOfShape i(finish.Generated(seed.shape)); i.More(); i.Next())
+            if (i.Value().ShapeType() == TopAbs_FACE) origins.push_back({seed.id, i.Value()});
+    return finishResult(body, selected, finish.Shape(), origins);
 }
 }
 std::vector<Result> resizeBlends(const Tree& input, const std::vector<Operand>& bodies,
                                std::vector<std::string>& participants) {
     const double radius = input.get<double>("radius");
-    if (!std::isfinite(radius) || radius <= 1e-7) throw std::runtime_error("Fillet radius must be greater than zero");
+    if (!std::isfinite(radius) || radius < 0 || (radius > 0 && radius <= 1e-7)) throw std::runtime_error("Fillet radius must be zero or greater than the geometry tolerance");
     std::vector<Result> results;
     size_t count = 0;
     for (const auto& body : bodies) {
@@ -113,7 +133,7 @@ std::vector<Result> resizeBlends(const Tree& input, const std::vector<Operand>& 
             selected.push_back(TopoDS::Face(face->shape)); ++count;
         }
         if (selected.empty()) continue;
-        results.push_back(resize(body, selected, radius)); participants.push_back(body.id);
+        results.push_back(resize(body, selected, radius, input.get<bool>("chamfer", false))); participants.push_back(body.id);
     }
     if (!count || count != input.get_child("faces").size()) throw std::runtime_error("Select existing fillet faces");
     return results;

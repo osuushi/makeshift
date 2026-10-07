@@ -55,6 +55,13 @@ function face(value: unknown, faces: number, edges: number, known: ReadonlySet<s
     sign(blend.outward);
     indexes(blend.faceIndexes, faces);
   }
+  if (f.chamfer != null) {
+    const chamfer = object(f.chamfer);
+    positive(chamfer.distance);
+    positive(chamfer.distanceScale);
+    sign(chamfer.outward);
+    indexes(chamfer.faceIndexes, faces);
+  }
   if (f.thickness != null) {
     const thickness = object(f.thickness);
     indexes([thickness.faceIndex], faces);
