@@ -42,6 +42,18 @@ export class CanonicalPlaneVisibility {
     reducedMotion = false,
   ): boolean {
     const direction = camera.getWorldDirection(new THREE.Vector3());
+    // Plane order is also tie priority. Ignore floating-point noise at symmetric views.
+    let winner = planeIds[0];
+    let bestFacing = -1;
+    for (const id of planeIds) {
+      const frame = planes[id];
+      const normal = new THREE.Vector3(...frame.u).cross(new THREE.Vector3(...frame.v));
+      const facing = Math.abs(direction.dot(normal));
+      if (facing > bestFacing + 1e-12) {
+        winner = id;
+        bestFacing = facing;
+      }
+    }
     // An event-driven renderer may have been idle for minutes. Start a fresh
     // fade on that first frame instead of counting idle time toward the new target.
     const first = this.previous === null;
@@ -49,10 +61,8 @@ export class CanonicalPlaneVisibility {
     this.previous = now;
     let moving = false;
     for (const id of planeIds) {
-      const frame = planes[id];
-      const normal = new THREE.Vector3(...frame.u).cross(new THREE.Vector3(...frame.v));
       const state = this.states[id];
-      const target = planeVisibilityTarget(direction.dot(normal), settings);
+      const target = id === winner ? planeVisibilityTarget(bestFacing, settings) : 0;
       // Slow rendered frames still advance an existing fade. Only a new target
       // after a genuinely idle viewport starts with no accumulated time.
       const elapsed = !first && gap > 1000 && state.target !== target ? 0 : gap;

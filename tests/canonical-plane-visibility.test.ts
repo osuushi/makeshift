@@ -5,11 +5,7 @@ import {
   applicationPreferences,
   configurePreferences,
 } from "../src/preferences/application-preferences.js";
-import {
-  canonicalPlanes,
-  normalizePlaneSettings,
-  planePresets,
-} from "../src/preferences/canonical-planes.js";
+import { canonicalPlanes, normalizePlaneSettings } from "../src/preferences/canonical-planes.js";
 import { canonicalPlaneBounds, planeViewCenter } from "../src/sketch/canonical-plane-bounds.js";
 import {
   CanonicalPlaneVisibility,
@@ -51,36 +47,61 @@ test("smooth mixing is frame-rate independent, settles and honors instant change
   assert.equal(mixPlaneVisibility(0, 1, 120, 0), 1);
   assert.equal(mixPlaneVisibility(1, 0, 200, 120), 0);
 });
-test("presets encourage one/two references; head-on and isometric views remain natural", () => {
+test("one canonical plane wins by facing angle, with XY then XZ then YZ tie priority", () => {
   const camera = new THREE.OrthographicCamera();
   const visibility = new CanonicalPlaneVisibility();
-  camera.position.set(0, 0, 50);
+  const cases = [
+    [[0, 0, 1], "XY"],
+    [[0, 1, 0], "XZ"],
+    [[1, 0, 0], "YZ"],
+    [[1, 1, 1], "XY"],
+    [[-1, -1, -1], "XY"],
+    [[0, 1, 1], "XY"],
+    [[1, 0, 1], "XY"],
+    [[1, 1, 0], "XZ"],
+    [[0.9, 0.4, Math.sqrt(0.03)], "YZ"],
+    [[1, 1, 1.000001], "XY"],
+    [[1, 1.000001, 1], "XZ"],
+    [[1.000001, 1, 1], "YZ"],
+  ] as const;
+  for (const [direction, winner] of cases) {
+    camera.position.set(direction[0], direction[1], direction[2]);
+    camera.lookAt(0, 0, 0);
+    camera.updateMatrixWorld();
+    visibility.update(camera, settings, 0, true);
+    assert.deepEqual(
+      Object.entries(visibility.states)
+        .filter(([, state]) => state.opacity > 0)
+        .map(([id]) => id),
+      [winner],
+    );
+    assert.deepEqual(
+      Object.entries(visibility.states)
+        .filter(([, state]) => state.selectable)
+        .map(([id]) => id),
+      [winner],
+    );
+  }
+});
+test("a winner change crossfades smoothly and immediately disables outgoing picking", () => {
+  const camera = new THREE.OrthographicCamera();
+  const visibility = new CanonicalPlaneVisibility();
+  camera.position.set(0, 0, 1);
   camera.lookAt(0, 0, 0);
   camera.updateMatrixWorld();
-  visibility.update(camera, settings, 0, true);
-  assert.deepEqual(
-    Object.values(visibility.states).map((s) => s.selectable),
-    [true, false, false],
-  );
-  camera.position.set(1, 1, 1);
+  visibility.update(camera, settings, 0);
+  camera.position.set(0, 1, 0);
   camera.lookAt(0, 0, 0);
   camera.updateMatrixWorld();
-  visibility.update(camera, settings, 10, true);
-  assert.ok(Object.values(visibility.states).every((s) => s.selectable));
-  const direction = [0.9, 0.4, Math.sqrt(0.03)];
-  assert.equal(
-    direction.filter((d) => planeVisibilityTarget(d, settings) >= settings.selectableMinimum)
-      .length,
-    1,
-  );
-  assert.equal(
-    direction.filter(
-      (d) =>
-        planeVisibilityTarget(d, { ...settings, ...planePresets.choice }) >=
-        settings.selectableMinimum,
-    ).length,
-    2,
-  );
+  visibility.update(camera, settings, 16);
+  assert.ok(visibility.states.XY.opacity > 0 && visibility.states.XY.opacity < 1);
+  assert.ok(visibility.states.XZ.opacity > 0 && visibility.states.XZ.opacity < 1);
+  assert.ok(Math.abs(visibility.states.XY.opacity + visibility.states.XZ.opacity - 1) < 1e-12);
+  assert.equal(visibility.states.XY.selectable, false);
+  assert.equal(visibility.states.YZ.opacity, 0);
+  visibility.update(camera, settings, 300);
+  assert.equal(visibility.states.XY.opacity, 0);
+  assert.equal(visibility.states.XZ.opacity, 1);
 });
 test("stored settings recover malformed fields and preserve valid palettes", () => {
   const normalized = normalizePlaneSettings({

@@ -203,6 +203,7 @@ async function pickMirrorPlane(page, region) {
   await orient(page, [1, 1, 1]);
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   await chooseTool(page, "mirror", "mirror");
+  await orient(page, [1, 0.2, 0.2]);
   const target = await findRaycastPoint(page, "YZ");
   await page.mouse.click(target.x, target.y);
   const state = await inspect(page);

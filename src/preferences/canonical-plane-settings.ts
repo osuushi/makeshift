@@ -4,7 +4,7 @@ export function canonicalPlaneSettings(): HTMLElement {
   const section = document.createElement("section");
   section.className = "view-display-settings";
   section.innerHTML = `<h3>Plane grids</h3>
-    <p>Planes fade away as you look edge on, usually leaving one grid visible.</p>`;
+    <p>The most face-on plane is shown. Grids blend smoothly when the view changes.</p>`;
   const palette = planePaletteSettings();
   const actions = document.createElement("div");
   actions.className = "plane-palette-actions";

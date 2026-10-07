@@ -36,9 +36,10 @@ is line thickness in pixels (0.5–3, default 1), also used by the active sketch
 The legacy `viewDisplay.planes` field is accepted but always reads zero: planes have no fill.
 Explicit tool/keyboard entry remains available. Hidden/faint planes cannot intercept clicks.
 
-The Settings dialog uses “Usually one plane” behavior (cutoff/width 0.45/0.3), without
-preset or fade controls. An isometric view may show all three. Advanced API fields
-above remain available for deliberate tuning.
+The most face-on canonical plane is the sole visibility target, with ties resolved
+XY then XZ then YZ. Switching crossfades grids; the outgoing plane cannot receive
+input. Settings has no preset or fade controls. The angular cutoff/width remain
+0.45/0.3 by default; advanced API fields above remain available for deliberate tuning.
 
 Examples:
 

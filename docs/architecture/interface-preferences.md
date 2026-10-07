@@ -18,12 +18,18 @@ are local presentation preferences, independent of document files and Undo.
 
 Canonical XY/XZ/YZ references cover the viewport, including far from the origin.
 References render only colored grid lines; their invisible meshes remain picking targets.
-The “Usually one plane” behavior uses cutoff 0.45, fade width 0.3, selectable fraction
-0.15 and smooth mixing time 120 ms. These are tendencies rather than plane-count
-limits: an isometric view can show three. Settings keeps this simple behavior and
+The most face-on canonical plane is the sole visibility target, with ties resolved
+XY, then XZ, then YZ (absolute facing dot products within 1e-12 count as tied).
+Its opacity still uses cutoff 0.45, fade width 0.3, selectable fraction 0.15 and
+smooth mixing time 120 ms. On switching, the outgoing grid fades out while the
+incoming grid fades in; brief crossfade overlap is allowed, but only the incoming
+plane can receive hover/click. Settled views show at most one canonical grid.
+Settings keeps this simple behavior and
 exposes grid opacity, line thickness (0.5–3 pixels, default 1), colors and saved palettes.
 Grid colors default to XY #d4ae3a, XZ #55bb6e and YZ #b325c1; axes retain their colors.
-Thickness also applies to the active sketch grid. Zero grid opacity disables canvas
+Thickness also applies to the active sketch grid. A sketch whose copied frame
+matches a canonical plane uses that plane’s palette color; other sketch grids stay neutral. World X/Y/Z axes render
+independently at fixed thickness and opacity, including when grid opacity is zero. Zero grid opacity disables canvas
 reference picking. Explicit tool/keyboard plane entry remains available.
 
 Preferences live on the editing device, outside document files and Undo. On the first

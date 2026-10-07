@@ -46,7 +46,8 @@ exact intersection is evaluated only after picking. No native operations run
 during reference discovery. Disjoint and box-tangent planes and hidden references are excluded.
 This is a broad filter: concavities, selected-face coverage and existing imprints
 may leave ineffective references selectable. Exact validation runs only on picking
-a reference. Canonical grids/fills retain their angular fades and selectable thresholds; saved
+a reference. Canonical grids use the single most face-on visibility target, smooth crossfades
+and selectable thresholds; saved
 plane and face candidate outlines remain visible. Hover adds a blue fill to exactly the reference the shared
 click picker would choose, including a face's actual visible surface. Entities rows highlight their own saved
 reference. Hover clears on leaving, navigation or tool exit and never changes geometry. Discovery does not create previews or alter history.

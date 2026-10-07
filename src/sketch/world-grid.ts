@@ -4,22 +4,12 @@ import { viewDisplay } from "../preferences/view-display.js";
 import { planeViewCenter } from "./canonical-plane-bounds.js";
 import type { CanonicalPlaneVisibility } from "./canonical-plane-visibility.js";
 import { type PlaneFrame, planeIds, planes } from "./planes.js";
+import { createWorldAxes } from "./world-axes.js";
 import { gridMaterial } from "./world-grid-material.js";
 
 export function createGrids(scene: THREE.Scene) {
-  const grids = [...planeIds, "work" as const].map((id) => {
-    const frame = id === "work" ? planes.XY : planes[id];
-    const u = new THREE.Vector3(...frame.u);
-    const v = new THREE.Vector3(...frame.v);
-    const normal = u.clone().cross(v);
-    const material = gridMaterial(id);
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material);
-    mesh.setRotationFromMatrix(new THREE.Matrix4().makeBasis(u, v, normal));
-    // The active sketch plane stays legible over bodies, fills and highlights.
-    mesh.renderOrder = id === "work" ? 100 : -10;
-    scene.add(mesh);
-    return { id, mesh, normal, u, v, material };
-  });
+  const axes = createWorldAxes(scene);
+  const grids = [...planeIds, "work" as const].map((id) => createGrid(scene, id));
   return {
     update(
       camera: THREE.Camera,
@@ -29,8 +19,16 @@ export function createGrids(scene: THREE.Scene) {
       viewportHeight: number,
       visibility: CanonicalPlaneVisibility["states"],
     ) {
+      axes.update(camera, target, height);
       const direction = camera.getWorldDirection(new THREE.Vector3());
       const spacing = gridSpacing(height, viewportHeight);
+      const canonicalSketch =
+        active &&
+        planeIds.find((id) =>
+          (["origin", "u", "v"] as const).every((field) =>
+            planes[id][field].every((value, index) => value === active[field][index]),
+          ),
+        );
       for (const grid of grids) {
         if (grid.id === "work") {
           grid.mesh.visible = !!active;
@@ -44,7 +42,11 @@ export function createGrids(scene: THREE.Scene) {
           );
         }
         grid.material.uniforms.gridColor.value.set(
-          grid.id === "work" ? "#758296" : canonicalPlanes().colors[grid.id],
+          grid.id === "work"
+            ? canonicalSketch
+              ? canonicalPlanes().colors[canonicalSketch]
+              : "#758296"
+            : canonicalPlanes().colors[grid.id],
         );
         const facing = Math.abs(direction.dot(grid.normal));
         grid.material.uniforms.spacing.value = spacing;
@@ -79,6 +81,7 @@ export function createGrids(scene: THREE.Scene) {
       return spacing;
     },
     dispose() {
+      axes.dispose();
       for (const { mesh, material } of grids) {
         mesh.geometry.dispose();
         material.dispose();
@@ -86,6 +89,20 @@ export function createGrids(scene: THREE.Scene) {
       }
     },
   };
+}
+
+function createGrid(scene: THREE.Scene, id: (typeof planeIds)[number] | "work") {
+  const frame = id === "work" ? planes.XY : planes[id];
+  const u = new THREE.Vector3(...frame.u);
+  const v = new THREE.Vector3(...frame.v);
+  const normal = u.clone().cross(v);
+  const material = gridMaterial(id);
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material);
+  mesh.setRotationFromMatrix(new THREE.Matrix4().makeBasis(u, v, normal));
+  // The active sketch plane stays legible over bodies, fills and highlights.
+  mesh.renderOrder = id === "work" ? 100 : -10;
+  scene.add(mesh);
+  return { id, mesh, normal, u, v, material };
 }
 
 function gridSpacing(height: number, viewportHeight: number): number {
