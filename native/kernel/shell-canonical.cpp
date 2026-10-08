@@ -174,7 +174,8 @@ Operand canonical(const Operand& original, const char* context) {
     const auto source = offset_geometry::prepare(original, context, nullptr, true);
     Handle(CylinderSupports) modification = new CylinderSupports(source);
     if (modification->empty()) return source;
-    offset_geometry::validSolid(source.shape, context);
+    // prepare validated this copy; recognition only reads it and creates new
+    // supports. Revalidate below after modifier/SameParameter change geometry.
     BRepTools_Modifier modifier(false);
     modifier.Init(source.shape);
     modifier.Perform(modification);
