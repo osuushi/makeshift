@@ -1,3 +1,4 @@
+import { installModalPlaneWidgets } from "./modal-plane-widgets.js";
 import { installPlaneTargets } from "./plane-targets.js";
 import type { Point, Vector } from "./planes.js";
 import type { World } from "./world.js";
@@ -13,6 +14,7 @@ export function worldLabels(
   origin.textContent = "⊕ 0, 0, 0";
   overlay.append(origin);
   const disposeTargets = installPlaneTargets(world, overlay, occupied, onHover),
+    disposeWidgets = installModalPlaneWidgets(world, overlay),
     axes = (["X", "Y", "Z"] as const).map((axis, i) => {
       const label = document.createElement("span");
       label.className = `axis axis-${axis}`;
@@ -38,6 +40,7 @@ export function worldLabels(
   return () => {
     world.changed.delete(update);
     disposeTargets();
+    disposeWidgets();
     origin.remove();
     for (const { label } of axes) label.remove();
   };
