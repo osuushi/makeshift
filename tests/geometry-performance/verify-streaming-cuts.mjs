@@ -189,20 +189,7 @@ async function inspectSources(worker, bodies) {
   if (reply.error) throw new Error(`Source inspect failed: ${reply.error}`);
   return { encodings: encodings(reply), rawReply };
 }
-async function run() {
-  const [base, candidate, outputArg] = process.argv.slice(2);
-  if (!base || !candidate || !outputArg || process.argv.length !== 5)
-    throw new Error("Usage: verify-streaming-cuts.mjs BASELINE CANDIDATE OUTPUT.jsonl");
-  const paths = { baseline: resolve(base), candidate: resolve(candidate) },
-    output = resolve(outputArg);
-  const fixture = await fixtures(paths.baseline),
-    items = focusedCases(fixture);
-  const sources = [...fixture.bodies, ...fixture.cubic[1].bodies];
-  const inputSnapshot = JSON.stringify(sources),
-    workers = {},
-    initial = {},
-    first = {};
-  const totals = { crossDifferences: 0, repeatDifferences: 0, expectationFailures: 0 };
+async function configuration(output, paths, sources) {
   await writeFile(
     output,
     `${JSON.stringify({
@@ -220,6 +207,22 @@ async function run() {
       note: "Only BRep string contents excluded from exact full-reply comparison. Source strings remain immutable JS inputs; repeated inspect decodes new shapes and cannot prove in-request TShape immutability. True repair/error injection deferred.",
     })}\n`,
   );
+}
+async function run() {
+  const [base, candidate, outputArg] = process.argv.slice(2);
+  if (!base || !candidate || !outputArg || process.argv.length !== 5)
+    throw new Error("Usage: verify-streaming-cuts.mjs BASELINE CANDIDATE OUTPUT.jsonl");
+  const paths = { baseline: resolve(base), candidate: resolve(candidate) },
+    output = resolve(outputArg);
+  const fixture = await fixtures(paths.baseline),
+    items = focusedCases(fixture);
+  const sources = [...fixture.bodies, ...fixture.cubic[1].bodies];
+  const inputSnapshot = JSON.stringify(sources),
+    workers = {},
+    initial = {},
+    first = {};
+  const totals = { crossDifferences: 0, repeatDifferences: 0, expectationFailures: 0 };
+  await configuration(output, paths, sources);
   try {
     for (const [label, path] of Object.entries(paths)) {
       workers[label] = worker(path);
