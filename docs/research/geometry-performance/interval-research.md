@@ -215,3 +215,22 @@ RTLD_NEXT resolves to that candidate, not accidentally the SDK. Missing symbol
 resolution exits127 with a clear diagnostic. This is an untimed trace only:
 atomics, wrapper calls and dynamic dispatch invalidate performance comparisons.
 The source is below300 lines and functions below80; no build/run claim.
+
+## Current application experiment
+
+The source control and contiguous-storage wrappers use the same immutable
+current application executable linked to the original SDK. Twenty-five stable
+full application comparisons match, retaining the same closed bent-shell
+construction error. Forty randomized paired application blocks then find no
+resolved speed gain on any of eight workloads. Circle is 1.01187 (95% interval
+0.99106–1.02984), bent captured Shell 0.99499 (0.97902–1.02167), and open
+perforated Shell 1.00440 (0.98154–1.01569). Fuse shows a small exploratory
+slowdown, 0.98502 (0.97331–0.99769), despite the isolated integration gain.
+This is not yet localized; these pointwise intervals span eight comparisons.
+No integration decision is justified by the isolated gain alone.
+
+All geometry/predecessor multisets match; notched Shell's baseline enumeration
+variability remains an ordered difference, explicitly recorded. Full metadata
+comparison, raw timings, and summary are
+`results/kronrod-interval-application-{full-output.json,confirmation.jsonl,confirmation-summary.json}`.
+The installed SDK remains unchanged and the prototype is not adopted.

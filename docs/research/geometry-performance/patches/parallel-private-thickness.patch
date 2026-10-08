@@ -1,0 +1,352 @@
+--- a/native/kernel/presentation.cpp
++++ b/native/kernel/presentation.cpp
+@@ -3,6 +3,7 @@
+ #include "timing.h"
+ #include "blends.h"
+ #include "offset-thickness.h"
++#include "parallel-thickness.h"
+ #include "face-chains.h"
+ #include <BRepAdaptor_Curve.hxx>
+ #include <BRepAdaptor_Surface.hxx>
+@@ -59,7 +60,7 @@
+         out << ",\"outward\":" << ((shape.Orientation() == TopAbs_REVERSED ? -1 : 1) * (sphere.Direct() ? 1 : -1)) << '}';
+     } else out << "null";
+ }
+-void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMapOfShape& edges, const std::vector<BlendFace>& blends, const std::vector<BlendFace>& chamfers, const TopTools_IndexedMapOfShape& faces, FaceChainContext& chains, OffsetThicknessContext& thickness) {
++void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMapOfShape& edges, const std::vector<BlendFace>& blends, const std::vector<BlendFace>& chamfers, const TopTools_IndexedMapOfShape& faces, FaceChainContext& chains, OffsetThicknessContext& thickness, const ParallelThickness& parallelThickness) {
+     out << ",\"edgeIndexes\":[";
+     bool first = true;
+     for (TopExp_Explorer e(shape, TopAbs_EDGE); e.More(); e.Next()) {
+@@ -83,7 +84,8 @@
+     out << ']';
+     BRepAdaptor_Surface surface(shape);
+     analyticSurfaces(out, shape, surface);
+-    presentOffsetThickness(out, shape, faces, thickness);
++    if (!parallelThickness.append(out, faces.FindIndex(shape)))
++        presentOffsetThickness(out, shape, faces, thickness);
+     const auto blend = std::find_if(blends.begin(), blends.end(), [&](const BlendFace& b) { return b.face.IsSame(shape); });
+     out << ",\"offsetFaceIndexes\":[";
+     const auto chain = chains.chain({shape});
+@@ -199,6 +201,7 @@
+     const auto chamfers = recognizeChamfers(result.shape);
+     OffsetThicknessContext thickness(result.shape);
+     FaceChainContext chains(result.shape);
++    ParallelThickness parallelThickness(result.shape, faces, out);
+     timing.phase("properties-and-blends");
+     for (const auto type : {TopAbs_FACE, TopAbs_EDGE}) {
+         out << (type == TopAbs_FACE ? ",\"faces\":[" : ",\"edges\":[");
+@@ -212,7 +215,7 @@
+                     [&](const TopoDS_Face& face) { return face.IsSame(shapes(i)); });
+                 out << ",\"offsetSelected\":" << (selected ? "true" : "false");
+             }
+-            if (type == TopAbs_FACE) face(out, TopoDS::Face(shapes(i)), edges, blends, chamfers, faces, chains, thickness); else edge(out, TopoDS::Edge(shapes(i)));
++            if (type == TopAbs_FACE) face(out, TopoDS::Face(shapes(i)), edges, blends, chamfers, faces, chains, thickness, parallelThickness); else edge(out, TopoDS::Edge(shapes(i)));
+             out << '}';
+         }
+         out << ']';
+--- a/native/kernel/CMakeLists.txt
++++ b/native/kernel/CMakeLists.txt
+@@ -20,7 +20,7 @@
+ target_sources(makeshift-kernel PRIVATE boundary-move.cpp boundary-selection.cpp boundary-edges.cpp boundary-faces.cpp boundary-cylinder.cpp boundary-filling.cpp boundary-polynomial.cpp)
+ target_sources(makeshift-kernel PRIVATE offset-collapse.cpp)
+ target_sources(makeshift-kernel PRIVATE chamfer-recognition.cpp)
+-target_sources(makeshift-kernel PRIVATE offset-thickness.cpp)
++target_sources(makeshift-kernel PRIVATE offset-thickness.cpp parallel-thickness.cpp thickness-geometry-ownership.cpp)
+ target_sources(makeshift-kernel PRIVATE spherical-face-offset.cpp)
+ target_sources(makeshift-kernel PRIVATE offset-geometry.cpp offset-boundaries.cpp offset-result.cpp)
+ target_sources(makeshift-kernel PRIVATE measurement.cpp measurement-gaps.cpp measurement-planar.cpp)
+--- /dev/null
++++ b/native/kernel/parallel-thickness.h
+@@ -0,0 +1,18 @@
++#pragma once
++#include <TopoDS_Shape.hxx>
++#include <TopTools_IndexedMapOfShape.hxx>
++#include <memory>
++#include <ostream>
++
++// Request-local exact thickness payloads only; original presentation stays serial.
++class ParallelThickness {
++    struct Data;
++    std::unique_ptr<Data> data;
++public:
++    ParallelThickness(const TopoDS_Shape&, const TopTools_IndexedMapOfShape&, const std::ostream&);
++    ~ParallelThickness();
++    ParallelThickness(const ParallelThickness&) = delete;
++    ParallelThickness& operator=(const ParallelThickness&) = delete;
++    // False means serial fallback; deferred face failures replay here in original order.
++    bool append(std::ostream&, int faceIndex) const;
++};
+--- /dev/null
++++ b/native/kernel/parallel-thickness.cpp
+@@ -0,0 +1,128 @@
++#include "parallel-thickness.h"
++#include "offset-thickness.h"
++#include "thickness-geometry-ownership.h"
++#include <BRepBuilderAPI_Copy.hxx>
++#include <OSD_ThreadPool.hxx>
++#include <TopExp.hxx>
++#include <TopoDS.hxx>
++#include <exception>
++#include <cstdlib>
++#include <cstring>
++#include <cstdio>
++#include <locale>
++#include <sstream>
++#include <stdexcept>
++#include <vector>
++
++namespace {
++struct Worker {
++    TopoDS_Shape body;
++    TopTools_IndexedMapOfShape faces;
++    std::unique_ptr<OffsetThicknessContext> context;
++
++    Worker(const TopoDS_Shape& original, const TopTools_IndexedMapOfShape& originalFaces) {
++        // All copies finish serially before any worker performs exact queries.
++        BRepBuilderAPI_Copy copy(original, true, false);
++        if (!copy.IsDone()) throw std::runtime_error("Private thickness copy failed");
++        body = copy.Shape();
++        TopTools_IndexedMapOfShape bodyFaces;
++        TopExp::MapShapes(body, TopAbs_FACE, bodyFaces);
++        if (bodyFaces.Extent() != originalFaces.Extent())
++            throw std::runtime_error("Private thickness copy changed face count");
++        for (int i = 1; i <= originalFaces.Extent(); ++i) {
++            const auto& source = originalFaces(i);
++            const auto mapped = copy.ModifiedShape(source).Oriented(source.Orientation());
++            if (mapped.ShapeType() != TopAbs_FACE || !bodyFaces.Contains(mapped)
++                || !mapped.Location().IsEqual(source.Location()) || faces.Add(mapped) != i)
++                throw std::runtime_error("Private thickness face correspondence failed");
++        }
++        context = std::make_unique<OffsetThicknessContext>(body);
++    }
++};
++struct Formatting {
++    std::ios_base::fmtflags flags;
++    std::streamsize precision;
++    std::locale locale;
++    char fill;
++    explicit Formatting(const std::ostream& source)
++        : flags(source.flags()), precision(source.precision()), locale(source.getloc()), fill(source.fill()) {}
++    void apply(std::ostringstream& output) const {
++        output.flags(flags);
++        output.precision(precision);
++        output.imbue(locale);
++        output.fill(fill);
++    }
++};
++}
++
++struct ParallelThickness::Data {
++    std::vector<std::string> payloads;
++    std::vector<std::exception_ptr> failures;
++    explicit Data(int count) : payloads(count), failures(count) {}
++};
++
++ParallelThickness::ParallelThickness(const TopoDS_Shape& body,
++                                     const TopTools_IndexedMapOfShape& faces,
++                                     const std::ostream& format) {
++    const char* configured = std::getenv("MAKESHIFT_KERNEL_PRIVATE_THICKNESS");
++    const char* tracing = std::getenv("MAKESHIFT_KERNEL_PRIVATE_THICKNESS_TRACE");
++    const bool trace = tracing && std::strcmp(tracing, "1") == 0;
++    const bool serial = configured && std::strcmp(configured, "serial") == 0;
++    const bool parallel = configured && (std::strcmp(configured, "parallel") == 0
++                                        || std::strcmp(configured, "1") == 0);
++    const auto& pool = OSD_ThreadPool::DefaultPool();
++    if ((!serial && !parallel) || faces.Extent() < 16 || (parallel && !pool->HasThreads())) return;
++    try {
++        std::unique_ptr<OSD_ThreadPool::Launcher> launcher;
++        if (parallel) {
++            launcher = std::make_unique<OSD_ThreadPool::Launcher>(*pool, faces.Extent());
++            if (!launcher->HasThreads()) return;
++        }
++        const Formatting formatting(format); // Read all caller stream state serially.
++        ThicknessGeometryOwnership ownership(body);
++        auto prepared = std::make_unique<Data>(faces.Extent());
++        std::vector<std::unique_ptr<Worker>> workers;
++        const int workerCount = serial ? 1 : launcher->NbThreads();
++        workers.reserve(workerCount);
++        for (int i = 0; i < workerCount; ++i) {
++            workers.push_back(std::make_unique<Worker>(body, faces));
++            ownership.addPrivateCopy(workers.back()->body);
++        }
++        const auto compute = [&](int threadIndex, int faceIndex) {
++            try {
++                auto& worker = *workers.at(threadIndex);
++                std::ostringstream output;
++                formatting.apply(output);
++                presentOffsetThickness(output, TopoDS::Face(worker.faces(faceIndex + 1)),
++                                       worker.faces, *worker.context);
++                prepared->payloads[faceIndex] = output.str();
++            } catch (...) {
++                prepared->failures[faceIndex] = std::current_exception();
++            }
++        };
++        if (serial) for (int i = 0; i < faces.Extent(); ++i) compute(0, i);
++        else launcher->Perform(0, faces.Extent(), compute);
++        data = std::move(prepared);
++        if (trace) std::fprintf(stderr, "private-thickness active mode=%s faces=%d workers=%d\n",
++                                serial ? "serial" : "parallel", faces.Extent(), workerCount);
++    } catch (const std::exception& error) {
++        if (trace) std::fprintf(stderr, "private-thickness serial fallback: %s\n", error.what());
++        data.reset();
++    } catch (...) {
++        // Failed private setup adds no new geometric failure: use the original path.
++        // No worker task touches original body supports or the shared output stream.
++        if (trace) std::fputs("private-thickness serial fallback: non-std exception\n", stderr);
++        data.reset();
++    }
++}
++ParallelThickness::~ParallelThickness() = default;
++
++bool ParallelThickness::append(std::ostream& output, int faceIndex) const {
++    if (!data) return false;
++    if (faceIndex < 1 || faceIndex > int(data->payloads.size()))
++        throw std::runtime_error("Invalid private thickness face index");
++    const auto index = size_t(faceIndex - 1);
++    if (data->failures[index]) std::rethrow_exception(data->failures[index]);
++    output << data->payloads[index];
++    return true;
++}
+--- /dev/null
++++ b/native/kernel/thickness-geometry-ownership.h
+@@ -0,0 +1,15 @@
++#pragma once
++#include <TopoDS_Shape.hxx>
++#include <memory>
++
++// Serial request-local verification of known geometry roots/bases and copy aliases.
++class ThicknessGeometryOwnership {
++    struct Data;
++    std::unique_ptr<Data> data;
++public:
++    explicit ThicknessGeometryOwnership(const TopoDS_Shape& original);
++    ~ThicknessGeometryOwnership();
++    ThicknessGeometryOwnership(const ThicknessGeometryOwnership&) = delete;
++    ThicknessGeometryOwnership& operator=(const ThicknessGeometryOwnership&) = delete;
++    void addPrivateCopy(const TopoDS_Shape&);
++};
+--- /dev/null
++++ b/native/kernel/thickness-geometry-ownership.cpp
+@@ -0,0 +1,122 @@
++#include "thickness-geometry-ownership.h"
++#include <BRep_CurveRepresentation.hxx>
++#include <BRep_TEdge.hxx>
++#include <BRep_TFace.hxx>
++#include <Geom_BSplineCurve.hxx>
++#include <Geom_BSplineSurface.hxx>
++#include <Geom_BezierCurve.hxx>
++#include <Geom_BezierSurface.hxx>
++#include <Geom_Circle.hxx>
++#include <Geom_ConicalSurface.hxx>
++#include <Geom_CylindricalSurface.hxx>
++#include <Geom_Ellipse.hxx>
++#include <Geom_Hyperbola.hxx>
++#include <Geom_Line.hxx>
++#include <Geom_OffsetCurve.hxx>
++#include <Geom_OffsetSurface.hxx>
++#include <Geom_Parabola.hxx>
++#include <Geom_Plane.hxx>
++#include <Geom_RectangularTrimmedSurface.hxx>
++#include <Geom_SphericalSurface.hxx>
++#include <Geom_SurfaceOfLinearExtrusion.hxx>
++#include <Geom_SurfaceOfRevolution.hxx>
++#include <Geom_ToroidalSurface.hxx>
++#include <Geom_TrimmedCurve.hxx>
++#include <Geom2d_BSplineCurve.hxx>
++#include <Geom2d_BezierCurve.hxx>
++#include <Geom2d_Circle.hxx>
++#include <Geom2d_Ellipse.hxx>
++#include <Geom2d_Hyperbola.hxx>
++#include <Geom2d_Line.hxx>
++#include <Geom2d_Parabola.hxx>
++#include <Geom2d_TrimmedCurve.hxx>
++#include <TopExp_Explorer.hxx>
++#include <stdexcept>
++#include <unordered_set>
++
++namespace {
++using Geometry = std::unordered_set<const Standard_Transient*>;
++template <typename T> bool exact(const Handle(T)& geometry, const Handle(Standard_Type)& type) {
++    return geometry->DynamicType() == type;
++}
++template <typename T> bool enter(const Handle(T)& geometry, Geometry& values, int depth) {
++    if (geometry.IsNull()) return false;
++    if (depth > 32) throw std::runtime_error("Private thickness geometry nesting exceeds guard");
++    return values.insert(geometry.get()).second;
++}
++void curve(const Handle(Geom_Curve)& value, Geometry& values, int depth) {
++    if (!enter(value, values, depth)) return;
++    if (exact(value, STANDARD_TYPE(Geom_TrimmedCurve)))
++        curve(Handle(Geom_TrimmedCurve)::DownCast(value)->BasisCurve(), values, depth + 1);
++    else if (exact(value, STANDARD_TYPE(Geom_OffsetCurve)))
++        curve(Handle(Geom_OffsetCurve)::DownCast(value)->BasisCurve(), values, depth + 1);
++    else if (!exact(value, STANDARD_TYPE(Geom_Line)) && !exact(value, STANDARD_TYPE(Geom_Circle))
++             && !exact(value, STANDARD_TYPE(Geom_Ellipse)) && !exact(value, STANDARD_TYPE(Geom_Hyperbola))
++             && !exact(value, STANDARD_TYPE(Geom_Parabola)) && !exact(value, STANDARD_TYPE(Geom_BSplineCurve))
++             && !exact(value, STANDARD_TYPE(Geom_BezierCurve)))
++        throw std::runtime_error("Unsupported private thickness 3D support");
++}
++void curve2d(const Handle(Geom2d_Curve)& value, Geometry& values, int depth) {
++    if (!enter(value, values, depth)) return;
++    if (exact(value, STANDARD_TYPE(Geom2d_TrimmedCurve)))
++        curve2d(Handle(Geom2d_TrimmedCurve)::DownCast(value)->BasisCurve(), values, depth + 1);
++    // Geom2d_OffsetCurve deliberately fails closed: pinned Copy can share its basis.
++    else if (!exact(value, STANDARD_TYPE(Geom2d_Line)) && !exact(value, STANDARD_TYPE(Geom2d_Circle))
++             && !exact(value, STANDARD_TYPE(Geom2d_Ellipse)) && !exact(value, STANDARD_TYPE(Geom2d_Hyperbola))
++             && !exact(value, STANDARD_TYPE(Geom2d_Parabola)) && !exact(value, STANDARD_TYPE(Geom2d_BSplineCurve))
++             && !exact(value, STANDARD_TYPE(Geom2d_BezierCurve)))
++        throw std::runtime_error("Unsupported private thickness 2D support");
++}
++void surface(const Handle(Geom_Surface)& value, Geometry& values, int depth) {
++    if (!enter(value, values, depth)) return;
++    if (exact(value, STANDARD_TYPE(Geom_RectangularTrimmedSurface)))
++        surface(Handle(Geom_RectangularTrimmedSurface)::DownCast(value)->BasisSurface(), values, depth + 1);
++    else if (exact(value, STANDARD_TYPE(Geom_OffsetSurface)))
++        surface(Handle(Geom_OffsetSurface)::DownCast(value)->BasisSurface(), values, depth + 1);
++    else if (exact(value, STANDARD_TYPE(Geom_SurfaceOfLinearExtrusion)))
++        curve(Handle(Geom_SurfaceOfLinearExtrusion)::DownCast(value)->BasisCurve(), values, depth + 1);
++    else if (exact(value, STANDARD_TYPE(Geom_SurfaceOfRevolution)))
++        curve(Handle(Geom_SurfaceOfRevolution)::DownCast(value)->BasisCurve(), values, depth + 1);
++    else if (!exact(value, STANDARD_TYPE(Geom_Plane)) && !exact(value, STANDARD_TYPE(Geom_CylindricalSurface))
++             && !exact(value, STANDARD_TYPE(Geom_ConicalSurface)) && !exact(value, STANDARD_TYPE(Geom_SphericalSurface))
++             && !exact(value, STANDARD_TYPE(Geom_ToroidalSurface)) && !exact(value, STANDARD_TYPE(Geom_BSplineSurface))
++             && !exact(value, STANDARD_TYPE(Geom_BezierSurface)))
++        throw std::runtime_error("Unsupported private thickness surface support");
++}
++Geometry collect(const TopoDS_Shape& body) {
++    Geometry values;
++    for (TopExp_Explorer e(body, TopAbs_FACE); e.More(); e.Next()) {
++        const auto face = Handle(BRep_TFace)::DownCast(e.Current().TShape());
++        if (face.IsNull()) throw std::runtime_error("Unsupported private thickness face topology");
++        surface(face->Surface(), values, 0);
++    }
++    for (TopExp_Explorer e(body, TopAbs_EDGE); e.More(); e.Next()) {
++        const auto edge = Handle(BRep_TEdge)::DownCast(e.Current().TShape());
++        if (edge.IsNull()) throw std::runtime_error("Unsupported private thickness edge topology");
++        for (const auto& representation : edge->Curves()) {
++            if (representation->IsCurve3D()) curve(representation->Curve3D(), values, 0);
++            else if (representation->IsCurveOnSurface()) {
++                surface(representation->Surface(), values, 0);
++                curve2d(representation->PCurve(), values, 0);
++                if (representation->IsCurveOnClosedSurface()) curve2d(representation->PCurve2(), values, 0);
++            } else if (representation->IsRegularity()) {
++                surface(representation->Surface(), values, 0);
++                surface(representation->Surface2(), values, 0);
++            } else if (representation->IsPolygonOnSurface()) surface(representation->Surface(), values, 0);
++            else if (!representation->IsPolygon3D() && !representation->IsPolygonOnTriangulation())
++                throw std::runtime_error("Unsupported private thickness edge representation");
++        }
++    }
++    return values;
++}
++}
++struct ThicknessGeometryOwnership::Data { Geometry seen; };
++ThicknessGeometryOwnership::ThicknessGeometryOwnership(const TopoDS_Shape& original)
++    : data(std::make_unique<Data>()) { data->seen = collect(original); }
++ThicknessGeometryOwnership::~ThicknessGeometryOwnership() = default;
++void ThicknessGeometryOwnership::addPrivateCopy(const TopoDS_Shape& copy) {
++    const auto values = collect(copy);
++    for (const auto* value : values) if (data->seen.contains(value))
++        throw std::runtime_error("Private thickness geometry copy shares support handle");
++    data->seen.insert(values.begin(), values.end());
++}

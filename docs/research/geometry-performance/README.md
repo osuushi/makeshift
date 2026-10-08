@@ -1,5 +1,10 @@
 # Exact geometry performance investigation
 
+Start with [the results overview](results-overview.md) for the source-pinned
+combined application measurements, kernel findings and remaining work.
+The [baseline provenance correction](baseline-provenance-review.md) supersedes
+early attribution of the startup prebuilt binary to the starting source commit.
+
 ## Authority and scope
 
 Follow [the user’s brief](../../planning/geometry-performance-research-brief.md).
@@ -70,10 +75,13 @@ output. Failed cases remain failures and are reported separately from speedups.
 - Cgroup CPU quota `400000 100000`: four CPU equivalents, not a guarantee of
   consistent single-core speed. Memory limit 16 GiB.
 - OCCT built without TBB; built-in OSD pool is available.
-- Existing SDK/build artifacts were already provisioned and receipt-verified by
-  the setup flow; no need to rebuild the whole kernel to establish the baseline.
-- Baseline calculator preserved at `/tmp/makeshift-kernel-baseline` for this
-  session; reproduce future baselines from the starting commit and same SDK.
+- Existing SDK libraries were provisioned and receipt-verified. The application
+  executable requires separate source/build provenance; an SDK receipt does not
+  certify that executable's revision.
+- `/tmp/makeshift-kernel-baseline` is the preserved **startup prebuilt artifact**.
+  A later combined output check shows it omits starting-source chamfer metadata,
+  so it cannot be attributed to commit 7861122. A fresh detached checkout/build
+  of that exact commit is now saved as `/tmp/makeshift-kernel-source-baseline`.
 
 ## Investigation log
 
@@ -150,8 +158,12 @@ timed runs. Record successful candidate tests before calling either ready.
 
 ### Shell parallel measurements: 20 paired blocks
 
-`results/shell-parallel.jsonl` compares unchanged baseline and the parallel-only
-candidate at four threads. Five successful captured/synthetic shell choices and
+`results/shell-parallel.jsonl` compares the startup prebuilt artifact and the
+rebuilt parallel-only candidate at four threads. A later provenance check finds
+the startup artifact is stale relative to the starting source (missing chamfer
+metadata). These early timings therefore do not isolate the parallel change
+against source-pinned 7861122; retain them as artifact observations pending a
+fresh-source retest. Five successful captured/synthetic shell choices and
 one existing rejection are included, each with 20 paired measured samples.
 
 | Case | Baseline ms | Parallel ms | Paired speedup, bootstrap 95% |
@@ -577,8 +589,16 @@ bits and measures small GK integration gains: circle-Z 1.039× (1.034–1.056),
 circle-X 1.057× (1.047–1.115), bent-X 1.021× (1.007–1.040). This does not imply
 the same application gain; current circle-X integration is only about 2 ms.
 Exact ray-query repetition counters rule out a broad query cache on perforated
-Fuse (one repeated attempt of 2,080). A separate analytic ray line/adaptor setup
-reuse prototype is prepared with lifetime/reentrancy guards, uncompiled so far.
+Fuse (one repeated attempt of 2,080). Analytic ray line/adaptor setup reuse now
+has isolated SDK-compatible builds, 6,900 bit-identical public query rows per
+variant, and thirty passing native regression cases for the first variant.
+Untimed constructor counts fall sharply, but an initial forty-pair 1.3% Fuse
+effect does not reproduce in another forty-block three-way run. The leaner
+variant resolves no gain on any of eight workloads. Setup reuse is therefore
+a measured negative result on this corpus, rather than an adopted kernel patch.
+An independent early exact ray-range filter is being prepared for execution;
+skipping irrelevant classifiers changes possible exceptions and is explicitly
+not assumed to preserve the complete generic kernel API contract.
 
 1. Broaden isolated fixed-V fork corpus checks before deciding whether to adopt
    the patch; reproduction is validated.
@@ -599,4 +619,5 @@ Additional notes: [quadrature](quadrature-research.md),
 [upstream backports](upstream-opportunities.md),
 [roundoff-floor experiment](kronrod-roundoff-research.md),
 [quadrature allocation/table audit](kronrod-allocation-research.md),
-[interval storage](interval-research.md), [ray setup](ray-setup-research.md).
+[interval storage](interval-research.md), [ray setup](ray-setup-research.md),
+[early ray range filtering](ray-range-research.md).

@@ -1,0 +1,7 @@
+{
+  "configs": 36,
+  "sdk_control_equal": 36,
+  "sdk_range_equal": 36,
+  "all_success": 28,
+  "crash_configs": 8
+}

@@ -13,7 +13,7 @@ to claim an unmeasured combined gain. Full methods and raw measurements are in
 | Reuse the final solid's already computed exact volume | Circle offset/twist request 1.93× | 20 paired blocks; ordered output and regression checks | Only reusable for the identical final unchanged solid |
 | Prefer transverse global flux for unmodified twisted extrusion volume | Circle offset/twist New 43.18× and neutral Auto 43.34×, about 2.5 s→58 ms | 40 pairs; 24 byte-identical BReps; 33 regressions; additional placement and 16 scale/slender checks | Pathological fixture; no universal accuracy claim; 120-pair cubic control shows small 2.4% regression requiring localization |
 | One centered prism for plain symmetric extrusion | Perforated 2.65×; box 6.25× | 40 blocks; 20 two-way material checks; signed/draft/location cases | Removes artificial midpoint seams; topology counts intentionally differ |
-| Parallelize strict Shell checks | Several successful shells 1.18–1.28× | 20 blocks; original predicates/tolerances retained | Thread benefit depends on available CPU; no general thread-count policy |
+| Parallelize strict Shell checks | Early prebuilt-artifact comparisons suggested 1.18–1.28×; source-pinned benefit requires retest | 20 blocks; original predicates/tolerances retained | Startup binary later proved stale (missing starting-source chamfer metadata); thread benefit depends on available CPU |
 | Remove repeat validation of unchanged Shell source | Successful shells 1.05–1.23× | 40 blocks; mutation audit; five Shell files and captured Erode pass | Adjacent Erode sphere-plane-fillet also fails on original baseline |
 | Cache ray setup and lazy exact UV sampling per body | Perforated unions 1.13–1.18× | 30 blocks; full metadata; focused reverse/located/repeated-query tests | Unchanged geometry, serial request lifetime; ray setup alone showed no reliable gain |
 | Retain already computed implicit Intersect Common/history | 1.25× on perforated case | 40 blocks; ordered full output; multi-target Undo/Redo/Open checks | Explicit route unchanged; positive Common is specific to immutable pair |
@@ -51,5 +51,10 @@ patch is installed in the production SDK.
 Contiguous interval storage is a more promising narrow prototype: forty paired
 blocks show 1.039× circle-Z and 1.021× bent-X integration gains with identical
 mass/error bits. Application benefit is unmeasured and may be very small after
-axis conditioning. Analytic ray setup reuse is prepared for testing; allocation
-counts and robust lifetime controls must precede any speed claim.
+axis conditioning. Analytic ray setup reuse dramatically reduces visible
+constructor calls, but an initial 1.3% Fuse gain does not reproduce in another
+forty-block three-way run, and minimal reuse resolves no gain in eight workloads.
+Both setup variants remain measured negative results. Early exact ray-range
+filtering may avoid more expensive trimmed
+classification, but potential suppressed exceptions keep it a research-only
+candidate pending execution and a justified application contract.

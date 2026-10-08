@@ -47,6 +47,10 @@ for variant in $variants; do
   printf '#!/usr/bin/env bash\nexec env LD_PRELOAD=%q %q "$@"\n' \
     "$output_dir/lib/kronrod-$variant.so" "$volume_binary" > "$output_dir/bin/volume-$variant"
   chmod +x "$output_dir/bin/volume-$variant"
+  printf '#!/usr/bin/env bash\nexec env LD_PRELOAD=%q %q "$@"\n' \
+    "$output_dir/lib/kronrod-$variant.so" /tmp/makeshift-kernel-streaming-cuts \
+    > "$output_dir/bin/makeshift-$variant"
+  chmod +x "$output_dir/bin/makeshift-$variant"
 done
 sha256sum "$source_file" "$header_file" "$output_dir"/lib/*.so \
   "$output_dir"/source/*.cxx > "$output_dir/build-hashes.txt"

@@ -989,3 +989,130 @@ The next separate kernel hypothesis is avoiding per-face/per-ray allocation of
 Geom_Line and GeomAdaptor_Curve in IntCurvesFace_Intersector. Analytic support
 ray tests currently construct both even when their setup can be reused safely;
 source/lifetime/reentrancy proof and measurements are pending.
+
+## Private-copy thickness-only parallel prototype (source artifact)
+
+Artifact [patches/parallel-private-thickness.patch](patches/parallel-private-thickness.patch)
+is against Makeshift HEAD `27a797dcdc147fe40546d8635bc630a396d127ea`.
+Source-only working copies are in `/tmp/makeshift-parallel-private-thickness/`;
+no production native file was edited or build/run performed in this lane.
+A git apply --check passed against the current unchanged native files. The patch
+adds 128-line parallel-thickness.cpp / 18-line header and a separate 122-line
+geometry-ownership guard / 15-line header; presentation.cpp becomes 225 lines,
+and new functions remain below 80 lines. CMake lists both new implementation
+files. No kernel/header ABI change or replacement SDK is involved.
+
+Only the exact **thickness payload** is prepared ahead of serial presentation.
+The original face metadata still emits predecessors, signatures, selected flags,
+mesh triangles, analytic handles, continuity chains, blends and chamfers on the
+original result. Worker tasks invoke unchanged presentOffsetThickness using
+private copied shapes/supports and format only its existing
+`,"thickness":...` fragment. Cached fragments or deferred per-face exceptions
+are consumed exactly where that original call occurred inside the ordered face
+loop. Edges and geometry result encoding remain serial and unchanged.
+
+Three same-binary modes use `MAKESHIFT_KERNEL_PRIVATE_THICKNESS`:
+
+- Absent, off or unknown value: original serial path.
+- `serial`: one deep-private context, computed serially in original face order,
+  separating copy/representation and setup cost from CPU concurrency.
+- `parallel` or `1`: available default-pool Launcher workers, each with its own
+  deep copy, face map, sample cache and intersector.
+
+All experimental modes require at least 16 faces; parallel additionally requires
+at least two pool workers, including the caller. This cutoff is a conservative
+prototype scope, not a measured optimal threshold. The direct default-pool
+Launcher follows the existing configured thread budget. Optional
+`MAKESHIFT_KERNEL_PRIVATE_THICKNESS_TRACE=1` emits active mode/worker count or a
+setup fallback reason from the orchestrator thread; use only for untimed
+eligibility diagnostics. Off/serial/parallel timing must leave tracing disabled.
+
+### Geometry isolation guard, including the 2D offset blocker
+
+CopyGeom=true alone was **insufficient** as a safety contract. The independent
+[shell audit](private-thickness-copy-research.md) found pinned
+Geom2d_OffsetCurve::Copy/SetBasisCurve can reuse an untrimmed basis curve, including
+mutable spline Resolution fields. The source prototype therefore rejects any
+stored Geom2d_OffsetCurve, including one under standard trimmed wrappers, and
+unknown geometry subclasses. It does not revive the analytic-only guard: known
+BSpline/Bezier supports are allowed only after ownership verification.
+
+Before launching queries, a serial guard collects geometry handle addresses
+from every original face surface and **every stored edge representation**:
+3D curves, all curve-on-surface roots, first/second seam pcurves, regularity
+surfaces and polygon-on-surface supports. It recursively follows standard
+trimmed/offset surface and 3D curve bases, extrusion/revolution basis curves,
+and 2D trimmed bases. Exact standard dynamic types permit analytic conics,
+BSpline/Bezier leaves and these reviewed wrappers; unknown types, excessive
+nesting and unsupported representations fail closed. Each worker copy's entire
+collected set must be disjoint from the original and every earlier worker's
+set before it is accepted. Shared roots/bases within one worker are allowed
+because that worker executes serially. Setup or ownership failures discard
+prepared state and return to the unchanged original serial path.
+
+The guard checks **object handle graphs**, not arbitrary internal array storage
+or all private evaluator fields. Standard spline/Bezier Copy constructors
+allocate/copy data arrays; standard trimmed/3D offset/extrusion/revolution and
+surface offset constructors clone bases and construct private evaluator/
+osculating state, as documented in the shell audit. That source evidence is
+required alongside runtime pointer disjointness. Unknown custom Copy semantics
+are rejected, and this is not a global proof that all OCCT intersection routines
+are race-free. No original geometry is accessed by worker tasks: original maps
+and support collection/copying happen serially before queries, and caller stream
+flags/precision/locale/fill are captured **serially** into immutable formatting
+values. Workers use independent ostringstream objects without copying callbacks,
+ties or invoking shared caller stream accessors.
+
+### Mapping, seams and numerical parity boundaries
+
+Pinned
+[CopyModification](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepTools/BRepTools_CopyModification.cxx#L35)
+NewSurface/NewCurve/NewCurve2d copy supports, preserve tolerances and supply
+unchanged orientation-reversal flags. The
+[modifier rebuild](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepTools/BRepTools_Modifier.cxx#L254)
+retains locations, natural restriction, ranges and seam alternatives. Its
+[ModifiedShape map](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepTools/BRepTools_Modifier.lxx#L27)
+looks up IsSame topology and can return a canonically FORWARD face. The prototype
+therefore explicitly restores **each original indexed face orientation**, retains
+the mapped location, checks location equality and membership in the copied
+body, and requires copied-body face count plus indexed insertion count to match.
+It inserts mapped faces in original face-map order, not new-copy traversal order.
+
+OffsetThicknessContext samples are keyed by those private oriented faces, and
+its ray tool loads that same private body. IsSame target tests therefore compare
+private-to-private identities; no original face is compared against a copied ray
+hit. Returned target indexes still come from the map populated in original index
+order. Body root locations, seams and reversed face normals need runtime checks
+because this source mapping audit is not numeric output verification.
+
+CopyMesh=false removes geometric-face display meshes on private copies; workers
+perform exact support/trimmed intersection and do not consume original display
+triangles. Copying may generate/install a missing planar pcurve **on the copy**,
+and constructors can normalize/rebuild parameter data even while preserving
+mathematical geometry. These representation differences can alter UVBounds,
+classifier boundary results or last-bit numerical values. The `serial` private
+mode is therefore a necessary correctness control before assessing parallel
+mode. Failures of exact metadata parity cannot be dismissed as harmless copying;
+retain raw replies, tolerance-sensitive cases and the old source geometry.
+
+### Error schedule, cost and acceptance
+
+Every face task catches its own failure into a preallocated exception_ptr slot.
+Original face predecessors/signature/mesh/analytic work executes before replay
+at that face's old thickness position; earlier serial face failures still win.
+A worker's prior face failure does not suppress later tasks. Copies/setup failures
+fall back serially; no new setup error is surfaced in place of an old later face
+error. Signals, allocation exhaustion, extra work before replay, and generic
+process-global/cancellation side effects remain scheduling limitations.
+
+Serial copies and guard walks, duplicate all-face ray initialization/sample
+caches, retained fragment strings, and copied support memory are charged to the
+request. Parallelism may lose the old cross-face cache sharing and load balance;
+no speedup or acceptable memory footprint is established by this patch.
+Require off/serial/parallel exact full metadata and source encodings on the shared
+28-case corpus, focused seams/locations/reversals/missing pcurves/offset2D
+fallback, and regression suites. Use untimed trace to prove each candidate
+actually activated instead of silently falling back. Include per-face exception
+ordinal tests, copied-body identity checks and race detection where available.
+Only after serial private representation parity should randomized paired
+same-binary mode timings and memory measurements assess the CPU benefit.

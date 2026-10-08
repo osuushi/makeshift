@@ -1,0 +1,47 @@
+[
+  {
+    "name": "extrude-perforated",
+    "baselineRepeat": "matched",
+    "candidateMatch": "reply.results[0].faces[0]\n+ actual - expected\n... Skipped lines\n\n  [\n    'predecessors',\n    'signature',\n    'offsetSelected',\n    'edgeIndexes',\n...\n    'blend',\n-   'chamfer',\n    'offsetHandle',\n    'plane'\n  ]\n"
+  },
+  {
+    "name": "boolean-cut-perforated",
+    "baselineRepeat": "matched",
+    "candidateMatch": "reply.results[0].faces[0]\n+ actual - expected\n... Skipped lines\n\n  [\n    'predecessors',\n    'signature',\n    'offsetSelected',\n    'edgeIndexes',\n...\n    'blend',\n-   'chamfer',\n    'offsetHandle',\n    'plane'\n  ]\n"
+  },
+  {
+    "name": "boolean-union-perforated",
+    "baselineRepeat": "matched",
+    "candidateMatch": "reply.results[0].faces[0]\n+ actual - expected\n... Skipped lines\n\n  [\n    'predecessors',\n    'signature',\n    'offsetSelected',\n    'edgeIndexes',\n...\n    'blend',\n-   'chamfer',\n    'offsetHandle',\n    'plane'\n  ]\n"
+  },
+  {
+    "name": "shell-perforated-open",
+    "baselineRepeat": "matched",
+    "candidateMatch": "reply.results[0].faces[0]\n+ actual - expected\n... Skipped lines\n\n  [\n    'predecessors',\n    'signature',\n    'offsetSelected',\n    'edgeIndexes',\n...\n    'blend',\n-   'chamfer',\n    'offsetHandle',\n    'plane'\n  ]\n"
+  },
+  {
+    "name": "cubic-subtract-implicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "reply.results[0].faces[0]\n+ actual - expected\n... Skipped lines\n\n  [\n    'predecessors',\n    'signature',\n    'offsetSelected',\n    'edgeIndexes',\n...\n    'blend',\n-   'chamfer',\n    'offsetHandle',\n    'plane'\n  ]\n"
+  },
+  {
+    "name": "shell-notched-cylinder-captured",
+    "baselineRepeat": "reply.results[0].faces[3].thickness.faceIndex: 17 != 15",
+    "candidateMatch": "reply.results[0].faces[0]\n+ actual - expected\n... Skipped lines\n\n  [\n    'predecessors',\n    'signature',\n    'offsetSelected',\n    'edgeIndexes',\n...\n    'blend',\n-   'chamfer',\n    'offsetHandle',\n    'plane'\n  ]\n"
+  },
+  {
+    "name": "shell-bent-sweep-captured",
+    "baselineRepeat": "matched",
+    "candidateMatch": "reply.results[0].faces[0]\n+ actual - expected\n... Skipped lines\n\n  [\n    'predecessors',\n    'signature',\n    'offsetSelected',\n    'edgeIndexes',\n...\n    'blend',\n-   'chamfer',\n    'offsetHandle',\n    'plane'\n  ]\n"
+  },
+  {
+    "name": "circle-offset-twist",
+    "baselineRepeat": "matched",
+    "candidateMatch": "reply.results[0].faces[0]\n+ actual - expected\n... Skipped lines\n\n  [\n    'predecessors',\n    'signature',\n    'offsetSelected',\n    'edgeIndexes',\n...\n    'blend',\n-   'chamfer',\n    'offsetHandle',\n    'plane'\n  ]\n"
+  },
+  {
+    "name": "circle-offset-twist-neutral-auto",
+    "baselineRepeat": "matched",
+    "candidateMatch": "reply.results[0].faces[0]\n+ actual - expected\n... Skipped lines\n\n  [\n    'predecessors',\n    'signature',\n    'offsetSelected',\n    'edgeIndexes',\n...\n    'blend',\n-   'chamfer',\n    'offsetHandle',\n    'plane'\n  ]\n"
+  }
+]
