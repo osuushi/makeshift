@@ -18,12 +18,17 @@ are local presentation preferences, independent of document files and Undo.
 
 Canonical XY/XZ/YZ references cover the viewport, including far from the origin.
 References render only colored grid lines; their invisible meshes remain picking targets.
-The most face-on canonical plane is the sole visibility target, with ties resolved
-XY, then XZ, then YZ (absolute facing dot products within 1e-12 count as tied).
-Its opacity still uses cutoff 0.45, fade width 0.3, selectable fraction 0.15 and
-smooth mixing time 120 ms. On switching, the outgoing grid fades out while the
-incoming grid fades in; brief crossfade overlap is allowed, but only the incoming
-plane can receive hover/click. Settled views show at most one canonical grid.
+The most face-on canonical plane is primary at configured maximum grid opacity,
+with ties resolved XY, then XZ, then YZ (facing differences within 1e-12 count as tied).
+One secondary supplies a faint orientation cue (14–22% of the maximum), fading
+near edge-on. On switching, grids crossfade with the existing 120 ms smoothing;
+only the primary receives ordinary hover/click. A visible secondary can be picked
+in explicit plane-selection tools. Both current and target primary opacity must
+meet the selectable fraction (0.15). At steady state at most two grids are visible.
+Coordinate grids apply a gentle bounded fade with positive depth from the view
+target along the camera direction. Fade distance scales with visible world height,
+independently of camera retreat; nearer portions retain full strength. Work grids,
+construction planes, world axes and geometry do not receive this fade.
 Settings keeps this simple behavior and
 exposes grid opacity, line thickness (0.5–3 pixels, default 1), colors and saved palettes.
 Grid colors default to XY #d4ae3a, XZ #55bb6e and YZ #b325c1; axes retain their colors.

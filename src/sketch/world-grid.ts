@@ -48,6 +48,9 @@ export function createGrids(scene: THREE.Scene) {
               : "#758296"
             : canonicalPlanes().colors[grid.id],
         );
+        grid.material.uniforms.coordinateDepthDistance.value = height * 2.5;
+        grid.material.uniforms.coordinateViewCenter.value.copy(target);
+        grid.material.uniforms.coordinateViewDirection.value.copy(direction);
         const facing = Math.abs(direction.dot(grid.normal));
         grid.material.uniforms.spacing.value = spacing;
         grid.material.uniforms.lineWidth.value = viewDisplay().gridLineWidth;
