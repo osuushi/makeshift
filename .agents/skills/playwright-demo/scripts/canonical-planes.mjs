@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import { chromium } from "playwright";
 import { createServer } from "vite";
-import { orient } from "../../../../tests/ui-blend-edit.mjs";
+import { openDocument } from "../../../../tests/native-documents.mjs";
+import { orient, project } from "../../../../tests/ui-blend-edit.mjs";
 import { at, drag, inspect, reset, settled } from "../../../../tests/ui-helpers.mjs";
 import { chooseTool } from "../../../../tests/ui-tools.mjs";
 import { FixedStepCapture } from "./fixed-step-capture.mjs";
@@ -25,22 +26,13 @@ try {
     },
     orbitDemo,
   );
-  await record(
-    "02-presets-and-preview",
-    async (page) => {
-      await seedBody(page);
-      await orient(page, [0.9, -0.4, Math.sqrt(0.03)]);
-    },
-    settingsDemo,
-  );
-  await record(
-    "03-away-from-origin",
-    async (page) => {
-      await reset(page);
-      await orient(page, [0, 0, 1]);
-    },
-    awayDemo,
-  );
+  await record("02-secondary-selection", async (page) => {
+    await reset(page);
+    const fixture = JSON.parse(await readFile("tests/fixtures/plane-cut-bent-shell.json", "utf8"));
+    await openDocument(page, { name: "cue-split.makeshift", mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify({ format: "makeshift", version: 1, document: fixture.document })) });
+    await orient(page, [1, -0.8, 0.3]);
+  }, selectionDemo);
 } finally {
   await browser?.close();
   await server.close();
@@ -114,151 +106,37 @@ async function orbit(page, capture, dx, dy) {
 }
 
 async function orbitDemo(page, capture) {
-  await label(
-    page,
-    "Head on: full configured visibility",
-    "Default preset · 15% maximum fill · edge-on planes fade away.",
-  );
-  await capture.hold(1.6);
-  await label(
-    page,
-    "Plane fades during orbit",
-    "The grid and fill fade together with the actual 120 ms smoothing setting.",
-  );
-  await orbit(page, capture, -260, 100);
-  await orbit(page, capture, 190, -110);
-  await label(
-    page,
-    "Isometric views can show all three",
-    "Presets configure facing-angle parameters, rather than a hard plane-count limit.",
-  );
-  await capture.action(() => orient(page, [1, -1, 1]));
-  await capture.hold(2);
-  assert.equal((await capture.action(() => inspect(page))).document.bodies.length, 1);
-}
-
-async function openSettings(page, capture) {
-  await capture.action(async () => {
-    await page.getByRole("button", { name: "Application settings" }).click();
-    await page.getByRole("combobox", { name: "Plane visibility preset" }).scrollIntoViewIfNeeded();
-  });
-}
-
-async function closeSettings(page, capture) {
-  await capture.action(async () => {
-    await page.getByRole("button", { name: "Done", exact: true }).click();
-    await settled(page);
-  });
-}
-
-async function settingsDemo(page, capture) {
-  await label(
-    page,
-    "Preset: usually one plane",
-    "Compare the same angle with the broader two-plane preset.",
-  );
-  await capture.hold(1.6);
-  await openSettings(page, capture);
-  await capture.hold(0.8);
-  await capture.action(() =>
-    page.getByRole("combobox", { name: "Plane visibility preset" }).selectOption("choice"),
-  );
+  await label(page, "One clear coordinate grid", "The primary keeps the configured opacity.");
   await capture.hold(1);
-  await closeSettings(page, capture);
-  await label(
-    page,
-    "Preset: usually two planes",
-    "The second grid fades in at the same viewing angle.",
-  );
-  await capture.hold(1.8);
-  await orbit(page, capture, -75, -45);
-  await label(
-    page,
-    "Visible previews can remain non-selectable",
-    "Minimum selectable visibility: 100% requires full visibility.",
-  );
-  await openSettings(page, capture);
-  await capture.action(() =>
-    page.getByRole("slider", { name: "Minimum selectable visibility", exact: true }).press("End"),
-  );
-  await capture.hold(0.9);
-  await closeSettings(page, capture);
-  await capture.action(() => orient(page, [1, -1, 1]));
-  const previews = await capture.action(() => inspect(page));
-  assert.ok(previews.planeTargets.every((plane) => plane.visible && !plane.selectable));
-  await page.mouse.move(780, 474);
-  await page.mouse.click(780, 474);
-  await capture.hold(1.6);
-  assert.ok(
-    (await capture.action(() => inspect(page))).planeTargets.every((plane) => !plane.selected),
-  );
-  await label(
-    page,
-    "Optional preview jump",
-    "Above the preview ceiling, the target becomes full configured visibility.",
-  );
-  await openSettings(page, capture);
-  await capture.action(() =>
-    page.getByRole("slider", { name: "Maximum preview visibility", exact: true }).press("Home"),
-  );
+  await label(page, "A faint secondary provides orientation", "Signed depth fading softens the far side; bodies occlude the grids.");
+  await orbit(page, capture, -190, 80);
+  await capture.action(() => orient(page, [1, -0.8, 0.3]));
   await capture.hold(1);
-  await closeSettings(page, capture);
-  await page.mouse.move(781, 475);
-  await capture.hold(1);
-  await page.mouse.click(781, 475);
-  await capture.hold(1.5);
-  assert.ok(
-    (await capture.action(() => inspect(page))).planeTargets.some((plane) => plane.selected),
-  );
-}
-
-async function awayDemo(page, capture) {
-  await label(
-    page,
-    "Planes cover the view, beyond the origin",
-    "Pan away: the grid and plane remain available for selection.",
-  );
-  await capture.hold(1.5);
-  await page.mouse.move(660, 360);
-  for (let i = 0; i < 36; i++) {
-    await page.mouse.wheel(70, 42.5);
-    await capture.hold(0.1);
-  }
-  await capture.action(() => settled(page));
-  await capture.hold(1);
-  await page.mouse.move(720, 444);
-  await capture.hold(0.5);
-  await page.mouse.click(720, 444);
-  await capture.hold(1.2);
-  assert.ok(
-    (await capture.action(() => inspect(page))).planeTargets.find((plane) => plane.id === "XY")
-      .selected,
-  );
-  await label(
-    page,
-    "Double-click to enter the plane",
-    "Create a sketch here with the origin far offscreen.",
-  );
-  await page.mouse.dblclick(720, 444);
-  await capture.action(() => settled(page));
-  await capture.hold(0.7);
-  const { camera } = await capture.action(() => inspect(page));
-  await page.keyboard.press("r");
-  const a = await capture.action(() => at(page, camera.target[0] - 10, camera.target[1] - 7));
-  const b = await capture.action(() => at(page, camera.target[0] + 10, camera.target[1] + 7));
-  await page.mouse.move(a.x, a.y);
-  await page.mouse.down();
-  for (let i = 1; i <= 45; i++) {
-    await page.mouse.move(a.x + ((b.x - a.x) * i) / 45, a.y + ((b.y - a.y) * i) / 45);
-    await capture.frame();
-  }
-  await page.mouse.up();
   const state = await capture.action(() => inspect(page));
-  assert.equal(state.document.sketches[0].curves.length, 4);
-  await label(
-    page,
-    "Normal sketch geometry, away from the origin",
-    "A full-view reference grid, without an origin-bound selection widget.",
-  );
-  await capture.hold(1.8);
+  assert.equal(state.planeTargets.filter((plane) => plane.selectable).length, 1);
+  assert.equal(state.planeTargets.filter((plane) => plane.visible).length, 2);
+  assert.equal(state.document.bodies.length, 1);
+}
+
+async function selectionDemo(page, capture) {
+  await label(page, "Secondary cues do not intercept ordinary clicks", "Only the stronger primary selects during normal modeling.");
+  const point = await capture.action(() => project(page, [30, 0, -18]));
+  await page.mouse.move(point.x, point.y);
+  await page.mouse.click(point.x, point.y);
+  await capture.hold(1);
+  assert.equal((await capture.action(() => inspect(page))).planeTargets.find((p) => p.id === "XZ").selected, false);
+  await label(page, "Split asks for a plane", "The visible secondary now accepts a normal canvas click.");
+  await capture.action(async () => {
+    await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+    await chooseTool(page, "Split Body", "split");
+  });
+  await capture.hold(0.7);
+  await page.mouse.move(point.x, point.y);
+  await page.mouse.click(point.x, point.y);
+  await capture.action(() => inspect(page));
+  const state = await capture.action(() => inspect(page));
+  assert.ok(state.preview?.bodies.length >= 2, state.notice);
+  await capture.action(() => page.getByText("Cutter · XZ world plane", { exact: true }).waitFor());
+  await label(page, "Secondary XZ plane selected", "The real split preview is temporary until acceptance.");
+  await capture.hold(1.2);
 }

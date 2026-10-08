@@ -17,7 +17,13 @@ export function canonicalPlaneBounds(world: World, frame: PlaneFrame): PlaneBoun
   return { minX: x - radius, maxX: x + radius, minY: y - radius, maxY: y + radius };
 }
 export function canonicalPlaneSelectable(world: World, id: import("./planes.js").PlaneId): boolean {
-  return !world.active && world.canonicalVisibility.states[id].selectable;
+  const state = world.canonicalVisibility.states[id];
+  const modal = !!world.planePicker || !!world.planePickerAccept;
+  return (
+    !world.active &&
+    (state.selectable ||
+      (modal && state.role === "secondary" && state.opacity > 0 && state.target > 0))
+  );
 }
 
 /** The central viewing ray's intersection, rather than the target's normal projection. */

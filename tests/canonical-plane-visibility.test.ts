@@ -6,15 +6,21 @@ import {
   configurePreferences,
 } from "../src/preferences/application-preferences.js";
 import { canonicalPlanes, normalizePlaneSettings } from "../src/preferences/canonical-planes.js";
-import { canonicalPlaneBounds, planeViewCenter } from "../src/sketch/canonical-plane-bounds.js";
+import {
+  canonicalPlaneBounds,
+  canonicalPlaneSelectable,
+  planeViewCenter,
+} from "../src/sketch/canonical-plane-bounds.js";
 import {
   CanonicalPlaneVisibility,
   mixPlaneVisibility,
   planeVisibilityTarget,
   selectablePlane,
 } from "../src/sketch/canonical-plane-visibility.js";
+import { coordinateDepthOpacity } from "../src/sketch/coordinate-plane-depth.js";
 import { planes } from "../src/sketch/planes.js";
 import type { World } from "../src/sketch/world.js";
+import { gridMaterial } from "../src/sketch/world-grid-material.js";
 
 const settings = canonicalPlanes();
 test("angle boundaries, both sides, head-on maximum and optional preview jump", () => {
@@ -47,7 +53,7 @@ test("smooth mixing is frame-rate independent, settles and honors instant change
   assert.equal(mixPlaneVisibility(0, 1, 120, 0), 1);
   assert.equal(mixPlaneVisibility(1, 0, 200, 120), 0);
 });
-test("one canonical plane wins by facing angle, with XY then XZ then YZ tie priority", () => {
+test("one full-strength primary wins by facing angle, with a bounded secondary and stable ties", () => {
   const camera = new THREE.OrthographicCamera();
   const visibility = new CanonicalPlaneVisibility();
   const cases = [
@@ -69,9 +75,17 @@ test("one canonical plane wins by facing angle, with XY then XZ then YZ tie prio
     camera.lookAt(0, 0, 0);
     camera.updateMatrixWorld();
     visibility.update(camera, settings, 0, true);
+    assert.equal(visibility.states[winner].opacity, 1);
+    assert.equal(Object.values(visibility.states).filter((state) => state.target === 1).length, 1);
+    assert.ok(
+      Object.values(visibility.states)
+        .filter((state) => state.role !== "primary")
+        .every((state) => state.opacity >= 0 && state.opacity <= 0.22),
+    );
+    assert.ok(Object.values(visibility.states).filter((state) => state.opacity > 0).length <= 2);
     assert.deepEqual(
       Object.entries(visibility.states)
-        .filter(([, state]) => state.opacity > 0)
+        .filter(([, state]) => state.role === "primary")
         .map(([id]) => id),
       [winner],
     );
@@ -195,4 +209,59 @@ test("grid thickness validation is atomic and fill opacity stays disabled", () =
   assert.throws(() => configurePreferences('{"viewDisplay":{"grid":0.1,"gridLineWidth":0.4}}'));
   assert.equal(applicationPreferences().viewDisplay.grid, original.viewDisplay.grid);
   configurePreferences(JSON.stringify(original));
+});
+
+test("secondary references are selectable only inside explicit plane picking", () => {
+  const camera = new THREE.OrthographicCamera();
+  camera.position.set(1, 0.8, 0.3);
+  camera.lookAt(0, 0, 0);
+  camera.updateMatrixWorld();
+  const visibility = new CanonicalPlaneVisibility();
+  visibility.update(camera, settings, 0, true);
+  const world = {
+    canonicalVisibility: visibility,
+    active: null,
+    planePicker: null,
+    planePickerAccept: null,
+  } as unknown as World;
+  assert.equal(canonicalPlaneSelectable(world, "YZ"), true);
+  assert.equal(canonicalPlaneSelectable(world, "XZ"), false);
+  world.planePicker = () => {};
+  assert.equal(canonicalPlaneSelectable(world, "XZ"), true);
+  assert.equal(canonicalPlaneSelectable(world, "XY"), false);
+  Object.assign(world, { active: "XY" });
+  assert.equal(canonicalPlaneSelectable(world, "XZ"), false);
+});
+
+test("coordinate depth fading preserves nearer portions and scales with view height and ignores camera retreat", () => {
+  assert.equal(coordinateDepthOpacity(-100000), 1);
+  assert.equal(coordinateDepthOpacity(0), 1);
+  assert.ok(coordinateDepthOpacity(200) < 1);
+  assert.ok(coordinateDepthOpacity(200) > 0.65);
+  assert.equal(coordinateDepthOpacity(Infinity), 0.65);
+  const center = new THREE.Vector3(10, 20, 30);
+  const point = new THREE.Vector3(10, 20, -170);
+  const camera = new THREE.OrthographicCamera();
+  const opacity = (distance: number, zoom: number) => {
+    camera.position.copy(center).add(new THREE.Vector3(0, 0, distance));
+    camera.zoom = zoom;
+    camera.lookAt(center);
+    camera.updateMatrixWorld();
+    return coordinateDepthOpacity(
+      point.clone().sub(center).dot(camera.getWorldDirection(new THREE.Vector3())),
+    );
+  };
+  assert.equal(opacity(100, 1), opacity(10000, 4));
+  assert.equal(coordinateDepthOpacity(200, 80), coordinateDepthOpacity(2000, 800));
+});
+
+test("coordinate grids receive depth fading while the active work grid stays unfaded", () => {
+  const coordinate = gridMaterial("XY");
+  const work = gridMaterial("work");
+  assert.equal(coordinate.uniforms.coordinateDepthEnabled.value, 1);
+  assert.equal(work.uniforms.coordinateDepthEnabled.value, 0);
+  assert.equal(coordinate.depthTest, true);
+  assert.equal(work.depthTest, false);
+  coordinate.dispose();
+  work.dispose();
 });

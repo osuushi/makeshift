@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { canonicalPlanes } from "../preferences/canonical-planes.js";
+import { coordinatePlaneDepth } from "./coordinate-plane-depth.js";
 import type { PlaneBounds } from "./plane-bounds.js";
 import { type PlaneFrame, type PlaneId, planeIds, planes } from "./planes.js";
 import { stableClipping } from "./stable-clipping.js";
@@ -41,6 +42,7 @@ export function positionPlanePatch(mesh: PlanePatch, frame: PlaneFrame, bounds: 
 export function createPlaneTargets(world: World): PlaneTarget[] {
   return planeIds.map((id) => {
     const mesh = planePatch(planeTargetBaseColor(id));
+    coordinatePlaneDepth(mesh.material, world.camera, world.target, () => world.height);
     mesh.userData.planeTarget = id;
     world.scene.add(mesh);
     return { id, frame: planes[id], mesh };
