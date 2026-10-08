@@ -20,8 +20,11 @@ Canonical XY/XZ/YZ references cover the viewport, including far from the origin.
 References render only colored grid lines; their invisible meshes remain picking targets.
 The most face-on canonical plane is primary at configured maximum grid opacity,
 with ties resolved XY, then XZ, then YZ (facing differences within 1e-12 count as tied).
-One secondary supplies a faint orientation cue (14–22% of the maximum), fading
-near edge-on. On switching, grids crossfade with the existing 120 ms smoothing;
+One secondary supplies an orientation cue at a configurable fraction of the maximum
+(35% by default), fading near edge-on. On switching, only opacity targets change;
+each grid carries opacity and velocity through a critically damped spring with a
+240 ms smoothing time (about 0.6 seconds to reach 95% of a settled target).
+Reduced motion and a configured zero smoothing time use immediate changes;
 only the primary receives ordinary hover/click. A visible secondary can be picked
 in explicit plane-selection tools. Both current and target primary opacity must
 meet the selectable fraction (0.15). At steady state at most two grids are visible.
@@ -30,7 +33,8 @@ target along the camera direction. Fade distance scales with visible world heigh
 independently of camera retreat; nearer portions retain full strength. Work grids,
 construction planes, world axes and geometry do not receive this fade.
 Settings keeps this simple behavior and
-exposes grid opacity, line thickness (0.5–3 pixels, default 1), colors and saved palettes.
+exposes grid opacity, secondary plane opacity (0–100% relative to the primary),
+line thickness (0.5–3 pixels, default 1), colors and saved palettes.
 Grid colors default to XY #d4ae3a, XZ #55bb6e and YZ #b325c1; axes retain their colors.
 Thickness also applies to the active sketch grid. A sketch whose copied frame
 matches a canonical plane uses that plane’s palette color; other sketch grids stay neutral. World X/Y/Z axes render
@@ -41,7 +45,7 @@ Preferences live on the editing device, outside document files and Undo. On the 
 load of the grid-only presentation, previous visibility choices reset to the focused
 behavior and old default colors migrate; custom colors and named palettes survive.
 Reset plane grids restores visibility and colors while preserving palettes. Reset
-grid display restores opacity and thickness. Advanced fade parameters remain available
+grid display restores primary/secondary opacity and thickness. Advanced fade parameters remain available
 through the settings API; the legacy planes opacity field always reads zero.
 
 `makeshift settings [JSON]` reads or validates and patches these preferences through

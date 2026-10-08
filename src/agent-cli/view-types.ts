@@ -9,7 +9,7 @@ export type FaceInfo = FaceBase & (
 );
 export interface PlaneSettings {
   angleCutoff: number; fadeWidth: number; selectableMinimum: number;
-  fullOpacityAbove: number; fadeMilliseconds: number;
+  fullOpacityAbove: number; fadeMilliseconds: number; secondaryOpacity: number;
   colors: Record<"XY" | "XZ" | "YZ", string>;
   palettes: Record<string, Record<"XY" | "XZ" | "YZ", string>>;
 }

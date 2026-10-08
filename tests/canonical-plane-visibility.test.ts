@@ -13,7 +13,6 @@ import {
 } from "../src/sketch/canonical-plane-bounds.js";
 import {
   CanonicalPlaneVisibility,
-  mixPlaneVisibility,
   planeVisibilityTarget,
   selectablePlane,
 } from "../src/sketch/canonical-plane-visibility.js";
@@ -45,14 +44,6 @@ test("faint previews cannot click, including a still-bright plane fading out", (
   assert.equal(selectablePlane(0.001, 0.001, 0), true);
   assert.equal(selectablePlane(0.99, 1, 1), false);
 });
-test("smooth mixing is frame-rate independent, settles and honors instant changes", () => {
-  const half = mixPlaneVisibility(0, 1, 60, 120);
-  assert.ok(
-    Math.abs(mixPlaneVisibility(half, 1, 60, 120) - mixPlaneVisibility(0, 1, 120, 120)) < 1e-12,
-  );
-  assert.equal(mixPlaneVisibility(0, 1, 120, 0), 1);
-  assert.equal(mixPlaneVisibility(1, 0, 200, 120), 0);
-});
 test("one full-strength primary wins by facing angle, with a bounded secondary and stable ties", () => {
   const camera = new THREE.OrthographicCamera();
   const visibility = new CanonicalPlaneVisibility();
@@ -80,7 +71,7 @@ test("one full-strength primary wins by facing angle, with a bounded secondary a
     assert.ok(
       Object.values(visibility.states)
         .filter((state) => state.role !== "primary")
-        .every((state) => state.opacity >= 0 && state.opacity <= 0.22),
+        .every((state) => state.opacity >= 0 && state.opacity <= settings.secondaryOpacity),
     );
     assert.ok(Object.values(visibility.states).filter((state) => state.opacity > 0).length <= 2);
     assert.deepEqual(
@@ -113,7 +104,7 @@ test("a winner change crossfades smoothly and immediately disables outgoing pick
   assert.ok(Math.abs(visibility.states.XY.opacity + visibility.states.XZ.opacity - 1) < 1e-12);
   assert.equal(visibility.states.XY.selectable, false);
   assert.equal(visibility.states.YZ.opacity, 0);
-  visibility.update(camera, settings, 300);
+  visibility.update(camera, settings, 2000);
   assert.equal(visibility.states.XY.opacity, 0);
   assert.equal(visibility.states.XZ.opacity, 1);
 });
@@ -197,6 +188,9 @@ test("slow rendered frames continue fading instead of remaining permanently unse
   visibility.update(camera, settings, 10000);
   assert.equal(visibility.states.XY.opacity, 1);
   visibility.update(camera, settings, 10200);
+  assert.ok(visibility.states.XY.opacity > 0 && visibility.states.XY.opacity < 1);
+  assert.ok(visibility.states.YZ.opacity > 0 && visibility.states.YZ.opacity < 1);
+  visibility.update(camera, settings, 12000);
   assert.equal(visibility.states.XY.opacity, 0);
   assert.equal(visibility.states.YZ.opacity, 1);
 });

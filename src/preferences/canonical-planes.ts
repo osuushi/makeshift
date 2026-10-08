@@ -8,6 +8,8 @@ export interface CanonicalPlaneSettings {
   selectableMinimum: number;
   fullOpacityAbove: number;
   fadeMilliseconds: number;
+  /** Secondary visibility as a fraction of the primary grid's maximum. */
+  secondaryOpacity: number;
   colors: Record<PlaneId, string>;
   palettes: Record<string, Record<PlaneId, string>>;
 }
@@ -16,11 +18,13 @@ export const planePresets = {
   choice: { angleCutoff: 0.25, fadeWidth: 0.4 },
 } as const;
 export const defaultPlaneColors = { XY: "#d4ae3a", XZ: "#55bb6e", YZ: "#b325c1" };
+export const defaultSecondaryOpacity = 0.35;
 const defaults: CanonicalPlaneSettings = {
   ...planePresets.focused,
   selectableMinimum: 0.15,
   fullOpacityAbove: 1,
-  fadeMilliseconds: 120,
+  fadeMilliseconds: 240,
+  secondaryOpacity: defaultSecondaryOpacity,
   colors: defaultPlaneColors,
   palettes: {},
 };
@@ -36,7 +40,7 @@ try {
       ...planePresets.focused,
       selectableMinimum: 0.15,
       fullOpacityAbove: 1,
-      fadeMilliseconds: 120,
+      fadeMilliseconds: defaults.fadeMilliseconds,
     };
     const oldColors = { XY: "#8fa8c4", XZ: "#91b5a4", YZ: "#c2a27b" };
     for (const id of planeIds)
@@ -66,11 +70,15 @@ export function normalizePlaneSettings(input: unknown): CanonicalPlaneSettings {
     "selectableMinimum",
     "fullOpacityAbove",
     "fadeMilliseconds",
+    "secondaryOpacity",
   ] as const) {
     const number = candidate[field];
     if (typeof number === "number" && Number.isFinite(number))
       result[field] = Math.max(0, Math.min(field === "fadeMilliseconds" ? 2000 : 1, number));
   }
+  // Upgrade the old implicit fade default while retaining custom durations.
+  if (candidate.secondaryOpacity === undefined && candidate.fadeMilliseconds === 120)
+    result.fadeMilliseconds = defaults.fadeMilliseconds;
   result.colors = colors(candidate.colors);
   if (candidate.palettes && typeof candidate.palettes === "object")
     result.palettes = Object.fromEntries(

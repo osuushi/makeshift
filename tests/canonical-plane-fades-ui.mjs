@@ -28,7 +28,7 @@ export async function orientationCueRoute(page, name = "cue") {
   );
   assert.ok(state.planeTargets.every((p) => p.fillOpacity === 0));
   assert.ok(state.planeTargets.find((p) => p.id === "XZ").opacity > 0);
-  assert.ok(state.planeTargets.find((p) => p.id === "XZ").opacity <= 0.22);
+  assert.ok(state.planeTargets.find((p) => p.id === "XZ").opacity <= 0.351);
   // This ray hits XZ closer than YZ. Ordinary picking must still choose the primary.
   const secondaryPoint = await project(page, [18, 0, -18]);
   await page.mouse.move(secondaryPoint.x, secondaryPoint.y);

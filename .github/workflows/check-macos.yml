@@ -136,6 +136,10 @@ jobs:
           xvfb-run -a node tests/decorator-settings-browser.mjs
           xvfb-run -a node tests/view-settings-browser.mjs
           xvfb-run -a node tests/canonical-plane-fades-ui.mjs
+          xvfb-run -a node tests/secondary-plane-opacity-ui.mjs
+          xvfb-run -a node tests/extrude-internal-annulus-ui.mjs
+          xvfb-run -a node tests/plane-alignment-ui.mjs
+          xvfb-run -a node tests/modal-plane-widgets-ui.mjs
           xvfb-run -a node tests/decorator-settings-layout.mjs
       - name: Browser preview readiness
         if: matrix.shard == 1 && matrix.browser == 'chromium'
@@ -454,6 +458,10 @@ jobs:
           node tests/decorator-settings-browser.mjs
           node tests/view-settings-browser.mjs
           node tests/canonical-plane-fades-ui.mjs
+          node tests/secondary-plane-opacity-ui.mjs
+          node tests/extrude-internal-annulus-ui.mjs
+          node tests/plane-alignment-ui.mjs
+          node tests/modal-plane-widgets-ui.mjs
           node tests/decorator-settings-layout.mjs
           node tests/decorator-display-ui.mjs
           node tests/thread-preview-rim-ui.mjs
@@ -463,6 +471,15 @@ jobs:
         env:
           MAKESHIFT_TEST_BROWSER: electron
         run: node tests/decorator-display-ui.mjs
+      - name: Omnibus plane controls and captured extrusion in Electron
+        if: matrix.lane == 'electron-host'
+        env:
+          MAKESHIFT_TEST_BROWSER: electron
+        run: |
+          node tests/secondary-plane-opacity-ui.mjs
+          node tests/extrude-internal-annulus-ui.mjs
+          node tests/plane-alignment-ui.mjs
+          node tests/modal-plane-widgets-ui.mjs
       - name: Body Enter and Transform in WebKit
         if: matrix.lane == 'webkit-controls'
         env:

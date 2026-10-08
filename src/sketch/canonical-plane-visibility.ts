@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import type { CanonicalPlaneSettings } from "../preferences/canonical-planes.js";
+import { dampPlaneOpacity } from "./damped-plane-opacity.js";
 import { type PlaneId, planeIds, planes } from "./planes.js";
 
 export function planeVisibilityTarget(facing: number, settings: CanonicalPlaneSettings): number {
@@ -18,18 +19,6 @@ export function planeVisibilityTarget(facing: number, settings: CanonicalPlaneSe
 export function selectablePlane(current: number, target: number, minimum: number): boolean {
   return current > 0 && target > 0 && current >= minimum && target >= minimum;
 }
-/** Frame-rate-independent smooth mixing, similar to Unity's damped interpolation. */
-export function mixPlaneVisibility(
-  current: number,
-  target: number,
-  elapsed: number,
-  duration: number,
-): number {
-  if (duration === 0) return target;
-  const next =
-    current + (target - current) * (1 - Math.exp((-Math.max(0, elapsed) * 5) / duration));
-  return Math.abs(next - target) < 0.001 ? target : next;
-}
 export class CanonicalPlaneVisibility {
   private previous: number | null = null;
   readonly states = Object.fromEntries(
@@ -37,6 +26,7 @@ export class CanonicalPlaneVisibility {
       id,
       {
         opacity: 0,
+        velocity: 0,
         target: 0,
         selectable: false,
         role: "hidden" as "primary" | "secondary" | "hidden",
@@ -46,6 +36,7 @@ export class CanonicalPlaneVisibility {
     PlaneId,
     {
       opacity: number;
+      velocity: number;
       target: number;
       selectable: boolean;
       role: "primary" | "secondary" | "hidden";
@@ -86,22 +77,26 @@ export class CanonicalPlaneVisibility {
         state.role === "primary"
           ? 1
           : state.role === "secondary"
-            ? edgeFade * (0.14 + 0.08 * planeVisibilityTarget(facing, settings))
+            ? edgeFade * settings.secondaryOpacity
             : 0;
       // Slow rendered frames still advance an existing fade. Only a new target
       // after a genuinely idle viewport starts with no accumulated time.
       const elapsed = !first && gap > 1000 && state.target !== target ? 0 : gap;
       state.target = target;
-      state.opacity = mixPlaneVisibility(
+      if (elapsed === 0 && gap > 1000) state.velocity = 0;
+      const damped = dampPlaneOpacity(
         state.opacity,
+        state.velocity,
         state.target,
-        elapsed,
-        reducedMotion ? 0 : settings.fadeMilliseconds,
+        first ? 0 : elapsed,
+        first || reducedMotion ? 0 : settings.fadeMilliseconds,
       );
+      state.opacity = damped.opacity;
+      state.velocity = damped.velocity;
       state.selectable =
         state.role === "primary" &&
         selectablePlane(state.opacity, state.target, settings.selectableMinimum);
-      moving ||= state.opacity !== state.target;
+      moving ||= state.opacity !== state.target || state.velocity !== 0;
     }
     return moving;
   }
