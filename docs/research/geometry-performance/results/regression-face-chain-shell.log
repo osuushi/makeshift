@@ -1,0 +1,12 @@
+✔ .cache/sketch-tests/tests/body-shell-capture.test.js (8161.764177ms)
+✔ .cache/sketch-tests/tests/body-shell-geometry.test.js (1785.430465ms)
+✔ .cache/sketch-tests/tests/body-shell-source-precision.test.js (3160.792457ms)
+✔ .cache/sketch-tests/tests/body-shell-sweep.test.js (21180.595801ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 34296.877665

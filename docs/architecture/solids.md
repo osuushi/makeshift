@@ -19,6 +19,13 @@ holes. Modeling hit tests use exact segment/circular ray crossings; triangulatio
 is only the highlight representation. Profile keys are temporary and selection
 clears when accepted geometry changes. They are not persistent operation inputs.
 
+A selected exact face can also contain INTERNAL edges, wires or vertices from
+earlier edits. These remain accepted topology, but do not bound swept material.
+The shared face-profile path for extrusion, revolve, path sweep and loft removes
+removable INTERNAL entities from a temporary copied profile before construction,
+preserving true outer/hole boundaries and the accepted BRep. Boundary preparation
+does not relax geometry validation or repair invalid solids after sweeping.
+
 B1 now uses a stateless OCCT 7.9.3 calculator for exact profile sweeps and Booleans.
 The existing TypeScript document owner supplies current BReps and accepts the
 whole candidate, including zero/multiple results, as one snapshot Undo step.

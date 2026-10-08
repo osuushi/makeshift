@@ -1,0 +1,27 @@
+{"name":"extrude-perforated","baselineRepeat":"matched","candidateMatch":"matched"}
+{"name":"extrude-symmetric-perforated","baselineRepeat":"matched","candidateMatch":"matched"}
+{"name":"extrude-symmetric-box","baselineRepeat":"matched","candidateMatch":"matched"}
+{"name":"boolean-cut-perforated","baselineRepeat":"matched","candidateMatch":"matched"}
+{"name":"boolean-union-perforated","baselineRepeat":"matched","candidateMatch":"matched"}
+{"name":"extrude-union-implicit","baselineRepeat":"matched","candidateMatch":"matched"}
+{"name":"extrude-union-explicit","baselineRepeat":"matched","candidateMatch":"matched"}
+{"name":"extrude-auto-implicit","baselineRepeat":"matched","candidateMatch":"matched"}
+{"name":"extrude-auto-explicit","baselineRepeat":"matched","candidateMatch":"matched"}
+{"name":"extrude-subtract-implicit","baselineRepeat":"matched","candidateMatch":"matched"}
+{"name":"extrude-subtract-explicit","baselineRepeat":"matched","candidateMatch":"matched"}
+{"name":"extrude-intersect-implicit","baselineRepeat":"matched","candidateMatch":"matched"}
+{"name":"extrude-intersect-explicit","baselineRepeat":"matched","candidateMatch":"matched"}
+✔ .cache/sketch-tests/tests/body-boolean.test.js (882.87774ms)
+✔ .cache/sketch-tests/tests/extrude-draft.test.js (1243.834893ms)
+✔ .cache/sketch-tests/tests/extrude-projected-cylinder.test.js (3664.831407ms)
+✔ .cache/sketch-tests/tests/extrude-symmetric.test.js (5356.155788ms)
+✔ .cache/sketch-tests/tests/extrude-twist.test.js (10560.119118ms)
+✔ .cache/sketch-tests/tests/tagged-groups-boolean.test.js (367.919735ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22092.853942

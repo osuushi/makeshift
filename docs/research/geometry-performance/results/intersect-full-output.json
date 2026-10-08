@@ -1,0 +1,12 @@
+[
+  {
+    "name": "extrude-intersect-implicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "extrude-intersect-explicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  }
+]

@@ -1,0 +1,14 @@
+✔ .cache/sketch-tests/tests/body-boolean.test.js (890.733934ms)
+✔ .cache/sketch-tests/tests/body-offset-chain.test.js (957.783303ms)
+✔ .cache/sketch-tests/tests/body-offset-coplanar.test.js (1662.431272ms)
+✔ .cache/sketch-tests/tests/body-offset-spline.test.js (30251.005351ms)
+✔ .cache/sketch-tests/tests/body-offset.test.js (822.93426ms)
+✔ .cache/sketch-tests/tests/body-shell.test.js (1164.317034ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 35758.418097

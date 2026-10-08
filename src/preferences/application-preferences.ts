@@ -36,6 +36,7 @@ export function configurePreferences(json: string): void {
       "selectableMinimum",
       "fullOpacityAbove",
       "fadeMilliseconds",
+      "secondaryOpacity",
       "colors",
       "palettes",
     ]);

@@ -1,0 +1,3511 @@
+{
+  "notes": [
+    "Each sample uses a fresh process; fixture construction happens in a separate process closed before sampling.",
+    "VmHWM/VmPeak include native startup and the sole request. Snapshots are outside elapsed request timing; HWM is not a sampled per-request peak or peak delta.",
+    "MiB equals proc KiB divided by 1024. Positive paired differences mean candidate uses more memory. Failed requests are excluded from memory summaries and retained as errors.",
+    "Bootstrap95 intervals use seeded 10000 paired-block resamples of median absolute differences; small pilots have limited inference power.",
+    "Representative comparison ignores BRep string contents only; all other numeric data use tolerance 1e-9 and metadata/display/topology ordering is preserved."
+  ],
+  "summary": [
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "perforated-explicit-auto-n4-overlap-only",
+      "label": "streaming",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.3515625,
+            "p95MiB": 0.49609375,
+            "minMiB": 0.0859375,
+            "maxMiB": 0.88671875
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 38.6171875,
+            "p95MiB": 39.6796875,
+            "minMiB": 38.3515625,
+            "maxMiB": 39.703125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -0.466796875,
+            "bootstrap95MiB": [
+              -0.6875,
+              0.47265625
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": -0.02734375,
+            "bootstrap95MiB": [
+              -0.1328125,
+              0.1171875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.3515625,
+            "p95MiB": 0.49609375,
+            "minMiB": 0.0859375,
+            "maxMiB": 0.88671875
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 32.9296875,
+            "p95MiB": 33.05078125,
+            "minMiB": 31.47265625,
+            "maxMiB": 33.15234375
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 2.107421875,
+            "bootstrap95MiB": [
+              0.59375,
+              2.21484375
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": -0.02734375,
+            "bootstrap95MiB": [
+              -0.1328125,
+              0.1171875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 12.87109375,
+            "p95MiB": 32.078125,
+            "minMiB": 2.3828125,
+            "maxMiB": 59.37109375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 85.146484375,
+            "p95MiB": 86.37890625,
+            "minMiB": 85.08203125,
+            "maxMiB": 86.3828125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -0.482421875,
+            "bootstrap95MiB": [
+              -0.578125,
+              0.66015625
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": -4.802734375,
+            "bootstrap95MiB": [
+              -12.6796875,
+              13.91015625
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-explicit-auto-n4-overlap-only.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/streaming-perforated-explicit-auto-n4-overlap-only.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "perforated-explicit-auto-n4-overlap-only",
+      "label": "retained",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.373046875,
+            "p95MiB": 0.5,
+            "minMiB": 0.21875,
+            "maxMiB": 0.50390625
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 39.142578125,
+            "p95MiB": 39.21875,
+            "minMiB": 39.0546875,
+            "maxMiB": 39.23046875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.373046875,
+            "p95MiB": 0.5,
+            "minMiB": 0.21875,
+            "maxMiB": 0.50390625
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 30.85546875,
+            "p95MiB": 30.89453125,
+            "minMiB": 30.71875,
+            "maxMiB": 30.90234375
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 15.013671875,
+            "p95MiB": 32.07421875,
+            "minMiB": 2.37890625,
+            "maxMiB": 32.07421875
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 85.658203125,
+            "p95MiB": 85.66796875,
+            "minMiB": 85.55859375,
+            "maxMiB": 85.71875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-explicit-auto-n4-overlap-only.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-explicit-auto-n4-overlap-only.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "cubic-implicit-subtract-n4-overlap-only",
+      "label": "retained",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.337890625,
+            "p95MiB": 0.37890625,
+            "minMiB": 0.0859375,
+            "maxMiB": 2.70703125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 27.6015625,
+            "p95MiB": 27.78515625,
+            "minMiB": 27.3984375,
+            "maxMiB": 27.80859375
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.337890625,
+            "p95MiB": 0.37890625,
+            "minMiB": 0.0859375,
+            "maxMiB": 2.70703125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 27.498046875,
+            "p95MiB": 27.70703125,
+            "minMiB": 27.28515625,
+            "maxMiB": 27.73046875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 8.671875,
+            "p95MiB": 20.57421875,
+            "minMiB": 2.37890625,
+            "maxMiB": 65.3984375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 73.673828125,
+            "p95MiB": 73.96484375,
+            "minMiB": 73.39453125,
+            "maxMiB": 73.97265625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-implicit-subtract-n4-overlap-only.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-implicit-subtract-n4-overlap-only.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "cubic-implicit-subtract-n4-overlap-only",
+      "label": "streaming",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.37109375,
+            "p95MiB": 0.390625,
+            "minMiB": 0.30078125,
+            "maxMiB": 3.8125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 25.19921875,
+            "p95MiB": 25.3359375,
+            "minMiB": 25.1015625,
+            "maxMiB": 25.47265625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -2.470703125,
+            "bootstrap95MiB": [
+              -2.66015625,
+              -2.1875
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.0390625,
+            "bootstrap95MiB": [
+              0,
+              0.265625
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.37109375,
+            "p95MiB": 0.390625,
+            "minMiB": 0.30078125,
+            "maxMiB": 3.8125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 25.1875,
+            "p95MiB": 25.3359375,
+            "minMiB": 25.06640625,
+            "maxMiB": 25.47265625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -2.328125,
+            "bootstrap95MiB": [
+              -2.515625,
+              -2.0390625
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.0390625,
+            "bootstrap95MiB": [
+              0,
+              0.265625
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 15.017578125,
+            "p95MiB": 16.2890625,
+            "minMiB": 2.390625,
+            "maxMiB": 65.4140625
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 71.23046875,
+            "p95MiB": 71.31640625,
+            "minMiB": 70.99609375,
+            "maxMiB": 71.32421875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -2.45703125,
+            "bootstrap95MiB": [
+              -2.83984375,
+              -2.19140625
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.009765625,
+            "bootstrap95MiB": [
+              -6.828125,
+              11.759765625
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-implicit-subtract-n4-overlap-only.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/streaming-cubic-implicit-subtract-n4-overlap-only.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "cubic-explicit-auto-n1-extra-disjoint",
+      "label": "retained",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.353515625,
+            "p95MiB": 0.43359375,
+            "minMiB": 0.31640625,
+            "maxMiB": 0.58984375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 24.927734375,
+            "p95MiB": 25.0703125,
+            "minMiB": 24.78515625,
+            "maxMiB": 25.16015625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.353515625,
+            "p95MiB": 0.43359375,
+            "minMiB": 0.31640625,
+            "maxMiB": 0.58984375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 24.712890625,
+            "p95MiB": 24.953125,
+            "minMiB": 24.63671875,
+            "maxMiB": 25.0234375
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 12.8671875,
+            "p95MiB": 28.421875,
+            "minMiB": 3.6015625,
+            "maxMiB": 45.296875
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 70.826171875,
+            "p95MiB": 71.04296875,
+            "minMiB": 70.8203125,
+            "maxMiB": 71.13671875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-explicit-auto-n1-extra-disjoint.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-explicit-auto-n1-extra-disjoint.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "cubic-explicit-auto-n1-extra-disjoint",
+      "label": "streaming",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.33984375,
+            "p95MiB": 0.390625,
+            "minMiB": 0.0859375,
+            "maxMiB": 1.70703125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 24.88671875,
+            "p95MiB": 24.9609375,
+            "minMiB": 24.76171875,
+            "maxMiB": 25.08984375
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -0.041015625,
+            "bootstrap95MiB": [
+              -0.18359375,
+              0.015625
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": -0.0078125,
+            "bootstrap95MiB": [
+              -0.01953125,
+              0.046875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.33984375,
+            "p95MiB": 0.390625,
+            "minMiB": 0.0859375,
+            "maxMiB": 1.70703125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 24.669921875,
+            "p95MiB": 24.9609375,
+            "minMiB": 24.5859375,
+            "maxMiB": 25.0546875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -0.033203125,
+            "bootstrap95MiB": [
+              -0.28125,
+              0.28125
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": -0.0078125,
+            "bootstrap95MiB": [
+              -0.01953125,
+              0.046875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 9.947265625,
+            "p95MiB": 20.578125,
+            "minMiB": 2.3828125,
+            "maxMiB": 65.40234375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 70.828125,
+            "p95MiB": 71.1484375,
+            "minMiB": 70.81640625,
+            "maxMiB": 71.15234375
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0.00390625,
+            "bootstrap95MiB": [
+              -0.21875,
+              0.3203125
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 1.275390625,
+            "bootstrap95MiB": [
+              0.00390625,
+              8.5859375
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-explicit-auto-n1-extra-disjoint.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/streaming-cubic-explicit-auto-n1-extra-disjoint.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "cubic-explicit-auto-n4-overlap-only",
+      "label": "streaming",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.376953125,
+            "p95MiB": 2.05078125,
+            "minMiB": 0.30859375,
+            "maxMiB": 5.62109375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 25.388671875,
+            "p95MiB": 25.4609375,
+            "minMiB": 25.09765625,
+            "maxMiB": 25.4765625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -2.515625,
+            "bootstrap95MiB": [
+              -2.84765625,
+              -2.158203125
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.048828125,
+            "bootstrap95MiB": [
+              -0.0234375,
+              1.640625
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.376953125,
+            "p95MiB": 2.05078125,
+            "minMiB": 0.30859375,
+            "maxMiB": 5.62109375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 25.388671875,
+            "p95MiB": 25.4609375,
+            "minMiB": 25.09765625,
+            "maxMiB": 25.4765625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -2.31640625,
+            "bootstrap95MiB": [
+              -2.84765625,
+              -2.076171875
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.048828125,
+            "bootstrap95MiB": [
+              -0.0234375,
+              1.640625
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 16.29296875,
+            "p95MiB": 65.40234375,
+            "minMiB": 3.60546875,
+            "maxMiB": 65.43359375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 71.28515625,
+            "p95MiB": 71.32421875,
+            "minMiB": 71,
+            "maxMiB": 71.328125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -2.517578125,
+            "bootstrap95MiB": [
+              -2.62109375,
+              -2.34375
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 4.021484375,
+            "bootstrap95MiB": [
+              -8.578125,
+              12.6875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-explicit-auto-n4-overlap-only.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/streaming-cubic-explicit-auto-n4-overlap-only.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "cubic-explicit-auto-n4-overlap-only",
+      "label": "retained",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.373046875,
+            "p95MiB": 0.41015625,
+            "minMiB": 0.30078125,
+            "maxMiB": 2.33203125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 27.810546875,
+            "p95MiB": 27.99609375,
+            "minMiB": 27.4765625,
+            "maxMiB": 28.1328125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.373046875,
+            "p95MiB": 0.41015625,
+            "minMiB": 0.30078125,
+            "maxMiB": 2.33203125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 27.705078125,
+            "p95MiB": 27.9453125,
+            "minMiB": 27.453125,
+            "maxMiB": 28.1328125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 16.28515625,
+            "p95MiB": 20.57421875,
+            "minMiB": 2.38671875,
+            "maxMiB": 65.3984375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 73.6796875,
+            "p95MiB": 73.8984375,
+            "minMiB": 73.58984375,
+            "maxMiB": 73.95703125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-explicit-auto-n4-overlap-only.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-explicit-auto-n4-overlap-only.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "perforated-explicit-auto-n1-extra-disjoint",
+      "label": "retained",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.33984375,
+            "p95MiB": 2.09375,
+            "minMiB": 0.3046875,
+            "maxMiB": 5.234375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 33.64453125,
+            "p95MiB": 33.69921875,
+            "minMiB": 33.57421875,
+            "maxMiB": 33.72265625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.33984375,
+            "p95MiB": 2.09375,
+            "minMiB": 0.3046875,
+            "maxMiB": 5.234375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 26.45703125,
+            "p95MiB": 26.48046875,
+            "minMiB": 26.33203125,
+            "maxMiB": 26.5625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 7.796875,
+            "p95MiB": 65.3984375,
+            "minMiB": 2.38671875,
+            "maxMiB": 65.4296875
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 80.69140625,
+            "p95MiB": 80.6953125,
+            "minMiB": 80.65234375,
+            "maxMiB": 80.8203125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-explicit-auto-n1-extra-disjoint.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-explicit-auto-n1-extra-disjoint.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "perforated-explicit-auto-n1-extra-disjoint",
+      "label": "streaming",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.349609375,
+            "p95MiB": 0.36328125,
+            "minMiB": 0.31640625,
+            "maxMiB": 0.4140625
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 33.443359375,
+            "p95MiB": 33.51953125,
+            "minMiB": 33.359375,
+            "maxMiB": 33.578125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -0.2265625,
+            "bootstrap95MiB": [
+              -0.30859375,
+              -0.0703125
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.0078125,
+            "bootstrap95MiB": [
+              -1.734375,
+              0.046875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.349609375,
+            "p95MiB": 0.36328125,
+            "minMiB": 0.31640625,
+            "maxMiB": 0.4140625
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 26.28125,
+            "p95MiB": 26.5625,
+            "minMiB": 25.80078125,
+            "maxMiB": 26.6796875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -0.197265625,
+            "bootstrap95MiB": [
+              -0.26953125,
+              0.091796875
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.0078125,
+            "bootstrap95MiB": [
+              -1.734375,
+              0.046875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 11.99609375,
+            "p95MiB": 16.2890625,
+            "minMiB": 3.60546875,
+            "maxMiB": 21.75
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 80.478515625,
+            "p95MiB": 80.5390625,
+            "minMiB": 80.41015625,
+            "maxMiB": 80.5546875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -0.228515625,
+            "bootstrap95MiB": [
+              -0.28125,
+              -0.15625
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 1.8828125,
+            "bootstrap95MiB": [
+              -53.40234375,
+              9.609375
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-explicit-auto-n1-extra-disjoint.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/streaming-perforated-explicit-auto-n1-extra-disjoint.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "perforated-implicit-subtract-n4-overlap-only",
+      "label": "retained",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.384765625,
+            "p95MiB": 0.46484375,
+            "minMiB": 0.21875,
+            "maxMiB": 0.6484375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 39.080078125,
+            "p95MiB": 39.24609375,
+            "minMiB": 38.94140625,
+            "maxMiB": 39.2734375
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.384765625,
+            "p95MiB": 0.46484375,
+            "minMiB": 0.21875,
+            "maxMiB": 0.6484375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 30.810546875,
+            "p95MiB": 30.9140625,
+            "minMiB": 30.6875,
+            "maxMiB": 30.921875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 16.28515625,
+            "p95MiB": 28.421875,
+            "minMiB": 2.37890625,
+            "maxMiB": 49.33203125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 85.662109375,
+            "p95MiB": 85.7421875,
+            "minMiB": 85.62890625,
+            "maxMiB": 85.7578125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-implicit-subtract-n4-overlap-only.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-implicit-subtract-n4-overlap-only.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "perforated-implicit-subtract-n4-overlap-only",
+      "label": "streaming",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.36328125,
+            "p95MiB": 0.37890625,
+            "minMiB": 0.3046875,
+            "maxMiB": 0.40625
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 38.6328125,
+            "p95MiB": 39.6640625,
+            "minMiB": 38.41796875,
+            "maxMiB": 39.828125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -0.462890625,
+            "bootstrap95MiB": [
+              -0.68359375,
+              0.41796875
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": -0.021484375,
+            "bootstrap95MiB": [
+              -0.16015625,
+              0.0546875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.36328125,
+            "p95MiB": 0.37890625,
+            "minMiB": 0.3046875,
+            "maxMiB": 0.40625
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 32.982421875,
+            "p95MiB": 33.078125,
+            "minMiB": 31.0546875,
+            "maxMiB": 33.08984375
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 2.11328125,
+            "bootstrap95MiB": [
+              0.5859375,
+              2.26171875
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": -0.021484375,
+            "bootstrap95MiB": [
+              -0.16015625,
+              0.0546875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 12.87109375,
+            "p95MiB": 16.2890625,
+            "minMiB": 2.390625,
+            "maxMiB": 22.87109375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 85.126953125,
+            "p95MiB": 86.3203125,
+            "minMiB": 85.078125,
+            "maxMiB": 86.37890625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -0.546875,
+            "bootstrap95MiB": [
+              -0.62109375,
+              0.69140625
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": -6.14453125,
+            "bootstrap95MiB": [
+              -26.03125,
+              10.87890625
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-implicit-subtract-n4-overlap-only.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/streaming-perforated-implicit-subtract-n4-overlap-only.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "perforated-explicit-auto-n4-extra-disjoint",
+      "label": "streaming",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.33203125,
+            "p95MiB": 0.37890625,
+            "minMiB": 0.1171875,
+            "maxMiB": 0.38671875
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 42.783203125,
+            "p95MiB": 42.88671875,
+            "minMiB": 41.66015625,
+            "maxMiB": 42.88671875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0.560546875,
+            "bootstrap95MiB": [
+              0.4765625,
+              0.65234375
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": -0.0078125,
+            "bootstrap95MiB": [
+              -0.12109375,
+              0.0234375
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.33203125,
+            "p95MiB": 0.37890625,
+            "minMiB": 0.1171875,
+            "maxMiB": 0.38671875
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 32.068359375,
+            "p95MiB": 33.3125,
+            "minMiB": 30.890625,
+            "maxMiB": 33.51953125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0.90625,
+            "bootstrap95MiB": [
+              0.84765625,
+              2.296875
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": -0.0078125,
+            "bootstrap95MiB": [
+              -0.12109375,
+              0.02734375
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 3.60546875,
+            "p95MiB": 13.74609375,
+            "minMiB": 2.3828125,
+            "maxMiB": 20.578125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 87.908203125,
+            "p95MiB": 87.9375,
+            "minMiB": 86.765625,
+            "maxMiB": 87.96875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0.576171875,
+            "bootstrap95MiB": [
+              0.50390625,
+              0.64453125
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": -4.77734375,
+            "bootstrap95MiB": [
+              -18.18359375,
+              1.75390625
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-explicit-auto-n4-extra-disjoint.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/streaming-perforated-explicit-auto-n4-extra-disjoint.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "perforated-explicit-auto-n4-extra-disjoint",
+      "label": "retained",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.36328125,
+            "p95MiB": 0.39453125,
+            "minMiB": 0.3203125,
+            "maxMiB": 0.4453125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 42.232421875,
+            "p95MiB": 42.28125,
+            "minMiB": 42.15625,
+            "maxMiB": 42.2890625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.36328125,
+            "p95MiB": 0.39453125,
+            "minMiB": 0.3203125,
+            "maxMiB": 0.4453125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 31.119140625,
+            "p95MiB": 31.25390625,
+            "minMiB": 31.015625,
+            "maxMiB": 31.265625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 14.138671875,
+            "p95MiB": 21.74609375,
+            "minMiB": 2.38671875,
+            "maxMiB": 25.6171875
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 87.32421875,
+            "p95MiB": 87.33984375,
+            "minMiB": 87.29296875,
+            "maxMiB": 87.3515625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-explicit-auto-n4-extra-disjoint.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-explicit-auto-n4-extra-disjoint.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "cubic-explicit-auto-n1-overlap-only",
+      "label": "streaming",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.3828125,
+            "p95MiB": 0.4609375,
+            "minMiB": 0.3359375,
+            "maxMiB": 0.5390625
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 24.7734375,
+            "p95MiB": 24.86328125,
+            "minMiB": 24.69140625,
+            "maxMiB": 24.875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0.0234375,
+            "bootstrap95MiB": [
+              -0.015625,
+              0.1015625
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.044921875,
+            "bootstrap95MiB": [
+              -0.0625,
+              0.18359375
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.3828125,
+            "p95MiB": 0.4609375,
+            "minMiB": 0.3359375,
+            "maxMiB": 0.5390625
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 24.73828125,
+            "p95MiB": 24.86328125,
+            "minMiB": 24.51171875,
+            "maxMiB": 24.875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0.03125,
+            "bootstrap95MiB": [
+              -0.09765625,
+              0.22265625
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.044921875,
+            "bootstrap95MiB": [
+              -0.0625,
+              0.18359375
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 16.2890625,
+            "p95MiB": 28.42578125,
+            "minMiB": 11.99609375,
+            "maxMiB": 38.625
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 71.060546875,
+            "p95MiB": 71.06640625,
+            "minMiB": 70.74609375,
+            "maxMiB": 71.0703125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0.0078125,
+            "bootstrap95MiB": [
+              0.00390625,
+              0.32421875
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 2.0703125,
+            "bootstrap95MiB": [
+              -8.578125,
+              22.01953125
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-explicit-auto-n1-overlap-only.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/streaming-cubic-explicit-auto-n1-overlap-only.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "cubic-explicit-auto-n1-overlap-only",
+      "label": "retained",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.37109375,
+            "p95MiB": 0.40234375,
+            "minMiB": 0.2109375,
+            "maxMiB": 0.4609375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 24.765625,
+            "p95MiB": 24.7890625,
+            "minMiB": 24.66015625,
+            "maxMiB": 24.8125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.37109375,
+            "p95MiB": 0.40234375,
+            "minMiB": 0.2109375,
+            "maxMiB": 0.4609375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 24.728515625,
+            "p95MiB": 24.7890625,
+            "minMiB": 24.5,
+            "maxMiB": 24.8125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 18.4296875,
+            "p95MiB": 21.74609375,
+            "minMiB": 2.38671875,
+            "maxMiB": 28.82421875
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 70.9609375,
+            "p95MiB": 71.05859375,
+            "minMiB": 70.734375,
+            "maxMiB": 71.0625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-explicit-auto-n1-overlap-only.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-explicit-auto-n1-overlap-only.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "cubic-explicit-auto-n4-extra-disjoint",
+      "label": "streaming",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.34765625,
+            "p95MiB": 0.48046875,
+            "minMiB": 0.30078125,
+            "maxMiB": 0.6015625
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 25.818359375,
+            "p95MiB": 25.890625,
+            "minMiB": 25.59765625,
+            "maxMiB": 25.91015625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -2.11328125,
+            "bootstrap95MiB": [
+              -2.5390625,
+              -1.984375
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.00390625,
+            "bootstrap95MiB": [
+              -0.0546875,
+              0.2421875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.34765625,
+            "p95MiB": 0.48046875,
+            "minMiB": 0.30078125,
+            "maxMiB": 0.6015625
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 25.125,
+            "p95MiB": 25.2109375,
+            "minMiB": 24.890625,
+            "maxMiB": 25.37890625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -2.326171875,
+            "bootstrap95MiB": [
+              -2.6484375,
+              -2.08203125
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.00390625,
+            "bootstrap95MiB": [
+              -0.0546875,
+              0.2421875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 8.67578125,
+            "p95MiB": 28.828125,
+            "minMiB": 3.60546875,
+            "maxMiB": 45.30078125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 71.35546875,
+            "p95MiB": 71.43359375,
+            "minMiB": 71.32421875,
+            "maxMiB": 71.43359375
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -2.42578125,
+            "bootstrap95MiB": [
+              -2.6328125,
+              -2.17578125
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": -3.412109375,
+            "bootstrap95MiB": [
+              -8.38671875,
+              8.25390625
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-explicit-auto-n4-extra-disjoint.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/streaming-cubic-explicit-auto-n4-extra-disjoint.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "cubic-explicit-auto-n4-extra-disjoint",
+      "label": "retained",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.35546875,
+            "p95MiB": 0.41015625,
+            "minMiB": 0.08203125,
+            "maxMiB": 6.7109375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 27.9765625,
+            "p95MiB": 28.13671875,
+            "minMiB": 27.6171875,
+            "maxMiB": 28.55859375
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.35546875,
+            "p95MiB": 0.41015625,
+            "minMiB": 0.08203125,
+            "maxMiB": 6.7109375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 27.361328125,
+            "p95MiB": 27.7734375,
+            "minMiB": 27.20703125,
+            "maxMiB": 27.796875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 12.8671875,
+            "p95MiB": 20.57421875,
+            "minMiB": 2.37890625,
+            "maxMiB": 65.4296875
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 73.78125,
+            "p95MiB": 73.98046875,
+            "minMiB": 73.5,
+            "maxMiB": 74.06640625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-explicit-auto-n4-extra-disjoint.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-explicit-auto-n4-extra-disjoint.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "cubic-explicit-auto-n16-overlap-only",
+      "label": "streaming",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.333984375,
+            "p95MiB": 0.42578125,
+            "minMiB": 0.08203125,
+            "maxMiB": 0.88671875
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 29.404296875,
+            "p95MiB": 29.55859375,
+            "minMiB": 29.33984375,
+            "maxMiB": 29.57421875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -14.6015625,
+            "bootstrap95MiB": [
+              -14.859375,
+              -13.1640625
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": -0.033203125,
+            "bootstrap95MiB": [
+              -0.24609375,
+              0.01171875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.333984375,
+            "p95MiB": 0.42578125,
+            "minMiB": 0.08203125,
+            "maxMiB": 0.88671875
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 26.958984375,
+            "p95MiB": 27.12890625,
+            "minMiB": 26.6484375,
+            "maxMiB": 27.14453125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -14.11328125,
+            "bootstrap95MiB": [
+              -14.66796875,
+              -13.80078125
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": -0.033203125,
+            "bootstrap95MiB": [
+              -0.24609375,
+              0.01171875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 11.99609375,
+            "p95MiB": 22.87109375,
+            "minMiB": 2.3828125,
+            "maxMiB": 59.37109375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 73.33984375,
+            "p95MiB": 73.34375,
+            "minMiB": 73.02734375,
+            "maxMiB": 73.34765625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -14.0625,
+            "bootstrap95MiB": [
+              -14.96484375,
+              -13.328125
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              -6.0390625,
+              8.39453125
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-explicit-auto-n16-overlap-only.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/streaming-cubic-explicit-auto-n16-overlap-only.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "cubic-explicit-auto-n16-overlap-only",
+      "label": "retained",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.359375,
+            "p95MiB": 0.484375,
+            "minMiB": 0.3203125,
+            "maxMiB": 3.7578125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 44.05859375,
+            "p95MiB": 44.32421875,
+            "minMiB": 42.5625,
+            "maxMiB": 44.33203125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.359375,
+            "p95MiB": 0.484375,
+            "minMiB": 0.3203125,
+            "maxMiB": 3.7578125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 41.248046875,
+            "p95MiB": 41.3515625,
+            "minMiB": 40.58203125,
+            "maxMiB": 41.5078125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 9.943359375,
+            "p95MiB": 28.82421875,
+            "minMiB": 2.38671875,
+            "maxMiB": 65.41015625
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 87.40234375,
+            "p95MiB": 87.9921875,
+            "minMiB": 86.421875,
+            "maxMiB": 88.19140625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-explicit-auto-n16-overlap-only.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-explicit-auto-n16-overlap-only.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "perforated-explicit-auto-n16-extra-disjoint",
+      "label": "streaming",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.341796875,
+            "p95MiB": 0.3671875,
+            "minMiB": 0.30078125,
+            "maxMiB": 0.42578125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 90.333984375,
+            "p95MiB": 90.7734375,
+            "minMiB": 89.7890625,
+            "maxMiB": 91.26171875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -1.33984375,
+            "bootstrap95MiB": [
+              -1.87890625,
+              -1.0546875
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": -0.021484375,
+            "bootstrap95MiB": [
+              -1.15234375,
+              0.03125
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.341796875,
+            "p95MiB": 0.3671875,
+            "minMiB": 0.30078125,
+            "maxMiB": 0.42578125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 54.48828125,
+            "p95MiB": 54.86328125,
+            "minMiB": 53.96484375,
+            "maxMiB": 55.3671875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -1.337890625,
+            "bootstrap95MiB": [
+              -1.8515625,
+              -1.0625
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": -0.021484375,
+            "bootstrap95MiB": [
+              -1.15234375,
+              0.03125
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 8.67578125,
+            "p95MiB": 16.2890625,
+            "minMiB": 2.390625,
+            "maxMiB": 21.75
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 143.158203125,
+            "p95MiB": 143.48046875,
+            "minMiB": 142.72265625,
+            "maxMiB": 144.0703125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -1.728515625,
+            "bootstrap95MiB": [
+              -2.16015625,
+              -1.5
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": -4.798828125,
+            "bootstrap95MiB": [
+              -51.65234375,
+              4.296875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-explicit-auto-n16-extra-disjoint.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/streaming-perforated-explicit-auto-n16-extra-disjoint.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "perforated-explicit-auto-n16-extra-disjoint",
+      "label": "retained",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.369140625,
+            "p95MiB": 1.50390625,
+            "minMiB": 0.2890625,
+            "maxMiB": 4.390625
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 91.826171875,
+            "p95MiB": 91.8359375,
+            "minMiB": 91.4609375,
+            "maxMiB": 91.87890625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.369140625,
+            "p95MiB": 1.50390625,
+            "minMiB": 0.2890625,
+            "maxMiB": 4.390625
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 55.91015625,
+            "p95MiB": 55.98046875,
+            "minMiB": 55.6796875,
+            "maxMiB": 56.01171875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 14.138671875,
+            "p95MiB": 65.3984375,
+            "minMiB": 2.38671875,
+            "maxMiB": 65.4296875
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 145.00390625,
+            "p95MiB": 145.015625,
+            "minMiB": 144.7578125,
+            "maxMiB": 145.01953125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-explicit-auto-n16-extra-disjoint.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-explicit-auto-n16-extra-disjoint.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "perforated-explicit-auto-n1-overlap-only",
+      "label": "streaming",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.349609375,
+            "p95MiB": 0.38671875,
+            "minMiB": 0.30078125,
+            "maxMiB": 0.4296875
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 30.15234375,
+            "p95MiB": 30.27734375,
+            "minMiB": 30.08984375,
+            "maxMiB": 30.41796875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0.0703125,
+            "bootstrap95MiB": [
+              -0.109375,
+              0.25
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.001953125,
+            "bootstrap95MiB": [
+              -0.01171875,
+              0.0546875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.349609375,
+            "p95MiB": 0.38671875,
+            "minMiB": 0.30078125,
+            "maxMiB": 0.4296875
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 23.984375,
+            "p95MiB": 24.109375,
+            "minMiB": 23.921875,
+            "maxMiB": 24.14453125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0.083984375,
+            "bootstrap95MiB": [
+              -0.03515625,
+              0.1484375
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.001953125,
+            "bootstrap95MiB": [
+              -0.01171875,
+              0.0546875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 13.74609375,
+            "p95MiB": 16.2890625,
+            "minMiB": 3.60546875,
+            "maxMiB": 21.75
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 77.232421875,
+            "p95MiB": 77.26171875,
+            "minMiB": 77.125,
+            "maxMiB": 77.265625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -0.015625,
+            "bootstrap95MiB": [
+              -0.05078125,
+              0.01953125
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.00390625,
+            "bootstrap95MiB": [
+              0.00390625,
+              12.6875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-explicit-auto-n1-overlap-only.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/streaming-perforated-explicit-auto-n1-overlap-only.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "perforated-explicit-auto-n1-overlap-only",
+      "label": "retained",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.337890625,
+            "p95MiB": 0.40234375,
+            "minMiB": 0.3125,
+            "maxMiB": 0.67578125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 30.080078125,
+            "p95MiB": 30.24609375,
+            "minMiB": 30.02734375,
+            "maxMiB": 30.26171875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.337890625,
+            "p95MiB": 0.40234375,
+            "minMiB": 0.3125,
+            "maxMiB": 0.67578125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 23.939453125,
+            "p95MiB": 24.02734375,
+            "minMiB": 23.8828125,
+            "maxMiB": 24.0859375
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 8.671875,
+            "p95MiB": 21.74609375,
+            "minMiB": 2.38671875,
+            "maxMiB": 49.46875
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 77.232421875,
+            "p95MiB": 77.25,
+            "minMiB": 77.19140625,
+            "maxMiB": 77.25390625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-explicit-auto-n1-overlap-only.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-explicit-auto-n1-overlap-only.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "perforated-explicit-auto-n16-overlap-only",
+      "label": "streaming",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.35546875,
+            "p95MiB": 0.5703125,
+            "minMiB": 0.3203125,
+            "maxMiB": 0.70703125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 86.974609375,
+            "p95MiB": 87.7265625,
+            "minMiB": 86.48046875,
+            "maxMiB": 87.9296875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -1.494140625,
+            "bootstrap95MiB": [
+              -1.953125,
+              -0.76953125
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.013671875,
+            "bootstrap95MiB": [
+              -0.0703125,
+              0.18359375
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.35546875,
+            "p95MiB": 0.5703125,
+            "minMiB": 0.3203125,
+            "maxMiB": 0.70703125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 53.65625,
+            "p95MiB": 54.30078125,
+            "minMiB": 53.23046875,
+            "maxMiB": 54.62890625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -1.53125,
+            "bootstrap95MiB": [
+              -1.85546875,
+              -0.88671875
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.013671875,
+            "bootstrap95MiB": [
+              -0.0703125,
+              0.18359375
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 12.87109375,
+            "p95MiB": 43.8046875,
+            "minMiB": 3.60546875,
+            "maxMiB": 49.47265625
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 141.560546875,
+            "p95MiB": 142.08984375,
+            "minMiB": 141.1875,
+            "maxMiB": 142.48828125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -1.9296875,
+            "bootstrap95MiB": [
+              -2.26953125,
+              -1.37890625
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.00390625,
+            "bootstrap95MiB": [
+              -9.75,
+              17.3984375
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-explicit-auto-n16-overlap-only.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/streaming-perforated-explicit-auto-n16-overlap-only.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "perforated-explicit-auto-n16-overlap-only",
+      "label": "retained",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.380859375,
+            "p95MiB": 0.4609375,
+            "minMiB": 0.328125,
+            "maxMiB": 0.5078125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 88.484375,
+            "p95MiB": 88.578125,
+            "minMiB": 88.359375,
+            "maxMiB": 88.69140625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.380859375,
+            "p95MiB": 0.4609375,
+            "minMiB": 0.328125,
+            "maxMiB": 0.5078125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 55.189453125,
+            "p95MiB": 55.23828125,
+            "minMiB": 55.0859375,
+            "maxMiB": 55.34375
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 18.4296875,
+            "p95MiB": 25.6171875,
+            "minMiB": 3.6015625,
+            "maxMiB": 32.07421875
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 143.515625,
+            "p95MiB": 143.52734375,
+            "minMiB": 143.44921875,
+            "maxMiB": 143.55078125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-explicit-auto-n16-overlap-only.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-perforated-explicit-auto-n16-overlap-only.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "cubic-explicit-auto-n16-extra-disjoint",
+      "label": "streaming",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.3671875,
+            "p95MiB": 0.390625,
+            "minMiB": 0.3125,
+            "maxMiB": 0.3984375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 30.59765625,
+            "p95MiB": 30.7109375,
+            "minMiB": 30.49609375,
+            "maxMiB": 30.71484375
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -14.220703125,
+            "bootstrap95MiB": [
+              -14.74609375,
+              -13.5390625
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.03125,
+            "bootstrap95MiB": [
+              0.00390625,
+              0.04296875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.3671875,
+            "p95MiB": 0.390625,
+            "minMiB": 0.3125,
+            "maxMiB": 0.3984375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 27.6484375,
+            "p95MiB": 27.72265625,
+            "minMiB": 27.57421875,
+            "maxMiB": 27.78125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -14.515625,
+            "bootstrap95MiB": [
+              -14.75,
+              -14.1875
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0.03125,
+            "bootstrap95MiB": [
+              -0.01171875,
+              0.04296875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 13.74609375,
+            "p95MiB": 20.578125,
+            "minMiB": 2.390625,
+            "maxMiB": 20.578125
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 75.3984375,
+            "p95MiB": 75.5234375,
+            "minMiB": 75.390625,
+            "maxMiB": 75.61328125
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": -14.29296875,
+            "bootstrap95MiB": [
+              -14.59765625,
+              -13.4921875
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 1.75390625,
+            "bootstrap95MiB": [
+              0.00390625,
+              12.6875
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-explicit-auto-n16-extra-disjoint.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/streaming-cubic-explicit-auto-n16-extra-disjoint.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    },
+    {
+      "dataset": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl",
+      "name": "cubic-explicit-auto-n16-extra-disjoint",
+      "label": "retained",
+      "baselineLabel": "retained",
+      "samples": 8,
+      "validSamples": 8,
+      "pairedSuccessfulRequests": 8,
+      "memory": {
+        "VmHWMMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.33203125,
+            "p95MiB": 0.34375,
+            "minMiB": 0.2890625,
+            "maxMiB": 0.40234375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 44.826171875,
+            "p95MiB": 45.25390625,
+            "minMiB": 43.52734375,
+            "maxMiB": 45.3671875
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmRSSMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 0.33203125,
+            "p95MiB": 0.34375,
+            "minMiB": 0.2890625,
+            "maxMiB": 0.40234375
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 42.232421875,
+            "p95MiB": 42.375,
+            "minMiB": 41.671875,
+            "maxMiB": 42.47265625
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        },
+        "VmPeakMiB": {
+          "before": {
+            "n": 8,
+            "medianMiB": 7.796875,
+            "p95MiB": 11.9921875,
+            "minMiB": 2.38671875,
+            "maxMiB": 20.57421875
+          },
+          "after": {
+            "n": 8,
+            "medianMiB": 89.724609375,
+            "p95MiB": 90.12109375,
+            "minMiB": 88.796875,
+            "maxMiB": 90.1484375
+          },
+          "pairedCandidateMinusBaselineAfter": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "pairedCandidateMinusBaselineBefore": {
+            "n": 8,
+            "medianMiB": 0,
+            "bootstrap95MiB": [
+              0,
+              0
+            ]
+          },
+          "missingBefore": 0,
+          "missingAfter": 0
+        }
+      },
+      "errors": [],
+      "missingMemory": [],
+      "fullOutput": {
+        "status": "matched",
+        "baselinePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-explicit-auto-n16-extra-disjoint.json",
+        "candidatePath": "/workspace/makeshift/docs/research/geometry-performance/results/streaming-cuts-auto-controls.jsonl.representatives/retained-cubic-explicit-auto-n16-extra-disjoint.json",
+        "baselineError": null,
+        "candidateError": null,
+        "tolerance": 1e-9,
+        "ignoredValue": "brep only; key presence/order still compared",
+        "baselineRepeatCheck": "unavailable: one saved full reply per configuration"
+      }
+    }
+  ]
+}

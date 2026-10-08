@@ -1,0 +1,68 @@
+[
+  {
+    "shape": "invariant",
+    "axis": 0,
+    "n": 12,
+    "allAPISuccess": true,
+    "maxRelativeDiscrepancyFromSameAxisOrigin": 1.496995997478803e-11,
+    "maxActualRelativeError": 1.4971868166238895e-11,
+    "maxEstimatedError": 1.1722524240848072e-13,
+    "worstEstimateToleranceRatio": 0.0011722524240848071,
+    "sourceUnchanged": true
+  },
+  {
+    "shape": "invariant",
+    "axis": 1,
+    "n": 12,
+    "allAPISuccess": true,
+    "maxRelativeDiscrepancyFromSameAxisOrigin": 1.496995997478803e-11,
+    "maxActualRelativeError": 1.4971868166238895e-11,
+    "maxEstimatedError": 2.3491470476397417e-13,
+    "worstEstimateToleranceRatio": 0.0023491470476397418,
+    "sourceUnchanged": true
+  },
+  {
+    "shape": "invariant",
+    "axis": 2,
+    "n": 12,
+    "allAPISuccess": true,
+    "maxRelativeDiscrepancyFromSameAxisOrigin": 2.4457202325492982e-11,
+    "maxActualRelativeError": 2.445838676405633e-11,
+    "maxEstimatedError": 1.1923146085766445e-9,
+    "worstEstimateToleranceRatio": 11.923146085766446,
+    "sourceUnchanged": true
+  },
+  {
+    "shape": "fitted",
+    "axis": 0,
+    "n": 12,
+    "allAPISuccess": true,
+    "maxRelativeDiscrepancyFromSameAxisOrigin": 3.6367135091865134e-12,
+    "maxActualRelativeError": null,
+    "maxEstimatedError": 0.0000016623250723901945,
+    "worstEstimateToleranceRatio": 16623.250723901943,
+    "sourceUnchanged": true
+  },
+  {
+    "shape": "fitted",
+    "axis": 1,
+    "n": 12,
+    "allAPISuccess": true,
+    "maxRelativeDiscrepancyFromSameAxisOrigin": 1.1968194873818059e-10,
+    "maxActualRelativeError": null,
+    "maxEstimatedError": 0.0000030134447939134988,
+    "worstEstimateToleranceRatio": 30134.447939134985,
+    "sourceUnchanged": true
+  },
+  {
+    "shape": "fitted",
+    "axis": 2,
+    "n": 12,
+    "allAPISuccess": true,
+    "maxRelativeDiscrepancyFromSameAxisOrigin": 4.12932722684532e-10,
+    "maxActualRelativeError": null,
+    "maxEstimatedError": 0.000043663939609749956,
+    "worstEstimateToleranceRatio": 436639.3960974995,
+    "sourceUnchanged": true
+  }
+]

@@ -1,0 +1,51 @@
+--- a/src/math/math_KronrodSingleIntegration.cxx
++++ b/src/math/math_KronrodSingleIntegration.cxx
+@@ -18,6 +18,35 @@
+ #include <math_KronrodSingleIntegration.hxx>
+ #include <math_Vector.hxx>
+ #include <TColStd_SequenceOfReal.hxx>
++#include <Standard_OutOfRange.hxx>
++#include <vector>
++
++namespace
++{
++// Research-only storage adapter. Preserve the original one-based access and
++// insertion semantics, including its checked invalid-zero-index exception.
++class KronrodRealSequence
++{
++public:
++  KronrodRealSequence() { values.reserve(32); }
++  Standard_Integer Length() const { return static_cast<Standard_Integer>(values.size()); }
++  void Append(const Standard_Real value) { values.push_back(value); }
++  Standard_Real& operator()(const Standard_Integer index)
++  {
++    Standard_OutOfRange_Raise_if(index <= 0 || index > Length(),
++                                 "NCollection_Sequence::ChangeValue");
++    return values[static_cast<std::size_t>(index - 1)];
++  }
++  void InsertAfter(const Standard_Integer index, const Standard_Real value)
++  {
++    Standard_OutOfRange_Raise_if(index < 0 || index > Length(),
++                                 "NCollection_Sequence::InsertAfter");
++    values.insert(values.begin() + index, value);
++  }
++private:
++  std::vector<Standard_Real> values;
++};
++} // namespace
+ 
+ //==========================================================================
+ // function : An empty constructor.
+@@ -199,9 +228,9 @@
+   if (myNbIterReached >= theMaxNbIter)
+     return;
+ 
+-  TColStd_SequenceOfReal anIntervals;
+-  TColStd_SequenceOfReal anErrors;
+-  TColStd_SequenceOfReal aValues;
++  KronrodRealSequence anIntervals;
++  KronrodRealSequence anErrors;
++  KronrodRealSequence aValues;
+ 
+   anIntervals.Append(theLower);
+   anIntervals.Append(theUpper);

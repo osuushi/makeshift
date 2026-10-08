@@ -1,0 +1,193 @@
+TAP version 13
+# Subtest: standalone Booleans preview overlaps, preserve originals, reject invalid input and reopen
+ok 1 - standalone Booleans preview overlaps, preserve originals, reject invalid input and reopen
+  ---
+  duration_ms: 304.382736
+  type: 'test'
+  ...
+# Subtest: standalone subtraction retains every split solid, multiple cutters and optional tools
+ok 2 - standalone subtraction retains every split solid, multiple cutters and optional tools
+  ---
+  duration_ms: 110.862085
+  type: 'test'
+  ...
+# Subtest: disjoint and touching Booleans distinguish successful empty solid results from errors
+ok 3 - disjoint and touching Booleans distinguish successful empty solid results from errors
+  ---
+  duration_ms: 117.57115
+  type: 'test'
+  ...
+# Subtest: sweep eligibility excludes bodies even from explicit targets
+ok 4 - sweep eligibility excludes bodies even from explicit targets
+  ---
+  duration_ms: 62.560323
+  type: 'test'
+  ...
+# Subtest: implicit sweep intersection retains multiple targets and matches explicit results
+ok 5 - implicit sweep intersection retains multiple targets and matches explicit results
+  ---
+  duration_ms: 104.515868
+  type: 'test'
+  ...
+# Subtest: Auto retains explicitly selected disjoint targets when another target overlaps
+ok 6 - Auto retains explicitly selected disjoint targets when another target overlaps
+  ---
+  duration_ms: 61.988844
+  type: 'test'
+  ...
+# Subtest: captured cylindrical splines shell inward/outward, closed or with either/both caps open
+ok 7 - captured cylindrical splines shell inward/outward, closed or with either/both caps open
+  ---
+  duration_ms: 3702.229629
+  type: 'test'
+  ...
+# Subtest: capture conversion preserves rejection, Undo, reopen and subsequent face editing
+ok 8 - capture conversion preserves rejection, Undo, reopen and subsequent face editing
+  ---
+  duration_ms: 1795.581926
+  type: 'test'
+  ...
+# Subtest: captured spline shelling is independent of body placement and orientation
+ok 9 - captured spline shelling is independent of body placement and orientation
+  ---
+  duration_ms: 1114.777698
+  type: 'test'
+  ...
+# Subtest: shell box inward, outward, closed and multiple openings
+ok 10 - shell box inward, outward, closed and multiple openings
+  ---
+  duration_ms: 431.917907
+  type: 'test'
+  ...
+# Subtest: shell supports curved and concave walls and adjacent openings with exact requested thickness
+ok 11 - shell supports curved and concave walls and adjacent openings with exact requested thickness
+  ---
+  duration_ms: 321.177568
+  type: 'test'
+  ...
+# Subtest: shell respects through-holes and rejects wall collision instead of closing them
+ok 12 - shell respects through-holes and rejects wall collision instead of closing them
+  ---
+  duration_ms: 140.832715
+  type: 'test'
+  ...
+# Subtest: closed spherical and toroidal shells preserve analytic distance and reject radius inversion
+ok 13 - closed spherical and toroidal shells preserve analytic distance and reject radius inversion
+  ---
+  duration_ms: 547.377635
+  type: 'test'
+  ...
+# Subtest: conical shell uses normal distance rather than radial shrink
+ok 14 - conical shell uses normal distance rather than radial shrink
+  ---
+  duration_ms: 77.681146
+  type: 'test'
+  ...
+# Subtest: captured conservative input bounds permit exact shell thickness without changing source
+ok 15 - captured conservative input bounds permit exact shell thickness without changing source
+  ---
+  duration_ms: 2580.214979
+  type: 'test'
+  ...
+# Subtest: captured spline sweep shells both openings without changing source or retained identities
+ok 16 - captured spline sweep shells both openings without changing source or retained identities
+  ---
+  duration_ms: 4480.548438
+  type: 'test'
+  ...
+# Subtest: captured shell has an open bore and signed one-millimeter walls through the bend
+ok 17 - captured shell has an open bore and signed one-millimeter walls through the bend
+  ---
+  duration_ms: 4451.766177
+  type: 'test'
+  ...
+# Subtest: captured sweep checks supported cap choices and rejects invalid inward closures
+ok 18 - captured sweep checks supported cap choices and rejects invalid inward closures
+  ---
+  duration_ms: 7703.104725
+  type: 'test'
+  ...
+# Subtest: captured spline shell preserves Undo, reopened topology and rigid placement
+ok 19 - captured spline shell preserves Undo, reopened topology and rigid placement
+  ---
+  duration_ms: 2144.924516
+  type: 'test'
+  ...
+# Subtest: shell rejects collapse and invalid inputs without accepting last good preview
+ok 20 - shell rejects collapse and invalid inputs without accepting last good preview
+  ---
+  duration_ms: 104.881791
+  type: 'test'
+  ...
+# Subtest: shell preserves retained topology, single Undo, reopen and ordinary subsequent edits
+ok 21 - shell preserves retained topology, single Undo, reopen and ordinary subsequent edits
+  ---
+  duration_ms: 114.246914
+  type: 'test'
+  ...
+# Subtest: shell is atomic across bodies and retains rejected intent in history
+ok 22 - shell is atomic across bodies and retains rejected intent in history
+  ---
+  duration_ms: 211.211999
+  type: 'test'
+  ...
+# Subtest: shell preserves precise boundaries after an individual shoulder edge moves
+ok 23 - shell preserves precise boundaries after an individual shoulder edge moves
+  ---
+  duration_ms: 476.818423
+  type: 'test'
+  ...
+# Subtest: shell rejects self-interference on the genuine cubic extrusion
+ok 24 - shell rejects self-interference on the genuine cubic extrusion
+  ---
+  duration_ms: 74.212093
+  type: 'test'
+  ...
+twist 90: 165 ms
+twist -90: 151 ms
+twist 450: 1077 ms
+# Subtest: twisted extrusion preserves volume through signed multiple turns and off-center axes
+ok 25 - twisted extrusion preserves volume through signed multiple turns and off-center axes
+  ---
+  duration_ms: 1393.908985
+  type: 'test'
+  ...
+# Subtest: twisted draft retains per-wall offset for either length sign and restores through history
+ok 26 - twisted draft retains per-wall offset for either length sign and restores through history
+  ---
+  duration_ms: 506.998454
+  type: 'test'
+  ...
+# Subtest: twist with holes narrows holes under positive draft and rejects collapse and off-plane axes
+ok 27 - twist with holes narrows holes under positive draft and rejects collapse and off-plane axes
+  ---
+  duration_ms: 265.404415
+  type: 'test'
+  ...
+# Subtest: cubic profiles support twist with and without draft
+ok 28 - cubic profiles support twist with and without draft
+  ---
+  duration_ms: 4278.52707
+  type: 'test'
+  ...
+# Subtest: obsolete native twist is cancelled promptly and newest extrusion can use the slot
+ok 29 - obsolete native twist is cancelled promptly and newest extrusion can use the slot
+  ---
+  duration_ms: 208.184725
+  type: 'test'
+  ...
+# Subtest: twisted planar-face extrusion unions and twisted profile subtraction preserves stock
+ok 30 - twisted planar-face extrusion unions and twisted profile subtraction preserves stock
+  ---
+  duration_ms: 637.838758
+  type: 'test'
+  ...
+1..30
+# tests 30
+# suites 0
+# pass 30
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 38636.253188

@@ -1,3 +1,8 @@
+import {
+  canonicalPlanes,
+  defaultSecondaryOpacity,
+  setCanonicalPlanes,
+} from "./canonical-planes.js";
 import { resetViewDisplay, setViewDisplay, viewDisplay } from "./view-display.js";
 
 export function viewSettings(): HTMLElement {
@@ -19,12 +24,26 @@ export function viewSettings(): HTMLElement {
     section.append(row);
     return { field, input, output, thickness };
   });
+  const secondary = document.createElement("label");
+  secondary.innerHTML =
+    '<span>Secondary plane opacity</span><input type="range" min="0" max="100" step="1" aria-label="Secondary plane opacity"><output></output>';
+  secondary.title = "Relative to the primary grid opacity";
+  const secondaryInput = secondary.querySelector("input");
+  const secondaryOutput = secondary.querySelector("output");
+  if (!secondaryInput || !secondaryOutput) throw new Error("Missing secondary plane control");
+  secondaryInput.oninput = () => {
+    setCanonicalPlanes({ secondaryOpacity: Number(secondaryInput.value) / 100 });
+    secondaryOutput.textContent = `${secondaryInput.value}%`;
+  };
+  section.append(secondary);
   const update = () => {
     const value = viewDisplay();
     for (const row of rows) {
       row.input.value = String(Math.round(value[row.field] * (row.thickness ? 10 : 1000)) / 10);
       row.output.textContent = `${row.input.value}${row.thickness ? " px" : "%"}`;
     }
+    secondaryInput.value = String(Math.round(canonicalPlanes().secondaryOpacity * 100));
+    secondaryOutput.textContent = `${secondaryInput.value}%`;
   };
   section.addEventListener("preferences-refresh", update);
   const reset = document.createElement("button");
@@ -32,6 +51,7 @@ export function viewSettings(): HTMLElement {
   reset.textContent = "Reset grid display";
   reset.onclick = () => {
     resetViewDisplay();
+    setCanonicalPlanes({ secondaryOpacity: defaultSecondaryOpacity });
     update();
   };
   section.append(reset);

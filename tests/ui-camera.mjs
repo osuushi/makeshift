@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { orient } from "./ui-blend-edit.mjs";
 import { blockedDuringDrawing } from "./ui-camera-drawing.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { navigationIdle } from "./ui-navigation-history.mjs";
@@ -99,7 +100,10 @@ export async function cameraRoute(page, name) {
 
 async function animatedEntry(page, name) {
   await reset(page);
+  await orient(page, [0.2, 0.2, 1]);
   const target = await findRaycastPoint(page, "XY");
+  await page.mouse.click(target.x, target.y);
+  await inspect(page);
   const entry = await page.evaluate((point) => {
     const before = window.makeshiftInspect().camera;
     document
@@ -144,7 +148,14 @@ async function animatedEntry(page, name) {
   assert.equal(started.camera.moving, true, "Region entry animates its framing");
   const framed = await inspect(page);
   assert.deepEqual(framed.camera.target, [30, 22, 0], "Region finishes centered");
-  assert.ok(framed.camera.height > 11 && framed.camera.height < 13, "Region fits with margin");
+  const quarterTurn =
+    Math.abs(framed.projection.u.y - framed.projection.origin.y) >
+    Math.abs(framed.projection.u.x - framed.projection.origin.x);
+  close(
+    framed.camera.height,
+    quarterTurn ? 18 : 12,
+    "Region fits its chosen screen axes with margin",
+  );
   await assertVisibleAndCentered(page, framed, [24, 18], [36, 26]);
   await page.screenshot({ path: `.cache/sketch-review/${name}-animated-region-entry.png` });
 

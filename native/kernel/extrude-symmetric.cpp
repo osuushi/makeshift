@@ -1,6 +1,9 @@
 #include "kernel.h"
+#include <BRepBuilderAPI_Transform.hxx>
+#include <BRepPrimAPI_MakePrism.hxx>
 #include <BRepGProp.hxx>
 #include <GProp_GProps.hxx>
+#include <TopoDS.hxx>
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
@@ -16,10 +19,23 @@ TopoDS_Shape half(const TopoDS_Face& face, const gp_Vec& travel, const Tree& inp
     return input.get_child_optional("twist")
         ? extrudeTwist(face, travel, input) : extrudeDraft(face, travel, input);
 }
+TopoDS_Shape centeredPrism(const TopoDS_Face& face, const gp_Vec& travel) {
+    gp_Trsf shift;
+    shift.SetTranslation(travel * -0.5);
+    const auto start = TopoDS::Face(BRepBuilderAPI_Transform(face, shift, true).Shape());
+    BRepPrimAPI_MakePrism prism(start, travel, true);
+    if (!prism.IsDone()) throw std::runtime_error("Extrusion failed");
+    return prism.Shape();
+}
 }
 
 TopoDS_Shape extrudeProfile(const TopoDS_Face& face, const gp_Vec& travel, const Tree& input) {
     if (!input.get<bool>("symmetric", false)) return half(face, travel, input);
+    // Constant sections form one exact prism. The half-depth draft calculation
+    // retains the existing validation and zero-offset threshold for this path.
+    if (!input.get_child_optional("twist") &&
+        std::abs(extrusionDraftOffset(travel * 0.5, input)) < 1e-10)
+        return centeredPrism(face, travel);
     Tree forward = input, backward = input;
     if (input.get_child_optional("twist")) {
         const auto angle = input.get<double>("twist.angle");

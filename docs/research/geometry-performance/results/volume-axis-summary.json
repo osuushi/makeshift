@@ -1,0 +1,149 @@
+[
+  {
+    "name": "circle-offset-twist",
+    "axes": [
+      {
+        "axis": "x",
+        "n": 30,
+        "medianMs": 2.054818,
+        "p95Ms": 2.557007,
+        "minMass": 6283.185307179816,
+        "maxMass": 6283.185307179816,
+        "minError": 1.0520309670648936e-11,
+        "maxError": 1.0520309670648936e-11,
+        "exceptions": 0
+      },
+      {
+        "axis": "y",
+        "n": 30,
+        "medianMs": 1.6925495,
+        "p95Ms": 1.981496,
+        "minMass": 6283.185307179812,
+        "maxMass": 6283.185307179812,
+        "minError": 1.8126378388750107e-11,
+        "maxError": 1.8126378388750107e-11,
+        "exceptions": 0
+      },
+      {
+        "axis": "z",
+        "n": 30,
+        "medianMs": 2517.956281,
+        "p95Ms": 2746.684899,
+        "minMass": 6283.185307474675,
+        "maxMass": 6283.185307474675,
+        "minError": 7.555793709637746e-11,
+        "maxError": 7.555793709637746e-11,
+        "exceptions": 0
+      },
+      {
+        "axis": "adaptive",
+        "n": 30,
+        "medianMs": 2.470626,
+        "p95Ms": 2.961438,
+        "minMass": 6283.185307179566,
+        "maxMass": 6283.185307179566,
+        "minError": 6.513775987637286e-16,
+        "maxError": 6.513775987637286e-16,
+        "exceptions": 0
+      }
+    ]
+  },
+  {
+    "name": "shell-bent-sweep-captured",
+    "axes": [
+      {
+        "axis": "x",
+        "n": 30,
+        "medianMs": 81.2348025,
+        "p95Ms": 90.262997,
+        "minMass": 2463.5761443864135,
+        "maxMass": 2463.5761443864135,
+        "minError": 1.0042724994123697e-9,
+        "maxError": 1.0042724994123697e-9,
+        "exceptions": 0
+      },
+      {
+        "axis": "y",
+        "n": 30,
+        "medianMs": 78.473297,
+        "p95Ms": 83.409794,
+        "minMass": 2463.576144386421,
+        "maxMass": 2463.576144386421,
+        "minError": 1.2254537034926683e-9,
+        "maxError": 1.2254537034926683e-9,
+        "exceptions": 0
+      },
+      {
+        "axis": "z",
+        "n": 30,
+        "medianMs": 65.880162,
+        "p95Ms": 70.684458,
+        "minMass": 2463.5761443864462,
+        "maxMass": 2463.5761443864462,
+        "minError": 2.1515474757258234e-10,
+        "maxError": 2.1515474757258234e-10,
+        "exceptions": 0
+      },
+      {
+        "axis": "adaptive",
+        "n": 30,
+        "medianMs": 4.2371935,
+        "p95Ms": 5.034143,
+        "minMass": 2463.7387640478455,
+        "maxMass": 2463.7387640478455,
+        "minError": 4.139092833289996e-15,
+        "maxError": 4.139092833289996e-15,
+        "exceptions": 0
+      }
+    ]
+  },
+  {
+    "name": "shell-notched-cylinder-captured",
+    "axes": [
+      {
+        "axis": "x",
+        "n": 30,
+        "medianMs": 11.8350685,
+        "p95Ms": 15.277836,
+        "minMass": 1659.4916779880136,
+        "maxMass": 1659.4916779880136,
+        "minError": 4.6470050657758427e-10,
+        "maxError": 4.6470050657758427e-10,
+        "exceptions": 0
+      },
+      {
+        "axis": "y",
+        "n": 30,
+        "medianMs": 5.5416605,
+        "p95Ms": 8.583271,
+        "minMass": 1659.4916519102826,
+        "maxMass": 1659.4916519102826,
+        "minError": 4.2777855359412716e-10,
+        "maxError": 4.2777855359412716e-10,
+        "exceptions": 0
+      },
+      {
+        "axis": "z",
+        "n": 30,
+        "medianMs": 12.435591,
+        "p95Ms": 21.394925,
+        "minMass": 1659.491666408057,
+        "maxMass": 1659.491666408057,
+        "minError": 1.0402842944566286e-10,
+        "maxError": 1.0402842944566286e-10,
+        "exceptions": 0
+      },
+      {
+        "axis": "adaptive",
+        "n": 30,
+        "medianMs": 16.940399,
+        "p95Ms": 22.078209,
+        "minMass": 1659.4916514962895,
+        "maxMass": 1659.4916514962895,
+        "minError": 1.5638579839016004e-15,
+        "maxError": 1.5638579839016004e-15,
+        "exceptions": 0
+      }
+    ]
+  }
+]

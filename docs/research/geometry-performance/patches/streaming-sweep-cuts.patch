@@ -1,0 +1,87 @@
+--- a/native/kernel/geometry.cpp
++++ b/native/kernel/geometry.cpp
+@@ -5,6 +5,7 @@
+ #include "geometry-policy.h"
+ #include "normal-extrude.h"
+ #include "boolean-probe.h"
++#include "streaming-sweep-cuts.h"
+ #include <BRepAdaptor_Curve.hxx>
+ #include <ShapeFix_Wire.hxx>
+ #include <ShapeExtend_WireData.hxx>
+@@ -132,6 +133,8 @@
+     const auto targetList = input.get_child_optional("targets");
+     const bool reuseIntersection = mode == "intersect" && !targetList;
+     std::vector<SweepIntersection> intersections;
++    StreamingSweepCuts cuts;
++    const bool streamSubtract = mode == "auto" || (mode == "subtract" && !targetList);
+     for (const auto& body : bodies) {
+         if (eligible && std::none_of(eligible->begin(), eligible->end(), [&](const auto& v) { return v.second.template get_value<std::string>() == body.id; })) continue;
+         if (targetList && std::none_of(targetList->begin(), targetList->end(), [&](const auto& v) { return v.second.template get_value<std::string>() == body.id; })) continue;
+@@ -148,7 +151,8 @@
+             auto operation = std::make_unique<BooleanProbe>(body.shape, tool);
+             if (volume(operation->shape()) > 1e-10) {
+                 positive.push_back(&body);
+-                intersections.push_back({&body, std::move(operation)});
++                if (streamSubtract) cuts.add(body, *operation, toolOrigins);
++                else if (reuseIntersection) intersections.push_back({&body, std::move(operation)});
+             } else if (mode == "auto") {
+                 BRepExtrema_DistShapeShape separation(body.shape, tool);
+                 if (separation.IsDone() && separation.Value() < 1e-7) contact.push_back(&body);
+@@ -172,12 +176,11 @@
+         }
+         solids(results, shape, origins, participants, selected.empty() ? twistedVolumeReferenceAxis(input) : -1);
+     } else for (const auto* body : selected) {
+-        participants.push_back(body->id); auto origins = body->entities;
++        participants.push_back(body->id);
++        if (mode == "subtract" && cuts.append(results, *body)) continue;
++        auto origins = body->entities;
+         origins.insert(origins.end(), toolOrigins.begin(), toolOrigins.end());
+-        const auto found = std::find_if(intersections.begin(), intersections.end(),
+-            [&](const auto& intersection) { return intersection.body == body; });
+-        const auto shape = mode == "subtract" && found != intersections.end()
+-            ? found->operation->subtract(origins) : booleanShape(body->shape, tool, mode, origins);
++        const auto shape = booleanShape(body->shape, tool, mode, origins);
+         solids(results, shape, origins, {body->id});
+     }
+     return results;
+--- /dev/null
++++ b/native/kernel/streaming-sweep-cuts.h
+@@ -0,0 +1,38 @@
++#pragma once
++#include "boolean-probe.h"
++#include <algorithm>
++#include <exception>
++#include <utility>
++
++// Experiment: eagerly finish only positive Subtract pairs, retaining no filler.
++// Geometric Cut failures are replayed after classification in final target order.
++class StreamingSweepCuts {
++    struct Pending {
++        const Operand* body;
++        TopoDS_Shape shape;
++        std::vector<SourceEntity> origins;
++        std::exception_ptr failure;
++    };
++    std::vector<Pending> pending;
++public:
++    void add(const Operand& body, const BooleanProbe& operation,
++             const std::vector<SourceEntity>& toolOrigins) {
++        Pending item{&body, {}, {}, {}};
++        try {
++            item.origins = body.entities;
++            item.origins.insert(item.origins.end(), toolOrigins.begin(), toolOrigins.end());
++            item.shape = operation.subtract(item.origins);
++        } catch (...) {
++            item.failure = std::current_exception();
++        }
++        pending.push_back(std::move(item));
++    }
++    bool append(std::vector<Result>& results, const Operand& body) const {
++        const auto found = std::find_if(pending.begin(), pending.end(),
++            [&](const Pending& item) { return item.body == &body; });
++        if (found == pending.end()) return false;
++        if (found->failure) std::rethrow_exception(found->failure);
++        solids(results, found->shape, found->origins, {body.id});
++        return true;
++    }
++};

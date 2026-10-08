@@ -1,0 +1,158 @@
+--- a/src/BSplSLib/BSplSLib_Cache.hxx
++++ b/src/BSplSLib/BSplSLib_Cache.hxx
+@@ -15,6 +15,7 @@
+ #define _BSplSLib_Cache_Headerfile
+ 
+ #include <TColStd_HArray2OfReal.hxx>
++#include <cstdint>
+ #include <TColStd_Array2OfReal.hxx>
+ 
+ #include <BSplCLib_CacheParams.hxx>
+@@ -122,6 +123,10 @@
+                                                 // for non-rational surfaces there is no weight;
+                                                 // size of array: (max(myDegree)+1) * A*(min(myDegree)+1), where A = 4 or 3
+   // clang-format on
++
++  // Makeshift experiment: identifies this span's polynomial coefficients.
++  // D1 only reads this key; partial coefficient storage is thread-local.
++  std::uint64_t myFixedVGeneration;
+ };
+ 
+ DEFINE_STANDARD_HANDLE(BSplSLib_Cache, Standard_Transient)
+--- a/src/BSplSLib/BSplSLib_Cache.cxx
++++ b/src/BSplSLib/BSplSLib_Cache.cxx
+@@ -13,6 +13,11 @@
+ 
+ #include <BSplSLib_Cache.hxx>
+ #include <BSplSLib.hxx>
++#include <Standard_ProgramError.hxx>
++#include <atomic>
++#include <cmath>
++#include <limits>
++#include <vector>
+ 
+ #include <NCollection_LocalArray.hxx>
+ 
+@@ -20,6 +25,36 @@
+ #include <TColStd_HArray2OfReal.hxx>
+ 
+ IMPLEMENT_STANDARD_RTTIEXT(BSplSLib_Cache, Standard_Transient)
++
++namespace
++{
++// Identity allocation is shared, but no coefficient cache is shared by threads.
++std::uint64_t NextFixedVGeneration()
++{
++  static std::atomic<std::uint64_t> aNext(1);
++  std::uint64_t aGeneration = aNext.load(std::memory_order_relaxed);
++  do
++  {
++    if (aGeneration == std::numeric_limits<std::uint64_t>::max())
++      throw Standard_ProgramError("Fixed-V cache generation exhausted");
++  }
++  while (!aNext.compare_exchange_weak(aGeneration,
++                                      aGeneration + 1,
++                                      std::memory_order_relaxed,
++                                      std::memory_order_relaxed));
++  return aGeneration;
++}
++
++struct FixedVPartial
++{
++  const BSplSLib_Cache* Owner = NULL;
++  std::uint64_t Generation = 0;
++  Standard_Real Parameter = 0.0;
++  Standard_Boolean Valid = Standard_False;
++  std::vector<Standard_Real> Coefficients;
++};
++} // namespace
++
+ 
+ //! Converts handle of array of Standard_Real into the pointer to Standard_Real
+ static Standard_Real* ConvertArray(const Handle(TColStd_HArray2OfReal)& theHArray)
+@@ -37,7 +72,8 @@
+                                const TColStd_Array2OfReal* theWeights)
+     : myIsRational(theWeights != NULL),
+       myParamsU(theDegreeU, thePeriodicU, theFlatKnotsU),
+-      myParamsV(theDegreeV, thePeriodicV, theFlatKnotsV)
++      myParamsV(theDegreeV, thePeriodicV, theFlatKnotsV),
++      myFixedVGeneration(NextFixedVGeneration())
+ {
+   Standard_Integer aMinDegree   = Min(theDegreeU, theDegreeV);
+   Standard_Integer aMaxDegree   = Max(theDegreeU, theDegreeV);
+@@ -58,6 +94,9 @@
+                                 const TColgp_Array2OfPnt&   thePoles,
+                                 const TColStd_Array2OfReal* theWeights)
+ {
++  // Invalidate every thread's partial result before coefficients or spans change.
++  myFixedVGeneration = NextFixedVGeneration();
++
+   // Normalize the parameters for periodical B-splines
+   Standard_Real aNewParamU = myParamsU.PeriodicNormalization(theParameterU);
+   Standard_Real aNewParamV = myParamsV.PeriodicNormalization(theParameterV);
+@@ -203,19 +242,49 @@
+ 
+   // Calculate intermediate values and derivatives of bivariate polynomial along variable with
+   // maximal degree
+-  PLib::EvalPolynomial(aParameters[1],
+-                       1,
+-                       aMinMaxDegree[1],
+-                       aCacheCols,
+-                       aPolesArray[0],
+-                       aTransientCoeffs[0]);
++  Standard_Real* aFirstStage = aTransientCoeffs;
++  const Standard_Boolean canCacheV = myParamsV.Degree >= myParamsU.Degree && std::isfinite(aNewV);
++  if (canCacheV)
++  {
++    static thread_local FixedVPartial aPartial;
++    const std::size_t aSize = static_cast<std::size_t>(2 * aCacheCols);
++    if (!aPartial.Valid || aPartial.Owner != this
++        || aPartial.Generation != myFixedVGeneration
++        || aPartial.Coefficients.size() != aSize
++        || aNewV != aPartial.Parameter
++        || std::signbit(aNewV) != std::signbit(aPartial.Parameter))
++    {
++      aPartial.Valid = Standard_False;
++      aPartial.Coefficients.resize(aSize);
++      PLib::EvalPolynomial(aParameters[1],
++                           1,
++                           aMinMaxDegree[1],
++                           aCacheCols,
++                           aPolesArray[0],
++                           aPartial.Coefficients[0]);
++      aPartial.Owner = this;
++      aPartial.Generation = myFixedVGeneration;
++      aPartial.Parameter = aNewV;
++      aPartial.Valid = Standard_True;
++    }
++    aFirstStage = aPartial.Coefficients.data();
++  }
++  else
++  {
++    PLib::EvalPolynomial(aParameters[1],
++                         1,
++                         aMinMaxDegree[1],
++                         aCacheCols,
++                         aPolesArray[0],
++                         aFirstStage[0]);
++  }
+ 
+   // Calculate a point on surface and a derivative along variable with minimal degree
+   PLib::EvalPolynomial(aParameters[0],
+                        1,
+                        aMinMaxDegree[0],
+                        aDimension,
+-                       aTransientCoeffs[0],
++                       aFirstStage[0],
+                        aPntDeriv[0]);
+ 
+   // Calculate derivative along variable with maximal degree
+@@ -223,7 +292,7 @@
+                                    aMinMaxDegree[0],
+                                    aDimension,
+                                    aMinMaxDegree[0] * aDimension,
+-                                   aTransientCoeffs[aCacheCols],
++                                   aFirstStage[aCacheCols],
+                                    aPntDeriv[aDimension << 1]);
+ 
+   Standard_Real* aResult = aPntDeriv;

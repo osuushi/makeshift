@@ -1,0 +1,28 @@
+{
+  "blocks": 20,
+  "specs": [
+    {
+      "label": "baseline",
+      "executable": "/tmp/makeshift-kernel-construction-reuse"
+    },
+    {
+      "label": "candidate",
+      "executable": "/tmp/makeshift-kernel-pave-reuse"
+    }
+  ],
+  "seed": 20261008,
+  "filter": "^(cubic|perforated)-implicit-subtract-n(1|16)-overlap-only$",
+  "constructorExecutable": "/tmp/makeshift-kernel-construction-reuse",
+  "fixtureFaces": [
+    {
+      "name": "cubic",
+      "faces": 6
+    },
+    {
+      "name": "perforated",
+      "faces": 31
+    }
+  ],
+  "targetCountMeaning": "Positive-overlap independent bodies; extra-disjoint adds one body and one explicit target.",
+  "timingNote": "No warmup: each measurement uses a fresh process. First request elapsed can include remaining process startup."
+}

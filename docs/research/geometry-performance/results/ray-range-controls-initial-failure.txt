@@ -1,0 +1,1 @@
+Initial SDK-only diagnostic exited 139 (SIGSEGV); output buffering prevents identifying the exact last-started query. No control/candidate process ran.

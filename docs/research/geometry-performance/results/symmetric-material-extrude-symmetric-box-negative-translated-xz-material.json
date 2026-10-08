@@ -1,0 +1,65 @@
+{
+  "ok": true,
+  "exitCode": 0,
+  "rows": [
+    {
+      "type": "input",
+      "side": "baseline",
+      "exact_brep_valid": true,
+      "volume": 7999.999999999998,
+      "counts": {
+        "solids": 1,
+        "shells": 1,
+        "faces": 10,
+        "wires": 10,
+        "edges": 20,
+        "vertices": 12
+      },
+      "bounds": [
+        1234,
+        -4577,
+        123,
+        1254,
+        -4557,
+        143
+      ]
+    },
+    {
+      "type": "input",
+      "side": "candidate",
+      "exact_brep_valid": true,
+      "volume": 7999.999999999998,
+      "counts": {
+        "solids": 1,
+        "shells": 1,
+        "faces": 6,
+        "wires": 6,
+        "edges": 12,
+        "vertices": 8
+      },
+      "bounds": [
+        1234,
+        -4577,
+        123,
+        1254,
+        -4557,
+        143
+      ]
+    },
+    {
+      "type": "comparison",
+      "ok": true,
+      "volume_absolute_tolerance": 0.00007999999999999998,
+      "volume_relative_tolerance": 1e-8,
+      "baseline_minus_candidate": 0,
+      "candidate_minus_baseline": 0,
+      "bounds_max_delta": 0,
+      "bounds_tolerance": 0.000002,
+      "occupancy_samples": 686,
+      "occupancy_mismatches": 0,
+      "occupancy_uncertain": 0
+    }
+  ],
+  "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":10,\"wires\":10,\"edges\":20,\"vertices\":12},\"bounds\":[1234,-4577,123,1254,-4557,143]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":6,\"wires\":6,\"edges\":12,\"vertices\":8},\"bounds\":[1234,-4577,123,1254,-4557,143]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":7.9999999999999979e-05,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":1.9999999999999999e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+  "stderr": ""
+}

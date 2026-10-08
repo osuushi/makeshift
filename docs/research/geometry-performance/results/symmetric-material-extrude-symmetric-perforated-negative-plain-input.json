@@ -1,0 +1,597 @@
+{
+  "kind": "extrude",
+  "normal": [
+    0,
+    0,
+    1
+  ],
+  "profiles": [
+    {
+      "outer": [
+        {
+          "kind": "line",
+          "a": [
+            0,
+            0,
+            0
+          ],
+          "b": [
+            60,
+            0,
+            0
+          ]
+        },
+        {
+          "kind": "line",
+          "a": [
+            60,
+            0,
+            0
+          ],
+          "b": [
+            60,
+            60,
+            0
+          ]
+        },
+        {
+          "kind": "line",
+          "a": [
+            60,
+            60,
+            0
+          ],
+          "b": [
+            0,
+            60,
+            0
+          ]
+        },
+        {
+          "kind": "line",
+          "a": [
+            0,
+            60,
+            0
+          ],
+          "b": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "holes": [
+        [
+          {
+            "kind": "circle",
+            "center": [
+              10,
+              10,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              10,
+              20,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              10,
+              30,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              10,
+              40,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              10,
+              50,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              20,
+              10,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              20,
+              20,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              20,
+              30,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              20,
+              40,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              20,
+              50,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              30,
+              10,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              30,
+              20,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              30,
+              30,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              30,
+              40,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              30,
+              50,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              40,
+              10,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              40,
+              20,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              40,
+              30,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              40,
+              40,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              40,
+              50,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              50,
+              10,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              50,
+              20,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              50,
+              30,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              50,
+              40,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ],
+        [
+          {
+            "kind": "circle",
+            "center": [
+              50,
+              50,
+              0
+            ],
+            "radius": 2,
+            "normal": [
+              0,
+              0,
+              1
+            ],
+            "axis": [
+              1,
+              0,
+              0
+            ]
+          }
+        ]
+      ]
+    }
+  ],
+  "distance": -20,
+  "mode": "new",
+  "bodies": [],
+  "symmetric": true
+}

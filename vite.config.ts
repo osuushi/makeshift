@@ -29,6 +29,8 @@ export default defineConfig(({ mode }) => ({
         ]
       : [sketchBackend(), fixtureCapture(), meshBackend()],
   css: { postcss: { plugins: [uiScaleCss()] } },
+  // Worker/lazy imports must not trigger a cold-server reload during an edit.
+  optimizeDeps: { include: ["manifold-3d", "three/addons/libs/fflate.module.js"] },
   resolve: {
     alias:
       mode === "web"

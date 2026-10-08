@@ -4,22 +4,43 @@
 #include "sketch-curve.h"
 #include "geometry-policy.h"
 #include "normal-extrude.h"
+#include "boolean-probe.h"
+#include "streaming-sweep-cuts.h"
 #include <BRepAdaptor_Curve.hxx>
 #include <ShapeFix_Wire.hxx>
 #include <ShapeExtend_WireData.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
+#include <BRepBuilderAPI_Copy.hxx>
+#include <BRepTools.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepBndLib.hxx>
 #include <Bnd_Box.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Wire.hxx>
+#include <TopExp_Explorer.hxx>
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
+#include <utility>
 
 namespace {
+TopoDS_Face sweepBoundaryFace(const TopoDS_Face& face) {
+    for (const auto kind : {TopAbs_WIRE, TopAbs_EDGE, TopAbs_VERTEX}) {
+        for (TopExp_Explorer entities(face, kind); entities.More(); entities.Next()) {
+            if (entities.Current().Orientation() != TopAbs_INTERNAL) continue;
+            // Internal imprints are not material boundaries. Sweeping them can
+            // add internal faces to the closed shell and invalidate the solid.
+            // Cleanup mutates topology, so keep the accepted source untouched.
+            auto boundary = BRepBuilderAPI_Copy(face, true, false).Shape();
+            BRepTools::RemoveInternals(boundary, false);
+            validate(boundary);
+            return TopoDS::Face(boundary);
+        }
+    }
+    return face;
+}
 TopoDS_Wire wire(const Tree& spans) {
     BRepBuilderAPI_MakeWire builder;
     for (const auto& item : spans) {
@@ -62,7 +83,7 @@ TopoDS_Face profileFace(const Tree& profile, const std::vector<Operand>& bodies)
         if (!builder.IsDone()) throw std::runtime_error("Profile is not a planar face");
         face = builder.Face(); validate(face);
     }
-    return face;
+    return sweepBoundaryFace(face);
 }
 TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies, std::vector<SourceEntity>& origins) {
     const double distance = input.get<double>("distance");
@@ -84,6 +105,34 @@ TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies, std::v
     return tool;
 }
 namespace {
+int twistedVolumeReferenceAxis(const Tree& input) {
+    if (input.get<std::string>("kind") != "extrude" || input.get<bool>("normalExtrusion", false) ||
+        input.get<double>("twist.angle", 0) == 0) return -1;
+    // Axial flux on a rotating closed section can cancel nearly to zero inside
+    // GK's nested relative-error integrals. A transverse global flux direction
+    // still integrates the same closed solid, with the same method/tolerance.
+    const auto direction = point(input.get_child("normal"));
+    int axis = 0;
+    for (int i = 1; i < 3; ++i)
+        if (std::abs(direction.Coord(i + 1)) < std::abs(direction.Coord(axis + 1))) axis = i;
+    return axis;
+}
+struct SweepIntersection {
+    const Operand* body;
+    std::unique_ptr<BooleanProbe> operation;
+};
+std::vector<Result> intersectionResults(const std::vector<SweepIntersection>& intersections,
+                                      const std::vector<SourceEntity>& toolOrigins,
+                                      std::vector<std::string>& participants) {
+    std::vector<Result> results;
+    for (const auto& intersection : intersections) {
+        participants.push_back(intersection.body->id);
+        auto origins = intersection.body->entities;
+        origins.insert(origins.end(), toolOrigins.begin(), toolOrigins.end());
+        solids(results, intersection.operation->intersect(origins), origins, {intersection.body->id});
+    }
+    return results;
+}
 std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>& bodies,
                                    std::string& mode, std::vector<std::string>& participants) {
     std::vector<SourceEntity> toolOrigins;
@@ -95,11 +144,15 @@ std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>
     if (mode != "auto" && mode != "new" && mode != "union" && mode != "subtract" && mode != "intersect")
         throw std::runtime_error("Unknown Boolean mode");
     std::vector<Result> results;
-    if (mode == "new") { solids(results, tool, toolOrigins, {}); return results; }
+    if (mode == "new") { solids(results, tool, toolOrigins, {}, twistedVolumeReferenceAxis(input)); return results; }
     Bnd_Box toolBounds; BRepBndLib::Add(tool, toolBounds, false); toolBounds.Enlarge(1e-7);
     std::vector<const Operand*> positive, contact, explicitTargets;
     const auto eligible = input.get_child_optional("eligibleTargets");
     const auto targetList = input.get_child_optional("targets");
+    const bool reuseIntersection = mode == "intersect" && !targetList;
+    std::vector<SweepIntersection> intersections;
+    StreamingSweepCuts cuts;
+    const bool streamSubtract = mode == "auto" || (mode == "subtract" && !targetList);
     for (const auto& body : bodies) {
         if (eligible && std::none_of(eligible->begin(), eligible->end(), [&](const auto& v) { return v.second.template get_value<std::string>() == body.id; })) continue;
         if (targetList && std::none_of(targetList->begin(), targetList->end(), [&](const auto& v) { return v.second.template get_value<std::string>() == body.id; })) continue;
@@ -113,10 +166,12 @@ std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>
             BRepExtrema_DistShapeShape separation(body.shape, tool);
             if (separation.IsDone() && separation.Value() < 1e-7) contact.push_back(&body);
         } else {
-            std::vector<SourceEntity> unused;
-            const auto common = booleanShape(body.shape, tool, "intersect", unused);
-            if (volume(common) > 1e-10) positive.push_back(&body);
-            else if (mode == "auto") {
+            auto operation = std::make_unique<BooleanProbe>(body.shape, tool);
+            if (volume(operation->shape()) > 1e-10) {
+                positive.push_back(&body);
+                if (streamSubtract) cuts.add(body, *operation, toolOrigins);
+                else if (reuseIntersection) intersections.push_back({&body, std::move(operation)});
+            } else if (mode == "auto") {
                 BRepExtrema_DistShapeShape separation(body.shape, tool);
                 if (separation.IsDone() && separation.Value() < 1e-7) contact.push_back(&body);
             }
@@ -129,15 +184,19 @@ std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>
     if (mode == "new") { solids(results, tool, {}, {}); return results; }
     const auto& selected = targetList ? explicitTargets : mode == "union" ? contact : positive;
     if (selected.empty() && mode != "union") throw std::runtime_error("The swept shape does not intersect a target body");
+    // Detection already constructed the exact implicit Intersect result/history.
+    if (reuseIntersection) return intersectionResults(intersections, toolOrigins, participants);
     if (mode == "union") {
         auto shape = tool; auto origins = toolOrigins;
         for (const auto* body : selected) {
             participants.push_back(body->id); origins.insert(origins.end(), body->entities.begin(), body->entities.end());
             shape = booleanShape(shape, body->shape, mode, origins);
         }
-        solids(results, shape, origins, participants);
+        solids(results, shape, origins, participants, selected.empty() ? twistedVolumeReferenceAxis(input) : -1);
     } else for (const auto* body : selected) {
-        participants.push_back(body->id); auto origins = body->entities;
+        participants.push_back(body->id);
+        if (mode == "subtract" && cuts.append(results, *body)) continue;
+        auto origins = body->entities;
         origins.insert(origins.end(), toolOrigins.begin(), toolOrigins.end());
         const auto shape = booleanShape(body->shape, tool, mode, origins);
         solids(results, shape, origins, {body->id});

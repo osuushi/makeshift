@@ -1,0 +1,47 @@
+[
+  {
+    "name": "extrude-perforated",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "boolean-cut-perforated",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "boolean-union-perforated",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "shell-perforated-open",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "cubic-subtract-implicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "shell-notched-cylinder-captured",
+    "baselineRepeat": "reply.results[0].faces[4].thickness.faceIndex: 13 != 14",
+    "candidateMatch": "reply.results[0].faces[4].thickness.faceIndex: 13 != 12"
+  },
+  {
+    "name": "shell-bent-sweep-captured",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "circle-offset-twist",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "circle-offset-twist-neutral-auto",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  }
+]

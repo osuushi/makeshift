@@ -1,0 +1,5 @@
+In file included from native/kernel/face-chains.cpp:1:
+native/kernel/kernel.h:2:10: fatal error: boost/property_tree/ptree.hpp: No such file or directory
+    2 | #include <boost/property_tree/ptree.hpp>
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.

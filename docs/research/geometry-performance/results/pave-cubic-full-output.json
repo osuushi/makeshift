@@ -1,0 +1,32 @@
+[
+  {
+    "name": "cubic-auto-implicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "cubic-auto-explicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "cubic-subtract-implicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "cubic-subtract-explicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "cubic-intersect-implicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "cubic-intersect-explicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  }
+]

@@ -1,0 +1,21 @@
+✔ .cache/sketch-tests/tests/body-erosion-capture.test.js (5888.692506ms)
+✖ .cache/sketch-tests/tests/body-erosion-special.test.js (16425.705136ms)
+✔ .cache/sketch-tests/tests/body-shell-capture.test.js (7075.479902ms)
+✔ .cache/sketch-tests/tests/body-shell-geometry.test.js (1791.08152ms)
+✔ .cache/sketch-tests/tests/body-shell-source-precision.test.js (3005.06071ms)
+✔ .cache/sketch-tests/tests/body-shell-sweep.test.js (20005.889237ms)
+✔ .cache/sketch-tests/tests/body-shell.test.js (1167.336858ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 6
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 55368.276539
+
+✖ failing tests:
+
+test at .cache/sketch-tests/tests/body-erosion-special.test.js:1:1
+✖ .cache/sketch-tests/tests/body-erosion-special.test.js (16425.705136ms)
+  'test failed'

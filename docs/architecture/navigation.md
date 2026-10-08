@@ -8,11 +8,18 @@ Cubic editing/projection (2026-09-16) supersedes any earlier spline exclusion.
 
 In Modeling, a single click on a canonical plane selects that reference, clearing
 geometry and saved-plane selection. The reference stays selected after hover leaves.
-Only the most face-on canonical grid is targeted for visibility; view changes
-crossfade grids, while all world axes remain visible. Only the incoming reference
-above its selectable visibility threshold accepts canvas input. See
+The most face-on canonical grid stays at configured maximum opacity; a faint
+secondary provides orientation. View changes crossfade grids while world axes
+remain visible. Only the primary above its selectable visibility threshold accepts
+ordinary canvas input; explicit plane-selection tools also accept the visible secondary.
+Coordinate grids fade subtly with depth away from the view target, scaled to visible
+world height; nearer portions remain unfaded and finite camera retreat has no effect. See
 [interface preferences](interface-preferences.md) for blending and grid controls.
 Enter or double-click enters its sketch workspace; Escape or a click without a selectable reference or geometry clears it.
+Plane entry chooses the nearest quaternion orientation among all four in-plane
+quarter turns on either side, preserving the accepted plane frame and grid axes.
+Profile entry fits the boundary along the chosen screen axes, keeping its center
+and margin when a quarter turn swaps the horizontal and vertical extents.
 Canonical references remain fixed, while construction planes support placement edits.
 Explicit plane-selection modes continue to accept a plane on a single click.
 In Mirror and Projection, a nearer planar solid face takes precedence over a
@@ -198,9 +205,13 @@ roll measures pointer bearing around the cube center, one-to-one in angle; radia
 motion adds no roll. Viewport Option-drag retains its model/selection-centered bearing.
 A face click
 aligns Front (−Y), Back (+Y), Left (−X), Right (+X), Top (+Z), or Bottom (−Z).
-The white/near-black cube has six inset labeled faces, twelve edge bevels and eight
+The cube has six inset labeled faces, twelve edge bevels and eight
 corner bevels. The face half-width is 0.58 of the cube half-width, leaving wider
 bevel polygons as the actual pointer/touch targets without overlapping hit regions.
+Opposing main faces share their corresponding canonical plane's configured grid
+color: Top/Bottom use XY, Front/Back use XZ, and Left/Right use YZ. Color changes
+apply immediately; label ink adapts for contrast, while hover/focus retains blue
+highlighting and dark labels. Bevels retain their neutral shading.
 Labels are projected in each face plane, rotating and foreshortening with the rigid
 cube. Edge clicks align to the equal-weight diagonal of their two
 axes (flat 45°); corner clicks align to the equal-weight three-axis isometric view.

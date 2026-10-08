@@ -1,0 +1,28 @@
+{
+  "blocks": 8,
+  "specs": [
+    {
+      "label": "retained",
+      "executable": "/tmp/makeshift-kernel-twist-volume-axis"
+    },
+    {
+      "label": "streaming",
+      "executable": "/tmp/makeshift-kernel-streaming-cuts"
+    }
+  ],
+  "seed": 20261008,
+  "filter": "^(cubic|perforated)-(explicit-auto-n(1|4|16)-(overlap-only|extra-disjoint)|implicit-subtract-n4-overlap-only)$",
+  "constructorExecutable": "/tmp/makeshift-kernel-twist-volume-axis",
+  "fixtureFaces": [
+    {
+      "name": "cubic",
+      "faces": 6
+    },
+    {
+      "name": "perforated",
+      "faces": 31
+    }
+  ],
+  "targetCountMeaning": "Positive-overlap independent bodies; extra-disjoint adds one body and one explicit target.",
+  "timingNote": "No warmup: each measurement uses a fresh process. First request elapsed can include remaining process startup."
+}

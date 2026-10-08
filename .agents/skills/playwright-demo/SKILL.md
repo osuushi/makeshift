@@ -47,9 +47,9 @@ runner or the user's machine. Diagnose software rendering with WebGL's
 ## Bundled implementation
 
 `scripts/fixed-step-capture.mjs` supplies a reusable frame pump, holds, bounded
-UI actions, and MP4 export. `scripts/canonical-planes.mjs` records three actual
-UI routes: angular fades during orbit, presets/selection thresholds, and
-selecting/sketching after panning away from the origin.
+UI actions, and MP4 export. `scripts/canonical-planes.mjs` records two actual
+UI routes: primary/secondary grids during orbit, and secondary click gating
+followed by selecting that grid for a real split preview.
 
 From the repository root, with the pinned Node environment active and existing
 native dependencies prepared:
@@ -66,3 +66,8 @@ capture timing and frame count; separate state snapshots accompany the asserted
 UI routes. For other demos, reuse the
 capture helper and replace the fixture and routes, keeping acceptance checks
 specific to what the user needs to see.
+
+`scripts/plane-alignment.mjs` records coordinate and construction plane double-click
+entry from near-90° roll, asserting the short turn and unchanged plane frames.
+Run it with `node .agents/skills/playwright-demo/scripts/plane-alignment.mjs`; an
+optional first argument selects its generated-artifact destination.

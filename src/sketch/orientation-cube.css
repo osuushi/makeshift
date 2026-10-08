@@ -26,13 +26,17 @@
   outline: none;
 }
 .orientation-cube text {
-  fill: #151515;
+  fill: var(--cube-label-color, #151515);
   /* ui-scale: viewbox */
   font-size: 10px;
   font-weight: 600;
   text-anchor: middle;
   dominant-baseline: central;
   pointer-events: none;
+}
+.orientation-cube g:hover text,
+.orientation-cube g:focus text {
+  fill: #151515;
 }
 .exit-isolation {
   position: absolute;

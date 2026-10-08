@@ -1,0 +1,122 @@
+[
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/circle-offset-twist.brep",
+    "axis": "z",
+    "label": "baseline",
+    "baselineLabel": "baseline",
+    "n": 30,
+    "validPairs": 30,
+    "medianMs": 2442.1760285,
+    "p95Ms": 2531.455925,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "exactMassMatches": 30,
+    "exactErrorMatches": 30,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/circle-offset-twist.brep",
+    "axis": "z",
+    "label": "fixed-v",
+    "baselineLabel": "baseline",
+    "n": 30,
+    "validPairs": 30,
+    "medianMs": 1620.7375124999999,
+    "p95Ms": 1753.131504,
+    "pairedMedianSpeedup": 1.506156084504085,
+    "bootstrap95": [
+      1.480998538883254,
+      1.5409987083577688
+    ],
+    "exactMassMatches": 30,
+    "exactErrorMatches": 30,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-notched-cylinder-captured.brep",
+    "axis": "z",
+    "label": "baseline",
+    "baselineLabel": "baseline",
+    "n": 30,
+    "validPairs": 30,
+    "medianMs": 11.9980055,
+    "p95Ms": 13.037185,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "exactMassMatches": 30,
+    "exactErrorMatches": 30,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-notched-cylinder-captured.brep",
+    "axis": "z",
+    "label": "fixed-v",
+    "baselineLabel": "baseline",
+    "n": 30,
+    "validPairs": 30,
+    "medianMs": 11.905719999999999,
+    "p95Ms": 12.613505,
+    "pairedMedianSpeedup": 1.0094756020321416,
+    "bootstrap95": [
+      0.9997900627058027,
+      1.0360033488400144
+    ],
+    "exactMassMatches": 30,
+    "exactErrorMatches": 30,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-bent-sweep-captured.brep",
+    "axis": "z",
+    "label": "baseline",
+    "baselineLabel": "baseline",
+    "n": 30,
+    "validPairs": 30,
+    "medianMs": 63.697041,
+    "p95Ms": 74.396036,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "exactMassMatches": 30,
+    "exactErrorMatches": 30,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-bent-sweep-captured.brep",
+    "axis": "z",
+    "label": "fixed-v",
+    "baselineLabel": "baseline",
+    "n": 30,
+    "validPairs": 30,
+    "medianMs": 52.477155499999995,
+    "p95Ms": 57.610231,
+    "pairedMedianSpeedup": 1.2172319893644343,
+    "bootstrap95": [
+      1.1927280040119015,
+      1.2361933274881376
+    ],
+    "exactMassMatches": 30,
+    "exactErrorMatches": 30,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  }
+]

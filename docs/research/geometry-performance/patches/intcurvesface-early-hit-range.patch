@@ -1,0 +1,46 @@
+--- a/src/IntCurvesFace/IntCurvesFace_Intersector.cxx
++++ b/src/IntCurvesFace/IntCurvesFace_Intersector.cxx
+@@ -38,6 +38,7 @@
+ #include <BRep_Tool.hxx>
+ #include <TopoDS.hxx>
+ #include <GeomAPI_ProjectPointOnCurve.hxx>
++#include <cmath>
+ 
+ IMPLEMENT_STANDARD_RTTIEXT(IntCurvesFace_Intersector, Standard_Transient)
+ 
+@@ -221,6 +222,25 @@
+ {
+   if (HICS.IsDone() && HICS.NbPoints() > 0)
+   {
++    // Research precondition: immutable valid face; not validated here.
++    // Limit the first experiment to analytic support and finite ordered ranges.
++    const Standard_Boolean aFilterRange = !myPolyhedron && std::isfinite(parinf)
++                                          && std::isfinite(parsup) && parinf <= parsup;
++    if (aFilterRange)
++    {
++      Standard_Boolean hasInRangePoint = Standard_False;
++      for (Standard_Integer index = HICS.NbPoints(); index >= 1; --index)
++      {
++        const Standard_Real aW = HICS.Point(index).W();
++        if (aW >= parinf && aW <= parsup)
++        {
++          hasInRangePoint = Standard_True;
++          break;
++        }
++      }
++      if (!hasInRangePoint)
++        return;
++    }
+     // Calculate tolerance for 2d classifier
+     Standard_Real   mintol3d = BRep_Tool::Tolerance(face);
+     Standard_Real   maxtol3d = mintol3d;
+@@ -241,6 +261,9 @@
+     for (Standard_Integer index = HICS.NbPoints(); index >= 1; index--)
+     {
+       const IntCurveSurface_IntersectionPoint& HICSPointindex = HICS.Point(index);
++      const Standard_Real aW = HICSPointindex.W();
++      if (aFilterRange && !(aW >= parinf && aW <= parsup))
++        continue;
+       gp_Pnt2d                                 Puv(HICSPointindex.U(), HICSPointindex.V());
+ 
+       // TopAbs_State currentstate = myTopolTool->Classify(Puv,Tol);

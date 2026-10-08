@@ -80,7 +80,8 @@ Result shellBody(const Operand& source, const Tree& selection, double thickness,
     TopTools_IndexedMapOfShape retainedFaces;
     TopExp::MapShapes(retained, TopAbs_FACE, retainedFaces);
     if (retainedFaces.IsEmpty()) throw std::runtime_error("Shell needs at least one retained face");
-    offset_geometry::validSolid(body.shape, "Shell");
+    // canonical already validated this geometry. Selection/radius checks and
+    // collecting retained faces do not change its supports, boundaries or bounds.
     timing.phase("validate-source");
     auto geometry = constructShell(body, openings, thickness, freeform, intersections);
     auto wall = geometry.wall;

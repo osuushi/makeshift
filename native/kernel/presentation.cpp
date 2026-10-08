@@ -3,6 +3,7 @@
 #include "timing.h"
 #include "blends.h"
 #include "offset-thickness.h"
+#include "face-chains.h"
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBndLib.hxx>
@@ -58,7 +59,7 @@ void analyticSurfaces(std::ostream& out, const TopoDS_Face& shape, const BRepAda
         out << ",\"outward\":" << ((shape.Orientation() == TopAbs_REVERSED ? -1 : 1) * (sphere.Direct() ? 1 : -1)) << '}';
     } else out << "null";
 }
-void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMapOfShape& edges, const std::vector<BlendFace>& blends, const std::vector<BlendFace>& chamfers, const TopTools_IndexedMapOfShape& faces, const TopoDS_Shape& body) {
+void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMapOfShape& edges, const std::vector<BlendFace>& blends, const std::vector<BlendFace>& chamfers, const TopTools_IndexedMapOfShape& faces, FaceChainContext& chains, OffsetThicknessContext& thickness) {
     out << ",\"edgeIndexes\":[";
     bool first = true;
     for (TopExp_Explorer e(shape, TopAbs_EDGE); e.More(); e.Next()) {
@@ -82,10 +83,10 @@ void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMap
     out << ']';
     BRepAdaptor_Surface surface(shape);
     analyticSurfaces(out, shape, surface);
-    presentOffsetThickness(out, shape, faces, body);
+    presentOffsetThickness(out, shape, faces, thickness);
     const auto blend = std::find_if(blends.begin(), blends.end(), [&](const BlendFace& b) { return b.face.IsSame(shape); });
     out << ",\"offsetFaceIndexes\":[";
-    const auto chain = tangentFaceChain(body, {shape});
+    const auto chain = chains.chain({shape});
     for (size_t i = 0; i < chain.size(); ++i) { if (i) out << ','; out << faces.FindIndex(chain[i])-1; }
     out << ']';
     out << ",\"blend\":";
@@ -182,7 +183,8 @@ void present(std::ostream& out, const Result& result, double deflection) {
             throw std::runtime_error("Kernel could not mesh every face; the geometry result was rejected");
     }
     timing.phase("mesh");
-    out << "{\"brep\":" << quoted(encode(result.shape)) << ",\"volume\":" << volume(result.shape);
+    out << "{\"brep\":" << quoted(encode(result.shape)) << ",\"volume\":"
+        << (result.exactVolume ? *result.exactVolume : volume(result.shape));
     GProp_GProps properties; BRepGProp::VolumeProperties(result.shape, properties, 1e-10);
     out << ",\"center\":"; xyz(out, properties.CentreOfMass().XYZ());
     out << ",\"copy\":" << (result.copy ? "true" : "false") << ",\"predecessorBodies\":[";
@@ -195,6 +197,8 @@ void present(std::ostream& out, const Result& result, double deflection) {
     TopTools_IndexedMapOfShape faces; TopExp::MapShapes(result.shape, TopAbs_FACE, faces);
     const auto blends = recognizeBlends(result.shape);
     const auto chamfers = recognizeChamfers(result.shape);
+    OffsetThicknessContext thickness(result.shape);
+    FaceChainContext chains(result.shape);
     timing.phase("properties-and-blends");
     for (const auto type : {TopAbs_FACE, TopAbs_EDGE}) {
         out << (type == TopAbs_FACE ? ",\"faces\":[" : ",\"edges\":[");
@@ -208,7 +212,7 @@ void present(std::ostream& out, const Result& result, double deflection) {
                     [&](const TopoDS_Face& face) { return face.IsSame(shapes(i)); });
                 out << ",\"offsetSelected\":" << (selected ? "true" : "false");
             }
-            if (type == TopAbs_FACE) face(out, TopoDS::Face(shapes(i)), edges, blends, chamfers, faces, result.shape); else edge(out, TopoDS::Edge(shapes(i)));
+            if (type == TopAbs_FACE) face(out, TopoDS::Face(shapes(i)), edges, blends, chamfers, faces, chains, thickness); else edge(out, TopoDS::Edge(shapes(i)));
             out << '}';
         }
         out << ']';

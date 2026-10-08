@@ -211,3 +211,90 @@ test("sweep eligibility excludes bodies even from explicit targets", async () =>
     owner.close();
   }
 });
+
+test("implicit sweep intersection retains multiple targets and matches explicit results", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const a = await box(owner, 0, 0, 10, 10),
+      b = await box(owner, 8, 0, 18, 10),
+      untouched = await box(owner, 30, 0, 40, 10);
+    const original = owner.view.data;
+    const sketch = original.sketches[1];
+    const extrusion = {
+      sources: [{ sketch: sketch.id, profile: profilesFor(sketch)[0].key }],
+      distance: 5,
+      mode: "intersect" as const,
+    };
+    const summarize = (bodies: readonly Body[]) =>
+      bodies.map((body) => ({
+        volume: body.volume,
+        bounds: body.bounds,
+        faces: body.faces.length,
+        edges: body.edges.length,
+      }));
+    const implicit = await owner.call({ kind: "extrude", extrusion });
+    assert.equal(implicit.error, undefined);
+    const results = implicit.view.candidate?.bodies ?? [];
+    assert.equal(results.length, 3);
+    near(volume(results), 1600);
+    assert.equal(
+      results.find((body) => body.id === untouched.id),
+      untouched,
+    );
+    identities(results);
+    assert.deepEqual(owner.view.data, original);
+    const expected = summarize(results);
+    await owner.call({ kind: "cancel-preview" });
+    const explicit = await owner.call({
+      kind: "extrude",
+      extrusion: { ...extrusion, targets: [a.id, b.id] },
+    });
+    assert.equal(explicit.error, undefined);
+    assert.deepEqual(summarize(explicit.view.candidate?.bodies ?? []), expected);
+    await owner.call({ kind: "accept" });
+    const saved = owner.view.data;
+    await owner.call({ kind: "undo" });
+    assert.deepEqual(owner.view.data, original);
+    await owner.call({ kind: "redo" });
+    assert.deepEqual(owner.view.data, saved);
+    assert.equal((await owner.call({ kind: "open", document: saved })).error, undefined);
+    near(volume(owner.view.data.bodies ?? []), 1600);
+  } finally {
+    owner.close();
+  }
+});
+
+test("Auto retains explicitly selected disjoint targets when another target overlaps", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const a = await box(owner, 0, 0, 10, 10),
+      disjoint = await box(owner, 30, 0, 40, 10);
+    const original = owner.view.data;
+    const sketch = original.sketches[0];
+    const reply = await owner.call({
+      kind: "extrude",
+      extrusion: {
+        sources: [{ sketch: sketch.id, profile: profilesFor(sketch)[0].key }],
+        distance: 5,
+        mode: "auto",
+        targets: [a.id, disjoint.id],
+      },
+    });
+    assert.equal(reply.error, undefined);
+    assert.equal(reply.view.booleanMode, "subtract");
+    const results = reply.view.candidate?.bodies ?? [];
+    assert.equal(results.length, 2);
+    near(volume(results), 1500);
+    const retained = results.find((body) => body.bounds[0] === 30);
+    assert.ok(retained);
+    near(retained.volume, disjoint.volume);
+    assert.deepEqual(retained.bounds, disjoint.bounds);
+    identities(results);
+    assert.deepEqual(owner.view.data, original);
+    await owner.call({ kind: "accept" });
+    await owner.call({ kind: "undo" });
+    assert.deepEqual(owner.view.data, original);
+  } finally {
+    owner.close();
+  }
+});
