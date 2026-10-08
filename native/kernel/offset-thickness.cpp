@@ -2,12 +2,14 @@
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepClass_FaceClassifier.hxx>
 #include <IntCurvesFace_ShapeIntersector.hxx>
+#include <TopTools_IndexedMapOfOrientedShape.hxx>
 #include <TopoDS.hxx>
 #include <gp_Lin.hxx>
 #include <gp_Sphere.hxx>
 #include <gp_Cylinder.hxx>
 #include <gp_Pln.hxx>
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <vector>
 
@@ -35,7 +37,7 @@ gp_Vec normalDirection(const BRepAdaptor_Surface& surface, const gp_Pnt& point) 
     return (from - axis * from.Dot(axis)).Normalized();
 }
 bool visible(const TopoDS_Face& face, const BRepAdaptor_Surface& surface,
-             const TopoDS_Face& target, double delta, IntCurvesFace_ShapeIntersector& ray,
+             const TopoDS_Face& target, double delta, OffsetThicknessContext& context,
              double& slope) {
     // Sample both trimmed faces so a small reference patch is not hidden by the
     // source's coarse parameter grid. Exact intersections still decide visibility.
@@ -44,17 +46,15 @@ bool visible(const TopoDS_Face& face, const BRepAdaptor_Surface& surface,
                (surface.FirstVParameter()+surface.LastVParameter())/2, midpoint, du, dv);
     const double outward = (du.Crossed(dv).Dot(normalDirection(surface, midpoint)) > 0 ? 1 : -1)
         * (face.Orientation() == TopAbs_REVERSED ? -1 : 1);
+    auto& ray = context.ray();
     // Exact trimmed intersections at sampled locations: conservative absence,
     // never infer a facing region from display triangles or infinite supports alone.
     for (const bool reverse : {false, true}) {
         const auto& sampledFace = reverse ? target : face;
-        const BRepAdaptor_Surface sampled(sampledFace);
         for (int u = 1; u < 12; ++u) for (int v = 1; v < 12; ++v) {
-            const gp_Pnt2d uv(sampled.FirstUParameter() + (sampled.LastUParameter()-sampled.FirstUParameter())*u/12,
-                              sampled.FirstVParameter() + (sampled.LastVParameter()-sampled.FirstVParameter())*v/12);
-            BRepClass_FaceClassifier classifier(sampledFace, uv, tolerance);
-            if (classifier.State() != TopAbs_IN) continue;
-            gp_Pnt point = sampled.Value(uv.X(), uv.Y());
+            const auto cached = context.sample(sampledFace, u, v);
+            if (!cached) continue;
+            gp_Pnt point = *cached;
             const auto radial = normalDirection(surface, point);
             if (reverse) {
                 point.Translate(radial * -delta);
@@ -83,8 +83,57 @@ bool visible(const TopoDS_Face& face, const BRepAdaptor_Surface& surface,
 }
 }
 
+struct OffsetThicknessContext::SampleCache {
+    struct Sample {
+        bool checked = false;
+        std::optional<gp_Pnt> point;
+    };
+    struct FaceSamples {
+        BRepAdaptor_Surface surface;
+        std::array<Sample, 121> grid;
+        explicit FaceSamples(const TopoDS_Face& face) : surface(face) {}
+    };
+    // Unlike IsSame maps, this includes orientation as well as TShape/location.
+    TopTools_IndexedMapOfOrientedShape faces;
+    std::vector<FaceSamples> values;
+};
+
 void presentOffsetThickness(std::ostream& out, const TopoDS_Face& face,
                             const TopTools_IndexedMapOfShape& faces, const TopoDS_Shape& body) {
+    OffsetThicknessContext context(body);
+    presentOffsetThickness(out, face, faces, context);
+}
+
+OffsetThicknessContext::OffsetThicknessContext(const TopoDS_Shape& shape) : body(shape) {}
+OffsetThicknessContext::~OffsetThicknessContext() = default;
+
+IntCurvesFace_ShapeIntersector& OffsetThicknessContext::ray() {
+    if (!tool) {
+        tool = std::make_unique<IntCurvesFace_ShapeIntersector>();
+        tool->Load(body, tolerance);
+    }
+    return *tool;
+}
+
+std::optional<gp_Pnt> OffsetThicknessContext::sample(const TopoDS_Face& face, int u, int v) {
+    if (!samples) samples = std::make_unique<SampleCache>();
+    const int index = samples->faces.Add(face);
+    if (index > static_cast<int>(samples->values.size())) samples->values.emplace_back(face);
+    auto& entry = samples->values[index - 1];
+    auto& result = entry.grid[(u - 1) * 11 + v - 1];
+    if (!result.checked) {
+        const auto& surface = entry.surface;
+        const gp_Pnt2d uv(surface.FirstUParameter() + (surface.LastUParameter()-surface.FirstUParameter())*u/12,
+                          surface.FirstVParameter() + (surface.LastVParameter()-surface.FirstVParameter())*v/12);
+        BRepClass_FaceClassifier classifier(face, uv, tolerance);
+        if (classifier.State() == TopAbs_IN) result.point = surface.Value(uv.X(), uv.Y());
+        result.checked = true;
+    }
+    return result.point;
+}
+
+void presentOffsetThickness(std::ostream& out, const TopoDS_Face& face,
+                            const TopTools_IndexedMapOfShape& faces, OffsetThicknessContext& context) {
     out << ",\"thickness\":";
     const BRepAdaptor_Surface surface(face);
     if (surface.GetType() != GeomAbs_Plane && surface.GetType() != GeomAbs_Cylinder && surface.GetType() != GeomAbs_Sphere) { out << "null"; return; }
@@ -100,11 +149,9 @@ void presentOffsetThickness(std::ostream& out, const TopoDS_Face& face,
     }
     std::sort(candidates.begin(), candidates.end(), [](const auto& a, const auto& b) { return std::abs(a.delta) < std::abs(b.delta); });
     if (!candidates.empty()) {
-        IntCurvesFace_ShapeIntersector ray;
-        ray.Load(body, tolerance);
         for (const auto& candidate : candidates) {
             double slope;
-            if (!visible(face, surface, TopoDS::Face(faces(candidate.index)), candidate.delta, ray, slope)) continue;
+            if (!visible(face, surface, TopoDS::Face(faces(candidate.index)), candidate.delta, context, slope)) continue;
             out << "{\"faceIndex\":" << candidate.index-1 << ",\"distance\":" << std::abs(candidate.delta)
                 << ",\"slope\":" << slope << '}';
             return;

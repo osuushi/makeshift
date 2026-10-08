@@ -7,10 +7,13 @@
 #include <TopExp.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Compound.hxx>
+#include <TopLoc_Location.hxx>
+#include <gp_Trsf.hxx>
 #include <sstream>
 #include <stdexcept>
 #include <iostream>
 #include <vector>
+#include <utility>
 
 namespace {
 TopoDS_Face wall(double radius, double z = 0, double x = 0) {
@@ -35,6 +38,21 @@ std::string measure(const std::vector<TopoDS_Face>& walls) {
 void expect(const std::string& value, const std::string& expected) {
     if (value != ",\"thickness\":" + expected) throw std::runtime_error(value);
 }
+void expectShared(const std::vector<TopoDS_Face>& walls,
+                  const std::vector<std::pair<TopoDS_Face, std::string>>& queries) {
+    BRep_Builder builder;
+    TopoDS_Compound body;
+    builder.MakeCompound(body);
+    for (const auto& face : walls) builder.Add(body, face);
+    TopTools_IndexedMapOfShape faces;
+    TopExp::MapShapes(body, TopAbs_FACE, faces);
+    OffsetThicknessContext context(body);
+    for (const auto& [face, expected] : queries) {
+        std::ostringstream output;
+        presentOffsetThickness(output, face, faces, context);
+        expect(output.str(), expected);
+    }
+}
 }
 int main() {
     expect(measure({wall(3), wall(8), wall(5)}), "{\"faceIndex\":2,\"distance\":2,\"slope\":-1}");
@@ -52,5 +70,26 @@ int main() {
     expect(measure({plane(0), plane(2, 20), plane(4)}), "{\"faceIndex\":2,\"distance\":4,\"slope\":-1}");
     const auto tiny = BRepBuilderAPI_MakeFace(gp_Pln(gp_Pnt(4.9, 4.9, 2), gp_Dir(0, 0, 1)), -0.01, 0.01, -0.01, 0.01).Face();
     expect(measure({plane(0), plane(4), tiny}), "{\"faceIndex\":2,\"distance\":2,\"slope\":-1}");
+    // The tiny reference requires reverse sampling. Querying it next must use
+    // its original position, unaffected by the previous projection onto stock.
+    const auto stock = plane(0), cap = plane(4);
+    expectShared({stock, cap, tiny}, {
+        {stock, "{\"faceIndex\":2,\"distance\":2,\"slope\":-1}"},
+        {tiny, "{\"faceIndex\":0,\"distance\":2,\"slope\":1}"},
+        {stock, "{\"faceIndex\":2,\"distance\":2,\"slope\":-1}"},
+    });
+    // Located instances share support topology but occupy different world planes.
+    // Switching source sides and orientation must preserve distance and sign.
+    gp_Trsf middleMove, topMove;
+    middleMove.SetTranslation(gp_Vec(0, 0, 4));
+    topMove.SetTranslation(gp_Vec(0, 0, 8));
+    const auto middle = TopoDS::Face(stock.Moved(TopLoc_Location(middleMove)));
+    const auto top = TopoDS::Face(stock.Moved(TopLoc_Location(topMove)));
+    expectShared({stock, middle, top}, {
+        {stock, "{\"faceIndex\":1,\"distance\":4,\"slope\":-1}"},
+        {top, "{\"faceIndex\":1,\"distance\":4,\"slope\":1}"},
+        {TopoDS::Face(top.Reversed()), "{\"faceIndex\":1,\"distance\":4,\"slope\":-1}"},
+        {top, "{\"faceIndex\":1,\"distance\":4,\"slope\":1}"},
+    });
     std::cout << "Nearest, trimmed overlap and obstructed radial thickness checks passed\n";
 }
