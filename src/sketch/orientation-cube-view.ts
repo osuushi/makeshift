@@ -1,3 +1,4 @@
+import { canonicalPlanes } from "../preferences/canonical-planes.js";
 import { type CubeSurface, cubeSurfaces } from "./orientation-cube-geometry.js";
 import type { World } from "./world.js";
 
@@ -17,7 +18,14 @@ export function createOrientationCube(world: World) {
   world.host.append(cube);
   const draw = () => {
     const inverse = world.camera.quaternion.clone().invert();
+    const colors = canonicalPlanes().colors;
     for (const { face, group, polygon, text } of entries) {
+      if (face.kind === "face") {
+        const plane = face.normal.x ? "YZ" : face.normal.y ? "XZ" : "XY";
+        const color = colors[plane];
+        polygon.setAttribute("fill", color);
+        group.style.setProperty("--cube-label-color", labelColor(color));
+      }
       const direction = face.normal.clone().applyQuaternion(inverse);
       const visible = direction.z > 0.015;
       group.style.display = visible ? "" : "none";
@@ -28,8 +36,10 @@ export function createOrientationCube(world: World) {
         return `${72 + p.x * scale},${72 - p.y * scale}`;
       });
       polygon.setAttribute("points", points.join(" "));
-      const shade = face.kind === "face" ? 255 : Math.round(235 + 14 * direction.z);
-      polygon.setAttribute("fill", `rgb(${shade} ${shade} ${shade})`);
+      if (face.kind !== "face") {
+        const shade = Math.round(235 + 14 * direction.z);
+        polygon.setAttribute("fill", `rgb(${shade} ${shade} ${shade})`);
+      }
       if (!text) continue;
       const right = face.up.clone().cross(face.normal).applyQuaternion(inverse);
       const up = face.up.clone().applyQuaternion(inverse);
@@ -42,6 +52,16 @@ export function createOrientationCube(world: World) {
     }
   };
   return { cube, entries, draw };
+}
+
+/** Choose the label ink with the higher contrast against the configured face color. */
+function labelColor(color: string): string {
+  const channels = [1, 3, 5].map((offset) => {
+    const channel = Number.parseInt(color.slice(offset, offset + 2), 16) / 255;
+    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  const luminance = 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  return (luminance + 0.05) / (0.0075 + 0.05) >= 1.05 / (luminance + 0.05) ? "#151515" : "#ffffff";
 }
 
 function createSurface(cube: SVGSVGElement, face: CubeSurface) {
