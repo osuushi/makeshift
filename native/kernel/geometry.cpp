@@ -86,6 +86,18 @@ TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies, std::v
     return tool;
 }
 namespace {
+int twistedVolumeReferenceAxis(const Tree& input) {
+    if (input.get<std::string>("kind") != "extrude" || input.get<bool>("normalExtrusion", false) ||
+        input.get<double>("twist.angle", 0) == 0) return -1;
+    // Axial flux on a rotating closed section can cancel nearly to zero inside
+    // GK's nested relative-error integrals. A transverse global flux direction
+    // still integrates the same closed solid, with the same method/tolerance.
+    const auto direction = point(input.get_child("normal"));
+    int axis = 0;
+    for (int i = 1; i < 3; ++i)
+        if (std::abs(direction.Coord(i + 1)) < std::abs(direction.Coord(axis + 1))) axis = i;
+    return axis;
+}
 struct SweepIntersection {
     const Operand* body;
     std::unique_ptr<BooleanProbe> operation;
@@ -113,7 +125,7 @@ std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>
     if (mode != "auto" && mode != "new" && mode != "union" && mode != "subtract" && mode != "intersect")
         throw std::runtime_error("Unknown Boolean mode");
     std::vector<Result> results;
-    if (mode == "new") { solids(results, tool, toolOrigins, {}); return results; }
+    if (mode == "new") { solids(results, tool, toolOrigins, {}, twistedVolumeReferenceAxis(input)); return results; }
     Bnd_Box toolBounds; BRepBndLib::Add(tool, toolBounds, false); toolBounds.Enlarge(1e-7);
     std::vector<const Operand*> positive, contact, explicitTargets;
     const auto eligible = input.get_child_optional("eligibleTargets");
@@ -158,7 +170,7 @@ std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>
             participants.push_back(body->id); origins.insert(origins.end(), body->entities.begin(), body->entities.end());
             shape = booleanShape(shape, body->shape, mode, origins);
         }
-        solids(results, shape, origins, participants);
+        solids(results, shape, origins, participants, selected.empty() ? twistedVolumeReferenceAxis(input) : -1);
     } else for (const auto* body : selected) {
         participants.push_back(body->id); auto origins = body->entities;
         origins.insert(origins.end(), toolOrigins.begin(), toolOrigins.end());

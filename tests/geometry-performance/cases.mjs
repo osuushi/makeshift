@@ -41,6 +41,17 @@ async function cubicOperand(client) {
   return operand(cubicReply.results[0], "cubic-stock");
 }
 
+function twistedCases() {
+  const tool = {
+    ...extrude({ outer: [circle(0, 0, 10)], holes: [] }),
+    twist: { angle: 90, origin: [5, 0, 0] },
+  };
+  return [
+    ["circle-offset-twist", tool],
+    ["circle-offset-twist-neutral-auto", { ...tool, mode: "auto" }],
+  ];
+}
+
 export async function cases(client) {
   const profile = square(0, 0, 60);
   for (let x = 10; x <= 50; x += 10)
@@ -129,12 +140,6 @@ export async function cases(client) {
         },
       ]);
   }
-  list.push([
-    "circle-offset-twist",
-    {
-      ...extrude({ outer: [circle(0, 0, 10)], holes: [] }),
-      twist: { angle: 90, origin: [5, 0, 0] },
-    },
-  ]);
+  list.push(...twistedCases());
   return list;
 }

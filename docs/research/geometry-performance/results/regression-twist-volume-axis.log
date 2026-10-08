@@ -1,0 +1,211 @@
+TAP version 13
+# Subtest: standalone Booleans preview overlaps, preserve originals, reject invalid input and reopen
+ok 1 - standalone Booleans preview overlaps, preserve originals, reject invalid input and reopen
+  ---
+  duration_ms: 287.644017
+  type: 'test'
+  ...
+# Subtest: standalone subtraction retains every split solid, multiple cutters and optional tools
+ok 2 - standalone subtraction retains every split solid, multiple cutters and optional tools
+  ---
+  duration_ms: 101.675518
+  type: 'test'
+  ...
+# Subtest: disjoint and touching Booleans distinguish successful empty solid results from errors
+ok 3 - disjoint and touching Booleans distinguish successful empty solid results from errors
+  ---
+  duration_ms: 128.767958
+  type: 'test'
+  ...
+# Subtest: sweep eligibility excludes bodies even from explicit targets
+ok 4 - sweep eligibility excludes bodies even from explicit targets
+  ---
+  duration_ms: 49.048273
+  type: 'test'
+  ...
+# Subtest: implicit sweep intersection retains multiple targets and matches explicit results
+ok 5 - implicit sweep intersection retains multiple targets and matches explicit results
+  ---
+  duration_ms: 107.447616
+  type: 'test'
+  ...
+# Subtest: Auto retains explicitly selected disjoint targets when another target overlaps
+ok 6 - Auto retains explicitly selected disjoint targets when another target overlaps
+  ---
+  duration_ms: 63.557664
+  type: 'test'
+  ...
+# Subtest: centered circular twist uses the ordinary exact cylinder/draft on every plane
+ok 7 - centered circular twist uses the ordinary exact cylinder/draft on every plane
+  ---
+  duration_ms: 181.170125
+  type: 'test'
+  ...
+# Subtest: off-center circular twist preserves orbit, radius, signed turns, draft and history
+ok 8 - off-center circular twist preserves orbit, radius, signed turns, draft and history
+  ---
+  duration_ms: 667.030755
+  type: 'test'
+  ...
+# Subtest: draft uses per-wall end offset, angle conversion and either extrusion direction
+ok 9 - draft uses per-wall end offset, angle conversion and either extrusion direction
+  ---
+  duration_ms: 139.397649
+  type: 'test'
+  ...
+# Subtest: draft expands circular material and contracts holes without changing the source
+ok 10 - draft expands circular material and contracts holes without changing the source
+  ---
+  duration_ms: 76.85195
+  type: 'test'
+  ...
+# Subtest: draft rejects impossible angles and collapsed circles and permits recovery
+ok 11 - draft rejects impossible angles and collapsed circles and permits recovery
+  ---
+  duration_ms: 40.797516
+  type: 'test'
+  ...
+# Subtest: draft supports cubic profile edges with a true end offset
+ok 12 - draft supports cubic profile edges with a true end offset
+  ---
+  duration_ms: 500.671962
+  type: 'test'
+  ...
+# Subtest: draft rejects hole closure and colliding walls
+ok 13 - draft rejects hole closure and colliding walls
+  ---
+  duration_ms: 46.386968
+  type: 'test'
+  ...
+# Subtest: drafted face extrusion unions onto its source body and shares one Undo
+ok 14 - drafted face extrusion unions onto its source body and shares one Undo
+  ---
+  duration_ms: 84.837697
+  type: 'test'
+  ...
+# Subtest: captured cubic extrusion resolves auto with complete geometry and history
+ok 15 - captured cubic extrusion resolves auto with complete geometry and history
+  ---
+  duration_ms: 344.040756
+  type: 'test'
+  ...
+# Subtest: captured cubic extrusion resolves union with complete geometry and history
+ok 16 - captured cubic extrusion resolves union with complete geometry and history
+  ---
+  duration_ms: 562.388523
+  type: 'test'
+  ...
+# Subtest: captured cubic extrusion resolves subtract with complete geometry and history
+ok 17 - captured cubic extrusion resolves subtract with complete geometry and history
+  ---
+  duration_ms: 269.695798
+  type: 'test'
+  ...
+# Subtest: captured cubic extrusion resolves intersect with complete geometry and history
+ok 18 - captured cubic extrusion resolves intersect with complete geometry and history
+  ---
+  duration_ms: 322.251535
+  type: 'test'
+  ...
+# Subtest: captured cubic extrusion resolves new with complete geometry and history
+ok 19 - captured cubic extrusion resolves new with complete geometry and history
+  ---
+  duration_ms: 169.609633
+  type: 'test'
+  ...
+# Subtest: the original incomplete capture still rejects atomically during Open
+ok 20 - the original incomplete capture still rejects atomically during Open
+  ---
+  duration_ms: 379.570787
+  type: 'test'
+  ...
+# Subtest: saved cubic prisms support standalone Union and subsequent rigid editing
+ok 21 - saved cubic prisms support standalone Union and subsequent rigid editing
+  ---
+  duration_ms: 686.643538
+  type: 'test'
+  ...
+# Subtest: analytic-only Boolean operands preserve gaps smaller than the cubic budget
+ok 22 - analytic-only Boolean operands preserve gaps smaller than the cubic budget
+  ---
+  duration_ms: 49.047021
+  type: 'test'
+  ...
+# Subtest: symmetric extrusion uses signed total depth and preserves source/history
+ok 23 - symmetric extrusion uses signed total depth and preserves source/history
+  ---
+  duration_ms: 45.693971
+  type: 'test'
+  ...
+# Subtest: symmetric draft keeps per-cap wall offset and converts angle using half depth
+ok 24 - symmetric draft keeps per-cap wall offset and converts angle using half depth
+  ---
+  duration_ms: 417.206371
+  type: 'test'
+  ...
+# Subtest: symmetric twist puts opposite half angles on the caps and supports draft
+ok 25 - symmetric twist puts opposite half angles on the caps and supports draft
+  ---
+  duration_ms: 1244.998573
+  type: 'test'
+  ...
+# Subtest: centered extrusion participates in booleans and leaves editable caps
+ok 26 - centered extrusion participates in booleans and leaves editable caps
+  ---
+  duration_ms: 132.144316
+  type: 'test'
+  ...
+# Subtest: symmetric sweep preserves holes and accepts cubic twist with draft
+ok 27 - symmetric sweep preserves holes and accepts cubic twist with draft
+  ---
+  duration_ms: 3084.346053
+  type: 'test'
+  ...
+twist 90: 176 ms
+twist -90: 156 ms
+twist 450: 1085 ms
+# Subtest: twisted extrusion preserves volume through signed multiple turns and off-center axes
+ok 28 - twisted extrusion preserves volume through signed multiple turns and off-center axes
+  ---
+  duration_ms: 1418.113977
+  type: 'test'
+  ...
+# Subtest: twisted draft retains per-wall offset for either length sign and restores through history
+ok 29 - twisted draft retains per-wall offset for either length sign and restores through history
+  ---
+  duration_ms: 490.802127
+  type: 'test'
+  ...
+# Subtest: twist with holes narrows holes under positive draft and rejects collapse and off-plane axes
+ok 30 - twist with holes narrows holes under positive draft and rejects collapse and off-plane axes
+  ---
+  duration_ms: 233.005303
+  type: 'test'
+  ...
+# Subtest: cubic profiles support twist with and without draft
+ok 31 - cubic profiles support twist with and without draft
+  ---
+  duration_ms: 4071.304386
+  type: 'test'
+  ...
+# Subtest: obsolete native twist is cancelled promptly and newest extrusion can use the slot
+ok 32 - obsolete native twist is cancelled promptly and newest extrusion can use the slot
+  ---
+  duration_ms: 178.158459
+  type: 'test'
+  ...
+# Subtest: twisted planar-face extrusion unions and twisted profile subtraction preserves stock
+ok 33 - twisted planar-face extrusion unions and twisted profile subtraction preserves stock
+  ---
+  duration_ms: 635.373931
+  type: 'test'
+  ...
+1..33
+# tests 33
+# suites 0
+# pass 33
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 17313.883469

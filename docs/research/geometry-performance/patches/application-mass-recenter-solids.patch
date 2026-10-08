@@ -1,0 +1,37 @@
+diff --git a/native/kernel/main.cpp b/native/kernel/main.cpp
+index 0b50b61..fdb4fb3 100644
+--- a/native/kernel/main.cpp
++++ b/native/kernel/main.cpp
+@@ -63,6 +63,23 @@ double volume(const TopoDS_Shape& shape) {
+         timing.phase("bounds");
+         if (bounds.IsVoid()) return 0;
+         double lo[3], hi[3]; bounds.Get(lo[0], lo[1], lo[2], hi[0], hi[1], hi[2]);
++        // Research prototype: evaluate mass in a nearby frame. Only the TopoDS
++        // value's placement changes; supports/topology and accepted shape stay
++        // untouched. Avoid world-coordinate subtraction in surface D1 evaluation.
++        auto local = shape;
++        // Open-face flux is reference-dependent. Keep probe compounds and other
++        // shapes on their original reference; this prototype handles solids only.
++        if (shape.ShapeType() == TopAbs_SOLID) {
++            gp_Vec center;
++            for (int axis = 0; axis < 3; ++axis)
++                center.SetCoord(axis + 1, lo[axis] + (hi[axis] - lo[axis]) * 0.5);
++            gp_Trsf shift; shift.SetTranslation(-center);
++            local.Move(TopLoc_Location(shift));
++            for (int axis = 0; axis < 3; ++axis) {
++                lo[axis] -= center.Coord(axis + 1);
++                hi[axis] -= center.Coord(axis + 1);
++            }
++        }
+         // Integrate across spline spans. Ordinary adaptive quadrature can converge
+         // to different volumes for the same solid after its faces are repartitioned.
+         // A nearby exterior plane avoids near-zero integrals on trimmed faces,
+@@ -73,7 +90,7 @@ double volume(const TopoDS_Shape& shape) {
+             gp_Pnt origin(lo[0],lo[1],lo[2]);
+             origin.SetCoord(axis+1,lo[axis]-1);
+             const gp_Dir normal(axis == 0,axis == 1,axis == 2);
+-            error = BRepGProp::VolumePropertiesGK(shape,props,gp_Pln(origin,normal),1e-10,false,true);
++            error = BRepGProp::VolumePropertiesGK(local,props,gp_Pln(origin,normal),1e-10,false,true);
+             if (std::isfinite(error) && error >= 0) break;
+             // A failed face aborts GK before all properties are accumulated. Try a
+             // different integral reference, never accept its partial mass or error.

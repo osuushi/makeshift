@@ -428,8 +428,6 @@ primitive run is retained in `results/quadrature-primitives.jsonl`; its elapsed
 times are observations rather than paired speedup evidence. See
 [the translation analysis](quadrature-translation-research.md).
 
-## Pending experiments
-
 ### Unchanged shell validation reuse: 40 paired blocks
 
 The candidate removes two repeat validations of geometry already validated by
@@ -465,15 +463,66 @@ location requires global recentering; removing only the root location misses it.
 Intrinsic world-coordinate supports retain about 1.7e-6 discrepancy from nominal
 dimensions in every variant. That control can contain construction roundoff,
 so it is not independently an integration-error certificate. Application
-integration is not yet adopted. Timings in `results/quadrature-recenter-confirmed.jsonl`
+integration is not adopted. A closed-solid-only application prototype was tested
+in thirty randomized paired blocks: twisted circle 1.029× (95% bootstrap interval
+1.020–1.040), cubic implicit Subtract 1.000× (0.980–1.059), notched Shell 1.004×
+(0.967–1.015), and bent captured Shell 0.996× (0.985–1.013). All summary geometry
+checks matched. This does not justify broad application adoption for speed;
+the production prototype was reverted and both prototype patches retained.
+Results: `results/mass-recenter-solids-confirmation.jsonl` and
+`results/mass-recenter-solids-confirmation-summary.json`.
+Timings in `results/quadrature-recenter-confirmed.jsonl`
 are observations, not randomized paired speedup measurements.
+
+### Twisted extrusion global flux axis
+
+The application candidate passes a transverse global axis
+hint for unmodified twisted extrusion solids (New and neutral Union/Auto).
+Boolean-modified results, Common eligibility volumes, ordinary prism and normal
+extrusion retain the existing policy. Only `TopAbs_SOLID` accepts the hint, and
+the previous fallback axes remain. GK, spline span subdivision, epsilon 1e-10,
+and validation predicates are unchanged. A single global flux axis integrates
+the same closed-solid scalar volume; independent per-face axes would not.
+
+Forty randomized paired blocks confirm the circle offset/twist request at
+43.18× (95% paired bootstrap interval 42.29–44.09), median 2503→58.06 ms.
+Neutral Auto confirms 43.34× (42.80–44.28), median 2515→57.53 ms. Do not
+generalize this pathological fixture's factor to arbitrary extrusions.
+Thirty-three named regression tests passed in six files, and all 24 additional
+orientation/sign/angle/symmetric/neutral Auto/draft/polygon fixtures match the
+baseline's full ordered metadata at 1e-9 and volumes at 1e-10. Only BRep text
+contents are excluded from the metadata comparison, but a separate exact text
+check confirms all 24 baseline-repeat and baseline/candidate BRep encodings
+identical. Largest relative volume delta is 5.10e-11. Raw full replies and actual
+public GK plane arguments/errors/flags are retained in
+`results/twist-volume-axis-variants.jsonl`; the preload shim is correctness-only.
+Ideal area-times-travel values are diagnostic, not certified volumes of fitted
+surfaces. The forty-block randomized comparison runs without the shim:
+`results/twist-volume-axis-confirmation{,-summary}` (JSONL/JSON). The unchanged
+perforated extrusion control was 0.975× (0.956–0.998); cubic Subtract 0.967×
+(0.932–1.018). A 120-block control-only retest is running to investigate the
+small slowdown instead of attributing it to the hint without evidence. That
+retest finds perforated 0.993× (0.981–1.009), compatible with no change; cubic
+Subtract 0.976× (0.963–0.996), a small measured executable regression that remains
+to be localized. Raw results and summaries are
+`results/twist-volume-axis-controls-retest.jsonl` / `-summary.json`.
+See [source and numerical safety review](volume-axis-review.md).
+The fixed exact-BRep translation diagnostic subsequently completed: analytic
+invariant circle/cylinder meets actual relative 1e-10 for all 36 evaluations;
+fitted-circle X translation discrepancy is ≤3.64e-12, with unknown independent
+fitted volume. Y/Z diagnostics expose existing conditioning/status limitations.
+Both original BReps remain exactly unchanged. Small-volume/slender/perforated
+and broader fitted-sweep cases remain follow-up work.
+
+## Pending experiments
 
 1. Broaden isolated fixed-V fork corpus checks before deciding whether to adopt
    the patch; reproduction is validated.
-2. Measure request-local tangent-face-chain reuse, preserving directed continuity,
-   face orientation/location keys, neighbor order and full output semantics.
-3. Establish application-safe Boolean batching and measure multi-body retained
-   preprocessing memory; larger standalone samples are confirmed.
+2. Test fixed fitted BRep volume under large placements and small-volume
+   threshold decisions. Mass-only recentering primitive checks passed; the broad
+   application prototype was tested and reverted after no broad speed benefit.
+3. Establish application-safe Boolean batching and a many-target retained
+   preprocessing policy; standalone batching and retention costs are measured.
 4. Investigate volume quadrature conditioning/accuracy without weakening geometry
    contracts or accepting misleading error estimates.
 5. Profile next shell/extrusion bottlenecks and preserve negative results.
@@ -481,4 +530,6 @@ are observations, not randomized paired speedup measurements.
 Research notes: [Shell](shell-research.md), [Booleans](boolean-research.md),
 [volume/kernel](volume-kernel-research.md), [presentation](presentation-research.md).
 Additional notes: [quadrature](quadrature-research.md),
+[reference translation](quadrature-translation-research.md),
+[recentering](quadrature-recenter.md), [literature](quadrature-literature.md),
 [upstream backports](upstream-opportunities.md).

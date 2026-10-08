@@ -1,0 +1,21 @@
+--- a/native/kernel/transform.cpp
++++ b/native/kernel/transform.cpp
+@@ -34,6 +34,9 @@
+         movement.SetTranslation(gp_Vec(translation.X(), translation.Y(), translation.Z()));
+         transform = movement * rotation;
+     }
++    // Document duplication/IDs are independent of OCCT geometry-copy policy.
++    const bool directRigid = input.get<std::string>("kind") == "transform" &&
++        !transform.IsNegative() && transform.ScaleFactor() == 1.0;
+     std::set<std::string> selected;
+     for (const auto& id : input.get_child("ids")) selected.insert(id.second.get_value<std::string>());
+     if (selected.empty()) throw std::runtime_error("Select bodies to move");
+@@ -56,7 +59,7 @@
+             results.push_back(std::move(result));
+             continue;
+         }
+-        BRepBuilderAPI_Transform operation(body.shape, transform, true);
++        BRepBuilderAPI_Transform operation(body.shape, transform, !directRigid);
+         if (!operation.IsDone()) throw std::runtime_error("Body transform failed");
+         validate(operation.Shape());
+         if ((mirror || scale) && volume(operation.Shape()) <= 0)

@@ -333,3 +333,97 @@ face/edge selections and downstream operations. Compare origin correspondence
 sets separately from incidental order; body participants and predecessor-body
 order remain part of the existing application behavior. Retain raw timing and
 memory samples before claiming that preprocessing dominates.
+## Streaming positive Common-to-Cut experiment (2026-10-08)
+
+Artifact: [patches/streaming-sweep-cuts.patch](patches/streaming-sweep-cuts.patch),
+Initially against committed geometry.cpp at
+ced39f05be1ab99d8d283a420bb9fc0883fb0286, now rebased onto that production working
+tree plus the uncommitted twistedVolumeReferenceAxis hint. Exact base geometry.cpp
+SHA256: c0cdba8e53862bd70601e0c112d3f174fa03e283386ac3224ad9fe6468527775.
+It adds a small header-only
+StreamingSweepCuts helper and changes calculateSweep. The prototype was made in
+/tmp working copies and a durable diff; **no production native file was edited**,
+and no build/benchmark was performed in this lane. The patch application check
+passed against current source at handoff. Geometry remains 236 lines, helper
+38; modified calculateSweep and helper functions stay below 80 lines.
+
+Rebase audit: both hinted solids calls remain byte-for-byte unchanged: New
+passes twistedVolumeReferenceAxis(input), and Union passes the hint only when
+selected is empty. Streaming Subtract neither consumes nor changes the hint.
+Helper review found no retained probe/filler pointer: add() executes while its
+caller-owned Common remains alive and returns only the BRep value/origins.
+Body pointers remain valid because the const operand vector outlives the
+function-local helper. Completed outputs retain necessary topology handles;
+they do not retain the Boolean builder. Null output still counts as a handled
+pair and keeps the participant, matching the old solids() behavior.
+Final ordered append checks a stored failure before solids(); unknown/disjoint
+explicit targets return false and retain the existing fallback. No broader
+exception-scheduling guarantee than the limitations below is asserted.
+
+### Goal and retained contracts
+
+The orchestrator reports about +14 MB peak memory on the 16-body cubic fixture
+when retaining each positive Common's PaveFiller through the classification
+pass. This candidate keeps the latency benefit of pair preprocessing reuse,
+immediately finishes each positive implicit Subtract/Auto Cut, then destroys
+that pair's Common/filler before classifying the next body. Only Cut shape,
+mapped source/tool origins, body pointer and optional exception are retained.
+Output geometry/origins remain necessary memory; total request memory is not
+claimed constant-space.
+
+- Eligibility, targets, body order, box broad phase, positive-volume threshold
+  and Auto contact tests are unchanged.
+- Common/prepared Cut use the existing operand pair, non-destructive mode,
+  fuzzy/cubic budget, thread policy and builder/history APIs.
+- Each Cut's origins start with body entities plus tool origins; Common history
+  does not truncate them.
+- Early successful outputs go through existing solids() only during the final
+  selected-body pass. Participants/order and multi-solid filtering stay there.
+- Explicit Subtract keeps its original direct Boolean fallback. Explicit Auto
+  positive pairs stream; disjoint selected bodies have no cached Cut and retain
+  their fallback if Auto resolves to Subtract.
+- With no positive pairs Auto retains neutral Union and the same explicit/contact
+  selection and independent-tool behavior.
+- Implicit Intersect keeps its separate retained-Common result/history route.
+- Invalid Cut repair stays in finishBoolean: splitFailedCutFaces changes the
+  private source, requiring fresh preprocessing with the original fuzzy budget.
+
+### Error ordering: deferred geometry failures, remaining limits
+
+Naive streaming changes observable errors: Cut on A could fail before Common
+classification on B, whereas previously B's classification failure wins.
+The prototype stores early Cut exceptions in std::exception_ptr and continues
+classification. Later classification errors still propagate directly and take
+priority. After successful classification, the original selected-body loop
+rethrows stored failures at their body positions. Earlier disjoint-body fallback
+errors or solids-validation errors retain priority over later stored failures.
+Successful solid splitting/mass validation is deferred to this final pass.
+
+This preserves ordinary exception priority, not every runtime effect. More Cuts
+can execute before an earlier final failure is replayed, so cancellation,
+progress, signal faults and allocation failures can differ. Failed allocation
+while storing a pending entry cannot reliably be deferred. Kernel caches see a
+different evaluation order. Inputs must remain immutable; source-encoding checks
+must accompany parity tests. If strict phase/error scheduling is a product
+contract, retain the current two-phase path or use a bounded/recomputed strategy.
+
+Retained exception objects may own diagnostic resources; failure-heavy requests
+need memory coverage. Catching C++ exceptions here preserves phase priority; it
+does not promise recovery from corrupted kernel state or memory exhaustion.
+
+### Concrete measurement and acceptance
+
+Apply only in an isolated build after the orchestrator's queued checkpoint.
+Compare repeated independent Common/Cut baseline, current retained-fillers reuse,
+and streaming reuse. Use the 16-body cubic high-memory request and 1/4/8/16-body
+scaling where practical. Measure peak RSS and randomized paired latency serially
+under the compute lock. Lower live-filler count need not lower RSS: freed allocator
+arenas can remain reserved, and result geometry/origins remain live.
+
+Require full response/encoding/history/participants/mode parity on implicit
+Subtract, positive/neutral Auto, explicit Auto with disjoint targets, eligibility
+filters, multiple solids, near-threshold volumes, cubic contacts and repaired
+periodic cuts. Implicit Intersect is a regression control. Check source encodings
+before/after and filler lifetime. Failure controls: early Cut/later classification,
+early disjoint fallback/later cached Cut, early solids validation/later Cut.
+Reject gains that lose correspondence, immutability or pair-reuse latency.

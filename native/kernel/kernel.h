@@ -33,7 +33,8 @@ std::vector<Operand> operands(const Tree& input);
 TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies, std::vector<SourceEntity>& origins);
 std::vector<Result> calculate(const Tree& input, const std::vector<Operand>& bodies, std::string& mode, std::vector<std::string>& participants);
 void present(std::ostream& out, const Result& result, double deflection = 0.05);
-double volume(const TopoDS_Shape& shape);
+// A preferred global flux axis is a numerical integration hint for closed solids.
+double volume(const TopoDS_Shape& shape, int referenceAxis = -1);
 void validate(const TopoDS_Shape& shape);
 
 std::vector<double> signature(const TopoDS_Shape& shape);
@@ -41,7 +42,7 @@ std::vector<double> signature(const TopoDS_Shape& shape);
 std::vector<Result> transformBodies(const Tree&, const std::vector<Operand>&, std::vector<std::string>&);
 
 TopoDS_Shape booleanShape(const TopoDS_Shape&, const TopoDS_Shape&, const std::string&, std::vector<SourceEntity>&);
-void solids(std::vector<Result>&, const TopoDS_Shape&, const std::vector<SourceEntity>&, const std::vector<std::string>&);
+void solids(std::vector<Result>&, const TopoDS_Shape&, const std::vector<SourceEntity>&, const std::vector<std::string>&, int referenceAxis = -1);
 std::vector<Result> booleanBodies(const Tree&, const std::vector<Operand>&, std::vector<std::string>&);
 
 std::vector<Result> finishEdges(const Tree&, const std::vector<Operand>&, std::vector<std::string>&);

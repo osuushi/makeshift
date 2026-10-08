@@ -49,7 +49,7 @@ gp_Pnt point(const Tree& tree) {
 void validate(const TopoDS_Shape& shape) {
     if (shape.IsNull() || !BRepCheck_Analyzer(shape).IsValid()) throw std::runtime_error("Kernel produced invalid geometry");
 }
-double volume(const TopoDS_Shape& shape) {
+double volume(const TopoDS_Shape& shape, int referenceAxis) {
     KernelTiming timing("volume");
     if (shape.IsNull()) return 0;
     GProp_GProps props;
@@ -69,6 +69,10 @@ double volume(const TopoDS_Shape& shape) {
         // without amplifying boundary tolerances along the body's longest axis.
         std::array<int,3> axes{0,1,2};
         std::stable_sort(axes.begin(),axes.end(),[&](int a,int b) { return hi[a]-lo[a] < hi[b]-lo[b]; });
+        if (referenceAxis >= 0 && referenceAxis < 3 && shape.ShapeType() == TopAbs_SOLID) {
+            const auto preferred = std::find(axes.begin(), axes.end(), referenceAxis);
+            std::rotate(axes.begin(), preferred, preferred + 1);
+        }
         for (const int axis : axes) {
             gp_Pnt origin(lo[0],lo[1],lo[2]);
             origin.SetCoord(axis+1,lo[axis]-1);

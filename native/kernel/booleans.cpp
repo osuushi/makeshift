@@ -104,11 +104,11 @@ TopoDS_Shape BooleanProbe::subtract(std::vector<SourceEntity>& origins) const {
                          buildBoolean(source, tool, "subtract", common->DSFiller()));
 }
 void solids(std::vector<Result>& results, const TopoDS_Shape& shape,
-            const std::vector<SourceEntity>& origins, const std::vector<std::string>& bodies) {
+            const std::vector<SourceEntity>& origins, const std::vector<std::string>& bodies, int referenceAxis) {
     if (shape.IsNull()) return;
     for (TopExp_Explorer e(shape, TopAbs_SOLID); e.More(); e.Next()) {
         validate(e.Current());
-        const double measured = volume(e.Current());
+        const double measured = volume(e.Current(), referenceAxis);
         if (measured > geometry_policy::minimumSolidVolumeMm3) {
             Result result{e.Current(), origins, bodies};
             result.exactVolume = measured;
