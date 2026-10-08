@@ -28,7 +28,7 @@ import type { SelectionTarget } from "./selection-target.js";
 import { type Hit, hitIds } from "./sketch-hit.js";
 import type { World } from "./world.js";
 
-export type Tool = "select" | "rectangle" | "line" | "circle" | "bezier" | "trim";
+export type Tool = "select" | "rectangle" | "line" | "circle" | "bezier" | "pen" | "trim";
 export class SketchEditor {
   readonly store = new ModelClient(
     () => this.refresh(),

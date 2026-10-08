@@ -30,6 +30,7 @@ type Kind =
   | "selection-choice"
   | "model-selection"
   | "pointer"
+  | "pen"
   | "bezier"
   | "bow"
   | "fillet"

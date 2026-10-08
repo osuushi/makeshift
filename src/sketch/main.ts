@@ -59,6 +59,7 @@ import { PointerGestures } from "./gestures.js";
 import { LineConstraints } from "./line-constraints.js";
 import { NumericEdit } from "./numeric-edit.js";
 import { OffsetControls } from "./offset-controls.js";
+import { PenControls } from "./pen-controls.js";
 import { PointChooser } from "./point-chooser.js";
 import { PointEdgeControls } from "./point-edge-controls.js";
 import { PointTangentControls } from "./point-tangent-controls.js";
@@ -66,6 +67,7 @@ import { drawRegionFills } from "./region-fill.js";
 import { SelectionOverlay } from "./selection-overlay.js";
 import { TransformOverlay } from "./transform-overlay.js";
 import { TrimControls } from "./trim-controls.js";
+import { installWorkspaceStatus } from "./workspace-status.js";
 import { World } from "./world.js";
 import { worldLabels } from "./world-labels.js";
 
@@ -157,6 +159,7 @@ const pointTangent = new PointTangentControls(editor, constraints.available);
 const pointChooser = new PointChooser(editor, overlay);
 const lineConstraints = new LineConstraints(editor, constraints.available);
 const curvedConstraints = new CurvedConstraints(editor, constraints.available);
+const pen = new PenControls(editor, overlay);
 const beziers = new BezierControls(editor, overlay);
 const bows = new BowControls(editor, overlay);
 const fillets = new FilletControls(editor, overlay);
@@ -217,25 +220,7 @@ const disposeHost =
 const disposePlaneEntry = planeEntryTools(editor);
 const disposeSettings = installSettings(editor, app);
 const toolMenu = new ToolMenu(editor, app);
-world.changed.add(() => {
-  const mode = app.querySelector(".mode-label");
-  if (mode) mode.textContent = world.active ? "Sketching" : "Modeling";
-  status.textContent =
-    (editor.store.slow ? (world.active ? "Solving sketch…" : "Calculating geometry…") : "") ||
-    editor.message ||
-    editor.notice ||
-    (world.active
-      ? `${world.active} sketch · ${world.spacing} mm grid · ${editor.tool === "trim" ? "Trim · click a span · Option-drag to brush" : (editor.snap?.label ?? (editor.moveMode ? "Transform · Shift uniform · Option about anchor · ⌘-drag box moves" : "Shift bypasses geometry snaps · Option / Alt draws/resizes about center"))}`
-      : editor.modeling.targets.length
-        ? `${editor.modeling.targets.length} ${editor.modeling.targets.every((t) => t.kind === "body") ? "body" : editor.modeling.targets.every((t) => t.kind === "edge") ? "edge" : editor.modeling.targets.every((t) => t.kind === "face") ? "face" : editor.modeling.targets.every((t) => t.kind === "sketch") ? "sketch" : editor.modeling.targets.every((t) => t.kind === "profile") ? "region" : "item"} selected${editor.modeling.targets.every((t) => t.kind === "body" || t.kind === "sketch") ? " · M to transform" : ""}`
-        : world.selectedPlane
-          ? `${world.selectedPlane} plane selected · Enter to sketch`
-          : editor.tool === "rectangle"
-            ? "Rectangle · Choose a plane to sketch"
-            : editor.tool === "trim"
-              ? "Trim · Choose a plane to sketch"
-              : "Choose a plane to sketch");
-});
+installWorkspaceStatus(editor, app, status);
 installViewInspection(editor, sections);
 world.draw();
 void editor.store.request({ kind: "read" });
@@ -294,6 +279,7 @@ window.addEventListener("pagehide", (event) => {
   fillets.dispose();
   bows.dispose();
   beziers.dispose();
+  pen.dispose();
   trim.dispose();
   offsets.dispose();
   disposePlaneEntry();

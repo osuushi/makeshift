@@ -87,6 +87,7 @@ export class PointerGestures implements DragQuantityEdit {
       this.drag ||
       this.editor.interactions.current?.captured ||
       this.editor.tool === "trim" ||
+      this.editor.tool === "pen" ||
       this.editor.world.cameraTransitioning ||
       (this.editor.blocked && !this.editor.interactions.current) ||
       (event.metaKey && this.editor.world.transformBoxContains?.(event.clientX, event.clientY)) ||
@@ -121,6 +122,7 @@ export class PointerGestures implements DragQuantityEdit {
     const drag = this.drag,
       editor = this.editor;
     if (!drag) {
+      if (editor.tool === "pen") return;
       if (editor.blocked) return;
       hoverPointer(this.editor, event, this.canvas);
       return;

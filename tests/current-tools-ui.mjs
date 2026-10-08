@@ -10,6 +10,7 @@ import { faceCutReferenceRoute } from "./ui-face-cut-reference.mjs";
 import { faceOffsetRoute } from "./ui-face-offset.mjs";
 import { lineRoute } from "./ui-line.mjs";
 import { normalExtrudeRoute } from "./ui-normal-extrude.mjs";
+import { penRoute } from "./ui-pen.mjs";
 import { planeCutRoute } from "./ui-plane-cuts.mjs";
 import { pointLinkRoute } from "./ui-point-links.mjs";
 import { rectangleRoute } from "./ui-rectangle.mjs";
@@ -47,6 +48,7 @@ await withUiRuntimes(
       shellRoute,
       planeCutRoute,
       faceCutReferenceRoute,
+      penRoute,
     ].entries()) {
       if (index % count !== shard - 1) continue;
       console.log(`${name}: ${route.name}`);

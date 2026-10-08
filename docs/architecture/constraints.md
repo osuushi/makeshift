@@ -41,6 +41,9 @@ Snap to endpoints, midpoints, centers, intersections, nearest positions on edges
 and alignment guides; add tangent inference with curved tools. Shift bypasses
 geometry snapping. Grid snapping is a separate, initially enabled toolbar toggle:
 Shift leaves it enabled, and disabling the grid leaves geometry attraction active.
+Pen anchor/handle gestures additionally use Shift for 45° direction locking.
+Existing cubic handle edits use the same direction lock; Option/Alt-drag breaks
+joined-end tangency while retaining coincidence. See [Pen paths](curve-editing.md#pen-paths).
 Pointer rotation snaps to 5° by default and 0.5° with Shift. Move arrows use
 one tenth of the grid spacing with Shift; see [transform precision](transforms.md).
 Option retains symmetric sizing/creation and Move duplication. Shift-click

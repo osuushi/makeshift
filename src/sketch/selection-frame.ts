@@ -10,7 +10,7 @@ export function selectionFrame(
   editor: SketchEditor,
 ): { center: Point; pivot: Point; handle: Point } | null {
   const sketch = editor.sketch;
-  if (!sketch || !editor.selectionOwners.size) return null;
+  if (!sketch || !editor.selectionOwners.size || editor.tool === "pen") return null;
   const points = editor.moveMode
     ? [
         ...sketch.curves
