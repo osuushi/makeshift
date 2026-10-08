@@ -54,7 +54,7 @@ export function viewSettings(): HTMLElement {
     setCanonicalPlanes({ secondaryOpacity: defaultSecondaryOpacity });
     update();
   };
-  section.append(reset);
+  section.querySelector("h3")?.append(reset);
   update();
   return section;
 }

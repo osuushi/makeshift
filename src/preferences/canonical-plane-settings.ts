@@ -6,8 +6,6 @@ export function canonicalPlaneSettings(): HTMLElement {
   section.innerHTML = `<h3>Plane grids</h3>
     <p>The most face-on plane is shown. Grids blend smoothly when the view changes.</p>`;
   const palette = planePaletteSettings();
-  const actions = document.createElement("div");
-  actions.className = "plane-palette-actions";
   const reset = document.createElement("button");
   reset.type = "button";
   reset.textContent = "Reset plane grids";
@@ -15,8 +13,8 @@ export function canonicalPlaneSettings(): HTMLElement {
     resetCanonicalPlanes();
     update();
   };
-  actions.append(reset);
-  section.append(palette, actions);
+  section.querySelector("h3")?.append(reset);
+  section.append(palette);
   function update(): void {
     palette.dispatchEvent(new Event("palette-refresh"));
   }

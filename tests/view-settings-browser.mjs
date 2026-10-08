@@ -5,6 +5,7 @@ import { withUiRuntimes } from "./ui-runtime.mjs";
 
 await withUiRuntimes(
   async (page, name) => {
+    await modalSettingsRoute(page);
     await migrationRoute(page);
     await opacitySettingsRoute(page);
     const open = () => page.getByRole("button", { name: "Application settings" }).click();
@@ -74,6 +75,50 @@ await withUiRuntimes(
   },
   { defaults: ["chromium", "webkit"] },
 );
+
+async function modalSettingsRoute(page) {
+  await settled(page);
+  const trigger = page.getByRole("button", { name: "Application settings" });
+  const dialog = page.getByRole("dialog", { name: "Settings", exact: true });
+  await trigger.click();
+  assert.equal(await dialog.evaluate((element) => element.matches(":modal")), true);
+  const bounds = await dialog.boundingBox();
+  assert.ok(bounds && bounds.height < 760, "Compact settings fit the desktop viewport");
+  await page.mouse.click(bounds.x + 3, bounds.y + 3);
+  assert.equal(await dialog.isVisible(), true, "Dialog padding does not dismiss settings");
+  await page.keyboard.press("Escape");
+  assert.equal(await dialog.isVisible(), false);
+  assert.equal(await trigger.evaluate((element) => element === document.activeElement), true);
+  await page.evaluate(() =>
+    Object.defineProperty(navigator, "platform", { value: "MacIntel", configurable: true }),
+  );
+  await page.keyboard.press("Meta+Comma");
+  assert.equal(await dialog.isVisible(), true, "Mac shortcut opens settings");
+  await page.getByRole("textbox", { name: "Plane palette name" }).fill("Unsaved palette");
+  await page.keyboard.press("Meta+Comma");
+  assert.equal(await dialog.isVisible(), true, "Shortcut is safe while settings are open");
+  await page.mouse.move(bounds.x + 3, bounds.y + 3);
+  await page.mouse.down();
+  await page.mouse.move(2, 2);
+  await page.mouse.up();
+  assert.equal(
+    await dialog.isVisible(),
+    true,
+    "Dragging from the dialog onto the backdrop keeps it open",
+  );
+  await page.mouse.click(2, 2);
+  assert.equal(await dialog.isVisible(), false, "Backdrop dismisses settings");
+  await trigger.click();
+  await page.setViewportSize({ width: 390, height: 700 });
+  assert.equal(
+    await dialog.evaluate((element) => element.scrollWidth <= element.clientWidth),
+    true,
+  );
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  assert.equal(await dialog.isVisible(), false);
+  await page.setViewportSize({ width: 1280, height: 850 });
+  await page.evaluate(() => delete navigator.platform);
+}
 
 async function opacitySettingsRoute(page) {
   await reset(page);

@@ -10,7 +10,7 @@ export function decoratorSettings(): HTMLElement {
   section.className = "decorator-display-settings";
   section.innerHTML = `<h3>Decorator previews</h3>
     <label>Preview detail<select aria-label="Decorator preview detail"><option value="detailed">Detailed</option><option value="color-only">Color only</option></select></label>
-    <p>Color only marks attached faces without generating preview meshes. Mesh exports retain the full decoration. Previews are visual; select the original face to edit.</p>`;
+    <p>Color only skips preview meshes. Exports retain full decoration; select the original face to edit.</p>`;
   const mode = section.querySelector<HTMLSelectElement>("select");
   if (!mode) throw new Error("Missing decorator preview mode");
   const rows = decoratorKinds.map((kind) => {
@@ -48,7 +48,7 @@ export function decoratorSettings(): HTMLElement {
   const reset = document.createElement("button");
   reset.type = "button";
   reset.textContent = "Reset decorator display";
-  section.append(reset);
+  section.querySelector("h3")?.append(reset);
   const update = () => {
     const value = decoratorDisplay();
     mode.value = value.mode;
