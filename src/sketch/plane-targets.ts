@@ -100,6 +100,19 @@ class PlaneTargetInteraction {
     if (event.button || event.metaKey || event.ctrlKey || this.world.planePickerAccept) return;
     const pending = this.selecting;
     if (
+      event.type === "click" &&
+      event.detail > 1 &&
+      pending &&
+      event.timeStamp - pending.time <= 500 &&
+      Math.hypot(event.clientX - pending.point.x, event.clientY - pending.point.y) <= 4
+    ) {
+      // The second click belongs to the first click's workspace-entry intent.
+      // Do not replace its pre-selection snapshot with the already selected plane.
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      return;
+    }
+    if (
       event.type === "dblclick" &&
       pending &&
       event.timeStamp - pending.time <= 500 &&
