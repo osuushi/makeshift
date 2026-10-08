@@ -33,6 +33,7 @@ export class ConstructionPlaneView {
       this.choosing,
       planes.map((p) => !this.accepts || this.accepts(p.frame)),
       e.blocked,
+      toolCatalog(e).switching,
       e.world.active,
       e.visibility.key,
       e.world.camera.matrixWorld.elements,

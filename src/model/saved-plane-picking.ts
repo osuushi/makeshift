@@ -61,6 +61,7 @@ export function savedPlaneInteraction(
       (event) => {
         if (
           editor.world.active ||
+          editor.interactions.current?.selectsLocally() ||
           (type === "pointermove"
             ? editor.blocked || editor.isDragging || !!editor.interactions.current
             : !!toolCatalog(editor).reason({ reason: () => null })) ||
