@@ -128,15 +128,21 @@ async function faceToolSwitchRoute(page, center) {
   await page.keyboard.press("e");
   await exclusive(page, "extrude");
   await button(page, "Drag extrusion").click();
-  // Invalid input retains the operation when another tool is requested.
+  const original = (await inspect(page)).document;
+  // Invalid input cancels before the requested tool takes ownership.
   const distance = page.getByRole("textbox", { name: "Extrusion distance", exact: true });
   await distance.fill("bad");
   await chooseTool(page, "offset faces", "offset");
-  assert.equal((await inspect(page)).interaction.kind, "extrude");
+  assert.equal((await inspect(page)).interaction, null);
+  assert.deepEqual((await inspect(page)).document, original);
+  await exclusive(page, "offset");
+  await page.keyboard.press("e");
+  await button(page, "Drag extrusion").click();
   await distance.fill("0");
   // A zero-distance operation can exit without a history entry.
   await chooseTool(page, "offset faces", "offset");
   await exclusive(page, "offset");
+  assert.deepEqual((await inspect(page)).document, original);
   await page.keyboard.press("Shift+R");
   assert.equal((await inspect(page)).interaction.kind, "revolve");
   await page.keyboard.press("o");
