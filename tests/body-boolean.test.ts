@@ -263,3 +263,38 @@ test("implicit sweep intersection retains multiple targets and matches explicit 
     owner.close();
   }
 });
+
+test("Auto retains explicitly selected disjoint targets when another target overlaps", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const a = await box(owner, 0, 0, 10, 10),
+      disjoint = await box(owner, 30, 0, 40, 10);
+    const original = owner.view.data;
+    const sketch = original.sketches[0];
+    const reply = await owner.call({
+      kind: "extrude",
+      extrusion: {
+        sources: [{ sketch: sketch.id, profile: profilesFor(sketch)[0].key }],
+        distance: 5,
+        mode: "auto",
+        targets: [a.id, disjoint.id],
+      },
+    });
+    assert.equal(reply.error, undefined);
+    assert.equal(reply.view.booleanMode, "subtract");
+    const results = reply.view.candidate?.bodies ?? [];
+    assert.equal(results.length, 2);
+    near(volume(results), 1500);
+    const retained = results.find((body) => body.bounds[0] === 30);
+    assert.ok(retained);
+    near(retained.volume, disjoint.volume);
+    assert.deepEqual(retained.bounds, disjoint.bounds);
+    identities(results);
+    assert.deepEqual(owner.view.data, original);
+    await owner.call({ kind: "accept" });
+    await owner.call({ kind: "undo" });
+    assert.deepEqual(owner.view.data, original);
+  } finally {
+    owner.close();
+  }
+});

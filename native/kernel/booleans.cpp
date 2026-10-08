@@ -1,5 +1,6 @@
 #include "kernel.h"
 #include "boolean-periodic.h"
+#include "boolean-probe.h"
 #include "geometry-policy.h"
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepAdaptor_Curve.hxx>
@@ -31,13 +32,13 @@ bool hasCubicBoundary(const TopoDS_Shape& shape) {
     }
     return false;
 }
-}
-
-TopoDS_Shape booleanShape(const TopoDS_Shape& a, const TopoDS_Shape& b, const std::string& mode,
-                         std::vector<SourceEntity>& origins) {
+std::unique_ptr<BRepAlgoAPI_BooleanOperation> buildBoolean(
+        const TopoDS_Shape& a, const TopoDS_Shape& b, const std::string& mode,
+        const BOPAlgo_PaveFiller* filler = nullptr) {
     std::unique_ptr<BRepAlgoAPI_BooleanOperation> operation;
     if (mode == "union") operation = std::make_unique<BRepAlgoAPI_Fuse>();
-    else if (mode == "subtract") operation = std::make_unique<BRepAlgoAPI_Cut>();
+    else if (mode == "subtract") operation = filler
+        ? std::make_unique<BRepAlgoAPI_Cut>(*filler) : std::make_unique<BRepAlgoAPI_Cut>();
     else operation = std::make_unique<BRepAlgoAPI_Common>();
     TopTools_ListOfShape arguments, tools; arguments.Append(a); tools.Append(b);
     operation->SetArguments(arguments); operation->SetTools(tools);
@@ -49,11 +50,29 @@ TopoDS_Shape booleanShape(const TopoDS_Shape& a, const TopoDS_Shape& b, const st
     operation->SetRunParallel(OSD_ThreadPool::DefaultPool()->HasThreads());
     operation->SetNonDestructive(true); operation->Build();
     if (!operation->IsDone() || operation->HasErrors()) throw std::runtime_error("Boolean operation failed");
+    return operation;
+}
+void mapOrigins(BRepAlgoAPI_BooleanOperation& operation, std::vector<SourceEntity>& origins) {
+    std::vector<SourceEntity> next;
+    for (const auto& origin : origins) {
+        if (!operation.IsDeleted(origin.shape)) next.push_back(origin);
+        for (const auto* list : {&operation.Modified(origin.shape), &operation.Generated(origin.shape)})
+            for (TopTools_ListIteratorOfListOfShape i(*list); i.More(); i.Next())
+                if (i.Value().ShapeType() == origin.shape.ShapeType()) next.push_back({origin.id, i.Value()});
+    }
+    origins = std::move(next);
+}
+TopoDS_Shape finishBoolean(const TopoDS_Shape& a, const TopoDS_Shape& b, const std::string& mode,
+                         std::vector<SourceEntity>& origins,
+                         std::unique_ptr<BRepAlgoAPI_BooleanOperation> operation) {
     if (mode == "subtract" && !operation->Shape().IsNull() &&
         !BRepCheck_Analyzer(operation->Shape()).IsValid()) {
         const auto prepared = splitFailedCutFaces(a, *operation, origins);
+        // Source topology changed: the old pair's intersection data is invalid.
+        // Preserve the original pair's fuzzy value for the repair attempt.
+        const double fuzzy = operation->FuzzyValue();
         operation = std::make_unique<BRepAlgoAPI_Cut>();
-        arguments.Clear(); arguments.Append(prepared);
+        TopTools_ListOfShape arguments, tools; arguments.Append(prepared); tools.Append(b);
         operation->SetArguments(arguments); operation->SetTools(tools);
         operation->SetFuzzyValue(fuzzy);
         operation->SetRunParallel(OSD_ThreadPool::DefaultPool()->HasThreads());
@@ -62,15 +81,27 @@ TopoDS_Shape booleanShape(const TopoDS_Shape& a, const TopoDS_Shape& b, const st
     }
     const auto result = operation->Shape();
     if (!result.IsNull()) validate(result);
-    std::vector<SourceEntity> next;
-    for (const auto& origin : origins) {
-        if (!operation->IsDeleted(origin.shape)) next.push_back(origin);
-        for (const auto* list : {&operation->Modified(origin.shape), &operation->Generated(origin.shape)})
-            for (TopTools_ListIteratorOfListOfShape i(*list); i.More(); i.Next())
-                if (i.Value().ShapeType() == origin.shape.ShapeType()) next.push_back({origin.id, i.Value()});
-    }
-    origins = std::move(next);
+    mapOrigins(*operation, origins);
     return result;
+}
+}
+TopoDS_Shape booleanShape(const TopoDS_Shape& a, const TopoDS_Shape& b, const std::string& mode,
+                         std::vector<SourceEntity>& origins) {
+    return finishBoolean(a, b, mode, origins, buildBoolean(a, b, mode));
+}
+BooleanProbe::BooleanProbe(const TopoDS_Shape& a, const TopoDS_Shape& b)
+    : source(a), tool(b), common(buildBoolean(a, b, "intersect")) {
+    if (!shape().IsNull()) validate(shape());
+}
+BooleanProbe::~BooleanProbe() = default;
+const TopoDS_Shape& BooleanProbe::shape() const { return common->Shape(); }
+TopoDS_Shape BooleanProbe::intersect(std::vector<SourceEntity>& origins) const {
+    mapOrigins(*common, origins);
+    return shape();
+}
+TopoDS_Shape BooleanProbe::subtract(std::vector<SourceEntity>& origins) const {
+    return finishBoolean(source, tool, "subtract", origins,
+                         buildBoolean(source, tool, "subtract", common->DSFiller()));
 }
 void solids(std::vector<Result>& results, const TopoDS_Shape& shape,
             const std::vector<SourceEntity>& origins, const std::vector<std::string>& bodies) {

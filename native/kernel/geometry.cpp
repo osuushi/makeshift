@@ -4,6 +4,7 @@
 #include "sketch-curve.h"
 #include "geometry-policy.h"
 #include "normal-extrude.h"
+#include "boolean-probe.h"
 #include <BRepAdaptor_Curve.hxx>
 #include <ShapeFix_Wire.hxx>
 #include <ShapeExtend_WireData.hxx>
@@ -87,15 +88,17 @@ TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies, std::v
 namespace {
 struct SweepIntersection {
     const Operand* body;
-    TopoDS_Shape shape;
-    std::vector<SourceEntity> origins;
+    std::unique_ptr<BooleanProbe> operation;
 };
 std::vector<Result> intersectionResults(const std::vector<SweepIntersection>& intersections,
+                                      const std::vector<SourceEntity>& toolOrigins,
                                       std::vector<std::string>& participants) {
     std::vector<Result> results;
     for (const auto& intersection : intersections) {
         participants.push_back(intersection.body->id);
-        solids(results, intersection.shape, intersection.origins, {intersection.body->id});
+        auto origins = intersection.body->entities;
+        origins.insert(origins.end(), toolOrigins.begin(), toolOrigins.end());
+        solids(results, intersection.operation->intersect(origins), origins, {intersection.body->id});
     }
     return results;
 }
@@ -130,12 +133,10 @@ std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>
             BRepExtrema_DistShapeShape separation(body.shape, tool);
             if (separation.IsDone() && separation.Value() < 1e-7) contact.push_back(&body);
         } else {
-            auto origins = reuseIntersection ? body.entities : std::vector<SourceEntity>{};
-            if (reuseIntersection) origins.insert(origins.end(), toolOrigins.begin(), toolOrigins.end());
-            const auto common = booleanShape(body.shape, tool, "intersect", origins);
-            if (volume(common) > 1e-10) {
+            auto operation = std::make_unique<BooleanProbe>(body.shape, tool);
+            if (volume(operation->shape()) > 1e-10) {
                 positive.push_back(&body);
-                if (reuseIntersection) intersections.push_back({&body, common, std::move(origins)});
+                intersections.push_back({&body, std::move(operation)});
             } else if (mode == "auto") {
                 BRepExtrema_DistShapeShape separation(body.shape, tool);
                 if (separation.IsDone() && separation.Value() < 1e-7) contact.push_back(&body);
@@ -150,7 +151,7 @@ std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>
     const auto& selected = targetList ? explicitTargets : mode == "union" ? contact : positive;
     if (selected.empty() && mode != "union") throw std::runtime_error("The swept shape does not intersect a target body");
     // Detection already constructed the exact implicit Intersect result/history.
-    if (reuseIntersection) return intersectionResults(intersections, participants);
+    if (reuseIntersection) return intersectionResults(intersections, toolOrigins, participants);
     if (mode == "union") {
         auto shape = tool; auto origins = toolOrigins;
         for (const auto* body : selected) {
@@ -161,7 +162,10 @@ std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>
     } else for (const auto* body : selected) {
         participants.push_back(body->id); auto origins = body->entities;
         origins.insert(origins.end(), toolOrigins.begin(), toolOrigins.end());
-        const auto shape = booleanShape(body->shape, tool, mode, origins);
+        const auto found = std::find_if(intersections.begin(), intersections.end(),
+            [&](const auto& intersection) { return intersection.body == body; });
+        const auto shape = mode == "subtract" && found != intersections.end()
+            ? found->operation->subtract(origins) : booleanShape(body->shape, tool, mode, origins);
         solids(results, shape, origins, {body->id});
     }
     return results;
