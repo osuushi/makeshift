@@ -21,7 +21,7 @@
 
 namespace {
 std::map<std::string, std::vector<TopoDS_Face>> selectedFaces(
-        const Tree& input, const std::vector<Operand>& bodies, double distance) {
+        const Tree& input, const std::vector<Operand>& bodies) {
     std::map<std::string, std::vector<TopoDS_Face>> selected;
     std::set<std::string> unique;
     for (const auto& item : input.get_child("faces")) {
@@ -34,7 +34,6 @@ std::map<std::string, std::vector<TopoDS_Face>> selectedFaces(
             return e.id == faceId && e.shape.ShapeType() == TopAbs_FACE;
         });
         if (face == body->entities.end()) throw std::runtime_error("Selected face does not belong to this body");
-        checkOffsetFace(TopoDS::Face(face->shape), distance);
         selected[bodyId].push_back(TopoDS::Face(face->shape));
     }
     if (selected.empty()) throw std::runtime_error("Select at least one body face");
@@ -93,12 +92,17 @@ std::vector<Result> offsetFaces(const Tree& input, const std::vector<Operand>& b
     if (input.get_optional<double>("radius")) return resizeBlends(input, bodies, participants);
     const double distance = input.get<double>("distance");
     if (!std::isfinite(distance)) throw std::runtime_error("Enter a finite face offset");
-    auto selected = selectedFaces(input, bodies, distance);
+    auto selected = selectedFaces(input, bodies);
     std::vector<Result> results;
     for (auto body : bodies) {
         KernelTiming timing("face-offset-body");
         const auto found = selected.find(body.id);
         if (found == selected.end()) continue;
+        if (auto collapsed = collapseOffsetFinish(body, found->second, distance)) {
+            participants.push_back(body.id);
+            results.push_back(std::move(*collapsed));
+            continue;
+        }
         found->second = tangentFaceChain(body.shape, found->second);
         for (const auto& face : found->second) checkOffsetFace(face, distance);
         participants.push_back(body.id);
