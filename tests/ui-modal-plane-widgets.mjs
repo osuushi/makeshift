@@ -99,6 +99,11 @@ export async function modalPlaneWidgetRoute(page, name) {
   assert.deepEqual(cancelled.document, before.document);
   assert.deepEqual(cancelled.modelingSelection, before.modelingSelection);
   assert.equal(await page.locator(".modal-plane-widgets").isVisible(), false);
+  await acceptedWidgetEdits(page, before);
+  console.log(`${name}: modal plane cues, zoom, orbit, split/imprint, cancel and Undo passed`);
+}
+
+async function acceptedWidgetEdits(page, before) {
   await chooseTool(page, "Split Body", "split");
   await chooseWidget(page, "YZ");
   await page.keyboard.press("Enter");
@@ -106,6 +111,12 @@ export async function modalPlaneWidgetRoute(page, name) {
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before.document);
   await page.keyboard.press("Escape");
+  const box = await page.locator("canvas").boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.keyboard.down("Control");
+  await page.mouse.wheel(0, 100);
+  await page.keyboard.up("Control");
+  await settled(page);
   await worldClick(page, [0, 0, 20]);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   await chooseTool(page, "Imprint", "imprint");
@@ -118,5 +129,4 @@ export async function modalPlaneWidgetRoute(page, name) {
   assert.ok(imprinted.modelingSelection.every((target) => target.kind === "edge"));
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before.document);
-  console.log(`${name}: modal plane cues, zoom, orbit, split/imprint, cancel and Undo passed`);
 }
