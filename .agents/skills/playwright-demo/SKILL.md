@@ -50,10 +50,6 @@ runner or the user's machine. Diagnose software rendering with WebGL's
 UI actions, and MP4 export. `scripts/canonical-planes.mjs` records three actual
 UI routes: angular fades during orbit, presets/selection thresholds, and
 selecting/sketching after panning away from the origin.
-`scripts/plane-alignment.mjs` records coordinate and construction plane double-click
-entry from near-90° roll, asserting the short turn and unchanged plane frames.
-Run it with `node .agents/skills/playwright-demo/scripts/plane-alignment.mjs`; an
-optional first argument selects its generated-artifact destination.
 
 From the repository root, with the pinned Node environment active and existing
 native dependencies prepared:
@@ -70,3 +66,8 @@ capture timing and frame count; separate state snapshots accompany the asserted
 UI routes. For other demos, reuse the
 capture helper and replace the fixture and routes, keeping acceptance checks
 specific to what the user needs to see.
+
+`scripts/plane-alignment.mjs` records coordinate and construction plane double-click
+entry from near-90° roll, asserting the short turn and unchanged plane frames.
+Run it with `node .agents/skills/playwright-demo/scripts/plane-alignment.mjs`; an
+optional first argument selects its generated-artifact destination.
