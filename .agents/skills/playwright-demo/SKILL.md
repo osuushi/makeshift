@@ -66,3 +66,8 @@ capture timing and frame count; separate state snapshots accompany the asserted
 UI routes. For other demos, reuse the
 capture helper and replace the fixture and routes, keeping acceptance checks
 specific to what the user needs to see.
+
+`scripts/plane-alignment.mjs` records coordinate and construction plane double-click
+entry from near-90° roll, asserting the short turn and unchanged plane frames.
+Run it with `node .agents/skills/playwright-demo/scripts/plane-alignment.mjs`; an
+optional first argument selects its generated-artifact destination.

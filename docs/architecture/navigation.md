@@ -13,6 +13,8 @@ crossfade grids, while all world axes remain visible. Only the incoming referenc
 above its selectable visibility threshold accepts canvas input. See
 [interface preferences](interface-preferences.md) for blending and grid controls.
 Enter or double-click enters its sketch workspace; Escape or a click without a selectable reference or geometry clears it.
+Plane entry chooses the nearest quaternion orientation among all four in-plane
+quarter turns on either side, preserving the accepted plane frame and grid axes.
 Canonical references remain fixed, while construction planes support placement edits.
 Explicit plane-selection modes continue to accept a plane on a single click.
 In Mirror and Projection, a nearer planar solid face takes precedence over a

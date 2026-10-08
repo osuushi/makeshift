@@ -15,8 +15,8 @@ export type CameraPose = {
  * Put the camera on a sketch plane while making the smallest possible turn
  * that still presents the plane's two axes as the screen axes.
  *
- * A plane has four valid axis-aligned views: either side of the normal and
- * either in-plane up direction. Comparing their quaternions avoids an
+ * A plane has eight valid axis-aligned views: either side of the normal and
+ * each of the four in-plane quarter turns. Comparing their quaternions avoids an
  * arbitrary half-turn when entering a plane from an oblique 3D view.
  */
 export function planeCameraPose(
@@ -34,20 +34,20 @@ export function planeCameraPose(
     : view.target
         .clone()
         .addScaledVector(normal, new THREE.Vector3(...frame.origin).sub(view.target).dot(normal));
-  const up = new THREE.Vector3(...frame.v);
-  let best:
-    | { side: number; upSign: number; quaternion: THREE.Quaternion; score: number }
-    | undefined;
+  const ups = [frame.v, frame.u].flatMap((axis) => [
+    new THREE.Vector3(...axis).negate(),
+    new THREE.Vector3(...axis),
+  ]);
+  let best: { quaternion: THREE.Quaternion; score: number } | undefined;
   for (const side of [-1, 1]) {
-    for (const upSign of [-1, 1]) {
+    for (const up of ups) {
       const candidate = new THREE.OrthographicCamera();
       candidate.position.copy(target).addScaledVector(normal, side * distance);
-      candidate.up.copy(up).multiplyScalar(upSign);
+      candidate.up.copy(up);
       candidate.lookAt(target);
       candidate.updateMatrixWorld();
       const score = Math.abs(previous.dot(candidate.quaternion));
-      if (!best || score > best.score)
-        best = { side, upSign, quaternion: candidate.quaternion.clone(), score };
+      if (!best || score > best.score) best = { quaternion: candidate.quaternion.clone(), score };
     }
   }
   if (!best) throw new Error("A plane camera pose requires an orientation");
