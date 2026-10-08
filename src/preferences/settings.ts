@@ -16,11 +16,17 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
   button.setAttribute("aria-haspopup", "dialog");
   if (/Mac/.test(navigator.platform)) button.title = "Settings (⌘,)";
   const dialog = settingsDialog();
+  const rememberFocus = settingsFocus(dialog);
+  const requestOpen = () => {
+    if (dialog.open) return;
+    rememberFocus();
+    void toolCatalog(editor).invoke("settings");
+  };
   const open = () => {
     if (editor.blocked || editor.interactions.current) return;
     if (!dialog.open) dialog.showModal();
   };
-  button.onclick = () => void toolCatalog(editor).invoke("settings");
+  button.onclick = requestOpen;
   const header = app.querySelector("header");
   header?.append(button);
   const fitHeader = () => {
@@ -67,7 +73,7 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
   };
   const disposeView = onViewDisplayChange(refreshPreferences);
   const disposePlanes = onCanonicalPlanesChange(refreshPreferences);
-  const disposeKeyboard = installSettingsKeyboard(open);
+  const disposeKeyboard = installSettingsKeyboard(requestOpen);
   update();
   return () => {
     disposeTool();
@@ -80,6 +86,17 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
     app.style.removeProperty("--editor-header-bottom");
     button.remove();
     dialog.remove();
+  };
+}
+
+function settingsFocus(dialog: HTMLDialogElement): () => void {
+  let opener: HTMLElement | null = null;
+  dialog.addEventListener("close", () => {
+    if (opener?.isConnected) opener.focus();
+    opener = null;
+  });
+  return () => {
+    opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   };
 }
 

@@ -85,8 +85,34 @@ async function route(page, name) {
   console.log(
     `${name}: 500 ms prompt, Wait/Cancel, real shell geometry and exact Undo/Redo passed`,
   );
+  await settingsShortcutCompletion(page, name);
   await sketchPointerHandoff(page, name);
   await releasedGestureSwitch(page, name);
+}
+
+async function settingsShortcutCompletion(page, name) {
+  await reset(page);
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
+  await page.keyboard.press("c");
+  await drag(page, [-20, 0], [-12, 0]);
+  const original = (await inspect(page)).document;
+  await page.getByRole("textbox", { name: "Radius", exact: true }).fill("9");
+  await page.evaluate(() =>
+    Object.defineProperty(navigator, "platform", { value: "MacIntel", configurable: true }),
+  );
+  try {
+    await page.keyboard.press("Meta+Comma");
+    await page.getByRole("dialog", { name: "Settings", exact: true }).waitFor();
+    const state = await inspect(page);
+    assert.equal(state.interaction, null);
+    close(state.document.sketches[0].curves[0].radius, 9, "Shortcut completes numeric edit");
+    await page.getByRole("button", { name: "Done", exact: true }).click();
+    await chooseTool(page, "undo", "undo");
+    assert.deepEqual((await inspect(page)).document, original);
+  } finally {
+    await page.evaluate(() => delete navigator.platform);
+  }
+  console.log(`${name}: Settings shortcut completes pending edit in one Undo step passed`);
 }
 
 async function sketchPointerHandoff(page, name) {

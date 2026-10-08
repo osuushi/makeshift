@@ -77,6 +77,7 @@ export class PointerGestures implements DragQuantityEdit {
   };
   private start = async (event: PointerEvent): Promise<void> => {
     if (
+      this.editor.tool !== "pen" &&
       !this.editor.interactions.current?.selectsLocally() &&
       handoffModalPointer(this.editor, event, this.abort.signal)
     )

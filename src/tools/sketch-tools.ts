@@ -52,6 +52,7 @@ export function sketchTools(editor: SketchEditor): () => void {
   disposers.push(
     catalog.register({
       id: "grid",
+      finishEdit: () => editor.interactions.current?.kind !== "pen",
       label: "Toggle grid snapping",
       category: "View",
       aliases: ["grid snap"],
