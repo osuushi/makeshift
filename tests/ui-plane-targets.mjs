@@ -127,6 +127,7 @@ function inside(point, polygon) {
 
 /** Pick a displayed reference patch through the actual canvas, including explicit tool modes. */
 export async function pickPlane(page, id) {
+  await orient(page, { XY: [0.2, 0.2, 1], XZ: [0.2, 1, 0.2], YZ: [1, 0.2, 0.2] }[id]);
   if (await page.locator(".modal-plane-widgets").isVisible()) {
     assert.equal(
       await page
@@ -139,7 +140,6 @@ export async function pickPlane(page, id) {
   }
   // Full-view references overlap everywhere; face the requested plane for an
   // unambiguous pointer route, rather than relying on finite origin-patch corners.
-  await orient(page, { XY: [0.2, 0.2, 1], XZ: [0.2, 1, 0.2], YZ: [1, 0.2, 0.2] }[id]);
   const box = await page.getByLabel("Modeling viewport", { exact: true }).boundingBox();
   const points = [
     { x: box.x + 12, y: box.y + box.height * 0.25 },

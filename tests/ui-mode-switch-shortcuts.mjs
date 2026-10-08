@@ -24,6 +24,7 @@ export async function loftErodeSwitchRoute(page, name) {
   await chooseTool(page, "threads", "threads");
   const clearance = page.getByRole("spinbutton", { name: "Clearance", exact: true });
   await clearance.fill("0.4");
+  assert.equal((await inspect(page)).preview.decorators[0].settings.clearance, 0.4);
   // A shortcut must still accept the draft if fresh prerequisites reject its next action.
   await keySwitch(page, "l");
   await modalCompleted(page);
