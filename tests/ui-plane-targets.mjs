@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { orient } from "./ui-blend-edit.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
+import { chooseWidget } from "./ui-modal-plane-widgets.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function planeTargetsRoute(page, name) {
@@ -126,6 +127,16 @@ function inside(point, polygon) {
 
 /** Pick a displayed reference patch through the actual canvas, including explicit tool modes. */
 export async function pickPlane(page, id) {
+  if (await page.locator(".modal-plane-widgets").isVisible()) {
+    assert.equal(
+      await page
+        .getByRole("button", { name: `Use ${id} plane`, exact: true })
+        .getAttribute("aria-disabled"),
+      "false",
+    );
+    await chooseWidget(page, id);
+    return;
+  }
   // Full-view references overlap everywhere; face the requested plane for an
   // unambiguous pointer route, rather than relying on finite origin-patch corners.
   await orient(page, { XY: [0.2, 0.2, 1], XZ: [0.2, 1, 0.2], YZ: [1, 0.2, 0.2] }[id]);

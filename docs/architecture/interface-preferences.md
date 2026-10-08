@@ -24,6 +24,7 @@ One secondary supplies an orientation cue at a configurable fraction of the maxi
 (35% by default), fading near edge-on. On switching, only opacity targets change;
 each grid carries opacity and velocity through a critically damped spring with a
 240 ms smoothing time (about 0.6 seconds to reach 95% of a settled target).
+Camera depth fitting depends on geometry and viewing angle, independently of animated opacity.
 Reduced motion and a configured zero smoothing time use immediate changes;
 only the primary receives ordinary hover/click. A visible secondary can be picked
 in explicit plane-selection tools. Both current and target primary opacity must

@@ -61,7 +61,7 @@ export async function navigationInputRoute(page, name) {
   await navigationIdle(page);
   await navigationRoundTrip(
     page,
-    () => page.getByRole("button", { name: "Top view", exact: true }).click(),
+    () => page.locator('.orientation-cube [data-kind="face"]:visible').first().click(),
     "Cube single click",
   );
   await navigationRoundTrip(page, () => cubeDrag(page), "Cube drag");
@@ -145,10 +145,12 @@ async function ordinaryNavigation(page, action, label) {
 async function noOpNavigation(page) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await navigationIdle(page);
-  await page.getByRole("button", { name: "Top view", exact: true }).click();
+  const face = page.locator('.orientation-cube [data-kind="face"]:visible').first();
+  const name = await face.getAttribute("aria-label");
+  await face.click();
   await navigationIdle(page);
   const before = await page.evaluate(() => window.makeshiftHistory());
-  await page.getByRole("button", { name: "Top view", exact: true }).click();
+  await page.getByRole("button", { name, exact: true }).click();
   await navigationIdle(page);
   await wheel(page, 0, 0);
   await page.mouse.move(1000, 600);
