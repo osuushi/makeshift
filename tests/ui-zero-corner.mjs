@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import { outwardDrag, selectSurface } from "./ui-blend-edit.mjs";
-import { circularFinish } from "./ui-body-fillet.mjs";
+import { orient, outwardDrag, project, selectSurface } from "./ui-blend-edit.mjs";
+import { circularFinish, plate } from "./ui-body-fillet.mjs";
 import {
   at,
   click,
@@ -119,9 +119,61 @@ async function solidZero(page, name, mode) {
   assert.deepEqual((await inspect(page)).document, rounded);
 }
 
+async function cubeZero(page, mode) {
+  await plate(page);
+  const stock = (await inspect(page)).document.bodies[0];
+  await page.keyboard.press("Escape");
+  await orient(page, [-1, -1, 0.4]);
+  const edge = await project(page, [-10, -10, 5]);
+  await page.mouse.click(edge.x, edge.y);
+  await chooseTool(page, mode, mode);
+  await page
+    .getByRole("button", {
+      name: mode === "fillet" ? "Fillet edges" : "Chamfer edges",
+      exact: true,
+    })
+    .click();
+  await page
+    .getByRole("textbox", {
+      name: mode === "fillet" ? "Fillet radius" : "Chamfer distance",
+      exact: true,
+    })
+    .fill("2");
+  await previewActionReady(page, `Accept ${mode}`);
+  await page.keyboard.press("Enter");
+  await modalCompleted(page);
+  const rounded = (await inspect(page)).document;
+  const face = rounded.bodies[0].faces.find((f) => (mode === "fillet" ? f.blend : f.chamfer));
+  assert.ok(face);
+  // Planar faces use the frontend's normal fallback rather than a kernel handle.
+  const target = face.offsetHandle
+    ? face
+    : {
+        ...face,
+        offsetHandle: {
+          center: [-9, -9, 5],
+          normal: [-Math.SQRT1_2, -Math.SQRT1_2, 0],
+        },
+      };
+  await selectSurface(page, target);
+  await outwardDrag(page, mode === "fillet" ? "Resize fillet" : "Resize chamfer", target, 4);
+  await previewActionReady(page, "Accept face offset");
+  const preview = (await inspect(page)).preview.bodies[0];
+  close(preview.volume, stock.volume);
+  assert.equal(preview.faces.length, stock.faces.length);
+  assert.ok(!preview.faces.some((f) => f.id === face.id));
+  await page.keyboard.press("Enter");
+  await modalCompleted(page);
+  assert.equal((await inspect(page)).modelingSelection[0]?.kind, "body");
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, rounded);
+}
+
 export async function zeroCornerRoute(page, name) {
   await sketchZero(page);
   await solidZero(page, name, "fillet");
   await solidZero(page, name, "chamfer");
+  await cubeZero(page, "fillet");
+  await cubeZero(page, "chamfer");
   console.log(`${name}: zero corner numeric/drag, healing, Cancel and Undo passed`);
 }

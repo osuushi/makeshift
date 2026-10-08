@@ -116,6 +116,28 @@ Result resize(const Operand& body, const std::vector<TopoDS_Face>& seeds, double
     return finishResult(body, selected, finish.Shape(), origins);
 }
 }
+std::optional<Result> collapseOffsetFinish(const Operand& body,
+                                          const std::vector<TopoDS_Face>& seeds, double distance) {
+    // At a curved face's zero radius or a chamfer's zero setback, recover the
+    // support intersection rather than constructing a zero-area surface.
+    for (const bool chamfer : {false, true}) {
+        const auto finishes = chamfer ? recognizeChamfers(body.shape) : recognizeBlends(body.shape);
+        const auto atCorner = [&](const auto& face) {
+            const auto finish = std::find_if(finishes.begin(), finishes.end(),
+                [&](const auto& f) { return f.face.IsSame(face); });
+            return finish != finishes.end() &&
+                   std::abs(finish->radius + (chamfer ? -1 : 1) * finish->outward *
+                            distance * finish->distanceScale) <= 1e-7;
+        };
+        if (seeds.empty() || !std::all_of(seeds.begin(), seeds.end(), atCorner)) continue;
+        const auto selected = chamfer ? tangentFaceChain(body.shape, seeds) : blendGroup(finishes, seeds);
+        // A connected strip may only heal together when every member reaches
+        // its endpoint; do not silently consume a differently sized neighbor.
+        if (!std::all_of(selected.begin(), selected.end(), atCorner)) return std::nullopt;
+        return resize(body, selected, 0, chamfer);
+    }
+    return std::nullopt;
+}
 std::vector<Result> resizeBlends(const Tree& input, const std::vector<Operand>& bodies,
                                std::vector<std::string>& participants) {
     const double radius = input.get<double>("radius");
