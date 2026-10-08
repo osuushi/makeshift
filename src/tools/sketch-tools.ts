@@ -1,4 +1,4 @@
-import type { SketchEditor } from "../sketch/editor.js";
+import type { SketchEditor, Tool } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "./catalog.js";
 
 export function sketchTools(editor: SketchEditor): () => void {
@@ -10,6 +10,7 @@ export function sketchTools(editor: SketchEditor): () => void {
     ["line", "Line", "L", ["segment"]],
     ["circle", "Circle", "C", ["disk"]],
     ["bezier", "Curve", "B", ["bezier", "cubic curve", "spline"]],
+    ["pen", "Pen", "P", ["pen tool", "path"]],
     ["trim", "Trim", "T", ["cut curve", "trim brush"]],
   ] as const)
     disposers.push(
@@ -20,12 +21,7 @@ export function sketchTools(editor: SketchEditor): () => void {
         shortcut,
         aliases,
         category: id === "select" ? "Select" : "Sketch",
-        description:
-          id === "select"
-            ? "Select geometry"
-            : id === "trim"
-              ? "Remove spans; hold Option and drag to brush trim"
-              : "Draw or edit in a planar workspace",
+        description: drawingDescription(id),
         reason: () => (editor.interactions.current?.kind === "numeric" ? null : idleReason(editor)),
         run: () => editor.setTool(id),
       }),
@@ -58,7 +54,7 @@ export function sketchTools(editor: SketchEditor): () => void {
       label: "Toggle grid snapping",
       category: "View",
       aliases: ["grid snap"],
-      reason: () => idleReason(editor),
+      reason: () => (editor.interactions.current?.kind === "pen" ? null : idleReason(editor)),
       run: () => {
         editor.gridSnap = !editor.gridSnap;
         editor.refresh();
@@ -89,4 +85,12 @@ export function sketchTools(editor: SketchEditor): () => void {
   return () => {
     for (const dispose of disposers) dispose();
   };
+}
+
+function drawingDescription(tool: Tool): string {
+  if (tool === "select") return "Select geometry";
+  if (tool === "trim") return "Remove spans; hold Option and drag to brush trim";
+  if (tool === "pen")
+    return "Click corners, drag smooth anchors; Option breaks handles, Shift locks direction";
+  return "Draw or edit in a planar workspace";
 }
