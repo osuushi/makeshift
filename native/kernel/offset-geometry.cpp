@@ -1,4 +1,5 @@
 #include "offset-geometry.h"
+#include <OSD_ThreadPool.hxx>
 #include "offset-repair.h"
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
@@ -140,7 +141,8 @@ void validSolid(const TopoDS_Shape& shape, const char* context) {
     using geometry_policy::offsetTopologyToleranceMm;
     require(!shape.IsNull() && shape.ShapeType() == TopAbs_SOLID,
             std::string(context) + " must produce exactly one solid per body");
-    BRepCheck_Analyzer validity(shape, true, false, true);
+    const bool parallel = OSD_ThreadPool::DefaultPool()->HasThreads();
+    BRepCheck_Analyzer validity(shape, true, parallel, true);
     require(validity.IsValid(), std::string(context) + " has invalid boundaries or surface geometry");
     const double v = mass(shape);
     require(std::isfinite(v) && v > geometry_policy::minimumSolidVolumeMm3,
@@ -160,7 +162,8 @@ void validSolid(const TopoDS_Shape& shape, const char* context) {
         require(BRep_Tool::Tolerance(TopoDS::Vertex(it.Current())) <= offsetTopologyToleranceMm,
                 std::string(context) + " exceeds the vertex tolerance");
     BOPAlgo_ArgumentAnalyzer check;
-    check.SetShape1(shape); check.SelfInterMode() = true; check.Perform();
+    check.SetShape1(shape); check.SelfInterMode() = true;
+    check.SetRunParallel(parallel); check.Perform();
     require(!check.HasErrors() && !check.HasFaulty(), std::string(context) + " contains self-intersections");
 }
 }

@@ -77,8 +77,12 @@ void solids(std::vector<Result>& results, const TopoDS_Shape& shape,
     if (shape.IsNull()) return;
     for (TopExp_Explorer e(shape, TopAbs_SOLID); e.More(); e.Next()) {
         validate(e.Current());
-        if (volume(e.Current()) > geometry_policy::minimumSolidVolumeMm3)
-            results.push_back({e.Current(), origins, bodies});
+        const double measured = volume(e.Current());
+        if (measured > geometry_policy::minimumSolidVolumeMm3) {
+            Result result{e.Current(), origins, bodies};
+            result.exactVolume = measured;
+            results.push_back(std::move(result));
+        }
     }
 }
 

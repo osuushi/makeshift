@@ -75,7 +75,10 @@ void validateWall(const TopoDS_Shape& source, const TopoDS_Shape& wall,
     TopExp::MapShapes(retainedSkin, TopAbs_FACE, originalFaces);
     TopExp::MapShapes(offsetSkin, TopAbs_FACE, offsetFaces);
     require(!originalFaces.IsEmpty() && !offsetFaces.IsEmpty(), "Shell lost its offset walls");
-    BRepExtrema_DistShapeShape separation(retainedSkin, offsetSkin);
+    BRepExtrema_DistShapeShape separation;
+    separation.SetMultiThread(OSD_ThreadPool::DefaultPool()->HasThreads());
+    separation.LoadS1(retainedSkin); separation.LoadS2(offsetSkin);
+    separation.Perform();
     timing.phase("separation");
     require(separation.IsDone() && separation.Value() >= std::abs(thickness) - boundaryDistanceMm,
             "Shell walls collide or are thinner than requested");

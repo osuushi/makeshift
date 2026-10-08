@@ -182,7 +182,8 @@ void present(std::ostream& out, const Result& result, double deflection) {
             throw std::runtime_error("Kernel could not mesh every face; the geometry result was rejected");
     }
     timing.phase("mesh");
-    out << "{\"brep\":" << quoted(encode(result.shape)) << ",\"volume\":" << volume(result.shape);
+    out << "{\"brep\":" << quoted(encode(result.shape)) << ",\"volume\":"
+        << (result.exactVolume ? *result.exactVolume : volume(result.shape));
     GProp_GProps properties; BRepGProp::VolumeProperties(result.shape, properties, 1e-10);
     out << ",\"center\":"; xyz(out, properties.CentreOfMass().XYZ());
     out << ",\"copy\":" << (result.copy ? "true" : "false") << ",\"predecessorBodies\":[";
