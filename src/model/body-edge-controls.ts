@@ -23,6 +23,7 @@ export class BodyEdgeControls {
     editor.world.scene.add(this.outline);
     this.disposeTool = toolCatalog(editor).register({
       id: "use-edge",
+      finishEdit: () => !this.lease,
       label: "Use body edge",
       category: "Reference",
       aliases: ["reuse edge", "copy edge"],

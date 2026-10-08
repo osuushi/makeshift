@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 export async function queryBrowserInspection(page, command, entity) {
   return page.evaluate(
     async ({ command, entity, modulePath }) => {
-      const context = window.readInspection(
+      const context = await window.readInspection(
         command === "render",
         false,
         command === "select" ? JSON.stringify(entity.split(" ")) : undefined,

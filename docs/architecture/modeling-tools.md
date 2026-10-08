@@ -230,7 +230,8 @@ Expansion retains existing ordered targets and adds unique stable topology IDs;
 it uses published face-edge incidence, not visual proximity. Boundary selection
 replaces the set with exterior/hole boundary edges, excluding shared interior edges.
 Selection changes do not mutate geometry or create document Undo entries. Refinement
-is unavailable during an active edit; finish or cancel it first.
+first completes a released modal: commit valid settings or cancel invalid ones,
+then resolve the new selection against accepted geometry.
 
 ## Delete faces and edges (founder decision, 2026-09-17)
 

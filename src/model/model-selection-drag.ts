@@ -2,6 +2,7 @@ import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { selectModelsInFrustum } from "../sketch/model-selection.js";
 import { penSelectionClick, pointerDragThreshold } from "../sketch/pointer-intent.js";
+import { handoffModalPointer } from "./modal-pointer-handoff.js";
 
 const drags = new WeakMap<SketchEditor, ModelSelectionDrag>();
 export function cancelModelSelectionDrag(editor: SketchEditor): void {
@@ -46,6 +47,14 @@ export class ModelSelectionDrag {
     );
   }
   private begin = (event: PointerEvent): void => {
+    if (
+      !this.editor.interactions.current?.selectsLocally() &&
+      this.editor.interactions.current?.kind !== "tag-membership" &&
+      !this.editor.world.planePicker &&
+      !this.editor.world.planePickerAccept &&
+      handoffModalPointer(this.editor, event, this.abort.signal)
+    )
+      return;
     if (
       event.button !== 0 ||
       this.pointerId !== null ||

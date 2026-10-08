@@ -81,12 +81,7 @@ export function installWorkspaceSync(editor: SketchEditor): void {
   world.orbitPivot = (press) => orbitPivot(editor, press);
   world.rollPivot = () => rollSelectionPivot(editor);
   world.canNavigate = () => !editor.isDragging;
-  world.canEnterSketch = () =>
-    !editor.blocked &&
-    !editor.isDragging &&
-    !toolCatalog(editor).switching &&
-    editor.interactions.current?.kind !== "body-boolean" &&
-    (!editor.interactions.current || !!editor.interactions.current.finish);
+  world.canEnterSketch = () => !toolCatalog(editor).reason({ reason: () => null });
   world.sketchEntry = (id) => {
     void toolCatalog(editor).invoke(`sketch-${id.toLowerCase()}`);
   };

@@ -1,5 +1,7 @@
+import { handoffModalPointer } from "../model/modal-pointer-handoff.js";
 import { toolCatalog } from "../tools/catalog.js";
 import type { InteractionLease } from "./active-interaction.js";
+import { completeInteraction } from "./complete-interaction.js";
 import { curveBounds } from "./curve-geometry.js";
 import { dragIntent } from "./drag-intent.js";
 import { beginDrag, type Drag, type Quantity, resolveDrag } from "./drag-state.js";
@@ -75,13 +77,18 @@ export class PointerGestures implements DragQuantityEdit {
   };
   private start = async (event: PointerEvent): Promise<void> => {
     if (
+      !this.editor.interactions.current?.selectsLocally() &&
+      handoffModalPointer(this.editor, event, this.abort.signal)
+    )
+      return;
+    if (
       event.button !== 0 ||
       toolCatalog(this.editor).switching ||
       this.drag ||
-      this.editor.isDragging ||
+      this.editor.interactions.current?.captured ||
       this.editor.tool === "trim" ||
       this.editor.world.cameraTransitioning ||
-      this.editor.blocked ||
+      (this.editor.blocked && !this.editor.interactions.current) ||
       (event.metaKey && this.editor.world.transformBoxContains?.(event.clientX, event.clientY)) ||
       !this.editor.world.active
     )
@@ -89,9 +96,7 @@ export class PointerGestures implements DragQuantityEdit {
     event.preventDefault();
     this.failure = "";
     this.canvas.focus();
-    await this.editor.numeric.commit();
-    if (toolCatalog(this.editor).switching || this.editor.interactions.current?.kind === "numeric")
-      return;
+    if (!(await completeInteraction(this.editor)) || toolCatalog(this.editor).switching) return;
     this.drag = beginDrag(this.editor, event);
     if (this.drag) {
       const interaction = this.editor.interactions.acquire("pointer", this.cancel);

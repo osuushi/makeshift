@@ -14,26 +14,33 @@ The entire mutation lifecycle is:
    the accepted document and display the relevant error locally.
 4. Refresh derived geometry and controls, then accept the next edit.
 
-A deliberate mode/action switch accepts valid released settings through the current
-controller's ordinary asynchronous finisher, waits for ownership to release, then
-resolves the requested action against accepted geometry and refreshed selection.
-Each accepted edit retains its own ordinary Undo entry. A zero-change preview can
-exit without adding an edit. Invalid latest input or a failed acceptance retains
-the field, error and current owner; the requested action does not execute. Canvas
-gesture and numeric input owners exclude new edits until switching completes,
-including the interval after an old lease releases. Navigation keeps its ordinary
-route. Owners
-without a completion path require explicit completion or cancellation. Captured
-gestures and running calculations retain their guards. Local options inside the
-same controller keep their existing temporary-edit semantics. Merely opening or
-browsing Tools borrows focus and never accepts the edit.
+A deliberate mode/action switch resolves the released modal first: valid latest
+settings use the controller's ordinary acceptance path and its normal Undo entry;
+invalid/incomplete settings or rejected acceptance cancel the temporary operation.
+Then the requested action resolves its prerequisites against accepted geometry and
+refreshed selection. Empty or unchanged previews exit without a geometry Undo step.
+This boundary covers tool and keyboard actions, canvas/entity selection and new
+selection gestures, visibility, appearance/rename, settings, tags/decorators,
+Delete/Clear, file/host commands, agent inspection/script entry and iPad handoff.
+ToolCatalog serializes deliberate actions until completion and the requested action
+finish. Controllers expose a drain
+for their current/latest calculation; the backend alone cannot establish that a
+controller's queued target has settled.
 
-While a calculation is running, disable conflicting edits, including Undo, Clear,
-Open and tool changes that mutate geometry. Do not silently queue clicks or replay
-them later. If it exceeds about 150 ms, show a busy indicator; that delay is an
-initial UX default to test. The window continues repainting; pan/orbit/zoom remain
-available except during a geometry drag gesture. Busy does not itself disable
-navigation.
+When calculation must finish before validity is known, an attempted action waits up
+to 500 ms. If it is still pending, a modal offers Wait or Cancel operation. Wait
+continues the same calculation; Cancel discards the old operation before continuing
+the requested action. Finishing calculation dismisses the prompt automatically.
+Escape in that prompt chooses cancellation. Held pointers and atomic acceptance
+already in progress retain their guards. Same-controller options and source/reference
+picks retain their temporary semantics. Opening/browsing Tools only borrows focus.
+New pointer gestures buffer their physical release while a modal completes, then
+use the ordinary gesture route against fresh geometry; cancelled contacts do not
+replay. Pan/orbit/zoom remain available except during a held geometry gesture.
+
+While a calculation runs, keep the window repainting and show a delayed busy
+indicator after about 150 ms. Actions that conflict with nonmodal backend work or
+a running script still retain the single-owner guard.
 The delayed calculation indicator names the operation, shows elapsed time and
 offers Cancel/Escape for cancellable calculations. Heavy native work
 runs outside the renderer, using a direct call adapter and one request in flight.
@@ -106,7 +113,11 @@ After a worker exit, finish the failed edit as a failure and explicitly restart
 the calculator when needed; do not replay the failed edit automatically.
 
 The future embedded agent calls the same edit functions through the app host.
-It waits while the editor is busy or receives “busy.” Re-resolve referenced IDs
+Agent inspection and script entry resolve released modal work through the same
+completion and 500 ms wait-or-cancel boundary before reading accepted geometry or
+acquiring script ownership. Script deadlines/heartbeat start after acquisition,
+so a user decision cannot consume the script's timeout. Held pointers, active
+scripts and nonmodal backend work still return busy. Re-resolve referenced IDs
 when an edit starts; missing geometry is an ordinary error. User and agent do not
 write the document concurrently. Remote hosting, if later delivered, retains
 single-user serialized semantics rather than introducing collaborative editing.
@@ -160,9 +171,8 @@ geometry operation to its exact input snapshot and ordered selection, then seed
 its ordinary modal controller before local parameter-history tracking. The pending
 preview reuses the exact accepted result and its retained measurements; reopening
 does not recalculate geometry, cleanup or decorators. Changed parameters resume
-normal calculation. Unchanged acceptance retains the saved result. Reopen requires
-released view gestures and an idle edit owner; it does not accept a preview as
-part of its history rollback. Selection
+normal calculation. Unchanged acceptance retains the saved result. Reopen requires released view gestures and resolves a current modal through the
+same completion boundary before rolling back the latest accepted operation. Selection
 and camera changes do not hide that operation. A newer unsupported changed edit,
 including metadata or direct sketch edits, blocks reentry rather than searching
 backward for an older supported operation. New/Open has no operation to reopen.
@@ -276,8 +286,7 @@ there is no additional request queue or history owner.
 A trailing view change inside a modal takes priority over older temporary parameter
 history. View-only Undo/Redo preserves the tool, candidate and pending operation.
 A later parameter edit or local parameter Undo/Redo expires the view suffix,
-including undone future states. Calculating
-or captured edit guards remain in force; an active captured view gesture also
+including undone future states. Captured edit guards remain in force; calculating edits use the 500 ms wait boundary. An active captured view gesture also
 blocks history navigation. Undo during an uncaptured camera animation finishes
 its current visible pose before navigating. Restoring any history context
 suppresses workspace/camera recording, including later animation draws. New/Open
@@ -298,9 +307,10 @@ and exits the tool without changing accepted geometry. That press does not also
 navigate document history; the next Undo follows ordinary document/selection
 history, including any selection restoration recorded by the tool's existing
 cancellation path. Undo remains available at this boundary through standard keyboard and
-menu routes, unless the tool is calculating or holding a pointer gesture. A changed
-tweak after Undo branches the local history. Unchanged focus changes preserve Redo. History navigation is disabled during held gestures
-and calculations. Focused text fields retain native text Undo until defocus.
+menu routes. Outstanding calculations use the same 500 ms wait-or-cancel decision;
+held pointers still block history navigation. A changed
+tweak after Undo branches the local history. Unchanged focus changes preserve Redo. History navigation is disabled during held gestures. Pending calculations settle
+through the shared wait-or-cancel boundary before navigating. Focused text fields retain native text Undo until defocus.
 
 Controllers own these temporary parameter snapshots, not another geometry
 document. Accepting/completing the tool still creates one backend document Undo step;
@@ -310,8 +320,8 @@ acceptance boundary. Their numeric previews can use local history before accepta
 
 This applies to Extrude (including draft, twist, axis, mode and targets), Shell, Erode,
 face/edge Move, Face Offset, Fillet/Chamfer, Scale, Revolve, Loft, Mirror, Boolean,
-construction-plane placement, plane cuts and cross-section placement. Active
-modal tools without tweak history do not accept themselves just to service Undo.
+construction-plane placement, plane cuts and cross-section placement. Released modal tools without tweak history complete valid work or cancel invalid
+work before ordinary document Undo/Redo.
 Projection and sketch Fillet/Offset retain their existing explicit exception:
 document Undo/Redo cancels their released preview first, then navigates accepted
 history. Their mode-switch finishers do not add local parameter checkpoints.

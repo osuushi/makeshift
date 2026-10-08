@@ -16,21 +16,13 @@ export function registerTransformTool(
     shortcut: "M",
     aliases: ["move", "translate", "rotate", "resize", "scale", "non-uniform scale"],
     reason: () =>
-      (editor.interactions.current && !editor.interactions.current.finish
-        ? "Finish or cancel the current edit first"
-        : null) ??
-      (referenceSelected() ||
+      referenceSelected() ||
       scaleSelection(editor) ||
       (!editor.world.active && modelingSketch(editor)) ||
       (editor.world.active && editor.selectionOwners.size)
         ? null
-        : "Select sketch, solid geometry or a plane"),
+        : "Select sketch, solid geometry or a plane",
     run: async () => {
-      const current = editor.interactions.current;
-      if (current && !(await current.finish?.())) {
-        editor.message ||= "Finish or cancel the current edit before switching tools";
-        return false;
-      }
       await activate();
     },
   });

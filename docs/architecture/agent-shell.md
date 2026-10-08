@@ -559,11 +559,13 @@ order of unrelated targets, and `--clear` clears it. `--surface cylinder|plane|o
 selects matching exact face metadata across all bodies, including hidden bodies
 without changing their visibility. Narrower requests use inspected stable IDs.
 The result reports the resulting view context. Selection follows ordinary selection
-history; geometry, camera, visibility and geometry Undo are unchanged.
+history. Before selection, a released modal commits valid settings or cancels invalid
+settings, using its ordinary geometry Undo. Selection itself preserves geometry,
+camera and visibility.
 
 Validation and application run together in the active renderer, through the same
-bounded desktop/iPad view connection used for inspection. Active edits reject the
-request. Modeling accepts face, edge, body and sketch IDs; sketch mode accepts
+bounded desktop/iPad view connection used for inspection. Held gestures and atomic
+acceptance reject the request. Modeling accepts face, edge, body and sketch IDs; sketch mode accepts
 curve/group IDs from its active sketch. Invalid or incompatible targets reject the
 entire request. Workspace changes remain explicit; point, profile and plane targets
 are not yet writable through this CLI command.

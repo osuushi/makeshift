@@ -37,6 +37,10 @@ type Kind =
   | "trim"
   | "numeric";
 interface InteractionCapabilities {
+  /** Picks currently belong to source/reference collection inside this tool. */
+  selectsLocally?: () => boolean;
+  /** Drain the controller's latest calculation before testing completion validity. */
+  settled?: () => Promise<unknown>;
   /** Captured gestures always exclude navigation, including otherwise settled tools. */
   navigation: "blocked" | "when-released";
   /** Preserve owners whose ordinary document Undo first cancels their preview. */
@@ -86,13 +90,37 @@ export class ActiveInteraction {
   }
 }
 export class InteractionLease {
+  settled: (() => Promise<unknown>) | undefined;
+  readonly selectsLocally: () => boolean;
   history: Pick<
     InteractionHistory<unknown>,
     "canUndo" | "canRedo" | "checkpoint" | "navigate"
   > | null = null;
   readonly navigationAllowed: boolean;
   readonly cancelBeforeHistory: boolean;
-  phase: "editing" | "waiting" | "closing" = "editing";
+  private phaseValue: "editing" | "waiting" | "closing" = "editing";
+  private closing: Promise<void> | null = null;
+  private resolveClosing: (() => void) | null = null;
+  get phase(): "editing" | "waiting" | "closing" {
+    return this.phaseValue;
+  }
+  set phase(value: "editing" | "waiting" | "closing") {
+    this.phaseValue = value;
+    if (value === "closing") {
+      this.closing ??= new Promise((resolve) => {
+        this.resolveClosing = resolve;
+      });
+    } else this.endClosing();
+  }
+  /** Join acceptance/cancellation that began while a caller awaited calculation. */
+  async whenClosed(): Promise<void> {
+    await this.closing;
+  }
+  private endClosing(): void {
+    this.resolveClosing?.();
+    this.resolveClosing = null;
+    this.closing = null;
+  }
   candidate: DisplayDocument | null = null;
   private captureTarget: { element: Element; id: number } | null = null;
   private abort = new AbortController();
@@ -103,6 +131,8 @@ export class InteractionLease {
     readonly finish?: () => Promise<boolean>,
     capabilities: InteractionCapabilities = { navigation: "blocked" },
   ) {
+    this.settled = capabilities.settled;
+    this.selectsLocally = capabilities.selectsLocally ?? (() => false);
     this.navigationAllowed = capabilities.navigation === "when-released";
     this.cancelBeforeHistory = capabilities.documentHistory === "cancel-preview";
   }
@@ -183,5 +213,6 @@ export class InteractionLease {
     this.abort.abort();
     this.releaseCapture();
     this.owner.release(this);
+    this.endClosing();
   }
 }

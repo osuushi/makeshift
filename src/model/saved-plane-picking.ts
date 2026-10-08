@@ -2,6 +2,7 @@ import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import { pickModels } from "../sketch/model-selection.js";
 import type { Point } from "../sketch/planes.js";
+import { toolCatalog } from "../tools/catalog.js";
 import type { ConstructionPlane } from "./construction-plane.js";
 
 export function pickSavedPlane(editor: SketchEditor, screen: Point, maxDepth = Infinity) {
@@ -60,9 +61,9 @@ export function savedPlaneInteraction(
       (event) => {
         if (
           editor.world.active ||
-          editor.blocked ||
-          editor.isDragging ||
-          editor.interactions.current ||
+          (type === "pointermove"
+            ? editor.blocked || editor.isDragging || !!editor.interactions.current
+            : !!toolCatalog(editor).reason({ reason: () => null })) ||
           event.buttons ||
           event.metaKey ||
           event.ctrlKey

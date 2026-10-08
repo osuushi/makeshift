@@ -1,5 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { modelingKey } from "../sketch/model-selection-state.js";
+import { toolCatalog } from "../tools/catalog.js";
 import type { TagControls } from "./controls.js";
 import { type TaggedGroup, tagStatus } from "./model.js";
 
@@ -64,10 +65,13 @@ export class TagRows {
     remove.innerHTML =
       '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h10M6 4V2h4v2M4 4l1 10h6l1-10M6.5 7v4M9.5 7v4"/></svg>';
     remove.onclick = () => {
-      if (this.editor.blocked || this.editor.interactions.current) return;
-      void this.editor.store.request({
-        kind: "tagged-group",
-        edit: { action: "remove", id: group.id },
+      void toolCatalog(this.editor).activate({
+        reason: () => null,
+        run: () =>
+          this.editor.store.request({
+            kind: "tagged-group",
+            edit: { action: "remove", id: group.id },
+          }),
       });
     };
     refresh.push(() => {
@@ -76,7 +80,7 @@ export class TagRows {
         "aria-pressed",
         String(group.members.length > 0 && group.members.every((m) => selected.has(m.id))),
       );
-      button.disabled = this.editor.blocked || !!this.editor.interactions.current;
+      button.disabled = !!toolCatalog(this.editor).reason({ reason: () => null });
       remove.disabled = button.disabled;
     });
     row.append(button, remove);

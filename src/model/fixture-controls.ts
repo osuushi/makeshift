@@ -52,6 +52,7 @@ export function fixtureControls(editor: SketchEditor, toolbar: HTMLElement): () 
   };
   const dispose = toolCatalog(editor).register({
     id: "capture",
+    finishEdit: false,
     label: "Capture fixture",
     category: "Development",
     description: "Save accepted geometry, previews and diagnostics without changing the model",

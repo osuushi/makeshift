@@ -4,8 +4,8 @@ import {
 } from "../preferences/application-preferences.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { worldPoint } from "../sketch/planes.js";
-
 import { pointTarget } from "../sketch/selection-target.js";
+import { toolCatalog } from "../tools/catalog.js";
 import type { InspectionTarget, InspectionView } from "./inspection-protocol.js";
 import { changeAgentSelection } from "./selection-command.js";
 
@@ -95,18 +95,27 @@ function captureViewport(editor: SketchEditor): NonNullable<InspectionView["imag
 
 export function installInspection(editor: SketchEditor): () => void {
   return (
-    window.makeshiftInspection?.onRequest((render, acquireScript, selection, settings) => {
-      let view = inspectionView(editor, render);
-      if (selection !== undefined) {
-        changeAgentSelection(editor, selection);
-        view = inspectionView(editor, render);
-      }
-      if (settings !== undefined) {
-        configurePreferences(settings);
-        view = inspectionView(editor, render);
-      }
-      if (acquireScript) editor.store.scriptState(true);
-      return view;
+    window.makeshiftInspection?.onRequest(async (render, acquireScript, selection, settings) => {
+      let result: InspectionView | undefined;
+      const completed = await toolCatalog(editor).activate({
+        reason: () => null,
+        run: () => {
+          let view = inspectionView(editor, render);
+          if (selection !== undefined) {
+            changeAgentSelection(editor, selection);
+            view = inspectionView(editor, render);
+          }
+          if (settings !== undefined) {
+            configurePreferences(settings);
+            view = inspectionView(editor, render);
+          }
+          if (acquireScript) editor.store.scriptState(true);
+          result = view;
+        },
+      });
+      if (!completed || !result)
+        throw new Error(editor.message || "The current edit could not complete.");
+      return result;
     }) ?? (() => {})
   );
 }

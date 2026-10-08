@@ -34,17 +34,18 @@ export function sketchTools(editor: SketchEditor): () => void {
     disposers.push(
       catalog.register({
         id,
+        finishEdit: false,
         label: id === "undo" ? "Undo" : "Redo",
         showInTools: false,
         category: "Document & Edit",
         shortcut: id === "undo" ? "⌘Z" : "⇧⌘Z",
-        allowBusy: false,
+        allowBusy: true,
         reason: () => {
           if (editor.world.navigation.dragging) return "Finish the current view gesture first";
           const interaction = editor.interactions.current;
           if (id === "undo" ? editor.store.canUndoView : editor.store.canRedoView) return null;
           if (interaction?.finish && !interaction.history && !interaction.cancelBeforeHistory)
-            return `Nothing to ${id} in this tool`;
+            return null;
           if (interaction?.history && id === "undo") return null;
           const history = interaction?.history ?? editor.store;
           return (id === "undo" ? history.canUndo : history.canRedo) ? null : `Nothing to ${id}`;

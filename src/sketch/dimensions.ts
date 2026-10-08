@@ -1,3 +1,4 @@
+import { handoffModalPointer } from "../model/modal-pointer-handoff.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { layoutLocalControls } from "./control-layout.js";
@@ -53,22 +54,35 @@ export class Dimensions implements NumericFields {
     this.disposeTools = () => {
       for (const dispose of disposers) dispose();
     };
-    document.addEventListener(
-      "pointerdown",
-      (event) => {
-        if (event.target instanceof HTMLInputElement) return;
-        if (event.target instanceof Element && event.target.closest(".dimension-lock")) return;
-        if (
-          event.target instanceof Element &&
-          event.target.closest("[data-history], [data-action]")
-        )
-          this.cancel();
-        else this.commitFocused();
-      },
-      { capture: true, signal: this.abort.signal },
-    );
+    document.addEventListener("pointerdown", this.pointerDown, {
+      capture: true,
+      signal: this.abort.signal,
+    });
     editor.world.changed.add(this.update);
   }
+  private pointerDown = (event: PointerEvent): void => {
+    const editor = this.editor;
+    if (event.target instanceof HTMLInputElement) return;
+    if (event.target instanceof Element && event.target.closest(".dimension-lock")) return;
+    if (editor.interactions.current?.kind === "numeric") {
+      if (
+        event.target === editor.world.canvas &&
+        handoffModalPointer(editor, event, this.abort.signal)
+      )
+        return;
+      // The destination's click owns completion. Prevent blur from starting
+      // atomic acceptance before that action can resolve invalid text.
+      if (event.target instanceof Element && event.target.closest("button, [data-action]")) {
+        event.preventDefault();
+        return;
+      }
+      void toolCatalog(editor).activate({ reason: () => null, run: () => true });
+      return;
+    }
+    if (event.target instanceof Element && event.target.closest("[data-history], [data-action]"))
+      this.cancel();
+    else this.commitFocused();
+  };
   update = (): void => {
     const values = dimensionValues(this.editor);
     const key = values.length

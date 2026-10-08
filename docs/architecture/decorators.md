@@ -81,7 +81,8 @@ mesh operations to native Manifold; clients without that capability retain WASM.
    only valid settings display a preview and enable Create threads. The editor
    explains that the defaults do not fit and nothing is added until confirmation.
    Switching to another mode/action also uses ordinary validated creation;
-   invalid latest settings stay open with their error and block the switch.
+   invalid latest settings cancel before the requested action continues. Pending
+   validation uses the shared 500 ms Wait/Cancel boundary.
    Create threads accepts all inferred instances in one ordinary owner edit and Undo step.
    Cancel/Escape discards the settings and preview before creation is sent. While the
    atomic application runs, the editor shows Creating threads and retains its interaction

@@ -91,13 +91,29 @@ export class TagControls {
     editor.world.changed.add(this.update);
   }
   begin(group?: TaggedGroup): void {
+    if (this.editor.interactions.current && this.editor.interactions.current !== this.lease) {
+      void toolCatalog(this.editor).activate({ reason: () => null, run: () => this.begin(group) });
+      return;
+    }
     const e = this.editor;
     if (e.blocked || e.interactions.current || e.world.active) return;
+    if (group) {
+      group = e.store.data.taggedGroups?.find((item) => item.id === group?.id);
+      if (!group) return;
+    }
     const body = group?.body ?? tagSelectionBody(e.modeling.targets);
     if (!body) return;
-    const lease = e.interactions.acquire("tag-membership", () => this.cancel(), undefined, {
-      navigation: "when-released",
-    });
+    const lease = e.interactions.acquire(
+      "tag-membership",
+      () => this.cancel(),
+      async () => {
+        await this.finish();
+        return !this.lease;
+      },
+      {
+        navigation: "when-released",
+      },
+    );
     if (!lease) return;
     this.lease = lease;
     this.original = [...e.modeling.targets];
@@ -119,7 +135,16 @@ export class TagControls {
   }
   async select(group: TaggedGroup, event: MouseEvent): Promise<void> {
     const e = this.editor;
-    if (e.blocked || e.interactions.current) return;
+    await toolCatalog(e).activate({
+      reason: () => null,
+      run: () => this.selectAccepted(group, event),
+    });
+  }
+  private selectAccepted(group: TaggedGroup, event: MouseEvent): void {
+    const e = this.editor;
+    const accepted = e.store.data.taggedGroups?.find((item) => item.id === group.id);
+    if (!accepted) return;
+    group = accepted;
     e.world.exit();
     const targets = tagTargets(group),
       toggle = event.metaKey || event.ctrlKey;

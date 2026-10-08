@@ -19,7 +19,7 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
     if (editor.blocked || editor.interactions.current) return;
     if (!dialog.open) dialog.showModal();
   };
-  button.onclick = open;
+  button.onclick = () => void toolCatalog(editor).invoke("settings");
   const header = app.querySelector("header");
   header?.append(button);
   const fitHeader = () => {
@@ -52,7 +52,7 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
     run: open,
   });
   const update = () => {
-    button.disabled = editor.blocked || !!editor.interactions.current;
+    button.disabled = !!toolCatalog(editor).reason({ reason: () => null });
   };
   editor.world.changed.add(update);
   const disposeScale = onUiScaleChange(() => {

@@ -85,6 +85,7 @@ export class ProjectionControls {
       () => this.cancel(),
       () => this.accept(),
       {
+        selectsLocally: () => true,
         navigation: "when-released",
         documentHistory: "cancel-preview",
       },

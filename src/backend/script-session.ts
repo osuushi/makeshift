@@ -12,6 +12,8 @@ export class ScriptSession {
   private deadline: ReturnType<typeof setTimeout> | undefined;
   private heartbeat: ReturnType<typeof setTimeout> | undefined;
   private pending = false;
+  private acquiring = false;
+  private acquisitionCancelled = false;
   constructor(
     private owner: DocumentOwner,
     private acquire: () => Promise<InspectionView>,
@@ -20,7 +22,7 @@ export class ScriptSession {
     private changed: () => void,
   ) {}
   get busy(): boolean {
-    return this.token !== null;
+    return this.token !== null || this.acquiring;
   }
   async request(request: ScriptRequest, channel: string): Promise<unknown> {
     if (request?.action === "begin") return this.begin(request.name, channel);
@@ -60,25 +62,30 @@ export class ScriptSession {
     if (!this.available() || this.busy) throw new Error("Finish the current operation first");
     if (typeof name !== "string" || !name || name.length > 256)
       throw new Error("Invalid script name");
-    this.owner.beginScript(name);
-    const token = randomUUID();
-    this.token = token;
-    this.channel = channel;
-    this.deadline = setTimeout(
-      () => void this.cancel("Script exceeded the 15-minute limit"),
-      scriptTimeoutMs,
-    );
-    this.keepAlive();
+    this.acquiring = true;
+    this.acquisitionCancelled = false;
     try {
-      // Renderer checks its own gesture state and locks editing in the same callback.
+      // Complete the renderer's modal before acquiring backend script ownership.
       const view = await this.acquire();
-      if (this.token !== token || !this.available())
+      if (this.acquisitionCancelled || !this.available())
         throw new Error("Script cancelled before start");
+      this.owner.beginScript(name);
+      const token = randomUUID();
+      this.token = token;
+      this.channel = channel;
+      this.deadline = setTimeout(
+        () => void this.cancel("Script exceeded the 15-minute limit"),
+        scriptTimeoutMs,
+      );
+      this.keepAlive();
       this.publish(true, this.owner.view);
       return { token, selection: view.selection };
     } catch (error) {
-      await this.cancel();
+      if (this.token) await this.cancel();
+      else this.publish(false, this.owner.view);
       throw error;
+    } finally {
+      this.acquiring = false;
     }
   }
   private keepAlive(): void {
@@ -86,6 +93,7 @@ export class ScriptSession {
     this.heartbeat = setTimeout(() => void this.cancel("Script runner disconnected"), 5000);
   }
   async cancel(error = "Script cancelled"): Promise<void> {
+    if (this.acquiring) this.acquisitionCancelled = true;
     if (!this.token) return;
     const token = this.token;
     await this.owner.scripts.cancel(error);

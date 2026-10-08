@@ -79,11 +79,7 @@ function isolationButton(editor: SketchEditor): () => void {
   editor.world.host.append(exitButton);
   const updateButton = () => {
     exitButton.hidden = !editor.visibility.isolating;
-    exitButton.disabled =
-      editor.blocked ||
-      editor.isDragging ||
-      catalog.switching ||
-      (!!editor.interactions.current && !editor.interactions.current.finish);
+    exitButton.disabled = !!catalog.reason({ reason: () => null });
   };
   editor.world.changed.add(updateButton);
   return () => {

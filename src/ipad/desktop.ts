@@ -1,5 +1,6 @@
 import { installControlMenu } from "../sketch/control-menu.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import { toolCatalog } from "../tools/catalog.js";
 import { ConnectionScreen } from "./connection-screen.js";
 import type { IPadStatus } from "./protocol.js";
 
@@ -9,18 +10,18 @@ export function installIPadButton(editor: SketchEditor, app: HTMLElement): void 
     app,
     host
       ? async () => {
-          if (editor.blocked || editor.interactions.current || editor.isDragging) {
-            editor.message = "Finish or cancel the current tool before connecting the iPad.";
-            editor.refresh();
-            return;
-          }
-          try {
-            await host.start();
-            location.reload();
-          } catch (error) {
-            editor.message = String(error);
-            editor.refresh();
-          }
+          await toolCatalog(editor).activate({
+            reason: () => null,
+            run: async () => {
+              try {
+                await host.start();
+                location.reload();
+              } catch (error) {
+                editor.message = String(error);
+                editor.refresh();
+              }
+            },
+          });
         }
       : undefined,
   );
