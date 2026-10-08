@@ -108,7 +108,7 @@ export class BodyEdgeFinishControls {
       "body-edge-finish",
       () => this.cancel(),
       () => this.finish(),
-      { navigation: "when-released" },
+      { navigation: "when-released", settled: () => this.previews.settle() },
     );
     if (!this.lease) return false;
     this.restoredSelection = restored ? structuredClone(this.editor.modeling.targets) : undefined;

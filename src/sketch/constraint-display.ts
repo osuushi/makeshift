@@ -1,3 +1,4 @@
+import { toolCatalog } from "../tools/catalog.js";
 import { selectedConstraints } from "./constraint-selection.js";
 import type { Constraint } from "./document.js";
 import type { SketchEditor } from "./editor.js";
@@ -84,15 +85,20 @@ export class ConstraintDisplay {
       this.editor.constraintHover = null;
       this.editor.refresh();
     });
-    button.addEventListener("click", async () => {
-      const sketch = this.editor.sketch;
-      if (!sketch || this.editor.blocked || this.editor.isDragging) return;
-      await this.editor.editSketch({
-        ...sketch,
-        constraints: sketch.constraints.filter((c) => c.id !== constraint.id),
+    button.addEventListener("click", () => {
+      void toolCatalog(this.editor).activate({
+        reason: () => null,
+        run: async () => {
+          const sketch = this.editor.sketch;
+          if (!sketch?.constraints.some((c) => c.id === constraint.id)) return;
+          await this.editor.editSketch({
+            ...sketch,
+            constraints: sketch.constraints.filter((c) => c.id !== constraint.id),
+          });
+          this.editor.constraintHover = null;
+          this.editor.refresh();
+        },
       });
-      this.editor.constraintHover = null;
-      this.editor.refresh();
     });
     return button;
   }
@@ -105,7 +111,8 @@ export class ConstraintDisplay {
       this.key = key;
       this.existing.replaceChildren(...locks.map((lock) => this.button(lock)));
     }
-    for (const button of this.existing.querySelectorAll("button")) button.disabled = editor.blocked;
+    for (const button of this.existing.querySelectorAll("button"))
+      button.disabled = !!toolCatalog(editor).reason({ reason: () => null });
   };
   dispose(): void {
     this.editor.world.changed.delete(this.update);

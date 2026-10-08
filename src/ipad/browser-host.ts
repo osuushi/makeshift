@@ -24,7 +24,7 @@ class BrowserConnection {
         acquireScript?: boolean,
         selection?: string,
         settings?: string,
-      ) => InspectionView)
+      ) => InspectionView | Promise<InspectionView>)
     | null = null;
   private socket = new WebSocket(
     `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/connect`,

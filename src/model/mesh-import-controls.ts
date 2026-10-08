@@ -67,9 +67,21 @@ export class MeshImportControls {
   }
   private async start(file: File): Promise<void> {
     if (this.editor.blocked || this.editor.interactions.current) return;
-    this.lease = this.editor.interactions.acquire("mesh-import", () => this.cancel(), undefined, {
-      navigation: "when-released",
-    });
+    this.lease = this.editor.interactions.acquire(
+      "mesh-import",
+      () => this.cancel(),
+      async () => {
+        if (!this.valid) return false;
+        await this.finish();
+        return !this.lease;
+      },
+      {
+        settled: async () => {
+          await this.running;
+        },
+        navigation: "when-released",
+      },
+    );
     if (!this.lease) return;
     const lease = this.lease;
     this.editor.notice = "Import mesh · Fit preview, then accept · Escape to cancel";

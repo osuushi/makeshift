@@ -84,7 +84,13 @@ export class BooleanControls {
       "body-boolean",
       () => this.cancel(),
       () => this.finish(),
-      { navigation: "when-released" },
+      {
+        selectsLocally: () => true,
+        navigation: "when-released",
+        settled: async () => {
+          await this.running;
+        },
+      },
     );
     if (!this.lease) return;
     this.entities.sourcePicker = {

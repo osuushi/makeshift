@@ -1,6 +1,7 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { PlaneId } from "../sketch/planes.js";
+import { toolCatalog } from "../tools/catalog.js";
 import type { ConstructionPlane } from "./construction-plane.js";
 import { cancelModelSelectionDrag } from "./model-selection-drag.js";
 import { type OverlapCandidate, overlapCandidates } from "./overlap-candidates.js";
@@ -34,12 +35,16 @@ export class OverlapChooser {
   }
   async open(event: PointerEvent): Promise<void> {
     const e = this.editor;
-    const candidates = overlapCandidates(e, { x: event.clientX, y: event.clientY });
-    if (!candidates.length) return;
     if (e.interactions.current?.kind === "model-selection") await e.interactions.cancel();
     const membership = e.interactions.current?.kind === "tag-membership";
     if (membership) cancelModelSelectionDrag(e);
+    if (!membership && e.interactions.current) {
+      await toolCatalog(e).activate({ reason: () => null, run: () => this.open(event) });
+      return;
+    }
     if (e.blocked || e.world.active || (e.interactions.current && !membership)) return;
+    const candidates = overlapCandidates(e, { x: event.clientX, y: event.clientY });
+    if (!candidates.length) return;
     this.lease = membership
       ? e.interactions.current
       : e.interactions.acquire("selection-choice", () => this.close());

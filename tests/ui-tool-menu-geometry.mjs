@@ -86,8 +86,9 @@ async function shellAndHistory(page) {
   await inspect(page);
   await chooseTool(page, "transform", "transform");
   state = await inspect(page);
-  assert.equal(state.interaction.kind, "shell", "Invalid preview must not switch tools");
-  assert.equal(await thickness.inputValue(), "-30");
+  assert.equal(state.interaction, null, "Invalid preview cancels before switching");
+  close(state.document.bodies[0].volume, 4000);
+  await chooseTool(page, "shell", "shell");
   await thickness.fill("-1");
   await inspect(page);
   await chooseTool(page, "transform", "transform");

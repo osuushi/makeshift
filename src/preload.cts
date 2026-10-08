@@ -49,9 +49,9 @@ contextBridge.exposeInMainWorld("makeshiftInspection", {
       acquireScript?: boolean,
       selection?: string,
       settings?: string,
-    ) => InspectionView,
+    ) => InspectionView | Promise<InspectionView>,
   ) => {
-    const listener = (
+    const listener = async (
       _event: Electron.IpcRendererEvent,
       request: {
         id: string;
@@ -61,10 +61,11 @@ contextBridge.exposeInMainWorld("makeshiftInspection", {
         settings?: string;
       },
     ) => {
+      ipcRenderer.send("agent-inspection-reply", { id: request.id, pending: true });
       try {
         ipcRenderer.send("agent-inspection-reply", {
           id: request.id,
-          view: callback(
+          view: await callback(
             request.render,
             request.acquireScript,
             request.selection,

@@ -69,7 +69,7 @@ test("editor history stays inside its interaction and refuses navigation while b
   history.checkpoint();
   let documentRequests = 0;
   const editor = {
-    interactions: { current: { history, captured: false } },
+    interactions: { current: { history, captured: false, whenClosed: async () => {} } },
     world: { navigation: { dragging: false } },
     blocked: true,
     selectionHistory: { finishNavigation: () => {} },
@@ -144,6 +144,7 @@ test("legacy preview owners cancel before document history without accepting the
       );
       assert.equal(interactions.current, null);
       assert.deepEqual(events, [
+        "settled",
         "finish-navigation",
         "settled",
         "read",

@@ -26,18 +26,18 @@ export async function inspectDrawing(
     settings,
   ) => readInspectionView(window, render, false, selection, settings),
 ): Promise<unknown> {
-  const document = owner.view.data;
-  const check = () => {
-    if (!isCurrent() || owner.view.data !== document || owner.view.candidate)
-      throw new Error("The drawing changed during inspection. Run the command again.");
-  };
-  check();
+  if (!isCurrent()) throw new Error("The drawing connection changed during inspection.");
   if (command === "select" && entity === undefined) throw new Error("Missing selection arguments.");
   const view = await readView(
     command === "render",
     command === "select" ? entity : undefined,
     command === "settings" ? entity : undefined,
   );
+  const document = owner.view.data;
+  const check = () => {
+    if (!isCurrent() || owner.view.data !== document || owner.view.candidate)
+      throw new Error("The drawing changed during inspection. Run the command again.");
+  };
   check();
   const { image, ...context } = view;
   if (command === "settings") return view.preferences;

@@ -52,20 +52,20 @@ export async function projectionSwitchRoute(page, name) {
   await chooseTool(page, "Rectangle", "rectangle");
   let state = await inspect(page);
   assert.deepEqual(state.document, before.document);
-  assert.equal(state.interaction.kind, "projection");
-  assert.equal(state.interaction.phase, "editing");
+  assert.equal(state.interaction, null);
   assert.equal(state.preview, null);
-  assert.notEqual(state.tool, "rectangle");
-  assert.match(await page.locator(".local-feedback").textContent(), /valid destination/);
+  assert.equal(state.tool, "rectangle");
+  await chooseTool(page, "Project", "project");
   await pickPlane(page, "XZ");
   geometry((await inspect(page)).preview, before.document);
   await undoPreview(page, before, history);
   await chooseTool(page, "Project", "project");
   await pickPlane(page, "XZ");
-  const preview = (await inspect(page)).preview;
-  const projected = geometry(preview, before.document);
+  let preview = (await inspect(page)).preview;
+  geometry(preview, before.document);
   await browsePreview(page, "projection", before.document, preview);
-  await rejectPreviewSwitch(page, "projection", before, preview);
+  preview = await rejectPreviewSwitch(page, "projection", before);
+  const projected = geometry(preview, before.document);
   const beforeEntry = await navigationIdle(page);
   await chooseTool(page, "Rectangle", "rectangle");
   await modalCompleted(page);
@@ -80,6 +80,6 @@ export async function projectionSwitchRoute(page, name) {
     modeling: [],
   });
   console.log(
-    `${name}: unfinished/rejected Projection retention, Tools borrowing, independent exact projection and ordinary switch/history passed`,
+    `${name}: unfinished/rejected Projection cancellation, Tools borrowing, independent exact projection and ordinary switch/history passed`,
   );
 }

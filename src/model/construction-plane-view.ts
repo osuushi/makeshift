@@ -1,5 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { PlaneFrame } from "../sketch/planes.js";
+import { toolCatalog } from "../tools/catalog.js";
 import type { ConstructionPlane } from "./construction-plane.js";
 import { entityRows } from "./entity-presentation.js";
 import { renameEntity } from "./entity-rename.js";
@@ -32,6 +33,7 @@ export class ConstructionPlaneView {
       this.choosing,
       planes.map((p) => !this.accepts || this.accepts(p.frame)),
       e.blocked,
+      toolCatalog(e).switching,
       e.world.active,
       e.visibility.key,
       e.world.camera.matrixWorld.elements,
@@ -77,7 +79,10 @@ export class ConstructionPlaneView {
       item.dataset.plane = plane.id;
       item.setAttribute("aria-label", `${this.choosing ? "Use" : "Select"} ${name}`);
       item.setAttribute("aria-pressed", String(this.selected === plane.id));
-      item.disabled = e.blocked || !visible || !allowed;
+      item.disabled =
+        (this.choosing ? e.blocked : !!toolCatalog(e).reason({ reason: () => null })) ||
+        !visible ||
+        !allowed;
       item.onclick = () => this.choose(plane);
       item.ondblclick = () => {
         if (!this.choosing) this.sketch(plane);
@@ -89,16 +94,23 @@ export class ConstructionPlaneView {
     row.className = "entity-row";
     eye.textContent = visible ? "◉" : "○";
     eye.setAttribute("aria-label", `${visible ? "Hide" : "Show"} ${name}`);
-    eye.disabled = e.blocked || !!e.interactions.current;
+    eye.disabled = !!toolCatalog(e).reason({ reason: () => null });
     eye.onclick = () => {
-      if (visible) e.visibility.hide(plane.id);
-      else e.visibility.show(plane.id);
-      if (visible && this.selected === plane.id) this.selected = null;
-      e.refresh();
+      void toolCatalog(e).activate({
+        reason: () => null,
+        run: () => {
+          if (!e.store.data.constructionPlanes?.some((p) => p.id === plane.id)) return;
+          const visible = e.visibility.visible(plane.id);
+          if (visible) e.visibility.hide(plane.id);
+          else e.visibility.show(plane.id);
+          if (visible && this.selected === plane.id) this.selected = null;
+          e.refresh();
+        },
+      });
     };
     const labelButton = button();
     labelButton.ondblclick = () => renameEntity(e, labelButton, plane.id);
-    new EntityReorder(e, row, labelButton, plane.id, "plane");
+    new EntityReorder(e, row, labelButton, plane.id, "plane", () => this.choosing);
     row.append(labelButton, eye);
     this.rows.append(row);
   }

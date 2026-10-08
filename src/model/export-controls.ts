@@ -201,6 +201,7 @@ export function exportControls(editor: SketchEditor): () => void {
   disposers.push(
     toolCatalog(editor).register({
       id: "cancel-export",
+      finishEdit: false,
       label: "Cancel export",
       category: "Document & Edit",
       reason: () => (session.busy ? null : "No export is running"),

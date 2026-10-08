@@ -121,7 +121,7 @@ export class ExtrudeControls {
       "extrude",
       () => (this.twist.cancelGesture() ? undefined : this.cancel()),
       () => this.finish(),
-      { navigation: "when-released" },
+      { navigation: "when-released", settled: () => this.previews.settle() },
     );
     this.previews.clear();
     this.targets.reset();

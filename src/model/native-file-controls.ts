@@ -45,8 +45,10 @@ export function nativeFileControls(editor: SketchEditor, host: DocumentHost): ()
       ["new", "open", "save", "save-as", "close"].includes(command) &&
       !(command === "close" && editor.store.scriptRunning)
     )
-      void editor.store.settled().then(() => toolCatalog(editor).invoke(command));
-    else void editor.store.settled().then(() => run(command));
+      void toolCatalog(editor).invoke(command);
+    else if (["quit", "restart-update"].includes(command) && !editor.store.scriptRunning)
+      void toolCatalog(editor).activate({ reason: () => null, run: () => run(command) });
+    else void run(command);
   });
   const disposeStatus = host.onStatus(status);
   let initialized = false;
@@ -102,20 +104,7 @@ async function runDocumentCommand(
     } else await editor.history(command);
     return;
   }
-  if (leaving && !editor.isDragging && !editor.finishing) {
-    await editor.numeric.commit();
-    const interaction = editor.interactions.current;
-    if (interaction?.finish) {
-      if (!(await interaction.finish())) return;
-      await editor.store.settled();
-    }
-  }
-  if (editor.blocked || editor.isDragging) return;
-  if (editor.interactions.current) {
-    editor.message = "Finish or cancel the current tool before using document commands.";
-    editor.refresh();
-    return;
-  }
+  if (editor.blocked || editor.interactions.current || editor.isDragging) return;
   editor.store.busy = true;
   editor.message = command === "open" ? "Opening document…" : "Working with document…";
   editor.refresh();

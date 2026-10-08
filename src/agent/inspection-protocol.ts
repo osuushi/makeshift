@@ -48,7 +48,7 @@ declare global {
           acquireScript?: boolean,
           selection?: string,
           settings?: string,
-        ) => InspectionView,
+        ) => InspectionView | Promise<InspectionView>,
       ): () => void;
     };
   }

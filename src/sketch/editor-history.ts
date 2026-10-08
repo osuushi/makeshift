@@ -1,3 +1,4 @@
+import { completeInteraction, settleInteraction } from "./complete-interaction.js";
 import type { SketchEditor } from "./editor.js";
 
 export async function performHistory(
@@ -5,6 +6,7 @@ export async function performHistory(
   direction: "undo" | "redo",
 ): Promise<void> {
   if (editor.world.navigation.dragging) return;
+  if (!(await settleInteraction(editor))) return;
   const interaction = editor.interactions.current;
   if (interaction && !interaction.captured && !editor.blocked) {
     interaction.history?.checkpoint();
@@ -24,12 +26,9 @@ export async function performHistory(
     editor.refresh();
     return;
   }
-  if (
-    (interaction?.finish && !interaction.cancelBeforeHistory) ||
-    editor.blocked ||
-    editor.isDragging
-  )
+  if (interaction && !interaction.cancelBeforeHistory && !(await completeInteraction(editor)))
     return;
+  if (editor.blocked || editor.isDragging) return;
   editor.selectionHistory.finishNavigation();
   editor.numeric.cancel();
   await editor.interactions.cancel();

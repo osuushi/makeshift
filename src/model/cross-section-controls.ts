@@ -96,7 +96,9 @@ export class CrossSectionControls {
     const button = document.createElement("button");
     button.textContent = label;
     button.onclick = () => {
-      if (!button.disabled) run();
+      if (button.disabled) return;
+      if (this.lease) run();
+      else void toolCatalog(this.editor).activate({ reason: () => null, run });
     };
     this.root.append(button);
     this.buttons.set(label, button);
@@ -202,7 +204,9 @@ export class CrossSectionControls {
       editing = !!this.lease,
       frame = e.world.crossSection;
     this.root.hidden = !!e.world.active || (!editing && !frame);
-    const blocked = e.blocked || (!!e.interactions.current && !editing) || e.interactions.dragging;
+    const blocked = editing
+      ? e.blocked || e.interactions.dragging
+      : !!toolCatalog(e).reason({ reason: () => null });
     for (const [name, button] of this.buttons) {
       button.disabled = blocked;
       button.hidden = ["Done", "Cancel", "Choose section plane"].includes(name)

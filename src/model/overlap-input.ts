@@ -1,6 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { PlaneId } from "../sketch/planes.js";
 import { pointerDragThreshold } from "../sketch/pointer-intent.js";
+import { toolCatalog } from "../tools/catalog.js";
 import type { ConstructionPlane } from "./construction-plane.js";
 import { OverlapChooser } from "./overlap-chooser.js";
 import "./overlap.css";
@@ -114,9 +115,11 @@ export class OverlapInput {
       event.target !== e.world.canvas ||
       event.button !== 0 ||
       !event.isPrimary ||
-      e.blocked ||
+      (e.interactions.current?.kind === "tag-membership"
+        ? e.blocked
+        : !!toolCatalog(e).reason({ reason: () => null })) ||
       e.world.active ||
-      (e.interactions.current && e.interactions.current.kind !== "tag-membership") ||
+      e.interactions.current?.selectsLocally() ||
       e.world.planePicker ||
       e.world.cameraTransitioning
     )

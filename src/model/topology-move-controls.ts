@@ -146,7 +146,12 @@ export class TopologyMoveControls {
       this.kind === "faces" ? "face-move" : "edge-move",
       () => this.cancel(),
       () => this.finish(),
-      { navigation: "when-released" },
+      {
+        navigation: "when-released",
+        settled: async () => {
+          await this.running;
+        },
+      },
     );
     if (!this.lease) return false;
     this.edit = edit;

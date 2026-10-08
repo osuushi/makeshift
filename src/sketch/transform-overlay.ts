@@ -3,6 +3,7 @@ import { BodyPivotDrag } from "../model/body-pivot-drag.js";
 import { WidgetClearance } from "../model/widget-clearance.js";
 import { cameraFacingWidth } from "../model/widget-frame.js";
 import { uiScale } from "../preferences/ui-scale.js";
+import { toolCatalog } from "../tools/catalog.js";
 import type { SketchEditor } from "./editor.js";
 import { markerMarkup } from "./move-widget/geometry.js";
 import { type Point, worldPoint } from "./planes.js";
@@ -36,10 +37,14 @@ export class TransformOverlay {
     this.pivot.textContent = "Pivot";
     this.pivot.setAttribute("aria-label", "Place rotation pivot");
     this.pivot.addEventListener("click", () => {
-      if (editor.blocked || editor.isDragging) return;
-      editor.placingPivot = !editor.placingPivot;
-      editor.message = editor.placingPivot ? "Click to place the rotation pivot" : "";
-      editor.refresh();
+      void toolCatalog(editor).activate({
+        reason: () => null,
+        run: () => {
+          editor.placingPivot = !editor.placingPivot;
+          editor.message = editor.placingPivot ? "Click to place the rotation pivot" : "";
+          editor.refresh();
+        },
+      });
     });
     this.move.className = "move-control";
     this.move.type = "button";
@@ -86,7 +91,7 @@ export class TransformOverlay {
       frame = selectionFrame(e),
       r = e.world.canvas.getBoundingClientRect();
     this.move.hidden = !frame || e.isDragging || e.moveMode;
-    this.move.disabled = e.blocked;
+    this.move.disabled = !!toolCatalog(e).reason({ reason: () => null });
     this.move.setAttribute("aria-pressed", String(e.moveMode));
     if (sketch && frame) {
       const pos = e.world.projectLocal(sketch.plane, frame.center);
@@ -105,7 +110,7 @@ export class TransformOverlay {
       this.pivot.style.top = `${p.y - r.top - 13}px`;
     }
     this.placement.fit([this.move, this.pivot, this.anchor]);
-    this.pivot.disabled = e.blocked || e.isDragging;
+    this.pivot.disabled = !!toolCatalog(e).reason({ reason: () => null });
     this.pivot.setAttribute("aria-pressed", String(e.placingPivot));
     this.redraw();
   };

@@ -152,17 +152,21 @@ async function numericPreviewSwitch(page, name, kind) {
   await chooseTool(page, "Rectangle", "rectangle");
   let state = await inspect(page);
   assert.deepEqual(state.document, before.document);
-  assert.equal(state.interaction.kind, kind);
-  assert.equal(state.interaction.phase, "editing");
-  assert.notEqual(state.tool, "rectangle");
-  assert.equal(await input.inputValue(), kind === "fillet" ? "-1" : "0");
-  assert.equal(await input.getAttribute("aria-invalid"), "true");
-  assert.ok(await page.locator(".local-feedback").textContent());
+  assert.equal(state.interaction, null);
+  assert.equal(state.tool, "rectangle");
+  await page.keyboard.press("v");
+  await chooseTool(page, "select all", "select-all-entities");
+  await chooseTool(
+    page,
+    kind === "fillet" ? "Fillet sketch corner" : "Offset sketch curves",
+    `sketch-${kind}`,
+  );
   await input.fill("2");
-  const preview = (await inspect(page)).preview;
-  const ids = geometry(preview, kind, before.document);
+  let preview = (await inspect(page)).preview;
+  geometry(preview, kind, before.document);
   await browsePreview(page, kind, before.document, preview, input);
-  await rejectPreviewSwitch(page, kind, before, preview, input);
+  preview = await rejectPreviewSwitch(page, kind, before, input);
+  const ids = geometry(preview, kind, before.document);
   await chooseTool(page, "Rectangle", "rectangle");
   await modalCompleted(page);
   state = await inspect(page);
@@ -174,7 +178,7 @@ async function numericPreviewSwitch(page, name, kind) {
     modeling: [],
   });
   console.log(
-    `${name}: numeric ${kind} invalid/rejected owner retention, Tools borrowing, ordinary acceptance and exact geometry/history passed`,
+    `${name}: numeric ${kind} invalid/rejected cancellation, Tools borrowing, ordinary acceptance and exact geometry/history passed`,
   );
 }
 export async function sketchFilletSwitchRoute(page, name) {

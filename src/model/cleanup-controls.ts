@@ -64,7 +64,12 @@ export class CleanupControls {
       "cleanup",
       () => this.cancel(),
       () => this.finish(),
-      { navigation: "when-released" },
+      {
+        navigation: "when-released",
+        settled: async () => {
+          await this.running;
+        },
+      },
     );
     if (!this.lease) return;
     // Reopened cleanup has no editable parameters; baseline Undo cancels it.

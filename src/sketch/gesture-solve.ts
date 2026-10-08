@@ -20,7 +20,9 @@ export class GestureSolve {
   constructor(
     private editor: SketchEditor,
     private interaction: InteractionLease,
-  ) {}
+  ) {
+    interaction.settled = () => this.flush();
+  }
   update(sketch: Sketch, intent: EditIntent = { kind: "direct" }): void {
     this.enqueue({ kind: "preview", sketch, intent });
   }

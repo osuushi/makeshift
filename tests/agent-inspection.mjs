@@ -117,13 +117,23 @@ try {
   assert.deepEqual((await inspect(page)).document, before.document);
   assert.deepEqual((await query("selection")).context.camera, selection.context.camera);
   await (await relativeOffsetInput(page)).fill("1");
-  await assert.rejects(() => query("select", "--clear"), /current edit|changed during inspection/);
-
-  await settled(page);
-  await assert.rejects(() => query("selection"), /current edit|changed during inspection/);
-  await page.getByRole("button", { name: "Cancel face offset", exact: true }).click();
-  await settled(page);
+  const acceptedOffset = (await inspect(page)).preview;
+  assert.deepEqual((await query("select", "--clear")).context.selection, []);
+  assert.equal((await inspect(page)).interaction, null);
+  assert.deepEqual((await inspect(page)).document, acceptedOffset);
+  await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before.document);
+  if (app) {
+    await page.getByRole("button", { name: "Offset faces", exact: true }).click();
+    await (await relativeOffsetInput(page)).fill("1");
+    const preview = (await inspect(page)).preview;
+    await writeFile(join(workspace, "modal-acquisition.ts"), "void makeshift.selection;\n");
+    await query("run", "modal-acquisition.ts");
+    assert.equal((await inspect(page)).interaction, null);
+    assert.deepEqual((await inspect(page)).document, preview);
+    await chooseTool(page, "undo", "undo");
+    assert.deepEqual((await inspect(page)).document, before.document);
+  }
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   await settled(page);
   const body = await query("selection");

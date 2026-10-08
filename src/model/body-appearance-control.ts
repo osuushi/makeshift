@@ -1,4 +1,5 @@
 import type { SketchEditor } from "../sketch/editor.js";
+import { toolCatalog } from "../tools/catalog.js";
 import { defaultBodyAppearance } from "./body-appearance.js";
 
 export function bodyAppearanceControl(
@@ -19,9 +20,16 @@ export function bodyAppearanceControl(
       defaultBodyAppearance;
     chip.style.backgroundColor = appearance.color;
     chip.style.opacity = String(appearance.alpha);
-    button.disabled = editor.blocked || !!editor.interactions.current;
+    button.disabled = !!toolCatalog(editor).reason({ reason: () => null });
   });
-  button.onclick = () => openAppearance(editor, id, name, button);
+  button.onclick = () =>
+    void toolCatalog(editor).activate({
+      reason: () => null,
+      run: () => {
+        if (editor.store.data.bodies?.some((body) => body.id === id))
+          openAppearance(editor, id, name, button);
+      },
+    });
   return button;
 }
 

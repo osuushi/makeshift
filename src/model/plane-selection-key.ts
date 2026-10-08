@@ -1,4 +1,5 @@
 import type { SketchEditor } from "../sketch/editor.js";
+import { toolCatalog } from "../tools/catalog.js";
 
 /** World and saved references share entry/clear keys; only saved planes can be deleted. */
 export function planeSelectionKey(
@@ -7,8 +8,7 @@ export function planeSelectionKey(
   actions: { enter: () => void; clear: () => void; remove?: () => void },
 ): void {
   if (
-    editor.blocked ||
-    editor.interactions.current ||
+    toolCatalog(editor).reason({ reason: () => null }) ||
     event.defaultPrevented ||
     event.target instanceof HTMLInputElement ||
     event.target instanceof HTMLTextAreaElement ||

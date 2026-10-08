@@ -265,12 +265,18 @@ export class ConstructionPlaneControls {
     this.editor.refresh();
   }
   private async remove(): Promise<void> {
-    const plane = this.selected();
-    if (!plane || this.editor.blocked || this.editor.interactions.current) return;
-    await this.editor.store.request({ kind: "delete-plane", id: plane.id });
-    this.view.selected = null;
-    this.editor.refresh();
+    await toolCatalog(this.editor).activate({
+      reason: () => null,
+      run: async () => {
+        const plane = this.selected();
+        if (!plane) return;
+        await this.editor.store.request({ kind: "delete-plane", id: plane.id });
+        this.view.selected = null;
+        this.editor.refresh();
+      },
+    });
   }
+
   private update = (): void => {
     const e = this.editor;
     if ((e.modeling.targets.length || e.world.active) && !this.lease) this.view.selected = null;

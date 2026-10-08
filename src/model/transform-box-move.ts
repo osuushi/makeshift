@@ -3,6 +3,7 @@ import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import type { Vector } from "../sketch/planes.js";
+import { toolCatalog } from "../tools/catalog.js";
 import { BufferedPointer } from "./buffered-pointer.js";
 import { MovementShadows } from "./movement-shadows.js";
 import type { ScaleSource } from "./scale.js";
@@ -32,10 +33,7 @@ export class TransformBoxMove {
   private drag: Drag | null = null;
   private handoff: BufferedPointer | null = null;
   private ignoreClick = false;
-  constructor(
-    private editor: SketchEditor,
-    private finishScale: () => Promise<boolean>,
-  ) {
+  constructor(private editor: SketchEditor) {
     this.shadows = new MovementShadows(editor);
     editor.world.changed.add(this.previewHover);
     const options = { signal: this.abort.signal };
@@ -130,12 +128,12 @@ export class TransformBoxMove {
     event.stopImmediatePropagation();
     let released = false;
     let last = { x: event.clientX, y: event.clientY };
-    if (editor.interactions.current?.kind === "scale") {
+    if (editor.interactions.current) {
       const buffer = new BufferedPointer(event, this.abort.signal);
       this.handoff = buffer;
       let finished: boolean;
       try {
-        finished = await this.finishScale();
+        finished = await toolCatalog(editor).activate({ reason: () => null, run: () => true });
       } finally {
         buffer.dispose();
         this.handoff = null;

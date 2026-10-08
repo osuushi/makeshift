@@ -19,7 +19,7 @@ export async function browsePreview(page, kind, original, preview, input) {
   }
 }
 
-export async function rejectPreviewSwitch(page, kind, before, preview, input) {
+export async function rejectPreviewSwitch(page, kind, before, input) {
   const history = await appliedSwitchHistory(page);
   // Reject only ordinary acceptance. Seed, preview and successful retry use the real backend.
   await page.evaluate(async () => {
@@ -42,24 +42,36 @@ export async function rejectPreviewSwitch(page, kind, before, preview, input) {
   try {
     await chooseTool(page, "Rectangle", "rectangle");
     const state = await inspect(page);
-    assert.equal(state.interaction.kind, kind);
-    assert.equal(state.interaction.phase, "editing");
+    assert.equal(state.interaction, null);
     assert.deepEqual(state.document, before.document);
-    assert.deepEqual(state.preview, preview);
-    assert.notEqual(state.tool, "rectangle");
-    assert.ok(
-      await page.locator(".local-feedback").textContent(),
-      "Rejected acceptance shows a clear error",
-    );
-    if (input) assert.equal(await input.inputValue(), "2");
+    assert.equal(state.preview, null);
+    assert.equal(state.tool, "rectangle");
     assert.equal(await page.evaluate(() => window.previewAcceptanceProbe.calls), 1);
-    assert.deepEqual(await appliedSwitchHistory(page), history);
+    assert.deepEqual(
+      (await appliedSwitchHistory(page)).filter((entry) => entry.operation.kind !== "selection"),
+      history.filter((entry) => entry.operation.kind !== "selection"),
+    );
   } finally {
     await page.evaluate(() => {
       window.previewAcceptanceProbe.restore();
       delete window.previewAcceptanceProbe;
     });
   }
+  if (kind === "projection") {
+    await chooseTool(page, "Project", "project");
+    const { pickPlane } = await import("./ui-plane-targets.mjs");
+    await pickPlane(page, "XZ");
+  } else {
+    await page.keyboard.press("v");
+    await chooseTool(page, "select all", "select-all-entities");
+    await chooseTool(
+      page,
+      kind === "fillet" ? "Fillet sketch corner" : "Offset sketch curves",
+      `sketch-${kind}`,
+    );
+    if (input) await input.fill("2");
+  }
+  return (await inspect(page)).preview;
 }
 
 export async function knownPreviewHistory(page, before) {

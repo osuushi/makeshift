@@ -22,7 +22,7 @@ export function readInspectionView(
     const closed = () => finish(new Error("The drawing window closed."));
     const reply = (
       event: Electron.IpcMainEvent,
-      value: { id?: string; view?: InspectionView; error?: string },
+      value: { id?: string; view?: InspectionView; error?: string; pending?: boolean },
     ) => {
       if (
         event.sender !== window.webContents ||
@@ -30,6 +30,11 @@ export function readInspectionView(
         value?.id !== id
       )
         return;
+      // The renderer may await the user's modal Wait/Cancel decision.
+      if (value.pending) {
+        clearTimeout(timer);
+        return;
+      }
       if (value.error) finish(new Error(value.error));
       else if (!value.view || !Array.isArray(value.view.selection))
         finish(new Error("Invalid inspection response."));

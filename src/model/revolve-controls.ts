@@ -118,7 +118,13 @@ export class RevolveControls {
       "revolve",
       () => this.cancel(),
       () => this.finish(),
-      { navigation: "when-released" },
+      {
+        selectsLocally: () => this.picking,
+        navigation: "when-released",
+        settled: async () => {
+          await this.running;
+        },
+      },
     );
     if (!this.lease) return;
     this.hover = null;
