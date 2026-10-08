@@ -44,6 +44,57 @@ test("plane alignment preserves the nearest in-plane half-turn when it is alread
   assert.ok(up.dot(new THREE.Vector3(...planes.XZ.v)) < -0.999999);
 });
 
+test("plane entry retains the nearest quarter turn on either side of coordinate and tilted planes", () => {
+  const tilted = {
+    origin: [7, -4, 12] as [number, number, number],
+    u: [Math.SQRT1_2, Math.SQRT1_2, 0] as [number, number, number],
+    v: [0, 0, 1] as [number, number, number],
+  };
+  for (const frame of [...Object.values(planes), tilted]) {
+    const unchanged = structuredClone(frame);
+    const normal = new THREE.Vector3(...frame.u).cross(new THREE.Vector3(...frame.v));
+    for (const side of [-1, 1]) {
+      for (const quarter of [1, 3]) {
+        for (const offset of [-0.12, 0.12]) {
+          const camera = new THREE.OrthographicCamera();
+          const target = new THREE.Vector3(...frame.origin);
+          camera.position.copy(target).addScaledVector(normal, 120 * side);
+          camera.up.fromArray(frame.v).applyAxisAngle(normal, (quarter * Math.PI) / 2);
+          camera.lookAt(target);
+          const expected = camera.quaternion.clone();
+          camera.up.applyAxisAngle(normal, offset);
+          camera.position.addScaledVector(new THREE.Vector3(...frame.u), 9);
+          camera.lookAt(target);
+          const before = camera.quaternion.clone();
+          const view = { camera, target, height: 80 };
+          const pose = planeCameraPose(view, frame);
+          assert.ok(pose.quaternion.angleTo(expected) < 1e-7);
+          assert.ok(before.angleTo(pose.quaternion) < 0.15, "Entry takes the short turn");
+          applyCameraPose(view, pose);
+          assert.ok(camera.up.dot(new THREE.Vector3(...frame.u)) ** 2 > 0.999999);
+          assert.deepEqual(frame, unchanged, "Camera roll never changes the plane frame");
+        }
+      }
+    }
+  }
+});
+
+test("plane orientation ranking is invariant to quaternion sign", () => {
+  const camera = new THREE.OrthographicCamera();
+  camera.position.set(0, 0, -120);
+  camera.up.set(-1, 0.08, 0).normalize();
+  const view = { camera, target: new THREE.Vector3(), height: 80 };
+  camera.lookAt(view.target);
+  const positive = planeCameraPose(view, planes.XY).quaternion;
+  // lookAt must preserve the quaternion representative for this sign regression.
+  camera.lookAt = () => {};
+  const q = camera.quaternion;
+  q.set(-q.x, -q.y, -q.z, -q.w);
+  const negative = planeCameraPose(view, planes.XY).quaternion;
+  assert.ok(positive.angleTo(negative) < 1e-7);
+  assert.ok(new THREE.Vector3(0, 1, 0).applyQuaternion(negative).x < -0.999999);
+});
+
 test("plane framing carries a region target and orthographic height into one pose", () => {
   const camera = new THREE.OrthographicCamera();
   camera.position.set(55, -70, 65);
