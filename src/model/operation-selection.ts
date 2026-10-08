@@ -15,6 +15,7 @@ export interface DeletionSelection {
   bodyIds: string[];
   sketchIds: string[];
   topology: CleanupSelection[];
+  profiles: { sketch: string; profile: string }[];
 }
 export interface OperationInputs {
   scale: MovementSelection;
@@ -149,12 +150,16 @@ function offsetSelection(
   return available({ targets: c.faces.map(({ body, face }) => ({ body, face })), faces });
 }
 function deletionSelection(c: SelectionContext): Resolution<DeletionSelection> {
-  if (c.ordered.some((t) => t.kind === "profile"))
-    return unavailable("Select whole sketches to delete them");
   return available({
     bodyIds: c.complete.map((b) => b.id),
     sketchIds: c.ordered.flatMap((t) => (t.kind === "sketch" ? [t.sketch] : [])),
     topology: cleanupSelection([...c.partialFaces, ...uncoveredEdges(c)]),
+    profiles: c.ordered.flatMap((t) =>
+      t.kind === "profile" &&
+      !c.ordered.some((other) => other.kind === "sketch" && other.sketch === t.sketch)
+        ? [{ sketch: t.sketch, profile: t.profile.key }]
+        : [],
+    ),
   });
 }
 

@@ -5,6 +5,7 @@ import { bezierRoute } from "./ui-bezier.mjs";
 import { bodyChamferRoute } from "./ui-body-chamfer.mjs";
 import { bodyFilletRoute } from "./ui-body-fillet.mjs";
 import { circleRoute } from "./ui-circle.mjs";
+import { deleteProfilesRoute } from "./ui-delete-profiles.mjs";
 import { extrudeRoute } from "./ui-extrude.mjs";
 import { faceCutReferenceRoute } from "./ui-face-cut-reference.mjs";
 import { faceOffsetRoute } from "./ui-face-offset.mjs";
@@ -37,6 +38,7 @@ await withUiRuntimes(
       bezierRoute,
       pointLinkRoute,
       trimLineRoute,
+      deleteProfilesRoute,
       transformRoute,
       extrudeRoute,
       normalExtrudeRoute,
