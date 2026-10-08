@@ -1,0 +1,59 @@
+diff --git a/native/kernel/offset-geometry.cpp b/native/kernel/offset-geometry.cpp
+index 78c47a8..f9ec316 100644
+--- a/native/kernel/offset-geometry.cpp
++++ b/native/kernel/offset-geometry.cpp
+@@ -12,12 +12,14 @@
+ #include <BOPAlgo_ArgumentAnalyzer.hxx>
+ #include <Geom_OffsetSurface.hxx>
+ #include <GeomAPI_ProjectPointOnSurf.hxx>
++#include <Precision.hxx>
+ #include <TColStd_Array1OfReal.hxx>
+ #include <TopExp.hxx>
+ #include <TopExp_Explorer.hxx>
+ #include <TopTools_IndexedMapOfShape.hxx>
+ #include <TopoDS.hxx>
+ #include <cmath>
++#include <optional>
+ #include <stdexcept>
+ 
+ namespace offset_geometry {
+@@ -101,19 +103,35 @@ void checkParallel(const TopoDS_Face& source, const TopoDS_Face& offset, double
+     Handle(Geom_Surface) expected = expectedOffset->Surface();
+     if (expected.IsNull()) expected = expectedOffset;
+     BRepAdaptor_Surface actual(offset);
++    const auto initializeProjection = [](GeomAPI_ProjectPointOnSurf& projection,
++                                         const Handle(Geom_Surface)& surface) {
++        double uMin, uMax, vMin, vMax;
++        surface->Bounds(uMin, uMax, vMin, vMax);
++        // Match the point/surface constructor; the no-tolerance Init differs.
++        projection.Init(surface, uMin, uMax, vMin, vMax, Precision::Confusion());
++    };
++    GeomAPI_ProjectPointOnSurf projection;
++    std::optional<GeomAPI_ProjectPointOnSurf> basisProjection;
++    bool projectionReady = false;
+     // Include every C2 span for freeform supports, rather than sampling only
+     // three positions over the entire spline. This remains a numerical check,
+     // supplemented by exact BRep validity and whole-skin minimum separation.
+     for (double u : samples(actual, true)) for (double v : samples(actual, false)) {
+         const auto p = actual.Value(u, v);
+-        GeomAPI_ProjectPointOnSurf projection(p, expected);
++        if (!projectionReady) {
++            initializeProjection(projection, expected); projectionReady = true;
++        }
++        projection.Perform(p);
+         require(projection.IsDone() && projection.NbPoints() && projection.LowerDistance() <= boundaryDistanceMm,
+                 std::string(context) + " surface does not match the requested thickness");
+         if (preserveOrientation) {
+-            GeomAPI_ProjectPointOnSurf basisProjection(p, support);
+-            require(basisProjection.IsDone() && basisProjection.NbPoints(),
++            if (!basisProjection) {
++                initializeProjection(basisProjection.emplace(), support);
++            }
++            basisProjection->Perform(p);
++            require(basisProjection->IsDone() && basisProjection->NbPoints(),
+                     std::string(context) + " could not verify surface orientation");
+-            double a, b; basisProjection.LowerDistanceParameters(a, b);
++            double a, b; basisProjection->LowerDistanceParameters(a, b);
+             gp_Pnt point; gp_Vec du, dv, targetU, targetV;
+             support->D1(a, b, point, du, dv);
+             actual.D1(u, v, point, targetU, targetV);

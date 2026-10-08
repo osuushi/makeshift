@@ -1,0 +1,2882 @@
+[
+  {
+    "name": "dense-4",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb1/history1",
+    "n": 40,
+    "medianMs": 11.8719885,
+    "minMs": 10.771399,
+    "maxMs": 18.433756,
+    "p95Ms": 13.420927,
+    "pairedMedianSpeedup": 0.9305737683838406,
+    "bootstrap95": [
+      0.9144712981802954,
+      0.9622345665210452
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 36,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb1/history0",
+    "n": 40,
+    "medianMs": 11.677894,
+    "minMs": 10.871139,
+    "maxMs": 22.424746,
+    "p95Ms": 12.935933,
+    "pairedMedianSpeedup": 0.9492012117525134,
+    "bootstrap95": [
+      0.9200478186825544,
+      0.9687356906198417
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 36,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "fuse",
+    "config": "fuse-batched/obb1/history0",
+    "n": 40,
+    "medianMs": 6.3572334999999995,
+    "minMs": 5.776896,
+    "maxMs": 8.516178,
+    "p95Ms": 7.150513,
+    "pairedMedianSpeedup": 1.7640669259790978,
+    "bootstrap95": [
+      1.6975092475064315,
+      1.799098951297769
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 36,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb0/history1",
+    "n": 40,
+    "medianMs": 11.174408,
+    "minMs": 10.210531,
+    "maxMs": 13.763524,
+    "p95Ms": 12.203735,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 36,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "fuse",
+    "config": "fuse-batched/obb0/history0",
+    "n": 40,
+    "medianMs": 5.9170175,
+    "minMs": 5.432465,
+    "maxMs": 8.628518,
+    "p95Ms": 6.796007,
+    "pairedMedianSpeedup": 1.8619928142716309,
+    "bootstrap95": [
+      1.8219060771058433,
+      1.9244655780732136
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 36,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "fuse",
+    "config": "fuse-batched/obb1/history1",
+    "n": 40,
+    "medianMs": 6.426158,
+    "minMs": 5.827542,
+    "maxMs": 9.321876,
+    "p95Ms": 7.791753,
+    "pairedMedianSpeedup": 1.754256711759394,
+    "bootstrap95": [
+      1.7039871280540697,
+      1.7983362615176457
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 36,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "fuse",
+    "config": "fuse-batched/obb0/history1",
+    "n": 40,
+    "medianMs": 5.947559,
+    "minMs": 5.384493,
+    "maxMs": 7.282062,
+    "p95Ms": 6.352016,
+    "pairedMedianSpeedup": 1.875537342332064,
+    "bootstrap95": [
+      1.8078141613222225,
+      1.957410959968466
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 36,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb0/history0",
+    "n": 40,
+    "medianMs": 10.988126,
+    "minMs": 10.114076,
+    "maxMs": 19.324076,
+    "p95Ms": 12.916092,
+    "pairedMedianSpeedup": 1.0066145372373676,
+    "bootstrap95": [
+      0.9955454725970565,
+      1.0197207699193007
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 36,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "cut",
+    "config": "cut-sequential/obb0/history1",
+    "n": 40,
+    "medianMs": 9.22149,
+    "minMs": 8.659315,
+    "maxMs": 10.641042,
+    "p95Ms": 10.107055,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 10,
+        "edges": 24,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "cut",
+    "config": "cut-batched/obb0/history1",
+    "n": 40,
+    "medianMs": 5.611636000000001,
+    "minMs": 5.021573,
+    "maxMs": 7.337606,
+    "p95Ms": 6.38136,
+    "pairedMedianSpeedup": 1.6729903073071761,
+    "bootstrap95": [
+      1.6045889986684845,
+      1.7304178735000648
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 10,
+        "edges": 24,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "cut",
+    "config": "cut-batched/obb1/history0",
+    "n": 40,
+    "medianMs": 5.9586765,
+    "minMs": 5.370421,
+    "maxMs": 9.25114,
+    "p95Ms": 6.65902,
+    "pairedMedianSpeedup": 1.5570205557886383,
+    "bootstrap95": [
+      1.5069995695811094,
+      1.5837398663440931
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 10,
+        "edges": 24,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "cut",
+    "config": "cut-batched/obb0/history0",
+    "n": 40,
+    "medianMs": 5.5017405,
+    "minMs": 5.003677,
+    "maxMs": 6.471986,
+    "p95Ms": 5.873812,
+    "pairedMedianSpeedup": 1.6939386802186545,
+    "bootstrap95": [
+      1.6586107473723417,
+      1.7437834929288072
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 10,
+        "edges": 24,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "cut",
+    "config": "cut-sequential/obb1/history0",
+    "n": 40,
+    "medianMs": 9.884978,
+    "minMs": 9.153502,
+    "maxMs": 12.894004,
+    "p95Ms": 11.17534,
+    "pairedMedianSpeedup": 0.9309112778180262,
+    "bootstrap95": [
+      0.9097642455390363,
+      0.9426202161984789
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 10,
+        "edges": 24,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "cut",
+    "config": "cut-batched/obb1/history1",
+    "n": 40,
+    "medianMs": 5.957815,
+    "minMs": 5.437553,
+    "maxMs": 7.229782,
+    "p95Ms": 7.178446,
+    "pairedMedianSpeedup": 1.5559546931548325,
+    "bootstrap95": [
+      1.512059139675468,
+      1.6144263756789519
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 10,
+        "edges": 24,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "cut",
+    "config": "cut-sequential/obb1/history1",
+    "n": 40,
+    "medianMs": 10.127295,
+    "minMs": 9.364191,
+    "maxMs": 11.237194,
+    "p95Ms": 10.932914,
+    "pairedMedianSpeedup": 0.9141918436669567,
+    "bootstrap95": [
+      0.89151261401763,
+      0.9506175930409361
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 10,
+        "edges": 24,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "cut",
+    "config": "cut-sequential/obb0/history0",
+    "n": 40,
+    "medianMs": 9.4433305,
+    "minMs": 8.590921,
+    "maxMs": 11.719553,
+    "p95Ms": 10.168838,
+    "pairedMedianSpeedup": 0.9958194971682526,
+    "bootstrap95": [
+      0.9590275794330978,
+      1.028438673420158
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 10,
+        "edges": 24,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "pair",
+    "config": "pair-reused/obb1/history0",
+    "n": 40,
+    "medianMs": 3.1829535,
+    "minMs": 2.860966,
+    "maxMs": 3.772524,
+    "p95Ms": 3.691052,
+    "pairedMedianSpeedup": 1.2699590222514021,
+    "bootstrap95": [
+      1.2236351947342015,
+      1.2977483305791253
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 3,
+        "edges": 3,
+        "solids": 1
+      },
+      {
+        "faces": 7,
+        "edges": 15,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "pair",
+    "config": "pair-separate/obb0/history0",
+    "n": 40,
+    "medianMs": 4.0026425,
+    "minMs": 3.650951,
+    "maxMs": 5.20427,
+    "p95Ms": 4.448577,
+    "pairedMedianSpeedup": 1.0088540971691096,
+    "bootstrap95": [
+      0.9825964341388495,
+      1.0270146744851802
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 3,
+        "edges": 3,
+        "solids": 1
+      },
+      {
+        "faces": 7,
+        "edges": 15,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "pair",
+    "config": "pair-separate/obb0/history1",
+    "n": 40,
+    "medianMs": 3.9960335000000002,
+    "minMs": 3.65634,
+    "maxMs": 5.024859,
+    "p95Ms": 4.359353,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 3,
+        "edges": 3,
+        "solids": 1
+      },
+      {
+        "faces": 7,
+        "edges": 15,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "pair",
+    "config": "pair-reused/obb0/history0",
+    "n": 40,
+    "medianMs": 2.9623005,
+    "minMs": 2.788998,
+    "maxMs": 3.668447,
+    "p95Ms": 3.479942,
+    "pairedMedianSpeedup": 1.3091215678284736,
+    "bootstrap95": [
+      1.2817582612944596,
+      1.381222771789278
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 3,
+        "edges": 3,
+        "solids": 1
+      },
+      {
+        "faces": 7,
+        "edges": 15,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "pair",
+    "config": "pair-separate/obb1/history0",
+    "n": 40,
+    "medianMs": 4.2957505000000005,
+    "minMs": 3.867748,
+    "maxMs": 5.742104,
+    "p95Ms": 5.45497,
+    "pairedMedianSpeedup": 0.8972502785395837,
+    "bootstrap95": [
+      0.8709955199002076,
+      0.946613433093006
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 3,
+        "edges": 3,
+        "solids": 1
+      },
+      {
+        "faces": 7,
+        "edges": 15,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "pair",
+    "config": "pair-separate/obb1/history1",
+    "n": 40,
+    "medianMs": 4.262805999999999,
+    "minMs": 3.918576,
+    "maxMs": 6.771991,
+    "p95Ms": 4.783835,
+    "pairedMedianSpeedup": 0.9324664090555996,
+    "bootstrap95": [
+      0.9160692063170219,
+      0.9687537699269082
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 3,
+        "edges": 3,
+        "solids": 1
+      },
+      {
+        "faces": 7,
+        "edges": 15,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "pair",
+    "config": "pair-reused/obb0/history1",
+    "n": 40,
+    "medianMs": 3.0171780000000004,
+    "minMs": 2.794005,
+    "maxMs": 3.916292,
+    "p95Ms": 3.579163,
+    "pairedMedianSpeedup": 1.3122504701123905,
+    "bootstrap95": [
+      1.2817224808208643,
+      1.350779634357789
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 3,
+        "edges": 3,
+        "solids": 1
+      },
+      {
+        "faces": 7,
+        "edges": 15,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-4",
+    "kind": "pair",
+    "config": "pair-reused/obb1/history1",
+    "n": 40,
+    "medianMs": 3.1989520000000002,
+    "minMs": 2.918623,
+    "maxMs": 5.046401,
+    "p95Ms": 4.04713,
+    "pairedMedianSpeedup": 1.269217804189519,
+    "bootstrap95": [
+      1.2098190280720025,
+      1.3013253936713938
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 3,
+        "edges": 3,
+        "solids": 1
+      },
+      {
+        "faces": 7,
+        "edges": 15,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-16",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb0/history0",
+    "n": 40,
+    "medianMs": 72.2203,
+    "minMs": 68.471216,
+    "maxMs": 84.25141,
+    "p95Ms": 76.414803,
+    "pairedMedianSpeedup": 1.011259649525337,
+    "bootstrap95": [
+      0.9972237808384178,
+      1.0165699042533476
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 70,
+        "edges": 108,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-16",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb1/history0",
+    "n": 40,
+    "medianMs": 77.08500599999999,
+    "minMs": 73.450547,
+    "maxMs": 97.397682,
+    "p95Ms": 83.889022,
+    "pairedMedianSpeedup": 0.9458829435815604,
+    "bootstrap95": [
+      0.9357808612651265,
+      0.9599679997538267
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 70,
+        "edges": 108,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-16",
+    "kind": "fuse",
+    "config": "fuse-batched/obb1/history1",
+    "n": 40,
+    "medianMs": 20.672141,
+    "minMs": 20.074398,
+    "maxMs": 25.986769,
+    "p95Ms": 22.882474,
+    "pairedMedianSpeedup": 3.5023322683794,
+    "bootstrap95": [
+      3.452327654077214,
+      3.575018013451648
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 70,
+        "edges": 108,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-16",
+    "kind": "fuse",
+    "config": "fuse-batched/obb0/history0",
+    "n": 40,
+    "medianMs": 19.551352,
+    "minMs": 18.2311,
+    "maxMs": 24.176171,
+    "p95Ms": 22.043015,
+    "pairedMedianSpeedup": 3.780710308664528,
+    "bootstrap95": [
+      3.6916451813101414,
+      3.818091108962988
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 70,
+        "edges": 108,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-16",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb1/history1",
+    "n": 40,
+    "medianMs": 78.36658299999999,
+    "minMs": 73.843335,
+    "maxMs": 87.16862,
+    "p95Ms": 83.624106,
+    "pairedMedianSpeedup": 0.9303339756627929,
+    "bootstrap95": [
+      0.9223977416171638,
+      0.9443467805908798
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 70,
+        "edges": 108,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-16",
+    "kind": "fuse",
+    "config": "fuse-batched/obb1/history0",
+    "n": 40,
+    "medianMs": 20.877903,
+    "minMs": 19.682674,
+    "maxMs": 27.228387,
+    "p95Ms": 22.818868,
+    "pairedMedianSpeedup": 3.495250822800325,
+    "bootstrap95": [
+      3.4341917319764867,
+      3.5687426548130317
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 70,
+        "edges": 108,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-16",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb0/history1",
+    "n": 40,
+    "medianMs": 72.72272,
+    "minMs": 69.116141,
+    "maxMs": 107.842535,
+    "p95Ms": 89.016396,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 70,
+        "edges": 108,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-16",
+    "kind": "fuse",
+    "config": "fuse-batched/obb0/history1",
+    "n": 40,
+    "medianMs": 19.6725545,
+    "minMs": 18.522371,
+    "maxMs": 23.58785,
+    "p95Ms": 21.621358,
+    "pairedMedianSpeedup": 3.7215886529851634,
+    "bootstrap95": [
+      3.6850942713049584,
+      3.781782565366507
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 70,
+        "edges": 108,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-16",
+    "kind": "cut",
+    "config": "cut-batched/obb0/history1",
+    "n": 40,
+    "medianMs": 18.768783,
+    "minMs": 17.582008,
+    "maxMs": 21.871005,
+    "p95Ms": 20.081399,
+    "pairedMedianSpeedup": 2.8430634105585337,
+    "bootstrap95": [
+      2.8153627630101887,
+      2.895861586303881
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 60,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-16",
+    "kind": "cut",
+    "config": "cut-sequential/obb1/history1",
+    "n": 40,
+    "medianMs": 58.0472125,
+    "minMs": 54.71247,
+    "maxMs": 74.222855,
+    "p95Ms": 65.91386,
+    "pairedMedianSpeedup": 0.9147070623567379,
+    "bootstrap95": [
+      0.9030636673836607,
+      0.9252501362093408
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 60,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-16",
+    "kind": "cut",
+    "config": "cut-sequential/obb0/history0",
+    "n": 40,
+    "medianMs": 52.0917935,
+    "minMs": 50.235279,
+    "maxMs": 65.436598,
+    "p95Ms": 62.264911,
+    "pairedMedianSpeedup": 1.0108671832106886,
+    "bootstrap95": [
+      1.0006581847722609,
+      1.0220106268603368
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 60,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-16",
+    "kind": "cut",
+    "config": "cut-sequential/obb0/history1",
+    "n": 40,
+    "medianMs": 53.485643499999995,
+    "minMs": 50.532849,
+    "maxMs": 60.456166,
+    "p95Ms": 58.315758,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 60,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-16",
+    "kind": "cut",
+    "config": "cut-batched/obb0/history0",
+    "n": 40,
+    "medianMs": 18.487378,
+    "minMs": 17.259099,
+    "maxMs": 22.947202,
+    "p95Ms": 21.098567,
+    "pairedMedianSpeedup": 2.8990598287437743,
+    "bootstrap95": [
+      2.8340112252661287,
+      2.923445782439842
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 60,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-16",
+    "kind": "cut",
+    "config": "cut-batched/obb1/history1",
+    "n": 40,
+    "medianMs": 20.108128,
+    "minMs": 18.922906,
+    "maxMs": 24.45989,
+    "p95Ms": 21.598642,
+    "pairedMedianSpeedup": 2.653343085023557,
+    "bootstrap95": [
+      2.6137530971007434,
+      2.6730070641919865
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 60,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-16",
+    "kind": "cut",
+    "config": "cut-sequential/obb1/history0",
+    "n": 40,
+    "medianMs": 56.6796435,
+    "minMs": 54.248929,
+    "maxMs": 88.804666,
+    "p95Ms": 62.607239,
+    "pairedMedianSpeedup": 0.9281787466384953,
+    "bootstrap95": [
+      0.9183502372136053,
+      0.9405198888533489
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 60,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "dense-16",
+    "kind": "cut",
+    "config": "cut-batched/obb1/history0",
+    "n": 40,
+    "medianMs": 19.9027485,
+    "minMs": 18.778798,
+    "maxMs": 30.861902,
+    "p95Ms": 23.38255,
+    "pairedMedianSpeedup": 2.6737230798076768,
+    "bootstrap95": [
+      2.6406062561376036,
+      2.708711692673296
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 60,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "fuse",
+    "config": "fuse-batched/obb0/history1",
+    "n": 40,
+    "medianMs": 0.6607345,
+    "minMs": 0.610283,
+    "maxMs": 0.928014,
+    "p95Ms": 0.779408,
+    "pairedMedianSpeedup": 3.1335018275243445,
+    "bootstrap95": [
+      3.0812855596386095,
+      3.1887136225848396
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 18,
+        "edges": 24,
+        "solids": 5
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb0/history0",
+    "n": 40,
+    "medianMs": 1.9918925,
+    "minMs": 1.927235,
+    "maxMs": 2.899454,
+    "p95Ms": 2.352747,
+    "pairedMedianSpeedup": 1.0239109174096175,
+    "bootstrap95": [
+      1.0018720938221657,
+      1.0302692811989058
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 18,
+        "edges": 24,
+        "solids": 5
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "fuse",
+    "config": "fuse-batched/obb0/history0",
+    "n": 40,
+    "medianMs": 0.6483805,
+    "minMs": 0.604404,
+    "maxMs": 0.838608,
+    "p95Ms": 0.739248,
+    "pairedMedianSpeedup": 3.2109477202802816,
+    "bootstrap95": [
+      3.1281415327213065,
+      3.2989261587949317
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 18,
+        "edges": 24,
+        "solids": 5
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb0/history1",
+    "n": 40,
+    "medianMs": 2.05341,
+    "minMs": 1.979474,
+    "maxMs": 3.567615,
+    "p95Ms": 2.290013,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 18,
+        "edges": 24,
+        "solids": 5
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb1/history1",
+    "n": 40,
+    "medianMs": 2.0798845000000004,
+    "minMs": 1.974706,
+    "maxMs": 3.413562,
+    "p95Ms": 2.415142,
+    "pairedMedianSpeedup": 0.9870221004586658,
+    "bootstrap95": [
+      0.9708254851033504,
+      1.000172916220984
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 18,
+        "edges": 24,
+        "solids": 5
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "fuse",
+    "config": "fuse-batched/obb1/history0",
+    "n": 40,
+    "medianMs": 0.6511695,
+    "minMs": 0.596181,
+    "maxMs": 0.987804,
+    "p95Ms": 0.888694,
+    "pairedMedianSpeedup": 3.155268089881134,
+    "bootstrap95": [
+      3.1103281577724586,
+      3.2417622855305153
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 18,
+        "edges": 24,
+        "solids": 5
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb1/history0",
+    "n": 40,
+    "medianMs": 1.9915965,
+    "minMs": 1.923118,
+    "maxMs": 3.219218,
+    "p95Ms": 2.311475,
+    "pairedMedianSpeedup": 1.030991142435703,
+    "bootstrap95": [
+      1.0039642007301106,
+      1.0419654954543827
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 18,
+        "edges": 24,
+        "solids": 5
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "fuse",
+    "config": "fuse-batched/obb1/history1",
+    "n": 40,
+    "medianMs": 0.6638785,
+    "minMs": 0.616723,
+    "maxMs": 1.003718,
+    "p95Ms": 0.885699,
+    "pairedMedianSpeedup": 3.108120233486182,
+    "bootstrap95": [
+      3.0001766968899766,
+      3.2211938566487106
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 18,
+        "edges": 24,
+        "solids": 5
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "cut",
+    "config": "cut-sequential/obb1/history0",
+    "n": 40,
+    "medianMs": 1.4086400000000001,
+    "minMs": 1.334488,
+    "maxMs": 2.082389,
+    "p95Ms": 1.850108,
+    "pairedMedianSpeedup": 1.0314901408926769,
+    "bootstrap95": [
+      0.9914809312636352,
+      1.046497273706514
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "cut",
+    "config": "cut-sequential/obb0/history0",
+    "n": 40,
+    "medianMs": 1.3995009999999999,
+    "minMs": 1.336971,
+    "maxMs": 2.25485,
+    "p95Ms": 1.698809,
+    "pairedMedianSpeedup": 1.045352550504398,
+    "bootstrap95": [
+      1.022790719392337,
+      1.063767521456997
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "cut",
+    "config": "cut-batched/obb1/history1",
+    "n": 40,
+    "medianMs": 0.602411,
+    "minMs": 0.546787,
+    "maxMs": 1.107505,
+    "p95Ms": 0.83312,
+    "pairedMedianSpeedup": 2.4144297847076803,
+    "bootstrap95": [
+      2.356680688134075,
+      2.531847836507027
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "cut",
+    "config": "cut-sequential/obb0/history1",
+    "n": 40,
+    "medianMs": 1.449402,
+    "minMs": 1.384254,
+    "maxMs": 2.516932,
+    "p95Ms": 1.629935,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "cut",
+    "config": "cut-sequential/obb1/history1",
+    "n": 40,
+    "medianMs": 1.4512795,
+    "minMs": 1.378204,
+    "maxMs": 1.945752,
+    "p95Ms": 1.698819,
+    "pairedMedianSpeedup": 1.006707249969868,
+    "bootstrap95": [
+      0.9612796078502488,
+      1.021682278203135
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "cut",
+    "config": "cut-batched/obb1/history0",
+    "n": 40,
+    "medianMs": 0.5705674999999999,
+    "minMs": 0.534388,
+    "maxMs": 0.966932,
+    "p95Ms": 0.738607,
+    "pairedMedianSpeedup": 2.5006633620489938,
+    "bootstrap95": [
+      2.4473847159288313,
+      2.601627155531346
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "cut",
+    "config": "cut-batched/obb0/history1",
+    "n": 40,
+    "medianMs": 0.5873385,
+    "minMs": 0.544454,
+    "maxMs": 0.764847,
+    "p95Ms": 0.708552,
+    "pairedMedianSpeedup": 2.4802657216522137,
+    "bootstrap95": [
+      2.408792959422551,
+      2.5580524685296506
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "cut",
+    "config": "cut-batched/obb0/history0",
+    "n": 40,
+    "medianMs": 0.5728265,
+    "minMs": 0.535199,
+    "maxMs": 0.81991,
+    "p95Ms": 0.631515,
+    "pairedMedianSpeedup": 2.557594022864575,
+    "bootstrap95": [
+      2.4919562570447074,
+      2.6005617703037323
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "pair",
+    "config": "pair-reused/obb0/history0",
+    "n": 40,
+    "medianMs": 0.4643775,
+    "minMs": 0.414416,
+    "maxMs": 0.748532,
+    "p95Ms": 0.557203,
+    "pairedMedianSpeedup": 1.4641582936669417,
+    "bootstrap95": [
+      1.4414051917304809,
+      1.5006992801707608
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 0,
+        "edges": 0,
+        "solids": 0
+      },
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "pair",
+    "config": "pair-separate/obb0/history0",
+    "n": 40,
+    "medianMs": 0.6568835,
+    "minMs": 0.604724,
+    "maxMs": 1.225613,
+    "p95Ms": 0.76029,
+    "pairedMedianSpeedup": 1.0320926023776487,
+    "bootstrap95": [
+      0.9913982170447313,
+      1.0645588084035018
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 0,
+        "edges": 0,
+        "solids": 0
+      },
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "pair",
+    "config": "pair-separate/obb1/history1",
+    "n": 40,
+    "medianMs": 0.6876445,
+    "minMs": 0.613798,
+    "maxMs": 1.232765,
+    "p95Ms": 0.91958,
+    "pairedMedianSpeedup": 0.999977179466276,
+    "bootstrap95": [
+      0.9436708806195268,
+      1.0441566128415598
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 0,
+        "edges": 0,
+        "solids": 0
+      },
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "pair",
+    "config": "pair-reused/obb1/history0",
+    "n": 40,
+    "medianMs": 0.4588335,
+    "minMs": 0.4161,
+    "maxMs": 0.796225,
+    "p95Ms": 0.55552,
+    "pairedMedianSpeedup": 1.4570823826417907,
+    "bootstrap95": [
+      1.3907877720863875,
+      1.5146458774296085
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 0,
+        "edges": 0,
+        "solids": 0
+      },
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "pair",
+    "config": "pair-reused/obb1/history1",
+    "n": 40,
+    "medianMs": 0.4763505,
+    "minMs": 0.439144,
+    "maxMs": 1.033333,
+    "p95Ms": 0.629161,
+    "pairedMedianSpeedup": 1.3925159696851788,
+    "bootstrap95": [
+      1.314113400183715,
+      1.455529394598127
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 0,
+        "edges": 0,
+        "solids": 0
+      },
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "pair",
+    "config": "pair-separate/obb0/history1",
+    "n": 40,
+    "medianMs": 0.6716405000000001,
+    "minMs": 0.620649,
+    "maxMs": 1.127254,
+    "p95Ms": 0.97838,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 0,
+        "edges": 0,
+        "solids": 0
+      },
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "pair",
+    "config": "pair-reused/obb0/history1",
+    "n": 40,
+    "medianMs": 0.4713025,
+    "minMs": 0.437351,
+    "maxMs": 0.755692,
+    "p95Ms": 0.544483,
+    "pairedMedianSpeedup": 1.4371607453890003,
+    "bootstrap95": [
+      1.4133189981227345,
+      1.4755096117976194
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 0,
+        "edges": 0,
+        "solids": 0
+      },
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-4",
+    "kind": "pair",
+    "config": "pair-separate/obb1/history0",
+    "n": 40,
+    "medianMs": 0.6431675,
+    "minMs": 0.609231,
+    "maxMs": 1.080675,
+    "p95Ms": 0.95261,
+    "pairedMedianSpeedup": 1.0276274346474006,
+    "bootstrap95": [
+      0.9992655574873687,
+      1.0784037687342876
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 0,
+        "edges": 0,
+        "solids": 0
+      },
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-16",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb0/history1",
+    "n": 40,
+    "medianMs": 15.8930895,
+    "minMs": 15.32165,
+    "maxMs": 17.337158,
+    "p95Ms": 17.069874,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 54,
+        "edges": 60,
+        "solids": 17
+      }
+    ]
+  },
+  {
+    "name": "sparse-16",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb0/history0",
+    "n": 40,
+    "medianMs": 15.2997675,
+    "minMs": 14.935746,
+    "maxMs": 20.218105,
+    "p95Ms": 17.326852,
+    "pairedMedianSpeedup": 1.0264156309758372,
+    "bootstrap95": [
+      1.018784408179611,
+      1.0473188689508615
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 54,
+        "edges": 60,
+        "solids": 17
+      }
+    ]
+  },
+  {
+    "name": "sparse-16",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb1/history0",
+    "n": 40,
+    "medianMs": 15.2512235,
+    "minMs": 14.886151,
+    "maxMs": 21.416897,
+    "p95Ms": 17.92048,
+    "pairedMedianSpeedup": 1.0329619189736934,
+    "bootstrap95": [
+      1.0165399146140834,
+      1.0425927930585217
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 54,
+        "edges": 60,
+        "solids": 17
+      }
+    ]
+  },
+  {
+    "name": "sparse-16",
+    "kind": "fuse",
+    "config": "fuse-batched/obb0/history0",
+    "n": 40,
+    "medianMs": 1.6236045,
+    "minMs": 1.497865,
+    "maxMs": 3.923954,
+    "p95Ms": 1.879242,
+    "pairedMedianSpeedup": 10.12406762222145,
+    "bootstrap95": [
+      9.48849250672048,
+      10.267923134765056
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 54,
+        "edges": 60,
+        "solids": 17
+      }
+    ]
+  },
+  {
+    "name": "sparse-16",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb1/history1",
+    "n": 40,
+    "medianMs": 15.838281,
+    "minMs": 15.335722,
+    "maxMs": 16.942191,
+    "p95Ms": 16.550087,
+    "pairedMedianSpeedup": 1.0058061909600713,
+    "bootstrap95": [
+      0.9924865321768728,
+      1.0133850796918988
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 54,
+        "edges": 60,
+        "solids": 17
+      }
+    ]
+  },
+  {
+    "name": "sparse-16",
+    "kind": "fuse",
+    "config": "fuse-batched/obb1/history0",
+    "n": 40,
+    "medianMs": 1.618157,
+    "minMs": 1.502763,
+    "maxMs": 2.02938,
+    "p95Ms": 1.908406,
+    "pairedMedianSpeedup": 10.014564854568114,
+    "bootstrap95": [
+      9.70434046052058,
+      10.23079212948539
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 54,
+        "edges": 60,
+        "solids": 17
+      }
+    ]
+  },
+  {
+    "name": "sparse-16",
+    "kind": "fuse",
+    "config": "fuse-batched/obb0/history1",
+    "n": 40,
+    "medianMs": 1.6622335,
+    "minMs": 1.535572,
+    "maxMs": 3.414273,
+    "p95Ms": 2.116781,
+    "pairedMedianSpeedup": 9.769285728402753,
+    "bootstrap95": [
+      9.400600452664355,
+      9.949695432500643
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 54,
+        "edges": 60,
+        "solids": 17
+      }
+    ]
+  },
+  {
+    "name": "sparse-16",
+    "kind": "fuse",
+    "config": "fuse-batched/obb1/history1",
+    "n": 40,
+    "medianMs": 1.678283,
+    "minMs": 1.530615,
+    "maxMs": 1.857279,
+    "p95Ms": 1.855195,
+    "pairedMedianSpeedup": 9.428443434320894,
+    "bootstrap95": [
+      9.222120126021144,
+      9.958944213882639
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 54,
+        "edges": 60,
+        "solids": 17
+      }
+    ]
+  },
+  {
+    "name": "sparse-16",
+    "kind": "cut",
+    "config": "cut-sequential/obb1/history0",
+    "n": 40,
+    "medianMs": 5.3614085,
+    "minMs": 5.132712,
+    "maxMs": 6.821596,
+    "p95Ms": 5.769406,
+    "pairedMedianSpeedup": 1.0345948692852267,
+    "bootstrap95": [
+      1.0177990186608885,
+      1.051019610189802
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-16",
+    "kind": "cut",
+    "config": "cut-sequential/obb1/history1",
+    "n": 40,
+    "medianMs": 5.554985,
+    "minMs": 5.320796,
+    "maxMs": 8.53052,
+    "p95Ms": 6.124983,
+    "pairedMedianSpeedup": 1.0027147862682095,
+    "bootstrap95": [
+      0.9829939654465503,
+      1.0198816838684235
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-16",
+    "kind": "cut",
+    "config": "cut-batched/obb0/history0",
+    "n": 40,
+    "medianMs": 1.360938,
+    "minMs": 1.230731,
+    "maxMs": 1.659079,
+    "p95Ms": 1.52775,
+    "pairedMedianSpeedup": 4.114831363077773,
+    "bootstrap95": [
+      3.9752227334223766,
+      4.235394497467629
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-16",
+    "kind": "cut",
+    "config": "cut-sequential/obb0/history0",
+    "n": 40,
+    "medianMs": 5.4419045,
+    "minMs": 5.155716,
+    "maxMs": 6.137712,
+    "p95Ms": 5.961214,
+    "pairedMedianSpeedup": 1.0303592030436564,
+    "bootstrap95": [
+      1.0133513967450185,
+      1.0460700373449785
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-16",
+    "kind": "cut",
+    "config": "cut-batched/obb1/history0",
+    "n": 40,
+    "medianMs": 1.3697815,
+    "minMs": 1.228588,
+    "maxMs": 10.73947,
+    "p95Ms": 1.676495,
+    "pairedMedianSpeedup": 4.096446208918166,
+    "bootstrap95": [
+      3.990514210200867,
+      4.2609732350017495
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-16",
+    "kind": "cut",
+    "config": "cut-batched/obb0/history1",
+    "n": 40,
+    "medianMs": 1.4008734999999999,
+    "minMs": 1.260746,
+    "maxMs": 1.773202,
+    "p95Ms": 1.688724,
+    "pairedMedianSpeedup": 4.060493557648604,
+    "bootstrap95": [
+      3.9392914387038664,
+      4.221373170270777
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-16",
+    "kind": "cut",
+    "config": "cut-batched/obb1/history1",
+    "n": 40,
+    "medianMs": 1.3934925,
+    "minMs": 1.258362,
+    "maxMs": 1.632439,
+    "p95Ms": 1.591166,
+    "pairedMedianSpeedup": 4.01617117823856,
+    "bootstrap95": [
+      3.9318405803593937,
+      4.228515441678841
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "sparse-16",
+    "kind": "cut",
+    "config": "cut-sequential/obb0/history1",
+    "n": 40,
+    "medianMs": 5.558776,
+    "minMs": 5.32967,
+    "maxMs": 11.882964,
+    "p95Ms": 6.508653,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 6,
+        "edges": 12,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "fuse",
+    "config": "fuse-batched/obb1/history0",
+    "n": 40,
+    "medianMs": 11.5710265,
+    "minMs": 11.344066,
+    "maxMs": 16.892776,
+    "p95Ms": 12.661876,
+    "pairedMedianSpeedup": 1.5739545204973948,
+    "bootstrap95": [
+      1.5580974910754235,
+      1.5923195426345895
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 36,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb1/history0",
+    "n": 40,
+    "medianMs": 18.444905499999997,
+    "minMs": 17.989374,
+    "maxMs": 26.413239,
+    "p95Ms": 20.554988,
+    "pairedMedianSpeedup": 0.9949787713370558,
+    "bootstrap95": [
+      0.9817913234407278,
+      1.0064571790420407
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 36,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb0/history1",
+    "n": 40,
+    "medianMs": 18.331527,
+    "minMs": 17.868519,
+    "maxMs": 22.540293,
+    "p95Ms": 20.924737,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 36,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "fuse",
+    "config": "fuse-batched/obb0/history0",
+    "n": 40,
+    "medianMs": 11.4211255,
+    "minMs": 11.212395,
+    "maxMs": 16.6011,
+    "p95Ms": 13.447425,
+    "pairedMedianSpeedup": 1.5986593008452652,
+    "bootstrap95": [
+      1.575026054259642,
+      1.6224779825375295
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 36,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb1/history1",
+    "n": 40,
+    "medianMs": 18.802620500000003,
+    "minMs": 18.056193,
+    "maxMs": 36.91821,
+    "p95Ms": 23.110258,
+    "pairedMedianSpeedup": 0.9883615110250108,
+    "bootstrap95": [
+      0.9768297420059233,
+      0.9924867872385746
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 36,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "fuse",
+    "config": "fuse-batched/obb0/history1",
+    "n": 40,
+    "medianMs": 11.532785,
+    "minMs": 11.176029,
+    "maxMs": 16.117172,
+    "p95Ms": 13.634158,
+    "pairedMedianSpeedup": 1.5925818125160345,
+    "bootstrap95": [
+      1.5809249412192536,
+      1.6080892532511069
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 36,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb0/history0",
+    "n": 40,
+    "medianMs": 18.307176499999997,
+    "minMs": 17.760426,
+    "maxMs": 38.716609,
+    "p95Ms": 20.156192,
+    "pairedMedianSpeedup": 1.0090404615016082,
+    "bootstrap95": [
+      0.9976642153787334,
+      1.014093303081931
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 36,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "fuse",
+    "config": "fuse-batched/obb1/history1",
+    "n": 40,
+    "medianMs": 11.800464,
+    "minMs": 11.418506,
+    "maxMs": 16.948647,
+    "p95Ms": 13.148492,
+    "pairedMedianSpeedup": 1.555714645976145,
+    "bootstrap95": [
+      1.5383326755701352,
+      1.579254969120368
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 36,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "cut",
+    "config": "cut-batched/obb0/history1",
+    "n": 40,
+    "medianMs": 11.101748,
+    "minMs": 10.854046,
+    "maxMs": 12.945947,
+    "p95Ms": 12.608226,
+    "pairedMedianSpeedup": 1.415177686773309,
+    "bootstrap95": [
+      1.403256511242928,
+      1.4327876910336466
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 10,
+        "edges": 24,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "cut",
+    "config": "cut-batched/obb1/history0",
+    "n": 40,
+    "medianMs": 11.2366265,
+    "minMs": 11.019663,
+    "maxMs": 16.58565,
+    "p95Ms": 13.590541,
+    "pairedMedianSpeedup": 1.3913983069179965,
+    "bootstrap95": [
+      1.3830501343413641,
+      1.4189666730551571
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 10,
+        "edges": 24,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "cut",
+    "config": "cut-batched/obb0/history0",
+    "n": 40,
+    "medianMs": 11.083636,
+    "minMs": 10.835495,
+    "maxMs": 12.80369,
+    "p95Ms": 12.337587,
+    "pairedMedianSpeedup": 1.4211066638770566,
+    "bootstrap95": [
+      1.4058794865289497,
+      1.4350199082886725
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 10,
+        "edges": 24,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "cut",
+    "config": "cut-sequential/obb1/history1",
+    "n": 40,
+    "medianMs": 16.049404,
+    "minMs": 15.75269,
+    "maxMs": 18.322735,
+    "p95Ms": 17.329496,
+    "pairedMedianSpeedup": 0.9921348330777875,
+    "bootstrap95": [
+      0.9808899988973252,
+      0.9999690220698911
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 10,
+        "edges": 24,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "cut",
+    "config": "cut-sequential/obb1/history0",
+    "n": 40,
+    "medianMs": 16.0711625,
+    "minMs": 15.645958,
+    "maxMs": 18.427161,
+    "p95Ms": 17.786403,
+    "pairedMedianSpeedup": 0.9853994078899679,
+    "bootstrap95": [
+      0.9819507457196563,
+      0.9945690407182042
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 10,
+        "edges": 24,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "cut",
+    "config": "cut-batched/obb1/history1",
+    "n": 40,
+    "medianMs": 11.3514145,
+    "minMs": 11.007264,
+    "maxMs": 15.27496,
+    "p95Ms": 13.097327,
+    "pairedMedianSpeedup": 1.3935286994620248,
+    "bootstrap95": [
+      1.3822531044479516,
+      1.4040209338056924
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 10,
+        "edges": 24,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "cut",
+    "config": "cut-sequential/obb0/history1",
+    "n": 40,
+    "medianMs": 15.866513,
+    "minMs": 15.349279,
+    "maxMs": 18.295353,
+    "p95Ms": 17.70507,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 10,
+        "edges": 24,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "cut",
+    "config": "cut-sequential/obb0/history0",
+    "n": 40,
+    "medianMs": 15.581375999999999,
+    "minMs": 15.259184,
+    "maxMs": 19.256625,
+    "p95Ms": 17.393399,
+    "pairedMedianSpeedup": 1.0086943618602924,
+    "bootstrap95": [
+      1.0032758336295098,
+      1.017890337537536
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 10,
+        "edges": 24,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "pair",
+    "config": "pair-separate/obb1/history0",
+    "n": 40,
+    "medianMs": 6.8231975,
+    "minMs": 6.627001,
+    "maxMs": 7.874622,
+    "p95Ms": 7.62855,
+    "pairedMedianSpeedup": 0.9690079005268787,
+    "bootstrap95": [
+      0.9603219965867111,
+      0.9844639274207831
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 3,
+        "edges": 3,
+        "solids": 1
+      },
+      {
+        "faces": 7,
+        "edges": 15,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "pair",
+    "config": "pair-reused/obb1/history0",
+    "n": 40,
+    "medianMs": 4.838055499999999,
+    "minMs": 4.705355,
+    "maxMs": 6.652806,
+    "p95Ms": 5.463559,
+    "pairedMedianSpeedup": 1.3752845192106191,
+    "bootstrap95": [
+      1.3546666655898076,
+      1.3853310713889484
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 3,
+        "edges": 3,
+        "solids": 1
+      },
+      {
+        "faces": 7,
+        "edges": 15,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "pair",
+    "config": "pair-separate/obb1/history1",
+    "n": 40,
+    "medianMs": 6.839448,
+    "minMs": 6.691133,
+    "maxMs": 15.109519,
+    "p95Ms": 7.99478,
+    "pairedMedianSpeedup": 0.967190223730663,
+    "bootstrap95": [
+      0.9564594105606389,
+      0.9778030730958389
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 3,
+        "edges": 3,
+        "solids": 1
+      },
+      {
+        "faces": 7,
+        "edges": 15,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "pair",
+    "config": "pair-reused/obb1/history1",
+    "n": 40,
+    "medianMs": 4.8648109999999996,
+    "minMs": 4.749933,
+    "maxMs": 12.288072,
+    "p95Ms": 5.740656,
+    "pairedMedianSpeedup": 1.3612890669191589,
+    "bootstrap95": [
+      1.3453862130347298,
+      1.3707878740167716
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 3,
+        "edges": 3,
+        "solids": 1
+      },
+      {
+        "faces": 7,
+        "edges": 15,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "pair",
+    "config": "pair-separate/obb0/history0",
+    "n": 40,
+    "medianMs": 6.5931865,
+    "minMs": 6.387879,
+    "maxMs": 8.346616,
+    "p95Ms": 7.910888,
+    "pairedMedianSpeedup": 0.9970526371191628,
+    "bootstrap95": [
+      0.9878150072866969,
+      1.0151465632424712
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 3,
+        "edges": 3,
+        "solids": 1
+      },
+      {
+        "faces": 7,
+        "edges": 15,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "pair",
+    "config": "pair-separate/obb0/history1",
+    "n": 40,
+    "medianMs": 6.609109,
+    "minMs": 6.463167,
+    "maxMs": 7.862152,
+    "p95Ms": 7.28479,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 3,
+        "edges": 3,
+        "solids": 1
+      },
+      {
+        "faces": 7,
+        "edges": 15,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "pair",
+    "config": "pair-reused/obb0/history0",
+    "n": 40,
+    "medianMs": 4.7187055,
+    "minMs": 4.593857,
+    "maxMs": 6.138844,
+    "p95Ms": 5.431314,
+    "pairedMedianSpeedup": 1.402051466018298,
+    "bootstrap95": [
+      1.3927179447606264,
+      1.4193975065925137
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 3,
+        "edges": 3,
+        "solids": 1
+      },
+      {
+        "faces": 7,
+        "edges": 15,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-4",
+    "kind": "pair",
+    "config": "pair-reused/obb0/history1",
+    "n": 40,
+    "medianMs": 4.7318635,
+    "minMs": 4.614908,
+    "maxMs": 5.877237,
+    "p95Ms": 5.720747,
+    "pairedMedianSpeedup": 1.3969446452756005,
+    "bootstrap95": [
+      1.3884596249138146,
+      1.4073308730447278
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 3,
+        "edges": 3,
+        "solids": 1
+      },
+      {
+        "faces": 7,
+        "edges": 15,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-16",
+    "kind": "fuse",
+    "config": "fuse-batched/obb0/history1",
+    "n": 40,
+    "medianMs": 45.418969000000004,
+    "minMs": 43.113638,
+    "maxMs": 53.365456,
+    "p95Ms": 48.477922,
+    "pairedMedianSpeedup": 2.561776930667646,
+    "bootstrap95": [
+      2.522364503836631,
+      2.587652249856786
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 70,
+        "edges": 108,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-16",
+    "kind": "fuse",
+    "config": "fuse-batched/obb0/history0",
+    "n": 40,
+    "medianMs": 45.051865,
+    "minMs": 42.744381,
+    "maxMs": 55.614202,
+    "p95Ms": 51.709788,
+    "pairedMedianSpeedup": 2.5538566412148294,
+    "bootstrap95": [
+      2.5103387919347697,
+      2.5969248986891693
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 70,
+        "edges": 108,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-16",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb1/history0",
+    "n": 40,
+    "medianMs": 118.905005,
+    "minMs": 112.933975,
+    "maxMs": 195.046585,
+    "p95Ms": 146.037729,
+    "pairedMedianSpeedup": 0.9733356155745279,
+    "bootstrap95": [
+      0.9577167700679678,
+      0.9898009096629065
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 70,
+        "edges": 108,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-16",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb0/history0",
+    "n": 40,
+    "medianMs": 114.191265,
+    "minMs": 108.607552,
+    "maxMs": 146.372114,
+    "p95Ms": 141.035162,
+    "pairedMedianSpeedup": 1.0079028295830597,
+    "bootstrap95": [
+      0.9974571799523342,
+      1.0291996073914738
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 70,
+        "edges": 108,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-16",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb0/history1",
+    "n": 40,
+    "medianMs": 115.9456635,
+    "minMs": 109.561244,
+    "maxMs": 164.626339,
+    "p95Ms": 131.524829,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 70,
+        "edges": 108,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-16",
+    "kind": "fuse",
+    "config": "fuse-sequential/obb1/history1",
+    "n": 40,
+    "medianMs": 118.91402550000001,
+    "minMs": 113.760205,
+    "maxMs": 151.233325,
+    "p95Ms": 126.115504,
+    "pairedMedianSpeedup": 0.9592707699532843,
+    "bootstrap95": [
+      0.954369387674788,
+      0.9876894279977755
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 70,
+        "edges": 108,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-16",
+    "kind": "fuse",
+    "config": "fuse-batched/obb1/history1",
+    "n": 40,
+    "medianMs": 44.7349705,
+    "minMs": 42.60525,
+    "maxMs": 56.084524,
+    "p95Ms": 50.844323,
+    "pairedMedianSpeedup": 2.587890245818617,
+    "bootstrap95": [
+      2.548359475991746,
+      2.619068877340319
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 70,
+        "edges": 108,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-16",
+    "kind": "fuse",
+    "config": "fuse-batched/obb1/history0",
+    "n": 40,
+    "medianMs": 44.325020499999994,
+    "minMs": 42.305377,
+    "maxMs": 69.403794,
+    "p95Ms": 50.960546,
+    "pairedMedianSpeedup": 2.5895419547161245,
+    "bootstrap95": [
+      2.556581154682209,
+      2.621010945572723
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 70,
+        "edges": 108,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-16",
+    "kind": "cut",
+    "config": "cut-batched/obb1/history1",
+    "n": 40,
+    "medianMs": 43.93692849999999,
+    "minMs": 41.451856,
+    "maxMs": 56.071758,
+    "p95Ms": 49.25798,
+    "pairedMedianSpeedup": 2.046885437254406,
+    "bootstrap95": [
+      2.0139301612785836,
+      2.0858455895986476
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 60,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-16",
+    "kind": "cut",
+    "config": "cut-sequential/obb0/history1",
+    "n": 40,
+    "medianMs": 89.03667100000001,
+    "minMs": 85.193284,
+    "maxMs": 144.877434,
+    "p95Ms": 98.174333,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 60,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-16",
+    "kind": "cut",
+    "config": "cut-sequential/obb1/history0",
+    "n": 40,
+    "medianMs": 92.34285,
+    "minMs": 87.685553,
+    "maxMs": 133.076004,
+    "p95Ms": 102.164928,
+    "pairedMedianSpeedup": 0.9696282422507966,
+    "bootstrap95": [
+      0.9591734975218128,
+      0.9822119051595073
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 60,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-16",
+    "kind": "cut",
+    "config": "cut-batched/obb0/history0",
+    "n": 40,
+    "medianMs": 43.812160500000005,
+    "minMs": 41.600264,
+    "maxMs": 64.240208,
+    "p95Ms": 54.808714,
+    "pairedMedianSpeedup": 2.019116489622244,
+    "bootstrap95": [
+      1.9967535572987276,
+      2.035243116276498
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 60,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-16",
+    "kind": "cut",
+    "config": "cut-batched/obb0/history1",
+    "n": 40,
+    "medianMs": 43.868355,
+    "minMs": 41.373207,
+    "maxMs": 52.415445,
+    "p95Ms": 48.711468,
+    "pairedMedianSpeedup": 2.0388880587978573,
+    "bootstrap95": [
+      2.013828300474903,
+      2.0755665901443265
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 60,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-16",
+    "kind": "cut",
+    "config": "cut-sequential/obb1/history1",
+    "n": 40,
+    "medianMs": 92.60421199999999,
+    "minMs": 88.472453,
+    "maxMs": 140.956878,
+    "p95Ms": 103.491074,
+    "pairedMedianSpeedup": 0.9639967223242085,
+    "bootstrap95": [
+      0.955348351330929,
+      0.9883562911078194
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 60,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-16",
+    "kind": "cut",
+    "config": "cut-batched/obb1/history0",
+    "n": 40,
+    "medianMs": 43.319919999999996,
+    "minMs": 40.934557,
+    "maxMs": 76.404198,
+    "p95Ms": 46.360509,
+    "pairedMedianSpeedup": 2.069999227240307,
+    "bootstrap95": [
+      2.031390633608625,
+      2.083345892736745
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 60,
+        "solids": 1
+      }
+    ]
+  },
+  {
+    "name": "oblique-16",
+    "kind": "cut",
+    "config": "cut-sequential/obb0/history0",
+    "n": 40,
+    "medianMs": 88.6124495,
+    "minMs": 84.225691,
+    "maxMs": 100.594265,
+    "p95Ms": 98.40268,
+    "pairedMedianSpeedup": 1.010412835407947,
+    "bootstrap95": [
+      0.998480998741649,
+      1.0234463367768227
+    ],
+    "equivalence": "valid, matching volumes, solid counts and 252 occupancy probes",
+    "topology": [
+      {
+        "faces": 22,
+        "edges": 60,
+        "solids": 1
+      }
+    ]
+  }
+]

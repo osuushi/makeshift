@@ -218,3 +218,118 @@ counts alone can hide changed material or naming. Preserve `1e-10` target-select
 semantics separately from `minimumSolidVolumeMm3 = 1e-12` output filtering.
 
 No candidate in this document is ready for integration solely on source evidence.
+
+## Smallest application change for intersection reuse
+
+Source-only design follow-up, 2026-10-08. Current working tree now carries
+orchestrator changes such as `Result::exactVolume`; those do not remove the
+Common-detection/final-operation duplication described above. No application
+mutation or benchmark performed by this lane.
+
+### Step 1: reuse implicit intersect's existing result and mapping
+
+For `mode == intersect` without an explicit target list, the smallest change
+needs **no prepared-filler API**. During target detection assemble actual origins
+(`body.entities` then `toolOrigins`) rather than the currently empty vector.
+Call the existing `booleanShape(body.shape, tool, intersect, origins)` once,
+retain its Common shape and mapped origins when its whole-shape volume exceeds
+the unchanged `1e-10` positive-overlap threshold. In the final intersect loop
+pass those retained values to `solids` and retain the existing participants and
+`{body.id}` predecessor-body policy. Mapping origins does not affect construction;
+it supplies the same Modified/Generated/IsDeleted correspondence now computed
+by the repeated second Common. Keep validation and per-solid filtering intact.
+
+Store request-local candidates keyed by the stable Operand address or index in
+the unchanged const `bodies` vector. Retain shape and origins together; a Common
+shape alone loses correspondence. Explicit non-auto targets bypass detection
+today, so leave that route on its original single operation. Auto resolves to
+subtract or union, never intersect; it does not need this result-only fast path.
+No new global shape cache or document mutation is needed.
+
+Do not reuse detection's whole-common volume as each output solid's volume. A
+Common may produce multiple disconnected solids, or lower-dimensional contacts;
+`solids` must still validate/filter/integrate each solid. Boundary-only contact
+remains excluded by the whole-shape positive-volume threshold. Preserve the
+distinction between detection `1e-10` and output `1e-12` volume budgets.
+
+### Step 2: retain the probe operation to share its filler with Cut
+
+Implicit subtract and auto-positive targets need different result assembly after
+the same intersections. A small move-only request-local `BooleanProbe` can own
+the already-built Common operation rather than constructing a separate standalone
+PaveFiller. That Common already owns its DSFiller and has the correct arguments,
+fuzzy budget, non-destructive and parallel settings. Retain it for positive
+targets; destroy rejected candidates promptly. Factor the existing helper into
+construction, validation/periodic retry, and origin mapping so the old direct API
+and probe finishing path share behavior. Keep this bounded in a Boolean module;
+do not scatter separate mapping copies into geometry.cpp.
+
+At finishing, construct an **empty prepared** `BRepAlgoAPI_Cut(*probe.DSFiller())`,
+assign arguments exactly `[body.shape]` and tools exactly `[tool]`, apply the same
+parallel builder setting, and Build once. Source references remain pinned:
+[BuilderAlgo borrowed-filler ownership](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepAlgoAPI/BRepAlgoAPI_BuilderAlgo.cxx#L34),
+[BooleanOperation conditional intersection](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepAlgoAPI/BRepAlgoAPI_BooleanOperation.cxx#L113).
+Do not call Common.Build again: that clears/replaces its owned filler. Ensure
+borrowed Cut is destroyed before its Common owner. A retained Common can also
+finish intersect by mapping actual origins through its original history rather
+than storing mapped origins in Step 1; choose one coherent implementation if
+both steps are adopted together.
+
+For subtract, origin mapping must use the **Cut's** history, not Common history.
+Do not map origins through Common and then feed that truncated mapping to Cut:
+material outside Common survives subtract. Construct final origins from untouched
+body/tool entities, apply normal Cut mapping after it succeeds, and preserve the
+existing invalid-cut repair behavior. `splitFailedCutFaces` consults the failed
+Cut's Modified history to identify implicated cylinders and remaps origins onto
+prepared source topology. The repair changes the first operand, so the retry
+must create a normal fresh Cut/filler on the prepared shape. Never reuse the old
+probe filler with that repaired source.
+
+### Configuration and lifetime constraints
+
+Pinned [BOPAlgo_Builder::PerformWithFiller](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BOPAlgo/BOPAlgo_Builder.cxx#L202)
+copies non-destructive, fuzzy, glue and OBB options from the supplied filler.
+Consequently setting different intersection options on the borrowed Cut cannot
+retroactively alter preprocessing. Capture the original exact pair and config
+in the probe; reject reuse after changed shapes, locations, orientations, bounds
+policy, fuzzy budget or repair. Set parallelism consistently on probe and final
+builder, but avoid global pool changes between these operations. Keep history
+collection enabled where repair or final source mapping needs it.
+
+Detection and final operations currently do not simplify results. Do not add
+SimplifyResult to the reuse experiment, and do not simplify the retained Common
+or mutate/mesh its arguments before final Cut. Retaining the operation rather
+than just DSFiller/shape provides history and lifetime ownership. Builders using
+the same filler should run sequentially; non-destructive protects arguments but
+does not establish that filler internals are immutable or safe for concurrent
+builders. Result-building state and tolerances should be compared against the
+baseline on repeated Common→Cut and Common→Common probes.
+
+Auto with explicit targets is subtle: target selection ultimately uses the
+explicit list, including targets whose bounds failed or whose Common had no
+positive volume. Keep an optional probe per body and fall back to the original
+operation wherever no probe exists; do not accidentally shrink the explicit
+selection to the positive list. Auto can switch to union if no positive target
+exists; its sequential growing Fuse operands differ from detection body/tool
+pairs and must not borrow those fillers. Preserve mode/participants behavior.
+
+Keep one filler per actual pair. Sharing a tool across several bodies does not
+make one pair's filler valid for another body. Whole bodies may contain multiple
+solids; do not flatten arguments to a different set just for caching. Map final
+origins through the whole operation, then let existing `solids` enumerate outputs
+with unchanged predecessor-body policy. Retaining all candidate fillers raises
+peak memory; measure this alongside speed, and restrict retention to positive
+targets unless explicit-auto semantics require keeping a particular probe.
+
+### Acceptance before implementation adoption
+
+Benchmark three independent savings: Common-only result reuse, Common→Cut with
+shared filler, and unchanged direct explicit-target path. Cover analytic/cubic
+contact, tangency, contained tools, two-body through-cut, multi-solid output,
+empty lower-dimensional Common, multiple candidates, explicit-auto including
+disjoint selected bodies, and the periodic cylinder repair fixture. Verify exact
+volume/set differences and topology signatures plus tag/decoration continuation,
+face/edge selections and downstream operations. Compare origin correspondence
+sets separately from incidental order; body participants and predecessor-body
+order remain part of the existing application behavior. Retain raw timing and
+memory samples before claiming that preprocessing dominates.

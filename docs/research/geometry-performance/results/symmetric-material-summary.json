@@ -1,0 +1,2570 @@
+{
+  "purpose": "Symmetric exact material verification; timings are observations, not benchmark claims",
+  "baseline": "/tmp/makeshift-kernel-uv-reuse",
+  "candidate": "/tmp/makeshift-kernel-construction-reuse",
+  "comparator": "/tmp/geometry-compare-solids",
+  "threads": 1,
+  "records": [
+    {
+      "label": "extrude-symmetric-perforated-positive-plain",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-plain-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-plain-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-plain-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 311.06116699999995,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.81469282025,
+            "center": [
+              29.999999999999982,
+              29.99999999999998,
+              -2.6295247897298816e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ],
+            "faces": 60,
+            "edges": 145
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 149.19022799999993,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.81469282025,
+            "center": [
+              29.99999999999997,
+              29.999999999999986,
+              0
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ],
+            "faces": 31,
+            "edges": 87
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-plain-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-plain-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282042,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 60,
+              "wires": 110,
+              "edges": 145,
+              "vertices": 87
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282041,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 31,
+              "wires": 81,
+              "edges": 87,
+              "vertices": 58
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.0006571681469282043,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000006,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":65716.814692820422,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":60,\"wires\":110,\"edges\":145,\"vertices\":87},\"bounds\":[0,0,-10,60,60,10]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":65716.814692820408,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":31,\"wires\":81,\"edges\":87,\"vertices\":58},\"bounds\":[0,0,-10,60,60,10]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":0.00065716814692820427,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":6.0000000000000002e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-perforated-positive-angle-zero",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-angle-zero-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-angle-zero-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-angle-zero-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 296.744601,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.81469282025,
+            "center": [
+              29.999999999999982,
+              29.99999999999998,
+              -2.6295247897298816e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ],
+            "faces": 60,
+            "edges": 145
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 138.723338,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.81469282025,
+            "center": [
+              29.99999999999997,
+              29.999999999999986,
+              0
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ],
+            "faces": 31,
+            "edges": 87
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-angle-zero-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-angle-zero-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282042,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 60,
+              "wires": 110,
+              "edges": 145,
+              "vertices": 87
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282041,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 31,
+              "wires": 81,
+              "edges": 87,
+              "vertices": 58
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.0006571681469282043,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000006,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":65716.814692820422,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":60,\"wires\":110,\"edges\":145,\"vertices\":87},\"bounds\":[0,0,-10,60,60,10]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":65716.814692820408,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":31,\"wires\":81,\"edges\":87,\"vertices\":58},\"bounds\":[0,0,-10,60,60,10]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":0.00065716814692820427,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":6.0000000000000002e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-perforated-positive-offset-zero",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-offset-zero-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-offset-zero-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-offset-zero-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 315.22539000000006,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.81469282025,
+            "center": [
+              29.999999999999982,
+              29.99999999999998,
+              -2.6295247897298816e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ],
+            "faces": 60,
+            "edges": 145
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 131.95223899999996,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.81469282025,
+            "center": [
+              29.99999999999997,
+              29.999999999999986,
+              0
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ],
+            "faces": 31,
+            "edges": 87
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-offset-zero-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-offset-zero-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282042,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 60,
+              "wires": 110,
+              "edges": 145,
+              "vertices": 87
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282041,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 31,
+              "wires": 81,
+              "edges": 87,
+              "vertices": 58
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.0006571681469282043,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000006,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":65716.814692820422,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":60,\"wires\":110,\"edges\":145,\"vertices\":87},\"bounds\":[0,0,-10,60,60,10]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":65716.814692820408,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":31,\"wires\":81,\"edges\":87,\"vertices\":58},\"bounds\":[0,0,-10,60,60,10]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":0.00065716814692820427,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":6.0000000000000002e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-perforated-positive-offset-below-threshold",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-offset-below-threshold-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-offset-below-threshold-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-offset-below-threshold-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 304.4771260000002,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.81469282025,
+            "center": [
+              29.999999999999982,
+              29.99999999999998,
+              -2.6295247897298816e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ],
+            "faces": 60,
+            "edges": 145
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 127.3390629999999,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.81469282025,
+            "center": [
+              29.99999999999997,
+              29.999999999999986,
+              0
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ],
+            "faces": 31,
+            "edges": 87
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-offset-below-threshold-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-offset-below-threshold-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282042,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 60,
+              "wires": 110,
+              "edges": 145,
+              "vertices": 87
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282041,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 31,
+              "wires": 81,
+              "edges": 87,
+              "vertices": 58
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.0006571681469282043,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000006,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":65716.814692820422,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":60,\"wires\":110,\"edges\":145,\"vertices\":87},\"bounds\":[0,0,-10,60,60,10]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":65716.814692820408,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":31,\"wires\":81,\"edges\":87,\"vertices\":58},\"bounds\":[0,0,-10,60,60,10]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":0.00065716814692820427,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":6.0000000000000002e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-perforated-positive-translated-xz",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-translated-xz-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-translated-xz-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-translated-xz-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 319.01058600000033,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.8146927841,
+            "center": [
+              1263.9999999999973,
+              -4567.000000000005,
+              152.99999999999997
+            ],
+            "bounds": [
+              1234,
+              -4577,
+              123,
+              1294,
+              -4557,
+              183
+            ],
+            "faces": 60,
+            "edges": 145
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 144.13002199999983,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.8146927841,
+            "center": [
+              1263.9999999999998,
+              -4567.000000000006,
+              152.99999999999997
+            ],
+            "bounds": [
+              1234,
+              -4577,
+              123,
+              1294,
+              -4557,
+              183
+            ],
+            "faces": 31,
+            "edges": 87
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-translated-xz-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-positive-translated-xz-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282048,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 60,
+              "wires": 110,
+              "edges": 145,
+              "vertices": 87
+            },
+            "bounds": [
+              1234,
+              -4577,
+              123,
+              1294,
+              -4557,
+              183
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282048,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 31,
+              "wires": 81,
+              "edges": 87,
+              "vertices": 58
+            },
+            "bounds": [
+              1234,
+              -4577,
+              123,
+              1294,
+              -4557,
+              183
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.0006571681469282048,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000006,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":65716.814692820481,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":60,\"wires\":110,\"edges\":145,\"vertices\":87},\"bounds\":[1234,-4577,123,1294,-4557,183]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":65716.814692820481,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":31,\"wires\":81,\"edges\":87,\"vertices\":58},\"bounds\":[1234,-4577,123,1294,-4557,183]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":0.00065716814692820481,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":6.0000000000000002e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-perforated-negative-plain",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-plain-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-plain-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-plain-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 296.36774400000013,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.81469282025,
+            "center": [
+              29.999999999999982,
+              29.99999999999998,
+              2.6295247897298816e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ],
+            "faces": 60,
+            "edges": 145
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 130.1442300000008,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.81469282025,
+            "center": [
+              29.99999999999997,
+              29.999999999999986,
+              0
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ],
+            "faces": 31,
+            "edges": 87
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-plain-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-plain-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282042,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 60,
+              "wires": 110,
+              "edges": 145,
+              "vertices": 87
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282041,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 31,
+              "wires": 81,
+              "edges": 87,
+              "vertices": 58
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.0006571681469282043,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000006,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":65716.814692820422,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":60,\"wires\":110,\"edges\":145,\"vertices\":87},\"bounds\":[0,0,-10,60,60,10]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":65716.814692820408,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":31,\"wires\":81,\"edges\":87,\"vertices\":58},\"bounds\":[0,0,-10,60,60,10]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":0.00065716814692820427,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":6.0000000000000002e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-perforated-negative-angle-zero",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-angle-zero-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-angle-zero-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-angle-zero-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 348.4103100000002,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.81469282025,
+            "center": [
+              29.999999999999982,
+              29.99999999999998,
+              2.6295247897298816e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ],
+            "faces": 60,
+            "edges": 145
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 127.07157400000051,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.81469282025,
+            "center": [
+              29.99999999999997,
+              29.999999999999986,
+              0
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ],
+            "faces": 31,
+            "edges": 87
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-angle-zero-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-angle-zero-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282042,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 60,
+              "wires": 110,
+              "edges": 145,
+              "vertices": 87
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282041,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 31,
+              "wires": 81,
+              "edges": 87,
+              "vertices": 58
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.0006571681469282043,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000006,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":65716.814692820422,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":60,\"wires\":110,\"edges\":145,\"vertices\":87},\"bounds\":[0,0,-10,60,60,10]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":65716.814692820408,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":31,\"wires\":81,\"edges\":87,\"vertices\":58},\"bounds\":[0,0,-10,60,60,10]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":0.00065716814692820427,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":6.0000000000000002e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-perforated-negative-offset-zero",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-offset-zero-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-offset-zero-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-offset-zero-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 291.682409,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.81469282025,
+            "center": [
+              29.999999999999982,
+              29.99999999999998,
+              2.6295247897298816e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ],
+            "faces": 60,
+            "edges": 145
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 136.88136899999972,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.81469282025,
+            "center": [
+              29.99999999999997,
+              29.999999999999986,
+              0
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ],
+            "faces": 31,
+            "edges": 87
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-offset-zero-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-offset-zero-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282042,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 60,
+              "wires": 110,
+              "edges": 145,
+              "vertices": 87
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282041,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 31,
+              "wires": 81,
+              "edges": 87,
+              "vertices": 58
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.0006571681469282043,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000006,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":65716.814692820422,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":60,\"wires\":110,\"edges\":145,\"vertices\":87},\"bounds\":[0,0,-10,60,60,10]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":65716.814692820408,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":31,\"wires\":81,\"edges\":87,\"vertices\":58},\"bounds\":[0,0,-10,60,60,10]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":0.00065716814692820427,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":6.0000000000000002e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-perforated-negative-offset-below-threshold",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-offset-below-threshold-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-offset-below-threshold-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-offset-below-threshold-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 303.36095600000044,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.81469282025,
+            "center": [
+              29.999999999999982,
+              29.99999999999998,
+              2.6295247897298816e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ],
+            "faces": 60,
+            "edges": 145
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 133.2941840000003,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.81469282025,
+            "center": [
+              29.99999999999997,
+              29.999999999999986,
+              0
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ],
+            "faces": 31,
+            "edges": 87
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-offset-below-threshold-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-offset-below-threshold-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282042,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 60,
+              "wires": 110,
+              "edges": 145,
+              "vertices": 87
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282041,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 31,
+              "wires": 81,
+              "edges": 87,
+              "vertices": 58
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              60,
+              60,
+              10
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.0006571681469282043,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000006,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":65716.814692820422,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":60,\"wires\":110,\"edges\":145,\"vertices\":87},\"bounds\":[0,0,-10,60,60,10]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":65716.814692820408,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":31,\"wires\":81,\"edges\":87,\"vertices\":58},\"bounds\":[0,0,-10,60,60,10]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":0.00065716814692820427,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":6.0000000000000002e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-perforated-negative-translated-xz",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-translated-xz-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-translated-xz-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-translated-xz-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 305.77365999999984,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.8146927841,
+            "center": [
+              1263.9999999999973,
+              -4567.000000000005,
+              152.99999999999997
+            ],
+            "bounds": [
+              1234,
+              -4577,
+              123,
+              1294,
+              -4557,
+              183
+            ],
+            "faces": 60,
+            "edges": 145
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 151.89790999999968,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 65716.8146927841,
+            "center": [
+              1263.9999999999998,
+              -4567.000000000006,
+              152.99999999999997
+            ],
+            "bounds": [
+              1234,
+              -4577,
+              123,
+              1294,
+              -4557,
+              183
+            ],
+            "faces": 31,
+            "edges": 87
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-translated-xz-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-perforated-negative-translated-xz-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282048,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 60,
+              "wires": 110,
+              "edges": 145,
+              "vertices": 87
+            },
+            "bounds": [
+              1234,
+              -4577,
+              123,
+              1294,
+              -4557,
+              183
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 65716.81469282048,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 31,
+              "wires": 81,
+              "edges": 87,
+              "vertices": 58
+            },
+            "bounds": [
+              1234,
+              -4577,
+              123,
+              1294,
+              -4557,
+              183
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.0006571681469282048,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000006,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":65716.814692820481,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":60,\"wires\":110,\"edges\":145,\"vertices\":87},\"bounds\":[1234,-4577,123,1294,-4557,183]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":65716.814692820481,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":31,\"wires\":81,\"edges\":87,\"vertices\":58},\"bounds\":[1234,-4577,123,1294,-4557,183]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":0.00065716814692820481,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":6.0000000000000002e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-box-positive-plain",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-plain-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-plain-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-plain-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 29.626602999999704,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              10,
+              10,
+              3.9790393202565596e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ],
+            "faces": 10,
+            "edges": 20
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 4.610701999999947,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              10,
+              10,
+              -2.2737367544323197e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ],
+            "faces": 6,
+            "edges": 12
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-plain-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-plain-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 10,
+              "wires": 10,
+              "edges": 20,
+              "vertices": 12
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 6,
+              "wires": 6,
+              "edges": 12,
+              "vertices": 8
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.00007999999999999998,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000002,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":10,\"wires\":10,\"edges\":20,\"vertices\":12},\"bounds\":[0,0,-10,20,20,10]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":6,\"wires\":6,\"edges\":12,\"vertices\":8},\"bounds\":[0,0,-10,20,20,10]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":7.9999999999999979e-05,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":1.9999999999999999e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-box-positive-angle-zero",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-angle-zero-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-angle-zero-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-angle-zero-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 30.032976999999846,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              10,
+              10,
+              3.9790393202565596e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ],
+            "faces": 10,
+            "edges": 20
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 6.2255749999994805,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              10,
+              10,
+              -2.2737367544323197e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ],
+            "faces": 6,
+            "edges": 12
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-angle-zero-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-angle-zero-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 10,
+              "wires": 10,
+              "edges": 20,
+              "vertices": 12
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 6,
+              "wires": 6,
+              "edges": 12,
+              "vertices": 8
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.00007999999999999998,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000002,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":10,\"wires\":10,\"edges\":20,\"vertices\":12},\"bounds\":[0,0,-10,20,20,10]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":6,\"wires\":6,\"edges\":12,\"vertices\":8},\"bounds\":[0,0,-10,20,20,10]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":7.9999999999999979e-05,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":1.9999999999999999e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-box-positive-offset-zero",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-offset-zero-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-offset-zero-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-offset-zero-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 29.193186999999853,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              10,
+              10,
+              3.9790393202565596e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ],
+            "faces": 10,
+            "edges": 20
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 4.850293999999849,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              10,
+              10,
+              -2.2737367544323197e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ],
+            "faces": 6,
+            "edges": 12
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-offset-zero-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-offset-zero-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 10,
+              "wires": 10,
+              "edges": 20,
+              "vertices": 12
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 6,
+              "wires": 6,
+              "edges": 12,
+              "vertices": 8
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.00007999999999999998,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000002,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":10,\"wires\":10,\"edges\":20,\"vertices\":12},\"bounds\":[0,0,-10,20,20,10]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":6,\"wires\":6,\"edges\":12,\"vertices\":8},\"bounds\":[0,0,-10,20,20,10]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":7.9999999999999979e-05,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":1.9999999999999999e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-box-positive-offset-below-threshold",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-offset-below-threshold-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-offset-below-threshold-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-offset-below-threshold-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 29.34725999999955,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              10,
+              10,
+              3.9790393202565596e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ],
+            "faces": 10,
+            "edges": 20
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 4.722261000000799,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              10,
+              10,
+              -2.2737367544323197e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ],
+            "faces": 6,
+            "edges": 12
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-offset-below-threshold-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-offset-below-threshold-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 10,
+              "wires": 10,
+              "edges": 20,
+              "vertices": 12
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 6,
+              "wires": 6,
+              "edges": 12,
+              "vertices": 8
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.00007999999999999998,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000002,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":10,\"wires\":10,\"edges\":20,\"vertices\":12},\"bounds\":[0,0,-10,20,20,10]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":6,\"wires\":6,\"edges\":12,\"vertices\":8},\"bounds\":[0,0,-10,20,20,10]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":7.9999999999999979e-05,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":1.9999999999999999e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-box-positive-translated-xz",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-translated-xz-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-translated-xz-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-translated-xz-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 30.18486699999994,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              1244.0000000000002,
+              -4566.999999999999,
+              132.99999999999997
+            ],
+            "bounds": [
+              1234,
+              -4577,
+              123,
+              1254,
+              -4557,
+              143
+            ],
+            "faces": 10,
+            "edges": 20
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 4.404630999999426,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              1244,
+              -4566.999999999999,
+              133
+            ],
+            "bounds": [
+              1234,
+              -4577,
+              123,
+              1254,
+              -4557,
+              143
+            ],
+            "faces": 6,
+            "edges": 12
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-translated-xz-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-positive-translated-xz-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 10,
+              "wires": 10,
+              "edges": 20,
+              "vertices": 12
+            },
+            "bounds": [
+              1234,
+              -4577,
+              123,
+              1254,
+              -4557,
+              143
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 6,
+              "wires": 6,
+              "edges": 12,
+              "vertices": 8
+            },
+            "bounds": [
+              1234,
+              -4577,
+              123,
+              1254,
+              -4557,
+              143
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.00007999999999999998,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000002,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":10,\"wires\":10,\"edges\":20,\"vertices\":12},\"bounds\":[1234,-4577,123,1254,-4557,143]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":6,\"wires\":6,\"edges\":12,\"vertices\":8},\"bounds\":[1234,-4577,123,1254,-4557,143]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":7.9999999999999979e-05,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":1.9999999999999999e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-box-negative-plain",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-plain-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-plain-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-plain-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 30.376406000000316,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              10,
+              10,
+              -3.9790393202565596e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ],
+            "faces": 10,
+            "edges": 20
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 28.316241000000446,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              10,
+              10,
+              2.2737367544323197e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ],
+            "faces": 6,
+            "edges": 12
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-plain-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-plain-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 10,
+              "wires": 10,
+              "edges": 20,
+              "vertices": 12
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 6,
+              "wires": 6,
+              "edges": 12,
+              "vertices": 8
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.00007999999999999998,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000002,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":10,\"wires\":10,\"edges\":20,\"vertices\":12},\"bounds\":[0,0,-10,20,20,10]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":6,\"wires\":6,\"edges\":12,\"vertices\":8},\"bounds\":[0,0,-10,20,20,10]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":7.9999999999999979e-05,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":1.9999999999999999e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-box-negative-angle-zero",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-angle-zero-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-angle-zero-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-angle-zero-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 31.156596000000718,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              10,
+              10,
+              -3.9790393202565596e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ],
+            "faces": 10,
+            "edges": 20
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 4.79702400000042,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              10,
+              10,
+              2.2737367544323197e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ],
+            "faces": 6,
+            "edges": 12
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-angle-zero-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-angle-zero-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 10,
+              "wires": 10,
+              "edges": 20,
+              "vertices": 12
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 6,
+              "wires": 6,
+              "edges": 12,
+              "vertices": 8
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.00007999999999999998,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000002,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":10,\"wires\":10,\"edges\":20,\"vertices\":12},\"bounds\":[0,0,-10,20,20,10]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":6,\"wires\":6,\"edges\":12,\"vertices\":8},\"bounds\":[0,0,-10,20,20,10]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":7.9999999999999979e-05,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":1.9999999999999999e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-box-negative-offset-zero",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-offset-zero-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-offset-zero-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-offset-zero-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 29.62358800000038,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              10,
+              10,
+              -3.9790393202565596e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ],
+            "faces": 10,
+            "edges": 20
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 4.39739500000087,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              10,
+              10,
+              2.2737367544323197e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ],
+            "faces": 6,
+            "edges": 12
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-offset-zero-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-offset-zero-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 10,
+              "wires": 10,
+              "edges": 20,
+              "vertices": 12
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 6,
+              "wires": 6,
+              "edges": 12,
+              "vertices": 8
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.00007999999999999998,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000002,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":10,\"wires\":10,\"edges\":20,\"vertices\":12},\"bounds\":[0,0,-10,20,20,10]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":6,\"wires\":6,\"edges\":12,\"vertices\":8},\"bounds\":[0,0,-10,20,20,10]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":7.9999999999999979e-05,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":1.9999999999999999e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-box-negative-offset-below-threshold",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-offset-below-threshold-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-offset-below-threshold-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-offset-below-threshold-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 29.33442599999944,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              10,
+              10,
+              -3.9790393202565596e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ],
+            "faces": 10,
+            "edges": 20
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 4.496884000000136,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              10,
+              10,
+              2.2737367544323197e-16
+            ],
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ],
+            "faces": 6,
+            "edges": 12
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-offset-below-threshold-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-offset-below-threshold-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 10,
+              "wires": 10,
+              "edges": 20,
+              "vertices": 12
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 6,
+              "wires": 6,
+              "edges": 12,
+              "vertices": 8
+            },
+            "bounds": [
+              0,
+              0,
+              -10,
+              20,
+              20,
+              10
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.00007999999999999998,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000002,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":10,\"wires\":10,\"edges\":20,\"vertices\":12},\"bounds\":[0,0,-10,20,20,10]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":6,\"wires\":6,\"edges\":12,\"vertices\":8},\"bounds\":[0,0,-10,20,20,10]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":7.9999999999999979e-05,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":1.9999999999999999e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    },
+    {
+      "label": "extrude-symmetric-box-negative-translated-xz",
+      "inputFile": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-translated-xz-input.json",
+      "nativeFiles": {
+        "baseline": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-translated-xz-baseline-native.json",
+        "candidate": "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-translated-xz-candidate-native.json"
+      },
+      "ok": true,
+      "baseline": {
+        "milliseconds": 31.341355000000476,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              1244.0000000000002,
+              -4566.999999999999,
+              132.99999999999997
+            ],
+            "bounds": [
+              1234,
+              -4577,
+              123,
+              1254,
+              -4557,
+              143
+            ],
+            "faces": 10,
+            "edges": 20
+          }
+        ]
+      },
+      "candidate": {
+        "milliseconds": 4.725942000000032,
+        "mode": "new",
+        "participants": [],
+        "results": [
+          {
+            "volume": 8000.000000000003,
+            "center": [
+              1244,
+              -4566.999999999999,
+              133
+            ],
+            "bounds": [
+              1234,
+              -4577,
+              123,
+              1254,
+              -4557,
+              143
+            ],
+            "faces": 6,
+            "edges": 12
+          }
+        ]
+      },
+      "brepFiles": [
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-translated-xz-baseline.brep",
+        "/workspace/makeshift/docs/research/geometry-performance/results/symmetric-material-extrude-symmetric-box-negative-translated-xz-candidate.brep"
+      ],
+      "material": {
+        "ok": true,
+        "exitCode": 0,
+        "rows": [
+          {
+            "type": "input",
+            "side": "baseline",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 10,
+              "wires": 10,
+              "edges": 20,
+              "vertices": 12
+            },
+            "bounds": [
+              1234,
+              -4577,
+              123,
+              1254,
+              -4557,
+              143
+            ]
+          },
+          {
+            "type": "input",
+            "side": "candidate",
+            "exact_brep_valid": true,
+            "volume": 7999.999999999998,
+            "counts": {
+              "solids": 1,
+              "shells": 1,
+              "faces": 6,
+              "wires": 6,
+              "edges": 12,
+              "vertices": 8
+            },
+            "bounds": [
+              1234,
+              -4577,
+              123,
+              1254,
+              -4557,
+              143
+            ]
+          },
+          {
+            "type": "comparison",
+            "ok": true,
+            "volume_absolute_tolerance": 0.00007999999999999998,
+            "volume_relative_tolerance": 1e-8,
+            "baseline_minus_candidate": 0,
+            "candidate_minus_baseline": 0,
+            "bounds_max_delta": 0,
+            "bounds_tolerance": 0.000002,
+            "occupancy_samples": 686,
+            "occupancy_mismatches": 0,
+            "occupancy_uncertain": 0
+          }
+        ],
+        "stdout": "{\"type\":\"input\",\"side\":\"baseline\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":10,\"wires\":10,\"edges\":20,\"vertices\":12},\"bounds\":[1234,-4577,123,1254,-4557,143]}\n{\"type\":\"input\",\"side\":\"candidate\",\"exact_brep_valid\":true,\"volume\":7999.9999999999982,\"counts\":{\"solids\":1,\"shells\":1,\"faces\":6,\"wires\":6,\"edges\":12,\"vertices\":8},\"bounds\":[1234,-4577,123,1254,-4557,143]}\n{\"type\":\"comparison\",\"ok\":true,\"volume_absolute_tolerance\":7.9999999999999979e-05,\"volume_relative_tolerance\":1e-08,\"baseline_minus_candidate\":0,\"candidate_minus_baseline\":0,\"bounds_max_delta\":0,\"bounds_tolerance\":1.9999999999999999e-06,\"occupancy_samples\":686,\"occupancy_mismatches\":0,\"occupancy_uncertain\":0}\n",
+        "stderr": ""
+      }
+    }
+  ],
+  "ok": true
+}

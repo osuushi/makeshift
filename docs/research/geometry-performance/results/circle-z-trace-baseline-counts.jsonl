@@ -1,0 +1,1 @@
+{"type":"evaluation_counts","d1_calls":22242432,"eval_polynomial":{"calls":44488293,"degree_histogram":{"2":22245861,"8":22242432},"other_degree":0},"no_derivative_eval_polynomial":{"calls":22276851,"degree_histogram":{"2":22261179,"8":15672},"other_degree":0}}

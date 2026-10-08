@@ -1,0 +1,518 @@
+[
+  {
+    "name": "extrude-perforated",
+    "label": "baseline",
+    "n": 20,
+    "medianMs": 100.99951600000168,
+    "p95Ms": 111.19264300001669,
+    "minMs": 94.86737900000298,
+    "maxMs": 117.69163399999525,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 0.1969325,
+        "n": 20
+      },
+      "extrude operands": {
+        "medianMs": 0.0289885,
+        "n": 20
+      },
+      "volume bounds": {
+        "medianMs": 0.1547995,
+        "n": 40
+      },
+      "volume integrate": {
+        "medianMs": 2.32585,
+        "n": 40
+      },
+      "volume total": {
+        "medianMs": 2.50052,
+        "n": 40
+      },
+      "extrude calculate": {
+        "medianMs": 14.914349999999999,
+        "n": 20
+      },
+      "presentation mesh": {
+        "medianMs": 33.6262,
+        "n": 20
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 24.4155,
+        "n": 20
+      },
+      "presentation topology-and-json": {
+        "medianMs": 22.448500000000003,
+        "n": 20
+      },
+      "presentation total": {
+        "medianMs": 82.2096,
+        "n": 20
+      },
+      "extrude presentation": {
+        "medianMs": 82.22565,
+        "n": 20
+      },
+      "extrude write": {
+        "medianMs": 0.584739,
+        "n": 20
+      },
+      "extrude total": {
+        "medianMs": 98.72470000000001,
+        "n": 20
+      }
+    }
+  },
+  {
+    "name": "extrude-perforated",
+    "label": "reuse",
+    "n": 20,
+    "medianMs": 98.46783649999634,
+    "p95Ms": 112.03739700000006,
+    "minMs": 92.53262499999983,
+    "maxMs": 122.8103240000055,
+    "pairedMedianSpeedup": 1.0212330510093968,
+    "bootstrap95": [
+      0.9919452523131413,
+      1.0624571541865169
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 0.197489,
+        "n": 20
+      },
+      "extrude operands": {
+        "medianMs": 0.0303555,
+        "n": 20
+      },
+      "volume bounds": {
+        "medianMs": 0.16899,
+        "n": 20
+      },
+      "volume integrate": {
+        "medianMs": 2.2468700000000004,
+        "n": 20
+      },
+      "volume total": {
+        "medianMs": 2.42654,
+        "n": 20
+      },
+      "extrude calculate": {
+        "medianMs": 15.3789,
+        "n": 20
+      },
+      "presentation mesh": {
+        "medianMs": 34.589749999999995,
+        "n": 20
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 22.04945,
+        "n": 20
+      },
+      "presentation topology-and-json": {
+        "medianMs": 22.2357,
+        "n": 20
+      },
+      "presentation total": {
+        "medianMs": 78.6171,
+        "n": 20
+      },
+      "extrude presentation": {
+        "medianMs": 78.63265000000001,
+        "n": 20
+      },
+      "extrude write": {
+        "medianMs": 0.596492,
+        "n": 20
+      },
+      "extrude total": {
+        "medianMs": 96.09905,
+        "n": 20
+      }
+    }
+  },
+  {
+    "name": "boolean-cut-perforated",
+    "label": "baseline",
+    "n": 20,
+    "medianMs": 116.53683050000109,
+    "p95Ms": 129.6370820000011,
+    "minMs": 106.10553100000106,
+    "maxMs": 131.2347909999953,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "boolean parse": {
+        "medianMs": 1.0062950000000002,
+        "n": 20
+      },
+      "boolean operands": {
+        "medianMs": 8.812695,
+        "n": 20
+      },
+      "volume bounds": {
+        "medianMs": 0.121434,
+        "n": 40
+      },
+      "volume integrate": {
+        "medianMs": 2.0498149999999997,
+        "n": 40
+      },
+      "volume total": {
+        "medianMs": 2.19048,
+        "n": 40
+      },
+      "boolean calculate": {
+        "medianMs": 24.266150000000003,
+        "n": 20
+      },
+      "presentation mesh": {
+        "medianMs": 28.071150000000003,
+        "n": 20
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 22.04085,
+        "n": 20
+      },
+      "presentation topology-and-json": {
+        "medianMs": 26.23515,
+        "n": 20
+      },
+      "presentation total": {
+        "medianMs": 77.29115,
+        "n": 20
+      },
+      "boolean presentation": {
+        "medianMs": 77.3074,
+        "n": 20
+      },
+      "boolean write": {
+        "medianMs": 0.456541,
+        "n": 20
+      },
+      "boolean total": {
+        "medianMs": 113.96600000000001,
+        "n": 20
+      }
+    }
+  },
+  {
+    "name": "boolean-cut-perforated",
+    "label": "reuse",
+    "n": 20,
+    "medianMs": 115.48614699999962,
+    "p95Ms": 124.2383179999888,
+    "minMs": 104.0685109999904,
+    "maxMs": 127.72838100000081,
+    "pairedMedianSpeedup": 1.0304176210528118,
+    "bootstrap95": [
+      1.0020280092900649,
+      1.057576228746968
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "boolean parse": {
+        "medianMs": 0.9992235,
+        "n": 20
+      },
+      "boolean operands": {
+        "medianMs": 8.898435,
+        "n": 20
+      },
+      "volume bounds": {
+        "medianMs": 0.13223449999999998,
+        "n": 20
+      },
+      "volume integrate": {
+        "medianMs": 2.005975,
+        "n": 20
+      },
+      "volume total": {
+        "medianMs": 2.1657450000000003,
+        "n": 20
+      },
+      "boolean calculate": {
+        "medianMs": 24.18065,
+        "n": 20
+      },
+      "presentation mesh": {
+        "medianMs": 27.2316,
+        "n": 20
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 19.533250000000002,
+        "n": 20
+      },
+      "presentation topology-and-json": {
+        "medianMs": 25.934199999999997,
+        "n": 20
+      },
+      "presentation total": {
+        "medianMs": 74.86525,
+        "n": 20
+      },
+      "boolean presentation": {
+        "medianMs": 74.8824,
+        "n": 20
+      },
+      "boolean write": {
+        "medianMs": 0.4751335,
+        "n": 20
+      },
+      "boolean total": {
+        "medianMs": 112.49600000000001,
+        "n": 20
+      }
+    }
+  },
+  {
+    "name": "circle-offset-twist",
+    "label": "baseline",
+    "n": 20,
+    "medianMs": 4886.3407515,
+    "p95Ms": 5096.560489999989,
+    "minMs": 4686.696991999997,
+    "maxMs": 5180.028557999991,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 0.036936,
+        "n": 20
+      },
+      "extrude operands": {
+        "medianMs": 0.0284885,
+        "n": 20
+      },
+      "twist-stations-6 sections": {
+        "medianMs": 0.220248,
+        "n": 20
+      },
+      "twist-stations-6 loft": {
+        "medianMs": 1.15536,
+        "n": 20
+      },
+      "twist-stations-6 accuracy-retry": {
+        "medianMs": 0.9638875,
+        "n": 20
+      },
+      "twist-stations-6 total": {
+        "medianMs": 2.4279,
+        "n": 20
+      },
+      "twist-stations-12 sections": {
+        "medianMs": 0.275652,
+        "n": 20
+      },
+      "twist-stations-12 loft": {
+        "medianMs": 1.1467049999999999,
+        "n": 20
+      },
+      "twist-stations-12 accuracy-pass": {
+        "medianMs": 18.27805,
+        "n": 20
+      },
+      "sweep-validation brep": {
+        "medianMs": 0.3518425,
+        "n": 20
+      },
+      "sweep-validation volume-and-self-interference": {
+        "medianMs": 7.13497,
+        "n": 20
+      },
+      "sweep-validation total": {
+        "medianMs": 7.5188950000000006,
+        "n": 20
+      },
+      "twist-stations-12 validate": {
+        "medianMs": 7.56224,
+        "n": 20
+      },
+      "twist-stations-12 total": {
+        "medianMs": 27.5213,
+        "n": 20
+      },
+      "volume bounds": {
+        "medianMs": 1.435515,
+        "n": 40
+      },
+      "volume integrate": {
+        "medianMs": 2400.9350000000004,
+        "n": 40
+      },
+      "volume total": {
+        "medianMs": 2402.445,
+        "n": 40
+      },
+      "extrude calculate": {
+        "medianMs": 2440.51,
+        "n": 20
+      },
+      "presentation mesh": {
+        "medianMs": 10.358049999999999,
+        "n": 20
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 2406.52,
+        "n": 20
+      },
+      "presentation topology-and-json": {
+        "medianMs": 7.23163,
+        "n": 20
+      },
+      "presentation total": {
+        "medianMs": 2423.65,
+        "n": 20
+      },
+      "extrude presentation": {
+        "medianMs": 2423.67,
+        "n": 20
+      },
+      "extrude write": {
+        "medianMs": 0.046235,
+        "n": 20
+      },
+      "extrude total": {
+        "medianMs": 4885.67,
+        "n": 20
+      }
+    }
+  },
+  {
+    "name": "circle-offset-twist",
+    "label": "reuse",
+    "n": 20,
+    "medianMs": 2513.113614,
+    "p95Ms": 2619.997703000001,
+    "minMs": 2357.8644600000116,
+    "maxMs": 2692.0964810000005,
+    "pairedMedianSpeedup": 1.929789942993041,
+    "bootstrap95": [
+      1.9001742595717444,
+      1.9900486581212382
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 0.037531499999999995,
+        "n": 20
+      },
+      "extrude operands": {
+        "medianMs": 0.028518,
+        "n": 20
+      },
+      "twist-stations-6 sections": {
+        "medianMs": 0.21792499999999998,
+        "n": 20
+      },
+      "twist-stations-6 loft": {
+        "medianMs": 1.155525,
+        "n": 20
+      },
+      "twist-stations-6 accuracy-retry": {
+        "medianMs": 0.9998339999999999,
+        "n": 20
+      },
+      "twist-stations-6 total": {
+        "medianMs": 2.48665,
+        "n": 20
+      },
+      "twist-stations-12 sections": {
+        "medianMs": 0.2927225,
+        "n": 20
+      },
+      "twist-stations-12 loft": {
+        "medianMs": 1.1555749999999998,
+        "n": 20
+      },
+      "twist-stations-12 accuracy-pass": {
+        "medianMs": 19.2294,
+        "n": 20
+      },
+      "sweep-validation brep": {
+        "medianMs": 0.345237,
+        "n": 20
+      },
+      "sweep-validation volume-and-self-interference": {
+        "medianMs": 7.149825,
+        "n": 20
+      },
+      "sweep-validation total": {
+        "medianMs": 7.49069,
+        "n": 20
+      },
+      "twist-stations-12 validate": {
+        "medianMs": 7.525285,
+        "n": 20
+      },
+      "twist-stations-12 total": {
+        "medianMs": 28.353099999999998,
+        "n": 20
+      },
+      "volume bounds": {
+        "medianMs": 1.401485,
+        "n": 20
+      },
+      "volume integrate": {
+        "medianMs": 2453.915,
+        "n": 20
+      },
+      "volume total": {
+        "medianMs": 2455.615,
+        "n": 20
+      },
+      "extrude calculate": {
+        "medianMs": 2488.965,
+        "n": 20
+      },
+      "presentation mesh": {
+        "medianMs": 10.4487,
+        "n": 20
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 4.17636,
+        "n": 20
+      },
+      "presentation topology-and-json": {
+        "medianMs": 7.197345,
+        "n": 20
+      },
+      "presentation total": {
+        "medianMs": 21.9725,
+        "n": 20
+      },
+      "extrude presentation": {
+        "medianMs": 21.9944,
+        "n": 20
+      },
+      "extrude write": {
+        "medianMs": 0.0433455,
+        "n": 20
+      },
+      "extrude total": {
+        "medianMs": 2511.955,
+        "n": 20
+      }
+    }
+  }
+]

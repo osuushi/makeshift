@@ -1,0 +1,7 @@
+[ 50%] Built target TKernel
+[100%] Built target TKMath
+[ 33%] Built target TKernel
+[ 66%] Built target TKMath
+[ 77%] Built target TKG2d
+[100%] Built target TKG3d
+Prototype binaries: /workspace/makeshift/.cache/geometry-performance/bspline-cache/bin

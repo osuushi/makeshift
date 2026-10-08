@@ -210,6 +210,43 @@ All links use the inspected OCCT commit; no upstream code was copied.
 
 ## Required benchmark coverage
 
+### Request-local surface projection reuse prototype (2026-10-08)
+
+`offset_geometry::checkParallel` now initializes one expected-surface projector on
+the first sample, then calls `Perform` for each point. The basis projector is
+constructed/initialized lazily only after an expected projection passes and
+`preserveOrientation` needs it. Both objects are local to the check. Samples,
+evaluation order, distance predicates, normals and orientation tests stay the same.
+No bounds shrinkage, tolerance relaxation or alternative extrema algorithm is used.
+No builds/runs were performed by this lane; the orchestrator owns comparison.
+
+The exact pinned constructor audit found an important overload distinction:
+[`Init(P, Surface, Algo)`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/GeomAPI/GeomAPI_ProjectPointOnSurf.cxx#L106)
+uses `Precision::Confusion()`, whereas surface-only initialization without an
+explicit tolerance uses `Precision::PConfusion()`. The prototype explicitly
+passes **Confusion**, full `Surface->Bounds` and the same default
+`Extrema_ExtAlgo_Grad`. Using the seemingly matching no-tolerance overload would
+have changed the convergence tolerance by two orders of magnitude.
+
+[`Extrema_ExtPS::Perform`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/Extrema/Extrema_ExtPS.cxx#L246)
+clears point/distance results on each call; GeomAPI recomputes completion and the
+nearest-result index afterward.
+[`Extrema_FuncPSNorm::SetPoint`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/Extrema/Extrema_FuncPSNorm.cxx#L57)
+also clears its accumulated results. GenExtPS initialization invalidates its
+surface grid; repeated Perform retains geometric grid values and recomputes
+point-dependent node/edge/face distance information. Extrusion/revolution special
+projectors are likewise retained by ExtPS instead of reconstructed for each point.
+
+Preconditions: support/expected surfaces, domains and extrema settings remain
+unchanged throughout this request; projectors cannot be shared across concurrent
+calls. This is supported initialization reuse, not reuse of old projection answers.
+Retained adaptor caches may nevertheless change floating-point roundoff/order in
+some surface paths. Compare accepted/rejected outcomes and output encoding on
+analytic, spline, offset-wrapper, periodic/seam, located and orientation-preserving
+fixtures against the construction-per-point binary before adoption. Failed/empty
+projection followed by another point must not expose stale results in any direct
+projector equivalence test. Keep source geometry immutable.
+
 Use ordinary analytic box/cylinder, outward rounded joins, concave and through-hole
 collisions, spherical/toroidal closed hollows, canonicalized cylindrical splines,
 genuine freeform bent sweep, conservative metadata and periodic trim inputs.
@@ -218,3 +255,77 @@ rigid transforms; accepted/rejected outcomes; preserved entity IDs and source
 immutability. Include deliberately invalid boundary and self-intersection controls.
 The existing body-shell geometry/source-precision/sweep suites and captures cover
 much of this matrix. Coordinate with orchestrator rather than running those here.
+
+## Duplicate validation candidate: mutation audit and implementation
+
+Source-only audit followed by a narrow candidate edit removed two duplicate calls:
+the prepared-source validSolid in canonical after CylinderSupports construction,
+and the canonical-body validSolid in shellBody before offset construction.
+All validations after actual geometry changes remain; no validation predicate,
+construction tolerance, retry policy or result publication check changed.
+
+`canonical` always calls prepare with forceCopy=true. Both successful branches of
+prepare tighten/check boundaries and call validSolid immediately before returning;
+the no-copy fast return cannot apply. CylinderSupports construction reads those
+faces/edges, recognizes candidate analytic geometry and stores fresh supports;
+it does not install them on the source BRep. GeomConvert_SurfToAnaSurf stores a
+source handle, but BSpline/Bezier processing explicitly Copy()s before Segment().
+Its recognized cylinders are new Geom_CylindricalSurface objects. Therefore the
+application's SetPosition mutates candidate geometry, not the prepared source.
+
+CurveToAnaCurve unwraps trimmed handles and evaluates source curves, extracts
+pole data into newly allocated scratch arrays and creates candidate line/circle
+geometry. Existing analytic-handle return paths do not apply to the application's
+BSpline/Bezier-only recognition inputs. No SetPole, source Transform, source
+Reverse or topology/tolerance update appears in this recognition path. Projection
+solvers/adaptors maintain private evaluation caches; this does not change geometry
+or any validSolid predicate.
+
+If recognition is empty, canonical returns the validated prepare shape. If it
+changes representation, modifier/SameParameter are followed by the original
+validSolid(result.shape). Entity mapping is read-only. Both equivalence difference
+Booleans use SetNonDestructive(true), whose pinned public contract copies subshapes
+that need updates instead of modifying arguments. Those results are still
+validated and checked for warning-free completion and material difference.
+Non-geometric root ownership flags may change, but validSolid does not predicate
+on them and the existing encoding check explicitly normalizes the root flag.
+
+Between canonical return and the removed shellBody check, encoding temporarily
+sets/restores root Free; openingFaces fills maps/lists; checkOffsetFace only reads
+analytic support radii, handedness and orientation; and TopExp builds maps.
+Adding an existing face to a new retained compound freezes the component Free
+flag and appends an oriented handle to the *compound*, not to the source solid.
+It does not change source connectivity, surface/curve geometry or tolerances.
+The source faces are already components of the prepared solid. None of these
+actions changes any of the strict geometry/volume/orientation/closure/tolerance/
+self-interference predicates established by canonical.
+
+The validator itself is not a repair step. ArgumentAnalyzer::TestSelfInterferences
+explicitly sets its local CheckerSI to non-destructive, and CheckerSI's constructor
+also defaults non-destructive and avoids pcurve building. BRepCheck analyzer/face/
+wire Update paths update their private status maps and cached results; the inspected
+paths do not call geometric/tolerance setters on the checked BRep. Their internal
+evaluation caches and the local solid classifier are not published geometry.
+Removing a repeated validator does not omit a needed normalization side effect.
+
+Risks to retain in review: future recognition code that mutates a supplied handle,
+destructive equivalence Booleans, source repair after canonical return, or changing
+canonical to allow prepare's no-copy fast path would invalidate this lifecycle
+argument. Comments mark the removed sites. Keep original serialized input checks
+and source-precision regressions. Offset/wall mutation and validation remain
+unchanged. `validate-source` timing label remains for compatibility but now covers
+selection/support feasibility bookkeeping rather than a second strict solid scan.
+
+Candidate source sizes: shell.cpp 141 lines; shell-canonical.cpp 201 lines; functions
+remain below 80 lines. Diff check passed. No build/test/benchmark by this worker;
+the orchestrator owns those checks and measured results.
+
+- [Surface recognition copies spline geometry before Segment](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/GeomConvert/GeomConvert_SurfToAnaSurf.cxx#L771-L882)
+- [Candidate cylinder allocation](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/GeomConvert/GeomConvert_SurfToAnaSurf.cxx#L149-L219)
+- [Curve conversion handle traversal](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/GeomConvert/GeomConvert_CurveToAnaCurve.cxx#L68-L93)
+- [Curve scratch poles and fresh line allocation](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/GeomConvert/GeomConvert_CurveToAnaCurve.cxx#L159-L223)
+- [Non-destructive Boolean contract](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepAlgoAPI/BRepAlgoAPI_BuilderAlgo.hxx#L81-L89)
+- [Builder Add freezes component flag and changes parent list](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/TopoDS/TopoDS_Builder.cxx#L42-L103)
+- [Self-interference analysis explicitly uses non-destructive checker](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BOPAlgo/BOPAlgo_ArgumentAnalyzer.cxx#L340-L369)
+- [CheckerSI defaults non-destructive and avoids pcurve building](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BOPAlgo/BOPAlgo_CheckerSI.cxx#L106-L112)
+- [BRepCheck Update changes private status list](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepCheck/BRepCheck_Face.cxx#L162-L181)

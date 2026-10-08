@@ -1,0 +1,1316 @@
+[
+  {
+    "name": "shell-cylindrical-splines-closed",
+    "label": "baseline",
+    "n": 20,
+    "medianMs": 271.41493300000366,
+    "p95Ms": 296.99361599999247,
+    "minMs": 258.709400000007,
+    "maxMs": 313.44454000000405,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "outcome.results[0].faceSignatures[6][1]: 1 != 0",
+    "phases": {
+      "shell parse": {
+        "medianMs": 2.9864699999999997,
+        "n": 20
+      },
+      "shell operands": {
+        "medianMs": 3.277095,
+        "n": 20
+      },
+      "shell-body begin": {
+        "medianMs": 0.001282,
+        "n": 20
+      },
+      "volume bounds": {
+        "medianMs": 8.370466,
+        "n": 40
+      },
+      "volume integrate": {
+        "medianMs": 0.019044,
+        "n": 100
+      },
+      "volume total": {
+        "medianMs": 0.0703665,
+        "n": 100
+      },
+      "shell-body canonicalize": {
+        "medianMs": 170.57100000000003,
+        "n": 20
+      },
+      "shell-body validate-source": {
+        "medianMs": 5.159795,
+        "n": 20
+      },
+      "shell-body offset": {
+        "medianMs": 19.610599999999998,
+        "n": 20
+      },
+      "shell-body correspondence": {
+        "medianMs": 2.243285,
+        "n": 20
+      },
+      "shell-wall-validation begin": {
+        "medianMs": 0.000887,
+        "n": 20
+      },
+      "shell-wall-validation valid-solid": {
+        "medianMs": 12.5939,
+        "n": 20
+      },
+      "shell-wall-validation containment": {
+        "medianMs": 2.040195,
+        "n": 20
+      },
+      "shell-wall-validation separation": {
+        "medianMs": 34.25355,
+        "n": 20
+      },
+      "shell-wall-validation openings": {
+        "medianMs": 0.046130000000000004,
+        "n": 20
+      },
+      "shell-wall-validation total": {
+        "medianMs": 48.9768,
+        "n": 20
+      },
+      "shell-body validate-wall": {
+        "medianMs": 48.9962,
+        "n": 20
+      },
+      "shell-body total": {
+        "medianMs": 247.615,
+        "n": 20
+      },
+      "shell calculate": {
+        "medianMs": 247.652,
+        "n": 20
+      },
+      "presentation mesh": {
+        "medianMs": 2.362835,
+        "n": 20
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 5.85158,
+        "n": 20
+      },
+      "presentation topology-and-json": {
+        "medianMs": 5.4590499999999995,
+        "n": 20
+      },
+      "presentation total": {
+        "medianMs": 13.75415,
+        "n": 20
+      },
+      "shell presentation": {
+        "medianMs": 13.77185,
+        "n": 20
+      },
+      "shell write": {
+        "medianMs": 0.035474000000000006,
+        "n": 20
+      },
+      "shell total": {
+        "medianMs": 269.935,
+        "n": 20
+      }
+    }
+  },
+  {
+    "name": "shell-cylindrical-splines-closed",
+    "label": "parallel",
+    "n": 20,
+    "medianMs": 218.98697000000175,
+    "p95Ms": 240.9344010000059,
+    "minMs": 201.53724999999395,
+    "maxMs": 250.23334999999952,
+    "pairedMedianSpeedup": 1.2293816089708054,
+    "bootstrap95": [
+      1.1859488899922805,
+      1.2699558066073506
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "outcome.results[0].faceSignatures[6][0]: 0 != 1",
+    "phases": {
+      "shell parse": {
+        "medianMs": 2.7063699999999997,
+        "n": 20
+      },
+      "shell operands": {
+        "medianMs": 3.24173,
+        "n": 20
+      },
+      "shell-body begin": {
+        "medianMs": 0.0012115,
+        "n": 20
+      },
+      "volume bounds": {
+        "medianMs": 8.282165,
+        "n": 40
+      },
+      "volume integrate": {
+        "medianMs": 0.0184985,
+        "n": 100
+      },
+      "volume total": {
+        "medianMs": 0.066861,
+        "n": 100
+      },
+      "shell-body canonicalize": {
+        "medianMs": 135.1585,
+        "n": 20
+      },
+      "shell-body validate-source": {
+        "medianMs": 6.0956150000000004,
+        "n": 20
+      },
+      "shell-body offset": {
+        "medianMs": 19.78125,
+        "n": 20
+      },
+      "shell-body correspondence": {
+        "medianMs": 2.250315,
+        "n": 20
+      },
+      "shell-wall-validation begin": {
+        "medianMs": 0.001002,
+        "n": 20
+      },
+      "shell-wall-validation valid-solid": {
+        "medianMs": 13.66045,
+        "n": 20
+      },
+      "shell-wall-validation containment": {
+        "medianMs": 1.82256,
+        "n": 20
+      },
+      "shell-wall-validation separation": {
+        "medianMs": 16.363999999999997,
+        "n": 20
+      },
+      "shell-wall-validation openings": {
+        "medianMs": 0.031247499999999997,
+        "n": 20
+      },
+      "shell-wall-validation total": {
+        "medianMs": 32.437200000000004,
+        "n": 20
+      },
+      "shell-body validate-wall": {
+        "medianMs": 32.45975,
+        "n": 20
+      },
+      "shell-body total": {
+        "medianMs": 196.3895,
+        "n": 20
+      },
+      "shell calculate": {
+        "medianMs": 196.421,
+        "n": 20
+      },
+      "presentation mesh": {
+        "medianMs": 2.28596,
+        "n": 20
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 5.856785,
+        "n": 20
+      },
+      "presentation topology-and-json": {
+        "medianMs": 5.4357050000000005,
+        "n": 20
+      },
+      "presentation total": {
+        "medianMs": 13.63315,
+        "n": 20
+      },
+      "shell presentation": {
+        "medianMs": 13.6517,
+        "n": 20
+      },
+      "shell write": {
+        "medianMs": 0.0334005,
+        "n": 20
+      },
+      "shell total": {
+        "medianMs": 216.6795,
+        "n": 20
+      }
+    }
+  },
+  {
+    "name": "shell-cylindrical-splines-open",
+    "label": "baseline",
+    "n": 20,
+    "medianMs": 252.04439350000393,
+    "p95Ms": 270.7464110000001,
+    "minMs": 241.83339099999284,
+    "maxMs": 275.46149999999034,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "shell parse": {
+        "medianMs": 0.5870175,
+        "n": 20
+      },
+      "shell operands": {
+        "medianMs": 3.206555,
+        "n": 20
+      },
+      "shell-body begin": {
+        "medianMs": 0.000892,
+        "n": 20
+      },
+      "volume bounds": {
+        "medianMs": 8.3015525,
+        "n": 40
+      },
+      "volume integrate": {
+        "medianMs": 0.027031,
+        "n": 100
+      },
+      "volume total": {
+        "medianMs": 0.06651599999999999,
+        "n": 100
+      },
+      "shell-body canonicalize": {
+        "medianMs": 166.5995,
+        "n": 20
+      },
+      "shell-body validate-source": {
+        "medianMs": 5.1222449999999995,
+        "n": 20
+      },
+      "shell-body offset": {
+        "medianMs": 4.142725,
+        "n": 20
+      },
+      "shell-body correspondence": {
+        "medianMs": 2.272175,
+        "n": 20
+      },
+      "shell-wall-validation begin": {
+        "medianMs": 0.0010365,
+        "n": 20
+      },
+      "shell-wall-validation valid-solid": {
+        "medianMs": 11.71965,
+        "n": 20
+      },
+      "shell-wall-validation containment": {
+        "medianMs": 5.191285000000001,
+        "n": 20
+      },
+      "shell-wall-validation separation": {
+        "medianMs": 20.250799999999998,
+        "n": 20
+      },
+      "shell-wall-validation openings": {
+        "medianMs": 5.173695,
+        "n": 20
+      },
+      "shell-wall-validation total": {
+        "medianMs": 42.901700000000005,
+        "n": 20
+      },
+      "shell-body validate-wall": {
+        "medianMs": 42.92695,
+        "n": 20
+      },
+      "shell-body total": {
+        "medianMs": 221.714,
+        "n": 20
+      },
+      "shell calculate": {
+        "medianMs": 221.745,
+        "n": 20
+      },
+      "presentation mesh": {
+        "medianMs": 2.8011,
+        "n": 20
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 6.04369,
+        "n": 20
+      },
+      "presentation topology-and-json": {
+        "medianMs": 14.9513,
+        "n": 20
+      },
+      "presentation total": {
+        "medianMs": 23.8815,
+        "n": 20
+      },
+      "shell presentation": {
+        "medianMs": 23.8992,
+        "n": 20
+      },
+      "shell write": {
+        "medianMs": 0.040021,
+        "n": 20
+      },
+      "shell total": {
+        "medianMs": 250.626,
+        "n": 20
+      }
+    }
+  },
+  {
+    "name": "shell-cylindrical-splines-open",
+    "label": "parallel",
+    "n": 20,
+    "medianMs": 216.899708500001,
+    "p95Ms": 231.40609399999084,
+    "minMs": 200.7810610000015,
+    "maxMs": 240.53784099999757,
+    "pairedMedianSpeedup": 1.1818304035261984,
+    "bootstrap95": [
+      1.120233312065835,
+      1.2198157953585835
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "shell parse": {
+        "medianMs": 0.5549740000000001,
+        "n": 20
+      },
+      "shell operands": {
+        "medianMs": 3.243855,
+        "n": 20
+      },
+      "shell-body begin": {
+        "medianMs": 0.0009215,
+        "n": 20
+      },
+      "volume bounds": {
+        "medianMs": 8.3337395,
+        "n": 40
+      },
+      "volume integrate": {
+        "medianMs": 0.025934,
+        "n": 100
+      },
+      "volume total": {
+        "medianMs": 0.067592,
+        "n": 100
+      },
+      "shell-body canonicalize": {
+        "medianMs": 140.96,
+        "n": 20
+      },
+      "shell-body validate-source": {
+        "medianMs": 6.064045,
+        "n": 20
+      },
+      "shell-body offset": {
+        "medianMs": 4.293145,
+        "n": 20
+      },
+      "shell-body correspondence": {
+        "medianMs": 2.27086,
+        "n": 20
+      },
+      "shell-wall-validation begin": {
+        "medianMs": 0.001047,
+        "n": 20
+      },
+      "shell-wall-validation valid-solid": {
+        "medianMs": 12.8216,
+        "n": 20
+      },
+      "shell-wall-validation containment": {
+        "medianMs": 5.03791,
+        "n": 20
+      },
+      "shell-wall-validation separation": {
+        "medianMs": 11.58455,
+        "n": 20
+      },
+      "shell-wall-validation openings": {
+        "medianMs": 4.86815,
+        "n": 20
+      },
+      "shell-wall-validation total": {
+        "medianMs": 34.22155,
+        "n": 20
+      },
+      "shell-body validate-wall": {
+        "medianMs": 34.2435,
+        "n": 20
+      },
+      "shell-body total": {
+        "medianMs": 187.0075,
+        "n": 20
+      },
+      "shell calculate": {
+        "medianMs": 187.124,
+        "n": 20
+      },
+      "presentation mesh": {
+        "medianMs": 2.8230750000000002,
+        "n": 20
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 6.03266,
+        "n": 20
+      },
+      "presentation topology-and-json": {
+        "medianMs": 15.213049999999999,
+        "n": 20
+      },
+      "presentation total": {
+        "medianMs": 24.36645,
+        "n": 20
+      },
+      "shell presentation": {
+        "medianMs": 24.381,
+        "n": 20
+      },
+      "shell write": {
+        "medianMs": 0.037417000000000006,
+        "n": 20
+      },
+      "shell total": {
+        "medianMs": 215.5695,
+        "n": 20
+      }
+    }
+  },
+  {
+    "name": "shell-notched-cylinder-closed",
+    "label": "baseline",
+    "n": 20,
+    "medianMs": 599.3848600000056,
+    "p95Ms": 650.3374259999982,
+    "minMs": 572.289730000004,
+    "maxMs": 664.0382119999995,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "outcome.results[0].faceSignatures[9][0]: 0 != 4",
+    "phases": {
+      "shell parse": {
+        "medianMs": 0.709463,
+        "n": 20
+      },
+      "shell operands": {
+        "medianMs": 3.1360650000000003,
+        "n": 20
+      },
+      "shell-body begin": {
+        "medianMs": 0.0014824999999999999,
+        "n": 40
+      },
+      "shell-body canonicalize": {
+        "medianMs": 33.955749999999995,
+        "n": 40
+      },
+      "shell-body validate-source": {
+        "medianMs": 28.3325,
+        "n": 40
+      },
+      "shell-body total": {
+        "medianMs": 232.332,
+        "n": 40
+      },
+      "shell-body offset": {
+        "medianMs": 103.86099999999999,
+        "n": 20
+      },
+      "shell-body correspondence": {
+        "medianMs": 11.94815,
+        "n": 20
+      },
+      "shell-wall-validation begin": {
+        "medianMs": 0.0015825000000000001,
+        "n": 20
+      },
+      "shell-wall-validation valid-solid": {
+        "medianMs": 102.3205,
+        "n": 20
+      },
+      "shell-wall-validation containment": {
+        "medianMs": 5.404925,
+        "n": 20
+      },
+      "volume integrate": {
+        "medianMs": 2.631057,
+        "n": 40
+      },
+      "volume total": {
+        "medianMs": 18.39912,
+        "n": 40
+      },
+      "shell-wall-validation separation": {
+        "medianMs": 85.14224999999999,
+        "n": 20
+      },
+      "shell-wall-validation openings": {
+        "medianMs": 0.0563605,
+        "n": 20
+      },
+      "shell-wall-validation total": {
+        "medianMs": 193.2545,
+        "n": 20
+      },
+      "shell-body validate-wall": {
+        "medianMs": 193.283,
+        "n": 20
+      },
+      "shell calculate": {
+        "medianMs": 473.1005,
+        "n": 20
+      },
+      "presentation mesh": {
+        "medianMs": 5.79871,
+        "n": 20
+      },
+      "volume bounds": {
+        "medianMs": 32.6335,
+        "n": 20
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 88.5589,
+        "n": 20
+      },
+      "presentation topology-and-json": {
+        "medianMs": 24.076549999999997,
+        "n": 20
+      },
+      "presentation total": {
+        "medianMs": 118.2685,
+        "n": 20
+      },
+      "shell presentation": {
+        "medianMs": 118.28999999999999,
+        "n": 20
+      },
+      "shell write": {
+        "medianMs": 0.1822005,
+        "n": 20
+      },
+      "shell total": {
+        "medianMs": 596.437,
+        "n": 20
+      }
+    }
+  },
+  {
+    "name": "shell-notched-cylinder-closed",
+    "label": "parallel",
+    "n": 20,
+    "medianMs": 501.15291949999846,
+    "p95Ms": 520.2468979999976,
+    "minMs": 468.0769779999973,
+    "maxMs": 540.9112269999969,
+    "pairedMedianSpeedup": 1.1869669567326822,
+    "bootstrap95": [
+      1.1660166279165614,
+      1.2216740361621774
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "outcome.results[0].faceSignatures[9][1]: 0 != 1",
+    "phases": {
+      "shell parse": {
+        "medianMs": 0.6988925,
+        "n": 20
+      },
+      "shell operands": {
+        "medianMs": 3.3739350000000004,
+        "n": 20
+      },
+      "shell-body begin": {
+        "medianMs": 0.0014125000000000001,
+        "n": 40
+      },
+      "shell-body canonicalize": {
+        "medianMs": 30.531599999999997,
+        "n": 40
+      },
+      "shell-body validate-source": {
+        "medianMs": 24.5662,
+        "n": 40
+      },
+      "shell-body total": {
+        "medianMs": 180.855,
+        "n": 40
+      },
+      "shell-body offset": {
+        "medianMs": 97.1362,
+        "n": 20
+      },
+      "shell-body correspondence": {
+        "medianMs": 11.9772,
+        "n": 20
+      },
+      "shell-wall-validation begin": {
+        "medianMs": 0.001573,
+        "n": 20
+      },
+      "shell-wall-validation valid-solid": {
+        "medianMs": 68.6062,
+        "n": 20
+      },
+      "shell-wall-validation containment": {
+        "medianMs": 5.4293,
+        "n": 20
+      },
+      "volume integrate": {
+        "medianMs": 2.613266,
+        "n": 40
+      },
+      "volume total": {
+        "medianMs": 18.3858195,
+        "n": 40
+      },
+      "shell-wall-validation separation": {
+        "medianMs": 37.925349999999995,
+        "n": 20
+      },
+      "shell-wall-validation openings": {
+        "medianMs": 0.047767000000000004,
+        "n": 20
+      },
+      "shell-wall-validation total": {
+        "medianMs": 112.4735,
+        "n": 20
+      },
+      "shell-body validate-wall": {
+        "medianMs": 112.5015,
+        "n": 20
+      },
+      "shell calculate": {
+        "medianMs": 371.1915,
+        "n": 20
+      },
+      "presentation mesh": {
+        "medianMs": 5.415155,
+        "n": 20
+      },
+      "volume bounds": {
+        "medianMs": 33.09995,
+        "n": 20
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 88.97569999999999,
+        "n": 20
+      },
+      "presentation topology-and-json": {
+        "medianMs": 24.19885,
+        "n": 20
+      },
+      "presentation total": {
+        "medianMs": 119.00800000000001,
+        "n": 20
+      },
+      "shell presentation": {
+        "medianMs": 119.0275,
+        "n": 20
+      },
+      "shell write": {
+        "medianMs": 0.5705375,
+        "n": 20
+      },
+      "shell total": {
+        "medianMs": 498.235,
+        "n": 20
+      }
+    }
+  },
+  {
+    "name": "shell-notched-cylinder-captured",
+    "label": "baseline",
+    "n": 20,
+    "medianMs": 543.8831010000031,
+    "p95Ms": 589.1139259999982,
+    "minMs": 525.4056189999974,
+    "maxMs": 616.0193409999993,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "outcome.results[0].faceSignatures[11][1]: 1 != 0",
+    "phases": {
+      "shell parse": {
+        "medianMs": 0.761627,
+        "n": 20
+      },
+      "shell operands": {
+        "medianMs": 3.30062,
+        "n": 20
+      },
+      "shell-body begin": {
+        "medianMs": 0.0014624999999999998,
+        "n": 40
+      },
+      "shell-body canonicalize": {
+        "medianMs": 34.199,
+        "n": 40
+      },
+      "shell-body validate-source": {
+        "medianMs": 28.5347,
+        "n": 40
+      },
+      "shell-body offset": {
+        "medianMs": 33.027150000000006,
+        "n": 40
+      },
+      "shell-body total": {
+        "medianMs": 212.2685,
+        "n": 40
+      },
+      "shell-body correspondence": {
+        "medianMs": 12.0129,
+        "n": 20
+      },
+      "shell-wall-validation begin": {
+        "medianMs": 0.001722,
+        "n": 20
+      },
+      "shell-wall-validation valid-solid": {
+        "medianMs": 102.61500000000001,
+        "n": 20
+      },
+      "shell-wall-validation containment": {
+        "medianMs": 6.151244999999999,
+        "n": 20
+      },
+      "volume integrate": {
+        "medianMs": 2.6530259999999997,
+        "n": 40
+      },
+      "volume total": {
+        "medianMs": 18.335187,
+        "n": 40
+      },
+      "shell-wall-validation separation": {
+        "medianMs": 74.84525,
+        "n": 20
+      },
+      "shell-wall-validation openings": {
+        "medianMs": 3.6020250000000003,
+        "n": 20
+      },
+      "shell-wall-validation total": {
+        "medianMs": 188.5555,
+        "n": 20
+      },
+      "shell-body validate-wall": {
+        "medianMs": 188.586,
+        "n": 20
+      },
+      "shell calculate": {
+        "medianMs": 397.044,
+        "n": 20
+      },
+      "presentation mesh": {
+        "medianMs": 5.946244999999999,
+        "n": 20
+      },
+      "volume bounds": {
+        "medianMs": 32.4891,
+        "n": 20
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 88.86925,
+        "n": 20
+      },
+      "presentation topology-and-json": {
+        "medianMs": 45.714749999999995,
+        "n": 20
+      },
+      "presentation total": {
+        "medianMs": 141.06150000000002,
+        "n": 20
+      },
+      "shell presentation": {
+        "medianMs": 141.0795,
+        "n": 20
+      },
+      "shell write": {
+        "medianMs": 0.172571,
+        "n": 20
+      },
+      "shell total": {
+        "medianMs": 540.9375,
+        "n": 20
+      }
+    }
+  },
+  {
+    "name": "shell-notched-cylinder-captured",
+    "label": "parallel",
+    "n": 20,
+    "medianMs": 459.71763599999395,
+    "p95Ms": 502.0770859999975,
+    "minMs": 434.68007000000216,
+    "maxMs": 564.7721099999981,
+    "pairedMedianSpeedup": 1.1802408380403526,
+    "bootstrap95": [
+      1.161425752242931,
+      1.203522228095586
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "outcome.results[0].faceSignatures[10][0]: 1 != 4",
+    "phases": {
+      "shell parse": {
+        "medianMs": 0.700134,
+        "n": 20
+      },
+      "shell operands": {
+        "medianMs": 3.1648750000000003,
+        "n": 20
+      },
+      "shell-body begin": {
+        "medianMs": 0.001312,
+        "n": 40
+      },
+      "shell-body canonicalize": {
+        "medianMs": 30.38185,
+        "n": 40
+      },
+      "shell-body validate-source": {
+        "medianMs": 25.185650000000003,
+        "n": 40
+      },
+      "shell-body offset": {
+        "medianMs": 32.917,
+        "n": 40
+      },
+      "shell-body total": {
+        "medianMs": 158.7715,
+        "n": 40
+      },
+      "shell-body correspondence": {
+        "medianMs": 11.68665,
+        "n": 20
+      },
+      "shell-wall-validation begin": {
+        "medianMs": 0.001673,
+        "n": 20
+      },
+      "shell-wall-validation valid-solid": {
+        "medianMs": 73.309,
+        "n": 20
+      },
+      "shell-wall-validation containment": {
+        "medianMs": 6.27328,
+        "n": 20
+      },
+      "volume integrate": {
+        "medianMs": 2.6157744999999997,
+        "n": 40
+      },
+      "volume total": {
+        "medianMs": 18.3307925,
+        "n": 40
+      },
+      "shell-wall-validation separation": {
+        "medianMs": 32.07205,
+        "n": 20
+      },
+      "shell-wall-validation openings": {
+        "medianMs": 3.574285,
+        "n": 20
+      },
+      "shell-wall-validation total": {
+        "medianMs": 114.7445,
+        "n": 20
+      },
+      "shell-body validate-wall": {
+        "medianMs": 114.7925,
+        "n": 20
+      },
+      "shell calculate": {
+        "medianMs": 309.706,
+        "n": 20
+      },
+      "presentation mesh": {
+        "medianMs": 5.75545,
+        "n": 20
+      },
+      "volume bounds": {
+        "medianMs": 32.53925,
+        "n": 20
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 87.80715000000001,
+        "n": 20
+      },
+      "presentation topology-and-json": {
+        "medianMs": 46.3044,
+        "n": 20
+      },
+      "presentation total": {
+        "medianMs": 140.43650000000002,
+        "n": 20
+      },
+      "shell presentation": {
+        "medianMs": 140.454,
+        "n": 20
+      },
+      "shell write": {
+        "medianMs": 0.171865,
+        "n": 20
+      },
+      "shell total": {
+        "medianMs": 456.784,
+        "n": 20
+      }
+    }
+  },
+  {
+    "name": "shell-bent-sweep-closed",
+    "label": "baseline",
+    "n": 20,
+    "medianMs": 457.8651420000024,
+    "p95Ms": 472.6363810000039,
+    "minMs": 321.64563699999417,
+    "maxMs": 473.97071300000243,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "error": "Solid boundary does not meet its incident surfaces",
+    "phases": {
+      "shell parse": {
+        "medianMs": 12.33035,
+        "n": 20
+      },
+      "shell operands": {
+        "medianMs": 5.53648,
+        "n": 20
+      },
+      "shell-body begin": {
+        "medianMs": 0.0017675,
+        "n": 40
+      },
+      "shell-body canonicalize": {
+        "medianMs": 74.6131,
+        "n": 40
+      },
+      "shell-body validate-source": {
+        "medianMs": 59.17585,
+        "n": 40
+      },
+      "shell-body total": {
+        "medianMs": 213.16,
+        "n": 40
+      },
+      "shell total": {
+        "medianMs": 447.994,
+        "n": 20
+      }
+    }
+  },
+  {
+    "name": "shell-bent-sweep-closed",
+    "label": "parallel",
+    "n": 20,
+    "medianMs": 393.02382399999624,
+    "p95Ms": 410.692008,
+    "minMs": 270.475986999998,
+    "maxMs": 412.2422540000116,
+    "pairedMedianSpeedup": 1.173524467117644,
+    "bootstrap95": [
+      1.1428524946762546,
+      1.1982805463359885
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "error": "Solid boundary does not meet its incident surfaces",
+    "phases": {
+      "shell parse": {
+        "medianMs": 12.3422,
+        "n": 20
+      },
+      "shell operands": {
+        "medianMs": 5.582525,
+        "n": 20
+      },
+      "shell-body begin": {
+        "medianMs": 0.001728,
+        "n": 40
+      },
+      "shell-body canonicalize": {
+        "medianMs": 59.8787,
+        "n": 40
+      },
+      "shell-body validate-source": {
+        "medianMs": 42.63035,
+        "n": 40
+      },
+      "shell-body total": {
+        "medianMs": 182.39350000000002,
+        "n": 40
+      },
+      "shell total": {
+        "medianMs": 383.5265,
+        "n": 20
+      }
+    }
+  },
+  {
+    "name": "shell-bent-sweep-captured",
+    "label": "baseline",
+    "n": 20,
+    "medianMs": 1090.6429590000007,
+    "p95Ms": 1132.329012999995,
+    "minMs": 1055.0814769999997,
+    "maxMs": 1204.287507000001,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "shell parse": {
+        "medianMs": 14.50235,
+        "n": 20
+      },
+      "shell operands": {
+        "medianMs": 5.52824,
+        "n": 20
+      },
+      "shell-body begin": {
+        "medianMs": 0.0015875,
+        "n": 20
+      },
+      "shell-body canonicalize": {
+        "medianMs": 74.426,
+        "n": 20
+      },
+      "shell-body validate-source": {
+        "medianMs": 58.712050000000005,
+        "n": 20
+      },
+      "shell-body offset": {
+        "medianMs": 2.2076700000000002,
+        "n": 20
+      },
+      "shell-body correspondence": {
+        "medianMs": 98.20474999999999,
+        "n": 20
+      },
+      "shell-wall-validation begin": {
+        "medianMs": 0.0016725,
+        "n": 20
+      },
+      "shell-wall-validation valid-solid": {
+        "medianMs": 379.778,
+        "n": 20
+      },
+      "shell-wall-validation containment": {
+        "medianMs": 16.0029,
+        "n": 20
+      },
+      "volume integrate": {
+        "medianMs": 30.674091,
+        "n": 40
+      },
+      "volume total": {
+        "medianMs": 74.400451,
+        "n": 40
+      },
+      "shell-wall-validation separation": {
+        "medianMs": 79.40639999999999,
+        "n": 20
+      },
+      "shell-wall-validation openings": {
+        "medianMs": 18.1597,
+        "n": 20
+      },
+      "shell-wall-validation total": {
+        "medianMs": 494.47249999999997,
+        "n": 20
+      },
+      "shell-body validate-wall": {
+        "medianMs": 494.52,
+        "n": 20
+      },
+      "shell-body total": {
+        "medianMs": 732.6210000000001,
+        "n": 20
+      },
+      "shell calculate": {
+        "medianMs": 732.6575,
+        "n": 20
+      },
+      "presentation mesh": {
+        "medianMs": 41.967150000000004,
+        "n": 20
+      },
+      "volume bounds": {
+        "medianMs": 88.46494999999999,
+        "n": 20
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 247.211,
+        "n": 20
+      },
+      "presentation topology-and-json": {
+        "medianMs": 29.13045,
+        "n": 20
+      },
+      "presentation total": {
+        "medianMs": 321.0885,
+        "n": 20
+      },
+      "shell presentation": {
+        "medianMs": 321.1055,
+        "n": 20
+      },
+      "shell write": {
+        "medianMs": 0.7068295,
+        "n": 20
+      },
+      "shell total": {
+        "medianMs": 1078.425,
+        "n": 20
+      }
+    }
+  },
+  {
+    "name": "shell-bent-sweep-captured",
+    "label": "parallel",
+    "n": 20,
+    "medianMs": 848.1792365000001,
+    "p95Ms": 875.3951439999946,
+    "minMs": 812.470358999999,
+    "maxMs": 879.792690000002,
+    "pairedMedianSpeedup": 1.2826597025328903,
+    "bootstrap95": [
+      1.260270055967333,
+      1.3302395049419409
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "shell parse": {
+        "medianMs": 14.64225,
+        "n": 20
+      },
+      "shell operands": {
+        "medianMs": 5.634765,
+        "n": 20
+      },
+      "shell-body begin": {
+        "medianMs": 0.0016025000000000002,
+        "n": 20
+      },
+      "shell-body canonicalize": {
+        "medianMs": 61.35865,
+        "n": 20
+      },
+      "shell-body validate-source": {
+        "medianMs": 42.669250000000005,
+        "n": 20
+      },
+      "shell-body offset": {
+        "medianMs": 2.224495,
+        "n": 20
+      },
+      "shell-body correspondence": {
+        "medianMs": 99.3012,
+        "n": 20
+      },
+      "shell-wall-validation begin": {
+        "medianMs": 0.001653,
+        "n": 20
+      },
+      "shell-wall-validation valid-solid": {
+        "medianMs": 200.43200000000002,
+        "n": 20
+      },
+      "shell-wall-validation containment": {
+        "medianMs": 16.043599999999998,
+        "n": 20
+      },
+      "volume integrate": {
+        "medianMs": 30.577288,
+        "n": 40
+      },
+      "volume total": {
+        "medianMs": 74.32801099999999,
+        "n": 40
+      },
+      "shell-wall-validation separation": {
+        "medianMs": 43.76085,
+        "n": 20
+      },
+      "shell-wall-validation openings": {
+        "medianMs": 18.4432,
+        "n": 20
+      },
+      "shell-wall-validation total": {
+        "medianMs": 280.293,
+        "n": 20
+      },
+      "shell-body validate-wall": {
+        "medianMs": 280.338,
+        "n": 20
+      },
+      "shell-body total": {
+        "medianMs": 485.815,
+        "n": 20
+      },
+      "shell calculate": {
+        "medianMs": 485.8485,
+        "n": 20
+      },
+      "presentation mesh": {
+        "medianMs": 42.73795,
+        "n": 20
+      },
+      "volume bounds": {
+        "medianMs": 89.41335,
+        "n": 20
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 247.268,
+        "n": 20
+      },
+      "presentation topology-and-json": {
+        "medianMs": 29.0835,
+        "n": 20
+      },
+      "presentation total": {
+        "medianMs": 320.961,
+        "n": 20
+      },
+      "shell presentation": {
+        "medianMs": 320.97749999999996,
+        "n": 20
+      },
+      "shell write": {
+        "medianMs": 0.7473155,
+        "n": 20
+      },
+      "shell total": {
+        "medianMs": 836.381,
+        "n": 20
+      }
+    }
+  }
+]

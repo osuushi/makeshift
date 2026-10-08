@@ -1,0 +1,16 @@
+{"type":"input","valid":true,"bounds_ms":1.9644710000000001,"lo":[-10.000000100000022,-15.000000100000024,-9.9999999999999995e-08],"hi":[15.000000100000001,10.000000099999996,20.000000100000005]}
+{"type":"face","index":0,"surface_type":6,"u_degree":2,"v_degree":8,"u_rational":true,"v_rational":true,"u_knots":4,"v_knots":2}
+{"type":"face","index":1,"surface_type":0}
+{"type":"face","index":2,"surface_type":0}
+{"type":"volume","axis":"y","block":-1,"eps":1e-10,"ms":2.4976780000000001,"exception":false,"error":1.8126378388750107e-11,"mass":6283.1853071798123}
+{"type":"volume","axis":"adaptive","block":-1,"eps":1e-10,"ms":2.796119,"exception":false,"error":6.5137759876372863e-16,"mass":6283.1853071795658}
+{"type":"volume","axis":"z","block":-1,"eps":1e-10,"ms":2589.1256870000002,"exception":false,"error":7.5557937096377463e-11,"mass":6283.185307474675}
+{"type":"volume","axis":"x","block":-1,"eps":1e-10,"ms":2.3271600000000001,"exception":false,"error":1.0520309670648936e-11,"mass":6283.1853071798159}
+{"type":"volume","axis":"adaptive","block":0,"eps":1e-10,"ms":2.6729620000000001,"exception":false,"error":6.5137759876372863e-16,"mass":6283.1853071795658}
+{"type":"volume","axis":"z","block":0,"eps":1e-10,"ms":2607.5170469999998,"exception":false,"error":7.5557937096377463e-11,"mass":6283.185307474675}
+{"type":"volume","axis":"y","block":0,"eps":1e-10,"ms":1.671948,"exception":false,"error":1.8126378388750107e-11,"mass":6283.1853071798123}
+{"type":"volume","axis":"x","block":0,"eps":1e-10,"ms":2.1247029999999998,"exception":false,"error":1.0520309670648936e-11,"mass":6283.1853071798159}
+{"type":"volume","axis":"x","block":1,"eps":1e-10,"ms":2.2580140000000002,"exception":false,"error":1.0520309670648936e-11,"mass":6283.1853071798159}
+{"type":"volume","axis":"y","block":1,"eps":1e-10,"ms":1.7851300000000001,"exception":false,"error":1.8126378388750107e-11,"mass":6283.1853071798123}
+{"type":"volume","axis":"z","block":1,"eps":1e-10,"ms":2604.7348649999999,"exception":false,"error":7.5557937096377463e-11,"mass":6283.185307474675}
+{"type":"volume","axis":"adaptive","block":1,"eps":1e-10,"ms":2.561283,"exception":false,"error":6.5137759876372863e-16,"mass":6283.1853071795658}

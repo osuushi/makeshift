@@ -1,0 +1,15 @@
+{"name":"extrude-intersect-implicit","baselineRepeat":"matched","candidateMatch":"matched"}
+{"name":"extrude-intersect-explicit","baselineRepeat":"matched","candidateMatch":"matched"}
+✔ .cache/sketch-tests/tests/body-boolean.test.js (840.933877ms)
+✔ .cache/sketch-tests/tests/extrude-draft.test.js (1122.073461ms)
+✔ .cache/sketch-tests/tests/extrude-projected-cylinder.test.js (3790.374944ms)
+✔ .cache/sketch-tests/tests/extrude-symmetric.test.js (5065.136701ms)
+✔ .cache/sketch-tests/tests/tagged-groups-boolean.test.js (369.208438ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11199.481287
