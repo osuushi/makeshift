@@ -1,3 +1,4 @@
+import { onCanonicalPlanesChange } from "../preferences/canonical-planes.js";
 import { cubeAlignment } from "./orientation-cube-alignment.js";
 import { createOrientationCube } from "./orientation-cube-view.js";
 import { pointerDragThreshold } from "./pointer-intent.js";
@@ -18,9 +19,11 @@ export function installOrientationCube(world: World): () => void {
   const view = createOrientationCube(world);
   const input = new CubeInput(world, view);
   world.changed.add(view.draw);
+  const removePlaneSettings = onCanonicalPlanesChange(view.draw);
   view.draw();
   return () => {
     input.dispose();
+    removePlaneSettings();
     world.changed.delete(view.draw);
     view.cube.remove();
   };

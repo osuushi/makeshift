@@ -198,9 +198,13 @@ roll measures pointer bearing around the cube center, one-to-one in angle; radia
 motion adds no roll. Viewport Option-drag retains its model/selection-centered bearing.
 A face click
 aligns Front (−Y), Back (+Y), Left (−X), Right (+X), Top (+Z), or Bottom (−Z).
-The white/near-black cube has six inset labeled faces, twelve edge bevels and eight
+The cube has six inset labeled faces, twelve edge bevels and eight
 corner bevels. The face half-width is 0.58 of the cube half-width, leaving wider
 bevel polygons as the actual pointer/touch targets without overlapping hit regions.
+Opposing main faces share their corresponding canonical plane's configured grid
+color: Top/Bottom use XY, Front/Back use XZ, and Left/Right use YZ. Color changes
+apply immediately; label ink adapts for contrast, while hover/focus retains blue
+highlighting and dark labels. Bevels retain their neutral shading.
 Labels are projected in each face plane, rotating and foreshortening with the rigid
 cube. Edge clicks align to the equal-weight diagonal of their two
 axes (flat 45°); corner clicks align to the equal-weight three-axis isometric view.
