@@ -1,0 +1,149 @@
+[
+  {
+    "name": "extrude-perforated",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "extrude-symmetric-perforated",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "extrude-symmetric-box",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "boolean-cut-perforated",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "boolean-union-perforated",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "shell-perforated-closed",
+    "baselineRepeat": "reply.results[0].faces[0].thickness.faceIndex: 36 != 34",
+    "candidateMatch": "reply.results[0].faces[0].thickness.faceIndex: 36 != 34"
+  },
+  {
+    "name": "shell-perforated-open",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "cubic-auto-implicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "cubic-auto-explicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "cubic-subtract-implicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "cubic-subtract-explicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "cubic-intersect-implicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "cubic-intersect-explicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "extrude-union-implicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "extrude-union-explicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "extrude-auto-implicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "extrude-auto-explicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "extrude-subtract-implicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "extrude-subtract-explicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "extrude-intersect-implicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "extrude-intersect-explicit",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "shell-cylindrical-splines-closed",
+    "baselineRepeat": "reply.results[0].faces[0].thickness.faceIndex: 10 != 11",
+    "candidateMatch": "reply.results[0].faces[0].thickness.faceIndex: 10 != 9"
+  },
+  {
+    "name": "shell-cylindrical-splines-open",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "shell-notched-cylinder-closed",
+    "baselineRepeat": "reply.results[0].faces[1].thickness.faceIndex: 9 != 19",
+    "candidateMatch": "reply.results[0].faces[1].thickness.faceIndex: 9 != 13"
+  },
+  {
+    "name": "shell-notched-cylinder-captured",
+    "baselineRepeat": "reply.results[0].faces[0].predecessors.length\n\n1 !== 0\n",
+    "candidateMatch": "reply.results[0].faces[0].predecessors.length\n\n1 !== 0\n"
+  },
+  {
+    "name": "shell-bent-sweep-closed",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched",
+    "baselineError": "Solid boundary does not meet its incident surfaces",
+    "candidateError": "Solid boundary does not meet its incident surfaces"
+  },
+  {
+    "name": "shell-bent-sweep-captured",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "circle-offset-twist",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  },
+  {
+    "name": "circle-offset-twist-neutral-auto",
+    "baselineRepeat": "matched",
+    "candidateMatch": "matched"
+  }
+]

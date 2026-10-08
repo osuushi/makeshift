@@ -1,0 +1,11 @@
+{"type":"input","valid":true,"bounds_ms":88.777728999999994,"lo":[-25.656854249492387,-5.6568543494923826,-8.000000100000058],"hi":[25.656854349492381,23.857864470347888,8.0000001000000136]}
+{"type":"face","index":0,"surface_type":1}
+{"type":"face","index":1,"surface_type":6,"u_degree":6,"v_degree":13,"u_rational":true,"v_rational":true,"u_knots":2,"v_knots":2}
+{"type":"face","index":2,"surface_type":1}
+{"type":"face","index":3,"surface_type":0}
+{"type":"face","index":4,"surface_type":1}
+{"type":"face","index":5,"surface_type":9}
+{"type":"face","index":6,"surface_type":0}
+{"type":"face","index":7,"surface_type":1}
+{"type":"volume","axis":"x","block":-1,"eps":1e-10,"ms":77.112938,"exception":false,"error":1.0042724994123697e-09,"mass":2463.5761443864135}
+{"type":"volume","axis":"x","block":0,"eps":1e-10,"ms":78.486085000000003,"exception":false,"error":1.0042724994123697e-09,"mass":2463.5761443864135}

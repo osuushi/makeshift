@@ -1,0 +1,90 @@
+--- a/src/IntCurvesFace/IntCurvesFace_Intersector.cxx
++++ b/src/IntCurvesFace/IntCurvesFace_Intersector.cxx
+@@ -38,6 +38,62 @@
+ #include <BRep_Tool.hxx>
+ #include <TopoDS.hxx>
+ #include <GeomAPI_ProjectPointOnCurve.hxx>
++#include <GeomAdaptor_Curve.hxx>
++
++namespace
++{
++struct RayLineScratch
++{
++  Handle(Geom_Line) line;
++  Handle(GeomAdaptor_Curve) curve;
++  bool busy = false;
++};
++
++// Lives before the local HICS, so reuse stays disabled through its destruction.
++// No intersector class/header/layout changes; each worker has separate scratch.
++class RayLineLease
++{
++public:
++  explicit RayLineLease(const bool enabled)
++  {
++    if (!enabled) return;
++    static thread_local RayLineScratch storage;
++    if (storage.busy) return;
++    if (!storage.curve.IsNull())
++    {
++      // The only expected owners are scratch.curve and scratch.line+curve.
++      // A retained adaptor or shallow copy retaining the line forbids mutation.
++      if (storage.curve->GetRefCount() != 1 || storage.line.IsNull()
++          || storage.line->GetRefCount() != 2) return;
++    }
++    else if (!storage.line.IsNull()) return;
++    storage.busy = true;
++    scratch = &storage;
++  }
++  ~RayLineLease() { if (scratch) scratch->busy = false; }
++  RayLineLease(const RayLineLease&) = delete;
++  RayLineLease& operator=(const RayLineLease&) = delete;
++  bool Reusable() const { return scratch != nullptr; }
++  Handle(GeomAdaptor_Curve) Load(const gp_Lin& line)
++  {
++    if (scratch->curve.IsNull())
++    {
++      scratch->line = new Geom_Line(line);
++      scratch->curve = new GeomAdaptor_Curve(scratch->line);
++    }
++    else
++    {
++      // Load of the same handle alone may retain type-specific preparation.
++      scratch->curve->Reset();
++      scratch->line->SetLin(line);
++      scratch->curve->Load(scratch->line);
++    }
++    return scratch->curve;
++  }
++private:
++  RayLineScratch* scratch = nullptr;
++};
++} // namespace
+ 
+ IMPLEMENT_STANDARD_RTTIEXT(IntCurvesFace_Intersector, Standard_Transient)
+ 
+@@ -364,10 +420,21 @@
+   mySeqState.Clear();
+   nbpnt = 0;
+ 
++  RayLineLease              lineLease(!myPolyhedron);
+   IntCurveSurface_HInter    HICS;
+-  Handle(Geom_Line)         geomline = new Geom_Line(L);
+-  GeomAdaptor_Curve         LL(geomline);
+-  Handle(GeomAdaptor_Curve) HLL    = new GeomAdaptor_Curve(LL);
++  Handle(Geom_Line)         geomline;
++  GeomAdaptor_Curve         LL;
++  Handle(GeomAdaptor_Curve) HLL;
++  if (lineLease.Reusable())
++  {
++    HLL = lineLease.Load(L);
++  }
++  else
++  {
++    geomline = new Geom_Line(L);
++    LL.Load(geomline);
++    HLL = new GeomAdaptor_Curve(LL);
++  }
+   Standard_Real             parinf = ParMin;
+   Standard_Real             parsup = ParMax;
+   //

@@ -516,6 +516,70 @@ and broader fitted-sweep cases remain follow-up work.
 
 ## Pending experiments
 
+### Incremental fixed-V fork after axis conditioning
+
+Relinking the exact 7811ec5 application objects against the isolated matching
+TKMath/TKG3d pair (verified by ldd) gives forty-pair bent captured Shell 1.034×
+(95% interval 1.017–1.059), median 802.0→774.8 ms. Circle is only 1.020×
+(0.997–1.035), 59.0→57.9 ms, compatible with no gain. Cubic implicit Subtract
+1.029× (0.981–1.051) and notched captured Shell 0.994× (0.983–1.014) are also
+uncertain. All summary geometry/predecessor multisets match; notched face
+enumeration remains variable within baseline too. Full 28-case comparison
+matches every stable baseline case. Raw evidence is
+`results/fixed-v-with-axis-{confirmation.jsonl,confirmation-summary.json,full-output.json}`.
+The fork application SHA256 is
+`945d7cf3ca055077ab204913a40d2a3d87adfb99fe5cf60ea4d1a1445555fcff`.
+SDK libraries remain untouched. The evaluator patch remains a prototype;
+its previous pathological-circle benefit cannot be multiplied by the new
+43× application improvement or presented as a broad remaining gain.
+
+### Small-volume and slender twist checks
+
+Six scales from 5e-6 to 1, two annulus scales, and slender travel test sixteen
+cases. All accepted baseline/candidate cases match full metadata and genuine
+relative volume at 1e-10 without a max(1,volume) floor; the three smallest
+offset twists retain the same construction-accuracy rejection. No new result
+or rejection appears. Analytic invariant and fitted nominal references are
+labeled separately, and threshold classifications/raw replies are retained in
+`results/twist-volume-axis-scales.jsonl`. Small invariant cases exercise the
+existing 1e-12 minimum-solid threshold. This is regression evidence, not
+independent accuracy certification of arbitrary fitted surfaces.
+
+## Next work
+
+Current follow-up: streaming Common→Cut completes each positive pair before
+releasing its intersection data. Twenty fresh paired blocks preserve cubic
+sixteen-target speed (1.297× versus no reuse), while reducing HWM 14.531 MiB
+versus retained reuse (95% interval 13.834–14.693 MiB). Twenty-six regressions
+pass. Repeated closed-Shell captures resolve the apparent face31/36 discrepancy
+to the same geometric source/target descriptors; baseline itself varies face
+enumeration. This is documented separately from formal BRep identity. See the
+Boolean and presentation notes for full evidence and remaining exceptional cases.
+
+Two isolated quadrature prototypes now have reproducible preload builds.
+Roundoff floor gives no consistent speed benefit in its three-block pilot.
+Prepared-table caching preserves 264 scalar rows bit-for-bit, including four
+additional high-order boundaries, and passes thirty fresh paired concurrency
+processes covering both Perform overloads. Captured-volume pilot mass/error
+bits also match; forty-block confirmation is running. Source/SDK are unchanged.
+
+That confirmation has finished: all480 measured mass/error records per variant
+match exactly, but every speed confidence interval includes1. Prepared-table
+caching is therefore a measured negative result on this corpus. The pilot's
+apparent gain disappeared with larger samples. Independent contiguous interval
+storage passes all264 scalar-row comparisons and an initial concurrent check;
+its captured-volume pilot is running. Focused streaming controls also pass all
+20cases ×3 paired repeats with zero exact metadata differences or expectation
+failures; fresh-decode source checks do not establish in-request TShape immutability.
+
+Contiguous interval storage forty-pair confirmation now preserves all mass/error
+bits and measures small GK integration gains: circle-Z 1.039× (1.034–1.056),
+circle-X 1.057× (1.047–1.115), bent-X 1.021× (1.007–1.040). This does not imply
+the same application gain; current circle-X integration is only about 2 ms.
+Exact ray-query repetition counters rule out a broad query cache on perforated
+Fuse (one repeated attempt of 2,080). A separate analytic ray line/adaptor setup
+reuse prototype is prepared with lifetime/reentrancy guards, uncompiled so far.
+
 1. Broaden isolated fixed-V fork corpus checks before deciding whether to adopt
    the patch; reproduction is validated.
 2. Test fixed fitted BRep volume under large placements and small-volume
@@ -532,4 +596,7 @@ Research notes: [Shell](shell-research.md), [Booleans](boolean-research.md),
 Additional notes: [quadrature](quadrature-research.md),
 [reference translation](quadrature-translation-research.md),
 [recentering](quadrature-recenter.md), [literature](quadrature-literature.md),
-[upstream backports](upstream-opportunities.md).
+[upstream backports](upstream-opportunities.md),
+[roundoff-floor experiment](kronrod-roundoff-research.md),
+[quadrature allocation/table audit](kronrod-allocation-research.md),
+[interval storage](interval-research.md), [ray setup](ray-setup-research.md).

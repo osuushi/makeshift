@@ -5,6 +5,7 @@
 #include "geometry-policy.h"
 #include "normal-extrude.h"
 #include "boolean-probe.h"
+#include "streaming-sweep-cuts.h"
 #include <BRepAdaptor_Curve.hxx>
 #include <ShapeFix_Wire.hxx>
 #include <ShapeExtend_WireData.hxx>
@@ -132,6 +133,8 @@ std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>
     const auto targetList = input.get_child_optional("targets");
     const bool reuseIntersection = mode == "intersect" && !targetList;
     std::vector<SweepIntersection> intersections;
+    StreamingSweepCuts cuts;
+    const bool streamSubtract = mode == "auto" || (mode == "subtract" && !targetList);
     for (const auto& body : bodies) {
         if (eligible && std::none_of(eligible->begin(), eligible->end(), [&](const auto& v) { return v.second.template get_value<std::string>() == body.id; })) continue;
         if (targetList && std::none_of(targetList->begin(), targetList->end(), [&](const auto& v) { return v.second.template get_value<std::string>() == body.id; })) continue;
@@ -148,7 +151,8 @@ std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>
             auto operation = std::make_unique<BooleanProbe>(body.shape, tool);
             if (volume(operation->shape()) > 1e-10) {
                 positive.push_back(&body);
-                intersections.push_back({&body, std::move(operation)});
+                if (streamSubtract) cuts.add(body, *operation, toolOrigins);
+                else if (reuseIntersection) intersections.push_back({&body, std::move(operation)});
             } else if (mode == "auto") {
                 BRepExtrema_DistShapeShape separation(body.shape, tool);
                 if (separation.IsDone() && separation.Value() < 1e-7) contact.push_back(&body);
@@ -172,12 +176,11 @@ std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>
         }
         solids(results, shape, origins, participants, selected.empty() ? twistedVolumeReferenceAxis(input) : -1);
     } else for (const auto* body : selected) {
-        participants.push_back(body->id); auto origins = body->entities;
+        participants.push_back(body->id);
+        if (mode == "subtract" && cuts.append(results, *body)) continue;
+        auto origins = body->entities;
         origins.insert(origins.end(), toolOrigins.begin(), toolOrigins.end());
-        const auto found = std::find_if(intersections.begin(), intersections.end(),
-            [&](const auto& intersection) { return intersection.body == body; });
-        const auto shape = mode == "subtract" && found != intersections.end()
-            ? found->operation->subtract(origins) : booleanShape(body->shape, tool, mode, origins);
+        const auto shape = booleanShape(body->shape, tool, mode, origins);
         solids(results, shape, origins, {body->id});
     }
     return results;

@@ -427,3 +427,270 @@ periodic cuts. Implicit Intersect is a regression control. Check source encoding
 before/after and filler lifetime. Failure controls: early Cut/later classification,
 early disjoint fallback/later cached Cut, early solids validation/later Cut.
 Reject gains that lose correspondence, immutability or pair-reuse latency.
+
+### Completed serial confirmation: latency and retained-filler memory
+
+The orchestrator applied and built this candidate separately. The saved
+[20-block metadata](results/streaming-cuts-memory-confirmation.jsonl.metadata.json)
+identifies noReuse (`/tmp/makeshift-kernel-construction-reuse`), retained
+(`/tmp/makeshift-kernel-twist-volume-axis`) and streaming
+(`/tmp/makeshift-kernel-streaming-cuts`). Fixture construction uses a separate
+process that closes before sampling. Every timed sample uses a fresh process;
+request order is randomized within paired blocks. These are whole-request
+measurements, including existing validation and presentation work, not isolated
+Boolean timings. Cubic/perforated fixtures have 6/31 faces respectively.
+
+[Latency confirmation](results/streaming-cuts-latency-confirmation-summary.json)
+contains 20 successful samples per variant/case. Speedup is the paired median
+baseline/candidate ratio; confidence intervals use paired bootstrap resampling.
+
+| Implicit Subtract fixture | noReuse median ms | retained median ms | streaming median ms | streaming/noReuse speedup, 95% interval |
+| --- | ---: | ---: | ---: | --- |
+| cubic, 1 body | 79.51 | 64.67 | 66.68 | 1.204 [1.172, 1.236] |
+| cubic, 16 bodies | 807.48 | 624.11 | 624.29 | 1.297 [1.275, 1.327] |
+| perforated, 1 body | 178.52 | 176.45 | 172.46 | 1.039 [1.006, 1.055] |
+| perforated, 16 bodies | 2380.77 | 2294.85 | 2300.25 | 1.033 [1.010, 1.056] |
+
+The [direct retained comparison](results/streaming-cuts-versus-retained-latency-summary.json)
+is derived from **these same paired blocks**, not an independent replication.
+Streaming/retained speedup is 0.991 [0.928, 1.021] for cubic n1,
+0.985 [0.959, 1.026] for cubic n16, 1.000 [0.979, 1.032] for
+perforated n1 and 1.002 [0.990, 1.018] for perforated n16. No latency change
+between reuse strategies is resolved here; crossing 1 is not a formal
+noninferiority/equivalence test. Pair-preprocessing reuse versus noReuse is the
+measured latency gain, while streaming addresses its lifetime/memory cost.
+
+[Memory confirmation](results/streaming-cuts-memory-confirmation-summary.json)
+uses process VmHWM, including native startup and the sole request, read outside
+the elapsed request timing. It is not a sampled per-request peak delta. MiB is
+proc KiB/1024. Intervals below are 10,000 seeded paired-block resamples of median
+absolute differences; subtracting independent medians need not give that value.
+
+| Fixture | noReuse HWM median MiB | retained HWM median MiB | streaming HWM median MiB | streaming minus retained MiB, 95% interval |
+| --- | ---: | ---: | ---: | --- |
+| cubic n1 | 24.520 | 24.773 | 24.770 | -0.002 [-0.092, 0.035] |
+| cubic n16 | 29.320 | 44.000 | 29.412 | -14.531 [-14.693, -13.834] |
+| perforated n1 | 29.992 | 30.152 | 30.152 | 0.000 [-0.086, 0.010] |
+| perforated n16 | 87.033 | 88.508 | 87.092 | -1.414 [-1.641, -1.041] |
+
+The [direct memory comparison](results/streaming-cuts-versus-retained-memory-summary.json)
+also gives cubic n16 RSS reduction 14.281 MiB [14.099, 14.861]. Streaming
+minus noReuse HWM at n16 is +0.100 MiB [-0.072, 0.328] cubic and
++0.043 MiB [-0.293, 0.637] perforated. Thus this fixture recovers the large
+retained-filler footprint without a resolved replacement footprint at n16;
+allocator behavior and necessary output storage still prevent a constant-memory
+claim.
+
+### Eight-block explicit Auto and scaling controls
+
+[Auto latency controls](results/streaming-cuts-auto-controls-latency-summary.json)
+and [memory controls](results/streaming-cuts-auto-controls-memory-summary.json)
+compare retained versus streaming for 14 cases, 8 paired blocks each: implicit
+Subtract n4 for both fixtures, and explicit Auto n1/n4/n16 with only overlapping
+targets or those targets plus one explicitly selected disjoint body. All latency
+intervals cross 1. Explicit Auto n16 streaming medians are cubic 612.56 ms
+(overlap only) / 622.52 ms (extra disjoint), and perforated 2313.43 / 2443.32 ms.
+Their speedups are respectively 0.989 [0.965, 1.005], 0.983 [0.962, 1.093],
+1.001 [0.973, 1.020], and 0.973 [0.961, 1.012]. These controls support preserving
+the disjoint explicit-target fallback without an established latency penalty;
+8 blocks provide less statistical power than the primary confirmation.
+
+Cubic n4 HWM drops 2.516 MiB [2.158, 2.848] for explicit Auto overlap only
+and 2.113 MiB [1.984, 2.539] with the extra disjoint target; n16 drops
+14.602 MiB [13.164, 14.859] and 14.221 MiB [13.539, 14.746]. Perforated n16
+also drops 1.494 MiB [0.770, 1.953] and 1.340 MiB [1.055, 1.879]. Memory
+is **not uniformly improved**: perforated n4 explicit Auto with an extra
+disjoint target increases HWM 0.561 MiB [0.477, 0.652] and RSS 0.906 MiB
+[0.848, 2.297]. Its overlap-only n4 HWM interval crosses zero, while RSS
+increases 2.107 MiB [0.594, 2.215]. Do not extrapolate the cubic high-memory
+benefit to every operand family or allocator pattern.
+
+### Evidence available and remaining correctness coverage
+
+All primary and Auto timed outcomes matched the saved ordered comparison and
+face/edge geometry/predecessor multisets; all requests succeeded. Representative
+full replies matched all fields except BRep string contents, with numeric
+comparison tolerance 1e-9 and metadata/display/topology order retained. This is
+not byte-identical BRep evidence and not a complete full-reply capture for every
+sample. The saved [regression log](results/regression-streaming-cuts.log) reports
+26 tests passed, zero failures. The separate 28-case full-output comparison
+matched the sweep/Boolean cases. Its untouched shell path had a thickness target
+index difference; repeated shell baseline itself subsequently varied. See
+[presentation-research.md](presentation-research.md) and preserved repeat
+captures for that unresolved geometry-region/tie evidence rather than treating
+indices or equal thickness values alone as equivalence.
+
+Current source eligibility audit confirms filters run **before** classification
+or cached Cut creation. Explicit non-Auto modes skip probing as before. Only
+positive-volume implicit Subtract and positive-volume Auto pairs stream;
+explicit Auto still selects its entire filtered target list after resolving
+mode, so disjoint targets use the old ordinary Cut fallback. No-positive Auto
+executes unchanged Union; implicit Intersect retains its own Common route.
+Participants are appended in original selected order before cached-result
+handling; solids splitting, mass filtering, final validation and origin/history
+correspondence are deferred to that same final pass. Operand pointer keys stay
+valid for this request, and no retained Pending item owns a PaveFiller.
+
+Source inspection supports the exception-priority design described above, but
+successful benchmarks do not test it. Remaining targeted controls are early
+cached Cut failure plus later Common/volume failure, early disjoint fallback
+failure plus later cached Cut failure, and earlier solids-validation failure
+plus later cached Cut failure. Eligibility exclusions, neutral/contact-only
+Auto, multi-solid outputs, threshold/cubic-contact boundaries, repaired periodic
+Cuts and source encodings need explicit coverage identified by case, rather than
+assuming the passing general suite covers them. Allocation failure during
+pending insertion, cancellation, kernel progress/global state and additional
+work before a replayed failure retain the documented scheduling limits. No
+source-only audit proves that earlier Cut execution cannot influence a later
+Common through shared/global mutable kernel state; non-destructive inputs and
+output parity are the current controls, not a universal proof.
+
+### Focused streaming contract harness prepared (not executed)
+
+[verify-streaming-cuts.mjs](../../../tests/geometry-performance/verify-streaming-cuts.mjs)
+accepts `BASELINE CANDIDATE OUTPUT.jsonl`. It constructs shared serialized fixtures
+through the baseline Client and existing square/cubic case helpers, then executes
+serial requests in alternating binary order, three repeats per case. Coverage:
+eligibility filters and empty eligibility, eligible/explicit-target intersection,
+implicit cuts splitting one/two stocks into multiple solids, target-list versus
+body traversal order, explicit Auto with disjoint targets first/last, neutral and
+contact-only Auto, empty/disjoint Subtract errors, implicit Intersect control,
+and cubic Subtract. Contained nominal 1e-12/1e-9 tools straddle the 1e-10 Common
+volume classification threshold. These are nominal geometric expectations to
+verify, not recorded runtime behavior or injected kernel failures.
+
+The harness retains raw replies, ordered **exact** full metadata comparisons
+(no numeric tolerance), repeated-response differences, expectations and separate
+BRep hashes. Only existing string-valued BRep content is excluded from metadata
+comparison; missing/type-changed BRep fields still fail. Any cross-binary metadata
+or expected-contract failure exits nonzero. Repeated same-binary differences are
+retained as diagnostic evidence rather than automatically blamed on streaming.
+
+Before/after source inspect replies preserve re-encoding hashes, while original
+JS serialized operand strings are checked unchanged. Important limit: inspect
+decodes fresh topology each request. Stable hashes do not prove that a Cut left
+its own request-local decoded TShapes untouched; that requires a native pre/post
+encoding control inside the request. True repaired periodic Cut and deferred
+kernel exception precedence are explicitly **not** covered by these ordinary
+fixtures. This source-only lane has not run the harness or a geometry process;
+the orchestrator owns execution under the shared compute lock.
+
+## Disjoint explicit Union compound bypass: source-only audit
+
+No implementation/build/benchmark in this lane. A sufficient spatial separation
+test could avoid intersection preprocessing for genuinely disconnected Union
+operands, but a raw Add-box test and compound assembly are not a complete
+drop-in replacement for booleanShape.
+
+### Two concrete blockers to a blanket shortcut
+
+**Raw Add boxes do not incorporate every incident vertex tolerance.** Pinned
+[BRepBndLib::Add](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepBndLib/BRepBndLib.cxx#L82)
+expands surface/edge bounds by their respective tolerances, but its final vertex
+loop covers vertices *not in edges*. An incident vertex can carry a larger
+tolerance than its edge. Pinned
+[BOPDS::Init](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BOPDS/BOPDS_DS.cxx#L347)
+instead builds each vertex box with vertex tolerance plus half
+max(fuzzy, Precision::Confusion), unions vertex boxes into edge boxes and those
+into face boxes, adding this half-budget at each stage. Thus raw Add boxes
+separated by just fuzzy+Confusion are not a source-proven guard for all BOP
+candidate interactions.
+
+**Compound Add can change shared mutability flags.** Pinned
+[TopoDS_Builder::Add](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/TopoDS/TopoDS_Builder.cxx#L42)
+sets aComponent.TShape()->Free(false) before checking container compatibility.
+A TopoDS value copy still shares that TShape. This does not move geometry or
+change incidence, but can alter a builder mutability flag visible in serialized
+state and subsequent builders. Do not claim universal encoded/flag immutability
+from const parameters.
+
+The application inputs are decoded request-local shapes, rather than the live
+accepted document objects. Moreover the existing
+[BOP::BuildRC](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BOPAlgo/BOPAlgo_BOP.cxx#L763)
+also adds untouched source shapes into its result compound. Its non-destructive
+policy is not a blanket promise that no Free flag is written. Source inspection
+therefore identifies a **potential** flag difference, not a newly proven
+geometric/topological regression. Capture flags and encoding in both baseline
+and shortcut; root flags may already be frozen on particular decoded inputs.
+Encoding normalization alone must not hide a changed flag contract.
+
+### Safest first geometry assembly route
+
+Use BRepBuilderAPI_Copy(source, false, true) to create private topology for each
+operand before adding it to a new identity/forward compound. The copyGeom=false
+route shares exact support geometry and pcurves, retains tolerances and copies
+topological objects. Pinned
+[CopyModification](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepTools/BRepTools_CopyModification.cxx#L30)
+does not clone geometric support when that option is false. With copyMesh=true
+and copyGeom=false, triangulation/polygon handles are **shared**, not deep copied;
+this is not a promise of mesh isolation. Later meshing and topology flag behavior
+need explicit source-encoding checks. copyMesh=false would drop mesh data on
+geometric faces and can change remeshing/output behavior.
+
+Map each original source entity through that operand's Copy.ModifiedShape,
+preserving its ID, order and multiplicity, rather than leaving origins pointing
+at replaced topology. Verify all mappings and location/orientation retention.
+Copying only the root using EmptyCopied and then adding original children can
+freeze shared child flags; it is not automatically equivalent isolation.
+Topology copying costs allocations and may erase the expected gain on tiny
+operands, so measure it separately from skipped BOP work.
+
+### Proposed sufficient guard and narrow scope
+
+Start with two valid, closed, forward-oriented solid operands only. Obtain the
+**same** cubic-dependent fuzzy value as buildBoolean, with no lowered budget.
+Use Add(shape, box, false), explicitly union every vertex point box expanded
+by its vertex tolerance, then add a generous per-operand guard exceeding the
+three half-budget BOP propagation stages. A per-operand 2*max(fuzzy, Confusion)
+guard is a source-derived conservative candidate for these stages; it still
+needs auditing against other iterator/narrow-phase increases before being
+described as a complete proof. A coordinate-scale roundoff allowance and strict
+finite, nonvoid, closed-box checks are also needed for large placements.
+Fail closed to ordinary Fuse if any premise is uncertain. Do not use display
+mesh-only boxes, AddOptimal with useShapeTolerance=false, or geometric distance
+zero as this separation predicate.
+
+Limit the first experiment to exactly two explicit Union operands with no
+later growing-union step. The aggregate box of previously disconnected
+components can overlap another operand despite actual disjointness; repeated
+compound nesting also changes traversal order and result grouping. Multi-input
+partitioning or per-component pair tests would be separate work.
+
+Validate both input/private operands and the compound with the same existing
+validate policy, then keep solids() per-solid validation, measured mass filtering
+and result construction. Do not use this path to accept invalid/open solids
+that the kernel previously rejected or repaired. Check error precedence too:
+new early checks can report different errors than original Fuse construction.
+
+### Output, history and ordering acceptance
+
+On separated valid solids the mathematical Union is their disconnected set,
+but that does not prove identical OCCT history or representation order.
+The baseline may return originals, reorder faces/solids, reconstruct a shell,
+or normalize metadata even without cross-operand intersections.
+
+- Preserve selected IDs, keepOriginals participants, predecessors and each
+  resulting body's origins exactly. Existing booleanBodies associates all
+  selected predecessor body IDs with each Union result; do not independently
+  relabel descendants by the compound component that contains them.
+- Preserve entity IDs through explicit copy mapping, retaining repeated source
+  origins. Do not claim original face IsSame identity after topology copy.
+- Compare result-solid order, full faces/edges metadata, BRep, locations,
+  orientations, triangulation, tolerances and minimum-volume filtering. Fast
+  compound insertion order must match baseline traversal order, not an assumed
+  operand-order contract.
+- Test separately original geometric/topological state, exact encoding and
+  Free/Modified/Checked flags on sources; report preexisting baseline flag
+  effects rather than calling every source byte change a new shortcut defect.
+- Reversed/inverted solids, compounds/multi-solids, open shells, missing curves,
+  high vertex tolerance, periodic trim and overlap/contact must use fallback in
+  the first candidate.
+
+Controls: far boxes and cylinders, cubic boundaries with gaps just below/equal/
+above the full guard, incident vertex tolerance larger than edge tolerance,
+large translated/nested placements, same-TShape located instances, shared
+geometry with private topology, retained originals and differing input mesh
+states. Include a non-disjoint later operand as a fallback control. Require
+positive valid masses and source immutability evidence, then randomized paired
+latency/RSS with bounding/copy/validation setup charged to the request. A gain
+from omitting validation or mesh work would not establish a Boolean optimization.

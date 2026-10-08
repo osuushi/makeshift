@@ -1,0 +1,8 @@
+{"type":"input","valid":true,"bounds_ms":1.6593599999999999,"lo":[-10.000000100000022,-15.000000100000024,-9.9999999999999995e-08],"hi":[15.000000100000001,10.000000099999996,20.000000100000005]}
+{"type":"face","index":0,"surface_type":6,"u_degree":2,"v_degree":8,"u_rational":true,"v_rational":true,"u_knots":4,"v_knots":2}
+{"type":"face","index":1,"surface_type":0}
+{"type":"face","index":2,"surface_type":0}
+{"type":"volume","axis":"z","block":-1,"eps":1e-10,"ms":2538.8403720000001,"exception":false,"error":7.560717732688538e-11,"mass":6283.185307474675}
+{"type":"volume","axis":"z","block":0,"eps":1e-10,"ms":2529.7557230000002,"exception":false,"error":7.560717732688538e-11,"mass":6283.185307474675}
+{"type":"volume","axis":"z","block":1,"eps":1e-10,"ms":2547.712583,"exception":false,"error":7.560717732688538e-11,"mass":6283.185307474675}
+{"type":"volume","axis":"z","block":2,"eps":1e-10,"ms":2516.940959,"exception":false,"error":7.560717732688538e-11,"mass":6283.185307474675}

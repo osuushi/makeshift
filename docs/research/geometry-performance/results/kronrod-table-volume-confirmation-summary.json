@@ -1,0 +1,482 @@
+[
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/circle-offset-twist.brep",
+    "axis": "adaptive",
+    "label": "control",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 2.5112275000000004,
+    "p95Ms": 2.825243,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/circle-offset-twist.brep",
+    "axis": "adaptive",
+    "label": "table",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 2.516165,
+    "p95Ms": 2.865454,
+    "pairedMedianSpeedup": 0.998233996887563,
+    "bootstrap95": [
+      0.9676581040282706,
+      1.0403646896255854
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/circle-offset-twist.brep",
+    "axis": "z",
+    "label": "control",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 2428.6918895,
+    "p95Ms": 2568.223095,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/circle-offset-twist.brep",
+    "axis": "z",
+    "label": "table",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 2412.558055,
+    "p95Ms": 2510.914906,
+    "pairedMedianSpeedup": 1.008190432433764,
+    "bootstrap95": [
+      0.9920453686475911,
+      1.0146925789805947
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/circle-offset-twist.brep",
+    "axis": "y",
+    "label": "control",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 1.701683,
+    "p95Ms": 1.905892,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/circle-offset-twist.brep",
+    "axis": "y",
+    "label": "table",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 1.710442,
+    "p95Ms": 2.130542,
+    "pairedMedianSpeedup": 0.9995238091631649,
+    "bootstrap95": [
+      0.979874223898024,
+      1.0190466520503167
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/circle-offset-twist.brep",
+    "axis": "x",
+    "label": "control",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 2.0251525,
+    "p95Ms": 2.334841,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/circle-offset-twist.brep",
+    "axis": "x",
+    "label": "table",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 1.9971299999999998,
+    "p95Ms": 2.306588,
+    "pairedMedianSpeedup": 1.029135614522267,
+    "bootstrap95": [
+      0.9874206461563597,
+      1.0502674712432154
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-notched-cylinder-captured.brep",
+    "axis": "adaptive",
+    "label": "control",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 16.157890000000002,
+    "p95Ms": 17.915081,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-notched-cylinder-captured.brep",
+    "axis": "adaptive",
+    "label": "table",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 16.0694705,
+    "p95Ms": 17.574597,
+    "pairedMedianSpeedup": 1.010564715787737,
+    "bootstrap95": [
+      0.9953089684943153,
+      1.0252891052770798
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-notched-cylinder-captured.brep",
+    "axis": "z",
+    "label": "control",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 11.956821,
+    "p95Ms": 13.680619,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-notched-cylinder-captured.brep",
+    "axis": "z",
+    "label": "table",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 11.855668,
+    "p95Ms": 13.632044,
+    "pairedMedianSpeedup": 1.0121374344007386,
+    "bootstrap95": [
+      0.9757775059230851,
+      1.0206742570210312
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-notched-cylinder-captured.brep",
+    "axis": "y",
+    "label": "control",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 5.3820245,
+    "p95Ms": 6.211443,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-notched-cylinder-captured.brep",
+    "axis": "y",
+    "label": "table",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 5.2639344999999995,
+    "p95Ms": 6.449114,
+    "pairedMedianSpeedup": 1.0121377725281733,
+    "bootstrap95": [
+      0.9994910615336473,
+      1.032732761951269
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-notched-cylinder-captured.brep",
+    "axis": "x",
+    "label": "control",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 11.569285,
+    "p95Ms": 12.87529,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-notched-cylinder-captured.brep",
+    "axis": "x",
+    "label": "table",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 11.538193,
+    "p95Ms": 12.806436,
+    "pairedMedianSpeedup": 0.9870638489884241,
+    "bootstrap95": [
+      0.9701304923525244,
+      1.0296203336185417
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-bent-sweep-captured.brep",
+    "axis": "adaptive",
+    "label": "control",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 4.0701,
+    "p95Ms": 5.526107,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-bent-sweep-captured.brep",
+    "axis": "adaptive",
+    "label": "table",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 4.045082000000001,
+    "p95Ms": 4.54931,
+    "pairedMedianSpeedup": 0.9990814822548801,
+    "bootstrap95": [
+      0.9678906494893689,
+      1.0515479909388321
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-bent-sweep-captured.brep",
+    "axis": "z",
+    "label": "control",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 63.814008,
+    "p95Ms": 67.740255,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-bent-sweep-captured.brep",
+    "axis": "z",
+    "label": "table",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 63.897529,
+    "p95Ms": 84.302394,
+    "pairedMedianSpeedup": 0.9922198978286818,
+    "bootstrap95": [
+      0.9697959321899827,
+      1.0153378595014328
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-bent-sweep-captured.brep",
+    "axis": "y",
+    "label": "control",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 76.86079699999999,
+    "p95Ms": 86.457306,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-bent-sweep-captured.brep",
+    "axis": "y",
+    "label": "table",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 76.317685,
+    "p95Ms": 83.505345,
+    "pairedMedianSpeedup": 1.0064205242001854,
+    "bootstrap95": [
+      0.991527267081564,
+      1.0338483475005356
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-bent-sweep-captured.brep",
+    "axis": "x",
+    "label": "control",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 78.23720900000001,
+    "p95Ms": 85.673426,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  },
+  {
+    "fixture": "/workspace/makeshift/docs/research/geometry-performance/results/shell-bent-sweep-captured.brep",
+    "axis": "x",
+    "label": "table",
+    "baselineLabel": "control",
+    "n": 40,
+    "validPairs": 40,
+    "medianMs": 78.25439399999999,
+    "p95Ms": 85.469422,
+    "pairedMedianSpeedup": 1.0078048394199906,
+    "bootstrap95": [
+      0.9902042982417504,
+      1.0164699203782899
+    ],
+    "exactMassMatches": 40,
+    "exactErrorMatches": 40,
+    "massMismatches": [],
+    "errorMismatches": [],
+    "failures": []
+  }
+]

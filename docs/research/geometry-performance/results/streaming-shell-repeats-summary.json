@@ -1,0 +1,4976 @@
+{
+  "input": "docs/research/geometry-performance/results/streaming-shell-repeats.jsonl",
+  "records": 40,
+  "counts": {
+    "baseline": 20,
+    "candidate": 20
+  },
+  "diagnosticOnly": true,
+  "roundingAbsoluteGeometryUnitStep": 1e-7,
+  "limitations": [
+    "Rounded signatures/supports/boundary samples/history are not formal BRep or trimmed-region equivalence.",
+    "Edge orientation ignored; face orientation, history and seam multiplicity retained.",
+    "Curve a/b endpoints and unoriented normals canonicalized; sampled spline geometry is approximate evidence.",
+    "Descriptor collisions flagged within each result; indistinguishable separate regions require BRep inspection.",
+    "Geometry hash compares result/face/edge multisets, not authoritative ordered output or metadata target intent.",
+    "Exact BRep hashes remain separate; raw inputs and replies are preserved in the original file."
+  ],
+  "inputRecords": [
+    {
+      "type": "input",
+      "case": "shell-perforated-closed",
+      "inputSha256": "08f3a4486130b8ffa989941322e75ccf35920ac52e1301ec1ab0148dc62678be",
+      "samplesPerBinary": 20,
+      "lifetime": "reuse",
+      "threads": 4,
+      "binaries": {
+        "baseline": {
+          "path": "/tmp/makeshift-kernel-twist-volume-axis",
+          "sha256": "bae92a96e28acfeab31f1ed52090246d8129b59ee21660e719e1df150b99cad3"
+        },
+        "candidate": {
+          "path": "/tmp/makeshift-kernel-streaming-cuts",
+          "sha256": "a73a4deeab12ba8655bf031dbc1d28ec29e612a25235919ccfba381809afbecb"
+        }
+      },
+      "comparisonNumericRelativeTolerance": 1e-9,
+      "note": "Complete raw replies retained; no assumed tie equivalence. SDK provenance recorded separately.",
+      "sentInputBytes": 50781
+    }
+  ],
+  "geometryVariants": [
+    {
+      "hash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      }
+    }
+  ],
+  "exactBRepVariants": [
+    {
+      "hash": "c53c7e891977d40976255ac35a55dfeab65321582c188b15586f7897a3c8869e",
+      "resultCount": 1,
+      "byLabel": {
+        "baseline": 1,
+        "candidate": 4
+      }
+    },
+    {
+      "hash": "af8c79e311907503af9641d011834ad5d676fe5fc7c008e7100ebf3bbda43ccc",
+      "resultCount": 1,
+      "byLabel": {
+        "candidate": 3,
+        "baseline": 2
+      }
+    },
+    {
+      "hash": "75ff60635c1e64ce040c607d2b5f4c719a5c6e084976ee29f3a202e8c2a2b7ab",
+      "resultCount": 1,
+      "byLabel": {
+        "baseline": 5,
+        "candidate": 3
+      }
+    },
+    {
+      "hash": "d400289ed7d80a4ab0c1cb278bab1aa244f9be5d0bf8964c77eadffba5e0058a",
+      "resultCount": 1,
+      "byLabel": {
+        "candidate": 2,
+        "baseline": 2
+      }
+    },
+    {
+      "hash": "a6b41aa32ac99ce51809bbac79a01ce8a2cc0c91ebd45f24536d89a6fd9e5a14",
+      "resultCount": 1,
+      "byLabel": {
+        "candidate": 1
+      }
+    },
+    {
+      "hash": "068d2335ad0707f8d56635919abfea469215d67b5914e77b71f3e4b2dd2f4faf",
+      "resultCount": 1,
+      "byLabel": {
+        "baseline": 1
+      }
+    },
+    {
+      "hash": "2de4750ede5a88bfc86790cc3b80474dc7ad6623b950b012fd099e06ed224bee",
+      "resultCount": 1,
+      "byLabel": {
+        "candidate": 1,
+        "baseline": 1
+      }
+    },
+    {
+      "hash": "95f7f356609e6f86db1b50cdcd258dfcfba7738dfb3203af2fa3b48909a6560f",
+      "resultCount": 1,
+      "byLabel": {
+        "baseline": 2
+      }
+    },
+    {
+      "hash": "4f85cbbf1df15a91195265e8b6950fd8dabaadf4cde7a8c0c0ae2d2824cf6837",
+      "resultCount": 1,
+      "byLabel": {
+        "baseline": 4,
+        "candidate": 4
+      }
+    },
+    {
+      "hash": "7a82bce43f744fea6c0ba554588f8e596afab60f9ac3002d33aa7567df24f534",
+      "resultCount": 1,
+      "byLabel": {
+        "baseline": 1,
+        "candidate": 1
+      }
+    },
+    {
+      "hash": "c18ca404684552b625fc241a99235a5a9fec63e038e3f3c6872dac12bf5b65e8",
+      "resultCount": 1,
+      "byLabel": {
+        "baseline": 1
+      }
+    },
+    {
+      "hash": "ac7dd68c301715b3a95f62657ee8c2ed82f3f1cd030b4b23268a446593cdcff0",
+      "resultCount": 1,
+      "byLabel": {
+        "candidate": 1
+      }
+    }
+  ],
+  "descriptorCollisions": [],
+  "thicknessRelations": [
+    {
+      "source": "6c5ee69dfc174a08b1920031bea420205680130d7b1fc24e103c624403aef528",
+      "target": "63f39071e793872c3304fd3e2b230ca18230b49407f4d38cf7062c4d91b6824b",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,0,34]": 6,
+        "[\"candidate\",0,0,34]": 8,
+        "[\"baseline\",0,0,36]": 10,
+        "[\"candidate\",0,0,36]": 8,
+        "[\"baseline\",0,0,31]": 4,
+        "[\"candidate\",0,0,31]": 4
+      }
+    },
+    {
+      "source": "61aca3a8084fb41d78b63af424ec951d59fd618f8e6a7a0dbba2032b1c1f24ab",
+      "target": "1c93bfbc9b3eb68d906629217a6414865879aeaff06754d3fee9868bf76d674f",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,1,36]": 1,
+        "[\"candidate\",0,1,31]": 3,
+        "[\"baseline\",0,1,34]": 5,
+        "[\"candidate\",0,1,35]": 5,
+        "[\"baseline\",0,1,35]": 5,
+        "[\"baseline\",0,1,31]": 2,
+        "[\"candidate\",0,1,33]": 1,
+        "[\"baseline\",0,1,33]": 3,
+        "[\"candidate\",0,1,34]": 3,
+        "[\"baseline\",0,1,32]": 4,
+        "[\"candidate\",0,1,32]": 4,
+        "[\"candidate\",0,1,36]": 4
+      }
+    },
+    {
+      "source": "a176fabfba1c29c0a6b3cde6f19bc10b5bdf69d9977aafdb0213e78a01281bcb",
+      "target": "0f2fabd3101ff70bc5182f501ca0664133de15e2c42b3dcc6b56b95b5fa9b4ec",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,2,31]": 1,
+        "[\"candidate\",0,2,36]": 3,
+        "[\"baseline\",0,2,32]": 5,
+        "[\"candidate\",0,2,37]": 5,
+        "[\"baseline\",0,2,37]": 5,
+        "[\"baseline\",0,2,36]": 2,
+        "[\"candidate\",0,2,35]": 1,
+        "[\"baseline\",0,2,35]": 3,
+        "[\"candidate\",0,2,32]": 3,
+        "[\"baseline\",0,2,34]": 4,
+        "[\"candidate\",0,2,34]": 4,
+        "[\"candidate\",0,2,31]": 4
+      }
+    },
+    {
+      "source": "95382e78ff37d05a2a26f60235e3ec5a5dc87033907828794cb184960c5f949b",
+      "target": "22681d67348a0e6f63751f1316224f40b269cfa4be595325e7d636b943f705a5",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,3,33]": 1,
+        "[\"candidate\",0,3,35]": 10,
+        "[\"baseline\",0,3,35]": 11,
+        "[\"candidate\",0,3,32]": 5,
+        "[\"baseline\",0,3,32]": 5,
+        "[\"candidate\",0,3,61]": 1,
+        "[\"baseline\",0,3,31]": 2,
+        "[\"candidate\",0,3,33]": 4,
+        "[\"baseline\",0,3,61]": 1
+      }
+    },
+    {
+      "source": "4332fb0434ba3d2269f2bad251c70d3c761a6144a5455166975dfc18295c477b",
+      "target": "9678879b004a574c318cc4e98ca735e8416b7a18da7e7d1e7c612807900ddbad",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,4,35]": 1,
+        "[\"candidate\",0,4,33]": 15,
+        "[\"baseline\",0,4,33]": 16,
+        "[\"candidate\",0,4,31]": 1,
+        "[\"baseline\",0,4,61]": 2,
+        "[\"candidate\",0,4,35]": 4,
+        "[\"baseline\",0,4,31]": 1
+      }
+    },
+    {
+      "source": "2fbf3f036f2cceba56c3bb9f6a905944264bcd583e3e6b12c4d0d299e628cfd4",
+      "target": "2174061aa244ecd8f52f99dffaffa41ae229b9c8d2e3efa2d7e70d1add5c1d70",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,5,32]": 6,
+        "[\"candidate\",0,5,32]": 8,
+        "[\"baseline\",0,5,31]": 5,
+        "[\"candidate\",0,5,34]": 5,
+        "[\"baseline\",0,5,34]": 5,
+        "[\"candidate\",0,5,31]": 3,
+        "[\"baseline\",0,5,36]": 4,
+        "[\"candidate\",0,5,36]": 4
+      }
+    },
+    {
+      "source": "5dfc321f0c87dcbcc239fba51447cb391e43851c2b6ae94bfddf7d8bdea5760b",
+      "target": "a00c9e813e586c86b7f846b1e3fe6370005a84b0930161f5381a13c8c8fa6c14",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,6,60]": 17,
+        "[\"candidate\",0,6,60]": 19,
+        "[\"candidate\",0,6,59]": 1,
+        "[\"baseline\",0,6,59]": 3
+      }
+    },
+    {
+      "source": "df4b357e4f0fe4274611c82def2ecac1dfed6bb664053126108f7bd8ddd5aa5f",
+      "target": "ffdb3eb9423a56ef47277903f1ac1eee69977f2c62813d2f43141fcb13178597",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,7,59]": 17,
+        "[\"candidate\",0,7,59]": 19,
+        "[\"candidate\",0,7,58]": 1,
+        "[\"baseline\",0,7,58]": 3
+      }
+    },
+    {
+      "source": "33d942f83720da47250b49ca78cad228b68e98364e604883e33c988318d90f18",
+      "target": "79b973bdd2225a80d3363bd8d4cf82b180f65ac889e6dcba4e135ae7187aa559",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,8,58]": 17,
+        "[\"candidate\",0,8,58]": 19,
+        "[\"candidate\",0,8,57]": 1,
+        "[\"baseline\",0,8,57]": 3
+      }
+    },
+    {
+      "source": "a9b94eba168749ee8a1f82557c702a0c56eacb2074341198b06c12c3f6a24c0f",
+      "target": "f5a5750f99283b4ae17b885f322f3467c12a195349d36eaaaa445aabfa4c9f8b",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,9,57]": 17,
+        "[\"candidate\",0,9,57]": 18,
+        "[\"candidate\",0,9,31]": 1,
+        "[\"candidate\",0,9,56]": 1,
+        "[\"baseline\",0,9,56]": 3
+      }
+    },
+    {
+      "source": "6fb00b9989abc1017cd08d45dde36d721732e75a4eaa66fe38e4601a4c436686",
+      "target": "c4eb27d23418a73825b54443ec6b7646a3832ba9a8574ce2d986eae121328746",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,10,56]": 17,
+        "[\"candidate\",0,10,56]": 18,
+        "[\"candidate\",0,10,57]": 1,
+        "[\"candidate\",0,10,55]": 1,
+        "[\"baseline\",0,10,55]": 3
+      }
+    },
+    {
+      "source": "a5bebec77c08496ffc6345c5f3945f36544417c0cbd1f79481ab6320dc4e87f7",
+      "target": "f4f46c775b3c26f2995084e82a19981cc40a4a583a26f6df93114a4e4a4a7842",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,11,55]": 16,
+        "[\"candidate\",0,11,55]": 18,
+        "[\"candidate\",0,11,56]": 1,
+        "[\"candidate\",0,11,54]": 1,
+        "[\"baseline\",0,11,54]": 3,
+        "[\"baseline\",0,11,31]": 1
+      }
+    },
+    {
+      "source": "7ba154fa3c6e19fc45ac1656116a36d73ed25485ea35001c10bc2e4c8caed373",
+      "target": "efc2c4e63695bd7263bfe8c0ef241e4b79664499af4650847d46f03f74f18510",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,12,54]": 16,
+        "[\"candidate\",0,12,54]": 18,
+        "[\"candidate\",0,12,55]": 1,
+        "[\"candidate\",0,12,53]": 1,
+        "[\"baseline\",0,12,53]": 3,
+        "[\"baseline\",0,12,55]": 1
+      }
+    },
+    {
+      "source": "a1ff53592cbb5e656fb573471af00d21bd139938bdebc8e2d44489c076082c9c",
+      "target": "37276e70eaf46a94d78e3677ab23c430eef9c3475c88774df2135a9d243974ac",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,13,53]": 16,
+        "[\"candidate\",0,13,53]": 18,
+        "[\"candidate\",0,13,54]": 1,
+        "[\"candidate\",0,13,52]": 1,
+        "[\"baseline\",0,13,52]": 3,
+        "[\"baseline\",0,13,54]": 1
+      }
+    },
+    {
+      "source": "e1a68f03651d1e837d8465692273c9e1b3602762c93078ada3c9547e9ee716f0",
+      "target": "6335faea97bb67a44a5a4ea9a4d0cd40b20de2d3ca1534b3448b846618232366",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,14,52]": 16,
+        "[\"candidate\",0,14,52]": 18,
+        "[\"candidate\",0,14,53]": 1,
+        "[\"candidate\",0,14,51]": 1,
+        "[\"baseline\",0,14,51]": 3,
+        "[\"baseline\",0,14,53]": 1
+      }
+    },
+    {
+      "source": "fabebf63ebbf9b69dbf5f815b112f7d131c09bd06ed989eb60bb519503bd4bae",
+      "target": "7d82569511c7e00858ad408f7f5f1f9369c6c0b3c4d2f522ec526414d0dedf66",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,15,51]": 16,
+        "[\"candidate\",0,15,51]": 18,
+        "[\"candidate\",0,15,52]": 1,
+        "[\"candidate\",0,15,50]": 1,
+        "[\"baseline\",0,15,50]": 3,
+        "[\"baseline\",0,15,52]": 1
+      }
+    },
+    {
+      "source": "2018c12ab8f4f3cf8352990910a106a7ae07bd50e62101b8970b4008a7453d29",
+      "target": "dcb782a275ac901b71d96deada5bda4e6b6f467603ffc365c1e272c089bdb383",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,16,50]": 16,
+        "[\"candidate\",0,16,50]": 18,
+        "[\"candidate\",0,16,51]": 1,
+        "[\"candidate\",0,16,49]": 1,
+        "[\"baseline\",0,16,49]": 3,
+        "[\"baseline\",0,16,51]": 1
+      }
+    },
+    {
+      "source": "3aa775dc043fe64d09938e36c51358f6a8d51831b9fe1a657d0d9a0f604d3c4e",
+      "target": "d944ac7ac50d30204a8c12cdd3a021ea4733e56129e11704753534b7c93b4571",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,17,49]": 16,
+        "[\"candidate\",0,17,49]": 18,
+        "[\"candidate\",0,17,50]": 1,
+        "[\"candidate\",0,17,48]": 1,
+        "[\"baseline\",0,17,48]": 3,
+        "[\"baseline\",0,17,50]": 1
+      }
+    },
+    {
+      "source": "34791ae4d8f6c060f9b73dccbad79b6bf4077b4a739e9f4dd5b41a115bce1973",
+      "target": "9de08e8c7a0f699817cf239911fa0d5f7c5594c3d2edd0859de6ef659bfd7328",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,18,48]": 16,
+        "[\"candidate\",0,18,48]": 18,
+        "[\"candidate\",0,18,49]": 1,
+        "[\"candidate\",0,18,47]": 1,
+        "[\"baseline\",0,18,47]": 3,
+        "[\"baseline\",0,18,49]": 1
+      }
+    },
+    {
+      "source": "57cec3e42e33235ac7bc4f8af168fe5cf3656f8025081408728421b7b976e2a8",
+      "target": "affb0595fedfc4471c5d015d5a2c5b27257f80ba98039ae8fa5a41575ec34c9e",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,19,47]": 16,
+        "[\"candidate\",0,19,47]": 18,
+        "[\"candidate\",0,19,48]": 1,
+        "[\"candidate\",0,19,46]": 1,
+        "[\"baseline\",0,19,46]": 3,
+        "[\"baseline\",0,19,48]": 1
+      }
+    },
+    {
+      "source": "a25a80228d21cb8dcb7752d2471a8ec3d34bdc2d74230cf84b0a86d72b05d461",
+      "target": "e447ca1eb42222d310f74ddcf4c3e96fa139a024604550ea6a2a08c368b9fca0",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,20,46]": 16,
+        "[\"candidate\",0,20,46]": 18,
+        "[\"candidate\",0,20,47]": 1,
+        "[\"candidate\",0,20,45]": 1,
+        "[\"baseline\",0,20,45]": 3,
+        "[\"baseline\",0,20,47]": 1
+      }
+    },
+    {
+      "source": "90f0345e56f0a34d31fbf370276e32404ad2a36066ea9a97c782973b37a5deff",
+      "target": "4a9c153da486b870d6d71d9a895ee61e72e498f8422dd74c581b51e3d791306e",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,21,45]": 15,
+        "[\"candidate\",0,21,45]": 18,
+        "[\"candidate\",0,21,46]": 1,
+        "[\"baseline\",0,21,31]": 1,
+        "[\"candidate\",0,21,44]": 1,
+        "[\"baseline\",0,21,44]": 3,
+        "[\"baseline\",0,21,46]": 1
+      }
+    },
+    {
+      "source": "3feb8cfe863be66f78b6c3a400fd7aefbd72511348ad8dc8bbe7c110d8032113",
+      "target": "44cedc1842eb27e6d318f71d72363493ef7af0ebfd7ee17064f00568e48039e0",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,22,44]": 15,
+        "[\"candidate\",0,22,44]": 18,
+        "[\"candidate\",0,22,45]": 1,
+        "[\"baseline\",0,22,45]": 2,
+        "[\"candidate\",0,22,43]": 1,
+        "[\"baseline\",0,22,43]": 3
+      }
+    },
+    {
+      "source": "f625d1611b50c47dc5c303926d6ef28b1080489cd5f5b85928eeb24afb1f8909",
+      "target": "052fcfffa86e133fdd521794ed9358f3323d43d27abc71fca6085fa3063b3770",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,23,43]": 15,
+        "[\"candidate\",0,23,43]": 18,
+        "[\"candidate\",0,23,44]": 1,
+        "[\"baseline\",0,23,44]": 2,
+        "[\"candidate\",0,23,42]": 1,
+        "[\"baseline\",0,23,42]": 3
+      }
+    },
+    {
+      "source": "ccaac1ec880df266c7f63e46f6413f86cacff075f71869b2ef75e5fb034bd9b5",
+      "target": "be394bdd82bc3cec85cb4e068fd9723b2a8473c5a7964a45cf7a4c3d6ca621c1",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,24,42]": 15,
+        "[\"candidate\",0,24,42]": 17,
+        "[\"candidate\",0,24,43]": 1,
+        "[\"baseline\",0,24,43]": 2,
+        "[\"candidate\",0,24,41]": 1,
+        "[\"baseline\",0,24,41]": 3,
+        "[\"candidate\",0,24,31]": 1
+      }
+    },
+    {
+      "source": "c4077da2da3febfbf0dec25922014833dc02749bbcf580bf66cbfd180d749329",
+      "target": "8f28f9ff3f2b0205c73b9264508e14a547b52d50a14f7cd8df6d5b5e51f3b430",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,25,41]": 15,
+        "[\"candidate\",0,25,41]": 17,
+        "[\"candidate\",0,25,42]": 2,
+        "[\"baseline\",0,25,42]": 2,
+        "[\"candidate\",0,25,40]": 1,
+        "[\"baseline\",0,25,40]": 3
+      }
+    },
+    {
+      "source": "b7b7889025c3e6a02c654874a41b13e55be93a9915123516e33050f547809706",
+      "target": "c692dfae51f87672c42bb57f97b9dd4f591f9992d4f8c3a86ca170f58b93b5ad",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,26,40]": 14,
+        "[\"candidate\",0,26,40]": 16,
+        "[\"candidate\",0,26,41]": 2,
+        "[\"baseline\",0,26,41]": 2,
+        "[\"candidate\",0,26,39]": 1,
+        "[\"baseline\",0,26,39]": 3,
+        "[\"baseline\",0,26,31]": 1,
+        "[\"candidate\",0,26,31]": 1
+      }
+    },
+    {
+      "source": "e0cc6b35bd648758ddd315436fb9a0566473d4aa01db7b9ae7ef1ba3955275d4",
+      "target": "7fd595bc786f0ce3cbc564922d31d83984e3f67125728e1b6fa884aebe1c528c",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,27,39]": 14,
+        "[\"candidate\",0,27,39]": 16,
+        "[\"candidate\",0,27,40]": 3,
+        "[\"baseline\",0,27,40]": 3,
+        "[\"candidate\",0,27,38]": 1,
+        "[\"baseline\",0,27,38]": 3
+      }
+    },
+    {
+      "source": "3042722d86db87ed272494741b2d63c6478e41908a65a30b4699e36b8aecc032",
+      "target": "2d46ac7c1dfbec29f71496347a33ff1c7e79f59900f867d739044b5ea166a77f",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,28,38]": 12,
+        "[\"candidate\",0,28,38]": 14,
+        "[\"candidate\",0,28,31]": 2,
+        "[\"candidate\",0,28,39]": 3,
+        "[\"baseline\",0,28,39]": 3,
+        "[\"candidate\",0,28,37]": 1,
+        "[\"baseline\",0,28,37]": 3,
+        "[\"baseline\",0,28,31]": 2
+      }
+    },
+    {
+      "source": "fbd1a46805e386e9735fe787e38530a29a63f1f680d189ce1d491bdeff4a0358",
+      "target": "8d4cca36b38b00a399f63d9debb00779f84750fe77dd50cadb5a214ba32de1cc",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,29,37]": 12,
+        "[\"candidate\",0,29,37]": 14,
+        "[\"candidate\",0,29,38]": 5,
+        "[\"baseline\",0,29,38]": 5,
+        "[\"candidate\",0,29,36]": 1,
+        "[\"baseline\",0,29,36]": 3
+      }
+    },
+    {
+      "source": "94ad3270918dfc078c2575bc72100b44b8cdfaea214e0c24981d5b901c8dcc8f",
+      "target": "80fb002e99e720ec92839ad477e9db15b964431b06a54e8a6a4cef88e0e17338",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,30,61]": 17,
+        "[\"candidate\",0,30,61]": 19,
+        "[\"candidate\",0,30,60]": 1,
+        "[\"baseline\",0,30,60]": 3
+      }
+    },
+    {
+      "source": "0f2fabd3101ff70bc5182f501ca0664133de15e2c42b3dcc6b56b95b5fa9b4ec",
+      "target": "a176fabfba1c29c0a6b3cde6f19bc10b5bdf69d9977aafdb0213e78a01281bcb",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,31,2]": 1,
+        "[\"candidate\",0,36,2]": 3,
+        "[\"baseline\",0,32,2]": 5,
+        "[\"candidate\",0,37,2]": 5,
+        "[\"baseline\",0,37,2]": 5,
+        "[\"baseline\",0,36,2]": 2,
+        "[\"candidate\",0,35,2]": 1,
+        "[\"baseline\",0,35,2]": 3,
+        "[\"candidate\",0,32,2]": 3,
+        "[\"baseline\",0,34,2]": 4,
+        "[\"candidate\",0,34,2]": 4,
+        "[\"candidate\",0,31,2]": 4
+      }
+    },
+    {
+      "source": "2174061aa244ecd8f52f99dffaffa41ae229b9c8d2e3efa2d7e70d1add5c1d70",
+      "target": "2fbf3f036f2cceba56c3bb9f6a905944264bcd583e3e6b12c4d0d299e628cfd4",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,32,5]": 6,
+        "[\"candidate\",0,32,5]": 8,
+        "[\"baseline\",0,31,5]": 5,
+        "[\"candidate\",0,34,5]": 5,
+        "[\"baseline\",0,34,5]": 5,
+        "[\"candidate\",0,31,5]": 3,
+        "[\"baseline\",0,36,5]": 4,
+        "[\"candidate\",0,36,5]": 4
+      }
+    },
+    {
+      "source": "22681d67348a0e6f63751f1316224f40b269cfa4be595325e7d636b943f705a5",
+      "target": "95382e78ff37d05a2a26f60235e3ec5a5dc87033907828794cb184960c5f949b",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,33,3]": 1,
+        "[\"candidate\",0,35,3]": 10,
+        "[\"baseline\",0,35,3]": 11,
+        "[\"candidate\",0,32,3]": 5,
+        "[\"baseline\",0,32,3]": 5,
+        "[\"candidate\",0,61,3]": 1,
+        "[\"baseline\",0,31,3]": 2,
+        "[\"candidate\",0,33,3]": 4,
+        "[\"baseline\",0,61,3]": 1
+      }
+    },
+    {
+      "source": "63f39071e793872c3304fd3e2b230ca18230b49407f4d38cf7062c4d91b6824b",
+      "target": "6c5ee69dfc174a08b1920031bea420205680130d7b1fc24e103c624403aef528",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,34,0]": 6,
+        "[\"candidate\",0,34,0]": 8,
+        "[\"baseline\",0,36,0]": 10,
+        "[\"candidate\",0,36,0]": 8,
+        "[\"baseline\",0,31,0]": 4,
+        "[\"candidate\",0,31,0]": 4
+      }
+    },
+    {
+      "source": "9678879b004a574c318cc4e98ca735e8416b7a18da7e7d1e7c612807900ddbad",
+      "target": "4332fb0434ba3d2269f2bad251c70d3c761a6144a5455166975dfc18295c477b",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,35,4]": 1,
+        "[\"candidate\",0,33,4]": 15,
+        "[\"baseline\",0,33,4]": 16,
+        "[\"candidate\",0,31,4]": 1,
+        "[\"baseline\",0,61,4]": 2,
+        "[\"candidate\",0,35,4]": 4,
+        "[\"baseline\",0,31,4]": 1
+      }
+    },
+    {
+      "source": "1c93bfbc9b3eb68d906629217a6414865879aeaff06754d3fee9868bf76d674f",
+      "target": "61aca3a8084fb41d78b63af424ec951d59fd618f8e6a7a0dbba2032b1c1f24ab",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,36,1]": 1,
+        "[\"candidate\",0,31,1]": 3,
+        "[\"baseline\",0,34,1]": 5,
+        "[\"candidate\",0,35,1]": 5,
+        "[\"baseline\",0,35,1]": 5,
+        "[\"baseline\",0,31,1]": 2,
+        "[\"candidate\",0,33,1]": 1,
+        "[\"baseline\",0,33,1]": 3,
+        "[\"candidate\",0,34,1]": 3,
+        "[\"baseline\",0,32,1]": 4,
+        "[\"candidate\",0,32,1]": 4,
+        "[\"candidate\",0,36,1]": 4
+      }
+    },
+    {
+      "source": "8d4cca36b38b00a399f63d9debb00779f84750fe77dd50cadb5a214ba32de1cc",
+      "target": "fbd1a46805e386e9735fe787e38530a29a63f1f680d189ce1d491bdeff4a0358",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,37,29]": 12,
+        "[\"candidate\",0,37,29]": 14,
+        "[\"candidate\",0,38,29]": 5,
+        "[\"baseline\",0,38,29]": 5,
+        "[\"candidate\",0,36,29]": 1,
+        "[\"baseline\",0,36,29]": 3
+      }
+    },
+    {
+      "source": "2d46ac7c1dfbec29f71496347a33ff1c7e79f59900f867d739044b5ea166a77f",
+      "target": "3042722d86db87ed272494741b2d63c6478e41908a65a30b4699e36b8aecc032",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,38,28]": 12,
+        "[\"candidate\",0,38,28]": 14,
+        "[\"candidate\",0,31,28]": 2,
+        "[\"candidate\",0,39,28]": 3,
+        "[\"baseline\",0,39,28]": 3,
+        "[\"candidate\",0,37,28]": 1,
+        "[\"baseline\",0,37,28]": 3,
+        "[\"baseline\",0,31,28]": 2
+      }
+    },
+    {
+      "source": "7fd595bc786f0ce3cbc564922d31d83984e3f67125728e1b6fa884aebe1c528c",
+      "target": "e0cc6b35bd648758ddd315436fb9a0566473d4aa01db7b9ae7ef1ba3955275d4",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,39,27]": 14,
+        "[\"candidate\",0,39,27]": 16,
+        "[\"candidate\",0,40,27]": 3,
+        "[\"baseline\",0,40,27]": 3,
+        "[\"candidate\",0,38,27]": 1,
+        "[\"baseline\",0,38,27]": 3
+      }
+    },
+    {
+      "source": "c692dfae51f87672c42bb57f97b9dd4f591f9992d4f8c3a86ca170f58b93b5ad",
+      "target": "b7b7889025c3e6a02c654874a41b13e55be93a9915123516e33050f547809706",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,40,26]": 14,
+        "[\"candidate\",0,40,26]": 16,
+        "[\"candidate\",0,41,26]": 2,
+        "[\"baseline\",0,41,26]": 2,
+        "[\"candidate\",0,39,26]": 1,
+        "[\"baseline\",0,39,26]": 3,
+        "[\"baseline\",0,31,26]": 1,
+        "[\"candidate\",0,31,26]": 1
+      }
+    },
+    {
+      "source": "8f28f9ff3f2b0205c73b9264508e14a547b52d50a14f7cd8df6d5b5e51f3b430",
+      "target": "c4077da2da3febfbf0dec25922014833dc02749bbcf580bf66cbfd180d749329",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,41,25]": 15,
+        "[\"candidate\",0,41,25]": 17,
+        "[\"candidate\",0,42,25]": 2,
+        "[\"baseline\",0,42,25]": 2,
+        "[\"candidate\",0,40,25]": 1,
+        "[\"baseline\",0,40,25]": 3
+      }
+    },
+    {
+      "source": "be394bdd82bc3cec85cb4e068fd9723b2a8473c5a7964a45cf7a4c3d6ca621c1",
+      "target": "ccaac1ec880df266c7f63e46f6413f86cacff075f71869b2ef75e5fb034bd9b5",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,42,24]": 15,
+        "[\"candidate\",0,42,24]": 17,
+        "[\"candidate\",0,43,24]": 1,
+        "[\"baseline\",0,43,24]": 2,
+        "[\"candidate\",0,41,24]": 1,
+        "[\"baseline\",0,41,24]": 3,
+        "[\"candidate\",0,31,24]": 1
+      }
+    },
+    {
+      "source": "052fcfffa86e133fdd521794ed9358f3323d43d27abc71fca6085fa3063b3770",
+      "target": "f625d1611b50c47dc5c303926d6ef28b1080489cd5f5b85928eeb24afb1f8909",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,43,23]": 15,
+        "[\"candidate\",0,43,23]": 18,
+        "[\"candidate\",0,44,23]": 1,
+        "[\"baseline\",0,44,23]": 2,
+        "[\"candidate\",0,42,23]": 1,
+        "[\"baseline\",0,42,23]": 3
+      }
+    },
+    {
+      "source": "44cedc1842eb27e6d318f71d72363493ef7af0ebfd7ee17064f00568e48039e0",
+      "target": "3feb8cfe863be66f78b6c3a400fd7aefbd72511348ad8dc8bbe7c110d8032113",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,44,22]": 15,
+        "[\"candidate\",0,44,22]": 18,
+        "[\"candidate\",0,45,22]": 1,
+        "[\"baseline\",0,45,22]": 2,
+        "[\"candidate\",0,43,22]": 1,
+        "[\"baseline\",0,43,22]": 3
+      }
+    },
+    {
+      "source": "4a9c153da486b870d6d71d9a895ee61e72e498f8422dd74c581b51e3d791306e",
+      "target": "90f0345e56f0a34d31fbf370276e32404ad2a36066ea9a97c782973b37a5deff",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,45,21]": 15,
+        "[\"candidate\",0,45,21]": 18,
+        "[\"candidate\",0,46,21]": 1,
+        "[\"baseline\",0,31,21]": 1,
+        "[\"candidate\",0,44,21]": 1,
+        "[\"baseline\",0,44,21]": 3,
+        "[\"baseline\",0,46,21]": 1
+      }
+    },
+    {
+      "source": "e447ca1eb42222d310f74ddcf4c3e96fa139a024604550ea6a2a08c368b9fca0",
+      "target": "a25a80228d21cb8dcb7752d2471a8ec3d34bdc2d74230cf84b0a86d72b05d461",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,46,20]": 16,
+        "[\"candidate\",0,46,20]": 18,
+        "[\"candidate\",0,47,20]": 1,
+        "[\"candidate\",0,45,20]": 1,
+        "[\"baseline\",0,45,20]": 3,
+        "[\"baseline\",0,47,20]": 1
+      }
+    },
+    {
+      "source": "affb0595fedfc4471c5d015d5a2c5b27257f80ba98039ae8fa5a41575ec34c9e",
+      "target": "57cec3e42e33235ac7bc4f8af168fe5cf3656f8025081408728421b7b976e2a8",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,47,19]": 16,
+        "[\"candidate\",0,47,19]": 18,
+        "[\"candidate\",0,48,19]": 1,
+        "[\"candidate\",0,46,19]": 1,
+        "[\"baseline\",0,46,19]": 3,
+        "[\"baseline\",0,48,19]": 1
+      }
+    },
+    {
+      "source": "9de08e8c7a0f699817cf239911fa0d5f7c5594c3d2edd0859de6ef659bfd7328",
+      "target": "34791ae4d8f6c060f9b73dccbad79b6bf4077b4a739e9f4dd5b41a115bce1973",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,48,18]": 16,
+        "[\"candidate\",0,48,18]": 18,
+        "[\"candidate\",0,49,18]": 1,
+        "[\"candidate\",0,47,18]": 1,
+        "[\"baseline\",0,47,18]": 3,
+        "[\"baseline\",0,49,18]": 1
+      }
+    },
+    {
+      "source": "d944ac7ac50d30204a8c12cdd3a021ea4733e56129e11704753534b7c93b4571",
+      "target": "3aa775dc043fe64d09938e36c51358f6a8d51831b9fe1a657d0d9a0f604d3c4e",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,49,17]": 16,
+        "[\"candidate\",0,49,17]": 18,
+        "[\"candidate\",0,50,17]": 1,
+        "[\"candidate\",0,48,17]": 1,
+        "[\"baseline\",0,48,17]": 3,
+        "[\"baseline\",0,50,17]": 1
+      }
+    },
+    {
+      "source": "dcb782a275ac901b71d96deada5bda4e6b6f467603ffc365c1e272c089bdb383",
+      "target": "2018c12ab8f4f3cf8352990910a106a7ae07bd50e62101b8970b4008a7453d29",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,50,16]": 16,
+        "[\"candidate\",0,50,16]": 18,
+        "[\"candidate\",0,51,16]": 1,
+        "[\"candidate\",0,49,16]": 1,
+        "[\"baseline\",0,49,16]": 3,
+        "[\"baseline\",0,51,16]": 1
+      }
+    },
+    {
+      "source": "7d82569511c7e00858ad408f7f5f1f9369c6c0b3c4d2f522ec526414d0dedf66",
+      "target": "fabebf63ebbf9b69dbf5f815b112f7d131c09bd06ed989eb60bb519503bd4bae",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,51,15]": 16,
+        "[\"candidate\",0,51,15]": 18,
+        "[\"candidate\",0,52,15]": 1,
+        "[\"candidate\",0,50,15]": 1,
+        "[\"baseline\",0,50,15]": 3,
+        "[\"baseline\",0,52,15]": 1
+      }
+    },
+    {
+      "source": "6335faea97bb67a44a5a4ea9a4d0cd40b20de2d3ca1534b3448b846618232366",
+      "target": "e1a68f03651d1e837d8465692273c9e1b3602762c93078ada3c9547e9ee716f0",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,52,14]": 16,
+        "[\"candidate\",0,52,14]": 18,
+        "[\"candidate\",0,53,14]": 1,
+        "[\"candidate\",0,51,14]": 1,
+        "[\"baseline\",0,51,14]": 3,
+        "[\"baseline\",0,53,14]": 1
+      }
+    },
+    {
+      "source": "37276e70eaf46a94d78e3677ab23c430eef9c3475c88774df2135a9d243974ac",
+      "target": "a1ff53592cbb5e656fb573471af00d21bd139938bdebc8e2d44489c076082c9c",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,53,13]": 16,
+        "[\"candidate\",0,53,13]": 18,
+        "[\"candidate\",0,54,13]": 1,
+        "[\"candidate\",0,52,13]": 1,
+        "[\"baseline\",0,52,13]": 3,
+        "[\"baseline\",0,54,13]": 1
+      }
+    },
+    {
+      "source": "efc2c4e63695bd7263bfe8c0ef241e4b79664499af4650847d46f03f74f18510",
+      "target": "7ba154fa3c6e19fc45ac1656116a36d73ed25485ea35001c10bc2e4c8caed373",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,54,12]": 16,
+        "[\"candidate\",0,54,12]": 18,
+        "[\"candidate\",0,55,12]": 1,
+        "[\"candidate\",0,53,12]": 1,
+        "[\"baseline\",0,53,12]": 3,
+        "[\"baseline\",0,55,12]": 1
+      }
+    },
+    {
+      "source": "f4f46c775b3c26f2995084e82a19981cc40a4a583a26f6df93114a4e4a4a7842",
+      "target": "a5bebec77c08496ffc6345c5f3945f36544417c0cbd1f79481ab6320dc4e87f7",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,55,11]": 16,
+        "[\"candidate\",0,55,11]": 18,
+        "[\"candidate\",0,56,11]": 1,
+        "[\"candidate\",0,54,11]": 1,
+        "[\"baseline\",0,54,11]": 3,
+        "[\"baseline\",0,31,11]": 1
+      }
+    },
+    {
+      "source": "c4eb27d23418a73825b54443ec6b7646a3832ba9a8574ce2d986eae121328746",
+      "target": "6fb00b9989abc1017cd08d45dde36d721732e75a4eaa66fe38e4601a4c436686",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,56,10]": 17,
+        "[\"candidate\",0,56,10]": 18,
+        "[\"candidate\",0,57,10]": 1,
+        "[\"candidate\",0,55,10]": 1,
+        "[\"baseline\",0,55,10]": 3
+      }
+    },
+    {
+      "source": "f5a5750f99283b4ae17b885f322f3467c12a195349d36eaaaa445aabfa4c9f8b",
+      "target": "a9b94eba168749ee8a1f82557c702a0c56eacb2074341198b06c12c3f6a24c0f",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,57,9]": 17,
+        "[\"candidate\",0,57,9]": 18,
+        "[\"candidate\",0,31,9]": 1,
+        "[\"candidate\",0,56,9]": 1,
+        "[\"baseline\",0,56,9]": 3
+      }
+    },
+    {
+      "source": "79b973bdd2225a80d3363bd8d4cf82b180f65ac889e6dcba4e135ae7187aa559",
+      "target": "33d942f83720da47250b49ca78cad228b68e98364e604883e33c988318d90f18",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,58,8]": 17,
+        "[\"candidate\",0,58,8]": 19,
+        "[\"candidate\",0,57,8]": 1,
+        "[\"baseline\",0,57,8]": 3
+      }
+    },
+    {
+      "source": "ffdb3eb9423a56ef47277903f1ac1eee69977f2c62813d2f43141fcb13178597",
+      "target": "df4b357e4f0fe4274611c82def2ecac1dfed6bb664053126108f7bd8ddd5aa5f",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,59,7]": 17,
+        "[\"candidate\",0,59,7]": 19,
+        "[\"candidate\",0,58,7]": 1,
+        "[\"baseline\",0,58,7]": 3
+      }
+    },
+    {
+      "source": "a00c9e813e586c86b7f846b1e3fe6370005a84b0930161f5381a13c8c8fa6c14",
+      "target": "5dfc321f0c87dcbcc239fba51447cb391e43851c2b6ae94bfddf7d8bdea5760b",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,60,6]": 17,
+        "[\"candidate\",0,60,6]": 19,
+        "[\"candidate\",0,59,6]": 1,
+        "[\"baseline\",0,59,6]": 3
+      }
+    },
+    {
+      "source": "80fb002e99e720ec92839ad477e9db15b964431b06a54e8a6a4cef88e0e17338",
+      "target": "94ad3270918dfc078c2575bc72100b44b8cdfaea214e0c24981d5b901c8dcc8f",
+      "distance": 0.75,
+      "slope": 1,
+      "nullThickness": false,
+      "byLabel": {
+        "baseline": 20,
+        "candidate": 20
+      },
+      "indices": {
+        "[\"baseline\",0,61,30]": 17,
+        "[\"candidate\",0,61,30]": 19,
+        "[\"candidate\",0,60,30]": 1,
+        "[\"baseline\",0,60,30]": 3
+      }
+    }
+  ],
+  "face1Evidence": [
+    {
+      "sourceFingerprint": "61aca3a8084fb41d78b63af424ec951d59fd618f8e6a7a0dbba2032b1c1f24ab",
+      "source": {
+        "signature": [
+          0,
+          1,
+          1200,
+          0,
+          30,
+          10
+        ],
+        "predecessors": [
+          "perforated-f3"
+        ],
+        "surface": {
+          "cone": null,
+          "cylinder": null,
+          "plane": {
+            "origin": [
+              0,
+              0,
+              0
+            ],
+            "u": [
+              0,
+              1,
+              0
+            ],
+            "v": [
+              0,
+              0,
+              -1
+            ]
+          },
+          "sphere": null
+        },
+        "incidentEdges": [
+          {
+            "signature": [
+              0,
+              20,
+              0,
+              0,
+              10
+            ],
+            "predecessors": [
+              "perforated-e0"
+            ],
+            "curve": {
+              "a": [
+                0,
+                0,
+                0
+              ],
+              "b": [
+                0,
+                0,
+                20
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "1dfd13b82324d9ecb77ee4971c7ba2dae2ab973163f5fb99a46f1492d1244d16",
+            "sampleEnds": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                20
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              20,
+              0,
+              60,
+              10
+            ],
+            "predecessors": [
+              "perforated-e7"
+            ],
+            "curve": {
+              "a": [
+                0,
+                60,
+                0
+              ],
+              "b": [
+                0,
+                60,
+                20
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "adbd14497619b126f7cef4ff5b860f14fb16d7ec8098908090a68c3df120a0be",
+            "sampleEnds": [
+              [
+                0,
+                60,
+                0
+              ],
+              [
+                0,
+                60,
+                20
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              60,
+              0,
+              30,
+              0
+            ],
+            "predecessors": [
+              "perforated-e10"
+            ],
+            "curve": {
+              "a": [
+                0,
+                0,
+                0
+              ],
+              "b": [
+                0,
+                60,
+                0
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "e401e17c65796c8e32746ab64de93ce1a248c2591229471e0ff46bdc6c728179",
+            "sampleEnds": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                60,
+                0
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              60,
+              0,
+              30,
+              20
+            ],
+            "predecessors": [
+              "perforated-e11"
+            ],
+            "curve": {
+              "a": [
+                0,
+                0,
+                20
+              ],
+              "b": [
+                0,
+                60,
+                20
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "36bebb7c1529923360d01fc2ff2277d4ae47e5c8a8d029888f3d391269948e6f",
+            "sampleEnds": [
+              [
+                0,
+                0,
+                20
+              ],
+              [
+                0,
+                60,
+                20
+              ]
+            ]
+          }
+        ]
+      },
+      "targetFingerprint": "1c93bfbc9b3eb68d906629217a6414865879aeaff06754d3fee9868bf76d674f",
+      "target": {
+        "signature": [
+          0,
+          0,
+          1082.25,
+          0.75,
+          30,
+          10
+        ],
+        "predecessors": [],
+        "surface": {
+          "cone": null,
+          "cylinder": null,
+          "plane": {
+            "origin": [
+              0.75,
+              0,
+              0
+            ],
+            "u": [
+              0,
+              1,
+              0
+            ],
+            "v": [
+              0,
+              0,
+              1
+            ]
+          },
+          "sphere": null
+        },
+        "incidentEdges": [
+          {
+            "signature": [
+              0,
+              18.5,
+              0.75,
+              0.75,
+              10
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "b": [
+                0.75,
+                0.75,
+                19.25
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "d315a3669387b714aba78807ba431a884e029c7ab176c0f6e537840673b66ab4",
+            "sampleEnds": [
+              [
+                0.75,
+                0.75,
+                0.75
+              ],
+              [
+                0.75,
+                0.75,
+                19.25
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              18.5,
+              0.75,
+              59.25,
+              10
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                59.25,
+                0.75
+              ],
+              "b": [
+                0.75,
+                59.25,
+                19.25
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "528bfa5f4e80f888155a6cbd8f817cf65dc573030d414792ffbbd9db1e937a56",
+            "sampleEnds": [
+              [
+                0.75,
+                59.25,
+                0.75
+              ],
+              [
+                0.75,
+                59.25,
+                19.25
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              58.5,
+              0.75,
+              30,
+              0.75
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "b": [
+                0.75,
+                59.25,
+                0.75
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "0928eee63a8dac0ef86b2a20f689a4926642eebf731bc4c57e123cf276f14dda",
+            "sampleEnds": [
+              [
+                0.75,
+                0.75,
+                0.75
+              ],
+              [
+                0.75,
+                59.25,
+                0.75
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              58.5,
+              0.75,
+              30,
+              19.25
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                0.75,
+                19.25
+              ],
+              "b": [
+                0.75,
+                59.25,
+                19.25
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "3fdafee9cb84c4f201bc7c3ae05b79cff88e196bcdd6364c702ab4ef94251f61",
+            "sampleEnds": [
+              [
+                0.75,
+                0.75,
+                19.25
+              ],
+              [
+                0.75,
+                59.25,
+                19.25
+              ]
+            ]
+          }
+        ]
+      },
+      "thickness": {
+        "distance": 0.75,
+        "faceIndex": 36,
+        "slope": 1
+      },
+      "sourceIndex": 1,
+      "targetIndex": 36,
+      "byLabel": {
+        "baseline": 1,
+        "candidate": 4
+      },
+      "blocks": [
+        0,
+        8,
+        11,
+        17,
+        18
+      ]
+    },
+    {
+      "sourceFingerprint": "61aca3a8084fb41d78b63af424ec951d59fd618f8e6a7a0dbba2032b1c1f24ab",
+      "source": {
+        "signature": [
+          0,
+          1,
+          1200,
+          0,
+          30,
+          10
+        ],
+        "predecessors": [
+          "perforated-f3"
+        ],
+        "surface": {
+          "cone": null,
+          "cylinder": null,
+          "plane": {
+            "origin": [
+              0,
+              0,
+              0
+            ],
+            "u": [
+              0,
+              1,
+              0
+            ],
+            "v": [
+              0,
+              0,
+              -1
+            ]
+          },
+          "sphere": null
+        },
+        "incidentEdges": [
+          {
+            "signature": [
+              0,
+              20,
+              0,
+              0,
+              10
+            ],
+            "predecessors": [
+              "perforated-e0"
+            ],
+            "curve": {
+              "a": [
+                0,
+                0,
+                0
+              ],
+              "b": [
+                0,
+                0,
+                20
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "1dfd13b82324d9ecb77ee4971c7ba2dae2ab973163f5fb99a46f1492d1244d16",
+            "sampleEnds": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                20
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              20,
+              0,
+              60,
+              10
+            ],
+            "predecessors": [
+              "perforated-e7"
+            ],
+            "curve": {
+              "a": [
+                0,
+                60,
+                0
+              ],
+              "b": [
+                0,
+                60,
+                20
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "adbd14497619b126f7cef4ff5b860f14fb16d7ec8098908090a68c3df120a0be",
+            "sampleEnds": [
+              [
+                0,
+                60,
+                0
+              ],
+              [
+                0,
+                60,
+                20
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              60,
+              0,
+              30,
+              0
+            ],
+            "predecessors": [
+              "perforated-e10"
+            ],
+            "curve": {
+              "a": [
+                0,
+                0,
+                0
+              ],
+              "b": [
+                0,
+                60,
+                0
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "e401e17c65796c8e32746ab64de93ce1a248c2591229471e0ff46bdc6c728179",
+            "sampleEnds": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                60,
+                0
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              60,
+              0,
+              30,
+              20
+            ],
+            "predecessors": [
+              "perforated-e11"
+            ],
+            "curve": {
+              "a": [
+                0,
+                0,
+                20
+              ],
+              "b": [
+                0,
+                60,
+                20
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "36bebb7c1529923360d01fc2ff2277d4ae47e5c8a8d029888f3d391269948e6f",
+            "sampleEnds": [
+              [
+                0,
+                0,
+                20
+              ],
+              [
+                0,
+                60,
+                20
+              ]
+            ]
+          }
+        ]
+      },
+      "targetFingerprint": "1c93bfbc9b3eb68d906629217a6414865879aeaff06754d3fee9868bf76d674f",
+      "target": {
+        "signature": [
+          0,
+          0,
+          1082.25,
+          0.75,
+          30,
+          10
+        ],
+        "predecessors": [],
+        "surface": {
+          "cone": null,
+          "cylinder": null,
+          "plane": {
+            "origin": [
+              0.75,
+              0,
+              0
+            ],
+            "u": [
+              0,
+              1,
+              0
+            ],
+            "v": [
+              0,
+              0,
+              1
+            ]
+          },
+          "sphere": null
+        },
+        "incidentEdges": [
+          {
+            "signature": [
+              0,
+              18.5,
+              0.75,
+              0.75,
+              10
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "b": [
+                0.75,
+                0.75,
+                19.25
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "d315a3669387b714aba78807ba431a884e029c7ab176c0f6e537840673b66ab4",
+            "sampleEnds": [
+              [
+                0.75,
+                0.75,
+                0.75
+              ],
+              [
+                0.75,
+                0.75,
+                19.25
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              18.5,
+              0.75,
+              59.25,
+              10
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                59.25,
+                0.75
+              ],
+              "b": [
+                0.75,
+                59.25,
+                19.25
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "528bfa5f4e80f888155a6cbd8f817cf65dc573030d414792ffbbd9db1e937a56",
+            "sampleEnds": [
+              [
+                0.75,
+                59.25,
+                0.75
+              ],
+              [
+                0.75,
+                59.25,
+                19.25
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              58.5,
+              0.75,
+              30,
+              0.75
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "b": [
+                0.75,
+                59.25,
+                0.75
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "0928eee63a8dac0ef86b2a20f689a4926642eebf731bc4c57e123cf276f14dda",
+            "sampleEnds": [
+              [
+                0.75,
+                0.75,
+                0.75
+              ],
+              [
+                0.75,
+                59.25,
+                0.75
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              58.5,
+              0.75,
+              30,
+              19.25
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                0.75,
+                19.25
+              ],
+              "b": [
+                0.75,
+                59.25,
+                19.25
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "3fdafee9cb84c4f201bc7c3ae05b79cff88e196bcdd6364c702ab4ef94251f61",
+            "sampleEnds": [
+              [
+                0.75,
+                0.75,
+                19.25
+              ],
+              [
+                0.75,
+                59.25,
+                19.25
+              ]
+            ]
+          }
+        ]
+      },
+      "thickness": {
+        "distance": 0.75,
+        "faceIndex": 31,
+        "slope": 1
+      },
+      "sourceIndex": 1,
+      "targetIndex": 31,
+      "byLabel": {
+        "candidate": 3,
+        "baseline": 2
+      },
+      "blocks": [
+        0,
+        3,
+        4,
+        9,
+        15
+      ]
+    },
+    {
+      "sourceFingerprint": "61aca3a8084fb41d78b63af424ec951d59fd618f8e6a7a0dbba2032b1c1f24ab",
+      "source": {
+        "signature": [
+          0,
+          1,
+          1200,
+          0,
+          30,
+          10
+        ],
+        "predecessors": [
+          "perforated-f3"
+        ],
+        "surface": {
+          "cone": null,
+          "cylinder": null,
+          "plane": {
+            "origin": [
+              0,
+              0,
+              0
+            ],
+            "u": [
+              0,
+              1,
+              0
+            ],
+            "v": [
+              0,
+              0,
+              -1
+            ]
+          },
+          "sphere": null
+        },
+        "incidentEdges": [
+          {
+            "signature": [
+              0,
+              20,
+              0,
+              0,
+              10
+            ],
+            "predecessors": [
+              "perforated-e0"
+            ],
+            "curve": {
+              "a": [
+                0,
+                0,
+                0
+              ],
+              "b": [
+                0,
+                0,
+                20
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "1dfd13b82324d9ecb77ee4971c7ba2dae2ab973163f5fb99a46f1492d1244d16",
+            "sampleEnds": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                20
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              20,
+              0,
+              60,
+              10
+            ],
+            "predecessors": [
+              "perforated-e7"
+            ],
+            "curve": {
+              "a": [
+                0,
+                60,
+                0
+              ],
+              "b": [
+                0,
+                60,
+                20
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "adbd14497619b126f7cef4ff5b860f14fb16d7ec8098908090a68c3df120a0be",
+            "sampleEnds": [
+              [
+                0,
+                60,
+                0
+              ],
+              [
+                0,
+                60,
+                20
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              60,
+              0,
+              30,
+              0
+            ],
+            "predecessors": [
+              "perforated-e10"
+            ],
+            "curve": {
+              "a": [
+                0,
+                0,
+                0
+              ],
+              "b": [
+                0,
+                60,
+                0
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "e401e17c65796c8e32746ab64de93ce1a248c2591229471e0ff46bdc6c728179",
+            "sampleEnds": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                60,
+                0
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              60,
+              0,
+              30,
+              20
+            ],
+            "predecessors": [
+              "perforated-e11"
+            ],
+            "curve": {
+              "a": [
+                0,
+                0,
+                20
+              ],
+              "b": [
+                0,
+                60,
+                20
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "36bebb7c1529923360d01fc2ff2277d4ae47e5c8a8d029888f3d391269948e6f",
+            "sampleEnds": [
+              [
+                0,
+                0,
+                20
+              ],
+              [
+                0,
+                60,
+                20
+              ]
+            ]
+          }
+        ]
+      },
+      "targetFingerprint": "1c93bfbc9b3eb68d906629217a6414865879aeaff06754d3fee9868bf76d674f",
+      "target": {
+        "signature": [
+          0,
+          0,
+          1082.25,
+          0.75,
+          30,
+          10
+        ],
+        "predecessors": [],
+        "surface": {
+          "cone": null,
+          "cylinder": null,
+          "plane": {
+            "origin": [
+              0.75,
+              0,
+              0
+            ],
+            "u": [
+              0,
+              1,
+              0
+            ],
+            "v": [
+              0,
+              0,
+              1
+            ]
+          },
+          "sphere": null
+        },
+        "incidentEdges": [
+          {
+            "signature": [
+              0,
+              18.5,
+              0.75,
+              0.75,
+              10
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "b": [
+                0.75,
+                0.75,
+                19.25
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "d315a3669387b714aba78807ba431a884e029c7ab176c0f6e537840673b66ab4",
+            "sampleEnds": [
+              [
+                0.75,
+                0.75,
+                0.75
+              ],
+              [
+                0.75,
+                0.75,
+                19.25
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              18.5,
+              0.75,
+              59.25,
+              10
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                59.25,
+                0.75
+              ],
+              "b": [
+                0.75,
+                59.25,
+                19.25
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "528bfa5f4e80f888155a6cbd8f817cf65dc573030d414792ffbbd9db1e937a56",
+            "sampleEnds": [
+              [
+                0.75,
+                59.25,
+                0.75
+              ],
+              [
+                0.75,
+                59.25,
+                19.25
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              58.5,
+              0.75,
+              30,
+              0.75
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "b": [
+                0.75,
+                59.25,
+                0.75
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "0928eee63a8dac0ef86b2a20f689a4926642eebf731bc4c57e123cf276f14dda",
+            "sampleEnds": [
+              [
+                0.75,
+                0.75,
+                0.75
+              ],
+              [
+                0.75,
+                59.25,
+                0.75
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              58.5,
+              0.75,
+              30,
+              19.25
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                0.75,
+                19.25
+              ],
+              "b": [
+                0.75,
+                59.25,
+                19.25
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "3fdafee9cb84c4f201bc7c3ae05b79cff88e196bcdd6364c702ab4ef94251f61",
+            "sampleEnds": [
+              [
+                0.75,
+                0.75,
+                19.25
+              ],
+              [
+                0.75,
+                59.25,
+                19.25
+              ]
+            ]
+          }
+        ]
+      },
+      "thickness": {
+        "distance": 0.75,
+        "faceIndex": 34,
+        "slope": 1
+      },
+      "sourceIndex": 1,
+      "targetIndex": 34,
+      "byLabel": {
+        "baseline": 5,
+        "candidate": 3
+      },
+      "blocks": [
+        1,
+        2,
+        5,
+        6,
+        10,
+        12,
+        13,
+        19
+      ]
+    },
+    {
+      "sourceFingerprint": "61aca3a8084fb41d78b63af424ec951d59fd618f8e6a7a0dbba2032b1c1f24ab",
+      "source": {
+        "signature": [
+          0,
+          1,
+          1200,
+          0,
+          30,
+          10
+        ],
+        "predecessors": [
+          "perforated-f3"
+        ],
+        "surface": {
+          "cone": null,
+          "cylinder": null,
+          "plane": {
+            "origin": [
+              0,
+              0,
+              0
+            ],
+            "u": [
+              0,
+              1,
+              0
+            ],
+            "v": [
+              0,
+              0,
+              -1
+            ]
+          },
+          "sphere": null
+        },
+        "incidentEdges": [
+          {
+            "signature": [
+              0,
+              20,
+              0,
+              0,
+              10
+            ],
+            "predecessors": [
+              "perforated-e0"
+            ],
+            "curve": {
+              "a": [
+                0,
+                0,
+                0
+              ],
+              "b": [
+                0,
+                0,
+                20
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "1dfd13b82324d9ecb77ee4971c7ba2dae2ab973163f5fb99a46f1492d1244d16",
+            "sampleEnds": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                20
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              20,
+              0,
+              60,
+              10
+            ],
+            "predecessors": [
+              "perforated-e7"
+            ],
+            "curve": {
+              "a": [
+                0,
+                60,
+                0
+              ],
+              "b": [
+                0,
+                60,
+                20
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "adbd14497619b126f7cef4ff5b860f14fb16d7ec8098908090a68c3df120a0be",
+            "sampleEnds": [
+              [
+                0,
+                60,
+                0
+              ],
+              [
+                0,
+                60,
+                20
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              60,
+              0,
+              30,
+              0
+            ],
+            "predecessors": [
+              "perforated-e10"
+            ],
+            "curve": {
+              "a": [
+                0,
+                0,
+                0
+              ],
+              "b": [
+                0,
+                60,
+                0
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "e401e17c65796c8e32746ab64de93ce1a248c2591229471e0ff46bdc6c728179",
+            "sampleEnds": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                60,
+                0
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              60,
+              0,
+              30,
+              20
+            ],
+            "predecessors": [
+              "perforated-e11"
+            ],
+            "curve": {
+              "a": [
+                0,
+                0,
+                20
+              ],
+              "b": [
+                0,
+                60,
+                20
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "36bebb7c1529923360d01fc2ff2277d4ae47e5c8a8d029888f3d391269948e6f",
+            "sampleEnds": [
+              [
+                0,
+                0,
+                20
+              ],
+              [
+                0,
+                60,
+                20
+              ]
+            ]
+          }
+        ]
+      },
+      "targetFingerprint": "1c93bfbc9b3eb68d906629217a6414865879aeaff06754d3fee9868bf76d674f",
+      "target": {
+        "signature": [
+          0,
+          0,
+          1082.25,
+          0.75,
+          30,
+          10
+        ],
+        "predecessors": [],
+        "surface": {
+          "cone": null,
+          "cylinder": null,
+          "plane": {
+            "origin": [
+              0.75,
+              0,
+              0
+            ],
+            "u": [
+              0,
+              1,
+              0
+            ],
+            "v": [
+              0,
+              0,
+              1
+            ]
+          },
+          "sphere": null
+        },
+        "incidentEdges": [
+          {
+            "signature": [
+              0,
+              18.5,
+              0.75,
+              0.75,
+              10
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "b": [
+                0.75,
+                0.75,
+                19.25
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "d315a3669387b714aba78807ba431a884e029c7ab176c0f6e537840673b66ab4",
+            "sampleEnds": [
+              [
+                0.75,
+                0.75,
+                0.75
+              ],
+              [
+                0.75,
+                0.75,
+                19.25
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              18.5,
+              0.75,
+              59.25,
+              10
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                59.25,
+                0.75
+              ],
+              "b": [
+                0.75,
+                59.25,
+                19.25
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "528bfa5f4e80f888155a6cbd8f817cf65dc573030d414792ffbbd9db1e937a56",
+            "sampleEnds": [
+              [
+                0.75,
+                59.25,
+                0.75
+              ],
+              [
+                0.75,
+                59.25,
+                19.25
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              58.5,
+              0.75,
+              30,
+              0.75
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "b": [
+                0.75,
+                59.25,
+                0.75
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "0928eee63a8dac0ef86b2a20f689a4926642eebf731bc4c57e123cf276f14dda",
+            "sampleEnds": [
+              [
+                0.75,
+                0.75,
+                0.75
+              ],
+              [
+                0.75,
+                59.25,
+                0.75
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              58.5,
+              0.75,
+              30,
+              19.25
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                0.75,
+                19.25
+              ],
+              "b": [
+                0.75,
+                59.25,
+                19.25
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "3fdafee9cb84c4f201bc7c3ae05b79cff88e196bcdd6364c702ab4ef94251f61",
+            "sampleEnds": [
+              [
+                0.75,
+                0.75,
+                19.25
+              ],
+              [
+                0.75,
+                59.25,
+                19.25
+              ]
+            ]
+          }
+        ]
+      },
+      "thickness": {
+        "distance": 0.75,
+        "faceIndex": 35,
+        "slope": 1
+      },
+      "sourceIndex": 1,
+      "targetIndex": 35,
+      "byLabel": {
+        "candidate": 5,
+        "baseline": 5
+      },
+      "blocks": [
+        1,
+        2,
+        3,
+        7,
+        8,
+        10,
+        12,
+        13,
+        16,
+        16
+      ]
+    },
+    {
+      "sourceFingerprint": "61aca3a8084fb41d78b63af424ec951d59fd618f8e6a7a0dbba2032b1c1f24ab",
+      "source": {
+        "signature": [
+          0,
+          1,
+          1200,
+          0,
+          30,
+          10
+        ],
+        "predecessors": [
+          "perforated-f3"
+        ],
+        "surface": {
+          "cone": null,
+          "cylinder": null,
+          "plane": {
+            "origin": [
+              0,
+              0,
+              0
+            ],
+            "u": [
+              0,
+              1,
+              0
+            ],
+            "v": [
+              0,
+              0,
+              -1
+            ]
+          },
+          "sphere": null
+        },
+        "incidentEdges": [
+          {
+            "signature": [
+              0,
+              20,
+              0,
+              0,
+              10
+            ],
+            "predecessors": [
+              "perforated-e0"
+            ],
+            "curve": {
+              "a": [
+                0,
+                0,
+                0
+              ],
+              "b": [
+                0,
+                0,
+                20
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "1dfd13b82324d9ecb77ee4971c7ba2dae2ab973163f5fb99a46f1492d1244d16",
+            "sampleEnds": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                20
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              20,
+              0,
+              60,
+              10
+            ],
+            "predecessors": [
+              "perforated-e7"
+            ],
+            "curve": {
+              "a": [
+                0,
+                60,
+                0
+              ],
+              "b": [
+                0,
+                60,
+                20
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "adbd14497619b126f7cef4ff5b860f14fb16d7ec8098908090a68c3df120a0be",
+            "sampleEnds": [
+              [
+                0,
+                60,
+                0
+              ],
+              [
+                0,
+                60,
+                20
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              60,
+              0,
+              30,
+              0
+            ],
+            "predecessors": [
+              "perforated-e10"
+            ],
+            "curve": {
+              "a": [
+                0,
+                0,
+                0
+              ],
+              "b": [
+                0,
+                60,
+                0
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "e401e17c65796c8e32746ab64de93ce1a248c2591229471e0ff46bdc6c728179",
+            "sampleEnds": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                60,
+                0
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              60,
+              0,
+              30,
+              20
+            ],
+            "predecessors": [
+              "perforated-e11"
+            ],
+            "curve": {
+              "a": [
+                0,
+                0,
+                20
+              ],
+              "b": [
+                0,
+                60,
+                20
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "36bebb7c1529923360d01fc2ff2277d4ae47e5c8a8d029888f3d391269948e6f",
+            "sampleEnds": [
+              [
+                0,
+                0,
+                20
+              ],
+              [
+                0,
+                60,
+                20
+              ]
+            ]
+          }
+        ]
+      },
+      "targetFingerprint": "1c93bfbc9b3eb68d906629217a6414865879aeaff06754d3fee9868bf76d674f",
+      "target": {
+        "signature": [
+          0,
+          0,
+          1082.25,
+          0.75,
+          30,
+          10
+        ],
+        "predecessors": [],
+        "surface": {
+          "cone": null,
+          "cylinder": null,
+          "plane": {
+            "origin": [
+              0.75,
+              0,
+              0
+            ],
+            "u": [
+              0,
+              1,
+              0
+            ],
+            "v": [
+              0,
+              0,
+              1
+            ]
+          },
+          "sphere": null
+        },
+        "incidentEdges": [
+          {
+            "signature": [
+              0,
+              18.5,
+              0.75,
+              0.75,
+              10
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "b": [
+                0.75,
+                0.75,
+                19.25
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "d315a3669387b714aba78807ba431a884e029c7ab176c0f6e537840673b66ab4",
+            "sampleEnds": [
+              [
+                0.75,
+                0.75,
+                0.75
+              ],
+              [
+                0.75,
+                0.75,
+                19.25
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              18.5,
+              0.75,
+              59.25,
+              10
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                59.25,
+                0.75
+              ],
+              "b": [
+                0.75,
+                59.25,
+                19.25
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "528bfa5f4e80f888155a6cbd8f817cf65dc573030d414792ffbbd9db1e937a56",
+            "sampleEnds": [
+              [
+                0.75,
+                59.25,
+                0.75
+              ],
+              [
+                0.75,
+                59.25,
+                19.25
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              58.5,
+              0.75,
+              30,
+              0.75
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "b": [
+                0.75,
+                59.25,
+                0.75
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "0928eee63a8dac0ef86b2a20f689a4926642eebf731bc4c57e123cf276f14dda",
+            "sampleEnds": [
+              [
+                0.75,
+                0.75,
+                0.75
+              ],
+              [
+                0.75,
+                59.25,
+                0.75
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              58.5,
+              0.75,
+              30,
+              19.25
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                0.75,
+                19.25
+              ],
+              "b": [
+                0.75,
+                59.25,
+                19.25
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "3fdafee9cb84c4f201bc7c3ae05b79cff88e196bcdd6364c702ab4ef94251f61",
+            "sampleEnds": [
+              [
+                0.75,
+                0.75,
+                19.25
+              ],
+              [
+                0.75,
+                59.25,
+                19.25
+              ]
+            ]
+          }
+        ]
+      },
+      "thickness": {
+        "distance": 0.75,
+        "faceIndex": 33,
+        "slope": 1
+      },
+      "sourceIndex": 1,
+      "targetIndex": 33,
+      "byLabel": {
+        "candidate": 1,
+        "baseline": 3
+      },
+      "blocks": [
+        4,
+        5,
+        11,
+        14
+      ]
+    },
+    {
+      "sourceFingerprint": "61aca3a8084fb41d78b63af424ec951d59fd618f8e6a7a0dbba2032b1c1f24ab",
+      "source": {
+        "signature": [
+          0,
+          1,
+          1200,
+          0,
+          30,
+          10
+        ],
+        "predecessors": [
+          "perforated-f3"
+        ],
+        "surface": {
+          "cone": null,
+          "cylinder": null,
+          "plane": {
+            "origin": [
+              0,
+              0,
+              0
+            ],
+            "u": [
+              0,
+              1,
+              0
+            ],
+            "v": [
+              0,
+              0,
+              -1
+            ]
+          },
+          "sphere": null
+        },
+        "incidentEdges": [
+          {
+            "signature": [
+              0,
+              20,
+              0,
+              0,
+              10
+            ],
+            "predecessors": [
+              "perforated-e0"
+            ],
+            "curve": {
+              "a": [
+                0,
+                0,
+                0
+              ],
+              "b": [
+                0,
+                0,
+                20
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "1dfd13b82324d9ecb77ee4971c7ba2dae2ab973163f5fb99a46f1492d1244d16",
+            "sampleEnds": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                20
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              20,
+              0,
+              60,
+              10
+            ],
+            "predecessors": [
+              "perforated-e7"
+            ],
+            "curve": {
+              "a": [
+                0,
+                60,
+                0
+              ],
+              "b": [
+                0,
+                60,
+                20
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "adbd14497619b126f7cef4ff5b860f14fb16d7ec8098908090a68c3df120a0be",
+            "sampleEnds": [
+              [
+                0,
+                60,
+                0
+              ],
+              [
+                0,
+                60,
+                20
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              60,
+              0,
+              30,
+              0
+            ],
+            "predecessors": [
+              "perforated-e10"
+            ],
+            "curve": {
+              "a": [
+                0,
+                0,
+                0
+              ],
+              "b": [
+                0,
+                60,
+                0
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "e401e17c65796c8e32746ab64de93ce1a248c2591229471e0ff46bdc6c728179",
+            "sampleEnds": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                60,
+                0
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              60,
+              0,
+              30,
+              20
+            ],
+            "predecessors": [
+              "perforated-e11"
+            ],
+            "curve": {
+              "a": [
+                0,
+                0,
+                20
+              ],
+              "b": [
+                0,
+                60,
+                20
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "36bebb7c1529923360d01fc2ff2277d4ae47e5c8a8d029888f3d391269948e6f",
+            "sampleEnds": [
+              [
+                0,
+                0,
+                20
+              ],
+              [
+                0,
+                60,
+                20
+              ]
+            ]
+          }
+        ]
+      },
+      "targetFingerprint": "1c93bfbc9b3eb68d906629217a6414865879aeaff06754d3fee9868bf76d674f",
+      "target": {
+        "signature": [
+          0,
+          0,
+          1082.25,
+          0.75,
+          30,
+          10
+        ],
+        "predecessors": [],
+        "surface": {
+          "cone": null,
+          "cylinder": null,
+          "plane": {
+            "origin": [
+              0.75,
+              0,
+              0
+            ],
+            "u": [
+              0,
+              1,
+              0
+            ],
+            "v": [
+              0,
+              0,
+              1
+            ]
+          },
+          "sphere": null
+        },
+        "incidentEdges": [
+          {
+            "signature": [
+              0,
+              18.5,
+              0.75,
+              0.75,
+              10
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "b": [
+                0.75,
+                0.75,
+                19.25
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "d315a3669387b714aba78807ba431a884e029c7ab176c0f6e537840673b66ab4",
+            "sampleEnds": [
+              [
+                0.75,
+                0.75,
+                0.75
+              ],
+              [
+                0.75,
+                0.75,
+                19.25
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              18.5,
+              0.75,
+              59.25,
+              10
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                59.25,
+                0.75
+              ],
+              "b": [
+                0.75,
+                59.25,
+                19.25
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "528bfa5f4e80f888155a6cbd8f817cf65dc573030d414792ffbbd9db1e937a56",
+            "sampleEnds": [
+              [
+                0.75,
+                59.25,
+                0.75
+              ],
+              [
+                0.75,
+                59.25,
+                19.25
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              58.5,
+              0.75,
+              30,
+              0.75
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "b": [
+                0.75,
+                59.25,
+                0.75
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "0928eee63a8dac0ef86b2a20f689a4926642eebf731bc4c57e123cf276f14dda",
+            "sampleEnds": [
+              [
+                0.75,
+                0.75,
+                0.75
+              ],
+              [
+                0.75,
+                59.25,
+                0.75
+              ]
+            ]
+          },
+          {
+            "signature": [
+              0,
+              58.5,
+              0.75,
+              30,
+              19.25
+            ],
+            "predecessors": [],
+            "curve": {
+              "a": [
+                0.75,
+                0.75,
+                19.25
+              ],
+              "b": [
+                0.75,
+                59.25,
+                19.25
+              ],
+              "kind": "line"
+            },
+            "sampleCount": 2,
+            "sampleHash": "3fdafee9cb84c4f201bc7c3ae05b79cff88e196bcdd6364c702ab4ef94251f61",
+            "sampleEnds": [
+              [
+                0.75,
+                0.75,
+                19.25
+              ],
+              [
+                0.75,
+                59.25,
+                19.25
+              ]
+            ]
+          }
+        ]
+      },
+      "thickness": {
+        "distance": 0.75,
+        "faceIndex": 32,
+        "slope": 1
+      },
+      "sourceIndex": 1,
+      "targetIndex": 32,
+      "byLabel": {
+        "baseline": 4,
+        "candidate": 4
+      },
+      "blocks": [
+        6,
+        7,
+        9,
+        14,
+        15,
+        17,
+        18,
+        19
+      ]
+    }
+  ],
+  "observations": [
+    {
+      "label": "baseline",
+      "block": 0,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "c53c7e891977d40976255ac35a55dfeab65321582c188b15586f7897a3c8869e",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 0,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 0,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "af8c79e311907503af9641d011834ad5d676fe5fc7c008e7100ebf3bbda43ccc",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 0,
+      "crossDifferenceCount": 23280
+    },
+    {
+      "label": "baseline",
+      "block": 1,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "75ff60635c1e64ce040c607d2b5f4c719a5c6e084976ee29f3a202e8c2a2b7ab",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 23298,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 1,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "d400289ed7d80a4ab0c1cb278bab1aa244f9be5d0bf8964c77eadffba5e0058a",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 36087,
+      "crossDifferenceCount": 36059
+    },
+    {
+      "label": "baseline",
+      "block": 2,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "75ff60635c1e64ce040c607d2b5f4c719a5c6e084976ee29f3a202e8c2a2b7ab",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 23298,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 2,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "a6b41aa32ac99ce51809bbac79a01ce8a2cc0c91ebd45f24536d89a6fd9e5a14",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 44780,
+      "crossDifferenceCount": 44752
+    },
+    {
+      "label": "baseline",
+      "block": 3,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "068d2335ad0707f8d56635919abfea469215d67b5914e77b71f3e4b2dd2f4faf",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 48873,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 3,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "af8c79e311907503af9641d011834ad5d676fe5fc7c008e7100ebf3bbda43ccc",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 0,
+      "crossDifferenceCount": 39131
+    },
+    {
+      "label": "baseline",
+      "block": 4,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "af8c79e311907503af9641d011834ad5d676fe5fc7c008e7100ebf3bbda43ccc",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 23280,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 4,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "2de4750ede5a88bfc86790cc3b80474dc7ad6623b950b012fd099e06ed224bee",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 74900,
+      "crossDifferenceCount": 74900
+    },
+    {
+      "label": "baseline",
+      "block": 5,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "95f7f356609e6f86db1b50cdcd258dfcfba7738dfb3203af2fa3b48909a6560f",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 74925,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 5,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "75ff60635c1e64ce040c607d2b5f4c719a5c6e084976ee29f3a202e8c2a2b7ab",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 166,
+      "crossDifferenceCount": 75766
+    },
+    {
+      "label": "baseline",
+      "block": 6,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "4f85cbbf1df15a91195265e8b6950fd8dabaadf4cde7a8c0c0ae2d2824cf6837",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 23309,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 6,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "75ff60635c1e64ce040c607d2b5f4c719a5c6e084976ee29f3a202e8c2a2b7ab",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 166,
+      "crossDifferenceCount": 213
+    },
+    {
+      "label": "baseline",
+      "block": 7,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "d400289ed7d80a4ab0c1cb278bab1aa244f9be5d0bf8964c77eadffba5e0058a",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 45828,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 7,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "4f85cbbf1df15a91195265e8b6950fd8dabaadf4cde7a8c0c0ae2d2824cf6837",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 148,
+      "crossDifferenceCount": 36094
+    },
+    {
+      "label": "baseline",
+      "block": 8,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "7a82bce43f744fea6c0ba554588f8e596afab60f9ac3002d33aa7567df24f534",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 46603,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 8,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "c53c7e891977d40976255ac35a55dfeab65321582c188b15586f7897a3c8869e",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 23280,
+      "crossDifferenceCount": 46603
+    },
+    {
+      "label": "baseline",
+      "block": 9,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "af8c79e311907503af9641d011834ad5d676fe5fc7c008e7100ebf3bbda43ccc",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 23280,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 9,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "4f85cbbf1df15a91195265e8b6950fd8dabaadf4cde7a8c0c0ae2d2824cf6837",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 148,
+      "crossDifferenceCount": 148
+    },
+    {
+      "label": "baseline",
+      "block": 10,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "75ff60635c1e64ce040c607d2b5f4c719a5c6e084976ee29f3a202e8c2a2b7ab",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 23298,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 10,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "d400289ed7d80a4ab0c1cb278bab1aa244f9be5d0bf8964c77eadffba5e0058a",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 36087,
+      "crossDifferenceCount": 36059
+    },
+    {
+      "label": "baseline",
+      "block": 11,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "95f7f356609e6f86db1b50cdcd258dfcfba7738dfb3203af2fa3b48909a6560f",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 74925,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 11,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "c53c7e891977d40976255ac35a55dfeab65321582c188b15586f7897a3c8869e",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 23280,
+      "crossDifferenceCount": 74925
+    },
+    {
+      "label": "baseline",
+      "block": 12,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "c18ca404684552b625fc241a99235a5a9fec63e038e3f3c6872dac12bf5b65e8",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 53413,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 12,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "75ff60635c1e64ce040c607d2b5f4c719a5c6e084976ee29f3a202e8c2a2b7ab",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 166,
+      "crossDifferenceCount": 43643
+    },
+    {
+      "label": "baseline",
+      "block": 13,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "75ff60635c1e64ce040c607d2b5f4c719a5c6e084976ee29f3a202e8c2a2b7ab",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 23298,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 13,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "ac7dd68c301715b3a95f62657ee8c2ed82f3f1cd030b4b23268a446593cdcff0",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 37970,
+      "crossDifferenceCount": 37942
+    },
+    {
+      "label": "baseline",
+      "block": 14,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "2de4750ede5a88bfc86790cc3b80474dc7ad6623b950b012fd099e06ed224bee",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 75754,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 14,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "4f85cbbf1df15a91195265e8b6950fd8dabaadf4cde7a8c0c0ae2d2824cf6837",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 148,
+      "crossDifferenceCount": 74951
+    },
+    {
+      "label": "baseline",
+      "block": 15,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "4f85cbbf1df15a91195265e8b6950fd8dabaadf4cde7a8c0c0ae2d2824cf6837",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 23309,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 15,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "af8c79e311907503af9641d011834ad5d676fe5fc7c008e7100ebf3bbda43ccc",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 0,
+      "crossDifferenceCount": 148
+    },
+    {
+      "label": "baseline",
+      "block": 16,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "d400289ed7d80a4ab0c1cb278bab1aa244f9be5d0bf8964c77eadffba5e0058a",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 45828,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 16,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "7a82bce43f744fea6c0ba554588f8e596afab60f9ac3002d33aa7567df24f534",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 36861,
+      "crossDifferenceCount": 1317
+    },
+    {
+      "label": "baseline",
+      "block": 17,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "4f85cbbf1df15a91195265e8b6950fd8dabaadf4cde7a8c0c0ae2d2824cf6837",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 23309,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 17,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "c53c7e891977d40976255ac35a55dfeab65321582c188b15586f7897a3c8869e",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 23280,
+      "crossDifferenceCount": 23309
+    },
+    {
+      "label": "baseline",
+      "block": 18,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "4f85cbbf1df15a91195265e8b6950fd8dabaadf4cde7a8c0c0ae2d2824cf6837",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 23309,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 18,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "c53c7e891977d40976255ac35a55dfeab65321582c188b15586f7897a3c8869e",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 23280,
+      "crossDifferenceCount": 23309
+    },
+    {
+      "label": "baseline",
+      "block": 19,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "75ff60635c1e64ce040c607d2b5f4c719a5c6e084976ee29f3a202e8c2a2b7ab",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 23298,
+      "crossDifferenceCount": null
+    },
+    {
+      "label": "candidate",
+      "block": 19,
+      "geometryHash": "961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934",
+      "exactBRepHash": "4f85cbbf1df15a91195265e8b6950fd8dabaadf4cde7a8c0c0ae2d2824cf6837",
+      "topology": {
+        "error": null,
+        "mode": "new",
+        "results": [
+          {
+            "faces": 62,
+            "edges": 174,
+            "volume": 13393.4008726,
+            "bounds": [
+              0,
+              0,
+              0,
+              60,
+              60,
+              20
+            ],
+            "predecessorBodies": [
+              "perforated"
+            ]
+          }
+        ]
+      },
+      "repeatDifferenceCount": 148,
+      "crossDifferenceCount": 213
+    }
+  ]
+}

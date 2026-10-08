@@ -1,0 +1,1962 @@
+[
+  {
+    "name": "perforated-explicit-auto-n4-overlap-only",
+    "label": "streaming",
+    "n": 8,
+    "medianMs": 602.6063840000061,
+    "p95Ms": 646.7648270000063,
+    "minMs": 571.9855749999988,
+    "maxMs": 718.9871469999998,
+    "pairedMedianSpeedup": 0.9881475461214866,
+    "bootstrap95": [
+      0.90965762273895,
+      1.0165203449404998
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 3.4297950000000004,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 33.05785,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.101714,
+        "n": 64
+      },
+      "volume integrate": {
+        "medianMs": 1.28563,
+        "n": 64
+      },
+      "volume total": {
+        "medianMs": 1.4184685,
+        "n": 64
+      },
+      "extrude calculate": {
+        "medianMs": 135.6735,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 55.689949999999996,
+        "n": 32
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 19.5552,
+        "n": 32
+      },
+      "presentation topology-and-json": {
+        "medianMs": 23.02825,
+        "n": 32
+      },
+      "presentation total": {
+        "medianMs": 98.6067,
+        "n": 32
+      },
+      "extrude presentation": {
+        "medianMs": 391.76800000000003,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 2.483985,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 573.0945,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "perforated-explicit-auto-n4-overlap-only",
+    "label": "retained",
+    "n": 8,
+    "medianMs": 590.9403339999953,
+    "p95Ms": 609.2835019999984,
+    "minMs": 578.3125150000124,
+    "maxMs": 609.428257,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 3.4865399999999998,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 32.3108,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.123737,
+        "n": 64
+      },
+      "volume integrate": {
+        "medianMs": 1.1662649999999999,
+        "n": 64
+      },
+      "volume total": {
+        "medianMs": 1.310064,
+        "n": 64
+      },
+      "extrude calculate": {
+        "medianMs": 133.523,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 54.56585,
+        "n": 32
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 19.3566,
+        "n": 32
+      },
+      "presentation topology-and-json": {
+        "medianMs": 22.720750000000002,
+        "n": 32
+      },
+      "presentation total": {
+        "medianMs": 96.4721,
+        "n": 32
+      },
+      "extrude presentation": {
+        "medianMs": 385.921,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 3.342065,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 562.2145,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "cubic-implicit-subtract-n4-overlap-only",
+    "label": "retained",
+    "n": 8,
+    "medianMs": 176.25737099999606,
+    "p95Ms": 190.92558700000518,
+    "minMs": 166.35154400000465,
+    "maxMs": 192.34194600000046,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 0.5392555000000001,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 5.230425,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.286078,
+        "n": 64
+      },
+      "volume integrate": {
+        "medianMs": 0.18313200000000002,
+        "n": 64
+      },
+      "volume total": {
+        "medianMs": 0.495069,
+        "n": 64
+      },
+      "extrude calculate": {
+        "medianMs": 104.6545,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 1.48495,
+        "n": 32
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 2.261425,
+        "n": 32
+      },
+      "presentation topology-and-json": {
+        "medianMs": 6.479055000000001,
+        "n": 32
+      },
+      "presentation total": {
+        "medianMs": 10.57815,
+        "n": 32
+      },
+      "extrude presentation": {
+        "medianMs": 42.355199999999996,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 0.0929755,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 152.777,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "cubic-implicit-subtract-n4-overlap-only",
+    "label": "streaming",
+    "n": 8,
+    "medianMs": 170.094395999997,
+    "p95Ms": 180.37665500000003,
+    "minMs": 164.63639499999408,
+    "maxMs": 185.29332700000668,
+    "pairedMedianSpeedup": 1.022829703358111,
+    "bootstrap95": [
+      0.9792341739322332,
+      1.0807136414191956
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 0.53237,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 4.989255,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.2914155,
+        "n": 64
+      },
+      "volume integrate": {
+        "medianMs": 0.16708800000000001,
+        "n": 64
+      },
+      "volume total": {
+        "medianMs": 0.480827,
+        "n": 64
+      },
+      "extrude calculate": {
+        "medianMs": 102.84700000000001,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 1.4203350000000001,
+        "n": 32
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 2.2086449999999997,
+        "n": 32
+      },
+      "presentation topology-and-json": {
+        "medianMs": 6.40875,
+        "n": 32
+      },
+      "presentation total": {
+        "medianMs": 10.33155,
+        "n": 32
+      },
+      "extrude presentation": {
+        "medianMs": 41.69045,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 0.11865400000000001,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 150.4425,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "cubic-explicit-auto-n1-extra-disjoint",
+    "label": "retained",
+    "n": 8,
+    "medianMs": 72.34078200000476,
+    "p95Ms": 74.29037900001276,
+    "minMs": 68.8673359999957,
+    "maxMs": 79.12590699999419,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 0.27935750000000004,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 3.390225,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.2461025,
+        "n": 24
+      },
+      "volume integrate": {
+        "medianMs": 0.184324,
+        "n": 24
+      },
+      "volume total": {
+        "medianMs": 0.450041,
+        "n": 24
+      },
+      "extrude calculate": {
+        "medianMs": 32.7645,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 1.689255,
+        "n": 16
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 2.24092,
+        "n": 16
+      },
+      "presentation topology-and-json": {
+        "medianMs": 3.89345,
+        "n": 16
+      },
+      "presentation total": {
+        "medianMs": 7.865035,
+        "n": 16
+      },
+      "extrude presentation": {
+        "medianMs": 15.2501,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 0.02281,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 52.0919,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "cubic-explicit-auto-n1-extra-disjoint",
+    "label": "streaming",
+    "n": 8,
+    "medianMs": 73.2741189999997,
+    "p95Ms": 78.82058600000164,
+    "minMs": 70.33364699999947,
+    "maxMs": 81.63362100000086,
+    "pairedMedianSpeedup": 0.9607442704700206,
+    "bootstrap95": [
+      0.9163126622784533,
+      1.048365870682163
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 0.3011205,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 3.4039349999999997,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.2636035,
+        "n": 24
+      },
+      "volume integrate": {
+        "medianMs": 0.18976700000000002,
+        "n": 24
+      },
+      "volume total": {
+        "medianMs": 0.5033110000000001,
+        "n": 24
+      },
+      "extrude calculate": {
+        "medianMs": 33.485,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 1.936925,
+        "n": 16
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 1.760095,
+        "n": 16
+      },
+      "presentation topology-and-json": {
+        "medianMs": 4.134345,
+        "n": 16
+      },
+      "presentation total": {
+        "medianMs": 7.81942,
+        "n": 16
+      },
+      "extrude presentation": {
+        "medianMs": 16.0527,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 0.023225000000000003,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 53.3159,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "cubic-explicit-auto-n4-overlap-only",
+    "label": "streaming",
+    "n": 8,
+    "medianMs": 170.83792349999771,
+    "p95Ms": 180.77765999999974,
+    "minMs": 161.6989889999968,
+    "maxMs": 185.8144670000038,
+    "pairedMedianSpeedup": 1.0236861498447762,
+    "bootstrap95": [
+      0.9309523035091807,
+      1.0815307323906642
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 0.5564065,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 5.173355,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.2848405,
+        "n": 64
+      },
+      "volume integrate": {
+        "medianMs": 0.17318250000000002,
+        "n": 64
+      },
+      "volume total": {
+        "medianMs": 0.48065199999999997,
+        "n": 64
+      },
+      "extrude calculate": {
+        "medianMs": 103.26650000000001,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 1.49974,
+        "n": 32
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 2.2456500000000004,
+        "n": 32
+      },
+      "presentation topology-and-json": {
+        "medianMs": 6.509745000000001,
+        "n": 32
+      },
+      "presentation total": {
+        "medianMs": 10.572,
+        "n": 32
+      },
+      "extrude presentation": {
+        "medianMs": 42.5458,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 0.1165265,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 150.949,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "cubic-explicit-auto-n4-overlap-only",
+    "label": "retained",
+    "n": 8,
+    "medianMs": 173.67680149999865,
+    "p95Ms": 184.31617400000687,
+    "minMs": 168.29537899999923,
+    "maxMs": 187.11212899998645,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 0.5351295,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 5.124945,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.28459999999999996,
+        "n": 64
+      },
+      "volume integrate": {
+        "medianMs": 0.17771900000000002,
+        "n": 64
+      },
+      "volume total": {
+        "medianMs": 0.493912,
+        "n": 64
+      },
+      "extrude calculate": {
+        "medianMs": 103.498,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 1.4080599999999999,
+        "n": 32
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 2.227295,
+        "n": 32
+      },
+      "presentation topology-and-json": {
+        "medianMs": 6.425395,
+        "n": 32
+      },
+      "presentation total": {
+        "medianMs": 10.24065,
+        "n": 32
+      },
+      "extrude presentation": {
+        "medianMs": 41.7935,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 0.0869365,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 151.6535,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "perforated-explicit-auto-n1-extra-disjoint",
+    "label": "retained",
+    "n": 8,
+    "medianMs": 311.42451399999845,
+    "p95Ms": 337.88758400000006,
+    "minMs": 299.50250800000504,
+    "maxMs": 346.31217999999353,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 1.80903,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 17.6152,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.1126305,
+        "n": 24
+      },
+      "volume integrate": {
+        "medianMs": 2.0281599999999997,
+        "n": 24
+      },
+      "volume total": {
+        "medianMs": 2.222875,
+        "n": 24
+      },
+      "extrude calculate": {
+        "medianMs": 53.293350000000004,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 63.96175,
+        "n": 16
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 21.519750000000002,
+        "n": 16
+      },
+      "presentation topology-and-json": {
+        "medianMs": 22.148400000000002,
+        "n": 16
+      },
+      "presentation total": {
+        "medianMs": 106.687,
+        "n": 16
+      },
+      "extrude presentation": {
+        "medianMs": 208.96949999999998,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 1.611105,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 286.2825,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "perforated-explicit-auto-n1-extra-disjoint",
+    "label": "streaming",
+    "n": 8,
+    "medianMs": 317.6965745000052,
+    "p95Ms": 342.8755769999989,
+    "minMs": 301.2951189999949,
+    "maxMs": 410.22489000000496,
+    "pairedMedianSpeedup": 0.9836455886564464,
+    "bootstrap95": [
+      0.9252767910971,
+      1.0178849362641222
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 1.8876499999999998,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 17.7119,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.1146285,
+        "n": 24
+      },
+      "volume integrate": {
+        "medianMs": 2.02234,
+        "n": 24
+      },
+      "volume total": {
+        "medianMs": 2.1572750000000003,
+        "n": 24
+      },
+      "extrude calculate": {
+        "medianMs": 55.42705,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 64.2557,
+        "n": 16
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 21.71665,
+        "n": 16
+      },
+      "presentation topology-and-json": {
+        "medianMs": 22.294449999999998,
+        "n": 16
+      },
+      "presentation total": {
+        "medianMs": 107.368,
+        "n": 16
+      },
+      "extrude presentation": {
+        "medianMs": 214.4485,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 1.58629,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 292.1975,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "perforated-implicit-subtract-n4-overlap-only",
+    "label": "retained",
+    "n": 8,
+    "medianMs": 594.3068474999982,
+    "p95Ms": 605.5308119999972,
+    "minMs": 576.483865999995,
+    "maxMs": 627.2166959999886,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 3.52241,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 32.02075,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.098694,
+        "n": 64
+      },
+      "volume integrate": {
+        "medianMs": 1.25311,
+        "n": 64
+      },
+      "volume total": {
+        "medianMs": 1.36457,
+        "n": 64
+      },
+      "extrude calculate": {
+        "medianMs": 131.798,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 54.647,
+        "n": 32
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 19.304000000000002,
+        "n": 32
+      },
+      "presentation topology-and-json": {
+        "medianMs": 22.789450000000002,
+        "n": 32
+      },
+      "presentation total": {
+        "medianMs": 97.63475,
+        "n": 32
+      },
+      "extrude presentation": {
+        "medianMs": 392.738,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 3.1421400000000004,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 565.328,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "perforated-implicit-subtract-n4-overlap-only",
+    "label": "streaming",
+    "n": 8,
+    "medianMs": 590.0342469999978,
+    "p95Ms": 611.1625999999997,
+    "minMs": 578.6095909999858,
+    "maxMs": 657.2721369999927,
+    "pairedMedianSpeedup": 0.9962853167339623,
+    "bootstrap95": [
+      0.9720752237444628,
+      1.0119867264096658
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 3.5298049999999996,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 32.6682,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.1234065,
+        "n": 64
+      },
+      "volume integrate": {
+        "medianMs": 1.274793,
+        "n": 64
+      },
+      "volume total": {
+        "medianMs": 1.5230055,
+        "n": 64
+      },
+      "extrude calculate": {
+        "medianMs": 130.98200000000003,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 53.8863,
+        "n": 32
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 19.333849999999998,
+        "n": 32
+      },
+      "presentation topology-and-json": {
+        "medianMs": 22.92085,
+        "n": 32
+      },
+      "presentation total": {
+        "medianMs": 96.32135,
+        "n": 32
+      },
+      "extrude presentation": {
+        "medianMs": 384.1595,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 2.4021600000000003,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 560.72,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "perforated-explicit-auto-n4-extra-disjoint",
+    "label": "streaming",
+    "n": 8,
+    "medianMs": 731.7256919999959,
+    "p95Ms": 772.0868629999895,
+    "minMs": 703.7413789999991,
+    "maxMs": 778.8805219999995,
+    "pairedMedianSpeedup": 1.000182456331094,
+    "bootstrap95": [
+      0.9651971721720454,
+      1.0188861338989665
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 4.300985,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 40.381,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.140322,
+        "n": 72
+      },
+      "volume integrate": {
+        "medianMs": 1.90914,
+        "n": 72
+      },
+      "volume total": {
+        "medianMs": 2.099185,
+        "n": 72
+      },
+      "extrude calculate": {
+        "medianMs": 147.8865,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 56.7926,
+        "n": 40
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 20.02375,
+        "n": 40
+      },
+      "presentation topology-and-json": {
+        "medianMs": 22.693150000000003,
+        "n": 40
+      },
+      "presentation total": {
+        "medianMs": 100.4555,
+        "n": 40
+      },
+      "extrude presentation": {
+        "medianMs": 503.8065,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 3.2578199999999997,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 700.431,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "perforated-explicit-auto-n4-extra-disjoint",
+    "label": "retained",
+    "n": 8,
+    "medianMs": 729.2760265000102,
+    "p95Ms": 738.9257799999905,
+    "minMs": 714.969689000005,
+    "maxMs": 790.9691670000029,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 4.290345,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 39.9906,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.1158955,
+        "n": 72
+      },
+      "volume integrate": {
+        "medianMs": 1.93382,
+        "n": 72
+      },
+      "volume total": {
+        "medianMs": 2.097545,
+        "n": 72
+      },
+      "extrude calculate": {
+        "medianMs": 146.828,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 54.5537,
+        "n": 40
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 19.47265,
+        "n": 40
+      },
+      "presentation topology-and-json": {
+        "medianMs": 22.69725,
+        "n": 40
+      },
+      "presentation total": {
+        "medianMs": 97.43445,
+        "n": 40
+      },
+      "extrude presentation": {
+        "medianMs": 497.3915,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 3.60323,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 697.874,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "cubic-explicit-auto-n1-overlap-only",
+    "label": "streaming",
+    "n": 8,
+    "medianMs": 65.11147000000346,
+    "p95Ms": 69.75363400000788,
+    "minMs": 60.83341500000097,
+    "maxMs": 70.32291500000065,
+    "pairedMedianSpeedup": 0.9890444753552772,
+    "bootstrap95": [
+      0.8953448104362405,
+      1.0579178251295172
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 0.16394799999999998,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 2.451385,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.287059,
+        "n": 16
+      },
+      "volume integrate": {
+        "medianMs": 0.1938135,
+        "n": 16
+      },
+      "volume total": {
+        "medianMs": 0.496726,
+        "n": 16
+      },
+      "extrude calculate": {
+        "medianMs": 29.831200000000003,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 2.156335,
+        "n": 8
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 2.296665,
+        "n": 8
+      },
+      "presentation topology-and-json": {
+        "medianMs": 6.722099999999999,
+        "n": 8
+      },
+      "presentation total": {
+        "medianMs": 11.21745,
+        "n": 8
+      },
+      "extrude presentation": {
+        "medianMs": 11.26505,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 0.015879,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 44.0548,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "cubic-explicit-auto-n1-overlap-only",
+    "label": "retained",
+    "n": 8,
+    "medianMs": 64.28645350000443,
+    "p95Ms": 67.47189799999978,
+    "minMs": 60.55024599999888,
+    "maxMs": 68.0226370000164,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 0.159521,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 2.38698,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.2814655,
+        "n": 16
+      },
+      "volume integrate": {
+        "medianMs": 0.186186,
+        "n": 16
+      },
+      "volume total": {
+        "medianMs": 0.4956395,
+        "n": 16
+      },
+      "extrude calculate": {
+        "medianMs": 29.99185,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 2.0632200000000003,
+        "n": 8
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 2.306095,
+        "n": 8
+      },
+      "presentation topology-and-json": {
+        "medianMs": 6.554845,
+        "n": 8
+      },
+      "presentation total": {
+        "medianMs": 10.9923,
+        "n": 8
+      },
+      "extrude presentation": {
+        "medianMs": 11.033349999999999,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 0.014887500000000001,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 43.859899999999996,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "cubic-explicit-auto-n4-extra-disjoint",
+    "label": "streaming",
+    "n": 8,
+    "medianMs": 178.34420799999498,
+    "p95Ms": 193.4690840000003,
+    "minMs": 173.22031300000526,
+    "maxMs": 197.33478600000035,
+    "pairedMedianSpeedup": 1.0286994858196046,
+    "bootstrap95": [
+      0.969668115109103,
+      1.0616735613287016
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 0.650729,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 6.141575,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.28336300000000003,
+        "n": 72
+      },
+      "volume integrate": {
+        "medianMs": 0.17002699999999998,
+        "n": 72
+      },
+      "volume total": {
+        "medianMs": 0.475739,
+        "n": 72
+      },
+      "extrude calculate": {
+        "medianMs": 104.19,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 1.4312,
+        "n": 40
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 2.192955,
+        "n": 40
+      },
+      "presentation topology-and-json": {
+        "medianMs": 6.224995,
+        "n": 40
+      },
+      "presentation total": {
+        "medianMs": 9.93881,
+        "n": 40
+      },
+      "extrude presentation": {
+        "medianMs": 45.432900000000004,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 0.18212,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 156.688,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "cubic-explicit-auto-n4-extra-disjoint",
+    "label": "retained",
+    "n": 8,
+    "medianMs": 180.2942525000035,
+    "p95Ms": 188.86345399999118,
+    "minMs": 173.37298200000077,
+    "maxMs": 208.34790000000066,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 0.6506784999999999,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 6.49636,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.260008,
+        "n": 72
+      },
+      "volume integrate": {
+        "medianMs": 0.1741985,
+        "n": 72
+      },
+      "volume total": {
+        "medianMs": 0.4791345,
+        "n": 72
+      },
+      "extrude calculate": {
+        "medianMs": 106.4405,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 1.4657200000000001,
+        "n": 40
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 2.18885,
+        "n": 40
+      },
+      "presentation topology-and-json": {
+        "medianMs": 6.46818,
+        "n": 40
+      },
+      "presentation total": {
+        "medianMs": 10.2311,
+        "n": 40
+      },
+      "extrude presentation": {
+        "medianMs": 45.8721,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 0.1483595,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 159.72050000000002,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "cubic-explicit-auto-n16-overlap-only",
+    "label": "streaming",
+    "n": 8,
+    "medianMs": 612.5558545000022,
+    "p95Ms": 637.6661500000046,
+    "minMs": 590.3154630000063,
+    "maxMs": 674.049167000001,
+    "pairedMedianSpeedup": 0.9890342186943699,
+    "bootstrap95": [
+      0.9653579333095935,
+      1.0053842436322087
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 2.0408600000000003,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 15.5039,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.2967035,
+        "n": 256
+      },
+      "volume integrate": {
+        "medianMs": 0.16575050000000002,
+        "n": 256
+      },
+      "volume total": {
+        "medianMs": 0.479811,
+        "n": 256
+      },
+      "extrude calculate": {
+        "medianMs": 401.275,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 1.4160949999999999,
+        "n": 128
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 2.191845,
+        "n": 128
+      },
+      "presentation topology-and-json": {
+        "medianMs": 6.44646,
+        "n": 128
+      },
+      "presentation total": {
+        "medianMs": 10.22245,
+        "n": 128
+      },
+      "extrude presentation": {
+        "medianMs": 166.44299999999998,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 0.8717429999999999,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 588.7325000000001,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "cubic-explicit-auto-n16-overlap-only",
+    "label": "retained",
+    "n": 8,
+    "medianMs": 614.6259724999982,
+    "p95Ms": 632.4022000000114,
+    "minMs": 589.002330999996,
+    "maxMs": 638.4535639999958,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 2.082595,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 14.94715,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.2892975,
+        "n": 256
+      },
+      "volume integrate": {
+        "medianMs": 0.1736325,
+        "n": 256
+      },
+      "volume total": {
+        "medianMs": 0.485564,
+        "n": 256
+      },
+      "extrude calculate": {
+        "medianMs": 405.464,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 1.409795,
+        "n": 128
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 2.1977149999999996,
+        "n": 128
+      },
+      "presentation topology-and-json": {
+        "medianMs": 6.37406,
+        "n": 128
+      },
+      "presentation total": {
+        "medianMs": 10.10435,
+        "n": 128
+      },
+      "extrude presentation": {
+        "medianMs": 163.8355,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 0.82651,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 593.8565,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "perforated-explicit-auto-n16-extra-disjoint",
+    "label": "streaming",
+    "n": 8,
+    "medianMs": 2443.321928000005,
+    "p95Ms": 2490.6467540000012,
+    "minMs": 2308.777110999996,
+    "maxMs": 2534.4947040000006,
+    "pairedMedianSpeedup": 0.9726897616933944,
+    "bootstrap95": [
+      0.9614337101492115,
+      1.0120008804148874
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 15.785599999999999,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 134.2215,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.16206,
+        "n": 264
+      },
+      "volume integrate": {
+        "medianMs": 1.91125,
+        "n": 264
+      },
+      "volume total": {
+        "medianMs": 2.11802,
+        "n": 264
+      },
+      "extrude calculate": {
+        "medianMs": 547.3155,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 52.22255,
+        "n": 136
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 19.751199999999997,
+        "n": 136
+      },
+      "presentation topology-and-json": {
+        "medianMs": 23.2836,
+        "n": 136
+      },
+      "presentation total": {
+        "medianMs": 96.03215,
+        "n": 136
+      },
+      "extrude presentation": {
+        "medianMs": 1662.445,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 12.6319,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 2386.0649999999996,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "perforated-explicit-auto-n16-extra-disjoint",
+    "label": "retained",
+    "n": 8,
+    "medianMs": 2362.198549500001,
+    "p95Ms": 2468.5553139999975,
+    "minMs": 2336.0038910000003,
+    "maxMs": 2487.2712300000003,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 14.786249999999999,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 127.2515,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.11755750000000001,
+        "n": 264
+      },
+      "volume integrate": {
+        "medianMs": 1.919575,
+        "n": 264
+      },
+      "volume total": {
+        "medianMs": 2.0774749999999997,
+        "n": 264
+      },
+      "extrude calculate": {
+        "medianMs": 525.4459999999999,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 52.6528,
+        "n": 136
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 19.4697,
+        "n": 136
+      },
+      "presentation topology-and-json": {
+        "medianMs": 22.59975,
+        "n": 136
+      },
+      "presentation total": {
+        "medianMs": 95.45525,
+        "n": 136
+      },
+      "extrude presentation": {
+        "medianMs": 1614.96,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 12.36235,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 2310.6099999999997,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "perforated-explicit-auto-n1-overlap-only",
+    "label": "streaming",
+    "n": 8,
+    "medianMs": 173.36521500000163,
+    "p95Ms": 174.23786500000278,
+    "minMs": 164.4702499999985,
+    "maxMs": 200.4500659999976,
+    "pairedMedianSpeedup": 1.0314057013915565,
+    "bootstrap95": [
+      0.989611072957485,
+      1.0717583835788709
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 0.9029305,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 9.829284999999999,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.11739749999999999,
+        "n": 16
+      },
+      "volume integrate": {
+        "medianMs": 1.1869515,
+        "n": 16
+      },
+      "volume total": {
+        "medianMs": 1.4075215,
+        "n": 16
+      },
+      "extrude calculate": {
+        "medianMs": 36.254450000000006,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 56.8601,
+        "n": 8
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 19.89945,
+        "n": 8
+      },
+      "presentation topology-and-json": {
+        "medianMs": 22.8536,
+        "n": 8
+      },
+      "presentation total": {
+        "medianMs": 100.86449999999999,
+        "n": 8
+      },
+      "extrude presentation": {
+        "medianMs": 100.91499999999999,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 0.4961405,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 149.14100000000002,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "perforated-explicit-auto-n1-overlap-only",
+    "label": "retained",
+    "n": 8,
+    "medianMs": 174.68490700000984,
+    "p95Ms": 185.67810800000007,
+    "minMs": 167.8649929999956,
+    "maxMs": 195.06530199998815,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 0.8665305000000001,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 9.947659999999999,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.0948585,
+        "n": 16
+      },
+      "volume integrate": {
+        "medianMs": 1.146453,
+        "n": 16
+      },
+      "volume total": {
+        "medianMs": 1.2860705,
+        "n": 16
+      },
+      "extrude calculate": {
+        "medianMs": 38.1666,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 58.2397,
+        "n": 8
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 20.0655,
+        "n": 8
+      },
+      "presentation topology-and-json": {
+        "medianMs": 23.90015,
+        "n": 8
+      },
+      "presentation total": {
+        "medianMs": 103.301,
+        "n": 8
+      },
+      "extrude presentation": {
+        "medianMs": 103.3535,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 0.4989945,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 151.85950000000003,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "perforated-explicit-auto-n16-overlap-only",
+    "label": "streaming",
+    "n": 8,
+    "medianMs": 2313.4272525000106,
+    "p95Ms": 2332.706223000001,
+    "minMs": 2183.8262569999933,
+    "maxMs": 2378.540592000005,
+    "pairedMedianSpeedup": 1.0005439637734397,
+    "bootstrap95": [
+      0.9731346706318603,
+      1.0203174830790382
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 14.5908,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 125.423,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.13694699999999999,
+        "n": 256
+      },
+      "volume integrate": {
+        "medianMs": 1.2329165,
+        "n": 256
+      },
+      "volume total": {
+        "medianMs": 1.3837635000000001,
+        "n": 256
+      },
+      "extrude calculate": {
+        "medianMs": 529.4639999999999,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 51.441199999999995,
+        "n": 128
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 19.5231,
+        "n": 128
+      },
+      "presentation topology-and-json": {
+        "medianMs": 23.3249,
+        "n": 128
+      },
+      "presentation total": {
+        "medianMs": 94.81705,
+        "n": 128
+      },
+      "extrude presentation": {
+        "medianMs": 1558.49,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 11.728200000000001,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 2257.0950000000003,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "perforated-explicit-auto-n16-overlap-only",
+    "label": "retained",
+    "n": 8,
+    "medianMs": 2251.946201499999,
+    "p95Ms": 2356.866498999996,
+    "minMs": 2217.460546000002,
+    "maxMs": 2376.734693999999,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 13.9184,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 119.75049999999999,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.113847,
+        "n": 256
+      },
+      "volume integrate": {
+        "medianMs": 1.2356260000000001,
+        "n": 256
+      },
+      "volume total": {
+        "medianMs": 1.3476599999999999,
+        "n": 256
+      },
+      "extrude calculate": {
+        "medianMs": 504.62199999999996,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 52.9966,
+        "n": 128
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 19.53585,
+        "n": 128
+      },
+      "presentation topology-and-json": {
+        "medianMs": 22.767699999999998,
+        "n": 128
+      },
+      "presentation total": {
+        "medianMs": 95.5595,
+        "n": 128
+      },
+      "extrude presentation": {
+        "medianMs": 1542.9050000000002,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 11.892700000000001,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 2198.935,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "cubic-explicit-auto-n16-extra-disjoint",
+    "label": "streaming",
+    "n": 8,
+    "medianMs": 622.5233804999953,
+    "p95Ms": 645.3387920000023,
+    "minMs": 601.0597050000069,
+    "maxMs": 686.023154999999,
+    "pairedMedianSpeedup": 0.9830477769781019,
+    "bootstrap95": [
+      0.9616329461591304,
+      1.0925568766916465
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 2.22656,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 16.0942,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.2952665,
+        "n": 264
+      },
+      "volume integrate": {
+        "medianMs": 0.1676785,
+        "n": 264
+      },
+      "volume total": {
+        "medianMs": 0.474838,
+        "n": 264
+      },
+      "extrude calculate": {
+        "medianMs": 404.7735,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 1.41101,
+        "n": 136
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 2.23351,
+        "n": 136
+      },
+      "presentation topology-and-json": {
+        "medianMs": 6.4086,
+        "n": 136
+      },
+      "presentation total": {
+        "medianMs": 10.205200000000001,
+        "n": 136
+      },
+      "extrude presentation": {
+        "medianMs": 169.087,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 1.13375,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 598.771,
+        "n": 8
+      }
+    }
+  },
+  {
+    "name": "cubic-explicit-auto-n16-extra-disjoint",
+    "label": "retained",
+    "n": 8,
+    "medianMs": 621.9113694999978,
+    "p95Ms": 656.69191400001,
+    "minMs": 602.2189050000015,
+    "maxMs": 666.518923999989,
+    "pairedMedianSpeedup": 1,
+    "bootstrap95": [
+      1,
+      1
+    ],
+    "equivalence": "matched face and orientation-independent edge geometry/predecessor multisets",
+    "orderedEquivalence": "matched",
+    "phases": {
+      "extrude parse": {
+        "medianMs": 2.245765,
+        "n": 8
+      },
+      "extrude operands": {
+        "medianMs": 16.32695,
+        "n": 8
+      },
+      "volume bounds": {
+        "medianMs": 0.29165050000000003,
+        "n": 264
+      },
+      "volume integrate": {
+        "medianMs": 0.1716395,
+        "n": 264
+      },
+      "volume total": {
+        "medianMs": 0.4826495,
+        "n": 264
+      },
+      "extrude calculate": {
+        "medianMs": 408.1995,
+        "n": 8
+      },
+      "presentation mesh": {
+        "medianMs": 1.393935,
+        "n": 136
+      },
+      "presentation properties-and-blends": {
+        "medianMs": 2.229165,
+        "n": 136
+      },
+      "presentation topology-and-json": {
+        "medianMs": 6.378075,
+        "n": 136
+      },
+      "presentation total": {
+        "medianMs": 10.07975,
+        "n": 136
+      },
+      "extrude presentation": {
+        "medianMs": 168.7745,
+        "n": 8
+      },
+      "extrude write": {
+        "medianMs": 0.988019,
+        "n": 8
+      },
+      "extrude total": {
+        "medianMs": 598.1859999999999,
+        "n": 8
+      }
+    }
+  }
+]

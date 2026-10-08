@@ -1,0 +1,108 @@
+--- a/src/math/math_KronrodSingleIntegration.cxx
++++ b/src/math/math_KronrodSingleIntegration.cxx
+@@ -19,6 +19,39 @@
+ #include <math_Vector.hxx>
+ #include <TColStd_SequenceOfReal.hxx>
+ 
++namespace
++{
++// Immutable process-local tables for the six orders used by BRepGProp GK.
++// math_Vector already has 32-item stack storage; this saves table filling only.
++struct KronrodTables
++{
++  math_Vector points, weights, gaussPoints, gaussWeights;
++  Standard_Boolean valid;
++
++  explicit KronrodTables(const Standard_Integer order)
++      : points(1, order), weights(1, order),
++        gaussPoints(1, order / 2), gaussWeights(1, order / 2),
++        valid(math::KronrodPointsAndWeights(order, points, weights)
++              && math::OrderedGaussPointsAndWeights(order / 2, gaussPoints, gaussWeights))
++  {
++  }
++};
++
++const KronrodTables* cachedKronrodTables(const Standard_Integer order)
++{
++  switch (order)
++  {
++    case 5: { static const KronrodTables table(5); return &table; }
++    case 7: { static const KronrodTables table(7); return &table; }
++    case 9: { static const KronrodTables table(9); return &table; }
++    case 11: { static const KronrodTables table(11); return &table; }
++    case 13: { static const KronrodTables table(13); return &table; }
++    case 15: { static const KronrodTables table(15); return &table; }
++    default: return nullptr;
++  }
++}
++} // namespace
++
+ //==========================================================================
+ // function : An empty constructor.
+ //==========================================================================
+@@ -103,17 +136,25 @@
+   myErrorReached  = RealLast();
+ 
+   Standard_Integer aNGauss = myNbPntsReached / 2;
+-  math_Vector      aKronrodP(1, myNbPntsReached);
+-  math_Vector      aKronrodW(1, myNbPntsReached);
+-  math_Vector      aGaussP(1, aNGauss);
+-  math_Vector      aGaussW(1, aNGauss);
+-
+-  if (!math::KronrodPointsAndWeights(myNbPntsReached, aKronrodP, aKronrodW)
+-      || !math::OrderedGaussPointsAndWeights(aNGauss, aGaussP, aGaussW))
++  const KronrodTables* tables = cachedKronrodTables(myNbPntsReached);
++  // Keep the original uncached path for every other order. Cached calls need no
++  // table filling; the unused fallback vectors have logical length one.
++  math_Vector      localKronrodP(1, tables ? 1 : myNbPntsReached);
++  math_Vector      localKronrodW(1, tables ? 1 : myNbPntsReached);
++  math_Vector      localGaussP(1, tables ? 1 : aNGauss);
++  math_Vector      localGaussW(1, tables ? 1 : aNGauss);
++  if (tables ? !tables->valid
++             : (!math::KronrodPointsAndWeights(myNbPntsReached, localKronrodP, localKronrodW)
++                || !math::OrderedGaussPointsAndWeights(aNGauss, localGaussP, localGaussW)))
+   {
+     myIsDone = Standard_False;
+     return;
+   }
++
++  const math_Vector& aKronrodP = tables ? tables->points : localKronrodP;
++  const math_Vector& aKronrodW = tables ? tables->weights : localKronrodW;
++  const math_Vector& aGaussP = tables ? tables->gaussPoints : localGaussP;
++  const math_Vector& aGaussW = tables ? tables->gaussWeights : localGaussW;
+ 
+   myIsDone = GKRule(theFunction,
+                     theLower,
+@@ -160,17 +201,25 @@
+   myNbPntsReached = (theNbPnts % 2 == 0) ? theNbPnts + 1 : theNbPnts;
+ 
+   Standard_Integer aNGauss = myNbPntsReached / 2;
+-  math_Vector      aKronrodP(1, myNbPntsReached);
+-  math_Vector      aKronrodW(1, myNbPntsReached);
+-  math_Vector      aGaussP(1, aNGauss);
+-  math_Vector      aGaussW(1, aNGauss);
+-
+-  if (!math::KronrodPointsAndWeights(myNbPntsReached, aKronrodP, aKronrodW)
+-      || !math::OrderedGaussPointsAndWeights(aNGauss, aGaussP, aGaussW))
++  const KronrodTables* tables = cachedKronrodTables(myNbPntsReached);
++  // Keep the original uncached path for every other order. Cached calls need no
++  // table filling; the unused fallback vectors have logical length one.
++  math_Vector      localKronrodP(1, tables ? 1 : myNbPntsReached);
++  math_Vector      localKronrodW(1, tables ? 1 : myNbPntsReached);
++  math_Vector      localGaussP(1, tables ? 1 : aNGauss);
++  math_Vector      localGaussW(1, tables ? 1 : aNGauss);
++  if (tables ? !tables->valid
++             : (!math::KronrodPointsAndWeights(myNbPntsReached, localKronrodP, localKronrodW)
++                || !math::OrderedGaussPointsAndWeights(aNGauss, localGaussP, localGaussW)))
+   {
+     myIsDone = Standard_False;
+     return;
+   }
++
++  const math_Vector& aKronrodP = tables ? tables->points : localKronrodP;
++  const math_Vector& aKronrodW = tables ? tables->weights : localKronrodW;
++  const math_Vector& aGaussP = tables ? tables->gaussPoints : localGaussP;
++  const math_Vector& aGaussW = tables ? tables->gaussWeights : localGaussW;
+ 
+   // First iteration
+   myIsDone = GKRule(theFunction,

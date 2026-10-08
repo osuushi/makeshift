@@ -358,3 +358,634 @@ c++ -std=c++20 -I native/kernel -I .cache/release-inputs/boost -I "$SDK/include/
 The orchestrator must run this under the compute lock and record actual output.
 No claim of a passing run is made here. The fixture constructor is checked against
 pinned headers; the source stays under 300 lines and every function under 80.
+
+## Streaming build shell thickness discrepancy: source-only audit
+
+The orchestrator's streaming-Cut build matched the sweep/Boolean cases but
+reported shell-perforated-closed face[1].thickness.faceIndex 36 versus 31, with
+the first two baseline repetitions matching. This lane did not execute requests.
+The saved streaming-cuts-full-output.json contains comparison summaries only,
+not target geometry or exact BRep replies; it cannot settle this discrepancy.
+No production source change is proposed by this audit.
+
+Two different kinds of ties must be distinguished:
+
+1. Outer **candidate-face** selection in offset-thickness.cpp sorts only by
+   absolute support separation. It has no secondary index key and returns the
+   first candidate that visible() accepts. Two different trimmed patches on a
+   coplanar/equidistant support can each have a visible region on different
+   sampled rays. A changed ancestry enumeration or near-equal computed support
+   distance can therefore select a different valid patch.
+2. Inner **ray-hit** ties are explicitly rejected as ambiguous when any other
+   face lies within tolerance=1e-7 of the first hit. This is not permission to
+   choose any tied face on a coincident ray. Pinned
+   [ShapeIntersector::SortResult](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/IntCurvesFace/IntCurvesFace_ShapeIntersector.cxx#L159)
+   uses a strict greater-than bubble-sort and preserves equal-W enumeration;
+   it is incorrect to attribute the change to an unstable ray sort.
+
+The streaming helper is not invoked on the shell dispatch path. Nevertheless
+binary layout, allocator state left by previous requests, internal kernel
+unordered iteration and parallel shell construction can affect generated face
+enumeration. These are mechanisms to investigate, not proof of the cause.
+Outer std::sort itself is deterministic for identical inputs/order; lack of a
+secondary key alone does not explain changed replies.
+
+### Evidence needed before classifying or accepting the difference
+
+Save the exact shared shell input and full baseline/candidate JSON replies,
+including BRep. Do not regenerate separate fixture stocks in each executable:
+use the same captured input bytes. Record binary hashes, SDK library hashes,
+thread setting and request history. Current compare-output stops at its first
+field difference and excludes BRep; collect **all** differences before calling
+this only a target-choice tie.
+
+Under the serial compute lock run at least 20 baseline and 20 candidate requests
+with that input, retaining each full reply. Alternate binaries in paired blocks
+with fixed thread configuration. Include fresh-process shell-only controls as
+well as repeated same-process runs; prior sweep work can perturb allocation
+state without changing this shell path. A one-worker diagnostic can isolate
+parallel construction effects, but does not replace the production configuration
+comparison. Two matching baseline runs are weak evidence of stability.
+
+For every chosen target, compare distance and slope, then resolve the index to
+its actual output face: type/orientation/analytic support, area/centroid signature,
+predecessors, ordered incident edges and trimmed boundary geometry. Inspect
+baseline faces31/36 and candidate faces31/36, and track whether an index changed
+because the **same** face moved in enumeration or because a different patch was
+selected. Area/centroid signatures alone are not a face-identity proof; verify
+trimmed domains/edges in the serialized BRep where ambiguous.
+
+If distinct patches are selected at the same separation, verify both supports
+and distinct trimmed regions, and that each has a valid unoccluded source/target
+sample under the existing first-hit/tie predicate. An optional isolated trace
+build can print candidate order, full-precision delta, first successful u/v and
+reverse flag, and every ray face/W within tolerance of the first hit. Such a trace
+should reproduce the original decision, not change sorting or ray ranges.
+There must be no nearer candidate that was inadvertently bypassed.
+
+Classification criteria:
+
+- Baseline alone producing both geometrically equivalent choices establishes
+  preexisting output nondeterminism on the captured input. Document frequencies
+  and geometry evidence; do not silently weaken the regression comparator.
+- Both builds stable but different, with equivalent-distance valid choices,
+  establishes an order-sensitive metadata choice across these builds. It is
+  **not** proof of baseline repeat nondeterminism or automatic acceptance: the
+  indexed patch can affect downstream thickness edits.
+- Different distance/slope, invalid reference, changed target support/trimmed
+  geometry, or additional topology/history differences remains a regression.
+- If fresh-process identical-code control builds vary in the same way, isolate
+  kernel representation order from the streaming calculation before attributing
+  cause. Preserve this evidence with the checkpoint.
+
+Any deterministic tie-break policy is a separate product/correctness change;
+neither altering std::sort nor discarding faceIndex from parity is part of this
+streaming memory experiment.
+
+Prepared tests/geometry-performance/repeat-shell-output.mjs without executing
+geometry. It captures one exact sent input and 20 full raw transport replies per
+binary by default, comparing every metadata difference at the existing 1e-9
+relative numeric tolerance instead of stopping at the first discrepancy. Exact
+BRep string repeat/cross comparison is reported separately with lengths/hashes;
+the original raw JSON lines retain the complete BRep. Each reply also resolves
+source face1, chosen target and alternative faces31/36 to their full face payload
+and incident edge geometry. No equal-distance equivalence is presumed.
+
+Run after the memory experiment, under the compute lock:
+
+~~~sh
+node tests/geometry-performance/repeat-shell-output.mjs BASELINE CANDIDATE \
+  docs/research/geometry-performance/results/streaming-shell-repeats.jsonl 20 reuse
+node tests/geometry-performance/repeat-shell-output.mjs BASELINE CANDIDATE \
+  docs/research/geometry-performance/results/streaming-shell-fresh.jsonl 20 fresh INPUT.json
+~~~
+
+The first run's input record contains sentInput, which can be saved verbatim as
+INPUT.json for the fresh-process control; alternatively provide an already
+captured shared input to both runs. Fixture generation, when needed, uses a
+separate baseline process that closes before the comparison. Reuse starts two
+fresh workers, then repeats in alternating baseline/candidate block order;
+fresh starts one worker for each request. Both fix worker count at four.
+Binary hashes and exact sent-input hash are recorded; SDK library provenance
+must be retained by the orchestrator separately. Output is a diagnostic evidence
+file, not an automatic waiver of differing target choices. Syntax check passed;
+no geometry or benchmark was run by this lane. Current script length is 210 lines and
+functions stay below 80.
+
+### Initial reuse capture: orchestrator-reported observations
+
+The orchestrator subsequently ran the 20-block reuse capture and reports marked
+**baseline self-nondeterminism**, not merely a candidate-only faceIndex change.
+In late baseline blocks, first-reference metadata differences counted about
+23,309 and 23,298 fields; source face1's chosen opposite included indices32/34.
+Candidate choices included32/36. Reported thickness distance remained0.75 and
+slope1. Raw evidence is [streaming-shell-repeats.jsonl.gz](results/streaming-shell-repeats.jsonl.gz); this research lane did
+not parse the large raw file while the orchestrator held the compute lock.
+These observations are delegated reports pending compact geometry reconciliation,
+not a claim that all differences are harmless ties.
+
+The breadth of baseline differences makes positional faceIndex comparison
+insufficient. A compact next analysis should map **both source and target**
+faces between replies using type/orientation, analytic support, area/centroid,
+predecessors and boundary edges, then compare trimmed regions. Do not assume
+face1 itself is the same geometry across replies with reordered faces.
+Normalize large coordinate/triangle arrays only for diagnosis; retain full
+ordered output and raw BRep as authoritative evidence.
+
+For each selected source/target pair, record support separation, thickness
+distance/slope, plane/cylinder/sphere parameters and trimmed-boundary descriptors.
+Group exact/equivalent geometric regions separately from distinct coplanar
+patches with equal support separation. Signature collisions must be resolved
+through actual edge curves/trims in BRep. Then check whether the candidate's
+geometric pair appears in baseline repeats, and whether any fields still differ
+after a justified face/edge permutation mapping.
+
+Equal distance0.75/slope1 alone does not prove equivalent thickness targets.
+If multiple different patches are valid opposites, report that metadata choice
+ambiguity explicitly because later edits can target different regions.
+Baseline's demonstrated positional variation explains why two initial repeats
+were inadequate, but does not waive candidate geometry/history regressions.
+Fresh-process controls and compact geometry analysis were outstanding at this
+stage; the completed summaries below now address that diagnostic question.
+
+Prepared summarize-shell-repeats.mjs (source-only; syntax check passed). It streams
+JSONL or gzip JSONL through readline, then parses one full raw reply at a time.
+It emits rounded1e-7 geometry/history multiset hashes, topology counts,
+volume/bounds, per-label thickness relation variants keyed by source and target
+face fingerprints, selected face1 evidence and descriptor collision warnings.
+Face descriptors include orientation/signature, analytic surface payload,
+predecessors and sorted incident edge descriptors with seam multiplicity.
+Edge descriptors ignore orientation, canonicalize analytic endpoint order and
+normal sign, and retain a hash/endpoints of rounded sampled curve points.
+This can identify representation permutations conservatively without reading
+huge raw arrays into the final compact report.
+
+~~~sh
+node tests/geometry-performance/summarize-shell-repeats.mjs \
+  docs/research/geometry-performance/results/streaming-shell-repeats.jsonl.gz \
+  docs/research/geometry-performance/results/streaming-shell-repeats-summary.json
+~~~
+
+The absolute1e-7 step is applied in each field's native geometry units, including
+area/volume signatures; it is a diagnostic rounding choice, not a model tolerance.
+Matching fingerprints/hashes cannot prove identical trimmed domains or exact
+BRep equivalence. Within-result descriptor collisions are explicitly flagged;
+separate regions indistinguishable by these descriptors require BRep inspection.
+Authoritative raw files remain unchanged, exact BRep variants are separate and
+the script does not declare acceptance or choose a thickness target.
+No large capture was read or summary executed by this lane while compute was
+reserved. The current summarizer is 253 lines and functions stay under80.
+
+### Completed reuse and fresh-process diagnostic summaries
+
+The orchestrator completed both 20-block captures (20 baseline plus 20 candidate
+replies per process-lifetime mode). This lane read their compact summaries,
+not the compressed full raw replies, and verified the following counts:
+
+| Mode | Rounded geometry/history variants | Descriptor collisions | Source-target relation variants | Exact BRep byte-hash variants |
+| --- | ---: | ---: | ---: | ---: |
+| Reused workers, 40 replies | 1 | 0 | 62 | 12 |
+| Fresh workers, 40 replies | 1 | 0 | 62 | 14 |
+
+Both modes use the same captured input SHA256
+`08f3a4486130b8ffa989941322e75ccf35920ac52e1301ec1ab0148dc62678be`.
+All 80 replies share rounded geometry/history multiset hash
+`961a09194a3f79b447d0cfa8d5759c8b819ad017aaa12ba7ed837414798bd934`.
+The compact topology is one result with 62 faces, 174 edges, rounded volume
+13393.4008726, bounds `[0,0,0,60,60,20]`, and predecessor body `perforated`.
+Every one of the 62 fingerprint-keyed source-target relations occurs 20 times
+under each label in each mode. All 62 are non-null and report distance 0.75
+and slope 1.
+
+Source face 1 has one descriptor fingerprint across every observation:
+`61aca3a8084fb41d78b63af424ec951d59fd618f8e6a7a0dbba2032b1c1f24ab`.
+Its chosen target also has one fingerprint:
+`1c93bfbc9b3eb68d906629217a6414865879aeaff06754d3fee9868bf76d674f`.
+The resolved source is the outer X=0 planar wall, area 1200, predecessor
+`perforated-f3`; the target is the inner X=0.75 planar wall, area 1082.25.
+The descriptors include the same four line-boundary endpoints and incident-edge
+history for these faces. Reported thickness remains distance 0.75 and slope 1.
+The target's positional index varies within 31–36 across the captures, while
+this resolved source-target descriptor pair remains unchanged. Fresh-process
+variation therefore supports representation enumeration as the source of these
+particular index differences; it is not evidence here of choosing a different
+geometric opposite wall.
+
+Compact evidence:
+
+- [Reuse summary](results/streaming-shell-repeats-summary.json) and
+  [complete compressed reuse capture](results/streaming-shell-repeats.jsonl.gz).
+- [Fresh-process summary](results/streaming-shell-fresh-summary.json) and
+  [complete compressed fresh capture](results/streaming-shell-fresh.jsonl.gz).
+- [Captured shared input](results/streaming-shell-input.json).
+
+The reuse summary's stored `input` field retains the original `.jsonl` filename
+from before compression; the actual retained raw artifact is the `.jsonl.gz`
+linked above. Current capture harness length is 210 lines; streaming summarizer
+length is 253 lines. No geometry, compilation, or benchmark was run for this
+documentation reconciliation.
+
+This is **diagnostic descriptor agreement**, not formal BRep identity or a
+proof that every trimmed domain is equal. The absolute1e-7 rounding step is in
+each field's native units, edge orientation is normalized away, sampled curve
+geometry is finite, and exact serialized BRep hashes visibly vary. Zero
+within-result descriptor collisions reduces one ambiguity but cannot turn the
+descriptors into a mathematical identity certificate. Keep full ordered metadata,
+transport replies, exact BRep variants and downstream thickness intent review.
+The findings reconcile the observed face 1 index discrepancy without weakening
+the original parity comparator or authorizing a new tie-break policy.
+
+## Exact thickness ray-query reuse: source-only opportunity
+
+Audit of current `offset-thickness.cpp::visible` and pinned OCCT 7.9.3
+`a016080bf6738d6aeae020badee4e888ad1540a5`. No source change, instrumentation,
+geometry request or benchmark was performed in this lane. This is reuse of exact
+trimmed-body intersections during metadata presentation, not an approximate
+preview or a change to the selected thickness relation.
+
+### What an exact cache could reuse
+
+The unchanged-body OffsetThicknessContext already loads one shape intersector
+lazily, after meshing. Each candidate still calls Perform for sampled rays with
+`PMin=1e-6` and `PMax=abs(delta)+1e-7`. During the forward grid pass the source
+face/sample is unchanged across candidates. For planar supports, radial direction
+is constant; candidates at exactly the same signed delta therefore generate
+identical point/direction/bounds values, even when their trimmed target regions
+are different. The reverse pass samples each target and translates its point;
+these queries generally differ. Equal absolute delta alone is insufficient:
+opposite signs reverse direction, and independently stored support origins can
+produce different floating-point deltas even for mathematically coplanar faces.
+
+Pinned [ShapeIntersector::Perform and SortResult](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/IntCurvesFace/IntCurvesFace_ShapeIntersector.cxx#L57)
+perform every loaded face intersection, then collect hits in loaded-face order
+and stably sort by W (swapping only strictly greater W). The current visible
+loop consumes **every** hit's WParameter and Face, in that exact order: a hit
+within 1e-7 of the first hit on another IsSame face invalidates visibility.
+A result cache must retain all hits, including ON-boundary and coincident hits,
+without deduplication, re-sorting, changed tolerances or candidate ordering.
+Caching a target-dependent `hit` Boolean under a ray-only key would be wrong.
+
+A narrow request-local method can return an owning snapshot `{done, hits}`;
+for this consumer each hit needs original W bits plus a TopoDS_Face value copy.
+Keep target tests in the existing loop. For a general intersector-result adapter,
+copy all exposed fields: U/V/W, point, transition, state and oriented/located
+face, preserving order. The [public accessors](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/IntCurvesFace/IntCurvesFace_ShapeIntersector.hxx#L79)
+read per-face mutable result arrays; references into the tool cannot survive
+another Perform. A face value retains its TShape/location/orientation identity;
+do not resolve it through an index in a separately enumerated face map.
+
+### Conservative candidate contract and state audit
+
+Use the final constructed gp_Lin's location and direction components plus the
+actual PMin/PMax as an eight-double **bitwise** key. Do not round, quantize, use
+geometric IsEqual tolerances, identify differently parameterized lines, or
+normalize signed zeros. The context already supplies unchanged body, Load
+settings and lifetime; any future reload/body/tolerance change must clear the
+cache. Nonfinite query fields should bypass caching so original error behavior
+is retained. No static/global cache or shared context is needed; existing serial
+presentation ownership is the scope.
+
+Prefer caching only successful IsDone results, including successful empty hit
+lists. A failed query stays eligible for a real retry, and exceptions propagate
+at their original call instead of being converted into a remembered result.
+Bound both entries and total stored hits/bytes, for example an initial 1024-entry
+LRU plus an independent hit budget; skip oversized results. A fixed entry count
+alone is not a memory bound when a ray crosses many faces. Charge lookup,
+snapshot copies and eviction work to request time. Return a reference/view that
+stays valid through the immediate hit loop, not across cache insertions.
+
+Pinned [face Intersector construction](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/IntCurvesFace/IntCurvesFace_Intersector.cxx#L123)
+creates private surface/topology adaptors and optional private polyhedron.
+[Perform](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/IntCurvesFace/IntCurvesFace_Intersector.cxx#L353)
+clears its hit sequences and uses private analytic or polyhedron intersection
+state; private bounding data may be initialized lazily. Its
+[InternalCall](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/IntCurvesFace/IntCurvesFace_Intersector.cxx#L218)
+reads face/edge tolerances, classifies trimmed UV points and adjusts transition
+for reversed faces. These inspected routines contain no BRep_Builder operation
+or source-topology modification. The
+[topology tool's Classify](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepTopAdaptor/BRepTopAdaptor_TopolTool.cxx#L176)
+lazily creates a private FClass2d with the first tolerance, then reuses it.
+Successful miss processing has already performed this initialization for the
+loaded tool; skipping an identical successful query is not skipping its first
+initialization. This is source evidence for the narrow candidate, not a general
+claim that all transitive OCCT geometry adaptors/global state are immutable or
+that repeated queries are universally deterministic. Validate alternating-hit
+and eviction controls before asserting unchanged observable behavior.
+
+### Why PerformNearest is not a substitute
+
+Pinned [PerformNearest](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/IntCurvesFace/IntCurvesFace_ShapeIntersector.cxx#L69)
+shrinks the maximum parameter after finding a closer hit, and uses adaptive
+face-order bookkeeping on later calls. Faces queried earlier can retain hits
+beyond the eventual nearest distance; later faces see a shorter interval. Even
+if exact equal-W hits on later faces survive the endpoint-inclusive filter,
+near-coincident other-face hits **above** the nearest W but within the current
+1e-7 tie budget can be pruned. The visible loop intentionally uses those to
+reject ambiguity. It is therefore not a drop-in replacement preserving this
+all-hit tie contract. A new nearest-plus-tie-band algorithm would require its
+own proof and tests and is outside this narrow reuse proposal.
+
+### Likely workloads, counters and acceptance
+
+There is no measured duplicate count or speedup yet. Simple boxes generally
+have one useful opposite candidate and return at the first visible sample, so
+an exact ray cache may add cost with few hits. Closed perforated shell fixtures
+have many faces but usually unique coaxial cylinder pairs/opposite walls;
+face count alone does not establish repetition. Stronger hypotheses are Boolean
+split or fragmented coplanar target faces at the same signed offset: several
+failed small patches can exhaust the same forward source grid before reaching
+the matching patch. Existing cylindrical/spherical candidates can repeat only
+when final line/bounds also match exactly; do not infer this from equal radii.
+
+First instrument query count, exact duplicate count, successful duplicate hits,
+forward/reverse counts, source/candidate/signed-delta groups, hits copied, cache
+bytes/evictions and actual intersection time. Opt-in tracing must preserve
+normal production overhead. Compare no-cache/cache with the same body/candidate
+order, all original grid points/predicates, and ray all-hit sequences on misses
+and repeated queries. Include split coplanar faces, coincident boundaries,
+seams, reversed/located shapes, empty hits, failed queries, alternating bounds,
+eviction and high-hit rays. Retain source encoding checks and complete output
+metadata, resolving any preexisting shell enumeration variation separately.
+Only then use randomized serial paired whole-request timings plus peak memory;
+reject a latency claim from counts alone or from dropping coincident hits.
+
+### Counts-only preload prepared, not executed
+
+[trace-thickness-rays.cpp](../../../tests/geometry-performance/trace-thickness-rays.cpp)
+interposes pinned TKTopAlgo exported `ShapeIntersector::Load` and gp_Lin Perform
+through RTLD_NEXT. The source forwards original Load/Perform unchanged; it does
+not replay intersections or cache results. Exact keys use the eight final query
+component bit patterns above, preserving signed zero. Load completion starts a
+new owner generation and reports/resets any old generation at the same address.
+The Makeshift context always Loads a fresh tool before Perform, so pointer
+reuse is separated by that new generation. This does not prove a generic caller
+performed Load before using a recycled address; no destructor is interposed.
+Concurrent reload/query on the same original tool is not supported by this
+instrumentation or the existing mutable intersector.
+
+Per-generation records report query attempts, finite-query attempts, exact
+repeated queries and stored unique finite keys. The set caps at 8192 keys per
+owner and 64 retained owners; once capped, stored-unique and repeat counts are
+lower bounds, and `notStoredDueToCap` counts untracked key occurrences, **not**
+a number of distinct untracked keys. Owner eviction flushes its record; later
+queries without another Load contribute to `unknownOwnerQueries`. Reset/eviction
+and exit records together are needed to total a process. Failed/throwing Perform
+attempts are counted too; successful-repeat frequency still needs separate
+IsDone instrumentation before implementing successful-result-only caching.
+
+The two symbol spellings were checked by a lightweight nm read of the pinned
+SDK's `libTKTopAlgo.so.7.9.3`. No build or preload execution occurred. This is an
+untimed diagnostic: mutex/hash allocation/interposition and stderr reporting
+change elapsed time and memory. It must not be enabled during performance
+comparisons. Compilation/run remain orchestrator-owned under the compute lock;
+the source header includes the isolated shared-object build command.
+
+## Parallel exact per-face metadata: source-only CPU proposal
+
+The orchestrator's untimed ray diagnostic reports Fuse 2080 queries / 1 exact
+repeat, open perforated shell 1285 / 0, and captured notched case 277 / 26.
+These do not justify implementing an exact query cache for the dominant tested
+workloads. No cache implementation is proposed from these counts. Parallel
+execution of independent exact face metadata is a different CPU opportunity;
+no implementation/build/benchmark was performed here.
+
+### Narrow ordered execution design
+
+Keep meshing and its validation, encode, volume/center/bounds, topology mapping,
+blend/chamfer recognition and edge metadata serial. Meshing must finish before
+workers access any triangulation. Construct the same indexed face map once;
+preallocate one output slot and one exception slot per face. Each worker formats
+a **complete face object**, including predecessors, signature, selected flag and
+existing face() payload, into its own ostringstream. All mathematical operations,
+all grid/ray predicates, candidate enumeration and sort/tie policy remain the
+same. After workers join, append the strings in original face-index order and
+then run the old edge loop. No worker writes the shared output stream.
+
+Match the known caller's format explicitly: numeric flags, precision 17 and
+locale from the existing output stream, plus fill state if used. Do not accept
+the default ostringstream precision (6) or invent a new number formatter.
+origins() keeps its existing sorted ID set and IsSame correspondence; result
+predecessors/selectedFaces and recognition arrays are immutable inputs. Faces,
+edges and adjacency index maps retain their exact original traversal order.
+Each task writes only its own string/exception slot in an already-sized vector;
+there is no vector growth while tasks are active. Parallel string construction
+increases retained output memory; charge it to the request and consider bounded
+face batches only as a separate measured tradeoff.
+
+**Contexts must be per worker, not merely per output slot.** OffsetThicknessContext
+owns mutable sample maps and one mutable all-face ray intersector; FaceChainContext
+owns mutable ordered continuity caches. Build one of each per launcher worker,
+reuse across that worker's assigned faces, and never share them concurrently.
+Private worker contexts retain exact per-query ordering but reduce cross-face
+cache sharing and duplicate body-wide adjacency / ray-tool construction. This
+can erase speed gains or multiply peak memory. Constructing a full context per
+face would particularly discard the already measured reuse benefit.
+
+Pinned [OSD_ThreadPool::Launcher](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/OSD/OSD_ThreadPool.hxx#L199)
+provides `Perform(begin,end,functor(threadIndex,faceIndex))` and a guaranteed
+bounded worker-index range, suitable for private context slots sized using that
+launcher's NbThreads(). Prefer this to OSD_Parallel::For for this candidate:
+[pinned For](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/OSD/OSD_Parallel.hxx#L343)
+discards threadIndex through its wrapper and can select an external threading
+backend. Direct default-pool Launcher observes the current Makeshift thread
+budget and avoids adding independent std::threads or changing the backend
+globally. The [pool contract](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/OSD/OSD_ThreadPool.hxx#L28)
+says reserving available workers makes nested users of that same pool run
+sequentially when no pool workers remain. Keep outer meshing/Boolean stages
+completed; do not start face jobs inside their worker tasks. This is not a
+promise against oversubscription by some other library/OpenMP/TBB backend.
+Force serial for one configured thread and small face counts; determine any
+cutoff from measurements rather than treating all faces as uniform work.
+
+Catch each face's C++/OCCT exception into its slot and replay the first failure
+in original face order after join. Native Launcher alone forwards worker
+Standard_Failure with its own scheduling priority and does not implement the
+existing serial face-error contract. Earlier serial properties/recognition
+errors retain priority and the edge loop begins only after successful face
+results. Allocation, cancellation, signals, additional work before a replayed
+failure and process-global side effects remain scheduling limitations, as for
+the streaming Cut experiment. A successful output-parity run does not test
+those failure paths.
+
+### Concrete shared geometry hazard: private contexts are insufficient
+
+Pinned [GeomAdaptor_Surface](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/GeomAdaptor/GeomAdaptor_Surface.hxx#L345)
+has mutable per-adaptor BSplSLib cache state. Fresh independently constructed
+adaptors keep these caches private; do not copy an already-populated adaptor by
+implicit member copying into multiple workers. Its
+[ShallowCopy](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/GeomAdaptor/GeomAdaptor_Surface.cxx#L118)
+intentionally does not copy that cache and shallow-copies nested evaluators.
+However its underlying Geom handles still refer to shared support objects.
+
+Pinned [Geom_BSplineSurface::Resolution](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/Geom/Geom_BSplineSurface_1.cxx#L2201)
+lazily writes `umaxderivinv`, `vmaxderivinv` and `maxderivinvok` without a mutex.
+[Geom_BSplineCurve::Resolution](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/Geom/Geom_BSplineCurve_1.cxx#L704)
+and [Geom_BezierCurve::Resolution](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/Geom/Geom_BezierCurve.cxx#L663)
+similarly initialize derivative-inverse fields; Bezier surface
+[Resolution](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/Geom/Geom_BezierSurface.cxx#L1986)
+also initializes cached inverse derivatives. GeomAdaptor surface U/VResolution
+and curve Resolution call these methods. Ray Intersector::InternalCall evaluates
+U/VResolution for face/edge tolerances, so even each worker's **private ray tool**
+can concurrently initialize the same untouched body's shared spline support.
+Prior meshing may have initialized some of these fields, but is not a universal
+source proof that all reachable caches are warm. Same-result writes are still
+a C++ data race. This is a specific blocker to a blanket read-only-body claim.
+
+Serial exact warmup of every reachable spline/Bezier support and basis/trimmed/
+offset/revolution/extrusion curve/surface, including pcurves and geometry called
+by continuity/classification, might remove these lazy writes after a join/start
+happens-before boundary. It needs a complete transitive geometry audit and must
+account for copies created inside algorithms; calling each face adaptor's
+U/VResolution once is not automatically complete. Deep private support copies
+are another option, with mapping/identity and setup costs, not a free safety fix.
+Do not implement blanket parallelism on arbitrary BReps from this audit alone.
+
+### Safest first experiment and remaining source boundaries
+
+An initial sufficient **whole-body** guard can allow elementary analytic face
+supports and analytic 3D/pcurve supports only, with no shared spline/Bezier or
+nested offset/freeform geometry. Every worker's ray tool traverses **all** body
+faces and its continuity chain can traverse neighbors, so an analytic current
+face alone is an insufficient guard. Unknown support/wrapper types fall back
+to the existing serial presentation. A complete guard must inspect stored
+pcurves, not just BRepAdaptor_Curve::GetType on 3D edges. This deliberately
+excludes cubic/freeform fixtures until their lazy/cache access paths are solved.
+
+Source observations supporting this limited experiment: BRep_Tool::Triangulation
+returns existing mesh handles; nodes/triangles are read after meshing;
+ContinuityOfFaces builds local SurfaceProperties/GeomLProp/extrema objects and
+reads support/pcurve handles without a BRep_Builder mutation; ray intersection
+and classifiers keep their own sequences and local classification state.
+Relevant pinned sources are
+[BRep_Tool](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRep/BRep_Tool.cxx#L109),
+[ContinuityOfFaces](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepLib/BRepLib.cxx#L2049),
+[BRepGProp::SurfaceProperties](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepGProp/BRepGProp.cxx#L211)
+and [math Gauss tables](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/math/math.cxx#L30)
+(the ordinary surface signature path uses local properties/Gauss work and
+constant tabulated values). This is not an exhaustive transitive thread-safety
+certificate: offset/evaluator/osculating supports, missing planar pcurves,
+Geom2d resolution, custom geometry subclasses and global algorithm state remain
+audit boundaries. Kernel fork changes must also preserve these contracts.
+
+Acceptance must cover exact ordered replies/encoding/origins at threads1/2/4,
+shared support handles across adjacent and separately located faces, reversed
+orientation, contact/coincident ambiguity, worker-context reuse, multiple body
+results, source encoding and error precedence. Use a race detector where
+available; output parity alone does not establish absence of races. Measure
+construction overhead, per-worker context memory, load imbalance and serial
+phase fraction along with paired end-to-end timings. This performs the same
+exact CPU geometry work sooner; it is not a preview or display-only substitute.
+
+### Follow-up: analytic-only guard and topology mutation audit
+
+Further pinned-source inspection does **not** find a BRepTools::Update call in
+this candidate's restricted ray/classification/adaptor paths. In particular,
+[BRepAdaptor_Surface::Initialize](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepAdaptor/BRepAdaptor_Surface.cxx#L76)
+calls UVBounds for restriction, while
+[BRepTools::UVBounds / AddUVBounds](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepTools/BRepTools.cxx#L59)
+construct local boxes, locally change a copied face's orientation and read
+pcurves/support bounds. They do not call UpdateFaceUVPoints or set Checked.
+This distinction matters: the **separate**
+[BRepTools::Update(face)](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepTools/BRepTools.cxx#L378)
+does change UV endpoint data and the shared face Checked flag. Do not add Update
+inside workers as a supposed harmless warmup, or assume UVBounds performs it.
+
+[FaceClassifier::Perform](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepClass/BRepClass_FaceClassifier.cxx#L60)
+uses local FaceExplorer and Extrema_ExtPS objects; the 3D-point overload reads
+UVBounds then initializes/executes local extrema. FaceExplorer's computed face
+bounds and probing state belong to that explorer. FClass2d constructs private
+polygon classifiers and uses local BRepTools_WireExplorer state. The inspected
+BRepClass and WireExplorer implementations contain no shared topology update or
+Checked/Free mutation in these routes. ShapeIntersector Load constructs private
+per-face adaptors, tools and optional polyhedra as already documented.
+
+[CurveOnSurface](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRep/BRep_Tool.cxx#L289)
+returns the stored pcurve representation (including the orientation-dependent
+seam branch). If none is stored on a plane,
+[CurveOnPlane](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRep/BRep_Tool.cxx#L356)
+projects into newly constructed geometry; it does **not** attach that curve to
+the edge. Nonetheless the first guard should reject missing stored pcurves to
+avoid extending this audit to the projection route. UVBounds' analytic pcurve
+bounding uses local
+[BndLib_Add2dCurve](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BndLib/BndLib_Add2dCurve.cxx#L321)
+computations rather than initializing spline resolution fields.
+
+A concrete conservative first guard, evaluated serially after all preparation:
+
+1. Every body's face support must be an **exact standard dynamic type** Plane,
+   CylindricalSurface, ConicalSurface, SphericalSurface or ToroidalSurface,
+   optionally beneath standard RectangularTrimmedSurface wrappers. Recursively
+   unwrap with a finite depth cap; reject OffsetSurface, spline/Bezier,
+   revolution/extrusion wrappers, unknown classes and custom subclasses. Merely
+   testing GetType/IsKind can admit a subclass with unreviewed mutable behavior.
+2. Every body edge's non-null 3D support must likewise be exact standard Line,
+   Circle, Ellipse, Hyperbola or Parabola, optionally standard TrimmedCurve
+   wrappers. The first candidate may reject degenerate/null-3D edges entirely;
+   allowing cone/sphere pole degeneracies needs separate baseline coverage.
+3. For **every face-edge incidence**, retrieve stored pcurves with
+   `theIsStored`, examining both edge orientations so seam alternatives are
+   covered. Require non-null stored exact standard Geom2d Line/Circle/Ellipse/
+   Hyperbola/Parabola, optionally standard Geom2d_TrimmedCurve wrappers. Enumerate
+   any additional edge curve-on-surface representations that reachable
+   algorithms might consult; unreviewed representations fail closed. A serial
+   guard must not call a topology builder to synthesize missing representations.
+4. Original mesh validation must already have completed; triangulation node and
+   triangle arrays are populated and remain untouched until join. Keep recognize
+   blends/chamfers and every topology-changing operation before workers. Locations
+   and support handles remain fixed; concurrent external document mutation is
+   excluded by existing request ownership, not solved by this proposal.
+
+These elementary support/conic objects expose geometry calculations on stored
+gp values without the spline/Bezier derivative-resolution lazy fields. Standard
+trimmed wrappers forward to those audited bases. Each independently constructed
+adaptor's working state remains private. Shared
+[TopLoc_Location::Transformation](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/TopLoc/TopLoc_Location.cxx#L52)
+reads an already stored transformation;
+[ItemLocation construction](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/TopLoc/TopLoc_ItemLocation.cxx#L26)
+computes it eagerly. Mesh
+[Node/Triangle accessors](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/Poly/Poly_Triangulation.hxx#L142)
+read arrays; this path does not use/update CachedMinMax or deferred mesh loading.
+Read-only topology maps and support handles still require private algorithm
+objects, as outlined above.
+
+This narrows the demonstrated shared-lazy-write hazard away from eligible
+supports, and no additional topology mutation was found in the inspected
+analytic ray/UVBounds/classifier paths. It remains a proposed experiment contract,
+not a universal thread-safety assertion for all transitive intersection/extrema
+routines. First count actual guard eligibility on the expensive perforated
+Fuse/Shell outputs: elementary-looking geometry may still carry spline pcurves
+or unsupported representations and legitimately fall back. Eligibility setup,
+private context construction and ordered buffering remain part of measured
+request cost. Preserve the stable stream-format and first-face exception ordinal
+rules above; adding threads cannot justify changing tie or predecessor behavior.
+
+## Exact-query counter execution
+
+The orchestrator compiled `trace-thickness-rays.cpp` as an isolated counts-only
+preload and ran ten generated/captured cases with fresh native processes at one
+thread. The first harness attempt used SIGTERM shutdown and got no destructor
+report; it was corrected to close stdin and wait for normal EOF exit. That
+initial configuration-only artifact is retained as `results/thickness-ray-counts-initial-no-destructor.jsonl`.
+
+The completed `results/thickness-ray-counts.jsonl` preserves inputs, baseline and
+traced full replies, all counters and stderr. No key/owner cap or unknown-owner
+query occurred. Perforated extrusion/symmetric extrusion: six queries each,
+zero repeats. Cut: 142, zero repeats. Fuse: 2,080, one repeat. Closed perforated
+Shell: 62, zero; open perforated Shell: 1,285, zero. Notched closed: 208, two
+repeats; captured notched: 277, 26 repeats. Bent closed: no loaded intersector
+(retained operation result/error); captured bent: four, zero repeats.
+These count attempts, not a guarantee of reusable successful results. Exact
+query caching cannot remove meaningful work from the expensive perforated
+Fuse on this evidence; no cache implementation is justified there.
+
+Seven baseline/traced metadata comparisons match; three closed/captured Shell
+outputs differ in face enumeration/predecessors and are preserved explicitly.
+This diagnostic does not waive those differences or establish their cause.
+Previous baseline-repeat investigations document related nondeterminism, but
+this run did not independently repeat every differing case. Timings and memory
+under the trace are invalid performance measurements.
+
+The next separate kernel hypothesis is avoiding per-face/per-ray allocation of
+Geom_Line and GeomAdaptor_Curve in IntCurvesFace_Intersector. Analytic support
+ray tests currently construct both even when their setup can be reused safely;
+source/lifetime/reentrancy proof and measurements are pending.
