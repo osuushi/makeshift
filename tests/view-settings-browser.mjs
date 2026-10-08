@@ -80,7 +80,9 @@ async function modalSettingsRoute(page) {
   await settled(page);
   const trigger = page.getByRole("button", { name: "Application settings" });
   const dialog = page.getByRole("dialog", { name: "Settings", exact: true });
-  await trigger.click();
+  // macOS WebKit leaves clicked buttons unfocused. Use keyboard activation to
+  // establish an opener whose focus the native modal must restore on Escape.
+  await trigger.press("Space");
   assert.equal(await dialog.evaluate((element) => element.matches(":modal")), true);
   const bounds = await dialog.boundingBox();
   assert.ok(bounds && bounds.height < 760, "Compact settings fit the desktop viewport");
