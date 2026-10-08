@@ -68,6 +68,7 @@ export class PlaneReferencePicker {
     this.editor.world.planePickerAccept = this.accepts;
     this.reference = null;
     this.choose = (frame, source) => {
+      if (this.editor.blocked || this.editor.isDragging) return;
       if (this.accepts && !this.accepts(frame)) return;
       this.hover.clear();
       this.reference = source ?? null;
