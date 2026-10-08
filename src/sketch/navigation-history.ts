@@ -36,12 +36,13 @@ export class NavigationHistory {
     if (this.suppressed || this.before) return;
     this.before = this.capture();
   }
-  beginWorkspace(): void {
+  beginWorkspace(selection?: HistorySelection): void {
     if (this.suppressed) return;
     this.begin();
     // Workspace entry freezes pre-entry selection, including a held gesture.
     // Retire its deferred accepted-selection callback without changing its baseline.
     if (this.before) this.before = structuredClone(this.before);
+    if (this.before && selection) this.before.selection = structuredClone(selection);
     this.changingWorkspace = true;
     queueMicrotask(() => {
       this.changingWorkspace = false;

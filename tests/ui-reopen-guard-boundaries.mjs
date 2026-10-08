@@ -70,22 +70,28 @@ export async function reopenModalGuards(page, name) {
   assert.equal(before.interaction.kind, "extrude");
   await select.press("Meta+r");
   assert.deepEqual(await snapshot(page), before);
-  await page.locator("#world canvas").focus();
-  await page.keyboard.press("Meta+r");
-  assert.deepEqual(await snapshot(page), before);
-  // Read the modal admission reason only after the actual extrusion preview settles.
-  const modal = await ready(page, "Accept extrusion");
+  // Canvas Cmd-R completes the valid edit, then reopens the accepted operation.
+  const modal = await reopen(page);
   assert.equal(modal.interaction.kind, "extrude");
-  assert.equal(
-    modal.commands.find((c) => c.id === "reopen-operation").unavailable,
-    "Finish or cancel the current edit first",
+  assert.deepEqual(modal.document, before.document);
+  assert.deepEqual(modal.preview, before.preview);
+  const history = (await snapshot(page)).history;
+  const added = history.filter(
+    (entry) => entry.id > Math.max(...before.history.map((entry) => entry.id)),
   );
+  assert.deepEqual(
+    added
+      .filter((entry) => entry.operation.kind === "extrude")
+      .map((entry) => [entry.state, entry.outcome]),
+    [["undone", "changed"]],
+  );
+  assert.equal(modal.commands.find((c) => c.id === "reopen-operation").unavailable, null);
   await button(page, "Cancel extrusion").click();
   await completed(page);
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await completed(page)).document, original);
   console.log(
-    `${name}: native select and active ordinary Extrude own Cmd-R without changing lease/candidate/history`,
+    `${name}: native select owns Cmd-R; canvas Cmd-R completes and reopens Extrude with exact Cancel/Redo`,
   );
 }
 export async function reopenNavigationGuard(page, name) {

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { viewDisplay } from "../preferences/view-display.js";
 import { canonicalPlaneBounds, canonicalPlaneSelectable } from "./canonical-plane-bounds.js";
+import type { HistorySelection } from "./history-selection.js";
 import {
   createPlaneTargets,
   disposePlaneTarget,
@@ -36,6 +37,8 @@ class PlaneTargetInteraction {
     target: PlaneTarget;
     point: Point;
     entering: boolean;
+    time: number;
+    selection: HistorySelection;
   } | null = null;
   constructor(
     private world: World,
@@ -99,6 +102,7 @@ class PlaneTargetInteraction {
     if (
       event.type === "dblclick" &&
       pending &&
+      event.timeStamp - pending.time <= 500 &&
       Math.hypot(event.clientX - pending.point.x, event.clientY - pending.point.y) <= 4
     ) {
       event.preventDefault();
@@ -107,7 +111,12 @@ class PlaneTargetInteraction {
       // The first click may still be accepting native geometry. Preserve the
       // double-click entry intent instead of losing it while the editor is busy.
       void pending.done.then(() => {
-        if (!this.abort.signal.aborted && this.world.canEnterSketch()) this.enter(pending.target);
+        if (!this.abort.signal.aborted && this.world.canEnterSketch()) {
+          // A fast first click may already have selected the plane. Workspace
+          // Undo still restores the selection from the whole double-click intent.
+          this.world.navigation.beginWorkspace(pending.selection);
+          this.enter(pending.target);
+        }
       });
       return;
     }
@@ -123,14 +132,13 @@ class PlaneTargetInteraction {
         target,
         point: { x: event.clientX, y: event.clientY },
         entering: false,
+        time: event.timeStamp,
+        selection: this.world.navigation.readSelection(),
       };
       const done = this.world.planeSelection?.(target.id, () => selection.entering);
       if (done) {
         selection.done = done;
         this.selecting = selection;
-        void done.finally(() => {
-          if (this.selecting === selection) this.selecting = null;
-        });
       }
     } else this.enter(target);
   };

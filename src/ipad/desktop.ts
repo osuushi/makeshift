@@ -10,18 +10,17 @@ export function installIPadButton(editor: SketchEditor, app: HTMLElement): void 
     app,
     host
       ? async () => {
-          await toolCatalog(editor).activate({
-            reason: () => null,
-            run: async () => {
-              try {
-                await host.start();
-                location.reload();
-              } catch (error) {
-                editor.message = String(error);
-                editor.refresh();
-              }
-            },
-          });
+          if (!(await toolCatalog(editor).activate({ reason: () => null, run: () => true })))
+            return;
+          // The host reads renderer state during handoff; release the completion
+          // boundary first so that inspection can acquire it normally.
+          try {
+            await host.start();
+            location.reload();
+          } catch (error) {
+            editor.message = String(error);
+            editor.refresh();
+          }
         }
       : undefined,
   );

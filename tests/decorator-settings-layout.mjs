@@ -26,6 +26,7 @@ try {
         installSettings(
           {
             blocked: false,
+            refresh() {},
             interactions: { current: null },
             world: { changed: new Set(), draw() {}, requestDraw() {} },
           },

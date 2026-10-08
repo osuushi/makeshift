@@ -216,11 +216,16 @@ export async function recentSolidRoute(page, name) {
   const recent = await recentIds(page);
   await search(page).fill("transform");
   await page.locator('[data-command="transform"]').click();
-  const refused = await inspect(page);
-  assert.equal(refused.interaction.kind, "shell");
-  assert.deepEqual(refused.document, before.document);
-  assert.deepEqual(await recentIds(page), recent, "Invalid pending switch does not promote");
+  const switched = await inspect(page);
+  assert.equal(switched.interaction, null);
+  assert.deepEqual(switched.document, before.document);
+  assert.deepEqual(
+    await recentIds(page),
+    ["transform", ...recent.filter((id) => id !== "transform")],
+    "Admitted switch cancels invalid Shell and promotes Transform",
+  );
   await dismissed(page);
+  await chooseTool(page, "thickness", "shell");
   await thickness.fill("-1");
   await inspect(page);
   await page.getByRole("button", { name: "Accept shell", exact: true }).click();
@@ -265,6 +270,6 @@ export async function recentSolidRoute(page, name) {
   await dismissed(page);
   await page.screenshot({ path: `.cache/sketch-review/${name}-recent-tools.png` });
   console.log(
-    `${name}: real Extrude/Shell geometry, refused modal switch and disabled Recent invocation passed`,
+    `${name}: real Extrude/Shell geometry, invalid modal cancellation and disabled Recent invocation passed`,
   );
 }
