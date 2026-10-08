@@ -12,17 +12,35 @@
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
+#include <BRepBuilderAPI_Copy.hxx>
+#include <BRepTools.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepBndLib.hxx>
 #include <Bnd_Box.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Wire.hxx>
+#include <TopExp_Explorer.hxx>
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
 #include <utility>
 
 namespace {
+TopoDS_Face sweepBoundaryFace(const TopoDS_Face& face) {
+    for (const auto kind : {TopAbs_WIRE, TopAbs_EDGE, TopAbs_VERTEX}) {
+        for (TopExp_Explorer entities(face, kind); entities.More(); entities.Next()) {
+            if (entities.Current().Orientation() != TopAbs_INTERNAL) continue;
+            // Internal imprints are not material boundaries. Sweeping them can
+            // add internal faces to the closed shell and invalidate the solid.
+            // Cleanup mutates topology, so keep the accepted source untouched.
+            auto boundary = BRepBuilderAPI_Copy(face, true, false).Shape();
+            BRepTools::RemoveInternals(boundary, false);
+            validate(boundary);
+            return TopoDS::Face(boundary);
+        }
+    }
+    return face;
+}
 TopoDS_Wire wire(const Tree& spans) {
     BRepBuilderAPI_MakeWire builder;
     for (const auto& item : spans) {
@@ -65,7 +83,7 @@ TopoDS_Face profileFace(const Tree& profile, const std::vector<Operand>& bodies)
         if (!builder.IsDone()) throw std::runtime_error("Profile is not a planar face");
         face = builder.Face(); validate(face);
     }
-    return face;
+    return sweepBoundaryFace(face);
 }
 TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies, std::vector<SourceEntity>& origins) {
     const double distance = input.get<double>("distance");
