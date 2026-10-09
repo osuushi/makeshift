@@ -50,6 +50,7 @@ try {
       const settings = await page.locator(".settings-trigger").boundingBox();
       assert.ok(
         settings.x >= 0 && settings.x + settings.width <= 820 && settings.y + settings.height < 250,
+        `Settings stays inside the narrow header: ${JSON.stringify(settings)}`,
       );
       await page.screenshot({ path: `.cache/sketch-review/${name}-interface-scale-narrow.png` });
       assert.deepEqual(errors, []);
