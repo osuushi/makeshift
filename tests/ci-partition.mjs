@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { access, readFile } from "node:fs/promises";
+import { access, readdir, readFile } from "node:fs/promises";
 import test from "node:test";
+import { macModelFiles, modelPartitions } from "../scripts/ci-model-suites.mjs";
 import { partition, shardIndex } from "../scripts/ci-partition.mjs";
 import { uiSuites } from "../scripts/ci-ui-suites.mjs";
 
@@ -85,4 +86,17 @@ test("widget and edge partitions use disjoint subsets without losing any family"
 test("shard arguments cannot silently omit a partition", () => {
   assert.deepEqual(shardIndex("3/4"), { index: 2, count: 4 });
   for (const bad of ["0/4", "5/4", "1/0", "1", undefined]) assert.throws(() => shardIndex(bad));
+});
+
+test("model platforms cover every file once, including new unmeasured tests", async () => {
+  const files = (await readdir(new URL(".", import.meta.url)))
+    .filter((file) => file.endsWith(".test.ts"))
+    .map((file) => file.replace(/\.ts$/, ".js"));
+  files.push("new-unmeasured.test.js");
+  const linux = modelPartitions(files, "linux", 4).flatMap((s) => s.suites.map((s) => s.id));
+  const mac = modelPartitions(files, "mac", 3).flatMap((s) => s.suites.map((s) => s.id));
+  assert.deepEqual(mac.sort(), [...macModelFiles].sort());
+  assert.deepEqual([...linux, ...mac].sort(), files.sort());
+  assert.ok(linux.includes("new-unmeasured.test.js"));
+  assert.throws(() => modelPartitions([], "mac", 3), /Missing required Mac test/);
 });

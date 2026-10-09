@@ -64,7 +64,8 @@ render current pixels, including after reload. For local diagnosis, prefix a UI
 command with that environment variable; ordinary runs retain normal redraws.
 macOS acceptance uses the same frame mode and is limited to a built-host smoke
 (native geometry, Save/Open, sandbox), Finder PATH and process setup regressions,
-native navigation and constrained rotation, plus three serial partitions of the
+native navigation, constrained rotation and WebKit high-DPI narrow-header layout,
+plus three serial partitions of the
 six geometry files with documented Linux differences.
 
 The six geometry exceptions in `scripts/ci-model-tests.mjs` are special erosion
@@ -72,9 +73,11 @@ and its placement boundaries, captured offset movement, offset thickness, exact
 projection and captured erosion responsiveness. Prior Linux failures included
 filleted hemisphere validity, a captured plate's volume, an unchanged sphere's
 numerical signature, a conic projection reply and erosion calculation latency.
-WebKit constrained rotation also remains on Mac. The broader Linux WebKit
-migration must pass unchanged routes before being considered verified; previously
-it reported unhandled selection fetch errors on reload. Remove platform exceptions
+WebKit constrained rotation also remains on Mac. Linux WebKit passes interface
+scale geometry but fails the existing narrow-header Settings bounds check; retain
+that unchanged suite on Mac. The broader Linux WebKit migration must pass
+unchanged routes before being considered verified; previously it reported
+unhandled selection fetch errors on reload. Remove platform exceptions
 only after the unchanged route passes on Linux.
 
 The final `check` job requires every lane to succeed, including after a lane

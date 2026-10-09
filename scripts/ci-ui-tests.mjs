@@ -16,6 +16,7 @@ assert.ok(selected.suites.length, "CI must run a nonempty shard");
 console.log(
   `${browser} ${shard}: ${selected.suites.length} suites, estimated ${selected.seconds}s`,
 );
+let failed = false;
 for (const suite of selected.suites) {
   console.log(`CI suite: ${suite.id}`);
   if (mode === "--list") continue;
@@ -26,5 +27,6 @@ for (const suite of selected.suites) {
   });
   console.log(`CI timing: ${suite.id}: ${Math.ceil((performance.now() - start) / 1000)}s`);
   if (result.error) throw result.error;
-  if (result.status !== 0) process.exit(result.status ?? 1);
+  if (result.status !== 0) failed = true;
 }
+if (failed) process.exit(1);

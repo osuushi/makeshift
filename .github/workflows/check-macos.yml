@@ -318,6 +318,32 @@ jobs:
           node tests/electron.mjs --navigation-only
           node tests/navigation-host-ui.mjs
           MAKESHIFT_TEST_BROWSER=webkit node tests/current-tools-ui.mjs --route=transformRoute
+          MAKESHIFT_TEST_BROWSER=webkit node tests/interface-scale.mjs
+  linux-platform-probe:
+    needs: linux-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: ./.github/actions/ci-linux-runtime
+      - run: npx tsc -p tsconfig.test.json
+      - name: Reproduce documented geometry exceptions on Linux
+        continue-on-error: true
+        run: node scripts/ci-model-tests.mjs mac
+      - name: Install Linux WebKit
+        run: npx playwright install --with-deps webkit
+      - name: Reproduce constrained rotation on Linux WebKit
+        continue-on-error: true
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+          MAKESHIFT_TEST_FRAME_MODE: on-demand
+        run: xvfb-run -a node tests/current-tools-ui.mjs --route=transformRoute
+      - name: Reproduce high-DPI narrow header on Linux WebKit
+        continue-on-error: true
+        env:
+          MAKESHIFT_TEST_BROWSER: webkit
+          MAKESHIFT_TEST_FRAME_MODE: on-demand
+        run: xvfb-run -a node tests/interface-scale.mjs
   check:
     if: always() && !cancelled()
     needs:
