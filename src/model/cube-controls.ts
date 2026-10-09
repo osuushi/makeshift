@@ -159,6 +159,8 @@ export class CubeControls {
     else this.preview.hide();
   };
   private press = (event: PointerEvent): void => {
+    // A new press cannot generate the previous placement gesture's click.
+    this.consumeClick = false;
     if (
       this.lease?.phase !== "editing" ||
       event.button !== 0 ||
@@ -247,7 +249,8 @@ export class CubeControls {
     this.editor.refresh();
   }
   private cancel(): void {
-    this.consumeClick ||= !!this.gesture;
+    // Async sketch acceptance runs after the placement click was already consumed.
+    this.consumeClick ||= !!this.lease?.captured;
     this.lease?.release();
     this.lease = null;
     this.gesture = null;
