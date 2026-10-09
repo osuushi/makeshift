@@ -387,6 +387,13 @@ both document and temporary interaction Undo. Subtract always consumes its targe
 and optionally retains cutting tools; the other modes optionally retain all
 inputs. Acceptance/cancel and document Undo/Redo retain their ordinary semantics.
 
+Extrude, Revolve and Loft also show their generated tool with these translucent
+surfaces and outlines during Subtract and Intersect, including automatic Subtract.
+The displayed tool is the complete pre-Boolean sweep from the kernel. It remains
+temporary, follows the displayed candidate (including a last valid preview), and
+clears on acceptance, cancellation or switching to a result without a tool overlay.
+It is never added to accepted bodies.
+
 ## Bounded normal face extrusion (2026-10-06)
 
 Extrude/E also accepts supported curved solid faces. It constructs material between

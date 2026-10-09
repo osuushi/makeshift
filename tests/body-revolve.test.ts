@@ -201,10 +201,17 @@ test("revolve Boolean defaults, explicit participants and planar result reuse", 
     const grooved = await preview(owner, cut, { mode: "auto" });
     assert.equal(owner.view.booleanMode, "subtract");
     near(grooved.volume, shaft.volume - 36 * Math.PI);
+    const tool = owner.view.booleanTools?.[0];
+    assert.ok(tool);
+    near(tool.volume, 80 * Math.PI);
+    assert.ok(tool.faces.some((face) => face.vertices.length > 0));
+    assert.equal("brep" in tool, false, "tool view has no exact-shape authority");
     const overlap = await preview(owner, cut, { mode: "intersect", targets: [shaft.id] });
     near(overlap.volume, 36 * Math.PI);
+    assert.deepEqual(owner.view.booleanTools?.[0].bounds, tool.bounds);
     const joined = await preview(owner, cut, { mode: "union" });
     near(joined.volume, shaft.volume + 44 * Math.PI);
+    assert.deepEqual(owner.view.booleanTools, []);
     const sector = await preview(owner, cut, { angle: 90 });
     await owner.call({ kind: "accept" });
     const cap = sector.faces.find((f) => f.plane && Math.abs(f.plane.v[2]) > 0.9);

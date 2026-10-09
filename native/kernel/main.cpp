@@ -173,10 +173,11 @@ void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
     }
     std::vector<std::string> participants;
     Tree erosionQuality;
+    std::vector<Result> tools;
     const bool erode = input.get<std::string>("kind") == "erode";
     if (erode) mode = "new";
     const auto results = erode ? erodeBodies(input,bodies,participants,&erosionQuality)
-        : calculate(input,bodies,mode,participants);
+        : calculate(input,bodies,mode,participants,&tools);
 
     timing.phase("calculate");
     std::ostringstream output; output << std::setprecision(17) << "{\"mode\":" << quoted(mode) << ",\"participants\":[";
@@ -185,6 +186,8 @@ void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
     const double deflection = input.get<std::string>("kind") == "inspect"
         ? input.get<double>("deflection", 0.05) : 0.05;
     for (size_t i = 0; i < results.size(); i++) { if (i) output << ','; present(output, results[i], deflection); }
+    output << "],\"tools\":[";
+    for (size_t i = 0; i < tools.size(); i++) { if (i) output << ','; present(output, tools[i], deflection); }
     timing.phase("presentation");
     output << ']';
     if (erode && input.get<std::string>("method","fast") == "fast") writeErosionQuality(output,erosionQuality);

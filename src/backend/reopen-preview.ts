@@ -10,6 +10,7 @@ export type ReopenPreview = Pick<
   | "offsetSelection"
   | "booleanMode"
   | "booleanTargets"
+  | "booleanTools"
   | "erosionQuality"
   | "cleanupAvailable"
 >;
@@ -22,6 +23,7 @@ export function reopenPreview(view: ModelView): ReopenPreview {
     offsetSelection: view.offsetSelection,
     booleanMode: view.booleanMode,
     booleanTargets: view.booleanTargets,
+    booleanTools: view.booleanTools,
     erosionQuality: view.erosionQuality,
     cleanupAvailable: view.cleanupAvailable,
   });

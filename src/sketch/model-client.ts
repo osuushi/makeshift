@@ -125,6 +125,9 @@ export class ModelClient {
   get booleanTargets() {
     return this.view.booleanTargets ?? [];
   }
+  get booleanTools() {
+    return this.view.booleanTools ?? [];
+  }
   get booleanMode() {
     return this.view.booleanMode;
   }

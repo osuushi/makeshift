@@ -1,6 +1,7 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Extrusion, LiftSource } from "./body.js";
+import { BooleanOperands } from "./boolean-operands.js";
 import { ExtrudeInputs } from "./extrude-inputs.js";
 import { ExtrudeTargets } from "./extrude-targets.js";
 import { ExtrudeTwist } from "./extrude-twist.js";
@@ -8,6 +9,7 @@ import { ExtrudeWidget } from "./extrude-widget.js";
 import { PreviewRunner } from "./preview-runner.js";
 
 export class ExtrudeControls {
+  private operands: BooleanOperands;
   private widget: ExtrudeWidget;
   get root(): HTMLDivElement {
     return this.widget.root;
@@ -38,6 +40,7 @@ export class ExtrudeControls {
     private editor: SketchEditor,
     overlay: HTMLElement,
   ) {
+    this.operands = new BooleanOperands(editor);
     this.targets = new ExtrudeTargets(editor, () => {
       if (this.mode === "auto") this.mode = editor.store.booleanMode ?? "auto";
       this.queue(this.distance);
@@ -211,6 +214,7 @@ export class ExtrudeControls {
     if (request === this.previews.latest && this.lease?.phase === "editing") {
       this.valid = success;
       this.lease.show(success ? this.editor.store.candidate : null);
+      if (success) this.operands.showTool();
     }
     this.editor.refresh();
   }
@@ -255,6 +259,7 @@ export class ExtrudeControls {
     this.editor.refresh();
   }
   private update = (): void => {
+    if (!this.lease?.candidate) this.operands.clear();
     const editor = this.editor;
     this.widget.update(
       editor,
@@ -283,6 +288,7 @@ export class ExtrudeControls {
     this.widget.fit();
   };
   dispose(): void {
+    this.operands.dispose();
     this.previews.clear();
     this.abort.abort();
     this.editor.world.changed.delete(this.update);

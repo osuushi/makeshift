@@ -31,7 +31,7 @@ std::string encode(const TopoDS_Shape& shape);
 TopoDS_Shape decode(const std::string& data);
 std::vector<Operand> operands(const Tree& input);
 TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies, std::vector<SourceEntity>& origins);
-std::vector<Result> calculate(const Tree& input, const std::vector<Operand>& bodies, std::string& mode, std::vector<std::string>& participants);
+std::vector<Result> calculate(const Tree& input, const std::vector<Operand>& bodies, std::string& mode, std::vector<std::string>& participants, std::vector<Result>* tools = nullptr);
 void present(std::ostream& out, const Result& result, double deflection = 0.05);
 // A preferred global flux axis is a numerical integration hint for closed solids.
 double volume(const TopoDS_Shape& shape, int referenceAxis = -1);

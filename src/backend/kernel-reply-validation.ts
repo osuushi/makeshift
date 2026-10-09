@@ -63,5 +63,6 @@ export function readKernelReply<Input extends KernelRequest>(
     default:
       validateKernelBodies(reply, input);
   }
+  if (reply.tools !== undefined) validateKernelBodies({ ...reply, results: reply.tools }, input);
   return reply as KernelReply<Input>;
 }

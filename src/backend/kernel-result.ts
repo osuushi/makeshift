@@ -6,6 +6,8 @@ type Descendant<T> = Omit<T, "id"> & { predecessors: string[] };
 export interface KernelResult<Mode extends BooleanMode | "inspect" = BooleanMode> {
   mode: Mode;
   participants: string[];
+  /** Generated sweep operands for temporary display only. */
+  tools?: KernelResult["results"];
   results: (Omit<Body, "id" | "faces" | "edges"> & {
     copy?: boolean;
     predecessorBodies: string[];
