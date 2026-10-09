@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { inspect } from "./ui-helpers.mjs";
 import { navigationIdle } from "./ui-navigation-history.mjs";
+import { orientWithTurntable } from "./ui-orbit-orient.mjs";
 import { cubeSettled } from "./ui-orientation-cube-clicks.mjs";
 
 export async function bevelViewsRoute(page, name) {
@@ -22,7 +23,7 @@ export async function bevelViewsRoute(page, name) {
       }
   for (const { label, normal } of targets) {
     const surface = page.getByRole("button", { name: `${label} view`, exact: true });
-    await reveal(page, surface);
+    await reveal(page, surface, normal);
     const start = (await inspect(page)).camera;
     await clickSurface(page, surface);
     const moving = await page.evaluate(() => window.makeshiftInspect().camera);
@@ -54,40 +55,28 @@ export async function bevelViewsRoute(page, name) {
   );
 }
 
-async function reveal(page, target) {
-  const bounds = await page.locator(".orientation-cube").boundingBox();
-  const x = bounds.x + bounds.width / 2,
-    y = bounds.y + bounds.height / 2;
-  for (let i = 0; i < 48; i++) {
-    if (await target.isVisible()) {
-      const box = await target.locator("polygon").boundingBox();
-      const hittable = await target.locator("polygon").evaluate((polygon) => {
-        const points = Array.from(polygon.points);
-        const area =
-          Math.abs(
-            points.reduce((sum, p, i) => {
-              const q = points[(i + 1) % points.length];
-              return sum + p.x * q.y - q.x * p.y;
-            }, 0),
-          ) / 2;
-        const center = new DOMPoint(
-          points.reduce((sum, p) => sum + p.x, 0) / points.length,
-          points.reduce((sum, p) => sum + p.y, 0) / points.length,
-        ).matrixTransform(polygon.getScreenCTM());
-        return (
-          area >= 60 &&
-          document.elementFromPoint(center.x, center.y)?.closest("g") === polygon.parentElement
-        );
-      });
-      if (box.width > 6 && box.height > 6 && hittable) return;
-    }
-    await page.mouse.move(x, y);
-    await page.mouse.down();
-    await page.mouse.move(x + (i % 3 === 0 ? -24 : 27), y + (i % 2 ? -24 : 20), { steps: 5 });
-    await page.mouse.up();
-    await inspect(page);
-  }
-  assert.fail("Could not reveal cube surface");
+async function reveal(page, target, normal) {
+  await orientWithTurntable(page, normal);
+  const box = await target.locator("polygon").boundingBox();
+  const hittable = await target.locator("polygon").evaluate((polygon) => {
+    const points = Array.from(polygon.points);
+    const area =
+      Math.abs(
+        points.reduce((sum, p, i) => {
+          const q = points[(i + 1) % points.length];
+          return sum + p.x * q.y - q.x * p.y;
+        }, 0),
+      ) / 2;
+    const center = new DOMPoint(
+      points.reduce((sum, p) => sum + p.x, 0) / points.length,
+      points.reduce((sum, p) => sum + p.y, 0) / points.length,
+    ).matrixTransform(polygon.getScreenCTM());
+    return (
+      area >= 60 &&
+      document.elementFromPoint(center.x, center.y)?.closest("g") === polygon.parentElement
+    );
+  });
+  assert.ok(box.width > 6 && box.height > 6 && hittable, "Cube surface is visibly hittable");
 }
 
 async function clickSurface(page, target) {

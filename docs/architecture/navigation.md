@@ -113,16 +113,16 @@ the original acquired geometry pivot. Ending with roll runs the same release
 leveling as ordinary orbit, restoring a canonical world axis to screen vertical.
 Option modifies navigation only, leaving geometry tools' symmetric sizing intact.
 
-On orbit/roll completion, consider world X/Y/Z axes whose screen projection is
-within 20° of vertical. Orient each candidate toward screen top and choose the
-one whose unit-length top end is nearest the camera (largest signed view-depth
-component). An exactly end-on axis is ineligible. This same signed axis supplies
-yaw for the next orbit. Depth ties retain X/Y/Z order.
-If none qualify, score each world X/Y/Z axis by `rollRadians² - 0.25 × ln(projectedLength)`.
+On orbit/roll completion, orient each world X/Y/Z candidate toward screen top.
+Only candidates whose signed normal points toward the camera or is edge-on qualify:
+the camera must be above the perpendicular plane, using camera-relative up. Never
+choose an axis that would leave the camera looking up at its plane. Exactly end-on
+axes are ineligible. Among eligible axes, minimize
+`rollRadians² - 0.25 × ln(projectedLength)`, retaining X/Y/Z order on ties.
 Projection length is that of a unit axis on screen. This smoothly penalizes
-foreshortening, with infinite cost only at exactly end-on.
-The weight makes a half-length projection cost roughly as much as 24° of roll.
-Choose the lowest fallback score. Put the winning signed axis exactly vertical.
+foreshortening; a half-length projection costs roughly as much as 24° of roll.
+Put the winning signed axis exactly vertical. This same signed axis supplies yaw
+for the next orbit; starting a drag retains an eligible already-leveled axis.
 Discrete axis selection still has decision boundaries; orientations are not blended.
 Animate over 280 ms with cubic ease-out, or immediately with reduced motion. Viewing direction, pivot, distance
 and zoom stay fixed; only roll changes. New navigation interrupts the animation.

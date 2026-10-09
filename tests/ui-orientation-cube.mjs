@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import * as THREE from "three";
 import { drag, inspect, reset } from "./ui-helpers.mjs";
 import { navigationRoundTrip, navigationTips } from "./ui-navigation-history.mjs";
+import { orientWithTurntable } from "./ui-orbit-orient.mjs";
 import { cubeSettled } from "./ui-orientation-cube-clicks.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -29,15 +30,9 @@ export async function orientationCubeRoute(page, name) {
     Bottom: [0, 0, -1],
   };
   for (const [face, normal] of Object.entries(normals)) {
-    // Reveal hidden faces through actual cube drags, never by changing the camera directly.
+    // Reveal the face with real pointer navigation, independent of snap-axis boundaries.
+    await orientWithTurntable(page, normal);
     const target = page.getByRole("button", { name: `${face} view`, exact: true });
-    for (let attempt = 0; attempt < 16 && !(await target.locator("text").isVisible()); attempt++) {
-      await page.mouse.move(center.x, center.y);
-      await page.mouse.down();
-      await page.mouse.move(center.x + 27, center.y + (attempt % 2 ? -24 : 20), { steps: 6 });
-      await page.mouse.up();
-      await inspect(page);
-    }
     await assertFaceLabel(target);
     const beforeAlignment = await inspect(page);
     await target.locator("polygon").click();

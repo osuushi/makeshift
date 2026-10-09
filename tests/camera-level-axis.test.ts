@@ -26,7 +26,7 @@ function assertUpright(orientation: THREE.Quaternion, axis: THREE.Vector3) {
   assert.ok(projected.y > 0, "Chosen sign points toward screen top");
 }
 
-test("nearest screen-top end wins over the longer projected axis, including inverted views", () => {
+test("above-plane eligibility preserves camera-relative up in upright and inverted views", () => {
   for (const inverted of [false, true]) {
     for (const roll of [-19, 0, 19]) {
       const state = tiltedView(inverted ? -70 : 70, roll, inverted);
@@ -35,7 +35,7 @@ test("nearest screen-top end wins over the longer projected axis, including inve
   }
 });
 
-test("screen-top sign determines depth rather than absolute depth or positive world direction", () => {
+test("an upright axis viewed from below is rejected even when almost vertical", () => {
   const state = tiltedView(-70, 12);
   assertUpright(levelOrientation(state), new THREE.Vector3(0, 0, 1));
 });
@@ -48,11 +48,40 @@ test("an end-on axis with quaternion roundoff cannot replace the visible upright
   assertUpright(levelOrientation(state), new THREE.Vector3(0, 0, -1));
 });
 
-test("20 degree boundary is inclusive; outside it the existing fallback chooses the clear axis", () => {
-  for (const roll of [-20, 20])
+test("the above-plane rule applies on both sides of the retired 20 degree boundary", () => {
+  for (const roll of [-35, -20.01, -20, 0, 20, 20.01, 35]) {
     assertUpright(levelOrientation(tiltedView(70, roll)), new THREE.Vector3(0, 1, 0));
-  for (const roll of [-20.01, 20.01, 35])
-    assertUpright(levelOrientation(tiltedView(70, roll)), new THREE.Vector3(0, 0, -1));
+    assertUpright(levelOrientation(tiltedView(-70, roll)), new THREE.Vector3(0, 0, 1));
+  }
+});
+
+test("edge-on axes remain eligible at the horizon", () => {
+  assertUpright(levelOrientation(tiltedView(0, 12)), new THREE.Vector3(0, 1, 0));
+});
+
+test("arbitrary views snap above the chosen plane and preserve viewing direction", () => {
+  for (let i = 0; i < 1000; i++) {
+    const state = tiltedView(0, 0);
+    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(i * 0.21, i * 0.37, i * 0.16));
+    state.camera.position.copy(state.target).add(new THREE.Vector3(0, 0, 120).applyQuaternion(q));
+    state.camera.up.set(0, 1, 0).applyQuaternion(q);
+    const snapped = levelOrientation(state);
+    const inverse = snapped.clone().invert();
+    const axes = [
+      new THREE.Vector3(1, 0, 0),
+      new THREE.Vector3(0, 1, 0),
+      new THREE.Vector3(0, 0, 1),
+    ];
+    const upright = axes
+      .map((axis) => axis.applyQuaternion(inverse))
+      .find((axis) => Math.abs(axis.x) < 1e-10 && Math.abs(axis.y) > 1e-8);
+    assert.ok(upright);
+    assert.ok(upright.z * Math.sign(upright.y) >= -1e-12, "Never look up at orbit plane");
+    const direction = new THREE.Vector3(0, 0, 1);
+    assert.ok(
+      direction.clone().applyQuaternion(q).distanceTo(direction.applyQuaternion(snapped)) < 1e-10,
+    );
+  }
 });
 
 test("after snapping, horizontal movement yaws around the selected axis", () => {
@@ -67,7 +96,7 @@ test("after snapping, horizontal movement yaws around the selected axis", () => 
   assert.ok(state.camera.position.clone().sub(state.target).distanceTo(expected) < 1e-10);
 });
 
-test("the next drag keeps the snapped axis when another axis enters the band after leveling", () => {
+test("the next drag retains the snapped axis among other above-plane candidates", () => {
   const state = tiltedView(0, 0);
   const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(53 * 0.21, 53 * 0.37, 53 * 0.16));
   state.camera.position.copy(state.target).add(new THREE.Vector3(0, 0, 120).applyQuaternion(q));

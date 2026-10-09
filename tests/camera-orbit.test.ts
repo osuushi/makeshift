@@ -46,7 +46,11 @@ test("center drags yaw and pitch without tilting the horizon before release", ()
   assert.ok(Math.abs(upright.x) < 1e-10, "World up stays vertical while dragging");
   assert.ok(state.camera.position.x < state.target.x, "Horizontal motion yaws");
   assert.ok(state.camera.position.y < state.target.y, "Vertical motion pitches");
-  assert.ok(state.camera.quaternion.angleTo(levelOrientation(state)) < 1e-10);
+  const leveled = new THREE.Vector3(0, 0, 1).applyQuaternion(levelOrientation(state).invert());
+  assert.ok(
+    Math.abs(leveled.x) < 1e-10 && leveled.y > 0 && leveled.z > 0,
+    "Release replaces below-plane Y with above-plane Z",
+  );
 });
 test("two center drags turn the view through 180 degrees", () => {
   const state = view(),
@@ -100,7 +104,7 @@ test("release orientation is an exact signed canonical horizon, preserving view 
   }
 });
 
-test("a foreshortened vertical axis wins when its screen-top end is nearest", () => {
+test("a foreshortened vertical axis stays when the other upright candidate is below-plane", () => {
   const state = view();
   state.camera.position
     .copy(state.target)
