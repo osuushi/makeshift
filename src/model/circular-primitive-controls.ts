@@ -14,8 +14,9 @@ export type CircularPlacement = {
   radius: number;
   symmetric: boolean;
   source?: PlaneReferenceSource;
+  depth?: number;
 };
-type Support = { frame: PlaneFrame; source?: PlaneReferenceSource };
+type Support = { frame: PlaneFrame; source?: PlaneReferenceSource; depth?: number };
 export type CircularPrimitiveConfig = {
   id: CircularPrimitiveShape;
   label: string;
@@ -155,8 +156,9 @@ export class CircularPrimitiveControls {
       radius: this.gesture?.moved
         ? Math.hypot(tip.x - center.x, tip.y - center.y)
         : (this.gesture?.radius ?? cubeDefaultSize(this.editor.world, support.frame) / 2),
-      symmetric: this.symmetric,
+      symmetric: this.config.shape !== "drill" && this.symmetric,
       source: support.source,
+      depth: support.depth,
     };
   }
   private update = (): void => {

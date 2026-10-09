@@ -27,6 +27,18 @@ export async function cylinderPlacementRoute(page) {
   await page.mouse.move(a.x, a.y);
   await page.locator(".circular-primitive-dimension:visible").waitFor();
   assert.equal((await inspect(page)).document.sketches.length, 0);
+  const label = await page.locator(".circular-primitive-dimension:visible").textContent();
+  const diameter = Number(label.split(" ")[1]);
+  await page.mouse.click(a.x, a.y);
+  const clicked = await extrusion(page);
+  close(clicked.document.sketches[0].curves[0].radius, diameter / 2);
+  close(clicked.preview.bodies[0].volume, Math.PI * (diameter / 2) ** 2 * diameter);
+  await page.getByRole("button", { name: "Cancel extrusion", exact: true }).click();
+  await reset(page);
+  await page.getByRole("button", { name: "Top view", exact: true }).locator("polygon").dblclick();
+  await settled(page);
+  await chooseTool(page, "cylinder", "cylinder");
+  await page.mouse.move(a.x, a.y);
   await page.mouse.down();
   await page.mouse.move(b.x, b.y, { steps: 5 });
   await page.keyboard.down("Alt");
@@ -57,6 +69,18 @@ export async function cylinderPlacementRoute(page) {
   state = await inspect(page);
   assert.equal(state.document.bodies?.length ?? 0, 0);
   assert.equal(state.document.sketches[0].curves[0].kind, "circle");
+  await chooseTool(page, "redo", "redo");
+  state = await inspect(page);
+  const originalBody = state.document.bodies[0];
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await chooseTool(page, "transform", "transform");
+  await page.getByRole("button", { name: "Move body X", exact: true }).click();
+  await page.getByRole("textbox", { name: "Body translation X", exact: true }).fill("3");
+  await page.keyboard.press("Enter");
+  state = await inspect(page);
+  close(state.document.bodies[0].center[0], originalBody.center[0] + 3);
+  close(state.document.bodies[0].volume, originalBody.volume);
+  assert.equal(state.document.bodies[0].id, originalBody.id);
 
   await reset(page);
   await chooseTool(page, "cylinder", "cylinder");
@@ -77,5 +101,5 @@ await withUiRuntimes(
       `${name}: Cylinder pointer handoff, temporary editable extrusion, Undo and cancel passed`,
     );
   },
-  { allowed: ["electron"], timeout: 30000 },
+  { allowed: ["chromium", "webkit", "electron"], timeout: 30000 },
 );

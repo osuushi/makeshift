@@ -1,12 +1,23 @@
 import * as THREE from "three";
-import { worldPoint } from "../sketch/planes.js";
+import { type Vector, worldPoint } from "../sketch/planes.js";
 import type { World } from "../sketch/world.js";
 import type { CircularPlacement, CircularPrimitiveShape } from "./circular-primitive-controls.js";
+import { sphereAxisDirection } from "./sphere-primitive.js";
 import "./cube-preview.css";
 
 /** Lightweight presentation only; all accepted geometry comes from ordinary tools. */
 export class CircularPrimitivePreview {
   private solid: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+  private secondCone: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+  private axis = new THREE.Line(
+    new THREE.BufferGeometry(),
+    new THREE.LineBasicMaterial({
+      color: "#1675dc",
+      transparent: true,
+      opacity: 0.5,
+      depthTest: false,
+    }),
+  );
   private circle = new THREE.LineLoop(
     new THREE.BufferGeometry(),
     new THREE.LineBasicMaterial({ color: "#1675dc", depthTest: false }),
@@ -30,10 +41,12 @@ export class CircularPrimitivePreview {
         depthWrite: false,
       }),
     );
+    this.secondCone = new THREE.Mesh(geometry.clone(), this.solid.material);
+    this.axis.renderOrder = 100;
     this.circle.renderOrder = 100;
     this.label.className = "cube-dimension circular-primitive-dimension";
     overlay.append(this.label);
-    world.scene.add(this.circle, this.solid);
+    world.scene.add(this.circle, this.axis, this.solid, this.secondCone);
     this.hide();
   }
   show(placement: CircularPlacement): void {
@@ -46,13 +59,22 @@ export class CircularPrimitivePreview {
       new THREE.Matrix4().makeBasis(u, normal, v.clone().negate()),
     );
     this.solid.position.set(...worldPoint(plane, center));
-    if (this.shape !== "sphere")
-      this.solid.position.addScaledVector(
-        normal,
-        symmetric ? 0 : this.shape === "drill" ? -radius : radius,
-      );
-    this.solid.scale.setScalar(radius);
+    const drillDepth = placement.depth ?? radius * 2;
+    const offset = this.shape === "drill" ? -drillDepth / 2 : symmetric ? 0 : radius;
+    if (this.shape !== "sphere") this.solid.position.addScaledVector(normal, offset);
+    this.solid.scale.set(radius, this.shape === "drill" ? drillDepth / 2 : radius, radius);
+    this.secondCone.visible = this.shape === "cone" && symmetric && radius > 0;
+    if (this.secondCone.visible) {
+      this.solid.scale.y = radius / 2;
+      this.solid.position.addScaledVector(normal, radius / 2);
+      this.secondCone.quaternion.copy(this.solid.quaternion);
+      this.secondCone.position
+        .set(...worldPoint(plane, center))
+        .addScaledVector(normal, -radius / 2);
+      this.secondCone.scale.set(radius, -radius / 2, radius);
+    }
     this.solid.visible = radius > 0;
+    this.showAxis(placement);
     const points = Array.from({ length: 64 }, (_, i) => {
       const angle = (i * 2 * Math.PI) / 64;
       return new THREE.Vector3(
@@ -72,13 +94,36 @@ export class CircularPrimitivePreview {
     this.label.style.top = `${screen.y - (bounds?.top ?? 0)}px`;
     this.label.hidden = false;
   }
+  private showAxis({ plane, center, radius }: CircularPlacement): void {
+    this.axis.visible = this.shape === "sphere";
+    if (!this.axis.visible) return;
+    const view = this.world.target.clone().sub(this.world.camera.position).normalize();
+    const direction = sphereAxisDirection(plane, view.toArray() as Vector);
+    this.axis.geometry.dispose();
+    this.axis.geometry = new THREE.BufferGeometry().setFromPoints(
+      [-1, 1].map(
+        (sign) =>
+          new THREE.Vector3(
+            ...worldPoint(plane, {
+              x: center.x + sign * radius * direction.x,
+              y: center.y + sign * radius * direction.y,
+            }),
+          ),
+      ),
+    );
+  }
   hide(): void {
+    this.secondCone.visible = false;
+    this.axis.visible = false;
     this.circle.visible = false;
     this.solid.visible = false;
     this.label.hidden = true;
   }
   dispose(): void {
-    this.world.scene.remove(this.circle, this.solid);
+    this.world.scene.remove(this.circle, this.axis, this.solid, this.secondCone);
+    this.secondCone.geometry.dispose();
+    this.axis.geometry.dispose();
+    this.axis.material.dispose();
     this.solid.geometry.dispose();
     this.solid.material.dispose();
     this.circle.geometry.dispose();
