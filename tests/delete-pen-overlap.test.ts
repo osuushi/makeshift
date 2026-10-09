@@ -6,7 +6,7 @@ import { exportMesh } from "../src/model/export-mesh.js";
 import { curveIntersections } from "../src/sketch/curve-intersections.js";
 import type { SketchDocument } from "../src/sketch/document.js";
 import type { ModelRequest } from "../src/sketch/model-api.js";
-import { profilesFor } from "../src/sketch/profiles.js";
+import { profileAt, profilesFor } from "../src/sketch/profiles.js";
 
 const fixture = JSON.parse(readFileSync("tests/fixtures/delete-pen-overlap.json", "utf8")) as {
   document: SketchDocument;
@@ -16,8 +16,14 @@ const fixture = JSON.parse(readFileSync("tests/fixtures/delete-pen-overlap.json"
 test("stationary Pen curves intersect at their exact shared endpoint in either order", () => {
   const [, a, , b] = fixture.document.sketches[0].curves;
   assert.ok(a.kind === "bezier" && b.kind === "bezier");
-  assert.deepEqual(curveIntersections(a, b), [a.a]);
-  assert.deepEqual(curveIntersections(b, a), [a.a]);
+  for (const [first, second] of [
+    [a, b],
+    [{ ...a, c1: { x: 1.5, y: 3 } }, b],
+    [a, { ...b, c2: { x: 2.5, y: 1 } }],
+  ]) {
+    assert.deepEqual(curveIntersections(first, second), [a.a]);
+    assert.deepEqual(curveIntersections(second, first), [a.a]);
+  }
 });
 
 test("captured circle/Pen overlap deletes into a closed union, with history and extrusion", async () => {
@@ -30,6 +36,8 @@ test("captured circle/Pen overlap deletes into a closed union, with history and 
     const after = owner.view.data;
     const profiles = profilesFor(after.sketches[0]);
     assert.equal(profiles.length, 1);
+    for (const y of [-1e-8, 0, 1e-8])
+      assert.equal(profileAt(after.sketches[0], { x: -8, y })?.key, profiles[0].key);
     assert.ok(Math.abs(profiles[0].area - area) < 1e-6);
     assert.equal(after.sketches[0].curves.length, 4, "No microscopic endpoint remnant");
     await owner.call({ kind: "undo" });
