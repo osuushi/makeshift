@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import * as THREE from "three";
-import { restoreCamera } from "../src/model/camera-state.js";
+import { defaultCameraPosition, restoreCamera } from "../src/model/camera-state.js";
 import {
   alignCameraToPlane,
   applyCameraPose,
@@ -39,6 +39,16 @@ test("startup without a saved camera resets to balanced isometric projection", (
     return Math.hypot(projected.x, projected.y);
   });
   assert.ok(Math.max(...lengths) - Math.min(...lengths) < 1e-12);
+});
+
+test("isometric plane-entry ties retain the canonical in-plane up axis", () => {
+  const camera = new THREE.OrthographicCamera();
+  camera.position.set(...defaultCameraPosition);
+  camera.up.set(0, 0, 1);
+  const view = { camera, target: new THREE.Vector3(), height: 80 };
+  alignCameraToPlane(view, planes.XY);
+  assert.ok(camera.up.dot(new THREE.Vector3(...planes.XY.v)) > 0.999999);
+  assert.ok(camera.position.z > 0);
 });
 
 test("plane alignment chooses the closest axis-aligned side and roll", () => {
