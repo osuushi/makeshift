@@ -6,6 +6,23 @@ Cubic editing/projection (2026-09-16) supersedes any earlier spline exclusion.
 
 ### Curve modification and regions
 
+In 3D mode, Delete/Backspace on selected filled sketch regions trims their
+boundaries in one document edit. Only points inside selected regions may become
+unenclosed; every unselected enclosed region remains enclosed. Removing edges
+cannot enclose previously unenclosed points. Interior selections can therefore
+merge adjacent bounded regions instead of opening them. For two overlapping
+circles, deleting the overlap removes both internal arcs and leaves the union;
+deleting one outer crescent preserves the other circle, including the overlap;
+deleting that crescent together with the overlap leaves the opposite crescent.
+The operation derives adjacency from analytic arrangement spans, including hole
+boundaries, and opens selected components that touch the exterior while retaining
+their boundaries against unselected regions. Longer source curves split at those
+span limits; unrelated tails and construction geometry survive. Coincident
+ordinary curves trim together. Remnants use the existing Trim constraint/ID
+remapping and constraint-removal notice. Multi-sketch, whole-entity and solid
+topology selections share one atomic backend edit and Undo/Redo. Selecting a whole
+sketch still removes the sketch itself.
+
 Trim highlights the exact span to remove between intersections and commits its
 geometry/constraint changes together. Holding Shift ignores endpoint-only cuts
 from overlapping curves and follows unambiguous degree-two endpoint joins across
