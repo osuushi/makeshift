@@ -92,7 +92,13 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
 function settingsFocus(dialog: HTMLDialogElement): () => void {
   let opener: HTMLElement | null = null;
   dialog.addEventListener("close", () => {
-    if (opener?.isConnected) opener.focus();
+    // The close event can arrive after the user has focused another control.
+    // Restore only while focus still belongs to the closing dialog.
+    if (
+      opener?.isConnected &&
+      (document.activeElement === document.body || dialog.contains(document.activeElement))
+    )
+      opener.focus();
     opener = null;
   });
   return () => {
