@@ -134,6 +134,9 @@ void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMap
 void analyticEdge(std::ostream& out, const TopoDS_Edge& shape, const BRepAdaptor_Curve& curve) {
     const double a = curve.FirstParameter(), b = curve.LastParameter();
     out << ",\"curve\":";
+    // A cone apex can retain a degenerate circular edge in OCCT. It has no
+    // editable analytic curve; keep its topology without emitting radius zero.
+    if (BRep_Tool::Degenerated(shape)) { out << "null"; return; }
     if (const auto rim = circularRim(shape)) {
         const auto circle = *rim;
         out << "{\"kind\":\"circle\",\"center\":"; xyz(out, circle.Location().XYZ());

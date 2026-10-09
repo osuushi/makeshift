@@ -36,6 +36,11 @@ test("circular draft reaches an exact analytic apex in either direction and meas
         assert.equal(reply.error, undefined);
         const body = reply.view.candidate?.bodies?.[0];
         assert.ok(body);
+        for (const edge of body.edges) {
+          if (edge.curve?.kind === "circle") {
+            assert.ok(edge.curve.radius > 0, "Apex topology must not expose a zero-radius circle");
+          }
+        }
         close(body.volume, (Math.PI * 100 * 20) / 3);
         assert.equal(
           body.faces.length,
