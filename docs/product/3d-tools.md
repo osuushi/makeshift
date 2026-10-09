@@ -13,7 +13,7 @@ into thinking in sketches, regions and constructive solid geometry.
 
 ## Cube proof of concept
 
-Choose **Cube** in Tools. In Modeling, a centered square follows the pointer on
+Choose **Cube** in Tools. In Modeling, a square follows the pointer with one corner on
 the hovered visible construction plane or planar solid face, falling back to
 the current primary canonical plane. Its default side is a rounded decimal
 millimeter quantity: an integer times a power of ten, chosen near one eighth of
@@ -21,17 +21,19 @@ the viewport's shorter dimension by projected bounding extent. Orbit and zoom
 recompute the plane and size before placement; a held gesture keeps its plane and
 starting size fixed, including when dragging beyond the hovered support.
 
-Click to create the square sketch. Click and drag to create a rectangle centered
-on the press point; hold Shift to lock a square. A bottom hint advertises dragging,
+Click to create the square sketch. Click and drag from one corner to the opposite
+corner; hold Option to center the rectangle on the press point and extrude
+symmetrically about its plane. Option can change during hover or sizing; its state
+on release carries into Extrude. Hold Shift to lock a square. A bottom hint advertises dragging,
 and dimensions alongside the preview expose its size. This uses the ordinary
-rectangle footprint with a translucent light-green mesh showing its one-sided
+rectangle footprint with a translucent light-green mesh showing its
 extrusion during hover and sizing. The mesh has depth equal to the rectangle's
 minor dimension and creates no document geometry. The sketch uses the ordinary
 rectangle primitive: four segments, rectangle constraints and a convenience group.
 A fresh sketch keeps the new region independent of nearby existing profiles.
 
 On release, select that region and enter ordinary **Extrude**, prefilled with
-**Symmetric** disabled, **Union** selected even for intersecting material, and
+**Symmetric** matching Option on release, **Union** selected even for intersecting material, and
 depth equal to the rectangle's minor dimension.
 Cube mode ends here. A simple click followed by clicking away finishes a cube;
 dragging instead produces a rectangular prism. The regular extrusion arrow,

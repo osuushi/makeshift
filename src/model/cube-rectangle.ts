@@ -34,14 +34,27 @@ export function cubeDefaultSize(world: World, plane = cubePlane(world)): number 
   return Math.round(target / step) * step;
 }
 
-export function cubeRectangle(center: Point, tip: Point | null, size: number, square: boolean) {
-  let halfWidth = tip ? Math.abs(tip.x - center.x) : size / 2;
-  let halfHeight = tip ? Math.abs(tip.y - center.y) : size / 2;
-  if (square) halfWidth = halfHeight = Math.max(halfWidth, halfHeight);
+export function cubeRectangle(
+  anchor: Point,
+  tip: Point | null,
+  size: number,
+  square: boolean,
+  symmetric: boolean,
+) {
+  let dx = tip ? tip.x - anchor.x : size / (symmetric ? 2 : 1);
+  let dy = tip ? tip.y - anchor.y : size / (symmetric ? 2 : 1);
+  if (square) {
+    const extent = Math.max(Math.abs(dx), Math.abs(dy));
+    dx = (dx < 0 ? -1 : 1) * extent;
+    dy = (dy < 0 ? -1 : 1) * extent;
+  }
+  const other = { x: anchor.x + dx, y: anchor.y + dy };
+  const start = symmetric ? { x: anchor.x - dx, y: anchor.y - dy } : anchor;
   return {
-    a: { x: center.x - halfWidth, y: center.y - halfHeight },
-    b: { x: center.x + halfWidth, y: center.y + halfHeight },
-    width: 2 * halfWidth,
-    height: 2 * halfHeight,
+    a: { x: Math.min(start.x, other.x), y: Math.min(start.y, other.y) },
+    b: { x: Math.max(start.x, other.x), y: Math.max(start.y, other.y) },
+    width: Math.abs(other.x - start.x),
+    height: Math.abs(other.y - start.y),
+    symmetric,
   };
 }

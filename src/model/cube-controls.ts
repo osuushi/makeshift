@@ -10,7 +10,7 @@ import { CubePreview } from "./cube-preview.js";
 import { cubeDefaultSize, cubeHoverPlane, cubePlane, cubeRectangle } from "./cube-rectangle.js";
 
 const hint =
-  "Cube · Click to place a cube · Click and drag to draw a centered rectangle · Shift locks a square";
+  "Cube · Click to place a cube · Drag from a corner · Option centers and extrudes symmetrically · Shift locks a square";
 
 /** Cube owns only placement, then yields to ordinary sketch and extrusion primitives. */
 export class CubeControls {
@@ -22,18 +22,19 @@ export class CubeControls {
   private gesture: {
     id: number;
     screen: Point;
-    center: Point;
+    anchor: Point;
     plane: PlaneFrame;
     size: number;
     threshold: number;
     moved: boolean;
   } | null = null;
   private square = false;
+  private symmetric = false;
   private consumeClick = false;
   constructor(
     private editor: SketchEditor,
     overlay: HTMLElement,
-    private extrude: (depth: number) => boolean,
+    private extrude: (depth: number, symmetric: boolean) => boolean,
   ) {
     this.preview = new CubePreview(editor.world, overlay);
     this.unregister = toolCatalog(editor).register({
@@ -83,8 +84,9 @@ export class CubeControls {
       window.addEventListener(
         type,
         (event) => {
-          if (!this.lease || !this.gesture || event.key !== "Shift") return;
+          if (!this.lease || !["Shift", "Alt"].includes(event.key)) return;
           this.square = event.shiftKey;
+          this.symmetric = event.altKey;
           this.editor.refresh();
         },
         options,
@@ -117,6 +119,7 @@ export class CubeControls {
     editor.message = "";
     editor.notice = hint;
     this.pointer = null;
+    this.symmetric = false;
     this.consumeClick = false;
     editor.refresh();
     return true;
@@ -137,14 +140,15 @@ export class CubeControls {
       (this.pointer ? cubeHoverPlane(this.editor, this.pointer) : cubePlane(world));
     const point = this.pointer && world.pointAt(plane, this.pointer.x, this.pointer.y);
     if (!point) return null;
-    const center = this.gesture?.center ?? this.snap(point);
+    const anchor = this.gesture?.anchor ?? this.snap(point);
     return {
       plane,
       ...cubeRectangle(
-        center,
+        anchor,
         this.gesture?.moved ? this.snap(point) : null,
         this.gesture?.size ?? cubeDefaultSize(world, plane),
         this.square,
+        this.symmetric,
       ),
     };
   }
@@ -173,10 +177,11 @@ export class CubeControls {
     world.canvas.focus();
     this.pointer = { x: event.clientX, y: event.clientY };
     this.square = event.shiftKey;
+    this.symmetric = event.altKey;
     this.gesture = {
       id: event.pointerId,
       screen: this.pointer,
-      center: this.snap(point),
+      anchor: this.snap(point),
       plane,
       size: cubeDefaultSize(world, plane),
       threshold: pointerDragThreshold(event),
@@ -190,6 +195,7 @@ export class CubeControls {
     if (this.gesture && this.gesture.id !== event.pointerId) return;
     this.pointer = { x: event.clientX, y: event.clientY };
     this.square = event.shiftKey;
+    this.symmetric = event.altKey;
     if (this.gesture) {
       event.stopImmediatePropagation();
       this.gesture.moved ||=
@@ -236,7 +242,7 @@ export class CubeControls {
     }
     this.editor.modeling.targets = [{ kind: "profile", sketch: sketch.id, profile }];
     this.editor.notice = "Extrude · Drag the arrow or edit the depth · Click away to finish";
-    if (!this.extrude(Math.min(bounds.width, bounds.height)))
+    if (!this.extrude(Math.min(bounds.width, bounds.height), bounds.symmetric))
       this.editor.message = "Select the rectangle region to extrude";
     this.editor.refresh();
   }

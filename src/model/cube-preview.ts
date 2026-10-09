@@ -44,7 +44,7 @@ export class CubePreview {
     this.solid.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(u, v, normal));
     this.solid.position
       .set(...worldPoint(plane, { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }))
-      .addScaledVector(normal, depth / 2);
+      .addScaledVector(normal, rectangle.symmetric ? 0 : depth / 2);
     this.solid.scale.set(width, height, depth);
     this.solid.visible = depth > 0;
     const corners = [a, { x: b.x, y: a.y }, b, { x: a.x, y: b.y }];

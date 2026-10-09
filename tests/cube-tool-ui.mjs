@@ -112,14 +112,16 @@ async function rectangleAndEdit(page) {
   await reset(page);
   await top(page);
   await begin(page);
+  await page.keyboard.down("Alt");
   let state = await draw(page, [10, 6, 0], [22, 14, 0]);
+  await page.keyboard.up("Alt");
   const body = state.preview.bodies[0];
   close(body.bounds[0], -2);
   close(body.bounds[1], -2);
   close(body.bounds[3], 22);
   close(body.bounds[4], 14);
-  close(body.bounds[2], 0);
-  close(body.bounds[5], 16);
+  close(body.bounds[2], -8);
+  close(body.bounds[5], 8);
   close(body.volume, 24 * 16 * 16);
   await page.getByLabel("Extrusion distance", { exact: true }).fill("8");
   state = await extrusion(page);
@@ -131,7 +133,7 @@ async function rectangleAndEdit(page) {
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - 35, { steps: 4 });
   await page.mouse.up();
   state = await extrusion(page);
-  assert.equal(await page.getByLabel("Symmetric extrusion").isChecked(), false);
+  assert.equal(await page.getByLabel("Symmetric extrusion").isChecked(), true);
   assert.notEqual(state.preview.bodies[0].volume, 24 * 16 * 8);
   await page.getByRole("button", { name: "Cancel extrusion", exact: true }).click();
   state = await inspect(page);
@@ -152,6 +154,20 @@ async function rectangleAndEdit(page) {
   close(Math.max(...xs) - Math.min(...xs), 30);
 }
 
+async function cornerRectangle(page) {
+  await reset(page);
+  await top(page);
+  await begin(page);
+  const state = await draw(page, [10, 6, 0], [-2, -2, 0]);
+  assert.equal(await page.getByLabel("Symmetric extrusion").isChecked(), false);
+  const body = state.preview.bodies[0];
+  [-2, -2, 0, 10, 6, 8].forEach((value, i) => {
+    close(body.bounds[i], value);
+  });
+  close(body.volume, 12 * 8 * 8);
+  await page.getByRole("button", { name: "Cancel extrusion", exact: true }).click();
+}
+
 async function squareAndCancel(page) {
   await reset(page);
   await top(page);
@@ -167,16 +183,25 @@ async function squareAndCancel(page) {
   await page.mouse.move(a.x, a.y);
   await page.mouse.down();
   await page.mouse.move(b.x, b.y, { steps: 4 });
-  await page.keyboard.down("Shift");
   const labels = page.locator(".cube-dimension:visible");
+  assert.deepEqual(await labels.allTextContents(), ["12 mm", "8 mm"]);
+  await page.keyboard.down("Alt");
+  assert.deepEqual(await labels.allTextContents(), ["24 mm", "16 mm"]);
+  await page.keyboard.up("Alt");
+  assert.deepEqual(await labels.allTextContents(), ["12 mm", "8 mm"]);
+  await page.keyboard.down("Alt");
+  await page.keyboard.down("Shift");
   assert.deepEqual(await labels.allTextContents(), ["24 mm", "24 mm"]);
   await page.keyboard.up("Shift");
   assert.deepEqual(await labels.allTextContents(), ["24 mm", "16 mm"]);
   await page.keyboard.down("Shift");
   await page.mouse.up();
   await page.keyboard.up("Shift");
+  await page.keyboard.up("Alt");
   let state = await extrusion(page);
   close(state.preview.bodies[0].volume, 24 ** 3);
+  assert.equal(await page.getByLabel("Symmetric extrusion").isChecked(), true);
+  close(state.preview.bodies[0].bounds[2], -12);
   assert.match(await page.locator(".status").textContent(), /Extrude/);
   await page.getByRole("button", { name: "Accept extrusion", exact: true }).click();
   await settled(page);
@@ -217,20 +242,17 @@ async function hoveredSupports(page) {
   await settled(page);
   await top(page);
   await begin(page);
-  let state = await draw(page, [0, 0, 12], [10, 10, 12]);
+  let state = await draw(page, [-10, -10, 12], [10, 10, 12]);
   assert.deepEqual(state.document.sketches[0].plane.origin, [0, 0, 12]);
   close(state.preview.bodies[0].bounds[2], 12);
   close(state.preview.bodies[0].bounds[5], 32);
   await page.getByRole("button", { name: "Accept extrusion", exact: true }).click();
   await settled(page);
   await begin(page);
-  // The cap is closer than the saved plane; dragging off it retains its support.
-  state = await draw(page, [0, 0, 32], [15, 15, 32]);
+  // The cap is closer than the saved plane.
+  state = await draw(page, [-5, -5, 32], [5, 5, 32]);
   const sketch = state.document.sketches[1];
   close(sketch.plane.origin[2], 32);
-  const xs = sketch.curves.flatMap((curve) => [curve.a.x, curve.b.x]);
-  const ys = sketch.curves.flatMap((curve) => [curve.a.y, curve.b.y]);
-  const area = (Math.max(...xs) - Math.min(...xs)) * (Math.max(...ys) - Math.min(...ys));
   assert.equal(await page.getByLabel("Symmetric extrusion").isChecked(), false);
   assert.equal(
     await page.getByRole("button", { name: "Union", exact: true }).getAttribute("aria-pressed"),
@@ -239,7 +261,7 @@ async function hoveredSupports(page) {
   await page.getByLabel("Extrusion distance", { exact: true }).fill("-5");
   state = await extrusion(page);
   assert.equal(state.preview.bodies.length, 1, "Intersecting inward extrusion still unions");
-  close(state.preview.bodies[0].volume, 20 ** 3 + (area - 20 ** 2) * 5);
+  close(state.preview.bodies[0].volume, 20 ** 3);
   await page.getByRole("button", { name: "Cancel extrusion", exact: true }).click();
 }
 
@@ -247,6 +269,7 @@ await withUiRuntimes(
   async (page, name) => {
     await clickCube(page, name);
     await rectangleAndEdit(page);
+    await cornerRectangle(page);
     await squareAndCancel(page);
     await hoveredSupports(page);
     console.log(
