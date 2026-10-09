@@ -53,6 +53,9 @@ workspace exit. It changes no accepted geometry, selection identity or Undo.
 
 ### Orthographic camera depth
 
+New views start in a balanced isometric orientation from +X, −Y, +Z, with
+equal foreshortening of all three world axes and world Z upright.
+
 Zoom changes the orthographic view size. Before rendering and queued navigation
 picking, place the finite camera behind the bounds of visible document/preview
 geometry, with a small depth margin, and extend the far limit when necessary.

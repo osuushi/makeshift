@@ -103,7 +103,7 @@ export class World {
     readonly overlay: HTMLElement,
   ) {
     this.scene.background = new THREE.Color("#f8f9fb");
-    this.camera.position.set(55, -70, 65);
+    this.camera.position.set(65, -65, 65);
     this.camera.up.set(0, 0, 1);
     this.canvas.setAttribute("aria-label", "Modeling viewport");
     this.canvas.tabIndex = 0;
