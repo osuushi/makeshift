@@ -5,8 +5,10 @@ import { navigationInterruptionRoute } from "./ui-navigation-interruption.mjs";
 import { navigationOrderRoute } from "./ui-navigation-order.mjs";
 import { navigationTailRoute } from "./ui-navigation-tail.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
+import { sketchEntryRoute } from "./ui-sketch-entry.mjs";
 
 const routes = {
+  entry: sketchEntryRoute,
   tail: navigationTailRoute,
   inputs: navigationInputRoute,
   order: navigationOrderRoute,
