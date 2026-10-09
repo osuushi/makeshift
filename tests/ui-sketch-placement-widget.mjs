@@ -64,10 +64,7 @@ export async function sketchPlacementWidgetRoute(page, name) {
   const origin = await center(anchor);
   const rotation = await center(page.getByRole("button", { name: "Rotate sketch Z", exact: true }));
   await placementRotationSnapping(page, rotation, origin);
-  await gesture(page, rotation, {
-    x: origin.x + rotation.y - origin.y,
-    y: origin.y - rotation.x + origin.x,
-  });
+  await quarterRotation(page, anchor);
   const rotated = (await inspect(page)).document.sketches[0];
   close(rotated.plane.origin[0], -10);
   close(rotated.plane.origin[1], 5);
@@ -94,6 +91,22 @@ export async function sketchPlacementWidgetRoute(page, name) {
   console.log(
     `${name}: whole-sketch widget, numeric/pointer placement, custom anchor rotation, invalid cancellation, history and re-edit passed`,
   );
+}
+
+async function quarterRotation(page, anchor) {
+  const handle = page.getByRole("button", { name: "Rotate sketch Z", exact: true });
+  await handle.hover();
+  const from = await center(handle),
+    pivot = await center(anchor);
+  const offset = await handle.evaluate((element) => {
+    const values = getComputedStyle(element).translate.split(" ").map(Number.parseFloat);
+    return { x: values[0] || 0, y: values[1] || 0 };
+  });
+  const origin = { x: pivot.x + offset.x, y: pivot.y + offset.y };
+  await gesture(page, from, {
+    x: origin.x + from.y - origin.y,
+    y: origin.y - from.x + origin.x,
+  });
 }
 
 async function anchorChecks(page, anchor) {
