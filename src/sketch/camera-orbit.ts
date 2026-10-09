@@ -52,7 +52,7 @@ export class SmoothedTurntable {
       offset: view.camera.position.clone().sub(pivot),
       targetOffset: view.target.clone().sub(pivot),
       pivot: pivot.clone(),
-      upAxis: levelAxis(orientation).axis,
+      upAxis: levelAxis(orientation, true).axis,
       roll,
       orbitPivot: orbitPivot.clone(),
       rollPivot: rollPivot?.clone() ?? null,
@@ -107,12 +107,17 @@ function pointerAngle(from: OrbitPointer, to: OrbitPointer, center: OrbitPointer
 
 // With radians, a half-length projection costs as much as about 24 degrees of roll.
 const foreshorteningWeight = 0.25;
+const verticalTolerance = THREE.MathUtils.degToRad(20);
 
-function levelAxis(orientation: THREE.Quaternion): { axis: THREE.Vector3; angle: number } {
+function levelAxis(
+  orientation: THREE.Quaternion,
+  preferLeveled = false,
+): { axis: THREE.Vector3; angle: number } {
   const inverse = orientation.clone().invert();
   let angle = 0;
   let axis = new THREE.Vector3(0, 0, 1);
   let bestScore = Infinity;
+  let nearestDepth = -Infinity;
   for (const candidateAxis of [
     new THREE.Vector3(1, 0, 0),
     new THREE.Vector3(0, 1, 0),
@@ -120,21 +125,34 @@ function levelAxis(orientation: THREE.Quaternion): { axis: THREE.Vector3; angle:
   ]) {
     const projected = candidateAxis.clone().applyQuaternion(inverse);
     const length = Math.hypot(projected.x, projected.y);
+    if (length < 1e-12) continue;
     let candidate = Math.atan2(-projected.x, projected.y);
     if (candidate > Math.PI / 2) candidate -= Math.PI;
     if (candidate < -Math.PI / 2) candidate += Math.PI;
-    // log(0) naturally gives infinite cost for an exactly end-on axis.
+    // Preserve the previous roll/foreshortening balance when no axis qualifies.
     const score = candidate * candidate - foreshorteningWeight * Math.log(length);
-    if (score < bestScore) {
+    // Camera-local +Z points toward the viewer. Compare the signed, screen-top
+    // end of each unit axis, including negative world axes in inverted views.
+    const sign = projected.y < 0 ? -1 : 1;
+    const depth = projected.z * sign;
+    const eligible = Math.abs(candidate) <= (preferLeveled ? 1e-10 : verticalTolerance + 1e-12);
+    if (
+      (eligible && depth > nearestDepth + 1e-12) ||
+      (nearestDepth === -Infinity && !eligible && score < bestScore)
+    ) {
+      if (eligible) nearestDepth = depth;
       bestScore = score;
       angle = candidate;
-      axis = candidateAxis.multiplyScalar(projected.y < 0 ? -1 : 1);
+      axis = candidateAxis.multiplyScalar(sign);
     }
   }
+  // Starting the next drag keeps the snapped axis; rolling may have brought a
+  // different, nearer axis into the 20° band. Unleveled views use the release rule.
+  if (preferLeveled && nearestDepth === -Infinity) return levelAxis(orientation);
   return { axis, angle };
 }
 
-/** Balance roll distance against foreshortening, then level the winning axis exactly. */
+/** Prefer the nearest screen-top axis within 20° of vertical, then level it exactly. */
 export function levelOrientation(view: OrbitView): THREE.Quaternion {
   view.camera.lookAt(view.target);
   view.camera.updateMatrixWorld();

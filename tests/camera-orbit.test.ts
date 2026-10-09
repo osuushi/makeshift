@@ -100,7 +100,7 @@ test("release orientation is an exact signed canonical horizon, preserving view 
   }
 });
 
-test("a foreshortened vertical axis loses to a clear horizon requiring some roll", () => {
+test("a foreshortened vertical axis wins when its screen-top end is nearest", () => {
   const state = view();
   state.camera.position
     .copy(state.target)
@@ -109,12 +109,10 @@ test("a foreshortened vertical axis loses to a clear horizon requiring some roll
   state.camera.lookAt(state.target);
   const before = state.camera.quaternion.clone();
   const after = levelOrientation(state);
-  const projectedZ = new THREE.Vector3(0, 0, 1).applyQuaternion(after.clone().invert());
-  assert.ok(
-    before.angleTo(after) > 0.1,
-    "Prefer a visible axis even though Y already costs zero roll",
-  );
-  assert.ok(Math.abs(projectedZ.x) < 1e-10, "Z becomes exactly vertical");
+  const projectedY = new THREE.Vector3(0, 1, 0).applyQuaternion(after.clone().invert());
+  for (const component of ["x", "y", "z", "w"] as const)
+    assert.ok(Math.abs(before[component] - after[component]) < 1e-10);
+  assert.ok(Math.abs(projectedY.x) < 1e-10, "Y stays exactly vertical");
 });
 test("a clear already-level horizon stays put, including an exactly end-on other axis", () => {
   const state = view();

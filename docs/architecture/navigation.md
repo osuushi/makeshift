@@ -93,7 +93,7 @@ dimension. A press stays pending until movement exceeds the selection drag
 threshold; a completed Command-click toggles selection without exiting the sketch.
 Escape or window blur cancels a pending press. All press locations use the same
 turntable: horizontal motion yaws around the signed world X/Y/Z axis selected by
-the release-leveling score, and vertical motion pitches around the starting
+the release-leveling rule, and vertical motion pitches around the starting
 camera-right axis. Its horizon stays level during small drags from an already
 level view. There is no outer ring or position-based change of rotation mode.
 The pointer-down point, camera pose, upright axis and acquired pivot stay fixed
@@ -113,11 +113,16 @@ the original acquired geometry pivot. Ending with roll runs the same release
 leveling as ordinary orbit, restoring a canonical world axis to screen vertical.
 Option modifies navigation only, leaving geometry tools' symmetric sizing intact.
 
-On orbit/roll completion, score each world X/Y/Z axis by `rollRadians² - 0.25 × ln(projectedLength)`.
+On orbit/roll completion, consider world X/Y/Z axes whose screen projection is
+within 20° of vertical. Orient each candidate toward screen top and choose the
+one whose unit-length top end is nearest the camera (largest signed view-depth
+component). An exactly end-on axis is ineligible. This same signed axis supplies
+yaw for the next orbit. Depth ties retain X/Y/Z order.
+If none qualify, score each world X/Y/Z axis by `rollRadians² - 0.25 × ln(projectedLength)`.
 Projection length is that of a unit axis on screen. This smoothly penalizes
-foreshortening, with infinite cost only at exactly end-on; no eligibility threshold.
+foreshortening, with infinite cost only at exactly end-on.
 The weight makes a half-length projection cost roughly as much as 24° of roll.
-Choose the lowest score and put either sign of that axis exactly vertical.
+Choose the lowest fallback score. Put the winning signed axis exactly vertical.
 Discrete axis selection still has decision boundaries; orientations are not blended.
 Animate over 280 ms with cubic ease-out, or immediately with reduced motion. Viewing direction, pivot, distance
 and zoom stay fixed; only roll changes. New navigation interrupts the animation.
