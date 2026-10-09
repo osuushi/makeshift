@@ -1,6 +1,6 @@
 #include "blends.h"
 #include <BRepAdaptor_Surface.hxx>
-#include <BRepLib.hxx>
+#include "face-chains.h"
 #include <TopExp.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
@@ -53,7 +53,7 @@ std::vector<BlendFace> recognizeBlends(const TopoDS_Shape& shape) {
             for (TopTools_ListIteratorOfListOfShape i(neighbors); i.More(); i.Next()) {
                 if (i.Value().IsSame(face)) continue;
                 const auto other = TopoDS::Face(i.Value());
-                if (BRepLib::ContinuityOfFaces(TopoDS::Edge(adjacency.FindKey(e)), face, other, 1e-5) < GeomAbs_G1) continue;
+                if (faceContinuity(TopoDS::Edge(adjacency.FindKey(e)), face, other) < GeomAbs_G1) continue;
                 if (std::none_of(blend.supports.begin(), blend.supports.end(), [&](const TopoDS_Face& s) { return s.IsSame(other); }))
                     blend.supports.push_back(other);
             }

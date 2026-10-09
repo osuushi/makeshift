@@ -34,7 +34,10 @@ export class NativeCalculator<Input, Output> {
       clearTimeout(this.timer);
       try {
         const reply = JSON.parse(line) as Output & { error?: string };
-        if (reply.error) pending.reject(new Error(reply.error, { cause: reply }));
+        if (typeof reply.error === "string")
+          pending.reject(
+            new Error(reply.error || `${this.name} calculation failed`, { cause: reply }),
+          );
         else pending.resolve(reply);
       } catch {
         pending.reject(new Error("Invalid native calculator reply"));

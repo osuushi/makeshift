@@ -1234,3 +1234,19 @@ Save/Open and final cavity subtraction after extending the exact construction to
 multi-span B-spline rims. Boundary correspondence, solid validity and persistence
 checks remain required; this construction alone promises neither tangent continuity
 nor a valid result for every edit.
+
+## Stationary endpoints and continuity metadata
+
+Source observation at configured OCCT commit
+`a016080bf6738d6aeae020badee4e888ad1540a5`:
+[`BRepLib::ContinuityOfFaces`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepLib/BRepLib.cxx#L2160-L2170)
+can ask for a normal after comparing first derivatives, including stationary
+parameters. [`LProp_SLProps::Normal`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/LProp/LProp_SLProps.gxx#L341-L348)
+throws `LProp_NotDefined` when that normal is undefined.
+
+Makeshift policy: optional tangent grouping and fillet recognition do not infer
+smoothness across such an adjacency. Treat it as C0 for metadata only; retain
+the exact solid and all geometry and presentation checks. This does not promise
+tangent propagation across a singular parameterization. The captured Pen
+extrusion regression exercises stationary endpoint controls next to an arc;
+ordinary smooth joins remain covered by existing face-chain/fillet acceptance.
