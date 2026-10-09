@@ -4,6 +4,7 @@ import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
 import { bodyMoveRoute } from "./ui-body-move.mjs";
+import { bodyRotationEntryRoute } from "./ui-body-rotation-entry.mjs";
 import { moveFieldsRoute } from "./ui-move-fields.mjs";
 import { moveToolRoute } from "./ui-move-tool.mjs";
 import { moveWidgetRoute } from "./ui-move-widget.mjs";
@@ -50,6 +51,8 @@ try {
     await page.screenshot({ path: `.cache/sketch-review/${name}-move-widget-sketch.png` });
     await bodyMoveRoute(page, name);
     await moveWidgetRoute(page, name);
+    await bodyRotationEntryRoute(page, name);
+    await bodyRotationEntryRoute(page, name, "pointer release");
   }
 } catch (error) {
   await page?.screenshot({ path: `.cache/sketch-review/${name}-move-widget-failure.png` });

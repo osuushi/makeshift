@@ -2,6 +2,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import { replayPointerModifiers } from "../sketch/modifier-pointer.js";
 import { snapRotation } from "../sketch/rotation-snap.js";
+import { numericFocus } from "../tools/menu-focus.js";
 import type { dragFrame } from "./body-drag.js";
 export interface GizmoPointer {
   id: number;
@@ -25,7 +26,7 @@ interface GizmoActions {
 export class GizmoInputs {
   constructor(
     private editor: SketchEditor,
-    input: HTMLInputElement,
+    private input: HTMLInputElement,
     signal: AbortSignal,
     private actions: GizmoActions,
   ) {
@@ -65,6 +66,8 @@ export class GizmoInputs {
     window.addEventListener("pointercancel", () => void actions.cancel(), options);
   }
   private move = (event: PointerEvent): void => {
+    // Tab hands the held gesture to exact numeric entry, including at release.
+    if (numericFocus(this.input)) return;
     const gesture = this.actions.gesture();
     if (!gesture || gesture.pointer.id !== event.pointerId) return;
     const { pointer, rotate } = gesture;

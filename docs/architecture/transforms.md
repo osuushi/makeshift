@@ -56,6 +56,10 @@ handles snap their gesture angle. Numeric entry remains exact, and Option retain
 its Move duplication behavior. Move arrows snap displacement to the current grid
 spacing; Shift uses one tenth of that spacing while bypassing geometry attraction.
 The grid toggle still controls translation grid snapping.
+Tabbing to a body or topology Move field during a held gesture gives numeric entry
+ownership: typing updates the preview, and pointer travel or modifier changes cannot
+replace that value. Enter accepts the displayed numeric value; whole-body movement
+also accepts it on pointer release. Topology movement retains its combined preview.
 
 ### Option-Move duplication (founder-directed, 2026-09-21)
 
