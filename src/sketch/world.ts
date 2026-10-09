@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { type CameraState, restoreCamera } from "../model/camera-state.js";
+import { type CameraState, defaultCameraPosition, restoreCamera } from "../model/camera-state.js";
 import { canonicalPlanes } from "../preferences/canonical-planes.js";
 import { alignCameraToPlane, type CameraFraming, planeCameraPose } from "./camera-motion.js";
 import {
@@ -103,7 +103,7 @@ export class World {
     readonly overlay: HTMLElement,
   ) {
     this.scene.background = new THREE.Color("#f8f9fb");
-    this.camera.position.set(65, -65, 65);
+    this.camera.position.set(...defaultCameraPosition);
     this.camera.up.set(0, 0, 1);
     this.canvas.setAttribute("aria-label", "Modeling viewport");
     this.canvas.tabIndex = 0;
