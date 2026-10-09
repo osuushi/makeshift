@@ -1,6 +1,15 @@
-import type { Point } from "../sketch/planes.js";
+import type { SketchEditor } from "../sketch/editor.js";
+import type { PlaneFrame, Point } from "../sketch/planes.js";
 import { planeIds, planes } from "../sketch/planes.js";
 import type { World } from "../sketch/world.js";
+import { pickPlaneInterior } from "./plane-interior-pick.js";
+
+export function cubeHoverPlane(editor: SketchEditor, screen: Point): PlaneFrame {
+  return (
+    pickPlaneInterior(editor, screen, (frame) => !Object.values(planes).includes(frame))?.frame ??
+    cubePlane(editor.world)
+  );
+}
 
 export function cubePlane(world: World) {
   return planes[
@@ -9,8 +18,7 @@ export function cubePlane(world: World) {
 }
 
 /** Nearest one-significant-digit millimeter size to a projected viewport fraction. */
-export function cubeDefaultSize(world: World): number {
-  const plane = cubePlane(world);
+export function cubeDefaultSize(world: World, plane = cubePlane(world)): number {
   const points = [
     { x: -0.5, y: -0.5 },
     { x: 0.5, y: -0.5 },

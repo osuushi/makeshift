@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { openDocument, saveDocument } from "./native-documents.mjs";
 import { project } from "./ui-blend-edit.mjs";
 import { inspect, reset, settled } from "./ui-helpers.mjs";
+import { pickPlane } from "./ui-plane-targets.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -41,6 +42,13 @@ async function draw(page, center, tip) {
 
 async function clickCube(page, name) {
   await reset(page);
+  await begin(page);
+  const hover = await project(page, [0, 0, 0]);
+  await page.mouse.move(hover.x, hover.y);
+  await page.locator(".cube-dimension:visible").first().waitFor();
+  await page.screenshot({ path: `.cache/sketch-review/${name}-cube-mesh.png` });
+  assert.equal((await inspect(page)).document.sketches.length, 0);
+  await page.keyboard.press("Escape");
   await top(page);
   await begin(page);
   const center = await project(page, [15, 10, 0]);
@@ -66,9 +74,9 @@ async function clickCube(page, name) {
   assert.equal(state.document.sketches[0].curves.length, 4);
   assert.equal(state.document.sketches[0].groups[0].kind, "rectangle");
   assert.equal(state.document.bodies?.length ?? 0, 0, "Cube hands off to temporary Extrude");
-  assert.equal(await page.getByLabel("Symmetric extrusion").isChecked(), true);
+  assert.equal(await page.getByLabel("Symmetric extrusion").isChecked(), false);
   close(state.preview.bodies[0].volume, zoomSize ** 3);
-  close(state.preview.bodies[0].bounds[2], -zoomSize / 2);
+  close(state.preview.bodies[0].bounds[2], 0);
   close(
     Number(await page.getByLabel("Extrusion distance", { exact: true }).inputValue()),
     zoomSize,
@@ -110,8 +118,8 @@ async function rectangleAndEdit(page) {
   close(body.bounds[1], -2);
   close(body.bounds[3], 22);
   close(body.bounds[4], 14);
-  close(body.bounds[2], -8);
-  close(body.bounds[5], 8);
+  close(body.bounds[2], 0);
+  close(body.bounds[5], 16);
   close(body.volume, 24 * 16 * 16);
   await page.getByLabel("Extrusion distance", { exact: true }).fill("8");
   state = await extrusion(page);
@@ -123,7 +131,7 @@ async function rectangleAndEdit(page) {
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - 35, { steps: 4 });
   await page.mouse.up();
   state = await extrusion(page);
-  assert.equal(await page.getByLabel("Symmetric extrusion").isChecked(), true);
+  assert.equal(await page.getByLabel("Symmetric extrusion").isChecked(), false);
   assert.notEqual(state.preview.bodies[0].volume, 24 * 16 * 8);
   await page.getByRole("button", { name: "Cancel extrusion", exact: true }).click();
   state = await inspect(page);
@@ -195,7 +203,43 @@ async function squareAndCancel(page) {
   assert.deepEqual(state.document.sketches[0].plane.u, [1, 0, 0]);
   assert.deepEqual(state.document.sketches[0].plane.v, [0, 0, 1]);
   const body = state.preview.bodies[0];
-  close(body.bounds[1], -body.bounds[4]);
+  close(body.bounds[4], 0);
+  await page.getByRole("button", { name: "Cancel extrusion", exact: true }).click();
+}
+
+async function hoveredSupports(page) {
+  await reset(page);
+  await chooseTool(page, "construction plane", "construction-plane");
+  await pickPlane(page, "XY");
+  await page.getByRole("button", { name: "Move plane Z", exact: true }).click();
+  await page.getByRole("textbox", { name: "Plane translation Z", exact: true }).fill("12");
+  await page.keyboard.press("Enter");
+  await settled(page);
+  await top(page);
+  await begin(page);
+  let state = await draw(page, [0, 0, 12], [10, 10, 12]);
+  assert.deepEqual(state.document.sketches[0].plane.origin, [0, 0, 12]);
+  close(state.preview.bodies[0].bounds[2], 12);
+  close(state.preview.bodies[0].bounds[5], 32);
+  await page.getByRole("button", { name: "Accept extrusion", exact: true }).click();
+  await settled(page);
+  await begin(page);
+  // The cap is closer than the saved plane; dragging off it retains its support.
+  state = await draw(page, [0, 0, 32], [15, 15, 32]);
+  const sketch = state.document.sketches[1];
+  close(sketch.plane.origin[2], 32);
+  const xs = sketch.curves.flatMap((curve) => [curve.a.x, curve.b.x]);
+  const ys = sketch.curves.flatMap((curve) => [curve.a.y, curve.b.y]);
+  const area = (Math.max(...xs) - Math.min(...xs)) * (Math.max(...ys) - Math.min(...ys));
+  assert.equal(await page.getByLabel("Symmetric extrusion").isChecked(), false);
+  assert.equal(
+    await page.getByRole("button", { name: "Union", exact: true }).getAttribute("aria-pressed"),
+    "true",
+  );
+  await page.getByLabel("Extrusion distance", { exact: true }).fill("-5");
+  state = await extrusion(page);
+  assert.equal(state.preview.bodies.length, 1, "Intersecting inward extrusion still unions");
+  close(state.preview.bodies[0].volume, 20 ** 3 + (area - 20 ** 2) * 5);
   await page.getByRole("button", { name: "Cancel extrusion", exact: true }).click();
 }
 
@@ -204,6 +248,7 @@ await withUiRuntimes(
     await clickCube(page, name);
     await rectangleAndEdit(page);
     await squareAndCancel(page);
+    await hoveredSupports(page);
     console.log(
       `${name}: Cube click/zoom, centered rectangle, Shift, editable Extrude/source, click-off, cancel, history and primary-plane changes passed`,
     );

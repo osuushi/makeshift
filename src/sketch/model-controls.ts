@@ -29,7 +29,9 @@ export class ModelControls {
     this.revolve = new RevolveControls(editor, overlay);
     this.loft = new LoftControls(editor, overlay);
     this.extrusion = new ExtrudeControls(editor, overlay);
-    this.cube = new CubeControls(editor, overlay, (depth) => this.extrusion.start(depth, true));
+    this.cube = new CubeControls(editor, overlay, (depth) =>
+      this.extrusion.start(depth, false, "union"),
+    );
     this.selectionDrag = new ModelSelectionDrag(
       editor,
       overlay,

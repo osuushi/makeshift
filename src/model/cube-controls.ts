@@ -7,7 +7,7 @@ import { pointerDragThreshold } from "../sketch/pointer-intent.js";
 import { profilesFor } from "../sketch/profiles.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { CubePreview } from "./cube-preview.js";
-import { cubeDefaultSize, cubePlane, cubeRectangle } from "./cube-rectangle.js";
+import { cubeDefaultSize, cubeHoverPlane, cubePlane, cubeRectangle } from "./cube-rectangle.js";
 
 const hint =
   "Cube · Click to place a cube · Click and drag to draw a centered rectangle · Shift locks a square";
@@ -41,7 +41,7 @@ export class CubeControls {
       label: "Cube",
       category: "Solid",
       aliases: ["box", "rectangular prism", "3d primitive"],
-      description: "Place a rectangle sketch, then adjust its symmetric extrusion",
+      description: "Place a rectangle sketch, then adjust its extrusion",
       reason: () => null,
       run: () => this.begin(),
     });
@@ -132,7 +132,9 @@ export class CubeControls {
   }
   private bounds() {
     const world = this.editor.world;
-    const plane = this.gesture?.plane ?? cubePlane(world);
+    const plane =
+      this.gesture?.plane ??
+      (this.pointer ? cubeHoverPlane(this.editor, this.pointer) : cubePlane(world));
     const point = this.pointer && world.pointAt(plane, this.pointer.x, this.pointer.y);
     if (!point) return null;
     const center = this.gesture?.center ?? this.snap(point);
@@ -141,7 +143,7 @@ export class CubeControls {
       ...cubeRectangle(
         center,
         this.gesture?.moved ? this.snap(point) : null,
-        this.gesture?.size ?? cubeDefaultSize(world),
+        this.gesture?.size ?? cubeDefaultSize(world, plane),
         this.square,
       ),
     };
@@ -164,7 +166,7 @@ export class CubeControls {
     event.preventDefault();
     event.stopImmediatePropagation();
     const world = this.editor.world;
-    const plane = cubePlane(world);
+    const plane = cubeHoverPlane(this.editor, { x: event.clientX, y: event.clientY });
     const point = world.pointAt(plane, event.clientX, event.clientY);
     if (!point) return;
     this.editor.message = "";
@@ -176,7 +178,7 @@ export class CubeControls {
       screen: this.pointer,
       center: this.snap(point),
       plane,
-      size: cubeDefaultSize(world),
+      size: cubeDefaultSize(world, plane),
       threshold: pointerDragThreshold(event),
       moved: false,
     };

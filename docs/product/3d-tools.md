@@ -14,20 +14,25 @@ into thinking in sketches, regions and constructive solid geometry.
 ## Cube proof of concept
 
 Choose **Cube** in Tools. In Modeling, a centered square follows the pointer on
+the hovered visible construction plane or planar solid face, falling back to
 the current primary canonical plane. Its default side is a rounded decimal
 millimeter quantity: an integer times a power of ten, chosen near one eighth of
 the viewport's shorter dimension by projected bounding extent. Orbit and zoom
 recompute the plane and size before placement; a held gesture keeps its plane and
-starting size fixed. Construction planes are deferred.
+starting size fixed, including when dragging beyond the hovered support.
 
 Click to create the square sketch. Click and drag to create a rectangle centered
 on the press point; hold Shift to lock a square. A bottom hint advertises dragging,
 and dimensions alongside the preview expose its size. This uses the ordinary
+rectangle footprint with a translucent light-green mesh showing its one-sided
+extrusion during hover and sizing. The mesh has depth equal to the rectangle's
+minor dimension and creates no document geometry. The sketch uses the ordinary
 rectangle primitive: four segments, rectangle constraints and a convenience group.
 A fresh sketch keeps the new region independent of nearby existing profiles.
 
 On release, select that region and enter ordinary **Extrude**, prefilled with
-**Symmetric** enabled and total depth equal to the rectangle's minor dimension.
+**Symmetric** disabled, **Union** selected even for intersecting material, and
+depth equal to the rectangle's minor dimension.
 Cube mode ends here. A simple click followed by clicking away finishes a cube;
 dragging instead produces a rectangular prism. The regular extrusion arrow,
 distance field, draft, twist and Boolean controls remain available. Extrusion
