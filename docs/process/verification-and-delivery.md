@@ -34,49 +34,53 @@ Measure replacing SVG overlays with the bounded, atomic `overlayPoint` helper.
 
 `npm test` runs test files serially. Native geometry checks include wall-clock
 calculation limits; competing test workers can exhaust those limits on otherwise
-valid fixtures. CI distributes the files across four Linux jobs using Node's
-`--test-shard`, with `--test-concurrency=1` in each job. Keep the actual geometry
-and latency assertions intact.
+valid fixtures. CI assigns files to four Linux workers using measured test durations
+and longest-first balancing in `scripts/ci-partition.mjs`, preserving
+`--test-concurrency=1`. Unmeasured files receive a small default weight and remain
+required. Keep the actual geometry and latency assertions intact.
 
-The PR workflow builds the Linux native runtime once and shares a tar archive
-with the test jobs, preserving executable permissions and library symlinks.
-Chromium and hidden Electron controls each run in three serial route
-shards on separate Linux workers. Seven more workers run the complete Electron
-host interaction suite under Xvfb, with serial routes and isolated apps in each,
-except two native navigation routes retained on Mac with their fixture sequence.
+Both platform builds start independently of static checks. The PR workflow builds
+each native runtime once and shares a tar archive with its test jobs, preserving
+executable permissions and library symlinks. Exact native executable caches include
+native sources, setup/build recipes, locked dependencies, platform/architecture and
+SDK/toolchain identity. There are no fallback executable keys. SDK libraries must
+also be restored before a cached executable can run; cache misses build normally.
+Renderer and host TypeScript are rebuilt on every run. Native coverage assertions
+run even on a cache hit. Signing and notarization remain release checks.
+
+Shared Chromium, WebKit and hidden Electron UI suites run on Linux in sixteen
+serial partitions per runtime. `scripts/ci-ui-suites.mjs` and `ci-ui-routes.mjs`
+list runnable suites and timing weights. Ordinary controls, widget reachability
+and edge finishes have independent entry points; dependent fixture sequences stay
+intact. Seven additional workers retain the complete Electron host suite, except
+two native navigation routes retained on Mac with their fixture sequence.
+CI logs each suite's duration; update the weights when the distribution changes.
+Do not append shard-specific workflow steps that escape balancing.
+
 Linux UI jobs select `MAKESHIFT_TEST_FRAME_MODE=on-demand`: input, native geometry,
 camera, picking and DOM updates run normally, while captures request fresh GPU frames.
 The demand-frame regression checks real input avoids GPU draws and screenshots
 render current pixels, including after reload. For local diagnosis, prefix a UI
 command with that environment variable; ordinary runs retain normal redraws.
-macOS also builds its runtime once and shares an archive from the same run. Both
-platform builds start independently of static checks. Four
-parallel workers retain the full acceptance suite: platform-sensitive geometry,
-WebKit controls, WebKit widget placement and Reopen topology, and the built
-Electron host/preload boundary, document persistence, process handling and Finder
-PATH. All four workers install WebKit; its acceptance blocks are distributed alongside
-geometry and Electron work using measured hosted step durations. Every moved
-WebKit block explicitly selects WebKit. Each worker runs its routes serially to
-preserve geometry calculation limits.
-Signing and notarization remain release checks.
-The final `check` job requires every lane to succeed, including after a lane
-fails or is skipped. Cancelled runs skip that final check so it cannot hold a
-workflow concurrency slot. Runtime artifacts expire after one day. A completed OCCT
-SDK is verified and cached even if compilation of an application calculator
-fails afterward; incomplete SDKs cannot enter the cache.
+macOS acceptance uses the same frame mode and is limited to a built-host smoke
+(native geometry, Save/Open, sandbox), Finder PATH and process setup regressions,
+native navigation and constrained rotation, plus three serial partitions of the
+six geometry files with documented Linux differences.
 
-The first Linux migration retains six required geometry files on Mac via
-`scripts/ci-model-tests.mjs`: special erosion and its placement boundaries,
-captured offset movement, offset thickness, exact projection and captured erosion
-responsiveness. Linux currently
-differs on the filleted hemisphere's erosion validity, a captured plate's volume,
-an unchanged sphere's numerical signature and a conic projection reply. The
-captured erosion can exceed its existing calculation limit on Linux. WebKit's
-control suite remains required on Mac: Linux accepts a constrained rotation that
-should reject and reports unhandled selection fetch errors across reload in
-multiple routes. These are compatibility gaps, not relaxed
-assertions. Remove each partition exception only after its unchanged route passes
-on Linux. Normal `npm test` and `test:current-tools` still run every case.
+The six geometry exceptions in `scripts/ci-model-tests.mjs` are special erosion
+and its placement boundaries, captured offset movement, offset thickness, exact
+projection and captured erosion responsiveness. Prior Linux failures included
+filleted hemisphere validity, a captured plate's volume, an unchanged sphere's
+numerical signature, a conic projection reply and erosion calculation latency.
+WebKit constrained rotation also remains on Mac. The broader Linux WebKit
+migration must pass unchanged routes before being considered verified; previously
+it reported unhandled selection fetch errors on reload. Remove platform exceptions
+only after the unchanged route passes on Linux.
+
+The final `check` job requires every lane to succeed, including after a lane
+fails or is skipped. Cancelled runs skip that final check. Runtime artifacts expire
+after one day. A completed OCCT SDK is verified and cached even if compilation of
+an application calculator fails afterward; incomplete SDKs cannot enter the cache.
 Linux Electron test apps use SwiftShader under Xvfb because the worker's Mesa
 renderer is blocklisted for WebGL. Hidden Linux test windows render offscreen:
 otherwise the compositor delivers about one frame per second despite disabled
