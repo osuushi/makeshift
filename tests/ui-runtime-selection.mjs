@@ -10,7 +10,8 @@ test("UI runtime selection preserves defaults and rejects unsupported/empty rout
     assert.deepEqual(runtimeNames(), ["electron"]);
     assert.deepEqual(runtimeNames(undefined, ["chromium", "webkit", "electron"]), ["electron"]);
     assert.deepEqual(runtimeNames(["chromium", "webkit"]), ["chromium"]);
-    assert.deepEqual(runtimeNames(undefined, ["chromium"]), ["chromium"]);
+    assert.deepEqual(runtimeNames(undefined, ["chromium"]), ["electron"]);
+    assert.deepEqual(runtimeNames(["chromium", "webkit"], ["webkit"]), ["webkit"]);
     assert.throws(() => runtimeNames([]), /at least one/);
     assert.throws(() => runtimeNames(["chromium"], ["webkit"]), /supported and nonempty/);
     for (const name of ["chromium", "webkit", "electron"]) {

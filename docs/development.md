@@ -189,16 +189,15 @@ hidden Electron. These checks do not certify third-party STEP application suppor
 ### Sketch and solid tools
 
 The orientable tool controls have a focused real-input suite. After `npm run build`,
-run `node tests/orientable-tools-ui.mjs` for Chromium; set `MAKESHIFT_TEST_BROWSER=webkit`
-or `MAKESHIFT_TEST_BROWSER=electron` for WebKit or hidden Electron. It covers operation
+run `node tests/orientable-tools-ui.mjs` for hidden Electron; set
+`MAKESHIFT_TEST_BROWSER=webkit` or `chromium` for a browser compatibility issue. It covers operation
 glyphs, camera projection, actual editing, cancellation, history and reopening.
 `MAKESHIFT_TOOL_ROUTE` optionally selects comma-separated route names from the runner.
 
 Mirror has a focused real-input suite for sketch and body reference picking,
 copy/replace, offset, cancellation, Undo/Redo, Save/Open and subsequent edits.
-After `npm run build`, run `node tests/mirror-ui.mjs` for headless Chromium/WebKit
-and hidden Electron. `MAKESHIFT_TEST_BROWSER=chromium`, `webkit` or `electron` limits
-the run to that runtime.
+After `npm run build`, run `node tests/mirror-ui.mjs` for hidden Electron.
+`MAKESHIFT_TEST_BROWSER=chromium` or `webkit` selects a browser compatibility check.
 
 The limited interactive face Move tool has a focused real-input suite:
 
@@ -265,7 +264,7 @@ npm run build
 node tests/calculation-ui.mjs
 ```
 
-This runs headless Chromium/WebKit and hidden Electron, including navigation,
+This runs hidden Electron, including navigation,
 cancellation, timeout, recovery and adjacent sketch interaction checks. To measure
 captured deletion and open/closed Shell with 1/2/4 kernel threads, without other test
 workloads running:
@@ -290,9 +289,9 @@ Undo history. Exact bodies and topology IDs are saved; display meshes are regene
 on Open. Desktop uses native file dialogs and unsaved-work prompts; paired iPad
 browses computer files, while the standalone web frontend uses upload/download.
 There is no geometry autosave.
-UI checks own headless Chromium/WebKit instances and close them after the run.
-To check just one engine, use `MAKESHIFT_TEST_BROWSER=chromium npm run test:ui`
-or `MAKESHIFT_TEST_BROWSER=webkit npm run test:ui`. Each run owns its server/backend.
+UI checks own and close their runtime. `npm run test:ui` runs the built Electron
+smoke. For a browser-specific issue, set `MAKESHIFT_TEST_BROWSER=chromium` or
+`webkit` on the affected supported fixture. Each run owns its server/backend.
 Electron checks hide their window; on macOS they still require a desktop session.
 Linux browser prerequisites can be installed with Playwright's `install --with-deps`
 option in the test machine/VM. Linux/Windows builds and physical iPad interaction

@@ -22,7 +22,7 @@ export function runtimeNames(
     "UI defaults must be supported and nonempty",
   );
   // An ordinary invocation exercises one runtime. Cross-browser sweeps are explicit.
-  return requested ? [requested] : [defaults.includes("electron") ? "electron" : defaults[0]];
+  return requested ? [requested] : [allowed.includes("electron") ? "electron" : defaults[0]];
 }
 
 /** Own the server, browser/app, isolated Electron profile and page for each route. */
