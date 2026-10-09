@@ -139,7 +139,8 @@ jobs:
       - *a1
       - uses: ./.github/actions/ci-linux-runtime
       - name: Display dependencies
-        run: npx playwright install-deps chromium
+        timeout-minutes: 3
+        run: bash scripts/ci-browser-deps.sh electron
       - name: Built Electron smoke
         run: xvfb-run -a npm run test:smoke
   electron-regressions:
@@ -157,7 +158,8 @@ jobs:
       - *a1
       - uses: ./.github/actions/ci-linux-runtime
       - name: Display dependencies
-        run: npx playwright install-deps chromium
+        timeout-minutes: 3
+        run: bash scripts/ci-browser-deps.sh electron
       - name: Compile regression inspection dependencies
         run: npx tsc -p tsconfig.test.json
       - name: Focused Electron regressions

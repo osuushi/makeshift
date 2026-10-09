@@ -23,6 +23,7 @@ export const macModelCases = [
   {
     file: "erosion-responsiveness.test.js",
     name: "captured tight allowance fails quickly and its suggested allowance succeeds",
+    // Also reproduced unchanged by main's integration run 37943268836.
     seconds: 12,
   },
   {

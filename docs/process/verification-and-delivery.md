@@ -83,6 +83,11 @@ locked dependencies, platform/architecture and SDK/toolchain identity. Cache mis
 build normally, SDK libraries are required, and native coverage assertions still
 run on cache hits. Renderer and host TypeScript rebuild on every run.
 
+Linux Electron installs system/display dependencies through
+`scripts/ci-browser-deps.sh`, retaining three-minute setup limits, 30-second apt
+network timeouts and two retries. It uses the npm-installed Electron binary and
+does not download Chromium/WebKit browser binaries. Setup failures remain failures.
+
 `npm run test:smoke` exercises the built hidden Electron app: sandbox, pointer-drawn
 rectangle, real native extrusion, temporary preview, acceptance, Undo/Redo, renderer
 reload and native Save/Open. It runs on Linux and Mac. `npm run test:regressions`

@@ -103,11 +103,11 @@ export const uiSuites = [
     unit: "reopen-parameters.test.ts",
   },
   {
-    args: ["navigation-history-ui.mjs", "acceptance", "files", "interruption"],
-    seconds: 45,
+    args: ["navigation-history-ui.mjs", "entry", "acceptance", "files", "interruption"],
+    seconds: 60,
     browsers: ["electron"],
     reason:
-      "Input during acceptance, file replacement and interrupted navigation must respect history ownership.",
+      "Double-click sketch entry and input during acceptance, file replacement or interrupted navigation must respect history ownership.",
     unit: "navigation-owner.test.ts",
   },
   {
