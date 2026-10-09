@@ -129,6 +129,23 @@ async function cubeRoll(page, center) {
     new THREE.Vector3(...during.camera.up).distanceTo(expected) < 1e-8,
     "Quarter-circle around cube center produces exactly a quarter-turn",
   );
+  const duringAxis = new THREE.Vector3(...during.camera.position)
+    .sub(new THREE.Vector3(...during.camera.target))
+    .normalize();
+  assert.ok(duringAxis.distanceTo(axis) < 1e-8, "Roll preserves view direction during drag");
+  const beforeUp = new THREE.Vector3(...before.camera.up);
+  const beforeRight = beforeUp.clone().cross(axis).normalize();
+  const previousAxis = [
+    new THREE.Vector3(1, 0, 0),
+    new THREE.Vector3(0, 1, 0),
+    new THREE.Vector3(0, 0, 1),
+  ].find(
+    (candidate) =>
+      Math.abs(candidate.dot(beforeRight)) < 1e-8 &&
+      Math.abs(candidate.dot(beforeUp)) > 1e-8 &&
+      candidate.dot(axis) * Math.sign(candidate.dot(beforeUp)) >= -1e-12,
+  );
+  assert.ok(previousAxis, "Starting view has an eligible upright orbit axis");
   await page.mouse.up();
   await page.keyboard.up("Alt");
   const after = await inspect(page);
@@ -136,9 +153,10 @@ async function cubeRoll(page, center) {
   const afterAxis = new THREE.Vector3(...after.camera.position)
     .sub(new THREE.Vector3(...after.camera.target))
     .normalize();
+  const afterRight = new THREE.Vector3(...after.camera.up).cross(afterAxis).normalize();
   assert.ok(
-    afterAxis.distanceTo(axis) < 1e-8,
-    "Roll preserves view direction around its geometry pivot",
+    Math.abs(previousAxis.dot(afterRight)) < 1e-8,
+    "Cube release retains the previous orbit axis vertically during the handoff",
   );
   assert.deepEqual(after.document, before.document);
 }

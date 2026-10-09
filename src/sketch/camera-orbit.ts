@@ -5,6 +5,7 @@ export type OrbitPointer = {
   viewport?: { x: number; y: number };
   rollCenter?: { x: number; y: number };
 };
+export type OrbitReleaseFrame = { axis: THREE.Vector3; pivot: THREE.Vector3 };
 type OrbitView = { camera: THREE.OrthographicCamera; target: THREE.Vector3 };
 
 const rotationPerRadius = 2;
@@ -27,6 +28,9 @@ export class SmoothedTurntable {
   } | null = null;
   get active(): boolean {
     return this.start !== null;
+  }
+  get releaseFrame(): OrbitReleaseFrame | null {
+    return this.start ? { axis: this.start.upAxis.clone(), pivot: this.start.pivot.clone() } : null;
   }
   end(): void {
     this.start = null;
@@ -66,8 +70,11 @@ export class SmoothedTurntable {
   }
   drag(view: OrbitView, to: OrbitPointer, roll = false): void {
     if (!this.start) return;
-    if (roll !== this.start.roll)
+    if (roll !== this.start.roll) {
+      const axis = this.start.upAxis.clone();
       this.begin(view, this.start.last, this.start.orbitPivot, roll, this.start.rollPivot);
+      this.start.upAxis.copy(axis);
+    }
     const { point, orientation, offset, targetOffset, pivot, upAxis } = this.start;
     if (roll)
       this.start.rollAngle -= pointerAngle(
@@ -152,5 +159,31 @@ export function levelOrientation(view: OrbitView): THREE.Quaternion {
   const { angle } = levelAxis(orientation);
   return orientation.multiply(
     new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), angle),
+  );
+}
+
+/** At an axis handoff, remove viewing-direction skew out of the two-axis plane. */
+export function orbitReleaseOrientation(
+  view: OrbitView,
+  previousAxis: THREE.Vector3,
+): THREE.Quaternion {
+  const leveled = levelOrientation(view);
+  const nextAxis = levelAxis(view.camera.quaternion).axis;
+  const planeNormal = previousAxis.clone().cross(nextAxis);
+  if (planeNormal.lengthSq() < 1e-12) return leveled;
+  planeNormal.normalize();
+  const direction = new THREE.Vector3(0, 0, 1).applyQuaternion(view.camera.quaternion);
+  direction.addScaledVector(planeNormal, -direction.dot(planeNormal));
+  // An end-on axis has no viewport vertical. Keep ordinary leveling at this
+  // singularity instead of inventing an arbitrary tilt or a 90-degree turn.
+  if (direction.lengthSq() < 1e-12) return leveled;
+  direction.normalize();
+  const up = nextAxis.clone().addScaledVector(direction, -nextAxis.dot(direction));
+  const previousLength = previousAxis.clone().cross(direction).lengthSq();
+  if (up.lengthSq() < 1e-12 || previousLength < 1e-12) return leveled;
+  up.normalize();
+  const right = up.clone().cross(direction).normalize();
+  return new THREE.Quaternion().setFromRotationMatrix(
+    new THREE.Matrix4().makeBasis(right, up, direction),
   );
 }

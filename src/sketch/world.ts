@@ -2,7 +2,13 @@ import * as THREE from "three";
 import { type CameraState, restoreCamera } from "../model/camera-state.js";
 import { canonicalPlanes } from "../preferences/canonical-planes.js";
 import { alignCameraToPlane, type CameraFraming, planeCameraPose } from "./camera-motion.js";
-import { levelOrientation, type OrbitPointer, SmoothedTurntable } from "./camera-orbit.js";
+import {
+  levelOrientation,
+  type OrbitPointer,
+  type OrbitReleaseFrame,
+  orbitReleaseOrientation,
+  SmoothedTurntable,
+} from "./camera-orbit.js";
 import { CameraRoll } from "./camera-roll.js";
 import { CameraTransition } from "./camera-transition.js";
 import { CanonicalPlaneVisibility } from "./canonical-plane-visibility.js";
@@ -198,14 +204,18 @@ export class World {
   private animateTo(frame: PlaneFrame, framing: CameraFraming): void {
     this.motion.start(planeCameraPose(this, frame, framing));
   }
-  animateOrientation(quaternion: THREE.Quaternion, record = true): void {
+  animateOrientation(quaternion: THREE.Quaternion, record = true, frame?: OrbitReleaseFrame): void {
     if (record) this.navigation.begin();
-    this.motion.start({
-      target: this.target.clone(),
-      quaternion,
-      distance: this.camera.position.distanceTo(this.target),
-      height: this.height,
-    });
+    this.motion.start(
+      {
+        target: this.target.clone(),
+        quaternion,
+        distance: this.camera.position.distanceTo(this.target),
+        height: this.height,
+      },
+      undefined,
+      frame,
+    );
   }
   animateCamera(state: CameraState): void {
     const camera = new THREE.OrthographicCamera();
@@ -223,9 +233,10 @@ export class World {
       () => restoreCamera(this, state),
     );
   }
-  levelHorizon(): void {
+  levelHorizon(frame?: OrbitReleaseFrame | null): void {
     if (this.rollAnimation.active) return;
-    this.animateOrientation(levelOrientation(this), this.navigation.active);
+    const orientation = frame ? orbitReleaseOrientation(this, frame.axis) : levelOrientation(this);
+    this.animateOrientation(orientation, this.navigation.active, frame ?? undefined);
   }
   cancelCameraMotion(preserveRoll = false): void {
     if (!preserveRoll) this.rollAnimation.cancel();

@@ -82,7 +82,7 @@ selection-bounds and central-20% sampling rules.
 
 Freeze the pivot throughout the drag and rotate both camera position and view
 target about it, preserving the pivot's screen location and reversibility. Release
-leveling retains the view-axis roll behavior described below. Cube face
+leveling retains this pivot on screen, including the two-axis handoff below. Cube face
 clicks retain their existing view target. These are transient camera decisions,
 using the ephemeral view Undo contract in [edit lifecycle](edit-lifecycle.md#ephemeral-view-undo-founder-decision-2026-10-03).
 
@@ -121,11 +121,22 @@ axes are ineligible. Among eligible axes, minimize
 `rollRadians² - 0.25 × ln(projectedLength)`, retaining X/Y/Z order on ties.
 Projection length is that of a unit axis on screen. This smoothly penalizes
 foreshortening; a half-length projection costs roughly as much as 24° of roll.
-Put the winning signed axis exactly vertical. This same signed axis supplies yaw
-for the next orbit; starting a drag retains an eligible already-leveled axis.
+Put the winning signed axis exactly vertical. If it differs from the previous
+orbit axis, also keep that previous axis vertical: remove the viewing direction's
+component perpendicular to the plane containing both axes, preserving its direction
+within that plane. This changes viewing direction, aligning both axes together.
+From an already leveled orbit, the previous axis remains vertical throughout the
+handoff animation. Retain the gesture's orbit axis across Option modifier rebases.
+When an axis is end-on or the viewing direction is perpendicular to the two-axis
+plane, a visible two-axis alignment is undefined; retain ordinary roll leveling.
+The new above-plane signed axis supplies yaw for the next orbit. Starting a drag
+retains an eligible already-leveled axis. Same-axis releases, pinch leveling and
+native quarter-turn correction retain roll-only leveling.
 Discrete axis selection still has decision boundaries; orientations are not blended.
-Animate over 280 ms with cubic ease-out, or immediately with reduced motion. Viewing direction, pivot, distance
-and zoom stay fixed; only roll changes. New navigation interrupts the animation.
+Animate over 280 ms with cubic ease-out, or immediately with reduced motion.
+Keep the acquired pivot fixed on screen throughout the snap, rotating the view
+target about it as needed. Camera-to-target distance and zoom stay fixed.
+New navigation interrupts the animation.
 Cancellation, Escape and focus loss end the drag without snapping. Releasing Command
 mid-drag retains capture. Capture blocks editing, trailing clicks and wheel/pinch.
 Camera gestures retain accepted geometry and use the ephemeral view Undo contract. On macOS, Electron’s native
