@@ -46,8 +46,17 @@ export async function curvedRegionRoute(page, name) {
   await page.keyboard.press("v");
   await click(page, 18.25, 15);
   await chooseTool(page, "delete", "delete");
+  const afterDelete = await inspect(page);
+  assert.equal(
+    afterDelete.document.sketches[0].curves.length,
+    2,
+    "Delete removes one boundary line",
+  );
   const opened = await pixels(page, samples);
-  assert.ok(opened[1][0] > filled[1][0] + 10, "Removing a line opens the exterior region");
+  assert.ok(
+    opened[1][0] > filled[1][0] + 10,
+    `Removing a line opens the exterior region: ${JSON.stringify({ filled, opened, selection: afterDelete.selection, curves: afterDelete.document.sketches[0].curves })}`,
+  );
   tinted(blank[0], opened[0]);
   await chooseTool(page, "undo", "undo");
   tinted(opened[1], (await pixels(page, samples))[1]);

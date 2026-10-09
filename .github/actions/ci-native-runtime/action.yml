@@ -1,0 +1,42 @@
+name: Restore exact native executables
+description: Reuse calculators only when native sources, recipes, dependencies and toolchain match exactly.
+inputs:
+  sdk-key:
+    required: true
+    description: Verified SDK recipe and compiler identity
+  sdk-cache-hit:
+    required: true
+    description: Executables require the SDK libraries to have been restored
+outputs:
+  cache-hit:
+    value: ${{ steps.cache.outputs.cache-hit }}
+    description: Exact executable cache match
+  key:
+    value: ${{ steps.key.outputs.key }}
+    description: Source and toolchain cache identity
+runs:
+  using: composite
+  steps:
+    - id: key
+      shell: bash
+      env:
+        SDK_KEY: ${{ inputs.sdk-key }}
+        SOURCES: ${{ hashFiles('native/**', 'scripts/setup-*.mjs', 'scripts/build-native.mjs', 'scripts/native-inputs.mjs', 'scripts/mesh-inputs.mjs', 'scripts/sdk-provenance.mjs', 'scripts/sdk-*.mjs', 'scripts/occt-*.json', 'scripts/occt-*.mjs', 'scripts/release/cache-key.mjs', 'package-lock.json', '.nvmrc', '.github/actions/ci-native-runtime/action.yml') }}
+      run: |
+        echo "key=native-executables-v1-${RUNNER_OS}-${RUNNER_ARCH}-${SDK_KEY}-${SOURCES}" >> "$GITHUB_OUTPUT"
+    - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      if: inputs.sdk-cache-hit == 'true'
+      id: cache
+      with:
+        path: .cache/ci/native-executables.tar.gz
+        key: ${{ steps.key.outputs.key }}
+    - if: steps.cache.outputs.cache-hit == 'true'
+      shell: bash
+      run: |
+        tar -xzf .cache/ci/native-executables.tar.gz
+        for executable in .build/{host-native,solver,kernel,mesh}/bin/makeshift-*; do
+          test -x "$executable"
+        done
+        for calculator in .build/{solver,kernel}/bin/makeshift-*; do
+          "$calculator" </dev/null
+        done

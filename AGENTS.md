@@ -122,12 +122,16 @@ upstream code without recording provenance and evaluating licensing. Do not buil
 or commit the ignored reference checkout by default. Update an existing reference
 chapter when a material new lesson is found; avoid reports for every small edit.
 
-Use actual pointer/keyboard controls and the real geometry path for interaction
-acceptance. Helper/mocked tests alone do not prove a manual flow. Report precisely
-what ran and what remains unverified. Routine UI tests run headlessly or in an
-isolated VM; use Chromium/WebKit, not Firefox by default. Hidden Electron checks
-are needed for its host/preload boundary. Reserve visible apps for product review.
-Own and clean up test browsers, apps, native children, profiles and ports.
+Default to fast unit tests and direct native model tests. Keep routine full-app
+coverage to a compact hidden Electron smoke and focused escaped regressions;
+do not add exhaustive feature tours or a Chromium/WebKit/Electron matrix to CI.
+A permanent UI case must explain the concrete integration failure that lower-level
+tests cannot catch. Browser-specific cases require a browser-specific reason.
+See [test placement and cost](docs/process/verification-and-delivery.md#test-placement-and-cost).
+Use actual pointer/keyboard controls and real geometry when claiming interaction
+acceptance; helper/mocked tests alone do not prove it. Report actual checks/gaps.
+Reserve visible apps for product review. Own and clean up test apps, native children,
+profiles and ports.
 
 For founder-reported model bugs, use the **Capture fixture** action
 and read the resulting temporary JSON file directly (use the displayed capture path).

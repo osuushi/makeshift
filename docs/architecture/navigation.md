@@ -20,6 +20,8 @@ Plane entry chooses the nearest quaternion orientation among all four in-plane
 quarter turns on either side, preserving the accepted plane frame and grid axes.
 Profile entry fits the boundary along the chosen screen axes, keeping its center
 and margin when a quarter turn swaps the horizontal and vertical extents.
+Double-click sketch entry consumes the event before sketch selection handles it,
+so the same click cannot select curves and interrupt the camera alignment.
 Canonical references remain fixed, while construction planes support placement edits.
 Explicit plane-selection modes continue to accept a plane on a single click.
 In Mirror and Projection, a nearer planar solid face takes precedence over a

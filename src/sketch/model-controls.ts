@@ -182,8 +182,13 @@ export class ModelControls {
       editor.modeling.alternatives = [];
       this.placement.enabled = false;
       editor.refresh();
-    } else if (target && !event.shiftKey && !event.metaKey && !event.ctrlKey)
+    } else if (target && !event.shiftKey && !event.metaKey && !event.ctrlKey) {
+      // Entry owns this double-click. Later sketch listeners must not turn the
+      // same event into a selection change that interrupts camera alignment.
+      event.preventDefault();
+      event.stopImmediatePropagation();
       void toolCatalog(editor).invoke("edit-sketch");
+    }
   }
   private installKeys(options: { signal: AbortSignal }): void {
     const editor = this.editor;
