@@ -1,6 +1,7 @@
 import type { DisplayDocument } from "../model/display-document.js";
 import { EntityVisibility } from "../model/entity-visibility.js";
 import { ActiveInteraction, type InteractionLease } from "./active-interaction.js";
+import { completeInteraction } from "./complete-interaction.js";
 import {
   type Arc,
   type Circle,
@@ -27,7 +28,7 @@ import type { SelectionTarget } from "./selection-target.js";
 import { type Hit, hitIds } from "./sketch-hit.js";
 import type { World } from "./world.js";
 
-export type Tool = "select" | "rectangle" | "line" | "circle" | "bezier" | "trim";
+export type Tool = "select" | "rectangle" | "line" | "circle" | "bezier" | "pen" | "trim";
 export class SketchEditor {
   readonly store = new ModelClient(
     () => this.refresh(),
@@ -150,10 +151,7 @@ export class SketchEditor {
     this.world.draw();
   }
   async setTool(tool: Tool): Promise<void> {
-    if (this.blocked || this.isDragging) return;
-    await this.numeric.commit();
-    if (this.interactions.current?.kind === "numeric") return;
-    await this.interactions.cancel();
+    if (!(await completeInteraction(this))) return;
     this.selected.replacePoints([]);
     this.pointMenu = null;
     this.pointHover = null;
@@ -171,9 +169,7 @@ export class SketchEditor {
     this.refresh();
   }
   async activateMove(): Promise<void> {
-    if (!this.selectionOwners.size || this.blocked || this.isDragging) return;
-    await this.numeric.commit();
-    if (this.interactions.current?.kind === "numeric") return;
+    if (!(await completeInteraction(this)) || !this.selectionOwners.size) return;
     this.tool = "select";
     this.creationArmed = false;
     this.moveMode = true;
@@ -237,9 +233,8 @@ export class SketchEditor {
     await performHistory(this, direction);
   }
   async remove(): Promise<void> {
-    if (this.blocked || this.isDragging) return;
+    if (!(await completeInteraction(this))) return;
     this.numeric.cancel();
-    await this.interactions.cancel();
     const sketch = this.sketch;
     if (sketch)
       await this.store.request({
@@ -250,17 +245,15 @@ export class SketchEditor {
     this.clearSelection();
   }
   async clear(): Promise<void> {
-    if (this.blocked || this.isDragging) return;
+    if (!(await completeInteraction(this))) return;
     this.numeric.cancel();
-    await this.interactions.cancel();
     const sketch = this.sketch;
     if (sketch) await this.store.request({ kind: "clear", sketchId: sketch.id });
     this.clearSelection();
   }
   async newDocument(): Promise<boolean> {
-    if (this.blocked || this.isDragging) return false;
+    if (!(await completeInteraction(this))) return false;
     this.numeric.cancel();
-    await this.interactions.cancel();
     if (!(await this.store.request({ kind: "new" }))) return false;
     this.bodiesVisible = true;
     this.visibility.reset();

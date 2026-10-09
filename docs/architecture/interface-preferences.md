@@ -1,8 +1,10 @@
 # Interface preferences
 
-Settings is available in the editor header and through Tools. User interface scale
+Settings is available in the editor header, through Tools and with Cmd-, on Mac.
+It opens a compact modal dialog; Escape, clicking the backdrop or Done closes it. User interface scale
 applies immediately at 80%, 90%, 100%, 110%, 125% or 150%; Reset to 100% is always
 available from this dialog. Opening Settings requires completing the current edit.
+Closing restores focus to its opener unless another control has already taken focus.
 The choice is stored locally on the current device/origin under `makeshift.ui-scale`,
 outside accepted geometry, document files and Undo. Invalid stored values fall back
 to 100%; unavailable browser storage keeps the preference for the current window.

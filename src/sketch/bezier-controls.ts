@@ -4,6 +4,7 @@ import type { Bezier, Sketch } from "./document.js";
 import type { SketchEditor } from "./editor.js";
 import { GestureSolve } from "./gesture-solve.js";
 import { replayPointerModifiers } from "./modifier-pointer.js";
+import { penDirection } from "./pen-geometry.js";
 import { distance } from "./point-math.js";
 import { snapped } from "./snapping.js";
 
@@ -36,7 +37,7 @@ export class BezierControls {
     editor.world.changed.add(this.draw);
   }
   private handles(): Handle[] {
-    if (!this.editor.world.active || this.editor.moveMode) return [];
+    if (!this.editor.world.active || this.editor.moveMode || this.editor.tool === "pen") return [];
     return (
       this.editor.sketch?.curves.flatMap((c) =>
         c.kind === "bezier" && this.editor.selectionOwners.has(c.id)
@@ -78,8 +79,26 @@ export class BezierControls {
     event.stopImmediatePropagation();
     const p = e.world.pointAt(s.sketch.plane, event.clientX, event.clientY);
     if (!p) return;
-    const point = snapped(e, p, new Set([s.curve.id]), event.shiftKey);
-    s.solve.update(editBezierHandle(s.sketch, s.curve.id, s.key, point));
+    const anchor = s.key === "c1" ? s.curve.a : s.curve.b;
+    const point = event.shiftKey
+      ? penDirection(anchor, p, e.gridSnap ? e.world.spacing : 0)
+      : snapped(e, p, new Set([s.curve.id]), false);
+    if (event.shiftKey) e.snap = { ...point, label: "45°" };
+    const end = s.key === "c1" ? "a" : "b";
+    const sketch = event.altKey
+      ? {
+          ...s.sketch,
+          constraints: s.sketch.constraints.filter(
+            (c) =>
+              c.kind !== "tangent" ||
+              !(
+                (c.a === s.curve.id && c.junction?.aEnd === end) ||
+                (c.b === s.curve.id && c.junction?.bEnd === end)
+              ),
+          ),
+        }
+      : s.sketch;
+    s.solve.update(editBezierHandle(sketch, s.curve.id, s.key, point));
   };
   private release = (event: PointerEvent): void => {
     const s = this.session;
@@ -134,7 +153,7 @@ export class BezierControls {
       handle.setAttribute("data-curve", curve.id);
       handle.setAttribute("data-handle", key);
       const title = document.createElementNS(ns, "title");
-      title.textContent = "Drag tangent handle";
+      title.textContent = "Drag tangent handle · Shift locks 45° · Option / Alt breaks tangency";
       handle.append(title);
       this.root.append(line, handle);
     }

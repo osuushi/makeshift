@@ -60,7 +60,7 @@ export class ScaleControls {
         this.queue();
       },
     );
-    this.boxMove = new TransformBoxMove(editor, () => this.finish());
+    this.boxMove = new TransformBoxMove(editor);
     this.widget.accept.onclick = () => void this.finish();
     this.widget.cancel.onclick = () => void this.cancel();
     this.widget.factors.forEach((input, index) => {
@@ -89,12 +89,7 @@ export class ScaleControls {
     });
     this.events();
     installBodyTransformEnter(editor, this.abort.signal);
-    installTransformHandoff(
-      editor,
-      () => !!this.lease && !this.gestures.active,
-      () => this.finish(),
-      this.abort.signal,
-    );
+    installTransformHandoff(editor, () => !!this.lease && !this.gestures.active, this.abort.signal);
     editor.world.transformBoxContains = (x, y) => {
       const source = this.source ?? scaleSelection(editor);
       const box = this.box ?? (source ? selectionBox(editor, source) : null);
@@ -130,7 +125,12 @@ export class ScaleControls {
       "scale",
       () => this.cancel(),
       () => this.finish(),
-      { navigation: "when-released" },
+      {
+        navigation: "when-released",
+        settled: async () => {
+          await this.running;
+        },
+      },
     );
     if (!this.lease) return;
     this.source = source;

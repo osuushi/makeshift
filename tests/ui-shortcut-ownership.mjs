@@ -101,7 +101,7 @@ async function modalOwnership(page) {
     await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
     const original = (await inspect(page)).document;
     await chooseTool(page, tool, tool);
-    // Released valid edits may now switch; latest invalid settings keep ownership.
+    // Invalid settings stay local while typing, then cancel on a tool shortcut.
     if (tool === "transform") {
       await page.locator(".transform-box-handle:visible").last().click();
       await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("0");
@@ -116,8 +116,6 @@ async function modalOwnership(page) {
     const before = await inspect(page);
     assert.equal(before.interaction.kind, tool === "mirror" ? "mirror" : "scale");
     assert.deepEqual(before.document, original);
-    for (const key of commonKeys) await keyTool(page, key);
-    await unchanged(page, before);
     assert.equal(
       await page
         .getByRole("textbox", {
@@ -127,6 +125,14 @@ async function modalOwnership(page) {
         .getAttribute("aria-invalid"),
       "true",
     );
+    await keyTool(page, "l");
+    const switched = await inspect(page);
+    assert.equal(switched.interaction, null);
+    assert.match(
+      switched.commands.find((command) => command.id === "loft").unavailable,
+      /ordered loft sections/,
+    );
+    assert.deepEqual(switched.document, original);
     await page.keyboard.press("Escape");
     await modalCompleted(page);
     assert.deepEqual((await inspect(page)).document, original);
@@ -155,7 +161,7 @@ async function extrudeOwnership(page) {
   await input.fill("");
   const invalid = await inspect(page);
   assert.equal(invalid.preview, null);
-  for (const key of ["Shift+E", "l"]) await keyTool(page, key);
+  await keyTool(page, "Shift+E");
   await unchanged(page, invalid);
   assert.equal(await input.inputValue(), "");
   await input.fill("12");
@@ -163,7 +169,9 @@ async function extrudeOwnership(page) {
   assert.equal(await input.inputValue(), "12USIl");
   assert.equal((await inspect(page)).interaction.kind, "extrude");
   assert.deepEqual((await inspect(page)).document, before.document);
-  await input.fill("0");
+  await keyTool(page, "l");
+  assert.equal((await inspect(page)).interaction, null);
+  assert.deepEqual((await inspect(page)).document, before.document);
   await page.keyboard.press("Escape");
   await modalCompleted(page);
 }
@@ -285,6 +293,6 @@ export async function shortcutOwnership(page, name) {
   await sketchGestureOwnership(page);
   if (name === "electron") await terminalOwnership(page);
   console.log(
-    `${name}: shortcuts retain modal/local, field/select/search/popover, Sketch L and held-Shift ownership${name === "electron" ? ", real PTY focus" : ""}`,
+    `${name}: shortcuts cancel invalid modals and retain local, field/select/search/popover, Sketch L and held-Shift ownership${name === "electron" ? ", real PTY focus" : ""}`,
   );
 }

@@ -178,14 +178,18 @@ function preserveRelations(
 }
 
 /** Clear the highlighted locus in this sketch in one accepted rewrite. */
-export function trimOverlappingSketch(original: Sketch, target: TrimSpan | readonly TrimSpan[]) {
+export function trimOverlappingSketch(
+  original: Sketch,
+  target: TrimSpan | readonly TrimSpan[],
+  skipConstruction = false,
+) {
   const spans = Array.isArray(target) ? target : [target as TrimSpan];
   let sketch = original;
   let cast = false;
   const created: ReturnType<typeof newTrimEndpoints> = [];
   for (const span of spans) {
     const highlight = spanCurve(span);
-    const pending = [...sketch.curves];
+    const pending = sketch.curves.filter((curve) => !skipConstruction || !curve.construction);
     while (pending.length) {
       const curve = pending.pop();
       if (!curve) break;

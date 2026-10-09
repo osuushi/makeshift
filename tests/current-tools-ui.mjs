@@ -5,11 +5,14 @@ import { bezierRoute } from "./ui-bezier.mjs";
 import { bodyChamferRoute } from "./ui-body-chamfer.mjs";
 import { bodyFilletRoute } from "./ui-body-fillet.mjs";
 import { circleRoute } from "./ui-circle.mjs";
+import { deleteProfilesRoute } from "./ui-delete-profiles.mjs";
 import { extrudeRoute } from "./ui-extrude.mjs";
 import { faceCutReferenceRoute } from "./ui-face-cut-reference.mjs";
 import { faceOffsetRoute } from "./ui-face-offset.mjs";
 import { lineRoute } from "./ui-line.mjs";
 import { normalExtrudeRoute } from "./ui-normal-extrude.mjs";
+import { penRoute } from "./ui-pen.mjs";
+import { penExtrusionRoute } from "./ui-pen-extrusion.mjs";
 import { planeCutRoute } from "./ui-plane-cuts.mjs";
 import { pointLinkRoute } from "./ui-point-links.mjs";
 import { rectangleRoute } from "./ui-rectangle.mjs";
@@ -37,6 +40,7 @@ await withUiRuntimes(
       bezierRoute,
       pointLinkRoute,
       trimLineRoute,
+      deleteProfilesRoute,
       transformRoute,
       extrudeRoute,
       normalExtrudeRoute,
@@ -47,6 +51,8 @@ await withUiRuntimes(
       shellRoute,
       planeCutRoute,
       faceCutReferenceRoute,
+      penRoute,
+      penExtrusionRoute,
     ].entries()) {
       if (index % count !== shard - 1) continue;
       console.log(`${name}: ${route.name}`);

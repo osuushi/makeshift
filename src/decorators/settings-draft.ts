@@ -32,7 +32,12 @@ export class DecoratorSettingsDraft {
         "numeric",
         () => this.cancel(),
         () => this.commit(),
-        { navigation: "when-released" },
+        {
+          navigation: "when-released",
+          settled: async () => {
+            await this.current?.pending;
+          },
+        },
       );
       if (!lease) return;
       this.current = { lease, edit, valid: false, pending: null };

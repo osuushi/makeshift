@@ -21,12 +21,13 @@ createInterface({input: process.stdin}).on('line', line => {
   if (input.stall) {
     writeFileSync(${JSON.stringify(ready)}, String(process.pid));
     setTimeout(() => console.log(JSON.stringify({late: true})), 1500);
-  } else console.log(JSON.stringify({pid: process.pid}));
+  } else if (input.error !== undefined) console.log(JSON.stringify({error: input.error}));
+  else console.log(JSON.stringify({pid: process.pid}));
 });
 `,
   );
   await chmod(executable, 0o755);
-  const native = new NativeCalculator<{ stall?: boolean }, { pid: number }>(
+  const native = new NativeCalculator<{ stall?: boolean; error?: string }, { pid: number }>(
     executable,
     "Test kernel",
     deadline,
@@ -100,6 +101,24 @@ test("cancellation also discards a request waiting for an old process to exit", 
     const next = assert.rejects(native.calculate({}), /cancelled/);
     await native.cancel();
     await next;
+    assert.ok((await native.calculate({})).pid > 0);
+  } finally {
+    native.close();
+    await native.cancel();
+    await rm(dir, { recursive: true });
+  }
+});
+
+test("native error replies remain errors even when their diagnostic is empty", async () => {
+  const { native, dir } = await calculator();
+  try {
+    for (const error of ["", "Undefined normal"]) {
+      await assert.rejects(native.calculate({ error }), (failure: Error) => {
+        assert.equal(failure.message, error || "Test kernel calculation failed");
+        assert.deepEqual(failure.cause, { error });
+        return true;
+      });
+    }
     assert.ok((await native.calculate({})).pid > 0);
   } finally {
     native.close();

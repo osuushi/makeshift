@@ -1,6 +1,14 @@
 import type { SketchEditor } from "../sketch/editor.js";
+import { toolCatalog } from "../tools/catalog.js";
 
 export function renameEntity(editor: SketchEditor, label: HTMLButtonElement, id: string): void {
+  void toolCatalog(editor).activate({
+    reason: () => null,
+    run: () => startRename(editor, label, id),
+  });
+}
+
+function startRename(editor: SketchEditor, label: HTMLButtonElement, id: string): void {
   if (editor.blocked || editor.interactions.current || !label.isConnected) return;
   const input = document.createElement("input");
   input.className = "entity-name";

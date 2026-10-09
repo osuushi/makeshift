@@ -1,6 +1,6 @@
 import { arcCircle } from "./arc-geometry.js";
 import { bezierPowers } from "./bezier-geometry.js";
-import { type CurveSpan, curvePoint, spanArea } from "./curve-spans.js";
+import { type CurveSpan, curvePoint, regionTolerance, spanArea } from "./curve-spans.js";
 import type { Sketch } from "./document.js";
 import type { Point } from "./planes.js";
 import { derivative, roots } from "./polynomial.js";
@@ -15,6 +15,9 @@ export interface Profile {
 /** Ray parity on exact spans; circular spans are split only at Y extrema. */
 export function insideBoundary(boundary: readonly CurveSpan[], point: Point): boolean {
   let inside = false;
+  // Adjacent spans can evaluate a shared vertex differently within the region
+  // tolerance. Use the same side so a ray through it counts one crossing.
+  const above = (p: Point) => p.y - point.y > regionTolerance;
   for (const span of boundary) {
     const low = Math.min(span.start, span.end),
       high = Math.max(span.start, span.end);
@@ -31,7 +34,7 @@ export function insideBoundary(boundary: readonly CurveSpan[], point: Point): bo
     for (let i = 1; i < cuts.length; i++) {
       const a = curvePoint(span.curve, cuts[i - 1]),
         b = curvePoint(span.curve, cuts[i]);
-      if (a.y > point.y === b.y > point.y) continue;
+      if (above(a) === above(b)) continue;
       let x: number;
       if (span.curve.kind === "segment") x = a.x + ((point.y - a.y) * (b.x - a.x)) / (b.y - a.y);
       else if (span.curve.kind === "bezier") {
@@ -39,7 +42,7 @@ export function insideBoundary(boundary: readonly CurveSpan[], point: Point): bo
           hi = cuts[i];
         for (let n = 0; n < 48; n++) {
           const m = (lo + hi) / 2;
-          if (curvePoint(span.curve, m).y > point.y === a.y > point.y) lo = m;
+          if (above(curvePoint(span.curve, m)) === above(a)) lo = m;
           else hi = m;
         }
         x = curvePoint(span.curve, (lo + hi) / 2).x;

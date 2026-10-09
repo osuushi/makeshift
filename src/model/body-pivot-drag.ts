@@ -4,6 +4,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import type { Vector } from "../sketch/planes.js";
 import { anchorSnap } from "./anchor-snapping.js";
+import { handoffModalPointer } from "./modal-pointer-handoff.js";
 import { MovementShadows } from "./movement-shadows.js";
 import { scaleSelection } from "./scale-selection.js";
 import { pointOnTransformPlane, transformPlane } from "./transform-plane.js";
@@ -86,6 +87,7 @@ export class BodyPivotDrag {
     window.addEventListener("pointercancel", () => this.finish(true), options);
   }
   private start = (event: PointerEvent): void => {
+    if (handoffModalPointer(this.editor, event, this.abort.signal)) return;
     if (event.button || this.editor.blocked || this.editor.interactions.current) return;
     event.preventDefault();
     event.stopPropagation();

@@ -26,6 +26,7 @@ try {
         installSettings(
           {
             blocked: false,
+            refresh() {},
             interactions: { current: null },
             world: { changed: new Set(), draw() {}, requestDraw() {} },
           },
@@ -34,7 +35,7 @@ try {
       });
       for (const width of [390, 820]) {
         await page.setViewportSize({ width, height: 650 });
-        for (const scale of [0.8, 1.5]) {
+        for (const scale of [0.8, 1, 1.5]) {
           await page.getByRole("button", { name: "Application settings" }).click();
           const dialog = page.getByRole("dialog", { name: "Settings", exact: true });
           await dialog
@@ -57,10 +58,25 @@ try {
             assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= width);
             assert.ok(bounds.y >= 0 && bounds.y + bounds.height <= 650);
           }
+          for (const control of await dialog.locator(".decorator-color-value").all()) {
+            const fits = await control.evaluate((input) => {
+              const style = getComputedStyle(input);
+              const context = document.createElement("canvas").getContext("2d");
+              context.font = style.font;
+              const available =
+                input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+              return context.measureText(input.value).width <= available;
+            });
+            assert.ok(fits, `${name}: complete hex value at ${width}px, ${scale * 100}%`);
+          }
+          if (width === 390 && scale === 0.8) {
+            await dialog.getByLabel("Threads preview hex color").scrollIntoViewIfNeeded();
+            await page.screenshot({ path: `.cache/sketch-review/${name}-hex-settings.png` });
+          }
           await dialog.getByRole("button", { name: "Done", exact: true }).click();
         }
       }
-      console.log(`${name}: expanded shared Settings reachable at 390/820px and 80/150%`);
+      console.log(`${name}: expanded shared Settings reachable at 390/820px and 80/100/150%`);
     } finally {
       await browser.close();
     }

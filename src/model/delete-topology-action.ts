@@ -1,3 +1,4 @@
+import { editNotice } from "../sketch/edit-notice.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
@@ -37,7 +38,7 @@ export class DeleteTopologyAction {
           event.target instanceof HTMLTextAreaElement ||
           event.target instanceof HTMLSelectElement ||
           (event.target instanceof HTMLElement && event.target.isContentEditable) ||
-          !this.available()
+          toolCatalog(editor).reason({ reason: () => null })
         )
           return;
         event.preventDefault();
@@ -52,13 +53,19 @@ export class DeleteTopologyAction {
     const editor = this.editor;
     const resolution = editor.modeling.resolve("delete");
     if (!resolution.available) return;
-    const { bodyIds, sketchIds, topology } = resolution.inputs;
-    if (bodyIds.length || sketchIds.length) {
-      const entities = { bodyIds, sketchIds, ...(topology.length ? { topology } : {}) };
+    const { bodyIds, sketchIds, topology, profiles } = resolution.inputs;
+    if (bodyIds.length || sketchIds.length || profiles.length) {
+      const entities = {
+        bodyIds,
+        sketchIds,
+        ...(profiles.length ? { profiles } : {}),
+        ...(topology.length ? { topology } : {}),
+      };
+      const before = editor.store.data;
       const ok = await editor.store.request({ kind: "delete-entities", ...entities });
       if (ok) {
         editor.modeling.targets = [];
-        editor.notice = "";
+        editor.notice = editNotice(before, editor.store.data);
       }
       editor.refresh();
       return;

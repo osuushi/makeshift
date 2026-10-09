@@ -1,5 +1,7 @@
 #pragma once
 #include <TopoDS_Face.hxx>
+#include <TopoDS_Edge.hxx>
+#include <GeomAbs_Shape.hxx>
 #include <memory>
 #include <vector>
 
@@ -14,3 +16,6 @@ public:
     FaceChainContext& operator=(const FaceChainContext&) = delete;
     std::vector<TopoDS_Face> chain(const std::vector<TopoDS_Face>& seeds);
 };
+
+// Undefined normals do not establish tangency; retain the exact solid.
+GeomAbs_Shape faceContinuity(const TopoDS_Edge&, const TopoDS_Face&, const TopoDS_Face&);

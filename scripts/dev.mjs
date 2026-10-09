@@ -21,7 +21,7 @@ if (code !== 0) {
   await server.close();
   process.exit(1);
 }
-const child = spawn(electron, ["."], {
+const child = spawn(electron, [".", ...process.argv.slice(2)], {
   stdio: "inherit",
   env: { ...process.env, MAKESHIFT_DEV_URL: server.resolvedUrls.local[0] },
 });

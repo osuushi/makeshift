@@ -54,7 +54,10 @@ export async function browseTools(page, category) {
   await page.getByRole("combobox", { name: "Find a tool" }).fill("");
   const back = page.locator(".tool-menu-back");
   if (await back.isVisible()) await back.click();
-  await page.getByRole("option", { name: category, exact: true }).click();
+  await page
+    .getByRole("option", { name: category, exact: true })
+    .and(page.locator(`[data-command="${category}"]`))
+    .click();
 }
 
 export async function toolEnabled(page, query, id) {

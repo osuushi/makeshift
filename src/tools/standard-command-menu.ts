@@ -23,7 +23,7 @@ export class StandardCommandMenu {
     document.querySelector("header strong")?.replaceWith(this.wrapper);
     document.body.append(this.menu);
     this.trigger.onclick = () => {
-      if (editor.isDragging) return;
+      if (editor.interactions.current?.captured) return;
       if (this.menu.matches(":popover-open")) return this.menu.hidePopover();
       this.render();
       const box = this.trigger.getBoundingClientRect();

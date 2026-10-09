@@ -14,12 +14,19 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
   button.className = "settings-trigger";
   button.setAttribute("aria-label", "Application settings");
   button.setAttribute("aria-haspopup", "dialog");
+  if (/Mac/.test(navigator.platform)) button.title = "Settings (⌘,)";
   const dialog = settingsDialog();
+  const rememberFocus = settingsFocus(dialog);
+  const requestOpen = () => {
+    if (dialog.open) return;
+    rememberFocus();
+    void toolCatalog(editor).invoke("settings");
+  };
   const open = () => {
     if (editor.blocked || editor.interactions.current) return;
     if (!dialog.open) dialog.showModal();
   };
-  button.onclick = open;
+  button.onclick = requestOpen;
   const header = app.querySelector("header");
   header?.append(button);
   const fitHeader = () => {
@@ -52,7 +59,7 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
     run: open,
   });
   const update = () => {
-    button.disabled = editor.blocked || !!editor.interactions.current;
+    button.disabled = !!toolCatalog(editor).reason({ reason: () => null });
   };
   editor.world.changed.add(update);
   const disposeScale = onUiScaleChange(() => {
@@ -66,6 +73,40 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
   };
   const disposeView = onViewDisplayChange(refreshPreferences);
   const disposePlanes = onCanonicalPlanesChange(refreshPreferences);
+  const disposeKeyboard = installSettingsKeyboard(requestOpen);
+  update();
+  return () => {
+    disposeTool();
+    disposeScale();
+    disposeView();
+    disposePlanes();
+    editor.world.changed.delete(update);
+    disposeKeyboard();
+    headerObserver.disconnect();
+    app.style.removeProperty("--editor-header-bottom");
+    button.remove();
+    dialog.remove();
+  };
+}
+
+function settingsFocus(dialog: HTMLDialogElement): () => void {
+  let opener: HTMLElement | null = null;
+  dialog.addEventListener("close", () => {
+    // The close event can arrive after the user has focused another control.
+    // Restore only while focus still belongs to the closing dialog.
+    if (
+      opener?.isConnected &&
+      (document.activeElement === document.body || dialog.contains(document.activeElement))
+    )
+      opener.focus();
+    opener = null;
+  });
+  return () => {
+    opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  };
+}
+
+function installSettingsKeyboard(open: () => void): () => void {
   const blockZoom = (event: KeyboardEvent) => {
     if (
       (event.metaKey || event.ctrlKey) &&
@@ -77,18 +118,24 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
     }
   };
   document.addEventListener("keydown", blockZoom, true);
-  update();
+  const shortcut = (event: KeyboardEvent) => {
+    if (
+      /Mac/.test(navigator.platform) &&
+      event.metaKey &&
+      !event.ctrlKey &&
+      !event.altKey &&
+      !event.shiftKey &&
+      event.key === ","
+    ) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      open();
+    }
+  };
+  window.addEventListener("keydown", shortcut, true);
   return () => {
-    disposeTool();
-    disposeScale();
-    disposeView();
-    disposePlanes();
-    editor.world.changed.delete(update);
     document.removeEventListener("keydown", blockZoom, true);
-    headerObserver.disconnect();
-    app.style.removeProperty("--editor-header-bottom");
-    button.remove();
-    dialog.remove();
+    window.removeEventListener("keydown", shortcut, true);
   };
 }
 
@@ -96,9 +143,30 @@ function settingsDialog(): HTMLDialogElement {
   const dialog = document.createElement("dialog");
   dialog.className = "application-settings";
   dialog.setAttribute("aria-labelledby", "settings-title");
+  const outside = (event: PointerEvent) => {
+    const bounds = dialog.getBoundingClientRect();
+    return (
+      event.target === dialog &&
+      (event.clientX < bounds.left ||
+        event.clientX > bounds.right ||
+        event.clientY < bounds.top ||
+        event.clientY > bounds.bottom)
+    );
+  };
+  let backdropPress = false;
+  dialog.addEventListener("pointerdown", (event) => {
+    backdropPress = event.button === 0 && outside(event);
+  });
+  dialog.addEventListener("pointerup", (event) => {
+    if (backdropPress && outside(event)) dialog.close();
+    backdropPress = false;
+  });
+  dialog.addEventListener("pointercancel", () => {
+    backdropPress = false;
+  });
   dialog.innerHTML = `<form method="dialog"><h2 id="settings-title">Settings</h2>
     <label>User interface scale<select aria-label="User interface scale"></select></label>
-    <p>Changes apply immediately and are saved on this device. Geometry and camera zoom stay independent.</p>
+    <p>Changes apply immediately and are saved on this device.</p>
     <div class="settings-actions"><button type="button" data-reset>Reset to 100%</button><button value="close">Done</button></div></form>`;
   const select = dialog.querySelector<HTMLSelectElement>("select");
   const reset = dialog.querySelector<HTMLButtonElement>("[data-reset]");

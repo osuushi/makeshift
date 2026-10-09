@@ -5,6 +5,7 @@ export class BufferedPointer {
   private modifiers: Pick<PointerEvent, "metaKey" | "shiftKey" | "altKey" | "ctrlKey">;
   position: { x: number; y: number };
   released = false;
+  doubleClicked = false;
 
   constructor(
     private press: PointerEvent,
@@ -21,6 +22,14 @@ export class BufferedPointer {
     window.addEventListener("pointermove", this.track, options);
     window.addEventListener("pointerup", this.track, options);
     window.addEventListener("pointercancel", this.pointerCancel, options);
+    window.addEventListener(
+      "dblclick",
+      (event) => {
+        if (Math.hypot(event.clientX - press.clientX, event.clientY - press.clientY) <= 4)
+          this.doubleClicked = true;
+      },
+      options,
+    );
     window.addEventListener("blur", this.cancel, { signal: this.listeners.signal });
     window.addEventListener("keydown", this.key, options);
     window.addEventListener("keyup", this.key, options);
@@ -38,6 +47,7 @@ export class BufferedPointer {
       cancelable: true,
       pointerId: this.press.pointerId,
       pointerType: this.press.pointerType,
+      isPrimary: this.press.isPrimary,
       button: this.press.button,
       buttons: type === "pointerup" ? 0 : this.press.buttons,
       clientX: position.x,

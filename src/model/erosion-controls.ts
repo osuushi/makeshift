@@ -103,7 +103,12 @@ export class ErosionControls {
       "erode",
       () => this.cancel(),
       () => this.finish(),
-      { navigation: "when-released" },
+      {
+        navigation: "when-released",
+        settled: async () => {
+          await this.running;
+        },
+      },
     );
     if (!this.lease) return false;
     this.valid = this.invalid = false;

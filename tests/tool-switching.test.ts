@@ -10,6 +10,7 @@ function context() {
   const editor = {
     interactions,
     blocked: false,
+    store: { scriptRunning: false, settled: async () => {} },
     isDragging: false,
     message: "",
     refresh: () => events.push("refresh"),
@@ -60,12 +61,12 @@ test("discovery borrows ownership; explicit switching accepts then resolves fres
   );
 });
 
-test("invalid latest draft stays owned and cannot execute the requested action", async () => {
+test("invalid latest draft cancels before executing the requested action", async () => {
   const { editor, interactions, catalog } = context();
   let ran = false;
   const lease = interactions.acquire(
     "numeric",
-    () => {},
+    () => lease?.release(),
     async () => {
       editor.message = "Invalid thread clearance";
       return false;
@@ -78,21 +79,21 @@ test("invalid latest draft stays owned and cannot execute the requested action",
         ran = true;
       }),
     ),
-    false,
+    true,
   );
-  assert.equal(ran, false);
-  assert.equal(interactions.current, lease);
+  assert.equal(ran, true);
+  assert.equal(interactions.current, null);
   assert.equal(editor.message, "Invalid thread clearance");
   assert.equal(catalog.switching, false);
 });
 
-test("acceptance failure, unreleased ownership and unavailable fresh targets block switching", async () => {
+test("acceptance failure cancels; unreleased ownership and unavailable fresh targets block switching", async () => {
   for (const mode of ["false", "unreleased", "unavailable", "throw"] as const) {
     const { editor, interactions, catalog } = context();
     let ran = false;
     const lease = interactions.acquire(
       "face-offset",
-      () => {},
+      () => lease?.release(),
       async () => {
         if (mode === "throw") throw new Error("Kernel rejected acceptance");
         if (mode === "false") return false;
@@ -107,8 +108,9 @@ test("acceptance failure, unreleased ownership and unavailable fresh targets blo
       },
       () => (mode === "unavailable" ? "Face no longer exists" : null),
     );
-    assert.equal(await catalog.activate(next), false, mode);
-    assert.equal(ran, false, mode);
+    const proceeds = mode === "false" || mode === "throw";
+    assert.equal(await catalog.activate(next), proceeds, mode);
+    assert.equal(ran, proceeds, mode);
     assert.equal(catalog.switching, false, mode);
     if (mode === "unavailable") assert.equal(editor.message, "Face no longer exists");
     if (mode === "throw") assert.equal(editor.message, "Kernel rejected acceptance");
@@ -139,19 +141,19 @@ test("one awaited acceptance excludes duplicate activations", async () => {
   const first = catalog.activate(next);
   assert.equal(catalog.switching, true);
   assert.equal(await catalog.activate(next), false);
+  await new Promise<void>((done) => setImmediate(done));
   resolve(true);
   assert.equal(await first, true);
   assert.equal(accepts, 1);
   assert.equal(runs, 1);
 });
 
-test("held gestures, calculations and unfinished owners retain their ordinary guards", async () => {
-  for (const guard of ["drag", "busy", "unfinished"] as const) {
-    const { editor, interactions, catalog } = context();
+test("held gestures and calculations without modal owners retain their ordinary guards", async () => {
+  for (const guard of ["drag", "busy"] as const) {
+    const { editor, catalog } = context();
     let ran = false;
     if (guard === "drag") editor.isDragging = true;
     if (guard === "busy") editor.blocked = true;
-    if (guard === "unfinished") interactions.acquire("projection", () => {});
     assert.ok(catalog.reason(action(() => {})), guard);
     assert.equal(
       await catalog.activate(
@@ -195,4 +197,82 @@ test("ordinary action rejection propagates to its calling control", async () => 
   const { catalog } = context();
   assert.equal(await catalog.activate(action(() => false)), false);
   assert.equal(catalog.switching, false);
+});
+
+test("released owners without valid completion cancel before default actions", async () => {
+  const { events, interactions, catalog } = context();
+  const lease = interactions.acquire(
+    "use-edge",
+    () => {
+      events.push("cancel");
+      lease?.release();
+    },
+    undefined,
+    { navigation: "when-released" },
+  );
+  assert.equal(await catalog.activate({ reason: () => null, run: () => events.push("run") }), true);
+  assert.deepEqual(
+    events.filter((event) => event === "cancel" || event === "run"),
+    ["cancel", "run"],
+  );
+});
+
+test("a modal calculation drains latest input before validity and fresh action prerequisites", async () => {
+  const { events, editor, interactions, catalog } = context();
+  let ready!: () => void;
+  const calculation = new Promise<void>((resolve) => {
+    ready = resolve;
+  });
+  editor.blocked = true;
+  const lease = interactions.acquire(
+    "shell",
+    () => lease?.release(),
+    async () => {
+      assert.equal(editor.blocked, false);
+      events.push("accept");
+      lease?.release();
+      return true;
+    },
+    { navigation: "when-released", settled: () => calculation },
+  );
+  const activation = catalog.activate(action(() => events.push("run")));
+  assert.equal(catalog.switching, true);
+  assert.ok(!events.includes("accept"));
+  editor.blocked = false;
+  ready();
+  assert.equal(await activation, true);
+  assert.deepEqual(
+    events.filter((event) => ["accept", "run"].includes(event)),
+    ["accept", "run"],
+  );
+});
+
+test("a switch joins automatic acceptance that starts when a released gesture calculates", async () => {
+  const { editor, interactions, catalog } = context();
+  let ready!: () => void;
+  const calculation = new Promise<void>((resolve) => {
+    ready = resolve;
+  });
+  const lease = interactions.acquire("pointer", () => lease?.release(), undefined, {
+    navigation: "blocked",
+    settled: () => calculation,
+  });
+  assert.ok(lease);
+  lease.wait();
+  let ran = false;
+  const switching = catalog.activate(
+    action(() => {
+      ran = true;
+    }),
+  );
+  lease.close();
+  editor.blocked = true;
+  ready();
+  await new Promise<void>((resolve) => setImmediate(resolve));
+  assert.equal(ran, false, "Atomic acceptance completes before the requested action");
+  assert.equal(catalog.switching, true);
+  editor.blocked = false;
+  lease.release();
+  assert.equal(await switching, true);
+  assert.equal(ran, true);
 });

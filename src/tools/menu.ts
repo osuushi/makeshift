@@ -104,7 +104,7 @@ export class ToolMenu {
     );
   }
   private open(): void {
-    if (this.editor.isDragging || toolMenuOpen()) return;
+    if (this.editor.interactions.current?.captured || toolMenuOpen()) return;
     for (const menu of document.querySelectorAll<HTMLElement>(".control-menu:popover-open"))
       menu.hidePopover();
     borrowToolFocus();

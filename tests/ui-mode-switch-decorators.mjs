@@ -6,7 +6,7 @@ import {
   switchUndoRedo,
   switchViewUndoRedo,
 } from "./ui-mode-switch-history.mjs";
-import { navigationIdle } from "./ui-navigation-history.mjs";
+import { assertNavigation, navigationHistory, navigationIdle } from "./ui-navigation-history.mjs";
 import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { browseTools, chooseTool } from "./ui-tools.mjs";
 
@@ -96,15 +96,12 @@ export async function decoratorDraftSwitchRoute(page, name) {
   await preset(page).selectOption("metric");
   await switched(page);
   let state = await inspect(page);
-  assert.deepEqual(state.document, original);
-  assert.equal(state.interaction.kind, "numeric");
-  assert.equal(state.interaction.phase, "editing");
-  assert.equal(await clearance(page).inputValue(), "-1");
-  assert.equal(await preset(page).inputValue(), "fdm-fine");
-  await chooseTool(page, "construction plane", "construction-plane");
-  state = await inspect(page);
-  assert.deepEqual(state.document, original);
-  assert.equal(state.interaction.kind, "numeric");
+  assert.equal(state.interaction, null);
+  assert.equal(state.document.decorators[0].settings.preset, "metric");
+  // Cancelled invalid clearance is not in the accepted preset change.
+  assert.equal(state.document.decorators[0].settings.clearance, 0.1);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
   await clearance(page).fill("0.3");
   await chooseTool(page, "construction plane", "construction-plane");
   state = await inspect(page);
@@ -115,7 +112,7 @@ export async function decoratorDraftSwitchRoute(page, name) {
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);
   console.log(
-    `${name}: numeric draft→preset serial acceptance; invalid text/preview/lease preserved and corrected mode switch passed`,
+    `${name}: numeric draft→preset serial acceptance; invalid draft discarded before preset and fresh valid mode switch passed`,
   );
 }
 
@@ -126,9 +123,13 @@ export async function threadApplicationSwitchRoute(page, name) {
   await chooseTool(page, "threads", "threads");
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   let state = await inspect(page);
-  assert.equal(state.activePlane, null);
-  assert.equal(state.interaction.kind, "numeric");
+  assert.equal(state.activePlane, "XY");
+  assert.equal(state.interaction, null);
   assert.deepEqual(state.document, original);
+  await chooseTool(page, "return to modeling", "modeling");
+  await navigationHistory(page);
+  assertNavigation(await navigationHistory(page), before, "Cancelled application navigation Undo");
+  await chooseTool(page, "threads", "threads");
   const pitch = page.getByRole("spinbutton", { name: "Pitch", exact: true });
   await page.getByRole("combobox", { name: "Profile", exact: true }).selectOption("metric");
   await pitch.fill("0.25");
@@ -154,7 +155,7 @@ export async function threadApplicationSwitchRoute(page, name) {
     modeling: before.modelingSelection,
   });
   console.log(
-    `${name}: invalid provisional Threads blocks switching; correction applies ordinarily before sketch entry passed`,
+    `${name}: invalid provisional Threads cancels before switching; fresh valid application applies ordinarily before sketch entry passed`,
   );
 }
 

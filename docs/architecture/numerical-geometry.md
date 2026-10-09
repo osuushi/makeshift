@@ -59,3 +59,12 @@ possible at sphere/plane and sphere/cylinder junctions without relaxing their
 1e-6 mm boundary budget. These are construction targets, not a claim that every
 fillet meets the offset budget; offset operations still measure their input and
 reject coarse older or imported geometry.
+
+## Stationary Bézier endpoints and solid presentation
+
+Pen corners may have a control point equal to their endpoint. Their exact
+extrusion remains valid even when OCCT cannot define a first-derivative surface
+normal there. Optional tangent face chains and blend recognition conservatively
+leave that adjacency ungrouped on `LProp_NotDefined`; they neither modify the
+solid nor bypass geometry, meshing or export validity checks. Other failures
+remain errors. See the [pinned source observation](../freecad/kernel-topology.md#stationary-endpoints-and-continuity-metadata).

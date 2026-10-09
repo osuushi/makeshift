@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { decoratorCylinder } from "./ui-decorator-cylinder.mjs";
+import { worldClick } from "./ui-face-offset.mjs";
 import { drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -107,10 +108,8 @@ export async function failedAcceptanceSwitchRoute(page, name) {
     await chooseTool(page, "construction plane", "construction-plane");
     const state = await inspect(page);
     assert.deepEqual(state.document, original);
-    assert.equal(state.interaction.kind, "numeric");
-    assert.equal(state.interaction.phase, "editing");
-    assert.equal(state.preview.decorators[0].settings.clearance, 0.4);
-    assert.equal(await clearance.inputValue(), "0.4");
+    assert.equal(state.interaction.kind, "construction-plane");
+    assert.equal(state.preview, null);
     assert.equal(await page.evaluate(() => window.acceptanceProbe.calls), 1);
     assert.deepEqual(await changedGeometry(page), history);
   } finally {
@@ -119,6 +118,8 @@ export async function failedAcceptanceSwitchRoute(page, name) {
       delete window.acceptanceProbe;
     });
   }
+  await page.keyboard.press("Escape");
+  await worldClick(page, [0, -8, 5]);
   await clearance.fill("0.3");
   await chooseTool(page, "construction plane", "construction-plane");
   const state = await inspect(page);
@@ -129,6 +130,6 @@ export async function failedAcceptanceSwitchRoute(page, name) {
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);
   console.log(
-    `${name}: injected ordinary store rejection retains latest valid draft/text/owner; corrected real backend acceptance and exact Undo passed`,
+    `${name}: injected ordinary store rejection discards the draft before switching; fresh real backend acceptance and exact Undo passed`,
   );
 }

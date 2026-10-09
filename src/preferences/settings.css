@@ -2,10 +2,10 @@
   pointer-events: auto;
 }
 .application-settings {
-  width: min(520px, calc(100vw - 24px));
+  width: min(600px, calc(100vw - 24px));
   max-height: calc(100dvh - 24px);
   overflow: auto;
-  padding: 22px;
+  padding: 16px;
   border: 1px solid #d6dfe9;
   border-radius: 12px;
   background: #fff;
@@ -17,7 +17,7 @@
 }
 .application-settings h2 {
   font-size: 18px;
-  margin: 0 0 20px;
+  margin: 0 0 8px;
 }
 .application-settings label {
   display: flex;
@@ -29,7 +29,7 @@
   font: inherit;
   /* Keep Safari input focus from zooming the page at smaller interface scales. */
   font-size: max(16px, calc(14px * var(--ui-scale, 1)));
-  padding: 8px;
+  padding: 5px 8px;
   border: 1px solid #d6dfe9;
   border-radius: 6px;
   background: white;
@@ -37,7 +37,8 @@
 }
 .application-settings p {
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.4;
+  margin: 4px 0;
   color: #647285;
 }
 .settings-actions {
@@ -45,22 +46,23 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 20px;
+  margin-top: 8px;
 }
 .decorator-display-settings {
   border-top: 1px solid #d6dfe9;
-  margin-top: 20px;
-  padding-top: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
 }
 .decorator-display-settings h3 {
   font-size: 15px;
+  margin: 0 0 8px;
 }
 .decorator-display-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  margin: 12px 0;
+  margin: 4px 0;
 }
 .decorator-display-row > label {
   max-width: 100%;
@@ -78,8 +80,11 @@
   width: 100px;
 }
 .decorator-color-value {
-  width: 70px;
+  box-sizing: content-box;
+  width: 8ch;
+  flex-shrink: 0;
   font: inherit;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: max(16px, calc(14px * var(--ui-scale, 1)));
   padding: 4px;
   border: 1px solid #d6dfe9;
@@ -90,15 +95,16 @@
 }
 .view-display-settings {
   border-top: 1px solid #d6dfe9;
-  margin-top: 20px;
-  padding-top: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
 }
 .view-display-settings h3 {
   font-size: 15px;
+  margin: 0 0 8px;
 }
 .view-display-settings label {
   flex-wrap: wrap;
-  margin: 12px 0;
+  margin: 4px 0;
 }
 .view-display-settings label > span {
   flex: 1;
@@ -116,7 +122,7 @@
   font: inherit;
   font-size: 13px;
   line-height: 1.3;
-  padding: 7px 12px;
+  padding: 5px 10px;
   border: 1px solid #d6dfe9;
   border-radius: 6px;
   background: #f7f9fc;
@@ -149,7 +155,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 0;
 }
 .plane-palette-saved :is(select, input) {
   flex: 1;
@@ -159,7 +165,7 @@
 .plane-palette-saved input {
   font: inherit;
   font-size: max(16px, calc(14px * var(--ui-scale, 1)));
-  padding: 8px;
+  padding: 5px 8px;
   border: 1px solid #d6dfe9;
   border-radius: 6px;
   color: inherit;
@@ -167,6 +173,25 @@
 .plane-palette-saved button {
   flex-shrink: 0;
 }
-.plane-palette-actions {
-  margin-top: 12px;
+
+.plane-palette-settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+.plane-palette-settings > label {
+  flex: 1;
+  margin: 0;
+}
+.plane-palette-saved {
+  flex-basis: 100%;
+  min-width: 0;
+}
+
+.application-settings h3 {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px 12px;
 }

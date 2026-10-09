@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { viewDisplay } from "../preferences/view-display.js";
 import { canonicalPlaneBounds, canonicalPlaneSelectable } from "./canonical-plane-bounds.js";
+import type { HistorySelection } from "./history-selection.js";
 import {
   createPlaneTargets,
   disposePlaneTarget,
@@ -36,6 +37,9 @@ class PlaneTargetInteraction {
     target: PlaneTarget;
     point: Point;
     entering: boolean;
+    time: number;
+    selection: HistorySelection;
+    settled: boolean;
   } | null = null;
   constructor(
     private world: World,
@@ -97,8 +101,22 @@ class PlaneTargetInteraction {
     if (event.button || event.metaKey || event.ctrlKey || this.world.planePickerAccept) return;
     const pending = this.selecting;
     if (
+      event.type === "click" &&
+      event.detail > 1 &&
+      pending &&
+      event.timeStamp - pending.time <= 500 &&
+      Math.hypot(event.clientX - pending.point.x, event.clientY - pending.point.y) <= 4
+    ) {
+      // The second click belongs to the first click's workspace-entry intent.
+      // Do not replace its pre-selection snapshot with the already selected plane.
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      return;
+    }
+    if (
       event.type === "dblclick" &&
       pending &&
+      event.timeStamp - pending.time <= 500 &&
       Math.hypot(event.clientX - pending.point.x, event.clientY - pending.point.y) <= 4
     ) {
       event.preventDefault();
@@ -106,9 +124,16 @@ class PlaneTargetInteraction {
       pending.entering = true;
       // The first click may still be accepting native geometry. Preserve the
       // double-click entry intent instead of losing it while the editor is busy.
-      void pending.done.then(() => {
-        if (!this.abort.signal.aborted && this.world.canEnterSketch()) this.enter(pending.target);
-      });
+      const enter = () => {
+        if (!this.abort.signal.aborted && this.world.canEnterSketch()) {
+          // A fast first click may already have selected the plane. Workspace
+          // Undo still restores the selection from the whole double-click intent.
+          this.world.navigation.beginWorkspace(pending.selection);
+          this.enter(pending.target);
+        }
+      };
+      if (pending.settled) enter();
+      else void pending.done.then(enter);
       return;
     }
     if (this.world.planePicker && event.type !== "click") return;
@@ -123,13 +148,17 @@ class PlaneTargetInteraction {
         target,
         point: { x: event.clientX, y: event.clientY },
         entering: false,
+        time: event.timeStamp,
+        selection: this.world.navigation.readSelection(),
+        settled: true,
       };
       const done = this.world.planeSelection?.(target.id, () => selection.entering);
       if (done) {
         selection.done = done;
+        selection.settled = false;
         this.selecting = selection;
-        void done.finally(() => {
-          if (this.selecting === selection) this.selecting = null;
+        void done.then(() => {
+          selection.settled = true;
         });
       }
     } else this.enter(target);

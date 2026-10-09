@@ -1,8 +1,10 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import { handoffModalPointer } from "./modal-pointer-handoff.js";
 
 /** Pointer capture keeps mouse, Pencil and touch on the same panel-only route. */
 export class EntityReorder {
+  private abort = new AbortController();
   private start: { x: number; y: number; pointer: number } | null = null;
   private lease: InteractionLease | null = null;
   private before: string | null | undefined;
@@ -16,6 +18,7 @@ export class EntityReorder {
     private label: HTMLButtonElement,
     id: string,
     group: string,
+    private localSelection: () => boolean = () => false,
   ) {
     row.dataset.entity = id;
     row.dataset.entityGroup = group;
@@ -39,11 +42,17 @@ export class EntityReorder {
     );
   }
   private down = (event: PointerEvent): void => {
+    if (!this.localSelection() && handoffModalPointer(this.editor, event, this.abort.signal))
+      return;
     if (this.start) return;
     this.suppressClick = false;
     if (event.button !== 0 || this.editor.blocked || this.editor.interactions.current) return;
     this.start = { x: event.clientX, y: event.clientY, pointer: event.pointerId };
-    this.label.setPointerCapture(event.pointerId);
+    try {
+      this.label.setPointerCapture(event.pointerId);
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === "NotFoundError")) throw error;
+    }
   };
   private move = (event: PointerEvent): void => {
     const start = this.start;

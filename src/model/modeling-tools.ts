@@ -59,13 +59,11 @@ export class ModelingTools {
             (event.target.matches("input, select, textarea") || event.target.isContentEditable))
         )
           return;
-        if (editor.isDragging) return;
+        if (editor.interactions.current?.captured) return;
         const current = editor.interactions.current;
         const tool = modelingShortcut(
           event,
-          current
-            ? { kind: current.kind, canFinish: !!current.finish && current.phase === "editing" }
-            : null,
+          current ? { kind: current.kind, canFinish: current.phase !== "closing" } : null,
         );
         if (!tool) return;
         event.preventDefault();
@@ -93,8 +91,6 @@ export class ModelingTools {
       const result = this.editor.modeling.resolve(tool);
       if (!result.available) return result.reason;
     }
-    const current = this.editor.interactions.current;
-    if (current && !current.finish) return "Finish or cancel the current edit first";
     return null;
   }
   private async choose(tool: ModelingTool): Promise<boolean> {
@@ -108,11 +104,6 @@ export class ModelingTools {
       return true;
     }
     if (editor.modeling.tool === tool && editor.interactions.current) return true;
-    const current = editor.interactions.current;
-    if (current && !(await current.finish?.())) {
-      editor.message ||= "Finish or cancel the current edit before switching tools";
-      return false;
-    }
     if (this.reason(tool)) return false;
     if (tool === "erode") {
       const result = editor.modeling.resolve("erode");

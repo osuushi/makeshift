@@ -1,3 +1,4 @@
+import { completeInteraction } from "../sketch/complete-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 
 export const categories = [
@@ -22,7 +23,7 @@ export interface ToolDefinition {
   shortcut?: string;
   reason: () => string | null;
   run: () => unknown;
-  /** Finish the current edit before resolving this action against accepted geometry. */
+  /** Complete the current edit by default; false preserves same-owner/local actions. */
   finishEdit?: boolean | (() => boolean);
   allowBusy?: boolean;
   showInTools?: boolean;
@@ -59,16 +60,22 @@ export class ToolCatalog {
   get switching(): boolean {
     return this.running;
   }
-  private switches(tool: ToolAction): boolean {
-    return typeof tool.finishEdit === "function" ? tool.finishEdit() : !!tool.finishEdit;
+  private switches(tool: Pick<ToolAction, "finishEdit">): boolean {
+    return typeof tool.finishEdit === "function" ? tool.finishEdit() : tool.finishEdit !== false;
   }
-  reason(tool: ToolAction): string | null {
+  reason(tool: Omit<ToolAction, "run">): string | null {
     if (this.running) return "Switching tools…";
-    if (this.editor.isDragging) return "Finish the current drag first";
-    if (this.editor.blocked && !tool.allowBusy) return "Wait for the current calculation";
     const current = this.editor.interactions.current;
-    if (current && this.switches(tool))
-      return current.finish ? null : "Finish or cancel the current edit first";
+    if (current?.captured || (!current && this.editor.isDragging))
+      return "Finish the current drag first";
+    if (
+      current &&
+      this.switches(tool) &&
+      current.phase !== "closing" &&
+      !this.editor.store.scriptRunning
+    )
+      return null;
+    if (this.editor.blocked && !tool.allowBusy) return "Wait for the current calculation";
     return tool.reason();
   }
   results(): ToolResult[] {
@@ -100,8 +107,8 @@ export class ToolCatalog {
     try {
       const current = this.editor.interactions.current;
       if (current && this.switches(tool)) {
-        if (!(await current.finish?.()) || this.editor.interactions.current) {
-          this.editor.message ||= "Correct or cancel the current edit before switching";
+        if (!(await completeInteraction(this.editor))) {
+          this.editor.message ||= "Could not complete the current edit";
           return false;
         }
         this.editor.refresh();

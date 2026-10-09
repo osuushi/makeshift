@@ -173,6 +173,7 @@ jobs:
         run: |
           xvfb-run -a node tests/mode-switch-readiness-ui.mjs
           xvfb-run -a node tests/mode-switch-ui.mjs
+          xvfb-run -a node tests/modal-completion-ui.mjs
       - name: Mode switch model and preview regressions
         if: matrix.shard == 2
         run: |
@@ -218,6 +219,7 @@ jobs:
         run: |
           node tests/mode-switch-readiness-ui.mjs
           node tests/mode-switch-ui.mjs
+          node tests/modal-completion-ui.mjs
       - name: Modal Undo boundaries
         if: matrix.shard == 3
         run: xvfb-run -a node tests/modal-undo-boundary-ui.mjs
@@ -410,6 +412,7 @@ jobs:
         run: |
           node tests/mode-switch-readiness-ui.mjs
           node tests/mode-switch-ui.mjs
+          node tests/modal-completion-ui.mjs
       - name: Modal Undo boundaries
         if: matrix.lane == 'geometry'
         env:

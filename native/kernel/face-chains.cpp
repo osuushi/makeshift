@@ -1,6 +1,7 @@
 #include "kernel.h"
 #include "face-chains.h"
 #include <BRepLib.hxx>
+#include <LProp_NotDefined.hxx>
 #include <TopExp.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
@@ -9,6 +10,16 @@
 #include <TopTools_MapOfShape.hxx>
 #include <TopoDS.hxx>
 #include <map>
+
+GeomAbs_Shape faceContinuity(const TopoDS_Edge& edge, const TopoDS_Face& from, const TopoDS_Face& to) {
+    try {
+        return BRepLib::ContinuityOfFaces(edge, from, to, 1e-5);
+    } catch (const LProp_NotDefined&) {
+        // A stationary Bezier endpoint can have no first-derivative normal.
+        // Optional face grouping must not reject otherwise valid geometry.
+        return GeomAbs_C0;
+    }
+}
 
 struct FaceChainContext::Data {
     TopTools_IndexedDataMapOfShapeListOfShape adjacency;
@@ -37,7 +48,7 @@ struct FaceChainContext::Data {
         auto& cache = continuity[edge];
         const auto found = cache.find(key);
         if (found != cache.end()) return found->second;
-        const auto value = BRepLib::ContinuityOfFaces(TopoDS::Edge(adjacency.FindKey(edge)), from, to, 1e-5);
+        const auto value = faceContinuity(TopoDS::Edge(adjacency.FindKey(edge)), from, to);
         cache.emplace(key, value);
         return value;
     }

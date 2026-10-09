@@ -4,6 +4,7 @@ import { editBodyAppearance } from "../model/body-appearance.js";
 import { withConstructionPlane } from "../model/construction-plane.js";
 import { editEntityPresentation } from "../model/entity-presentation.js";
 import { copySketch } from "../sketch/copy-selection.js";
+import { deleteProfiles } from "../sketch/delete-profiles.js";
 import { type SketchDocument, withSketch } from "../sketch/document.js";
 import { removeCurves } from "../sketch/geometry.js";
 import type { ModelRequest } from "../sketch/model-api.js";
@@ -96,6 +97,9 @@ export function editDocument(
     case "delete-entities": {
       const bodyIds = new Set(request.bodyIds);
       const sketchIds = new Set(request.sketchIds);
+      for (const target of request.profiles ?? [])
+        if (!document.sketches.some((sketch) => sketch.id === target.sketch))
+          throw new Error("Sketch no longer exists");
       return {
         ...document,
         ...(document.bodyAppearances
@@ -119,7 +123,14 @@ export function editDocument(
                 .filter((instance) => instance.faces.length),
             }
           : {}),
-        sketches: document.sketches.filter((sketch) => !sketchIds.has(sketch.id)),
+        sketches: document.sketches
+          .filter((sketch) => !sketchIds.has(sketch.id))
+          .map((sketch) => {
+            const keys = (request.profiles ?? [])
+              .filter((target) => target.sketch === sketch.id)
+              .map((target) => target.profile);
+            return keys.length ? deleteProfiles(sketch, keys).sketch : sketch;
+          }),
       };
     }
     case "delete-sketch":

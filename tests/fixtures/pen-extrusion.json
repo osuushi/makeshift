@@ -1,0 +1,208 @@
+{
+  "document": {
+    "units": "mm",
+    "sketches": [
+      {
+        "id": "3654cdff-2e93-436f-8e94-ca6314773725",
+        "plane": {
+          "origin": [0, 0, 0],
+          "u": [1, 0, 0],
+          "v": [0, 1, 0]
+        },
+        "curves": [
+          {
+            "id": "e78f7b2b-3306-472b-827c-846d9829dac1",
+            "kind": "bezier",
+            "a": {
+              "x": -8,
+              "y": 2
+            },
+            "b": {
+              "x": -4,
+              "y": 8
+            },
+            "c1": {
+              "x": -8,
+              "y": 2
+            },
+            "c2": {
+              "x": -8,
+              "y": 8
+            },
+            "construction": false
+          },
+          {
+            "id": "821d0d81-6372-4636-9edd-c502a94cc37f",
+            "kind": "bezier",
+            "a": {
+              "x": -4,
+              "y": 8
+            },
+            "b": {
+              "x": 18,
+              "y": -2
+            },
+            "c1": {
+              "x": 0,
+              "y": 8
+            },
+            "c2": {
+              "x": 12,
+              "y": -8
+            },
+            "construction": false
+          },
+          {
+            "id": "69ee3c65-6a9a-4851-bbd2-7f240c29711a",
+            "kind": "bezier",
+            "a": {
+              "x": 18,
+              "y": -2
+            },
+            "b": {
+              "x": 18,
+              "y": -12
+            },
+            "c1": {
+              "x": 24,
+              "y": 4
+            },
+            "c2": {
+              "x": 18,
+              "y": -12
+            },
+            "construction": false
+          },
+          {
+            "id": "e6b524fa-14d9-4513-a674-b3bbdb802434",
+            "kind": "segment",
+            "a": {
+              "x": 18,
+              "y": -12
+            },
+            "b": {
+              "x": 4,
+              "y": -10
+            },
+            "construction": false
+          },
+          {
+            "id": "3a37a121-02b6-4f44-8168-daaac2432f6a",
+            "a": {
+              "x": 4,
+              "y": -10
+            },
+            "b": {
+              "x": -8,
+              "y": 2
+            },
+            "construction": false,
+            "kind": "arc",
+            "bulge": -0.33333333356616407
+          }
+        ],
+        "constraints": [
+          {
+            "id": "821d0d81-6372-4636-9edd-c502a94cc37f-a-join",
+            "kind": "coincident",
+            "a": {
+              "curve": "821d0d81-6372-4636-9edd-c502a94cc37f",
+              "end": "a"
+            },
+            "b": {
+              "curve": "e78f7b2b-3306-472b-827c-846d9829dac1",
+              "end": "b"
+            }
+          },
+          {
+            "id": "821d0d81-6372-4636-9edd-c502a94cc37f-a-tangent",
+            "kind": "tangent",
+            "a": "e78f7b2b-3306-472b-827c-846d9829dac1",
+            "b": "821d0d81-6372-4636-9edd-c502a94cc37f",
+            "side": 1,
+            "junction": {
+              "aEnd": "b",
+              "bEnd": "a"
+            }
+          },
+          {
+            "id": "69ee3c65-6a9a-4851-bbd2-7f240c29711a-a-join",
+            "kind": "coincident",
+            "a": {
+              "curve": "69ee3c65-6a9a-4851-bbd2-7f240c29711a",
+              "end": "a"
+            },
+            "b": {
+              "curve": "821d0d81-6372-4636-9edd-c502a94cc37f",
+              "end": "b"
+            }
+          },
+          {
+            "id": "69ee3c65-6a9a-4851-bbd2-7f240c29711a-a-tangent",
+            "kind": "tangent",
+            "a": "821d0d81-6372-4636-9edd-c502a94cc37f",
+            "b": "69ee3c65-6a9a-4851-bbd2-7f240c29711a",
+            "side": 1,
+            "junction": {
+              "aEnd": "b",
+              "bEnd": "a"
+            }
+          },
+          {
+            "id": "e6b524fa-14d9-4513-a674-b3bbdb802434-a-join",
+            "kind": "coincident",
+            "a": {
+              "curve": "e6b524fa-14d9-4513-a674-b3bbdb802434",
+              "end": "a"
+            },
+            "b": {
+              "curve": "69ee3c65-6a9a-4851-bbd2-7f240c29711a",
+              "end": "b"
+            }
+          },
+          {
+            "id": "3a37a121-02b6-4f44-8168-daaac2432f6a-a-join",
+            "kind": "coincident",
+            "a": {
+              "curve": "3a37a121-02b6-4f44-8168-daaac2432f6a",
+              "end": "a"
+            },
+            "b": {
+              "curve": "e6b524fa-14d9-4513-a674-b3bbdb802434",
+              "end": "b"
+            }
+          },
+          {
+            "id": "3a37a121-02b6-4f44-8168-daaac2432f6a-b-join",
+            "kind": "coincident",
+            "a": {
+              "curve": "3a37a121-02b6-4f44-8168-daaac2432f6a",
+              "end": "b"
+            },
+            "b": {
+              "curve": "e78f7b2b-3306-472b-827c-846d9829dac1",
+              "end": "a"
+            }
+          }
+        ],
+        "groups": []
+      }
+    ]
+  },
+  "extrusion": {
+    "sources": [
+      {
+        "sketch": "3654cdff-2e93-436f-8e94-ca6314773725",
+        "profile": "3654cdff-2e93-436f-8e94-ca6314773725/0"
+      }
+    ],
+    "distance": 16,
+    "symmetric": false,
+    "draft": {
+      "mode": "angle",
+      "value": 0
+    },
+    "mode": "auto",
+    "eligibleTargets": []
+  }
+}

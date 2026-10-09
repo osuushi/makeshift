@@ -149,12 +149,18 @@ async function radiusLocks(page) {
   assert.equal(await input.getAttribute("aria-invalid"), "true");
   assert.equal((await inspect(page)).interaction.kind, "numeric");
   await button(page, "Unlock Radius");
-  assert.deepEqual((await inspect(page)).document, accepted);
-  assert.equal(await input.inputValue(), "3");
-  await page.keyboard.press("Escape");
   await modalCompleted(page);
+  const unlocked = (await inspect(page)).document;
+  assert.deepEqual(unlocked.sketches[0].curves, accepted.sketches[0].curves);
+  assert.equal(
+    (await locks(page)).length,
+    0,
+    "Unlock cancels the invalid draft before removing the lock",
+  );
+  await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, accepted);
-  await button(page, "Unlock Radius");
+  await chooseTool(page, "redo", "redo");
+  assert.deepEqual((await inspect(page)).document, unlocked);
   await number(page, "Radius", 5);
   assert.equal((await locks(page)).length, 0);
 }

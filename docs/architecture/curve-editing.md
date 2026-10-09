@@ -7,7 +7,7 @@ Cubic editing/projection (2026-09-16) supersedes any earlier spline exclusion.
 ### Creation and immediate editing
 
 Press-drag-release creates independent lines, rectangles and center-radius
-circles. The selected drawing tool stays active after release. There is no polyline
+circles. The selected drawing tool stays active after release. These tools have no polyline
 continuation or click-to-place session: subsequent input selects/edits existing
 geometry or starts a fresh drag. R/L/C explicitly arms creation over existing geometry.
 The press stays pending until it resolves to a full click or a drag beyond the
@@ -19,6 +19,43 @@ After a valid completion, the shape exists and is selected for editing. Leaving
 the tool or changing focus preserves it. A zero-size or invalid gesture creates
 nothing and adds no Undo entry. Creating another shape does not steal or rewrite
 the prior shape's numeric fields.
+
+### Pen paths
+
+P or Tools → Pen starts click-to-place drawing in the active planar workspace.
+Click places a corner anchor; press-drag creates mirrored incoming/outgoing cubic
+handles at a smooth anchor. Two corner anchors create an ordinary segment. Any
+span with a handle creates an ordinary cubic Bézier. Pen owns anchor clicks,
+including clicks on existing geometry; V returns to ordinary selection/editing.
+The first anchor is temporary and creates no sketch or Undo entry on its own.
+
+Each completed span is accepted through the document owner, with its endpoint
+coincidence and smooth-junction tangency constraints, in one Undo step. Successive
+spans remain fused when moved. Tangency couples the joined handle directions;
+their lengths stay independently editable. Grid placement creates no relationship.
+Unambiguous endpoint and analytic-edge snaps apply the existing drawing attachment
+policy. Centers, intersections, ambiguous junctions and body features remain
+placement references rather than persistent cross-document relationships.
+
+Shift bypasses geometry attraction and constrains the next-anchor or handle
+direction to multiples of 45°. Grid snapping retains its independent Tools toggle,
+which can change during a path. Handles use grid/geometry snapping without Shift;
+their Shift direction lock uses the pointer with grid increments along the locked
+direction when grid snapping is enabled. Option/Alt-drag makes a corner
+with an independent outgoing handle. Clicking the current last anchor retracts
+its outgoing handle; dragging it redirects the outgoing handle independently.
+
+Clicking the first anchor closes the path and preserves applicable tangency at
+the closing join. Enter, double-click or switching tools ends an open path.
+Enter during span acceptance finishes after that acceptance completes. Escape or
+pointer cancellation discards pending input and retains completed spans. Document
+Undo ends the temporary continuation and undoes the last completed span.
+
+After finishing, existing point/curve selection, movement, deletion, trim and
+cubic handle controls apply. Shift-dragging an existing cubic handle locks its
+direction to 45°; Option/Alt-dragging removes its joined-end tangency constraint
+while retaining endpoint coincidence. These edits are undoable. General spline
+editing and automatic anchor insertion/removal are outside this first pen tool.
 
 ### Circle interaction
 

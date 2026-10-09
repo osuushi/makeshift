@@ -19,7 +19,8 @@ founder feedback update these contracts before further tools depend on them.
   global body visibility. Ordinary Select All stays with File/Edit and keyboard
   commands; the body/sketch variants appear in Tools under Select. Reference planes keep
   their separate single-reference selection. Text fields, tool search and the agent
-  retain their own selection keys; active edits must finish or cancel first.
+  retain their own selection keys. Selection commands first commit valid released
+  modal settings or cancel invalid ones, then select against accepted geometry.
 
 - Hidden sketches and bodies remain selectable in the Entities panel, including
   when all bodies are hidden. Selection does not reveal them; Delete/Backspace
@@ -114,9 +115,10 @@ founder feedback update these contracts before further tools depend on them.
   geometry picking; explicit plane-entry targets handle plane selection.
   Deliberate entry from canonical patches, Tools, selected sketches/faces, saved
   planes and accepted projections passes through the editor's WorkspaceEntry.
-  It rejects busy, captured or active edits before changing workspace or selection;
-  finish or cancel first. Ordinary modeling clicks may finish a released valid
-  operation before a subsequent entry. History restores its recorded workspace
+  Deliberate actions first commit valid released modal settings or cancel invalid
+  ones, using the shared 500 ms Wait/Cancel boundary for pending calculation.
+  WorkspaceEntry then checks the idle state; captured gestures, atomic acceptance
+  and nonmodal busy work retain their guards. History restores its recorded workspace
   through its existing cancellation/selection route. Navigation capability is
   declared when each interaction acquires its lease: released modeling tools can
   pan/orbit, while captured gestures block navigation.

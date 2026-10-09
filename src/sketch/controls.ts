@@ -87,6 +87,7 @@ function installShortcuts(
         {
           r: "rectangle",
           b: "bezier",
+          p: "pen",
           l: "line",
           c: "circle",
           t: "trim",

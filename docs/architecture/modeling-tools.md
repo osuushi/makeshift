@@ -149,8 +149,13 @@ chamfer at a positive distance and heals it at zero. A tangent chamfer strip
 resizes and heals together when every face has the same recognized setback;
 partially recognized strips retain ordinary Offset. Normal drag travel converts
 to setback distance using the supporting angle; dragging past zero stops at the
-hard edge. Failed healing rejects without changing accepted geometry. Removal
-retains body identity, selects affected bodies, and supports Cancel and Undo.
+hard edge. Failed healing rejects without changing accepted geometry. Healing
+also applies to signed face Offset requests at the recognized finish's exact
+zero-size endpoint: zero offset surface radius for fillets, or zero setback
+for chamfers using their supporting angle.
+The complete connected finish must reach that endpoint together. This can remove
+multiple faces and their boundary edges while recovering the supporting intersection.
+Removal retains body identity, selects affected bodies, and supports Cancel and Undo.
 Unrecognized chamfers retain ordinary face Offset. Parallel non-concentric cylinders do not qualify.
 The kernel sorts matching supports by normal separation, then checks exact trimmed
 ray intersections from 11×11 parameter grids on both faces, excluding intervening faces.
@@ -230,7 +235,8 @@ Expansion retains existing ordered targets and adds unique stable topology IDs;
 it uses published face-edge incidence, not visual proximity. Boundary selection
 replaces the set with exterior/hole boundary edges, excluding shared interior edges.
 Selection changes do not mutate geometry or create document Undo entries. Refinement
-is unavailable during an active edit; finish or cancel it first.
+first completes a released modal: commit valid settings or cancel invalid ones,
+then resolve the new selection against accepted geometry.
 
 ## Delete faces and edges (founder decision, 2026-09-17)
 

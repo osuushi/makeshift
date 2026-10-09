@@ -164,7 +164,7 @@ export class DecoratorPanel {
       if (preview) this.draft.preview(edit);
       else return this.edit(edit);
     };
-    if (preview) run();
+    if (preview && this.draft.active) run();
     else return toolCatalog(this.editor).activate({ finishEdit: true, reason: () => null, run });
   }
   private update = (): void => {
@@ -193,12 +193,10 @@ export class DecoratorPanel {
     for (const input of this.root.querySelectorAll<HTMLInputElement>("input, select, button"))
       input.disabled =
         input.dataset.unavailable === "true" ||
-        this.editor.store.busy ||
+        (this.editor.store.busy && (!this.editor.interactions.current || this.draft.active)) ||
         this.draft.waiting ||
         toolCatalog(this.editor).switching ||
-        (!!this.editor.interactions.current &&
-          !this.draft.active &&
-          (input instanceof HTMLInputElement || !this.editor.interactions.current.finish));
+        !!this.editor.interactions.current?.captured;
     if (this.draft.active) return;
     const key = JSON.stringify([
       instances,

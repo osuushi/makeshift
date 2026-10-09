@@ -106,7 +106,12 @@ export class PlaneCutControls {
       "plane-cut",
       () => this.cancel(),
       () => this.finish(),
-      { navigation: "when-released" },
+      {
+        navigation: "when-released",
+        settled: async () => {
+          await this.running;
+        },
+      },
     );
     if (!this.lease) return;
     this.source = { mode, targets };

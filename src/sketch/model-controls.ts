@@ -139,21 +139,19 @@ export class ModelControls {
       async (event) => {
         if (
           editor.world.active ||
-          toolCatalog(editor).switching ||
-          editor.isDragging ||
-          editor.blocked ||
           ["body-move", "placement"].includes(editor.interactions.current?.kind ?? "")
         )
           return;
-        const interaction = editor.interactions.current;
-        if (interaction?.finish && !(await interaction.finish())) return;
-        if (this.extrusion.active && !(await this.extrusion.finish())) return;
-        if (toolCatalog(editor).switching) return;
-        const hits = pickModels(editor, { x: event.clientX, y: event.clientY });
-        editor.modeling.alternatives = hits.slice(1);
-        editor.modeling.choose(hits[0] ?? null, event.shiftKey, event.metaKey || event.ctrlKey);
-        this.placement.enabled = false;
-        editor.refresh();
+        await toolCatalog(editor).activate({
+          reason: () => null,
+          run: () => {
+            const hits = pickModels(editor, { x: event.clientX, y: event.clientY });
+            editor.modeling.alternatives = hits.slice(1);
+            editor.modeling.choose(hits[0] ?? null, event.shiftKey, event.metaKey || event.ctrlKey);
+            this.placement.enabled = false;
+            editor.refresh();
+          },
+        });
       },
       options,
     );
@@ -189,8 +187,7 @@ export class ModelControls {
         editor.world.active ||
         toolCatalog(editor).switching ||
         event.target instanceof HTMLInputElement ||
-        editor.blocked ||
-        editor.isDragging
+        editor.interactions.current?.captured
       )
         return;
       if (

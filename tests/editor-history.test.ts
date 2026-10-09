@@ -16,7 +16,12 @@ function editorAtBaseline() {
       value = saved;
     },
   );
-  const interaction = { history, captured: false, finish: async () => true };
+  const interaction = {
+    history,
+    captured: false,
+    finish: async () => true,
+    whenClosed: async () => {},
+  };
   const editor = {
     interactions: {
       current: interaction as typeof interaction | null,
@@ -100,7 +105,7 @@ test("initial modal Undo remains unavailable while calculating or holding a poin
   assert.deepEqual(context.requests, []);
 });
 
-test("shared command catalog enables initial modal Undo but preserves busy/drag guards", async () => {
+test("shared command catalog admits calculation waiting but preserves captured-pointer guards", async () => {
   const context = editorAtBaseline();
   const editor = context.editor as unknown as SketchEditor;
   const dispose = sketchTools(editor);
@@ -111,13 +116,15 @@ test("shared command catalog enables initial modal Undo but preserves busy/drag 
     assert.equal(reason("redo"), "Nothing to redo");
     context.editor.blocked = true;
     await catalog.invoke("undo");
-    assert.equal(reason("undo"), "Wait for the current calculation");
+    assert.equal(reason("undo"), null);
     context.editor.blocked = false;
     context.editor.isDragging = true;
+    context.interaction.captured = true;
     await catalog.invoke("undo");
     assert.equal(reason("undo"), "Finish the current drag first");
     assert.equal(context.cancellations(), 0);
     context.editor.isDragging = false;
+    context.interaction.captured = false;
     await catalog.invoke("undo");
     assert.equal(context.cancellations(), 1);
     assert.equal(reason("undo"), "Nothing to undo");

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
+import type { Body, Face } from "../src/model/body.js";
 import { constraintCurves } from "../src/sketch/constraint-geometry.js";
 import { emptySketch } from "../src/sketch/document.js";
 import { createFillet, editFilletRadius } from "../src/sketch/fillet-edit.js";
@@ -10,6 +11,31 @@ import { planes } from "../src/sketch/planes.js";
 import { validateSketch } from "../src/sketch/sketch-validation.js";
 import { roundedFixture } from "./body-blend-fixtures.js";
 import { finish, lift, prism, square, vertical } from "./body-edge-fixtures.js";
+
+async function offsetCornerPreview(owner: DocumentOwner, body: Body, face: Face) {
+  const finish = face.blend ?? face.chamfer;
+  assert.ok(finish);
+  const size = face.blend?.radius ?? face.chamfer?.distance;
+  assert.ok(size);
+  const reply = await owner.call({
+    kind: "offset-faces",
+    operation: {
+      faces: [{ body: body.id, face: face.id }],
+      distance:
+        ((face.chamfer ? 1 : -1) * size * finish.outward) / (face.chamfer?.distanceScale ?? 1),
+    },
+  });
+  assert.equal(reply.error, undefined);
+  const corner = reply.view.candidate?.bodies?.[0];
+  assert.ok(corner);
+  assert.ok(!corner.faces.some((f) => f.id === face.id));
+  assert.equal(reply.view.offsetSelection?.length, 0);
+  const before = owner.view.data;
+  await owner.call({ kind: "accept" });
+  await owner.call({ kind: "undo" });
+  assert.equal(owner.view.data, before);
+  return corner;
+}
 
 test("zero sketch fillet extends supports, removes arc relationships and fuses the hard corner", async () => {
   const a = segment({ x: 0, y: 0 }, { x: 10, y: 0 });
@@ -42,7 +68,9 @@ for (const type of ["convex", "concave", "rim", "corner"] as const)
       const body = before.bodies?.[0];
       assert.ok(body);
       const face = body.faces.find((f) => f.blend);
-      assert.ok(face);
+      assert.ok(face?.blend);
+      const offsetCorner = await offsetCornerPreview(owner, body, face);
+      assert.ok(!offsetCorner.faces.some((f) => f.blend));
       const reply = await owner.call({
         kind: "offset-faces",
         operation: { faces: [{ body: body.id, face: face.id }], distance: 2, radius: 0 },
@@ -54,6 +82,13 @@ for (const type of ["convex", "concave", "rim", "corner"] as const)
       assert.ok(!sharp.faces.some((f) => f.blend));
       const volume = type === "rim" ? Math.PI * 64 * 10 : type === "concave" ? 3000 : 4000;
       assert.ok(Math.abs(sharp.volume - volume) < 1e-6);
+      assert.ok(Math.abs(offsetCorner.volume - volume) < 1e-6);
+      assert.equal(offsetCorner.faces.length, sharp.faces.length);
+      if (type !== "rim") {
+        const position = type === "concave" ? 10 : 0;
+        assert.ok(vertical(sharp, position, position));
+        assert.ok(vertical(offsetCorner, position, position));
+      }
       assert.equal(reply.view.data, before);
       await owner.call({ kind: "accept" });
       await owner.call({ kind: "undo" });
@@ -112,6 +147,11 @@ for (const type of ["planar", "conical", "concave", "angled"])
       const face = beveled.faces.find((f) => f.chamfer);
       assert.ok(face?.chamfer);
       assert.ok(Math.abs(face.chamfer.distance - 2) < 1e-6);
+      const offsetCorner = await offsetCornerPreview(owner, beveled, face);
+      assert.ok(Math.abs(offsetCorner.volume - body.volume) < 1e-6);
+      assert.equal(offsetCorner.faces.length, body.faces.length);
+      if (!rim)
+        assert.ok(vertical(offsetCorner, type === "concave" ? 10 : 0, type === "concave" ? 10 : 0));
       const resized = await owner.call({
         kind: "offset-faces",
         operation: {

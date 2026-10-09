@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { orient } from "./ui-blend-edit.mjs";
 import { decoratorCylinder } from "./ui-decorator-cylinder.mjs";
+import { worldClick } from "./ui-face-offset.mjs";
 import { close, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import {
   appliedSwitchHistory,
@@ -98,11 +99,12 @@ export async function sketchNumericSwitchRoute(page, name) {
   await chooseTool(page, "Rectangle", "rectangle");
   let state = await inspect(page);
   assert.deepEqual(state.document, original);
-  assert.equal(state.interaction.kind, "numeric");
-  assert.equal(state.interaction.phase, "editing");
-  assert.equal(await radiusInput.inputValue(), "-1");
-  assert.equal(await radiusInput.getAttribute("aria-invalid"), "true");
-  assert.notEqual(state.tool, "rectangle");
+  assert.equal(state.interaction, null);
+  assert.equal(state.tool, "rectangle");
+  // Reselect the circle and begin a fresh valid edit after discard.
+  await page.keyboard.press("v");
+  const { click } = await import("./ui-helpers.mjs");
+  await click(page, 8, 0);
   await radiusInput.fill("9");
   await chooseTool(page, "Rectangle", "rectangle");
   await modalCompleted(page);
@@ -116,7 +118,7 @@ export async function sketchNumericSwitchRoute(page, name) {
     modeling: before.modelingSelection,
   });
   console.log(
-    `${name}: invalid sketch numeric text retains ownership; corrected value applies before drawing-tool switch with exact Undo/Redo passed`,
+    `${name}: invalid sketch numeric text cancels; a fresh valid value applies before drawing-tool switch with exact Undo/Redo passed`,
   );
 }
 
@@ -129,15 +131,17 @@ export async function offsetInvalidSwitchRoute(page, name) {
   const plane = await findRaycastPoint(page, "XY");
   await page.mouse.dblclick(plane.x, plane.y);
   state = await inspect(page);
-  assert.equal(state.activePlane, null, "Invalid preview blocks plane entry");
-  assert.equal(state.interaction.kind, "face-offset");
+  assert.equal(state.activePlane, "XY", "Invalid preview cancels before plane entry");
+  assert.equal(state.interaction, null);
   assert.deepEqual(state.document, original);
-  await chooseTool(page, "threads", "threads");
-  state = await inspect(page);
-  assert.deepEqual(state.document, original);
-  assert.equal(state.interaction.kind, "face-offset");
-  assert.equal(await input.inputValue(), "");
-  assert.equal(state.document.decorators?.length ?? 0, 0);
+  await chooseTool(page, "return to modeling", "modeling");
+  const body = original.bodies[0];
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  assert.equal((await inspect(page)).modelingSelection[0].body, body.id);
+  await chooseTool(page, "Clear selection", "selection-clear");
+  await orient(page, [0, -1, 0.3]);
+  await worldClick(page, [0, -8, 5]);
+  await offset(page);
   await input.fill("1");
   await inspect(page);
   // Existing O remains ordinary Offset ownership; typing in the field cannot switch.
@@ -152,6 +156,6 @@ export async function offsetInvalidSwitchRoute(page, name) {
   radius(state.document, 9);
   assert.equal(state.document.decorators.length, 1);
   console.log(
-    `${name}: unfinished Offset input blocks action, local field owns keys, correction accepts before Threads passed`,
+    `${name}: invalid Offset cancels before plane entry, local field owns keys, fresh preview accepts before Threads passed`,
   );
 }
