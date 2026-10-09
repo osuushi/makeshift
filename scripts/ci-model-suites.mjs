@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import times from "./ci-model-times.json" with { type: "json" };
 import { partition } from "./ci-partition.mjs";
 
-// Unchanged failures reproduced on Linux in run 37874047517; all other cases run there.
+// Required Mac cases reproduce Linux failures in runs noted here; all others run on Linux.
 export const macModelCases = [
   {
     file: "body-erosion-special-boundaries.test.js",
@@ -28,6 +28,13 @@ export const macModelCases = [
     file: "projection.test.js",
     name: "cut cone hyperbola and parabola edges project from exact BRep curves",
     seconds: 1,
+  },
+  // Linux runs 37922405765 and 37943268836 reject the suggested allowance.
+  // Retain the complete unchanged geometry/history check in required Mac CI.
+  {
+    file: "erosion-responsiveness.test.js",
+    name: "captured tight allowance fails quickly and its suggested allowance succeeds",
+    seconds: 12,
   },
 ];
 const macFiles = new Set(macModelCases.map(({ file }) => file));
