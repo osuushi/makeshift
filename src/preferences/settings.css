@@ -80,8 +80,11 @@
   width: 100px;
 }
 .decorator-color-value {
-  width: 70px;
+  box-sizing: content-box;
+  width: 8ch;
+  flex-shrink: 0;
   font: inherit;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: max(16px, calc(14px * var(--ui-scale, 1)));
   padding: 4px;
   border: 1px solid #d6dfe9;
