@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { primitivePreviewLayer } from "../sketch/world-primitive-overlay.js";
 
 /** Opaque shading and depth-tested contours keep front/back orientation unambiguous. */
 export function primitivePreviewMesh(geometry: THREE.BufferGeometry, color = "#a6e8ae") {
@@ -25,6 +26,7 @@ export function primitivePreviewMesh(geometry: THREE.BufferGeometry, color = "#a
     new THREE.LineBasicMaterial({ color: "#28643a" }),
   );
   solid.add(silhouette, edges);
+  solid.traverse((object) => object.layers.set(primitivePreviewLayer));
   return {
     solid,
     dispose: () => {

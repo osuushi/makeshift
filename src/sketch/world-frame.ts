@@ -1,6 +1,7 @@
 import type * as THREE from "three";
 import type { World } from "./world.js";
 import { SketchForeground } from "./world-foreground.js";
+import { PrimitiveOverlay } from "./world-primitive-overlay.js";
 
 declare global {
   interface Window {
@@ -11,6 +12,7 @@ declare global {
 /** GPU presentation; camera, geometry, picking and DOM updates remain in World. */
 export class WorldFrame {
   private readonly foreground = new SketchForeground();
+  private readonly primitives = new PrimitiveOverlay();
   private width = -1;
   private height = -1;
 
@@ -41,10 +43,12 @@ export class WorldFrame {
     if (activeFrame) {
       this.foreground.render(renderer, scene, camera, clip, renderForegroundOverlays);
     }
+    this.primitives.render(renderer, scene, camera);
   }
 
   dispose(): void {
     window.removeEventListener("makeshift-test-frame", this.captureFrame);
     this.foreground.dispose();
+    this.primitives.dispose();
   }
 }

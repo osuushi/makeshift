@@ -154,5 +154,6 @@ export const reviewUiSuites = [
     browsers: ["chromium", "webkit", "electron"],
   },
   { args: ["orientation-cube-ui.mjs"], seconds: 202, browsers: ["webkit", "electron"] },
+  { args: ["primitive-overlay-ui.mjs"], seconds: 45, browsers: ["chromium", "webkit", "electron"] },
   ...uiRoutes,
 ];

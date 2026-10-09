@@ -26,7 +26,7 @@ corner; hold Option to center the rectangle on the press point and extrude
 symmetrically about its plane. Option can change during hover or sizing; its state
 on release carries into Extrude. Hold Shift to lock a square. A bottom hint advertises dragging,
 and dimensions alongside the preview expose its size. This uses the ordinary
-rectangle footprint with an opaque light-green mesh and darker green contours showing its
+rectangle footprint with a light-green mesh and darker green contours showing its
 extrusion during hover and sizing. The mesh has depth equal to the rectangle's
 minor dimension and creates no document geometry. The sketch uses the ordinary
 rectangle primitive: four segments, rectangle constraints and a convenience group.
@@ -80,3 +80,8 @@ extra travel. Other visible bodies intersected within that travel can also be cu
 through the ordinary Boolean target rules; hidden bodies are excluded. Depth and
 targets remain editable in Extrude. No persistent drill recipe or body dependency
 is added.
+
+Placement previews render opaque into a separate depth buffer, then blend over the
+viewport at 50% opacity. Their front surfaces occlude their own back surfaces, while
+the underlying model remains visible. Drill retains a pink fill; its coplanar entry
+cap never competes with the body face for depth. Preview geometry stays exact.

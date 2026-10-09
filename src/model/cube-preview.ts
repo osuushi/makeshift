@@ -2,6 +2,7 @@ import * as THREE from "three";
 import type { PlaneFrame, Point } from "../sketch/planes.js";
 import { worldPoint } from "../sketch/planes.js";
 import type { World } from "../sketch/world.js";
+import { primitivePreviewLayer } from "../sketch/world-primitive-overlay.js";
 import type { cubeRectangle } from "./cube-rectangle.js";
 import { primitivePreviewMesh } from "./primitive-preview-mesh.js";
 import "./cube-preview.css";
@@ -19,6 +20,7 @@ export class CubePreview {
     private world: World,
     overlay: HTMLElement,
   ) {
+    this.line.layers.set(primitivePreviewLayer);
     this.line.renderOrder = 100;
     this.line.visible = false;
     this.solid.visible = false;
