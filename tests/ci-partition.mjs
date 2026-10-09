@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { access, readdir, readFile } from "node:fs/promises";
 import test from "node:test";
-import { macModelFiles, modelPartitions } from "../scripts/ci-model-suites.mjs";
+import { macModelCases, macModelPattern, modelPartitions } from "../scripts/ci-model-suites.mjs";
 import { partition, shardIndex } from "../scripts/ci-partition.mjs";
 import { uiSuites } from "../scripts/ci-ui-suites.mjs";
 
@@ -43,16 +43,13 @@ test("UI inventory has runnable entry points, unique commands and complete brows
   }
 });
 
-test("ordinary route migration covers all routes, with only constrained rotation retained on Mac", async () => {
+test("ordinary route migration covers every route in all supported runtimes", async () => {
   const source = await readFile(new URL("current-tools-ui.mjs", import.meta.url), "utf8");
   const routes = [...source.matchAll(/^ {6}(\w+Route),$/gm)].map((m) => m[1]);
   assert.equal(routes.length, 20);
   const suites = uiSuites.filter((s) => s.args[0] === "current-tools-ui.mjs");
   assert.deepEqual(suites.map((s) => s.args[1].slice("--route=".length)).sort(), routes.sort());
-  assert.deepEqual(
-    suites.filter((s) => !s.browsers.includes("webkit")).map((s) => s.args[1]),
-    ["--route=transformRoute"],
-  );
+  assert.ok(suites.every((s) => s.browsers.includes("webkit")));
 });
 
 test("widget and edge partitions use disjoint subsets without losing any family", () => {
@@ -88,15 +85,24 @@ test("shard arguments cannot silently omit a partition", () => {
   for (const bad of ["0/4", "5/4", "1/0", "1", undefined]) assert.throws(() => shardIndex(bad));
 });
 
-test("model platforms cover every file once, including new unmeasured tests", async () => {
+test("platform filtering retains every file and only the five reproduced Mac cases", async () => {
   const files = (await readdir(new URL(".", import.meta.url)))
     .filter((file) => file.endsWith(".test.ts"))
     .map((file) => file.replace(/\.ts$/, ".js"));
   files.push("new-unmeasured.test.js");
-  const linux = modelPartitions(files, "linux", 4).flatMap((s) => s.suites.map((s) => s.id));
-  const mac = modelPartitions(files, "mac", 3).flatMap((s) => s.suites.map((s) => s.id));
-  assert.deepEqual(mac.sort(), [...macModelFiles].sort());
-  assert.deepEqual([...linux, ...mac].sort(), files.sort());
+  const linux = modelPartitions(files, "linux", 5).flatMap((s) => s.suites.map((s) => s.id));
+  const mac = modelPartitions(files, "mac", 1).flatMap((s) => s.suites.map((s) => s.id));
+  assert.deepEqual(linux.sort(), files.sort());
+  assert.deepEqual(mac.sort(), [...new Set(macModelCases.map((c) => c.file))].sort());
   assert.ok(linux.includes("new-unmeasured.test.js"));
-  assert.throws(() => modelPartitions([], "mac", 3), /Missing required Mac test/);
+  assert.equal(macModelCases.length, 5);
+  const pattern = new RegExp(macModelPattern);
+  for (const { name } of macModelCases) {
+    assert.ok(pattern.test(name));
+    assert.ok(!pattern.test(`${name} adjacent`), "Filter matches the whole test name");
+  }
+  assert.ok(
+    !pattern.test("captured original erosion allowance produces a result that can be reopened"),
+  );
+  assert.throws(() => modelPartitions([], "mac", 1), /Missing required Mac test/);
 });

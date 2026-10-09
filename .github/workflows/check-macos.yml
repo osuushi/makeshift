@@ -118,6 +118,7 @@ jobs:
           - 2
           - 3
           - 4
+          - 5
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: ./.github/actions/ci-linux-runtime
@@ -125,8 +126,8 @@ jobs:
         run: |
           node scripts/clean-tests.mjs
           npx tsc -p tsconfig.test.json
-      - name: Serial geometry tests, shard ${{ matrix.shard }}/4
-        run: node scripts/ci-model-tests.mjs linux ${{ matrix.shard }}/4
+      - name: Serial geometry tests, shard ${{ matrix.shard }}/5
+        run: node scripts/ci-model-tests.mjs linux ${{ matrix.shard }}/5
   controls:
     needs: linux-build
     runs-on: ubuntu-24.04
@@ -283,9 +284,7 @@ jobs:
       fail-fast: false
       matrix:
         lane:
-          - geometry-1
-          - geometry-2
-          - geometry-3
+          - geometry
           - host-smoke
           - regressions
     env:
@@ -299,9 +298,8 @@ jobs:
           node scripts/clean-tests.mjs
           npx tsc -p tsconfig.test.json
       - name: Required platform-sensitive geometry
-        if: startsWith(matrix.lane, 'geometry-')
-        run: node scripts/ci-model-tests.mjs mac ${{ endsWith(matrix.lane, '1') && '1/3' || endsWith(matrix.lane, '2')
-          && '2/3' || '3/3' }}
+        if: matrix.lane == 'geometry'
+        run: node scripts/ci-model-tests.mjs mac
       - name: Built host smoke and Finder launch
         if: matrix.lane == 'host-smoke'
         run: |-
@@ -309,41 +307,15 @@ jobs:
           node tests/agent-finder-launch.mjs
           node tests/agent-plane-settings-electron.mjs
           node tests/agent-setup-electron.mjs
-      - name: Install WebKit for constrained rotation regression
+      - name: Install WebKit for narrow-header regression
         if: matrix.lane == 'regressions'
         run: npx playwright install webkit
-      - name: Platform-specific navigation and constrained rotation
+      - name: Native navigation and WebKit narrow header
         if: matrix.lane == 'regressions'
         run: |-
           node tests/electron.mjs --navigation-only
           node tests/navigation-host-ui.mjs
-          MAKESHIFT_TEST_BROWSER=webkit node tests/current-tools-ui.mjs --route=transformRoute
           MAKESHIFT_TEST_BROWSER=webkit node tests/interface-scale.mjs
-  linux-platform-probe:
-    needs: linux-build
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - uses: ./.github/actions/ci-linux-runtime
-      - run: npx tsc -p tsconfig.test.json
-      - name: Reproduce documented geometry exceptions on Linux
-        continue-on-error: true
-        run: node scripts/ci-model-tests.mjs mac
-      - name: Install Linux WebKit
-        run: npx playwright install --with-deps webkit
-      - name: Reproduce constrained rotation on Linux WebKit
-        continue-on-error: true
-        env:
-          MAKESHIFT_TEST_BROWSER: webkit
-          MAKESHIFT_TEST_FRAME_MODE: on-demand
-        run: xvfb-run -a node tests/current-tools-ui.mjs --route=transformRoute
-      - name: Reproduce high-DPI narrow header on Linux WebKit
-        continue-on-error: true
-        env:
-          MAKESHIFT_TEST_BROWSER: webkit
-          MAKESHIFT_TEST_FRAME_MODE: on-demand
-        run: xvfb-run -a node tests/interface-scale.mjs
   check:
     if: always() && !cancelled()
     needs:

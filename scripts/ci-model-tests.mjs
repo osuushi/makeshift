@@ -1,24 +1,38 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { readdir } from "node:fs/promises";
-
-import { modelPartitions } from "./ci-model-suites.mjs";
+import { macModelCases, macModelPattern, modelPartitions } from "./ci-model-suites.mjs";
 import { shardIndex } from "./ci-partition.mjs";
 
 const [platform, shard] = process.argv.slice(2);
 const { index, count } = shardIndex(shard ?? "1/1");
+assert.ok(platform !== "mac" || count === 1, "The five Mac regressions run together");
 const directory = ".cache/sketch-tests/tests";
 const files = (await readdir(directory)).filter((file) => file.endsWith(".test.js")).sort();
 const assigned = modelPartitions(files, platform, count)[index];
-const selected = assigned.suites.map(({ id }) => id);
-assert.ok(selected.length, "CI must run a nonempty test partition");
+assert.ok(assigned.suites.length, "CI must run a nonempty test partition");
 console.log(
-  `${platform}: estimated ${assigned.seconds}s, ${selected.length}/${files.length} test files${shard ? `, shard ${shard}` : ""}`,
+  `${platform} ${shard ?? "1/1"}: estimated ${assigned.seconds}s, ${assigned.suites.length} files`,
 );
-const result = spawnSync(
+const filter = platform === "mac" ? "--test-name-pattern" : "--test-skip-pattern";
+const child = spawn(
   process.execPath,
-  ["--test", "--test-concurrency=1", ...selected.map((file) => `${directory}/${file}`)],
-  { stdio: "inherit" },
+  [
+    "--test",
+    "--test-reporter=spec",
+    "--test-concurrency=1",
+    `${filter}=${macModelPattern}`,
+    ...assigned.suites.map(({ id }) => `${directory}/${id}`),
+  ],
+  { stdio: ["ignore", "pipe", "inherit"], env: { ...process.env, NO_COLOR: "1" } },
 );
-if (result.error) throw result.error;
-process.exit(result.status ?? 1);
+let summary = "";
+child.stdout.on("data", (chunk) => {
+  process.stdout.write(chunk);
+  summary = (summary + chunk).slice(-2048);
+});
+const [status] = await once(child, "close");
+if (status !== 0) process.exit(status ?? 1);
+// A renamed/deleted fixture must not silently turn the focused Mac gate into zero tests.
+if (platform === "mac") assert.match(summary, new RegExp(`^ℹ pass ${macModelCases.length}$`, "m"));

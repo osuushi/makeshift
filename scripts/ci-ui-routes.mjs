@@ -43,7 +43,7 @@ export const uiRoutes = [
   {
     args: ["current-tools-ui.mjs", "--route=transformRoute"],
     seconds: 24,
-    browsers: ["chromium", "electron"],
+    browsers: ["chromium", "webkit", "electron"],
   },
   {
     args: ["current-tools-ui.mjs", "--route=extrudeRoute"],

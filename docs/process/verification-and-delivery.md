@@ -34,7 +34,7 @@ Measure replacing SVG overlays with the bounded, atomic `overlayPoint` helper.
 
 `npm test` runs test files serially. Native geometry checks include wall-clock
 calculation limits; competing test workers can exhaust those limits on otherwise
-valid fixtures. CI assigns files to four Linux workers using measured test durations
+valid fixtures. CI assigns files to five Linux workers using measured test durations
 and longest-first balancing in `scripts/ci-partition.mjs`, preserving
 `--test-concurrency=1`. Unmeasured files receive a small default weight and remain
 required. Keep the actual geometry and latency assertions intact.
@@ -64,21 +64,23 @@ render current pixels, including after reload. For local diagnosis, prefix a UI
 command with that environment variable; ordinary runs retain normal redraws.
 macOS acceptance uses the same frame mode and is limited to a built-host smoke
 (native geometry, Save/Open, sandbox), Finder PATH and process setup regressions,
-native navigation, constrained rotation and WebKit high-DPI narrow-header layout,
-plus three serial partitions of the
-six geometry files with documented Linux differences.
+native navigation and WebKit high-DPI narrow-header layout,
+plus the five individual numerical cases still failing on Linux.
 
-The six geometry exceptions in `scripts/ci-model-tests.mjs` are special erosion
-and its placement boundaries, captured offset movement, offset thickness, exact
-projection and captured erosion responsiveness. Prior Linux failures included
-filleted hemisphere validity, a captured plate's volume, an unchanged sphere's
-numerical signature, a conic projection reply and erosion calculation latency.
-WebKit constrained rotation also remains on Mac. Linux WebKit passes interface
-scale geometry but fails the existing narrow-header Settings bounds check; retain
-that unchanged suite on Mac. The broader Linux WebKit migration must pass
-unchanged routes before being considered verified; previously it reported
-unhandled selection fetch errors on reload. Remove platform exceptions
-only after the unchanged route passes on Linux.
+`scripts/ci-model-suites.mjs` retains five individual geometry tests on Mac:
+filleted-sphere erosion and rigid placement, captured plate-hole movement volume,
+unchanged spherical thickness signature and conic projection validity. An unchanged
+Linux probe passed 33 of the formerly partitioned 38 cases in run 37874047517.
+Those 33, including erosion responsiveness and the other captured plate movements,
+now run on Linux. Node name/skip filters partition cases exactly; the Mac gate also
+requires exactly five passed tests so a renamed fixture cannot silently disappear.
+Do not relax geometry, topology, history or calculation limits to remove exceptions.
+The constrained-rotation WebKit route also passed unchanged on Linux and moved there.
+Linux WebKit fails the existing high-DPI narrow-header Settings bounds check
+(button bottom257px, required below250px); retain that unchanged suite on Mac.
+The shared WebKit reload suites passed on Linux; their former broad Mac partition
+is retired. Remove a remaining platform exception only after its unchanged route
+passes on Linux.
 
 The final `check` job requires every lane to succeed, including after a lane
 fails or is skipped. Cancelled runs skip that final check. Runtime artifacts expire
