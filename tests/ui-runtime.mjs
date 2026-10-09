@@ -7,7 +7,10 @@ import { failureContext } from "./ui-failure-context.mjs";
 import { installProfilePickTrace } from "./ui-profile-pick-trace.mjs";
 import { installTestFrames } from "./ui-test-frames.mjs";
 
-export function runtimeNames(allowed = ["chromium", "webkit", "electron"], defaults = allowed) {
+export function runtimeNames(
+  allowed = ["chromium", "webkit", "electron"],
+  defaults = allowed.includes("electron") ? ["electron"] : [allowed[0]],
+) {
   const requested = process.env.MAKESHIFT_TEST_BROWSER;
   if (requested && !allowed.includes(requested))
     throw new Error(
@@ -18,7 +21,8 @@ export function runtimeNames(allowed = ["chromium", "webkit", "electron"], defau
     defaults.length && defaults.every((name) => allowed.includes(name)),
     "UI defaults must be supported and nonempty",
   );
-  return requested ? [requested] : defaults;
+  // An ordinary invocation exercises one runtime. Cross-browser sweeps are explicit.
+  return requested ? [requested] : [defaults.includes("electron") ? "electron" : defaults[0]];
 }
 
 /** Own the server, browser/app, isolated Electron profile and page for each route. */

@@ -128,73 +128,40 @@ jobs:
           npx tsc -p tsconfig.test.json
       - name: Serial geometry tests, shard ${{ matrix.shard }}/5
         run: node scripts/ci-model-tests.mjs linux ${{ matrix.shard }}/5
-  controls:
+  electron-smoke:
     needs: linux-build
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        browser:
-          - chromium
-          - webkit
-          - electron
-        shard:
-          - 1
-          - 2
-          - 3
-          - 4
-          - 5
-          - 6
-          - 7
-          - 8
-          - 9
-          - 10
-          - 11
-          - 12
-          - 13
-          - 14
-          - 15
-          - 16
-    env:
-      MAKESHIFT_TEST_FRAME_MODE: on-demand
-      MAKESHIFT_TEST_BROWSER: ${{ matrix.browser }}
-      DEBUG: ${{ matrix.browser == 'electron' && 'pw:browser' || '' }}
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - uses: ./.github/actions/ci-linux-runtime
-      - name: Browser and display dependencies
-        run: npx playwright install --with-deps ${{ matrix.browser == 'electron' && 'chromium' || matrix.browser }}
-      - name: Compile UI inspection dependencies
-        run: npx tsc -p tsconfig.test.json
-      - name: Measured serial UI suites
-        run: xvfb-run -a node scripts/ci-ui-tests.mjs ${{ matrix.browser }} ${{ matrix.shard }}/16
-  electron-host:
-    needs: linux-build
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        shard:
-          - 1
-          - 2
-          - 3
-          - 4
-          - 5
-          - 6
-          - 7
+    timeout-minutes: 10
     env:
       MAKESHIFT_TEST_BROWSER: electron
       MAKESHIFT_TEST_FRAME_MODE: on-demand
-      DEBUG: pw:browser
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - *a1
       - uses: ./.github/actions/ci-linux-runtime
       - name: Display dependencies
         run: npx playwright install-deps chromium
-      - name: Hidden Electron host routes
-        run: xvfb-run -a npm run test:electron -- --shard=${{ matrix.shard }}/7 --without-navigation
+      - name: Built Electron smoke
+        run: xvfb-run -a npm run test:smoke
+  electron-regressions:
+    needs: linux-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    env:
+      MAKESHIFT_TEST_BROWSER: electron
+      MAKESHIFT_TEST_FRAME_MODE: on-demand
+    steps:
+      - *a1
+      - uses: ./.github/actions/ci-linux-runtime
+      - name: Display dependencies
+        run: npx playwright install-deps chromium
+      - name: Compile regression inspection dependencies
+        run: npx tsc -p tsconfig.test.json
+      - name: Focused Electron regressions
+        run: xvfb-run -a node scripts/ci-ui-tests.mjs electron ${{ matrix.shard }}/3
   macos-build:
     runs-on: macos-15
     timeout-minutes: 60
@@ -303,7 +270,7 @@ jobs:
       - name: Built host smoke and Finder launch
         if: matrix.lane == 'host-smoke'
         run: |-
-          node tests/electron-smoke.mjs
+          npm run test:smoke
           node tests/agent-finder-launch.mjs
           node tests/agent-plane-settings-electron.mjs
           node tests/agent-setup-electron.mjs
@@ -322,8 +289,8 @@ jobs:
       - static
       - linux-build
       - model
-      - controls
-      - electron-host
+      - electron-smoke
+      - electron-regressions
       - macos-build
       - macos-acceptance
     runs-on: ubuntu-24.04

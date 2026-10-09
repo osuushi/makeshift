@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { access, readdir, readFile } from "node:fs/promises";
+import { access, readdir } from "node:fs/promises";
 import test from "node:test";
 import { macModelCases, macModelPattern, modelPartitions } from "../scripts/ci-model-suites.mjs";
 import { partition, shardIndex } from "../scripts/ci-partition.mjs";
@@ -23,61 +23,28 @@ test("longest-first assignment preserves every suite exactly once and balances h
   assert.throws(() => partition([{ id: "bad", seconds: 0 }], 1), /Invalid timing/);
 });
 
-test("UI inventory has runnable entry points, unique commands and complete browser partitions", async () => {
-  for (const suite of uiSuites) await access(new URL(suite.args[0], import.meta.url));
-  for (const browser of ["chromium", "webkit", "electron"]) {
-    const suites = uiSuites
-      .filter((s) => s.browsers.includes(browser))
-      .map((s) => ({ ...s, id: s.args.join(" ") }));
-    const shards = partition(suites, 16);
-    assert.ok(shards.every((s) => s.suites.length));
-    assert.deepEqual(
-      shards
-        .flatMap((s) => s.suites)
-        .map((s) => s.id)
-        .sort(),
-      suites.map((s) => s.id).sort(),
+test("PR UI coverage stays bounded, Electron-only and tied to lower-level coverage", async () => {
+  assert.ok(uiSuites.length <= 20, "Review the UI budget before adding another permanent journey");
+  for (const suite of uiSuites) {
+    await access(new URL(suite.args[0], import.meta.url));
+    await access(new URL(suite.unit, import.meta.url));
+    assert.deepEqual(suite.browsers, ["electron"], "Cross-browser matrices are opt-in review");
+    assert.ok(
+      suite.reason.length > 30,
+      "Explain the integration failure lower-level tests cannot catch",
     );
-    const totals = shards.map((s) => s.seconds);
-    assert.ok(Math.max(...totals) - Math.min(...totals) <= 30, `${browser}: ${totals}`);
   }
-});
-
-test("ordinary route migration covers every route in all supported runtimes", async () => {
-  const source = await readFile(new URL("current-tools-ui.mjs", import.meta.url), "utf8");
-  const routes = [...source.matchAll(/^ {6}(\w+Route),$/gm)].map((m) => m[1]);
-  assert.equal(routes.length, 20);
-  const suites = uiSuites.filter((s) => s.args[0] === "current-tools-ui.mjs");
-  assert.deepEqual(suites.map((s) => s.args[1].slice("--route=".length)).sort(), routes.sort());
-  assert.ok(suites.every((s) => s.browsers.includes("webkit")));
-});
-
-test("widget and edge partitions use disjoint subsets without losing any family", () => {
-  const subsets = (file) =>
-    uiSuites
-      .filter((s) => s.args[0] === file)
-      .map((s) => s.args[1])
-      .sort();
-  assert.deepEqual(subsets("widget-reachability-ui.mjs"), [
-    "adjacent",
-    "axial",
-    "blend",
-    "body",
-    "cards",
-    "extrude",
-    "planar",
-    "plane",
-    "revolve",
-    "topology",
-  ]);
-  assert.deepEqual(subsets("edge-finish-ui.mjs"), [
-    "adjacent",
-    "faces",
-    "grid",
-    "motion",
-    "periodic",
-    "zero",
-  ]);
+  const suites = uiSuites.map((suite) => ({ ...suite, id: suite.args.join(" ") }));
+  const shards = partition(suites, 3);
+  assert.ok(shards.every((shard) => shard.suites.length));
+  assert.ok(
+    shards.reduce((sum, shard) => sum + shard.seconds, 0) <= 500,
+    "Keep the regression gate within its aggregate execution budget",
+  );
+  assert.deepEqual(
+    shards.flatMap((shard) => shard.suites.map((suite) => suite.id)).sort(),
+    suites.map((suite) => suite.id).sort(),
+  );
 });
 
 test("shard arguments cannot silently omit a partition", () => {

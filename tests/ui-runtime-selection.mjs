@@ -7,7 +7,9 @@ test("UI runtime selection preserves defaults and rejects unsupported/empty rout
   const previous = process.env.MAKESHIFT_TEST_BROWSER;
   try {
     delete process.env.MAKESHIFT_TEST_BROWSER;
-    assert.deepEqual(runtimeNames(["chromium", "webkit"]), ["chromium", "webkit"]);
+    assert.deepEqual(runtimeNames(), ["electron"]);
+    assert.deepEqual(runtimeNames(undefined, ["chromium", "webkit", "electron"]), ["electron"]);
+    assert.deepEqual(runtimeNames(["chromium", "webkit"]), ["chromium"]);
     assert.deepEqual(runtimeNames(undefined, ["chromium"]), ["chromium"]);
     assert.throws(() => runtimeNames([]), /at least one/);
     assert.throws(() => runtimeNames(["chromium"], ["webkit"]), /supported and nonempty/);
