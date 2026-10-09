@@ -88,8 +88,10 @@ try {
       const rolled = await inspect(page);
       assert.notDeepEqual(rolling.camera.up, rotated.camera.up);
       assert.notDeepEqual(rolled.camera.up, rolling.camera.up, "Mouse roll snaps on release");
+      assertRollFraming(rotated.camera, rolling.camera);
+      assertRollFraming(rotated.camera, rolled.camera);
       for (let i = 0; i < 3; i++)
-        assert.ok(Math.abs(rolled.camera.position[i] - rotated.camera.position[i]) < 1e-8);
+        assert.ok(Math.abs(rolled.camera.up[i] - rotated.camera.up[i]) < 1e-8);
       assert.deepEqual(rolled.document, before.document);
       await control.click();
       await trackpad.check();
@@ -113,4 +115,21 @@ try {
 } finally {
   if ("close" in server) await server.close();
   else await new Promise((resolve) => server.httpServer.close(resolve));
+}
+
+function assertRollFraming(before, after) {
+  const start = before.position.map((v, i) => v - before.target[i]);
+  const end = after.position.map((v, i) => v - after.target[i]);
+  const startDepth = Math.hypot(...start),
+    endDepth = Math.hypot(...end);
+  assert.equal(after.height, before.height, "Roll preserves orthographic zoom");
+  for (let i = 0; i < 3; i++) {
+    assert.ok(Math.abs(after.target[i] - before.target[i]) < 1e-8, "Roll preserves view target");
+    assert.ok(
+      Math.abs(end[i] / endDepth - start[i] / startDepth) < 1e-8,
+      "Roll preserves viewing direction",
+    );
+  }
+  // Reference-plane depth fitting may retreat along that direction as up changes.
+  assert.ok(endDepth >= startDepth - 1e-8, "Depth fitting only retreats the ray origin");
 }
