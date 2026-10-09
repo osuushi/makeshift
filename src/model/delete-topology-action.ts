@@ -55,7 +55,12 @@ export class DeleteTopologyAction {
     if (!resolution.available) return;
     const { bodyIds, sketchIds, topology, profiles } = resolution.inputs;
     if (bodyIds.length || sketchIds.length || profiles.length) {
-      const entities = { bodyIds, sketchIds, profiles, ...(topology.length ? { topology } : {}) };
+      const entities = {
+        bodyIds,
+        sketchIds,
+        ...(profiles.length ? { profiles } : {}),
+        ...(topology.length ? { topology } : {}),
+      };
       const before = editor.store.data;
       const ok = await editor.store.request({ kind: "delete-entities", ...entities });
       if (ok) {
