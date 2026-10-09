@@ -188,10 +188,11 @@ class TabletInput {
     consume(event);
     this.suppressClickUntil = performance.now() + 1000;
     const level = event.type === "pointerup" && this.rotating && !this.touches.size;
+    const frame = this.world.orbit.releaseFrame;
     if (this.world.canvas.hasPointerCapture(event.pointerId))
       this.world.canvas.releasePointerCapture(event.pointerId);
     this.rebase();
-    if (level) this.world.levelHorizon();
+    if (level) this.world.levelHorizon(frame);
     if (!this.touches.size) this.world.navigation.release("touch");
   };
   private reset = (): void => {

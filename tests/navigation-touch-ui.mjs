@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { chromium, webkit } from "playwright";
+import * as THREE from "three";
 import { launchElectron } from "./native-documents.mjs";
 import { drag } from "./ui-helpers.mjs";
 import { navigationIdle, navigationRoundTrip } from "./ui-navigation-history.mjs";
@@ -38,6 +39,28 @@ async function touchDriver(page, name) {
     dispose: async () => {},
   };
 }
+async function touchHandoff(page, touch) {
+  await page.getByRole("button", { name: "Top view", exact: true }).dblclick();
+  await navigationIdle(page);
+  const { after } = await navigationRoundTrip(
+    page,
+    async () => {
+      await touch.send("touchStart", [[1, 520, 350]]);
+      await touch.send("touchMove", [[1, 560, 150]]);
+      await touch.send("touchEnd", []);
+    },
+    "Two-axis touch handoff",
+  );
+  const camera = new THREE.PerspectiveCamera();
+  camera.position.fromArray(after.camera.position);
+  camera.up.fromArray(after.camera.up);
+  camera.lookAt(new THREE.Vector3(...after.camera.target));
+  for (const axis of [new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)]) {
+    const p = axis.applyQuaternion(camera.quaternion.clone().invert());
+    assert.ok(Math.abs(p.x) < 1e-8 && p.y > 0, "Touch release aligns both axes");
+  }
+}
+
 async function touchRoute(page, name) {
   const touch = await touchDriver(page, name);
   try {
@@ -50,6 +73,7 @@ async function touchRoute(page, name) {
       },
       "One-finger orbit",
     );
+    await touchHandoff(page, touch);
     await chooseTool(page, "Sketch on XY", "sketch-xy");
     await navigationIdle(page);
     if (name === "chromium") {

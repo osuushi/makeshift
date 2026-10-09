@@ -84,7 +84,7 @@ selection-bounds and central-20% sampling rules.
 
 Freeze the pivot throughout the drag and rotate both camera position and view
 target about it, preserving the pivot's screen location and reversibility. Release
-leveling retains the view-axis roll behavior described below. Cube face
+leveling retains this pivot on screen, including the two-axis handoff below. Cube face
 clicks retain their existing view target. These are transient camera decisions,
 using the ephemeral view Undo contract in [edit lifecycle](edit-lifecycle.md#ephemeral-view-undo-founder-decision-2026-10-03).
 
@@ -95,7 +95,7 @@ dimension. A press stays pending until movement exceeds the selection drag
 threshold; a completed Command-click toggles selection without exiting the sketch.
 Escape or window blur cancels a pending press. All press locations use the same
 turntable: horizontal motion yaws around the signed world X/Y/Z axis selected by
-the release-leveling score, and vertical motion pitches around the starting
+the release-leveling rule, and vertical motion pitches around the starting
 camera-right axis. Its horizon stays level during small drags from an already
 level view. There is no outer ring or position-based change of rotation mode.
 The pointer-down point, camera pose, upright axis and acquired pivot stay fixed
@@ -115,14 +115,30 @@ the original acquired geometry pivot. Ending with roll runs the same release
 leveling as ordinary orbit, restoring a canonical world axis to screen vertical.
 Option modifies navigation only, leaving geometry tools' symmetric sizing intact.
 
-On orbit/roll completion, score each world X/Y/Z axis by `rollRadians² - 0.25 × ln(projectedLength)`.
+On orbit/roll completion, orient each world X/Y/Z candidate toward screen top.
+Only candidates whose signed normal points toward the camera or is edge-on qualify:
+the camera must be above the perpendicular plane, using camera-relative up. Never
+choose an axis that would leave the camera looking up at its plane. Exactly end-on
+axes are ineligible. Among eligible axes, minimize
+`rollRadians² - 0.25 × ln(projectedLength)`, retaining X/Y/Z order on ties.
 Projection length is that of a unit axis on screen. This smoothly penalizes
-foreshortening, with infinite cost only at exactly end-on; no eligibility threshold.
-The weight makes a half-length projection cost roughly as much as 24° of roll.
-Choose the lowest score and put either sign of that axis exactly vertical.
+foreshortening; a half-length projection costs roughly as much as 24° of roll.
+Put the winning signed axis exactly vertical. If it differs from the previous
+orbit axis, also keep that previous axis vertical: remove the viewing direction's
+component perpendicular to the plane containing both axes, preserving its direction
+within that plane. This changes viewing direction, aligning both axes together.
+From an already leveled orbit, the previous axis remains vertical throughout the
+handoff animation. Retain the gesture's orbit axis across Option modifier rebases.
+When an axis is end-on or the viewing direction is perpendicular to the two-axis
+plane, a visible two-axis alignment is undefined; retain ordinary roll leveling.
+The new above-plane signed axis supplies yaw for the next orbit. Starting a drag
+retains an eligible already-leveled axis. Same-axis releases, pinch leveling and
+native quarter-turn correction retain roll-only leveling.
 Discrete axis selection still has decision boundaries; orientations are not blended.
-Animate over 280 ms with cubic ease-out, or immediately with reduced motion. Viewing direction, pivot, distance
-and zoom stay fixed; only roll changes. New navigation interrupts the animation.
+Animate over 280 ms with cubic ease-out, or immediately with reduced motion.
+Keep the acquired pivot fixed on screen throughout the snap, rotating the view
+target about it as needed. Camera-to-target distance and zoom stay fixed.
+New navigation interrupts the animation.
 Cancellation, Escape and focus loss end the drag without snapping. Releasing Command
 mid-drag retains capture. Capture blocks editing, trailing clicks and wheel/pinch.
 Camera gestures retain accepted geometry and use the ephemeral view Undo contract. On macOS, Electron’s native

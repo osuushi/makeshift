@@ -136,7 +136,8 @@ export async function emptyAndError(page, name) {
     const initial = await importControlledBundle(page, path);
     await customSettled(page, sampleCount);
     await marker(page, initial, { busy: false });
-    await coloredFace(page, `${name}-empty-custom-keeps-marker`, [2, -2, 10]);
+    // Sample the cap interior away from the selected face's white extrusion handle.
+    await coloredFace(page, `${name}-empty-custom-keeps-marker`, [-2, -2, 10]);
     const height = page.getByRole("spinbutton", { name: "Height", exact: true });
     await height.fill("2");
     await height.press("Enter");
@@ -147,7 +148,7 @@ export async function emptyAndError(page, name) {
     assert.deepEqual(errored.bodies, initial.bodies);
     assert.equal(errored.decorators[0].problem, undefined);
     await marker(page, errored, { busy: false });
-    await coloredFace(page, `${name}-custom-error-keeps-marker`, [2, -2, 10]);
+    await coloredFace(page, `${name}-custom-error-keeps-marker`, [-2, -2, 10]);
     await height.fill("3");
     await height.press("Enter");
     const recovered = (await completed(page)).document;

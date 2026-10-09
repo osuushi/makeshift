@@ -70,11 +70,11 @@ export class BodyMoveControls {
       release: (moved) => {
         this.pointer = null;
         this.session?.lease.releaseCapture();
-        if (moved) void this.commit();
-        else {
+        if (moved && !this.session?.rotate) void this.commit();
+        else if (!moved) {
           this.gizmo.input.focus();
           this.gizmo.input.select();
-        }
+        } else this.editor.refresh();
       },
       finish: () => this.commit(),
       cancel: () => this.cancel(),

@@ -3,6 +3,14 @@
 // Add combinatorial cases to the linked lower-level tests, not this inventory.
 export const uiSuites = [
   {
+    args: ["cube-selection-ui.mjs"],
+    seconds: 15,
+    browsers: ["electron"],
+    reason:
+      "Async Cube handoff must not consume the first real face click after extrusion completion.",
+    unit: "tool-switching.test.ts",
+  },
+  {
     args: ["selection-redo-ui.mjs"],
     seconds: 10,
     browsers: ["electron"],

@@ -174,6 +174,7 @@ async function ringDrag(page, bodies) {
     );
   }
   await page.mouse.up();
+  await page.keyboard.press("Enter");
   const rotated = (await inspect(page)).document.bodies;
   const samples = await page.evaluate(() => {
     window.removeEventListener("pointerdown", window.bodyPointerDown, { capture: true });

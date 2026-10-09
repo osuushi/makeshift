@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import * as THREE from "three";
 import { drag, inspect, reset } from "./ui-helpers.mjs";
 import { navigationRoundTrip, navigationTips } from "./ui-navigation-history.mjs";
+import { orientWithTurntable } from "./ui-orbit-orient.mjs";
 import { cubeSettled } from "./ui-orientation-cube-clicks.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -29,15 +30,9 @@ export async function orientationCubeRoute(page, name) {
     Bottom: [0, 0, -1],
   };
   for (const [face, normal] of Object.entries(normals)) {
-    // Reveal hidden faces through actual cube drags, never by changing the camera directly.
+    // Reveal the face with real pointer navigation, independent of snap-axis boundaries.
+    await orientWithTurntable(page, normal);
     const target = page.getByRole("button", { name: `${face} view`, exact: true });
-    for (let attempt = 0; attempt < 16 && !(await target.locator("text").isVisible()); attempt++) {
-      await page.mouse.move(center.x, center.y);
-      await page.mouse.down();
-      await page.mouse.move(center.x + 27, center.y + (attempt % 2 ? -24 : 20), { steps: 6 });
-      await page.mouse.up();
-      await inspect(page);
-    }
     await assertFaceLabel(target);
     const beforeAlignment = await inspect(page);
     await target.locator("polygon").click();
@@ -134,6 +129,23 @@ async function cubeRoll(page, center) {
     new THREE.Vector3(...during.camera.up).distanceTo(expected) < 1e-8,
     "Quarter-circle around cube center produces exactly a quarter-turn",
   );
+  const duringAxis = new THREE.Vector3(...during.camera.position)
+    .sub(new THREE.Vector3(...during.camera.target))
+    .normalize();
+  assert.ok(duringAxis.distanceTo(axis) < 1e-8, "Roll preserves view direction during drag");
+  const beforeUp = new THREE.Vector3(...before.camera.up);
+  const beforeRight = beforeUp.clone().cross(axis).normalize();
+  const previousAxis = [
+    new THREE.Vector3(1, 0, 0),
+    new THREE.Vector3(0, 1, 0),
+    new THREE.Vector3(0, 0, 1),
+  ].find(
+    (candidate) =>
+      Math.abs(candidate.dot(beforeRight)) < 1e-8 &&
+      Math.abs(candidate.dot(beforeUp)) > 1e-8 &&
+      candidate.dot(axis) * Math.sign(candidate.dot(beforeUp)) >= -1e-12,
+  );
+  assert.ok(previousAxis, "Starting view has an eligible upright orbit axis");
   await page.mouse.up();
   await page.keyboard.up("Alt");
   const after = await inspect(page);
@@ -141,9 +153,10 @@ async function cubeRoll(page, center) {
   const afterAxis = new THREE.Vector3(...after.camera.position)
     .sub(new THREE.Vector3(...after.camera.target))
     .normalize();
+  const afterRight = new THREE.Vector3(...after.camera.up).cross(afterAxis).normalize();
   assert.ok(
-    afterAxis.distanceTo(axis) < 1e-8,
-    "Roll preserves view direction around its geometry pivot",
+    Math.abs(previousAxis.dot(afterRight)) < 1e-8,
+    "Cube release retains the previous orbit axis vertically during the handoff",
   );
   assert.deepEqual(after.document, before.document);
 }

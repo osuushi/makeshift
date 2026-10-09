@@ -178,9 +178,10 @@ class CubeInput {
   private release = (event: PointerEvent): void => {
     const press = this.press;
     if (!press || press.event.pointerId !== event.pointerId) return;
+    const frame = this.world.orbit.releaseFrame;
     this.stop();
     if (press.dragging) {
-      this.world.levelHorizon();
+      this.world.levelHorizon(frame);
     } else {
       const face = this.faceAt(press.event);
       if (face) {

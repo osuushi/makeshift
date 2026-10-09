@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import * as THREE from "three";
 import { drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -113,9 +114,12 @@ async function explicitRoll(page, bounds) {
   await page.mouse.move(x + 100, y + 60, { steps: 4 });
   const rolled = await inspect(page);
   assert.notDeepEqual(rolled.camera.up, before.camera.up, "Option drag rolls even at center");
-  for (const key of ["position", "target"])
-    for (let i = 0; i < 3; i++)
-      assert.ok(Math.abs(rolled.camera[key][i] - before.camera[key][i]) < 1e-8);
+  const viewDirection = (camera) =>
+    new THREE.Vector3(...camera.position).sub(new THREE.Vector3(...camera.target)).normalize();
+  // Depth fitting may retreat the finite camera along its unchanged viewing ray.
+  assert.ok(viewDirection(rolled.camera).distanceTo(viewDirection(before.camera)) < 1e-8);
+  assert.deepEqual(rolled.camera.target, before.camera.target);
+  assert.equal(rolled.camera.height, before.camera.height);
   await page.mouse.up();
   await page.keyboard.up("Alt");
   await page.keyboard.up("Meta");

@@ -14,6 +14,10 @@ enter sketch mode. The user explicitly enters an available plane/workspace.
 Extrusion is a 3D operation and is unavailable in planar sketch view; E must
 not silently exit sketch mode to make it available.
 
+[Guided 3D tools](3d-tools.md) compose ordinary primitives. Cube explicitly returns
+to Modeling, places a centered rectangle on the primary canonical plane, then
+hands off to symmetric Extrude. Within Cube placement, Shift locks a square.
+
 Show rectangle dimensions during dragging, alongside their corresponding edges.
 Each number is an independent spatial control, not a multi-field floating panel.
 Tab cycles between them. Default snapping includes grid, existing points and
