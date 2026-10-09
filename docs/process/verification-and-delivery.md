@@ -2,117 +2,127 @@
 
 Read when this procedure is needed. [Process overview](../development-process.md).
 
-## Verification is about behavior
+## Test placement and cost
 
-For each interaction increment, exercise creation **and subsequent editing**,
-not merely a convenient creation demo. Use the actual controls involved, including
-buttons and keyboard routes when both exist. Remove unnecessary duplicate controls
-through the interaction design; do not leave apparently working buttons untested.
+Founder decision, 2026-10-09: optimize test scope before buying CI capacity.
+Default to fast unit tests. Use real native model tests for geometry and a small
+Electron smoke plus focused integration regressions for the application boundary.
+Do not prove every feature and every parameter combination through a browser.
+A large test count or an exhaustive feature journey is not a delivery requirement.
 
-The small adjacent regression route includes selection, reselection, moving,
-dimensions, tool exit/re-entry, Undo/Redo, Delete and Clear when present. Add
-save/reopen once it exists. Relevant geometric checks use independent expected
-coordinates, dimensions or areas, not the implementation's own derived answer.
+The retired routine UI journeys already have lower-level coverage: curve creation,
+constraints and transforms in `rectangle`, `circle`, `arc`, `bezier`, `point-links`,
+`trim` and `scale` tests; solid operations in `body-*` and `plane-cut*`; mode/shortcut
+combinations in `tool-switching` and `modeling-shortcuts`; layout families in
+`widget-clearance`, `widget-viewport` and `orientable-frames`; decorator validation,
+meshes and history in `decorator-*`; and Reopen state/topology in `reopen-*`.
+These are `.test.ts` files under `tests/`, automatically included in the model gate.
+The focused UI inventory keeps only the additional integration boundary checks.
 
-Use headless Chromium and WebKit for routine shared-editor tests. Check the real
-Electron preload/host route with hidden Electron or an isolated VM when that
-boundary changes and at product checkpoints. No Firefox default. A browser run
-does not establish Electron integration, and desktop WebKit does not establish
-iPad touch/Pencil usability. Schedule actual device feedback; label it unverified
-until performed. If a runtime cannot be exercised, report the gap plainly.
+Choose the lowest layer that can catch the failure:
 
-Mocks are useful for specific failures; a mocked solver is not geometry acceptance.
-Tests must not create, select or commit through hidden controller methods when
-claiming an ordinary user route. Read-only inspection can verify the resulting
-model. Maintain a compact inventory of visible controls and their checked routes.
+| Behavior | Required test layer |
+| --- | --- |
+| Pure calculations, selection order, shortcuts, layout math, parameter validity | Unit test |
+| Native geometry, topology, document ownership, persistence data, Undo/Redo matrices | Direct model/native integration test |
+| App boot, preload sandbox, real pointer-to-native geometry, native file dialogs | Compact hidden Electron smoke |
+| Escaped focus, event ordering, stale worker presentation, keyboard/menu dispatch or reload failures | One focused Electron regression |
+| WebKit-specific layout, touch delivery or browser-only file/runtime behavior | A focused named compatibility case in that runtime |
 
-Run `npm run typecheck` and `npm run check` before native compilation.
-`typecheck:ui` checks UI JavaScript fixtures listed in `tsconfig.ui.json` with `// @ts-check`;
-annotate their Playwright `Page` parameters so nullable DOM measurements are checked.
-Offset opts in; other UI fixtures remain unchecked until they are annotated.
-Measure replacing SVG overlays with the bounded, atomic `overlayPoint` helper.
+Prefer extending an existing lower-level fixture over creating a second journey.
+For a geometry bug, reproduce the captured model directly and compare independent
+coordinates, dimensions, areas or volumes. Do not mock the solver and call that
+geometry acceptance. Keep actual geometry and latency assertions intact.
 
-`npm test` runs test files serially. Native geometry checks include wall-clock
-calculation limits; competing test workers can exhaust those limits on otherwise
-valid fixtures. CI assigns files to five Linux workers using measured test durations
-and longest-first balancing in `scripts/ci-partition.mjs`, preserving
-`--test-concurrency=1`. Unmeasured files receive a small default weight and remain
-required. Keep the actual geometry and latency assertions intact.
+A permanent UI regression needs a concrete failure and an explanation of why a
+unit/model test cannot catch its boundary. Cover that failure once in Electron;
+put the case matrix below the UI. A file named "regressions" that replays ordinary
+creation, editing and adjacent tools is still broad feature coverage. Do not add
+it to CI by default. Do not add repeated screenshots, reloads, save/reopen or
+adjacent feature tours to every bug fixture. Retain these only when they exercise
+the failure. Run one focused real pointer/keyboard route for changed interaction
+wiring; run both a button and a shortcut only when their distinct dispatch matters.
 
-Both platform builds start independently of static checks. The PR workflow builds
-each native runtime once and shares a tar archive with its test jobs, preserving
-executable permissions and library symlinks. Exact native executable caches include
-native sources, setup/build recipes, locked dependencies, platform/architecture and
-SDK/toolchain identity. There are no fallback executable keys. SDK libraries must
-also be restored before a cached executable can run; cache misses build normally.
-Renderer and host TypeScript are rebuilt on every run. Native coverage assertions
-run even on a cache hit. Signing and notarization remain release checks.
+`scripts/ci-ui-suites.mjs` owns the bounded PR regression inventory, reasons and
+linked lower-level coverage. It has an aggregate timing budget and a suite-count
+cap checked by `tests/ci-partition.mjs`. Adding a case normally means replacing or
+narrowing redundant coverage, not adding another shard. A justified budget change
+must be explicit and measured; do not pad timing estimates or bypass the inventory
+with extra workflow steps. The same policy applies to unit tests: add a distinct
+behavioral assertion, not tests mirroring implementation details.
 
-Shared Chromium, WebKit and hidden Electron UI suites run on Linux in sixteen
-serial partitions per runtime. `scripts/ci-ui-suites.mjs` and `ci-ui-routes.mjs`
-list runnable suites and timing weights. Ordinary controls, widget reachability
-and edge finishes have independent entry points; dependent fixture sequences stay
-intact. Seven additional workers retain the complete Electron host suite, except
-two native navigation routes retained on Mac with their fixture sequence.
-CI logs each suite's duration; update the weights when the distribution changes.
-Do not append shard-specific workflow steps that escape balancing.
+Broad historical UI journeys remain available for targeted diagnosis in
+`scripts/ui-review-suites.mjs` and `ui-review-routes.mjs`; they are not automatic
+PR/release gates. Do not respond to a failing focused regression by launching the
+entire historical suite in every runtime. Local UI helpers default to one runtime,
+Electron when supported. Select a browser explicitly with `MAKESHIFT_TEST_BROWSER`
+when investigating that browser. Explicit browser-only fixtures remain supported.
 
-Linux browser setup separates system dependencies from browser downloads, with
-three-minute limits for each phase. Apt uses 30-second network timeouts and two
-retries; browser downloads retain Playwright's mirror retries with a 30-second
-connection timeout. Browser binaries are cached by runner OS/architecture, Ubuntu
-version, browser and lockfile; system libraries are installed on every fresh runner.
-Electron uses its npm-installed binary and only installs Chromium's system
-dependencies. Setup failures remain failures and do not skip acceptance suites.
+## Routine acceptance
 
-Linux UI jobs select `MAKESHIFT_TEST_FRAME_MODE=on-demand`: input, native geometry,
-camera, picking and DOM updates run normally, while captures request fresh GPU frames.
-The demand-frame regression checks real input avoids GPU draws and screenshots
-render current pixels, including after reload. For local diagnosis, prefix a UI
-command with that environment variable; ordinary runs retain normal redraws.
-macOS acceptance uses the same frame mode and is limited to a built-host smoke
-(native geometry, Save/Open, sandbox), Finder PATH and process setup regressions,
-native navigation and WebKit high-DPI narrow-header layout,
-plus the six individual numerical cases still failing on Linux.
+For a focused change, run the affected lower-level tests and a small adjacent set.
+Do not rerun the entire model/UI inventory after every edit. CI runs the complete
+required gate once per pushed commit; repeat a local full run only when a changed
+boundary or unresolved failure justifies it.
 
-`scripts/ci-model-suites.mjs` retains six individual geometry tests on Mac:
-filleted-sphere erosion and rigid placement, captured plate-hole movement volume,
-unchanged spherical thickness signature, conic projection validity and captured
-erosion suggested-allowance recovery. An unchanged
-Linux probe passed 33 of the formerly partitioned 38 cases in run 37874047517.
-The suggested-allowance case subsequently failed unchanged on Linux in runs
-37922405765 and 37943268836: the suggested 0.5700000000000001 mm allowance cannot
-construct the eroded body. It passes unchanged on macOS and remains required there,
-including geometry, timing, acceptance, Undo/Redo and reopen assertions. The other
-two erosion responsiveness cases and the other captured plate movements remain on
-Linux. Node name/skip filters partition cases exactly; the Mac gate also requires
-exactly six passed tests so a renamed fixture cannot silently disappear.
-Do not relax geometry, topology, history or calculation limits to remove exceptions.
-The constrained-rotation WebKit route also passed unchanged on Linux and moved there.
-Linux WebKit fails the existing high-DPI narrow-header Settings bounds check
-(button bottom257px, required below250px); retain that unchanged suite on Mac.
-The shared WebKit reload suites passed on Linux; their former broad Mac partition
-is retired. Remove a remaining platform exception only after its unchanged route
-passes on Linux.
+Run `npm run typecheck` and `npm run check` before native compilation. `test:setup`
+checks launcher/setup and runtime selection; `typecheck:ui` covers the opted-in
+JavaScript fixtures in `tsconfig.ui.json`.
 
-The final `check` job requires every lane to succeed, including after a lane
-fails or is skipped. Cancelled runs skip that final check. Runtime artifacts expire
-after one day. A completed OCCT SDK is verified and cached even if compilation of
-an application calculator fails afterward; incomplete SDKs cannot enter the cache.
-Linux Electron test apps use SwiftShader under Xvfb because the worker's Mesa
-renderer is blocklisted for WebGL. Hidden Linux test windows render offscreen:
-otherwise the compositor delivers about one frame per second despite disabled
-background throttling, making input slow and missing camera animation checks.
-Visible desktop application rendering is unchanged.
-Navigation over widgets and the native camera gesture route remain required on
-Mac through `test:electron -- --navigation-only`; offscreen Linux navigation is
-not yet accepted. Default `test:electron` still runs all 86 original routes.
+`npm test` runs the complete unit/model inventory serially. CI balances it across
+five Linux workers with `scripts/ci-model-tests.mjs` and measured file durations.
+Each worker preserves `--test-concurrency=1`: concurrent native calculations can
+exhaust the existing wall-clock limits. New test files remain included by default.
+Only seven individually reproduced numerical/timing failures run on Mac, selected
+by exact test names in `scripts/ci-model-suites.mjs`; the Mac gate requires seven
+passes. Calculation limits and assertions remain unchanged.
 
-Every routine run owns and closes its app, native child, browser, profile and port,
-including after failure. Visible windows are for deliberate founder review only.
-Founder instruction, 2026-09-20: do not inspect or control the founder's browser
-without asking first. Ask the founder to test login and browser handoffs; automated
-acceptance stays in owned, isolated test apps and browser profiles.
+The PR workflow builds each native runtime once and shares its executable archive,
+preserving permissions and symlinks. Exact native caches include sources, recipes,
+locked dependencies, platform/architecture and SDK/toolchain identity. Cache misses
+build normally, SDK libraries are required, and native coverage assertions still
+run on cache hits. Renderer and host TypeScript rebuild on every run.
+
+Linux Electron installs system/display dependencies through
+`scripts/ci-browser-deps.sh`, retaining three-minute setup limits, 30-second apt
+network timeouts and two retries. It uses the npm-installed Electron binary and
+does not download Chromium/WebKit browser binaries. Setup failures remain failures.
+
+`npm run test:smoke` exercises the built hidden Electron app: sandbox, pointer-drawn
+rectangle, real native extrusion, temporary preview, acceptance, Undo/Redo, renderer
+reload and native Save/Open. It runs on Linux and Mac. `npm run test:regressions`
+runs the focused Electron inventory; CI divides it into three serial Linux workers.
+`test:ui` aliases the smoke; `test:electron` runs smoke plus focused regressions.
+The old full sweeps require explicit `test:ui:extended` or `test:electron:extended`.
+No general Chromium/WebKit/Electron feature matrix or second exhaustive Electron
+sweep runs on every push. Unit/model coverage remains required for those features.
+
+macOS retains Finder PATH/process setup regressions, native navigation and the
+WebKit high-DPI narrow-header Settings regression. These are platform exceptions,
+not authorization for another broad browser sweep. The seven model exceptions
+cover filleted-sphere erosion/placement, captured erosion calculation limits,
+captured plate-hole movement volume, spherical thickness signature and conic
+projection validity. The erosion cancellation case still runs on Linux. Restore
+an exception to Linux after resolving its reproduced failure; a single successful
+probe does not establish that a timing failure is resolved.
+
+Standalone WASM/browser release acceptance remains in `test:web`: Electron cannot
+establish browser file behavior or a standalone WASM runtime. Desktop WebKit also
+does not establish iPad touch/Pencil usability; actual device feedback remains
+separate. Signing and notarization remain desktop release checks.
+
+Linux Electron runs under Xvfb with SwiftShader and offscreen hidden windows.
+`MAKESHIFT_TEST_FRAME_MODE=on-demand` preserves input/native/DOM behavior while
+captures request fresh GPU frames. The demand-frame regression protects this test
+mode. Ordinary application rendering is unchanged. Native navigation retains its
+Mac fixture sequence because offscreen Linux navigation is not accepted.
+
+The final `check` job requires every lane to succeed even if another fails or is
+skipped; cancelled runs skip that job. Runtime artifacts expire after one day.
+Every test owns and closes its app, native children, browser, profile and port,
+including after failure. Visible apps are for founder review. Do not inspect or
+control the founder's browser without asking; use owned isolated test sessions.
+Report the actual runtime and route tested, including any unverified device gap.
 
 ## Setup, commits and handoff
 

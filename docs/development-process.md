@@ -40,8 +40,10 @@ split by responsibility, never compress or scatter forwarding helpers to evade l
 - [Verification, setup and delivery](process/verification-and-delivery.md): acceptance,
   runtime/host checks, reproducible setup, commits and handoff.
 
-Routine UI checks use headless Chromium/WebKit; host-boundary work also needs hidden
-Electron. Visible apps are for founder review. Own and clean up test processes.
+Default to unit/model tests; routine UI coverage is compact hidden Electron smoke
+and focused integration regressions. Browser-specific checks need a specific
+compatibility reason. See the verification procedure for test placement and budgets.
+Visible apps are for founder review. Own and clean up test processes.
 For reported model bugs, read the development Capture fixture JSON; ask for its
 path if missing. Never extract the live model through computer use.
 

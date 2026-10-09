@@ -4,11 +4,17 @@ import { performance } from "node:perf_hooks";
 import { partition, shardIndex } from "./ci-partition.mjs";
 import { uiSuites } from "./ci-ui-suites.mjs";
 
-const [browser, shard, mode] = process.argv.slice(2);
+const [browser, shard, ...options] = process.argv.slice(2);
 assert.ok(["chromium", "webkit", "electron"].includes(browser), "Choose a CI browser");
-assert.ok(!mode || mode === "--list", "Only --list is supported");
+assert.ok(
+  options.every((option) => ["--list", "--extended"].includes(option)),
+  "Unknown UI option",
+);
+const inventory = options.includes("--extended")
+  ? (await import("./ui-review-suites.mjs")).reviewUiSuites
+  : uiSuites;
 const { index, count } = shardIndex(shard);
-const suites = uiSuites
+const suites = inventory
   .filter((suite) => suite.browsers.includes(browser))
   .map((suite) => ({ ...suite, id: suite.args.join(" ") }));
 const selected = partition(suites, count)[index];
@@ -19,11 +25,15 @@ console.log(
 let failed = false;
 for (const suite of selected.suites) {
   console.log(`CI suite: ${suite.id}`);
-  if (mode === "--list") continue;
+  if (options.includes("--list")) continue;
   const start = performance.now();
   const result = spawnSync(process.execPath, [`tests/${suite.args[0]}`, ...suite.args.slice(1)], {
     stdio: "inherit",
-    env: { ...process.env, MAKESHIFT_TEST_BROWSER: browser },
+    env: {
+      ...process.env,
+      MAKESHIFT_TEST_BROWSER: browser,
+      MAKESHIFT_TEST_FRAME_MODE: process.env.MAKESHIFT_TEST_FRAME_MODE ?? "on-demand",
+    },
   });
   console.log(`CI timing: ${suite.id}: ${Math.ceil((performance.now() - start) / 1000)}s`);
   if (result.error) throw result.error;

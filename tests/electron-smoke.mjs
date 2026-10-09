@@ -1,11 +1,9 @@
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { launchElectron } from "./native-documents.mjs";
-import { backendPersistence } from "./ui-backend.mjs";
-import { extrudeRoute } from "./ui-extrude.mjs";
+import { smokeRoute } from "./ui-smoke-route.mjs";
 
-// The complete shared-editor suite runs on Linux. Keep the Mac gate focused on
-// the built host/preload boundary, real native geometry and document persistence.
+// The same compact smoke protects built Linux and Mac host/preload integration.
 await mkdir(".cache/sketch-review", { recursive: true });
 const app = await launchElectron({
   args: ["."],
@@ -23,8 +21,7 @@ try {
     false,
   );
   assert.equal(await page.evaluate(() => typeof window.require), "undefined");
-  await extrudeRoute(page, "electron-smoke");
-  await backendPersistence(page, "electron-smoke");
+  await smokeRoute(page);
   assert.deepEqual(errors, []);
   console.log("Hidden Electron smoke: sandbox, native geometry, Save/Open and history passed");
 } finally {

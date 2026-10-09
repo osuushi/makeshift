@@ -18,7 +18,7 @@
     "check": "biome check package.json tsconfig.json tsconfig.host.json tsconfig.test.json tsconfig.ui.json vite.config.ts forge.config.js packaging biome.json scripts tests src",
     "format": "biome check --write package.json tsconfig.json tsconfig.host.json tsconfig.test.json tsconfig.ui.json vite.config.ts forge.config.js packaging biome.json scripts tests src",
     "test": "node scripts/clean-tests.mjs && tsc -p tsconfig.test.json && node --test --test-concurrency=1 .cache/sketch-tests/tests/*.test.js",
-    "test:ui": "node tests/ui.mjs",
+    "test:ui": "npm run test:smoke",
     "test:current-tools": "node tests/current-tools-ui.mjs",
     "test:pen": "node tests/pen-ui.mjs",
     "test:booleans": "node tests/boolean-collection-ui.mjs",
@@ -32,7 +32,7 @@
     "test:zero-corner": "node tests/zero-corner-ui.mjs",
     "test:edge-move": "node tests/edge-move-ui.mjs",
     "test:face-move": "node tests/face-move-ui.mjs",
-    "test:electron": "node tests/electron.mjs",
+    "test:electron": "npm run test:smoke && npm run test:regressions",
     "setup:native": "node scripts/setup-native.mjs",
     "build:native": "node scripts/build-native.mjs",
     "setup:kernel": "node scripts/setup-kernel.mjs",
@@ -53,7 +53,11 @@
     "test:navigation-host": "node tests/navigation-host-ui.mjs",
     "test:navigation-touch": "node tests/navigation-touch-ui.mjs",
     "test:thread-presets": "node tests/thread-presets-ui.mjs",
-    "test:preview-fallback": "node tests/preview-fallback-ui.mjs"
+    "test:preview-fallback": "node tests/preview-fallback-ui.mjs",
+    "test:smoke": "node tests/electron-smoke.mjs",
+    "test:regressions": "node scripts/ci-ui-tests.mjs electron 1/1",
+    "test:electron:extended": "node tests/electron.mjs",
+    "test:ui:extended": "node tests/ui.mjs"
   },
   "dependencies": {
     "@jitl/quickjs-wasmfile-release-sync": "0.32.0",

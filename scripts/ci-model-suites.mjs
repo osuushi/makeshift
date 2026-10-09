@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import times from "./ci-model-times.json" with { type: "json" };
 import { partition } from "./ci-partition.mjs";
 
-// Required Mac cases reproduce Linux failures in runs noted here; all others run on Linux.
+// Numerical cases failed unchanged on Linux in run 37874047517; erosion limits
+// also failed in runs 37922405765 and 37945256817. Preserve their assertions on Mac.
 export const macModelCases = [
   {
     file: "body-erosion-special-boundaries.test.js",
@@ -13,6 +14,17 @@ export const macModelCases = [
     file: "body-erosion-special.test.js",
     name: "special erosion: sphere-plane-fillet",
     seconds: 2,
+  },
+  {
+    file: "erosion-responsiveness.test.js",
+    name: "captured original erosion allowance produces a result that can be reopened",
+    seconds: 3,
+  },
+  {
+    file: "erosion-responsiveness.test.js",
+    name: "captured tight allowance fails quickly and its suggested allowance succeeds",
+    // Also reproduced unchanged by main's integration run 37943268836.
+    seconds: 12,
   },
   {
     file: "offset-move-capture.test.js",
@@ -28,13 +40,6 @@ export const macModelCases = [
     file: "projection.test.js",
     name: "cut cone hyperbola and parabola edges project from exact BRep curves",
     seconds: 1,
-  },
-  // Linux runs 37922405765 and 37943268836 reject the suggested allowance.
-  // Retain the complete unchanged geometry/history check in required Mac CI.
-  {
-    file: "erosion-responsiveness.test.js",
-    name: "captured tight allowance fails quickly and its suggested allowance succeeds",
-    seconds: 12,
   },
 ];
 const macFiles = new Set(macModelCases.map(({ file }) => file));
