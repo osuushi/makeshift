@@ -8,6 +8,7 @@
 #include <BRepGProp.hxx>
 #include <BRepOffsetAPI_MakeOffset.hxx>
 #include <BRepOffsetAPI_ThruSections.hxx>
+#include <BRepPrimAPI_MakeCone.hxx>
 #include <BRepPrimAPI_MakePrism.hxx>
 #include <BRepTools.hxx>
 #include <GProp_GProps.hxx>
@@ -16,6 +17,7 @@
 #include <TopoDS_Wire.hxx>
 #include <gp_Pln.hxx>
 #include <cmath>
+#include <limits>
 #include <numbers>
 #include <stdexcept>
 
@@ -23,8 +25,35 @@ namespace {
 double area(const TopoDS_Shape& shape) {
     GProp_GProps props; BRepGProp::SurfaceProperties(shape, props); return props.Mass();
 }
+TopoDS_Shape circularApex(const TopoDS_Wire& wire, const gp_Vec& vector, double offset) {
+    TopExp_Explorer edges(wire, TopAbs_EDGE);
+    if (!edges.More()) return {};
+    BRepAdaptor_Curve curve(TopoDS::Edge(edges.Current()));
+    edges.Next();
+    if (edges.More() || curve.GetType() != GeomAbs_Circle ||
+        std::abs(curve.LastParameter() - curve.FirstParameter() - 2 * std::numbers::pi) > 1e-10)
+        return {};
+    const auto circle = curve.Circle();
+    const double endRadius = circle.Radius() + offset;
+    // Angle conversion may round the exact collapse offset by a few ulps.
+    // This is arithmetic equality, not a geometric tolerance for a tiny cap.
+    const double epsilon = 16 * std::numeric_limits<double>::epsilon() * circle.Radius();
+    if (endRadius < -epsilon)
+        throw std::runtime_error("Draft collapses the profile; reduce its value");
+    if (std::abs(endRadius) > epsilon) return {};
+    BRepPrimAPI_MakeCone cone(gp_Ax2(circle.Location(), gp_Dir(vector)),
+                             circle.Radius(), 0, vector.Magnitude());
+    cone.Build();
+    if (!cone.IsDone()) throw std::runtime_error("Cannot construct the drafted circular apex");
+    validate(cone.Shape());
+    return cone.Shape();
+}
 TopoDS_Shape taperedWire(const TopoDS_Wire& wire, const gp_Pln& plane,
-                         const gp_Vec& vector, double offset) {
+                         const gp_Vec& vector, double offset, bool allowApex = false) {
+    if (allowApex) {
+        const auto cone = circularApex(wire, vector, offset);
+        if (!cone.IsNull()) return cone;
+    }
     const auto start = BRepBuilderAPI_MakeFace(plane, wire, true).Face();
     bool analytic = true;
     for (TopExp_Explorer ex(wire, TopAbs_EDGE); ex.More(); ex.Next()) {
@@ -93,7 +122,7 @@ TopoDS_Shape extrudeDraft(const TopoDS_Face& face, const gp_Vec& vector, const T
     BRepAdaptor_Surface base(face);
     if (base.GetType() != GeomAbs_Plane) throw std::runtime_error("Draft needs a planar profile");
     const auto outer = BRepTools::OuterWire(face);
-    auto shape = taperedWire(outer, base.Plane(), vector, offset);
+    auto shape = taperedWire(outer, base.Plane(), vector, offset, true);
     for (TopExp_Explorer ex(face, TopAbs_WIRE); ex.More(); ex.Next()) {
         if (ex.Current().IsSame(outer)) continue;
         const auto hole = taperedWire(TopoDS::Wire(ex.Current()), base.Plane(), vector, -offset);
