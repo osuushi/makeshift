@@ -57,6 +57,14 @@ two native navigation routes retained on Mac with their fixture sequence.
 CI logs each suite's duration; update the weights when the distribution changes.
 Do not append shard-specific workflow steps that escape balancing.
 
+Linux browser setup separates system dependencies from browser downloads, with
+three-minute limits for each phase. Apt uses 30-second network timeouts and two
+retries; browser downloads retain Playwright's mirror retries with a 30-second
+connection timeout. Browser binaries are cached by runner OS/architecture, Ubuntu
+version, browser and lockfile; system libraries are installed on every fresh runner.
+Electron uses its npm-installed binary and only installs Chromium's system
+dependencies. Setup failures remain failures and do not skip acceptance suites.
+
 Linux UI jobs select `MAKESHIFT_TEST_FRAME_MODE=on-demand`: input, native geometry,
 camera, picking and DOM updates run normally, while captures request fresh GPU frames.
 The demand-frame regression checks real input avoids GPU draws and screenshots
@@ -65,15 +73,20 @@ command with that environment variable; ordinary runs retain normal redraws.
 macOS acceptance uses the same frame mode and is limited to a built-host smoke
 (native geometry, Save/Open, sandbox), Finder PATH and process setup regressions,
 native navigation and WebKit high-DPI narrow-header layout,
-plus the five individual numerical cases still failing on Linux.
+plus the six individual numerical cases still failing on Linux.
 
-`scripts/ci-model-suites.mjs` retains five individual geometry tests on Mac:
+`scripts/ci-model-suites.mjs` retains six individual geometry tests on Mac:
 filleted-sphere erosion and rigid placement, captured plate-hole movement volume,
-unchanged spherical thickness signature and conic projection validity. An unchanged
+unchanged spherical thickness signature, conic projection validity and captured
+erosion suggested-allowance recovery. An unchanged
 Linux probe passed 33 of the formerly partitioned 38 cases in run 37874047517.
-Those 33, including erosion responsiveness and the other captured plate movements,
-now run on Linux. Node name/skip filters partition cases exactly; the Mac gate also
-requires exactly five passed tests so a renamed fixture cannot silently disappear.
+The suggested-allowance case subsequently failed unchanged on Linux in runs
+37922405765 and 37943268836: the suggested 0.5700000000000001 mm allowance cannot
+construct the eroded body. It passes unchanged on macOS and remains required there,
+including geometry, timing, acceptance, Undo/Redo and reopen assertions. The other
+two erosion responsiveness cases and the other captured plate movements remain on
+Linux. Node name/skip filters partition cases exactly; the Mac gate also requires
+exactly six passed tests so a renamed fixture cannot silently disappear.
 Do not relax geometry, topology, history or calculation limits to remove exceptions.
 The constrained-rotation WebKit route also passed unchanged on Linux and moved there.
 Linux WebKit fails the existing high-DPI narrow-header Settings bounds check
