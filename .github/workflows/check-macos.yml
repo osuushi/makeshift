@@ -163,8 +163,33 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: ./.github/actions/ci-linux-runtime
-      - name: Browser and display dependencies
-        run: npx playwright install --with-deps ${{ matrix.browser == 'electron' && 'chromium' || matrix.browser }}
+      - name: Browser system and display dependencies
+        timeout-minutes: 3
+        env:
+          CI_BROWSER: ${{ matrix.browser }}
+        run: bash scripts/ci-browser-deps.sh "$CI_BROWSER"
+      - name: Restore browser binaries
+        if: matrix.browser != 'electron'
+        id: browsers
+        timeout-minutes: 2
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-v1-${{ runner.os }}-${{ runner.arch }}-ubuntu-24.04-${{ matrix.browser }}-${{ hashFiles('package-lock.json') }}
+      - name: Install browser binaries
+        if: matrix.browser != 'electron'
+        timeout-minutes: 3
+        env:
+          CI_BROWSER: ${{ matrix.browser }}
+          PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: '30000'
+        run: npx --no-install playwright install "$CI_BROWSER"
+      - name: Cache browser binaries
+        if: matrix.browser != 'electron' && steps.browsers.outputs.cache-hit != 'true'
+        timeout-minutes: 2
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ steps.browsers.outputs.cache-primary-key }}
       - name: Compile UI inspection dependencies
         run: npx tsc -p tsconfig.test.json
       - name: Measured serial UI suites
@@ -192,7 +217,8 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: ./.github/actions/ci-linux-runtime
       - name: Display dependencies
-        run: npx playwright install-deps chromium
+        timeout-minutes: 3
+        run: bash scripts/ci-browser-deps.sh electron
       - name: Hidden Electron host routes
         run: xvfb-run -a npm run test:electron -- --shard=${{ matrix.shard }}/7 --without-navigation
   macos-build:

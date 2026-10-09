@@ -57,6 +57,14 @@ two native navigation routes retained on Mac with their fixture sequence.
 CI logs each suite's duration; update the weights when the distribution changes.
 Do not append shard-specific workflow steps that escape balancing.
 
+Linux browser setup separates system dependencies from browser downloads, with
+three-minute limits for each phase. Apt uses 30-second network timeouts and two
+retries; browser downloads retain Playwright's mirror retries with a 30-second
+connection timeout. Browser binaries are cached by runner OS/architecture, Ubuntu
+version, browser and lockfile; system libraries are installed on every fresh runner.
+Electron uses its npm-installed binary and only installs Chromium's system
+dependencies. Setup failures remain failures and do not skip acceptance suites.
+
 Linux UI jobs select `MAKESHIFT_TEST_FRAME_MODE=on-demand`: input, native geometry,
 camera, picking and DOM updates run normally, while captures request fresh GPU frames.
 The demand-frame regression checks real input avoids GPU draws and screenshots
