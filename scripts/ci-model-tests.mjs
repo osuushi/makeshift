@@ -7,7 +7,7 @@ import { shardIndex } from "./ci-partition.mjs";
 
 const [platform, shard] = process.argv.slice(2);
 const { index, count } = shardIndex(shard ?? "1/1");
-assert.ok(platform !== "mac" || count === 1, "The five Mac regressions run together");
+assert.ok(platform !== "mac" || count === 1, "The focused Mac regressions run together");
 const directory = ".cache/sketch-tests/tests";
 const files = (await readdir(directory)).filter((file) => file.endsWith(".test.js")).sort();
 const assigned = modelPartitions(files, platform, count)[index];

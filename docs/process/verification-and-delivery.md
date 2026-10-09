@@ -73,8 +73,9 @@ JavaScript fixtures in `tsconfig.ui.json`.
 five Linux workers with `scripts/ci-model-tests.mjs` and measured file durations.
 Each worker preserves `--test-concurrency=1`: concurrent native calculations can
 exhaust the existing wall-clock limits. New test files remain included by default.
-Only five individually reproduced numerical failures run on Mac, selected by exact
-test names in `scripts/ci-model-suites.mjs`; the Mac gate requires five passes.
+Only seven individually reproduced numerical/timing failures run on Mac, selected
+by exact test names in `scripts/ci-model-suites.mjs`; the Mac gate requires seven
+passes. Calculation limits and assertions remain unchanged.
 
 The PR workflow builds each native runtime once and shares its executable archive,
 preserving permissions and symlinks. Exact native caches include sources, recipes,
@@ -93,10 +94,12 @@ sweep runs on every push. Unit/model coverage remains required for those feature
 
 macOS retains Finder PATH/process setup regressions, native navigation and the
 WebKit high-DPI narrow-header Settings regression. These are platform exceptions,
-not authorization for another broad browser sweep. The five numerical exceptions
-cover filleted-sphere erosion/placement, captured plate-hole movement volume,
-spherical thickness signature and conic projection validity. Remove an exception
-only after its unchanged case passes on Linux.
+not authorization for another broad browser sweep. The seven model exceptions
+cover filleted-sphere erosion/placement, captured erosion calculation limits,
+captured plate-hole movement volume, spherical thickness signature and conic
+projection validity. The erosion cancellation case still runs on Linux. Restore
+an exception to Linux after resolving its reproduced failure; a single successful
+probe does not establish that a timing failure is resolved.
 
 Standalone WASM/browser release acceptance remains in `test:web`: Electron cannot
 establish browser file behavior or a standalone WASM runtime. Desktop WebKit also
