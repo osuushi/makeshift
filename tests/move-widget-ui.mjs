@@ -52,7 +52,8 @@ try {
     await bodyMoveRoute(page, name);
     await moveWidgetRoute(page, name);
     await bodyRotationEntryRoute(page, name);
-    await bodyRotationEntryRoute(page, name, "pointer release");
+    await bodyRotationEntryRoute(page, name, true);
+    await bodyRotationEntryRoute(page, name, false, "Escape");
   }
 } catch (error) {
   await page?.screenshot({ path: `.cache/sketch-review/${name}-move-widget-failure.png` });

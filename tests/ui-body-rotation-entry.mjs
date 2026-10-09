@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-export async function bodyRotationEntryRoute(page, name, finish = "Enter") {
+async function selectedBody(page) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   if ((await inspect(page)).gridSnap) await chooseTool(page, "grid snap", "grid");
@@ -19,7 +19,11 @@ export async function bodyRotationEntryRoute(page, name, finish = "Enter") {
   await inspect(page);
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   await page.keyboard.press("m");
-  const original = (await inspect(page)).document;
+  return (await inspect(page)).document;
+}
+
+export async function bodyRotationEntryRoute(page, name, held = false, finish = "Enter") {
+  const original = await selectedBody(page);
   const handle = page.getByRole("button", { name: "Rotate body Z", exact: true });
   await handle.hover();
   const box = await handle.boundingBox();
@@ -31,10 +35,14 @@ export async function bodyRotationEntryRoute(page, name, finish = "Enter") {
   const input = page.getByRole("textbox", { name: "Body rotation Z", exact: true });
   const manual = Number(await input.inputValue());
   assert.ok(manual !== 0 && manual !== 90);
+  if (!held) await page.mouse.up();
+  let state = await inspect(page);
+  assert.deepEqual(state.document, original, "release retains the rotation preview");
+  assert.ok(state.preview);
   await page.keyboard.press("Tab");
   assert.ok(await input.evaluate((element) => element === document.activeElement));
   await page.keyboard.type("90");
-  let state = await inspect(page);
+  state = await inspect(page);
   assert.deepEqual(state.document, original, "typing only changes the preview");
   const expectedBounds = [-5, -10, 0, 5, 10, 5];
   assert.ok(state.preview);
@@ -48,9 +56,22 @@ export async function bodyRotationEntryRoute(page, name, finish = "Enter") {
   (await inspect(page)).preview.bodies[0].bounds.forEach((value, i) => {
     close(value, expectedBounds[i]);
   });
-  if (finish === "Enter") await page.keyboard.press("Enter");
-  await page.mouse.up();
+  if (held) {
+    await page.mouse.up();
+    assert.deepEqual(
+      (await inspect(page)).document,
+      original,
+      "release keeps typed rotation pending",
+    );
+  }
+  await page.keyboard.press(finish);
   state = await inspect(page);
+  if (finish === "Escape") {
+    assert.deepEqual(state.document, original, "Escape discards the released rotation");
+    assert.equal(state.preview, null);
+    console.log(`${name}: released body rotation numeric refinement cancels with Escape`);
+    return;
+  }
   state.document.bodies[0].bounds.forEach((value, i) => {
     close(value, expectedBounds[i]);
   });
@@ -60,5 +81,7 @@ export async function bodyRotationEntryRoute(page, name, finish = "Enter") {
   (await inspect(page)).document.bodies[0].bounds.forEach((value, i) => {
     close(value, expectedBounds[i]);
   });
-  console.log(`${name}: held body rotation → Tab → typed preview → ${finish}, Undo/Redo passed`);
+  console.log(
+    `${name}: ${held ? "held" : "released"} body rotation → Tab → typed preview → Enter, Undo/Redo passed`,
+  );
 }

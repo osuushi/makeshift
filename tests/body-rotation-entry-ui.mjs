@@ -4,7 +4,8 @@ import { withUiRuntimes } from "./ui-runtime.mjs";
 await withUiRuntimes(
   async (page, name) => {
     await bodyRotationEntryRoute(page, name);
-    await bodyRotationEntryRoute(page, name, "pointer release");
+    await bodyRotationEntryRoute(page, name, true);
+    await bodyRotationEntryRoute(page, name, false, "Escape");
   },
   {
     allowed: ["chromium", "webkit"],

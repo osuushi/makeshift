@@ -62,6 +62,7 @@ async function rotationCheck(page, pivot, axis, before, gesture = false) {
       x: anchor.x + from.y - anchor.y,
       y: anchor.y - from.x + anchor.x,
     });
+    await page.keyboard.press("Enter");
   } else {
     await marker.click();
     await page.locator(".body-transform-value").fill("90");

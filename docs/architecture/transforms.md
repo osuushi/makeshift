@@ -58,8 +58,10 @@ spacing; Shift uses one tenth of that spacing while bypassing geometry attractio
 The grid toggle still controls translation grid snapping.
 Tabbing to a body or topology Move field during a held gesture gives numeric entry
 ownership: typing updates the preview, and pointer travel or modifier changes cannot
-replace that value. Enter accepts the displayed numeric value; whole-body movement
-also accepts it on pointer release. Topology movement retains its combined preview.
+replace that value. Whole-body rotation retains its preview and angle field after
+pointer release so the angle can be refined before Enter/tool exit accepts it in
+one Undo step; Escape cancels it. Whole-body translation still accepts on release.
+Topology movement retains its combined preview.
 
 ### Option-Move duplication (founder-directed, 2026-09-21)
 
@@ -70,7 +72,8 @@ rotation controls. Partial solid faces/edges retain ordinary Move behavior:
 Option has no duplication effect there. Detached topology and reattachment are deferred.
 
 The held preview responds immediately to pressing/releasing Option. Pointer release
-accepts one Undo step; Escape cancels without creating a copy. Option-click a Move
+accepts translation in one Undo step; body rotation remains editable until Enter or
+tool exit accepts it. Escape cancels without creating a copy. Option-click a Move
 handle to type a numeric copy transform; that click captures the copying choice.
 The resulting copies become selected, retain selection order, and remain ordinary
 editable geometry. Pivot-only movement never duplicates geometry. Drawing and resize
