@@ -58,7 +58,8 @@ spacing; Shift uses one tenth of that spacing while bypassing geometry attractio
 The grid toggle still controls translation grid snapping.
 Tabbing to a body or topology Move field during a held gesture gives numeric entry
 ownership: typing updates the preview, and pointer travel or modifier changes cannot
-replace that value. Whole-body rotation retains its preview and angle field after
+replace that value. A fresh handle press returns control to dragging.
+Whole-body rotation retains its preview and angle field after
 pointer release so the angle can be refined before Enter/tool exit accepts it in
 one Undo step; Escape cancels it. Whole-body translation still accepts on release.
 Topology movement retains its combined preview.

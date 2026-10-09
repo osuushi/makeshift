@@ -64,7 +64,8 @@ export async function bodyRotationEntryRoute(page, name, held = false, finish = 
       "release keeps typed rotation pending",
     );
   }
-  await page.keyboard.press(finish);
+  if (finish === "tool exit") await chooseTool(page, "select", "select");
+  else await page.keyboard.press(finish);
   state = await inspect(page);
   if (finish === "Escape") {
     assert.deepEqual(state.document, original, "Escape discards the released rotation");
@@ -81,7 +82,25 @@ export async function bodyRotationEntryRoute(page, name, held = false, finish = 
   (await inspect(page)).document.bodies[0].bounds.forEach((value, i) => {
     close(value, expectedBounds[i]);
   });
+  if (finish === "tool exit") await reselectAndDelete(page);
   console.log(
-    `${name}: ${held ? "held" : "released"} body rotation → Tab → typed preview → Enter, Undo/Redo passed`,
+    `${name}: ${held ? "held" : "released"} body rotation → Tab → typed preview → ${finish}, Undo/Redo passed`,
   );
+}
+
+async function reselectAndDelete(page) {
+  const accepted = (await inspect(page)).document;
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await page.keyboard.press("m");
+  await page.getByRole("button", { name: "Rotate body Z", exact: true }).click();
+  await page.getByRole("textbox", { name: "Body rotation Z", exact: true }).fill("30");
+  assert.deepEqual((await inspect(page)).document, accepted);
+  await page.keyboard.press("Escape");
+  assert.deepEqual((await inspect(page)).document, accepted);
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await page.keyboard.press("Delete");
+  assert.equal((await inspect(page)).document.bodies.length, 0);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, accepted);
+  await reset(page);
 }

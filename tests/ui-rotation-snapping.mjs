@@ -57,6 +57,15 @@ export async function rotationSnappingRoute(page, name) {
 
 export async function placementRotationSnapping(page, from, origin) {
   const original = (await inspect(page)).document;
+  const handle = page.getByRole("button", { name: "Rotate sketch Z", exact: true });
+  await handle.hover();
+  const box = await handle.boundingBox();
+  from = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  const offset = await handle.evaluate((element) => {
+    const values = getComputedStyle(element).translate.split(" ").map(Number.parseFloat);
+    return { x: values[0] || 0, y: values[1] || 0 };
+  });
+  origin = { x: origin.x + offset.x, y: origin.y + offset.y };
   const radians = (-16 * Math.PI) / 180;
   const dx = from.x - origin.x,
     dy = from.y - origin.y;

@@ -69,8 +69,22 @@ export async function topologyReachability(page, name) {
       assert.ok(Math.abs(exact.bounds[3] - 11) < 0.001);
       assert.ok(Math.abs(exact.bounds[0] + 10) < 0.001);
     }
+    await continueAfterNumeric(page, kind, axis, unit);
     await page.keyboard.press("Escape");
     assert.deepEqual((await inspect(page)).document, before);
   }
   console.log(`${name}: docked face/edge Move and native geometry cancellation passed`);
+}
+
+async function continueAfterNumeric(page, kind, axis, unit) {
+  const state = await dragPixels(page, button(page, `Move ${kind} ${axis}`), unit);
+  const amount = 1 + deliveredAxisDelta(state.widgetGesture, unit);
+  const body = state.preview.bodies[0];
+  if (kind === "faces") {
+    assert.ok(Math.abs(body.volume - (4000 + 400 * amount)) < 0.001);
+    assert.ok(Math.abs(body.bounds[5] - (10 + amount)) < 0.001);
+  } else {
+    assert.ok(Math.abs(body.bounds[3] - (10 + amount)) < 0.001);
+    assert.ok(Math.abs(body.bounds[0] + 10) < 0.001);
+  }
 }

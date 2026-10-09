@@ -31,6 +31,15 @@ export class GizmoInputs {
     private actions: GizmoActions,
   ) {
     const options = { signal };
+    window.addEventListener(
+      "pointerdown",
+      (event) => {
+        // A fresh handle press returns ownership from numeric entry to dragging.
+        if (actions.gesture()?.pointer.id === event.pointerId && event.target !== input)
+          input.blur();
+      },
+      options,
+    );
     window.addEventListener("pointermove", this.move, options);
     replayPointerModifiers(signal, () => !!actions.gesture(), this.move);
     window.addEventListener(
