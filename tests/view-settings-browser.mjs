@@ -90,6 +90,9 @@ async function modalSettingsRoute(page) {
   assert.equal(await dialog.isVisible(), true, "Dialog padding does not dismiss settings");
   await page.keyboard.press("Escape");
   assert.equal(await dialog.isVisible(), false);
+  // Visibility changes synchronously; the native close event restores focus
+  // in a later task. Require that restoration before checking its target.
+  await page.waitForFunction(() => document.activeElement?.matches(".settings-trigger"));
   assert.equal(await trigger.evaluate((element) => element === document.activeElement), true);
   await page.evaluate(() =>
     Object.defineProperty(navigator, "platform", { value: "MacIntel", configurable: true }),
