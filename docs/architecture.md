@@ -41,6 +41,7 @@ is a later operation on current geometry, through ordinary Undo.
 | Creation, circle/arc editing | [Curve editing](architecture/curve-editing.md), [curved controls](architecture/curved-controls.md) |
 | Orientable widget visuals | [Design language and implementation references](design/orientable-widgets.md) |
 | Tool search and discovery | [Panel replacement, matching and menu interaction](design/tool-menu.md) |
+| Guided 3D shape tools | [Product philosophy and Cube flow](product/3d-tools.md) |
 | Movement, resize, rotation | [Transforms](architecture/transforms.md), [founder corrections](architecture/movement-corrections.md) |
 | Construction planes, solid split and surface imprint | [Plane tools](architecture/plane-tools.md) |
 | Constraints, Fuse/Unfuse, attachment | [Constraints](architecture/constraints.md), [point links](architecture/point-links.md), [drawing attachments](architecture/drawing-attachments.md) |

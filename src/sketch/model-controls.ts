@@ -1,3 +1,4 @@
+import { CubeControls } from "../model/cube-controls.js";
 import { ExtrudeControls } from "../model/extrude-controls.js";
 import { LoftControls } from "../model/loft-controls.js";
 import { ModelSelectionDrag } from "../model/model-selection-drag.js";
@@ -17,6 +18,7 @@ export class ModelControls {
   private revolve: RevolveControls;
   private loft: LoftControls;
   private extrusion: ExtrudeControls;
+  private cube: CubeControls;
   private selectionDrag: ModelSelectionDrag;
   constructor(
     private editor: SketchEditor,
@@ -27,6 +29,7 @@ export class ModelControls {
     this.revolve = new RevolveControls(editor, overlay);
     this.loft = new LoftControls(editor, overlay);
     this.extrusion = new ExtrudeControls(editor, overlay);
+    this.cube = new CubeControls(editor, overlay, (depth) => this.extrusion.start(depth, true));
     this.selectionDrag = new ModelSelectionDrag(
       editor,
       overlay,
@@ -253,6 +256,7 @@ export class ModelControls {
     return true;
   }
   dispose(): void {
+    this.cube.dispose();
     for (const dispose of this.disposers) dispose();
     this.abort.abort();
     this.placement.dispose();

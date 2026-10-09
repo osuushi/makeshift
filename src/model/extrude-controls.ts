@@ -105,6 +105,14 @@ export class ExtrudeControls {
     this.input.focus();
     this.input.select();
   }
+  /** Guided tools hand off to the ordinary temporary extrusion interaction. */
+  start(distance: number, symmetric: boolean): boolean {
+    this.editor.modeling.setTool("extrude");
+    this.editor.refresh();
+    if (!this.begin()) return false;
+    this.queue(distance, symmetric);
+    return true;
+  }
   private begin(restored?: Extrusion): boolean {
     if (this.lease) return this.lease.phase === "editing";
     if (this.editor.blocked || this.editor.world.active || this.editor.modeling.tool !== "extrude")
