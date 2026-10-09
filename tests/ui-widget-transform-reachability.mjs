@@ -92,7 +92,9 @@ async function rotateBodyAndCancel(page, before) {
     [0, 0, 1],
     30,
   );
-  const rotated = state.document;
+  assert.deepEqual(state.document, before, "rotation release retains a preview");
+  await page.keyboard.press("Enter");
+  const rotated = (await inspect(page)).document;
   // Move pointer rotation with Shift retains the ordinary half-degree snap.
   const angle = ((Math.round(state.rotationInput.deliveredAngle * 2) / 2) * Math.PI) / 180;
   const extent = 10 * (Math.abs(Math.cos(angle)) + Math.abs(Math.sin(angle)));

@@ -5,6 +5,7 @@ import { cameraFacingMove } from "./ui-camera-facing-move.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 import { assertWidgetClearance } from "./ui-widget-clearance.mjs";
+import { rotateDocked } from "./ui-widget-rotation.mjs";
 
 const center = async (locator) => {
   const b = await locator.boundingBox();
@@ -53,15 +54,12 @@ async function projection(page) {
 }
 async function rotationCheck(page, pivot, axis, before, gesture = false) {
   const marker = page.getByRole("button", { name: `Rotate body ${axis}`, exact: true });
+  let degrees = 90;
   if (gesture) {
-    const anchor = await center(
-      page.getByRole("button", { name: "Reposition body pivot", exact: true }),
-    );
-    const from = await center(marker);
-    await pointerDrag(page, from, {
-      x: anchor.x + from.y - anchor.y,
-      y: anchor.y - from.x + anchor.x,
-    });
+    const direction = { X: [1, 0, 0], Y: [0, 1, 0], Z: [0, 0, 1] }[axis];
+    const rotation = await rotateDocked(page, marker, pivot, direction, 90);
+    degrees = Math.round(rotation.rotationInput.deliveredAngle * 2) / 2;
+    await page.keyboard.press("Enter");
   } else {
     await marker.click();
     await page.locator(".body-transform-value").fill("90");
@@ -71,7 +69,7 @@ async function rotationCheck(page, pivot, axis, before, gesture = false) {
   const direction = { X: [1, 0, 0], Y: [0, 1, 0], Z: [0, 0, 1] }[axis];
   const expected = new THREE.Vector3(...before.center)
     .sub(new THREE.Vector3(...pivot))
-    .applyAxisAngle(new THREE.Vector3(...direction), Math.PI / 2)
+    .applyAxisAngle(new THREE.Vector3(...direction), (degrees * Math.PI) / 180)
     .add(new THREE.Vector3(...pivot));
   assert.ok(
     expected.distanceTo(new THREE.Vector3(...after.center)) < 1e-5,
@@ -215,13 +213,18 @@ async function spatialAnchor(page, name, anchor, root, vertex, original, body) {
     for (const axis of ["X", "Y"]) {
       const normal = axis === "X" ? [0, 72 * unit, 72 * unit] : [72 * unit, 0, 72 * unit];
       const target = projectionState.point(normal);
-      const marker = await center(root.locator(`.body-rotate-handle[data-axis="${axis}"]`));
+      const handle = root.locator(`.body-rotate-handle[data-axis="${axis}"]`);
+      const marker = await center(handle);
+      const offset = await handle.evaluate((element) => {
+        const values = getComputedStyle(element).translate.split(" ").map(Number.parseFloat);
+        return { x: values[0] || 0, y: values[1] || 0 };
+      });
       const nominal = { x: target.x - origin.x, y: target.y - origin.y };
       const actual = { x: marker.x - anchorScreen.x, y: marker.y - anchorScreen.y };
+      // Viewport docking can shift the control laterally; its undocked plane reference stays exact.
       assert.ok(
-        Math.abs(actual.x * nominal.y - actual.y * nominal.x) / Math.hypot(nominal.x, nominal.y) <
-          0.1,
-        "separation preserves the marker's projected radial direction",
+        Math.hypot(actual.x - offset.x - nominal.x, actual.y - offset.y - nominal.y) < 0.1,
+        "the marker retains its geometric reference beneath screen docking",
       );
       assert.ok(Math.hypot(actual.x, actual.y) >= Math.hypot(nominal.x, nominal.y) - 0.1);
     }
