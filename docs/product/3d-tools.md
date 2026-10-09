@@ -26,7 +26,7 @@ corner; hold Option to center the rectangle on the press point and extrude
 symmetrically about its plane. Option can change during hover or sizing; its state
 on release carries into Extrude. Hold Shift to lock a square. A bottom hint advertises dragging,
 and dimensions alongside the preview expose its size. This uses the ordinary
-rectangle footprint with a translucent light-green mesh showing its
+rectangle footprint with an opaque light-green mesh and darker green contours showing its
 extrusion during hover and sizing. The mesh has depth equal to the rectangle's
 minor dimension and creates no document geometry. The sketch uses the ordinary
 rectangle primitive: four segments, rectangle constraints and a convenience group.
@@ -50,6 +50,8 @@ reopened, moved and dimensionally edited as an ordinary rectangle sketch.
 **Cylinder**, **Sphere**, **Cone** and **Drill** use a circle centered on the initial
 click. Drag from that center to set its radius, or click to use the displayed default
 diameter. The footprint is always centered; Option has no placement behavior.
+Opaque shaded placement meshes have darker green silhouettes and visible edges
+to distinguish their front and back; Drill retains its subtractive pink fill.
 The support and default size follow Cube's rules, except Drill requires a visible
 planar body face. Hover previews and diameter labels create no document geometry.
 A held gesture keeps its initial support. Each completed placement accepts a fresh
@@ -63,8 +65,8 @@ finite top face. Ordinary Extrude still exposes distance, symmetry, draft, twist
 and Boolean mode; changing those controls is a regular extrusion edit.
 
 Sphere adds an ordinary diameter segment in the circle's sketch. Its direction
-projects the camera's viewing direction into the sketch plane, falling back to
-local V when viewed head-on. That diameter creates two half-disk regions. The
+chooses the sketch grid axis pointing most away from the camera. Ties, including
+a head-on view, use local V. That diameter creates two half-disk regions. The
 guide selects one region and enters **Revolve** with the diameter's axis, 360°,
 zero height and **Union**. Enter accepts a ball; angle, height, axis and Boolean
 controls remain available. Both source curves remain ordinary editable geometry.

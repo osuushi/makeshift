@@ -2,12 +2,14 @@ import * as THREE from "three";
 import { type Vector, worldPoint } from "../sketch/planes.js";
 import type { World } from "../sketch/world.js";
 import type { CircularPlacement, CircularPrimitiveShape } from "./circular-primitive-controls.js";
+import { primitivePreviewMesh } from "./primitive-preview-mesh.js";
 import { sphereAxisDirection } from "./sphere-sketch.js";
 import "./cube-preview.css";
 
 /** Lightweight presentation only; all accepted geometry comes from ordinary tools. */
 export class CircularPrimitivePreview {
-  private solid: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+  private mesh: ReturnType<typeof primitivePreviewMesh>;
+  private solid: THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial>;
   private axis = new THREE.Line(
     new THREE.BufferGeometry(),
     new THREE.LineBasicMaterial({
@@ -19,7 +21,7 @@ export class CircularPrimitivePreview {
   );
   private circle = new THREE.LineLoop(
     new THREE.BufferGeometry(),
-    new THREE.LineBasicMaterial({ color: "#1675dc", depthTest: false }),
+    new THREE.LineBasicMaterial({ color: "#28643a" }),
   );
   private label = document.createElement("span");
   constructor(
@@ -31,15 +33,8 @@ export class CircularPrimitivePreview {
       shape === "sphere"
         ? new THREE.SphereGeometry(1, 32, 16)
         : new THREE.CylinderGeometry(shape === "cone" ? 0 : 1, 1, 2, 48);
-    this.solid = new THREE.Mesh(
-      geometry,
-      new THREE.MeshBasicMaterial({
-        color: shape === "drill" ? "#e8a6a6" : "#a6e8ae",
-        transparent: true,
-        opacity: 0.35,
-        depthWrite: false,
-      }),
-    );
+    this.mesh = primitivePreviewMesh(geometry, shape === "drill" ? "#e8a6a6" : "#a6e8ae");
+    this.solid = this.mesh.solid;
     this.axis.renderOrder = 100;
     this.circle.renderOrder = 100;
     this.label.className = "cube-dimension circular-primitive-dimension";
@@ -110,8 +105,7 @@ export class CircularPrimitivePreview {
     this.world.scene.remove(this.circle, this.axis, this.solid);
     this.axis.geometry.dispose();
     this.axis.material.dispose();
-    this.solid.geometry.dispose();
-    this.solid.material.dispose();
+    this.mesh.dispose();
     this.circle.geometry.dispose();
     this.circle.material.dispose();
     this.label.remove();

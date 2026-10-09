@@ -3,22 +3,16 @@ import type { PlaneFrame, Point } from "../sketch/planes.js";
 import { worldPoint } from "../sketch/planes.js";
 import type { World } from "../sketch/world.js";
 import type { cubeRectangle } from "./cube-rectangle.js";
+import { primitivePreviewMesh } from "./primitive-preview-mesh.js";
 import "./cube-preview.css";
 
 /** Presentation-only rectangle and extrusion mesh; accepted geometry waits for release. */
 export class CubePreview {
-  private solid = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 1, 1),
-    new THREE.MeshBasicMaterial({
-      color: "#a6e8ae",
-      transparent: true,
-      opacity: 0.35,
-      depthWrite: false,
-    }),
-  );
+  private mesh = primitivePreviewMesh(new THREE.BoxGeometry(1, 1, 1));
+  private solid = this.mesh.solid;
   private line = new THREE.LineLoop(
     new THREE.BufferGeometry(),
-    new THREE.LineBasicMaterial({ color: "#1675dc", depthTest: false }),
+    new THREE.LineBasicMaterial({ color: "#28643a" }),
   );
   private labels = [document.createElement("span"), document.createElement("span")];
   constructor(
@@ -73,8 +67,7 @@ export class CubePreview {
   }
   dispose(): void {
     this.world.scene.remove(this.line, this.solid);
-    this.solid.geometry.dispose();
-    this.solid.material.dispose();
+    this.mesh.dispose();
     this.line.geometry.dispose();
     this.line.material.dispose();
     for (const label of this.labels) label.remove();

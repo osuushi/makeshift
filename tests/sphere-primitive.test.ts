@@ -8,11 +8,14 @@ import { profileAt, profilesFor } from "../src/sketch/profiles.js";
 const near = (actual: number, expected: number) =>
   assert.ok(Math.abs(actual - expected) < 1e-5, `${actual} != ${expected}`);
 
-test("sphere diameter projects away from camera and remains stable head-on", () => {
+test("sphere diameter follows the grid axis most away from camera with a stable head-on tie", () => {
   assert.deepEqual(sphereAxisDirection(planes.XY, [0, 0, -1]), { x: 0, y: 1 });
-  const direction = sphereAxisDirection(planes.XY, [3, -4, -5]);
-  near(direction.x, 0.6);
-  near(direction.y, -0.8);
+  assert.deepEqual(sphereAxisDirection(planes.XY, [-1e-12, -1e-12, -1]), { x: 0, y: 1 });
+  assert.deepEqual(sphereAxisDirection(planes.XY, [3, -4, -5]), { x: 0, y: -1 });
+  assert.deepEqual(sphereAxisDirection(planes.XY, [-4, 3, -5]), { x: -1, y: 0 });
+  assert.deepEqual(sphereAxisDirection(planes.XY, [4, 3, -5]), { x: 1, y: 0 });
+  assert.deepEqual(sphereAxisDirection(planes.XY, [3, 3, -5]), { x: 0, y: 1 });
+  assert.deepEqual(sphereAxisDirection(planes.XZ, [1, -5, -3]), { x: 0, y: -1 });
 });
 
 test("ordinary circle and diameter produce one exact sphere from either half-region", async () => {
