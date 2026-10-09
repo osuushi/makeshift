@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { project } from "./ui-blend-edit.mjs";
+import { deletePenOverlapRoute } from "./ui-delete-pen-overlap.mjs";
 import { drag, inspect, reset, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -73,6 +74,7 @@ export async function deleteProfilesRoute(page, name) {
     await chooseTool(page, "delete", "delete");
     assert.notDeepEqual((await inspect(page)).document, after);
   }
+  await deletePenOverlapRoute(page, name);
   console.log(
     `${name}: sketch face selection, Delete, region areas, Undo/Redo and reselection passed`,
   );

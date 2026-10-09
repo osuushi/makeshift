@@ -76,7 +76,11 @@ function pairIntersections(a: Bezier, b: Bezier, includeOverlapEnds: boolean): P
     return includeOverlapEnds ? [a.a, a.b] : [];
   const shared = overlap(a, b);
   if (shared) return includeOverlapEnds ? shared : [];
-  const points: Point[] = [];
+  // Keep known shared endpoints exact. At stationary ends subdivision can
+  // otherwise report a nearby point and manufacture a microscopic trim remnant.
+  const points: Point[] = [a.a, a.b].filter(
+    (p, i) => (!i || distance(p, a.a) >= 1e-7) && [b.a, b.b].some((q) => distance(p, q) < 1e-9),
+  );
   let visits = 0;
   const visit = (a: Bezier, b: Bezier, depth: number) => {
     const A = box(a),

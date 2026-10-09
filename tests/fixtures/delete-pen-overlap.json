@@ -1,0 +1,162 @@
+{
+  "document": {
+    "units": "mm",
+    "sketches": [
+      {
+        "id": "20fa1746-4fab-4f08-9234-03bec0d45bef",
+        "plane": {
+          "origin": [0, 0, 0],
+          "u": [1, 0, 0],
+          "v": [0, 1, 0]
+        },
+        "curves": [
+          {
+            "id": "11bde258-6013-4bc7-9cf3-971a2c87a9e9",
+            "kind": "circle",
+            "center": {
+              "x": -2,
+              "y": 0
+            },
+            "radius": 12,
+            "construction": false
+          },
+          {
+            "id": "e05d498d-7d20-4626-aebf-b7d1ae816450",
+            "kind": "bezier",
+            "a": {
+              "x": 2,
+              "y": 2
+            },
+            "b": {
+              "x": 6,
+              "y": 14
+            },
+            "c1": {
+              "x": 2,
+              "y": 2
+            },
+            "c2": {
+              "x": -2,
+              "y": 14
+            },
+            "construction": false
+          },
+          {
+            "id": "433fa9c0-5378-4e06-b240-44647928b1cd",
+            "kind": "bezier",
+            "a": {
+              "x": 6,
+              "y": 14
+            },
+            "b": {
+              "x": 22,
+              "y": 0
+            },
+            "c1": {
+              "x": 14,
+              "y": 14
+            },
+            "c2": {
+              "x": 36,
+              "y": 12
+            },
+            "construction": false
+          },
+          {
+            "id": "219df955-feec-49c0-b471-a3e26c7e3643",
+            "kind": "bezier",
+            "a": {
+              "x": 22,
+              "y": 0
+            },
+            "b": {
+              "x": 2,
+              "y": 2
+            },
+            "c1": {
+              "x": 8,
+              "y": -12
+            },
+            "c2": {
+              "x": 2,
+              "y": 2
+            },
+            "construction": false
+          }
+        ],
+        "constraints": [
+          {
+            "id": "433fa9c0-5378-4e06-b240-44647928b1cd-a-join",
+            "kind": "coincident",
+            "a": {
+              "curve": "433fa9c0-5378-4e06-b240-44647928b1cd",
+              "end": "a"
+            },
+            "b": {
+              "curve": "e05d498d-7d20-4626-aebf-b7d1ae816450",
+              "end": "b"
+            }
+          },
+          {
+            "id": "433fa9c0-5378-4e06-b240-44647928b1cd-a-tangent",
+            "kind": "tangent",
+            "a": "e05d498d-7d20-4626-aebf-b7d1ae816450",
+            "b": "433fa9c0-5378-4e06-b240-44647928b1cd",
+            "side": 1,
+            "junction": {
+              "aEnd": "b",
+              "bEnd": "a"
+            }
+          },
+          {
+            "id": "219df955-feec-49c0-b471-a3e26c7e3643-a-join",
+            "kind": "coincident",
+            "a": {
+              "curve": "219df955-feec-49c0-b471-a3e26c7e3643",
+              "end": "a"
+            },
+            "b": {
+              "curve": "433fa9c0-5378-4e06-b240-44647928b1cd",
+              "end": "b"
+            }
+          },
+          {
+            "id": "219df955-feec-49c0-b471-a3e26c7e3643-a-tangent",
+            "kind": "tangent",
+            "a": "433fa9c0-5378-4e06-b240-44647928b1cd",
+            "b": "219df955-feec-49c0-b471-a3e26c7e3643",
+            "side": 1,
+            "junction": {
+              "aEnd": "b",
+              "bEnd": "a"
+            }
+          },
+          {
+            "id": "219df955-feec-49c0-b471-a3e26c7e3643-b-join",
+            "kind": "coincident",
+            "a": {
+              "curve": "219df955-feec-49c0-b471-a3e26c7e3643",
+              "end": "b"
+            },
+            "b": {
+              "curve": "e05d498d-7d20-4626-aebf-b7d1ae816450",
+              "end": "a"
+            }
+          }
+        ],
+        "groups": []
+      }
+    ]
+  },
+  "deletion": {
+    "kind": "delete-entities",
+    "bodyIds": [],
+    "sketchIds": [],
+    "profiles": [
+      {
+        "sketch": "20fa1746-4fab-4f08-9234-03bec0d45bef",
+        "profile": "20fa1746-4fab-4f08-9234-03bec0d45bef/0"
+      }
+    ]
+  }
+}

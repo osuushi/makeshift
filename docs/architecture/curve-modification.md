@@ -18,7 +18,9 @@ The operation derives adjacency from analytic arrangement spans, including hole
 boundaries, and opens selected components that touch the exterior while retaining
 their boundaries against unselected regions. Longer source curves split at those
 span limits; unrelated tails and construction geometry survive. Coincident
-ordinary curves trim together. Remnants use the existing Trim constraint/ID
+ordinary curves trim together. Shared cubic endpoints remain exact during
+intersection subdivision, including stationary Pen corners, so deletion does not
+manufacture microscopic endpoint remnants. Remnants use the existing Trim constraint/ID
 remapping and constraint-removal notice. Multi-sketch, whole-entity and solid
 topology selections share one atomic backend edit and Undo/Redo. Selecting a whole
 sketch still removes the sketch itself.
