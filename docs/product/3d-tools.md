@@ -85,3 +85,6 @@ Placement previews render opaque into a separate depth buffer, then blend over t
 viewport at 50% opacity. Their front surfaces occlude their own back surfaces, while
 the underlying model remains visible. Drill retains a pink fill; its coplanar entry
 cap never competes with the body face for depth. Preview geometry stays exact.
+The temporary footprint and Sphere axis render in a final depth-independent pass,
+so the placement sketch stays visible through its own solid preview. Existing
+sketch visibility settings remain independent.

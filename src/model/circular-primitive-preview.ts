@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { type Vector, worldPoint } from "../sketch/planes.js";
 import type { World } from "../sketch/world.js";
-import { primitivePreviewLayer } from "../sketch/world-primitive-overlay.js";
+import { primitiveFootprintLayer } from "../sketch/world-primitive-overlay.js";
 import type { CircularPlacement, CircularPrimitiveShape } from "./circular-primitive-controls.js";
 import { primitivePreviewMesh } from "./primitive-preview-mesh.js";
 import { sphereAxisDirection } from "./sphere-sketch.js";
@@ -18,11 +18,12 @@ export class CircularPrimitivePreview {
       transparent: true,
       opacity: 0.5,
       depthTest: false,
+      depthWrite: false,
     }),
   );
   private circle = new THREE.LineLoop(
     new THREE.BufferGeometry(),
-    new THREE.LineBasicMaterial({ color: "#28643a" }),
+    new THREE.LineBasicMaterial({ color: "#28643a", depthTest: false, depthWrite: false }),
   );
   private label = document.createElement("span");
   constructor(
@@ -36,8 +37,8 @@ export class CircularPrimitivePreview {
         : new THREE.CylinderGeometry(shape === "cone" ? 0 : 1, 1, 2, 48);
     this.mesh = primitivePreviewMesh(geometry, shape === "drill" ? "#e8a6a6" : "#a6e8ae");
     this.solid = this.mesh.solid;
-    this.circle.layers.set(primitivePreviewLayer);
-    this.axis.layers.set(primitivePreviewLayer);
+    this.circle.layers.set(primitiveFootprintLayer);
+    this.axis.layers.set(primitiveFootprintLayer);
     this.axis.renderOrder = 100;
     this.circle.renderOrder = 100;
     this.label.className = "cube-dimension circular-primitive-dimension";

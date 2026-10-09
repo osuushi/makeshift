@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 export const primitivePreviewLayer = 3;
+export const primitiveFootprintLayer = 4;
 
 /** Resolve the opaque preview's own depth before blending it over the model. */
 export class PrimitiveOverlay {
@@ -25,7 +26,11 @@ export class PrimitiveOverlay {
   render(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera): void {
     let visible = false;
     scene.traverseVisible((object) => {
-      if (object.layers.isEnabled(primitivePreviewLayer)) visible = true;
+      if (
+        object.layers.isEnabled(primitivePreviewLayer) ||
+        object.layers.isEnabled(primitiveFootprintLayer)
+      )
+        visible = true;
     });
     if (!visible) return;
     renderer.getDrawingBufferSize(this.size);
@@ -57,6 +62,9 @@ export class PrimitiveOverlay {
       renderer.setRenderTarget(previousTarget);
       renderer.autoClear = false;
       renderer.render(this.scene, this.camera);
+      // Footprints explain the placement plane, even behind the solid preview.
+      camera.layers.set(primitiveFootprintLayer);
+      renderer.render(scene, camera);
     } finally {
       for (const [light, layers] of lights) light.layers.mask = layers;
       scene.background = background;
