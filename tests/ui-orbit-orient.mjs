@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import * as THREE from "three";
+import { levelOrientation } from "../src/sketch/camera-orbit.ts";
 import { inspect } from "./ui-helpers.mjs";
 
 /** Reach a viewing direction through ordinary center-band Command drags. */
@@ -17,7 +18,7 @@ export async function orientWithTurntable(page, normal) {
     view.position.fromArray(camera.position);
     view.up.fromArray(camera.up);
     view.lookAt(target);
-    const upAxis = uprightAxis(view.quaternion);
+    const upAxis = uprightAxis(view, target);
     const right = new THREE.Vector3(1, 0, 0).applyQuaternion(view.quaternion);
     const elevation = (vector) => Math.asin(THREE.MathUtils.clamp(vector.dot(upAxis), -1, 1));
     const pitch = THREE.MathUtils.clamp(elevation(direction) - elevation(desired), -0.7, 0.7);
@@ -45,22 +46,23 @@ export async function orientWithTurntable(page, normal) {
   assert.ok(direction.angleTo(desired) < 0.01, "Turntable reaches the requested viewing direction");
 }
 
-function uprightAxis(orientation) {
-  const inverse = orientation.clone().invert();
-  let best = { score: Infinity, axis: new THREE.Vector3(0, 0, 1) };
-  for (const axis of [
-    new THREE.Vector3(1, 0, 0),
-    new THREE.Vector3(0, 1, 0),
-    new THREE.Vector3(0, 0, 1),
-  ]) {
-    const projected = axis.clone().applyQuaternion(inverse);
-    let angle = Math.atan2(-projected.x, projected.y);
-    if (angle > Math.PI / 2) angle -= Math.PI;
-    if (angle < -Math.PI / 2) angle += Math.PI;
-    const score = angle * angle - 0.25 * Math.log(Math.hypot(projected.x, projected.y));
-    if (score < best.score) best = { score, axis: axis.multiplyScalar(projected.y < 0 ? -1 : 1) };
-  }
-  return best.axis;
+function uprightAxis(camera, target) {
+  const axes = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)];
+  const candidates = (orientation) => {
+    const inverse = orientation.clone().invert();
+    return axes
+      .map((axis) => {
+        const p = axis.clone().applyQuaternion(inverse);
+        const sign = p.y < 0 ? -1 : 1;
+        return { axis: axis.clone().multiplyScalar(sign), p, depth: p.z * sign };
+      })
+      .filter(({ p }) => Math.abs(p.x) < 1e-10 && Math.abs(p.y) > 1e-12)
+      .sort((a, b) => b.depth - a.depth);
+  };
+  // This is fixture steering, not the release-snap assertion: follow the actual
+  // snapped upright axis, using production leveling only for an unleveled pose.
+  return (candidates(camera.quaternion)[0] ?? candidates(levelOrientation({ camera, target }))[0])
+    .axis;
 }
 
 async function safePress(page, box, radius) {
