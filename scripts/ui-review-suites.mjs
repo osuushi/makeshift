@@ -2,6 +2,7 @@ import { uiRoutes } from "./ui-review-routes.mjs";
 
 // Measured Linux timings from PR #73, run 37872133423; use the slowest runtime per suite.
 export const reviewUiSuites = [
+  { args: ["cube-tool-ui.mjs"], seconds: 35, browsers: ["chromium", "webkit", "electron"] },
   { args: ["ui-runtime-cleanup.mjs"], seconds: 3, browsers: ["chromium", "electron", "webkit"] },
   { args: ["decorator-removal-ui.mjs"], seconds: 14, browsers: ["chromium", "electron", "webkit"] },
   { args: ["selection-redo-ui.mjs"], seconds: 10, browsers: ["chromium", "electron", "webkit"] },
