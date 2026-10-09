@@ -3,6 +3,14 @@
 // Add combinatorial cases to the linked lower-level tests, not this inventory.
 export const uiSuites = [
   {
+    args: ["primitive-handoff-ui.mjs"],
+    seconds: 60,
+    browsers: ["electron"],
+    reason:
+      "Circle placement must release its pointer lease into editable Extrude/Revolve with the correct profile, axis, mode and drill direction.",
+    unit: "sphere-primitive.test.ts",
+  },
+  {
     args: ["cube-selection-ui.mjs"],
     seconds: 15,
     browsers: ["electron"],

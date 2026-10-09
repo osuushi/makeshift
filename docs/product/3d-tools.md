@@ -45,10 +45,36 @@ The sketch remains in the document. On successful extrusion completion, the
 existing visibility rule hides it when every region was used. It can be shown,
 reopened, moved and dimensionally edited as an ordinary rectangle sketch.
 
-## Future tools
+## Circular tools (founder decision, 2026-10-09)
 
-Cylinder, sphere and other shape tools should follow the same principle. For each,
-first identify the expert primitive flow, then design the smallest set of guided
-modes and defaults that makes that flow discoverable. A shortcut is successful
-when the user gets a useful shape quickly and learns how to keep editing it with
-the existing modeling tools.
+**Cylinder**, **Sphere**, **Cone** and **Drill** use a circle centered on the initial
+click. Drag from that center to set its radius, or click to use the displayed default
+diameter. The footprint is always centered; Option has no placement behavior.
+The support and default size follow Cube's rules, except Drill requires a visible
+planar body face. Hover previews and diameter labels create no document geometry.
+A held gesture keeps its initial support. Each completed placement accepts a fresh
+ordinary sketch, then hands off to the existing editable modeling tool. Canceling
+that tool retains the sketch; solid acceptance is a separate Undo step.
+
+Cylinder enters **Extrude** with outward depth equal to the circle's diameter,
+**Union** selected and Symmetric off. Cone uses the same depth and operation,
+with inward Draft offset equal to its radius. Its exact circular apex has no
+finite top face. Ordinary Extrude still exposes distance, symmetry, draft, twist
+and Boolean mode; changing those controls is a regular extrusion edit.
+
+Sphere adds an ordinary diameter segment in the circle's sketch. Its direction
+projects the camera's viewing direction into the sketch plane, falling back to
+local V when viewed head-on. That diameter creates two half-disk regions. The
+guide selects one region and enters **Revolve** with the diameter's axis, 360°,
+zero height and **Union**. Enter accepts a ball; angle, height, axis and Boolean
+controls remain available. Both source curves remain ordinary editable geometry.
+
+Drill has a drill icon and accepts a circle only on a planar body face. It enters
+**Extrude**, with **Subtract**, Symmetric off and a negative distance along the
+face's outward normal. Depth conservatively projects the selected body's exact
+axis-aligned bounds onto that normal, plus a small clearance, so it clears the
+whole body rather than stopping at the first cavity. Oblique bounds can give
+extra travel. Other visible bodies intersected within that travel can also be cut
+through the ordinary Boolean target rules; hidden bodies are excluded. Depth and
+targets remain editable in Extrude. No persistent drill recipe or body dependency
+is added.

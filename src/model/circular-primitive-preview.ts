@@ -2,13 +2,12 @@ import * as THREE from "three";
 import { type Vector, worldPoint } from "../sketch/planes.js";
 import type { World } from "../sketch/world.js";
 import type { CircularPlacement, CircularPrimitiveShape } from "./circular-primitive-controls.js";
-import { sphereAxisDirection } from "./sphere-primitive.js";
+import { sphereAxisDirection } from "./sphere-sketch.js";
 import "./cube-preview.css";
 
 /** Lightweight presentation only; all accepted geometry comes from ordinary tools. */
 export class CircularPrimitivePreview {
   private solid: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
-  private secondCone: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
   private axis = new THREE.Line(
     new THREE.BufferGeometry(),
     new THREE.LineBasicMaterial({
@@ -41,16 +40,15 @@ export class CircularPrimitivePreview {
         depthWrite: false,
       }),
     );
-    this.secondCone = new THREE.Mesh(geometry.clone(), this.solid.material);
     this.axis.renderOrder = 100;
     this.circle.renderOrder = 100;
     this.label.className = "cube-dimension circular-primitive-dimension";
     overlay.append(this.label);
-    world.scene.add(this.circle, this.axis, this.solid, this.secondCone);
+    world.scene.add(this.circle, this.axis, this.solid);
     this.hide();
   }
   show(placement: CircularPlacement): void {
-    const { plane, center, radius, symmetric } = placement;
+    const { plane, center, radius } = placement;
     const u = new THREE.Vector3(...plane.u);
     const v = new THREE.Vector3(...plane.v);
     const normal = u.clone().cross(v);
@@ -60,19 +58,9 @@ export class CircularPrimitivePreview {
     );
     this.solid.position.set(...worldPoint(plane, center));
     const drillDepth = placement.depth ?? radius * 2;
-    const offset = this.shape === "drill" ? -drillDepth / 2 : symmetric ? 0 : radius;
+    const offset = this.shape === "drill" ? -drillDepth / 2 : radius;
     if (this.shape !== "sphere") this.solid.position.addScaledVector(normal, offset);
     this.solid.scale.set(radius, this.shape === "drill" ? drillDepth / 2 : radius, radius);
-    this.secondCone.visible = this.shape === "cone" && symmetric && radius > 0;
-    if (this.secondCone.visible) {
-      this.solid.scale.y = radius / 2;
-      this.solid.position.addScaledVector(normal, radius / 2);
-      this.secondCone.quaternion.copy(this.solid.quaternion);
-      this.secondCone.position
-        .set(...worldPoint(plane, center))
-        .addScaledVector(normal, -radius / 2);
-      this.secondCone.scale.set(radius, -radius / 2, radius);
-    }
     this.solid.visible = radius > 0;
     this.showAxis(placement);
     const points = Array.from({ length: 64 }, (_, i) => {
@@ -113,15 +101,13 @@ export class CircularPrimitivePreview {
     );
   }
   hide(): void {
-    this.secondCone.visible = false;
     this.axis.visible = false;
     this.circle.visible = false;
     this.solid.visible = false;
     this.label.hidden = true;
   }
   dispose(): void {
-    this.world.scene.remove(this.circle, this.axis, this.solid, this.secondCone);
-    this.secondCone.geometry.dispose();
+    this.world.scene.remove(this.circle, this.axis, this.solid);
     this.axis.geometry.dispose();
     this.axis.material.dispose();
     this.solid.geometry.dispose();

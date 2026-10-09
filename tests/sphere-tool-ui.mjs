@@ -76,5 +76,5 @@ await withUiRuntimes(
       "Sphere pointer placement, half-region, editable Revolve, Enter, Undo and cancel passed",
     );
   },
-  { allowed: ["electron"], timeout: 30000 },
+  { allowed: ["chromium", "webkit", "electron"], timeout: 30000 },
 );

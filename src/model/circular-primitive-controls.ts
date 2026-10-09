@@ -12,7 +12,6 @@ export type CircularPlacement = {
   plane: PlaneFrame;
   center: Point;
   radius: number;
-  symmetric: boolean;
   source?: PlaneReferenceSource;
   depth?: number;
 };
@@ -44,7 +43,6 @@ export class CircularPrimitiveControls {
     threshold: number;
     moved: boolean;
   } | null = null;
-  private symmetric = false;
   private consumeClick = false;
   private creating = false;
   constructor(
@@ -94,16 +92,6 @@ export class CircularPrimitiveControls {
       },
       options,
     );
-    for (const type of ["keydown", "keyup"] as const)
-      window.addEventListener(
-        type,
-        (event) => {
-          if (!this.lease || event.key !== "Alt") return;
-          this.symmetric = event.altKey;
-          this.editor.refresh();
-        },
-        options,
-      );
     window.addEventListener("blur", () => this.gesture && this.cancel(), options);
   }
   private begin(): boolean {
@@ -126,7 +114,6 @@ export class CircularPrimitiveControls {
     editor.message = "";
     editor.notice = this.config.hint;
     this.pointer = null;
-    this.symmetric = false;
     this.consumeClick = false;
     editor.refresh();
     return true;
@@ -156,7 +143,6 @@ export class CircularPrimitiveControls {
       radius: this.gesture?.moved
         ? Math.hypot(tip.x - center.x, tip.y - center.y)
         : (this.gesture?.radius ?? cubeDefaultSize(this.editor.world, support.frame) / 2),
-      symmetric: this.config.shape !== "drill" && this.symmetric,
       source: support.source,
       depth: support.depth,
     };
@@ -192,7 +178,6 @@ export class CircularPrimitiveControls {
     world.canvas.focus();
     this.editor.message = "";
     this.pointer = screen;
-    this.symmetric = event.altKey;
     this.gesture = {
       id: event.pointerId,
       screen,
@@ -209,7 +194,6 @@ export class CircularPrimitiveControls {
     if (this.lease?.phase !== "editing") return;
     if (this.gesture && this.gesture.id !== event.pointerId) return;
     this.pointer = { x: event.clientX, y: event.clientY };
-    this.symmetric = event.altKey;
     if (this.gesture) {
       event.stopImmediatePropagation();
       this.gesture.moved ||=

@@ -48,17 +48,18 @@ export async function cylinderPlacementRoute(page) {
   assert.equal(state.document.sketches.length, 1);
   const circle = state.document.sketches[0].curves[0];
   assert.equal(circle.kind, "circle");
+  assert.deepEqual(circle.center, { x: 10, y: 6 });
   close(circle.radius, 12);
   assert.equal(state.document.sketches[0].curves.length, 1);
   assert.equal(state.document.bodies?.length ?? 0, 0);
-  assert.equal(await page.getByLabel("Symmetric extrusion").isChecked(), true);
+  assert.equal(await page.getByLabel("Symmetric extrusion").isChecked(), false);
   assert.equal(
     await page.getByRole("button", { name: "Union", exact: true }).getAttribute("aria-pressed"),
     "true",
   );
   close(state.preview.bodies[0].volume, Math.PI * 12 ** 2 * 24);
-  close(state.preview.bodies[0].bounds[2], -12);
-  close(state.preview.bodies[0].bounds[5], 12);
+  close(state.preview.bodies[0].bounds[2], 0);
+  close(state.preview.bodies[0].bounds[5], 24);
   await page.getByLabel("Extrusion distance", { exact: true }).fill("8");
   state = await extrusion(page);
   close(state.preview.bodies[0].volume, Math.PI * 12 ** 2 * 8);

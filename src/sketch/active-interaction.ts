@@ -4,6 +4,10 @@ import { InteractionHistory } from "./interaction-history.js";
 
 type Kind =
   | "cube"
+  | "cylinder"
+  | "sphere"
+  | "cone"
+  | "drill"
   | "mesh-import"
   | "tag-membership"
   | "entity-reorder"

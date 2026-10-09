@@ -12,8 +12,12 @@ export function drillPlane(editor: SketchEditor, screen: Point) {
   const hit = pickFace(editor, screen);
   const body = hit && editor.display.bodies?.find((body) => body.id === hit.body);
   const face = body?.faces.find((face) => face.id === hit?.face);
-  return hit && face?.plane
-    ? { frame: face.plane, source: { kind: "face" as const, body: hit.body, face: hit.face } }
+  return hit && face?.plane && body
+    ? {
+        frame: face.plane,
+        depth: drillDepth(body, face.plane),
+        source: { kind: "face" as const, body: hit.body, face: hit.face },
+      }
     : null;
 }
 

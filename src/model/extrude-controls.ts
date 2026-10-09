@@ -106,11 +106,17 @@ export class ExtrudeControls {
     this.input.select();
   }
   /** Guided tools hand off to the ordinary temporary extrusion interaction. */
-  start(distance: number, symmetric: boolean, mode: Extrusion["mode"] = "auto"): boolean {
+  start(
+    distance: number,
+    symmetric: boolean,
+    mode: Extrusion["mode"] = "auto",
+    draft?: Extrusion["draft"],
+  ): boolean {
     this.editor.modeling.setTool("extrude");
     this.editor.refresh();
     if (!this.begin()) return false;
     this.mode = mode;
+    if (draft) this.widget.draft.restore(draft);
     this.queue(distance, symmetric);
     return true;
   }

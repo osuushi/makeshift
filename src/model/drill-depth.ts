@@ -1,13 +1,9 @@
-import type { PlaneFrame, Vector } from "../sketch/planes.js";
+import { type PlaneFrame, planeNormal } from "../sketch/planes.js";
 import type { BodyGeometry } from "./body.js";
 
 /** Project exact shape bounds, rather than sampled mesh points, through the entire body. */
 export function drillDepth(body: BodyGeometry, plane: PlaneFrame): number {
-  const normal: Vector = [
-    plane.u[1] * plane.v[2] - plane.u[2] * plane.v[1],
-    plane.u[2] * plane.v[0] - plane.u[0] * plane.v[2],
-    plane.u[0] * plane.v[1] - plane.u[1] * plane.v[0],
-  ];
+  const normal = planeNormal(plane);
   let depth = 0;
   for (let corner = 0; corner < 8; corner++) {
     let projection = 0;
