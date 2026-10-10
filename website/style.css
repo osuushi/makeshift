@@ -117,14 +117,19 @@ nav a {
 nav a:hover {
   text-decoration: underline;
 }
+.showcase {
+  max-width: 960px;
+}
 .hero {
-  padding-block: 64px 40px;
+  padding-block: 56px 36px;
+  text-align: center;
 }
 .hero h1 {
   margin-bottom: 24px;
 }
 .intro {
-  max-width: 740px;
+  max-width: 680px;
+  margin-inline: auto;
 }
 .intro > p:first-child {
   font-size: 20px;
@@ -135,7 +140,8 @@ nav a:hover {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: 20px 36px;
+  justify-content: center;
+  gap: 12px 28px;
 }
 .actions .text-link {
   display: inline-flex;
