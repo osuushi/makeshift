@@ -70,8 +70,8 @@ motion. Labels remain outside the model. Videos are muted and play inline.
 
 ## Content
 
-Headings use Fraunces; body text and controls use DM Sans. Both load from Google
-Fonts with `display=swap`, with local serif/sans-serif fallbacks while loading
+Headings, body text and controls use DM Sans, with semibold headlines. It loads
+from Google Fonts with `display=swap`, with local sans-serif fallbacks while loading
 or when the font service is unavailable.
 
 Product claims follow the README and current architecture/topic docs. The icon
