@@ -130,6 +130,14 @@ nav a:hover {
 .hero h1 {
   margin-bottom: 24px;
 }
+.hero-subtitle {
+  display: block;
+  margin-top: 12px;
+  font-size: clamp(26px, 3vw, 36px);
+  font-weight: 400;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
 .intro {
   max-width: 680px;
   margin-inline: auto;
