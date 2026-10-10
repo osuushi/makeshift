@@ -61,7 +61,9 @@ ownership: typing updates the preview, and pointer travel or modifier changes ca
 replace that value. A fresh handle press returns control to dragging.
 Whole-body rotation retains its preview and angle field after
 pointer release so the angle can be refined before Enter/tool exit accepts it in
-one Undo step; Escape cancels it. Whole-body translation still accepts on release.
+one Undo step; Escape cancels it. Pressing a different body translation or rotation
+handle accepts the released rotation first, then starts that handle from the accepted
+geometry. Each accepted gesture has its own Undo step. Whole-body translation still accepts on release.
 Topology movement retains its combined preview.
 
 ### Option-Move duplication (founder-directed, 2026-09-21)
