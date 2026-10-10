@@ -4,7 +4,17 @@ export function canonicalPlaneSettings(): HTMLElement {
   const section = document.createElement("section");
   section.className = "view-display-settings";
   section.innerHTML = `<h3>Plane grids</h3>
-    <p>The most face-on plane is shown. Grids blend smoothly when the view changes.</p>`;
+    <p>Keep the current plane until the view is within the switch angle of its surface,
+    then choose the most face-on plane. Grids blend smoothly.</p>`;
+  const angle = document.createElement("label");
+  angle.innerHTML = `<span>Plane switch angle</span><input type="range" min="0" max="90" step="1" aria-label="Plane switch angle"><output></output>`;
+  const input = angle.querySelector("input");
+  const output = angle.querySelector("output");
+  if (!input || !output) throw new Error("Missing plane switch angle controls");
+  input.oninput = () => {
+    setCanonicalPlanes({ switchAngleDegrees: Number(input.value) });
+    update();
+  };
   const palette = planePaletteSettings();
   const reset = document.createElement("button");
   reset.type = "button";
@@ -14,11 +24,15 @@ export function canonicalPlaneSettings(): HTMLElement {
     update();
   };
   section.querySelector("h3")?.append(reset);
-  section.append(palette);
+  section.append(angle, palette);
   function update(): void {
+    if (!input || !output) return;
+    input.value = String(canonicalPlanes().switchAngleDegrees);
+    output.textContent = `${input.value}°`;
     palette.dispatchEvent(new Event("palette-refresh"));
   }
   section.addEventListener("preferences-refresh", update);
+  update();
   return section;
 }
 

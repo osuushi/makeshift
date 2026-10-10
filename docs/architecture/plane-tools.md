@@ -46,7 +46,8 @@ exact intersection is evaluated only after picking. No native operations run
 during reference discovery. Disjoint and box-tangent planes and hidden references are excluded.
 This is a broad filter: concavities, selected-face coverage and existing imprints
 may leave ineffective references selectable. Exact validation runs only on picking
-a reference. Canonical grids use the single most face-on visibility target, smooth crossfades
+a reference. Canonical grids use the single primary visibility target with the navigation
+switch-angle hysteresis, smooth crossfades
 and selectable thresholds; saved
 plane and face candidate outlines remain visible. Hover adds a blue fill to exactly the reference the shared
 click picker would choose, including a face's actual visible surface. Entities rows highlight their own saved

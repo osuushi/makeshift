@@ -1,6 +1,8 @@
 import { type PlaneId, planeIds } from "../sketch/planes.js";
 
 export interface CanonicalPlaneSettings {
+  /** Switch when the view is this many degrees from the current plane's surface. */
+  switchAngleDegrees: number;
   /** Absolute view-direction dot normal where visibility starts. */
   angleCutoff: number;
   fadeWidth: number;
@@ -20,6 +22,7 @@ export const planePresets = {
 export const defaultPlaneColors = { XY: "#d4ae3a", XZ: "#55bb6e", YZ: "#b325c1" };
 export const defaultSecondaryOpacity = 0;
 const defaults: CanonicalPlaneSettings = {
+  switchAngleDegrees: 30,
   ...planePresets.focused,
   selectableMinimum: 0.15,
   fullOpacityAbove: 1,
@@ -65,6 +68,7 @@ export function normalizePlaneSettings(input: unknown): CanonicalPlaneSettings {
   if (!input || typeof input !== "object") return result;
   const candidate = input as Partial<CanonicalPlaneSettings>;
   for (const field of [
+    "switchAngleDegrees",
     "angleCutoff",
     "fadeWidth",
     "selectableMinimum",
@@ -74,7 +78,13 @@ export function normalizePlaneSettings(input: unknown): CanonicalPlaneSettings {
   ] as const) {
     const number = candidate[field];
     if (typeof number === "number" && Number.isFinite(number))
-      result[field] = Math.max(0, Math.min(field === "fadeMilliseconds" ? 2000 : 1, number));
+      result[field] = Math.max(
+        0,
+        Math.min(
+          field === "fadeMilliseconds" ? 2000 : field === "switchAngleDegrees" ? 90 : 1,
+          number,
+        ),
+      );
   }
   // Upgrade the old implicit fade default while retaining custom durations.
   if (candidate.secondaryOpacity === undefined && candidate.fadeMilliseconds === 120)

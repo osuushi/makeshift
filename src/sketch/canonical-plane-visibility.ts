@@ -21,6 +21,7 @@ export function selectablePlane(current: number, target: number, minimum: number
 }
 export class CanonicalPlaneVisibility {
   private previous: number | null = null;
+  private primary: PlaneId | null = null;
   readonly states = Object.fromEntries(
     planeIds.map((id) => [
       id,
@@ -65,11 +66,14 @@ export class CanonicalPlaneVisibility {
           ? planeIds.indexOf(a.id) - planeIds.indexOf(b.id)
           : b.facing - a.facing,
       );
+    const current = ranked.find(({ id }) => id === this.primary);
+    const switchFacing = Math.sin((settings.switchAngleDegrees * Math.PI) / 180);
+    if (!current || current.facing <= switchFacing + 1e-12) this.primary = ranked[0].id;
     let moving = false;
     for (const id of planeIds) {
       const state = this.states[id];
-      state.role = id === ranked[0].id ? "primary" : "hidden";
-      // Only the most face-on grid supplies a reference.
+      state.role = id === this.primary ? "primary" : "hidden";
+      // Retain the primary until it approaches edge-on; only it supplies a reference.
       const target = state.role === "primary" ? 1 : 0;
       // Slow rendered frames still advance an existing fade. Only a new target
       // after a genuinely idle viewport starts with no accumulated time.
