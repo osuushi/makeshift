@@ -29,8 +29,10 @@ space through orbit, pan, zoom and resize; line fading stays independent.
 Geometry in front retains its appearance; orientable widgets remain unobscured.
 Coplanar geometry remains unveiled: plane-side classification interpolates signed
 geometry distances rather than reconstructing them from quantized fragment depth.
-The most face-on canonical plane is primary at configured maximum grid opacity,
-with ties resolved XY, then XZ, then YZ (facing differences within 1e-12 count as tied).
+Initially the most face-on canonical plane is primary at configured maximum grid
+opacity. Retain it until the viewing direction is within the **Plane switch angle**
+of its surface (default 15°), then choose the most face-on plane again. Ties resolve
+XY, then XZ, then YZ (facing differences within 1e-12 count as tied).
 Only the primary has a nonzero visibility target. On switching, each grid carries
 opacity and velocity through a critically damped spring with a 240 ms smoothing
 time (about 0.6 seconds to reach 95% of a settled target). Reduced motion and zero
@@ -44,7 +46,9 @@ independently of camera retreat; nearer portions retain full strength. Work grid
 construction planes, world axes and geometry do not receive this fade.
 Settings keeps this simple behavior and
 exposes grid line opacity, white grid fill opacity (0–100%, default 30%),
-line thickness (0.5–3 pixels, default 1), colors and saved palettes.
+line thickness (0.5–3 pixels, default 1), plane switch angle (0–90°, default 15°),
+colors and saved palettes. A 0° switch angle retains until edge-on; 90° always
+chooses the most face-on plane.
 Grid colors default to XY #d4ae3a, XZ #55bb6e and YZ #b325c1; axes retain their colors.
 Thickness also applies to the active sketch grid. A sketch whose copied frame
 matches a canonical plane uses that plane’s palette color; other sketch grids stay neutral. World X/Y/Z axes render

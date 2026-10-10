@@ -44,9 +44,8 @@ test("faint previews cannot click, including a still-bright plane fading out", (
   assert.equal(selectablePlane(0.001, 0.001, 0), true);
   assert.equal(selectablePlane(0.99, 1, 1), false);
 });
-test("one full-strength primary wins by facing angle, with no secondary and stable ties", () => {
+test("initial primary wins by facing angle, with no secondary and stable ties", () => {
   const camera = new THREE.OrthographicCamera();
-  const visibility = new CanonicalPlaneVisibility();
   const cases = [
     [[0, 0, 1], "XY"],
     [[0, 1, 0], "XZ"],
@@ -62,6 +61,7 @@ test("one full-strength primary wins by facing angle, with no secondary and stab
     [[1.000001, 1, 1], "YZ"],
   ] as const;
   for (const [direction, winner] of cases) {
+    const visibility = new CanonicalPlaneVisibility();
     camera.position.set(direction[0], direction[1], direction[2]);
     camera.lookAt(0, 0, 0);
     camera.updateMatrixWorld();

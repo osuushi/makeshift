@@ -31,6 +31,7 @@ export function configurePreferences(json: string): void {
   if (patch.canonicalPlanes !== undefined) {
     const planes = patch.canonicalPlanes;
     object(planes, [
+      "switchAngleDegrees",
       "angleCutoff",
       "fadeWidth",
       "selectableMinimum",
@@ -50,7 +51,11 @@ export function configurePreferences(json: string): void {
             throw new Error("Palette names must be 1–60 characters.");
           palette(colors);
         }
-      } else number(value, field === "fadeMilliseconds" ? 2000 : 1);
+      } else
+        number(
+          value,
+          field === "fadeMilliseconds" ? 2000 : field === "switchAngleDegrees" ? 90 : 1,
+        );
     }
   }
   if (patch.viewDisplay) setViewDisplay({ ...viewDisplay(), ...patch.viewDisplay });
