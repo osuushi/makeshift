@@ -26,6 +26,34 @@ Preserve the existing file on failed saves, using the host's ordinary safe-write
 path. Save/Open and unsaved-work handling are required product interactions, not
 a storage research project. No migration framework for hypothetical old versions.
 
+## System clipboard
+
+Copy/Paste uses DOM clipboard events for keyboard and native Edit-menu actions,
+and `navigator.clipboard` for browser File/Edit buttons. The system pasteboard
+stores versioned `makeshift-geometry` JSON as plain text, shared across windows,
+New/Open and renderer reloads. Text inputs, editable content and the agent retain
+ordinary text copy/paste. Clipboard buttons need the browser's clipboard access;
+keyboard events remain the route on LAN HTTP where async clipboard APIs are absent.
+
+In a sketch, copy includes selected curves/groups and the owning curves of selected
+points (points are curve features, not independent entities). Internal constraints
+and complete convenience groups survive; relationships to uncopied curves do not.
+In Modeling, copy accepts whole sketches, selected region boundary spans, whole
+bodies and sets of these. Selecting all faces also counts as a whole body; partial
+solid face/edge selections do not copy a body. Region boundaries become ordinary
+editable curves, with shared identical spans included once.
+
+Paste creates fresh sketch, curve, constraint, group, body and topology identities.
+Exact B-reps are inspected by the kernel before one atomic document acceptance;
+invalid data leaves accepted work untouched. Body names, appearance, tagged groups
+and decorators follow the copies. Bundled custom decorator definitions receive
+fresh namespaced identities to avoid conflicts with installed code.
+A sketch-only paste into a planar workspace appends local coordinates on that
+workspace's plane. Otherwise sketches and bodies retain world placement. Paste
+selects the copies for ordinary Move/editing and is one geometry Undo step.
+Copy/Paste is unavailable during an active edit or calculation; finish or cancel
+it first. There is no private in-memory clipboard or host pasteboard bridge.
+
 ## Native document lifecycle
 
 Electron uses one window and one complete session per document. Each session owns

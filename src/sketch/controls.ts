@@ -1,3 +1,4 @@
+import { clipboardControls } from "../clipboard/controls.js";
 import { fileControls } from "../model/file-controls.js";
 import { fixtureControls } from "../model/fixture-controls.js";
 import { toolCatalog } from "../tools/catalog.js";
@@ -14,6 +15,7 @@ export function installControls(
   app: HTMLElement,
 ): () => void {
   const disposeTools = sketchTools(editor);
+  const disposeClipboard = clipboardControls(editor);
   const disposeFiles = fileControls(editor, app);
   const disposeFixtures =
     import.meta.env.DEV || window.makeshiftFixture ? fixtureControls(editor, app) : () => {};
@@ -30,6 +32,7 @@ export function installControls(
     abort.abort();
     standardMenu.dispose();
     disposeTools();
+    disposeClipboard();
     disposeFiles();
     disposeFixtures();
   };
