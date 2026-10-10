@@ -67,7 +67,7 @@ h3 {
   font-weight: 600;
 }
 .wrap {
-  width: min(1080px, calc(100% - 80px));
+  width: min(1240px, calc(100% - 80px));
   margin-inline: auto;
 }
 .small {
@@ -173,7 +173,7 @@ nav a:hover {
   margin-left: 5px;
 }
 .product {
-  margin-block: 0;
+  margin: 0;
 }
 .product > a {
   display: block;
