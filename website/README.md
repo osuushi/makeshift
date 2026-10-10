@@ -4,7 +4,9 @@ Static landing page for [makeshift.horse](https://makeshift.horse), hosted in th
 separate [makeshift-site](https://github.com/osuushi/makeshift-site) GitHub Pages
 repository. The apex domain uses GitHub Pages A records; `www` is a CNAME to
 `osuushi.github.io` and redirects to the apex. Domain ownership is verified in
-the `osuushi` GitHub account through a DNS TXT record.
+the `osuushi` GitHub account through a DNS TXT record. The web app is published
+from its separate Pages repository at `web.makeshift.horse`; the landing page
+links directly to that subdomain.
 
 ## Preview and regenerate demos
 
