@@ -8,7 +8,7 @@ import {
 } from "./kernel-query-validation.js";
 import type { KernelReply } from "./kernel-reply.js";
 import type { KernelRequest } from "./kernel-request.js";
-import { array, object, requireKernel, text } from "./kernel-values.js";
+import { array, object, requireKernel, text, vector } from "./kernel-values.js";
 
 /** Validate the wire result before geometry, correspondence or measurements escape the adapter. */
 export function readKernelReply<Input extends KernelRequest>(
@@ -17,6 +17,9 @@ export function readKernelReply<Input extends KernelRequest>(
 ): KernelReply<Input> {
   const reply = object(value);
   switch (input.kind) {
+    case "center-of-mass":
+      vector(reply.centerOfMass);
+      break;
     case "erode":
       validateKernelBodies(reply, input);
       validateErosionQuality(reply, input);

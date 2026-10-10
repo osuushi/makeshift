@@ -41,6 +41,8 @@ process.on(
         applyTaggedGroup: (input) =>
           call({ kind: "applyTaggedGroup", input }) as ReturnType<ScriptApi["applyTaggedGroup"]>,
         topology: (input) => call({ kind: "topology", input }) as ReturnType<ScriptApi["topology"]>,
+        centerOfMass: (input) =>
+          call({ kind: "centerOfMass", input }) as ReturnType<ScriptApi["centerOfMass"]>,
         replaceFace: (input) =>
           call({ kind: "replaceFace", input }) as ReturnType<ScriptApi["replaceFace"]>,
         selection: structuredClone(message.selection ?? []),

@@ -7,13 +7,14 @@ import { StepExporter } from "./step-exporter.js";
 
 type Query = Extract<
   ModelRequest,
-  { kind: "sections" | "measure" | "export-geometry" | "export-step" }
+  { kind: "sections" | "measure" | "export-geometry" | "export-step" | "center-of-mass" }
 >;
 
 export function isGeometryQuery(request: ModelRequest): request is Query {
   return (
     request.kind === "sections" ||
     request.kind === "measure" ||
+    request.kind === "center-of-mass" ||
     request.kind === "export-step" ||
     request.kind === "export-geometry"
   );
@@ -38,6 +39,11 @@ export class GeometryQueries {
   private async calculate(view: ModelView, request: Query): Promise<ModelReply> {
     try {
       if (this.closed) throw new Error("Geometry query cancelled");
+      if (request.kind === "center-of-mass") {
+        const body = view.data.bodies?.find((body) => body.id === request.body);
+        if (!body) throw new Error("Unknown center-of-mass body");
+        return { view, centerOfMass: await this.kernel.centerOfMass(body) };
+      }
       if (request.kind === "export-step") {
         return { view, step: await this.step.export(request.items) };
       }

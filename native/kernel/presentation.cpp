@@ -188,14 +188,13 @@ void present(std::ostream& out, const Result& result, double deflection) {
     timing.phase("mesh");
     out << "{\"brep\":" << quoted(encode(result.shape)) << ",\"volume\":"
         << (result.exactVolume ? *result.exactVolume : volume(result.shape));
-    GProp_GProps properties; BRepGProp::VolumeProperties(result.shape, properties, 1e-10);
-    out << ",\"center\":"; xyz(out, properties.CentreOfMass().XYZ());
     out << ",\"copy\":" << (result.copy ? "true" : "false") << ",\"predecessorBodies\":[";
     for (size_t i = 0; i < result.bodies.size(); ++i) { if (i) out << ','; out << quoted(result.bodies[i]); }
     // Transform handles need surface extrema, not rational spline control-hull bounds.
     Bnd_Box box; BRepBndLib::AddOptimal(result.shape, box, false, false);
     double x, y, z, X, Y, Z; box.Get(x, y, z, X, Y, Z);
-    out << "],\"bounds\":"; numbers(out, {x, y, z, X, Y, Z});
+    out << "],\"center\":"; xyz(out, gp_XYZ((x+X)/2, (y+Y)/2, (z+Z)/2));
+    out << ",\"bounds\":"; numbers(out, {x, y, z, X, Y, Z});
     TopTools_IndexedMapOfShape edges; TopExp::MapShapes(result.shape, TopAbs_EDGE, edges);
     TopTools_IndexedMapOfShape faces; TopExp::MapShapes(result.shape, TopAbs_FACE, faces);
     const auto blends = recognizeBlends(result.shape);

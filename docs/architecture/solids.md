@@ -36,8 +36,15 @@ amplification of boundary tolerances. Planar bodies retain ordinary adaptive
 integration. Nonfinite or failed integration rejects; tessellation is not a volume
 source. Offset reversal, shell-cap differences, plane-cut conservation and rigid
 placement are regression checks for these measurements.
-Display meshes/outlines and planar frames derive from the exact geometry. Face
-eligibility uses its geometric surface, not how it was generated. Native operation
+Display meshes/outlines and planar frames derive from the exact geometry. Body
+results report `center` as the bounding-box midpoint for widget placement and
+nearby mesh coordinates, without a separate center-of-mass integration. Precise uniform-density
+center of mass is a read-only `center-of-mass` query or
+`makeshift.centerOfMass({body})` script call. Each calculator caches up to 16
+exact-BRep results in memory; changed geometry misses, failed queries are evicted,
+and closing the calculator clears the cache. These derivatives are not saved or
+recorded in Undo. Agent inspection labels the ordinary center as a bounding-box midpoint.
+Face eligibility uses its geometric surface, not how it was generated. Native operation
 history supplies immediate face/edge correspondence; one-to-one continuations
 retain IDs, while splits/merges receive new ones. Future label policy is deferred.
 Use edge copies supported coplanar line/circular geometry into ordinary sketch

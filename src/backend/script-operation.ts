@@ -31,6 +31,11 @@ export async function scriptOperation(
   if (!operation || typeof operation !== "object" || !operation.input)
     throw new Error("Invalid script operation");
   if (operation.kind === "fitMesh") return scriptMeshFit(document, operation.input, kernel);
+  if (operation.kind === "centerOfMass") {
+    const body = document.bodies?.find((body) => body.id === operation.input.body);
+    if (!body) throw new Error("Unknown center-of-mass body");
+    return { document, result: { centerOfMass: await kernel.centerOfMass(body) } };
+  }
   if (operation.kind === "taggedGroups") return { document, result: document.taggedGroups ?? [] };
   if (operation.kind === "editTaggedGroup") {
     const next = editTags(document, operation.input);

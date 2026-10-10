@@ -44,6 +44,7 @@ export interface Edge {
 export interface BodyGeometry {
   readonly id: string;
   readonly volume: number;
+  /** Bounding-box midpoint for UI/mesh placement, not the material's center of mass. */
   readonly center: Vector;
   readonly bounds: number[];
   readonly faces: readonly Face[];

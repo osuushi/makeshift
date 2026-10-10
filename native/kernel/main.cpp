@@ -3,6 +3,7 @@
 #include "measurement.h"
 #include "mesh-fit.h"
 #include "timing.h"
+#include "geometry-policy.h"
 #include <boost/property_tree/json_parser.hpp>
 #include <BRepTools.hxx>
 #include <OSD_Parallel.hxx>
@@ -134,6 +135,20 @@ std::vector<Operand> operands(const Tree& input) {
     return result;
 }
 namespace {
+void writeMassCenter(std::ostream& reply, const std::vector<Operand>& bodies) {
+    if (bodies.size() != 1) throw std::runtime_error("Select one body for center of mass");
+    GProp_GProps properties;
+    // GK omits first moments unless CGFlag is explicitly enabled.
+    const double error = BRepGProp::VolumePropertiesGK(bodies.front().shape, properties,
+                                                      1e-10, false, true, true);
+    const auto center = properties.CentreOfMass();
+    if (!std::isfinite(error) || error < 0 || !std::isfinite(properties.Mass()) ||
+        std::abs(properties.Mass()) <= geometry_policy::minimumSolidVolumeMm3 ||
+        !std::isfinite(center.X()) || !std::isfinite(center.Y()) || !std::isfinite(center.Z()))
+        throw std::runtime_error("Center of mass integration failed");
+    reply << std::setprecision(17) << "{\"centerOfMass\":[" << center.X() << ','
+          << center.Y() << ',' << center.Z() << "]}";
+}
 void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
     if (input.get<std::string>("kind") == "fit-mesh") {
         std::ostringstream output; mesh_fit::reconstruct(output,input);
@@ -145,6 +160,9 @@ void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
     }
     const auto bodies = operands(input); std::string mode;
     timing.phase("operands");
+    if (input.get<std::string>("kind") == "center-of-mass") {
+        writeMassCenter(reply, bodies); return;
+    }
     if (input.get<std::string>("kind") == "topology") {
         std::ostringstream output; output << std::setprecision(17);
         inspectTopology(output, input, bodies);

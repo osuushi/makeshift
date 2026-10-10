@@ -52,6 +52,7 @@ export interface ScaleResult extends SolidResult {
   sketches: SketchResult[];
 }
 export type ScriptResult =
+  | { centerOfMass: import("../sketch/planes.js").Vector }
   | readonly import("../tags/model.js").TaggedGroup[]
   | BodyTopology
   | SketchResult
@@ -65,6 +66,10 @@ export interface ScriptApi extends DecoratorScriptApi, TagScriptApi {
   /** Fit shared bicubic surfaces to a triangle mesh using a supplied closed quad layout. */
   fitMesh(input: MeshFitInput): Promise<MeshFitResult>;
   topology(input: { body: string }): Promise<BodyTopology>;
+  /** Uniform-density mass center in world millimeters; computed on demand and cached. */
+  centerOfMass(input: {
+    body: string;
+  }): Promise<{ centerOfMass: import("../sketch/planes.js").Vector }>;
   replaceFace(input: FaceReplacement): Promise<SolidResult>;
   /** Omit id to create; supply an existing plane id to reposition. Frames are copied. */
   constructionPlane(input: PlaneInput): Promise<PlaneResult>;
@@ -102,6 +107,7 @@ export type ScriptOperation =
   | { kind: "fitMesh"; input: MeshFitInput }
   | TagScriptOperation
   | { kind: "topology"; input: { body: string } }
+  | { kind: "centerOfMass"; input: { body: string } }
   | { kind: "replaceFace"; input: FaceReplacement }
   | DecoratorScriptOperation
   | { kind: "booleanBodies"; input: BodyBoolean }
