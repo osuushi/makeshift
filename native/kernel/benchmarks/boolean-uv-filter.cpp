@@ -1,4 +1,5 @@
 #include "boolean-uv-filter.h"
+#include "boolean-uv-torus.h"
 #include <BOPDS_DS.hxx>
 #include <BOPDS_Tools.hxx>
 #include <BndLib_AddSurface.hxx>
@@ -18,8 +19,10 @@ bool supported(const BRepAdaptor_Surface& surface) {
            type == GeomAbs_BezierSurface || type == GeomAbs_BSplineSurface;
 }
 void bound(const BRepAdaptor_Surface& surface, const std::array<double,4>& uv,
-           double padding, Bnd_Box& box) {
-    if (surface.GetType() == GeomAbs_BSplineSurface) {
+           double padding, Bnd_Box& box, bool tightTorus) {
+    if (tightTorus && surface.GetType() == GeomAbs_Torus) {
+        boolean_uv::boundTorus(surface.Torus(),uv,padding,box);
+    } else if (surface.GetType() == GeomAbs_BSplineSurface) {
         // Segment a copied support to tighten its control hull, without making edges/faces.
         auto patch = surface.BSpline();
         patch->Segment(uv[0],uv[1],uv[2],uv[3]);
@@ -36,14 +39,15 @@ double diagonal(const Bnd_Box& box) {
     return box.SquareExtent();
 }
 }
-boolean_uv::FilteringIterator::FilteringIterator(int depth, double tolerance)
-    : depthLimit(depth), padding(tolerance) {}
+boolean_uv::FilteringIterator::FilteringIterator(int depth, double tolerance, bool useTrims, bool tightenTorus)
+    : depthLimit(depth), padding(tolerance), trimming(useTrims), tightTorus(tightenTorus) {}
 
 boolean_uv::FilteringIterator::Face& boolean_uv::FilteringIterator::face(int index) {
     auto& value = faces[index];
     if (!value) {
         value = std::make_unique<Face>();
         value->surface.Initialize(TopoDS::Face(myDS->Shape(index)));
+        if (trimming) value->trims = std::make_unique<TrimRegion>(TopoDS::Face(myDS->Shape(index)));
         value->root.box = myDS->ShapeInfo(index).Box();
         value->root.uv = {value->surface.FirstUParameter(),value->surface.LastUParameter(),
                          value->surface.FirstVParameter(),value->surface.LastVParameter()};
@@ -62,8 +66,8 @@ bool boolean_uv::FilteringIterator::split(Face& face, Patch& patch) {
     first->uv[axis+1] = middle; second->uv[axis] = middle;
     first->depth = second->depth = patch.depth+1;
     try {
-        bound(face.surface,first->uv,padding,first->box);
-        bound(face.surface,second->uv,padding,second->box);
+        bound(face.surface,first->uv,padding,first->box,tightTorus);
+        bound(face.surface,second->uv,padding,second->box,tightTorus);
     } catch (const Standard_Failure&) {
         return false; // Uncertain bounds retain the original exact intersection route.
     }
@@ -71,9 +75,18 @@ bool boolean_uv::FilteringIterator::split(Face& face, Patch& patch) {
     patch.first = std::move(first); patch.second = std::move(second);
     return true;
 }
+bool boolean_uv::FilteringIterator::outside(Face& face, Patch& patch) {
+    if (!trimming) return false;
+    if (patch.trimState < 0) {
+        patch.trimState = face.trims->outside(patch.uv) ? 1 : 0;
+        statistics.outsideCells += patch.trimState;
+    }
+    return patch.trimState == 1;
+}
 bool boolean_uv::FilteringIterator::separated(Face& a, Patch& pa, Face& b, Patch& pb) {
     if (++statistics.tests > 100000) return false;
     if (pa.box.IsOut(pb.box)) return true;
+    if (outside(a,pa) || outside(b,pb)) return true;
     if (pa.depth >= depthLimit && pb.depth >= depthLimit) return false;
     const bool refineA = pb.depth >= depthLimit ||
                          (pa.depth < depthLimit && diagonal(pa.box) >= diagonal(pb.box));

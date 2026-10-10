@@ -419,6 +419,22 @@ Validity is a separate OCCT check. `TopoShape::isValid()` constructs `BRepCheck_
 
 ## Boolean, fillet, and history behavior
 
+OCCT 7.9.3 source observation: face/face processing computes support intersection
+curves, then checks their achieved 3D tolerance against pcurves/surfaces in
+[`IntTools_FaceFace::ComputeTolReached3d`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/IntTools/IntTools_FaceFace.cxx#L523-L543)
+and its [deviation-checking loop](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/IntTools/IntTools_FaceFace.cxx#L608-L685).
+Thus a curve later discarded by Boolean trimming can already have incurred
+expensive approximation and deviation checks. The ordinary
+[`BndLib::Add(gp_Torus, ...)`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BndLib/BndLib.cxx#L1560-L1752)
+also uses coarse V bands, so subdividing UV intervals does not imply equally tight boxes.
+Makeshift inference: after the original box gate, conservative trim-cell exclusion
+may avoid unnecessary support work; a cell must retain every possible trimming
+boundary, rather than rely on center/corner sampling alone. The opt-in
+[native benchmark](../../native/kernel/benchmarks/README.md) separates support
+bounds, trim exclusion and isolated per-pair CPU profiling. It remains experimental;
+these source observations do not establish general rejection safety or enable a
+production Boolean optimization.
+
 Simple cut/common/fuse call OCCT wrappers and return a shell-normalized result ([TopoShape.cpp#L1759-L1818](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Part/App/TopoShape.cpp#L1759-L1818), [TopoShape.cpp#L1857-L1885](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Part/App/TopoShape.cpp#L1857-L1885)). The element-mapped boolean path is more informative: it selects Fuse/Cut/Common/Section, rejects null and invalid inputs, includes analyzer details in invalid-input errors, configures parallelism and fuzzy tolerance, builds, handles cancellation, then records element mapping ([TopoShapeExpansion.cpp#L6046-L6055](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Part/App/TopoShapeExpansion.cpp#L6046-L6055), [TopoShapeExpansion.cpp#L6227-L6294](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Part/App/TopoShapeExpansion.cpp#L6227-L6294)). Positive tolerance is fuzzy value; negative requests auto-fuzzy. That policy should be explicit in a service API.
 
 Fillet accepts one radius for all edges or two radii, calls OCCT, and translates `Standard_Failure` into a Part exception ([TopoShapePyImp.cpp#L1258-L1315](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Part/App/TopoShapePyImp.cpp#L1258-L1315)). A caller must preflight edge ownership and radius feasibility, catch operation errors, validate the resulting shape, and retain the prior revision for rollback. OCCT does not provide a product-level “safe fillet” contract.

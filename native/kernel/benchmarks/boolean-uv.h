@@ -11,6 +11,8 @@ struct Variant {
     const char* name;
     int outerU, outerV, innerU, innerV;
     int refinementDepth = 0;
+    bool useTrims = false, parallel = true;
+    bool tightTorus = false;
 };
 struct Prepared {
     Pair pair;

@@ -1,5 +1,6 @@
 #include "boolean-uv.h"
 #include "boolean-uv-filter.h"
+#include "boolean-uv-torus.h"
 #include "geometry-policy.h"
 #include <BOPAlgo_PaveFiller.hxx>
 #include <BOPDS_DS.hxx>
@@ -9,6 +10,7 @@
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
 #include <BRepPrimAPI_MakeSphere.hxx>
+#include <BRepPrimAPI_MakeTorus.hxx>
 #include <BRepTools.hxx>
 #include <OSD_Parallel.hxx>
 #include <OSD_ThreadPool.hxx>
@@ -32,16 +34,18 @@ double elapsed(Clock::time_point start) {
 class TimedFiller : public BOPAlgo_PaveFiller {
     int depth;
     double padding;
+    bool trimming, tightTorus;
 public:
     boolean_uv::FilterStatistics filter;
     double faceFaceMs = 0;
     int candidateFaces = 0;
-    TimedFiller(int refinementDepth, double tolerance) : depth(refinementDepth), padding(tolerance) {}
+    TimedFiller(int refinementDepth, double tolerance, bool useTrims, bool tightenTorus)
+        : depth(refinementDepth), padding(tolerance), trimming(useTrims), tightTorus(tightenTorus) {}
     void Init(const Message_ProgressRange& range) override {
         BOPAlgo_PaveFiller::Init(range);
         if (HasErrors() || depth == 0) return;
         // Reuse OCCT's pair enumeration; this extra enumeration is charged to filler time.
-        auto iterator = std::make_unique<boolean_uv::FilteringIterator>(depth,padding);
+        auto iterator = std::make_unique<boolean_uv::FilteringIterator>(depth,padding,trimming,tightTorus);
         iterator->SetDS(myDS);
         iterator->SetRunParallel(myRunParallel);
         iterator->Prepare(myContext,myUseOBB,myFuzzyValue);
@@ -64,16 +68,17 @@ struct Sample {
     TopoDS_Shape result;
     boolean_uv::FilterStatistics filter;
 };
-Sample subtract(const boolean_uv::Pair& pair, int depth) {
+Sample subtract(const boolean_uv::Pair& pair, int depth, bool trimming = false,
+                bool parallel = true, bool tightTorus = false) {
     TopTools_ListOfShape operands; operands.Append(pair.outer); operands.Append(pair.inner);
     const double padding = geometry_policy::cubicBooleanToleranceMm +
         std::max(boolean_uv::maximumTolerance(pair.outer),boolean_uv::maximumTolerance(pair.inner));
-    TimedFiller filler(depth,padding);
+    TimedFiller filler(depth,padding,trimming,tightTorus);
     filler.SetArguments(operands);
     filler.SetNonDestructive(true);
     // Match Makeshift's cubic-boundary contact resolution for this captured pair.
     filler.SetFuzzyValue(geometry_policy::cubicBooleanToleranceMm);
-    filler.SetRunParallel(true);
+    filler.SetRunParallel(parallel);
     auto start = Clock::now(); filler.Perform();
     const double fillerMs = elapsed(start);
     if (filler.HasErrors()) throw std::runtime_error("Intersection processing failed");
@@ -90,7 +95,7 @@ Sample subtract(const boolean_uv::Pair& pair, int depth) {
     cut.SetArguments(arguments); cut.SetTools(tools);
     cut.SetNonDestructive(true);
     cut.SetFuzzyValue(geometry_policy::cubicBooleanToleranceMm);
-    cut.SetRunParallel(true);
+    cut.SetRunParallel(parallel);
     start = Clock::now(); cut.Build();
     const double buildMs = elapsed(start);
     if (!cut.IsDone() || cut.HasErrors()) throw std::runtime_error("Cut construction failed");
@@ -105,7 +110,8 @@ bool run(const boolean_uv::Pair& original, const boolean_uv::Variant& variant, i
          std::map<std::string,std::string>& verifiedResults) {
     try {
         const auto prepared = boolean_uv::prepare(original,variant);
-        const auto sample = subtract(prepared.pair,variant.refinementDepth);
+        const auto sample = subtract(prepared.pair,variant.refinementDepth,variant.useTrims,
+                                     variant.parallel,variant.tightTorus);
         std::ostringstream encoded;
         BRepTools::Write(sample.result,encoded,false,false,TopTools_FormatVersion_CURRENT);
         // Identical exact BReps reuse the geometric verification, outside measured time.
@@ -125,7 +131,7 @@ bool run(const boolean_uv::Pair& original, const boolean_uv::Variant& variant, i
             << prepared.maximumTolerance << ',' << precision << ','
             << sample.filter.milliseconds << ',' << sample.filter.originalPairs << ','
             << sample.filter.rejectedPairs << ',' << sample.filter.boxes << ','
-            << sample.filter.tests << ",ok" << std::endl;
+            << sample.filter.tests << ',' << sample.filter.outsideCells << ",ok" << std::endl;
         std::cerr << "Checked " << variant.name << " round " << round << std::endl;
         return true;
     } catch (const Standard_Failure& error) {
@@ -136,6 +142,8 @@ bool run(const boolean_uv::Pair& original, const boolean_uv::Variant& variant, i
     return false;
 }
 void selfTest() {
+    boolean_uv::testTorusBounds();
+    boolean_uv::testTrimRegions();
     const auto outer = BRepPrimAPI_MakeSphere(gp_Pnt(0,0,0),10).Shape();
     const std::vector<std::pair<const char*,boolean_uv::Pair>> cases{
         {"disjoint",{outer,BRepPrimAPI_MakeSphere(gp_Pnt(30,0,0),8).Shape()}},
@@ -143,10 +151,14 @@ void selfTest() {
         {"contained",{outer,BRepPrimAPI_MakeSphere(gp_Pnt(1,1,1),6).Shape()}},
         {"intersecting",{outer,BRepPrimAPI_MakeSphere(gp_Pnt(12,0,0),8).Shape()}},
         {"tangent",{outer,BRepPrimAPI_MakeSphere(gp_Pnt(18,0,0),8).Shape()}},
+        {"torus-intersecting",{BRepPrimAPI_MakeTorus(10,4).Shape(),
+            BRepPrimAPI_MakeSphere(gp_Pnt(12,0,0),3).Shape()}},
+        {"torus-contained-tube",{BRepPrimAPI_MakeTorus(10,4).Shape(),
+            BRepPrimAPI_MakeTorus(10,2).Shape()}},
         {"rational-splines",{BRepBuilderAPI_NurbsConvert(outer,true).Shape(),
             BRepBuilderAPI_NurbsConvert(BRepPrimAPI_MakeSphere(gp_Pnt(12,0,0),8).Shape(),true).Shape()}}};
     for (const auto& [name,pair] : cases) {
-        const auto baseline = subtract(pair,0), adaptive = subtract(pair,8);
+        const auto baseline = subtract(pair,0), adaptive = subtract(pair,8,true,true,true);
         const double expected = boolean_uv::volume(baseline.result);
         if (std::abs(boolean_uv::volume(adaptive.result)-expected) > 1e-8*expected)
             throw std::runtime_error(std::string(name)+" volume mismatch");
@@ -174,12 +186,15 @@ void selfTest() {
 }
 int main(int argc, char** argv) {
     try {
-        if (argc < 2) throw std::runtime_error("Usage: boolean-uv-benchmark CAPTURE.json [rounds=3]");
+        if (argc < 2 || argc > 4)
+            throw std::runtime_error("Usage: boolean-uv-benchmark CAPTURE.json [rounds=3] [--trim-experiment|--tight-experiment]");
         const int threads = OSD_Parallel::NbLogicalProcessors();
         OSD_ThreadPool::DefaultPool(threads);
         if (std::string(argv[1]) == "--self-test") { selfTest(); return 0; }
         const int rounds = argc > 2 ? std::stoi(argv[2]) : 3;
         if (rounds < 1 || rounds > 10) throw std::runtime_error("Choose 1 to 10 rounds");
+        if (argc > 3 && std::string(argv[3]) != "--trim-experiment" &&
+            std::string(argv[3]) != "--tight-experiment") throw std::runtime_error("Unknown experiment option");
         const auto original = boolean_uv::readFixture(argv[1]);
         const std::array<double,2> volumes{
             boolean_uv::volume(original.outer),boolean_uv::volume(original.inner)};
@@ -187,15 +202,25 @@ int main(int argc, char** argv) {
         std::cerr << "Threads " << threads << "; material probes " << probes.size()
                   << "; expected cavity volume " << std::setprecision(17)
                   << volumes[0]-volumes[1] << std::endl;
-        const std::vector<boolean_uv::Variant> variants{
+        std::vector<boolean_uv::Variant> variants{
             {"baseline",1,1,1,1}, {"gated-inner-U2",1,1,2,1}, {"gated-inner-V2",1,1,1,2},
             {"gated-inner-2x2",1,1,2,2}, {"gated-both-2x2",2,2,2,2},
             {"gated-inner-4x4",1,1,4,4},
             {"adaptive-depth4",1,1,1,1,4}, {"adaptive-depth6",1,1,1,1,6},
             {"adaptive-depth8",1,1,1,1,8}, {"adaptive-depth10",1,1,1,1,10}};
+        if (argc > 3 && std::string(argv[3]) == "--trim-experiment") variants = {
+            {"baseline",1,1,1,1}, {"baseline-serial",1,1,1,1,0,false,false},
+            {"adaptive-depth10",1,1,1,1,10}, {"trim-depth10",1,1,1,1,10,true},
+            {"trim-depth14",1,1,1,1,14,true}, {"trim-depth18",1,1,1,1,18,true}};
+        if (argc > 3 && std::string(argv[3]) == "--tight-experiment") variants = {
+            {"baseline",1,1,1,1}, {"baseline-serial",1,1,1,1,0,false,false},
+            {"adaptive-depth10",1,1,1,1,10}, {"trim-depth10",1,1,1,1,10,true},
+            {"tight-depth10",1,1,1,1,10,false,true,true},
+            {"trim-tight-depth10",1,1,1,1,10,true,true,true},
+            {"trim-tight-depth14",1,1,1,1,14,true,true,true}};
         std::cout << "variant,round,outer_faces,inner_faces,prepare_ms,filler_ms,face_face_ms,"
                      "build_ms,validate_ms,total_ms,candidate_faces,curves,blocks,max_tolerance_mm,"
-                     "precision_preserved,refine_ms,original_pairs,rejected_pairs,patch_boxes,box_tests,status"
+                     "precision_preserved,refine_ms,original_pairs,rejected_pairs,patch_boxes,box_tests,outside_cells,status"
                   << std::endl;
         // Rotate the starting case to avoid always measuring baseline first.
         int failures = 0;
