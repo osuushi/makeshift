@@ -1,8 +1,10 @@
 # Makeshift landing page
 
-Static landing page for makeshift.horse, hosted in the separate
-[makeshift-site](https://github.com/osuushi/makeshift-site) GitHub Pages repository
-at https://osuushi.github.io/makeshift-site/. The custom domain is not connected yet.
+Static landing page for [makeshift.horse](https://makeshift.horse), hosted in the
+separate [makeshift-site](https://github.com/osuushi/makeshift-site) GitHub Pages
+repository. The apex domain uses GitHub Pages A records; `www` is a CNAME to
+`osuushi.github.io` and redirects to the apex. Domain ownership is verified in
+the `osuushi` GitHub account through a DNS TXT record.
 
 ## Preview and regenerate demos
 
@@ -62,7 +64,7 @@ Desktop uses the release source with native geometry; web uses the just-built
 static WASM app (`npm run demos:record -- --web`). Release failures block
 publication. `npm run demos:package -- DESTINATION` validates the complete
 manifest against a clean HEAD and emits `Makeshift-website.tar.gz` plus
-`website-demos.json`. The bundle is ready for the later separate Pages host;
+`website-demos.json`. The bundle is ready for separate publication to the Pages host;
 these workflows do not deploy or configure makeshift.horse.
 
 The gallery advances when a clip finishes, offers explicit selection and pause,
