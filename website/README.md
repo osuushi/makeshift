@@ -23,7 +23,8 @@ existing hosts. Add the custom domain only when configuring the separate host.
 ## Content and assets
 
 - Product claims follow the repository README, `docs/architecture/web.md`,
-  `docs/product/3d-tools.md`, `docs/releases.md`, and `COPYING.md`.
+  `docs/product/3d-tools.md`, `docs/architecture/decorators.md`, `docs/releases.md`,
+  and `COPYING.md`.
 - Web links open https://osuushi.github.io/makeshift-web/.
 - The primary action downloads the Mac DMG from the verified 20261010T103958Z
   preview release; the browser version is a secondary, quick-try link. Update
