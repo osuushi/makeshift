@@ -135,7 +135,7 @@ test("agent settings validate atomically and return independent snapshots", () =
   configurePreferences('{"canonicalPlanes":{"angleCutoff":0.5},"viewDisplay":{"planes":0.04}}');
   assert.equal(applicationPreferences().canonicalPlanes.angleCutoff, 0.5);
   assert.equal(applicationPreferences().viewDisplay.planes, 0);
-  assert.equal(applicationPreferences().viewDisplay.gridFill, 0.1);
+  assert.equal(applicationPreferences().viewDisplay.gridFill, 0.3);
   assert.throws(() => configurePreferences('{"viewDisplay":{"gridFill":1.1}}'));
   configurePreferences(JSON.stringify(before));
 });

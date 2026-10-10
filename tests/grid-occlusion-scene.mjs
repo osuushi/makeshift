@@ -108,3 +108,41 @@ function readPixels(renderer, target) {
     frontLine: pixel(83, 48),
   };
 }
+
+export function gridGradientPixels(normal) {
+  const renderer = new THREE.WebGLRenderer({ antialias: false });
+  renderer.setSize(256, 128);
+  const target = new THREE.WebGLRenderTarget(256, 128);
+  target.texture.colorSpace = THREE.SRGBColorSpace;
+  renderer.setRenderTarget(target);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color("#808080");
+  const camera = new THREE.OrthographicCamera(-40, 40, 20, -20, 0.1, 1000);
+  camera.position.fromArray(normal).multiplyScalar(50);
+  camera.lookAt(0, 0, 0);
+  camera.updateMatrixWorld();
+  const grids = createGrids(scene);
+  scene.getObjectByName("world-coordinate-axes").visible = false;
+  setViewDisplay({ grid: 0, gridFill: 0.3 });
+  grids.update(camera, new THREE.Vector3(), 40, null, 128, {
+    XY: { opacity: 1 },
+    XZ: { opacity: 0 },
+    YZ: { opacity: 0 },
+  });
+  // Grid updates preserve axis visibility; keep this pixel fixture fill-only.
+  scene.getObjectByName("world-coordinate-axes").visible = false;
+  renderer.render(scene, camera);
+  const pixels = new Uint8Array(256 * 128 * 4);
+  renderer.readRenderTargetPixels(target, 0, 0, 256, 128, pixels);
+  const at = (x, y) => pixels[(y * 256 + x) * 4];
+  const result = {
+    center: at(128, 64),
+    horizontal: at(160, 64),
+    vertical: at(128, 96),
+    edge: at(254, 64),
+  };
+  grids.dispose();
+  target.dispose();
+  renderer.dispose();
+  return result;
+}

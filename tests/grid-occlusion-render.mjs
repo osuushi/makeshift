@@ -10,13 +10,13 @@ await withUiRuntimes(async (page) => {
     },
     `/@fs${resolve("tests/grid-occlusion-scene.mjs")}`,
   );
-  assert.ok(after.behindFill[0] > before.behindFill[0] + 80, "Rear geometry must fade");
-  assert.ok(after.behindLine[1] > before.behindLine[1] + 80, "Rear geometry must fade");
-  assert.ok(after.behindAxis[0] > before.behindAxis[0] + 80, "Rear geometry must fade");
+  assert.ok(after.behindFill[0] > before.behindFill[0] + 25, "Rear geometry must fade");
+  assert.ok(after.behindLine[1] > before.behindLine[1] + 25, "Rear geometry must fade");
+  assert.ok(after.behindAxis[0] > before.behindAxis[0] + 25, "Rear geometry must fade");
   assert.deepEqual(after.frontAxis, before.frontAxis);
   assert.deepEqual(after.frontFill, before.frontFill);
   assert.deepEqual(after.frontLine, before.frontLine);
-  assert.equal(labels[0], 0);
+  assert.equal(labels[0], 1, "Viewport center stays clear even behind the grid");
   assert.equal(labels[1], 1);
   const coplanar = await page.evaluate(
     async (url) => {
@@ -40,6 +40,26 @@ await withUiRuntimes(async (page) => {
     coplanar.changed,
     0,
     "Coplanar sketch fill stays unchanged at oblique angles and deep camera bounds",
+  );
+  const gradient = await page.evaluate(
+    async (url) => {
+      const { gridGradientPixels } = await import(url);
+      return [
+        [0, 0, 1],
+        [0, 0.8, 1],
+      ].map(gridGradientPixels);
+    },
+    `/@fs${resolve("tests/grid-occlusion-scene.mjs")}`,
+  );
+  assert.deepEqual(gradient[0], gradient[1], "Fill gradient stays in screen space while orbiting");
+  assert.equal(gradient[0].center, 128, "Center remains transparent");
+  assert.equal(
+    gradient[0].horizontal,
+    gradient[0].vertical,
+    "Gradient remains circular on a wide screen",
+  );
+  assert.ok(
+    gradient[0].edge > gradient[0].horizontal && gradient[0].horizontal > gradient[0].center,
   );
   console.log(
     "Grid veil GPU pixels: coplanar fill stable; rear geometry fades; front geometry and labels preserved",

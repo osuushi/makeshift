@@ -2,7 +2,7 @@
 
 Settings is available in the editor header, through Tools and with Cmd-, on Mac.
 It opens a compact modal dialog; Escape, clicking the backdrop or Done closes it. User interface scale
-applies immediately at 80%, 90%, 100%, 110%, 125% or 150%; Reset to 100% is always
+applies immediately at 80%, 90%, 100%, 130%, 125% or 150%; Reset to 100% is always
 available from this dialog. Opening Settings requires completing the current edit.
 Closing restores focus to its opener unless another control has already taken focus.
 The choice is stored locally on the current device/origin under `makeshift.ui-scale`,
@@ -19,9 +19,12 @@ at the top after dragging or resizing the window. These positions
 are local presentation preferences, independent of document files and Undo.
 
 Canonical XY/XZ/YZ references cover the viewport, including far from the origin.
-References render colored grid lines over a white fill (10% opacity by default);
+References render colored grid lines over a white radial fill (30% maximum opacity by default);
 their meshes remain picking targets. The fill veils scene geometry behind the grid,
 including translucent sketch regions, sketch lines, axes and coordinate labels.
+The fill is transparent at viewport center and ramps smoothly to the configured
+maximum at half the shorter viewport dimension. It remains circular in screen
+space through orbit, pan, zoom and resize; line fading stays independent.
 Geometry in front retains its appearance; orientable widgets remain unobscured.
 Coplanar geometry remains unveiled: plane-side classification interpolates signed
 geometry distances rather than reconstructing them from quantized fragment depth.
@@ -39,7 +42,7 @@ target along the camera direction. Fade distance scales with visible world heigh
 independently of camera retreat; nearer portions retain full strength. Work grids,
 construction planes, world axes and geometry do not receive this fade.
 Settings keeps this simple behavior and
-exposes grid line opacity, white grid fill opacity (0–100%, default 10%),
+exposes grid line opacity, white grid fill opacity (0–100%, default 30%),
 line thickness (0.5–3 pixels, default 1), colors and saved palettes.
 Grid colors default to XY #d4ae3a, XZ #55bb6e and YZ #b325c1; axes retain their colors.
 Thickness also applies to the active sketch grid. A sketch whose copied frame

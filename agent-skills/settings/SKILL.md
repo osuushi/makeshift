@@ -33,7 +33,7 @@ All fractional values below are 0–1; time is 0–2000 milliseconds.
 Threshold fractions refer to configured grid visibility. `viewDisplay.grid` is grid
 opacity (default 0.4); zero disables canvas reference picking. `viewDisplay.gridLineWidth`
 is line thickness in pixels (0.5–3, default 1), also used by the active sketch grid.
-`viewDisplay.gridFill` controls white grid square fill opacity (0–1, default 0.1),
+`viewDisplay.gridFill` controls white grid square fill opacity (0–1, default 0.3),
 including the active sketch grid. The legacy `viewDisplay.planes` field always reads zero.
 Explicit tool/keyboard entry remains available. Hidden/faint planes cannot intercept clicks.
 

@@ -9,7 +9,7 @@ await withUiRuntimes(async (page, name) => {
     (await inspect(page)).planeTargets.find((plane) => plane.id === "XZ");
   await page.getByRole("button", { name: "Application settings" }).click();
   const slider = page.getByRole("slider", { name: "Grid fill opacity", exact: true });
-  assert.equal(await slider.inputValue(), "10");
+  assert.equal(await slider.inputValue(), "30");
   assert.equal(
     await page.getByRole("slider", { name: "Secondary plane opacity", exact: true }).count(),
     0,
@@ -37,7 +37,7 @@ await withUiRuntimes(async (page, name) => {
   await page.getByRole("button", { name: "Application settings" }).click();
   assert.equal(await slider.inputValue(), "99.9");
   await page.getByRole("button", { name: "Reset grid display", exact: true }).click();
-  assert.equal(await slider.inputValue(), "10");
+  assert.equal(await slider.inputValue(), "30");
   await page.getByRole("button", { name: "Done", exact: true }).click();
   await orient(page, [1, -0.8, 0.3]);
   await settled(page);

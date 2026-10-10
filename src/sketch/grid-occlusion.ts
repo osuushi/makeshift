@@ -1,16 +1,15 @@
 import * as THREE from "three";
+import { gridFillGradient, gridFillGradientFragment } from "./grid-fill-gradient.js";
 import type { World } from "./world.js";
 
 /** Complete the grid veil for translucent objects drawn after the grid itself. */
 export class GridOcclusion {
   private readonly installed = new WeakMap<THREE.Material, { value: number }>();
-  private readonly inverse = { value: new THREE.Matrix4() };
   private readonly viewport = { value: new THREE.Vector2() };
   private readonly direction = { value: new THREE.Vector3() };
   private readonly planes = { value: Array.from({ length: 4 }, () => new THREE.Vector4()) };
   private readonly centers = { value: Array.from({ length: 4 }, () => new THREE.Vector4()) };
   private readonly opacity = { value: [0, 0, 0, 0] };
-  private readonly depth = { value: new THREE.Vector4() };
 
   update(world: World): void {
     const grids: THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>[] = [];
@@ -18,13 +17,8 @@ export class GridOcclusion {
       if (object.userData.coordinateGrid) grids.push(object as (typeof grids)[number]);
     });
     world.camera.updateMatrixWorld();
-    this.inverse.value.multiplyMatrices(
-      world.camera.matrixWorld,
-      world.camera.projectionMatrixInverse,
-    );
     world.renderer.getDrawingBufferSize(this.viewport.value);
     world.camera.getWorldDirection(this.direction.value);
-    this.depth.value.set(...world.target.toArray(), world.height * 2.5);
     this.opacity.value.fill(0);
     grids.forEach((grid, index) => {
       if (!grid.visible) return;
@@ -62,13 +56,11 @@ export class GridOcclusion {
       compile(shader, renderer);
       Object.assign(shader.uniforms, {
         gridOcclusionEnabled: active,
-        gridInverse: this.inverse,
         gridViewport: this.viewport,
         gridDirection: this.direction,
         gridPlanes: this.planes,
         gridCenters: this.centers,
         gridOpacity: this.opacity,
-        gridDepth: this.depth,
       });
       // Interpolate plane distances from geometry, rather than classifying the
       // quantized depth buffer. Coplanar fragments must all stay on the plane.
@@ -96,30 +88,20 @@ export class GridOcclusion {
 const fragment = `
 varying float gridDistance[4];
 uniform float gridOcclusionEnabled;
-uniform mat4 gridInverse;
-uniform vec2 gridViewport;
+${gridFillGradientFragment}
 uniform vec3 gridDirection;
 uniform vec4 gridPlanes[4];
 uniform vec4 gridCenters[4];
 uniform float gridOpacity[4];
-uniform vec4 gridDepth;
 float gridTransmission() {
   if (gridOcclusionEnabled == 0.0) return 1.0;
-  vec4 position = gridInverse * vec4(gl_FragCoord.xy / gridViewport * 2.0 - 1.0,
-    gl_FragCoord.z * 2.0 - 1.0, 1.0);
-  vec3 point = position.xyz / position.w;
   float transmission = 1.0;
   for (int i = 0; i < 4; i++) {
     float facing = dot(gridPlanes[i].xyz, gridDirection);
     if (gridOpacity[i] <= 0.0 || abs(facing) < 0.00001) continue;
     float distance = -gridDistance[i] / facing;
     if (distance >= -0.0001) continue;
-    vec3 hit = point + gridDirection * distance;
-    vec3 offset = hit - gridCenters[i].xyz;
-    float fade = exp(-dot(offset, offset) / (gridCenters[i].w * gridCenters[i].w));
-    float depth = dot(hit - gridDepth.xyz, gridDirection);
-    float depthFade = 0.65 + 0.35 * exp(-max(0.0, depth) / gridDepth.w);
-    transmission *= 1.0 - gridOpacity[i] * fade * depthFade;
+    transmission *= 1.0 - gridOpacity[i] * gridFillGradient();
   }
   return transmission;
 }`;
@@ -136,12 +118,15 @@ export function gridLabelTransmission(world: World, point: THREE.Vector3): numbe
     if (Math.abs(facing) < 0.00001) return;
     const distance = normal.dot(grid.position.clone().sub(point)) / facing;
     if (distance >= -0.0001) return;
-    const hit = point.clone().addScaledVector(direction, distance);
-    const radius = grid.material.uniforms.radius.value as number;
-    const fade = Math.exp(-hit.distanceToSquared(grid.position) / (radius * radius));
-    const depth = hit.clone().sub(world.target).dot(direction);
-    const depthFade = 0.65 + 0.35 * Math.exp(-Math.max(0, depth) / (world.height * 2.5));
-    transmission *= 1 - grid.material.uniforms.fillOpacity.value * fade * depthFade;
+    const size = world.renderer.getSize(new THREE.Vector2());
+    const projected = point.clone().project(world.camera);
+    const fade = gridFillGradient(
+      ((projected.x + 1) * size.x) / 2,
+      ((projected.y + 1) * size.y) / 2,
+      size.x,
+      size.y,
+    );
+    transmission *= 1 - grid.material.uniforms.fillOpacity.value * fade;
   });
   return transmission;
 }

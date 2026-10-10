@@ -1,9 +1,10 @@
 import * as THREE from "three";
 import { coordinateDepthFragment } from "./coordinate-plane-depth.js";
+import { gridFillGradientFragment } from "./grid-fill-gradient.js";
 import type { PlaneId } from "./planes.js";
 
 export function gridMaterial(id: PlaneId | "work"): THREE.ShaderMaterial {
-  return new THREE.ShaderMaterial({
+  const material = new THREE.ShaderMaterial({
     transparent: true,
     depthWrite: false,
     depthTest: id !== "work",
@@ -18,7 +19,8 @@ export function gridMaterial(id: PlaneId | "work"): THREE.ShaderMaterial {
       lineWidth: { value: 1 },
       strength: { value: 0.2 },
       opacityScale: { value: 1 },
-      fillOpacity: { value: 0.1 },
+      fillOpacity: { value: 0.3 },
+      gridViewport: { value: new THREE.Vector2(1, 1) },
       radius: { value: 160 },
       center: { value: new THREE.Vector2() },
       gridColor: { value: new THREE.Color("#758296") },
@@ -30,6 +32,7 @@ export function gridMaterial(id: PlaneId | "work"): THREE.ShaderMaterial {
             coordinateViewCenter, coordinateViewDirection);
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
     fragmentShader: `${coordinateDepthFragment}
+        ${gridFillGradientFragment}
         varying float coordinateDepth; uniform float coordinateDepthEnabled;
         varying vec2 coordinate;
         uniform float spacing; uniform float lineWidth; uniform float strength; uniform float radius;
@@ -45,11 +48,15 @@ export function gridMaterial(id: PlaneId | "work"): THREE.ShaderMaterial {
           float fade = exp(-dot(coordinate-center,coordinate-center)/(radius*radius));
           float lines = max(grid(spacing)*0.6,grid(spacing*10.0));
           float depthFade = mix(1.0, coordinateDepthFade(coordinateDepth), coordinateDepthEnabled);
-          float lineAlpha = min(1.0, lines * strength * opacityScale);
-          float fillAlpha = fillOpacity * (1.0 - lineAlpha);
+          float lineAlpha = min(1.0, lines * strength * opacityScale) * fade * depthFade;
+          float fillAlpha = fillOpacity * gridFillGradient() * (1.0 - lineAlpha);
           float alpha = lineAlpha + fillAlpha;
           vec3 color = (gridColor * lineAlpha + vec3(1.0) * fillAlpha) / max(alpha, 0.00001);
-          gl_FragColor = vec4(color, alpha * fade * depthFade);
+          gl_FragColor = vec4(color, alpha);
         }`,
   });
+  material.onBeforeRender = (renderer) => {
+    renderer.getDrawingBufferSize(material.uniforms.gridViewport.value);
+  };
+  return material;
 }

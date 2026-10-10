@@ -9,7 +9,7 @@ Cubic editing/projection (2026-09-16) supersedes any earlier spline exclusion.
 In Modeling, a single click on a canonical plane selects that reference, clearing
 geometry and saved-plane selection. The reference stays selected after hover leaves.
 The most face-on canonical grid stays at configured maximum opacity, with white
-square fill at 10% by default. View changes crossfade grids while world axes
+square fill at 30% by default. View changes crossfade grids while world axes
 remain visible. Only the primary above its selectable visibility threshold accepts
 canvas input, including explicit plane-selection tools.
 Coordinate grids fade subtly with depth away from the view target, scaled to visible
