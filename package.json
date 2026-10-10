@@ -20,6 +20,7 @@
     "test": "node scripts/clean-tests.mjs && tsc -p tsconfig.test.json && node --test --test-concurrency=1 .cache/sketch-tests/tests/*.test.js",
     "test:ui": "npm run test:smoke",
     "test:current-tools": "node tests/current-tools-ui.mjs",
+    "test:primitives": "node tests/primitive-handoff-ui.mjs",
     "test:pen": "node tests/pen-ui.mjs",
     "test:booleans": "node tests/boolean-collection-ui.mjs",
     "test:plane-cuts": "node tests/plane-cut-feedback-ui.mjs",

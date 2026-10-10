@@ -2,6 +2,7 @@ import { CubeControls } from "../model/cube-controls.js";
 import { ExtrudeControls } from "../model/extrude-controls.js";
 import { LoftControls } from "../model/loft-controls.js";
 import { ModelSelectionDrag } from "../model/model-selection-drag.js";
+import { primitiveTools } from "../model/primitive-tools.js";
 import { RevolveControls } from "../model/revolve-controls.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import type { SketchEditor } from "./editor.js";
@@ -32,6 +33,7 @@ export class ModelControls {
     this.cube = new CubeControls(editor, overlay, (depth, symmetric) =>
       this.extrusion.start(depth, symmetric, "union"),
     );
+    this.disposers.push(primitiveTools(editor, overlay, this.extrusion, this.revolve));
     this.selectionDrag = new ModelSelectionDrag(
       editor,
       overlay,

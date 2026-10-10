@@ -155,7 +155,9 @@ test("cut cone hyperbola and parabola edges project from exact BRep curves", asy
       await owner.call({ kind: "accept" });
       const body = owner.view.data.bodies?.[0];
       assert.ok(body);
-      const conics = body.edges.filter((e) => !e.curve);
+      // Null analytic metadata also represents the cone's degenerate apex.
+      // The signature's exact linear measure distinguishes spatial conics.
+      const conics = body.edges.filter((e) => !e.curve && e.signature[2] > 1e-7);
       assert.ok(conics.length, "cone cut creates non-circular conic edges");
       const projected = await owner.call({
         kind: "project",

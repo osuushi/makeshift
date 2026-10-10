@@ -13,8 +13,13 @@ The sign convention stays the same for either extrusion direction.
 Switching units preserves the shape using `offset = abs(length) * tan(angle)`.
 Subsequent length edits hold the selected quantity fixed. Nonzero draft cannot be
 converted at zero length; set a nonzero length first. Angles must lie strictly
-between -90° and 90°. Collapse, split boundaries and colliding walls are errors
-with recoverable input, never a silent undrafted result.
+between -90° and 90°. A complete circular outer boundary may contract exactly to
+an apex: offset `-radius` produces an analytic cone with no finite end cap, for
+either signed extrusion direction. Angle input has the equivalent result.
+Going beyond the apex, closing a hole, other collapsed boundaries, split boundaries
+and colliding walls remain recoverable errors, never a silent undrafted result.
+Symmetric draft keeps the source circle at the midplane and applies the offset
+to each end; offset `-radius` therefore produces two cones joined at their bases.
 
 Draft belongs to the temporary Extrusion request. Straight/circular boundaries
 use kernel parallel contours and ruled solids, with holes cut separately; other

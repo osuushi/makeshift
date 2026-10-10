@@ -106,6 +106,20 @@ export class RevolveControls {
     this.widget.angle.focus();
     this.widget.angle.select();
   }
+  /** Guided primitives enter the ordinary editable revolution with an explicit axis. */
+  start(axis: RevolveAxis, mode: Revolution["mode"] = "union"): boolean {
+    this.editor.modeling.setTool("revolve");
+    this.begin();
+    if (!this.lease) return false;
+    this.axis = axis;
+    this.mode = mode;
+    this.picking = false;
+    this.editor.notice = "Revolve · angle and total height · Enter accepts · Escape cancels";
+    this.queue();
+    this.lease.history?.checkpoint();
+    this.editor.refresh();
+    return true;
+  }
   begin(restored?: Revolution): void {
     const editor = this.editor;
     if (editor.blocked || editor.interactions.current || editor.world.active) return;

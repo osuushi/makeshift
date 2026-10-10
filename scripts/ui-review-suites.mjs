@@ -2,6 +2,14 @@ import { uiRoutes } from "./ui-review-routes.mjs";
 
 // Measured Linux timings from PR #73, run 37872133423; use the slowest runtime per suite.
 export const reviewUiSuites = [
+  { args: ["cylinder-tool-ui.mjs"], seconds: 25, browsers: ["chromium", "webkit", "electron"] },
+  { args: ["sphere-tool-ui.mjs"], seconds: 20, browsers: ["chromium", "webkit", "electron"] },
+  {
+    args: ["primitives-extrude-ui.mjs"],
+    seconds: 40,
+    browsers: ["chromium", "webkit", "electron"],
+  },
+  { args: ["primitive-handoff-ui.mjs"], seconds: 60, browsers: ["chromium", "webkit", "electron"] },
   { args: ["cube-tool-ui.mjs"], seconds: 35, browsers: ["chromium", "webkit", "electron"] },
   { args: ["ui-runtime-cleanup.mjs"], seconds: 3, browsers: ["chromium", "electron", "webkit"] },
   { args: ["decorator-removal-ui.mjs"], seconds: 14, browsers: ["chromium", "electron", "webkit"] },
@@ -146,5 +154,6 @@ export const reviewUiSuites = [
     browsers: ["chromium", "webkit", "electron"],
   },
   { args: ["orientation-cube-ui.mjs"], seconds: 202, browsers: ["webkit", "electron"] },
+  { args: ["primitive-overlay-ui.mjs"], seconds: 45, browsers: ["chromium", "webkit", "electron"] },
   ...uiRoutes,
 ];
