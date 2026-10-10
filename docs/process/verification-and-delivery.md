@@ -51,6 +51,12 @@ must be explicit and measured; do not pad timing estimates or bypass the invento
 with extra workflow steps. The same policy applies to unit tests: add a distinct
 behavioral assertion, not tests mirroring implementation details.
 
+The document-window lifecycle regression adds one justified suite (21 total,
+467 seconds estimated against the unchanged 500-second aggregate cap). Its
+focused macOS run took under 20 seconds; Linux uses the shared software-WebGL
+launcher. It covers native window/IPC routing and canceled application Quit,
+which document-owner tests cannot exercise.
+
 Broad historical UI journeys remain available for targeted diagnosis in
 `scripts/ui-review-suites.mjs` and `ui-review-routes.mjs`; they are not automatic
 PR/release gates. Do not respond to a failing focused regression by launching the

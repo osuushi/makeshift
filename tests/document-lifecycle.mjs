@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { _electron } from "playwright";
 import { blankDocumentOpen } from "./document-blank-open.mjs";
 import { hostModelBoundary } from "./host-model-boundary.mjs";
+import { electronTestArguments } from "./native-documents.mjs";
 import { drag, inspect, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -40,7 +41,7 @@ async function close() {
 }
 async function launch() {
   app = await _electron.launch({
-    args: [".", `--user-data-dir=${profile}`],
+    args: electronTestArguments([".", `--user-data-dir=${profile}`]),
     env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
   });
   await app.evaluate(({ dialog, BrowserWindow }) => {
