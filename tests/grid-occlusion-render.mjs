@@ -53,6 +53,7 @@ await withUiRuntimes(async (page) => {
   );
   assert.deepEqual(gradient[0], gradient[1], "Fill gradient stays in screen space while orbiting");
   assert.equal(gradient[0].center, 128, "Center remains transparent");
+  assert.equal(gradient[0].clearBoundary, 128, "The middle eighth stays fully transparent");
   assert.equal(
     gradient[0].horizontal,
     gradient[0].vertical,

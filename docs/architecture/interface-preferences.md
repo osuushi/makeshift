@@ -22,7 +22,8 @@ Canonical XY/XZ/YZ references cover the viewport, including far from the origin.
 References render colored grid lines over a white radial fill (30% maximum opacity by default);
 their meshes remain picking targets. The fill veils scene geometry behind the grid,
 including translucent sketch regions, sketch lines, axes and coordinate labels.
-The fill is transparent at viewport center and ramps smoothly to the configured
+The fill is completely transparent within a central circle whose diameter is one
+eighth of the shorter viewport dimension, then ramps smoothly to the configured
 maximum at half the shorter viewport dimension. It remains circular in screen
 space through orbit, pan, zoom and resize; line fading stays independent.
 Geometry in front retains its appearance; orientable widgets remain unobscured.

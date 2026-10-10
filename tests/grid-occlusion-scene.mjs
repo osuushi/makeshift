@@ -137,6 +137,7 @@ export function gridGradientPixels(normal) {
   const at = (x, y) => pixels[(y * 256 + x) * 4];
   const result = {
     center: at(128, 64),
+    clearBoundary: at(135, 64),
     horizontal: at(160, 64),
     vertical: at(128, 96),
     edge: at(254, 64),
