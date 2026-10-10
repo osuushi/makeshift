@@ -129,11 +129,13 @@ nav a:hover {
   text-align: left;
 }
 .hero h1 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.3em;
   margin-bottom: 24px;
 }
 .hero-subtitle {
-  display: block;
-  margin-top: 12px;
   font-size: clamp(26px, 3vw, 36px);
   font-weight: 700;
   letter-spacing: -0.025em;
