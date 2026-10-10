@@ -70,6 +70,10 @@ motion. Labels remain outside the model. Videos are muted and play inline.
 
 ## Content
 
+Headings use Fraunces; body text and controls use DM Sans. Both load from Google
+Fonts with `display=swap`, with local serif/sans-serif fallbacks while loading
+or when the font service is unavailable.
+
 Product claims follow the README and current architecture/topic docs. The icon
 comes from `assets/public/`. The old public-build screenshot has been removed.
 The primary action currently links to the verified `20261010T103958Z` Apple
