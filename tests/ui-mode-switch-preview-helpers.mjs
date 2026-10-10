@@ -5,7 +5,7 @@ import { browseTools, chooseTool } from "./ui-tools.mjs";
 
 export async function browsePreview(page, kind, original, preview, input) {
   // Exercise both ordinary opening routes before an actual command is selected.
-  await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await page.getByRole("button", { name: "More tools", exact: true }).click();
   for (const opening of ["pointer", "keyboard"]) {
     await browseTools(page, "Sketch");
     const state = await inspect(page);

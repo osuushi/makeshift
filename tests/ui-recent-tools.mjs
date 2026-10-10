@@ -36,7 +36,7 @@ async function dismissed(page) {
   await page.keyboard.press("Escape");
 }
 async function shortcut(page, key) {
-  await page.getByRole("button", { name: "Tools", exact: true }).focus();
+  await page.getByRole("button", { name: "More tools", exact: true }).focus();
   await page.keyboard.press(key);
   await settled(page);
 }

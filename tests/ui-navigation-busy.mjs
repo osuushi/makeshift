@@ -40,7 +40,7 @@ export async function navigationModalPriority(page, name) {
   assert.deepEqual(redo.preview, initial.preview);
   assertNavigation(redo, top, "Modal view Redo");
   await distance.fill("7");
-  await page.getByRole("button", { name: "Tools", exact: true }).focus();
+  await page.getByRole("button", { name: "More tools", exact: true }).focus();
   await navigationIdle(page);
   const parameterUndo = await navigationHistory(page);
   assert.equal((await navigationTips(page)).length, 0, "Parameter edit expires earlier view tail");

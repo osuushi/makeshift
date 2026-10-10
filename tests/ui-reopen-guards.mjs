@@ -19,7 +19,7 @@ export async function reopenFocusGuards(page, name) {
   const document = (await inspect(page)).document;
   const history = await page.evaluate(() => window.makeshiftHistory());
   assert.equal(await toolEnabled(page, "reopen last operation", "reopen-operation"), true);
-  await button(page, "Tools").focus();
+  await button(page, "More tools").focus();
   await page.keyboard.press("Meta+r");
   await unchanged(page, document, history);
   await button(page, "Select Body 1").dblclick();

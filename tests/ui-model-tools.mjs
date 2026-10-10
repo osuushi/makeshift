@@ -171,7 +171,7 @@ async function faceToolSwitchRoute(page, center) {
 
 async function menuKeyboardRoute(page, name) {
   const selection = (await inspect(page)).modelingSelection;
-  await button(page, "Tools").focus();
+  await button(page, "More tools").focus();
   await page.keyboard.press("Enter");
   await page.getByRole("combobox", { name: "Find a tool" }).fill("clear selection");
   await page.screenshot({ path: `.cache/sketch-review/${name}-selection-menu.png` });
@@ -181,5 +181,5 @@ async function menuKeyboardRoute(page, name) {
   );
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).modelingSelection, selection);
-  assert.equal(await button(page, "Tools").getAttribute("aria-expanded"), "false");
+  assert.equal(await button(page, "More tools").getAttribute("aria-expanded"), "false");
 }

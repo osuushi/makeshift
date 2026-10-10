@@ -13,7 +13,7 @@ const allowance = (page) =>
 
 async function enter(page) {
   // Do not wait for the calculation: this route must exercise cancellation while it runs.
-  await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await page.getByRole("button", { name: "More tools", exact: true }).click();
   await page.getByRole("combobox", { name: "Find a tool" }).fill("erode");
   await page.locator('[data-command="erode"]').click();
   await page.waitForFunction(() => {

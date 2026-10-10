@@ -19,7 +19,7 @@ async function run(page, name) {
   page.on("pageerror", (error) => errors.push(error.message));
   await inspect(page);
   assert.equal(await page.locator(".toolbox").count(), 0);
-  await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await page.getByRole("button", { name: "More tools", exact: true }).click();
   await page.getByRole("option", { name: "Solid", exact: true }).click();
   assert.equal(
     await page.getByRole("option", { name: "Shell", exact: true }).getAttribute("aria-disabled"),

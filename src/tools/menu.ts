@@ -21,8 +21,8 @@ export class ToolMenu {
     app: HTMLElement,
   ) {
     this.trigger.className = "tools-trigger";
-    this.trigger.innerHTML = `Tools <kbd>${toolShortcut("⌘F")}</kbd>`;
-    this.trigger.setAttribute("aria-label", "Tools");
+    this.trigger.innerHTML = `More <kbd>${toolShortcut("⌘F")}</kbd>`;
+    this.trigger.setAttribute("aria-label", "More tools");
     this.trigger.setAttribute("aria-haspopup", "dialog");
     this.trigger.setAttribute("aria-expanded", "false");
     this.backdrop.className = "tool-menu-backdrop";
@@ -52,10 +52,13 @@ export class ToolMenu {
     this.input.oninput = () => this.render(true);
     this.panel.append(this.input, this.back, this.list);
     this.backdrop.append(this.panel);
-    app.append(this.trigger, this.backdrop);
+    app.append(this.backdrop);
     this.trigger.onclick = () => this.open();
     this.bindEvents();
     editor.world.changed.add(this.update);
+  }
+  mountTrigger(host: HTMLElement): void {
+    host.append(this.trigger);
   }
   private bindEvents(): void {
     const options = { capture: true, signal: this.abort.signal };

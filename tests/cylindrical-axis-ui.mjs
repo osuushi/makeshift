@@ -41,7 +41,7 @@ async function route(page, name, partial) {
   assert.deepEqual((await inspect(page)).document, before);
   assert.equal((await inspect(page)).preview, null);
   await page.screenshot({ path: `.cache/cylindrical-axis/${tag}-hover.png` });
-  await page.getByRole("button", { name: "Tools", exact: true }).hover();
+  await page.getByRole("button", { name: "More tools", exact: true }).hover();
   assert.equal(await guide(page).count(), 0, "Leaving canvas clears hover");
   await hover(page, [14, -1, 12]);
   assert.equal(await guide(page).count(), 0, "Planar cap is not a cylindrical axis");

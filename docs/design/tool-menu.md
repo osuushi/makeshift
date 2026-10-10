@@ -1,13 +1,18 @@
-# Tool menu redesign
+# Tool panels and search
 
 Approved interaction contract, implemented 2026-09-21. Runtime checks and the
 immediate next action belong in the local brief.
 
 ## Outcome and agreed direction
 
-Replace the existing tools panel entirely with a compact **Tools · ⌘F** button
-and a searchable menu. The founder explicitly rejected retaining the old panel.
-Command-F opens the menu; an empty query exposes logical submenus for discovery.
+Show a fixed, compact common-tools panel below Entities. Sketch mode contains
+Arrow, Line, Rectangle, Circle, Pen and Trim; Modeling mode contains Arrow, Sketch,
+Cube, Cylinder, Sphere, Cone, Drill, Extrude and Offset. Every entry has an icon,
+labels show existing shortcuts, and the current tool is highlighted. The panel's **More ·
+⌘F** button and Command-F open the searchable menu. A short window moves constraints
+and measurements right to leave room for the panel. The panel uses the shared tool
+catalog and does not own geometry or history. Search remains the full discovery
+surface; an empty query exposes logical submenus.
 Search supports fuzzy names, synonyms and related operations. Available matches
 always precede unavailable matches; unavailable tools remain visible. Automatically
 highlight the top result. The following interaction is implemented.
@@ -16,11 +21,11 @@ Founder follow-up: remove the local Edit sketch / Select face / Move sketch / Ne
 sketch button row too; its actions move into the contextual search catalog.
 
 Selection-driven handles, local parameter/accept/cancel controls, Entities and the
-agent dock keep their purposes. They are not replacement tool catalogs.
+agent dock keep their purposes.
 
 ## Interaction
 
-- The Tools button supports mouse, touch and Pencil. Ctrl-F is the Windows/Linux
+- The More button supports mouse, touch and Pencil. Ctrl-F is the Windows/Linux
   equivalent. Each opening starts with an empty, focused search box.
 - On an empty root query, show a separate Recent section above Categories when
   tools have been invoked. Keep ten unique visible tools, newest first; invoking
@@ -154,10 +159,10 @@ routing so Command-F opens Tools rather than host/browser Find.
 1. **Inventory and first complete route:** map old panel actions to new homes;
    build catalog/search/menu and invoke actual sketch creation and Shell through
    it. Verify thickness, a typo, disabled reasons, focus and tool switching.
-2. **Complete replacement:** migrate remaining actions and shortcut dispatch;
-   remove the old panel and obsolete mounting assumptions. Retain only compact
-   entry/access controls. Review desktop and narrow/touch layouts.
-3. **Acceptance:** deterministic ranking tests plus real keyboard/pointer routes
+2. **Common panels:** review both mode-specific lists, every icon, active state,
+   existing shortcuts, disabled reasons and the More entry point. Resize to short
+   heights and confirm the toolbox remains below Entities while readouts move right.
+3. **Search acceptance:** deterministic ranking tests plus real keyboard/pointer routes
    in headless Chromium/WebKit and hidden Electron. Cover browsing, global search
    from submenus, available-first ordering, all-disabled/no-result states, numeric
    focus restoration, no shortcut leakage, invalid/pending switches, busy state
@@ -165,6 +170,7 @@ routing so Command-F opens Tools rather than host/browser Find.
    solid geometry, including Shell via thickness, Undo/Redo and Save/Open. Check
    file/export and selection actions remain reachable; clean up test processes.
 
-The implementation is complete; the next founder checkpoint is ordinary CAD work
-with the old panel and sketch action row absent. Physical iPad keyboard/Pencil behavior
-requires device review in addition to automated acceptance.
+The search menu contract above is implemented. The common panels are the current
+increment; runtime and founder review should be recorded in the active local brief.
+Physical iPad keyboard/Pencil behavior requires device review in addition to automated
+acceptance.

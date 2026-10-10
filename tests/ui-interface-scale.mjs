@@ -146,7 +146,7 @@ async function navigationScaleRoute(page, name, scale) {
     before.camera.height,
   );
   const cube = await page.locator(".orientation-cube").boundingBox();
-  const tools = await page.getByRole("button", { name: "Tools", exact: true }).boundingBox();
+  const tools = await page.getByRole("button", { name: "More tools", exact: true }).boundingBox();
   assert.ok(tools.x + tools.width < cube.x, "Scaled Tools and cube remain separate");
   await page.getByRole("button", { name: "Top view", exact: true }).click();
   await inspect(page);

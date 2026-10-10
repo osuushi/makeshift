@@ -8,7 +8,7 @@ import { chooseTool } from "./ui-tools.mjs";
 await withUiRuntimes(async (page, name) => {
   await reset(page);
   const before = (await inspect(page)).document;
-  await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await page.getByRole("button", { name: "More tools", exact: true }).click();
   const input = page.getByRole("combobox", { name: "Find a tool" });
   for (const query of ["cstr", "cnpl", "cp", "rfpl", "cope", "cole"]) {
     await input.fill(query);

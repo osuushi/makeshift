@@ -16,6 +16,7 @@ export function planeSelectionKey(
     (event.target instanceof HTMLElement && event.target.isContentEditable)
   )
     return;
+  if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) return;
   if (
     event.key === "Enter" &&
     event.target instanceof HTMLButtonElement &&

@@ -3,7 +3,7 @@
   top: max(85px, calc(var(--editor-header-bottom, 0px) + 12px));
   left: 20px;
   width: 190px;
-  max-height: calc(100vh - 230px);
+  max-height: max(120px, calc(100vh - 480px));
   overflow: auto;
   padding: 12px;
   border: 1px solid #e2e7ee;

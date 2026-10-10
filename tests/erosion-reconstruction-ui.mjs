@@ -124,7 +124,7 @@ async function cancelCalculation(page, original) {
     .getByRole("button", { name: /^Select Body / })
     .first()
     .click();
-  await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await page.getByRole("button", { name: "More tools", exact: true }).click();
   await page.getByRole("combobox", { name: "Find a tool" }).fill("erode");
   await page.locator('[data-command="erode"]').click();
   await page.getByRole("combobox", { name: "Mesh detail", exact: true }).selectOption("standard");

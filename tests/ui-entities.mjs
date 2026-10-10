@@ -5,8 +5,10 @@ import { chooseTool } from "./ui-tools.mjs";
 export async function entitiesRoute(page, name) {
   await reset(page);
   const list = await page.getByRole("complementary", { name: "Entities" }).boundingBox();
-  const tools = await page.getByRole("button", { name: "Tools", exact: true }).boundingBox();
-  assert.ok(list.x < 40 && tools.x > 900 && tools.y < 40);
+  const toolbox = await page.locator(".toolbox").boundingBox();
+  const more = await page.getByRole("button", { name: "More tools", exact: true }).boundingBox();
+  assert.ok(list.x < 40 && toolbox.x < 40 && toolbox.y > list.y + list.height);
+  assert.ok(more.x >= toolbox.x && more.y >= toolbox.y);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-15, -10], [15, 10]);

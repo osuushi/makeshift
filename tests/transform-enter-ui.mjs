@@ -207,7 +207,7 @@ async function nativeFocusAndModal(page, name) {
   await chooseTool(page, "offset faces", "offset");
   await commandIdle(page);
   await viewport(page).focus();
-  const tools = page.getByRole("button", { name: "Tools", exact: true });
+  const tools = page.getByRole("button", { name: "More tools", exact: true });
   await tools.focus();
   await page.keyboard.press("Enter");
   assert.equal(

@@ -19,6 +19,7 @@ import { rectangleRoute } from "./ui-rectangle.mjs";
 import { revolveRoute } from "./ui-revolve.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { shellRoute } from "./ui-shell.mjs";
+import { toolboxRoute } from "./ui-toolbox.mjs";
 import { transformRoute } from "./ui-transform.mjs";
 import { trimLineRoute } from "./ui-trim.mjs";
 
@@ -55,6 +56,7 @@ await withUiRuntimes(
       faceCutReferenceRoute,
       penRoute,
       penExtrusionRoute,
+      toolboxRoute,
     ].entries()) {
       if (values.route && route.name !== values.route) continue;
       matched = true;

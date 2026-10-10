@@ -25,6 +25,9 @@ export class EntityViewer {
   private refreshRows: (() => void)[] = [];
   private selectionRows: ModelingTarget[] = [];
   private selectionAnchor: string | null = null;
+  get element(): HTMLElement {
+    return this.root;
+  }
   constructor(
     private editor: SketchEditor,
     app: HTMLElement,
