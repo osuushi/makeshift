@@ -2,6 +2,7 @@ import { uiRoutes } from "./ui-review-routes.mjs";
 
 // Measured Linux timings from PR #73, run 37872133423; use the slowest runtime per suite.
 export const reviewUiSuites = [
+  { args: ["clipboard-ui.mjs"], seconds: 20, browsers: ["electron"] },
   { args: ["body-rotation-handoff-ui.mjs"], seconds: 20, browsers: ["electron"] },
   { args: ["cylinder-tool-ui.mjs"], seconds: 25, browsers: ["chromium", "webkit", "electron"] },
   { args: ["sphere-tool-ui.mjs"], seconds: 20, browsers: ["chromium", "webkit", "electron"] },
