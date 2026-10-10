@@ -118,17 +118,13 @@ nav a:hover {
   text-decoration: underline;
 }
 .hero {
-  padding-block: 75px 48px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 64px;
-  align-items: start;
+  padding-block: 64px 40px;
 }
-.hero .eyebrow {
-  grid-column: 1 / -1;
+.hero h1 {
+  margin-bottom: 24px;
 }
 .intro {
-  padding-top: 5px;
+  max-width: 740px;
 }
 .intro > p:first-child {
   font-size: 20px;
@@ -138,9 +134,16 @@ nav a:hover {
 .actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px 36px;
+}
+.actions .text-link {
+  display: inline-flex;
   align-items: center;
-  gap: 16px 24px;
-  margin-bottom: 14px;
+  min-height: 46px;
+}
+.actions p {
+  margin: 10px 0 0;
 }
 .button {
   display: inline-flex;
@@ -161,13 +164,6 @@ nav a:hover {
 }
 .button.primary:hover {
   background: #40304e;
-}
-.button.secondary {
-  background: transparent;
-  color: var(--accent);
-}
-.button.secondary:hover {
-  background: #ebe5ef;
 }
 .text-link {
   font-size: 15px;
@@ -243,7 +239,11 @@ figcaption {
   border-top: 1px solid var(--line);
   padding-top: 26px;
 }
-.editions .button {
+.editions .button,
+.editions .text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 46px;
   margin: 8px 0 14px;
 }
 .editions article > p:first-of-type {

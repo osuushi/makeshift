@@ -25,7 +25,8 @@ existing hosts. Add the custom domain only when configuring the separate host.
 - Product claims follow the repository README, `docs/architecture/web.md`,
   `docs/product/3d-tools.md`, `docs/releases.md`, and `COPYING.md`.
 - Web links open https://osuushi.github.io/makeshift-web/.
-- The Mac link points to the verified 20261010T103958Z preview release. Update
+- The primary action downloads the Mac DMG from the verified 20261010T103958Z
+  preview release; the browser version is a secondary, quick-try link. Update
   this deliberately when publishing a newer version; GitHub's `releases/latest`
   does not select these prereleases. All releases remains a stable fallback.
 - `assets/makeshift.png` is the existing application icon from `assets/public/`.

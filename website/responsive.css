@@ -3,8 +3,7 @@
     width: calc(100% - 48px);
   }
   .hero {
-    column-gap: 35px;
-    padding-top: 55px;
+    padding-top: 48px;
   }
   .intro > p:first-child {
     font-size: 18px;
@@ -41,14 +40,10 @@
     gap: 20px;
   }
   .hero {
-    display: block;
-    padding-block: 42px 24px;
+    padding-block: 36px 30px;
   }
   .hero h1 {
     margin-bottom: 25px;
-  }
-  .hero .eyebrow {
-    margin-bottom: 17px;
   }
   .actions {
     gap: 20px;
