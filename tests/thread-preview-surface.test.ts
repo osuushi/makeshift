@@ -20,7 +20,8 @@ for (const sloping of [false, true])
           owner,
           body,
           { origin: [0, 0, 7], u: [1, 0, 0], v: [0, 0.8, 0.6] },
-          (candidate) => candidate.center[2] < 5,
+          // The lower piece retains the original bottom; its box center can be z=5.
+          (candidate) => Math.abs(candidate.bounds[2] - body.bounds[2]) < 1e-6,
         );
       const face = body.faces.find((face) => face.cylinder?.outward === -1);
       assert.ok(face);
