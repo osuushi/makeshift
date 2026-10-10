@@ -144,7 +144,7 @@ export async function exportDocument(page, format, path, stepChoice) {
 
 /** Exercise the ordinary native Edit menu or the browser File/Edit menu. */
 export async function historyMenu(page, direction = "undo") {
-  await page.getByRole("button", { name: "Tools", exact: true }).focus();
+  await page.getByRole("button", { name: "More tools", exact: true }).focus();
   const session = sessions.get(page);
   if (session) {
     await session.app.evaluate(({ Menu }, direction) => {

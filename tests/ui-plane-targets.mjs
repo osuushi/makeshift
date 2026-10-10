@@ -49,7 +49,7 @@ export async function planeTargetsRoute(page, name) {
 
 async function assertEditorTabOrder(page) {
   assert.equal(await page.locator(".toolbox").count(), 0, "Old toolbar is removed");
-  const tools = page.getByRole("button", { name: "Tools", exact: true });
+  const tools = page.getByRole("button", { name: "More tools", exact: true });
   let focused = false;
   for (let step = 0; step < 20; step++) {
     await page.keyboard.press("Tab");

@@ -207,7 +207,7 @@ async function nativeFocusAndModal(page, name) {
   await chooseTool(page, "offset faces", "offset");
   await commandIdle(page);
   await viewport(page).focus();
-  const tools = page.getByRole("button", { name: "Tools", exact: true });
+  const tools = page.getByRole("button", { name: "More tools", exact: true });
   await tools.focus();
   await page.keyboard.press("Enter");
   assert.equal(
@@ -271,7 +271,7 @@ async function workspaceEnter(page, name) {
   const body = document.bodies[0];
   await modelClick(page, topFacePoint(body));
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
-  const onFace = await idleEnter(page);
+  const onFace = await idleEnter(page, "Control+Enter");
   assert.equal(onFace.activePlane, "Face sketch");
   assert.deepEqual(onFace.document, document);
   await chooseTool(page, "return to modeling", "modeling");

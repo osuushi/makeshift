@@ -105,7 +105,7 @@ export async function menuSketchToolsRoute(page, name) {
 export async function menuTouchRoute(page, name) {
   await page.setViewportSize({ width: 390, height: 720 });
   try {
-    await page.getByRole("button", { name: "Tools", exact: true }).tap();
+    await page.getByRole("button", { name: "More tools", exact: true }).tap();
     await page.getByRole("option", { name: "Reference", exact: true }).tap();
     assert.equal(await page.locator('[data-command="project"]').count(), 1);
     const bounds = await page.locator(".tool-menu").boundingBox();

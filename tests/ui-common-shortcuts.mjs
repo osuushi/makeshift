@@ -7,7 +7,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export const commonKeys = ["Shift+U", "Shift+S", "Shift+I", "l"];
 export async function keyTool(page, key) {
-  await page.getByRole("button", { name: "Tools", exact: true }).focus();
+  await page.getByRole("button", { name: "More tools", exact: true }).focus();
   await page.keyboard.press(key);
   return inspect(page);
 }

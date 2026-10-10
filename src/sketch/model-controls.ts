@@ -81,7 +81,6 @@ export class ModelControls {
         finishEdit: true,
         label: "Sketch on face",
         category: "Sketch",
-        shortcut: "Enter",
         reason: () => {
           const target = editor.modeling.targets.length === 1 ? editor.modeling.targets[0] : null;
           const face =
@@ -204,19 +203,19 @@ export class ModelControls {
         return;
       if (
         event.key === "Enter" &&
+        !event.metaKey &&
+        !event.ctrlKey &&
         !event.defaultPrevented &&
         !editor.interactions.current &&
         editor.modeling.targets.length === 1 &&
-        ["face", "sketch"].includes(editor.modeling.targets[0]?.kind ?? "") &&
+        editor.modeling.targets[0]?.kind === "sketch" &&
         (!(event.target instanceof HTMLButtonElement) ||
           event.target.classList.contains("entity-label")) &&
         !(event.target instanceof HTMLSelectElement) &&
         !(event.target instanceof HTMLTextAreaElement)
       ) {
         event.preventDefault();
-        void toolCatalog(editor).invoke(
-          editor.modeling.targets[0]?.kind === "face" ? "sketch-on-face" : "edit-sketch",
-        );
+        void toolCatalog(editor).invoke("edit-sketch");
       }
       if (event.key === "Escape") {
         // An operation owns its own cancellation and keeps its selection. This

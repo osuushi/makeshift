@@ -20,7 +20,7 @@ async function history(page, redo = false, menu = false) {
 async function checkpoint(page, input, value) {
   await input.fill(String(value));
   await inspect(page);
-  await page.getByRole("button", { name: "Tools", exact: true }).focus();
+  await page.getByRole("button", { name: "More tools", exact: true }).focus();
   return inspect(page);
 }
 const applied = async (page) =>

@@ -20,7 +20,7 @@ const hidden = [
 ];
 async function searchRoute(page) {
   const before = (await inspect(page)).document;
-  await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await page.getByRole("button", { name: "More tools", exact: true }).click();
   const menu = page.getByRole("dialog", { name: "Find a tool" });
   for (const query of ["undo", "redo", "close", "document", "delete", "select all", "uni"]) {
     await page.getByRole("combobox", { name: "Find a tool" }).fill(query);
@@ -89,7 +89,7 @@ async function route(page, name) {
       await (await downloaded).saveAs(path);
       await page.setViewportSize({ width: 1280, height: 850 });
     }
-    await page.getByRole("button", { name: "Tools", exact: true }).press("Control+n");
+    await page.getByRole("button", { name: "More tools", exact: true }).press("Control+n");
     assert.equal((await inspect(page)).document.sketches.length, 0);
     await openDocument(page, path);
     await page.waitForFunction(() => window.makeshiftInspect().document.sketches.length === 1);

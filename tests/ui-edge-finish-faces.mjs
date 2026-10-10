@@ -28,7 +28,7 @@ async function invokeFaces(page, mode, original, points, keyboard) {
   assert.equal(raw[0].kind, "face");
   const edges = boundarySelection(original, raw);
   if (keyboard) {
-    await page.getByRole("button", { name: "Tools", exact: true }).focus();
+    await page.getByRole("button", { name: "More tools", exact: true }).focus();
     await page.keyboard.press(mode === "fillet" ? "f" : "Shift+F");
   } else await chooseTool(page, mode, mode);
   const state = await inspect(page);

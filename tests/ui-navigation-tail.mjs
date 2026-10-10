@@ -53,7 +53,7 @@ async function trailingViews(page) {
   assertNavigation(await animatedHistory(page, true), middle);
   assertNavigation(await animatedHistory(page, true), after);
   assert.equal((await navigationTips(page)).length, 2, "Animations add no history entries");
-  await page.getByRole("button", { name: "Tools", exact: true }).focus();
+  await page.getByRole("button", { name: "More tools", exact: true }).focus();
   await page.keyboard.press("Meta+z");
   await page.waitForFunction(() => window.makeshiftInspect().camera.moving);
   await page.keyboard.press("Meta+z");

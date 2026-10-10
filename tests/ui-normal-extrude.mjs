@@ -42,7 +42,7 @@ export async function normalExtrudeRoute(page, name) {
   await acceptDistance(page, 22);
   close((await inspect(page)).document.bodies[0].volume, Math.PI * 5840);
   await worldClick(page, [12, -Math.sqrt(22 ** 2 - 12 ** 2), 15]);
-  await page.getByRole("button", { name: "Tools", exact: true }).focus();
+  await page.getByRole("button", { name: "More tools", exact: true }).focus();
   await page.keyboard.press("e");
   assert.equal(await page.getByRole("textbox", { name: "Extrusion distance" }).inputValue(), "22");
   await page.getByRole("textbox", { name: "Extrusion distance" }).fill("24");
