@@ -15,7 +15,9 @@ export class FixedStepCapture {
   async start() {
     await rm(this.directory, { recursive: true, force: true });
     await mkdir(this.directory, { recursive: true });
-    await this.page.clock.pauseAt(new Date());
+    // Use browser time: a reloaded installed clock can be ahead of the host clock.
+    const browserNow = await this.page.evaluate(() => Date.now());
+    await this.page.clock.pauseAt(new Date(browserNow + 1000));
     this.started = Date.now();
   }
 

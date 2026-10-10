@@ -6,38 +6,57 @@ import { chooseTool } from "../../tests/ui-tools.mjs";
 export function actions(page, capture) {
   const run = (operation) => capture.action(operation, 30);
   const state = () => run(() => inspect(page));
-  const tool = (id, query = id) =>
-    run(async () => {
-      const button = page.locator(`.toolbox [data-tool="${id}"]`);
-      if (await button.count()) await button.click();
-      else await chooseTool(page, query, id);
-      await settled(page);
-    });
+  const tool = async (id, query = id) => {
+    const button = page.locator(`.toolbox [data-tool="${id}"]`);
+    if (await button.count()) await run(() => button.click());
+    else if (id === "undo") await run(() => chooseTool(page, query, id));
+    else {
+      await page.keyboard.press("Meta+f");
+      await run(() => page.getByRole("combobox", { name: "Find a tool" }).fill(query));
+      await capture.hold(0.8);
+      await run(() => page.locator(`[data-command="${id}"]`).click());
+    }
+    await run(() => settled(page));
+    await capture.hold(0.8);
+  };
   const click = async (xyz) => {
     const point = await run(() => project(page, xyz));
     await page.mouse.click(point.x, point.y);
     await run(() => settled(page));
+    await capture.hold(0.8);
   };
-  const draw = async (from, to) => {
-    const a = await run(() => at(page, ...from));
-    const b = await run(() => at(page, ...to));
-    await page.mouse.move(a.x, a.y);
+  const dragPixels = async (from, to, seconds = 2) => {
+    await page.mouse.move(from.x, from.y);
+    await capture.hold(0.3);
     await page.mouse.down();
-    for (let i = 1; i <= 24; i++) {
-      await page.mouse.move(a.x + ((b.x - a.x) * i) / 24, a.y + ((b.y - a.y) * i) / 24);
+    const frames = Math.round(seconds * capture.fps);
+    for (let i = 1; i <= frames; i++) {
+      await page.mouse.move(
+        from.x + ((to.x - from.x) * i) / frames,
+        from.y + ((to.y - from.y) * i) / frames,
+      );
       await capture.frame();
     }
     await page.mouse.up();
     await run(() => settled(page));
+    await capture.hold(1);
   };
-  const fill = (label, value, role = "textbox") =>
-    run(async () => {
-      const input = page.getByRole(role, { name: label, exact: true });
-      await input.fill(String(value));
-      await input.press("Enter");
-      await settled(page);
-    });
-  const button = (name) => run(() => page.getByRole("button", { name, exact: true }).click());
+  const draw = async (from, to) =>
+    dragPixels(await run(() => at(page, ...from)), await run(() => at(page, ...to)));
+  const fill = async (label, value, role = "textbox") => {
+    const input = page.getByRole(role, { name: label, exact: true });
+    await run(() => input.fill(String(value)));
+    await run(() => settled(page));
+    await capture.hold(1);
+    await run(() => input.press("Enter"));
+    await run(() => settled(page));
+    await capture.hold(1);
+  };
+  const button = async (name) => {
+    await run(() => page.getByRole("button", { name, exact: true }).click());
+    await run(() => settled(page));
+    await capture.hold(0.8);
+  };
   const accept = async () => {
     await run(() => page.getByLabel("Modeling viewport", { exact: true }).focus());
     await page.keyboard.press("Enter");
@@ -47,8 +66,9 @@ export function actions(page, capture) {
         return !s.busy && s.interaction === null;
       }),
     );
+    await capture.hold(1);
   };
-  return { run, state, tool, click, draw, fill, button, accept };
+  return { run, state, tool, click, draw, dragPixels, fill, button, accept };
 }
 
 export async function solid(a) {
@@ -88,29 +108,4 @@ export async function pointer(page) {
       true,
     );
   });
-}
-
-export async function frameResult(page, capture, a) {
-  await page.keyboard.press("Escape");
-  const state = await a.state();
-  await page.mouse.move(600, 320);
-  await page.keyboard.down("Control");
-  await page.mouse.wheel(0, Math.log(40 / state.camera.height) / 0.01);
-  await page.keyboard.up("Control");
-  await a.run(() => settled(page));
-  const bounds = state.document.bodies?.[0]?.bounds;
-  const center = bounds
-    ? bounds.slice(0, 3).map((value, i) => (value + bounds[i + 3]) / 2)
-    : [0, 0, 0];
-  const point = await a.run(() => project(page, center));
-  // Middle-button pan uses the ordinary viewport route and leaves model data untouched.
-  await page.mouse.move(600, 330);
-  await page.mouse.down({ button: "middle" });
-  for (let i = 1; i <= 15; i++) {
-    await page.mouse.move(600 + ((580 - point.x) * i) / 15, 330 + ((330 - point.y) * i) / 15);
-    await capture.frame();
-  }
-  await page.mouse.up({ button: "middle" });
-  await a.run(() => settled(page));
-  await page.mouse.move(800, 590);
 }

@@ -32,6 +32,10 @@ input uses the same pointer/keyboard controls and real geometry backend, with
 read-only inspection assertions on the demonstrated results. The visible pointer
 is a presentation overlay; app controls and geometry are unmodified.
 
+Camera framing happens before recording. Drawing and editing drags last about
+two seconds, with short holds before and after meaningful changes. Sketching
+includes a rectangle, circle, bowed edge and dragged corner fillet.
+
 The Playwright demo skill's fixed-step capture helper advances the browser clock
 at 30 fps, captures numbered frames and encodes H.264/yuv420p MP4. Each export
 checks frame count, duration, dimensions and frame rate using ffprobe. This
