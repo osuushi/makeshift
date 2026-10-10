@@ -3,6 +3,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import { pickModels } from "../sketch/model-selection.js";
 import type { LiftSource } from "./body.js";
+import { BooleanOperands } from "./boolean-operands.js";
 import { ExtrudeTargets } from "./extrude-targets.js";
 import type { Loft } from "./loft.js";
 import { LoftGuides } from "./loft-guides.js";
@@ -10,6 +11,7 @@ import { type LoftSectionAction, LoftWidget } from "./loft-widget.js";
 import { resolveOperation } from "./operation-selection.js";
 
 export class LoftControls {
+  private operands: BooleanOperands;
   readonly widget: LoftWidget;
   private guides = new LoftGuides();
   private lease: InteractionLease | null = null;
@@ -27,6 +29,7 @@ export class LoftControls {
     private editor: SketchEditor,
     overlay: HTMLElement,
   ) {
+    this.operands = new BooleanOperands(editor);
     this.targets = new ExtrudeTargets(editor, () => this.queue());
     this.widget = new LoftWidget(
       this.sectionAction,
@@ -236,8 +239,10 @@ export class LoftControls {
       const success = await this.editor.store.request({ kind: "loft", operation: request });
       if (this.lease?.phase !== "editing" || request !== this.latest) continue;
       this.valid = success;
-      if (success) this.lease.show(this.editor.store.candidate);
-      else if (this.lease.candidate)
+      if (success) {
+        this.lease.show(this.editor.store.candidate);
+        this.operands.showTool();
+      } else if (this.lease.candidate)
         this.editor.message += " · Showing last valid loft; acceptance disabled";
       this.editor.refresh();
     }
@@ -273,6 +278,7 @@ export class LoftControls {
     this.editor.refresh();
   }
   private update = (): void => {
+    if (!this.lease?.candidate) this.operands.clear();
     this.widget.root.hidden = !this.lease;
     this.guides.root.style.display = this.lease ? "" : "none";
     if (!this.lease) return;
@@ -288,6 +294,7 @@ export class LoftControls {
     this.targets.update(this.mode !== "new");
   };
   dispose(): void {
+    this.operands.dispose();
     this.abort.abort();
     this.editor.world.changed.delete(this.update);
     this.widget.dispose();

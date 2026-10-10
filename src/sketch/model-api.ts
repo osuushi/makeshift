@@ -111,6 +111,7 @@ export interface ModelView {
   edgeSelection?: BodyEdgeFinish["edges"];
   booleanMode?: BooleanMode;
   booleanTargets?: string[];
+  booleanTools?: import("../model/body.js").BodyGeometry[];
   canUndo: boolean;
   canRedo: boolean;
   candidate: SketchDocument | null;

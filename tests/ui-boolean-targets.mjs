@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-export async function booleanTargetsRoute(page, hidden = false) {
+async function createStock(page) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
@@ -22,9 +22,14 @@ export async function booleanTargetsRoute(page, hidden = false) {
   await page.keyboard.press("Enter");
   await inspect(page);
   await page.keyboard.press("Enter");
-  let state = await inspect(page);
+  const state = await inspect(page);
   assert.equal(state.document.bodies.length, 2);
-  const unchanged = state.document.bodies[1];
+  return { left, unchanged: state.document.bodies[1] };
+}
+
+export async function booleanTargetsRoute(page, hidden = false) {
+  const { left, unchanged } = await createStock(page);
+  let state;
   await page.mouse.click(left.x, left.y);
   await chooseTool(page, "sketch on face", "sketch-on-face");
   await page.keyboard.press("r");
@@ -62,6 +67,11 @@ export async function booleanTargetsRoute(page, hidden = false) {
     await page.getByRole("button", { name: "Target body 2", exact: true }).click();
   }
   state = await inspect(page);
+  const tools = state.bodyRendering.booleanOperands;
+  assert.ok(tools.length > 0, "Bundled subtraction shows its generated tool");
+  assert.ok(
+    tools.every((tool) => tool.role === "tool" && tool.opacity === 0.16 && !tool.depthTest),
+  );
   assert.equal(state.preview.bodies.find((b) => b.id === unchanged.id).brep, unchanged.brep);
   close(
     state.preview.bodies.reduce((sum, b) => sum + b.volume, 0),
@@ -80,7 +90,11 @@ export async function booleanTargetsRoute(page, hidden = false) {
   await page.keyboard.press("Enter");
   state = await inspect(page);
   assert.equal(state.preview.bodies.length, 1);
+  assert.ok(state.bodyRendering.booleanOperands.length > 0);
+  assert.ok(state.bodyRendering.booleanOperands.every((tool) => tool.role === "input"));
   assert.equal(state.preview.bodies[0].id, unchanged.id);
   await page.keyboard.press("Escape");
-  assert.equal((await inspect(page)).document.bodies.length, 2);
+  state = await inspect(page);
+  assert.equal(state.document.bodies.length, 2);
+  assert.deepEqual(state.bodyRendering.booleanOperands, []);
 }

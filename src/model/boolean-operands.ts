@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
-import type { Body, BodyBoolean } from "./body.js";
+import type { BodyBoolean, BodyGeometry } from "./body.js";
 import { featureEdges } from "./feature-edges.js";
 
 /** Temporary translucent operand surfaces and outlines remain visible even when a preview consumes them. */
@@ -9,7 +9,7 @@ export class BooleanOperands {
   constructor(private editor: SketchEditor) {
     editor.world.scene.add(this.group);
   }
-  show(bodies: Body[], mode: BodyBoolean["mode"], target: string | null): void {
+  show(bodies: readonly BodyGeometry[], mode: BodyBoolean["mode"], target: string | null): void {
     this.clear();
     bodies.forEach((body) => {
       const color = mode === "subtract" && body.id !== target ? "#d08a35" : "#287cbd";
@@ -46,6 +46,13 @@ export class BooleanOperands {
         this.group.add(line);
       }
     });
+  }
+  /** Show the generated operand corresponding to the just-displayed sweep candidate. */
+  showTool(): void {
+    const mode = this.editor.store.booleanMode;
+    if (mode === "subtract" || mode === "intersect")
+      this.show(this.editor.store.booleanTools, mode, null);
+    else this.clear();
   }
   clear(): void {
     for (const object of [...this.group.children]) {

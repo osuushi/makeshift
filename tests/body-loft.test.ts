@@ -188,6 +188,12 @@ test("loft shares automatic/explicit Boolean targets, hidden eligibility and pla
     ] as const) {
       const cut = await preview(owner, [a, b], { mode, targets: [stock.id] });
       near(cut.volume, expected);
+      if (mode === "union") assert.deepEqual(owner.view.booleanTools, []);
+      else {
+        const tool = owner.view.booleanTools?.[0];
+        assert.ok(tool);
+        near(tool.volume, 96);
+      }
       assert.equal(owner.view.booleanMode, mode === "auto" ? "subtract" : mode);
       assert.deepEqual(owner.view.booleanTargets, [stock.id]);
     }

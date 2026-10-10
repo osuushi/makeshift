@@ -134,7 +134,7 @@ std::vector<Result> intersectionResults(const std::vector<SweepIntersection>& in
     return results;
 }
 std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>& bodies,
-                                   std::string& mode, std::vector<std::string>& participants) {
+                                   std::string& mode, std::vector<std::string>& participants, std::vector<Result>* tools) {
     std::vector<SourceEntity> toolOrigins;
     const auto tool = input.get<std::string>("kind") == "loft"
         ? loftSections(input, bodies) : input.get<std::string>("kind") == "revolve"
@@ -184,6 +184,8 @@ std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>
     if (mode == "new") { solids(results, tool, {}, {}); return results; }
     const auto& selected = targetList ? explicitTargets : mode == "union" ? contact : positive;
     if (selected.empty() && mode != "union") throw std::runtime_error("The swept shape does not intersect a target body");
+    if (tools && (mode == "subtract" || mode == "intersect"))
+        solids(*tools, tool, toolOrigins, {}, twistedVolumeReferenceAxis(input));
     // Detection already constructed the exact implicit Intersect result/history.
     if (reuseIntersection) return intersectionResults(intersections, toolOrigins, participants);
     if (mode == "union") {
@@ -205,7 +207,7 @@ std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>
 }
 }
 std::vector<Result> calculate(const Tree& input, const std::vector<Operand>& bodies,
-                             std::string& mode, std::vector<std::string>& participants) {
+                             std::string& mode, std::vector<std::string>& participants, std::vector<Result>* tools) {
     if (input.get<std::string>("kind", "") == "replace-face") {
         mode = "new"; return replaceFace(input, bodies, participants);
     }
@@ -250,5 +252,5 @@ std::vector<Result> calculate(const Tree& input, const std::vector<Operand>& bod
     if (input.get<std::string>("kind", "") == "boolean") {
         mode = input.get<std::string>("mode"); return booleanBodies(input, bodies, participants);
     }
-    return calculateSweep(input, bodies, mode, participants);
+    return calculateSweep(input, bodies, mode, participants, tools);
 }

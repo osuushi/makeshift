@@ -1,6 +1,7 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { LiftSource, Revolution } from "./body.js";
+import { BooleanOperands } from "./boolean-operands.js";
 import { extrusionAxis } from "./extrude-axis.js";
 import { ExtrudeTargets } from "./extrude-targets.js";
 import type { RevolveAxis } from "./revolve-axis.js";
@@ -9,6 +10,7 @@ import { RevolveInputs } from "./revolve-inputs.js";
 import { RevolveWidget } from "./revolve-widget.js";
 
 export class RevolveControls {
+  private operands: BooleanOperands;
   readonly widget: RevolveWidget;
   lease: InteractionLease | null = null;
   frame: ReturnType<typeof extrusionAxis> = null;
@@ -34,6 +36,7 @@ export class RevolveControls {
     readonly editor: SketchEditor,
     overlay: HTMLElement,
   ) {
+    this.operands = new BooleanOperands(editor);
     this.targets = new ExtrudeTargets(editor, () => {
       if (this.mode === "auto") this.mode = editor.store.booleanMode ?? "auto";
       this.queue();
@@ -230,6 +233,7 @@ export class RevolveControls {
         this.valid = success && request === this.latest;
         if (success) {
           this.lease.show(this.editor.store.candidate);
+          this.operands.showTool();
           this.lastGood = `${request.angle}°, height ${request.height} mm`;
         } else if (request === this.latest) this.failure(this.editor.message);
         // Keep the previous valid presentation, but never accept it for failed input.
@@ -280,6 +284,7 @@ export class RevolveControls {
     this.editor.refresh();
   }
   private update = (): void => {
+    if (!this.lease?.candidate) this.operands.clear();
     const frame = this.active ? this.frame : extrusionAxis(this.editor);
     const mode = this.mode === "auto" ? this.editor.store.booleanMode : this.mode;
     this.widget.update(
@@ -300,6 +305,7 @@ export class RevolveControls {
     );
   };
   dispose(): void {
+    this.operands.dispose();
     this.abort.abort();
     this.editor.world.changed.delete(this.update);
     this.widget.dispose();

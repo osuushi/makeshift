@@ -98,6 +98,7 @@ test("standalone Booleans preview overlaps, preserve originals, reject invalid i
     }
     await owner.call({ kind: "accept" });
     const saved = owner.view.data;
+    assert.equal(owner.view.booleanTools, undefined, "accepted view drops temporary tools");
     await owner.call({ kind: "undo" });
     assert.deepEqual(owner.view.data, original);
     await owner.call({ kind: "redo" });
@@ -234,6 +235,9 @@ test("implicit sweep intersection retains multiple targets and matches explicit 
       }));
     const implicit = await owner.call({ kind: "extrude", extrusion });
     assert.equal(implicit.error, undefined);
+    const tool = implicit.view.booleanTools?.[0];
+    assert.ok(tool);
+    near(tool.volume, 500);
     const results = implicit.view.candidate?.bodies ?? [];
     assert.equal(results.length, 3);
     near(volume(results), 1600);
@@ -245,12 +249,16 @@ test("implicit sweep intersection retains multiple targets and matches explicit 
     assert.deepEqual(owner.view.data, original);
     const expected = summarize(results);
     await owner.call({ kind: "cancel-preview" });
+    assert.equal(owner.view.booleanTools, undefined);
     const explicit = await owner.call({
       kind: "extrude",
       extrusion: { ...extrusion, targets: [a.id, b.id] },
     });
     assert.equal(explicit.error, undefined);
     assert.deepEqual(summarize(explicit.view.candidate?.bodies ?? []), expected);
+    await owner.call({ kind: "accept" });
+    const reopened = await owner.call({ kind: "reopen" });
+    assert.deepEqual(reopened.view.booleanTools?.[0].bounds, tool.bounds);
     await owner.call({ kind: "accept" });
     const saved = owner.view.data;
     await owner.call({ kind: "undo" });

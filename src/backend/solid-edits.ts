@@ -1,4 +1,10 @@
-import type { BodyEdgeFinish, BooleanMode, EdgeMovement, FaceMovement } from "../model/body.js";
+import type {
+  BodyEdgeFinish,
+  BodyGeometry,
+  BooleanMode,
+  EdgeMovement,
+  FaceMovement,
+} from "../model/body.js";
 import {
   type CleanupSelection,
   operationCleanup,
@@ -60,9 +66,12 @@ export class SolidEdits {
   edgeSelection: BodyEdgeFinish["edges"] = [];
   booleanTargets: string[] = [];
   booleanMode: BooleanMode | undefined;
+  booleanTools: BodyGeometry[] = [];
   constructor(private kernel: SolidCalculator) {}
   previewQuality(kind: HistoryOperation["kind"] | undefined) {
     return {
+      booleanTools:
+        kind === "extrude" || kind === "revolve" || kind === "loft" ? this.booleanTools : undefined,
       meshFit: kind === "reconstruct-mesh" ? this.meshFit : undefined,
       erosionQuality: kind === "erode" ? this.erosionQuality : undefined,
     };
@@ -203,6 +212,7 @@ export class SolidEdits {
   }
   async calculate(document: SketchDocument, request: SolidRequest): Promise<SketchDocument> {
     let candidate: SketchDocument;
+    this.booleanTools = [];
     this.meshFit = undefined;
     this.erosionQuality = undefined;
     const bodies = document.bodies ?? [];
@@ -255,6 +265,11 @@ export class SolidEdits {
       );
       this.booleanMode = result.mode;
       this.booleanTargets = result.participants;
+      this.booleanTools = materialize([], {
+        ...result,
+        participants: [],
+        results: result.tools ?? [],
+      }).map(({ brep: _brep, ...geometry }) => geometry);
       const next = materialize(bodies, result);
       candidate = {
         ...document,
