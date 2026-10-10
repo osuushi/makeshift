@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "edge-finish-conditioning.h"
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
 #include <BRepCheck_Analyzer.hxx>
@@ -78,6 +79,16 @@ std::map<std::string, std::vector<TopoDS_Edge>> selectedEdges(const Tree& input,
     if (selected.empty()) throw std::runtime_error("Select at least one body edge");
     return selected;
 }
+std::vector<Operand> finishOperands(const Tree& input, const std::vector<Operand>& bodies) {
+    std::set<std::string> involved;
+    for (const auto& item : input.get_child("edges"))
+        involved.insert(item.second.get<std::string>("body"));
+    std::vector<Operand> result;
+    for (const auto& body : bodies)
+        result.push_back(involved.count(body.id) ? conditionEdgeFinish(body) : body);
+    return result;
+}
+
 template<class Operation>
 void collectChain(const Operand& body, const std::vector<TopoDS_Edge>& edges,
                   std::vector<std::pair<std::string, std::string>>& selected) {
@@ -101,11 +112,12 @@ void collectChain(const Operand& body, const std::vector<TopoDS_Edge>& edges,
 void edgeFinishSelection(std::ostream& out, const Tree& input, const std::vector<Operand>& bodies) {
     const auto mode = input.get<std::string>("mode");
     if (mode != "fillet" && mode != "chamfer") throw std::runtime_error("Unknown edge finish");
-    const auto grouped = selectedEdges(input, bodies);
+    const auto conditioned = finishOperands(input, bodies);
+    const auto grouped = selectedEdges(input, conditioned);
     std::vector<std::pair<std::string, std::string>> selected;
     for (const auto& item : input.get_child("edges"))
         selected.emplace_back(item.second.get<std::string>("body"), item.second.get<std::string>("edge"));
-    for (const auto& body : bodies) {
+    for (const auto& body : conditioned) {
         const auto found = grouped.find(body.id);
         if (found == grouped.end()) continue;
         if (mode == "fillet") collectChain<BRepFilletAPI_MakeFillet>(body, found->second, selected);
@@ -125,9 +137,10 @@ std::vector<Result> finishEdges(const Tree& input, const std::vector<Operand>& b
     if (mode != "fillet" && mode != "chamfer") throw std::runtime_error("Unknown edge finish");
     if (!std::isfinite(size) || size <= 1e-8)
         throw std::runtime_error("Edge size must be greater than zero");
-    const auto selected = selectedEdges(input, bodies);
+    const auto conditioned = finishOperands(input, bodies);
+    const auto selected = selectedEdges(input, conditioned);
     std::vector<Result> results;
-    for (const auto& body : bodies) {
+    for (const auto& body : conditioned) {
         const auto found = selected.find(body.id);
         if (found == selected.end()) continue;
         const auto& edges = found->second;

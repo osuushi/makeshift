@@ -127,6 +127,20 @@ If OCCT builds an edge finish with invalid topology, the kernel makes one shape
 repair pass and validates the repaired solid before offering a preview. A repair
 that remains invalid still rejects the edit.
 
+Failed edge-chain validation keeps the Fillet/Chamfer control open with its error,
+numeric focus and disabled acceptance; Escape/Cancel explicitly releases it.
+For a linear extrusion of a nonrational cubic Bézier with an endpoint handle
+collapsed onto its endpoint, finishing conditions a temporary BRep operand. It
+moves only those handles along their limiting tangent by at most 1e-6 mm, updates
+matching boundary/pcurves and recomputes edge smoothness. The Bézier convex-hull
+bound limits support displacement to 1e-6 mm; endpoints stay fixed. Both the
+conditioned operand and finished solid must pass normal geometry validation.
+Accepted data changes only on acceptance, and Undo restores the original BRep.
+This works from saved solid geometry without its source sketch. Unsupported
+neighboring surfaces retain the original operand. On the captured thin Bézier
+extrusion, the sharp vertical corners now round; rounding its complete top rim
+still fails to find a feasible size. Smooth vertical junctions correctly reject.
+
 Extrude and Offset share the outlined directional drawing and compact control card.
 Extrude uses a lifted circular profile; Offset uses separated curved contours. Their signed
 positive direction is the projected extrusion axis or material-outward face normal;

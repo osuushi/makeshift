@@ -317,6 +317,16 @@ shared-body edits, large requests, zero and history. This is a conservative nume
 boundary for the current selection, not proof of a global maximum. These are bounded Makeshift runtime results,
 not a general fillet-feasibility guarantee or a new upstream source inference.
 
+
+The 2026-10-10 captured cubic extrusion exposed zero endpoint derivatives and
+spurious smooth-edge flags at sharp vertical corners. Clearing those flags alone
+produced a tiny tip solid instead of the rounded body despite passing BRep validity;
+`tests/bezier-extrusion-fillet.test.ts` therefore checks retained volume and bounds.
+Conditioning collapsed handles within 1e-6 mm on temporary supports, with matching
+boundary curves and recomputed smoothness, rounds the captured corners without the
+source sketch. Its complete top rim remains infeasible. This is a bounded Makeshift
+runtime result; no new upstream source inference or code copy is involved.
+
 ## Revolve and constant-pitch helix follow-up
 
 Source observation: FreeCAD's pinned `PartDesign::Helix::execute` constructs a

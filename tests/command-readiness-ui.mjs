@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { bezierFilletFocusRoute } from "./ui-bezier-fillet-focus.mjs";
 import { at, close, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -73,4 +74,8 @@ async function route(page, name) {
     `${name}: held real numeric completion, command readiness and exact extrusion passed`,
   );
 }
-await withUiRuntimes(route, { defaults: ["chromium", "webkit", "electron"] });
+await withUiRuntimes(async (page, name) => {
+  if (process.argv[2] !== "fillet") await route(page, name);
+  await bezierFilletFocusRoute(page);
+  console.log(`${name}: captured Bezier fillet and native rejection retain numeric focus and Undo`);
+});

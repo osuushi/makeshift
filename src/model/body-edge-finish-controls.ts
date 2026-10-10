@@ -150,7 +150,12 @@ export class BodyEdgeFinishControls {
     this.editor.modeling.setTool(this.mode);
     if (!success) {
       this.previews.clear();
-      void this.cancel();
+      this.valid = false;
+      this.invalid = true;
+      this.lease.show(null);
+      this.editor.notice =
+        "Selected edges cannot be finished · Try another mode or cancel to change selection";
+      this.editor.refresh();
       return;
     }
     this.editor.notice = `${this.mode === "fillet" ? "Fillet" : "Chamfer"} · ${this.edges.length} selected edges · Drag or enter a size`;

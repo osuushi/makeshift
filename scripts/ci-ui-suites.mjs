@@ -27,9 +27,10 @@ export const uiSuites = [
   },
   {
     args: ["command-readiness-ui.mjs"],
-    seconds: 7,
+    seconds: 13,
     browsers: ["electron"],
-    reason: "A tool click must await numeric acceptance beyond the native busy flag.",
+    reason:
+      "Tool clicks await numeric acceptance, and native Fillet rejection must retain the field focus, error and explicit cancellation.",
     unit: "tool-switching.test.ts",
   },
   {
