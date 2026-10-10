@@ -7,7 +7,7 @@ import { GridOcclusion, gridLabelTransmission } from "../src/sketch/grid-occlusi
 import { createGrids } from "../src/sketch/world-grid.ts";
 
 // A GPU regression: late translucent fills and fat sketch lines cross the grid.
-export function gridOcclusionPixels() {
+export function gridOcclusionPixels(coplanar = false) {
   const renderer = new THREE.WebGLRenderer({ antialias: false });
   renderer.setSize(128, 128);
   const target = new THREE.WebGLRenderTarget(128, 128);
@@ -15,7 +15,11 @@ export function gridOcclusionPixels() {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("white");
   const camera = new THREE.OrthographicCamera(-20, 20, 20, -20, 0.1, 100);
-  camera.position.set(0, 0, 30);
+  if (coplanar) {
+    camera.far = 100000;
+    camera.updateProjectionMatrix();
+    camera.position.set(30, -40, 50);
+  } else camera.position.set(0, 0, 30);
   camera.lookAt(0, 0, 0);
   camera.updateMatrixWorld();
   const center = new THREE.Vector3();
@@ -36,7 +40,7 @@ export function gridOcclusionPixels() {
         depthWrite: false,
       }),
     );
-    mesh.position.set(i ? 6 : -6, 5, z);
+    mesh.position.set(i ? 6 : -6, 5, coplanar ? 0 : z);
     mesh.renderOrder = 5;
     scene.add(mesh);
     return mesh;
@@ -95,6 +99,7 @@ function readPixels(renderer, target) {
   renderer.readRenderTargetPixels(target, 0, 0, 128, 128, pixels);
   const pixel = (x, y) => [...pixels.slice((y * 128 + x) * 4, (y * 128 + x) * 4 + 3)];
   return {
+    pixels: [...pixels],
     behindFill: pixel(45, 80),
     frontFill: pixel(83, 80),
     behindAxis: pixel(45, 31),

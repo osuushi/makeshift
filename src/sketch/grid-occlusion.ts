@@ -70,6 +70,20 @@ export class GridOcclusion {
         gridOpacity: this.opacity,
         gridDepth: this.depth,
       });
+      // Interpolate plane distances from geometry, rather than classifying the
+      // quantized depth buffer. Coplanar fragments must all stay on the plane.
+      const fatLine = shader.vertexShader.includes("attribute vec3 instanceStart;");
+      const anchor = fatLine ? "gl_Position = clip;" : "#include <project_vertex>";
+      const local = fatLine ? "(position.y < 0.5 ? instanceStart : instanceEnd)" : "transformed";
+      shader.vertexShader = `uniform vec4 gridPlanes[4];
+        uniform vec4 gridCenters[4]; varying float gridDistance[4];\n${shader.vertexShader}`.replace(
+        anchor,
+        `${anchor}
+        vec3 gridPoint = (modelMatrix * vec4(${local}, 1.0)).xyz;
+        for (int i = 0; i < 4; i++) {
+          gridDistance[i] = dot(gridPlanes[i].xyz, gridPoint - gridCenters[i].xyz);
+        }`,
+      );
       shader.fragmentShader = `${fragment}\n${shader.fragmentShader}`.replace(
         "#include <premultiplied_alpha_fragment>",
         "gl_FragColor.a *= gridTransmission();\n#include <premultiplied_alpha_fragment>",
@@ -80,6 +94,7 @@ export class GridOcclusion {
 }
 
 const fragment = `
+varying float gridDistance[4];
 uniform float gridOcclusionEnabled;
 uniform mat4 gridInverse;
 uniform vec2 gridViewport;
@@ -97,7 +112,7 @@ float gridTransmission() {
   for (int i = 0; i < 4; i++) {
     float facing = dot(gridPlanes[i].xyz, gridDirection);
     if (gridOpacity[i] <= 0.0 || abs(facing) < 0.00001) continue;
-    float distance = -(dot(gridPlanes[i].xyz, point) + gridPlanes[i].w) / facing;
+    float distance = -gridDistance[i] / facing;
     if (distance >= -0.0001) continue;
     vec3 hit = point + gridDirection * distance;
     vec3 offset = hit - gridCenters[i].xyz;
