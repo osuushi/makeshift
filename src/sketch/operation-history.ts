@@ -24,6 +24,8 @@ export function describeOperation(request: ModelRequest): HistoryOperation {
         maxPatches: request.input.maxPatches,
       },
     };
+  if (request.kind === "paste-geometry")
+    return { kind: request.kind, parameters: { target: request.target } };
   if (request.kind === "open")
     return {
       kind: "open",

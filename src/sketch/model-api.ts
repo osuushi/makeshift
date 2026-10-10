@@ -20,6 +20,11 @@ import type { HistoryOperation, OperationHistoryEntry } from "./operation-histor
 import type { PlaneFrame } from "./planes.js";
 
 export type ModelRequest =
+  | {
+      kind: "paste-geometry";
+      text: string;
+      target?: import("../clipboard/geometry.js").PasteTarget;
+    }
   | { kind: "reconstruct-mesh"; input: import("../model/mesh-fit.js").MeshReconstructionInput }
   | { kind: "tagged-group"; edit: import("../tags/model.js").TagEdit }
   | { kind: "export-step"; items: import("../model/step-export.js").StepItem[] }

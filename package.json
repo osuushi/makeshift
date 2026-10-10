@@ -25,6 +25,7 @@
     "test:booleans": "node tests/boolean-collection-ui.mjs",
     "test:plane-cuts": "node tests/plane-cut-feedback-ui.mjs",
     "test:setup": "node --test tests/sdk-provenance.mjs tests/ui-runtime-selection.mjs tests/worktree-dependencies.mjs tests/native-build-cache.mjs",
+    "test:clipboard": "node tests/clipboard-ui.mjs",
     "test:selection-history": "node tests/selection-history-ui.mjs",
     "test:reconnection": "node tests/boundary-reconnection-ui.mjs",
     "test:standalone-cleanup": "node tests/standalone-cleanup-ui.mjs",

@@ -3,6 +3,14 @@
 // Add combinatorial cases to the linked lower-level tests, not this inventory.
 export const uiSuites = [
   {
+    args: ["clipboard-ui.mjs"],
+    seconds: 20,
+    browsers: ["electron"],
+    reason:
+      "Native Edit roles must reach browser geometry clipboard handlers, retain pasted selection and leave text inputs in control.",
+    unit: "clipboard.test.ts",
+  },
+  {
     args: ["primitive-handoff-ui.mjs"],
     seconds: 60,
     browsers: ["electron"],

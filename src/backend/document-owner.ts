@@ -13,6 +13,7 @@ import { DocumentStore } from "./document-store.js";
 import { GeometryQueries, isGeometryQuery } from "./geometry-queries.js";
 import { NativeSolver } from "./native-solver.js";
 import { openDocument } from "./open-document.js";
+import { pasteGeometry } from "./paste-geometry.js";
 import { planeCutAvailable } from "./plane-cut.js";
 import { type ReopenPreview, reopenPreview } from "./reopen-preview.js";
 import { ScriptEdits } from "./script-edits.js";
@@ -258,6 +259,9 @@ export class DocumentOwner {
       await this.preview(request);
       return;
     }
+    await this.dispatchCommand(request, operation);
+  }
+  private async dispatchCommand(request: ModelRequest, operation: HistoryOperation): Promise<void> {
     switch (request.kind) {
       case "check-cleanup":
         if (this.candidate && !this.reopenedPreview)
@@ -273,6 +277,19 @@ export class DocumentOwner {
         );
         if (request.kind === "delete-topology") await this.accept();
         break;
+      case "paste-geometry": {
+        const document = await pasteGeometry(
+          this.store.data,
+          request.text,
+          this.kernel,
+          request.target,
+        );
+        this.checkCancellation();
+        this.pendingOperation = null;
+        this.candidate = null;
+        this.store.accept(document, operation);
+        break;
+      }
       case "open": {
         const document = await openDocument(request.document, this.kernel);
         this.checkCancellation();
