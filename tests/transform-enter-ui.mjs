@@ -271,7 +271,7 @@ async function workspaceEnter(page, name) {
   const body = document.bodies[0];
   await modelClick(page, topFacePoint(body));
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
-  const onFace = await idleEnter(page);
+  const onFace = await idleEnter(page, "Control+Enter");
   assert.equal(onFace.activePlane, "Face sketch");
   assert.deepEqual(onFace.document, document);
   await chooseTool(page, "return to modeling", "modeling");
