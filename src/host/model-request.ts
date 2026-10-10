@@ -28,6 +28,7 @@ const kinds: Record<HostModelRequest["kind"], true> = {
   "delete-plane": true,
   mirror: true,
   measure: true,
+  "center-of-mass": true,
   "cancel-preview": true,
   "supersede-preview": true,
   "check-cleanup": true,

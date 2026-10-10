@@ -30,12 +30,13 @@ export async function scriptSolidTool(
 function validate(document: SketchDocument, operation: Operation): void {
   const bodies = document.bodies ?? [];
   if (operation.kind === "booleanBodies") {
-    const { ids, mode, keepOriginals } = operation.input;
+    const { ids, mode, keepOriginals, experimentalTrimFiltering } = operation.input;
     if (
       !uniqueStrings(ids) ||
       ids.length < 2 ||
       !["union", "subtract", "intersect"].includes(mode) ||
       typeof keepOriginals !== "boolean" ||
+      (experimentalTrimFiltering !== undefined && typeof experimentalTrimFiltering !== "boolean") ||
       ids.some((id) => !bodies.some((b) => b.id === id))
     )
       throw new Error(

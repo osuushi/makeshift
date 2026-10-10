@@ -30,6 +30,8 @@ export interface MakeshiftScript extends DecoratorScriptApi, TagScriptApi {
   fitMesh(input: MeshFitInput): Promise<MeshFitResult>;
   /** Candidate topology, including analytic supports, trimmed loops and adjacency; no geometry edit. */
   topology(input: { body: string }): Promise<BodyTopology>;
+  /** Uniform-density mass center in world mm; computed on demand and cached. */
+  centerOfMass(input: { body: string }): Promise<{ centerOfMass: [number, number, number] }>;
   /** Coaxial complete cylinder/cone wall with two circular rims and perpendicular planar neighbors. */
   replaceFace(input: FaceReplacement): Promise<SolidResult>;
   /** Omit id to create, or provide an existing plane id to reposition it. */

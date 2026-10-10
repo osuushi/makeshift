@@ -19,6 +19,7 @@ export function bodySummary(body: Body) {
     id: body.id,
     volume: body.volume,
     center: body.center,
+    centerKind: "bounding-box midpoint",
     bounds: body.bounds,
     boundsKind: "conservative kernel bounding box",
     dimensions: body.bounds.slice(3).map((max, i) => max - body.bounds[i]),

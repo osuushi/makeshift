@@ -52,6 +52,7 @@ export type ModelRequest =
   | { kind: "delete-plane"; id: string }
   | { kind: "mirror"; operation: import("../model/mirror.js").MirrorOperation }
   | { kind: "measure"; targets: import("../model/measurement.js").MeasurementTarget[] }
+  | { kind: "center-of-mass"; body: string }
   | { kind: "cancel-preview" }
   | { kind: "supersede-preview"; interrupt?: boolean }
   | { kind: "check-cleanup" | "read-history" }
@@ -130,5 +131,6 @@ export type ModelReply = {
   error?: string;
   history?: OperationHistoryEntry[];
   measurement?: import("../model/measurement.js").Measurement;
+  centerOfMass?: import("./planes.js").Vector;
 };
 export type ModelCall = (request: ModelRequest) => Promise<ModelReply>;

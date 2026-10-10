@@ -29,6 +29,18 @@ does not relax geometry validation or repair invalid solids after sweeping.
 B1 now uses a stateless OCCT 7.9.3 calculator for exact profile sweeps and Booleans.
 The existing TypeScript document owner supplies current BReps and accepts the
 whole candidate, including zero/multiple results, as one snapshot Undo step.
+
+Settings → Experimental exposes **Fast trim checks**, off by default and saved
+on the device. New standalone Subtract operations use this preference. `BodyBoolean.experimentalTrimFiltering`
+is captured with the operation so reopening restores the choice. It runs OCCT's
+original box filter first, then conservative cached trimming-aware UV-cell bounds;
+uncertain pairs retain exact intersection processing. Fuzzy/contact tolerances
+are unchanged. Failure or an invalid experimental result retries ordinary OCCT
+processing before existing repair/validation. Other Boolean and automatic sweep
+paths do not opt in. The native benchmark and focused model/UI tests cover the
+shared implementation; broader geometry coverage and WASM runtime validation
+remain necessary before changing the default.
+
 Reported body volumes use adaptive integration of exact surfaces, with spline-span
 quadrature for curved bodies. A nearby exterior reference plane along the shortest
 bounding-box axis avoids unstable near-zero integrals on cut faces and limits
@@ -36,8 +48,15 @@ amplification of boundary tolerances. Planar bodies retain ordinary adaptive
 integration. Nonfinite or failed integration rejects; tessellation is not a volume
 source. Offset reversal, shell-cap differences, plane-cut conservation and rigid
 placement are regression checks for these measurements.
-Display meshes/outlines and planar frames derive from the exact geometry. Face
-eligibility uses its geometric surface, not how it was generated. Native operation
+Display meshes/outlines and planar frames derive from the exact geometry. Body
+results report `center` as the bounding-box midpoint for widget placement and
+nearby mesh coordinates, without a separate center-of-mass integration. Precise uniform-density
+center of mass is a read-only `center-of-mass` query or
+`makeshift.centerOfMass({body})` script call. Each calculator caches up to 16
+exact-BRep results in memory; changed geometry misses, failed queries are evicted,
+and closing the calculator clears the cache. These derivatives are not saved or
+recorded in Undo. Agent inspection labels the ordinary center as a bounding-box midpoint.
+Face eligibility uses its geometric surface, not how it was generated. Native operation
 history supplies immediate face/edge correspondence; one-to-one continuations
 retain IDs, while splits/merges receive new ones. Future label policy is deferred.
 Use edge copies supported coplanar line/circular geometry into ordinary sketch

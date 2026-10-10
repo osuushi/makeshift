@@ -39,6 +39,7 @@ type Request =
       bodies: readonly ExactBody[];
     }
   | { kind: "topology"; body: string; bodies: readonly ExactBody[] }
+  | { kind: "center-of-mass"; bodies: readonly ExactBody[] }
   | (import("../model/topology-edit.js").FaceReplacement & {
       kind: "replace-face";
       bodies: readonly ExactBody[];

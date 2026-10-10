@@ -7,6 +7,7 @@ import type { KernelRequest } from "./kernel-request.js";
 import type { KernelResult } from "./kernel-result.js";
 
 interface QueryReplies {
+  "center-of-mass": { centerOfMass: import("../sketch/planes.js").Vector };
   topology: { topology: BodyTopology };
   sections: { sections: SketchSection[] };
   measure: { measurement: Measurement };
