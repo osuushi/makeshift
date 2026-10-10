@@ -10,7 +10,7 @@ import { orientationOverrides } from "../.build/host/host/agent-orientation.js";
 import { workspaceTrustOverride } from "../.build/host/host/agent-settings.js";
 import { readPortableArchive } from "../.build/host/model/portable-archive.js";
 import { launchElectron, openDocument, saveDocument } from "./native-documents.mjs";
-import { drag, settled } from "./ui-helpers.mjs";
+import { drag, reset, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const run = promisify(execFile);
@@ -175,7 +175,7 @@ throw new Error("sandbox script rollback");
       response: o.buttons?.[0] === "Stop and continue" ? 0 : 2,
     });
   });
-  await chooseTool(page, "new document", "new");
+  await reset(page);
   await until(
     async () => (await page.evaluate(() => window.makeshiftDocument.status())).path === null,
   );
@@ -183,7 +183,7 @@ throw new Error("sandbox script rollback");
   await page.getByRole("button", { name: "Start", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
   const second = await environment(page);
-  assert.equal((await status(second)).document.name, "Untitled");
+  assert.match((await status(second)).document.name, /^Untitled(?: \d+)?$/);
   await openDocument(page, file);
   await until(
     async () => (await page.evaluate(() => window.makeshiftDocument.status())).path === file,

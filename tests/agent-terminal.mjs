@@ -99,31 +99,29 @@ try {
     (await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }))).workspace,
     first.workspace,
   );
-  await app.evaluate(({ dialog }) => {
-    dialog.showMessageBox = async (_window, options) => ({
-      response: options.buttons?.[0] === "Save" ? 2 : 1,
-    });
-  });
+  const opened = app.waitForEvent("window");
   await chooseTool(page, "new document", "new");
+  const independent = await opened;
+  await settled(independent);
   assert.equal(
     (await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }))).running,
     true,
   );
-  await app.evaluate(({ dialog }) => {
-    dialog.showMessageBox = async (_window, options) => ({
-      response: options.buttons?.[0] === "Save" ? 2 : 0,
-    });
-  });
-  await chooseTool(page, "new document", "new");
-  await waitAgent(page, (status) => status.workspace === null && !status.running);
   assert.equal(
-    (await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }))).running,
+    (await independent.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }))).running,
     false,
   );
+  assert.equal(
+    (await independent.evaluate(() => window.makeshiftAgent.request({ kind: "settings" })))
+      .workspace,
+    null,
+  );
+  await page.getByRole("button", { name: "Stop", exact: true }).click();
+  await waitAgent(page, (status) => !status.running);
   await access(join(first.workspace, "terminal-check.txt"));
   assert.deepEqual(errors, []);
   console.log(
-    "PASS hidden Electron terminal: real PTY input, env/cwd, collapse, resize, stop/restart, canceled/accepted New, retained files",
+    "PASS hidden Electron terminal: real PTY input, env/cwd, collapse, resize, stop/restart, independent New window, retained files",
   );
 } finally {
   const page = app.windows()[0];

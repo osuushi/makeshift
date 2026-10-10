@@ -2,6 +2,8 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { _electron } from "playwright";
+import { documentTestPage, followDocument } from "./document-test-page.mjs";
+import { reset } from "./ui-helpers.mjs";
 import { installTestFrames } from "./ui-test-frames.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -48,8 +50,9 @@ export async function launchElectron(options) {
     app.firstWindow = async (...args) => {
       const page = await firstWindow(...args);
       await installTestFrames(page);
-      sessions.set(page, { app, directory });
-      return page;
+      const fixture = documentTestPage(page, { app, directory });
+      sessions.set(fixture, { app, directory });
+      return fixture;
     };
     return app;
   } catch (error) {
@@ -76,10 +79,30 @@ export async function openDocument(page, file) {
     path = join(session.directory, "fixture.makeshift");
     await writeFile(path, file.buffer);
   }
+  // Archive fixture cases need a fresh owner when reopening the current file.
+  // Product duplicate-open/focus behavior is covered by document-lifecycle.mjs.
+  if ((await page.evaluate(() => window.makeshiftDocument.status())).path === path)
+    await reset(page);
   await session.app.evaluate(({ dialog }, path) => {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] });
   }, path);
   await chooseTool(page, "open document", "open");
+  let next;
+  for (let attempt = 0; attempt < 200 && !next; attempt++) {
+    for (const candidate of session.app.windows()) {
+      const matches = await candidate
+        .evaluate(async (path) => (await window.makeshiftDocument?.status())?.path === path, path)
+        .catch(() => false);
+      if (matches) {
+        next = candidate;
+        break;
+      }
+    }
+    if (!next) await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+  if (!next) throw new Error(`Open did not create or focus document: ${path}`);
+  await installTestFrames(next);
+  await followDocument(page, next);
   await page.waitForFunction(() => !window.makeshiftInspect().busy);
 }
 
@@ -95,13 +118,10 @@ export async function saveDocument(page, path) {
     await (await downloaded).saveAs(path);
     return;
   }
-  await session.app.evaluate(({ dialog, Menu }, path) => {
+  await session.app.evaluate(({ dialog }, path) => {
     dialog.showSaveDialog = async () => ({ canceled: false, filePath: path });
-    Menu.getApplicationMenu()
-      .items.find((item) => item.label === "File")
-      .submenu.items.find((item) => item.label === "Save As…")
-      .click();
   }, path);
+  await chooseTool(page, "save document as", "save-as");
   for (let attempt = 0; attempt < 200; attempt++) {
     const saved = await page.evaluate(async (path) => {
       const status = await window.makeshiftDocument.status();

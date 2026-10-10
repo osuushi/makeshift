@@ -3,10 +3,10 @@ import { rm } from "node:fs/promises";
 import { resolve } from "node:path";
 import { openDocument, saveDocument } from "./native-documents.mjs";
 import { plate } from "./ui-body-fillet.mjs";
-import { close } from "./ui-helpers.mjs";
+import { close, reset } from "./ui-helpers.mjs";
 import { completed } from "./ui-reopen-cycle.mjs";
 import { snapshot } from "./ui-reopen-guard-boundaries.mjs";
-import { chooseTool, toolEnabled } from "./ui-tools.mjs";
+import { toolEnabled } from "./ui-tools.mjs";
 
 /** Save/Open persists exact BRep and identities; native inspection rebuilds display derivatives. */
 export async function reopenReplacementGuards(page, name) {
@@ -16,7 +16,7 @@ export async function reopenReplacementGuards(page, name) {
   const path = resolve(`.cache/sketch-review/${name}-reopen-guard-saved.makeshift`);
   try {
     await saveDocument(page, path);
-    await chooseTool(page, "new document", "new");
+    await reset(page);
     const fresh = await completed(page);
     assert.equal(fresh.document.sketches.length, 0);
     assert.equal(fresh.document.bodies?.length ?? 0, 0);

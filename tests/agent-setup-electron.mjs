@@ -182,7 +182,7 @@ async function hostGuards(app, page) {
       extra.destroy();
     }
   });
-  assert.match(rejected, /Agent commands require the document window/);
+  assert.match(rejected, /IPC requires a document window/);
   await app.evaluate(() => {
     const s = globalThis.agentSetupFixture.session;
     globalThis.agentSetupFixture.desktop = s.canUseDesktop;

@@ -29,8 +29,8 @@ export async function chooseTool(page, query, id) {
     await page.waitForFunction((id) => {
       const state = window.makeshiftInspect();
       return (
-        !state.busy &&
-        (["new", "open", "save", "save-as", "close"].includes(id) ||
+        ["new", "open", "save", "save-as", "close"].includes(id) ||
+        (!state.busy &&
           state.commands.every((command) => command.unavailable !== "Switching tools…"))
       );
     }, id);

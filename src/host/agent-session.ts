@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { app, type BrowserWindow, clipboard, ipcMain } from "electron";
+import { app, type BrowserWindow, clipboard } from "electron";
 import type { InspectionCommand } from "../agent/inspection-protocol.js";
 import type { AgentReply, AgentRequest } from "../agent/protocol.js";
 import type { ScriptRequest } from "../agent-script/api.js";
@@ -9,25 +9,26 @@ import type { AgentConnection } from "./agent-connection.js";
 import { agentExecutable } from "./agent-executable.js";
 import { orientationOverrides, prepareOrientation } from "./agent-orientation.js";
 import { AgentProcess } from "./agent-process.js";
+import { recoverAgentFiles } from "./agent-recovery.js";
 import {
-  AgentSettings,
+  type AgentSettings,
   codexPermissionOverrides,
   personalSkillOverrides,
   workspaceTrustOverride,
 } from "./agent-settings.js";
-import { AgentSetup } from "./agent-setup.js";
+import type { AgentSetup } from "./agent-setup.js";
 import { prepareAgentSkills } from "./agent-skills.js";
 import { AgentWorkspace } from "./agent-workspace.js";
 import { codexResumeArgs, copyCodexLocalState } from "./codex-workspace.js";
+import { DocumentIPC } from "./document-ipc.js";
 import { nativeExecutable } from "./native-paths.js";
 import { sessionDialogs as dialog } from "./session-dialogs.js";
-import { recoverWorkspaceFiles } from "./workspace-recovery.js";
 
 export class AgentSession {
+  private ipc = new DocumentIPC();
   canUseDesktop = () => true;
   private process = new AgentProcess(nativeExecutable("agent-scope"));
-  private settings = new AgentSettings(app.getPath("userData"));
-  readonly setup = new AgentSetup(this.settings, app);
+
   readonly workspace = new AgentWorkspace(join(app.getPath("userData"), "agent", "workspaces"));
   private codexHome: string | null = null;
   private window: BrowserWindow | null = null;
@@ -48,8 +49,11 @@ export class AgentSession {
   ): Promise<unknown> => {
     throw new Error("The document is not attached.");
   };
-  constructor() {
-    ipcMain.handle("agent", async (event, request: AgentRequest) => {
+  constructor(
+    private settings: AgentSettings,
+    readonly setup: AgentSetup,
+  ) {
+    this.ipc.handle("agent", async (event, request: AgentRequest) => {
       if (event.sender !== this.window?.webContents || event.senderFrame !== event.sender.mainFrame)
         throw new Error("Agent commands require the document window.");
       try {
@@ -63,7 +67,11 @@ export class AgentSession {
   get status(): AgentReply {
     return { ...this.process.status, workspace: this.workspace.cwd, setup: this.setup.status };
   }
+  get unused(): boolean {
+    return !this.busy && !this.replacing && !this.process.status.running && !this.workspace.root;
+  }
   attach(window: BrowserWindow): void {
+    this.ipc.attach(window);
     this.window = window;
     window.webContents.on("did-finish-load", () =>
       window.webContents.setIgnoreMenuShortcuts(false),
@@ -133,7 +141,11 @@ export class AgentSession {
         return { ...this.status, executable: result.canceled ? undefined : result.filePaths[0] };
       }
       case "recover":
-        return this.recover(window);
+        if (this.process.status.running) throw new Error("Stop the agent before recovering files.");
+        await recoverAgentFiles(window, this.workspace, this.settings.directory, () =>
+          this.disconnect(),
+        );
+        return this.status;
       case "attach": {
         const attachment = await attachAgentFile(this.workspace, request.name, request.base64);
         return { ...this.status, attachment };
@@ -146,34 +158,6 @@ export class AgentSession {
       default:
         throw new Error("Unknown agent request.");
     }
-  }
-  private async recover(window: BrowserWindow): Promise<AgentReply> {
-    if (this.process.status.running) throw new Error("Stop the agent before recovering files.");
-    const choice = await dialog.showOpenDialog(window, {
-      properties: ["openDirectory"],
-      title: "Recover agent workspace",
-      defaultPath: this.workspace.directory,
-      message:
-        "Choose a retained document folder. Its files and conversations replace this document's agent workspace; geometry is unchanged.",
-    });
-    if (!choice.canceled && choice.filePaths[0]) {
-      const files = await recoverWorkspaceFiles(choice.filePaths[0], this.settings.directory);
-      if (!Object.keys(files).length)
-        throw new Error("This folder has no recoverable agent files.");
-      const confirmed = await dialog.showMessageBox(window, {
-        message: "Replace this document's agent files with the recovered files?",
-        detail:
-          "Current local files remain in their recovery folder. Save this document to keep the recovered files.",
-        buttons: ["Recover", "Cancel"],
-        defaultId: 1,
-        cancelId: 1,
-      });
-      if (confirmed.response === 0) {
-        await this.disconnect();
-        this.workspace.recovered(await this.workspace.prepare(files), files);
-      }
-    }
-    return this.status;
   }
   private async start(request: Extract<AgentRequest, { kind: "start" }>): Promise<AgentReply> {
     if (this.process.status.running) return this.status;
@@ -246,22 +230,6 @@ export class AgentSession {
     if (![cols, rows].every((value) => Number.isInteger(value) && value >= 2 && value <= 500))
       throw new Error("Invalid terminal dimensions.");
   }
-  async mayReplace(): Promise<boolean> {
-    const window = this.window;
-    if (!window) return false;
-    if (this.busy) return false;
-    if (!this.process.status.running) return true;
-    const { response } = await dialog.showMessageBox(window, {
-      type: "question",
-      message: "Stop the agent before leaving this document?",
-      detail: "The agent must stop before the final save or document replacement.",
-      buttons: ["Stop and continue", "Cancel"],
-      defaultId: 1,
-      cancelId: 1,
-      noLink: true,
-    });
-    return response === 0;
-  }
   async stop(): Promise<void> {
     if (this.busy) throw new Error("Wait for the agent lifecycle operation to finish.");
     this.replacing = true;
@@ -271,10 +239,6 @@ export class AgentSession {
     } finally {
       this.busy = false;
     }
-  }
-  reset(): void {
-    this.process = new AgentProcess(nativeExecutable("agent-scope"));
-    this.window?.webContents.setIgnoreMenuShortcuts(false);
   }
   endReplacement(): void {
     this.replacing = false;

@@ -6,7 +6,7 @@ import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { readPortableArchive } from "../.build/host/model/portable-archive.js";
 import { launchElectron, openDocument, saveDocument } from "./native-documents.mjs";
-import { drag, settled } from "./ui-helpers.mjs";
+import { drag, reset, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const root = await mkdtemp(join(tmpdir(), "makeshift-persistence-"));
@@ -28,7 +28,7 @@ try {
   await page.getByRole("button", { name: "Open agent terminal" }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
   await chooseTool(page, "Sketch on XY", "sketch-xy");
-  await page.keyboard.press("r");
+  await chooseTool(page, "rectangle", "rectangle");
   await drag(page, [-10, -6], [10, 6]);
   await settled(page);
   const model = await page.evaluate(() =>
@@ -78,7 +78,10 @@ try {
   await app.evaluate(({ dialog }) => {
     dialog.showMessageBox = async () => ({ response: 1 });
   });
+  const opened = app.waitForEvent("window");
   await chooseTool(page, "new document", "new");
+  const independent = await opened;
+  await settled(independent);
   assert.equal(
     await page.evaluate(() =>
       JSON.stringify({
@@ -88,13 +91,11 @@ try {
     ),
     model,
   );
-  await app.evaluate(({ dialog, Menu }, path) => {
-    dialog.showSaveDialog = async () => ({ canceled: false, filePath: path });
-    const item = Menu.getApplicationMenu()
-      .items.find((i) => i.label === "File")
-      .submenu.items.find((i) => i.label === "Save As…");
-    item.click();
-  }, copy);
+  assert.equal(
+    (await independent.evaluate(() => window.makeshiftAgent.request({ kind: "read" }))).running,
+    false,
+  );
+  await saveDocument(page, copy);
   await until(async () => {
     await readFile(copy);
     return true;
@@ -108,20 +109,23 @@ try {
   await until(async () => !(await page.evaluate(() => window.makeshiftDocument.status())).edited);
   await app.evaluate(({ dialog }) => {
     dialog.showMessageBox = async (_w, o) => {
-      if (o.buttons?.[0] === "Stop and continue")
+      if (o.buttons?.[0] === "Save")
         await new Promise((resolve) => {
           globalThis.answerStop = resolve;
         });
       return { response: 0 };
     };
   });
-  await chooseTool(page, "new document", "new");
+  await writeFile(join(workspace, "shutdown.txt"), "before close");
+  await until(async () => (await page.evaluate(() => window.makeshiftDocument.status())).edited);
+  const resetting = reset(page);
   await until(() => app.evaluate(() => !!globalThis.answerStop));
   await writeFile(join(workspace, "shutdown.txt"), "late write");
   await app.evaluate(() => {
     globalThis.answerStop();
     globalThis.answerStop = null;
   });
+  await resetting;
   await settled(page);
   await until(
     async () => (await page.evaluate(() => window.makeshiftDocument.status())).path === null,
@@ -155,6 +159,13 @@ try {
   await chooseTool(page, "save document", "save");
   await until(async () => !(await page.evaluate(() => window.makeshiftDocument.status())).edited);
   // Recovery imports files/conversation without replacing geometry.
+  await page.getByRole("button", { name: "Open agent terminal" }).click();
+  await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
+  await page.getByRole("button", { name: "Stop", exact: true }).click();
+  await until(
+    async () =>
+      !(await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" }))).running,
+  );
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await app.evaluate(({ dialog }, path) => {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] });
@@ -195,21 +206,25 @@ try {
   }
   await app.close();
 }
-const server = await createServer({ server: { port: 0 } });
-await server.listen();
 try {
   for (const [name, engine] of Object.entries({ chromium, webkit })) {
+    // The Vite native development backend owns one model per server. A fresh
+    // server keeps browser fixtures independent, like document windows.
+    const server = await createServer({ server: { port: 0, watch: null, hmr: false } });
+    await server.listen();
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage();
       await page.goto(server.resolvedUrls.local[0]);
+      await settled(page);
       // Use the original portable payload for exact-byte browser preservation.
       await page.getByLabel("Open Makeshift file").setInputFiles(copy);
+      await page.waitForFunction(
+        () => window.makeshiftInspect().document.sketches[0]?.curves.length === 4,
+      );
       await settled(page);
-      const download = page.waitForEvent("download");
-      await chooseTool(page, "save document", "save");
       const path = join(root, `${name}.makeshift`);
-      await (await download).saveAs(path);
+      await saveDocument(page, path);
       assert.deepEqual(
         readPortableArchive(await readFile(path)).files,
         readPortableArchive(await readFile(copy)).files,
@@ -217,10 +232,10 @@ try {
       console.log(`PASS ${name}: portable files and conversations survive upload/download`);
     } finally {
       await browser.close();
+      await server.close();
     }
   }
 } finally {
-  await server.close();
   await rm(root, { recursive: true, force: true });
 }
 

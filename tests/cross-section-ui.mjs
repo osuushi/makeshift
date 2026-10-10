@@ -6,7 +6,7 @@ import { createServer } from "vite";
 import { launchElectron, openDocument, saveDocument } from "./native-documents.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { makePlate, worldClick } from "./ui-face-offset.mjs";
-import { inspect, settled } from "./ui-helpers.mjs";
+import { inspect, reset, settled } from "./ui-helpers.mjs";
 import { pickPlane } from "./ui-plane-targets.mjs";
 import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -240,7 +240,7 @@ async function savedPlaneRoute(page, name) {
   await chooseTool(page, "cross section", "cross-section");
   await pickPlane(page, "XY");
   await page.keyboard.press("Enter");
-  await chooseTool(page, "new document", "new");
+  await reset(page);
   assert.equal((await inspect(page)).crossSection, null);
 }
 await mkdir(".cache/cross-section", { recursive: true });

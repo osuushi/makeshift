@@ -59,6 +59,7 @@ class BrowserConnection {
     };
     window.makeshiftDocument = {
       command: (command, camera) => this.rpc.request("document-command", { command, camera }),
+      commandFinished: (command) => this.rpc.request("document-command-finished", command),
       status: () => this.rpc.request("document-status"),
       onCommand: (callback) => this.subscribe<DocumentCommand>("document-command", callback),
       onStatus: (callback) => this.subscribe<DocumentStatus>("document-status", callback),

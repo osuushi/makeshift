@@ -79,7 +79,7 @@ export async function filletCursorRoute(page, name) {
   assert.deepEqual((await inspect(page)).document, rounded);
   const path = resolve(`.cache/sketch-review/${name}-fillet-cursor.makeshift`);
   await saveDocument(page, path);
-  await chooseTool(page, "new document", "new");
+  await reset(page);
   await page.waitForFunction(() => window.makeshiftInspect().document.sketches.length === 0);
   await openDocument(page, path);
   await page.waitForFunction(
