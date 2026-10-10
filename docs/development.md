@@ -75,12 +75,15 @@ without deleting the main cache. Explicit `OCCT_ROOT` overrides are preserved.
 Its macOS defaults use Node's architecture and deployment target `14.0`,
 matching the arm64 release SDK. Explicit environment overrides are preserved.
 The macOS hook runs `bash scripts/setup-worktree.sh` after activating Node.
-Install optional compiler caching with `brew install ccache`. Setup automatically
-uses it when available, with a shared 2 GB cache in the main checkout's
+Install optional compiler caching with `brew install ccache`. Setup and ordinary
+`npm run dev` / `npm run build:native` commands automatically
+use it when available, with a shared 2 GB cache in the main checkout's
 `.cache/ccache` and checkout-relative compiler paths. The first compilation fills
 the cache; later worktrees can reuse matching compiler outputs while retaining
 independent CMake build directories. `CMAKE_CXX_COMPILER_LAUNCHER`, `CCACHE_DIR`,
 `CCACHE_BASEDIR` and `CCACHE_MAXSIZE` overrides are preserved.
+Existing main-checkout configurations acquire the launcher on their next build;
+an explicitly empty `CMAKE_CXX_COMPILER_LAUNCHER` disables it.
 Mesh archives are shared by SHA-256 under the main checkout's `.cache/mesh-archives`
 (`MAKESHIFT_MESH_ARCHIVE_CACHE` overrides this); extraction remains checkout-local.
 Existing local mesh archives seed that cache after checksum verification.
