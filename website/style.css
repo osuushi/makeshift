@@ -121,8 +121,10 @@ nav a:hover {
   max-width: 960px;
 }
 .hero {
+  max-width: 680px;
+  margin-inline: auto;
   padding-block: 56px 36px;
-  text-align: center;
+  text-align: left;
 }
 .hero h1 {
   margin-bottom: 24px;
@@ -140,7 +142,7 @@ nav a:hover {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 12px 28px;
 }
 .actions p {
