@@ -9,7 +9,7 @@ Cubic editing/projection (2026-09-16) supersedes any earlier spline exclusion.
 In Modeling, a single click on a canonical plane selects that reference, clearing
 geometry and saved-plane selection. The reference stays selected after hover leaves.
 Initially the most face-on canonical grid is primary. Retain it until the viewing
-direction is within the configured **Plane switch angle** of its surface (30° by
+direction is within the configured **Plane switch angle** of its surface (15° by
 default), then choose the most face-on XY/XZ/YZ plane. Both sides count equally;
 facing-score ties within 1e-12 prefer XY, XZ, then YZ. The setting ranges from 0°
 (retain until edge-on) to 90° (always choose most face-on), is stored locally,

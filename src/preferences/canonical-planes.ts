@@ -22,7 +22,7 @@ export const planePresets = {
 export const defaultPlaneColors = { XY: "#d4ae3a", XZ: "#55bb6e", YZ: "#b325c1" };
 export const defaultSecondaryOpacity = 0;
 const defaults: CanonicalPlaneSettings = {
-  switchAngleDegrees: 30,
+  switchAngleDegrees: 15,
   ...planePresets.focused,
   selectableMinimum: 0.15,
   fullOpacityAbove: 1,

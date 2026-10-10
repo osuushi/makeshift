@@ -31,7 +31,7 @@ Coplanar geometry remains unveiled: plane-side classification interpolates signe
 geometry distances rather than reconstructing them from quantized fragment depth.
 Initially the most face-on canonical plane is primary at configured maximum grid
 opacity. Retain it until the viewing direction is within the **Plane switch angle**
-of its surface (default 30°), then choose the most face-on plane again. Ties resolve
+of its surface (default 15°), then choose the most face-on plane again. Ties resolve
 XY, then XZ, then YZ (facing differences within 1e-12 count as tied).
 Only the primary has a nonzero visibility target. On switching, each grid carries
 opacity and velocity through a critically damped spring with a 240 ms smoothing
@@ -46,7 +46,7 @@ independently of camera retreat; nearer portions retain full strength. Work grid
 construction planes, world axes and geometry do not receive this fade.
 Settings keeps this simple behavior and
 exposes grid line opacity, white grid fill opacity (0–100%, default 30%),
-line thickness (0.5–3 pixels, default 1), plane switch angle (0–90°, default 30°),
+line thickness (0.5–3 pixels, default 1), plane switch angle (0–90°, default 15°),
 colors and saved palettes. A 0° switch angle retains until edge-on; 90° always
 chooses the most face-on plane.
 Grid colors default to XY #d4ae3a, XZ #55bb6e and YZ #b325c1; axes retain their colors.

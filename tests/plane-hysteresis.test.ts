@@ -11,7 +11,10 @@ import { CanonicalPlaneVisibility } from "../src/sketch/canonical-plane-visibili
 function orbit(side = 1) {
   const visibility = new CanonicalPlaneVisibility();
   const camera = new THREE.OrthographicCamera();
-  return (degrees: number, switchAngleDegrees = 30) => {
+  return (
+    degrees: number,
+    switchAngleDegrees = normalizePlaneSettings(null).switchAngleDegrees,
+  ) => {
     const radians = (degrees * Math.PI) / 180;
     camera.position.set(0, side * Math.cos(radians), side * Math.sin(radians));
     camera.lookAt(0, 0, 0);
@@ -23,13 +26,24 @@ function orbit(side = 1) {
 
 test("primary survives ranking boundaries until 30 degrees from its surface, on either side", () => {
   for (const side of [1, -1]) {
-    const view = orbit(side);
+    const orbitView = orbit(side);
+    const view = (degrees: number) => orbitView(degrees, 30);
     assert.equal(view(90), "XY");
     for (const angle of [46, 44, 46, 44, 30.01]) assert.equal(view(angle), "XY");
     assert.equal(view(30), "XZ");
     for (const angle of [30.01, 44, 46, 59.99]) assert.equal(view(angle), "XZ");
     assert.equal(view(60), "XY");
   }
+});
+
+test("default retains primary until 15 degrees from its surface", () => {
+  const view = orbit();
+  assert.equal(view(90), "XY");
+  assert.equal(view(30), "XY");
+  assert.equal(view(15.01), "XY");
+  assert.equal(view(15), "XZ");
+  assert.equal(view(74.99), "XZ");
+  assert.equal(view(75), "XY");
 });
 
 test("switch angle changes take effect immediately, with edge-on and always-nearest extremes", () => {
@@ -60,8 +74,8 @@ test("switching reuses the most-face-on ranking and canonical tie order", () => 
 });
 
 test("switch angle defaults, stored normalization and atomic agent validation", () => {
-  assert.equal(normalizePlaneSettings({}).switchAngleDegrees, 30);
-  assert.equal(normalizePlaneSettings({ switchAngleDegrees: NaN }).switchAngleDegrees, 30);
+  assert.equal(normalizePlaneSettings({}).switchAngleDegrees, 15);
+  assert.equal(normalizePlaneSettings({ switchAngleDegrees: NaN }).switchAngleDegrees, 15);
   assert.equal(normalizePlaneSettings({ switchAngleDegrees: -1 }).switchAngleDegrees, 0);
   assert.equal(normalizePlaneSettings({ switchAngleDegrees: 100 }).switchAngleDegrees, 90);
   const before = applicationPreferences();
