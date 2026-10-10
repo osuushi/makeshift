@@ -56,15 +56,11 @@
   figcaption {
     font-size: 12px;
   }
-  figcaption span:last-child {
-    display: none;
-  }
   .approach {
     grid-template-columns: 1fr;
     gap: 26px;
     padding-block: 52px;
   }
-  .section-intro h2 br,
   .freedom h2 br {
     display: none;
   }
