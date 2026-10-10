@@ -1,7 +1,8 @@
 # Makeshift landing page
 
-Static landing page for makeshift.horse. Hosting will use a separate GitHub Pages
-repository, like the web editor. No domain or deployment configuration is changed.
+Static landing page for makeshift.horse, hosted in the separate
+[makeshift-site](https://github.com/osuushi/makeshift-site) GitHub Pages repository
+at https://osuushi.github.io/makeshift-site/. The custom domain is not connected yet.
 
 ## Preview and regenerate demos
 
@@ -76,7 +77,7 @@ local sans-serif fallbacks while loading or when the font service is unavailable
 
 Product claims follow the README and current architecture/topic docs. The icon
 comes from `assets/public/`. The old public-build screenshot has been removed.
-The primary action currently links to the verified `20261010T103958Z` Apple
+The primary action currently links to the verified `20261010T195437Z` Apple
 Silicon preview DMG; update that download link deliberately when publishing the
 landing page. `releases/latest` does not select these prereleases. Keep the
 application and desktop update feeds on their existing hosts.
