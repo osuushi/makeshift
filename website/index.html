@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Makeshift is free, open-source CAD for making things. Start in your browser, work directly with solid geometry, and bring a coding agent along on desktop."
+    >
+    <meta name="theme-color" content="#faf9f6">
+    <title>Makeshift — CAD for making things</title>
+    <link rel="icon" type="image/png" href="assets/makeshift.png">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="responsive.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header wrap">
+      <a class="wordmark" href="./" aria-label="Makeshift home">
+        <img src="assets/makeshift.png" alt="" width="40" height="40">Makeshift
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="#approach">The idea</a>
+        <a href="#get-started">Get started</a>
+        <a href="https://github.com/osuushi/makeshift">Source <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+    <main id="main">
+      <section class="hero wrap" aria-labelledby="intro-title">
+        <p class="eyebrow">Free, open-source CAD</p>
+        <h1 id="intro-title">For the things<br>you want to make.</h1>
+        <div class="intro">
+          <p>
+            Makeshift is a 3D design tool built to make getting started easier. Draw a shape, turn
+            it into a solid, and work on it directly. Bring a coding agent along when you need a
+            hand.
+          </p>
+          <div class="actions">
+            <a class="button primary" href="https://osuushi.github.io/makeshift-web/"
+              >Open in your browser <span aria-hidden="true">↗</span></a
+            >
+            <a class="text-link" href="#get-started"
+              >Get the desktop app <span aria-hidden="true">↓</span></a
+            >
+          </div>
+          <p class="small muted">No installation or account needed to try the web app.</p>
+        </div>
+      </section>
+
+      <figure class="product wrap">
+        <a href="assets/workspace.png" aria-label="View the full Makeshift workspace screenshot">
+          <img
+            src="assets/workspace.png"
+            width="1440"
+            height="920"
+            alt="A solid part with a rounded pocket open in Makeshift, surrounded by its modeling tools and coordinate grid."
+            fetchpriority="high"
+          >
+        </a>
+        <figcaption>
+          <span>A real model, in the Makeshift workspace.</span><span>Sketch · shape · refine</span>
+        </figcaption>
+      </figure>
+
+      <section id="approach" class="approach wrap" aria-labelledby="approach-title">
+        <div class="section-intro">
+          <p class="eyebrow">The idea</p>
+          <h2 id="approach-title">Spend more time <br>making the thing.</h2>
+          <p>
+            A replacement part. A small enclosure. Something that only needs to fit on your desk.
+            Getting an idea into a model should feel approachable, even if you’re new to CAD.
+          </p>
+        </div>
+        <div class="principles">
+          <article>
+            <h3>Start with a shape. Learn as you go.</h3>
+            <p>
+              Draw and drag to get started. Select something to see its controls, type a dimension
+              when it needs to be exact, and discover tools as you need them. Simple starting points
+              lead into the same tools you’ll use for more involved work.
+            </p>
+          </article>
+          <article>
+            <h3>Work on the part in front of you.</h3>
+            <p>
+              Makeshift works directly with solid geometry. Add material, cut it away, move a face,
+              round an edge. You don’t have to plan a tree of features before you know what you’re
+              making.
+            </p>
+            <p class="small muted">
+              Sketches can have dimensions and constraints. Solids remain independent: editing an
+              earlier sketch doesn’t automatically rebuild the part.
+            </p>
+          </article>
+          <article>
+            <h3>Give the repetitive work to an agent.</h3>
+            <p>
+              On desktop, a coding agent can inspect your model and use scripts to edit it. Let it
+              handle repeated operations and calculations, then keep shaping the result by hand.
+              Both work on the same geometry, and accepted modeling scripts can be undone.
+            </p>
+            <p class="small muted">
+              Connect a separately installed coding agent. Its account and any service costs are
+              separate from Makeshift.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="freedom wrap" aria-labelledby="freedom-title">
+        <p class="eyebrow">Free as in beer. Free as in speech.</p>
+        <div class="freedom-body">
+          <h2 id="freedom-title">A tool you can <br>make your own.</h2>
+          <div>
+            <p>
+              Makeshift costs nothing to use. The source is available to study, change, and share
+              under the LGPL. You can build it yourself, improve it, or take it in a different
+              direction.
+            </p>
+            <p>
+              Your work saves to local files. Export STEP for solid geometry, or STL and 3MF for
+              printing and other mesh workflows.
+            </p>
+            <a class="text-link" href="https://github.com/osuushi/makeshift"
+              >Explore the source <span aria-hidden="true">↗</span></a
+            >
+          </div>
+        </div>
+      </section>
+
+      <section id="get-started" class="start wrap" aria-labelledby="start-title">
+        <p class="eyebrow">Get started</p>
+        <h2 id="start-title">Try it on something small.</h2>
+        <div class="editions">
+          <article>
+            <h3>In your browser</h3>
+            <p>
+              Open Makeshift and start drawing. Sketch, build solids, and save your work locally.
+              The geometry runs on your device.
+            </p>
+            <a class="button primary" href="https://osuushi.github.io/makeshift-web/"
+              >Open the web app <span aria-hidden="true">↗</span></a
+            >
+            <p class="small muted">No install. No account. Save regularly.</p>
+          </article>
+          <article>
+            <h3>On your desktop</h3>
+            <p>
+              The modeling tools, plus an integrated agent terminal and a workspace for scripts and
+              reference files that travels with your drawing.
+            </p>
+            <a
+              class="button secondary"
+              href="https://github.com/osuushi/makeshift/releases/tag/20261010T103958Z"
+              >Download for Mac <span aria-hidden="true">↗</span></a
+            >
+            <p class="small muted">
+              Apple Silicon · macOS 14 or later ·
+              <a href="https://github.com/osuushi/makeshift/releases">All releases</a>
+            </p>
+          </article>
+        </div>
+        <aside class="development-note">
+          <strong>A project in active development.</strong>
+          Expect rough edges. Try a small project, save your work, and
+          <a href="https://github.com/osuushi/makeshift/issues">tell us what gets in your way</a>.
+          Windows and Linux builds are not yet verified.
+        </aside>
+      </section>
+    </main>
+    <footer class="site-footer wrap">
+      <a class="wordmark" href="./"
+        ><img src="assets/makeshift.png" alt="" width="28" height="28">Makeshift</a
+      >
+      <nav aria-label="Project links">
+        <a href="https://github.com/osuushi/makeshift#readme">Guide</a>
+        <a href="https://github.com/osuushi/makeshift/issues">Issues</a>
+        <a href="https://github.com/osuushi/makeshift/blob/main/COPYING.md">License</a>
+      </nav>
+      <p class="small muted">Made for making.</p>
+    </footer>
+  </body>
+</html>
