@@ -18,6 +18,8 @@ world height; nearer portions remain unfaded and finite camera retreat has no ef
 Enter or double-click enters its sketch workspace; Escape or a click without a selectable reference or geometry clears it.
 Plane entry chooses the nearest quaternion orientation among all four in-plane
 quarter turns on either side, preserving the accepted plane frame and grid axes.
+Equal-angle ties prefer the plane's positive V axis as screen up, including entry
+from the default isometric view; numerical roundoff must not select another quarter turn.
 Profile entry fits the boundary along the chosen screen axes, keeping its center
 and margin when a quarter turn swaps the horizontal and vertical extents.
 Double-click sketch entry consumes the event before sketch selection handles it,
@@ -52,6 +54,9 @@ The cutaway follows the current workspace frame and camera side, and clears on
 workspace exit. It changes no accepted geometry, selection identity or Undo.
 
 ### Orthographic camera depth
+
+New views start in a balanced isometric orientation from +X, −Y, +Z, with
+equal foreshortening of all three world axes and world Z upright.
 
 Zoom changes the orthographic view size. Before rendering and queued navigation
 picking, place the finite camera behind the bounds of visible document/preview

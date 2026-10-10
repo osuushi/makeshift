@@ -1,5 +1,7 @@
 import type { World } from "../sketch/world.js";
 
+export const defaultCameraPosition = [65, -65, 65] as const;
+
 export interface CameraState {
   position: [number, number, number];
   target: [number, number, number];
@@ -69,7 +71,7 @@ export function restoreCamera(world: World, state: CameraState | undefined): voi
     world.camera.up.fromArray(state.up);
     world.height = state.height;
   } else {
-    world.camera.position.set(55, -70, 65);
+    world.camera.position.set(...defaultCameraPosition);
     world.target.set(0, 0, 0);
     world.camera.up.set(0, 0, 1);
     world.height = 80;

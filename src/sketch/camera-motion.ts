@@ -35,8 +35,8 @@ export function planeCameraPose(
         .clone()
         .addScaledVector(normal, new THREE.Vector3(...frame.origin).sub(view.target).dot(normal));
   const ups = [frame.v, frame.u].flatMap((axis) => [
-    new THREE.Vector3(...axis).negate(),
     new THREE.Vector3(...axis),
+    new THREE.Vector3(...axis).negate(),
   ]);
   let best: { quaternion: THREE.Quaternion; score: number } | undefined;
   for (const side of [-1, 1]) {
@@ -47,7 +47,9 @@ export function planeCameraPose(
       candidate.lookAt(target);
       candidate.updateMatrixWorld();
       const score = Math.abs(previous.dot(candidate.quaternion));
-      if (!best || score > best.score) best = { quaternion: candidate.quaternion.clone(), score };
+      // Isometric views tie between quarter turns; prefer canonical up over roundoff.
+      if (!best || score > best.score + 1e-12)
+        best = { quaternion: candidate.quaternion.clone(), score };
     }
   }
   if (!best) throw new Error("A plane camera pose requires an orientation");
