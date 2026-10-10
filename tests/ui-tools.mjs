@@ -19,6 +19,7 @@ export async function chooseTool(page, query, id) {
     const trigger = page.getByRole("button", { name: "More tools", exact: true });
     await trigger.focus();
     await page.waitForFunction(() => {
+      if (typeof window.makeshiftInspect !== "function") return false;
       const state = window.makeshiftInspect();
       return (
         !state.busy && state.commands.every((command) => command.unavailable !== "Switching tools…")
@@ -27,6 +28,7 @@ export async function chooseTool(page, query, id) {
     await trigger.press(standardShortcuts[id]);
     // File helpers answer native/file/unsaved prompts before their command can complete.
     await page.waitForFunction((id) => {
+      if (typeof window.makeshiftInspect !== "function") return false;
       const state = window.makeshiftInspect();
       return (
         ["new", "open", "save", "save-as", "close"].includes(id) ||
@@ -42,6 +44,7 @@ export async function chooseTool(page, query, id) {
   // Locator actionability waits through transient tool closure/calculation updates.
   await row.click();
   await page.waitForFunction(() => {
+    if (typeof window.makeshiftInspect !== "function") return false;
     const state = window.makeshiftInspect();
     return (
       !state.busy && state.commands.every((command) => command.unavailable !== "Switching tools…")
