@@ -20,7 +20,9 @@ are local presentation preferences, independent of document files and Undo.
 
 Canonical XY/XZ/YZ references cover the viewport, including far from the origin.
 References render colored grid lines over a white fill (10% opacity by default);
-their meshes remain picking targets.
+their meshes remain picking targets. The fill veils scene geometry behind the grid,
+including translucent sketch regions, sketch lines, axes and coordinate labels.
+Geometry in front retains its appearance; orientable widgets remain unobscured.
 The most face-on canonical plane is primary at configured maximum grid opacity,
 with ties resolved XY, then XZ, then YZ (facing differences within 1e-12 count as tied).
 Only the primary has a nonzero visibility target. On switching, each grid carries
