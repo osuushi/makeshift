@@ -70,9 +70,9 @@ motion. Labels remain outside the model. Videos are muted and play inline.
 
 ## Content
 
-Headings, body text and controls use DM Sans, with semibold headlines. It loads
-from Google Fonts with `display=swap`, with local sans-serif fallbacks while loading
-or when the font service is unavailable.
+Major headlines, including the hero subheading, use Inter Tight ExtraBold; body
+text and controls use DM Sans. Both load from Google Fonts with `display=swap`, with
+local sans-serif fallbacks while loading or when the font service is unavailable.
 
 Product claims follow the README and current architecture/topic docs. The icon
 comes from `assets/public/`. The old public-build screenshot has been removed.
