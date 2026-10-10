@@ -10,6 +10,7 @@ import { BodyPivotDrag } from "./body-pivot-drag.js";
 import { axes, bodyCenter, placedDocument } from "./body-placement.js";
 import { GizmoInputs, type GizmoPointer } from "./gizmo-inputs.js";
 import { reopenBodyTransform } from "./reopen-body-transform.js";
+import { installTransformHandoff } from "./transform-handoff.js";
 import { widgetPointerOffset } from "./widget-viewport.js";
 
 type Session = {
@@ -79,6 +80,23 @@ export class BodyMoveControls {
       finish: () => this.commit(),
       cancel: () => this.cancel(),
     });
+    installTransformHandoff(
+      editor,
+      (event) => {
+        const s = this.session;
+        const handle = event.target instanceof Element && event.target.closest(".body-axis-handle");
+        return !!(
+          s?.rotate &&
+          s.valid &&
+          !this.pointer &&
+          handle &&
+          this.gizmo.root.contains(handle) &&
+          (handle.getAttribute("data-axis") !== s.axis ||
+            !handle.classList.contains("body-rotate-handle"))
+        );
+      },
+      this.abort.signal,
+    );
     editor.world.changed.add(this.update);
     this.update();
   }
@@ -221,12 +239,12 @@ export class BodyMoveControls {
       `${s.pivotOnly ? "Pivot" : rotate ? "Body rotation" : "Body translation"} ${axis}`,
     );
     if (event.pointerId !== -1) s.lease.capture(event.currentTarget as Element, event.pointerId);
-    else {
+    event.preventDefault();
+    this.editor.refresh();
+    if (event.pointerId === -1) {
       this.gizmo.input.focus();
       this.gizmo.input.select();
     }
-    event.preventDefault();
-    this.editor.refresh();
   };
   private preview(value: number): void {
     const s = this.session;

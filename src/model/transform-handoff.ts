@@ -3,16 +3,16 @@ import { pick } from "../sketch/picking.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { BufferedPointer } from "./buffered-pointer.js";
 
-/** Finish a scale preview before handing the same press to an arrow or sphere. */
+/** Finish a transform preview before handing the same press to an arrow or sphere. */
 export function installTransformHandoff(
   editor: SketchEditor,
-  scaling: () => boolean,
+  ready: (event: PointerEvent) => boolean,
   signal: AbortSignal,
 ): void {
   window.addEventListener(
     "pointerdown",
     (event) => {
-      if (!scaling() || event.button) return;
+      if (!ready(event) || event.button) return;
       const target = event.target;
       const widget = target instanceof Element && target.closest(".move-anchor, .body-axis-handle");
       const hit =
