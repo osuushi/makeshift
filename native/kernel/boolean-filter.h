@@ -6,7 +6,7 @@
 #include <array>
 #include <memory>
 #include <unordered_map>
-#include "boolean-uv-trims.h"
+#include "boolean-trims.h"
 
 namespace boolean_uv {
 struct FilterStatistics {

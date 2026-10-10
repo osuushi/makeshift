@@ -95,6 +95,7 @@ export interface BodyBoolean {
   ids: string[];
   mode: Exclude<BooleanMode, "new">;
   keepOriginals: boolean;
+  experimentalTrimFiltering?: boolean;
 }
 
 export interface BodyEdgeFinish {

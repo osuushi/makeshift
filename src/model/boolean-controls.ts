@@ -1,3 +1,4 @@
+import { fastTrimChecks } from "../preferences/experimental-settings.js";
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
@@ -107,7 +108,12 @@ export class BooleanControls {
     };
     this.operation = restored
       ? structuredClone(restored)
-      : { ids: [], mode, keepOriginals: this.preference.get(mode) };
+      : {
+          ids: [],
+          mode,
+          keepOriginals: this.preference.get(mode),
+          experimentalTrimFiltering: operation.experimentalTrimFiltering,
+        };
 
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
@@ -118,6 +124,7 @@ export class BooleanControls {
         ids: this.operation.ids,
         mode: this.operation.mode,
         target: this.targetId,
+        experimentalTrimFiltering: this.operation.experimentalTrimFiltering,
       }),
       async (operation) => {
         this.targetId = operation.target;
@@ -125,6 +132,7 @@ export class BooleanControls {
           ids: operation.ids,
           mode: operation.mode,
           keepOriginals: this.preference.get(operation.mode),
+          experimentalTrimFiltering: operation.experimentalTrimFiltering,
         };
         this.bodies = operation.ids.flatMap(
           (id) => this.editor.store.data.bodies?.filter((body) => body.id === id) ?? [],

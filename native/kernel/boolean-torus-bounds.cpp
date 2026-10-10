@@ -1,9 +1,7 @@
-#include "boolean-uv-torus.h"
-#include <ElSLib.hxx>
+#include "boolean-torus-bounds.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
-#include <stdexcept>
 
 namespace {
 using Interval = std::array<double,2>;
@@ -46,16 +44,4 @@ void boolean_uv::boundTorus(const gp_Torus& torus, const std::array<double,4>& u
     // Floating-point roundoff allowance is separate from the geometry contact tolerance.
     const double magnitude = 1+torus.Location().XYZ().Modulus()+torus.MajorRadius()+torus.MinorRadius();
     box.Enlarge(padding+128*std::numeric_limits<double>::epsilon()*magnitude);
-}
-void boolean_uv::testTorusBounds() {
-    const double pi = std::acos(-1.0);
-    const gp_Torus torus(gp_Ax3(gp_Pnt(17,-11,3),gp_Dir(1,2,3)),13,7);
-    for (int i = 0; i < 80; ++i) {
-        const double u = -2*pi+i*pi/17, v = -2*pi+i*pi/23;
-        const std::array<double,4> uv{u,u+pi/(i%7+1),v,v+pi/(i%11+1)};
-        Bnd_Box box; boundTorus(torus,uv,0,box);
-        for (int a = 0; a <= 20; ++a) for (int b = 0; b <= 20; ++b)
-            if (box.IsOut(ElSLib::Value(u+(uv[1]-u)*a/20,v+(uv[3]-v)*b/20,torus)))
-                throw std::runtime_error("Torus interval enclosure missed a sampled point");
-    }
 }

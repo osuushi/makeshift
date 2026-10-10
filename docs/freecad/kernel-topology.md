@@ -433,7 +433,9 @@ boundary, rather than rely on center/corner sampling alone. The opt-in
 [native benchmark](../../native/kernel/benchmarks/README.md) separates support
 bounds, trim exclusion and isolated per-pair CPU profiling. It remains experimental;
 these source observations do not establish general rejection safety or enable a
-production Boolean optimization.
+default Boolean optimization. Standalone Subtract can explicitly opt into the
+experimental shared filter; unsupported/uncertain pairs retain exact processing
+and invalid/failed experimental results fall back to ordinary OCCT preprocessing.
 
 Simple cut/common/fuse call OCCT wrappers and return a shell-normalized result ([TopoShape.cpp#L1759-L1818](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Part/App/TopoShape.cpp#L1759-L1818), [TopoShape.cpp#L1857-L1885](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Part/App/TopoShape.cpp#L1857-L1885)). The element-mapped boolean path is more informative: it selects Fuse/Cut/Common/Section, rejects null and invalid inputs, includes analyzer details in invalid-input errors, configures parallelism and fuzzy tolerance, builds, handles cancellation, then records element mapping ([TopoShapeExpansion.cpp#L6046-L6055](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Part/App/TopoShapeExpansion.cpp#L6046-L6055), [TopoShapeExpansion.cpp#L6227-L6294](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Part/App/TopoShapeExpansion.cpp#L6227-L6294)). Positive tolerance is fuzzy value; negative requests auto-fuzzy. That policy should be explicit in a service API.
 

@@ -106,3 +106,9 @@ Native rotation cursor coordinates retain the host's DIP-to-viewport conversion.
 
 Desktop WebKit and high-DPI browser checks cannot establish physical iPad/Pencil
 behavior or actual monitor accessibility. Those remain device review routes.
+
+Settings includes an Experimental section with **Fast trim checks**, off by default.
+The device-local `makeshift.fast-trim-checks` choice applies to new standalone
+Subtract operations. Accepted operations record their choice for reopen; changing
+the preference does not recalculate existing geometry. Center-of-mass caching
+requires no opt-in.

@@ -1,5 +1,5 @@
-#include "boolean-uv-filter.h"
-#include "boolean-uv-torus.h"
+#include "boolean-filter.h"
+#include "boolean-torus-bounds.h"
 #include <BOPDS_DS.hxx>
 #include <BOPDS_Tools.hxx>
 #include <BndLib_AddSurface.hxx>

@@ -3,6 +3,7 @@ import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { canonicalPlaneSettings } from "./canonical-plane-settings.js";
 import { onCanonicalPlanesChange } from "./canonical-planes.js";
 import { decoratorSettings } from "./decorator-settings.js";
+import { experimentalSettings } from "./experimental-settings.js";
 import { onUiScaleChange, setUiScale, uiScale, uiScaleChoices } from "./ui-scale.js";
 import { onViewDisplayChange } from "./view-display.js";
 import { viewSettings } from "./view-settings.js";
@@ -173,7 +174,7 @@ function settingsDialog(): HTMLDialogElement {
   if (!select || !reset) throw new Error("Missing scale settings controls");
   dialog
     .querySelector(".settings-actions")
-    ?.before(viewSettings(), canonicalPlaneSettings(), decoratorSettings());
+    ?.before(viewSettings(), canonicalPlaneSettings(), decoratorSettings(), experimentalSettings());
   for (const scale of uiScaleChoices)
     select.add(new Option(`${Math.round(scale * 100)}%`, String(scale)));
   const update = () => {

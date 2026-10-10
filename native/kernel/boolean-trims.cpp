@@ -1,18 +1,12 @@
-#include "boolean-uv-trims.h"
+#include "boolean-trims.h"
 #include <BRepAdaptor_Curve2d.hxx>
 #include <BRepClass_FaceClassifier.hxx>
-#include <BRepBuilderAPI_MakeFace.hxx>
-#include <BRepBuilderAPI_MakePolygon.hxx>
 #include <BndLib_Add2dCurve.hxx>
 #include <Precision.hxx>
 #include <Standard_Failure.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
-#include <TopoDS_Wire.hxx>
-#include <gp.hxx>
-#include <gp_Pln.hxx>
 #include <cmath>
-#include <stdexcept>
 
 boolean_uv::TrimRegion::TrimRegion(const TopoDS_Face& source)
     : face(TopoDS::Face(source.Oriented(TopAbs_FORWARD))) {
@@ -47,24 +41,4 @@ bool boolean_uv::TrimRegion::outside(const std::array<double,4>& uv) const {
         BRepClass_FaceClassifier classifier(face,center,Precision::PConfusion()*10);
         return classifier.State() == TopAbs_OUT;
     } catch (const Standard_Failure&) { return false; }
-}
-void boolean_uv::testTrimRegions() {
-    const auto square = [](double x, double y, double size) {
-        BRepBuilderAPI_MakePolygon polygon;
-        polygon.Add(gp_Pnt(x,y,0)); polygon.Add(gp_Pnt(x+size,y,0));
-        polygon.Add(gp_Pnt(x+size,y+size,0)); polygon.Add(gp_Pnt(x,y+size,0));
-        polygon.Close(); return polygon.Wire();
-    };
-    const gp_Pln plane(gp::XOY());
-    BRepBuilderAPI_MakeFace face(plane,square(-10,-10,20));
-    face.Add(TopoDS::Wire(square(-3,-3,6).Reversed()));
-    TrimRegion region(face.Face());
-    if (!region.outside({-0.5,0.5,-0.5,0.5}))
-        throw std::runtime_error("Trim hole interior was not excluded");
-    if (region.outside({5,6,5,6}) || region.outside({2.9,3.1,-0.5,0.5}))
-        throw std::runtime_error("Trim material or boundary cell was excluded");
-    // A small material island misses the center and corners of this cell.
-    TrimRegion island(BRepBuilderAPI_MakeFace(plane,square(0.2,0.2,0.01)).Face());
-    if (island.outside({-1,1,-1,1}))
-        throw std::runtime_error("Small trim island was incorrectly excluded");
 }

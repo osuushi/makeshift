@@ -14,5 +14,4 @@ public:
     explicit TrimRegion(const TopoDS_Face&);
     bool outside(const std::array<double,4>& uv) const;
 };
-void testTrimRegions();
 }

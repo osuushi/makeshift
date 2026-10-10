@@ -2,8 +2,13 @@
 
 This opt-in native benchmark reads a Capture fixture containing an ordered,
 two-body subtraction. Its volume/material verification currently assumes the
-second operand is contained inside the first. It does not change the application
-Boolean path or accepted geometry.
+second operand is contained inside the first. Settings → Experimental → **Fast trim checks**
+opts new Subtract operations into depth-10 trimming-aware filtering, off by default. The optional
+`BodyBoolean.experimentalTrimFiltering` field also exposes it to typed model/script
+callers. Other Boolean tools and automatic sweep/contact probes retain their
+established path. Failed/invalid experimental results fall back to ordinary OCCT
+preprocessing. Shared filter code lives in `native/kernel/boolean-filter.cpp` and
+`boolean-trims.cpp`; benchmark-only tests remain in this directory.
 
 After the normal native SDK setup, enable the target in the configured build:
 
@@ -70,7 +75,8 @@ V cuts. Comparing tight bounds separately avoids attributing their effect to tri
 This remains a research experiment, not a generally certified replacement for
 OCCT intersection processing. It relies on valid input faces, consistent pcurves
 and OCCT's classifier and bound behavior. Its protected iterator integration is
-tied to the pinned OCCT version. Production Boolean behavior is unchanged.
+tied to the pinned OCCT version. The default Boolean path is unchanged; explicit
+standalone Subtract opt-in retains existing result validation and topology repair.
 
 CSV `total_ms` includes preparation, intersection processing, result construction
 and topology validation. It excludes fixture decoding, volume integration,

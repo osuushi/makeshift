@@ -29,6 +29,18 @@ does not relax geometry validation or repair invalid solids after sweeping.
 B1 now uses a stateless OCCT 7.9.3 calculator for exact profile sweeps and Booleans.
 The existing TypeScript document owner supplies current BReps and accepts the
 whole candidate, including zero/multiple results, as one snapshot Undo step.
+
+Settings → Experimental exposes **Fast trim checks**, off by default and saved
+on the device. New standalone Subtract operations use this preference. `BodyBoolean.experimentalTrimFiltering`
+is captured with the operation so reopening restores the choice. It runs OCCT's
+original box filter first, then conservative cached trimming-aware UV-cell bounds;
+uncertain pairs retain exact intersection processing. Fuzzy/contact tolerances
+are unchanged. Failure or an invalid experimental result retries ordinary OCCT
+processing before existing repair/validation. Other Boolean and automatic sweep
+paths do not opt in. The native benchmark and focused model/UI tests cover the
+shared implementation; broader geometry coverage and WASM runtime validation
+remain necessary before changing the default.
+
 Reported body volumes use adaptive integration of exact surfaces, with spline-span
 quadrature for curved bodies. A nearby exterior reference plane along the shortest
 bounding-box axis avoids unstable near-zero integrals on cut faces and limits

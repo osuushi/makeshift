@@ -1,5 +1,5 @@
 #include "boolean-uv.h"
-#include "boolean-uv-filter.h"
+#include "boolean-filter.h"
 #include "geometry-policy.h"
 #include <BOPAlgo_PaveFiller.hxx>
 #include <BOPDS_DS.hxx>

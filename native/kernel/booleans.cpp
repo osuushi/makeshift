@@ -1,6 +1,7 @@
 #include "kernel.h"
 #include "boolean-periodic.h"
 #include "boolean-probe.h"
+#include "boolean-filter-filler.h"
 #include "geometry-policy.h"
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepAdaptor_Curve.hxx>
@@ -123,6 +124,7 @@ std::vector<Result> booleanBodies(const Tree& input, const std::vector<Operand>&
     if (mode != "union" && mode != "subtract" && mode != "intersect")
         throw std::runtime_error("Unknown Boolean mode");
     const bool keep = input.get<bool>("keepOriginals", false);
+    const bool trimFiltering = input.get<bool>("experimentalTrimFiltering", false) && mode == "subtract";
     std::vector<const Operand*> selected;
     std::set<std::string> unique;
     for (const auto& item : input.get_child("ids")) {
@@ -141,7 +143,23 @@ std::vector<Result> booleanBodies(const Tree& input, const std::vector<Operand>&
     std::vector<SourceEntity> origins = selected.front()->entities;
     for (std::size_t i = 1; i < selected.size(); ++i) {
         origins.insert(origins.end(), selected[i]->entities.begin(), selected[i]->entities.end());
-        shape = booleanShape(shape, selected[i]->shape, mode, origins);
+        if (trimFiltering) {
+            const auto& tool = selected[i]->shape;
+            std::unique_ptr<BOPAlgo_PaveFiller> filler;
+            std::unique_ptr<BRepAlgoAPI_BooleanOperation> operation;
+            try {
+                const double fuzzy = hasCubicBoundary(shape) || hasCubicBoundary(tool)
+                    ? geometry_policy::cubicBooleanToleranceMm : 0;
+                filler = filteredBooleanFiller(shape,tool,fuzzy,
+                    OSD_ThreadPool::DefaultPool()->HasThreads());
+                operation = buildBoolean(shape,tool,mode,filler.get());
+                if (!operation->Shape().IsNull() && !BRepCheck_Analyzer(operation->Shape()).IsValid())
+                    operation.reset();
+            } catch (const Standard_Failure&) { operation.reset(); }
+              catch (const std::exception&) { operation.reset(); }
+            if (!operation) operation = buildBoolean(shape,tool,mode);
+            shape = finishBoolean(shape,tool,mode,origins,std::move(operation));
+        } else shape = booleanShape(shape, selected[i]->shape, mode, origins);
     }
     std::vector<Result> results;
     std::vector<std::string> predecessors;
