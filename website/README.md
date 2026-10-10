@@ -70,7 +70,7 @@ motion. Labels remain outside the model. Videos are muted and play inline.
 
 ## Content
 
-Major headlines, including the hero subheading, use Inter Tight Bold; body
+Major headlines use Inter Tight Bold, with the hero tagline at weight 600; body
 text and controls use DM Sans. Both load from Google Fonts with `display=swap`, with
 local sans-serif fallbacks while loading or when the font service is unavailable.
 
