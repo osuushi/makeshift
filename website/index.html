@@ -12,6 +12,8 @@
     <link rel="icon" type="image/png" href="assets/makeshift.png">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="responsive.css">
+    <link rel="stylesheet" href="gallery.css">
+    <script type="module" src="gallery.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -51,17 +53,73 @@
           </div>
         </section>
 
-        <figure class="product">
-          <a href="assets/workspace.png" aria-label="View the full Makeshift workspace screenshot">
-            <img
-              src="assets/workspace.png"
-              width="1440"
-              height="920"
-              alt="A solid part with a rounded pocket open in Makeshift, surrounded by its modeling tools and coordinate grid."
-              fetchpriority="high"
-            >
-          </a>
-        </figure>
+        <section class="demo-gallery" aria-label="Makeshift feature demos" aria-roledescription="carousel">
+          <div class="demo-window"><div class="demo-track">
+            <figure class="demo-slide" aria-roledescription="slide" aria-label="1 of 7: Primitives">
+              <video muted playsinline preload="metadata" poster="assets/demos/primitives.jpg" aria-label="Primitives demonstration">
+                <source src="assets/demos/primitives.mp4" type="video/mp4">
+                <a href="assets/demos/primitives.mp4">Watch the primitives demo</a>
+              </video>
+              <figcaption>Start with a solid shape and adjust its size.</figcaption>
+            </figure>
+            <figure class="demo-slide" aria-roledescription="slide" aria-label="2 of 7: Sketching">
+              <video muted playsinline preload="none" poster="assets/demos/sketching.jpg" aria-label="Sketching demonstration">
+                <source src="assets/demos/sketching.mp4" type="video/mp4">
+                <a href="assets/demos/sketching.mp4">Watch the sketching demo</a>
+              </video>
+              <figcaption>Draw a profile with ordinary curves.</figcaption>
+            </figure>
+            <figure class="demo-slide" aria-roledescription="slide" aria-label="3 of 7: Extrude">
+              <video muted playsinline preload="none" poster="assets/demos/extrude.jpg" aria-label="Extrude demonstration">
+                <source src="assets/demos/extrude.mp4" type="video/mp4">
+                <a href="assets/demos/extrude.mp4">Watch the extrude demo</a>
+              </video>
+              <figcaption>Give a flat profile some depth.</figcaption>
+            </figure>
+            <figure class="demo-slide" aria-roledescription="slide" aria-label="4 of 7: Revolve">
+              <video muted playsinline preload="none" poster="assets/demos/revolve.jpg" aria-label="Revolve demonstration">
+                <source src="assets/demos/revolve.mp4" type="video/mp4">
+                <a href="assets/demos/revolve.mp4">Watch the revolve demo</a>
+              </video>
+              <figcaption>Turn a profile around an axis.</figcaption>
+            </figure>
+            <figure class="demo-slide" aria-roledescription="slide" aria-label="5 of 7: Fillet & chamfer">
+              <video muted playsinline preload="none" poster="assets/demos/edge-finishes.jpg" aria-label="Fillet & chamfer demonstration">
+                <source src="assets/demos/edge-finishes.mp4" type="video/mp4">
+                <a href="assets/demos/edge-finishes.mp4">Watch the fillet & chamfer demo</a>
+              </video>
+              <figcaption>Round an edge or give it a bevel.</figcaption>
+            </figure>
+            <figure class="demo-slide" aria-roledescription="slide" aria-label="6 of 7: Threads">
+              <video muted playsinline preload="none" poster="assets/demos/threads.jpg" aria-label="Threads demonstration">
+                <source src="assets/demos/threads.mp4" type="video/mp4">
+                <a href="assets/demos/threads.mp4">Watch the threads demo</a>
+              </video>
+              <figcaption>Add screw threads to a cylindrical face.</figcaption>
+            </figure>
+            <figure class="demo-slide" aria-roledescription="slide" aria-label="7 of 7: Knurling">
+              <video muted playsinline preload="none" poster="assets/demos/knurling.jpg" aria-label="Knurling demonstration">
+                <source src="assets/demos/knurling.mp4" type="video/mp4">
+                <a href="assets/demos/knurling.mp4">Watch the knurling demo</a>
+              </video>
+              <figcaption>Add an adjustable grip pattern.</figcaption>
+            </figure>
+          </div></div>
+          <div class="demo-controls">
+            <button class="demo-previous" type="button" aria-label="Previous demo">←</button>
+            <fieldset class="demo-choices" aria-label="Choose a demo">
+              <button type="button" data-slide="0" aria-pressed="true">Primitives</button>
+              <button type="button" data-slide="1" aria-pressed="false">Sketching</button>
+              <button type="button" data-slide="2" aria-pressed="false">Extrude</button>
+              <button type="button" data-slide="3" aria-pressed="false">Revolve</button>
+              <button type="button" data-slide="4" aria-pressed="false">Fillet & chamfer</button>
+              <button type="button" data-slide="5" aria-pressed="false">Threads</button>
+              <button type="button" data-slide="6" aria-pressed="false">Knurling</button>
+            </fieldset>
+            <button class="demo-next" type="button" aria-label="Next demo">→</button>
+          </div>
+          <button class="demo-playback" type="button" aria-pressed="false">Play demos</button>
+        </section>
       </div>
 
       <section id="approach" class="approach wrap" aria-labelledby="approach-title">

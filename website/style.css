@@ -143,11 +143,6 @@ nav a:hover {
   justify-content: center;
   gap: 12px 28px;
 }
-.actions .text-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 46px;
-}
 .actions p {
   margin: 10px 0 0;
 }
@@ -178,19 +173,10 @@ nav a:hover {
 .text-link span {
   margin-left: 5px;
 }
-.product {
-  margin: 0;
-}
-.product > a {
-  display: block;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  overflow: hidden;
-  background: var(--tint);
-}
-.product img {
-  display: block;
-  width: 100%;
+.actions .text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 46px;
 }
 .approach {
   padding-block: 72px;

@@ -1,41 +1,74 @@
 # Makeshift landing page
 
-A buildless, static landing page for makeshift.horse. The page is kept here for
-review; hosting will use a separate GitHub Pages repository, like the web editor.
-No domain or deployment configuration has been changed.
+Static landing page for makeshift.horse. Hosting will use a separate GitHub Pages
+repository, like the web editor. No domain or deployment configuration is changed.
 
-## Preview
+## Preview and regenerate demos
 
-From the Makeshift repository root, with dependencies installed:
+Activate the repository's `.nvmrc` version first (`nvm use`). With dependencies,
+native binaries (`npm run build:native`), Playwright Chromium
+(`npx playwright install chromium`), and `ffmpeg`/`ffprobe` installed:
 
 ```sh
-source /Users/adacohen/.nvm/nvm.sh
-nvm use
+npm run demos:check
 npx vite website --host 127.0.0.1 --port 4175 --strictPort
 ```
 
-Open http://127.0.0.1:4175. The website itself needs no JavaScript, framework,
-remote fonts, tracking, build step, or application runtime. The directory can be
-served by any static HTTP server. For Pages, publish `index.html`, both CSS files,
-and `assets/` at the site root. Keep the app and desktop update feeds on their
-existing hosts. Add the custom domain only when configuring the separate host.
+Open http://127.0.0.1:4175. `demos:check` records all seven recipes, checks their
+geometry and encoded media, then exercises the static gallery. Record only with
+`npm run demos:record`. `DEMO_ONLY=extrude npm run demos:record` is useful during
+recipe development; a partial manifest cannot be packaged for release.
 
-## Content and assets
+The site uses ordinary HTML/CSS and a small carousel module. Serve the entire
+website directory with a static HTTP server. Generated `assets/demos/` is ignored;
+a fresh checkout must generate it or unpack a matching release website bundle.
 
-- Product claims follow the repository README, `docs/architecture/web.md`,
-  `docs/product/3d-tools.md`, `docs/architecture/decorators.md`, `docs/releases.md`,
-  and `COPYING.md`.
-- Web links open https://osuushi.github.io/makeshift-web/.
-- The primary action downloads the Mac DMG from the verified 20261010T103958Z
-  preview release; the browser version is a secondary, quick-try link. Update
-  this deliberately when publishing a newer version; GitHub's `releases/latest`
-  does not select these prereleases. All releases remains a stable fallback.
-- `assets/makeshift.png` is the existing application icon from `assets/public/`.
-- `assets/workspace.png` is an unretouched 1440 × 920 screenshot of the public
-  Makeshift web editor, captured on 2026-10-10. The model is the document from
-  `tests/fixtures/filleted-pocket-move.json`, opened as a version-1 Makeshift
-  archive. No product controls or geometry were composited into the image.
+## Recording contract
 
-The mobile image is cropped around the model for legibility; selecting it opens
-the complete screenshot. The page uses native links, semantic landmarks, visible
-keyboard focus and a skip link. Keep product status and platform limits accurate.
+`scripts/demos/recipes.mjs` defines primitives, sketching, extrude, revolve,
+fillet/chamfer, threads and knurling. Each clip starts with an isolated browser
+context and an explicit document reset. Setup uses normal controls. Recorded
+input uses the same pointer/keyboard controls and real geometry backend, with
+read-only inspection assertions on the demonstrated results. The visible pointer
+is a presentation overlay; app controls and geometry are unmodified.
+
+The Playwright demo skill's fixed-step capture helper advances the browser clock
+at 30 fps, captures numbered frames and encodes H.264/yuv420p MP4. Each export
+checks frame count, duration, dimensions and frame rate using ffprobe. This
+preserves application animation timing; it does **not** measure live performance.
+Workers and native calculations remain asynchronous, with bounded completion
+checks. Clips end with a JPEG poster of the actual accepted result.
+
+Temporary frames and diagnostic model snapshots live in `.cache/feature-demo-frames/`;
+completed frame directories are removed. A failed run exits nonzero and cannot
+publish a complete new manifest. The manifest records source commit, backend,
+viewport and encoding metadata. `DEMO_OUTPUT` can select a separate output directory.
+
+## CI and releases
+
+The required Check workflow includes `feature-demos`: Chromium executes and
+encodes the same seven recipes, then tests reduced motion, keyboard navigation,
+play/pause, decoding every video, and responsive widths. It uploads generated
+media and gallery screenshots for inspection. This explicitly requested demo
+contract is separate from the compact application smoke/regression lanes.
+
+Both desktop and web release workflows regenerate the demos before publication.
+Desktop uses the release source with native geometry; web uses the just-built
+static WASM app (`npm run demos:record -- --web`). Release failures block
+publication. `npm run demos:package -- DESTINATION` validates the complete
+manifest against a clean HEAD and emits `Makeshift-website.tar.gz` plus
+`website-demos.json`. The bundle is ready for the later separate Pages host;
+these workflows do not deploy or configure makeshift.horse.
+
+The gallery advances when a clip finishes, offers explicit selection and pause,
+pauses outside the viewport/background tabs, and starts paused under reduced
+motion. Labels remain outside the model. Videos are muted and play inline.
+
+## Content
+
+Product claims follow the README and current architecture/topic docs. The icon
+comes from `assets/public/`. The old public-build screenshot has been removed.
+The primary action currently links to the verified `20261010T103958Z` Apple
+Silicon preview DMG; update that download link deliberately when publishing the
+landing page. `releases/latest` does not select these prereleases. Keep the
+application and desktop update feeds on their existing hosts.

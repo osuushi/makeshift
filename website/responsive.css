@@ -50,11 +50,6 @@
     align-items: center;
     gap: 8px;
   }
-  .product img {
-    min-height: 235px;
-    object-fit: cover;
-    object-position: center;
-  }
   .approach {
     padding-block: 52px;
   }

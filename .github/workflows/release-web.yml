@@ -60,6 +60,8 @@ jobs:
           fi
       - name: Install web build dependencies
         run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
           npm ci --ignore-scripts
           npx playwright install --with-deps chromium webkit
       - name: Build static web mode
@@ -83,11 +85,16 @@ jobs:
           npm run check
           npm run test:web
           WEB_MODE=1 node tests/control-menu-ui.mjs
+      - name: Generate demos from the release web build
+        run: |
+          npm run demos:record -- --web
+          node tests/website-gallery.mjs
       - name: Prepare binary, source and license artifacts
         id: release
         run: |
           source .cache/emsdk/emsdk_env.sh
           node scripts/web/release.mjs
+          npm run demos:package -- .build/web-release
       - name: Publish web release in the application repository
         env:
           GH_TOKEN: ${{ github.token }}
