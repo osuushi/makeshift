@@ -1,3 +1,5 @@
+import * as THREE from "three";
+import { gridLabelTransmission } from "./grid-occlusion.js";
 import { installModalPlaneWidgets } from "./modal-plane-widgets.js";
 import { installPlaneTargets } from "./plane-targets.js";
 import type { Point, Vector } from "./planes.js";
@@ -28,8 +30,10 @@ export function worldLabels(
     const rect = world.canvas.getBoundingClientRect(),
       projectedOrigin = world.project([0, 0, 0]);
     placeOrigin(origin, rect, projectedOrigin);
+    origin.style.opacity = String(gridLabelTransmission(world, new THREE.Vector3()));
     for (const { label, point } of axes) {
       const p = world.project(point);
+      label.style.opacity = String(gridLabelTransmission(world, new THREE.Vector3(...point)));
       label.hidden = Math.hypot(p.x - projectedOrigin.x, p.y - projectedOrigin.y) < 15;
       label.style.left = `${p.x - rect.left}px`;
       label.style.top = `${p.y - rect.top}px`;

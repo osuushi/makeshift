@@ -56,6 +56,8 @@ export function createGrids(scene: THREE.Scene) {
         grid.material.uniforms.lineWidth.value = viewDisplay().gridLineWidth;
         grid.material.uniforms.opacityScale.value =
           (viewDisplay().grid / 0.4) * (grid.id === "work" ? 1 : visibility[grid.id].opacity);
+        grid.material.uniforms.fillOpacity.value =
+          viewDisplay().gridFill * (grid.id === "work" ? 1 : visibility[grid.id].opacity);
         grid.material.uniforms.strength.value =
           grid.id === "work" ? 0.4 * Math.min(1, facing * 5) : 0.22;
         const frame = grid.id === "work" ? active : planes[grid.id];
@@ -101,6 +103,7 @@ function createGrid(scene: THREE.Scene, id: (typeof planeIds)[number] | "work") 
   const normal = u.clone().cross(v);
   const material = gridMaterial(id);
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), material);
+  mesh.userData.coordinateGrid = true;
   mesh.setRotationFromMatrix(new THREE.Matrix4().makeBasis(u, v, normal));
   // The active sketch plane stays legible over bodies, fills and highlights.
   mesh.renderOrder = id === "work" ? 100 : -10;

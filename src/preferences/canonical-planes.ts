@@ -8,7 +8,7 @@ export interface CanonicalPlaneSettings {
   selectableMinimum: number;
   fullOpacityAbove: number;
   fadeMilliseconds: number;
-  /** Secondary visibility as a fraction of the primary grid's maximum. */
+  /** Legacy preference retained for compatibility; secondary grids are disabled. */
   secondaryOpacity: number;
   colors: Record<PlaneId, string>;
   palettes: Record<string, Record<PlaneId, string>>;
@@ -18,7 +18,7 @@ export const planePresets = {
   choice: { angleCutoff: 0.25, fadeWidth: 0.4 },
 } as const;
 export const defaultPlaneColors = { XY: "#d4ae3a", XZ: "#55bb6e", YZ: "#b325c1" };
-export const defaultSecondaryOpacity = 0.35;
+export const defaultSecondaryOpacity = 0;
 const defaults: CanonicalPlaneSettings = {
   ...planePresets.focused,
   selectableMinimum: 0.15,

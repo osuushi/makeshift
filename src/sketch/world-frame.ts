@@ -1,4 +1,5 @@
 import type * as THREE from "three";
+import { GridOcclusion } from "./grid-occlusion.js";
 import type { World } from "./world.js";
 import { SketchForeground } from "./world-foreground.js";
 import { PrimitiveOverlay } from "./world-primitive-overlay.js";
@@ -11,6 +12,7 @@ declare global {
 
 /** GPU presentation; camera, geometry, picking and DOM updates remain in World. */
 export class WorldFrame {
+  private readonly gridOcclusion = new GridOcclusion();
   private readonly foreground = new SketchForeground();
   private readonly primitives = new PrimitiveOverlay();
   private width = -1;
@@ -38,6 +40,7 @@ export class WorldFrame {
     if (window.makeshiftTestFrameMode === "on-demand" && !force) return;
     const { renderer, scene, camera, renderOverlays, renderForegroundOverlays, activeFrame } =
       this.world;
+    this.gridOcclusion.update(this.world);
     renderer.render(scene, camera);
     for (const render of renderOverlays) render();
     if (activeFrame) {

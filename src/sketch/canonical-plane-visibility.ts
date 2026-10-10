@@ -29,7 +29,7 @@ export class CanonicalPlaneVisibility {
         velocity: 0,
         target: 0,
         selectable: false,
-        role: "hidden" as "primary" | "secondary" | "hidden",
+        role: "hidden" as "primary" | "hidden",
       },
     ]),
   ) as Record<
@@ -39,7 +39,7 @@ export class CanonicalPlaneVisibility {
       velocity: number;
       target: number;
       selectable: boolean;
-      role: "primary" | "secondary" | "hidden";
+      role: "primary" | "hidden";
     }
   >;
   update(
@@ -68,17 +68,9 @@ export class CanonicalPlaneVisibility {
     let moving = false;
     for (const id of planeIds) {
       const state = this.states[id];
-      state.role = id === ranked[0].id ? "primary" : id === ranked[1].id ? "secondary" : "hidden";
-      const facing = ranked.find((entry) => entry.id === id)?.facing ?? 0;
-      // Always retain a primary reference. The runner-up supplies a faint
-      // orientation cue, even below the preference's ordinary angle cutoff.
-      const edgeFade = Math.min(1, Math.max(0, (facing - 0.005) / 0.195));
-      const target =
-        state.role === "primary"
-          ? 1
-          : state.role === "secondary"
-            ? edgeFade * settings.secondaryOpacity
-            : 0;
+      state.role = id === ranked[0].id ? "primary" : "hidden";
+      // Only the most face-on grid supplies a reference.
+      const target = state.role === "primary" ? 1 : 0;
       // Slow rendered frames still advance an existing fade. Only a new target
       // after a genuinely idle viewport starts with no accumulated time.
       const elapsed = !first && gap > 1000 && state.target !== target ? 0 : gap;

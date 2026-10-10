@@ -24,10 +24,11 @@ export const reviewUiSuites = [
   { args: ["thread-preview-rim-ui.mjs"], seconds: 36, browsers: ["chromium", "webkit"] },
   { args: ["decorator-preview-render.mjs"], seconds: 2, browsers: ["chromium", "webkit"] },
   { args: ["decorator-settings-browser.mjs"], seconds: 1, browsers: ["chromium", "webkit"] },
+  { args: ["grid-occlusion-render.mjs"], seconds: 5, browsers: ["electron"] },
   { args: ["view-settings-browser.mjs"], seconds: 14, browsers: ["chromium", "webkit"] },
   { args: ["canonical-plane-fades-ui.mjs"], seconds: 27, browsers: ["chromium", "webkit"] },
   {
-    args: ["secondary-plane-opacity-ui.mjs"],
+    args: ["grid-fill-opacity-ui.mjs"],
     seconds: 11,
     browsers: ["chromium", "webkit", "electron"],
   },
