@@ -136,8 +136,9 @@ nav a:hover {
   margin-bottom: 24px;
 }
 .hero-subtitle {
-  font-size: clamp(26px, 3vw, 36px);
+  font-size: clamp(28px, 3.8vw, 44px);
   font-weight: 600;
+  color: #514d54;
   letter-spacing: -0.025em;
   line-height: 1.2;
 }
