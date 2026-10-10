@@ -3,6 +3,16 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 import { app, type BrowserWindow, dialog } from "electron";
 import type { DialogRequest, DirectoryListing } from "../ipad/protocol.js";
 
+export async function showDocumentError(error: unknown): Promise<void> {
+  console.error(error);
+  await dialog.showMessageBox({
+    type: "error",
+    message: "Could not complete document operation",
+    detail: String(error),
+    buttons: ["OK"],
+  });
+}
+
 /** The active document surface owns prompts. Paths still refer to this computer. */
 export const sessionDialogs = {
   remotes: new WeakMap<BrowserWindow, (request: DialogRequest) => Promise<unknown>>(),

@@ -124,4 +124,18 @@ export class DocumentFiles {
     });
     return response === 2 ? "discard" : response === 0 ? "save" : "cancel";
   }
+  async leave(
+    window: BrowserWindow,
+    stop: () => Promise<void>,
+    camera?: CameraState,
+  ): Promise<boolean> {
+    // Include final agent writes in the ordinary unsaved-work choice.
+    await stop();
+    const choice = await this.replacementChoice(window);
+    return (
+      choice === "clean" ||
+      choice === "discard" ||
+      (choice === "save" && (await this.save(window, false, undefined, camera)))
+    );
+  }
 }

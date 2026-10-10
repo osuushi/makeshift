@@ -3,6 +3,7 @@ import { mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { _electron } from "playwright";
+import { blankDocumentOpen } from "./document-blank-open.mjs";
 import { hostModelBoundary } from "./host-model-boundary.mjs";
 import { drag, inspect, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -276,6 +277,7 @@ try {
     "first",
   );
   const broken = join(root, "Broken.makeshift");
+  await blankDocumentOpen(app, reopenedFirst, root, firstPath, firstDocument);
   await writeFile(broken, "invalid archive");
   const promptCount = await app.evaluate(() => globalThis.promptNames.length);
   await app.evaluate(

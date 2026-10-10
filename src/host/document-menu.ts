@@ -1,6 +1,14 @@
-import { Menu } from "electron";
-import type { DocumentCommand } from "../model/document-host.js";
+import { type BrowserWindow, Menu } from "electron";
+import type { DocumentCommand, DocumentStatus } from "../model/document-host.js";
 import { showAbout, showLicenses } from "./about.js";
+
+export function setDocumentWindowTitle(window: BrowserWindow, status: DocumentStatus): void {
+  window.setTitle(`${status.name}${status.edited ? " — Edited" : ""} — Makeshift`);
+  if (process.platform === "darwin") {
+    window.setRepresentedFilename(status.path ?? "");
+    window.setDocumentEdited(status.edited);
+  }
+}
 
 export function installDocumentMenu(
   dispatch: (command: DocumentCommand) => void,

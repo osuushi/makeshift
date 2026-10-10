@@ -9,6 +9,7 @@ import { inspectDrawing } from "./agent-inspection.js";
 import type { AgentSession } from "./agent-session.js";
 import { DocumentFiles } from "./document-files.js";
 import { DocumentIPC } from "./document-ipc.js";
+import { setDocumentWindowTitle } from "./document-menu.js";
 import { readInspectionView } from "./inspection-view.js";
 import { hostModelRequest } from "./model-request.js";
 
@@ -152,8 +153,26 @@ export class DocumentSession {
     await this.owner.call({ kind: "discard" });
   }
   async openPath(path: string): Promise<void> {
-    await this.files.open(path);
-    this.update();
+    this.busy = true;
+    try {
+      await this.agent.stop();
+      await this.files.open(path);
+    } finally {
+      this.agent.endReplacement();
+      this.busy = false;
+      this.update();
+    }
+  }
+  get blank(): boolean {
+    return (
+      !this.busy &&
+      !this.script.busy &&
+      !this.remote?.active() &&
+      !this.owner.view.candidate &&
+      !this.files.status.path &&
+      !this.files.status.edited &&
+      this.agent.unused
+    );
   }
   async model(value: unknown) {
     const request = hostModelRequest(value);
@@ -224,11 +243,7 @@ export class DocumentSession {
     const window = this.window;
     if (!window || window.isDestroyed()) return;
     const status = this.files.status;
-    window.setTitle(`${status.name}${status.edited ? " — Edited" : ""} — Makeshift`);
-    if (process.platform === "darwin") {
-      window.setRepresentedFilename(status.path ?? "");
-      window.setDocumentEdited(status.edited);
-    }
+    setDocumentWindowTitle(window, status);
     this.send("document-status", {
       ...status,
       warning: this.agent.workspace.error ?? this.warning,
@@ -259,7 +274,8 @@ export class DocumentSession {
           this.warning = undefined;
       } else if (command === "close" || quitting) {
         if (quitting && !this.quitReply) return { replaced: false };
-        if (!(await this.leaveDocument(window, view))) return { replaced: false };
+        if (!(await this.files.leave(window, () => this.agent.stop(), view)))
+          return { replaced: false };
         this.warning = undefined;
         if (quitting) {
           if (!this.quitReply) return { replaced: false };
@@ -279,15 +295,5 @@ export class DocumentSession {
       this.busy = this.quitReady;
       this.update();
     }
-  }
-  private async leaveDocument(window: BrowserWindow, camera?: CameraState): Promise<boolean> {
-    // Stop first so the ordinary unsaved-work choice includes final agent writes.
-    await this.agent.stop();
-    const choice = await this.files.replacementChoice(window);
-    return (
-      choice === "clean" ||
-      choice === "discard" ||
-      (choice === "save" && (await this.files.save(window, false, undefined, camera)))
-    );
   }
 }

@@ -36,8 +36,12 @@ Application preferences, agent installation/settings, menus and updates are shar
 IPC handlers register once and select their session from the actual main-frame
 WebContents sender; an active window is never used to route model or agent requests.
 
-New always creates an independent untitled window. Open (including multiple files
-from the native panel) creates a window per file; opening an already open path or
+New always creates an independent untitled window. Open reuses its originating
+window when it is clean and untitled, with no pending geometry, file operation,
+agent workspace/lifecycle or iPad pairing. It validates before replacing that blank
+document, then reloads the editor to reset tools, selection and camera. Failed Open
+retains the blank window. Other Open requests (including further files in a multiple
+selection) create a window per file; opening an already open path or
 symlink focuses its existing window and preserves its geometry, history and view.
 Untitled windows have distinct names. Save As rejects a destination owned by another
 open/opening/saving document. Native File/Edit commands target the focused document,
@@ -46,8 +50,8 @@ with the last document window retained when an auxiliary window owns focus.
 Native Save writes back to that session's current path; first Save and Save As use a
 native save panel. A temporary sibling file is fully written before replacing the
 destination; failure retains the old identity and dirty state. Open validates and
-materializes in its provisional session before showing the editor; failure closes
-only that provisional window and reports the error. The current file's folder is
+materializes before replacing blank work or showing a new editor; failure retains
+the blank window or closes only its provisional new window and reports the error. The current file's folder is
 the default for its file panels; untitled panels use the application's last used
 folder, falling back to Documents.
 
@@ -64,8 +68,9 @@ and loading block edits. Quit, window close and update restart complete a releas
 active operation through its normal acceptance path before asking about unsaved work.
 Canceling the save prompt keeps that accepted operation available to Undo. Failed
 completion keeps the window open and the operation available for correction. Held
-pointer gestures must finish first. New/Open leave the current window's tools and
-agent running, while Save and Close complete released operations normally.
+pointer gestures must finish first. New and Open into another window leave the
+current window's tools and agent running, while Save and Close complete released
+operations normally.
 
 Close stops only that document's agent before the final unsaved-work prompt, so
 final process writes are included. Cancel keeps the document open; a stopped agent

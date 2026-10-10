@@ -1,20 +1,17 @@
-import { realpath } from "node:fs/promises";
-import { basename, dirname, join, resolve } from "node:path";
+import { dirname } from "node:path";
 import { app, BrowserWindow, dialog } from "electron";
 import type { DocumentCommand } from "../model/document-host.js";
 import { AgentSettings } from "./agent-settings.js";
 import { AgentSetup } from "./agent-setup.js";
 import { installDocumentMenu } from "./document-menu.js";
 import { DocumentWindow } from "./document-window.js";
-import { DocumentWindows, type SavedDocumentWindow, windowBounds } from "./document-windows.js";
-import { sessionDialogs } from "./session-dialogs.js";
-
-async function canonical(path: string): Promise<string> {
-  const absolute = resolve(path);
-  return realpath(absolute).catch(async () =>
-    join(await realpath(dirname(absolute)).catch(() => dirname(absolute)), basename(absolute)),
-  );
-}
+import {
+  canonicalDocumentPath as canonical,
+  cascadeWindow,
+  DocumentWindows,
+  type SavedDocumentWindow,
+} from "./document-windows.js";
+import { sessionDialogs, showDocumentError } from "./session-dialogs.js";
 
 /** Application menus, open-file deduplication and coordinated shutdown. */
 export class DocumentApplication {
@@ -83,9 +80,14 @@ export class DocumentApplication {
     const result = window
       ? await sessionDialogs.showOpenDialog(window, options)
       : await dialog.showOpenDialog(options);
-    if (!result.canceled) for (const path of result.filePaths) await this.open(path);
+    if (!result.canceled)
+      for (const path of result.filePaths) await this.open(path, undefined, window);
   }
-  async open(path?: string, bounds?: Electron.Rectangle): Promise<void> {
+  async open(
+    path?: string,
+    bounds?: Electron.Rectangle,
+    source = this.active()?.window,
+  ): Promise<void> {
     if (this.shuttingDown) return;
     const identity = path ? await canonical(path) : undefined;
     if (identity) {
@@ -107,12 +109,33 @@ export class DocumentApplication {
       const pending = this.pending.get(identity);
       if (pending) return pending;
     }
-    const opening = this.create(path, identity, bounds);
+    const blank =
+      path && !this.restoring
+        ? [...this.documents].find((entry) => entry.window === source && entry.documents.blank)
+        : undefined;
+    const opening =
+      blank && path && identity
+        ? this.replaceBlank(blank, path, identity)
+        : this.create(path, identity, bounds);
     if (identity) this.pending.set(identity, opening);
     try {
       await opening;
     } finally {
       if (identity) this.pending.delete(identity);
+    }
+  }
+  private async replaceBlank(
+    document: DocumentWindow,
+    path: string,
+    identity: string,
+  ): Promise<void> {
+    this.identities.set(document, identity);
+    try {
+      await document.load(path);
+      this.focus(document);
+    } catch (error) {
+      if (!document.documents.status.path) this.identities.delete(document);
+      throw error;
     }
   }
   private async create(
@@ -131,7 +154,7 @@ export class DocumentApplication {
         else await this.choose(window);
       },
       directory: () => this.preferences.directory,
-      bounds: bounds ?? this.cascade(),
+      bounds: bounds ?? cascadeWindow(this.active()?.window),
       remember: (path) => {
         if (path) this.preferences.directory = dirname(path);
         return this.remember();
@@ -190,12 +213,6 @@ export class DocumentApplication {
     } finally {
       this.writes.delete(identity);
     }
-  }
-  private cascade(): Electron.Rectangle | undefined {
-    const current = this.active()?.window;
-    if (!current || current.isDestroyed()) return;
-    const bounds = current.getNormalBounds();
-    return windowBounds({ ...bounds, x: bounds.x + 24, y: bounds.y + 24 });
   }
   private snapshot(): SavedDocumentWindow[] {
     return [...this.documents].map((entry) => ({
@@ -275,13 +292,5 @@ export class DocumentApplication {
     if (!document) throw new Error("Requires a document window");
     document.documents.checkDesktop();
   }
-  async error(error: unknown): Promise<void> {
-    console.error(error);
-    await dialog.showMessageBox({
-      type: "error",
-      message: "Could not complete document operation",
-      detail: String(error),
-      buttons: ["OK"],
-    });
-  }
+  error = showDocumentError;
 }

@@ -1,11 +1,24 @@
-import { readFile } from "node:fs/promises";
-import { isAbsolute, join } from "node:path";
-import { app, screen } from "electron";
+import { readFile, realpath } from "node:fs/promises";
+import { basename, dirname, isAbsolute, join, resolve } from "node:path";
+import { app, type BrowserWindow, screen } from "electron";
 import { safeWrite } from "./safe-write.js";
+
+export async function canonicalDocumentPath(path: string): Promise<string> {
+  const absolute = resolve(path);
+  return realpath(absolute).catch(async () =>
+    join(await realpath(dirname(absolute)).catch(() => dirname(absolute)), basename(absolute)),
+  );
+}
 
 export interface SavedDocumentWindow {
   path: string | null;
   bounds?: Electron.Rectangle;
+}
+
+export function cascadeWindow(window?: BrowserWindow): Electron.Rectangle | undefined {
+  if (!window || window.isDestroyed()) return;
+  const bounds = window.getNormalBounds();
+  return windowBounds({ ...bounds, x: bounds.x + 24, y: bounds.y + 24 });
 }
 
 export function windowBounds(value: unknown): Electron.Rectangle | undefined {

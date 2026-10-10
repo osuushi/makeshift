@@ -67,6 +67,9 @@ export class AgentSession {
   get status(): AgentReply {
     return { ...this.process.status, workspace: this.workspace.cwd, setup: this.setup.status };
   }
+  get unused(): boolean {
+    return !this.busy && !this.replacing && !this.process.status.running && !this.workspace.root;
+  }
   attach(window: BrowserWindow): void {
     this.ipc.attach(window);
     this.window = window;
