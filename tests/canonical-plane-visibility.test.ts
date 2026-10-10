@@ -44,7 +44,7 @@ test("faint previews cannot click, including a still-bright plane fading out", (
   assert.equal(selectablePlane(0.001, 0.001, 0), true);
   assert.equal(selectablePlane(0.99, 1, 1), false);
 });
-test("one full-strength primary wins by facing angle, with a bounded secondary and stable ties", () => {
+test("one full-strength primary wins by facing angle, with no secondary and stable ties", () => {
   const camera = new THREE.OrthographicCamera();
   const visibility = new CanonicalPlaneVisibility();
   const cases = [
@@ -71,9 +71,9 @@ test("one full-strength primary wins by facing angle, with a bounded secondary a
     assert.ok(
       Object.values(visibility.states)
         .filter((state) => state.role !== "primary")
-        .every((state) => state.opacity >= 0 && state.opacity <= settings.secondaryOpacity),
+        .every((state) => state.opacity === 0),
     );
-    assert.ok(Object.values(visibility.states).filter((state) => state.opacity > 0).length <= 2);
+    assert.ok(Object.values(visibility.states).filter((state) => state.opacity > 0).length === 1);
     assert.deepEqual(
       Object.entries(visibility.states)
         .filter(([, state]) => state.role === "primary")
@@ -135,6 +135,8 @@ test("agent settings validate atomically and return independent snapshots", () =
   configurePreferences('{"canonicalPlanes":{"angleCutoff":0.5},"viewDisplay":{"planes":0.04}}');
   assert.equal(applicationPreferences().canonicalPlanes.angleCutoff, 0.5);
   assert.equal(applicationPreferences().viewDisplay.planes, 0);
+  assert.equal(applicationPreferences().viewDisplay.gridFill, 0.1);
+  assert.throws(() => configurePreferences('{"viewDisplay":{"gridFill":1.1}}'));
   configurePreferences(JSON.stringify(before));
 });
 
@@ -195,17 +197,19 @@ test("slow rendered frames continue fading instead of remaining permanently unse
   assert.equal(visibility.states.YZ.opacity, 1);
 });
 
-test("grid thickness validation is atomic and fill opacity stays disabled", () => {
+test("grid thickness and white fill validate atomically; legacy plane fill stays disabled", () => {
   const original = applicationPreferences();
-  configurePreferences('{"viewDisplay":{"gridLineWidth":2.5,"planes":0.9}}');
+  configurePreferences('{"viewDisplay":{"gridLineWidth":2.5,"gridFill":0.25,"planes":0.9}}');
   assert.equal(applicationPreferences().viewDisplay.gridLineWidth, 2.5);
   assert.equal(applicationPreferences().viewDisplay.planes, 0);
+  assert.equal(applicationPreferences().viewDisplay.gridFill, 0.25);
+  assert.throws(() => configurePreferences('{"viewDisplay":{"gridFill":1.1}}'));
   assert.throws(() => configurePreferences('{"viewDisplay":{"grid":0.1,"gridLineWidth":0.4}}'));
   assert.equal(applicationPreferences().viewDisplay.grid, original.viewDisplay.grid);
   configurePreferences(JSON.stringify(original));
 });
 
-test("secondary references are selectable only inside explicit plane picking", () => {
+test("hidden references remain unselectable inside explicit plane picking", () => {
   const camera = new THREE.OrthographicCamera();
   camera.position.set(1, 0.8, 0.3);
   camera.lookAt(0, 0, 0);
@@ -221,7 +225,7 @@ test("secondary references are selectable only inside explicit plane picking", (
   assert.equal(canonicalPlaneSelectable(world, "YZ"), true);
   assert.equal(canonicalPlaneSelectable(world, "XZ"), false);
   world.planePicker = () => {};
-  assert.equal(canonicalPlaneSelectable(world, "XZ"), true);
+  assert.equal(canonicalPlaneSelectable(world, "XZ"), false);
   assert.equal(canonicalPlaneSelectable(world, "XY"), false);
   Object.assign(world, { active: "XY" });
   assert.equal(canonicalPlaneSelectable(world, "XZ"), false);

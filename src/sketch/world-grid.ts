@@ -56,6 +56,8 @@ export function createGrids(scene: THREE.Scene) {
         grid.material.uniforms.lineWidth.value = viewDisplay().gridLineWidth;
         grid.material.uniforms.opacityScale.value =
           (viewDisplay().grid / 0.4) * (grid.id === "work" ? 1 : visibility[grid.id].opacity);
+        grid.material.uniforms.fillOpacity.value =
+          viewDisplay().gridFill * (grid.id === "work" ? 1 : visibility[grid.id].opacity);
         grid.material.uniforms.strength.value =
           grid.id === "work" ? 0.4 * Math.min(1, facing * 5) : 0.22;
         const frame = grid.id === "work" ? active : planes[grid.id];

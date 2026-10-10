@@ -1,9 +1,10 @@
 export interface ViewDisplay {
   planes: number;
   grid: number;
+  gridFill: number;
   gridLineWidth: number;
 }
-const defaults: ViewDisplay = { planes: 0, grid: 0.4, gridLineWidth: 1 };
+const defaults: ViewDisplay = { planes: 0, grid: 0.4, gridFill: 0.1, gridLineWidth: 1 };
 const key = "makeshift.view-display";
 const listeners = new Set<() => void>();
 let value = { ...defaults };
@@ -16,7 +17,7 @@ function normalized(input: unknown): ViewDisplay {
   const result = { ...defaults };
   if (!input || typeof input !== "object") return result;
   const candidate = input as Partial<ViewDisplay>;
-  for (const field of ["grid"] as const) {
+  for (const field of ["grid", "gridFill"] as const) {
     const opacity = candidate[field];
     if (typeof opacity === "number" && Number.isFinite(opacity))
       result[field] = Math.max(0, Math.min(1, opacity));

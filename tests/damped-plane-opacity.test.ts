@@ -21,7 +21,7 @@ test("opacity spring retains frame-rate independence, velocity and a perceptible
   assert.equal(retargeted.velocity, first.velocity);
 });
 
-test("secondary opacity controls only the secondary target and accepts zero", () => {
+test("legacy secondary opacity cannot restore the removed secondary grid", () => {
   const camera = new THREE.OrthographicCamera();
   camera.position.set(1, 0.8, 0.3);
   camera.lookAt(0, 0, 0);
@@ -31,7 +31,7 @@ test("secondary opacity controls only the secondary target and accepts zero", ()
   for (const secondaryOpacity of [0, 0.35, 0.7, 1]) {
     visibility.update(camera, { ...settings, secondaryOpacity }, 0, true);
     assert.equal(visibility.states.YZ.opacity, 1);
-    assert.equal(visibility.states.XZ.opacity, secondaryOpacity);
+    assert.equal(visibility.states.XZ.opacity, 0);
     assert.equal(visibility.states.XY.opacity, 0);
     assert.equal(visibility.states.XZ.selectable, false);
   }

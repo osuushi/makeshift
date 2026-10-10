@@ -27,12 +27,11 @@ export async function orientationCueRoute(page, name = "cue") {
     ["YZ"],
   );
   assert.ok(state.planeTargets.every((p) => p.fillOpacity === 0));
-  assert.ok(state.planeTargets.find((p) => p.id === "XZ").opacity > 0);
-  assert.ok(state.planeTargets.find((p) => p.id === "XZ").opacity <= 0.351);
-  // This ray hits XZ closer than YZ. Ordinary picking must still choose the primary.
-  const secondaryPoint = await project(page, [18, 0, -18]);
-  await page.mouse.move(secondaryPoint.x, secondaryPoint.y);
-  await page.mouse.click(secondaryPoint.x, secondaryPoint.y);
+  assert.equal(state.planeTargets.find((p) => p.id === "XZ").opacity, 0);
+  // Pick a clear patch of the primary, away from the sketch geometry.
+  const primaryPoint = point;
+  await page.mouse.move(primaryPoint.x, primaryPoint.y);
+  await page.mouse.click(primaryPoint.x, primaryPoint.y);
   assert.equal((await inspect(page)).planeTargets.find((p) => p.id === "XZ").selected, false);
   assert.equal((await inspect(page)).planeTargets.find((p) => p.id === "YZ").selected, true);
   await distantPanRoute(page, point);
@@ -45,7 +44,7 @@ export async function orientationCueRoute(page, name = "cue") {
       JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
     ),
   });
-  await orient(page, [1, -0.8, 0.3]);
+  await orient(page, [0.3, -1, 0.2]);
   const original = (await inspect(page)).document;
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   await chooseTool(page, "Split Body", "split");
@@ -74,7 +73,7 @@ if (process.argv[1]?.endsWith("canonical-plane-fades-ui.mjs")) {
     async (page, name) => {
       await orientationCueRoute(page, name);
       console.log(
-        `${name}: primary canvas sketch entry, secondary click gating, real secondary split/cancel passed`,
+        `${name}: primary canvas sketch entry, secondary click gating, real primary split/cancel passed`,
       );
     },
     { defaults: ["chromium", "webkit"] },
@@ -88,7 +87,7 @@ async function distantPanRoute(page, point) {
   await page.waitForFunction(() => Math.hypot(...window.makeshiftInspect().camera.target) > 50000);
   await settled(page);
   const state = await inspect(page);
-  assert.equal(state.planeTargets.filter((p) => p.visible).length, 2);
+  assert.equal(state.planeTargets.filter((p) => p.visible).length, 1);
   assert.equal(state.planeTargets.filter((p) => p.selectable).length, 1);
   await page.mouse.move(point.x + 1, point.y + 1);
   assert.ok(

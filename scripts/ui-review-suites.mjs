@@ -19,7 +19,7 @@ export const reviewUiSuites = [
   { args: ["view-settings-browser.mjs"], seconds: 14, browsers: ["chromium", "webkit"] },
   { args: ["canonical-plane-fades-ui.mjs"], seconds: 27, browsers: ["chromium", "webkit"] },
   {
-    args: ["secondary-plane-opacity-ui.mjs"],
+    args: ["grid-fill-opacity-ui.mjs"],
     seconds: 11,
     browsers: ["chromium", "webkit", "electron"],
   },

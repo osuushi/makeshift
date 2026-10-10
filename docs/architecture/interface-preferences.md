@@ -19,24 +19,23 @@ at the top after dragging or resizing the window. These positions
 are local presentation preferences, independent of document files and Undo.
 
 Canonical XY/XZ/YZ references cover the viewport, including far from the origin.
-References render only colored grid lines; their invisible meshes remain picking targets.
+References render colored grid lines over a white fill (10% opacity by default);
+their meshes remain picking targets.
 The most face-on canonical plane is primary at configured maximum grid opacity,
 with ties resolved XY, then XZ, then YZ (facing differences within 1e-12 count as tied).
-One secondary supplies an orientation cue at a configurable fraction of the maximum
-(35% by default), fading near edge-on. On switching, only opacity targets change;
-each grid carries opacity and velocity through a critically damped spring with a
-240 ms smoothing time (about 0.6 seconds to reach 95% of a settled target).
-Camera depth fitting depends on geometry and viewing angle, independently of animated opacity.
-Reduced motion and a configured zero smoothing time use immediate changes;
-only the primary receives ordinary hover/click. A visible secondary can be picked
-in explicit plane-selection tools. Both current and target primary opacity must
-meet the selectable fraction (0.15). At steady state at most two grids are visible.
+Only the primary has a nonzero visibility target. On switching, each grid carries
+opacity and velocity through a critically damped spring with a 240 ms smoothing
+time (about 0.6 seconds to reach 95% of a settled target). Reduced motion and zero
+smoothing use immediate changes. Only the primary receives canvas input, including
+explicit plane-selection tools; both current and target opacity must meet the
+selectable fraction (0.15). Outgoing grids fade away during a handoff.
+Camera depth fitting remains independent of animated opacity.
 Coordinate grids apply a gentle bounded fade with positive depth from the view
 target along the camera direction. Fade distance scales with visible world height,
 independently of camera retreat; nearer portions retain full strength. Work grids,
 construction planes, world axes and geometry do not receive this fade.
 Settings keeps this simple behavior and
-exposes grid opacity, secondary plane opacity (0–100% relative to the primary),
+exposes grid line opacity, white grid fill opacity (0–100%, default 10%),
 line thickness (0.5–3 pixels, default 1), colors and saved palettes.
 Grid colors default to XY #d4ae3a, XZ #55bb6e and YZ #b325c1; axes retain their colors.
 Thickness also applies to the active sketch grid. A sketch whose copied frame
@@ -48,7 +47,8 @@ Preferences live on the editing device, outside document files and Undo. On the 
 load of the grid-only presentation, previous visibility choices reset to the focused
 behavior and old default colors migrate; custom colors and named palettes survive.
 Reset plane grids restores visibility and colors while preserving palettes. Reset
-grid display restores primary/secondary opacity and thickness. Advanced fade parameters remain available
+grid display restores line/fill opacity and thickness. The legacy secondaryOpacity
+API field is accepted but no longer affects visibility. Advanced fade parameters remain available
 through the settings API; the legacy planes opacity field always reads zero.
 
 `makeshift settings [JSON]` reads or validates and patches these preferences through

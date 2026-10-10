@@ -18,12 +18,7 @@ export function canonicalPlaneBounds(world: World, frame: PlaneFrame): PlaneBoun
 }
 export function canonicalPlaneSelectable(world: World, id: import("./planes.js").PlaneId): boolean {
   const state = world.canonicalVisibility.states[id];
-  const modal = !!world.planePicker || !!world.planePickerAccept;
-  return (
-    !world.active &&
-    (state.selectable ||
-      (modal && state.role === "secondary" && state.opacity > 0 && state.target > 0))
-  );
+  return !world.active && state.selectable;
 }
 
 /** The central viewing ray's intersection, rather than the target's normal projection. */

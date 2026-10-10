@@ -21,7 +21,7 @@ export function configurePreferences(json: string): void {
   const patch = JSON.parse(json) as ApplicationPreferencesPatch;
   object(patch, ["canonicalPlanes", "viewDisplay"]);
   if (patch.viewDisplay !== undefined) {
-    object(patch.viewDisplay, ["planes", "grid", "gridLineWidth"]);
+    object(patch.viewDisplay, ["planes", "grid", "gridFill", "gridLineWidth"]);
     for (const [field, value] of Object.entries(patch.viewDisplay)) {
       number(value, field === "gridLineWidth" ? 3 : 1);
       if (field === "gridLineWidth" && value < 0.5)
