@@ -112,7 +112,7 @@ export class BooleanControls {
           ids: [],
           mode,
           keepOriginals: this.preference.get(mode),
-          experimentalTrimFiltering: operation.experimentalTrimFiltering,
+          experimentalTrimFiltering: fastTrimChecks(),
         };
 
     this.editor.modeling.hover = null;
