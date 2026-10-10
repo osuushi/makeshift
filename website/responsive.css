@@ -76,9 +76,6 @@
     object-fit: cover;
     object-position: center;
   }
-  figcaption {
-    font-size: 12px;
-  }
   .approach {
     padding-block: 52px;
   }
