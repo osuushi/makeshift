@@ -74,10 +74,6 @@
     grid-template-columns: 1fr;
     gap: 22px;
   }
-  .freedom .eyebrow {
-    font-size: 11px;
-    letter-spacing: 0.065em;
-  }
   .start {
     padding-block: 52px 44px;
   }
