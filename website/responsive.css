@@ -8,8 +8,8 @@
   .intro > p:first-child {
     font-size: 18px;
   }
-  .approach {
-    gap: 45px;
+  .principles {
+    column-gap: 35px;
   }
   .freedom {
     padding: 32px;
@@ -57,15 +57,17 @@
     font-size: 12px;
   }
   .approach {
+    padding-block: 52px;
+  }
+  .section-intro {
+    margin-bottom: 28px;
+  }
+  .principles {
     grid-template-columns: 1fr;
     gap: 26px;
-    padding-block: 52px;
   }
   .freedom h2 br {
     display: none;
-  }
-  .section-intro > p:last-child {
-    margin-bottom: 0;
   }
   .freedom {
     padding: 28px 24px;
