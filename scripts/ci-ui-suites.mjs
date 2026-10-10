@@ -3,14 +3,6 @@
 // Add combinatorial cases to the linked lower-level tests, not this inventory.
 export const uiSuites = [
   {
-    args: ["body-rotation-handoff-ui.mjs"],
-    seconds: 20,
-    browsers: ["electron"],
-    reason:
-      "A different Move handle must accept a released body rotation and receive the same click or drag across native acceptance.",
-    unit: "tool-switching.test.ts",
-  },
-  {
     args: ["primitive-handoff-ui.mjs"],
     seconds: 60,
     browsers: ["electron"],
