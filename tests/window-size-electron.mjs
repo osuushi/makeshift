@@ -92,12 +92,14 @@ try {
   assert.equal(devRestored.width, devSize.width);
   assert.equal(devRestored.height, devSize.height);
   await close();
+  await rm(join(directory, "document-windows.json"), { force: true });
   await writeFile(preference, '{"width":999999,"height":999999}');
   const oversized = await launch();
   assert.equal(oversized.width, oversized.available.width);
   assert.equal(oversized.height, oversized.available.height);
   await close();
   for (const invalid of ['{"width":-1,"height":620}', "broken JSON"]) {
+    await rm(join(directory, "document-windows.json"), { force: true });
     await writeFile(preference, invalid);
     const fallback = await launch();
     assert.equal(fallback.width, initial.width);

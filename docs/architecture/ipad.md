@@ -55,10 +55,16 @@ Close first stops hosting and then uses the computer's normal file lifecycle.
 
 ## Computer files and agent
 
+Each computer document window owns its own pairing/listener and prompts. New/Open
+create or focus a separate computer window; the iPad remains paired with its current
+document and displays that behavior explicitly. Return to computer and select the
+other window's Tablet control to work on it. Opening an already open file never
+replaces the paired document or its Undo/agent state.
+
 Save/Open/Save As and agent executable/recovery choices refer to computer paths.
 A session dialog adapter routes file listings and prompts to the active surface;
-the existing document/agent lifecycle retains validation, save-before-replace,
-workspace capture, ordinary save/discard choices and one edit at a time. Desktop
+the document/agent lifecycle retains validation, workspace capture, ordinary
+save/discard choices and one edit at a time. Desktop
 use retains native dialogs. The initial browser picker traverses existing folders
 and accepts typed paths; folder creation is not provided. Mesh export retains the
 shared browser download path. Safari's own paste event supplies iPad terminal paste.

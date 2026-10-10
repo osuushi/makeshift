@@ -28,19 +28,28 @@ a storage research project. No migration framework for hypothetical old versions
 
 ## Native document lifecycle
 
-Electron remembers the document window's displayed width and height on close,
-including a zoomed/maximized window that fills the available screen, and
-restores them on the next launch or window creation, limited to the primary display's
-current work area. Missing or invalid preferences use the default 1280 × 850 size.
-Fullscreen and minimized windows retain their normal restore size instead.
-Window size is a host preference, independent of document contents and Undo.
+Electron uses one window and one complete session per document. Each session owns
+its DocumentOwner, Undo/Redo, accepted data and previews, file identity and saved
+baseline, agent workspace/process/script connection, export calculators and optional
+iPad handoff. Renderer selection, tools and camera live in that window's renderer.
+Application preferences, agent installation/settings, menus and updates are shared.
+IPC handlers register once and select their session from the actual main-frame
+WebContents sender; an active window is never used to route model or agent requests.
 
-Electron keeps one document window. The host owns the current path and saved-content
-baseline; DocumentOwner still owns accepted geometry and Undo. New/Open replace the
-same window only after Save/Cancel/Don’t Save resolves. Native Save writes back to the
-current path; first Save and Save As use a native save panel. A temporary sibling file
-is fully written before replacing the destination; failure retains the old identity
-and dirty state. Open validates/materializes before replacing accepted work.
+New always creates an independent untitled window. Open (including multiple files
+from the native panel) creates a window per file; opening an already open path or
+symlink focuses its existing window and preserves its geometry, history and view.
+Untitled windows have distinct names. Save As rejects a destination owned by another
+open/opening/saving document. Native File/Edit commands target the focused document,
+with the last document window retained when an auxiliary window owns focus.
+
+Native Save writes back to that session's current path; first Save and Save As use a
+native save panel. A temporary sibling file is fully written before replacing the
+destination; failure retains the old identity and dirty state. Open validates and
+materializes in its provisional session before showing the editor; failure closes
+only that provisional window and reports the error. The current file's folder is
+the default for its file panels; untitled panels use the application's last used
+folder, falling back to Documents.
 
 Desktop and paired-browser model transports accept geometry/history requests only.
 New/Open use document commands, so geometry replacement cannot bypass file identity,
@@ -55,22 +64,34 @@ and loading block edits. Quit, window close and update restart complete a releas
 active operation through its normal acceptance path before asking about unsaved work.
 Canceling the save prompt keeps that accepted operation available to Undo. Failed
 completion keeps the window open and the operation available for correction. Held
-pointer gestures must finish first; other file commands still require tools to finish
-or cancel first.
+pointer gestures must finish first. New/Open leave the current window's tools and
+agent running, while Save and Close complete released operations normally.
 
-The last successfully opened/saved path is remembered in the Electron user-data
-preferences and reopened at launch. New clears the current-file preference but retains the last successfully used folder.
-Open starts in the current file’s folder; untitled Open/Save use the remembered
-folder, falling back to Documents on first launch. This restores the saved file and
-its last saved camera framing (position, target, up direction and orthographic height),
-but not unsaved edits or Undo history. The camera is a validated file-envelope field,
-outside accepted geometry and Undo. Navigation alone does not mark the document edited;
-Save or Save As captures the current view. Files without a camera use the initial view.
-Missing/invalid remembered
-files open an untitled document with an error message. Closing a macOS window leaves
-the app available; New/Open or Dock activation can open its single window again.
-Quit and window close protect unsaved work. Autosave, crash recovery, file associations,
-recent-file menus and multiple windows remain outside this increment.
+Close stops only that document's agent before the final unsaved-work prompt, so
+final process writes are included. Cancel keeps the document open; a stopped agent
+can be started again. Quit and update restart prepare documents sequentially and
+close no windows until every document agrees. Cancel, a failed save, an unfinished
+gesture or an unresponsive/crashed renderer aborts shutdown. Previously prepared
+windows regain editing, and their accepted geometry/history remain intact. A busy
+file operation in another window is never unlocked by canceled Quit.
+
+On macOS, Finder/Open With, Dock file opening and the native Open Recent menu feed
+the same deduplicated Open route. The bundle declares `.makeshift` and legacy
+`.freac` documents. Closing the last document leaves the app available; New/Open
+and Dock activation create a document window. The native Window menu lists document
+windows. New windows cascade from the active window and use the remembered default
+size. Launch restores all windows from the last successful Quit/update, with each
+saved file's last saved camera and its window position/size; bounds are clamped to
+an available display. Untitled windows restore blank. Individually closed windows
+are removed from the restoration set. The former single-document preference is
+read on first launch after upgrading. Preferences contain paths, folders and window
+bounds, never geometry or Undo. Missing or invalid restored files are reported;
+remaining files still reopen, with an untitled fallback if none can open.
+
+Autosave, unsaved geometry/crash recovery and persisted Undo remain unimplemented.
+The saved camera is a validated file-envelope field outside accepted geometry and
+Undo. Navigation alone does not dirty the document; Save/Save As captures the current
+view. Dirty state includes portable agent content as described below.
 
 Standalone [web mode](web.md) uses the same archive codec with upload/download and
 an optional browser save picker. New/Open protect unsaved changes; native filesystem

@@ -17,6 +17,7 @@ export async function navigationFileBoundary(page, name) {
   await pinchStep(page, 35, 20);
   await navigationIdle(page);
   assert.equal((await navigationTips(page)).length, 1);
+  await reset(page);
   await openDocument(page, file);
   const opened = await navigationIdle(page);
   // Compare persisted JSON: native structured clone retains undefined optional keys.
@@ -37,7 +38,7 @@ export async function navigationFileBoundary(page, name) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await navigationIdle(page);
   assert.equal((await navigationTips(page)).length, 1);
-  await chooseTool(page, "New document", "new");
+  await reset(page);
   const discard = page
     .getByRole("dialog", { name: "Unsaved changes" })
     .getByRole("button", { name: "Don’t Save", exact: true });

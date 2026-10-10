@@ -3,7 +3,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { readPortableArchive } from "../.build/host/model/portable-archive.js";
 import { launchElectron, openDocument, saveDocument } from "./native-documents.mjs";
-import { inspect, settled } from "./ui-helpers.mjs";
+import { inspect, reset, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const app = await launchElectron({
@@ -51,7 +51,7 @@ await freac.extrude({sources:s.profiles,distance:5,mode:"new"});`;
   assert.equal(new TextDecoder().decode(archive.files["workspace/legacy.ts"]), source);
   await page.getByRole("button", { name: "Stop", exact: true }).click();
   await agentIdle(page);
-  await chooseTool(page, "new document", "new");
+  await reset(page);
   await documentAt(page, null);
   assert.equal((await inspect(page)).document.sketches.length, 0);
   await settled(page);

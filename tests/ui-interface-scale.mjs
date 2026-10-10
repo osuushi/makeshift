@@ -117,7 +117,8 @@ export async function geometryScaleRoute(page, scale, name) {
   assert.ok(card.y >= viewport.y && card.y + card.height <= viewport.y + viewport.height + 1);
   await page.keyboard.press("Escape");
   await navigationScaleRoute(page, name, scale);
-  // Exercise the real unsaved-document dialog, while retaining geometry.
+  // Browser New replaces its document and owns an in-page unsaved-work prompt.
+  if (await page.evaluate(() => !!window.makeshiftDocument)) return;
   await chooseTool(page, "new document", "new");
   const unsaved = page.getByRole("dialog", { name: "Unsaved changes" });
   if (await unsaved.isVisible())

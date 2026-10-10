@@ -25,7 +25,7 @@ export function nativeFileControls(editor: SketchEditor, host: DocumentHost): ()
   const disposers = (["new", "open", "save", "save-as", "close"] as const).map((command) =>
     toolCatalog(editor).register({
       id: command,
-      finishEdit: true,
+      finishEdit: command !== "new" && command !== "open",
       label: {
         new: "New document",
         open: "Open document",
@@ -35,20 +35,25 @@ export function nativeFileControls(editor: SketchEditor, host: DocumentHost): ()
       }[command],
       category: "Document & Edit",
       showInTools: false,
-      reason: () => (command === "close" ? null : idleReason(editor)),
+      reason: () => (["new", "open", "close"].includes(command) ? null : idleReason(editor)),
       run: () => run(command),
     }),
   );
   const disposeCommands = host.onCommand((command) => {
-    // Native File menu and keyboard/header actions share ordinary switch acceptance.
-    if (
-      ["new", "open", "save", "save-as", "close"].includes(command) &&
-      !(command === "close" && editor.store.scriptRunning)
-    )
-      void toolCatalog(editor).invoke(command);
-    else if (["quit", "restart-update"].includes(command) && !editor.store.scriptRunning)
-      void toolCatalog(editor).activate({ reason: () => null, run: () => run(command) });
-    else void run(command);
+    const execute = async () => {
+      if (
+        ["new", "open", "save", "save-as", "close"].includes(command) &&
+        !(command === "close" && editor.store.scriptRunning)
+      )
+        await toolCatalog(editor).invoke(command);
+      else if (["quit", "restart-update"].includes(command) && !editor.store.scriptRunning)
+        await toolCatalog(editor).activate({ reason: () => null, run: () => run(command) });
+      else await run(command);
+    };
+    void execute().finally(() => {
+      if (command === "quit" || command === "restart-update")
+        return host.commandFinished?.(command);
+    });
   });
   const disposeStatus = host.onStatus(status);
   let initialized = false;
@@ -104,9 +109,19 @@ async function runDocumentCommand(
     } else await editor.history(command);
     return;
   }
+  if (command === "new" || command === "open") {
+    const result = await host.command(command);
+    if (result.error || window.makeshiftRemote) {
+      editor.message =
+        result.error ??
+        "New and Open use separate computer windows. This iPad stays paired with the current document.";
+      editor.refresh();
+    }
+    return;
+  }
   if (editor.blocked || editor.interactions.current || editor.isDragging) return;
   editor.store.busy = true;
-  editor.message = command === "open" ? "Opening document…" : "Working with document…";
+  editor.message = "Working with document…";
   editor.refresh();
   try {
     await editor.store.settled();

@@ -6,8 +6,9 @@ Cubic editing/projection (2026-09-16) supersedes any earlier spline exclusion.
 
 ## Current implementation
 
-The current application is the root npm package: [Electron entry](../../src/main.ts)
-and [renderer composition](../../src/sketch/main.ts). Sources live under `src/`, with stateless native calculators under `native/`.
+The current application is the root npm package: [Electron entry](../../src/main.ts),
+[document application](../../src/host/document-application.ts),
+[per-window host session](../../src/host/document-window.ts) and [renderer composition](../../src/sketch/main.ts). Sources live under `src/`, with stateless native calculators under `native/`.
 The retired prototype and its command/revision protocol are preserved only in
 [Git history](../history/README.md#retired-prototype).
 

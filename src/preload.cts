@@ -95,6 +95,7 @@ contextBridge.exposeInMainWorld("makeshiftModel", (request: HostModelRequest) =>
 contextBridge.exposeInMainWorld("makeshiftDocument", {
   command: (command: string, camera?: unknown) =>
     ipcRenderer.invoke("document-command", command, camera),
+  commandFinished: (command: string) => ipcRenderer.invoke("document-command-finished", command),
   status: () => ipcRenderer.invoke("document-status"),
   onCommand: (callback: (command: string) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, command: string) => callback(command);

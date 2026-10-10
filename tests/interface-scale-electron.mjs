@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { _electron } from "playwright";
+import { documentTestPage } from "./document-test-page.mjs";
 import { electronTestArguments } from "./native-documents.mjs";
 import { failureContext } from "./ui-failure-context.mjs";
 import { settled } from "./ui-helpers.mjs";
@@ -23,7 +24,7 @@ async function launch() {
   });
   const page = await app.firstWindow();
   await installTestFrames(page);
-  return page;
+  return documentTestPage(page, { app, directory });
 }
 async function close(graceful = false) {
   if (!app) return;

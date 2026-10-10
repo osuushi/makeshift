@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { _electron } from "playwright";
@@ -7,241 +7,289 @@ import { hostModelBoundary } from "./host-model-boundary.mjs";
 import { drag, inspect, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
+// IPC routing, global menus and application shutdown cannot be proved by model
+// tests. Keep two raw document Pages and use real pointer/keyboard geometry.
 const root = await mkdtemp(join(tmpdir(), "makeshift-documents-"));
-const path = join(root, "Drawing.makeshift");
-let app, page;
+const profile = join(root, "profile");
+const firstPath = join(root, "First.makeshift"),
+  secondPath = join(root, "Second.makeshift");
+let app;
+const status = (page) => page.evaluate(() => window.makeshiftDocument.status());
+const agent = (page, request) =>
+  page.evaluate((request) => window.makeshiftAgent.request(request), request);
+async function until(check) {
+  for (let i = 0; i < 300; i++) {
+    try {
+      if (await check()) return;
+    } catch {
+      /* Wait for observable publication. */
+    }
+    await new Promise((resolve) => setTimeout(resolve, 30));
+  }
+  throw new Error(`Document lifecycle did not settle: ${check}`);
+}
+async function close() {
+  const current = app;
+  const timer = setTimeout(() => current.process().kill("SIGKILL"), 15000);
+  try {
+    await current.close();
+  } finally {
+    clearTimeout(timer);
+  }
+}
 async function launch() {
   app = await _electron.launch({
-    args: [".", `--user-data-dir=${join(root, "profile")}`],
+    args: [".", `--user-data-dir=${profile}`],
     env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
   });
-  page = await app.firstWindow();
+  await app.evaluate(({ dialog, BrowserWindow }) => {
+    // Hidden windows cannot acquire OS focus; exercise routing via their native focus events.
+    BrowserWindow.getFocusedWindow = () => null;
+    globalThis.answers = [];
+    globalThis.promptNames = [];
+    globalThis.savePath = undefined;
+    globalThis.openPaths = [];
+    dialog.showMessageBox = async (_window, options) => {
+      const value = options ?? _window;
+      globalThis.promptNames.push(value.message);
+      return { response: globalThis.answers.shift() ?? 2 };
+    };
+    dialog.showSaveDialog = async () => ({
+      canceled: !globalThis.savePath,
+      filePath: globalThis.savePath,
+    });
+    dialog.showOpenDialog = async () => ({
+      canceled: !globalThis.openPaths.length,
+      filePaths: globalThis.openPaths.splice(0),
+    });
+  });
+  const page = await app.firstWindow();
   page.setDefaultTimeout(15000);
   await settled(page);
-  await app.evaluate(({ dialog }) => {
-    globalThis.answers = [];
-    globalThis.savePaths = [];
-    globalThis.openPaths = [];
-    globalThis.prompts = 0;
-    globalThis.dialogDefaults = [];
-    dialog.showMessageBox = async () => {
-      globalThis.prompts++;
-      return { response: globalThis.answers.shift() ?? 1 };
-    };
-    dialog.showSaveDialog = async (_window, options) => {
-      globalThis.dialogDefaults.push({ kind: "save", path: options.defaultPath });
-      const filePath = globalThis.savePaths.shift();
-      return { canceled: !filePath, filePath };
-    };
-    dialog.showOpenDialog = async (_window, options) => {
-      globalThis.dialogDefaults.push({ kind: "open", path: options.defaultPath });
-      const filePath = globalThis.openPaths.shift();
-      return { canceled: !filePath, filePaths: filePath ? [filePath] : [] };
-    };
-  });
+  return page;
 }
-async function menu(label, group = "File") {
+async function menu(label, group = "File", page) {
+  if (page) {
+    const name = (await status(page)).name;
+    await app.evaluate(({ BrowserWindow }, name) => {
+      const window = BrowserWindow.getAllWindows().find((window) =>
+        window.getTitle().startsWith(name),
+      );
+      window?.emit("focus");
+    }, name);
+  }
   await app.evaluate(
     ({ Menu }, { label, group }) => {
-      const item = Menu.getApplicationMenu()
+      Menu.getApplicationMenu()
         .items.find((item) => item.label === group)
-        .submenu.items.find((item) => item.label === label);
-      item.click();
+        .submenu.items.find((item) => item.label === label)
+        .click();
     },
     { label, group },
   );
-  await page.waitForTimeout(120);
-  await settled(page);
 }
-async function answer(response) {
-  await app.evaluate((_, response) => globalThis.answers.push(response), response);
-}
-async function savePath(value) {
-  await app.evaluate((_, value) => globalThis.savePaths.push(value), value);
-}
-async function status() {
-  return page.evaluate(() => window.makeshiftDocument.status());
-}
-async function undoGeometry(keyboard = false) {
-  const before = (await inspect(page)).document;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    if (keyboard) await page.keyboard.press("Meta+z");
-    else await menu("Undo", "Edit");
-    await settled(page);
-    if (JSON.stringify((await inspect(page)).document) !== JSON.stringify(before)) return;
-    const history = (await page.evaluate(() => window.makeshiftModel({ kind: "read-history" })))
-      .history;
-    assert.equal(
-      history.filter((entry) => entry.state === "undone").at(-1).operation.kind,
-      "selection",
-    );
-    assert.equal((await status()).edited, false, "Selection Undo leaves saved contents clean");
-  }
-  assert.fail("Undo must reach the drawing change after selection entries");
-}
-async function draw() {
+async function draw(page, x = 0) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
-  await drag(page, [0, 0], [20, 10]);
+  await drag(page, [x, 0], [x + 20, 10]);
   await page.keyboard.press("Escape");
+  await settled(page);
+}
+async function save(page, path) {
+  await app.evaluate((_, path) => {
+    globalThis.savePath = path;
+  }, path);
+  await chooseTool(page, "save document as", "save-as");
+  await until(async () => (await status(page)).path === path && !(await status(page)).edited);
+}
+async function newWindow(page) {
+  const opened = app.waitForEvent("window");
+  await chooseTool(page, "new document", "new");
+  const next = await opened;
+  await settled(next);
+  return next;
+}
+async function openFile(path) {
+  await app.evaluate(({ app }, path) => app.emit("open-file", { preventDefault() {} }, path), path);
+  await until(async () => {
+    for (const page of app.windows()) if ((await status(page)).path === path) return true;
+    return false;
+  });
+  for (const page of app.windows()) if ((await status(page)).path === path) return page;
+  throw new Error("Missing opened file");
 }
 try {
+  const first = await launch();
+  await draw(first);
+  const firstDocument = (await inspect(first)).document;
+  await hostModelBoundary(first);
+  const second = await newWindow(first);
+  assert.equal(app.windows().length, 2);
+  assert.deepEqual(
+    (await inspect(first)).document,
+    firstDocument,
+    "New retains the previous drawing",
+  );
+  assert.equal((await status(first)).edited, true);
+  assert.equal((await inspect(second)).document.sketches.length, 0);
+  await draw(second, 35);
+  const secondDocument = (await inspect(second)).document;
+  assert.notDeepEqual(firstDocument, secondDocument);
+  await save(first, firstPath);
+  await save(second, secondPath);
+  for (let i = 0; i < 4 && !(await status(second)).edited; i++) {
+    await menu("Undo", "Edit", second);
+    await settled(second);
+  }
+  await until(async () => (await status(second)).edited);
+  assert.deepEqual(
+    (await inspect(first)).document,
+    firstDocument,
+    "Focused Undo never edits another window",
+  );
+  assert.equal((await status(first)).edited, false);
+  await menu("Redo", "Edit", second);
+  await until(async () => !(await status(second)).edited);
+  assert.deepEqual((await inspect(second)).document, secondDocument);
+  await app.evaluate((_, path) => {
+    globalThis.savePath = path;
+  }, firstPath);
+  await chooseTool(second, "save document as", "save-as");
+  await second.getByRole("status").filter({ hasText: "already open" }).waitFor();
+  assert.equal((await status(second)).path, secondPath);
+  assert.deepEqual(
+    JSON.parse(await readFile(firstPath, "utf8")).document.sketches,
+    firstDocument.sketches,
+  );
+  const alias = join(root, "Alias.makeshift");
+  await symlink(firstPath, alias);
+  await app.evaluate(({ app }, path) => {
+    app.emit("open-file", { preventDefault() {} }, path);
+    app.emit("open-file", { preventDefault() {} }, path);
+  }, alias);
+  await until(() =>
+    app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length === 2),
+  );
+  for (let i = 0; i < 4 && !(await status(first)).edited; i++) {
+    await menu("Undo", "Edit");
+    await settled(first);
+  }
+  await until(async () => (await status(first)).edited);
+  assert.equal(
+    (await status(second)).edited,
+    false,
+    "Duplicate Finder Open focuses the original document",
+  );
+  await menu("Redo", "Edit", first);
+  await until(async () => !(await status(first)).edited);
+
+  await agent(first, {
+    kind: "configure",
+    preferences: { preset: "custom", executable: "/bin/sh", args: ["-i"], env: {} },
+  });
+  const firstAgent = await agent(first, { kind: "start", cols: 80, rows: 24 });
+  const secondAgent = await agent(second, { kind: "start", cols: 80, rows: 24 });
+  assert.equal(firstAgent.running, true);
+  assert.equal(secondAgent.running, true);
+  assert.notEqual(firstAgent.workspace, secondAgent.workspace);
+  await agent(first, { kind: "write", data: "printf first > identity.txt\n" });
+  await agent(second, { kind: "write", data: "printf second > identity.txt\n" });
+  await until(
+    async () => (await readFile(join(firstAgent.workspace, "identity.txt"), "utf8")) === "first",
+  );
+  await until(
+    async () => (await readFile(join(secondAgent.workspace, "identity.txt"), "utf8")) === "second",
+  );
+  await until(async () => (await status(first)).edited && (await status(second)).edited);
+  await app.evaluate(() => {
+    globalThis.answers = [1];
+  });
+  await chooseTool(first, "close document", "close");
+  await until(async () => !(await agent(first, { kind: "read" })).running);
+  assert.equal(first.isClosed(), false, "Cancel Close retains the document");
+  assert.equal(
+    (await agent(second, { kind: "read" })).running,
+    true,
+    "Closing one agent leaves the other running",
+  );
+  await app.evaluate(({ app }) => {
+    globalThis.answers = [2, 1];
+    globalThis.promptNames = [];
+    app.quit();
+  });
+  await until(() => app.evaluate(() => globalThis.promptNames.length === 2));
+  await until(
+    async () => !(await first.evaluate(() => window.makeshiftModel({ kind: "read" }))).error,
+  );
+  assert.equal(app.windows().length, 2, "Cancel on the second Quit prompt preserves both windows");
+  assert.deepEqual((await inspect(first)).document, firstDocument);
+  assert.deepEqual((await inspect(second)).document, secondDocument);
+  await save(first, firstPath);
+  await save(second, secondPath);
+  const savedBounds = await app.evaluate(({ BrowserWindow }) => {
+    const windows = BrowserWindow.getAllWindows();
+    windows[0].setBounds({ x: 40, y: 60, width: 940, height: 620 });
+    windows[1].setBounds({ x: 80, y: 100, width: 1000, height: 680 });
+    return windows.map((window) => ({
+      name: window.getTitle().split(" — ")[0],
+      bounds: window.getBounds(),
+    }));
+  });
+  await close();
+
   await launch();
-  assert.equal((await status()).name, "Untitled");
-  await menu("Open…");
-  const documents = await app.evaluate(({ app }) => app.getPath("documents"));
+  await until(() => app.windows().length === 2);
   assert.deepEqual(
-    await app.evaluate(() => globalThis.dialogDefaults.at(-1)),
-    { kind: "open", path: documents },
-    "First Open starts in Documents",
+    await app.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows().map((window) => ({
+        name: window.getTitle().split(" — ")[0],
+        bounds: window.getBounds(),
+      })),
+    ),
+    savedBounds,
+    "Relaunch restores each window's own placement and size",
   );
-  await menu("Save");
+  const restored = app.windows();
+  for (const page of restored) await settled(page);
   assert.deepEqual(
-    await app.evaluate(() => globalThis.dialogDefaults.at(-1)),
-    { kind: "save", path: join(documents, "Untitled.makeshift") },
-    "First Save starts in Documents",
+    (await Promise.all(restored.map(status))).map((s) => s.path).sort(),
+    [firstPath, secondPath].sort(),
   );
-  await draw();
-  assert.equal((await status()).edited, true);
-  const original = (await inspect(page)).document;
-  await hostModelBoundary(page);
-  await answer(1);
-  await page.keyboard.press("Meta+n");
-  await page.waitForTimeout(120);
-  await settled(page);
-  assert.deepEqual((await inspect(page)).document, original, "Cancel New preserves geometry");
-  await answer(0);
-  await menu("New");
-  assert.deepEqual((await inspect(page)).document, original, "Cancelled Save preserves geometry");
-  await savePath(path);
-  await page.keyboard.press("Meta+s");
-  await page.waitForFunction(
-    () => !document.querySelector('[aria-label="Current document"]').textContent.includes("Edited"),
+  for (const page of restored) {
+    assert.equal((await status(page)).edited, false);
+    assert.equal((await agent(page, { kind: "read" })).running, false);
+    const history = await page.evaluate(() => window.makeshiftModel({ kind: "read-history" }));
+    assert.equal(
+      history.history.filter(
+        (entry) => entry.operation.kind !== "navigation" && entry.operation.kind !== "selection",
+      ).length,
+      0,
+    );
+  }
+  const reopenedFirst = await openFile(firstPath);
+  assert.equal(app.windows().length, 2);
+  assert.equal(
+    await readFile(
+      join((await agent(reopenedFirst, { kind: "read" })).workspace, "identity.txt"),
+      "utf8",
+    ),
+    "first",
   );
-  await settled(page);
-  assert.equal((await status()).path, path);
-  assert.equal((await status()).edited, false);
-  assert.equal(JSON.parse(await readFile(path, "utf8")).document.sketches.length, 1);
-  await hostModelBoundary(page);
-  await undoGeometry();
-  assert.equal((await status()).edited, true);
-  await page.keyboard.press("Meta+Shift+z");
-  await settled(page);
-  assert.equal((await status()).edited, false, "Redo to saved contents clears edited state");
-  await savePath(join(root, "missing", "Failed.makeshift"));
-  await menu("Save As…");
-  assert.equal((await status()).path, path, "Failed Save As retains original identity");
-  assert.deepEqual(JSON.parse(await readFile(path, "utf8")).document.sketches, original.sketches);
   const broken = join(root, "Broken.makeshift");
-  await writeFile(broken, '{"format":"makeshift","version":1,"document":{"units":"bad"}}');
-  await app.evaluate((_, path) => globalThis.openPaths.push(path), broken);
-  await menu("Open…");
-  assert.deepEqual((await inspect(page)).document, original, "Failed Open retains geometry");
-  assert.equal((await status()).path, path);
-  const copyPath = join(root, "Copy.makeshift");
-  await savePath(copyPath);
-  await page.keyboard.press("Meta+Shift+s");
-  await page.waitForTimeout(120);
-  await settled(page);
-  assert.equal((await status()).path, copyPath, "Save As changes current file identity");
-  assert.equal((await status()).edited, false);
-  await page.keyboard.press("Meta+n");
-  await page.waitForTimeout(120);
-  await settled(page);
-  assert.equal((await inspect(page)).document.sketches.length, 0);
-  assert.equal((await status()).path, null);
-  await app.evaluate((_, path) => globalThis.openPaths.push(path), path);
-  await page.keyboard.press("Meta+o");
-  await page.waitForTimeout(120);
-  await settled(page);
-  assert.equal((await inspect(page)).document.sketches.length, 1);
-  await app.close();
-  await launch();
-  assert.equal((await status()).path, path, "Relaunch restores current file identity");
-  assert.equal((await inspect(page)).document.sketches.length, 1);
-  await chooseTool(page, "Sketch on XY", "sketch-xy");
-  await page.keyboard.press("l");
-  await drag(page, [30, 0], [40, 10]);
-  await page.keyboard.press("Escape");
-  await page.keyboard.press("Meta+s");
-  await page.waitForTimeout(120);
-  await settled(page);
-  assert.equal((await status()).edited, false);
-  assert.equal(
-    JSON.parse(await readFile(path, "utf8")).document.sketches[0].curves.length,
-    2,
-    "Save writes back to the current file without another picker",
+  await writeFile(broken, "invalid archive");
+  const promptCount = await app.evaluate(() => globalThis.promptNames.length);
+  await app.evaluate(
+    ({ app }, path) => app.emit("open-file", { preventDefault() {} }, path),
+    broken,
   );
-  await undoGeometry(true);
-  await answer(1);
-  await menu("Close");
-  assert.equal((await inspect(page)).document.sketches[0].curves.length, 1);
-  await answer(1);
-  await app.evaluate(({ app }) => app.quit());
-  await page.waitForTimeout(120);
-  assert.equal((await status()).edited, true, "Cancel Quit leaves window and edits alive");
-  await answer(2);
-  await menu("New");
-  assert.equal((await inspect(page)).document.sketches.length, 0);
-  await app.close();
-  await launch();
-  assert.equal((await status()).path, null, "New clears remembered file");
-  await menu("Open…");
-  assert.deepEqual(
-    await app.evaluate(() => globalThis.dialogDefaults.at(-1)),
-    { kind: "open", path: root },
-    "New and relaunch preserve the last document folder",
-  );
-  await menu("Save");
-  assert.deepEqual(
-    await app.evaluate(() => globalThis.dialogDefaults.at(-1)),
-    { kind: "save", path: join(root, "Untitled.makeshift") },
-    "Untitled Save uses remembered folder",
-  );
-  await app.evaluate((_, path) => globalThis.openPaths.push(path), path);
-  await menu("Open…");
-  const closed = page.waitForEvent("close");
-  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].close());
-  await closed;
-  await app.evaluate(({ Menu }) =>
-    Menu.getApplicationMenu()
-      .items.find((item) => item.label === "File")
-      .submenu.items.find((item) => item.label === "New")
-      .click(),
-  );
-  page = await app.firstWindow();
-  await settled(page);
-  await page.waitForFunction(async () => (await window.makeshiftDocument.status()).path === null);
-  assert.equal((await status()).path, null, "New works with no open macOS window");
-  await draw();
-  const savedOnNew = join(root, "Saved-on-new.makeshift");
-  await savePath(savedOnNew);
-  await answer(0);
-  await menu("New");
-  assert.equal((await inspect(page)).document.sketches.length, 0);
-  assert.equal(
-    JSON.parse(await readFile(savedOnNew, "utf8")).document.sketches.length,
-    1,
-    "Save from the replacement prompt completes before New",
-  );
-  await app.evaluate((_, path) => globalThis.openPaths.push(path), savedOnNew);
-  await menu("Open…");
-  await app.close();
-  await rm(savedOnNew);
-  await launch();
-  await page.getByRole("status").filter({ hasText: "Could not reopen" }).waitFor();
-  assert.equal((await status()).path, null);
-  assert.equal(
-    (await inspect(page)).document.sketches.length,
-    0,
-    "A missing remembered file starts empty and reports the failure",
-  );
+  await until(() => app.evaluate((_, count) => globalThis.promptNames.length > count, promptCount));
+  assert.equal(app.windows().length, 2, "Failed Open removes only its provisional window");
+  await close();
   console.log(
-    "Hidden Electron: native menus, real drawing, save identity, dirty Undo/Redo, cancellation, failed open/save, close/quit protection and process restoration pass",
+    "PASS independent document windows: pointer geometry, menu Undo/Redo, save collision, Finder duplicate focus, agents, Close/Quit cancellation and restoration",
   );
 } finally {
-  // A failed assertion must not let the test's Cancel default block app cleanup.
   await app?.evaluate(({ app }) => app.exit()).catch(() => {});
-  await app?.close();
+  await app?.close().catch(() => {});
   await rm(root, { recursive: true, force: true });
 }

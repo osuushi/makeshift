@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { project } from "./ui-blend-edit.mjs";
-import { at, close, drag, inspect } from "./ui-helpers.mjs";
+import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -35,20 +35,7 @@ async function history(page, before, after) {
   assert.deepEqual((await inspect(page)).document, after);
 }
 async function createBody(page) {
-  await chooseTool(page, "new document", "new");
-  await page.waitForFunction(
-    () =>
-      !window
-        .makeshiftInspect()
-        .commands.some((command) => command.unavailable === "Switching tools…") ||
-      !!document.querySelector('dialog[aria-label="Unsaved changes"][open]'),
-  );
-  const discard = page
-    .getByRole("dialog", { name: "Unsaved changes" })
-    .getByRole("button", { name: "Don’t Save", exact: true });
-  if (await discard.isVisible()) await discard.click();
-  await commandIdle(page);
-  assert.deepEqual((await inspect(page)).document.sketches, []);
+  await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await chooseTool(page, "rectangle", "rectangle");
   await drag(page, [-10, -5], [10, 5]);

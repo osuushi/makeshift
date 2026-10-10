@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { exportDocument, openDocument, saveDocument } from "./native-documents.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
-import { at, close, drag, inspect } from "./ui-helpers.mjs";
+import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { startScale } from "./ui-scale.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -22,7 +22,7 @@ async function unchangedMenu(page) {
   assert.deepEqual(after.interaction, before.interaction);
 }
 async function sketchAndExtrude(page) {
-  await chooseTool(page, "new document", "new");
+  await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await chooseTool(page, "rectangle", "rectangle");
   await drag(page, [-10, -10], [10, 10]);
@@ -105,7 +105,7 @@ async function shellAndHistory(page) {
 async function filesAndDiscovery(page, name) {
   const path = resolve(`.cache/sketch-review/${name}-menu.makeshift`);
   await saveDocument(page, path);
-  await chooseTool(page, "new document", "new");
+  await reset(page);
   await openDocument(page, path);
   await page.waitForFunction(() => window.makeshiftInspect().document.bodies?.length === 1);
   close((await inspect(page)).document.bodies[0].volume, 1084);

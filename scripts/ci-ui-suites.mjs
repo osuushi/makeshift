@@ -3,6 +3,14 @@
 // Add combinatorial cases to the linked lower-level tests, not this inventory.
 export const uiSuites = [
   {
+    args: ["document-lifecycle.mjs"],
+    seconds: 20,
+    browsers: ["electron"],
+    reason:
+      "Per-window IPC, focused menus, independent agents and canceled application Quit must preserve every document; model tests cannot exercise Electron lifecycle routing.",
+    unit: "host-model-request.test.ts",
+  },
+  {
     args: ["primitive-handoff-ui.mjs"],
     seconds: 60,
     browsers: ["electron"],

@@ -20,6 +20,7 @@ export interface DocumentHost {
     command: DocumentCommand,
     camera?: CameraState,
   ): Promise<{ replaced: boolean; camera?: CameraState; error?: string }>;
+  commandFinished?(command: DocumentCommand): Promise<void>;
   status(): Promise<DocumentStatus>;
   onCommand(callback: (command: DocumentCommand) => void): () => void;
   onStatus(callback: (status: DocumentStatus) => void): () => void;

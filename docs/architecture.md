@@ -6,7 +6,7 @@ includes dated proposals: later founder decisions win.
 
 ## Stable boundaries
 
-- The TypeScript backend DocumentOwner owns accepted geometry, validation and
+- Each document window has its own TypeScript backend DocumentOwner, accepted geometry, validation and
   snapshot Undo/Redo. Renderer state is input intent, selection, camera and a view.
 - PlaneGCS and OCCT calculate geometry; neither owns an application document.
   One edit runs at a time. Accepted data, temporary candidates and UI state stay distinct.

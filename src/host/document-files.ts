@@ -1,5 +1,5 @@
 import { readFile, stat } from "node:fs/promises";
-import { basename, dirname, isAbsolute, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { app, type BrowserWindow } from "electron";
 import type { DocumentOwner } from "../backend/document-owner.js";
 import { validateDocument } from "../backend/document-validation.js";
@@ -13,18 +13,20 @@ import { sessionDialogs as dialog } from "./session-dialogs.js";
 
 export class DocumentFiles {
   path: string | null = null;
-  private lastDirectory = app.getPath("documents");
   get directory(): string {
-    return this.path ? dirname(this.path) : this.lastDirectory;
+    return this.path ? dirname(this.path) : this.defaultDirectory();
   }
   private saved: string;
   camera: CameraState | undefined;
   private cachedDocument: DocumentOwner["view"]["data"];
   private cachedArchive: string;
-  private session = join(app.getPath("userData"), "document-session.json");
   constructor(
     private owner: DocumentOwner,
     private workspace: AgentWorkspace,
+    private remembered: (path: string | null) => Promise<void>,
+    private write: (path: string, action: () => Promise<void>) => Promise<void>,
+    private defaultDirectory: () => string,
+    private untitledName: string,
   ) {
     this.cachedDocument = owner.view.data;
     this.saved = this.cachedArchive = documentArchive(this.cachedDocument);
@@ -38,44 +40,15 @@ export class DocumentFiles {
   }
   get status(): DocumentStatus {
     return {
-      name: this.path ? basename(this.path) : "Untitled",
+      name: this.path ? basename(this.path) : this.untitledName,
       path: this.path,
       edited: this.archive !== this.saved || this.workspace.dirty,
       camera: this.camera,
     };
   }
   async remember(): Promise<void> {
-    // A preference failure must not turn a successful file save into a failed save.
-    await safeWrite(
-      this.session,
-      JSON.stringify({ path: this.path, directory: this.directory }),
-    ).catch(console.error);
+    await this.remembered(this.path).catch(console.error);
   }
-  async restore(): Promise<string | undefined> {
-    await this.owner.call({ kind: "new" });
-    this.workspace.adopt(null, {});
-    this.path = null;
-    this.camera = undefined;
-    this.saved = this.archive;
-    let path: unknown;
-    try {
-      const preference = JSON.parse(await readFile(this.session, "utf8"));
-      path = preference.path;
-      if (typeof preference.directory === "string" && isAbsolute(preference.directory))
-        this.lastDirectory = preference.directory;
-      else if (typeof path === "string" && isAbsolute(path)) this.lastDirectory = dirname(path);
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") return String(error);
-      return;
-    }
-    if (typeof path !== "string") return;
-    try {
-      await this.open(path);
-    } catch (error) {
-      return `Could not reopen “${basename(path)}”. ${String(error)}`;
-    }
-  }
-
   async prepare(path: string) {
     if ((await stat(path)).size > 72 * 1024 * 1024) throw new Error("Document is too large.");
     const archive = readPortableArchive(await readFile(path));
@@ -97,17 +70,8 @@ export class DocumentFiles {
     if (reply.error) throw new Error(reply.error);
     this.workspace.adopt(archive.root, archive.files);
     this.path = path;
+    app.addRecentDocument(path);
     this.camera = archive.camera;
-    this.lastDirectory = dirname(path);
-    this.saved = this.archive;
-    await this.remember();
-  }
-  async new(): Promise<void> {
-    const reply = await this.owner.call({ kind: "new" });
-    if (reply.error) throw new Error(reply.error);
-    this.workspace.adopt(null, {});
-    this.path = null;
-    this.camera = undefined;
     this.saved = this.archive;
     await this.remember();
   }
@@ -121,7 +85,7 @@ export class DocumentFiles {
     if (!path || saveAs) {
       const result = await dialog.showSaveDialog(window, {
         title: "Save Document",
-        defaultPath: path ?? join(this.directory, "Untitled.makeshift"),
+        defaultPath: path ?? join(this.directory, `${this.untitledName}.makeshift`),
         filters: [{ name: "Makeshift Document", extensions: ["makeshift"] }],
       });
       if (result.canceled || !result.filePath) return false;
@@ -135,12 +99,14 @@ export class DocumentFiles {
     );
     const files = await this.workspace.snapshot();
     const bytes = writePortableArchive(archive, files);
-    await safeWrite(path, bytes);
-    this.path = path;
-    this.lastDirectory = dirname(path);
+    await this.write(path, async () => {
+      await safeWrite(path, bytes);
+      this.path = path;
+    });
     this.saved = model;
     this.camera = camera ?? this.camera;
     this.workspace.saved(files);
+    app.addRecentDocument(path);
     await this.remember();
     return true;
   }

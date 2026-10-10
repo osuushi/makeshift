@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { documentFixture, followDocument } from "./document-test-page.mjs";
+import { installTestFrames } from "./ui-test-frames.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 export async function settled(page) {
   await page.waitForFunction(() => {
@@ -19,7 +21,14 @@ export async function inspect(page) {
 }
 export async function reset(page) {
   await settled(page);
-  await chooseTool(page, "new document", "new");
+  const fixture = documentFixture(page);
+  if (fixture) {
+    const opened = fixture.session.app.waitForEvent("window");
+    await chooseTool(page, "new document", "new");
+    const next = await opened;
+    await installTestFrames(next);
+    await followDocument(page, next);
+  } else await chooseTool(page, "new document", "new");
   const discard = page
     .getByRole("dialog", { name: "Unsaved changes" })
     .getByRole("button", { name: "Don’t Save", exact: true });

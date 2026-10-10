@@ -5,13 +5,14 @@ import type { DialogRequest, DirectoryListing } from "../ipad/protocol.js";
 
 /** The active document surface owns prompts. Paths still refer to this computer. */
 export const sessionDialogs = {
-  remote: null as null | ((request: DialogRequest) => Promise<unknown>),
+  remotes: new WeakMap<BrowserWindow, (request: DialogRequest) => Promise<unknown>>(),
   async showOpenDialog(
     window: BrowserWindow,
     options: Electron.OpenDialogOptions,
   ): Promise<Electron.OpenDialogReturnValue> {
-    if (!this.remote) return dialog.showOpenDialog(window, options);
-    const path = await this.remote({
+    const remote = this.remotes.get(window);
+    if (!remote) return dialog.showOpenDialog(window, options);
+    const path = await remote({
       kind: "open",
       title: options.title,
       defaultPath: options.defaultPath,
@@ -28,8 +29,9 @@ export const sessionDialogs = {
     window: BrowserWindow,
     options: Electron.SaveDialogOptions,
   ): Promise<Electron.SaveDialogReturnValue> {
-    if (!this.remote) return dialog.showSaveDialog(window, options);
-    const path = await this.remote({
+    const remote = this.remotes.get(window);
+    if (!remote) return dialog.showSaveDialog(window, options);
+    const path = await remote({
       kind: "save",
       title: options.title,
       defaultPath: options.defaultPath,
@@ -43,7 +45,7 @@ export const sessionDialogs = {
       () => false,
     );
     if (exists) {
-      const response = await this.remote({
+      const response = await remote({
         kind: "message",
         message: "Replace this file?",
         detail: path,
@@ -58,8 +60,9 @@ export const sessionDialogs = {
     window: BrowserWindow,
     options: Electron.MessageBoxOptions,
   ): Promise<Electron.MessageBoxReturnValue> {
-    if (!this.remote) return dialog.showMessageBox(window, options);
-    const response = await this.remote({
+    const remote = this.remotes.get(window);
+    if (!remote) return dialog.showMessageBox(window, options);
+    const response = await remote({
       kind: "message",
       message: options.message,
       detail: options.detail,

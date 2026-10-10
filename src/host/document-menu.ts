@@ -37,6 +37,7 @@ export function installDocumentMenu(
         submenu: [
           item("New", "CmdOrCtrl+N", "new"),
           item("Open…", "CmdOrCtrl+O", "open"),
+          { role: "recentDocuments", submenu: [{ role: "clearRecentDocuments" }] },
           { type: "separator" },
           item("Save", "CmdOrCtrl+S", "save"),
           item("Save As…", "CmdOrCtrl+Shift+S", "save-as"),

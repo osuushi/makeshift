@@ -25,7 +25,7 @@ try {
   }
   let session = await launch();
   app = session.instance;
-  const { page } = session;
+  let { page } = session;
   const initial = (await inspect(page)).camera;
   const canvas = page.locator('canvas[aria-label="Modeling viewport"]');
   const bounds = await canvas.boundingBox();
@@ -52,10 +52,15 @@ try {
     up: moved.up,
     height: moved.height,
   });
+  const opened = app.waitForEvent("window");
+  const savedPage = page;
   await page.keyboard.press("Meta+n");
+  page = await opened;
+  await settled(page);
   await page.waitForFunction(async () => (await window.makeshiftDocument.status()).path === null);
   assert.deepEqual((await inspect(page)).camera.target, initial.target);
   await page.keyboard.press("Meta+o");
+  page = savedPage;
   await page.waitForFunction(async () => (await window.makeshiftDocument.status()).path !== null);
   const reopened = (await inspect(page)).camera;
   assert.deepEqual(reopened.target, moved.target);

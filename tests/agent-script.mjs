@@ -10,7 +10,7 @@ import { agentPathRoute } from "./agent-path-route.mjs";
 import { scriptBrowser } from "./agent-script-browser.mjs";
 import { agentSolidRoute } from "./agent-solid-route.mjs";
 import { launchElectron, openDocument, saveDocument } from "./native-documents.mjs";
-import { inspect, settled } from "./ui-helpers.mjs";
+import { inspect, reset, settled } from "./ui-helpers.mjs";
 import { orient, pick } from "./ui-measurement.mjs";
 import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -160,7 +160,7 @@ await makeshift.offsetFaces({faces,distance:2});`);
       ),
       box,
     );
-    await chooseTool(page, "new document", "new");
+    await reset(page);
     await settled(page);
     await openDocument(page, file);
     assert(Math.abs((await inspect(page)).document.bodies[0].volume - 4600) < 1e-6);

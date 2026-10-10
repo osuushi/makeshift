@@ -1,16 +1,18 @@
-import { type BrowserWindow, ipcMain } from "electron";
+import type { BrowserWindow } from "electron";
 import type { InspectionView } from "../agent/inspection-protocol.js";
 import type { AgentRequest } from "../agent/protocol.js";
 import { captureFixture } from "../backend/fixture-capture.js";
 import type { CameraState } from "../model/camera-state.js";
 import type { DocumentCommand } from "../model/document-host.js";
 import type { AgentSession } from "./agent-session.js";
+import { DocumentIPC } from "./document-ipc.js";
 import type { DocumentSession } from "./document-session.js";
 import { readInspectionView } from "./inspection-view.js";
 import { IPadServer } from "./ipad-server.js";
 import { listComputerDirectory, sessionDialogs } from "./session-dialogs.js";
 
 export class IPadSession {
+  private ipc = new DocumentIPC();
   private window: BrowserWindow | null = null;
   private server: IPadServer;
   private switching = false;
@@ -43,7 +45,7 @@ export class IPadSession {
     };
     agent.canUseDesktop = () => !this.server.active && !this.switching;
     for (const method of ["status", "start", "stop"] as const)
-      ipcMain.handle(`ipad-${method}`, async (event) => {
+      this.ipc.handle(`ipad-${method}`, async (event) => {
         if (
           event.sender !== this.window?.webContents ||
           event.senderFrame !== event.sender.mainFrame
@@ -60,7 +62,9 @@ export class IPadSession {
             await documents.prepareRemote();
           }
           const result = await this.server.start();
-          sessionDialogs.remote = (request) => this.server.request("dialog", request);
+          sessionDialogs.remotes.set(this.window, (request) =>
+            this.server.request("dialog", request),
+          );
           return result;
         } finally {
           this.switching = false;
@@ -68,6 +72,7 @@ export class IPadSession {
       });
   }
   attach(window: BrowserWindow): void {
+    this.ipc.attach(window);
     this.window = window;
     window.once("closed", () => {
       this.window = null;
@@ -82,6 +87,9 @@ export class IPadSession {
         return this.documents.model(value);
       case "agent":
         return this.agent.request(value as AgentRequest);
+      case "document-command-finished":
+        this.documents.commandFinished(value as DocumentCommand);
+        return;
       case "document-status":
         return this.documents.status;
       case "document-command": {
@@ -98,6 +106,6 @@ export class IPadSession {
   };
   async stop(): Promise<void> {
     await this.server.stop();
-    sessionDialogs.remote = null;
+    if (this.window) sessionDialogs.remotes.delete(this.window);
   }
 }

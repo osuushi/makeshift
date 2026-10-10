@@ -21,6 +21,22 @@ export default {
       MakeshiftReleaseTimestamp: metadata.timestamp,
       MakeshiftCommit: metadata.commit,
       LSMinimumSystemVersion: "14.0",
+      CFBundleDocumentTypes: [
+        {
+          CFBundleTypeName: "Makeshift Document",
+          CFBundleTypeRole: "Editor",
+          LSHandlerRank: "Owner",
+          LSItemContentTypes: ["com.osuushi.makeshift.document"],
+        },
+      ],
+      UTExportedTypeDeclarations: [
+        {
+          UTTypeIdentifier: "com.osuushi.makeshift.document",
+          UTTypeDescription: "Makeshift Document",
+          UTTypeConformsTo: ["public.data"],
+          UTTypeTagSpecification: { "public.filename-extension": ["makeshift", "freac"] },
+        },
+      ],
     },
     ...(process.env.MAKESHIFT_ELECTRON_ZIP_DIR
       ? { electronZipDir: process.env.MAKESHIFT_ELECTRON_ZIP_DIR }
