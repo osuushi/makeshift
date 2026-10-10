@@ -10,7 +10,8 @@
       "biome.json",
       "scripts/**",
       "tests/**",
-      "src/**"
+      "src/**",
+      "website/**"
     ]
   },
   "formatter": {

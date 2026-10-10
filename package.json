@@ -15,8 +15,8 @@
     "start": "npm run build && electron .",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.host.json --noEmit && tsc -p tsconfig.test.json --noEmit && npm run typecheck:ui",
     "typecheck:ui": "tsc -p tsconfig.ui.json --noEmit",
-    "check": "biome check package.json tsconfig.json tsconfig.host.json tsconfig.test.json tsconfig.ui.json vite.config.ts forge.config.js packaging biome.json scripts tests src",
-    "format": "biome check --write package.json tsconfig.json tsconfig.host.json tsconfig.test.json tsconfig.ui.json vite.config.ts forge.config.js packaging biome.json scripts tests src",
+    "check": "biome check package.json tsconfig.json tsconfig.host.json tsconfig.test.json tsconfig.ui.json vite.config.ts forge.config.js packaging biome.json scripts tests src website",
+    "format": "biome check --write package.json tsconfig.json tsconfig.host.json tsconfig.test.json tsconfig.ui.json vite.config.ts forge.config.js packaging biome.json scripts tests src website",
     "test": "node scripts/clean-tests.mjs && tsc -p tsconfig.test.json && node --test --test-concurrency=1 .cache/sketch-tests/tests/*.test.js",
     "test:ui": "npm run test:smoke",
     "test:current-tools": "node tests/current-tools-ui.mjs",
@@ -59,7 +59,10 @@
     "test:smoke": "node tests/electron-smoke.mjs",
     "test:regressions": "node scripts/ci-ui-tests.mjs electron 1/1",
     "test:electron:extended": "node tests/electron.mjs",
-    "test:ui:extended": "node tests/ui.mjs"
+    "test:ui:extended": "node tests/ui.mjs",
+    "demos:record": "node scripts/demos/record.mjs",
+    "demos:check": "node scripts/demos/record.mjs && node tests/website-gallery.mjs",
+    "demos:package": "node scripts/demos/package.mjs"
   },
   "dependencies": {
     "@jitl/quickjs-wasmfile-release-sync": "0.32.0",

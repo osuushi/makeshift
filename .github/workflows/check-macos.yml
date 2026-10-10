@@ -164,6 +164,28 @@ jobs:
         run: npx tsc -p tsconfig.test.json
       - name: Focused Electron regressions
         run: xvfb-run -a node scripts/ci-ui-tests.mjs electron ${{ matrix.shard }}/3
+  feature-demos:
+    needs: linux-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - *a1
+      - uses: ./.github/actions/ci-linux-runtime
+      - name: Install recording tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          npx playwright install --with-deps chromium
+      - name: Render all feature recipes and check gallery
+        run: npm run demos:check
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: feature-demos
+          path: |
+            website/assets/demos/
+            .cache/landing-review/gallery-*.png
+          retention-days: 3
   macos-build:
     runs-on: macos-15
     timeout-minutes: 60
@@ -295,6 +317,7 @@ jobs:
       - electron-regressions
       - macos-build
       - macos-acceptance
+      - feature-demos
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:

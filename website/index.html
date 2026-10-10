@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="CAD for everyone. Makeshift helps you make stuff, with approachable modeling tools and coding agents to handle repetitive work. Free and open source."
+    >
+    <meta name="theme-color" content="#ffffff">
+    <title>Makeshift: CAD for everyone</title>
+    <link rel="icon" type="image/png" href="assets/makeshift.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400..700&amp;family=Inter+Tight:wght@600;700&amp;display=swap"
+    >
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="responsive.css">
+    <link rel="stylesheet" href="gallery.css">
+    <script type="module" src="gallery.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header wrap">
+      <a class="wordmark" href="./" aria-label="Makeshift home">
+        <img src="assets/makeshift.png" alt="" width="40" height="40">Makeshift
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="#approach">Why Makeshift</a>
+        <a href="#get-started">Get started</a>
+        <a href="https://github.com/osuushi/makeshift">Source <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+    <main id="main">
+      <div class="showcase wrap">
+        <section class="hero" aria-labelledby="intro-title">
+          <h1 id="intro-title">
+            Makeshift <span class="hero-subtitle">CAD for everyone</span>
+          </h1>
+          <div class="intro">
+            <p>
+              You shouldn’t have to become a CAD expert to make stuff.
+              Makeshift is built around getting started, learning as you go, and letting coding
+              agents handle the repetitive work.
+            </p>
+            <div class="actions">
+              <div>
+                <a
+                  class="button primary"
+                  href="https://github.com/osuushi/makeshift/releases/download/20261010T195437Z/Makeshift-20261010T195437Z-arm64.dmg"
+                  >Download the Desktop App <span aria-hidden="true">↓</span></a
+                >
+                <p class="small muted">Apple Silicon · macOS 14 or later</p>
+              </div>
+              <a class="text-link" href="https://osuushi.github.io/makeshift-web/"
+                >Try the web version right away <span aria-hidden="true">↗</span></a
+              >
+            </div>
+          </div>
+        </section>
+
+        <section class="demo-gallery" aria-label="Makeshift feature demos" aria-roledescription="carousel">
+          <div class="demo-window"><div class="demo-track">
+            <figure class="demo-slide" aria-roledescription="slide" aria-label="1 of 7: Primitives">
+              <video muted playsinline preload="metadata" poster="assets/demos/primitives.jpg" aria-label="Primitives demonstration">
+                <source src="assets/demos/primitives.mp4" type="video/mp4">
+                <a href="assets/demos/primitives.mp4">Watch the primitives demo</a>
+              </video>
+              <figcaption>Start with a solid shape and adjust its size.</figcaption>
+            </figure>
+            <figure class="demo-slide" aria-roledescription="slide" aria-label="2 of 7: Sketching">
+              <video muted playsinline preload="none" poster="assets/demos/sketching.jpg" aria-label="Sketching demonstration">
+                <source src="assets/demos/sketching.mp4" type="video/mp4">
+                <a href="assets/demos/sketching.mp4">Watch the sketching demo</a>
+              </video>
+              <figcaption>Draw a profile, bow an edge into an arc, and round a corner.</figcaption>
+            </figure>
+            <figure class="demo-slide" aria-roledescription="slide" aria-label="3 of 7: Extrude">
+              <video muted playsinline preload="none" poster="assets/demos/extrude.jpg" aria-label="Extrude demonstration">
+                <source src="assets/demos/extrude.mp4" type="video/mp4">
+                <a href="assets/demos/extrude.mp4">Watch the extrude demo</a>
+              </video>
+              <figcaption>Give a flat profile some depth.</figcaption>
+            </figure>
+            <figure class="demo-slide" aria-roledescription="slide" aria-label="4 of 7: Revolve">
+              <video muted playsinline preload="none" poster="assets/demos/revolve.jpg" aria-label="Revolve demonstration">
+                <source src="assets/demos/revolve.mp4" type="video/mp4">
+                <a href="assets/demos/revolve.mp4">Watch the revolve demo</a>
+              </video>
+              <figcaption>Turn a profile around an axis.</figcaption>
+            </figure>
+            <figure class="demo-slide" aria-roledescription="slide" aria-label="5 of 7: Fillet & chamfer">
+              <video muted playsinline preload="none" poster="assets/demos/edge-finishes.jpg" aria-label="Fillet & chamfer demonstration">
+                <source src="assets/demos/edge-finishes.mp4" type="video/mp4">
+                <a href="assets/demos/edge-finishes.mp4">Watch the fillet & chamfer demo</a>
+              </video>
+              <figcaption>Round an edge or give it a bevel.</figcaption>
+            </figure>
+            <figure class="demo-slide" aria-roledescription="slide" aria-label="6 of 7: Threads">
+              <video muted playsinline preload="none" poster="assets/demos/threads.jpg" aria-label="Threads demonstration">
+                <source src="assets/demos/threads.mp4" type="video/mp4">
+                <a href="assets/demos/threads.mp4">Watch the threads demo</a>
+              </video>
+              <figcaption>Add screw threads to a cylindrical face.</figcaption>
+            </figure>
+            <figure class="demo-slide" aria-roledescription="slide" aria-label="7 of 7: Knurling">
+              <video muted playsinline preload="none" poster="assets/demos/knurling.jpg" aria-label="Knurling demonstration">
+                <source src="assets/demos/knurling.mp4" type="video/mp4">
+                <a href="assets/demos/knurling.mp4">Watch the knurling demo</a>
+              </video>
+              <figcaption>Add an adjustable grip pattern.</figcaption>
+            </figure>
+          </div></div>
+          <div class="demo-controls">
+            <button class="demo-previous" type="button" aria-label="Previous demo">←</button>
+            <fieldset class="demo-choices" aria-label="Choose a demo">
+              <button type="button" data-slide="0" aria-pressed="true">Primitives</button>
+              <button type="button" data-slide="1" aria-pressed="false">Sketching</button>
+              <button type="button" data-slide="2" aria-pressed="false">Extrude</button>
+              <button type="button" data-slide="3" aria-pressed="false">Revolve</button>
+              <button type="button" data-slide="4" aria-pressed="false">Fillet & chamfer</button>
+              <button type="button" data-slide="5" aria-pressed="false">Threads</button>
+              <button type="button" data-slide="6" aria-pressed="false">Knurling</button>
+            </fieldset>
+            <button class="demo-next" type="button" aria-label="Next demo">→</button>
+          </div>
+          <button class="demo-playback" type="button" aria-pressed="false">Play demos</button>
+        </section>
+      </div>
+
+      <section id="approach" class="approach wrap" aria-labelledby="approach-title">
+        <div class="section-intro">
+          <h2 id="approach-title">Making CAD easier to use</h2>
+          <p>
+            Makeshift is for people who want to design and make things, including people who have
+            never used CAD. We want to make the tools easier to learn and give you help with the
+            routine work that comes with a project.
+          </p>
+        </div>
+        <div class="principles">
+          <article>
+            <h3>Learn while you work</h3>
+            <p>
+              You can start by drawing a shape and dragging it to the size you want. Selecting it
+              shows the controls for editing it, and you can type in dimensions when you need an
+              exact size. These are the same tools you’ll use as you take on more involved projects.
+            </p>
+          </article>
+          <article>
+            <h3>Edit shapes directly</h3>
+            <p>
+              Makeshift works directly with solid geometry, so you can add or remove material, move
+              a face, or round an edge on the part you’re working on. You can make changes as you go
+              without planning a feature tree in advance.
+            </p>
+          </article>
+          <article>
+            <h3>Get help from a coding agent</h3>
+            <p>
+              If a task involves a lot of repetition or calculation, you can ask a coding agent to
+              help. In the desktop app, the agent can inspect your model and write scripts to edit
+              it. You can then adjust the result with the regular tools or undo the script’s
+              changes.
+            </p>
+            <p class="small muted">
+              Connect a separately installed coding agent. Its account and any service costs are
+              separate from Makeshift.
+            </p>
+          </article>
+          <article>
+            <h3>Add details with decorators</h3>
+            <p>
+              Decorators add details such as screw threads, knurling, and gear teeth while keeping
+              the underlying shape simple to edit. You can adjust their settings as you work, and
+              the details are included when you export a mesh for printing. The embedded coding
+              agent can also write custom decorators for your project.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="freedom wrap" aria-labelledby="freedom-title">
+        <div class="freedom-body">
+          <h2 id="freedom-title">A tool you can <br>make your own.</h2>
+          <div>
+            <p>
+              Makeshift costs nothing to use. The source is available to study, change, and share
+              under the LGPL. You can build it yourself, improve it, or take it in a different
+              direction.
+            </p>
+            <p>
+              Your work saves to local files. Export STEP for solid geometry, or STL and 3MF for
+              printing and other mesh workflows.
+            </p>
+            <a class="text-link" href="https://github.com/osuushi/makeshift"
+              >Explore the source <span aria-hidden="true">↗</span></a
+            >
+          </div>
+        </div>
+      </section>
+
+      <section id="get-started" class="start wrap" aria-labelledby="start-title">
+        <p class="eyebrow">Get started</p>
+        <h2 id="start-title">Download Makeshift or try it online</h2>
+        <div class="editions">
+          <article>
+            <h3>On your desktop</h3>
+            <p>
+              The desktop app includes the modeling tools, an agent terminal, and a workspace that
+              keeps your scripts and reference files with your drawing.
+            </p>
+            <a
+              class="button primary"
+              href="https://github.com/osuushi/makeshift/releases/download/20261010T195437Z/Makeshift-20261010T195437Z-arm64.dmg"
+              >Download the Desktop App <span aria-hidden="true">↓</span></a
+            >
+            <p class="small muted">
+              Apple Silicon · macOS 14 or later ·
+              <a href="https://github.com/osuushi/makeshift/releases">All releases</a>
+            </p>
+          </article>
+          <article>
+            <h3>Try it in your browser</h3>
+            <p>
+              You can try the modeling tools without installing anything or creating an account. If
+              you’d like to continue in the desktop app, save your model and open it there.
+            </p>
+            <a class="text-link" href="https://osuushi.github.io/makeshift-web/"
+              >Try the web version right away <span aria-hidden="true">↗</span></a
+            >
+            <p class="small muted">Your model runs locally in your browser; remember to save it.</p>
+          </article>
+        </div>
+        <aside class="development-note">
+          <strong>Makeshift is still in active development.</strong>
+          You may run into bugs or unfinished features. Please save your work regularly and
+          <a href="https://github.com/osuushi/makeshift/issues"
+            >let us know if something isn’t working</a
+          >. Windows and Linux builds are not yet verified.
+        </aside>
+      </section>
+    </main>
+    <footer class="site-footer wrap">
+      <a class="wordmark" href="./"
+        ><img src="assets/makeshift.png" alt="" width="28" height="28">Makeshift</a
+      >
+      <nav aria-label="Project links">
+        <a href="https://github.com/osuushi/makeshift#readme">Guide</a>
+        <a href="https://github.com/osuushi/makeshift/issues">Issues</a>
+        <a href="https://github.com/osuushi/makeshift/blob/main/COPYING.md">License</a>
+      </nav>
+      <p class="small muted">Made for making.</p>
+    </footer>
+  </body>
+</html>
