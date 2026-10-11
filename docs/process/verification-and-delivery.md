@@ -57,6 +57,10 @@ regressions cover GPU composition, cavities, captured cap overlap/hover/selectio
 distant-camera clipping, and localized X-ray masks. CPU geometry tests cannot
 observe these escaped rendering failures.
 The inventory permits 26 suites, totaling 553 seconds with the existing shard count.
+Feature-demo recording runs separately as one Linux job per recipe. Each uploads
+its own media and manifest; the final `feature-demos` job requires all recordings,
+checks their source/configuration and completeness, then validates the assembled
+gallery and uploads the combined artifact. A failed recipe does not cancel others.
 The three additional section cases were measured in hidden Electron on macOS:
 X-ray mask/settings/resize/pinch 7.05s, distant-camera ink/fill 6.72s, and cap
 overlap/selection/extrusion/chooser 8.75s. The X-ray route including New/XY/circle

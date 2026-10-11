@@ -28,7 +28,7 @@ jobs:
       - run: npx tsc -p tsconfig.host.json
       - run: npm run test:setup
       - name: CI partition coverage
-        run: node --test tests/ci-partition.mjs
+        run: node --test tests/ci-partition.mjs tests/demo-shards.mjs
   linux-build:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -164,8 +164,12 @@ jobs:
         run: npx tsc -p tsconfig.test.json
       - name: Focused Electron regressions
         run: xvfb-run -a node scripts/ci-ui-tests.mjs electron ${{ matrix.shard }}/3
-  feature-demos:
+  feature-demo-record:
     needs: linux-build
+    strategy:
+      fail-fast: false
+      matrix:
+        demo: [primitives, sketching, extrude, revolve, edge-finishes, threads, knurling]
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -176,9 +180,37 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg
           npx playwright install --with-deps chromium
-      - name: Render all feature recipes and check gallery
-        run: npm run demos:check
+      - name: Render and verify one feature recipe
+        env:
+          DEMO_ONLY: ${{ matrix.demo }}
+        run: npm run demos:record
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: feature-demo-${{ matrix.demo }}
+          path: website/assets/demos/
+          retention-days: 3
+  feature-demos:
+    needs: feature-demo-record
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - *a1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: feature-demo-*
+          path: .cache/demo-shards
+      - name: Combine verified recordings
+        run: node scripts/demos/merge.mjs .cache/demo-shards "$(git rev-parse HEAD)"
+      - run: npx playwright install --with-deps chromium
+      - name: Check complete gallery
+        run: node tests/website-gallery.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: feature-demos
