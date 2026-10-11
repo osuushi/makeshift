@@ -165,34 +165,36 @@ try {
         true,
         "Primary actions and the first chooser actions remain hittable",
       );
-      await page.goto(`http://127.0.0.1:${server.address().port}`);
-      const toolsObstacle = await page.evaluate(async () => {
-        const header = document.querySelector("header");
-        header.style.width = "100px";
-        header.style.zIndex = "2";
-        const tools = document.createElement("button");
-        tools.textContent = "Tools";
-        tools.className = "tools-trigger";
-        tools.style.cssText =
-          "position:absolute;left:160px;top:10px;width:100px;height:40px;z-index:2";
-        document.body.append(tools);
-        const root = document.querySelector("#root");
-        root.querySelector("#options").remove();
-        const handle = document.createElement("button");
-        handle.style.cssText = "position:absolute;left:160px;top:10px;pointer-events:auto";
-        root.append(handle);
-        const { WidgetClearance } = await import("/widget-clearance.js");
-        const placement = new WidgetClearance(root);
-        placement.fit([handle]);
-        const rect = handle.getBoundingClientRect();
-        const hittable = handle.contains(
-          document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2),
-        );
-        const result = { hittable, fit: handle.dataset.widgetFit };
-        placement.dispose();
-        return result;
-      });
-      assert.deepEqual(toolsObstacle, { hittable: true, fit: "clear" });
+      for (const className of ["tools-trigger", "toolbox"]) {
+        await page.goto(`http://127.0.0.1:${server.address().port}`);
+        const toolsObstacle = await page.evaluate(async (className) => {
+          const header = document.querySelector("header");
+          header.style.width = "100px";
+          header.style.zIndex = "2";
+          const tools = document.createElement("button");
+          tools.textContent = "Tools";
+          tools.className = className;
+          tools.style.cssText =
+            "position:absolute;left:160px;top:10px;width:100px;height:40px;z-index:2";
+          document.body.append(tools);
+          const root = document.querySelector("#root");
+          root.querySelector("#options").remove();
+          const handle = document.createElement("button");
+          handle.style.cssText = "position:absolute;left:160px;top:10px;pointer-events:auto";
+          root.append(handle);
+          const { WidgetClearance } = await import("/widget-clearance.js");
+          const placement = new WidgetClearance(root);
+          placement.fit([handle]);
+          const rect = handle.getBoundingClientRect();
+          const hittable = handle.contains(
+            document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2),
+          );
+          const result = { hittable, fit: handle.dataset.widgetFit };
+          placement.dispose();
+          return result;
+        }, className);
+        assert.deepEqual(toolsObstacle, { hittable: true, fit: "clear" }, className);
+      }
       await page.goto(`http://127.0.0.1:${server.address().port}`);
       await cardFootprintDom(page, name);
       await page.goto(`http://127.0.0.1:${server.address().port}`);
