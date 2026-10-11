@@ -2,22 +2,19 @@ import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Extrusion, LiftSource } from "./body.js";
 import { BooleanOperands } from "./boolean-operands.js";
+import { trackExtrudeHistory } from "./extrude-history.js";
 import { ExtrudeInputs } from "./extrude-inputs.js";
 import { ExtrudeTargets } from "./extrude-targets.js";
 import { ExtrudeTwist } from "./extrude-twist.js";
 import { ExtrudeWidget } from "./extrude-widget.js";
 import { PreviewRunner } from "./preview-runner.js";
+import { sourceExtrusion } from "./viewer-extrusion.js";
 
 export class ExtrudeControls {
   private operands: BooleanOperands;
   private widget: ExtrudeWidget;
-  get root(): HTMLDivElement {
-    return this.widget.root;
-  }
+  readonly root: HTMLDivElement;
   private targets: ExtrudeTargets;
-  private get input(): HTMLInputElement {
-    return this.widget.input;
-  }
   private abort = new AbortController();
   private lease: InteractionLease | null = null;
   private sources: LiftSource[] = [];
@@ -62,6 +59,7 @@ export class ExtrudeControls {
       () => void this.finish(),
       () => void this.cancel(),
     );
+    this.root = this.widget.root;
     this.twist = new ExtrudeTwist(
       editor,
       this.root,
@@ -101,12 +99,13 @@ export class ExtrudeControls {
   }
   async reopen(extrusion: Extrusion): Promise<void> {
     this.editor.modeling.setTool("extrude");
+    this.editor.refresh();
     if (!this.begin(extrusion)) throw new Error("Cannot restore extrusion inputs");
     this.queue(this.distance, this.symmetric);
     await this.previews.settle();
     if (!this.valid) throw new Error("Cannot regenerate the accepted extrusion");
-    this.input.focus();
-    this.input.select();
+    this.widget.input.focus();
+    this.widget.input.select();
   }
   /** Guided tools hand off to the ordinary temporary extrusion interaction. */
   start(
@@ -114,12 +113,14 @@ export class ExtrudeControls {
     symmetric: boolean,
     mode: Extrusion["mode"] = "auto",
     draft?: Extrusion["draft"],
+    sourceDistance = false,
   ): boolean {
     this.editor.modeling.setTool("extrude");
     this.editor.refresh();
     if (!this.begin()) return false;
     this.mode = mode;
     if (draft) this.widget.draft.restore(draft);
+    if (sourceDistance) distance *= this.widget.axis?.sourceSign ?? 1;
     this.queue(distance, symmetric);
     return true;
   }
@@ -144,38 +145,30 @@ export class ExtrudeControls {
     this.previews.clear();
     this.targets.reset();
     this.mode = restored?.mode ?? "auto";
+    const parameters = restored && sourceExtrusion(restored, this.widget.axis?.sourceSign ?? 1);
     this.widget.draft.restore(restored?.draft ?? { mode: "angle", value: 0 });
-    this.distance = restored?.distance ?? 0;
+    this.distance = parameters?.distance ?? 0;
     this.symmetric = restored?.symmetric ?? false;
     this.valid = false;
-    this.twist.angle = restored?.twist?.angle ?? 0;
+    this.twist.angle = parameters?.twist?.angle ?? 0;
     this.twist.origin =
       restored?.twist?.origin ?? (this.widget.axis ? [...this.widget.axis.center] : null);
     this.twist.input.value = String(this.twist.angle);
     this.targets.selected = restored?.targets;
     this.targets.restoredEligible = restored?.eligibleTargets;
-    this.input.value = String(this.widget.quantity.display(this.distance));
-    this.lease?.trackHistory(
-      this.root,
+    this.widget.input.value = String(this.widget.quantity.display(this.distance));
+    trackExtrudeHistory(
+      this.lease,
+      this.widget,
+      this.twist,
+      this.targets,
       () => ({
         distance: this.distance,
-        quantity: this.widget.quantity.mode,
         symmetric: this.symmetric,
         mode: this.mode,
-        draft: this.widget.draft.value,
-        angle: this.twist.angle,
-        origin: this.twist.origin,
-        targets: this.targets.selected,
       }),
       async (state) => {
-        this.widget.quantity.setMode(state.quantity);
         this.mode = state.mode;
-        this.widget.draft.restore(state.draft);
-        this.twist.angle = state.angle;
-        this.twist.origin = state.origin;
-        this.twist.input.value = String(state.angle);
-        this.targets.selected = state.targets;
-        this.input.value = String(this.widget.quantity.display(state.distance));
         this.queue(state.distance, state.symmetric);
         await this.previews.settle();
       },
@@ -198,16 +191,19 @@ export class ExtrudeControls {
       this.editor.refresh();
       return;
     }
-    const request: Extrusion = {
-      sources: this.sources,
-      distance: value,
-      symmetric: this.symmetric,
-      draft: this.widget.draft.value,
-      twist: this.twist.value,
-      mode: this.mode,
-      targets: this.targets.selected,
-      eligibleTargets: this.targets.eligible,
-    };
+    const request = sourceExtrusion(
+      {
+        sources: this.sources,
+        distance: value,
+        symmetric: this.symmetric,
+        draft: this.widget.draft.value,
+        twist: this.twist.value,
+        mode: this.mode,
+        targets: this.targets.selected,
+        eligibleTargets: this.targets.eligible,
+      },
+      this.widget.axis?.sourceSign ?? 1,
+    );
     // Pointer events within one grid step do not require another calculation.
     if (JSON.stringify(request) === JSON.stringify(this.previews.latest)) return;
     this.distance = value;
@@ -240,7 +236,7 @@ export class ExtrudeControls {
     this.editor.visibility.setUsedSketchesVisible(this.editor.store.data, this.sources, false);
     this.lease.release();
     this.lease = null;
-    this.input.blur();
+    this.widget.input.blur();
     this.distance = 0;
     this.symmetric = false;
     this.twist.reset();
@@ -258,7 +254,7 @@ export class ExtrudeControls {
     await this.previews.settle();
     lease.release();
     this.lease = null;
-    this.input.blur();
+    this.widget.input.blur();
     this.distance = 0;
     this.symmetric = false;
     this.twist.reset();

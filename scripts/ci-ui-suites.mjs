@@ -56,12 +56,12 @@ export const uiSuites = [
   },
   {
     args: ["primitive-handoff-ui.mjs"],
-    // Linux run 38146139847: 10s; the focused handoff no longer needs 60s.
+    // Linux run 38146139847: 10s; expanded viewer-side route: macOS 22.99s.
     seconds: 35,
     browsers: ["electron"],
     reason:
-      "Circle placement must release its pointer lease into editable Extrude/Revolve with the correct profile, axis, mode and drill direction.",
-    unit: "sphere-primitive.test.ts",
+      "Real placement/drag must hand off to native geometry with viewer-facing depth, a frozen active axis, opposite-view reopen and material-inward drill direction.",
+    unit: "viewer-extrusion.test.ts",
   },
   {
     args: ["cube-selection-ui.mjs"],

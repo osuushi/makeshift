@@ -20,6 +20,8 @@ millimeter quantity: an integer times a power of ten, chosen near one eighth of
 the viewport's shorter dimension by projected bounding extent. Orbit and zoom
 recompute the plane and size before placement; a held gesture keeps its plane and
 starting size fixed, including when dragging beyond the hovered support.
+The solid preview rises on the viewer-facing side of that plane. Its Extrude
+handoff uses the same side; orbiting during an active extrusion does not flip it.
 
 Click to create the square sketch. Click and drag from one corner to the opposite
 corner; hold Option to center the rectangle on the press point and extrude
@@ -58,7 +60,7 @@ A held gesture keeps its initial support. Each completed placement accepts a fre
 ordinary sketch, then hands off to the existing editable modeling tool. Canceling
 that tool retains the sketch; solid acceptance is a separate Undo step.
 
-Cylinder enters **Extrude** with outward depth equal to the circle's diameter,
+Cylinder enters **Extrude** with viewer-facing depth equal to the circle's diameter,
 **Union** selected and Symmetric off. Cone uses the same depth and operation,
 with inward Draft offset equal to its radius. Its exact circular apex has no
 finite top face. Ordinary Extrude still exposes distance, symmetry, draft, twist
@@ -73,7 +75,8 @@ controls remain available. Both source curves remain ordinary editable geometry.
 
 Drill has a drill icon and accepts a circle only on a planar body face. It enters
 **Extrude**, with **Subtract**, Symmetric off and a negative distance along the
-face's outward normal. Depth conservatively projects the selected body's exact
+face's outward normal, regardless of the interactive viewer-side convention.
+Depth conservatively projects the selected body's exact
 axis-aligned bounds onto that normal, plus a small clearance, so it clears the
 whole body rather than stopping at the first cavity. Oblique bounds can give
 extra travel. Other visible bodies intersected within that travel can also be cut

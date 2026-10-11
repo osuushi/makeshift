@@ -66,6 +66,9 @@ rendering headroom. These are local timings, not Linux runner measurements.
 Linux run 38146139847 measured partial sections at 23 seconds, section fills at
 13 seconds and primitive handoff at 10 seconds; their allocations remain 30, 20
 and 35 seconds. No existing coverage or assertion is removed.
+Primitive handoff now also covers the captured back-view extrusion, orbit/reopen
+and underside Cube/Cylinder/Cone creation. Hidden Electron on macOS measures
+22.99 seconds; the existing 35-second allocation and suite count are unchanged.
 
 Broad historical UI journeys remain available for targeted diagnosis in
 `scripts/ui-review-suites.mjs` and `ui-review-routes.mjs`; they are not automatic

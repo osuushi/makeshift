@@ -32,8 +32,14 @@ not promise that every parameter value will succeed; the exact kernel remains th
 geometry authority. Unsupported selections never silently drop targets.
 
 Planar Extrude and Revolve accept parallel supports with either normal orientation. The
-first selected support sets the common extrusion direction; signed distance retains
-its meaning when source order changes. Revolve uses that support for its section
+first selected support sets the stored common extrusion direction. Interactive
+Extrude chooses its positive side toward the viewer on entry (screen up at an
+exactly edge-on view), then holds it through orbit and parameter edits. Distance
+and twist convert together to the stored source-normal coordinates; draft and
+sketch frames are unchanged. Reopen converts stored parameters to the current
+viewer side without changing the result. Scripted operations retain source-normal
+signed coordinates. Curved-face extrusion retains its material-outward direction.
+Revolve uses the first support for its section
 frame and requires its selected axis to lie in the section plane. Manual and script
 paths use the same parallel-normal predicate. Nonparallel planar supports remain unavailable.
 Curved-face Extrude uses the bounded normal-face route described below.

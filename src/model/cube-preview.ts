@@ -1,10 +1,11 @@
 import * as THREE from "three";
-import type { PlaneFrame, Point } from "../sketch/planes.js";
+import type { PlaneFrame, Point, Vector } from "../sketch/planes.js";
 import { worldPoint } from "../sketch/planes.js";
 import type { World } from "../sketch/world.js";
 import { primitiveFootprintLayer } from "../sketch/world-primitive-overlay.js";
 import type { cubeRectangle } from "./cube-rectangle.js";
 import { primitivePreviewMesh } from "./primitive-preview-mesh.js";
+import { viewerSide } from "./viewer-extrusion.js";
 import "./cube-preview.css";
 
 /** Presentation-only rectangle and extrusion mesh; accepted geometry waits for release. */
@@ -37,7 +38,11 @@ export class CubePreview {
     const u = new THREE.Vector3(...plane.u);
     const v = new THREE.Vector3(...plane.v);
     const normal = u.clone().cross(v);
-    this.solid.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(u, v, normal));
+    const side = viewerSide(normal.toArray() as Vector, this.world.camera);
+    normal.multiplyScalar(side);
+    this.solid.quaternion.setFromRotationMatrix(
+      new THREE.Matrix4().makeBasis(u, v.clone().multiplyScalar(side), normal),
+    );
     this.solid.position
       .set(...worldPoint(plane, { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }))
       .addScaledVector(normal, rectangle.symmetric ? 0 : depth / 2);
