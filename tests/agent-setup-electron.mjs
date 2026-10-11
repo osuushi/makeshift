@@ -128,7 +128,7 @@ async function setupRoute(page, app, root) {
   assert.equal(await page.getByRole("button", { name: "Install Codex", exact: true }).count(), 0);
   assert.equal(await page.getByRole("button", { name: "Launch Codex", exact: true }).count(), 0);
   await page.getByRole("button", { name: "Save settings", exact: true }).click();
-  assert.equal(await page.locator(".agent-settings").isVisible(), false);
+  await page.locator(".agent-settings").waitFor({ state: "hidden" });
   await page.getByRole("button", { name: "Start", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
   await page.waitForFunction(

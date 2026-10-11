@@ -125,7 +125,7 @@ async function discoveryAndCustom(page) {
   assert.equal(await page.getByRole("button", { name: "Launch Codex", exact: true }).count(), 0);
   await page.getByLabel("Executable", { exact: true }).fill("/fixture/manual");
   await page.getByRole("button", { name: "Save settings", exact: true }).click();
-  assert.equal(await page.locator(".agent-settings").isVisible(), false);
+  await page.locator(".agent-settings").waitFor({ state: "hidden" });
   await page.getByRole("button", { name: "Start", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
   const configured = await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }));
@@ -224,7 +224,7 @@ async function installAndLaunch(page) {
     "/fixture/installed",
   );
   await page.getByRole("button", { name: "Save settings", exact: true }).click();
-  assert.equal(await page.locator(".agent-settings").isVisible(), false);
+  await page.locator(".agent-settings").waitFor({ state: "hidden" });
   await page.getByRole("button", { name: "Start", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
   await page.getByRole("button", { name: "Stop", exact: true }).click();
