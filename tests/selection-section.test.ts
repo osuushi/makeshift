@@ -40,10 +40,10 @@ function editor(targets: ModelingTarget[]): SketchEditor {
 test("Planar selections resolve accepted planes; ambiguous and curved selections do not", () => {
   const sketch: ModelingTarget = { kind: "sketch", sketch: "sketch" };
   const face: ModelingTarget = { kind: "face", body: "body", face: "flat" };
-  assert.deepEqual(selectedSectionFrame(editor([sketch]), undefined), planes.XY);
-  assert.deepEqual(selectedSectionFrame(editor([face]), undefined), planes.XY);
-  assert.deepEqual(selectedSectionFrame(editor([sketch, face]), undefined), planes.XY);
-  assert.deepEqual(selectedSectionFrame(editor([]), offset), offset);
+  assert.deepEqual(selectedSectionFrame(editor([sketch])), planes.XY);
+  assert.deepEqual(selectedSectionFrame(editor([face])), null);
+  assert.deepEqual(selectedSectionFrame(editor([sketch, face])), null);
+  assert.equal(selectedSectionFrame(editor([])), null);
   for (const targets of [
     [],
     [sketch, { kind: "sketch", sketch: "offset" }],
@@ -51,7 +51,7 @@ test("Planar selections resolve accepted planes; ambiguous and curved selections
     [{ kind: "body", body: "body" }],
     [{ kind: "sketch", sketch: "missing" }],
   ] as ModelingTarget[][])
-    assert.equal(selectedSectionFrame(editor(targets), undefined), null);
+    assert.equal(selectedSectionFrame(editor(targets)), null);
 });
 
 test("Extrude and revolve hold a copied source plane through preview replacement and cancellation", () => {

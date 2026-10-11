@@ -8,6 +8,13 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function cutawayRoute(page, name, plane = "XY") {
   await reset(page);
+  await page.getByRole("button", { name: "Application settings" }).click();
+  await page.getByRole("checkbox", { name: "Global X-ray vision" }).check();
+  const opacity = page.getByRole("slider", { name: "X-ray front opacity", exact: true });
+  await opacity.press("Home");
+  await opacity.press("PageUp");
+  await opacity.press("PageUp");
+  await page.getByRole("button", { name: "Done", exact: true }).click();
   await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
   await chooseTool(page, "rectangle", "rectangle");
   await drag(page, [-18, -18], [18, 18]);

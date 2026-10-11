@@ -2,12 +2,13 @@ import * as THREE from "three";
 import type { PlaneFrame } from "../sketch/planes.js";
 import { stableClipping } from "../sketch/stable-clipping.js";
 import type { World } from "../sketch/world.js";
-import { sectionMaterial } from "./section-pattern.js";
+import { SectionPalettes, sectionMaterial } from "./section-pattern.js";
 
 const capBit = 8;
 
 /** Per-body parity of the clipped closed shell fills material, including real cavities.
- * Uses only bit 8; sketch union, solid silhouette and coplanar face bits stay intact.
+ * Bit 8 tracks shell parity; bit 32 tracks filled cap samples for overlap blending.
+ * Sketch union, visible ink, solid silhouette and coplanar face bits stay intact.
  * Displayed geometry includes live candidates; no async exact-shape query or stale cap. */
 export class SectionCaps {
   private readonly scene = new THREE.Scene();
@@ -43,6 +44,7 @@ export class SectionCaps {
     new THREE.MeshBasicMaterial(),
   );
   private readonly styles = new Map<string, THREE.MeshBasicMaterial>();
+  private readonly palettes = new SectionPalettes();
 
   constructor() {
     this.resetScene.add(this.reset);
@@ -53,26 +55,16 @@ export class SectionCaps {
   render(world: World): void {
     const frame = world.partialSection ?? world.crossSection;
     if (!frame) return;
-    const bodies = new Map<string, THREE.Mesh[]>();
-    const seeds = new Map<string, string>();
-    const hovered = new Set<string>();
-    world.scene.traverseVisible((object) => {
-      if (!(object instanceof THREE.Mesh)) return;
-      if (object.userData.sectionBody) hovered.add(object.userData.sectionBody);
-      const body: string | undefined = object.userData.bodyFace?.body;
-      if (!body) return;
-      for (let owner: THREE.Object3D | null = object; owner; owner = owner.parent)
-        if (owner.userData.sectionStyleKey) seeds.set(body, owner.userData.sectionStyleKey);
-      const faces = bodies.get(body) ?? [];
-      faces.push(object);
-      bodies.set(body, faces);
-    });
+    const { bodies, seeds, hovered } = this.surfaces(world);
     for (const [id, material] of this.styles) {
       if (bodies.has(id)) continue;
       material.dispose();
       this.styles.delete(id);
     }
     const { renderer, camera } = world;
+    const palettes = this.palettes.forBodies(
+      [...bodies.keys()].map((body) => seeds.get(body) ?? body),
+    );
     const clipping = renderer.clippingPlanes;
     const autoClear = renderer.autoClear;
     const clip = clipping[0]?.clone();
@@ -80,6 +72,10 @@ export class SectionCaps {
     clip.constant -= 1e-4;
     renderer.autoClear = false;
     try {
+      renderer.clippingPlanes = [];
+      this.reset.material.stencilWriteMask = capBit | 32;
+      renderer.render(this.resetScene, this.resetCamera);
+      this.reset.material.stencilWriteMask = capBit;
       for (const [body, faces] of bodies) {
         renderer.clippingPlanes = [];
         renderer.render(this.resetScene, this.resetCamera);
@@ -100,7 +96,7 @@ export class SectionCaps {
           material = undefined;
         }
         if (!material) {
-          material = sectionMaterial(seed);
+          material = sectionMaterial(seed, palettes.get(seed));
           material.userData.sectionStyleKey = seed;
           this.styles.set(body, material);
         }
@@ -110,6 +106,15 @@ export class SectionCaps {
         this.scene.clear();
         this.scene.add(this.plane);
         renderer.clippingPlanes = [];
+        // Blend only samples already filled by another body. No cap writes depth,
+        // so differently triangulated coplanar cuts cannot compete for it.
+        material.opacity = 0.5;
+        material.stencilRef = capBit | 32;
+        material.stencilWriteMask = 0;
+        renderer.render(this.scene, camera);
+        material.opacity = 1;
+        material.stencilRef = capBit;
+        material.stencilWriteMask = 32;
         renderer.render(this.scene, camera);
       }
       renderer.render(this.resetScene, this.resetCamera);
@@ -117,7 +122,26 @@ export class SectionCaps {
       renderer.clippingPlanes = clipping;
       renderer.autoClear = autoClear;
       this.scene.clear();
+      this.reset.material.stencilWriteMask = capBit;
     }
+  }
+
+  private surfaces(world: World) {
+    const bodies = new Map<string, THREE.Mesh[]>();
+    const seeds = new Map<string, string>();
+    const hovered = new Set<string>();
+    world.scene.traverseVisible((object) => {
+      if (!(object instanceof THREE.Mesh)) return;
+      if (object.userData.sectionBody) hovered.add(object.userData.sectionBody);
+      const body: string | undefined = object.userData.bodyFace?.body;
+      if (!body) return;
+      for (let owner: THREE.Object3D | null = object; owner; owner = owner.parent)
+        if (owner.userData.sectionStyleKey) seeds.set(body, owner.userData.sectionStyleKey);
+      const faces = bodies.get(body) ?? [];
+      faces.push(object);
+      bodies.set(body, faces);
+    });
+    return { bodies, seeds, hovered };
   }
 
   private position(frame: PlaneFrame, faces: THREE.Mesh[]): void {

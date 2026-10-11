@@ -24,9 +24,9 @@ test("longest-first assignment preserves every suite exactly once and balances h
 });
 
 test("PR UI coverage stays bounded, Electron-only and tied to lower-level coverage", async () => {
-  // Two section cases cover GPU composition and cavity stencil integration, which
-  // model tests cannot observe. Measured allocations retain the 500s time budget.
-  assert.ok(uiSuites.length <= 23, "Review the UI budget before adding another permanent journey");
+  // Three founder section regressions add mask composition, distant-camera GPU
+  // clipping and cap/selection integration. Measured allocations add 55s; no new shards.
+  assert.ok(uiSuites.length <= 26, "Review the UI budget before adding another permanent journey");
   for (const suite of uiSuites) {
     await access(new URL(suite.args[0], import.meta.url));
     await access(new URL(suite.unit, import.meta.url));
@@ -40,7 +40,7 @@ test("PR UI coverage stays bounded, Electron-only and tied to lower-level covera
   const shards = partition(suites, 3);
   assert.ok(shards.every((shard) => shard.suites.length));
   assert.ok(
-    shards.reduce((sum, shard) => sum + shard.seconds, 0) <= 500,
+    shards.reduce((sum, shard) => sum + shard.seconds, 0) <= 553,
     "Keep the regression gate within its aggregate execution budget",
   );
   assert.deepEqual(

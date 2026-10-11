@@ -6,6 +6,7 @@ import type { Profile } from "../sketch/profiles.js";
 import { BodyPickProbe } from "./body-picking.js";
 import { edgeRayHits } from "./edge-selection.js";
 import { overlapSketchCandidates } from "./overlap-sketches.js";
+import { sectionBodyHits } from "./section-picking.js";
 
 export type OverlapTarget =
   | Extract<ModelingTarget, { kind: "body" | "face" | "edge" | "sketch" | "profile" }>
@@ -36,12 +37,21 @@ export function overlapCandidates(editor: SketchEditor, screen: Point): OverlapC
       key: hit.edge,
       label: "Edge",
     });
+  const sections = sectionBodyHits(
+    bodies,
+    ray,
+    editor.world.sectionEnabled(screen)
+      ? (editor.world.partialSection ?? editor.world.crossSection)
+      : null,
+    editor.world.camera.position,
+  );
   for (const body of bodies) {
     const hits = result.filter((c) => "body" in c.target && c.target.body === body.id);
-    if (hits.length)
+    const section = sections.find((hit) => hit.body === body.id);
+    if (hits.length || section)
       result.push({
         target: { kind: "body", body: body.id },
-        depth: Math.min(...hits.map((h) => h.depth)),
+        depth: Math.min(section?.depth ?? Infinity, ...hits.map((h) => h.depth)),
         key: body.id,
         label: "Body",
       });

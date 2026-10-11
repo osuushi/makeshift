@@ -12,6 +12,7 @@ import {
 import { CameraRoll } from "./camera-roll.js";
 import { CameraTransition } from "./camera-transition.js";
 import { CanonicalPlaneVisibility } from "./canonical-plane-visibility.js";
+import type { Sketch } from "./document.js";
 import { NavigationHistory } from "./navigation-history.js";
 import { minimumPlaneBounds, type PlaneBounds } from "./plane-bounds.js";
 import {
@@ -22,7 +23,7 @@ import {
   type Vector,
   worldPoint,
 } from "./planes.js";
-import { cameraSectionClip, sectionClip } from "./view-clipping.js";
+import { updateViewClipping } from "./view-clipping.js";
 import { fitWorldCameraDepth } from "./world-camera-depth.js";
 import type { ForegroundOverlay } from "./world-foreground.js";
 import { WorldFrame } from "./world-frame.js";
@@ -56,6 +57,11 @@ export class World {
   crossSection: PlaneFrame | null = null;
   selectionSection: () => PlaneFrame | null = () => null;
   partialSection: PlaneFrame | null = null;
+  xraySource: () => {
+    sketches: readonly Sketch[];
+    visibility: string;
+    visible: (id: string) => boolean;
+  } = () => ({ sketches: [], visibility: "", visible: () => false });
   height = 80;
   spacing = 1;
   canNavigate = () => true;
@@ -145,7 +151,7 @@ export class World {
       height,
       this.canonicalVisibility.states,
     );
-    this.updateClipping();
+    updateViewClipping(this, this.sketchClip);
     for (const listener of this.changed) listener();
     this.present();
     if (fading) this.requestDraw();
@@ -159,20 +165,16 @@ export class World {
     this.frame.render(this.sketchClip, forceFrame);
   }
 
-  private updateClipping(): void {
-    const selected = this.selectionSection();
-    const frame = this.activeFrame ?? (this.crossSection ? null : selected);
-    this.partialSection = frame;
-    if (!frame) {
-      this.renderer.clippingPlanes = this.crossSection ? [sectionClip(this.crossSection)] : [];
-      if (this.renderer.clippingPlanes[0]) this.renderer.clippingPlanes[0].constant += 1e-4;
-      return;
-    }
-    this.sketchClip.copy(cameraSectionClip(frame, this.camera.position));
-    this.renderer.clippingPlanes = [this.sketchClip];
-  }
   visiblePoint(point: THREE.Vector3): boolean {
-    return this.renderer.clippingPlanes.every((plane) => plane.distanceToPoint(point) >= 0);
+    return this.clippingAt(this.project(point.toArray() as Vector)).every(
+      (plane) => plane.distanceToPoint(point) >= 0,
+    );
+  }
+  sectionEnabled(screen: Point): boolean {
+    return this.frame.sectionEnabled(screen);
+  }
+  clippingAt(screen: Point): THREE.Plane[] {
+    return this.sectionEnabled(screen) ? this.renderer.clippingPlanes : [];
   }
   requestDraw(): void {
     // Subsequent input events need the latest basis and picking depth before the next paint.

@@ -5,6 +5,10 @@ import type { SketchEditor } from "./editor.js";
 import { type PlaneFrame, worldPoint } from "./planes.js";
 import { closedBoundaries } from "./regions.js";
 import { stableClipping } from "./stable-clipping.js";
+import type { World } from "./world.js";
+
+// Base tint and modeling hover/selection fills share one post-section pass.
+export const sketchFillLayer = 5;
 
 /** A stencil union keeps overlapping/nested closed cells at one translucent tint. */
 export function drawRegionFills(editor: SketchEditor): () => void {
@@ -16,16 +20,18 @@ export function drawRegionFills(editor: SketchEditor): () => void {
     depthTest: true,
     depthWrite: false,
     stencilWrite: true,
-    stencilRef: 1,
+    stencilRef: 0,
     stencilWriteMask: 1,
-    stencilFuncMask: 1,
-    stencilFunc: THREE.NotEqualStencilFunc,
-    stencilZPass: THREE.ReplaceStencilOp,
+    // Union the tint once, preserving already drawn sketch ink samples (bit 16).
+    stencilFuncMask: 17,
+    stencilFunc: THREE.EqualStencilFunc,
+    stencilZPass: THREE.InvertStencilOp,
   });
   stableClipping(material);
   const mesh = new THREE.Mesh(new THREE.BufferGeometry(), material);
   mesh.renderOrder = 5;
   editor.world.scene.add(mesh);
+  const disposeFillPass = installRegionFillPass(editor.world, mesh);
   let previous: DisplayDocument | null = null,
     previousScale = 0,
     visibility = "";
@@ -70,8 +76,34 @@ export function drawRegionFills(editor: SketchEditor): () => void {
   update();
   return () => {
     editor.world.changed.delete(update);
+    disposeFillPass();
     editor.world.scene.remove(mesh);
     mesh.geometry.dispose();
     material.dispose();
   };
+}
+
+function installRegionFillPass(world: World, mesh: THREE.Mesh): () => void {
+  mesh.layers.set(sketchFillLayer);
+  // Keep fills in the scene for grid-veil configuration. Render base tint first,
+  // then hover/selection (renderOrder 6), after caps and before the front composite.
+  const render = () => {
+    if (!mesh.visible) return;
+    const { renderer, scene, camera } = world;
+    const layers = camera.layers.mask;
+    const background = scene.background;
+    const autoClear = renderer.autoClear;
+    try {
+      camera.layers.set(sketchFillLayer);
+      scene.background = null;
+      renderer.autoClear = false;
+      renderer.render(scene, camera);
+    } finally {
+      camera.layers.mask = layers;
+      scene.background = background;
+      renderer.autoClear = autoClear;
+    }
+  };
+  world.renderOverlays.add(render);
+  return () => world.renderOverlays.delete(render);
 }

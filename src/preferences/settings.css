@@ -113,6 +113,9 @@
   width: 140px;
   max-width: 100%;
 }
+.view-display-settings input[type="checkbox"] {
+  width: auto;
+}
 .view-display-settings output {
   width: 48px;
   text-align: right;

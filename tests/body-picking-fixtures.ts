@@ -29,6 +29,8 @@ export function pickingEditor(
       project,
       canvas: { getBoundingClientRect: () => rect },
       renderer: { clippingPlanes: clipping },
+      clippingAt: () => clipping,
+      sectionEnabled: () => true,
       visiblePoint: (point: THREE.Vector3) =>
         clipping.every((plane) => plane.distanceToPoint(point) >= 0),
     },

@@ -53,6 +53,8 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
       "decorator display",
       "grid opacity",
       "section front opacity",
+      "x-ray vision",
+      "xray",
       "partial section opacity",
       "grid thickness",
       "plane visibility",

@@ -3,6 +3,33 @@
 // Add combinatorial cases to the linked lower-level tests, not this inventory.
 export const uiSuites = [
   {
+    args: ["xray-vision-ui.mjs"],
+    // macOS hidden Electron including New/XY/circle freshness: 9.18s.
+    seconds: 20,
+    browsers: ["electron"],
+    reason:
+      "A real GPU frame must keep both captures fresh after New and plane entry, and preserve normal/cut colors across the aperture, bleed, blur and resize; texture-unit state, Settings input and outside-aperture picking cannot be proven by mask math alone.",
+    unit: "xray-contents.test.ts",
+  },
+  {
+    args: ["section-distant-camera-ui.mjs"],
+    // macOS hidden Electron: 6.72s.
+    seconds: 15,
+    browsers: ["electron"],
+    reason:
+      "Founder capture loses coplanar sketch ink and fill when clipping subtracts distant camera coordinates; real GPU samples catch precision errors that CPU clipping tests cannot.",
+    unit: "section-pattern.test.ts",
+  },
+  {
+    args: ["section-overlap-ui.mjs"],
+    // macOS hidden Electron: 8.75s, including source-profile extrusion and chooser.
+    seconds: 20,
+    browsers: ["electron"],
+    reason:
+      "Captured caps must blend body patterns, preserve sketch ink and region hover/selection through extrusion, and offer owning bodies on a real hold; CPU geometry/style tests cannot prove GPU composition or chooser routing.",
+    unit: "section-pattern.test.ts",
+  },
+  {
     args: ["section-fill-ui.mjs"],
     seconds: 20,
     browsers: ["electron"],

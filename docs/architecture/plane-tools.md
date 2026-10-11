@@ -97,11 +97,12 @@ split topology and validation precision remain unchanged.
 
 ## Cross-section view
 
-Selecting a sketch/profile, world or saved construction plane, or planar body face
-automatically enables the [partial section overlay](navigation.md#partial-section-visibility).
-Its camera-side partition uses the configurable **Section front opacity**. The
-movable Cross section tool below remains an explicit hard cut, overriding the
-automatic selection view in Modeling.
+Selecting a sketch/profile automatically enables [X-ray vision](navigation.md#x-ray-vision).
+Its camera-side partition uses **X-ray front opacity**. Global cuts the whole plane;
+local mode uses a dilated, blurred screen-space mask of visible sketch contents.
+Selecting canonical/saved planes or body faces alone does not start X-ray vision.
+The movable Cross section tool remains an explicit global hard cut, overriding
+the automatic selection view in Modeling.
 
 **Cross section** in Cmd-F → View uses one selected planar face, canonical or saved plane;
 otherwise it picks a world plane, saved plane or planar face in the viewport.

@@ -209,9 +209,7 @@ const scaling = new ScaleControls(
 );
 const projection = new ProjectionControls(editor, overlay, constructionPlanes.picker, entities);
 const sections = new SectionControls(editor);
-const disposeSelectionSection = installSelectionSection(editor, () =>
-  constructionPlanes.selectedFrame(),
-);
+const disposeSelectionSection = installSelectionSection(editor);
 const bodyEdges = new BodyEdgeControls(editor);
 const disposeVisibility = visibilityControls(editor, () => constructionPlanes.selected()?.id);
 const crossSection = new CrossSectionControls(editor, overlay, constructionPlanes.picker, () =>

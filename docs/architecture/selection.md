@@ -64,6 +64,10 @@ founder feedback update these contracts before further tools depend on them.
   faces use the triangle normal nearest the hit on the edge. Candidates are sorted
   by camera distance, including occluded front-facing geometry. Hidden entities
   are excluded.
+  Section pseudofaces also contribute their owning whole bodies at the cut depth,
+  including every overlapping body under the press. Cavities and tangent contact
+  with existing faces do not create pseudoface hits. These choices select body IDs;
+  no synthetic face enters accepted topology.
   Ordinary edge picking and the chooser share projected edge segments, clipping
   and local-facing tests. Ordinary picking additionally checks the covering face
   at each closest edge point; the chooser retains covered candidates and tests
@@ -131,6 +135,9 @@ founder feedback update these contracts before further tools depend on them.
   with a dim tint. Its curves and regions take picking precedence over solid faces
   and edges, retaining normal depth order among selected sketches. Clearing selection
   restores ordinary picking; hidden sketches remain excluded. This is view state only.
+  Sketch region base tint, hover and selection fills draw after section pseudofaces,
+  retaining depth occlusion by real geometry and preserving sketch ink. Solid-tool
+  source regions retain the same selection tint over section material.
 - Selection occurs on a completed click. In modeling, double-clicking a body face
   or edge selects its whole body; a single face click retains face selection.
   Enter on one selected plane reference, planar face or whole sketch opens its sketch workspace,

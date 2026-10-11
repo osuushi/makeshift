@@ -31,6 +31,18 @@ test("ordinary edge picking excludes a covered support that the all-depth choose
       [new THREE.Plane(new THREE.Vector3(0, 0, -1), -1)],
     );
     assert.equal(pickBodyEdge(clipped, p)?.body, rear.id);
+    const cutPlanes = clipped.world.renderer.clippingPlanes;
+    clipped.world.clippingAt = (screen) => (screen.x > 700 ? cutPlanes : []);
+    assert.equal(
+      new BodyPickProbe(clipped, clipped.world.project([5, 10, 10])).faces()[0]?.body,
+      front.id,
+      "Outside aperture probes ordinary front geometry",
+    );
+    assert.equal(
+      new BodyPickProbe(clipped, clipped.world.project([15, 10, 10])).faces()[0]?.body,
+      rear.id,
+      "Inside aperture probes clipped rear geometry",
+    );
     const hidden = pickingEditor([rear, front], [0, 0, 100], [], [front.id]);
     assert.equal(pickBodyEdge(hidden, p)?.body, rear.id);
   } finally {

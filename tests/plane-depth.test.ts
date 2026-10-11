@@ -20,6 +20,7 @@ function scene(faceZ: number) {
     world: {
       camera,
       renderer: { clippingPlanes: [] },
+      clippingAt: () => [],
       visiblePoint: () => true,
       planeBounds: minimumPlaneBounds,
       canvas: { getBoundingClientRect: () => ({ left: 0, top: 0, width: 400, height: 400 }) },

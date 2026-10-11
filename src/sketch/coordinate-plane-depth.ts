@@ -40,7 +40,9 @@ export function coordinatePlaneDepth(
       "#include <color_fragment>\ndiffuseColor.a *= coordinateDepthFade(coordinateDepth);",
     );
   };
-  material.onBeforeRender = () => {
+  const render = material.onBeforeRender.bind(material);
+  material.onBeforeRender = (...args) => {
+    render(...args);
     camera.getWorldDirection(uniforms.coordinateViewDirection.value);
     uniforms.coordinateDepthDistance.value = viewHeight() * 2.5;
   };

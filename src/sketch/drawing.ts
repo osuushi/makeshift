@@ -19,6 +19,12 @@ export function drawSketches(editor: SketchEditor, obscured = false): () => void
     transparent: obscured,
     opacity: obscured ? 0.3 : 1,
     depthWrite: false,
+    // Preserve visible sketch samples when the later section-cap pass fills the cut.
+    stencilWrite: !obscured,
+    stencilRef: 16,
+    stencilWriteMask: 16,
+    stencilFunc: THREE.AlwaysStencilFunc,
+    stencilZPass: THREE.ReplaceStencilOp,
   });
   stableClipping(material);
   let geometry = new LineSegmentsGeometry(),

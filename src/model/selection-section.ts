@@ -3,18 +3,10 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { coplanar, type PlaneFrame } from "../sketch/planes.js";
 
 /** Resolve only unambiguous planar selections from accepted geometry. */
-export function selectedSectionFrame(
-  editor: SketchEditor,
-  reference: PlaneFrame | undefined,
-): PlaneFrame | null {
-  if (reference) return reference;
+export function selectedSectionFrame(editor: SketchEditor): PlaneFrame | null {
   const frames = editor.modeling.targets.map((target) => {
     if (target.kind === "sketch" || target.kind === "profile")
       return editor.store.data.sketches.find((sketch) => sketch.id === target.sketch)?.plane;
-    if (target.kind === "face")
-      return editor.store.data.bodies
-        ?.find((body) => body.id === target.body)
-        ?.faces.find((face) => face.id === target.face)?.plane;
     return null;
   });
   const first = frames[0];
@@ -49,17 +41,20 @@ export class SelectionSection {
   }
 }
 
-export function installSelectionSection(
-  editor: SketchEditor,
-  selectedPlane: () => PlaneFrame | undefined,
-): () => void {
+export function installSelectionSection(editor: SketchEditor): () => void {
   const section = new SelectionSection();
+  editor.world.xraySource = () => ({
+    sketches: editor.display.sketches,
+    visibility: editor.visibility.key,
+    visible: (id) => editor.visibility.visible(id),
+  });
   editor.world.selectionSection = () =>
     section.read(
-      editor.world.activeFrame ?? selectedSectionFrame(editor, selectedPlane()),
+      editor.world.activeFrame ?? selectedSectionFrame(editor),
       editor.interactions.current,
     );
   return () => {
     editor.world.selectionSection = () => null;
+    editor.world.xraySource = () => ({ sketches: [], visibility: "", visible: () => false });
   };
 }
