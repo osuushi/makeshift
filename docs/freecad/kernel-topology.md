@@ -884,9 +884,11 @@ opening selection therefore needs a distinct closed-hollow construction.
 [`BOPAlgo_ArgumentAnalyzer::TestSelfInterferences`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BOPAlgo/BOPAlgo_ArgumentAnalyzer.cxx#L340-L390)
 uses the Boolean self-interference checker independently of BRep validity.
 
-Makeshift inference: use arc joins for the surface distance envelope, a checked Boolean
-difference for closed hollows, and independent validity, orientation, collision,
-containment, opening and offset-correspondence checks before accepting. Keep strict
+Current Makeshift decision (2026-10-11): prefer sharp intersection joins, with
+the original arc distance-envelope joins as fallback after sharp attempts fail.
+Use a checked Boolean difference for closed hollows, and independent validity,
+orientation, collision, containment, opening and offset-correspondence checks before
+accepting. Keep strict
 requested thickness and atomic failure. Unsupported freeform verification must
 reject instead of pretending the kernel's success flag establishes validity.
 No upstream implementation was copied; this uses the existing LGPL OCCT component.

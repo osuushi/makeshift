@@ -28,9 +28,11 @@ specifies openings; a body or complete face coverage specifies a closed hollow.
 Explicit edges and non-solid targets are unavailable. Mixed whole bodies and
 partial face selections across bodies use those meanings independently.
 The local signed thickness field and arrow use negative inward / positive outward.
-Rounded offset joins follow the distance envelope around corners. The tool retains
-the original surface on the other side of the wall; it does not center thickness
-on the surface. The card states the number of openings or “Closed hollow”.
+Offset surfaces meet at sharp intersections by default. If sharp construction
+fails, Shell may use rounded joins to obtain a valid result.
+Thickness is the normal offset of each face, so corner-to-corner distances can
+exceed its magnitude. The tool retains the original surface on the other side of
+the wall; it does not center thickness on the surface. The card states the number of openings or “Closed hollow”.
 
 Drag release retains the temporary result. Enter/check or switching tools accepts
 one Undo step; Escape/cross cancels and restores selection. Zero exits without an
@@ -49,11 +51,15 @@ Save/Open does not replay Shell. Failed inputs and reasons use ordinary history.
 ## Geometry and rejection
 
 Open walls use OCCT `MakeThickSolidByJoin`. Closed hollows use `PerformByJoin`
-and a checked Boolean difference. Both use arc joins, 1e-7 mm construction tolerance,
-first with local intersections, then with all-parallel intersections if construction
+and a checked Boolean difference. Both use intersection joins and 1e-7 mm construction
+tolerance, first with local intersections, then with all-parallel intersections if construction
 or validation fails. Each attempt owns a fresh deep copy. Self-intersection removal
 stays disabled; surviving topology must pass the complete checks below. There is
-no mesh fallback or reduced thickness.
+no mesh fallback or reduced thickness. If both sharp-join attempts fail construction
+or validation, retry with arc joins, first local then all-parallel intersections.
+Rounded fallback may add corner fillets; it uses the same requested thickness and
+full validation. This preserves supported freeform sweeps and end caps when OCCT
+cannot construct valid sharp intersections (founder decision, 2026-10-11).
 
 The reproducible OCCT setup passes 1e-7 mm to rounded edge-pipe construction,
 replacing its independent 1e-4 mm default. Generated boundaries are measured

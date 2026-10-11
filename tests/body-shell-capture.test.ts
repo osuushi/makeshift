@@ -21,7 +21,7 @@ async function open(owner: DocumentOwner): Promise<Body> {
   return body;
 }
 function expectedVolume(thickness: number, openings: number): number {
-  // Independent parallel-section/rounded-cap formula for this simple prism.
+  // Independent parallel-section/sharp-cap formula for this simple prism.
   const { area, perimeter, height } = fixture.section;
   const caps = 2 - openings;
   if (thickness < 0)
@@ -30,11 +30,8 @@ function expectedVolume(thickness: number, openings: number): number {
       (area + perimeter * thickness + Math.PI * thickness ** 2) * (height + caps * thickness)
     );
   return (
-    (perimeter * thickness + Math.PI * thickness ** 2) * height +
-    caps *
-      (area * thickness +
-        (Math.PI * perimeter * thickness ** 2) / 4 +
-        (2 * Math.PI * thickness ** 3) / 3)
+    (area + perimeter * thickness + Math.PI * thickness ** 2) * (height + caps * thickness) -
+    area * height
   );
 }
 function near(actual: number, expected: number) {

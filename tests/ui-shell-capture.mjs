@@ -27,22 +27,25 @@ async function loadCapture(page) {
   assert.equal(state.modelingSelection[0]?.face, fixture.opening);
   return state.document;
 }
+function expectedVolume(thickness, openings) {
+  const { area, perimeter, height } = fixture.section;
+  const offset =
+    (area + perimeter * thickness + Math.PI * thickness ** 2) *
+    (height + (2 - openings) * thickness);
+  return Math.abs(offset - area * height);
+}
 function near(actual, expected) {
   assert.ok(Math.abs(actual - expected) < 1e-4, `${actual} != ${expected}`);
 }
 export async function shellCaptureRoute(page, name, electron) {
   const original = await loadCapture(page);
   await page.keyboard.press("s");
-  const input = page.getByRole("textbox", { name: "Shell thickness", exact: true });
-  for (const [thickness, expected] of [
-    [-1, 7414.0639652],
-    [1, 7928.7727445],
-    [4, 34708.3363952],
-  ]) {
+  let input = page.getByRole("textbox", { name: "Shell thickness", exact: true });
+  for (const thickness of [-1, 1, 4]) {
     await input.fill(String(thickness));
     const state = await inspect(page);
     assert.deepEqual(state.document, original);
-    near(state.preview?.bodies[0].volume, expected);
+    near(state.preview?.bodies[0].volume, expectedVolume(thickness, 1));
   }
   await input.fill("12");
   assert.equal((await inspect(page)).preview, null);
@@ -73,15 +76,13 @@ export async function shellCaptureRoute(page, name, electron) {
   await page.keyboard.press("Enter");
   assert.notEqual((await inspect(page)).document.bodies[0].volume, accepted.bodies[0].volume);
   await loadCapture(page);
+  input = page.getByRole("textbox", { name: "Shell thickness", exact: true });
   await browseTools(page, "Select");
   await chooseTool(page, "select owning bodies", "selection-bodies");
   await page.keyboard.press("s");
-  for (const [thickness, expected] of [
-    [-4, 32093.7549791],
-    [4, 45246.9140746],
-  ]) {
+  for (const thickness of [-4, 4]) {
     await input.fill(String(thickness));
-    near((await inspect(page)).preview?.bodies[0].volume, expected);
+    near((await inspect(page)).preview?.bodies[0].volume, expectedVolume(thickness, 0));
   }
   await page.keyboard.press("Escape");
   console.log(
