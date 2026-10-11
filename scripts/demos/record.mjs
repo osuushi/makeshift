@@ -62,6 +62,12 @@ async function record(recipe) {
     await reset(page);
     await recipe.setup(page);
     await prepareCamera(page, recipe.focus, recipe.height);
+    assert.equal(
+      await page
+        .getByText("Clipboard does not contain Makeshift geometry", { exact: true })
+        .count(),
+      0,
+    );
     await pointer(page);
     const capture = new FixedStepCapture(page, path.join(frames, recipe.id));
     await capture.start();

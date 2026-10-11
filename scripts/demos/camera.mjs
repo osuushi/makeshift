@@ -14,10 +14,8 @@ export async function prepareCamera(page, focus, height = 44) {
   await page.keyboard.up("Control");
   await settled(page);
   const point = await project(page, center);
-  await page.mouse.move(600, 330);
-  await page.mouse.down({ button: "middle" });
-  await page.mouse.move(600 + 580 - point.x, 330 + 330 - point.y, { steps: 8 });
-  await page.mouse.up({ button: "middle" });
+  // Trackpad scroll avoids the browser's middle-click primary-selection paste.
+  await page.mouse.wheel(point.x - 580, point.y - 330);
   await settled(page);
   await page.mouse.move(800, 590);
 }
