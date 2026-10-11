@@ -24,9 +24,9 @@ test("longest-first assignment preserves every suite exactly once and balances h
 });
 
 test("PR UI coverage stays bounded, Electron-only and tied to lower-level coverage", async () => {
-  // One additional lifecycle case covers independent windows and application Quit;
-  // its 20s allocation keeps the existing 500s aggregate budget unchanged.
-  assert.ok(uiSuites.length <= 21, "Review the UI budget before adding another permanent journey");
+  // Two section cases cover GPU composition and cavity stencil integration, which
+  // model tests cannot observe. Measured allocations retain the 500s time budget.
+  assert.ok(uiSuites.length <= 23, "Review the UI budget before adding another permanent journey");
   for (const suite of uiSuites) {
     await access(new URL(suite.args[0], import.meta.url));
     await access(new URL(suite.unit, import.meta.url));

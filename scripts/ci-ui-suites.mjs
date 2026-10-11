@@ -12,7 +12,8 @@ export const uiSuites = [
   },
   {
     args: ["partial-section-ui.mjs"],
-    seconds: 60,
+    // Linux run 38146139847: 23s; retain headroom for native previews and reload.
+    seconds: 30,
     browsers: ["electron"],
     reason:
       "Planar selection and solid-tool previews must retain complementary GPU passes; opacity endpoint pixels catch composition errors that plane/lifetime unit tests cannot.",
@@ -28,7 +29,8 @@ export const uiSuites = [
   },
   {
     args: ["primitive-handoff-ui.mjs"],
-    seconds: 60,
+    // Linux run 38146139847: 10s; the focused handoff no longer needs 60s.
+    seconds: 35,
     browsers: ["electron"],
     reason:
       "Circle placement must release its pointer lease into editable Extrude/Revolve with the correct profile, axis, mode and drill direction.",
