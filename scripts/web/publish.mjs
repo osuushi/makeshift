@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -5,6 +6,7 @@ import { resolve } from "node:path";
 
 const repository = process.env.WEB_PAGES_REPOSITORY;
 const key = process.env.WEB_PAGES_DEPLOY_KEY;
+const demosOnly = process.argv.includes("--demos");
 if (
   !repository ||
   !/^[\w.-]+\/[\w.-]+$/.test(repository) ||
@@ -37,8 +39,18 @@ try {
 }
 
 async function publish(env) {
-  const source = resolve(".build/web");
-  const metadata = JSON.parse(await readFile(resolve(source, "build.json"), "utf8"));
+  const source = resolve(demosOnly ? "website/assets/demos" : ".build/web");
+  const metadata = JSON.parse(await readFile(resolve(".build/web/build.json"), "utf8"));
+  if (demosOnly) {
+    const manifest = JSON.parse(await readFile(resolve(source, "manifest.json"), "utf8"));
+    assert.equal(manifest.source, metadata.commit, "Demos must match the released web build");
+    assert.equal(manifest.sourceDirty, false, "Only committed release demos can be deployed");
+    assert.deepEqual(
+      manifest,
+      JSON.parse(await readFile(resolve(".build/web-release/website-demos.json"), "utf8")),
+      "Deploy the verified packaged demo manifest",
+    );
+  }
   const destination = resolve(".build/web-publish");
   const git = (args) =>
     execFileSync("git", args, {
@@ -57,17 +69,26 @@ async function publish(env) {
     git(["init", "-b", "gh-pages"]);
     git(["remote", "add", "origin", url]);
   }
-  // Preserve immutable asset URLs so an already-open older tab can still lazy-load its calculators.
-  for (const entry of await readdir(destination)) {
-    if (entry === ".git" || entry === "assets" || entry === "CNAME") continue;
-    await rm(resolve(destination, entry), { recursive: true, force: true });
+  if (demosOnly) {
+    // The landing repository owns its copy, download link and domain configuration.
+    await cp(source, resolve(destination, "assets/demos"), { recursive: true });
+  } else {
+    // Preserve immutable asset URLs so existing tabs can lazy-load their calculators.
+    for (const entry of await readdir(destination)) {
+      if (entry === ".git" || entry === "assets" || entry === "CNAME") continue;
+      await rm(resolve(destination, entry), { recursive: true, force: true });
+    }
+    await cp(source, destination, { recursive: true });
   }
-  await cp(source, destination, { recursive: true });
   git(["config", "user.name", "github-actions[bot]"]);
   git(["config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"]);
   git(["add", "--all"]);
   if (git(["status", "--porcelain"]).trim()) {
-    git(["commit", "-m", `Deploy Makeshift ${metadata.tag} (${metadata.commit})`]);
+    git([
+      "commit",
+      "-m",
+      `Deploy Makeshift ${demosOnly ? "demos " : ""}${metadata.tag} (${metadata.commit})`,
+    ]);
     // Never force: a competing writer must fail visibly, not replace a newer deployment.
     git(["push", "origin", "HEAD:gh-pages"]);
   }

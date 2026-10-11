@@ -73,8 +73,13 @@ Desktop uses the release source with native geometry; web uses the just-built
 static WASM app (`npm run demos:record -- --web`). Release failures block
 publication. `npm run demos:package -- DESTINATION` validates the complete
 manifest against a clean HEAD and emits `Makeshift-website.tar.gz` plus
-`website-demos.json`. The bundle is ready for separate publication to the Pages host;
-these workflows do not deploy or configure makeshift.horse.
+`website-demos.json`. The web release then deploys the verified videos, posters and manifest to
+`makeshift-site:gh-pages`, preserving the landing repository's copy, download link,
+styles and domain configuration. Configure `SITE_PAGES_REPOSITORY` and a dedicated
+write-only-to-that-repository `SITE_PAGES_DEPLOY_KEY` in the application repository.
+Both web and landing deployment credentials are checked before building. A failed
+deployment fails the release workflow; published release assets remain available.
+The macOS workflow includes the website bundle but does not deploy it.
 
 The gallery advances when a clip finishes, offers explicit selection and pause,
 pauses outside the viewport/background tabs, and starts paused under reduced
@@ -88,7 +93,7 @@ local sans-serif fallbacks while loading or when the font service is unavailable
 
 Product claims follow the README and current architecture/topic docs. The icon
 comes from `assets/public/`. The old public-build screenshot has been removed.
-The primary action currently links to the verified `20261010T195437Z` Apple
+The primary action currently links to the verified `20261011T150651Z` Apple
 Silicon preview DMG; update that download link deliberately when publishing the
 landing page. `releases/latest` does not select these prereleases. Keep the
 application and desktop update feeds on their existing hosts.

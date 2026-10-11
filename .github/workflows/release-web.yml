@@ -33,6 +33,17 @@ jobs:
           trap 'rm -f "$key_path"' EXIT
           printf '%s\n' "$WEB_PAGES_DEPLOY_KEY" > "$key_path"
           ssh-keygen -y -f "$key_path" > /dev/null
+      - name: Check landing demo deployment configuration
+        env:
+          SITE_PAGES_REPOSITORY: ${{ vars.SITE_PAGES_REPOSITORY }}
+          SITE_PAGES_DEPLOY_KEY: ${{ secrets.SITE_PAGES_DEPLOY_KEY }}
+        run: |
+          test -n "$SITE_PAGES_REPOSITORY" || { echo 'Set SITE_PAGES_REPOSITORY'; exit 1; }
+          test -n "$SITE_PAGES_DEPLOY_KEY" || { echo 'Set SITE_PAGES_DEPLOY_KEY'; exit 1; }
+          key_path=$(mktemp)
+          trap 'rm -f "$key_path"' EXIT
+          printf '%s\n' "$SITE_PAGES_DEPLOY_KEY" > "$key_path"
+          ssh-keygen -y -f "$key_path" > /dev/null
       - name: Install pinned Emscripten
         run: |
           git clone https://github.com/emscripten-core/emsdk.git .cache/emsdk
@@ -108,3 +119,8 @@ jobs:
           WEB_PAGES_REPOSITORY: ${{ vars.WEB_PAGES_REPOSITORY }}
           WEB_PAGES_DEPLOY_KEY: ${{ secrets.WEB_PAGES_DEPLOY_KEY }}
         run: node scripts/web/publish.mjs
+      - name: Deploy verified demos to the landing Pages repository
+        env:
+          WEB_PAGES_REPOSITORY: ${{ vars.SITE_PAGES_REPOSITORY }}
+          WEB_PAGES_DEPLOY_KEY: ${{ secrets.SITE_PAGES_DEPLOY_KEY }}
+        run: node scripts/web/publish.mjs --demos
