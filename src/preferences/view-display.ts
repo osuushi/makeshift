@@ -13,10 +13,10 @@ const defaults: ViewDisplay = {
   grid: 0.4,
   gridFill: 0.3,
   gridLineWidth: 1,
-  sectionFrontOpacity: 0.2,
-  xrayGlobal: true,
-  xrayBleed: 16,
-  xrayRadius: 12,
+  sectionFrontOpacity: 0.8,
+  xrayGlobal: false,
+  xrayBleed: 100,
+  xrayRadius: 50,
 };
 const key = "makeshift.view-display";
 const listeners = new Set<() => void>();

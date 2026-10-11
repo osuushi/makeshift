@@ -32,6 +32,8 @@ await withUiRuntimes(async (page, name) => {
   const normal = await samples(page);
   await page.getByRole("button", { name: "Select Sketch 2", exact: true }).click();
   await settings(page);
+  await assertDefaults(page);
+  await page.getByRole("checkbox", { name: "Global X-ray vision" }).check();
   await page.getByRole("slider", { name: "X-ray front opacity", exact: true }).press("Home");
   assert.equal(await page.getByRole("slider", { name: "Bleed", exact: true }).isDisabled(), true);
   await page.getByRole("button", { name: "Done", exact: true }).click();
@@ -100,6 +102,19 @@ await withUiRuntimes(async (page, name) => {
   );
 });
 
+async function assertDefaults(page) {
+  assert.equal(
+    await page.getByRole("checkbox", { name: "Global X-ray vision" }).isChecked(),
+    false,
+  );
+  for (const [name, value] of [
+    ["X-ray front opacity", "80"],
+    ["Bleed", "100"],
+    ["Radius", "50"],
+  ]) {
+    assert.equal(await page.getByRole("slider", { name, exact: true }).inputValue(), value);
+  }
+}
 function delta(a, b) {
   return Math.max(...a.map((v, i) => Math.abs(v - b[i])));
 }

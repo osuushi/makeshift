@@ -48,7 +48,7 @@ choosing a drawing tool in Modeling can still arm a new plane-first drawing flow
 While a planar workspace or unambiguous sketch/profile selection is active, renderer clipping makes geometry on the
 camera side of its plane absent from the main pass. Bodies and their edges on
 that side render into a separate depth-tested buffer, clipped at the same plane,
-and composite over the main scene at the configured front opacity (20% by default). Overlapping foreground bodies
+and composite over the main scene at the configured front opacity (80% by default). Overlapping foreground bodies
 therefore do not accumulate transparency. Sketch curves and grids do not enter
 this foreground pass. Coplanar and behind-plane geometry remain normally visible;
 a 0.0001 mm rendering tolerance retains coplanar geometry. Materials interpolate
@@ -73,8 +73,8 @@ Settings → **X-ray vision** → **X-ray front opacity** controls the single fr
 partition composite from 0–100%. Zero skips the overlay; 100% shows the normally
 opaque front partition. The preference persists locally outside document files and
 Undo, and applies to selected-sketch and sketch-workspace views.
-**Global** (on by default) retains the full-plane view. Turning it off enables
-**Bleed** (mask expansion, default 16 px) and **Radius** (blur radius, default 12 px),
+**Global** (off by default) enables the full-plane view. With it off, use
+**Bleed** (mask expansion, default 100 px) and **Radius** (blur radius, default 50 px),
 both 0–100 screen pixels. The mask is the union of visible coplanar sketch contents:
 closed-region interiors plus all ordinary/construction curves, including open curves.
 Disconnected contents keep their gaps; plane and sketch bounding boxes are not masks.

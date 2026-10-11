@@ -9,6 +9,12 @@ import { chooseTool } from "./ui-tools.mjs";
 // Selection-to-GPU composition and real solid previews cannot be proven by plane math alone.
 await withUiRuntimes(
   async (page, name) => {
+    await page.getByRole("button", { name: "Application settings" }).click();
+    assert.equal(
+      await page.getByRole("slider", { name: "X-ray front opacity", exact: true }).inputValue(),
+      "80",
+    );
+    await page.getByRole("button", { name: "Done", exact: true }).click();
     await cutawayRoute(page, name);
     const facePoint = await project(page, [3.4, 6.4, 12]);
     await page.mouse.click(facePoint.x, facePoint.y);

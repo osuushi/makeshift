@@ -14,6 +14,7 @@ await withUiRuntimes(async (page, name) => {
   await openDocument(page, resolve("tests/fixtures/section-overlap.makeshift"));
   await inspect(page);
   await page.getByRole("button", { name: "Application settings" }).click();
+  await page.getByRole("checkbox", { name: "Global X-ray vision" }).check();
   await page.getByRole("slider", { name: "X-ray front opacity", exact: true }).press("Home");
   await page.getByRole("button", { name: "Done", exact: true }).click();
   await page.getByRole("button", { name: "Select Sketch 1", exact: true }).click();
