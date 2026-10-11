@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { project } from "../../tests/ui-blend-edit.mjs";
-import { at, inspect, settled } from "../../tests/ui-helpers.mjs";
+import { inspect, settled } from "../../tests/ui-helpers.mjs";
 import { chooseTool } from "../../tests/ui-tools.mjs";
+import { motions } from "./motions.mjs";
 
-export function actions(page, capture) {
+export function actions(page, capture, pause = 0.35) {
   const run = (operation) => capture.action(operation, 30);
   const state = () => run(() => inspect(page));
   const tool = async (id, query = id) => {
@@ -13,49 +14,32 @@ export function actions(page, capture) {
     else {
       await page.keyboard.press("Meta+f");
       await run(() => page.getByRole("combobox", { name: "Find a tool" }).fill(query));
-      await capture.hold(0.8);
+      await capture.hold(pause);
       await run(() => page.locator(`[data-command="${id}"]`).click());
     }
     await run(() => settled(page));
-    await capture.hold(0.8);
+    await capture.hold(pause);
   };
   const click = async (xyz) => {
     const point = await run(() => project(page, xyz));
     await page.mouse.click(point.x, point.y);
     await run(() => settled(page));
-    await capture.hold(0.8);
+    await capture.hold(pause);
   };
-  const dragPixels = async (from, to, seconds = 2) => {
-    await page.mouse.move(from.x, from.y);
-    await capture.hold(0.3);
-    await page.mouse.down();
-    const frames = Math.round(seconds * capture.fps);
-    for (let i = 1; i <= frames; i++) {
-      await page.mouse.move(
-        from.x + ((to.x - from.x) * i) / frames,
-        from.y + ((to.y - from.y) * i) / frames,
-      );
-      await capture.frame();
-    }
-    await page.mouse.up();
-    await run(() => settled(page));
-    await capture.hold(1);
-  };
-  const draw = async (from, to) =>
-    dragPixels(await run(() => at(page, ...from)), await run(() => at(page, ...to)));
-  const fill = async (label, value, role = "textbox") => {
+  const { draw, dragPixels, hover, dragWorld, dragHandle } = motions(page, capture, run, pause);
+  const fill = async (label, value, role = "textbox", submit = true) => {
     const input = page.getByRole(role, { name: label, exact: true });
     await run(() => input.fill(String(value)));
     await run(() => settled(page));
-    await capture.hold(1);
-    await run(() => input.press("Enter"));
+    await capture.hold(pause);
+    if (submit) await run(() => input.press("Enter"));
     await run(() => settled(page));
-    await capture.hold(1);
+    await capture.hold(pause);
   };
   const button = async (name) => {
     await run(() => page.getByRole("button", { name, exact: true }).click());
     await run(() => settled(page));
-    await capture.hold(0.8);
+    await capture.hold(pause);
   };
   const accept = async () => {
     await run(() => page.getByLabel("Modeling viewport", { exact: true }).focus());
@@ -66,9 +50,22 @@ export function actions(page, capture) {
         return !s.busy && s.interaction === null;
       }),
     );
-    await capture.hold(1);
+    await capture.hold(pause);
   };
-  return { run, state, tool, click, draw, dragPixels, fill, button, accept };
+  return {
+    run,
+    state,
+    tool,
+    click,
+    hover,
+    draw,
+    dragPixels,
+    dragWorld,
+    dragHandle,
+    fill,
+    button,
+    accept,
+  };
 }
 
 export async function solid(a) {
