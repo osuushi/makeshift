@@ -6,6 +6,7 @@ import { inspect } from "./ui-helpers.mjs";
 import { chooseWidget } from "./ui-modal-plane-widgets.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
+import { emptyXrayRoute } from "./ui-xray-empty.mjs";
 
 // Captured twisted body with only its circle sketch visible: the body extends well
 // outside sketch contents. GPU samples prove the aperture, rather than just mask math.
@@ -22,6 +23,7 @@ const probes = [
   [8.4, 0, 25],
 ];
 await withUiRuntimes(async (page, name) => {
+  await emptyXrayRoute(page, name);
   await openDocument(page, {
     name: "xray.makeshift",
     mimeType: "application/json",

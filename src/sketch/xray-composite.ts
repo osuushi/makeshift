@@ -85,10 +85,14 @@ export class XrayComposite {
       renderer.clippingPlanes = [];
       renderer.setRenderTarget(target);
       normal();
+      // The capture API binds unit 0 only when its cached texture changes.
+      // Explicitly activate it: the preceding composite leaves mask unit 2 active.
+      renderer.state.activeTexture(renderer.getContext().TEXTURE0);
       renderer.copyFramebufferToTexture(this.normal);
       renderer.clippingPlanes = clipping;
       renderer.setRenderTarget(target);
       cut();
+      renderer.state.activeTexture(renderer.getContext().TEXTURE0);
       renderer.copyFramebufferToTexture(this.cut);
       renderer.clippingPlanes = [];
       this.mask.render(world, this.aperture, viewDisplay().xrayBleed);

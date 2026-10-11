@@ -4,11 +4,11 @@
 export const uiSuites = [
   {
     args: ["xray-vision-ui.mjs"],
-    // macOS hidden Electron: 7.05s; retain software-renderer/startup headroom.
+    // macOS hidden Electron including New/XY/circle freshness: 9.18s.
     seconds: 20,
     browsers: ["electron"],
     reason:
-      "A real GPU frame must preserve normal and cut colors across the content aperture, bleed, blur and resize; Settings input and outside-aperture picking cannot be proven by mask math alone.",
+      "A real GPU frame must keep both captures fresh after New and plane entry, and preserve normal/cut colors across the aperture, bleed, blur and resize; texture-unit state, Settings input and outside-aperture picking cannot be proven by mask math alone.",
     unit: "xray-contents.test.ts",
   },
   {

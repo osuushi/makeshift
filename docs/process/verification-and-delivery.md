@@ -59,7 +59,8 @@ observe these escaped rendering failures.
 The inventory permits 26 suites, totaling 553 seconds with the existing shard count.
 The three additional section cases were measured in hidden Electron on macOS:
 X-ray mask/settings/resize/pinch 7.05s, distant-camera ink/fill 6.72s, and cap
-overlap/selection/extrusion/chooser 8.75s. Their allocations are 20/15/20 seconds,
+overlap/selection/extrusion/chooser 8.75s. The X-ray route including New/XY/circle
+frame freshness now measures 9.18s locally. Their allocations are 20/15/20 seconds,
 adding 55 seconds to the earlier 498-second inventory, with startup and software
 rendering headroom. These are local timings, not Linux runner measurements.
 Linux run 38146139847 measured partial sections at 23 seconds, section fills at
