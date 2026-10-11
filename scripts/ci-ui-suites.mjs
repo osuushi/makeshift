@@ -7,7 +7,7 @@ export const uiSuites = [
     seconds: 20,
     browsers: ["electron"],
     reason:
-      "Captured overlapping caps must blend both body patterns and preserve coplanar sketch ink; GPU depth, stencil and MSAA composition cannot be proven by style unit tests.",
+      "Captured caps must blend body patterns, preserve sketch ink and region tint, and offer owning bodies on a real hold; CPU geometry/style tests cannot prove GPU composition or chooser routing.",
     unit: "section-pattern.test.ts",
   },
   {

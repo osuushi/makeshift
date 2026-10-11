@@ -76,6 +76,8 @@ cavities. Its two-color procedural pattern is seeded by body identity and anchor
 in plane coordinates. Visible bodies use distinct palette colors until the six-color
 palette is exhausted, retaining their assigned colors through view changes. Caps
 preserve visible sketch ink, and coplanar body faces stay solely in the main pass.
+Sketch-region tint draws after the pseudofaces, preserving the single translucent
+union fill and visible sketch strokes, before the foreground body composite.
 Overlapping caps blend at half opacity over earlier caps without writing competing
 depths; nonoverlapping cap material remains opaque. New-body previews retain their style during recomputation;
 accepted bodies use their saved identity. These faces are presentation only, never

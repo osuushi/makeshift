@@ -64,6 +64,10 @@ founder feedback update these contracts before further tools depend on them.
   faces use the triangle normal nearest the hit on the edge. Candidates are sorted
   by camera distance, including occluded front-facing geometry. Hidden entities
   are excluded.
+  Section pseudofaces also contribute their owning whole bodies at the cut depth,
+  including every overlapping body under the press. Cavities and tangent contact
+  with existing faces do not create pseudoface hits. These choices select body IDs;
+  no synthetic face enters accepted topology.
   Ordinary edge picking and the chooser share projected edge segments, clipping
   and local-facing tests. Ordinary picking additionally checks the covering face
   at each closest edge point; the chooser retains covered candidates and tests
