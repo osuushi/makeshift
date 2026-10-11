@@ -53,6 +53,19 @@ export class ScaleWidget {
     this.root.append(this.svg, this.handles, this.card);
     overlay.append(this.root);
   }
+  bindFactors(begin: () => void, changed: () => void): void {
+    this.factors.forEach((input, index) => {
+      input.onfocus = begin;
+      input.oninput = () => {
+        begin();
+        if (this.linked.checked)
+          this.factors.forEach((other, i) => {
+            if (i !== index) other.value = input.value;
+          });
+        changed();
+      };
+    });
+  }
   values(): Vector {
     return this.factors.map((input) => (input.value.trim() ? Number(input.value) : NaN)) as Vector;
   }

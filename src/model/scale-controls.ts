@@ -1,14 +1,19 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import { onModelKeydown } from "../sketch/model-keys.js";
 import type { Vector } from "../sketch/planes.js";
 import { redrawSketchWidgets } from "../sketch/sketch-widget-layout.js";
 import { installBodyTransformEnter } from "./body-transform-enter.js";
 import { type ScaleOperation, type ScaleSource, scaleFactors } from "./scale.js";
+import { installScaleEvents } from "./scale-events.js";
 import { ScaleGestures } from "./scale-gestures.js";
-import { scalePivot, scaleSelection } from "./scale-selection.js";
+import {
+  scaleNumericPivot,
+  scalePivot,
+  scaleSelection,
+  selectScaledCurves,
+} from "./scale-selection.js";
 import { ScaleWidget } from "./scale-widget.js";
-import { boxLocal, boxWorld, selectionBox, type TransformBox } from "./transform-box.js";
+import { boxLocal, selectionBox, type TransformBox } from "./transform-box.js";
 import { TransformBoxMove } from "./transform-box-move.js";
 import { installTransformHandoff } from "./transform-handoff.js";
 import { registerTransformTool } from "./transform-tool.js";
@@ -63,31 +68,23 @@ export class ScaleControls {
     this.boxMove = new TransformBoxMove(editor);
     this.widget.accept.onclick = () => void this.finish();
     this.widget.cancel.onclick = () => void this.cancel();
-    this.widget.factors.forEach((input, index) => {
-      input.onfocus = () => {
+    this.widget.bindFactors(
+      () => {
         if (!this.lease) this.begin();
-      };
-      input.oninput = () => {
-        if (!this.lease) this.begin();
-        if (this.widget.linked.checked)
-          this.widget.factors.forEach((other, i) => {
-            if (i !== index) other.value = input.value;
-          });
-        if (this.box && !this.preserveNumericPivot) {
-          const box = this.box;
-          const local = boxLocal(box, this.pivot);
-          const factors = this.widget.values();
-          this.operationPivot = boxWorld(
-            box,
-            local.map((value, i) =>
-              Number.isFinite(factors[i]) && factors[i] !== 1 ? box.min[i] : value,
-            ) as Vector,
-          );
-        }
+      },
+      () => {
+        if (this.box && !this.preserveNumericPivot)
+          this.operationPivot = scaleNumericPivot(this.box, this.pivot, this.widget.values());
         this.queue();
-      };
-    });
-    this.events();
+      },
+    );
+    installScaleEvents(
+      editor,
+      this.abort.signal,
+      () => !!this.lease,
+      () => this.cancel(),
+      () => this.finish(),
+    );
     installBodyTransformEnter(editor, this.abort.signal);
     installTransformHandoff(editor, () => !!this.lease && !this.gestures.active, this.abort.signal);
     editor.world.transformBoxContains = (x, y) => {
@@ -172,26 +169,6 @@ export class ScaleControls {
     e.notice =
       "Transform · Option resizes about anchor · Shift scales uniformly · Enter accepts · Escape cancels";
   }
-  private events(): void {
-    const options = { signal: this.abort.signal, capture: true };
-    for (const type of ["pointerdown", "click", "dblclick"] as const)
-      this.editor.world.canvas.addEventListener(
-        type,
-        (event) => {
-          if (!this.lease || event.button || event.ctrlKey || event.metaKey) return;
-          event.preventDefault();
-          event.stopImmediatePropagation();
-        },
-        options,
-      );
-    onModelKeydown((event) => {
-      if (!this.lease || !["Escape", "Enter"].includes(event.key)) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      if (event.key === "Escape") void this.cancel();
-      else void this.finish();
-    }, options);
-  }
   private queue(): void {
     if (this.lease?.phase !== "editing" || !this.source) return;
     const factors = this.widget.values();
@@ -242,18 +219,7 @@ export class ScaleControls {
       return false;
     }
     if (this.source?.kind === "curves") {
-      const source = this.source;
-      const sketch = this.editor.store.data.sketches.find((s) => s.id === source.sketchId);
-      const curves = sketch?.curves ?? [];
-      const ids = source.ids.flatMap((id) => {
-        const start = curves.findIndex((curve) => curve.id === id);
-        if (start < 0) return [];
-        const pieces = [id];
-        for (let i = start + 1; i < curves.length && !this.originalIds.has(curves[i].id); i++)
-          pieces.push(curves[i].id);
-        return pieces;
-      });
-      this.editor.select(ids);
+      selectScaledCurves(this.editor, this.source, this.originalIds);
       this.editor.moveMode = true;
       if (this.box) {
         const local = boxLocal(this.box, this.pivot);

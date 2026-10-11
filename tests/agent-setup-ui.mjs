@@ -3,7 +3,26 @@ import { inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-function fakeAgentHost() {
+function installationResult(attempts, output) {
+  return attempts === 1
+    ? {
+        phase: "failed",
+        message: "Fixture connection failed. Retry installation.",
+        output,
+      }
+    : {
+        phase: "ready",
+        message: "Verified Codex CLI0.159.2. Launch and sign in separately.",
+        output,
+        executable: {
+          path: "/fixture/installed",
+          version: "0.159.2",
+          source: "standalone",
+        },
+      };
+}
+
+function fakeAgentHost(installationResult) {
   let preferences = { preset: "codex", executable: "/fixture/missing", args: [], env: {} };
   let setup = {
     phase: "idle",
@@ -71,23 +90,7 @@ function fakeAgentHost() {
         };
         timer = setTimeout(
           () => {
-            setup =
-              attempts === 1
-                ? {
-                    phase: "failed",
-                    message: "Fixture connection failed. Retry installation.",
-                    output: setup.output,
-                  }
-                : {
-                    phase: "ready",
-                    message: "Verified Codex CLI0.159.2. Launch and sign in separately.",
-                    output: setup.output,
-                    executable: {
-                      path: "/fixture/installed",
-                      version: "0.159.2",
-                      source: "standalone",
-                    },
-                  };
+            setup = installationResult(attempts, setup.output);
           },
           attempts === 2 ? 5000 : 250,
         );
@@ -233,7 +236,7 @@ async function installAndLaunch(page) {
 
 await withUiRuntimes(
   async (page, name) => {
-    await page.addInitScript(fakeAgentHost);
+    await page.addInitScript({ content: `(${fakeAgentHost})(${installationResult});` });
     await page.reload();
     const before = (await inspect(page)).document;
     await discoveryAndCustom(page);

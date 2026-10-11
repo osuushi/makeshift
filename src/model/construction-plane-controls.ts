@@ -1,10 +1,10 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import { newId } from "../sketch/document.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import { onModelKeydown } from "../sketch/model-keys.js";
 import { type PlaneFrame, type PlaneId, planes } from "../sketch/planes.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { type ConstructionPlane, withConstructionPlane } from "./construction-plane.js";
+import { installConstructionPlaneEvents } from "./construction-plane-events.js";
 import { ConstructionPlaneView } from "./construction-plane-view.js";
 import { PlanePlacement } from "./plane-placement.js";
 import { PlaneReferencePicker } from "./plane-reference-picker.js";
@@ -65,46 +65,25 @@ export class ConstructionPlaneControls {
       (id) => this.view.hover(id),
       (plane) => this.sketch(plane),
     );
-    this.bindEvents();
-    editor.world.planeSelection = (id, entering) => this.select(id, entering);
-    editor.world.changed.add(this.update);
-    this.update();
-  }
-  private bindEvents(): void {
-    const editor = this.editor;
-    onModelKeydown(
-      (event) => {
-        if (this.lease) {
-          if (event.key === "Escape" || event.key === "Enter") event.stopImmediatePropagation();
-          if (event.key === "Escape") {
-            event.preventDefault();
-            this.cancel();
-          }
-          if (event.key === "Enter") {
-            event.preventDefault();
-            void this.finish();
-          }
-        } else this.selectedKey(event);
-      },
-      { capture: true, signal: this.abort.signal },
-    );
-    editor.world.canvas.addEventListener(
-      "pointerdown",
-      (event) => {
-        if (
-          !this.lease &&
-          !this.picker.choose &&
-          !event.button &&
-          !event.metaKey &&
-          !event.ctrlKey
-        ) {
+    installConstructionPlaneEvents(
+      editor,
+      this.abort.signal,
+      () => !!this.lease,
+      () => !!this.picker.choose,
+      {
+        cancel: () => this.cancel(),
+        finish: () => this.finish(),
+        selectedKey: (event) => this.selectedKey(event),
+        clear: () => {
           this.view.selected = null;
           editor.world.selectedPlane = null;
           editor.refresh();
-        }
+        },
       },
-      { signal: this.abort.signal },
     );
+    editor.world.planeSelection = (id, entering) => this.select(id, entering);
+    editor.world.changed.add(this.update);
+    this.update();
   }
   selected(): ConstructionPlane | undefined {
     return this.editor.store.data.constructionPlanes?.find((p) => p.id === this.view.selected);

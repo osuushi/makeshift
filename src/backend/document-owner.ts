@@ -1,6 +1,5 @@
 import { operationCleanup } from "../model/cleanup.js";
 import { cancellableCalculation } from "../sketch/calculation-state.js";
-import type { SketchDocument } from "../sketch/document.js";
 import type { ModelReply, ModelRequest, ModelView } from "../sketch/model-api.js";
 import { describeOperation, type HistoryOperation } from "../sketch/operation-history.js";
 import { acceptedParameters } from "./accepted-parameters.js";
@@ -8,14 +7,14 @@ import { cutEdgeHighlights } from "./cut-edge-highlights.js";
 import { DecoratorSession } from "./decorator-session.js";
 import { editDocument, isDirectDocumentEdit } from "./document-edits.js";
 import { documentFailure } from "./document-failure.js";
+import { DocumentGeometry } from "./document-geometry.js";
 import { isPreviewRequest, type PreviewRequest, previewDocument } from "./document-preview.js";
-import { DocumentStore } from "./document-store.js";
+import { DocumentSession } from "./document-session.js";
+import { documentView } from "./document-view.js";
 import { GeometryQueries, isGeometryQuery } from "./geometry-queries.js";
 import { NativeSolver } from "./native-solver.js";
-import { openDocument } from "./open-document.js";
-import { pasteGeometry } from "./paste-geometry.js";
 import { planeCutAvailable } from "./plane-cut.js";
-import { type ReopenPreview, reopenPreview } from "./reopen-preview.js";
+import { reopenPreview } from "./reopen-preview.js";
 import { ScriptEdits } from "./script-edits.js";
 import { SolidCalculator } from "./solid-calculator.js";
 import { isSolidRequest, SolidEdits } from "./solid-edits.js";
@@ -25,16 +24,12 @@ export class DocumentOwner {
   private decorators = new DecoratorSession();
   private queries: GeometryQueries;
   private solids: SolidEdits;
+  private geometry: DocumentGeometry;
   private cleanupAvailable = false;
   private planeCutAvailable = false;
-  private store = new DocumentStore();
-  private pendingOperation: HistoryOperation | null = null;
-  private candidate: SketchDocument | null = null;
-  private reopenedPreview: ReopenPreview | null = null;
+  private session = new DocumentSession();
   private active: { kind: ModelRequest["kind"]; promise: Promise<ModelReply> } | null = null;
   private cancelling = false;
-  private solveCount = 0;
-  private solveMs = 0;
   readonly scripts: ScriptEdits;
   constructor(
     private solver = new NativeSolver(),
@@ -43,8 +38,9 @@ export class DocumentOwner {
     this.kernel = new SolidCalculator(kernelExecutable);
     this.queries = new GeometryQueries(kernelExecutable);
     this.solids = new SolidEdits(this.kernel);
+    this.geometry = new DocumentGeometry(this.kernel, this.solids, this.decorators);
     this.scripts = new ScriptEdits(
-      () => this.store,
+      () => this.session.store,
       this.solids,
       this.kernel,
       solver,
@@ -52,53 +48,26 @@ export class DocumentOwner {
     );
   }
   beginScript(name: string): void {
-    if (this.active || this.cancelling || this.candidate)
+    if (this.active || this.cancelling || this.session.candidate)
       throw new Error("Finish the current edit first");
     this.scripts.begin(name);
   }
   get view(): ModelView {
-    return {
-      data: this.store.data,
-      canUndoView: this.store.canNavigateView("undo"),
-      canRedoView: this.store.canNavigateView("redo"),
-      ...this.solids.previewQuality(this.candidate ? this.pendingOperation?.kind : undefined),
-      decoratorSources: this.decorators.sources,
-      historySelection: this.store.selection,
-      historyNavigation: this.store.restoredNavigation,
-      historyOperation: this.store.restoredOperation,
-      reopenOperation: this.store.reopenOperation,
+    return documentView(this.session, this.solids, this.decorators, {
       planeCutAvailable: this.planeCutAvailable,
-      ...this.solids.offsetEdit.view,
-      edgeSize: this.solids.edgeSize,
       cleanupAvailable: this.cleanupAvailable,
-      edgeSelection: this.solids.edgeSelection,
-      booleanMode: this.solids.booleanMode,
-      booleanTargets: this.solids.booleanTargets,
-      ...this.reopenedPreview,
-      canUndo: this.store.canUndo,
-      canRedo: this.store.canRedo,
-      candidate: this.candidate,
-      cutEdges:
-        this.candidate && this.candidate !== this.store.data
-          ? (this.reopenedPreview?.cutEdges ?? cutEdgeHighlights.get(this.candidate))
-          : undefined,
-      solveCount: this.solveCount,
-      solveMs: this.solveMs,
-    };
+    });
   }
+
   private async preview(request: PreviewRequest): Promise<void> {
-    const result = await previewDocument(this.store.data, request, this.kernel, this.solver);
-    this.solveCount += result.count;
-    if (result.count) this.solveMs = result.ms;
-    this.candidate = result.document;
+    const result = await previewDocument(
+      this.session.store.data,
+      request,
+      this.kernel,
+      this.solver,
+    );
+    this.session.preview(result);
     if (request.kind === "edit") await this.accept();
-  }
-  private replaceDocument(document?: SketchDocument): void {
-    this.reopenedPreview = null;
-    this.store = new DocumentStore(document);
-    this.decorators.clear();
-    this.pendingOperation = null;
-    this.candidate = null;
   }
   private checkCancellation(): void {
     if (this.cancelling) throw new Error("Calculation cancelled");
@@ -111,12 +80,13 @@ export class DocumentOwner {
     if (request.kind === "decorator-inspect" || request.kind === "decorator-draft")
       return {
         view: this.view,
-        ...(await this.decorators.query(this.store.data, request)),
+        ...(await this.decorators.query(this.session.store.data, request)),
       };
     if (this.scripts.busy && request.kind !== "read" && request.kind !== "read-history")
       return { view: this.view, error: "Finish or cancel the running script first" };
     if (isGeometryQuery(request)) return this.queries.call(this.view, request);
-    if (request.kind === "read-history") return { view: this.view, history: this.store.history };
+    if (request.kind === "read-history")
+      return { view: this.view, history: this.session.store.history };
     if (request.kind === "supersede-preview") {
       if (
         request.interrupt &&
@@ -134,11 +104,11 @@ export class DocumentOwner {
     if (request.kind === "cancel-preview") return this.cancelPreview();
     if (this.active || this.cancelling) {
       const error = "Finish the current edit first";
-      this.store.record(describeOperation(request), "failed", error);
+      this.session.store.record(describeOperation(request), "failed", error);
       return { view: this.view, error };
     }
     if (request.kind === "selection") {
-      this.store.selections(request.changes);
+      this.session.store.selections(request.changes);
       return { view: this.view };
     }
     this.kernel.begin();
@@ -156,60 +126,48 @@ export class DocumentOwner {
     this.cancelling = true;
     try {
       await Promise.all([this.kernel.cancel(), this.solver.cancel(), this.active?.promise]);
-      if (this.pendingOperation) this.store.record(this.pendingOperation, "cancelled");
-      this.candidate = null;
-      this.pendingOperation = null;
-      this.reopenedPreview = null;
+      this.session.discard();
+      this.session.clearPreview();
       return { view: this.view };
     } finally {
       this.cancelling = false;
     }
   }
   private async accept(cleanup = false): Promise<void> {
-    if (!this.candidate) throw new Error("No valid edit to accept");
-    if (cleanup && (!this.reopenedPreview || this.pendingOperation?.parameters.cleanup !== true)) {
-      this.reopenedPreview = null;
-      this.candidate = await this.solids.removeTopology(
-        this.candidate,
-        operationCleanup(this.store.data.bodies ?? [], this.candidate.bodies ?? []),
+    if (!this.session.candidate) throw new Error("No valid edit to accept");
+    if (
+      cleanup &&
+      (!this.session.reopenedPreview || this.session.pendingOperation?.parameters.cleanup !== true)
+    ) {
+      this.session.reopenedPreview = null;
+      this.session.candidate = await this.solids.removeTopology(
+        this.session.candidate,
+        operationCleanup(this.session.store.data.bodies ?? [], this.session.candidate.bodies ?? []),
       );
     }
     const feedback = this.view.cutEdges;
-    if (!this.reopenedPreview) this.candidate = await this.decorators.continue(this.candidate);
-    if (feedback) cutEdgeHighlights.set(this.candidate, feedback);
+    if (!this.session.reopenedPreview)
+      this.session.candidate = await this.decorators.continue(this.session.candidate);
+    if (feedback) cutEdgeHighlights.set(this.session.candidate, feedback);
     this.checkCancellation();
-    this.store.accept(
-      this.candidate,
-      {
-        ...(this.pendingOperation ?? describeOperation({ kind: "accept" })),
-        ...(cleanup ? { parameters: { ...this.pendingOperation?.parameters, cleanup: true } } : {}),
-      },
-      reopenPreview(this.view),
-    );
-    this.candidate = null;
-    this.pendingOperation = null;
-    this.reopenedPreview = null;
+    this.session.accept(cleanup, reopenPreview(this.view));
   }
+
   private async execute(request: ModelRequest): Promise<ModelReply> {
-    const before = this.store.data;
-    let operation =
-      request.kind === "accept"
-        ? (this.pendingOperation ?? describeOperation(request))
-        : describeOperation(request);
-    if (request.kind === "accept" && request.cleanup)
-      operation = { ...operation, parameters: { ...operation.parameters, cleanup: true } };
+    const before = this.session.store.data;
+    const operation = this.session.operation(request);
     try {
       if (request.kind === "check-plane-cut")
         this.planeCutAvailable = await planeCutAvailable(
-          this.store.data,
+          this.session.store.data,
           request.operation,
           this.kernel,
         );
       else await this.dispatch(request, operation);
-      if (this.candidate && !this.reopenedPreview)
-        this.candidate = await this.decorators.continue(this.candidate);
+      if (this.session.candidate && !this.session.reopenedPreview)
+        this.session.candidate = await this.decorators.continue(this.session.candidate);
       this.checkCancellation();
-      return { view: this.view, documentChanged: before !== this.store.data };
+      return { view: this.view, documentChanged: before !== this.session.store.data };
     } catch (error) {
       const { outcome, ...failure } = documentFailure(
         error,
@@ -217,36 +175,36 @@ export class DocumentOwner {
         this.cancelling,
         this.kernel.wasSuperseded,
       );
-      this.store.record(operation, outcome, failure.error);
+      this.session.store.record(operation, outcome, failure.error);
       if (request.kind !== "accept" && request.kind !== "check-cleanup") {
-        this.candidate = null;
-        this.pendingOperation = null;
+        this.session.candidate = null;
+        this.session.pendingOperation = null;
       }
       return { view: this.view, ...failure };
     }
   }
   private async dispatch(request: ModelRequest, operation: HistoryOperation): Promise<void> {
     if (!["read", "reopen", "accept", "check-cleanup", "navigation-history"].includes(request.kind))
-      this.reopenedPreview = null;
+      this.session.reopenedPreview = null;
     this.cleanupAvailable = false;
     const decoratorEdit =
       request.kind === "decorator" || request.kind === "decorator-enable"
-        ? await this.decorators.edit(this.store.data, request)
+        ? await this.decorators.edit(this.session.store.data, request)
         : null;
     const direct =
       decoratorEdit ??
-      (isDirectDocumentEdit(request) ? editDocument(this.store.data, request) : null);
+      (isDirectDocumentEdit(request) ? editDocument(this.session.store.data, request) : null);
     if (direct) {
-      this.pendingOperation = null;
-      this.candidate = null;
-      this.store.accept(direct, operation);
+      this.session.pendingOperation = null;
+      this.session.candidate = null;
+      this.session.store.accept(direct, operation);
       return;
     }
     if (isSolidRequest(request)) {
-      this.pendingOperation = operation;
-      this.candidate = null;
-      this.candidate = await this.solids.calculate(this.store.data, request);
-      this.pendingOperation = acceptedParameters(operation, {
+      this.session.pendingOperation = operation;
+      this.session.candidate = null;
+      this.session.candidate = await this.solids.calculate(this.session.store.data, request);
+      this.session.pendingOperation = acceptedParameters(operation, {
         edgeSize: this.solids.edgeSize,
         offsetDistance: this.solids.offsetEdit.view.offsetDistance,
       });
@@ -254,8 +212,8 @@ export class DocumentOwner {
       return;
     }
     if (isPreviewRequest(request)) {
-      this.pendingOperation = operation;
-      this.candidate = null;
+      this.session.pendingOperation = operation;
+      this.session.candidate = null;
       await this.preview(request);
       return;
     }
@@ -264,95 +222,71 @@ export class DocumentOwner {
   private async dispatchCommand(request: ModelRequest, operation: HistoryOperation): Promise<void> {
     switch (request.kind) {
       case "check-cleanup":
-        if (this.candidate && !this.reopenedPreview)
-          this.cleanupAvailable = await this.solids.checkCleanup(this.store.data, this.candidate);
+        if (this.session.candidate && !this.session.reopenedPreview)
+          this.cleanupAvailable = await this.solids.checkCleanup(
+            this.session.store.data,
+            this.session.candidate,
+          );
         break;
       case "cleanup":
       case "delete-topology":
-        this.pendingOperation = operation;
-        this.candidate = await this.solids.removeTopology(
-          this.store.data,
+        this.session.pendingOperation = operation;
+        this.session.candidate = await this.solids.removeTopology(
+          this.session.store.data,
           request.selection,
           request.kind,
         );
         if (request.kind === "delete-topology") await this.accept();
         break;
       case "paste-geometry": {
-        const document = await pasteGeometry(
-          this.store.data,
-          request.text,
-          this.kernel,
-          request.target,
-        );
+        const document = await this.geometry.paste(this.session.store.data, request);
         this.checkCancellation();
-        this.pendingOperation = null;
-        this.candidate = null;
-        this.store.accept(document, operation);
+        this.session.pendingOperation = null;
+        this.session.candidate = null;
+        this.session.store.accept(document, operation);
         break;
       }
       case "open": {
-        const document = await openDocument(request.document, this.kernel);
+        const document = await this.geometry.open(request.document);
         this.checkCancellation();
-        this.replaceDocument(document);
+        this.session.replace(document);
+        this.decorators.clear();
         break;
       }
       case "edge-finish-selection":
-        await this.solids.selectFinishEdges(this.store.data, request.operation);
+        await this.solids.selectFinishEdges(this.session.store.data, request.operation);
         break;
       case "accept":
         await this.accept(request.cleanup);
         break;
       case "discard":
-        if (this.pendingOperation) this.store.record(this.pendingOperation, "cancelled");
-        this.pendingOperation = null;
-        this.candidate = null;
+        this.session.discard();
         break;
       case "reopen":
       case "undo":
       case "redo":
-        this.navigateHistory(request.kind);
+        this.session.navigate(request.kind);
         break;
       case "navigation-history":
-        this.store.navigateView(request.direction);
+        this.session.store.navigateView(request.direction);
         break;
       case "new":
-        this.replaceDocument();
+        this.session.replace();
+        this.decorators.clear();
         break;
-      case "delete-entities":
-        await this.deleteEntities(request, operation);
+      case "delete-entities": {
+        this.session.pendingOperation = null;
+        this.session.candidate = null;
+        const document = await this.geometry.delete(this.session.store.data, request);
+        this.checkCancellation();
+        this.session.store.accept(document, operation);
         break;
+      }
       case "read":
         break;
       default:
         throw new Error("Unknown sketch operation");
     }
-  }
-  private navigateHistory(direction: "reopen" | "undo" | "redo"): void {
-    if (direction === "reopen") {
-      if (this.candidate) throw new Error("Finish the current edit first");
-      const restored = this.store.reopen();
-      this.candidate = restored.candidate;
-      this.pendingOperation = this.store.restoredOperation ?? null;
-      this.reopenedPreview = restored.preview ?? {};
-    } else {
-      this.pendingOperation = null;
-      this.candidate = null;
-      this.store[direction]();
-    }
-  }
-  private async deleteEntities(
-    request: Extract<ModelRequest, { kind: "delete-entities" }>,
-    operation: HistoryOperation,
-  ): Promise<void> {
-    this.pendingOperation = null;
-    this.candidate = null;
-    const reduced = editDocument(this.store.data, request);
-    const candidate = request.topology?.length
-      ? await this.solids.removeTopology(reduced, request.topology, "delete-topology")
-      : reduced;
-    const continued = await this.decorators.continue(candidate);
-    this.checkCancellation();
-    this.store.accept(continued, operation);
   }
   close(): void {
     this.queries.close();

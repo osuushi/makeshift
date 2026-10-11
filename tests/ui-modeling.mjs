@@ -81,29 +81,7 @@ export async function modelingRoute(page, name) {
   assert.deepEqual((await inspect(page)).document.sketches[0], moved);
   await placementDragChecks(page, moved);
   await activeModelingHistoryChecks(page, beforeRotation, rotationId);
-  assert.equal((await inspect(page)).activeSketch, original.id);
-  assert.equal(await page.locator(".mode-label").textContent(), "Sketching");
-  await page.keyboard.press("l");
-  await drag(page, [20, 0], [30, 0]);
-  assert.equal((await inspect(page)).document.sketches.length, 1);
-  const returnPoint = await at(page, 8, 0);
-  await chooseTool(page, "return to modeling", "modeling");
-  await page.mouse.click(returnPoint.x, returnPoint.y);
-  await chooseTool(page, "new sketch on this plane", "new-sketch-on-plane");
-  await page.keyboard.press("l");
-  await drag(page, [-30, 0], [-20, 0]);
-  const two = (await inspect(page)).document.sketches;
-  assert.equal(two.length, 2);
-  assert.notEqual(two[0].id, two[1].id);
-  assert.deepEqual(two[0].plane, two[1].plane);
-  assert.equal(two[0].curves.length, original.curves.length + 1);
-  assert.equal(two[1].curves.length, 1);
-  const line = await at(page, -27, 0);
-  await chooseTool(page, "return to modeling", "modeling");
-  await page.mouse.dblclick(line.x, line.y);
-  assert.equal((await inspect(page)).activeSketch, two[1].id);
-  await page.screenshot({ path: `.cache/sketch-review/${name}-moved-sketch.png` });
-  await deleteSketchCheck(page, line, two[1].id);
+  await coplanarWorkspaceChecks(page, name, original);
   console.log(
     `${name}: modeling profiles/holes, independent placement, cancellation/history and coplanar identity passed`,
   );
@@ -153,4 +131,30 @@ async function deleteSketchCheck(page, point, id) {
   );
   await page.mouse.dblclick(point.x, point.y);
   assert.equal((await inspect(page)).activeSketch, id);
+}
+
+async function coplanarWorkspaceChecks(page, name, original) {
+  assert.equal((await inspect(page)).activeSketch, original.id);
+  assert.equal(await page.locator(".mode-label").textContent(), "Sketching");
+  await page.keyboard.press("l");
+  await drag(page, [20, 0], [30, 0]);
+  assert.equal((await inspect(page)).document.sketches.length, 1);
+  const returnPoint = await at(page, 8, 0);
+  await chooseTool(page, "return to modeling", "modeling");
+  await page.mouse.click(returnPoint.x, returnPoint.y);
+  await chooseTool(page, "new sketch on this plane", "new-sketch-on-plane");
+  await page.keyboard.press("l");
+  await drag(page, [-30, 0], [-20, 0]);
+  const two = (await inspect(page)).document.sketches;
+  assert.equal(two.length, 2);
+  assert.notEqual(two[0].id, two[1].id);
+  assert.deepEqual(two[0].plane, two[1].plane);
+  assert.equal(two[0].curves.length, original.curves.length + 1);
+  assert.equal(two[1].curves.length, 1);
+  const line = await at(page, -27, 0);
+  await chooseTool(page, "return to modeling", "modeling");
+  await page.mouse.dblclick(line.x, line.y);
+  assert.equal((await inspect(page)).activeSketch, two[1].id);
+  await page.screenshot({ path: `.cache/sketch-review/${name}-moved-sketch.png` });
+  await deleteSketchCheck(page, line, two[1].id);
 }

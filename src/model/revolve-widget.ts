@@ -58,6 +58,20 @@ export class RevolveWidget {
       this.options,
     );
   }
+  bindQuantities(
+    signal: AbortSignal,
+    changed: (key: "angle" | "height", value: number) => void,
+  ): void {
+    for (const key of ["angle", "height"] as const)
+      this[key].addEventListener(
+        "input",
+        () => {
+          const value = this[key].value.trim();
+          changed(key, value ? Number(value) : NaN);
+        },
+        { signal },
+      );
+  }
   private button(label: string, path: string): HTMLButtonElement {
     const button = document.createElement("button");
     button.setAttribute("aria-label", label);

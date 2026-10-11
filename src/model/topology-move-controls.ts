@@ -3,37 +3,34 @@ import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import type { EdgeMovement, FaceMovement } from "./body.js";
-import { dragFrame } from "./body-drag.js";
+import { gizmoPointer } from "./body-drag.js";
 import { BodyGizmo } from "./body-gizmo.js";
-import { BodyPivotDrag } from "./body-pivot-drag.js";
 import { axes } from "./body-placement.js";
-import { CurrentTransform } from "./current-transform.js";
+import type { CurrentTransform } from "./current-transform.js";
 import { GizmoInputs, type GizmoPointer } from "./gizmo-inputs.js";
+import { TopologyMovePivot } from "./topology-move-pivot.js";
 import {
   createTopologyMoveActions,
   updateTopologyMovePresentation,
 } from "./topology-move-presentation.js";
+import { createMovementTransform, trackMovementHistory } from "./topology-move-transform.js";
 import {
   composeMovement,
-  movementCenter,
   movementIsIdentity,
   movementNormal,
   movementRequest,
   movementTargets,
+  restoredMovement,
   type TopologyMovement,
 } from "./topology-movement.js";
-import { widgetPointerOffset } from "./widget-viewport.js";
 
 export class TopologyMoveControls {
   private gizmo: BodyGizmo;
   private currentTransform: CurrentTransform;
-  private pivotDrag: BodyPivotDrag;
+  private pivot: TopologyMovePivot;
   private accept: HTMLButtonElement;
   private cancelButton: HTMLButtonElement;
   private abort = new AbortController();
-  private pivot: Vector = [0, 0, 0];
-  private customPivot = false;
-  private selection = "";
   private lease: InteractionLease | null = null;
   private edit: TopologyMovement | null = null;
   private direction: Vector = [1, 0, 0];
@@ -51,44 +48,23 @@ export class TopologyMoveControls {
     private kind: "faces" | "edges" = "faces",
   ) {
     this.gizmo = new BodyGizmo(overlay, this.start, kind);
-    this.currentTransform = new CurrentTransform(
+    this.currentTransform = createMovementTransform(
+      editor,
       kind,
-      (translation, angle) => {
-        if (this.lease?.phase !== "editing") return;
-        const base = this.latest ?? this.verified ?? this.edit;
-        if (!base) return;
-        this.invalid = ![...translation, angle].every(Number.isFinite);
+      () => (this.lease?.phase === "editing" ? (this.latest ?? this.verified ?? this.edit) : null),
+      (movement, invalid) => {
+        this.invalid = invalid;
         this.valid = false;
-        this.editor.notice = this.invalid
-          ? "Enter finite current transform values"
-          : `Move ${this.kind} · Enter to accept · Escape to cancel`;
-        if (this.invalid) {
-          this.pending = this.latest = null;
-          this.editor.refresh();
-          return;
+        this.pending = this.latest = movement;
+        if (movement) {
+          this.edit = movement;
+          this.gizmo.input.value = "0";
+          if (!this.running) this.running = this.drain();
         }
-        this.edit = this.latest = this.pending = { ...base, translation, angle };
-        this.gizmo.input.value = "0";
-        if (!this.running) this.running = this.drain();
-        this.editor.refresh();
       },
-      () => editor.refresh(),
     );
     this.gizmo.root.append(this.currentTransform.root);
-    this.pivotDrag = new BodyPivotDrag(
-      editor,
-      this.gizmo.pivot,
-      () => this.pivot,
-      (point) => {
-        this.customPivot = true;
-        this.pivot = point;
-        editor.refresh();
-      },
-      () => {
-        this.customPivot = false;
-        editor.refresh();
-      },
-    );
+    this.pivot = new TopologyMovePivot(editor, this.gizmo.pivot);
     const actions = createTopologyMoveActions(
       this.gizmo,
       kind,
@@ -117,16 +93,8 @@ export class TopologyMoveControls {
     this.update();
   }
   async reopen(operation: FaceMovement | EdgeMovement): Promise<void> {
-    const edit: TopologyMovement =
-      "faces" in operation
-        ? structuredClone(operation)
-        : {
-            ...structuredClone(operation),
-            pivot: movementCenter(this.editor, operation) ?? [0, 0, 0],
-            axis: [1, 0, 0],
-            angle: 0,
-          };
-    this.pivot = [...edit.pivot];
+    const edit = restoredMovement(this.editor, operation);
+    this.pivot.point = [...edit.pivot];
     this.direction = edit.axis;
     this.rotate = false;
     if (!this.open(edit)) throw new Error("Cannot restore topology movement inputs");
@@ -155,16 +123,16 @@ export class TopologyMoveControls {
     );
     if (!this.lease) return false;
     this.edit = edit;
-    this.lease.trackHistory(
-      this.gizmo.root,
+    trackMovementHistory(
+      this.lease,
+      this.gizmo,
+      this.currentTransform,
+      this.editor,
+      this.kind,
       () => this.latest ?? this.edit,
       async (state) => {
-        if (!state) return;
         this.edit = this.latest = this.pending = state;
         this.valid = false;
-        this.gizmo.input.value = "0";
-        this.currentTransform.update(state, false, true);
-        this.editor.notice = `Move ${this.kind} · Enter to accept · Escape to cancel`;
         if (!this.running) this.running = this.drain();
         await this.running;
       },
@@ -184,7 +152,7 @@ export class TopologyMoveControls {
         !targets ||
         !this.open({
           ...targets,
-          pivot: [...this.pivot],
+          pivot: [...this.pivot.point],
           axis: this.direction,
           angle: 0,
           translation: [0, 0, 0],
@@ -195,22 +163,7 @@ export class TopologyMoveControls {
     if (this.lease?.phase !== "editing") return;
     this.edit = this.verified ?? this.edit;
     this.rotate = rotate;
-    if (event.pointerId !== -1)
-      this.pointer = {
-        id: event.pointerId,
-        x: event.clientX,
-        y: event.clientY,
-        moved: false,
-        frame: dragFrame(
-          this.editor,
-          this.pivot,
-          axis,
-          event.clientX,
-          event.clientY,
-          this.direction,
-          widgetPointerOffset(event.currentTarget),
-        ),
-      };
+    this.pointer = gizmoPointer(this.editor, this.pivot.point, axis, event, this.direction);
     this.gizmo.input.setAttribute(
       "aria-label",
       `${this.kind === "faces" ? "Face" : "Edge"} ${rotate ? "rotation" : "translation"} ${axis === "N" ? "normal" : axis}`,
@@ -234,7 +187,7 @@ export class TopologyMoveControls {
     else {
       this.latest = this.pending = composeMovement(
         this.edit,
-        this.pivot,
+        this.pivot.point,
         this.direction,
         this.rotate,
         value,
@@ -279,8 +232,8 @@ export class TopologyMoveControls {
       return false;
     }
     const latest = this.latest;
-    if (this.customPivot && latest)
-      this.pivot = latest.pivot.map((n, i) => n + latest.translation[i]) as Vector;
+    if (this.pivot.custom && latest)
+      this.pivot.point = latest.pivot.map((n, i) => n + latest.translation[i]) as Vector;
     this.end(lease);
     return true;
   }
@@ -311,20 +264,14 @@ export class TopologyMoveControls {
       this.latest ?? this.verified ?? this.edit,
       this.lease?.phase !== "editing",
     );
-    const targets = movementTargets(this.editor, this.kind),
-      key = JSON.stringify(targets);
-    if (!this.lease && key !== this.selection) {
-      this.selection = key;
-      this.customPivot = false;
-    }
-    if (!this.lease && !this.customPivot && targets)
-      this.pivot = movementCenter(this.editor, targets) ?? this.pivot;
+    const targets = movementTargets(this.editor, this.kind);
+    this.pivot.update(targets, !!this.lease);
     updateTopologyMovePresentation(
       this.editor,
       this.gizmo,
       this.kind,
       targets,
-      this.pivot,
+      this.pivot.point,
       this.lease,
       this.valid,
       !!this.running,
@@ -336,7 +283,7 @@ export class TopologyMoveControls {
   };
   dispose(): void {
     this.abort.abort();
-    this.pivotDrag.dispose();
+    this.pivot.dispose();
     this.editor.world.changed.delete(this.update);
     this.gizmo.dispose();
   }

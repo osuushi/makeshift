@@ -4,10 +4,10 @@ import { isBuiltinDecorator, knurlDefinition } from "./builtins.js";
 import { appendCustomContinue } from "./custom-continue.js";
 import { appendCustomDecorators } from "./custom-panel.js";
 import { resolveFaces } from "./cylinder.js";
-import { editDecorators, faceKey, hasSettingsProblem } from "./edits.js";
+import { editDecorators, faceKey } from "./edits.js";
 import { appendKnurlSettings } from "./knurl-panel.js";
 import { decoratorLibrary } from "./library.js";
-import { appendThreadInformation } from "./panel-information.js";
+import { appendThreadInformation, appendThreadProblem } from "./panel-information.js";
 import { appendDecoratorRepairs } from "./repair-panel.js";
 import { DecoratorSettingsDraft } from "./settings-draft.js";
 import { ThreadApplication } from "./thread-application.js";
@@ -249,16 +249,7 @@ export class DecoratorPanel {
       this.editor.refresh();
     });
     appendThreadInformation(this.root, this.editor, instances);
-    const problem = instances.find((d) => d.problem)?.problem;
-    if (problem) {
-      const note = document.createElement("p");
-      note.className = "decorator-warning";
-      note.setAttribute("role", "status");
-      note.textContent = `⚠ Threads need correction: ${problem}.`;
-      if (instances.every((d) => !d.problem || hasSettingsProblem(d)))
-        note.textContent += " Adjust the settings below.";
-      this.root.append(note);
-    }
+    const problem = appendThreadProblem(this.root, instances);
     appendThreadSettings(
       this.root,
       instances,

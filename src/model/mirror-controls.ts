@@ -1,16 +1,11 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import { onModelKeydown } from "../sketch/model-keys.js";
 import { type PlaneId, planes } from "../sketch/planes.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import type { MirrorOperation } from "./mirror.js";
+import { installMirrorEvents } from "./mirror-events.js";
 import { MirrorHover } from "./mirror-hover.js";
-import {
-  type MirrorReference,
-  offsetReference,
-  pickMirrorReference,
-  planeReference,
-} from "./mirror-reference.js";
+import { type MirrorReference, offsetReference, planeReference } from "./mirror-reference.js";
 import { MirrorReferenceView } from "./mirror-reference-view.js";
 import { MirrorWidget } from "./mirror-widget.js";
 import "./mirror.css";
@@ -55,7 +50,19 @@ export class MirrorControls {
     this.widget.cancel.onclick = () => void this.cancel();
     this.widget.offset.oninput = () => this.queue();
     this.widget.keep.onchange = () => this.queue();
-    this.events();
+    installMirrorEvents(
+      editor,
+      this.abort.signal,
+      () => !!this.lease,
+      (reference) => {
+        this.reference = reference;
+        this.widget.offset.value = "0";
+        this.queue();
+      },
+      () => this.lease?.history?.checkpoint(),
+      () => this.cancel(),
+      () => this.finish(),
+    );
     editor.world.changed.add(this.update);
     this.update();
   }
@@ -143,66 +150,6 @@ export class MirrorControls {
     this.widget.offset.value = "0";
     this.queue();
     this.lease.history?.checkpoint();
-  }
-  private events(): void {
-    const e = this.editor,
-      options = { signal: this.abort.signal, capture: true };
-    e.world.canvas.addEventListener(
-      "pointerdown",
-      (event) => {
-        if (!this.lease || event.button || event.ctrlKey || event.metaKey) return;
-        event.preventDefault();
-        event.stopImmediatePropagation();
-      },
-      options,
-    );
-    e.world.canvas.addEventListener(
-      "click",
-      (event) => {
-        if (!this.lease || event.button || event.ctrlKey || event.metaKey) return;
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        if (e.blocked) return;
-        const reference = pickMirrorReference(e, { x: event.clientX, y: event.clientY });
-        if (!reference) {
-          e.message = "Pick a sketch axis, straight line, world plane or planar face";
-          e.refresh();
-          return;
-        }
-        this.reference = reference;
-        this.widget.offset.value = "0";
-        this.queue();
-        this.lease?.history?.checkpoint();
-      },
-      options,
-    );
-    e.world.canvas.addEventListener(
-      "dblclick",
-      (event) => {
-        if (this.lease) event.stopImmediatePropagation();
-      },
-      options,
-    );
-    e.world.canvas.addEventListener(
-      "pointermove",
-      (event) => {
-        if (!this.lease || event.buttons) return;
-        event.stopImmediatePropagation();
-      },
-      options,
-    );
-    onModelKeydown((event) => {
-      if (!this.lease) return;
-      if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "z")
-        return;
-      if (event.key === "Escape" || event.key === "Enter") {
-        event.preventDefault();
-        if (event.key === "Escape") void this.cancel();
-        else void this.finish();
-      }
-      // The tool owns CAD shortcuts while text input and camera gestures stay ordinary.
-      event.stopImmediatePropagation();
-    }, options);
   }
   private queue(): void {
     const source = this.source,

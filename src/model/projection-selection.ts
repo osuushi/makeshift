@@ -1,10 +1,11 @@
 import { curveDistance, displayPoints } from "../sketch/curve-geometry.js";
 import { boundaryPoints } from "../sketch/curve-spans.js";
+import { newId } from "../sketch/document.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { pickModels } from "../sketch/model-selection.js";
 import type { ModelingTarget } from "../sketch/model-selection-state.js";
 import type { Point } from "../sketch/planes.js";
-import { worldPoint } from "../sketch/planes.js";
+import { coplanar, type PlaneFrame, worldPoint } from "../sketch/planes.js";
 import { segmentDistance } from "../sketch/point-math.js";
 import { profilesFor } from "../sketch/profiles.js";
 import { BodyPickProbe } from "./body-picking.js";
@@ -102,4 +103,17 @@ export function projectionLines(e: SketchEditor, sources: readonly ProjectionSou
         ]
       : [];
   });
+}
+
+export function projectionDestination(
+  editor: SketchEditor,
+  frame: PlaneFrame,
+  sketchId?: string,
+): { frame: PlaneFrame; sketchId: string } {
+  const e = editor;
+  const visible = e.store.data.sketches.find(
+    (sketch) => e.visibility.visible(sketch.id) && coplanar(sketch.plane, frame),
+  );
+  // An explicit new ID prevents the backend from reusing a hidden coplanar sketch.
+  return { frame, sketchId: sketchId ?? visible?.id ?? newId() };
 }
