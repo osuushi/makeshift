@@ -97,6 +97,12 @@ split topology and validation precision remain unchanged.
 
 ## Cross-section view
 
+Selecting a sketch/profile, world or saved construction plane, or planar body face
+automatically enables the [partial section overlay](navigation.md#partial-section-visibility).
+Its camera-side partition uses the configurable **Section front opacity**. The
+movable Cross section tool below remains an explicit hard cut, overriding the
+automatic selection view in Modeling.
+
 **Cross section** in Cmd-F → View uses one selected planar face, canonical or saved plane;
 otherwise it picks a world plane, saved plane or planar face in the viewport.
 The initial cut removes the camera-facing half. Its direction then stays fixed
@@ -109,7 +115,8 @@ Moving it never edits a construction plane, sketch or body and creates no docume
 Undo entry. While adjusting, local Undo/Redo restores completed placement tweaks
 (see [interaction history](edit-lifecycle.md#temporary-interaction-history-founder-decision-2026-10-02)). Enter/Done keeps the section visible and releases placement; **Adjust
 section** reopens its handles, **Choose section plane** replaces the reference,
-and **Turn off section** restores the full view. Escape/Cancel restores the view
+and **Turn off section** removes the explicit cut, returning to the automatic
+selection view when a planar reference remains selected. Escape/Cancel restores the view
 from before adjustment, including restoring no section after first activation.
 Invalid numeric input must be corrected or cancelled. A new section starts from
 selection; an existing section resumes at its last placement.

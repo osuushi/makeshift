@@ -3,6 +3,14 @@
 // Add combinatorial cases to the linked lower-level tests, not this inventory.
 export const uiSuites = [
   {
+    args: ["partial-section-ui.mjs"],
+    seconds: 60,
+    browsers: ["electron"],
+    reason:
+      "Planar selection and solid-tool previews must retain complementary GPU passes; opacity endpoint pixels catch composition errors that plane/lifetime unit tests cannot.",
+    unit: "selection-section.test.ts",
+  },
+  {
     args: ["document-lifecycle.mjs"],
     seconds: 20,
     browsers: ["electron"],

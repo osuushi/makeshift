@@ -57,7 +57,7 @@ export function bodyView(editor: SketchEditor): () => void {
         selectedBodies,
         selectedFaces,
         hover?.kind === "face" ? hover.face : hover?.kind === "body" && hover.body === body.id,
-        editor.world.activeFrame ?? editor.world.crossSection,
+        editor.world.partialSection ?? editor.world.crossSection,
         editor.display.bodyAppearances?.find((entry) => entry.body === body.id),
         new Set(
           editor.display.decorators?.flatMap((d) =>

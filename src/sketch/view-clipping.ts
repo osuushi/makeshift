@@ -13,3 +13,11 @@ export function sectionClip(frame: PlaneFrame): THREE.Plane {
     new THREE.Vector3(...frame.origin),
   );
 }
+
+/** Keep the rear partition, including coplanar geometry, as the camera orbits. */
+export function cameraSectionClip(frame: PlaneFrame, cameraPosition: THREE.Vector3): THREE.Plane {
+  const clip = sectionClip(frame);
+  if (clip.distanceToPoint(cameraPosition) > 0) clip.negate();
+  clip.constant += 1e-4;
+  return clip;
+}

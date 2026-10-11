@@ -52,6 +52,8 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
       "user interface scale",
       "decorator display",
       "grid opacity",
+      "section front opacity",
+      "partial section opacity",
       "grid thickness",
       "plane visibility",
       "plane palette",

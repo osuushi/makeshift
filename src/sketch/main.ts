@@ -21,6 +21,7 @@ import { ProjectionControls } from "../model/projection-controls.js";
 import { reopenControls } from "../model/reopen-controls.js";
 import { ScaleControls } from "../model/scale-controls.js";
 import { SectionControls } from "../model/section-controls.js";
+import { installSelectionSection } from "../model/selection-section.js";
 import { ShellControls } from "../model/shell-controls.js";
 import { TopologyMoveControls } from "../model/topology-move-controls.js";
 import { installSettings } from "../preferences/settings.js";
@@ -208,6 +209,9 @@ const scaling = new ScaleControls(
 );
 const projection = new ProjectionControls(editor, overlay, constructionPlanes.picker, entities);
 const sections = new SectionControls(editor);
+const disposeSelectionSection = installSelectionSection(editor, () =>
+  constructionPlanes.selectedFrame(),
+);
 const bodyEdges = new BodyEdgeControls(editor);
 const disposeVisibility = visibilityControls(editor, () => constructionPlanes.selected()?.id);
 const crossSection = new CrossSectionControls(editor, overlay, constructionPlanes.picker, () =>
@@ -266,6 +270,7 @@ window.addEventListener("pagehide", (event) => {
   entities.dispose();
   overlaps.dispose();
   crossSection.dispose();
+  disposeSelectionSection();
   constructionPlanes.dispose();
   planeCuts.dispose();
   measurements.dispose();

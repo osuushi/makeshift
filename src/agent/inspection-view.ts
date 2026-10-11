@@ -21,7 +21,7 @@ export function inspectionView(editor: SketchEditor, render: boolean): Inspectio
   // passes, before reading both camera metadata and the transient WebGL buffer.
   if (render) world.draw();
   const sketch = editor.sketch;
-  const clippingFrame = world.activeFrame ?? world.crossSection;
+  const clippingFrame = world.partialSection ?? world.crossSection;
   const selection: InspectionTarget[] = world.active
     ? sketch
       ? editor.selected.targets.map((t) => ({ ...t, sketch: sketch.id }))

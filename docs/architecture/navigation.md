@@ -43,20 +43,35 @@ without inheriting Circle, Line, Rectangle, Curve or Trim from the previous sess
 Drawing tools continue to take precedence while that session is active. Explicitly
 choosing a drawing tool in Modeling can still arm a new plane-first drawing flow.
 
-### Sketch-plane visibility
+### Partial section visibility
 
-While a planar workspace is active, renderer clipping makes geometry on the
+While a planar workspace or unambiguous planar selection is active, renderer clipping makes geometry on the
 camera side of its plane absent from the main pass. Bodies and their edges on
 that side render into a separate depth-tested buffer, clipped at the same plane,
-and composite over the main scene at 20% opacity. Overlapping foreground bodies
+and composite over the main scene at the configured front opacity (20% by default). Overlapping foreground bodies
 therefore do not accumulate transparency. Sketch curves and grids do not enter
 this foreground pass. Coplanar and behind-plane geometry remain normally visible;
 a 0.0001 mm rendering tolerance retains coplanar geometry.
 Skip the empty foreground pass when no visible body geometry or decorator preview
 contributes. Lights and empty/hidden groups alone do not require compositing;
 showing their geometry restores the same full-resolution pass.
-The cutaway follows the current workspace frame and camera side, and clears on
-workspace exit. It changes no accepted geometry, selection identity or Undo.
+In Modeling, selected sketches/profiles, canonical or saved construction planes,
+and planar body faces supply the section plane. Multiple selected entities must
+share a plane; curved faces and mixed/noncoplanar selections supply none. The cut
+follows the camera side as the view orbits. Solid tools retain a copy of the source
+plane through preview updates, including extrusion and revolution, rather than
+following temporary faces or losing the cut when a source is consumed. After
+completion/cancellation, current selection determines the cut again. Deselecting
+clears it. Active workspaces use their current frame. The explicit movable Cross
+section tool takes precedence over automatic selection in Modeling and remains a
+hard cut. These views change no accepted geometry, selection identity or Undo.
+
+Settings → Viewport display → **Section front opacity** controls the single front
+partition composite from 0–100%. Zero skips the overlay; 100% shows the normally
+opaque front partition. The preference persists locally outside document files and
+Undo, and applies to both selected-plane and sketch-workspace views. Exact section
+caps remain part of the existing sketch/explicit-section workflow; automatic planar
+selection adds no new cut topology or caps.
 
 ### Orthographic camera depth
 
