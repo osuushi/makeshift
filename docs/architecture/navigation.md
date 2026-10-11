@@ -45,7 +45,7 @@ choosing a drawing tool in Modeling can still arm a new plane-first drawing flow
 
 ### Partial section visibility
 
-While a planar workspace or unambiguous planar selection is active, renderer clipping makes geometry on the
+While a planar workspace or unambiguous sketch/profile selection is active, renderer clipping makes geometry on the
 camera side of its plane absent from the main pass. Bodies and their edges on
 that side render into a separate depth-tested buffer, clipped at the same plane,
 and composite over the main scene at the configured front opacity (20% by default). Overlapping foreground bodies
@@ -55,8 +55,9 @@ a 0.0001 mm rendering tolerance retains coplanar geometry.
 Skip the empty foreground pass when no visible body geometry or decorator preview
 contributes. Lights and empty/hidden groups alone do not require compositing;
 showing their geometry restores the same full-resolution pass.
-In Modeling, selected sketches/profiles, canonical or saved construction planes,
-and planar body faces supply the section plane. Multiple selected entities must
+In Modeling, only selected sketches/profiles supply the automatic section plane.
+Canonical/saved construction planes and body faces remain selectable without
+triggering a cut. Multiple selected entities must
 share a plane; curved faces and mixed/noncoplanar selections supply none. The cut
 follows the camera side as the view orbits. Solid tools retain a copy of the source
 plane through preview updates, including extrusion and revolution, rather than
@@ -72,7 +73,11 @@ opaque front partition. The preference persists locally outside document files a
 Undo, and applies to both selected-plane and sketch-workspace views. A shared
 section-face pass closes exposed solid material on the plane, preserving real
 cavities. Its two-color procedural pattern is seeded by body identity and anchored
-in plane coordinates. New-body previews retain their style during recomputation;
+in plane coordinates. Visible bodies use distinct palette colors until the six-color
+palette is exhausted, retaining their assigned colors through view changes. Caps
+preserve visible sketch ink, and coplanar body faces stay solely in the main pass.
+Overlapping caps blend at half opacity over earlier caps without writing competing
+depths; nonoverlapping cap material remains opaque. New-body previews retain their style during recomputation;
 accepted bodies use their saved identity. These faces are presentation only, never
 new selectable topology or exported geometry.
 

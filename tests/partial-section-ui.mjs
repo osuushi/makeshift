@@ -15,10 +15,7 @@ await withUiRuntimes(
     const faceState = await inspect(page);
     const faceTarget = faceState.modelingSelection[0];
     assert.equal(faceTarget?.kind, "face");
-    const facePlane = faceState.document.bodies
-      .find((body) => body.id === faceTarget.body)
-      .faces.find((face) => face.id === faceTarget.face).plane;
-    assert.deepEqual(faceState.partialSection, facePlane, "Planar body face supplies its support");
+    assert.equal(faceState.partialSection, null, "Body faces do not trigger automatic sections");
     await page.getByRole("button", { name: "Select Sketch 1", exact: true }).click();
     let state = await inspect(page);
     const accepted = state.document;
@@ -51,17 +48,13 @@ await withUiRuntimes(
     const point = await findRaycastPoint(page, "XY");
     await page.mouse.click(point.x, point.y);
     state = await inspect(page);
-    assert.deepEqual(
-      state.partialSection?.origin,
-      [0, 0, 0],
-      "World-plane selection starts cutaway",
-    );
+    assert.equal(state.partialSection, null, "Canonical planes do not trigger automatic sections");
     await chooseTool(page, "construction plane", "construction-plane");
     await page.keyboard.press("Enter");
     await inspect(page);
     await page.getByRole("button", { name: "Select Plane 1", exact: true }).click();
     state = await inspect(page);
-    assert.deepEqual(state.partialSection, state.document.constructionPlanes[0].frame);
+    assert.equal(state.partialSection, null, "Saved planes do not trigger automatic sections");
     await page.keyboard.press("Escape");
     assert.equal(
       (await inspect(page)).partialSection,
@@ -71,7 +64,7 @@ await withUiRuntimes(
 
     await previewRoute(page);
     console.log(
-      `${name}: selected sketch/world/saved plane, front-opacity pixels and persistence, extrusion/revolve lifetime passed`,
+      `${name}: sketch-only automatic sections, front-opacity pixels and persistence, extrusion/revolve lifetime passed`,
     );
   },
   { timeout: 20000 },

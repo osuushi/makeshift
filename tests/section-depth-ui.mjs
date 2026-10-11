@@ -6,7 +6,7 @@ import { launchElectron } from "./native-documents.mjs";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { makePlate, worldClick } from "./ui-face-offset.mjs";
 import { inspect } from "./ui-helpers.mjs";
-import { pickPlane } from "./ui-plane-targets.mjs";
+import { chooseWidget } from "./ui-modal-plane-widgets.mjs";
 import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -72,9 +72,11 @@ async function coplanarSketch(page, name) {
   await chooseTool(page, "clear selection", "selection-clear");
   await orient(page, [1, -1, -1]);
   await page.mouse.move(1100, 80);
+  await page.screenshot({ path: `.cache/section-depth/${name}-coplanar-before.png` });
   const before = await sample(page, [-6, -6, 0]);
   await chooseTool(page, "cross section", "cross-section");
-  await pickPlane(page, "XY");
+  // Pick explicitly without the helper's orbit, preserving baseline pixel positions.
+  await chooseWidget(page, "XY");
   await page.waitForFunction(
     () =>
       !window.makeshiftInspect().sectionCalculating &&
@@ -83,6 +85,7 @@ async function coplanarSketch(page, name) {
   await page.getByRole("button", { name: "Done", exact: true }).click();
   for (let flip = 0; flip < 2; flip++) {
     await page.mouse.move(1100, 80);
+    await page.screenshot({ path: `.cache/section-depth/${name}-coplanar-after.png` });
     const after = await sample(page, [-6, -6, 0]);
     const delta = Math.max(...after.map((n, j) => Math.abs(n - before[j])));
     console.log(name, "coplanar sketch", flip, "RGB delta", delta);

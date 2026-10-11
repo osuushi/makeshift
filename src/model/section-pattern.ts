@@ -9,6 +9,30 @@ const palettes = [
   ["#eee9c8", "#8b8042"],
 ];
 
+/** Keep assigned colors stable, using every palette before repeating a color. */
+export class SectionPalettes {
+  private readonly assigned = new Map<string, number>();
+
+  forBodies(bodies: string[]): ReadonlyMap<string, number> {
+    const current = new Set(bodies);
+    // Retain hidden bodies so toggling visibility cannot change their colors.
+    const counts = palettes.map(() => 0);
+    for (const [id, palette] of this.assigned) if (current.has(id)) counts[palette]++;
+    for (const id of bodies) {
+      if (this.assigned.has(id)) continue;
+      const preferred = palettes.indexOf(sectionStyle(id).colors);
+      const least = Math.min(...counts);
+      const palette =
+        Array.from({ length: palettes.length }, (_, i) => (preferred + i) % palettes.length).find(
+          (i) => counts[i] === least,
+        ) ?? preferred;
+      this.assigned.set(id, palette);
+      counts[palette]++;
+    }
+    return this.assigned;
+  }
+}
+
 /** Fresh candidate IDs must not reshuffle material patterns during one edit. */
 export class SectionStyleSeeds {
   private kind: string | null = null;
@@ -25,32 +49,36 @@ export class SectionStyleSeeds {
 }
 
 /** Stable pseudo-random presentation from document-local identity, never triangle indexes. */
-export function sectionStyle(body: string) {
+export function sectionStyle(body: string, palette?: number) {
   let seed = 2166136261;
   for (const character of body) seed = Math.imul(seed ^ character.charCodeAt(0), 16777619);
   seed >>>= 0;
   return {
-    colors: palettes[seed % palettes.length],
+    colors: palettes[palette ?? seed % palettes.length],
     pattern: (seed >>> 8) % 4,
     angle: ((seed >>> 16) % 180) * (Math.PI / 180),
   };
 }
 
 /** Plane-local, antialiased hatch, crosshatch, dot and staggered brick patterns. */
-export function sectionMaterial(body: string): THREE.MeshBasicMaterial {
-  const style = sectionStyle(body);
+export function sectionMaterial(body: string, palette?: number): THREE.MeshBasicMaterial {
+  const style = sectionStyle(body, palette);
   const material = new THREE.MeshBasicMaterial({
     side: THREE.DoubleSide,
+    transparent: true,
+    depthWrite: false,
     polygonOffset: true,
     polygonOffsetFactor: 1,
     polygonOffsetUnits: 1,
     stencilWrite: true,
-    stencilRef: 10,
-    stencilFuncMask: 12,
-    stencilWriteMask: 2,
+    stencilRef: 8,
+    stencilFuncMask: 60,
+    stencilWriteMask: 32,
     stencilFunc: THREE.EqualStencilFunc,
-    stencilZPass: THREE.ReplaceStencilOp,
+    stencilZPass: THREE.InvertStencilOp,
   });
+  // A flat double-sided cap must blend once, rather than once for each side.
+  material.forceSinglePass = true;
   material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, {
       sectionA: { value: new THREE.Color(style.colors[0]) },

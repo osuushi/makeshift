@@ -151,7 +151,12 @@ export class BodyDrawable {
       mesh.material.opacity = appearance.alpha;
       mesh.material.depthWrite = !transparent;
       mesh.material.stencilWrite = !transparent;
-      mesh.material.stencilRef = section && face.plane && coplanar(section, face.plane) ? 6 : 2;
+      const onSection = !!(section && face.plane && coplanar(section, face.plane));
+      mesh.material.stencilRef = onSection ? 6 : 2;
+      // Coplanar faces belong wholly to the main pass. Re-clipping them at the
+      // complementary tolerance can produce floating-point triangle fragments.
+      if (onSection) mesh.layers.disable(foregroundBodyLayer);
+      else mesh.layers.enable(foregroundBodyLayer);
     });
   }
   highlight(source: BodyGeometry, selected: ReadonlySet<string>, hover?: string): void {

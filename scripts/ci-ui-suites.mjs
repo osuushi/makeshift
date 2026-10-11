@@ -3,6 +3,14 @@
 // Add combinatorial cases to the linked lower-level tests, not this inventory.
 export const uiSuites = [
   {
+    args: ["section-overlap-ui.mjs"],
+    seconds: 20,
+    browsers: ["electron"],
+    reason:
+      "Captured overlapping caps must blend both body patterns and preserve coplanar sketch ink; GPU depth, stencil and MSAA composition cannot be proven by style unit tests.",
+    unit: "section-pattern.test.ts",
+  },
+  {
     args: ["section-fill-ui.mjs"],
     seconds: 20,
     browsers: ["electron"],

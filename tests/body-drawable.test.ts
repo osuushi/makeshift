@@ -5,6 +5,7 @@ import { DocumentOwner } from "../src/backend/document-owner.js";
 import { BodyDrawable, sameBodyDrawing } from "../src/model/body-drawable.js";
 import { inspectBodyRendering } from "../src/model/body-render-inspection.js";
 import { planes } from "../src/sketch/planes.js";
+import { foregroundBodyLayer } from "../src/sketch/world-foreground.js";
 import { prism, square } from "./body-edge-fixtures.js";
 
 test("drawable compatibility uses presentation values rather than IDs or exact-shape identity", async () => {
@@ -52,6 +53,21 @@ test("face styling and source-chain highlighting preserve resources and dispose 
     const styled = inspectBodyRendering(scene);
     assert.equal(styled.faces.find((face) => face.face === cap.id)?.color, "82b5e0");
     assert.equal(styled.faces.find((face) => face.face === cap.id)?.stencil, 6);
+    const capMesh = drawing.group.children.find(
+      (object) => object.userData.bodyFace?.face === cap.id,
+    );
+    assert.ok(capMesh);
+    assert.equal(
+      capMesh.layers.isEnabled(foregroundBodyLayer),
+      false,
+      "Coplanar faces cannot flicker in the complementary pass",
+    );
+    drawing.style(new Set(), new Set(), undefined, null);
+    assert.equal(
+      capMesh.layers.isEnabled(foregroundBodyLayer),
+      true,
+      "Clearing the cut restores ordinary foreground eligibility",
+    );
     assert.deepEqual(
       styled.faces.map((face) => face.geometry),
       original.faces.map((face) => face.geometry),
