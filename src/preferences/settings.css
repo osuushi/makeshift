@@ -3,7 +3,7 @@
 }
 .application-settings {
   width: min(600px, calc(100vw - 24px));
-  max-height: calc(100dvh - 24px);
+  max-height: min(720px, calc(100dvh - 24px));
   overflow: auto;
   padding: 16px;
   border: 1px solid #d6dfe9;

@@ -1,4 +1,6 @@
 import type * as THREE from "three";
+import { SectionCaps } from "../model/section-caps.js";
+import { viewDisplay } from "../preferences/view-display.js";
 import { GridOcclusion } from "./grid-occlusion.js";
 import type { World } from "./world.js";
 import { SketchForeground } from "./world-foreground.js";
@@ -13,6 +15,7 @@ declare global {
 /** GPU presentation; camera, geometry, picking and DOM updates remain in World. */
 export class WorldFrame {
   private readonly gridOcclusion = new GridOcclusion();
+  private readonly sections = new SectionCaps();
   private readonly foreground = new SketchForeground();
   private readonly primitives = new PrimitiveOverlay();
   private width = -1;
@@ -38,13 +41,21 @@ export class WorldFrame {
 
   render(clip: THREE.Plane, force: boolean): void {
     if (window.makeshiftTestFrameMode === "on-demand" && !force) return;
-    const { renderer, scene, camera, renderOverlays, renderForegroundOverlays, activeFrame } =
+    const { renderer, scene, camera, renderOverlays, renderForegroundOverlays, partialSection } =
       this.world;
     this.gridOcclusion.update(this.world);
     renderer.render(scene, camera);
+    this.sections.render(this.world);
     for (const render of renderOverlays) render();
-    if (activeFrame) {
-      this.foreground.render(renderer, scene, camera, clip, renderForegroundOverlays);
+    if (partialSection) {
+      this.foreground.render(
+        renderer,
+        scene,
+        camera,
+        clip,
+        renderForegroundOverlays,
+        viewDisplay().sectionFrontOpacity,
+      );
     }
     this.primitives.render(renderer, scene, camera);
   }
@@ -52,6 +63,7 @@ export class WorldFrame {
   dispose(): void {
     window.removeEventListener("makeshift-test-frame", this.captureFrame);
     this.foreground.dispose();
+    this.sections.dispose();
     this.primitives.dispose();
   }
 }

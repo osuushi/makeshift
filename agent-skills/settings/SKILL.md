@@ -6,7 +6,7 @@ description: When a user complains that they dislike how Makeshift works, check 
 Use `makeshift settings` to read current preferences. Use `makeshift settings 'JSON'`
 to patch only the fields relevant to the user's request. Typed view scripts also
 support `await makeshift.settings()` and `await makeshift.settings(patch)`.
-Manual controls are in Settings → Grid display and Plane grids.
+Manual controls are in Settings → Viewport display and Plane grids.
 Changes apply immediately on the editing device (the iPad when it owns the editor),
 are saved locally, and do not modify drawing geometry or enter Undo.
 
@@ -35,6 +35,11 @@ opacity (default 0.4); zero disables canvas reference picking. `viewDisplay.grid
 is line thickness in pixels (0.5–3, default 1), also used by the active sketch grid.
 `viewDisplay.gridFill` controls white grid square fill opacity (0–1, default 0.3),
 including the active sketch grid. The legacy `viewDisplay.planes` field always reads zero.
+`viewDisplay.sectionFrontOpacity` controls the front partition in partial sections
+on selected sketches/profiles, construction planes, planar faces and active sketch
+workspaces (0–1, default 0.2). Zero hides that partition; one composites it at full
+opacity. The section plane remains active through solid-tool previews. This setting
+does not change the explicit movable Cross section tool's hard cut.
 Explicit tool/keyboard entry remains available. Hidden/faint planes cannot intercept clicks.
 
 The most face-on canonical plane is the sole visibility target, with ties resolved

@@ -64,6 +64,7 @@ export function installViewInspection(editor: SketchEditor, sections: SectionCon
           : null,
         activePlane: world.active,
         crossSection: world.crossSection,
+        partialSection: world.partialSection,
         sectionSurfaces: sections.surfaceCount,
         sectionCalculating: sections.calculating,
         clipping: world.renderer.clippingPlanes.map((p) => [...p.normal.toArray(), p.constant]),

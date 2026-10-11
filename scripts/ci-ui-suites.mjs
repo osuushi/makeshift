@@ -3,6 +3,23 @@
 // Add combinatorial cases to the linked lower-level tests, not this inventory.
 export const uiSuites = [
   {
+    args: ["section-fill-ui.mjs"],
+    seconds: 20,
+    browsers: ["electron"],
+    reason:
+      "GPU section caps must fill solid material without filling real holes or changing accepted geometry; section-profile unit tests cannot catch scene stencil integration errors.",
+    unit: "section-pattern.test.ts",
+  },
+  {
+    args: ["partial-section-ui.mjs"],
+    // Linux run 38146139847: 23s; retain headroom for native previews and reload.
+    seconds: 30,
+    browsers: ["electron"],
+    reason:
+      "Planar selection and solid-tool previews must retain complementary GPU passes; opacity endpoint pixels catch composition errors that plane/lifetime unit tests cannot.",
+    unit: "selection-section.test.ts",
+  },
+  {
     args: ["document-lifecycle.mjs"],
     seconds: 20,
     browsers: ["electron"],
@@ -12,7 +29,8 @@ export const uiSuites = [
   },
   {
     args: ["primitive-handoff-ui.mjs"],
-    seconds: 60,
+    // Linux run 38146139847: 10s; the focused handoff no longer needs 60s.
+    seconds: 35,
     browsers: ["electron"],
     reason:
       "Circle placement must release its pointer lease into editable Extrude/Revolve with the correct profile, axis, mode and drill direction.",

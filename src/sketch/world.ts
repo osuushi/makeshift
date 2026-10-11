@@ -22,7 +22,7 @@ import {
   type Vector,
   worldPoint,
 } from "./planes.js";
-import { sectionClip } from "./view-clipping.js";
+import { cameraSectionClip, sectionClip } from "./view-clipping.js";
 import { fitWorldCameraDepth } from "./world-camera-depth.js";
 import type { ForegroundOverlay } from "./world-foreground.js";
 import { WorldFrame } from "./world-frame.js";
@@ -54,6 +54,8 @@ export class World {
     return this.workspace?.frame ?? null;
   }
   crossSection: PlaneFrame | null = null;
+  selectionSection: () => PlaneFrame | null = () => null;
+  partialSection: PlaneFrame | null = null;
   height = 80;
   spacing = 1;
   canNavigate = () => true;
@@ -158,18 +160,15 @@ export class World {
   }
 
   private updateClipping(): void {
-    const frame = this.activeFrame;
+    const selected = this.selectionSection();
+    const frame = this.activeFrame ?? (this.crossSection ? null : selected);
+    this.partialSection = frame;
     if (!frame) {
       this.renderer.clippingPlanes = this.crossSection ? [sectionClip(this.crossSection)] : [];
       if (this.renderer.clippingPlanes[0]) this.renderer.clippingPlanes[0].constant += 1e-4;
       return;
     }
-    const normal = new THREE.Vector3(...frame.u).cross(new THREE.Vector3(...frame.v)).normalize();
-    const origin = new THREE.Vector3(...frame.origin);
-    if (normal.dot(this.camera.position.clone().sub(origin)) > 0) normal.negate();
-    this.sketchClip.setFromNormalAndCoplanarPoint(normal, origin);
-    // Retain coplanar curves and faces despite floating-point projection noise.
-    this.sketchClip.constant += 1e-4;
+    this.sketchClip.copy(cameraSectionClip(frame, this.camera.position));
     this.renderer.clippingPlanes = [this.sketchClip];
   }
   visiblePoint(point: THREE.Vector3): boolean {

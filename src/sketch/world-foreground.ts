@@ -56,9 +56,11 @@ export class SketchForeground {
     camera: THREE.Camera,
     sketchClip: THREE.Plane,
     overlays: ReadonlySet<ForegroundOverlay>,
+    opacity = 0.2,
   ): void {
     // Lights and empty body groups do not need a full-screen MSAA/compositing pass.
-    if (!hasForegroundContent(scene, overlays)) return;
+    if (opacity === 0 || !hasForegroundContent(scene, overlays)) return;
+    this.material.opacity = opacity;
     renderer.getDrawingBufferSize(this.size);
     this.target.setSize(this.size.x, this.size.y);
     // Complement the main cut exactly, leaving its coplanar tolerance intact.
