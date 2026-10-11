@@ -3,6 +3,14 @@
 // Add combinatorial cases to the linked lower-level tests, not this inventory.
 export const uiSuites = [
   {
+    args: ["section-distant-camera-ui.mjs"],
+    seconds: 20,
+    browsers: ["electron"],
+    reason:
+      "Founder capture loses coplanar sketch ink and fill when clipping subtracts distant camera coordinates; real GPU samples catch precision errors that CPU clipping tests cannot.",
+    unit: "section-pattern.test.ts",
+  },
+  {
     args: ["section-overlap-ui.mjs"],
     seconds: 20,
     browsers: ["electron"],
