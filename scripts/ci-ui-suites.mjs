@@ -15,7 +15,7 @@ export const uiSuites = [
     seconds: 20,
     browsers: ["electron"],
     reason:
-      "Captured caps must blend body patterns, preserve sketch ink and region tint, and offer owning bodies on a real hold; CPU geometry/style tests cannot prove GPU composition or chooser routing.",
+      "Captured caps must blend body patterns, preserve sketch ink and region hover/selection through extrusion, and offer owning bodies on a real hold; CPU geometry/style tests cannot prove GPU composition or chooser routing.",
     unit: "section-pattern.test.ts",
   },
   {

@@ -2,8 +2,9 @@ import * as THREE from "three";
 import { boundaryPoints } from "./curve-spans.js";
 import type { SketchEditor } from "./editor.js";
 import { type ModelingTarget, modelingKey } from "./model-selection-state.js";
-import { worldPoint } from "./planes.js";
-import { profilesFor } from "./profiles.js";
+import { type PlaneFrame, worldPoint } from "./planes.js";
+import { type Profile, profilesFor } from "./profiles.js";
+import { sketchFillLayer } from "./region-fill.js";
 import { stableClipping } from "./stable-clipping.js";
 
 export function modelHighlight(editor: SketchEditor): () => void {
@@ -31,20 +32,7 @@ export function modelHighlight(editor: SketchEditor): () => void {
     if (!sketch) return;
     const profiles = target.kind === "profile" ? [target.profile] : profilesFor(sketch);
     const scale = editor.world.height / editor.world.canvas.clientHeight;
-    const positions: number[] = [];
-    for (const profile of profiles) {
-      const outer = boundaryPoints(profile.outer, scale),
-        holes = profile.holes.map((h) => boundaryPoints(h, scale));
-      const points = [...outer, ...holes.flat()];
-      const vector = (p: { x: number; y: number }) => new THREE.Vector2(p.x, p.y);
-      for (const triangle of THREE.ShapeUtils.triangulateShape(
-        outer.map(vector),
-        holes.map((h) => h.map(vector)),
-      ))
-        for (const i of triangle) positions.push(...worldPoint(sketch.plane, points[i]));
-    }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    const geometry = profileGeometry(profiles, sketch.plane, scale);
     const material = new THREE.MeshBasicMaterial({
       color: hover ? "#c78a36" : "#337ac4",
       transparent: true,
@@ -52,9 +40,16 @@ export function modelHighlight(editor: SketchEditor): () => void {
       depthTest: true,
       depthWrite: false,
       side: THREE.DoubleSide,
+      // Keep sketch ink intact while tinting section material underneath it.
+      stencilWrite: true,
+      stencilRef: 0,
+      stencilFuncMask: 16,
+      stencilWriteMask: 0,
+      stencilFunc: THREE.EqualStencilFunc,
     });
     stableClipping(material);
     const mesh = new THREE.Mesh(geometry, material);
+    mesh.layers.set(sketchFillLayer);
     mesh.renderOrder = 6;
     group.add(mesh);
     if (!hover) {
@@ -62,6 +57,7 @@ export function modelHighlight(editor: SketchEditor): () => void {
       hiddenMaterial.depthFunc = THREE.GreaterDepth;
       hiddenMaterial.opacity = 0.09;
       const hidden = new THREE.Mesh(geometry.clone(), hiddenMaterial);
+      hidden.layers.set(sketchFillLayer);
       hidden.renderOrder = 6;
       group.add(hidden);
     }
@@ -91,4 +87,22 @@ export function modelHighlight(editor: SketchEditor): () => void {
     clear();
     editor.world.scene.remove(group);
   };
+}
+
+function profileGeometry(profiles: readonly Profile[], plane: PlaneFrame, scale: number) {
+  const positions: number[] = [];
+  for (const profile of profiles) {
+    const outer = boundaryPoints(profile.outer, scale),
+      holes = profile.holes.map((h) => boundaryPoints(h, scale));
+    const points = [...outer, ...holes.flat()];
+    const vector = (p: { x: number; y: number }) => new THREE.Vector2(p.x, p.y);
+    for (const triangle of THREE.ShapeUtils.triangulateShape(
+      outer.map(vector),
+      holes.map((h) => h.map(vector)),
+    ))
+      for (const i of triangle) positions.push(...worldPoint(plane, points[i]));
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  return geometry;
 }

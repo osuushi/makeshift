@@ -38,6 +38,7 @@ await withUiRuntimes(async (page, name) => {
   await page.getByRole("button", { name: "Done", exact: true }).click();
   await chooseTool(page, "clear selection", "selection-clear");
   await regionTint(page, await samples(page));
+  await profileTint(page);
   await pseudofaceChoice(page);
   await chooseTool(page, "Sketch on XZ", "sketch-xz");
   await page.keyboard.press("l");
@@ -59,8 +60,8 @@ await withUiRuntimes(async (page, name) => {
   );
 });
 
-async function samples(page, point = [15.3, 0, 27.2], size = 1) {
-  await page.mouse.move(1100, 80);
+async function samples(page, point = [15.3, 0, 27.2], size = 1, keepPointer = false) {
+  if (!keepPointer) await page.mouse.move(1100, 80);
   const p = await project(page, point);
   const png = await page.screenshot({
     clip: {
@@ -120,4 +121,29 @@ async function pseudofaceChoice(page) {
   );
   await page.getByRole("button", { name: "Show Sketch 1", exact: true }).click();
   await page.getByRole("button", { name: "Show Sketch 2", exact: true }).click();
+}
+
+async function profileTint(page) {
+  const point = [15.3, 0, 27.2];
+  const base = await samples(page, point);
+  const p = await project(page, point);
+  await page.mouse.move(p.x, p.y);
+  assert.equal((await inspect(page)).modelingHover, "profile");
+  const hovered = await samples(page, point, 1, true);
+  assert.ok(
+    hovered[2] < base[2] - 15 && hovered[0] - hovered[2] > base[0] - base[2] + 15,
+    `Amber hover overlays cap: ${hovered} / ${base}`,
+  );
+  await page.mouse.click(p.x, p.y);
+  assert.equal((await inspect(page)).modelingSelection[0]?.kind, "profile");
+  const selected = await samples(page, point);
+  assert.ok(selected[0] < base[0] - 15, `Blue selection overlays cap: ${selected} / ${base}`);
+  await page.keyboard.press("e");
+  await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
+  await page.getByRole("textbox", { name: "Extrusion distance" }).waitFor({ state: "visible" });
+  assert.equal((await inspect(page)).interaction?.kind, "extrude");
+  const extrusion = await samples(page, point);
+  assert.deepEqual(extrusion, selected, "Extrusion source preserves selection tint over caps");
+  await page.keyboard.press("Escape");
+  await chooseTool(page, "clear selection", "selection-clear");
 }

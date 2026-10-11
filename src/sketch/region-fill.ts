@@ -7,7 +7,8 @@ import { closedBoundaries } from "./regions.js";
 import { stableClipping } from "./stable-clipping.js";
 import type { World } from "./world.js";
 
-const regionFillLayer = 5;
+// Base tint and modeling hover/selection fills share one post-section pass.
+export const sketchFillLayer = 5;
 
 /** A stencil union keeps overlapping/nested closed cells at one translucent tint. */
 export function drawRegionFills(editor: SketchEditor): () => void {
@@ -83,9 +84,9 @@ export function drawRegionFills(editor: SketchEditor): () => void {
 }
 
 function installRegionFillPass(world: World, mesh: THREE.Mesh): () => void {
-  mesh.layers.set(regionFillLayer);
-  // Keep the mesh in the scene for grid-veil configuration, but draw its tint
-  // after section pseudofaces, before the camera-side body composite.
+  mesh.layers.set(sketchFillLayer);
+  // Keep fills in the scene for grid-veil configuration. Render base tint first,
+  // then hover/selection (renderOrder 6), after caps and before the front composite.
   const render = () => {
     if (!mesh.visible) return;
     const { renderer, scene, camera } = world;
@@ -93,7 +94,7 @@ function installRegionFillPass(world: World, mesh: THREE.Mesh): () => void {
     const background = scene.background;
     const autoClear = renderer.autoClear;
     try {
-      camera.layers.set(regionFillLayer);
+      camera.layers.set(sketchFillLayer);
       scene.background = null;
       renderer.autoClear = false;
       renderer.render(scene, camera);
