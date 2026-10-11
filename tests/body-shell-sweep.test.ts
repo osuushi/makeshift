@@ -107,7 +107,7 @@ test("captured shell has an open bore and signed one-millimeter walls through th
   }
 });
 
-test("captured sweep checks supported cap choices and rejects invalid inward closures", async () => {
+test("captured sweep retains rounded cap fallback and rejects invalid inward closures", async () => {
   const owner = new DocumentOwner();
   try {
     const body = await open(owner);
@@ -117,6 +117,12 @@ test("captured sweep checks supported cap choices and rejects invalid inward clo
         const wall = await shell(owner, body, thickness, [face]);
         assert.ok(wall.volume > both.volume);
         if (thickness < 0) assert.ok(Math.abs(wall.volume - both.volume - Math.PI * 7 ** 2) < 1e-5);
+        if (thickness > 0) {
+          // Sharp construction fails for this end cap. The rounded fallback
+          // adds the circular cap slab and its quarter-torus/spherical rim.
+          const capVolume = 64 * Math.PI + 4 * Math.PI ** 2 + (2 * Math.PI) / 3;
+          assert.ok(Math.abs(wall.volume - both.volume - capVolume) < 1e-5);
+        }
         const retainedCap = openings.find((id) => id !== face);
         assert.ok(wall.faces.some((f) => f.id === retainedCap));
       }

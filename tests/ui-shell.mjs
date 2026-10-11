@@ -13,7 +13,7 @@ export async function shellRoute(page, name, electron) {
   assert.equal(initial.modelingSelection[0].kind, "face");
   const original = initial.document;
   await chooseTool(page, "shell", "shell");
-  const input = page.getByRole("textbox", { name: "Shell thickness", exact: true });
+  let input = page.getByRole("textbox", { name: "Shell thickness", exact: true });
   await input.fill("-1");
   let state = await inspect(page);
   assert.equal(state.interaction.kind, "shell");
@@ -66,6 +66,7 @@ export async function shellRoute(page, name, electron) {
   await chooseTool(page, "undo", "undo");
   // Whole coverage creates a sealed cavity; switching tools completes one edit.
   await plate(page);
+  input = page.getByRole("textbox", { name: "Shell thickness", exact: true });
   await browseTools(page, "Select");
   await chooseTool(page, "select owning bodies", "selection-bodies");
   await page.keyboard.press("s");
@@ -84,7 +85,7 @@ export async function shellRoute(page, name, electron) {
 async function shellDragAndOutward(page, original) {
   const input = page.getByRole("textbox", { name: "Shell thickness", exact: true });
   await input.fill("1");
-  close((await inspect(page)).preview.bodies[0].volume, 1200 + 30 * Math.PI + (2 * Math.PI) / 3);
+  close((await inspect(page)).preview.bodies[0].volume, 22 * 22 * 11 - 4000);
   await page.getByRole("button", { name: "Cancel shell", exact: true }).click();
   assert.deepEqual((await inspect(page)).document, original);
   // Actual directional dragging must leave its result temporary after release.

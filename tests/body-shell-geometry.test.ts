@@ -16,12 +16,16 @@ test("shell box inward, outward, closed and multiple openings", async () => {
       [[], -1, 4000 - 18 * 18 * 8],
       [[cap(body, 10)], -1, 4000 - 18 * 18 * 9],
       [[cap(body, 0), cap(body, 10)], -1, (400 - 324) * 10],
-      [[cap(body, 10)], 1, 1200 + 30 * Math.PI + (2 * Math.PI) / 3],
-      [[], 1, 1600 + 50 * Math.PI + (4 * Math.PI) / 3],
+      [[cap(body, 10)], 1, 22 * 22 * 11 - 4000],
+      [[], 1, 22 * 22 * 12 - 4000],
     ] as const) {
       const result = await shell(owner, body, thickness, [...faces]);
-      if (expected !== undefined)
-        assert.ok(Math.abs(result.volume - expected) < 1e-6, `${result.volume} vs ${expected}`);
+      assert.equal(result.faces.length, faces.length === 0 ? 12 : faces.length === 1 ? 11 : 10);
+      assert.ok(
+        result.faces.every((face) => face.plane),
+        "Box shell must keep sharp planar corners",
+      );
+      assert.ok(Math.abs(result.volume - expected) < 1e-6, `${result.volume} vs ${expected}`);
       await owner.call({ kind: "discard" });
     }
   } finally {
@@ -48,10 +52,7 @@ test("shell supports curved and concave walls and adjacent openings with exact r
     });
     for (const t of [-1, 1]) {
       const cup = await shell(owner, cylinder, t, [cap(cylinder, 10)]);
-      const expected =
-        t < 0
-          ? Math.PI * (64 * 10 - 49 * 9)
-          : Math.PI * (17 * 10 + 64) + 4 * Math.PI ** 2 + (2 * Math.PI) / 3;
+      const expected = t < 0 ? Math.PI * (64 * 10 - 49 * 9) : Math.PI * (81 * 11 - 64 * 10);
       assert.ok(Math.abs(cup.volume - expected) < 1e-5, `${cup.volume} vs ${expected}`);
       const radii = cup.faces.flatMap((f) => (f.cylinder ? [f.cylinder.radius] : []));
       assert.ok(radii.some((r) => Math.abs(r - (8 + t)) < 1e-7));
@@ -66,7 +67,11 @@ test("shell supports curved and concave walls and adjacent openings with exact r
       [60, 20],
     ]);
     const open = await shell(owner, concave, -1, [cap(concave, 10)]);
-    assert.ok(open.volume > 0 && open.volume < concave.volume);
+    assert.ok(Math.abs(open.volume - (3000 - 224 * 9)) < 1e-6);
+    assert.ok(
+      open.faces.every((face) => face.plane),
+      "Concave corners must also stay sharp",
+    );
     await owner.call({ kind: "discard" });
     const rounded = await finish(owner, box, [vertical(box, 0, 0)], 2);
     await owner.call({ kind: "accept" });

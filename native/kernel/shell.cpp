@@ -38,18 +38,18 @@ struct ShellGeometry {
     TopoDS_Shape wall;
 };
 ShellGeometry constructShell(const Operand& body, const TopTools_ListOfShape& openings,
-                             double thickness, bool freeform, bool intersections) {
+                             double thickness, bool freeform, bool intersections, GeomAbs_JoinType join) {
     if (!openings.IsEmpty()) {
         auto hollow = std::make_unique<BRepOffsetAPI_MakeThickSolid>();
         hollow->MakeThickSolidByJoin(body.shape, openings, thickness, 1e-7,
-            BRepOffset_Skin, intersections, false, GeomAbs_Arc, false);
+            BRepOffset_Skin, intersections, false, join, false);
         if (!hollow->IsDone()) throw std::runtime_error("Shell is not feasible at this thickness and opening selection");
         const auto wall = hollow->Shape();
         return {std::move(hollow), wall};
     }
     auto offset = std::make_unique<BRepOffsetAPI_MakeOffsetShape>();
     offset->PerformByJoin(body.shape, thickness, 1e-7,
-        BRepOffset_Skin, intersections, false, GeomAbs_Arc, false);
+        BRepOffset_Skin, intersections, false, join, false);
     if (!offset->IsDone()) throw std::runtime_error("Shell could not construct the offset surface");
     if (freeform) BRepLib::SameParameter(offset->Shape(), 1e-7, true);
     offset_geometry::tightenGeneratedBoundaries(offset->Shape(), body.shape);
@@ -58,7 +58,7 @@ ShellGeometry constructShell(const Operand& body, const TopTools_ListOfShape& op
                                    : shell_tool::subtract(offset->Shape(), body.shape);
     return {std::move(offset), shell_tool::oneSolid(wall)};
 }
-Result shellBody(const Operand& source, const Tree& selection, double thickness, bool intersections) {
+Result shellBody(const Operand& source, const Tree& selection, double thickness, bool intersections, GeomAbs_JoinType join) {
     KernelTiming timing("shell-body");
     timing.phase("begin");
     const auto original = offset_geometry::encoding(source.shape);
@@ -83,7 +83,7 @@ Result shellBody(const Operand& source, const Tree& selection, double thickness,
     // canonical already validated this geometry. Selection/radius checks and
     // collecting retained faces do not change its supports, boundaries or bounds.
     timing.phase("validate-source");
-    auto geometry = constructShell(body, openings, thickness, freeform, intersections);
+    auto geometry = constructShell(body, openings, thickness, freeform, intersections, join);
     auto wall = geometry.wall;
     auto& operation = *geometry.operation;
     timing.phase("offset");
@@ -127,12 +127,21 @@ std::vector<Result> shellBodies(const Tree& input, const std::vector<Operand>& b
         const auto body = std::find_if(bodies.begin(), bodies.end(), [&](const Operand& b) { return b.id == id; });
         if (body == bodies.end() || !seen.insert(id).second)
             throw std::runtime_error("Select existing shell bodies only once");
-        try {
-            results.push_back(shellBody(*body, item.second, thickness, false));
-        } catch (const std::runtime_error&) {
-            // Nearby offset supports may intersect beyond their original adjacency.
-            // Each attempt owns a fresh copy; neither can modify the accepted body.
-            results.push_back(shellBody(*body, item.second, thickness, true));
+        // Prefer sharp joins, including the all-intersections retry. Rounded
+        // joins are a fallback only after both fully validated attempts fail.
+        // Each attempt prepares a fresh copy of the accepted source.
+        bool done = false;
+        for (const auto join : {GeomAbs_Intersection, GeomAbs_Arc}) {
+            for (const bool intersections : {false, true}) {
+                try {
+                    results.push_back(shellBody(*body, item.second, thickness, intersections, join));
+                    done = true;
+                    break;
+                } catch (const std::runtime_error&) {
+                    if (join == GeomAbs_Arc && intersections) throw;
+                }
+            }
+            if (done) break;
         }
         participants.push_back(id);
     }
