@@ -2,9 +2,11 @@ import type * as THREE from "three";
 import { SectionCaps } from "../model/section-caps.js";
 import { viewDisplay } from "../preferences/view-display.js";
 import { GridOcclusion } from "./grid-occlusion.js";
+import type { Point } from "./planes.js";
 import type { World } from "./world.js";
 import { SketchForeground } from "./world-foreground.js";
 import { PrimitiveOverlay } from "./world-primitive-overlay.js";
+import { XrayComposite } from "./xray-composite.js";
 
 declare global {
   interface Window {
@@ -18,6 +20,7 @@ export class WorldFrame {
   private readonly sections = new SectionCaps();
   private readonly foreground = new SketchForeground();
   private readonly primitives = new PrimitiveOverlay();
+  private readonly xray = new XrayComposite();
   private width = -1;
   private height = -1;
 
@@ -41,9 +44,31 @@ export class WorldFrame {
 
   render(clip: THREE.Plane, force: boolean): void {
     if (window.makeshiftTestFrameMode === "on-demand" && !force) return;
+    this.gridOcclusion.update(this.world);
+    if (this.xray.enabled(this.world))
+      this.xray.render(
+        this.world,
+        () => this.normal(),
+        () => this.section(clip),
+      );
+    else this.section(clip);
+    const { renderer, scene, camera } = this.world;
+    this.primitives.render(renderer, scene, camera);
+  }
+
+  sectionEnabled(point: Point): boolean {
+    return this.xray.contains(this.world, point);
+  }
+
+  private normal(): void {
+    const { renderer, scene, camera, renderOverlays } = this.world;
+    renderer.render(scene, camera);
+    for (const render of renderOverlays) render();
+  }
+
+  private section(clip: THREE.Plane): void {
     const { renderer, scene, camera, renderOverlays, renderForegroundOverlays, partialSection } =
       this.world;
-    this.gridOcclusion.update(this.world);
     renderer.render(scene, camera);
     this.sections.render(this.world);
     for (const render of renderOverlays) render();
@@ -57,7 +82,6 @@ export class WorldFrame {
         viewDisplay().sectionFrontOpacity,
       );
     }
-    this.primitives.render(renderer, scene, camera);
   }
 
   dispose(): void {
@@ -65,5 +89,6 @@ export class WorldFrame {
     this.foreground.dispose();
     this.sections.dispose();
     this.primitives.dispose();
+    this.xray.dispose();
   }
 }

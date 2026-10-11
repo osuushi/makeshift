@@ -26,7 +26,7 @@ export class BodyPickProbe {
         this.bodies,
         screen === this.screen ? this.ray : screenRay(this.editor, screen),
         this.editor.world.camera.position,
-        this.editor.world.renderer.clippingPlanes,
+        this.editor.world.clippingAt(screen),
       );
       this.hits.set(key, hits);
     }

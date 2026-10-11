@@ -3,8 +3,18 @@
 // Add combinatorial cases to the linked lower-level tests, not this inventory.
 export const uiSuites = [
   {
-    args: ["section-distant-camera-ui.mjs"],
+    args: ["xray-vision-ui.mjs"],
+    // macOS hidden Electron: 7.05s; retain software-renderer/startup headroom.
     seconds: 20,
+    browsers: ["electron"],
+    reason:
+      "A real GPU frame must preserve normal and cut colors across the content aperture, bleed, blur and resize; Settings input and outside-aperture picking cannot be proven by mask math alone.",
+    unit: "xray-contents.test.ts",
+  },
+  {
+    args: ["section-distant-camera-ui.mjs"],
+    // macOS hidden Electron: 6.72s.
+    seconds: 15,
     browsers: ["electron"],
     reason:
       "Founder capture loses coplanar sketch ink and fill when clipping subtracts distant camera coordinates; real GPU samples catch precision errors that CPU clipping tests cannot.",
@@ -12,6 +22,7 @@ export const uiSuites = [
   },
   {
     args: ["section-overlap-ui.mjs"],
+    // macOS hidden Electron: 8.75s, including source-profile extrusion and chooser.
     seconds: 20,
     browsers: ["electron"],
     reason:

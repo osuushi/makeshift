@@ -43,6 +43,11 @@ export class SelectionSection {
 
 export function installSelectionSection(editor: SketchEditor): () => void {
   const section = new SelectionSection();
+  editor.world.xraySource = () => ({
+    sketches: editor.display.sketches,
+    visibility: editor.visibility.key,
+    visible: (id) => editor.visibility.visible(id),
+  });
   editor.world.selectionSection = () =>
     section.read(
       editor.world.activeFrame ?? selectedSectionFrame(editor),
@@ -50,5 +55,6 @@ export function installSelectionSection(editor: SketchEditor): () => void {
     );
   return () => {
     editor.world.selectionSection = () => null;
+    editor.world.xraySource = () => ({ sketches: [], visibility: "", visible: () => false });
   };
 }

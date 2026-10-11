@@ -27,9 +27,16 @@ export function configurePreferences(json: string): void {
       "gridFill",
       "gridLineWidth",
       "sectionFrontOpacity",
+      "xrayGlobal",
+      "xrayBleed",
+      "xrayRadius",
     ]);
     for (const [field, value] of Object.entries(patch.viewDisplay)) {
-      number(value, field === "gridLineWidth" ? 3 : 1);
+      if (field === "xrayGlobal") {
+        if (typeof value !== "boolean") throw new Error("X-ray Global must be a boolean.");
+        continue;
+      }
+      number(value, field === "gridLineWidth" ? 3 : field.startsWith("xray") ? 100 : 1);
       if (field === "gridLineWidth" && value < 0.5)
         throw new Error("Grid line thickness must be at least 0.5 pixels.");
     }
@@ -76,7 +83,7 @@ function object(
   if (fields && Object.keys(value).some((key) => !fields.includes(key)))
     throw new Error("Unknown settings field.");
 }
-function number(value: unknown, max: number): void {
+function number(value: unknown, max: number): asserts value is number {
   if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > max)
     throw new Error(`Setting must be a finite number between 0 and ${max}.`);
 }

@@ -4,6 +4,9 @@ export interface ViewDisplay {
   gridFill: number;
   gridLineWidth: number;
   sectionFrontOpacity: number;
+  xrayGlobal: boolean;
+  xrayBleed: number;
+  xrayRadius: number;
 }
 const defaults: ViewDisplay = {
   planes: 0,
@@ -11,6 +14,9 @@ const defaults: ViewDisplay = {
   gridFill: 0.3,
   gridLineWidth: 1,
   sectionFrontOpacity: 0.2,
+  xrayGlobal: true,
+  xrayBleed: 16,
+  xrayRadius: 12,
 };
 const key = "makeshift.view-display";
 const listeners = new Set<() => void>();
@@ -24,6 +30,12 @@ function normalized(input: unknown): ViewDisplay {
   const result = { ...defaults };
   if (!input || typeof input !== "object") return result;
   const candidate = input as Partial<ViewDisplay>;
+  if (typeof candidate.xrayGlobal === "boolean") result.xrayGlobal = candidate.xrayGlobal;
+  for (const field of ["xrayBleed", "xrayRadius"] as const) {
+    const pixels = candidate[field];
+    if (typeof pixels === "number" && Number.isFinite(pixels))
+      result[field] = Math.max(0, Math.min(100, pixels));
+  }
   for (const field of ["grid", "gridFill", "sectionFrontOpacity"] as const) {
     const opacity = candidate[field];
     if (typeof opacity === "number" && Number.isFinite(opacity))

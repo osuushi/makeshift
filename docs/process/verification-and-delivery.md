@@ -52,13 +52,19 @@ with extra workflow steps. The same policy applies to unit tests: add a distinct
 behavioral assertion, not tests mirroring implementation details.
 
 The document-window lifecycle regression covers native window/IPC routing and
-canceled application Quit, which document-owner tests cannot exercise. The two
-section regressions additionally cover selection-to-GPU composition and solid/cavity
-stencil integration, which plane and section model tests cannot observe. The
-inventory permits 23 suites, totaling 498 seconds against the unchanged 500-second
-aggregate cap. Linux run 38146139847 measured partial sections at 23 seconds,
-section fills at 13 seconds and primitive handoff at 10 seconds; their allocations
-are 30, 20 and 35 seconds respectively. No existing coverage or assertion is removed.
+canceled application Quit, which document-owner tests cannot exercise. Section
+regressions cover GPU composition, cavities, captured cap overlap/hover/selection,
+distant-camera clipping, and localized X-ray masks. CPU geometry tests cannot
+observe these escaped rendering failures.
+The inventory permits 26 suites, totaling 553 seconds with the existing shard count.
+The three additional section cases were measured in hidden Electron on macOS:
+X-ray mask/settings/resize/pinch 7.05s, distant-camera ink/fill 6.72s, and cap
+overlap/selection/extrusion/chooser 8.75s. Their allocations are 20/15/20 seconds,
+adding 55 seconds to the earlier 498-second inventory, with startup and software
+rendering headroom. These are local timings, not Linux runner measurements.
+Linux run 38146139847 measured partial sections at 23 seconds, section fills at
+13 seconds and primitive handoff at 10 seconds; their allocations remain 30, 20
+and 35 seconds. No existing coverage or assertion is removed.
 
 Broad historical UI journeys remain available for targeted diagnosis in
 `scripts/ui-review-suites.mjs` and `ui-review-routes.mjs`; they are not automatic

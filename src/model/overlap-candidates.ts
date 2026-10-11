@@ -40,7 +40,9 @@ export function overlapCandidates(editor: SketchEditor, screen: Point): OverlapC
   const sections = sectionBodyHits(
     bodies,
     ray,
-    editor.world.partialSection ?? editor.world.crossSection,
+    editor.world.sectionEnabled(screen)
+      ? (editor.world.partialSection ?? editor.world.crossSection)
+      : null,
     editor.world.camera.position,
   );
   for (const body of bodies) {

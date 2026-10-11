@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import type { PlaneFrame, Vector } from "./planes.js";
+import type { World } from "./world.js";
 
 export function flipSectionFrame(frame: PlaneFrame): PlaneFrame {
   return { origin: [...frame.origin], u: [...frame.u], v: frame.v.map((n) => -n) as Vector };
@@ -20,4 +21,18 @@ export function cameraSectionClip(frame: PlaneFrame, cameraPosition: THREE.Vecto
   if (clip.distanceToPoint(cameraPosition) > 0) clip.negate();
   clip.constant += 1e-4;
   return clip;
+}
+
+/** Explicit cuts remain global; automatic X-ray planes follow the selected sketch. */
+export function updateViewClipping(world: World, sketchClip: THREE.Plane): void {
+  const selected = world.selectionSection();
+  const frame = world.activeFrame ?? (world.crossSection ? null : selected);
+  world.partialSection = frame;
+  if (!frame) {
+    world.renderer.clippingPlanes = world.crossSection ? [sectionClip(world.crossSection)] : [];
+    if (world.renderer.clippingPlanes[0]) world.renderer.clippingPlanes[0].constant += 1e-4;
+    return;
+  }
+  sketchClip.copy(cameraSectionClip(frame, world.camera.position));
+  world.renderer.clippingPlanes = [sketchClip];
 }

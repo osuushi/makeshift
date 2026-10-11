@@ -49,12 +49,15 @@ exposes grid line opacity, white grid fill opacity (0–100%, default 30%),
 line thickness (0.5–3 pixels, default 1), plane switch angle (0–90°, default 15°),
 colors and saved palettes. A 0° switch angle retains until edge-on; 90° always
 chooses the most face-on plane.
-Viewport display also exposes **Section front opacity** (0–100%, default 20%) for
-the partial section on selected sketches, construction planes and planar faces,
-and active sketch workspaces. Bodies and decorator previews in front of the plane
-composite once at this opacity, with their own depth buffer. The preference persists
-under `makeshift.view-display` as `sectionFrontOpacity`, outside geometry and Undo.
-Reset grid display preserves this independent section-opacity choice.
+**X-ray vision** has **Global** (on by default), **X-ray front opacity**
+(0–100%, default 20%), and **Bleed**/**Radius** (0–100 screen pixels, defaults 16/12).
+Global disables the two mask controls. Local mode dilates and blurs visible sketch
+contents on the current plane; the cut and front translucency appear only through
+that mask. Only sketch/profile selection or an active sketch workspace starts
+automatic X-ray vision. Explicit Cross section always remains global.
+These choices persist under `makeshift.view-display` as `xrayGlobal`, `xrayBleed`,
+`xrayRadius` and the compatible `sectionFrontOpacity`, outside geometry and Undo.
+Reset grid display preserves all X-ray choices.
 Grid colors default to XY #d4ae3a, XZ #55bb6e and YZ #b325c1; axes retain their colors.
 Thickness also applies to the active sketch grid. A sketch whose copied frame
 matches a canonical plane uses that plane’s palette color; other sketch grids stay neutral. World X/Y/Z axes render

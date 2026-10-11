@@ -21,7 +21,7 @@ await withUiRuntimes(
     const accepted = state.document;
     assert.equal(state.activePlane, null);
     assert.deepEqual(state.partialSection, accepted.sketches[0].plane);
-    const slider = page.getByRole("slider", { name: "Section front opacity", exact: true });
+    const slider = page.getByRole("slider", { name: "X-ray front opacity", exact: true });
     await page.getByRole("button", { name: "Application settings" }).click();
     assert.equal(await slider.inputValue(), "20");
     await slider.press("Home");

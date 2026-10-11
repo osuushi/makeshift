@@ -43,7 +43,7 @@ without inheriting Circle, Line, Rectangle, Curve or Trim from the previous sess
 Drawing tools continue to take precedence while that session is active. Explicitly
 choosing a drawing tool in Modeling can still arm a new plane-first drawing flow.
 
-### Partial section visibility
+### X-ray vision
 
 While a planar workspace or unambiguous sketch/profile selection is active, renderer clipping makes geometry on the
 camera side of its plane absent from the main pass. Bodies and their edges on
@@ -69,10 +69,22 @@ clears it. Active workspaces use their current frame. The explicit movable Cross
 section tool takes precedence over automatic selection in Modeling and remains a
 hard cut. These views change no accepted geometry, selection identity or Undo.
 
-Settings → Viewport display → **Section front opacity** controls the single front
+Settings → **X-ray vision** → **X-ray front opacity** controls the single front
 partition composite from 0–100%. Zero skips the overlay; 100% shows the normally
 opaque front partition. The preference persists locally outside document files and
-Undo, and applies to both selected-plane and sketch-workspace views. A shared
+Undo, and applies to selected-sketch and sketch-workspace views.
+**Global** (on by default) retains the full-plane view. Turning it off enables
+**Bleed** (mask expansion, default 16 px) and **Radius** (blur radius, default 12 px),
+both 0–100 screen pixels. The mask is the union of visible coplanar sketch contents:
+closed-region interiors plus all ordinary/construction curves, including open curves.
+Disconnected contents keep their gaps; plane and sketch bounding boxes are not masks.
+Round screen-space dilation followed by separable Gaussian blur mixes normal and
+X-ray presentations, retaining identical colors at both fully opaque endpoints.
+The solid aperture uses cut picking and pseudoface body ownership; the softened
+fringe uses normal depth picking. Zoom and resize rebuild projected contents.
+The explicit Cross section tool always remains global, independent of these settings.
+
+A shared
 section-face pass closes exposed solid material on the plane, preserving real
 cavities. Its two-color procedural pattern is seeded by body identity and anchored
 in plane coordinates. Visible bodies use distinct palette colors until the six-color
