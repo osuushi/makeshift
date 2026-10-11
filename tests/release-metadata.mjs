@@ -2,8 +2,37 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { meshInputs } from "../scripts/mesh-inputs.mjs";
+import { requireSuccessfulCheck } from "../scripts/release/required-check.mjs";
 import { updateFeed } from "../scripts/release/update-feed.mjs";
 import { releaseVersion } from "../scripts/release/version.mjs";
+
+test("release requires completed successful main-push Check at its exact commit", () => {
+  const sha = "a".repeat(40);
+  const run = {
+    headSha: sha,
+    headBranch: "main",
+    event: "push",
+    status: "completed",
+    conclusion: "success",
+    url: "https://github.com/osuushi/makeshift/actions/runs/123",
+  };
+  assert.equal(requireSuccessfulCheck([run], sha), run.url);
+  assert.throws(() => requireSuccessfulCheck([], sha), /requires a successful Check/);
+  for (const change of [
+    { headSha: "b".repeat(40) },
+    { headBranch: "topic" },
+    { event: "pull_request" },
+    { status: "in_progress", conclusion: "" },
+    { status: "queued", conclusion: "" },
+    { conclusion: "failure" },
+    { conclusion: "cancelled" },
+    { conclusion: "skipped" },
+  ]) {
+    // An earlier passing run cannot mask the latest run's result.
+    assert.throws(() => requireSuccessfulCheck([{ ...run, ...change }, run], sha));
+  }
+  assert.throws(() => requireSuccessfulCheck([run], "main"));
+});
 
 test("static preview feed names the exact timestamped ZIP and packaged numeric version", () => {
   const metadata = {

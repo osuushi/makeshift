@@ -63,9 +63,21 @@ certificate. An individual paid Developer Program membership is sufficient.
 Do not put credentials in the checkout, chat, logs or caches. The workflow imports
 its certificate into a temporary keychain and removes it even if signing fails.
 
-Run **Actions → Release macOS arm64 → Run workflow**, selecting `main`. It checks
-secrets before the expensive build, selects arm64 `macos-15` and Xcode 16.4, builds
-and tests the unsigned app, signs and notarizes the app and DMG, tests the signed
+Run **Actions → Release macOS arm64 → Run workflow**, selecting `main` after its
+**Check** workflow passes. Release requires the newest main-push Check run for
+the exact source commit to have completed successfully; missing, pending, failed
+or cancelled checks stop the release before native setup. Wait for Check to pass
+and dispatch again if necessary. The workflow token needs `actions: read`.
+
+Check owns static checks, the partitioned unit/native model suite, compact Electron
+smoke and focused platform regressions. Release does not repeat the full model
+suite serially on macOS. It retains release metadata, packaged app, update and
+Finder launch checks, with separate steps for metadata, packaging and unsigned
+verification so their costs are visible in Actions.
+
+Release checks signing secrets before the expensive build, selects arm64
+`macos-15` and Xcode 16.4, builds and tests the unsigned app,
+signs and notarizes the app and DMG, tests the signed
 app, and only then publishes a prerelease. Failed source preparation prevents
 publishing the app release. Do not enable automatic cancellation while signing.
 GitHub's runner image can remove an Xcode installation; update the explicit
