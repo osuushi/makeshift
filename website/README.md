@@ -37,9 +37,16 @@ input uses the same pointer/keyboard controls and real geometry backend, with
 read-only inspection assertions on the demonstrated results. The visible pointer
 is a presentation overlay; app controls and geometry are unmodified.
 
-Camera framing happens before recording. Drawing and editing drags last about
-two seconds, with short holds before and after meaningful changes. Sketching
-includes a rectangle, circle, bowed edge and dragged corner fillet.
+Camera framing happens before recording, with angled ground views for solid tools.
+Primitives shows a cube hover/click, cylinder and sphere sizing, then cone sizing
+and a slower height adjustment. Sketching keeps the rectangle at two seconds,
+uses a faster circle, and accelerates the one-second bow and corner fillet drags.
+Extrude reuses that exact completed sketch, including its hole. Revolve records
+the rectangle, changes to a 3D view, pauses on the axis, then varies the angle.
+Fillet/chamfer rounds the front vertical corner of a cube and then bevels its
+whole top face. Threads drills a cube and applies matching thread presets to
+its hole and a separate cylinder. Knurling compares Fine/Coarse on a larger
+cylinder. Short holds orient the viewer; repeated actions move more quickly.
 
 The Playwright demo skill's fixed-step capture helper advances the browser clock
 at 30 fps, captures numbered frames and encodes H.264/yuv420p MP4. Each export

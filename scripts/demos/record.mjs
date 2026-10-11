@@ -61,17 +61,23 @@ async function record(recipe) {
     await settled(page);
     await reset(page);
     await recipe.setup(page);
-    await prepareCamera(page, recipe.focus);
+    await prepareCamera(page, recipe.focus, recipe.height);
+    assert.equal(
+      await page
+        .getByText("Clipboard does not contain Makeshift geometry", { exact: true })
+        .count(),
+      0,
+    );
     await pointer(page);
     const capture = new FixedStepCapture(page, path.join(frames, recipe.id));
     await capture.start();
     const a = actions(page, capture);
-    await capture.hold(1);
+    await capture.hold(0.6);
     console.log(`Recording ${recipe.id}`);
     await recipe.record(page, capture, a);
     await page.keyboard.press("Escape");
     await page.mouse.move(800, 590);
-    await capture.hold(2.5);
+    await capture.hold(1.5);
     assert.deepEqual(errors, []);
     const state = await a.state();
     await writeFile(path.join(frames, `${recipe.id}-state.json`), JSON.stringify(state, null, 2));
