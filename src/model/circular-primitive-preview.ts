@@ -5,6 +5,7 @@ import { primitiveFootprintLayer } from "../sketch/world-primitive-overlay.js";
 import type { CircularPlacement, CircularPrimitiveShape } from "./circular-primitive-controls.js";
 import { primitivePreviewMesh } from "./primitive-preview-mesh.js";
 import { sphereAxisDirection } from "./sphere-sketch.js";
+import { viewerSide } from "./viewer-extrusion.js";
 import "./cube-preview.css";
 
 /** Lightweight presentation only; all accepted geometry comes from ordinary tools. */
@@ -51,9 +52,12 @@ export class CircularPrimitivePreview {
     const u = new THREE.Vector3(...plane.u);
     const v = new THREE.Vector3(...plane.v);
     const normal = u.clone().cross(v);
+    const side =
+      this.shape === "drill" ? 1 : viewerSide(normal.toArray() as Vector, this.world.camera);
+    normal.multiplyScalar(side);
     // Three's cylinders point along Y; align that axis with the support normal.
     this.solid.quaternion.setFromRotationMatrix(
-      new THREE.Matrix4().makeBasis(u, normal, v.clone().negate()),
+      new THREE.Matrix4().makeBasis(u, normal, v.clone().multiplyScalar(-side)),
     );
     this.solid.position.set(...worldPoint(plane, center));
     const drillDepth = placement.depth ?? radius * 2;

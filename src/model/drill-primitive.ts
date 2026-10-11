@@ -43,5 +43,6 @@ export async function createDrill(
     distance: -distance,
     symmetric: false,
     mode: "subtract",
+    sourceDistance: true,
   });
 }

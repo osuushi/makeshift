@@ -11,10 +11,12 @@ import {
 import { extrusionCircleCenter } from "./extrude-circle.js";
 import { offsetHandle } from "./face-offset-targets.js";
 import { expandedSelection, selectionContext } from "./selection-context.js";
+import { viewerSide } from "./viewer-extrusion.js";
 
 interface ExtrusionAxis {
   center: Vector;
   normal: Vector;
+  sourceSign?: 1 | -1;
   coplanar: boolean;
   normalExtrusion?: boolean;
   circleCenter?: Vector;
@@ -91,10 +93,12 @@ function planarExtrusionAxis(editor: SketchEditor): ExtrusionAxis | null {
     }
   }
   const circleCenter = extrusionCircleCenter(editor);
+  const sourceSign = normal ? viewerSide(normal, editor.world.camera) : 1;
   return total > 1e-10 && normal
     ? {
         center: circleCenter ?? (weighted.divideScalar(total).toArray() as Vector),
-        normal,
+        normal: normal.map((value) => value * sourceSign) as Vector,
+        sourceSign,
         coplanar,
         circleCenter,
       }
