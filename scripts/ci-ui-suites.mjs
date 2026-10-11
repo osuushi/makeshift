@@ -3,6 +3,14 @@
 // Add combinatorial cases to the linked lower-level tests, not this inventory.
 export const uiSuites = [
   {
+    args: ["section-fill-ui.mjs"],
+    seconds: 20,
+    browsers: ["electron"],
+    reason:
+      "GPU section caps must fill solid material without filling real holes or changing accepted geometry; section-profile unit tests cannot catch scene stencil integration errors.",
+    unit: "section-pattern.test.ts",
+  },
+  {
     args: ["partial-section-ui.mjs"],
     seconds: 60,
     browsers: ["electron"],

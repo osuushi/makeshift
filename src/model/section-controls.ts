@@ -95,6 +95,8 @@ export class SectionControls {
         const profile = sectionProfile(section, frame);
         if (!profile) throw new Error("Cross section boundary could not be closed");
         const mesh = sectionMesh(profile, frame, 0.01);
+        mesh.visible = false;
+        mesh.userData.sectionBody = section.body;
         this.regions.push({ section, profile, mesh });
         this.group.add(mesh);
       }
@@ -144,9 +146,15 @@ export class SectionControls {
   }
   private highlight(region: Region | undefined): void {
     if (this.hover === region) return;
-    if (this.hover) this.hover.mesh.material.color.set("#b5c3cf");
+    if (this.hover) this.hover.mesh.visible = false;
     this.hover = region;
-    if (region) region.mesh.material.color.set("#ead3aa");
+    if (region) {
+      // Exact regions provide sketch-capture hover; the shared cap pass owns the fill.
+      region.mesh.visible = true;
+      region.mesh.material.colorWrite = false;
+      region.mesh.material.depthWrite = false;
+      region.mesh.material.stencilWrite = false;
+    }
     this.editor.world.canvas.style.cursor = region ? "pointer" : "";
     this.editor.world.requestDraw();
   }

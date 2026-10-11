@@ -3,6 +3,7 @@ import { decoratorPreviewLayer } from "../decorators/preview-compositor.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { foregroundBodyLayer } from "../sketch/world-foreground.js";
 import { BodyDrawable } from "./body-drawable.js";
+import { SectionStyleSeeds } from "./section-pattern.js";
 
 export function bodyView(editor: SketchEditor): () => void {
   const group = new THREE.Group();
@@ -17,6 +18,7 @@ export function bodyView(editor: SketchEditor): () => void {
   light.position.set(40, -60, 90);
   editor.world.scene.add(group, ambient, light);
   const drawings = new Map<string, BodyDrawable>();
+  const sectionSeeds = new SectionStyleSeeds();
   const update = () => {
     const bodies = editor.display.bodies ?? [];
     const current = new Set(bodies.map((body) => body.id));
@@ -36,8 +38,9 @@ export function bodyView(editor: SketchEditor): () => void {
       editor.modeling.targets.filter((t) => t.kind === "edge").map((t) => t.edge),
     );
     const accepted = editor.store.data.bodies ?? [];
+    const kind = editor.candidate ? (editor.interactions.current?.kind ?? null) : null;
     const hover = editor.modeling.hover;
-    for (const body of bodies) {
+    for (const [index, body] of bodies.entries()) {
       let drawing = drawings.get(body.id);
       if (drawing && !drawing.reuse(body)) {
         drawing.dispose();
@@ -50,6 +53,14 @@ export function bodyView(editor: SketchEditor): () => void {
         drawings.set(body.id, drawing);
         group.add(drawing.group);
       }
+      // Newly created candidates get fresh model IDs on each computation. Hold
+      // their presentation seed through the gesture, then use accepted identity.
+      drawing.group.userData.sectionStyleKey = sectionSeeds.forBody(
+        kind,
+        index,
+        body.id,
+        accepted.some((source) => source.id === body.id),
+      );
       drawing.group.visible =
         editor.visibility.visible(body.id) &&
         (editor.bodiesVisible || !accepted.some((accepted) => accepted.id === body.id));

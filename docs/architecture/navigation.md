@@ -69,9 +69,12 @@ hard cut. These views change no accepted geometry, selection identity or Undo.
 Settings → Viewport display → **Section front opacity** controls the single front
 partition composite from 0–100%. Zero skips the overlay; 100% shows the normally
 opaque front partition. The preference persists locally outside document files and
-Undo, and applies to both selected-plane and sketch-workspace views. Exact section
-caps remain part of the existing sketch/explicit-section workflow; automatic planar
-selection adds no new cut topology or caps.
+Undo, and applies to both selected-plane and sketch-workspace views. A shared
+section-face pass closes exposed solid material on the plane, preserving real
+cavities. Its two-color procedural pattern is seeded by body identity and anchored
+in plane coordinates. New-body previews retain their style during recomputation;
+accepted bodies use their saved identity. These faces are presentation only, never
+new selectable topology or exported geometry.
 
 ### Orthographic camera depth
 

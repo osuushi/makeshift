@@ -121,11 +121,13 @@ from before adjustment, including restoring no section after first activation.
 Invalid numeric input must be corrected or cancelled. A new section starts from
 selection; an existing section resumes at its last placement.
 
-Clipping updates during drag. After release, the existing exact section query
-fills the exposed solid cross section, including holes; these fills are visual,
-not new selectable topology. While a new fill is calculating the clipped shell
-remains visible. During a body-edit preview, accepted-body fills are hidden until
-acceptance to avoid displaying a stale cut surface. Faces, edges, reference patches and sketches on the removed
+Clipping and solid section faces update during drag and body-edit previews. A
+shared GPU pass computes per-body parity of the clipped closed display shell on
+the plane, filling solid material while retaining real cavities. Each body has a
+stable pseudo-random color pair and antialiased procedural hatch, crosshatch, dot
+or brick pattern. These fills are visual, not new selectable topology. Exact
+accepted-body section queries remain available for sketch capture, independently
+of immediate visual fills. Faces, edges, reference patches and sketches on the removed
 side do not participate in point picking or snapping. Geometry operations still
 operate on whole accepted entities, not visually trimmed fragments.
 
@@ -136,6 +138,8 @@ The section is not saved in the document or included in exported geometry.
 Coplanar rendering gives existing body faces priority over generated section fills.
 Body faces on the active section support mark stencil bit 4; caps exclude those
 samples and write only the solid-silhouette bit 2. Sketch-fill union retains bit 1.
+The per-body section parity uses scratch bit 8, cleared between bodies and after
+the pass without disturbing the other bits.
 This preserves face selection colors without competing coplanar triangulations;
 material stencil state updates when the plane moves, without retessellating bodies.
 Filled surfaces, sketch overlays and plane cues interpolate signed clip distances
