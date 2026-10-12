@@ -6,6 +6,22 @@ App Store. Release builds are manually requested from `main`; they do not run
 on pushes or pull requests. Intel and Windows installers are outside this release
 pipeline. Signed Apple Silicon releases receive automatic preview updates.
 
+## Release everything from GitHub
+
+After **Check** passes on `main`, run **Actions → Release all → Run workflow**
+with `main` selected. It verifies Check for that exact commit, then runs the
+existing macOS and web release pipelines in parallel from the same commit.
+This publishes the signed macOS app, matching sources and preview update feed,
+the standalone web app and sources, and the web and landing-demo deployments.
+The existing `macos-release`, `web-release` and `github-pages` environments,
+credentials and approval rules still apply.
+
+The individual **Release macOS arm64** and **Release web mode** actions remain
+available. Publication is independent: one pipeline can finish even if the other
+fails. Retry a failed job in the combined run to avoid repeating successful
+releases. Builds and signing are serialized with individual runs of the same
+pipeline, and another Release all run does not cancel a release in progress.
+
 ## Local package and verification
 
 From the repository root, activate `.nvmrc` (`source ~/.nvm/nvm.sh && nvm use` on
