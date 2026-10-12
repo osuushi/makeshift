@@ -8,6 +8,7 @@ import { FixedStepCapture } from "../../.agents/skills/playwright-demo/scripts/f
 import { reset, settled } from "../../tests/ui-helpers.mjs";
 import { actions, pointer } from "./actions.mjs";
 import { prepareCamera } from "./camera.mjs";
+import { syncKernel } from "./kernel-sync.mjs";
 import { recipes } from "./recipes.mjs";
 
 const output = path.resolve(process.env.DEMO_OUTPUT ?? "website/assets/demos");
@@ -69,7 +70,9 @@ async function record(recipe) {
       0,
     );
     await pointer(page);
-    const capture = new FixedStepCapture(page, path.join(frames, recipe.id));
+    const capture = new FixedStepCapture(page, path.join(frames, recipe.id), 30, () =>
+      syncKernel(page),
+    );
     await capture.start();
     const a = actions(page, capture);
     await capture.hold(0.6);

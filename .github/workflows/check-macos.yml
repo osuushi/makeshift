@@ -28,7 +28,7 @@ jobs:
       - run: npx tsc -p tsconfig.host.json
       - run: npm run test:setup
       - name: CI partition coverage
-        run: node --test tests/ci-partition.mjs tests/demo-shards.mjs
+        run: node --test tests/ci-partition.mjs tests/demo-shards.mjs tests/demo-frame-sync.mjs
   linux-build:
     runs-on: ubuntu-24.04
     timeout-minutes: 60

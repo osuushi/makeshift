@@ -4,12 +4,13 @@ import path from "node:path";
 
 /** Capture real browser frames while advancing animation time independently of wall time. */
 export class FixedStepCapture {
-  constructor(page, directory, fps = 30) {
+  constructor(page, directory, fps = 30, beforeCapture = async () => {}) {
     this.page = page;
     this.directory = directory;
     this.fps = fps;
     this.frames = 0;
     this.pumping = false;
+    this.beforeCapture = beforeCapture;
   }
 
   async start() {
@@ -25,6 +26,7 @@ export class FixedStepCapture {
     const next = Math.floor(((this.frames + 1) * 1000) / this.fps);
     const previous = Math.floor((this.frames * 1000) / this.fps);
     await this.page.clock.runFor(next - previous);
+    await this.beforeCapture();
     await this.page.screenshot({
       path: path.join(this.directory, `${String(this.frames).padStart(6, "0")}.jpg`),
       type: "jpeg",

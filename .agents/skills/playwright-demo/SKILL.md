@@ -22,7 +22,9 @@ skill; it does not belong in the application's installed agent-skills directory.
    next frame interval using `page.clock.runFor`, then take a screenshot. At
    30 fps, repeat 33, 33, 34 milliseconds to avoid accumulating clock drift.
    Use `runFor`, rather than `fastForward`, so intermediate animation callbacks
-   run. Keep application animation durations and opacity settings unchanged.
+   run. Before the screenshot, wait for pending kernel calculations on host time
+   so slow workers publish the preview before the next input supersedes it.
+   Keep application animation durations and opacity settings unchanged.
 5. Pump and capture frames while asynchronous UI actions are pending. Locator
    actionability, camera settling, and application timers may wait for animation
    frames; awaiting those actions with a paused clock can deadlock. Bound this
@@ -47,7 +49,11 @@ runner or the user's machine. Diagnose software rendering with WebGL's
 ## Bundled implementation
 
 `scripts/fixed-step-capture.mjs` supplies a reusable frame pump, holds, bounded
-UI actions, and MP4 export. `scripts/canonical-planes.mjs` records two actual
+UI actions, and MP4 export. Its optional fourth constructor argument is an async
+`beforeCapture` callback, called after each clock step and before its screenshot.
+The feature-demo recorder supplies `scripts/demos/kernel-sync.mjs` to wait for
+kernel idle without waiting for camera animations or pumping the paused clock.
+`scripts/canonical-planes.mjs` records two actual
 UI routes: primary/secondary grids during orbit, and secondary click gating
 followed by selecting that grid for a real split preview.
 
