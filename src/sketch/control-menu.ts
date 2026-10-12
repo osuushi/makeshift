@@ -1,5 +1,6 @@
 import "./control-menu.css";
 import { type ControlMode, controlMode, setControlMode } from "./control-preference.js";
+import { installTouchToggle, touchHint } from "./touch-toggle.js";
 
 export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void>): void {
   const root = document.createElement("div");
@@ -18,13 +19,18 @@ export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void
   legend.textContent = "Controls";
   group.append(legend);
   const updateHint = () => {
-    button.textContent = controlMode() === "mouse" ? "Mouse" : "Trackpad";
+    button.textContent = touchHint()
+      ? "Touch / Pencil"
+      : controlMode() === "mouse"
+        ? "Mouse"
+        : "Trackpad";
     const hint = app.querySelector(".navigation-hint");
     if (hint)
       hint.textContent =
-        controlMode() === "mouse"
+        touchHint() ??
+        (controlMode() === "mouse"
           ? "Wheel · zoom   Middle-drag · pan   Shift-middle-drag · orbit (+Option · roll)   Hold · choose overlap"
-          : "Two-finger scroll · pan   ⌘-drag · orbit (+Option · roll)   Pinch · zoom   Hold · choose overlap";
+          : "Two-finger scroll · pan   ⌘-drag · orbit (+Option · roll)   Pinch · zoom   Hold · choose overlap");
   };
   updateHint();
   for (const value of ["trackpad", "mouse"] as const) {
@@ -41,21 +47,8 @@ export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void
     label.append(input, value === "mouse" ? "Mouse" : "Trackpad");
     group.append(label);
   }
-  panel.append(group, document.createElement("hr"));
-  const action = document.createElement("button");
-  action.textContent = "Tablet";
-  action.disabled = !tablet;
-  if (!tablet) action.title = "Tablet handoff is available in the desktop app";
-  action.onclick = async () => {
-    panel.hidePopover();
-    button.disabled = true;
-    try {
-      await tablet?.();
-    } finally {
-      button.disabled = false;
-    }
-  };
-  panel.append(action);
+  panel.append(group);
+  if (tablet) installTabletAction(panel, button, tablet);
   panel.addEventListener("beforetoggle", (event) => {
     const open = (event as ToggleEvent).newState === "open";
     button.setAttribute("aria-expanded", String(open));
@@ -71,5 +64,26 @@ export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void
     }
   });
   root.append(button, panel);
+  installTouchToggle(root, updateHint);
   app.querySelector("header")?.append(root);
+}
+
+function installTabletAction(
+  panel: HTMLElement,
+  button: HTMLButtonElement,
+  tablet: () => Promise<void>,
+): void {
+  panel.append(document.createElement("hr"));
+  const action = document.createElement("button");
+  action.textContent = "Tablet";
+  action.onclick = async () => {
+    panel.hidePopover();
+    button.disabled = true;
+    try {
+      await tablet();
+    } finally {
+      button.disabled = false;
+    }
+  };
+  panel.append(action);
 }

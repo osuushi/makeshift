@@ -4,6 +4,10 @@ Founder contract, 2026-09-21: keyboard-folio and Apple Pencil first. One finger
 rotates, two pan/pinch/twist; Pencil uses the existing geometry pointer routes. Backtick
 and tilde alias Escape in CAD, including numeric fields, while terminal and text
 editing retain their characters. Ordinary UI buttons remain finger-accessible.
+Touch browsers, including standalone web mode, use these controls automatically.
+The Camera/Pointer toggle defaults to Camera (fingers navigate, Pencil edits).
+Pointer sends finger input through ordinary geometry tools for use without Pencil;
+the preference persists locally and does not change the document or Undo history.
 Sketch and modeling selection allow 16 CSS pixels of Pencil tip movement before
 dragging (mouse retains 3 pixels). Selection uses the initial contact position,
 so lifting the tip off an edge still selects that edge. Modeling recognizes two
