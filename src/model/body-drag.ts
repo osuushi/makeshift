@@ -4,6 +4,8 @@ import type { Point, Vector } from "../sketch/planes.js";
 import { axes } from "./body-placement.js";
 import { projectedAxis } from "./extrude-axis.js";
 import { featureEdges } from "./feature-edges.js";
+import type { GizmoPointer } from "./gizmo-inputs.js";
+import { widgetPointerOffset } from "./widget-viewport.js";
 
 export function dragFrame(
   editor: SketchEditor,
@@ -106,4 +108,42 @@ export function bodySnap(
     }
   }
   return best;
+}
+
+export function gizmoPointer(
+  editor: SketchEditor,
+  pivot: Vector,
+  axis: string,
+  event: PointerEvent,
+  direction?: Vector,
+): GizmoPointer | null {
+  if (event.pointerId === -1) return null;
+  return {
+    id: event.pointerId,
+    x: event.clientX,
+    y: event.clientY,
+    moved: false,
+    frame: dragFrame(
+      editor,
+      pivot,
+      axis,
+      event.clientX,
+      event.clientY,
+      direction,
+      widgetPointerOffset(event.currentTarget),
+    ),
+  };
+}
+
+export function showBodySnap(
+  editor: SketchEditor,
+  marker: HTMLElement,
+  snap: ReturnType<typeof bodySnap>,
+): void {
+  marker.hidden = !snap;
+  if (snap) {
+    const point = editor.world.project(snap.point);
+    marker.style.left = `${point.x}px`;
+    marker.style.top = `${point.y}px`;
+  }
 }

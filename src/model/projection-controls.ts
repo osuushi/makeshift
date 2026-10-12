@@ -1,14 +1,19 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
-import { newId, type Sketch } from "../sketch/document.js";
+import type { Sketch } from "../sketch/document.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import { coplanar, type PlaneFrame } from "../sketch/planes.js";
+import type { PlaneFrame } from "../sketch/planes.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import type { EntityViewer } from "./entity-viewer.js";
 import type { PlaneReferencePicker } from "./plane-reference-picker.js";
 import type { Projection, ProjectionSource } from "./projection.js";
 import { sourceProjectionNormal } from "./projection-direction.js";
 import { ProjectionInput } from "./projection-input.js";
-import { projectionKey, projectionSelection, projectionSource } from "./projection-selection.js";
+import {
+  projectionDestination,
+  projectionKey,
+  projectionSelection,
+  projectionSource,
+} from "./projection-selection.js";
 import { ProjectionSourceView } from "./projection-source-view.js";
 
 export class ProjectionControls {
@@ -94,7 +99,7 @@ export class ProjectionControls {
     this.target = restored
       ? { frame: structuredClone(restored.frame), sketchId: restored.sketchId }
       : e.world.activeFrame
-        ? this.destination(e.world.activeFrame, e.sketch?.id)
+        ? projectionDestination(this.editor, e.world.activeFrame, e.sketch?.id)
         : null;
     e.message = "";
     this.direction = restored?.direction ?? "target-normal";
@@ -135,7 +140,7 @@ export class ProjectionControls {
       (frame) => {
         if (this.editor.blocked || this.lease?.phase !== "editing") return;
         this.lease.history?.checkpoint();
-        this.target = this.destination(frame);
+        this.target = projectionDestination(this.editor, frame);
         this.hover = null;
         this.view.show(this.sources, null);
         this.editor.message = "";
@@ -148,17 +153,6 @@ export class ProjectionControls {
       },
       (event) => !event.shiftKey,
     );
-  }
-  private destination(
-    frame: PlaneFrame,
-    sketchId?: string,
-  ): { frame: PlaneFrame; sketchId: string } {
-    const e = this.editor;
-    const visible = e.store.data.sketches.find(
-      (sketch) => e.visibility.visible(sketch.id) && coplanar(sketch.plane, frame),
-    );
-    // An explicit new ID prevents the backend from reusing a hidden coplanar sketch.
-    return { frame, sketchId: sketchId ?? visible?.id ?? newId() };
   }
   private toggle(source: ProjectionSource): void {
     const e = this.editor;

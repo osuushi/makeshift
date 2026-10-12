@@ -7,6 +7,7 @@ import { ExtrudeTargets } from "./extrude-targets.js";
 import type { RevolveAxis } from "./revolve-axis.js";
 import { installRevolveDrag } from "./revolve-drag.js";
 import { RevolveInputs } from "./revolve-inputs.js";
+import { revolutionFailureMessage, revolutionInputError } from "./revolve-validation.js";
 import { RevolveWidget } from "./revolve-widget.js";
 
 export class RevolveControls {
@@ -59,16 +60,10 @@ export class RevolveControls {
       editor.refresh();
     };
     this.widget.accept.onclick = () => void this.finish();
-    for (const key of ["angle", "height"] as const)
-      this.widget[key].addEventListener(
-        "input",
-        () => {
-          const field = this.widget[key];
-          this[key] = field.value.trim() ? Number(field.value) : NaN;
-          this.queue();
-        },
-        { signal: this.abort.signal },
-      );
+    this.widget.bindQuantities(this.abort.signal, (key, value) => {
+      this[key] = value;
+      this.queue();
+    });
     new RevolveInputs(editor, this.abort.signal, {
       state: () => ({
         lease: this.lease,
@@ -193,18 +188,11 @@ export class RevolveControls {
   }
   queue(): void {
     if (!this.axis || !this.lease || this.picking) return;
-    if (
-      !Number.isFinite(this.angle) ||
-      !Number.isFinite(this.height) ||
-      Math.abs(this.angle) < 1e-7 ||
-      (this.height === 0 && Math.abs(this.angle) > 360)
-    ) {
+    const inputError = revolutionInputError(this.angle, this.height);
+    if (inputError) {
       this.valid = false;
       this.pending = this.latest = null;
-      this.inputError =
-        this.height === 0 && Math.abs(this.angle) > 360
-          ? "Set a nonzero height for more than one revolution"
-          : "Enter a nonzero angle and a finite height";
+      this.inputError = inputError;
       this.failure(this.inputError);
       this.editor.refresh();
       return;
@@ -244,11 +232,7 @@ export class RevolveControls {
     this.running = null;
   }
   private failure(message: string): void {
-    this.editor.message =
-      message +
-      (this.lease?.candidate && this.lastGood
-        ? ` · Showing last valid preview: ${this.lastGood}`
-        : "");
+    this.editor.message = revolutionFailureMessage(message, !!this.lease?.candidate, this.lastGood);
   }
   async finish(): Promise<boolean> {
     await this.running;

@@ -1,29 +1,21 @@
-import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import type { BodyTransform } from "./body.js";
 import { selectedBodies } from "./body-actions.js";
-import { bodySnap, dragFrame } from "./body-drag.js";
+import { bodySnap, gizmoPointer, showBodySnap } from "./body-drag.js";
 import { BodyGizmo } from "./body-gizmo.js";
+import {
+  type BodyMoveSession,
+  restoreBodyMoveSession,
+  trackBodyMoveHistory,
+} from "./body-move-history.js";
 import { BodyPivotDrag } from "./body-pivot-drag.js";
 import { axes, bodyCenter, placedDocument } from "./body-placement.js";
 import { GizmoInputs, type GizmoPointer } from "./gizmo-inputs.js";
 import { reopenBodyTransform } from "./reopen-body-transform.js";
 import { installTransformHandoff } from "./transform-handoff.js";
-import { widgetPointerOffset } from "./widget-viewport.js";
 
-type Session = {
-  edit: BodyTransform;
-  lease: InteractionLease;
-  valid: boolean;
-  value: number;
-  axis: string;
-  rotate: boolean;
-  pivotOnly: boolean;
-  explicitCopy: boolean;
-  lastPreview: string | null;
-};
 export class BodyMoveControls {
   private gizmo: BodyGizmo;
   private pivotDrag: BodyPivotDrag;
@@ -33,7 +25,7 @@ export class BodyMoveControls {
   private pivotMode = false;
   private customPivot = false;
   private selection = "";
-  private session: Session | null = null;
+  private session: BodyMoveSession | null = null;
   private pointer: GizmoPointer | null = null;
   constructor(
     private editor: SketchEditor,
@@ -127,7 +119,7 @@ export class BodyMoveControls {
     this.gizmo.input.focus();
     this.gizmo.input.select();
   }
-  private open(duplicate: boolean, restored?: BodyTransform): Session | null {
+  private open(duplicate: boolean, restored?: BodyTransform): BodyMoveSession | null {
     const bodies = selectedBodies(this.editor, duplicate ? "duplicate" : "move");
     if (!bodies.length) return null;
     const lease = this.editor.interactions.acquire(
@@ -163,44 +155,11 @@ export class BodyMoveControls {
       },
     };
     const session = this.session;
-    if (restored) {
-      const parameters = reopenBodyTransform(restored);
-      if (!parameters) {
-        this.cancel();
-        return null;
-      }
-      session.edit = structuredClone(restored);
-      session.value = parameters.value;
-      session.axis = parameters.axis;
-      session.edit.axis = axes[parameters.axis];
-      session.rotate = parameters.rotate;
-      this.gizmo.input.value = String(parameters.value);
-      this.gizmo.input.setAttribute(
-        "aria-label",
-        `Body ${parameters.rotate ? "rotation" : "translation"} ${parameters.axis}`,
-      );
+    if (restored && !restoreBodyMoveSession(session, this.gizmo, restored)) {
+      this.cancel();
+      return null;
     }
-    lease.trackHistory(
-      this.gizmo.root,
-      () => ({
-        value: session.value,
-        axis: session.axis,
-        rotate: session.rotate,
-        duplicate: session.edit.duplicate,
-      }),
-      (state) => {
-        session.axis = state.axis;
-        session.rotate = state.rotate;
-        session.edit.axis = axes[state.axis];
-        session.edit.duplicate = state.duplicate;
-        this.gizmo.input.setAttribute(
-          "aria-label",
-          `${session.pivotOnly ? "Pivot" : state.rotate ? "Body rotation" : "Body translation"} ${state.axis}`,
-        );
-        this.gizmo.input.value = String(state.value);
-        this.preview(state.value);
-      },
-    );
+    trackBodyMoveHistory(session, this.gizmo, (value) => this.preview(value));
     this.preview(session.value);
     return this.session;
   }
@@ -218,22 +177,7 @@ export class BodyMoveControls {
     s.axis = axis;
     s.rotate = rotate;
     s.edit.axis = axes[axis];
-    if (event.pointerId !== -1)
-      this.pointer = {
-        id: event.pointerId,
-        x: event.clientX,
-        y: event.clientY,
-        moved: false,
-        frame: dragFrame(
-          this.editor,
-          this.pivot,
-          axis,
-          event.clientX,
-          event.clientY,
-          undefined,
-          widgetPointerOffset(event.currentTarget),
-        ),
-      };
+    this.pointer = gizmoPointer(this.editor, this.pivot, axis, event);
     this.gizmo.input.setAttribute(
       "aria-label",
       `${s.pivotOnly ? "Pivot" : rotate ? "Body rotation" : "Body translation"} ${axis}`,
@@ -307,12 +251,7 @@ export class BodyMoveControls {
       s && !s.rotate && !event.shiftKey
         ? bodySnap(this.editor, s.pivotOnly ? [] : s.edit.ids, s.edit.pivot, s.axis, value)
         : null;
-    this.snap.hidden = !snap;
-    if (snap) {
-      const point = this.editor.world.project(snap.point);
-      this.snap.style.left = `${point.x}px`;
-      this.snap.style.top = `${point.y}px`;
-    }
+    showBodySnap(this.editor, this.snap, snap);
     return snap?.value ?? value;
   }
   private update = (): void => {

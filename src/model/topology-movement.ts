@@ -134,3 +134,17 @@ export function movementNormal(editor: SketchEditor, targets: Targets | null): V
   if (major < 0) normal.negate();
   return normal.toArray() as Vector;
 }
+
+export function restoredMovement(
+  editor: SketchEditor,
+  operation: FaceMovement | EdgeMovement,
+): TopologyMovement {
+  return "faces" in operation
+    ? structuredClone(operation)
+    : {
+        ...structuredClone(operation),
+        pivot: movementCenter(editor, operation) ?? [0, 0, 0],
+        axis: [1, 0, 0],
+        angle: 0,
+      };
+}

@@ -1,26 +1,12 @@
 import { cancellableCalculation } from "./calculation-state.js";
-import type { ModelCall, ModelRequest, ModelView } from "./model-api.js";
+import type { ModelRequest, ModelView } from "./model-api.js";
+import { ModelQueries } from "./model-queries.js";
+import { call } from "./model-transport.js";
 import type { HistoryOperation, OperationHistoryEntry } from "./operation-history.js";
 import type { SelectionHistory } from "./selection-history.js";
 
-declare global {
-  interface Window {
-    makeshiftModel?: ModelCall;
-  }
-}
-const call: ModelCall = async (request) => {
-  if (window.makeshiftModel) return window.makeshiftModel(request);
-  const response = await fetch("/sketch-api", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
-  });
-  if (!response.ok) throw new Error("Sketch backend is unavailable");
-  return response.json();
-};
-
 // A read-only rendering copy. Accepted edits and all Undo snapshots live in the host.
-export class ModelClient {
+export class ModelClient extends ModelQueries {
   private view: ModelView = {
     data: { units: "mm", sketches: [] },
     canUndo: false,
@@ -66,7 +52,9 @@ export class ModelClient {
     private changed: () => void,
     private error: (message: string) => void,
     private navigated?: (operation: HistoryOperation, direction: "undo" | "redo") => void,
-  ) {}
+  ) {
+    super();
+  }
   get planeCutAvailable() {
     return this.view.planeCutAvailable ?? false;
   }
@@ -166,48 +154,6 @@ export class ModelClient {
     const reply = await call({ kind: "read-history" });
     if (reply.error) throw new Error(reply.error);
     return reply.history ?? [];
-  }
-  async sections(frame: import("./planes.js").PlaneFrame, bodies: string[]) {
-    const reply = await call({ kind: "sections", frame, bodies });
-    if (reply.error) throw new Error(reply.error);
-    if (!reply.sections) throw new Error("Cross sections unavailable");
-    return reply.sections;
-  }
-  async exportGeometry(bodyIds?: string[]) {
-    const reply = await call({ kind: "export-geometry", bodyIds });
-    if (reply.error) throw new Error(reply.error);
-    if (!reply.exportDocument) throw new Error("Export geometry unavailable");
-    return reply.exportDocument;
-  }
-  async exportStep(items: import("../model/step-export.js").StepItem[]) {
-    const reply = await call({ kind: "export-step", items });
-    if (reply.error) throw new Error(reply.error);
-    if (!reply.step) throw new Error("STEP geometry unavailable");
-    return reply.step;
-  }
-  async cancelStepExport(): Promise<void> {
-    const reply = await call({ kind: "cancel-step-export" });
-    if (reply.error) throw new Error(reply.error);
-  }
-  async draftDecorator(
-    edit: Extract<import("../decorators/types.js").DecoratorEdit, { action: "settings" }>,
-  ) {
-    const reply = await call({ kind: "decorator-draft", edit });
-    if (reply.error || !reply.decoratorDraft)
-      throw new Error(reply.error ?? "Decorator draft unavailable");
-    return reply.decoratorDraft;
-  }
-  async inspectDecorator(query: import("../decorators/inspection.js").DecoratorInspectionRequest) {
-    const reply = await call({ kind: "decorator-inspect", query });
-    if (reply.error || !reply.decoratorInspection)
-      throw new Error(reply.error ?? "Decorator inspection unavailable");
-    return reply.decoratorInspection;
-  }
-  async measure(targets: import("../model/measurement.js").MeasurementTarget[]) {
-    const reply = await call({ kind: "measure", targets });
-    if (reply.error) throw new Error(reply.error);
-    if (!reply.measurement) throw new Error("Measurement unavailable");
-    return reply.measurement;
   }
   private restoringReopen: ModelRequest["kind"] | null = null;
   async restoreReopen(kind: ModelRequest["kind"], restore: () => Promise<void>): Promise<void> {

@@ -1,4 +1,5 @@
 import type { SketchEditor } from "../sketch/editor.js";
+import { hasSettingsProblem } from "./edits.js";
 import { threadInformation } from "./thread-information.js";
 import type { DecoratorInstance } from "./types.js";
 
@@ -31,4 +32,18 @@ export function appendThreadInformation(
       root.append(text, button);
     }
   }
+}
+
+export function appendThreadProblem(root: HTMLElement, instances: DecoratorInstance[]) {
+  const problem = instances.find((d) => d.problem)?.problem;
+  if (problem) {
+    const note = document.createElement("p");
+    note.className = "decorator-warning";
+    note.setAttribute("role", "status");
+    note.textContent = `⚠ Threads need correction: ${problem}.`;
+    if (instances.every((d) => !d.problem || hasSettingsProblem(d)))
+      note.textContent += " Adjust the settings below.";
+    root.append(note);
+  }
+  return problem;
 }

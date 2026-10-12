@@ -1,14 +1,13 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
-import { pickModels } from "../sketch/model-selection.js";
 import type { LiftSource } from "./body.js";
 import { BooleanOperands } from "./boolean-operands.js";
 import { ExtrudeTargets } from "./extrude-targets.js";
 import type { Loft } from "./loft.js";
 import { LoftGuides } from "./loft-guides.js";
+import { pickLoftSection } from "./loft-selection.js";
 import { type LoftSectionAction, LoftWidget } from "./loft-widget.js";
-import { resolveOperation } from "./operation-selection.js";
 
 export class LoftControls {
   private operands: BooleanOperands;
@@ -136,16 +135,8 @@ export class LoftControls {
         event.preventDefault();
         event.stopImmediatePropagation();
         if (this.editor.blocked) return;
-        // Pick accepted source geometry rather than a newly generated loft face.
-        const candidate = this.lease.candidate;
-        this.lease.show(null);
-        const hits = pickModels(this.editor, { x: event.clientX, y: event.clientY });
-        this.lease.show(candidate);
-        for (const hit of hits) {
-          const resolution = resolveOperation("extrude", [hit], this.editor.store.data);
-          if (!resolution.available) continue;
-          const source = resolution.inputs[0];
-          if (this.sources.some((s) => JSON.stringify(s) === JSON.stringify(source))) continue;
+        const source = pickLoftSection(this.editor, this.lease, event, this.sources);
+        if (source) {
           this.sources.push(source);
           this.alignment?.push(0);
           this.queue();
