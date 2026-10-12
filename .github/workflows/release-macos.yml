@@ -1,6 +1,7 @@
 name: Release macOS arm64
 on:
   workflow_dispatch:
+  workflow_call:
 permissions:
   contents: read
   actions: read
