@@ -29,7 +29,10 @@ export class WorldFrame {
     private readonly capture: () => void,
   ) {
     window.addEventListener("makeshift-test-frame", this.captureFrame);
+    world.canvas.addEventListener("webglcontextrestored", this.restoreXray);
   }
+
+  private readonly restoreXray = (): void => this.xray.invalidate();
 
   private readonly captureFrame = (): void => {
     if (window.makeshiftTestFrameMode === "on-demand") this.capture();
@@ -86,6 +89,7 @@ export class WorldFrame {
 
   dispose(): void {
     window.removeEventListener("makeshift-test-frame", this.captureFrame);
+    this.world.canvas.removeEventListener("webglcontextrestored", this.restoreXray);
     this.foreground.dispose();
     this.sections.dispose();
     this.primitives.dispose();
