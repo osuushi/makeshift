@@ -1,10 +1,21 @@
 .control-selector {
   pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .control-selector > button {
   display: inline-flex;
   align-items: center;
   gap: 12px;
+}
+.touch-control-toggle {
+  display: flex;
+  gap: 2px;
+}
+.touch-control-toggle button[aria-pressed="true"] {
+  background: #dce8f4;
+  color: #243e58;
 }
 .control-selector > button::after {
   content: "";

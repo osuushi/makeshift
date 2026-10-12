@@ -1,12 +1,12 @@
-import type {} from "../ipad/protocol.js";
 import { panCamera, zoomCamera } from "./camera-motion.js";
 import type { Point } from "./planes.js";
 import { QuarterTurn } from "./quarter-turn.js";
+import { hasTouchControls, touchMode } from "./touch-preference.js";
 import type { World } from "./world.js";
 
 /** Touch navigates before geometry listeners. Pen/mouse retain ordinary tool routes. */
 export function installTabletInput(world: World, signal: AbortSignal): void {
-  if (window.makeshiftRemote) new TabletInput(world, signal);
+  if (hasTouchControls()) new TabletInput(world, signal);
 }
 class TabletInput {
   private touches = new Map<number, Point>();
@@ -31,6 +31,7 @@ class TabletInput {
         type,
         (event) => {
           if (
+            touchMode() === "camera" &&
             this.viewport(event.target) &&
             performance.now() < this.suppressClickUntil &&
             (!(event instanceof PointerEvent) ||
@@ -46,7 +47,7 @@ class TabletInput {
       window.addEventListener(
         type,
         (event) => {
-          if (this.viewport(event.target)) consume(event);
+          if (touchMode() === "camera" && this.viewport(event.target)) consume(event);
         },
         options,
       );
@@ -93,7 +94,7 @@ class TabletInput {
       this.origin = null;
       return;
     }
-    if (event.pointerType !== "touch") return;
+    if (event.pointerType !== "touch" || touchMode() === "pointer") return;
     if (event.target instanceof Element) {
       if (event.target.closest("input, select, textarea")) return;
       const button = event.target.closest("button");

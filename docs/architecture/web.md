@@ -6,6 +6,13 @@ computer. It shares the sketch/solid editor and existing touch/Pencil gestures.
 The agent pane, terminal and LAN handoff controls are excluded from this build.
 SSH or other agent connectivity is not part of web mode.
 
+Touch-capable browsers default to the iPad/Pencil interaction: Pencil edits,
+one finger rotates, and two fingers pan/pinch/twist. The visible Camera/Pointer
+toggle switches fingers between navigation and ordinary geometry editing, making
+the editor usable without a stylus. The choice persists locally, outside document
+Undo. Mouse/trackpad settings remain available for attached desktop input devices;
+the unavailable Tablet handoff action is omitted.
+
 ## Ownership and calculation
 
 The existing TypeScript DocumentOwner owns the accepted document and snapshot Undo.

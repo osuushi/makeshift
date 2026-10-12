@@ -4,6 +4,7 @@ import { createServer, preview } from "vite";
 import { cameraRoute } from "./ui-camera.mjs";
 import { drag, inspect, reset } from "./ui-helpers.mjs";
 import { runtimeNames } from "./ui-runtime.mjs";
+import { installTestFrames } from "./ui-test-frames.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const names = runtimeNames(["chromium", "webkit"]);
@@ -18,6 +19,7 @@ try {
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
+      await installTestFrames(page);
       page.on("dialog", (dialog) => dialog.accept());
       const errors = [];
       page.on("pageerror", (error) => errors.push(error.message));
