@@ -1,7 +1,9 @@
 import * as THREE from "three";
 import { viewDisplay } from "../preferences/view-display.js";
 import type { Point } from "./planes.js";
+import { coplanar } from "./planes.js";
 import type { World } from "./world.js";
+import { hasForegroundContent } from "./world-foreground.js";
 import { XrayMask } from "./xray-mask.js";
 
 const vertexShader = `varying vec2 vUv;
@@ -71,6 +73,14 @@ export class XrayComposite {
   }
 
   render(world: World, normal: () => void, cut: () => void): void {
+    // In an active planar-only workspace both images are identical. Avoid two
+    // full-size framebuffer copies and 50 blur samples per pixel, especially on
+    // Retina tablets. Keep enabled()/contains() independent: picking still uses
+    // the same aperture when sectionable content is subsequently shown.
+    if (planarOnlyWorkspace(world)) {
+      cut();
+      return;
+    }
     const { renderer } = world;
     const target = renderer.getRenderTarget(),
       clipping = renderer.clippingPlanes,
@@ -137,4 +147,15 @@ export class XrayComposite {
     this.blur.dispose();
     this.mix.dispose();
   }
+}
+
+export function planarOnlyWorkspace(
+  world: Pick<World, "activeFrame" | "scene" | "renderForegroundOverlays" | "xraySource">,
+): boolean {
+  const frame = world.activeFrame;
+  if (!frame || hasForegroundContent(world.scene, world.renderForegroundOverlays)) return false;
+  const source = world.xraySource();
+  return source.sketches.every(
+    (sketch) => !source.visible(sketch.id) || coplanar(frame, sketch.plane),
+  );
 }

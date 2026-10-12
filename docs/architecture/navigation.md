@@ -43,6 +43,14 @@ without inheriting Circle, Line, Rectangle, Curve or Trim from the previous sess
 Drawing tools continue to take precedence while that session is active. Explicitly
 choosing a drawing tool in Modeling can still arm a new plane-first drawing flow.
 
+Grid snapping has a touch-accessible **Grid snap: On/Off** button below the
+orientation cube, shared with the searchable Toggle grid snapping command.
+It changes placement only; geometry snapping and grid visibility remain independent.
+Exit isolation sits below it. These controls do not change document Undo.
+Sketch hover, Pen previews and active sketch gesture refreshes batch presentation
+on the next animation frame. Model updates and final pointer-release solving remain
+immediate; synchronous refresh remains available outside sketch gestures.
+
 ### X-ray vision
 
 While a planar workspace or unambiguous sketch/profile selection is active, renderer clipping makes geometry on the
@@ -57,6 +65,10 @@ and fragment coplanar sketch ink, region fills or shell parity.
 Skip the empty foreground pass when no visible body geometry or decorator preview
 contributes. Lights and empty/hidden groups alone do not require compositing;
 showing their geometry restores the same full-resolution pass.
+An active workspace containing only visible coplanar sketches also skips the local
+X-ray framebuffer copies and blur passes: its normal and cut images are identical.
+Visible bodies, decorator previews or noncoplanar sketches restore compositing.
+Modeling selection and aperture picking retain their existing behavior.
 In Modeling, only selected sketches/profiles supply the automatic section plane.
 Canonical/saved construction planes and body faces remain selectable without
 triggering a cut. Multiple selected entities must

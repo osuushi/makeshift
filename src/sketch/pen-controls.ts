@@ -188,7 +188,7 @@ export class PenControls {
       const preview = penSegment(s, this.last, end, this.press?.id ?? "pen-preview");
       this.lease.show(withSketch(this.editor.store.data, preview));
     } else this.lease.show(null);
-    this.editor.refresh();
+    this.editor.world.requestDraw();
   }
   private release = (event: PointerEvent): void => {
     const p = this.press;
