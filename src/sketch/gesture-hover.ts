@@ -31,5 +31,5 @@ export function hoverPointer(
             : "crosshair";
   if (event.shiftKey && editor.hover && pointKey(editor.hover))
     openPointMenu(editor, editor.hover, editor.pointer, true);
-  editor.refresh();
+  editor.world.requestDraw();
 }

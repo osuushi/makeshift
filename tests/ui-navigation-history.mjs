@@ -3,8 +3,10 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function navigationIdle(page) {
   await page.waitForFunction(() => {
-    const s = window.makeshiftInspect();
+    // Open/reload can replace the renderer before its inspection hook is installed.
+    const s = window.makeshiftInspect?.();
     return (
+      !!s &&
       !s.busy &&
       !s.camera.moving &&
       !s.camera.navigationPending &&

@@ -148,7 +148,10 @@ export class SketchEditor {
   refresh(): void {
     const sketch = this.store.data.sketches.find((s) => s.id === this.world.workspace?.sketchId);
     if (sketch) this.world.syncWorkspaceFrame(sketch.plane);
-    this.world.draw();
+    // Pointer input and calculator notifications can arrive several times per paint.
+    // Keep model updates immediate, but present a captured gesture only once per frame.
+    if (this.world.active && this.isDragging) this.world.requestDraw();
+    else this.world.draw();
   }
   async setTool(tool: Tool): Promise<void> {
     if (!(await completeInteraction(this))) return;

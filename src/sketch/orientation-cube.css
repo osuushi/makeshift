@@ -38,6 +38,7 @@
 .orientation-cube g:focus text {
   fill: #151515;
 }
+.grid-snap-control,
 .exit-isolation {
   position: absolute;
   top: 168px;
@@ -46,6 +47,15 @@
   padding: 7px 10px;
   font-size: 12px;
   white-space: nowrap;
+}
+.grid-snap-control {
+  min-height: 36px;
+}
+.grid-snap-control[aria-pressed="true"] {
+  border-color: #3276bf;
+}
+.exit-isolation {
+  top: 210px;
 }
 .exit-isolation[hidden] {
   display: none;
