@@ -44,7 +44,8 @@ export class DimensionFieldDraft {
       } else if (event.key === "Enter" || event.key === "Tab") {
         event.preventDefault();
         event.stopPropagation();
-        if (!(await this.commit(field))) return;
+        const committed = this.commit(field);
+        if (!(typeof committed === "boolean" ? committed : await committed)) return;
         if (event.key === "Enter") input.blur();
         else await next(event.shiftKey);
       }
@@ -53,16 +54,19 @@ export class DimensionFieldDraft {
   private async focus(field: DimensionField): Promise<void> {
     if (toolMenuOpen() || toolCatalog(this.editor).switching) return;
     const previous = this.focused;
-    if (previous && previous !== field && !(await this.commit(previous))) {
-      previous.input.focus();
-      return;
+    if (previous && previous !== field) {
+      const committed = this.commit(previous);
+      if (!(typeof committed === "boolean" ? committed : await committed)) {
+        previous.input.focus();
+        return;
+      }
     }
     if (toolCatalog(this.editor).switching) return;
     if (!this.lease) {
       this.lease = this.editor.interactions.acquire(
         "numeric",
         () => this.cancel(),
-        () => this.finish(),
+        async () => this.finish(),
         { navigation: "when-released" },
       );
       // Numeric values during a held sketch gesture belong to its pointer owner.
@@ -73,18 +77,18 @@ export class DimensionFieldDraft {
     field.input.select();
     this.editor.refresh();
   }
-  finish(): Promise<boolean> {
-    return this.focused ? this.commit(this.focused) : Promise.resolve(!this.lease);
+  finish(): boolean | Promise<boolean> {
+    return this.focused ? this.commit(this.focused) : !this.lease;
   }
-  private commit(field: DimensionField): Promise<boolean> {
+  private commit(field: DimensionField): boolean | Promise<boolean> {
     if (this.committing) return this.committing;
     const lease = this.lease;
     if (field.input.value === field.input.dataset.original) {
       field.input.removeAttribute("aria-invalid");
       this.end(lease);
-      return Promise.resolve(true);
+      return true;
     }
-    if (lease ? !lease.close() : !this.editor.isDragging) return Promise.resolve(false);
+    if (lease ? !lease.close() : !this.editor.isDragging) return false;
     this.committing = this.apply(field)
       .then((accepted) => {
         if (accepted) this.end(lease);

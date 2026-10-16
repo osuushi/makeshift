@@ -1,5 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { pick } from "../sketch/picking.js";
+import { pointerDragThreshold } from "../sketch/pointer-intent.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { BufferedPointer } from "./buffered-pointer.js";
 
@@ -31,7 +32,11 @@ export function installTransformHandoff(
             if (!done || !buffer.valid || !(target instanceof Element) || !target.isConnected)
               return;
             const { released, position: last } = buffer;
-            if (released && Math.hypot(last.x - event.clientX, last.y - event.clientY) > 3) {
+            if (
+              released &&
+              Math.hypot(last.x - event.clientX, last.y - event.clientY) >
+                pointerDragThreshold(event)
+            ) {
               target.dispatchEvent(
                 buffer.event("pointerdown", { x: event.clientX, y: event.clientY }),
               );

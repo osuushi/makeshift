@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { tabletNativeHistory } from "./tablet-native-history.mjs";
 import { at, drag, reset } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 
@@ -26,6 +27,7 @@ await withUiRuntimes(
     );
     await page.keyboard.press("l");
     await drag(page, [-20, 0], [20, 0]);
+    await tabletNativeHistory(page);
     await page.keyboard.press("Escape");
     const point = await at(page, 0, 0);
     await page.mouse.click(point.x, point.y);
