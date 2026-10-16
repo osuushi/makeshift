@@ -9,6 +9,7 @@ import { chooseTool } from "./ui-tools.mjs";
 export async function tabletEntryRoute(page, name) {
   await page.addInitScript(() => {
     Object.defineProperty(navigator, "maxTouchPoints", { value: 2 });
+    Object.defineProperty(navigator, "platform", { value: "MacIntel" });
   });
   await reset(page);
   await orient(page, [0.2, 0.2, 1]);
@@ -46,7 +47,11 @@ export async function tabletEntryRoute(page, name) {
   await page.touchscreen.tap(p.x, p.y);
   await page.touchscreen.tap(p.x, p.y);
   assert.ok((await inspect(page)).activePlane, "Finger double tap enters planar face");
-  await page.keyboard.press("Meta+f");
+  assert.match(
+    await page.getByRole("button", { name: "More tools", exact: true }).textContent(),
+    /⌘P/,
+  );
+  await page.keyboard.press("Meta+p");
   await page.getByRole("dialog", { name: "Find a tool" }).waitFor();
   await page.keyboard.press("Escape");
   // Exercise the iPad key-command fallback separately: desktop engines do not
@@ -54,7 +59,7 @@ export async function tabletEntryRoute(page, name) {
   assert.equal(
     await page.evaluate(() => {
       const event = new KeyboardEvent("keypress", {
-        key: "f",
+        key: "p",
         metaKey: true,
         bubbles: true,
         cancelable: true,

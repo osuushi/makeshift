@@ -10,8 +10,11 @@ newly displayed controls. Movement of 6 CSS pixels, multiple contacts, cancellat
 or a 300 ms hold disqualifies a tap; navigation and the overlap chooser retain
 ownership. Touch/Pencil taps are independent of prior mouse-orbit click suppression.
 Viewport taps focus the canvas so a stale numeric field cannot consume ⌘Enter.
-Sketch entry and ⌘F tool search also handle iPad's keypress command route; actual
-Safari native-command suppression still requires physical device verification.
+Sketch entry and tool search also handle iPad's keypress command route.
+On iOS, tool search uses and displays ⌘P; ⌘F remains with Safari Find after device
+feedback showed that Safari consumed it. Desktop tool search retains ⌘F/Ctrl+F,
+with ⌘P also accepted as a Mac alternate. Ctrl+P retains browser Print.
+iPad detection includes desktop-mode MacIntel with multiple touch points.
 Touch browsers, including standalone web mode, use these controls automatically.
 The Camera/Pointer toggle defaults to Camera (fingers navigate, Pencil edits).
 Pointer sends finger input through ordinary geometry tools for use without Pencil;

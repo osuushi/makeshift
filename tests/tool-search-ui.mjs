@@ -32,6 +32,10 @@ await withUiRuntimes(async (page, name) => {
   }
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, before, "Search does not edit geometry");
+  await page.keyboard.press("Meta+p");
+  await page.getByRole("dialog", { name: "Find a tool" }).waitFor();
+  assert.equal(await input.evaluate((element) => element === document.activeElement), true);
+  await page.keyboard.press("Escape");
   await orient(page, [1, 1, 1]);
   await page.keyboard.press("Meta+f");
   await input.fill("cope");
