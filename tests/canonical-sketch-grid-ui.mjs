@@ -9,6 +9,15 @@ await withUiRuntimes(async (page, name) => {
     await chooseTool(page, `Sketch on ${id}`, `sketch-${id.toLowerCase()}`);
     await settled(page);
     assert.equal((await inspect(page)).activePlane, id);
+    await page.locator('.toolbox [data-tool="sketch-grid"]').click();
+    const panel = page.getByRole("region", { name: "Sketch grid controls" });
+    const color = { XY: "#d4ae3a", XZ: "#55bb6e", YZ: "#b325c1" }[id];
+    for (const label of ["Minor grid color", "Major grid color"]) {
+      await panel.getByLabel(label, { exact: true }).fill(color);
+      await panel.getByLabel(label, { exact: true }).dispatchEvent("change");
+      await settled(page);
+    }
+    await panel.getByRole("button", { name: "Done", exact: true }).click();
     const counts = await page.evaluate(async () => {
       const image = new Image();
       image.src = document.querySelector("canvas").toDataURL();
@@ -32,10 +41,10 @@ await withUiRuntimes(async (page, name) => {
     });
     assert.ok(
       counts[id] > 3000,
-      `${id} sketch grid renders its palette color (${counts[id]} pixels)`,
+      `${id} sketch grid renders its document color (${counts[id]} pixels)`,
     );
     await page.screenshot({ path: `.cache/sketch-review/${name}-${id}-sketch-grid.png` });
     await chooseTool(page, "return to modeling", "modeling");
   }
-  console.log(`${name}: XY/XZ/YZ sketch entry renders the canonical grid palette colors`);
+  console.log(`${name}: XY/XZ/YZ sketch planes render the configured document grid colors`);
 });

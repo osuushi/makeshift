@@ -38,6 +38,9 @@ export class DocumentFiles {
     }
     return this.cachedArchive;
   }
+  adoptGridDefaults(previous: DocumentOwner["view"]["data"]): void {
+    if (this.saved === documentArchive(previous)) this.saved = this.archive;
+  }
   get status(): DocumentStatus {
     return {
       name: this.path ? basename(this.path) : this.untitledName,

@@ -1,0 +1,60 @@
+.sketch-grid-panel {
+  position: fixed;
+  z-index: 30;
+  width: min(280px, calc(100vw - 16px));
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid #d4dce6;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 4px 20px #0002;
+  animation: grid-slide-in 140ms ease-out;
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+}
+.sketch-grid-fields {
+  border: 0;
+  margin: 0 0 10px;
+  padding: 0;
+}
+.sketch-grid-fields legend {
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.sketch-grid-fields label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 8px 0;
+}
+.sketch-grid-fields input[type="number"] {
+  width: 90px;
+}
+.sketch-grid-fields input[type="color"] {
+  width: 44px;
+  height: 28px;
+  padding: 2px;
+}
+.sketch-grid-panel > button {
+  margin-right: 8px;
+}
+.sketch-grid-panel p {
+  font-size: 11px;
+  color: #566578;
+}
+@keyframes grid-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sketch-grid-panel {
+    animation: none;
+  }
+}

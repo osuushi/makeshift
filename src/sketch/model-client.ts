@@ -1,3 +1,4 @@
+import { sketchGridPreferences } from "../preferences/sketch-grid.js";
 import { cancellableCalculation } from "./calculation-state.js";
 import type { ModelRequest, ModelView } from "./model-api.js";
 import { ModelQueries } from "./model-queries.js";
@@ -174,6 +175,7 @@ export class ModelClient extends ModelQueries {
     if (
       ![
         "read",
+        "sketch-grid",
         "accept",
         "discard",
         "undo",
@@ -211,7 +213,17 @@ export class ModelClient extends ModelQueries {
               ? request.kind
               : null;
       if (this.cancelling || this.interrupted) return false;
-      const reply = await call(request);
+      let reply = await call(request);
+      if (
+        !reply.error &&
+        !reply.view.data.sketchGrid &&
+        ["read", "new", "open"].includes(request.kind)
+      )
+        reply = await call({
+          kind: "sketch-grid",
+          grid: sketchGridPreferences().grid,
+          initialize: true,
+        });
       if (this.interrupted) return false;
       this.view = reply.view;
       this.erosionAllowance = reply.erosionAllowance;
@@ -226,7 +238,11 @@ export class ModelClient extends ModelQueries {
         (direction || (!this.initialized && (selection.sketch.length || selection.modeling.length)))
       )
         this.selectionHistory?.restore(selection);
-      else if (request.kind === "new" || request.kind === "open" || reply.documentChanged)
+      else if (
+        request.kind === "new" ||
+        request.kind === "open" ||
+        (reply.documentChanged && request.kind !== "sketch-grid")
+      )
         this.selectionHistory?.accepted(request.kind === "new" || request.kind === "open");
       this.initialized = true;
       this.error("");

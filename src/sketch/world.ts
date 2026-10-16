@@ -64,6 +64,7 @@ export class World {
   } = () => ({ sketches: [], visibility: "", visible: () => false });
   height = 80;
   spacing = 1;
+  sketchGrid: () => import("./grid-settings.js").SketchGrid | undefined = () => undefined;
   canNavigate = () => true;
   transformBoxContains: ((x: number, y: number) => boolean) | null = null;
   canEnterSketch = () => true;
@@ -150,6 +151,7 @@ export class World {
       this.activeFrame,
       height,
       this.canonicalVisibility.states,
+      this.sketchGrid(),
     );
     updateViewClipping(this, this.sketchClip);
     for (const listener of this.changed) listener();
