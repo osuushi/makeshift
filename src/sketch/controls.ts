@@ -4,6 +4,7 @@ import { fixtureControls } from "../model/fixture-controls.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { sketchTools } from "../tools/sketch-tools.js";
 import { StandardCommandMenu } from "../tools/standard-command-menu.js";
+import { browserHistoryControls } from "./browser-history-controls.js";
 import type { SketchEditor } from "./editor.js";
 import { installGridSnapControl } from "./grid-snap-control.js";
 import { onModelKeydown } from "./model-keys.js";
@@ -22,6 +23,7 @@ export function installControls(
   const disposeFixtures =
     import.meta.env.DEV || window.makeshiftFixture ? fixtureControls(editor, app) : () => {};
   const abort = installShortcuts(editor, numeric, app);
+  browserHistoryControls(editor, abort.signal);
   const standardMenu = new StandardCommandMenu(editor);
   window.addEventListener(
     "blur",

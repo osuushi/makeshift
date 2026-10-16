@@ -13,6 +13,10 @@ Viewport taps focus the canvas so a stale numeric field cannot consume ⌘Enter.
 Sketch entry, tool search, document commands, Undo/Redo and Copy also handle
 iPad's keypress command route. Handled keydown events cancel their default action;
 ordinary text fields retain text editing and clipboard ownership.
+Browser `beforeinput` historyUndo/historyRedo commands also route to document
+history when focus is outside text editing. The original event target can be an
+earlier text field; current focus determines ownership. Open menus, dialogs and
+the agent retain their input. Physical iPad delivery of this fallback needs review.
 On iOS, tool search uses and displays ⌘P; ⌘F remains with Safari Find after device
 feedback showed that Safari consumed it. Desktop tool search retains ⌘F/Ctrl+F,
 with ⌘P also accepted as a Mac alternate. Ctrl+P retains browser Print.
