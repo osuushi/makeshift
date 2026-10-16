@@ -22,7 +22,8 @@ an in-tab geometry clipboard fallback on 2026-10-16: Copy records geometry and
 attempts system copy; keyboard/menu Paste uses the local copy on HTTP. It survives
 New within the same tab, but not reload or another tab. Ordinary text fields keep
 native clipboard ownership. HTTPS uses the system clipboard. No extra paste dialog.
-Undo/Redo accepts Cmd/Ctrl-Y as well as Cmd/Ctrl-Shift-Z.
+Undo/Redo accepts Cmd/Ctrl-Y as well as Cmd/Ctrl-Shift-Z. New uses and displays
+Ctrl-N on iPad after device testing found Cmd-N unavailable; desktop retains Cmd-N.
 Touch browsers, including standalone web mode, use these controls automatically.
 The Camera/Pointer toggle defaults to Camera (fingers navigate, Pencil edits).
 Pointer sends finger input through ordinary geometry tools for use without Pencil;

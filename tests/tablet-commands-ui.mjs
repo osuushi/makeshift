@@ -1,11 +1,14 @@
 import assert from "node:assert/strict";
 import { at, drag, reset } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
-import { chooseTool } from "./ui-tools.mjs";
 
 // Safari command keypress delivery and HTTP clipboard fallback are browser-specific.
 await withUiRuntimes(
   async (page, name) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "platform", { value: "MacIntel" });
+      Object.defineProperty(navigator, "maxTouchPoints", { value: 5 });
+    });
     await reset(page);
     await page.evaluate(() => {
       Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
@@ -14,7 +17,13 @@ await withUiRuntimes(
           document.activeElement?.value ?? event.clipboardData?.getData("text/plain");
       });
     });
-    await chooseTool(page, "Sketch on XY", "sketch-xy");
+    await page.keyboard.press("Meta+p");
+    await page.getByRole("combobox", { name: "Find a tool" }).fill("Sketch on XY");
+    await page.locator('[data-command="sketch-xy"]').click();
+    await page.waitForFunction(
+      () =>
+        window.makeshiftInspect().activePlane === "XY" && !window.makeshiftInspect().camera.moving,
+    );
     await page.keyboard.press("l");
     await drag(page, [-20, 0], [20, 0]);
     await page.keyboard.press("Escape");
@@ -54,7 +63,14 @@ await withUiRuntimes(
     await page.waitForFunction(
       () => window.makeshiftInspect().document.sketches[0].curves.length === 2,
     );
-    await commandPress(page, "n");
+    await page.getByRole("button", { name: "File / Edit", exact: true }).click();
+    assert.match(
+      await page.locator('[role="menuitem"][data-command="new"]').textContent(),
+      /Ctrl\+N/,
+    );
+    await page.keyboard.press("Escape");
+    await page.locator("canvas").focus();
+    await page.keyboard.press("Control+n");
     const dialog = page.getByRole("dialog", { name: "Unsaved changes" });
     await dialog.getByRole("button", { name: "Don’t Save", exact: true }).click();
     await page.waitForFunction(() => !window.makeshiftInspect().document.sketches.length);
