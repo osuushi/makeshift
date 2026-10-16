@@ -1,0 +1,43 @@
+.browser-library {
+  width: min(440px, calc(100vw - 48px));
+  max-height: 80vh;
+  padding: 24px;
+  border: 1px solid #8886;
+  border-radius: 12px;
+  color: inherit;
+  background: var(--panel, #fff);
+}
+.browser-library::backdrop {
+  background: #0005;
+}
+.browser-library h2 {
+  margin-top: 0;
+}
+.browser-library p {
+  line-height: 1.5;
+  font-size: 13px;
+}
+.browser-library label {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.browser-library input {
+  padding: 10px;
+  font: inherit;
+}
+.browser-library button {
+  padding: 10px 14px;
+  margin: 4px;
+  cursor: pointer;
+}
+.browser-drawings {
+  display: grid;
+  max-height: 45vh;
+  overflow: auto;
+  margin: 16px 0;
+}
+.browser-drawings button {
+  text-align: left;
+  overflow-wrap: anywhere;
+}

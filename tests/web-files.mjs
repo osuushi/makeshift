@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { strToU8, unzipSync, zipSync } from "three/addons/libs/fflate.module.js";
+import { downloadDrawing } from "./browser-library-helpers.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -17,7 +18,7 @@ export async function browserFileFailures(page) {
       throw new DOMException("Cancelled", "AbortError");
     };
   });
-  await chooseTool(page, "save as", "save-as");
+  await downloadDrawing(page, "test");
   assert.equal(JSON.stringify((await inspect(page)).document), before);
   await page.evaluate(() => {
     window.saveAborted = false;
@@ -36,7 +37,7 @@ export async function browserFileFailures(page) {
       }),
     });
   });
-  await chooseTool(page, "save as", "save-as");
+  await downloadDrawing(page, "test");
   await page.waitForFunction(() => window.saveAborted);
   assert.equal(JSON.stringify((await inspect(page)).document), before);
   await browserFileRoundtrip(page, before);
@@ -60,10 +61,14 @@ async function browserFileRoundtrip(page, before) {
       }),
     });
   });
-  await chooseTool(page, "save as", "save-as");
+  await downloadDrawing(page, "test");
   await page.waitForFunction(() => window.saveClosed);
   const buffer = Buffer.from(await page.evaluate(() => window.savedArchive));
   await chooseTool(page, "new", "new");
+  await page.waitForFunction(
+    () =>
+      !window.makeshiftInspect().busy && window.makeshiftInspect().document.sketches.length === 0,
+  );
   await page.getByLabel("Open Makeshift file").setInputFiles({
     name: "test.makeshift",
     mimeType: "application/octet-stream",
@@ -90,7 +95,7 @@ async function browserFileRoundtrip(page, before) {
   await page.evaluate(() => {
     window.saveClosed = false;
   });
-  await chooseTool(page, "save as", "save-as");
+  await downloadDrawing(page, "test");
   await page.waitForFunction(() => window.saveClosed);
   const roundtrip = unzipSync(new Uint8Array(await page.evaluate(() => window.savedArchive)));
   for (const [path, bytes] of Object.entries(attached)) assert.deepEqual(roundtrip[path], bytes);
