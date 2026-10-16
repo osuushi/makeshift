@@ -3,14 +3,6 @@
 // Add combinatorial cases to the linked lower-level tests, not this inventory.
 export const uiSuites = [
   {
-    args: ["plane-anchor-ui.mjs"],
-    seconds: 15,
-    browsers: ["electron"],
-    reason:
-      "The plane gizmo rendered a disabled anchor; real pointer input must reposition it, cancel safely, and feed rotation without adding document history.",
-    unit: "sketch-placement.test.ts",
-  },
-  {
     args: ["xray-vision-ui.mjs"],
     // macOS hidden Electron including New/XY/circle freshness: 9.18s.
     seconds: 20,
