@@ -51,6 +51,11 @@ Makeshift calculates both directly from its existing pointer contacts and consum
 duplicate Safari gesture events. Automated Chromium touch checks exercise this
 path; physical iPad twist usability remains unverified.
 Physical Pencil/palm rejection and Safari lifecycle behavior require device review.
+Sketch arrow taps and Tab/Shift-Tab between unchanged numeric fields focus and
+select the destination synchronously in the initiating input handler. Do not insert
+an idle promise before focus: iPad's native keyboard activation depends on the user
+gesture. Changed values still finish through the ordinary asynchronous edit owner
+before advancing; invalid values retain the current edit.
 
 ## One document and one active surface
 
@@ -121,3 +126,10 @@ dismisses without selection. Captured touch hit-tests screen coordinates to keep
 hover feedback and release selection on the same item. Browser automation covers
 pointer delivery and Chromium touch events;
 physical iPad/Pencil behavior still requires hardware review.
+
+Body/topology Move, plane and whole-sketch placement, and axial arrows use the same
+16 CSS-pixel Pencil tap tolerance, captured at press. Drift within that distance
+opens and selects the numeric field on release rather than accepting a drag;
+mouse gestures retain their 3-pixel threshold. Transform handoff preserves this
+distinction when accepting one handle's edit before beginning the next. Numeric
+entry on whole-sketch placement ignores held-pointer movement until a new gesture.

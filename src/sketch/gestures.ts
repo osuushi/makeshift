@@ -206,7 +206,10 @@ export class PointerGestures implements DragQuantityEdit {
     this.move(event);
     interaction.wait();
     interaction.releaseCapture();
-    await editor.numeric.commit();
+    // A stationary arrow tap has no calculation to drain. Keep its field focus
+    // in the pointer event so iPad Safari can open the keyboard and select text.
+    if (drag.moved || this.solve || document.activeElement instanceof HTMLInputElement)
+      await editor.numeric.commit();
     const solved = this.solve ? await this.solve.flush() : true;
     if (this.drag !== drag || !interaction.close()) return;
     if (!drag.moved && drag.hits[0]) {

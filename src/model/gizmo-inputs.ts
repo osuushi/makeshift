@@ -9,6 +9,7 @@ export interface GizmoPointer {
   x: number;
   y: number;
   moved: boolean;
+  threshold: number;
   frame: ReturnType<typeof dragFrame>;
 }
 interface GizmoActions {
@@ -81,7 +82,8 @@ export class GizmoInputs {
     if (!gesture || gesture.pointer.id !== event.pointerId) return;
     const { pointer, rotate } = gesture;
     this.actions.modifiers?.(event);
-    pointer.moved ||= Math.hypot(event.clientX - pointer.x, event.clientY - pointer.y) > 3;
+    pointer.moved ||=
+      Math.hypot(event.clientX - pointer.x, event.clientY - pointer.y) > pointer.threshold;
     if (!pointer.moved) return;
     const step = this.editor.world.spacing / (event.shiftKey ? 10 : 1);
     let value = rotate

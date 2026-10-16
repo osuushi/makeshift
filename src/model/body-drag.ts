@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Point, Vector } from "../sketch/planes.js";
+import { pointerDragThreshold } from "../sketch/pointer-intent.js";
 import { axes } from "./body-placement.js";
 import { projectedAxis } from "./extrude-axis.js";
 import { featureEdges } from "./feature-edges.js";
@@ -123,6 +124,7 @@ export function gizmoPointer(
     x: event.clientX,
     y: event.clientY,
     moved: false,
+    threshold: pointerDragThreshold(event),
     frame: dragFrame(
       editor,
       pivot,

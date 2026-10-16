@@ -173,7 +173,9 @@ export class Dimensions implements NumericFields {
         : e.transformAxis === "x"
           ? 0
           : -1;
-    if (!(await this.draft.finish())) return false;
+    // iPad focus must stay in the initiating key event when no edit needs saving.
+    const finished = this.draft.finish();
+    if (!(typeof finished === "boolean" ? finished : await finished)) return false;
     const next = index < 0 ? (reverse ? 2 : 0) : (index + (reverse ? 2 : 1)) % 3;
     e.transformAxis = next === 0 ? "x" : next === 1 ? "y" : null;
     e.transformRotation = next === 2;

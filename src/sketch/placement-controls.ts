@@ -13,6 +13,7 @@ import { onModelKeydown } from "./model-keys.js";
 import { modelingSketch } from "./model-selection.js";
 import { replayPointerModifiers } from "./modifier-pointer.js";
 import type { Vector } from "./planes.js";
+import { pointerDragThreshold } from "./pointer-intent.js";
 import { snapRotation } from "./rotation-snap.js";
 import { type PlacementAxis, placedFrame, sketchCenter } from "./sketch-placement.js";
 
@@ -29,6 +30,7 @@ type Session = {
   pointer: number;
   held: boolean;
   moved: boolean;
+  threshold: number;
   value: number;
   valid: boolean;
   lease: InteractionLease;
@@ -114,8 +116,9 @@ export class PlacementControls {
   private move = (event: PointerEvent): void => {
     const s = this.session;
     if (!s?.held || event.pointerId !== s.pointer) return;
+    if (numericFocus(this.input)) return;
     s.duplicate = event.altKey;
-    s.moved ||= Math.hypot(event.clientX - s.start.x, event.clientY - s.start.y) > 3;
+    s.moved ||= Math.hypot(event.clientX - s.start.x, event.clientY - s.start.y) > s.threshold;
     if (!s.moved) return;
     const step = this.editor.world.spacing / (event.shiftKey ? 10 : 1);
     const value = s.rotate
@@ -153,6 +156,7 @@ export class PlacementControls {
       pointer: event.pointerId,
       held: true,
       moved: false,
+      threshold: pointerDragThreshold(event),
       value: 0,
       valid: true,
       lease,
