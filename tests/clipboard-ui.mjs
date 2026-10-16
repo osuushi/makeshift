@@ -66,7 +66,7 @@ try {
   assert.equal((await inspect(page)).document.sketches[0].curves.length, 3);
   await page.reload();
   await inspect(page);
-  await page.getByRole("button", { name: "Tools", exact: true }).focus();
+  await page.getByRole("button", { name: "More tools", exact: true }).focus();
   await page.keyboard.press(`${command}+v`);
   await page.waitForFunction(
     () =>
@@ -79,7 +79,7 @@ try {
   );
   await createBody(page);
   await chooseTool(page, "Select all bodies", "select-all-bodies");
-  await page.getByRole("button", { name: "Tools", exact: true }).focus();
+  await page.getByRole("button", { name: "More tools", exact: true }).focus();
   await page.keyboard.press(`${command}+c`);
   const bodyText = await page.evaluate(() => navigator.clipboard.readText());
   assert.equal(JSON.parse(bodyText).geometry.bodies.length, 1);
@@ -91,10 +91,10 @@ try {
   );
   assert.equal((await inspect(page)).modelingSelection.length, 1);
   await chooseTool(page, "Select all bodies", "select-all-bodies");
-  await page.getByRole("button", { name: "Tools", exact: true }).focus();
+  await page.getByRole("button", { name: "More tools", exact: true }).focus();
   await page.keyboard.press(`${command}+c`);
   await reset(page);
-  await page.getByRole("button", { name: "Tools", exact: true }).focus();
+  await page.getByRole("button", { name: "More tools", exact: true }).focus();
   await page.keyboard.press(`${command}+v`);
   await page.waitForFunction(
     () =>
@@ -108,7 +108,7 @@ try {
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, pasted);
   // Text fields own native paste even with geometry selected.
-  await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await page.getByRole("button", { name: "More tools", exact: true }).click();
   const search = page.getByRole("combobox", { name: "Find a tool" });
   await search.fill("copy");
   await search.press(`${command}+a`);

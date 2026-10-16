@@ -1,6 +1,8 @@
 import { selectionContext } from "../model/selection-context.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import { onModelKeydown } from "../sketch/model-keys.js";
 import { toolCatalog } from "../tools/catalog.js";
+import { copyBrowserText, pasteBrowserText } from "./browser-clipboard.js";
 import { writeClipboard } from "./geometry.js";
 import { pasteSelection } from "./paste-selection.js";
 import { clipboardSelection } from "./selection.js";
@@ -35,7 +37,7 @@ export function clipboardControls(editor: SketchEditor): () => void {
               selectionContext(editor.modeling.targets, editor.store.data).complete.length
             ? null
             : "Select sketch geometry or whole bodies to copy"),
-      run: () => navigator.clipboard.writeText(copyText()),
+      run: () => copyBrowserText(copyText()),
     }),
     catalog.register({
       id: "paste",
@@ -45,9 +47,14 @@ export function clipboardControls(editor: SketchEditor): () => void {
       showInTools: false,
       finishEdit: false,
       reason,
-      run: async () => pasteSelection(editor, await navigator.clipboard.readText()),
+      run: async () => {
+        const text = await pasteBrowserText(abort.signal);
+        if (text !== null) return pasteSelection(editor, text);
+        return false;
+      },
     }),
   ];
+  copyShortcuts(editor, abort.signal);
   window.addEventListener(
     "copy",
     (event) => {
@@ -83,9 +90,29 @@ export function clipboardControls(editor: SketchEditor): () => void {
   };
 }
 
-function textOwnsClipboard(event: ClipboardEvent): boolean {
+function textOwnsClipboard(event: Event): boolean {
   const element = event.target instanceof Element ? event.target : document.activeElement;
   return !!element?.closest(
     "input, textarea, [contenteditable]:not([contenteditable=false]), .agent-dock, dialog[open]",
   );
+}
+
+function copyShortcuts(editor: SketchEditor, signal: AbortSignal): void {
+  for (const type of ["keydown", "keypress"] as const)
+    onModelKeydown(
+      (event) => {
+        if (
+          event.defaultPrevented ||
+          textOwnsClipboard(event) ||
+          !(event.metaKey || event.ctrlKey) ||
+          event.altKey ||
+          event.key.toLowerCase() !== "c"
+        )
+          return;
+        event.preventDefault();
+        void toolCatalog(editor).invoke("copy");
+      },
+      { signal },
+      type,
+    );
 }
