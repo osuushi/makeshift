@@ -5,7 +5,8 @@ rotates, two pan/pinch/twist; Pencil uses the existing geometry pointer routes. 
 and tilde alias Escape in CAD, including numeric fields, while terminal and text
 editing retain their characters. Ordinary UI buttons remain finger-accessible. In Modeling, a stationary finger tap
 selects at its initial contact; two taps within 500 ms and 16 CSS pixels enter a
-canonical/saved plane or planar face. The second tap retains entry intent across
+sketch, canonical/saved plane or planar face. Sketch ink has a 22 CSS-pixel
+entry radius measured on screen, independent of the 16-pixel inter-tap drift limit. The second tap retains entry intent across
 newly displayed controls. Movement of 6 CSS pixels, multiple contacts, cancellation
 or a 300 ms hold disqualifies a tap; navigation and the overlap chooser retain
 ownership. Touch/Pencil taps are independent of prior mouse-orbit click suppression.

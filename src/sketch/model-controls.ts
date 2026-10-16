@@ -11,6 +11,7 @@ import { onModelKeydown } from "./model-keys.js";
 import { modelingSketch, pickModel, pickModels } from "./model-selection.js";
 import type { ModelingTarget } from "./model-selection-state.js";
 import { PlacementControls } from "./placement-controls.js";
+import { touchSketchTarget } from "./touch-sketch-target.js";
 
 export class ModelControls {
   private disposers: (() => void)[] = [];
@@ -172,7 +173,11 @@ export class ModelControls {
       editor.interactions.current
     )
       return;
-    const target = pickModel(editor, { x: event.clientX, y: event.clientY });
+    const screen = { x: event.clientX, y: event.clientY };
+    const target =
+      (event instanceof PointerEvent && event.pointerType === "touch"
+        ? touchSketchTarget(editor, screen)
+        : null) ?? pickModel(editor, screen);
     if (
       target?.kind === "face" &&
       event instanceof PointerEvent &&
@@ -203,6 +208,7 @@ export class ModelControls {
       // same event into a selection change that interrupts camera alignment.
       event.preventDefault();
       event.stopImmediatePropagation();
+      editor.modeling.targets = [target];
       void toolCatalog(editor).invoke("edit-sketch");
     }
   }

@@ -1,6 +1,7 @@
 import type { SketchEditor } from "./editor.js";
 import type { ModelingTarget } from "./model-selection-state.js";
 import { pointerDragThreshold } from "./pointer-intent.js";
+import { touchSketchTarget } from "./touch-sketch-target.js";
 
 /** Preserve double taps across tip drift and newly displayed modeling widgets. */
 export function modelDoubleClick(
@@ -30,6 +31,19 @@ class ModelDoubleClick {
         if (performance.now() >= this.penClickUntil) this.select(event, this.before);
       },
       { signal },
+    );
+    window.addEventListener(
+      "dblclick",
+      (event) => {
+        if (
+          event.target === editor.world.canvas &&
+          event instanceof PointerEvent &&
+          event.pointerType === "touch" &&
+          touchSketchTarget(editor, { x: event.clientX, y: event.clientY })
+        )
+          this.select(event, this.before);
+      },
+      options,
     );
     window.addEventListener("click", this.click, options);
     window.addEventListener("pointerdown", this.down, options);

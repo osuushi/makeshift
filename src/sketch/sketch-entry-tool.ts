@@ -2,6 +2,7 @@ import type { ConstructionPlane } from "../model/construction-plane.js";
 import { toolCatalog } from "../tools/catalog.js";
 import type { SketchEditor } from "./editor.js";
 import { onModelKeydown } from "./model-keys.js";
+import { modelingSketch } from "./model-selection.js";
 import { planeIds } from "./planes.js";
 
 /** Enter sketching from the current modeling context, with a deliberate shortcut. */
@@ -21,6 +22,7 @@ export function sketchEntryTool(
     reason: () =>
       editor.workspaceEntry.reason() ?? (editor.world.active ? "Already editing a sketch" : null),
     run: () => {
+      if (modelingSketch(editor)) return editor.workspaceEntry.selected();
       const target = editor.modeling.targets.length === 1 ? editor.modeling.targets[0] : null;
       if (target?.kind === "face") {
         const face = editor.display.bodies

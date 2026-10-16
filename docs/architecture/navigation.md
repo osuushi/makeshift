@@ -35,6 +35,22 @@ In Mirror and Projection, a nearer planar solid face takes precedence over a
 canonical patch behind it; a coplanar face wins the depth tie.
 Keyboard/tool-menu plane entry remains available.
 
+### Sketch entry target
+
+Cmd-Enter resumes the selected sketch or profile before considering a selected
+face, construction plane, canonical reference or primary grid. All plane-entry
+routes reuse a visible coplanar sketch, retaining its own coordinate frame and ID;
+explicit sketch selection wins when several existing sketches share a plane.
+Entry alone creates no geometry. Drawing continues in that workspace rather than
+creating another sketch on the same visible plane.
+
+Finger double taps near visible sketch ink resolve the nearest curve within
+22 CSS pixels after projection, including tilted planes. Sketch entry takes priority
+over the canonical grid at that location and resolves the second tap independently
+of the first tap's selection. This 44-pixel target diameter is informed by
+[W3C target-size guidance](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html);
+it is an application picking tolerance, not a claim that CAD curves meet the UI criterion.
+
 ### Sketch tool lifetime
 
 Leaving a sketch workspace resets its tool to Select and clears armed creation

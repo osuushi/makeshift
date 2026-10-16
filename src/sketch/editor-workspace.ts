@@ -22,6 +22,19 @@ export class WorkspaceEntry {
 
   enter(workspace: NonNullable<World["workspace"]>, framing?: CameraFraming): boolean {
     if (this.reason()) return false;
+    const sketches = this.editor.store.data.sketches;
+    const existing =
+      sketches.find((sketch) => sketch.id === workspace.sketchId) ??
+      sketches.find(
+        (sketch) =>
+          this.editor.visibility.visible(sketch.id) && samePlane(sketch.plane, workspace.frame),
+      );
+    if (existing && existing.id !== workspace.sketchId)
+      workspace = {
+        key: `Sketch ${sketches.indexOf(existing) + 1}`,
+        frame: existing.plane,
+        sketchId: existing.id,
+      };
     this.editor.world.enterWorkspace(workspace, framing);
     this.editor.modeling.targets = [];
     this.editor.modeling.alternatives = [];
@@ -30,17 +43,7 @@ export class WorkspaceEntry {
   }
 
   canonical(id: PlaneId): boolean {
-    if (this.reason()) return false;
-    const frame = planes[id];
-    const index = this.editor.store.data.sketches.findIndex(
-      (sketch) => this.editor.visibility.visible(sketch.id) && samePlane(sketch.plane, frame),
-    );
-    const sketch = index < 0 ? undefined : this.editor.store.data.sketches[index];
-    return this.enter({
-      key: sketch ? `Sketch ${index + 1}` : id,
-      frame: sketch?.plane ?? frame,
-      ...(sketch ? { sketchId: sketch.id } : {}),
-    });
+    return this.enter({ key: id, frame: planes[id] });
   }
 
   selected(fresh = false): boolean {

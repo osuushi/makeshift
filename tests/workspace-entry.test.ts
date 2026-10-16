@@ -110,3 +110,28 @@ test("navigation capability defaults to blocked and captured released tools bloc
   assert.equal(owner.dragging, false);
   scale.release();
 });
+
+test("all plane entries reuse visible coplanar sketches even when requesting a new identity", () => {
+  for (const key of ["Construction plane", "Face sketch", "New sketch"]) {
+    const fixture = entryFixture();
+    assert.equal(fixture.entry.enter({ key, frame: planes.XY, sketchId: "new-id" }), true);
+    assert.equal(fixture.entered[0].sketchId, fixture.visible.id);
+    assert.equal(fixture.data.sketches.length, 2);
+  }
+});
+
+test("explicit selected sketch identity wins over another visible coplanar sketch", () => {
+  const fixture = entryFixture();
+  const second = emptySketch(planes.XY);
+  fixture.data.sketches.push(second);
+  fixture.modeling.targets = [{ kind: "sketch", sketch: second.id }];
+  assert.equal(fixture.entry.selected(), true);
+  assert.equal(fixture.entered[0].sketchId, second.id);
+});
+
+test("an unoccupied plane retains its frame without saving an empty sketch", () => {
+  const fixture = entryFixture();
+  assert.equal(fixture.entry.enter({ key: "saved", frame: planes.XZ }), true);
+  assert.deepEqual(fixture.entered[0], { key: "saved", frame: planes.XZ });
+  assert.equal(fixture.data.sketches.length, 2);
+});
