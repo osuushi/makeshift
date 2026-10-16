@@ -43,25 +43,24 @@ export function sketchEntryTool(
     },
   });
   const abort = new AbortController();
-  onModelKeydown(
-    (event) => {
-      if (
-        event.defaultPrevented ||
-        !(event.metaKey || event.ctrlKey) ||
-        event.altKey ||
-        event.shiftKey ||
-        event.key !== "Enter" ||
-        (event.target instanceof HTMLElement &&
-          (event.target.matches("input, textarea, select") || event.target.isContentEditable)) ||
-        catalog.reason({ reason: () => null })
-      )
-        return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      void catalog.invoke("start-sketch");
-    },
-    { capture: true, signal: abort.signal },
-  );
+  const shortcut = (event: KeyboardEvent) => {
+    if (
+      event.defaultPrevented ||
+      !(event.metaKey || event.ctrlKey) ||
+      event.altKey ||
+      event.shiftKey ||
+      (event.key !== "Enter" && event.code !== "Enter" && event.code !== "NumpadEnter") ||
+      (event.target instanceof HTMLElement &&
+        (event.target.matches("input, textarea, select") || event.target.isContentEditable)) ||
+      catalog.reason({ reason: () => null })
+    )
+      return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    void catalog.invoke("start-sketch");
+  };
+  for (const type of ["keydown", "keypress"] as const)
+    onModelKeydown(shortcut, { capture: true, signal: abort.signal }, type);
   return () => {
     abort.abort();
     dispose();

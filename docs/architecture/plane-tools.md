@@ -4,15 +4,22 @@ Founder-corrected interaction, 2026-09-21. This replaces the original
 offset-panel interaction.
 
 Construction planes are independent saved document objects with stable IDs and
-orthonormal PlaneFrames. With one planar face selected, Construction plane immediately
-creates a plane on that face in one Undo step. Otherwise it picks a world plane,
-planar face or saved plane in the viewport. A selected canonical or saved plane seeds
-temporary placement immediately, copying its frame into a new plane. Local translation/rotation controls
-place the temporary plane; Enter or leaving the tool accepts, Escape cancels.
-There is no plane-offset panel. Reselection supports movement, deletion, visibility
-and sketch entry. Select a saved plane and use Transform/M for placement,
-Enter or viewport double-click for sketch entry, and Delete/Backspace for deletion.
-These use the existing selection affordances; there is no floating plane action bar.
+orthonormal PlaneFrames. Construction plane immediately creates a new plane from
+one selected planar face, canonical plane or saved plane, copying that frame in
+one Undo step. Without a selected reference, it picks a world plane, planar face
+or saved plane once, then creates it. Creation selects the new plane and switches
+to idle Move controls. Reselecting a saved plane in 3D also defaults to Move.
+Reference picking ends at creation; later selection never relocates that plane
+onto another reference.
+
+Plane Move shares body Move's gizmo input, translation release and numeric routes.
+Translation drags accept on release; numeric edits and rotation accept with Enter
+or an ordinary selection/tool change. Clicking off accepts a valid edit, and
+Escape cancels. Move handles are idle until used, so sketch entry and deletion
+remain available immediately after selection. Reselection supports movement,
+deletion, visibility and sketch entry; Transform/M restores the movement controls.
+Enter or viewport double-click enters sketching, and Delete/Backspace deletes.
+These use existing selection affordances; there is no floating plane action bar.
 Visibility remains view state.
 
 While Revolve is choosing an axis, its own canvas hover and click take priority

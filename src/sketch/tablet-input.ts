@@ -1,6 +1,7 @@
 import { panCamera, zoomCamera } from "./camera-motion.js";
 import type { Point } from "./planes.js";
 import { QuarterTurn } from "./quarter-turn.js";
+import { TabletTaps } from "./tablet-taps.js";
 import { hasTouchControls, touchMode } from "./touch-preference.js";
 import type { World } from "./world.js";
 
@@ -9,6 +10,7 @@ export function installTabletInput(world: World, signal: AbortSignal): void {
   if (hasTouchControls()) new TabletInput(world, signal);
 }
 class TabletInput {
+  private taps: TabletTaps;
   private touches = new Map<number, Point>();
   private previous: ReturnType<typeof pair> | null = null;
   private origin: Point | null = null;
@@ -21,6 +23,7 @@ class TabletInput {
     private world: World,
     signal: AbortSignal,
   ) {
+    this.taps = new TabletTaps(world);
     const options = { capture: true, passive: false, signal };
     window.addEventListener("pointerdown", this.start, options);
     window.addEventListener("pointermove", this.move, options);
@@ -31,6 +34,7 @@ class TabletInput {
         type,
         (event) => {
           if (
+            !this.taps.replaying &&
             touchMode() === "camera" &&
             this.viewport(event.target) &&
             performance.now() < this.suppressClickUntil &&
@@ -88,6 +92,7 @@ class TabletInput {
   private start = (event: PointerEvent): void => {
     if (!this.viewport(event.target)) return;
     if (event.pointerType === "pen") {
+      this.taps.cancel();
       this.pen = event.pointerId;
       this.endOrbit();
       this.previous = null;
@@ -100,12 +105,15 @@ class TabletInput {
       const button = event.target.closest("button");
       if (
         button &&
+        !this.taps.continuing(event) &&
         !button.matches(
           ".orientable-handle, .body-axis-handle, .move-anchor, .scale-anchor, .scale-handle, .axial-arrow, .extrude-axis-sphere, .pivot-control, .move-control",
         )
       )
         return;
     }
+    if (this.pen === null) this.taps.start(event, this.touches.size);
+    else this.taps.cancel();
     this.world.longPress?.(event);
     consume(event);
     this.suppressClickUntil = performance.now() + 1000;
@@ -119,6 +127,7 @@ class TabletInput {
   };
   private move = (event: PointerEvent): void => {
     if (!this.touches.has(event.pointerId)) return;
+    this.taps.move(event);
     this.world.longPress?.(event);
     consume(event);
     this.touches.set(event.pointerId, point(event));
@@ -195,8 +204,10 @@ class TabletInput {
     this.rebase();
     if (level) this.world.levelHorizon(frame);
     if (!this.touches.size) this.world.navigation.release("touch");
+    this.taps.release(event);
   };
   private reset = (): void => {
+    this.taps.cancel();
     const ids = [...this.touches.keys()];
     this.touches.clear();
     this.world.navigation.release("touch");

@@ -37,7 +37,6 @@ await withUiRuntimes(async (page, name) => {
   await input.fill("cope");
   await page.keyboard.press("Enter");
   await pickPlane(page, "XY");
-  await page.keyboard.press("Enter");
   const created = (await inspect(page)).document.constructionPlanes;
   assert.equal(created.length, 1);
   assert.deepEqual(created[0].frame.origin, [0, 0, 0]);

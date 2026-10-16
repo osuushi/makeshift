@@ -3,9 +3,10 @@ import { toolMenuOpen } from "../tools/menu-focus.js";
 export function onModelKeydown(
   handler: (event: KeyboardEvent) => void,
   options?: AddEventListenerOptions,
+  type: "keydown" | "keypress" = "keydown",
 ): void {
   window.addEventListener(
-    "keydown",
+    type,
     (event) => {
       if (
         event.target instanceof Element &&

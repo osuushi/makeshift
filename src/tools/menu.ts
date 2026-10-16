@@ -63,6 +63,15 @@ export class ToolMenu {
   private bindEvents(): void {
     const options = { capture: true, signal: this.abort.signal };
     window.addEventListener("keydown", this.keydown, options);
+    // iPad Safari may route native key commands through keypress.
+    window.addEventListener(
+      "keypress",
+      (event) => {
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "f")
+          this.keydown(event);
+      },
+      options,
+    );
     window.addEventListener(
       "touchend",
       (event) => {

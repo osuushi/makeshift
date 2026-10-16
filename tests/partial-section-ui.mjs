@@ -56,7 +56,6 @@ await withUiRuntimes(
     state = await inspect(page);
     assert.equal(state.partialSection, null, "Canonical planes do not trigger automatic sections");
     await chooseTool(page, "construction plane", "construction-plane");
-    await page.keyboard.press("Enter");
     await inspect(page);
     await page.getByRole("button", { name: "Select Plane 1", exact: true }).click();
     state = await inspect(page);

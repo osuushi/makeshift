@@ -34,6 +34,7 @@ export class DeleteTopologyAction {
           event.ctrlKey ||
           event.metaKey ||
           event.altKey ||
+          (!editor.world.active && !this.selected()) ||
           event.target instanceof HTMLInputElement ||
           event.target instanceof HTMLTextAreaElement ||
           event.target instanceof HTMLSelectElement ||

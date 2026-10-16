@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { openDocument, saveDocument } from "./native-documents.mjs";
 import { orient } from "./ui-blend-edit.mjs";
@@ -18,6 +19,7 @@ async function movePlane(page, axis, value) {
 }
 
 async function route(page, name) {
+  await mkdir(".cache/plane-probe", { recursive: true });
   page.setDefaultTimeout(12000);
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -25,7 +27,7 @@ async function route(page, name) {
   await chooseTool(page, "construction plane", "construction-plane");
   await pickPlane(page, "XY");
   await movePlane(page, "Z", "12");
-  assert.equal((await inspect(page)).document.constructionPlanes, undefined);
+  assert.deepEqual((await inspect(page)).document.constructionPlanes[0].frame.origin, [0, 0, 0]);
   await page.keyboard.press("Enter");
   let s = await inspect(page);
   assert.deepEqual(s.document.constructionPlanes[0].frame.origin, [0, 0, 12]);

@@ -47,7 +47,10 @@ export class ConstructionPlaneControls {
     this.placement = new PlanePlacement(
       editor,
       overlay,
-      () => (this.lease && this.plane ? { frame: this.plane.frame, lease: this.lease } : null),
+      () => {
+        const plane = this.plane ?? this.selected();
+        return plane ? { frame: plane.frame, lease: this.lease } : null;
+      },
       (frame) => {
         if (!frame) {
           this.valid = false;
@@ -57,6 +60,11 @@ export class ConstructionPlaneControls {
         this.valid = true;
         this.preview(frame);
       },
+      () => {
+        const plane = this.selected();
+        if (plane) this.begin(plane);
+      },
+      () => this.finish(),
     );
     savedPlaneInteraction(
       editor,
@@ -93,10 +101,11 @@ export class ConstructionPlaneControls {
     return id ? planes[id] : this.selected()?.frame;
   }
   transform(): void {
-    const plane = this.selected();
-    if (plane) this.begin(plane);
+    this.editor.modeling.setTool("move");
+    this.editor.refresh();
   }
   private selectedKey(event: KeyboardEvent): void {
+    if (this.editor.interactions.current) return;
     const plane = this.selected();
     const world = this.editor.world,
       id = world.selectedPlane;
@@ -111,8 +120,12 @@ export class ConstructionPlaneControls {
       },
     });
   }
-  select(plane: ConstructionPlane | PlaneId, entering?: () => boolean): Promise<void> {
-    return selectReferencePlane(this.editor, this.picker, this.view, plane, entering);
+  async select(plane: ConstructionPlane | PlaneId, entering?: () => boolean): Promise<void> {
+    await selectReferencePlane(this.editor, this.picker, this.view, plane, entering);
+    if (typeof plane !== "string" && this.selected()) {
+      this.editor.modeling.setTool("move");
+      this.editor.refresh();
+    }
   }
   private sketch(plane: ConstructionPlane): void {
     if (this.editor.workspaceEntry.reason()) return;
@@ -127,7 +140,7 @@ export class ConstructionPlaneControls {
     if (e.blocked || e.interactions.current || e.world.active) return;
     const selected = e.modeling.targets;
     const reference = this.selectedFrame();
-    if (reference) return this.begin(undefined, structuredClone(reference));
+    if (reference) return this.place(structuredClone(reference));
     const target = selected.length === 1 ? selected[0] : undefined;
     const frame =
       target?.kind === "face"
@@ -136,11 +149,16 @@ export class ConstructionPlaneControls {
             ?.faces.find((f) => f.id === target.face)?.plane
         : null;
     if (!frame) return this.begin();
-    const plane = { id: newId(), frame: structuredClone(frame) };
-    if (await e.store.request({ kind: "construction-plane", plane })) {
-      e.modeling.targets = [];
+    await this.place(structuredClone(frame));
+  }
+  private async place(frame: PlaneFrame): Promise<void> {
+    const plane = { id: newId(), frame };
+    if (await this.editor.store.request({ kind: "construction-plane", plane })) {
+      this.editor.modeling.targets = [];
+      this.editor.world.selectedPlane = null;
       this.view.selected = plane.id;
-      e.refresh();
+      this.editor.modeling.setTool("move");
+      this.editor.refresh();
     }
   }
   async reopen(plane: ConstructionPlane): Promise<void> {
@@ -153,7 +171,7 @@ export class ConstructionPlaneControls {
     this.editor.world.canvas.focus();
     this.editor.refresh();
   }
-  private begin(existing?: ConstructionPlane, reference?: PlaneFrame): void {
+  private begin(existing?: ConstructionPlane): void {
     const e = this.editor;
     if (e.blocked || e.interactions.current || e.world.active) return;
     this.lease = e.interactions.acquire(
@@ -165,11 +183,8 @@ export class ConstructionPlaneControls {
     if (!this.lease) return;
     e.modeling.targets = [];
     e.world.selectedPlane = null;
-    this.plane = existing
-      ? structuredClone(existing)
-      : reference
-        ? { id: newId(), frame: reference }
-        : null;
+    this.plane = existing ? structuredClone(existing) : null;
+    e.modeling.setTool("move");
     this.valid = true;
     this.placement.reset();
     this.lease.trackHistory(
@@ -186,17 +201,21 @@ export class ConstructionPlaneControls {
         }
       },
     );
-    this.picker.start(
-      (frame) => {
-        this.placement.reset();
-        this.plane = { id: this.plane?.id ?? newId(), frame };
-        this.valid = true;
-        this.preview(frame);
-      },
-      undefined,
-      () => void this.finish(),
-    );
-    e.notice = "Construction plane · Pick a world plane, plane or planar face · Enter accepts";
+    if (!existing)
+      this.picker.start(
+        (frame) => {
+          this.plane = { id: newId(), frame };
+          this.valid = true;
+          this.preview(frame);
+          this.picker.stop();
+          void this.finish();
+        },
+        undefined,
+        () => void this.finish(),
+      );
+    e.notice = existing
+      ? "Move plane · Enter accepts · Escape cancels"
+      : "Construction plane · Pick a world plane, plane or planar face";
     if (this.plane) this.preview(this.plane.frame);
     else e.refresh();
   }

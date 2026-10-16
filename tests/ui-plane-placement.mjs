@@ -13,10 +13,14 @@ export async function planePlacementRoute(page) {
   await page.mouse.up();
   let s = await inspect(page);
   assert.notDeepEqual(
-    s.preview.constructionPlanes[0].frame.origin,
+    s.document.constructionPlanes[0].frame.origin,
     original.constructionPlanes[0].frame.origin,
   );
-  assert.deepEqual(s.document, original);
+  assert.equal(s.preview, null, "Translation drag commits on release like body Move");
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
+  await page.getByRole("button", { name: "Select Plane 1", exact: true }).first().click();
+  await page.getByRole("button", { name: "Move plane X", exact: true }).click();
   await page.getByRole("textbox", { name: "Plane translation X", exact: true }).fill("bad");
   await page.keyboard.press("Enter");
   assert.deepEqual((await inspect(page)).document, original);

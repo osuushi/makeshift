@@ -1,32 +1,27 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import { replayPointerModifiers } from "../sketch/modifier-pointer.js";
 import type { PlaneFrame } from "../sketch/planes.js";
-import { snapRotation } from "../sketch/rotation-snap.js";
 import { type PlacementAxis, placedFrame } from "../sketch/sketch-placement.js";
-import { dragFrame } from "./body-drag.js";
+import { gizmoPointer } from "./body-drag.js";
 import { BodyGizmo } from "./body-gizmo.js";
-import { widgetPointerOffset } from "./widget-viewport.js";
+import { GizmoInputs, type GizmoPointer } from "./gizmo-inputs.js";
 
+/** Plane geometry uses the same press, release and numeric input route as body Move. */
 export class PlanePlacement {
   private gizmo: BodyGizmo;
   get root(): HTMLElement {
     return this.gizmo.root;
   }
   private abort = new AbortController();
-  private drag: {
-    frame: PlaneFrame;
-    axis: PlacementAxis;
-    rotate: boolean;
-    pointer: number;
-    held: boolean;
-    measurement: ReturnType<typeof dragFrame>;
-  } | null = null;
+  private pointer: GizmoPointer | null = null;
+  private drag: { frame: PlaneFrame; axis: PlacementAxis; rotate: boolean } | null = null;
   constructor(
     private editor: SketchEditor,
     overlay: HTMLElement,
-    private current: () => { frame: PlaneFrame; lease: InteractionLease } | null,
+    private current: () => { frame: PlaneFrame; lease: InteractionLease | null } | null,
     private change: (frame: PlaneFrame | null) => void,
+    private begin: () => void = () => {},
+    private finish?: () => Promise<boolean>,
   ) {
     this.gizmo = new BodyGizmo(
       overlay,
@@ -35,69 +30,48 @@ export class PlanePlacement {
     );
     this.gizmo.pivot.disabled = true;
     this.gizmo.pivot.title = "Plane origin";
-    this.gizmo.input.setAttribute("aria-label", "Plane placement value");
-    const options = { signal: this.abort.signal };
-    const move = (event: PointerEvent) => {
-      const d = this.drag;
-      if (!d?.held || d.pointer !== event.pointerId) return;
-      const step = editor.world.spacing / (event.shiftKey ? 10 : 1);
-      let value = d.rotate
-        ? snapRotation(d.measurement.angle(event.clientX, event.clientY), event.shiftKey)
-        : d.measurement.translation(event.clientX, event.clientY);
-      if (!d.rotate && editor.gridSnap) value = Math.round(value / step) * step;
-      this.gizmo.input.value = String(Number(value.toFixed(4)));
-      this.preview(value);
-    };
-    window.addEventListener("pointermove", move, options);
-    replayPointerModifiers(this.abort.signal, () => !!this.drag?.held, move);
-    window.addEventListener(
-      "pointerup",
-      (event) => {
-        if (this.drag?.pointer !== event.pointerId) return;
-        this.drag.held = false;
-        this.current()?.lease.releaseCapture();
-        this.gizmo.input.focus();
-        this.gizmo.input.select();
-        this.editor.refresh();
+    new GizmoInputs(editor, this.gizmo.input, this.abort.signal, {
+      gesture: () =>
+        this.pointer && this.drag ? { pointer: this.pointer, rotate: this.drag.rotate } : null,
+      active: () => false, // The construction-plane owner handles acceptance/cancellation keys.
+      queue: (value) => this.preview(value),
+      release: (moved) => {
+        this.pointer = null;
+        this.current()?.lease?.releaseCapture();
+        if (moved && !this.drag?.rotate && this.finish) void this.finish();
+        else if (!moved) {
+          this.gizmo.input.focus();
+          this.gizmo.input.select();
+        } else editor.refresh();
       },
-      options,
-    );
-    this.gizmo.input.addEventListener(
-      "input",
-      () => this.preview(this.gizmo.input.value.trim() ? Number(this.gizmo.input.value) : NaN),
-      options,
-    );
+      finish: () => this.finish?.() ?? Promise.resolve(false),
+      cancel: () => {
+        if (this.pointer) editor.interactions.requestCancel();
+      },
+    });
   }
   private start(event: PointerEvent, axis: PlacementAxis, rotate: boolean): void {
+    if (event.button || this.editor.blocked || this.pointer) return;
+    if (!this.current()?.lease) this.begin();
     const current = this.current();
-    if (event.button || !current || this.editor.blocked) return;
+    if (!current?.lease) return;
     event.preventDefault();
     event.stopPropagation();
-    const frame = structuredClone(current.frame);
-    this.drag = {
-      frame,
-      axis,
-      rotate,
-      pointer: event.pointerId,
-      held: true,
-      measurement: dragFrame(
-        this.editor,
-        frame.origin,
-        axis,
-        event.clientX,
-        event.clientY,
-        undefined,
-        widgetPointerOffset(event.currentTarget),
-      ),
-    };
+    this.drag = { frame: structuredClone(current.frame), axis, rotate };
+    this.pointer = gizmoPointer(this.editor, current.frame.origin, axis, event);
     this.gizmo.input.value = "0";
     this.gizmo.input.removeAttribute("aria-invalid");
     this.gizmo.input.setAttribute(
       "aria-label",
       `Plane ${rotate ? "rotation" : "translation"} ${axis}`,
     );
-    current.lease.capture(event.currentTarget as Element, event.pointerId);
+    if (event.pointerId !== -1)
+      current.lease.capture(event.currentTarget as Element, event.pointerId);
     this.editor.refresh();
+    if (event.pointerId === -1) {
+      this.gizmo.input.focus();
+      this.gizmo.input.select();
+    }
   }
   private preview(value: number): void {
     const d = this.drag;
@@ -112,12 +86,12 @@ export class PlanePlacement {
     this.change(placedFrame(sketch, d.axis, d.rotate, value, d.frame.origin));
   }
   reset(): void {
-    this.drag = null;
+    this.pointer = this.drag = null;
     this.gizmo.input.removeAttribute("aria-invalid");
   }
   update(): void {
     const current = this.current();
-    this.gizmo.root.hidden = !current;
+    this.gizmo.root.hidden = !current || !!this.editor.world.active;
     this.gizmo.input.hidden = !this.drag;
     if (current) this.gizmo.update(this.editor, current.frame.origin, false);
   }

@@ -168,12 +168,13 @@ async function referenceRoutes(page, name, source) {
   await chooseTool(page, "cross section", "cross-section");
   await orient(page, [1, -1, 1]);
   await pickPlane(page, "XZ");
+  await orient(page, [1, -1, 1]); // Keep the X rotation marker away from edge-on hiding.
   assert.ok((await inspect(page)).crossSection);
   await placement(page, true, "X", 30);
   const oblique = (await inspect(page)).crossSection;
   await button(page, "Flip side").click();
   assert.deepEqual((await inspect(page)).crossSection.origin, oblique.origin);
-  await page.keyboard.press("Enter");
+  await button(page, "Done").click();
   await caps(page);
   await page.screenshot({ path: `.cache/cross-section/${name}-oblique.png` });
   await button(page, "Adjust section").click();
@@ -194,7 +195,6 @@ async function savedPlaneRoute(page, name) {
   // Saved-plane preselection, and selection via Entities after activation.
   await chooseTool(page, "construction plane", "construction-plane");
   await pickPlane(page, "YZ");
-  await page.keyboard.press("Enter");
   const saved = (await inspect(page)).document;
   await chooseTool(page, "cross section", "cross-section");
   assert.deepEqual(
