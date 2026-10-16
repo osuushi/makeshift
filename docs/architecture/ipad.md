@@ -47,6 +47,11 @@ Makeshift calculates both directly from its existing pointer contacts and consum
 duplicate Safari gesture events. Automated Chromium touch checks exercise this
 path; physical iPad twist usability remains unverified.
 Physical Pencil/palm rejection and Safari lifecycle behavior require device review.
+Sketch arrow taps and Tab/Shift-Tab between unchanged numeric fields focus and
+select the destination synchronously in the initiating input handler. Do not insert
+an idle promise before focus: iPad's native keyboard activation depends on the user
+gesture. Changed values still finish through the ordinary asynchronous edit owner
+before advancing; invalid values retain the current edit.
 
 ## One document and one active surface
 
