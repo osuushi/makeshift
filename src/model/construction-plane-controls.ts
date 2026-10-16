@@ -49,7 +49,7 @@ export class ConstructionPlaneControls {
       overlay,
       () => {
         const plane = this.plane ?? this.selected();
-        return plane ? { frame: plane.frame, lease: this.lease } : null;
+        return plane ? { frame: plane.frame, lease: this.lease, id: plane.id } : null;
       },
       (frame) => {
         if (!frame) {
@@ -65,6 +65,7 @@ export class ConstructionPlaneControls {
         if (plane) this.begin(plane);
       },
       () => this.finish(),
+      true,
     );
     savedPlaneInteraction(
       editor,

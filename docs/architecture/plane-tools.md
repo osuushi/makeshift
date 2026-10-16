@@ -22,6 +22,11 @@ Enter or viewport double-click enters sketching, and Delete/Backspace deletes.
 These use existing selection affordances; there is no floating plane action bar.
 Visibility remains view state.
 
+Dragging a saved plane's Move anchor repositions only the temporary rotation
+pivot, without editing geometry or adding Undo history. Escape restores an anchor
+drag. Rotation uses that pivot; translation carries it with the plane. Selecting
+another plane resets the anchor to that plane's origin.
+
 While Revolve is choosing an axis, its own canvas hover and click take priority
 over ordinary canonical-plane selection. World-axis clicks therefore stay with
 the revolution rather than becoming plane selection or sketch entry.
