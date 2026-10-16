@@ -2,7 +2,7 @@ import { selectionContext } from "../model/selection-context.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import { toolCatalog } from "../tools/catalog.js";
-import { copyBrowserText, pasteBrowserText } from "./browser-clipboard.js";
+import { copyBrowserText, hasLocalClipboard, pasteBrowserText } from "./browser-clipboard.js";
 import { writeClipboard } from "./geometry.js";
 import { pasteSelection } from "./paste-selection.js";
 import { clipboardSelection } from "./selection.js";
@@ -48,13 +48,11 @@ export function clipboardControls(editor: SketchEditor): () => void {
       finishEdit: false,
       reason,
       run: async () => {
-        const text = await pasteBrowserText(abort.signal);
-        if (text !== null) return pasteSelection(editor, text);
-        return false;
+        return pasteSelection(editor, await pasteBrowserText());
       },
     }),
   ];
-  copyShortcuts(editor, abort.signal);
+  clipboardShortcuts(editor, abort.signal);
   window.addEventListener(
     "copy",
     (event) => {
@@ -97,7 +95,7 @@ function textOwnsClipboard(event: Event): boolean {
   );
 }
 
-function copyShortcuts(editor: SketchEditor, signal: AbortSignal): void {
+function clipboardShortcuts(editor: SketchEditor, signal: AbortSignal): void {
   for (const type of ["keydown", "keypress"] as const)
     onModelKeydown(
       (event) => {
@@ -105,12 +103,14 @@ function copyShortcuts(editor: SketchEditor, signal: AbortSignal): void {
           event.defaultPrevented ||
           textOwnsClipboard(event) ||
           !(event.metaKey || event.ctrlKey) ||
-          event.altKey ||
-          event.key.toLowerCase() !== "c"
+          event.altKey
         )
           return;
+        const key = event.key.toLowerCase();
+        const localPaste = key === "v" && !navigator.clipboard && hasLocalClipboard();
+        if (key !== "c" && !localPaste) return;
         event.preventDefault();
-        void toolCatalog(editor).invoke("copy");
+        void toolCatalog(editor).invoke(localPaste ? "paste" : "copy");
       },
       { signal },
       type,

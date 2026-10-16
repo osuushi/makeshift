@@ -61,9 +61,15 @@ function installShortcuts(
       (event.target instanceof HTMLInputElement ||
         event.target instanceof HTMLTextAreaElement ||
         event.target.isContentEditable);
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z" && !input) {
+    const historyKey = event.key.toLowerCase();
+    if (
+      (event.metaKey || event.ctrlKey) &&
+      !event.altKey &&
+      ["z", "y"].includes(historyKey) &&
+      !input
+    ) {
       event.preventDefault();
-      void toolCatalog(editor).invoke(event.shiftKey ? "redo" : "undo");
+      void toolCatalog(editor).invoke(historyKey === "y" || event.shiftKey ? "redo" : "undo");
       return;
     }
     if (

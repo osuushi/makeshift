@@ -41,9 +41,7 @@ await withUiRuntimes(
     );
     await page.getByRole("button", { name: "File / Edit", exact: true }).click();
     await page.locator('[role="menuitem"][data-command="paste"]').click();
-    const field = page.getByRole("textbox", { name: "Geometry from clipboard" });
-    await field.waitFor();
-    await field.press("Meta+v");
+    assert.equal(await page.getByRole("dialog", { name: "Paste geometry" }).count(), 0);
     await page.waitForFunction(
       () => window.makeshiftInspect().document.sketches[0].curves.length === 2,
     );
@@ -52,7 +50,7 @@ await withUiRuntimes(
     await page.waitForFunction(
       () => window.makeshiftInspect().document.sketches[0].curves.length === 1,
     );
-    await commandPress(page, "Z", true);
+    await commandPress(page, "y");
     await page.waitForFunction(
       () => window.makeshiftInspect().document.sketches[0].curves.length === 2,
     );
@@ -60,7 +58,14 @@ await withUiRuntimes(
     const dialog = page.getByRole("dialog", { name: "Unsaved changes" });
     await dialog.getByRole("button", { name: "Don’t Save", exact: true }).click();
     await page.waitForFunction(() => !window.makeshiftInspect().document.sketches.length);
-    console.log(`${name}: command keypress New/Redo/Copy, HTTP menu Paste and history pass`);
+    await page.locator("canvas").focus();
+    await page.keyboard.press("Meta+v");
+    await page.waitForFunction(
+      () => window.makeshiftInspect().document.sketches[0]?.curves.length === 1,
+    );
+    console.log(
+      `${name}: command keypress New/Redo/Copy, HTTP local keyboard/menu Paste and history pass`,
+    );
   },
   { allowed: ["chromium", "webkit"] },
 );

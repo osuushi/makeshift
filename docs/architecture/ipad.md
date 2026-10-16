@@ -17,11 +17,12 @@ On iOS, tool search uses and displays ⌘P; ⌘F remains with Safari Find after 
 feedback showed that Safari consumed it. Desktop tool search retains ⌘F/Ctrl+F,
 with ⌘P also accepted as a Mac alternate. Ctrl+P retains browser Print.
 iPad detection includes desktop-mode MacIntel with multiple touch points.
-HTTP LAN sessions do not expose the async browser clipboard API. Copy uses a
-temporary selected text field and the system copy command in that case. Native
-paste events still import geometry directly; menu Paste opens a focused paste
-field for the browser's keyboard or touch Paste action. No private geometry
-clipboard substitutes stale data for the system clipboard.
+HTTP LAN sessions do not expose the async browser clipboard API. Founder approved
+an in-tab geometry clipboard fallback on 2026-10-16: Copy records geometry and
+attempts system copy; keyboard/menu Paste uses the local copy on HTTP. It survives
+New within the same tab, but not reload or another tab. Ordinary text fields keep
+native clipboard ownership. HTTPS uses the system clipboard. No extra paste dialog.
+Undo/Redo accepts Cmd/Ctrl-Y as well as Cmd/Ctrl-Shift-Z.
 Touch browsers, including standalone web mode, use these controls automatically.
 The Camera/Pointer toggle defaults to Camera (fingers navigate, Pencil edits).
 Pointer sends finger input through ordinary geometry tools for use without Pencil;
