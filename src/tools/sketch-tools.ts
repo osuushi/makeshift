@@ -1,4 +1,5 @@
 import type { SketchEditor, Tool } from "../sketch/editor.js";
+import { defaultSketchGrid } from "../sketch/grid-settings.js";
 import { idleReason, toolCatalog } from "./catalog.js";
 
 export function sketchTools(editor: SketchEditor): () => void {
@@ -52,14 +53,16 @@ export function sketchTools(editor: SketchEditor): () => void {
   disposers.push(
     catalog.register({
       id: "grid",
-      finishEdit: () => editor.interactions.current?.kind !== "pen",
+      finishEdit: false,
       label: "Toggle grid snapping",
       category: "View",
       aliases: ["grid snap"],
       reason: () => (editor.interactions.current?.kind === "pen" ? null : idleReason(editor)),
-      run: () => {
-        editor.gridSnap = !editor.gridSnap;
-        editor.refresh();
+      run: async () => {
+        await editor.store.request({
+          kind: "sketch-grid",
+          grid: { ...(editor.store.data.sketchGrid ?? defaultSketchGrid), snap: !editor.gridSnap },
+        });
       },
     }),
     catalog.register({

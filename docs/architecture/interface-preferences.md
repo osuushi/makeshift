@@ -59,8 +59,7 @@ These choices persist under `makeshift.view-display` as `xrayGlobal`, `xrayBleed
 `xrayRadius` and the compatible `sectionFrontOpacity`, outside geometry and Undo.
 Reset grid display preserves all X-ray choices.
 Grid colors default to XY #d4ae3a, XZ #55bb6e and YZ #b325c1; axes retain their colors.
-Thickness also applies to the active sketch grid. A sketch whose copied frame
-matches a canonical plane uses that plane’s palette color; other sketch grids stay neutral. World X/Y/Z axes render
+Thickness also applies to the active sketch grid. Sketch grids use their own document colors. World X/Y/Z axes render
 independently at fixed thickness and opacity, including when grid opacity is zero. Zero grid opacity disables canvas
 reference picking. Explicit tool/keyboard plane entry remains available.
 
@@ -125,3 +124,24 @@ The device-local `makeshift.fast-trim-checks` choice applies to new standalone
 Subtract operations. Accepted operations record their choice for reopen; changing
 the preference does not recalculate existing geometry. Center-of-mass caching
 requires no opt-in.
+
+## Sketch grid controls
+
+The sketch toolbox Grid icon opens a slide-out without selecting a drawing tool.
+Minor and major spacings (mm), their independent colors, and Snap to grid belong
+to the document. Set default copies those values to device defaults; Settings
+also edits those defaults. Built-in defaults are 0.5 mm minor, 10 mm major,
+#b8c2cf/#758296, snapping enabled. New documents and older files without grid
+metadata adopt the device defaults once. Grid settings persist in JSON and portable
+archives, survive renderer reload and geometry Undo/Redo, and do not add Undo steps.
+Changing them marks the document edited; initial default adoption does not.
+
+Settings exposes Min pixels per grid square (default 4 CSS pixels), stored on the
+device with grid defaults under `makeshift.sketch-grid`. Each grid independently
+uses the smallest positive integer multiple of its spacing that reaches that
+screen size. Equal grids draw only the major grid. A coarser minor grid also hides
+when the spacings share a factor greater than one after conversion to their smallest
+common power-of-ten integer unit (12/10 hides; 11/10 remains). Snapping follows the
+finest visible grid, or the major grid when the minor is hidden. Canonical modeling
+grids retain their existing spacing and palette behavior. The searchable Toggle
+grid snapping command remains available, including during a pen gesture.

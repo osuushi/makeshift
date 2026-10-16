@@ -26,6 +26,29 @@ export class DocumentStore {
   constructor(private accepted: SketchDocument = { units: "mm", sketches: [] }) {
     validateDocument(accepted);
   }
+  /** View preferences persist in the document but do not consume geometry Undo. */
+  setGrid(grid: import("../sketch/grid-settings.js").SketchGrid, initialize = false): void {
+    if (initialize && this.accepted.sketchGrid) return;
+    const next = { ...this.accepted, sketchGrid: structuredClone(grid) };
+    validateDocument(next);
+    const copies = new Map<SketchDocument, SketchDocument>([[this.accepted, next]]);
+    const update = (document: SketchDocument) => {
+      let copy = copies.get(document);
+      if (!copy) {
+        copy = { ...document, sketchGrid: next.sketchGrid };
+        copies.set(document, copy);
+      }
+      return copy;
+    };
+    for (const record of this.records) {
+      if (record.change) {
+        record.change.before = update(record.change.before);
+        record.change.after = update(record.change.after);
+      }
+      if (record.selectionDocument) record.selectionDocument = update(record.selectionDocument);
+    }
+    this.accepted = next;
+  }
   private records: HistoryRecord[] = [];
   private nextId = 1;
   selection = emptySelection();

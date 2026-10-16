@@ -16,6 +16,9 @@ export function gridMaterial(id: PlaneId | "work"): THREE.ShaderMaterial {
       coordinateDepthEnabled: { value: id === "work" ? 0 : 1 },
       extent: { value: 1 },
       spacing: { value: 1 },
+      majorSpacing: { value: 10 },
+      minorVisible: { value: 1 },
+      majorColor: { value: new THREE.Color("#758296") },
       lineWidth: { value: 1 },
       strength: { value: 0.2 },
       opacityScale: { value: 1 },
@@ -37,7 +40,8 @@ export function gridMaterial(id: PlaneId | "work"): THREE.ShaderMaterial {
         varying vec2 coordinate;
         uniform float spacing; uniform float lineWidth; uniform float strength; uniform float radius;
         uniform float opacityScale; uniform float fillOpacity;
-        uniform vec2 center; uniform vec3 gridColor;
+        uniform vec2 center; uniform vec3 gridColor; uniform vec3 majorColor;
+        uniform float majorSpacing; uniform float minorVisible;
         float grid(float stepSize) {
           vec2 p = coordinate / stepSize;
           vec2 width = max(fwidth(p) * lineWidth, vec2(0.00001));
@@ -46,12 +50,15 @@ export function gridMaterial(id: PlaneId | "work"): THREE.ShaderMaterial {
         }
         void main() {
           float fade = exp(-dot(coordinate-center,coordinate-center)/(radius*radius));
-          float lines = max(grid(spacing)*0.6,grid(spacing*10.0));
+          float minorLine = grid(spacing) * 0.6 * minorVisible;
+          float majorLine = grid(majorSpacing);
+          float lines = max(minorLine, majorLine);
+          vec3 lineColor = mix(gridColor, majorColor, step(minorLine, majorLine));
           float depthFade = mix(1.0, coordinateDepthFade(coordinateDepth), coordinateDepthEnabled);
           float lineAlpha = min(1.0, lines * strength * opacityScale) * fade * depthFade;
           float fillAlpha = fillOpacity * gridFillGradient() * (1.0 - lineAlpha);
           float alpha = lineAlpha + fillAlpha;
-          vec3 color = (gridColor * lineAlpha + vec3(1.0) * fillAlpha) / max(alpha, 0.00001);
+          vec3 color = (lineColor * lineAlpha + vec3(1.0) * fillAlpha) / max(alpha, 0.00001);
           gl_FragColor = vec4(color, alpha);
         }`,
   });

@@ -1,8 +1,10 @@
 import * as THREE from "three";
 import { canonicalPlanes } from "../preferences/canonical-planes.js";
+import { sketchGridPreferences } from "../preferences/sketch-grid.js";
 import { viewDisplay } from "../preferences/view-display.js";
 import { planeViewCenter } from "./canonical-plane-bounds.js";
 import type { CanonicalPlaneVisibility } from "./canonical-plane-visibility.js";
+import { defaultSketchGrid, type SketchGrid, visibleSketchGrid } from "./grid-settings.js";
 import { type PlaneFrame, planeIds, planes } from "./planes.js";
 import { createWorldAxes } from "./world-axes.js";
 import { gridMaterial } from "./world-grid-material.js";
@@ -18,17 +20,16 @@ export function createGrids(scene: THREE.Scene) {
       active: PlaneFrame | null,
       viewportHeight: number,
       visibility: CanonicalPlaneVisibility["states"],
+      settings: SketchGrid = { ...defaultSketchGrid },
     ) {
       axes.update(camera, target, height);
       const direction = camera.getWorldDirection(new THREE.Vector3());
       const spacing = gridSpacing(height, viewportHeight);
-      const canonicalSketch =
-        active &&
-        planeIds.find((id) =>
-          (["origin", "u", "v"] as const).every((field) =>
-            planes[id][field].every((value, index) => value === active[field][index]),
-          ),
-        );
+      const sketch = visibleSketchGrid(
+        settings,
+        viewportHeight / height,
+        sketchGridPreferences().minPixels,
+      );
       for (const grid of grids) {
         if (grid.id === "work") {
           grid.mesh.visible = !!active;
@@ -41,18 +42,11 @@ export function createGrids(scene: THREE.Scene) {
             new THREE.Matrix4().makeBasis(grid.u, grid.v, grid.normal),
           );
         }
-        grid.material.uniforms.gridColor.value.set(
-          grid.id === "work"
-            ? canonicalSketch
-              ? canonicalPlanes().colors[canonicalSketch]
-              : "#758296"
-            : canonicalPlanes().colors[grid.id],
-        );
+        updateGridSpacing(grid, settings, sketch, spacing);
         grid.material.uniforms.coordinateDepthDistance.value = height * 2.5;
         grid.material.uniforms.coordinateViewCenter.value.copy(target);
         grid.material.uniforms.coordinateViewDirection.value.copy(direction);
         const facing = Math.abs(direction.dot(grid.normal));
-        grid.material.uniforms.spacing.value = spacing;
         grid.material.uniforms.lineWidth.value = viewDisplay().gridLineWidth;
         grid.material.uniforms.opacityScale.value =
           (viewDisplay().grid / 0.4) * (grid.id === "work" ? 1 : visibility[grid.id].opacity);
@@ -83,7 +77,7 @@ export function createGrids(scene: THREE.Scene) {
             ? facing > 0.005
             : !active && facing > 1e-8 && visibility[grid.id].opacity > 0;
       }
-      return spacing;
+      return active ? sketch.snap : spacing;
     },
     dispose() {
       axes.dispose();
@@ -109,6 +103,24 @@ function createGrid(scene: THREE.Scene, id: (typeof planeIds)[number] | "work") 
   mesh.renderOrder = id === "work" ? 100 : -10;
   scene.add(mesh);
   return { id, mesh, normal, u, v, material };
+}
+
+function updateGridSpacing(
+  grid: ReturnType<typeof createGrid>,
+  settings: SketchGrid,
+  sketch: ReturnType<typeof visibleSketchGrid>,
+  spacing: number,
+): void {
+  const work = grid.id === "work";
+  grid.material.uniforms.gridColor.value.set(
+    grid.id === "work" ? settings.minorColor : canonicalPlanes().colors[grid.id],
+  );
+  grid.material.uniforms.majorColor.value.set(
+    grid.id === "work" ? settings.majorColor : canonicalPlanes().colors[grid.id],
+  );
+  grid.material.uniforms.spacing.value = work ? sketch.minor : spacing;
+  grid.material.uniforms.majorSpacing.value = work ? sketch.major : spacing * 10;
+  grid.material.uniforms.minorVisible.value = work && sketch.hideMinor ? 0 : 1;
 }
 
 function gridSpacing(height: number, viewportHeight: number): number {

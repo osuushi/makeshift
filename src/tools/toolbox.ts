@@ -5,6 +5,11 @@ import "./toolbox.css";
 
 type ToolButton = { id: string; label: string; icon: string };
 const sketchTools: ToolButton[] = [
+  {
+    id: "sketch-grid",
+    label: "Grid",
+    icon: '<rect x="3" y="3" width="18" height="18"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>',
+  },
   { id: "select", label: "Arrow", icon: '<path d="M5 3v17l5-5 3 7 3-1-3-7h7L5 3Z"/>' },
   {
     id: "line",
@@ -29,7 +34,7 @@ const sketchTools: ToolButton[] = [
   },
 ];
 const modelingTools: ToolButton[] = [
-  sketchTools[0],
+  sketchTools[1],
   {
     id: "start-sketch",
     label: "Sketch",

@@ -21,7 +21,13 @@ export class BrowserDocuments {
   constructor(private editor: SketchEditor) {
     this.baseline = this.contents();
     window.addEventListener("beforeunload", this.beforeUnload);
+    if (editor.store.busy) editor.world.changed.add(this.initialBaseline);
   }
+  private initialBaseline = (): void => {
+    if (this.editor.store.busy) return;
+    this.baseline = this.contents();
+    this.editor.world.changed.delete(this.initialBaseline);
+  };
   private contents(): string {
     return documentArchive(this.editor.store.data);
   }
@@ -123,6 +129,7 @@ export class BrowserDocuments {
   }
   dispose(): void {
     window.removeEventListener("beforeunload", this.beforeUnload);
+    this.editor.world.changed.delete(this.initialBaseline);
     this.codec.dispose();
   }
 }
