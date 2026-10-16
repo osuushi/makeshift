@@ -131,6 +131,9 @@ class OrbitDrag {
     if (event.type === "pointerup") this.world.levelHorizon(frame);
   };
   click = (event: Event): void => {
+    // Touch/Pencil may start before this mouse listener sees their press.
+    // A prior mouse orbit must not suppress a later contact's selection intent.
+    if (event instanceof PointerEvent && event.pointerType !== "mouse") return;
     if (this.suppressClick && this.onViewport(event.target)) consume(event);
   };
 }

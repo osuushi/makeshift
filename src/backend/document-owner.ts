@@ -184,6 +184,15 @@ export class DocumentOwner {
     }
   }
   private async dispatch(request: ModelRequest, operation: HistoryOperation): Promise<void> {
+    if (request.kind === "sketch-grid") {
+      this.session.store.setGrid(request.grid, request.initialize);
+      if (this.session.candidate)
+        this.session.candidate = {
+          ...this.session.candidate,
+          sketchGrid: this.session.store.data.sketchGrid,
+        };
+      return;
+    }
     if (!["read", "reopen", "accept", "check-cleanup", "navigation-history"].includes(request.kind))
       this.session.reopenedPreview = null;
     this.cleanupAvailable = false;

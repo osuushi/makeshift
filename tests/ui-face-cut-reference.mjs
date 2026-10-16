@@ -5,6 +5,7 @@ import { orient } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { planeHover } from "./ui-plane-hover.mjs";
+import { pickPlane } from "./ui-plane-targets.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function finishExtrusion(page, point, distance) {
@@ -46,8 +47,10 @@ async function pickReference(page) {
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   await chooseTool(page, "imprint", "imprint");
   await page.getByRole("status").filter({ hasText: "Pick a plane grid" }).waitFor();
-  await planeHover(page, [0, -5, 32], "curved-face");
-  await worldClick(page, [0, -5, 32]);
+  // The lower cylinder strip clears the tool card; positive X keeps it in front
+  // of the YZ reference when replacing a plane after navigation/history.
+  await planeHover(page, [3, -4, 30.1], "curved-face");
+  await worldClick(page, [3, -4, 30.1]);
 }
 export async function faceCutReferenceRoute(page, name) {
   const before = await fixture(page);
@@ -65,13 +68,14 @@ export async function faceCutReferenceRoute(page, name) {
   const hasCircle = async () =>
     (await inspect(page)).preview.bodies[1].edges.some((edge) => edge.curve?.kind === "circle");
   assert.equal(await hasCircle(), true);
-  await worldClick(page, [0, -16, 16]);
+  await pickPlane(page, "YZ");
   assert.equal(await hasCircle(), false, "A plane replaces the curved reference");
   await chooseTool(page, "undo", "undo");
   assert.equal(await hasCircle(), true, "Temporary Undo restores the curved reference");
   await chooseTool(page, "redo", "redo");
   assert.equal(await hasCircle(), false);
-  await worldClick(page, [0, -5, 32]);
+  await orient(page, [1, -1, 0.7]);
+  await worldClick(page, [3, -4, 30.1]);
   assert.equal(await hasCircle(), true, "A curved reference replaces the plane");
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, before);
@@ -95,7 +99,7 @@ export async function faceCutReferenceRoute(page, name) {
   await chooseTool(page, "undo", "undo");
   await page.getByRole("button", { name: "Select Body 2", exact: true }).click();
   await chooseTool(page, "split body", "split");
-  await worldClick(page, [0, -5, 32]);
+  await worldClick(page, [3, -4, 30.1]);
   state = await inspect(page);
   assert.equal(state.preview.bodies.length, 3);
   assert.deepEqual(state.document, before);

@@ -70,7 +70,9 @@ export class SketchEditor {
   pointMenu: PointMenu | null = null;
   pointHover: Hit | null = null;
   constraintHover: string | null = null;
-  gridSnap = true;
+  get gridSnap(): boolean {
+    return this.store.data.sketchGrid?.snap ?? true;
+  }
   pivot: Point | null = null;
   /** Current visible movement widget anchor; shared with bounding-box scaling. */
   transformAnchor: { point: import("./planes.js").Vector; active: boolean } | null = null;
@@ -107,6 +109,7 @@ export class SketchEditor {
     world.changed.add(() => {
       this.transformAnchor = null;
     });
+    world.sketchGrid = () => this.store.data.sketchGrid;
     installWorkspaceSync(this);
     this.store.selectionHistory = this.selectionHistory;
     this.selectionHistory.connectNavigation();

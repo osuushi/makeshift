@@ -92,6 +92,15 @@ closed-region interiors plus all ordinary/construction curves, including open cu
 Disconnected contents keep their gaps; plane and sketch bounding boxes are not masks.
 Round screen-space dilation followed by separable Gaussian blur mixes normal and
 X-ray presentations, retaining identical colors at both fully opaque endpoints.
+The normal presentation is captured once and blended directly over the cut framebuffer.
+Aperture and blur buffers use 1/8 resolution per axis when Bleed and Radius are
+at least 16 CSS px, 1/4 at 8 px, 1/2 at 4 px, and full resolution below that.
+This retains at least two mask texels across each margin even at 1× pixel density.
+Bilinear upsampling softens the coarse mask; sharp settings retain full resolution.
+The aperture and blur are reused until projected contents, visibility,
+plane, camera, viewport, pixel density or mask settings change. Radius zero skips
+blur; front-opacity and hover changes do not invalidate the aperture. WebGL context
+restoration invalidates its cached pixels.
 The solid aperture uses cut picking and pseudoface body ownership; the softened
 fringe uses normal depth picking. Zoom and resize rebuild projected contents.
 The explicit Cross section tool always remains global, independent of these settings.

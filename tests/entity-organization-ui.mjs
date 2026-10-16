@@ -85,7 +85,6 @@ async function route(page, name) {
   for (const plane of ["XY", "XZ"]) {
     await chooseTool(page, "Construction plane", "construction-plane");
     await pickPlane(page, plane);
-    await page.keyboard.press("Enter");
     await inspect(page);
     await page.keyboard.press("Escape");
   }

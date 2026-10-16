@@ -3,7 +3,27 @@
 Founder contract, 2026-09-21: keyboard-folio and Apple Pencil first. One finger
 rotates, two pan/pinch/twist; Pencil uses the existing geometry pointer routes. Backtick
 and tilde alias Escape in CAD, including numeric fields, while terminal and text
-editing retain their characters. Ordinary UI buttons remain finger-accessible.
+editing retain their characters. Ordinary UI buttons remain finger-accessible. In Modeling, a stationary finger tap
+selects at its initial contact; two taps within 500 ms and 16 CSS pixels enter a
+canonical/saved plane or planar face. The second tap retains entry intent across
+newly displayed controls. Movement of 6 CSS pixels, multiple contacts, cancellation
+or a 300 ms hold disqualifies a tap; navigation and the overlap chooser retain
+ownership. Touch/Pencil taps are independent of prior mouse-orbit click suppression.
+Viewport taps focus the canvas so a stale numeric field cannot consume ⌘Enter.
+Sketch entry, tool search, document commands, Undo/Redo and Copy also handle
+iPad's keypress command route. Handled keydown events cancel their default action;
+ordinary text fields retain text editing and clipboard ownership.
+On iOS, tool search uses and displays ⌘P; ⌘F remains with Safari Find after device
+feedback showed that Safari consumed it. Desktop tool search retains ⌘F/Ctrl+F,
+with ⌘P also accepted as a Mac alternate. Ctrl+P retains browser Print.
+iPad detection includes desktop-mode MacIntel with multiple touch points.
+HTTP LAN sessions do not expose the async browser clipboard API. Founder approved
+an in-tab geometry clipboard fallback on 2026-10-16: Copy records geometry and
+attempts system copy; keyboard/menu Paste uses the local copy on HTTP. It survives
+New within the same tab, but not reload or another tab. Ordinary text fields keep
+native clipboard ownership. HTTPS uses the system clipboard. No extra paste dialog.
+Undo/Redo accepts Cmd/Ctrl-Y as well as Cmd/Ctrl-Shift-Z. New uses and displays
+Ctrl-N on iPad after device testing found Cmd-N unavailable; desktop retains Cmd-N.
 Touch browsers, including standalone web mode, use these controls automatically.
 The Camera/Pointer toggle defaults to Camera (fingers navigate, Pencil edits).
 Pointer sends finger input through ordinary geometry tools for use without Pencil;

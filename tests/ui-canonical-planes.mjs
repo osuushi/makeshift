@@ -49,37 +49,7 @@ export async function canonicalPlanesRoute(page, name) {
     assert.deepEqual(section.v.map(Math.abs), frame.v);
     await page.keyboard.press("Escape");
     assert.equal((await inspect(page)).crossSection, null);
-    await select(page, id);
-    await chooseTool(page, "construction plane", "construction-plane");
-    let state = await inspect(page);
-    assert.deepEqual(state.preview.constructionPlanes[0].frame, frame, "Selection seeds placement");
-    assert.deepEqual(state.document, original);
-    await page.keyboard.press("Escape");
-    assert.deepEqual((await inspect(page)).document, original, "Cancel creates nothing");
-    await select(page, id);
-    await chooseTool(page, "construction plane", "construction-plane");
-    const axis = { XY: "Z", XZ: "Y", YZ: "X" }[id];
-    await orient(page, [1, 1, 1]);
-    await page.getByRole("button", { name: `Move plane ${axis}`, exact: true }).click();
-    await page.getByRole("textbox", { name: `Plane translation ${axis}`, exact: true }).fill("8");
-    await page.keyboard.press("Enter");
-    state = await inspect(page);
-    const origin = { XY: [0, 0, 8], XZ: [0, 8, 0], YZ: [8, 0, 0] }[id];
-    assert.deepEqual(state.document.constructionPlanes[0].frame, { ...frame, origin });
-    await chooseTool(page, "undo", "undo");
-    assert.equal((await inspect(page)).document.constructionPlanes?.length ?? 0, 0);
-    await chooseTool(page, "redo", "redo");
-    assert.deepEqual((await inspect(page)).document.constructionPlanes[0].frame.origin, origin);
-    await page.getByRole("button", { name: "Select Plane 1", exact: true }).click();
-    await chooseTool(page, "construction plane", "construction-plane");
-    state = await inspect(page);
-    assert.equal(
-      state.preview.constructionPlanes.length,
-      2,
-      "Saved selection also seeds a new plane",
-    );
-    assert.deepEqual(state.preview.constructionPlanes[1].frame, { ...frame, origin });
-    await page.keyboard.press("Escape");
+    const origin = await constructionPlaneLifecycle(page, id, frame, original);
     await page.getByRole("button", { name: "Select Plane 1", exact: true }).click();
     await page.keyboard.press("Enter");
     await chooseTool(page, "rectangle", "rectangle");
@@ -91,7 +61,7 @@ export async function canonicalPlanesRoute(page, name) {
     await page.keyboard.press("Enter");
     await chooseTool(page, "rectangle", "rectangle");
     await drag(page, [0, 0], [-10, -10]);
-    state = await inspect(page);
+    const state = await inspect(page);
     assert.equal(state.document.sketches.length, 2);
     assert.deepEqual(state.document.sketches[1].plane, frame, "Enter draws on the world reference");
     await chooseTool(page, "return to modeling", "modeling");
@@ -101,4 +71,43 @@ export async function canonicalPlanesRoute(page, name) {
       "selection, placement, cancel, Undo/Redo and real sketch geometry passed",
     );
   }
+}
+
+async function constructionPlaneLifecycle(page, id, frame, original) {
+  await select(page, id);
+  await chooseTool(page, "construction plane", "construction-plane");
+  let state = await inspect(page);
+  assert.deepEqual(
+    state.document.constructionPlanes[0].frame,
+    frame,
+    "Selection creates immediately",
+  );
+  assert.equal(state.interaction, null);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original, "Undo removes creation");
+  await select(page, id);
+  await chooseTool(page, "construction plane", "construction-plane");
+  const axis = { XY: "Z", XZ: "Y", YZ: "X" }[id];
+  await orient(page, [1, 1, 1]);
+  await page.getByRole("button", { name: `Move plane ${axis}`, exact: true }).click();
+  await page.getByRole("textbox", { name: `Plane translation ${axis}`, exact: true }).fill("8");
+  await page.keyboard.press("Enter");
+  state = await inspect(page);
+  const origin = { XY: [0, 0, 8], XZ: [0, 8, 0], YZ: [8, 0, 0] }[id];
+  assert.deepEqual(state.document.constructionPlanes[0].frame, { ...frame, origin });
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document.constructionPlanes[0].frame, frame);
+  await chooseTool(page, "redo", "redo");
+  assert.deepEqual((await inspect(page)).document.constructionPlanes[0].frame.origin, origin);
+  await page.getByRole("button", { name: "Select Plane 1", exact: true }).click();
+  await chooseTool(page, "construction plane", "construction-plane");
+  state = await inspect(page);
+  assert.equal(
+    state.document.constructionPlanes.length,
+    2,
+    "Saved selection also seeds a new plane",
+  );
+  assert.deepEqual(state.document.constructionPlanes[1].frame, { ...frame, origin });
+  await chooseTool(page, "undo", "undo");
+  return origin;
 }

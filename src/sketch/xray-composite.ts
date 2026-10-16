@@ -4,6 +4,7 @@ import type { Point } from "./planes.js";
 import { coplanar } from "./planes.js";
 import type { World } from "./world.js";
 import { hasForegroundContent } from "./world-foreground.js";
+import type { XrayContents } from "./xray-contents.js";
 import { XrayMask } from "./xray-mask.js";
 
 const vertexShader = `varying vec2 vUv;
@@ -25,11 +26,13 @@ void main() {
 export class XrayComposite {
   private readonly mask = new XrayMask();
   private normal = new THREE.FramebufferTexture(1, 1);
-  private cut = new THREE.FramebufferTexture(1, 1);
-  private readonly aperture = new THREE.WebGLRenderTarget(1, 1);
-  private readonly horizontal = new THREE.WebGLRenderTarget(1, 1);
-  private readonly soft = new THREE.WebGLRenderTarget(1, 1);
+  private readonly aperture = new THREE.WebGLRenderTarget(1, 1, { depthBuffer: false });
+  private readonly horizontal = new THREE.WebGLRenderTarget(1, 1, { depthBuffer: false });
+  private readonly soft = new THREE.WebGLRenderTarget(1, 1, { depthBuffer: false });
   private readonly size = new THREE.Vector2();
+  private maskContents: XrayContents | null = null;
+  private maskBleed = -1;
+  private maskRadius = -1;
   private readonly scene = new THREE.Scene();
   private readonly camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   private readonly blur = new THREE.ShaderMaterial({
@@ -47,14 +50,15 @@ export class XrayComposite {
     depthTest: false,
     depthWrite: false,
     toneMapped: false,
+    transparent: true,
     uniforms: {
       normalImage: { value: this.normal },
-      cutImage: { value: this.cut },
       maskImage: { value: this.soft.texture },
     },
-    fragmentShader: `uniform sampler2D normalImage; uniform sampler2D cutImage; uniform sampler2D maskImage; varying vec2 vUv;
+    fragmentShader: `uniform sampler2D normalImage; uniform sampler2D maskImage; varying vec2 vUv;
       void main() {
-        gl_FragColor = mix(texture2D(normalImage, vUv), texture2D(cutImage, vUv), texture2D(maskImage, vUv).r);
+        // Blend normal over the cut framebuffer: normal * (1-mask) + cut * mask.
+        gl_FragColor = vec4(texture2D(normalImage, vUv).rgb, 1.0 - texture2D(maskImage, vUv).r);
         // Framebuffer captures already use the display transfer function.
       }`,
   });
@@ -73,8 +77,8 @@ export class XrayComposite {
   }
 
   render(world: World, normal: () => void, cut: () => void): void {
-    // In an active planar-only workspace both images are identical. Avoid two
-    // full-size framebuffer copies and 50 blur samples per pixel, especially on
+    // In an active planar-only workspace both images are identical. Avoid the extra
+    // scene presentation, framebuffer copy and mask work, especially on
     // Retina tablets. Keep enabled()/contains() independent: picking still uses
     // the same aperture when sectionable content is subsequently shown.
     if (planarOnlyWorkspace(world)) {
@@ -87,27 +91,24 @@ export class XrayComposite {
       autoClear = renderer.autoClear;
     renderer.getDrawingBufferSize(this.size);
     this.resizeCaptures();
-    for (const buffer of [this.aperture, this.horizontal, this.soft])
-      if (buffer.width !== this.size.x || buffer.height !== this.size.y)
-        buffer.setSize(this.size.x, this.size.y);
     try {
       renderer.autoClear = true;
       renderer.clippingPlanes = [];
       renderer.setRenderTarget(target);
       normal();
       // The capture API binds unit 0 only when its cached texture changes.
-      // Explicitly activate it: the preceding composite leaves mask unit 2 active.
+      // Explicitly activate it: the preceding composite leaves mask unit 1 active.
       renderer.state.activeTexture(renderer.getContext().TEXTURE0);
       renderer.copyFramebufferToTexture(this.normal);
       renderer.clippingPlanes = clipping;
       renderer.setRenderTarget(target);
       cut();
-      renderer.state.activeTexture(renderer.getContext().TEXTURE0);
-      renderer.copyFramebufferToTexture(this.cut);
       renderer.clippingPlanes = [];
-      this.mask.render(world, this.aperture, viewDisplay().xrayBleed);
-      this.soften(renderer, viewDisplay().xrayRadius * renderer.getPixelRatio());
+      this.updateMask(world);
       renderer.setRenderTarget(target);
+      // Match the old fullscreen presentation without clearing its cut color.
+      renderer.clear(false, true, true);
+      renderer.autoClear = false;
       this.quad.material = this.mix;
       renderer.render(this.scene, this.camera);
     } finally {
@@ -117,14 +118,44 @@ export class XrayComposite {
     }
   }
 
+  invalidate(): void {
+    this.maskContents = null;
+  }
+
   private resizeCaptures(): void {
     if (this.normal.image.width === this.size.x && this.normal.image.height === this.size.y) return;
     this.normal.dispose();
-    this.cut.dispose();
     this.normal = new THREE.FramebufferTexture(this.size.x, this.size.y);
-    this.cut = new THREE.FramebufferTexture(this.size.x, this.size.y);
     this.mix.uniforms.normalImage.value = this.normal;
-    this.mix.uniforms.cutImage.value = this.cut;
+  }
+
+  private updateMask(world: World): void {
+    const contents = this.mask.read(world);
+    const { xrayBleed: bleed, xrayRadius } = viewDisplay();
+    const radius = xrayRadius * world.renderer.getPixelRatio();
+    // Keep at least two texels across both dilation and blur. Sharp/narrow masks
+    // retain full resolution; broad masks can shade 1/64 as many pixels.
+    const margin = Math.min(bleed, xrayRadius);
+    const scale = margin >= 16 ? 8 : margin >= 8 ? 4 : margin >= 4 ? 2 : 1;
+    const width = Math.ceil(this.size.x / scale),
+      height = Math.ceil(this.size.y / scale);
+    const resized = this.aperture.width !== width || this.aperture.height !== height;
+    if (
+      !resized &&
+      contents === this.maskContents &&
+      bleed === this.maskBleed &&
+      radius === this.maskRadius
+    )
+      return;
+    for (const buffer of [this.aperture, this.horizontal, this.soft]) buffer.setSize(width, height);
+    // Radius-only changes can reuse the sharp aperture too.
+    if (resized || contents !== this.maskContents || bleed !== this.maskBleed)
+      this.mask.render(world, this.aperture, bleed);
+    if (radius > 0) this.soften(world.renderer, radius);
+    this.mix.uniforms.maskImage.value = radius > 0 ? this.soft.texture : this.aperture.texture;
+    this.maskContents = contents;
+    this.maskBleed = bleed;
+    this.maskRadius = radius;
   }
 
   private soften(renderer: THREE.WebGLRenderer, radius: number): void {
@@ -141,8 +172,7 @@ export class XrayComposite {
 
   dispose(): void {
     this.mask.dispose();
-    for (const target of [this.normal, this.cut, this.aperture, this.horizontal, this.soft])
-      target.dispose();
+    for (const target of [this.normal, this.aperture, this.horizontal, this.soft]) target.dispose();
     this.quad.geometry.dispose();
     this.blur.dispose();
     this.mix.dispose();

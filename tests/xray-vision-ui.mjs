@@ -7,6 +7,7 @@ import { chooseWidget } from "./ui-modal-plane-widgets.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 import { emptyXrayRoute } from "./ui-xray-empty.mjs";
+import { assertCachedXrayWork } from "./ui-xray-work.mjs";
 
 // Captured twisted body with only its circle sketch visible: the body extends well
 // outside sketch contents. GPU samples prove the aperture, rather than just mask math.
@@ -47,6 +48,7 @@ await withUiRuntimes(async (page, name) => {
   await page.getByRole("slider", { name: "Radius", exact: true }).press("Home");
   await page.getByRole("button", { name: "Done", exact: true }).click();
   const local = await samples(page);
+  await assertCachedXrayWork(page);
   console.log(name, { normal, global, local });
   assert.ok(delta(local[0], normal[0]) <= 2, "Outside aperture retains ordinary body");
   assert.ok(delta(local[1], global[1]) <= 2, "Inside sketch contents retains full X-ray cut");
@@ -65,6 +67,7 @@ await withUiRuntimes(async (page, name) => {
     delta(softened[2], normal[2]) > 2 && delta(softened[2], global[2]) > 2,
     "Radius blends the aperture edge",
   );
+  await coarseMask(page, normal, global);
   await page.setViewportSize({ width: 1100, height: 760 });
   const resized = await samples(page);
   assert.ok(delta(resized[0], normal[0]) < 6, "Resize keeps exterior opaque");
@@ -149,4 +152,15 @@ async function samples(page) {
     },
     { data: png.toString("base64"), points },
   );
+}
+
+async function coarseMask(page, normal, global) {
+  await settings(page);
+  await slider(page, "Bleed", 16);
+  await slider(page, "Radius", 16);
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  const coarse = await samples(page);
+  await assertCachedXrayWork(page, 8);
+  assert.ok(delta(coarse[0], normal[0]) < 6, "Coarse mask retains opaque exterior");
+  assert.ok(delta(coarse[1], global[1]) < 6, "Coarse mask retains cut interior");
 }

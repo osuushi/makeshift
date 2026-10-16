@@ -2,6 +2,7 @@ import { validateDefinitions } from "../decorators/definition-edits.js";
 import { validateDecorators } from "../decorators/edits.js";
 import { validateBodyAppearances } from "../model/body-appearance.js";
 import type { SketchDocument } from "../sketch/document.js";
+import { validateSketchGrid } from "../sketch/grid-settings.js";
 import { validateFrame } from "../sketch/planes.js";
 import { validateSketch } from "../sketch/sketch-validation.js";
 import { validateTags } from "../tags/model.js";
@@ -14,6 +15,7 @@ export function validateDocument(document: SketchDocument): void {
     (document.constructionPlanes !== undefined && !Array.isArray(document.constructionPlanes))
   )
     throw new Error("Invalid Makeshift document");
+  if (document.sketchGrid !== undefined) validateSketchGrid(document.sketchGrid);
   validateBodyAppearances(document);
   validateTags(document);
   validateDecorators(document);

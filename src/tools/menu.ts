@@ -3,6 +3,7 @@ import { type Category, categories, type ToolResult, toolCatalog } from "./catal
 import { borrowToolFocus, restoreToolFocus, toolMenuOpen } from "./menu-focus.js";
 import { ToolMenuList, toolShortcut } from "./menu-list.js";
 import { searchTools } from "./search.js";
+import { toolSearchKey, toolSearchShortcut } from "./search-shortcut.js";
 import "./menu.css";
 
 export class ToolMenu {
@@ -21,7 +22,7 @@ export class ToolMenu {
     app: HTMLElement,
   ) {
     this.trigger.className = "tools-trigger";
-    this.trigger.innerHTML = `More <kbd>${toolShortcut("⌘F")}</kbd>`;
+    this.trigger.innerHTML = `More <kbd>${toolShortcut(toolSearchKey())}</kbd>`;
     this.trigger.setAttribute("aria-label", "More tools");
     this.trigger.setAttribute("aria-haspopup", "dialog");
     this.trigger.setAttribute("aria-expanded", "false");
@@ -63,6 +64,14 @@ export class ToolMenu {
   private bindEvents(): void {
     const options = { capture: true, signal: this.abort.signal };
     window.addEventListener("keydown", this.keydown, options);
+    // iPad Safari may route native key commands through keypress.
+    window.addEventListener(
+      "keypress",
+      (event) => {
+        if (toolSearchShortcut(event)) this.keydown(event);
+      },
+      options,
+    );
     window.addEventListener(
       "touchend",
       (event) => {
@@ -126,7 +135,7 @@ export class ToolMenu {
   private keydown = (event: KeyboardEvent): void => {
     if (event.target instanceof Element && event.target.closest(".agent-dock, dialog[open]"))
       return;
-    if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "f") {
+    if (toolSearchShortcut(event)) {
       event.preventDefault();
       event.stopImmediatePropagation();
       if (!toolMenuOpen()) this.open();

@@ -1,11 +1,13 @@
 import { toolMenuOpen } from "../tools/menu-focus.js";
+import { toolSearchShortcut } from "../tools/search-shortcut.js";
 /** CAD shortcuts leave embedded agents and native modal dialogs in control of their keys. */
 export function onModelKeydown(
   handler: (event: KeyboardEvent) => void,
   options?: AddEventListenerOptions,
+  type: "keydown" | "keypress" = "keydown",
 ): void {
   window.addEventListener(
-    "keydown",
+    type,
     (event) => {
       if (
         event.target instanceof Element &&
@@ -18,7 +20,7 @@ export function onModelKeydown(
       if (
         toolMenuOpen() ||
         document.querySelector(".control-menu:popover-open") ||
-        ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "f")
+        toolSearchShortcut(event)
       )
         return;
       handler(event);

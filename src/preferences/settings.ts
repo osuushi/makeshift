@@ -4,6 +4,8 @@ import { canonicalPlaneSettings } from "./canonical-plane-settings.js";
 import { onCanonicalPlanesChange } from "./canonical-planes.js";
 import { decoratorSettings } from "./decorator-settings.js";
 import { experimentalSettings } from "./experimental-settings.js";
+import { onSketchGridPreferencesChange } from "./sketch-grid.js";
+import { sketchGridSettings } from "./sketch-grid-settings.js";
 import { onUiScaleChange, setUiScale, uiScale, uiScaleChoices } from "./ui-scale.js";
 import { onViewDisplayChange } from "./view-display.js";
 import { viewSettings } from "./view-settings.js";
@@ -76,6 +78,7 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
     for (const panel of dialog.querySelectorAll(".view-display-settings"))
       panel.dispatchEvent(new Event("preferences-refresh"));
   };
+  const disposeGrid = onSketchGridPreferencesChange(refreshPreferences);
   const disposeView = onViewDisplayChange(refreshPreferences);
   const disposePlanes = onCanonicalPlanesChange(refreshPreferences);
   const disposeKeyboard = installSettingsKeyboard(requestOpen);
@@ -83,6 +86,7 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
   return () => {
     disposeTool();
     disposeScale();
+    disposeGrid();
     disposeView();
     disposePlanes();
     editor.world.changed.delete(update);
@@ -178,7 +182,13 @@ function settingsDialog(): HTMLDialogElement {
   if (!select || !reset) throw new Error("Missing scale settings controls");
   dialog
     .querySelector(".settings-actions")
-    ?.before(viewSettings(), canonicalPlaneSettings(), decoratorSettings(), experimentalSettings());
+    ?.before(
+      sketchGridSettings(),
+      viewSettings(),
+      canonicalPlaneSettings(),
+      decoratorSettings(),
+      experimentalSettings(),
+    );
   for (const scale of uiScaleChoices)
     select.add(new Option(`${Math.round(scale * 100)}%`, String(scale)));
   const update = () => {

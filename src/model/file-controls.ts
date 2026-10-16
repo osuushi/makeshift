@@ -1,5 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
+import { iosToolSearch } from "../tools/search-shortcut.js";
 import { BrowserDocuments } from "./browser-documents.js";
 import { exportControls } from "./export-controls.js";
 import { fileShortcuts } from "./file-shortcuts.js";
@@ -64,7 +65,7 @@ export function fileControls(editor: SketchEditor, container: HTMLElement): () =
       finishEdit: true,
       label: "New document",
       showInTools: false,
-      shortcut: "⌘N",
+      shortcut: iosToolSearch() ? "Ctrl+N" : "⌘N",
       category: "Document & Edit",
       reason,
       run: () => documents.newDocument(),

@@ -41,7 +41,6 @@ async function route(page, name) {
   await page.keyboard.press("Escape");
   await chooseTool(page, "construction plane", "construction-plane");
   await pickPlane(page, "YZ");
-  await page.keyboard.press("Enter");
   await settled(page);
   await orient(page, [1, 0, 1]);
   point = await project(page, [0, 0, 16]);

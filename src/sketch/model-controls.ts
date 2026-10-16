@@ -173,7 +173,22 @@ export class ModelControls {
     )
       return;
     const target = pickModel(editor, { x: event.clientX, y: event.clientY });
-    if (target?.kind === "face" || target?.kind === "edge" || target?.kind === "body") {
+    if (
+      target?.kind === "face" &&
+      event instanceof PointerEvent &&
+      event.pointerType === "touch" &&
+      !event.shiftKey &&
+      !event.metaKey &&
+      !event.ctrlKey &&
+      editor.display.bodies
+        ?.find((body) => body.id === target.body)
+        ?.faces.find((face) => face.id === target.face)?.plane
+    ) {
+      editor.modeling.targets = [target];
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      void toolCatalog(editor).invoke("start-sketch");
+    } else if (target?.kind === "face" || target?.kind === "edge" || target?.kind === "body") {
       editor.modeling.targets = before;
       editor.modeling.choose(
         { kind: "body", body: target.body },
