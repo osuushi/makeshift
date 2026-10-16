@@ -122,3 +122,10 @@ dismisses without selection. Captured touch hit-tests screen coordinates to keep
 hover feedback and release selection on the same item. Browser automation covers
 pointer delivery and Chromium touch events;
 physical iPad/Pencil behavior still requires hardware review.
+
+Body/topology Move, plane and whole-sketch placement, and axial arrows use the same
+16 CSS-pixel Pencil tap tolerance, captured at press. Drift within that distance
+opens and selects the numeric field on release rather than accepting a drag;
+mouse gestures retain their 3-pixel threshold. Transform handoff preserves this
+distinction when accepting one handle's edit before beginning the next. Numeric
+entry on whole-sketch placement ignores held-pointer movement until a new gesture.

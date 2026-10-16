@@ -3,6 +3,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { pickModels } from "../sketch/model-selection.js";
 import { replayPointerModifiers } from "../sketch/modifier-pointer.js";
 import type { Vector } from "../sketch/planes.js";
+import { pointerDragThreshold } from "../sketch/pointer-intent.js";
 import { projectedAxis } from "./extrude-axis.js";
 
 /** Shared signed-distance gesture for extrusion and face offset. */
@@ -15,6 +16,7 @@ export class AxialDrag {
     symmetric: boolean;
     direction: ReturnType<typeof projectedAxis>;
     moved: boolean;
+    threshold: number;
   } | null = null;
   get active(): boolean {
     return !!this.pointer;
@@ -64,6 +66,7 @@ export class AxialDrag {
           symmetric,
           direction: projectedAxis(editor, center, axis.normal),
           moved: false,
+          threshold: pointerDragThreshold(e),
         };
         state.lease()?.capture(handle, e.pointerId);
         e.preventDefault();
@@ -74,7 +77,7 @@ export class AxialDrag {
     const move = (e: PointerEvent) => {
       const p = this.pointer;
       if (!p || p.id !== e.pointerId) return;
-      if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > 3) p.moved = true;
+      if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > p.threshold) p.moved = true;
       if (!p.moved) return;
       let value =
         p.value +
