@@ -4,7 +4,13 @@ import { inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function webTablet(page, name) {
+  // Desktop WebKit can dispatch touch events with hasTouch while reporting zero
+  // touch points. Match the touch-capable device this route is intended to test.
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "maxTouchPoints", { value: 1 });
+  });
   await reset(page);
+  assert.ok(await page.evaluate(() => navigator.maxTouchPoints > 0));
   await page.setViewportSize({ width: 820, height: 1180 });
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
