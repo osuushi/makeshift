@@ -136,12 +136,14 @@ metadata adopt the device defaults once. Grid settings persist in JSON and porta
 archives, survive renderer reload and geometry Undo/Redo, and do not add Undo steps.
 Changing them marks the document edited; initial default adoption does not.
 
-Settings exposes Min pixels per grid square (default 4 CSS pixels), stored on the
-device with grid defaults under `makeshift.sketch-grid`. Each grid independently
-uses the smallest positive integer multiple of its spacing that reaches that
-screen size. Equal grids draw only the major grid. A coarser minor grid also hides
-when the spacings share a factor greater than one after conversion to their smallest
-common power-of-ten integer unit (12/10 hides; 11/10 remains). Snapping follows the
-finest visible grid, or the major grid when the minor is hidden. Canonical modeling
+Settings exposes Min pixels per grid square (default 10 CSS pixels), stored on the
+device with grid defaults under `makeshift.sketch-grid`. The minor grid uses the
+smallest positive integer multiple of its spacing that reaches that screen size.
+The visible major spacing is the smallest positive integer multiple of the visible
+minor spacing at least as large as the configured major spacing. This keeps every
+major line aligned with the minor grid at every zoom, including for older documents
+with non-divisible configured spacings. Equal grids draw only the major grid.
+Snapping follows the visible minor spacing (also the major spacing when equal).
+Canonical modeling
 grids retain their existing spacing and palette behavior. The searchable Toggle
 grid snapping command remains available, including during a pen gesture.
