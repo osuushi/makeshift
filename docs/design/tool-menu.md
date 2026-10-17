@@ -132,8 +132,38 @@ was copied. Ranking examples and menu activation are verified by Makeshift's sea
 and UI tests.
 
 An “Unavailable in this context” divider separates the groups. Alias matches may
-explain “Also called thickness.” Search never changes operation eligibility or
-implies that a kernel calculation will succeed.
+explain “Also called thickness.” Search admits selection-dependent tools through
+the selection step below; it does not imply that a kernel calculation will succeed.
+
+## Selection-first entry (2026-10-17)
+
+Selection-dependent commands remain invokable in their applicable workspace. On
+invocation, reuse the existing operation validation. If removing whole categories
+makes the selection valid, keep the unique maximal valid combination, in original
+order. Never select fewer members of a retained category, or guess between two
+incomparable valid combinations. For example, Union keeps all selected bodies and
+deselects a sketch; three faces for a one-face operation require explicit picking.
+
+Otherwise enter a transient selection step: emphasize eligible visible geometry
+in amber, selected inputs in blue, and show the tool's input prompt and count.
+Clicks toggle inputs without modifier keys; Entities rows also participate. A
+single-input tool proceeds after a valid pick. Multi-input tools require the
+bottom-center **Next** button (or Enter), enabled only when existing validation
+passes. Cancel/Escape restores the previous selection. Switching tools cancels
+collection. A refinement already satisfied by the picked selection completes as
+a no-op. Collecting inputs neither previews geometry nor edits the document;
+the destination tool retains its normal preview, acceptance, cancellation and Undo.
+
+`selection-policy.ts` inventories the affected commands: solid operations,
+transforms, decorators, tag membership, sketch entry from selected geometry,
+sketch offset/fillet, constraints and dimension locks, selection refinements,
+isolation, copy and delete. Custom decorator Apply, Continue and Reassign use
+the same picker, with Next waiting for asynchronous geometry inspection. Booleans
+require two owning bodies before Next; Loft requires two ordered sections. Existing reference/axis pickers continue after
+this source-selection step. Workspace, busy/calculation, missing-document,
+history, visibility-state and no-export-in-progress guards remain independent;
+they are not selection failures. Creation and reference tools that already start
+without preselection keep their existing pickers.
 
 ## Implementation and ownership
 

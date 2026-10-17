@@ -1,5 +1,7 @@
 import { completeInteraction } from "../sketch/complete-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import type { SelectionPolicy } from "./selection-policy.js";
+import { toolSelection } from "./tool-selection.js";
 
 export const categories = [
   ["Sketch", "Line, rectangle, curve and trim"],
@@ -27,8 +29,13 @@ export interface ToolDefinition {
   finishEdit?: boolean | (() => boolean);
   allowBusy?: boolean;
   showInTools?: boolean;
+  selection?: SelectionPolicy;
 }
-export type ToolAction = Pick<ToolDefinition, "reason" | "run" | "finishEdit" | "allowBusy">;
+export type ToolAction = Pick<
+  ToolDefinition,
+  "reason" | "run" | "finishEdit" | "allowBusy" | "selection"
+> &
+  Partial<Pick<ToolDefinition, "id" | "label">>;
 export interface ToolResult extends ToolDefinition {
   unavailable: string | null;
 }
@@ -42,7 +49,9 @@ export function toolCatalog(editor: SketchEditor): ToolCatalog {
   return catalog;
 }
 export function idleReason(editor: SketchEditor): string | null {
-  return editor.interactions.current ? "Finish or cancel the current edit first" : null;
+  return editor.interactions.current && editor.interactions.current.kind !== "tool-selection"
+    ? "Finish or cancel the current edit first"
+    : null;
 }
 export class ToolCatalog {
   private entries = new Map<string, ToolDefinition>();
@@ -61,6 +70,7 @@ export class ToolCatalog {
     return this.running;
   }
   private switches(tool: Pick<ToolAction, "finishEdit">): boolean {
+    if (this.editor.interactions.current?.kind === "tool-selection") return true;
     return typeof tool.finishEdit === "function" ? tool.finishEdit() : tool.finishEdit !== false;
   }
   reason(tool: Omit<ToolAction, "run">): string | null {
@@ -76,7 +86,8 @@ export class ToolCatalog {
     )
       return null;
     if (this.editor.blocked && !tool.allowBusy) return "Wait for the current calculation";
-    return tool.reason();
+    if (current && !this.switches(tool)) return tool.reason();
+    return toolSelection(this.editor, tool) ? null : tool.reason();
   }
   results(): ToolResult[] {
     return [...this.entries.values()].map((tool) => ({ ...tool, unavailable: this.reason(tool) }));
@@ -113,9 +124,23 @@ export class ToolCatalog {
         }
         this.editor.refresh();
         const unavailable = tool.reason();
-        if (unavailable) {
+        if (unavailable && !toolSelection(this.editor, tool)) {
           this.editor.message = unavailable;
           return false;
+        }
+      }
+      const selection = toolSelection(this.editor, tool);
+      if (
+        selection &&
+        (tool.reason() ||
+          (["union", "subtract", "intersect", "loft"].includes(selection.id) && !selection.valid()))
+      ) {
+        const narrowed = selection.narrow();
+        if (narrowed) selection.targets = narrowed;
+        else {
+          const { collectToolSelection } = await import("./selection-step.js");
+          collectToolSelection(this.editor, tool, selection, () => this.activate(tool));
+          return true;
         }
       }
       const result = await tool.run();

@@ -4,19 +4,26 @@ import { type ModelingTarget, modelingKey } from "../sketch/model-selection-stat
 import type { TagControls } from "../tags/controls.js";
 import { TagRows } from "../tags/rows.js";
 import { toolCatalog } from "../tools/catalog.js";
+import { selectionPickers } from "../tools/tool-selection.js";
 import { bodyAppearanceControl } from "./body-appearance-control.js";
 import { entityRows } from "./entity-presentation.js";
 import { renameEntity } from "./entity-rename.js";
 import { EntityReorder } from "./entity-reorder.js";
 
 export class EntityViewer {
-  sourcePicker: {
+  private localSourcePicker: {
     choose?: (target: ModelingTarget) => void;
     hover: (target: ModelingTarget | null) => void;
     selected: (target: ModelingTarget) => boolean;
     available?: (target: ModelingTarget) => boolean;
     role?: (target: ModelingTarget) => "target" | "tool" | "input" | undefined;
   } | null = null;
+  get sourcePicker(): EntityViewer["localSourcePicker"] {
+    return this.localSourcePicker ?? selectionPickers.get(this.editor) ?? null;
+  }
+  set sourcePicker(picker: EntityViewer["localSourcePicker"]) {
+    this.localSourcePicker = picker;
+  }
   readonly operationRows = document.createElement("section");
   readonly referenceRows = document.createElement("section");
   private root = document.createElement("aside");
