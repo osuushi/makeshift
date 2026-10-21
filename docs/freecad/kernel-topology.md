@@ -869,6 +869,17 @@ removable edge set rejects atomically. Mixed face/rim removal, multi-body failur
 cancellation, history, identity and reopened face offset are covered. This is
 bounded feature healing, not arbitrary face removal or approximate surface fitting.
 
+The 2026-10-21 native profile of `slow-face-delete.json` spends substantial sampled
+time in curve/surface search while healing, before eventually rejecting the request.
+Source observation: [`Extrema_GenExtCS::GlobMinGenCS`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/Extrema/Extrema_GenExtCS.cxx#L392-L481)
+initializes the particle pool by repeatedly replacing its current worst entry;
+[`math_PSOParticlesPool::GetWorstParticle`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/math/math_PSOParticlesPool.cxx#L65-L68)
+scans the entire pool. A stable heap is an isolated research candidate for that
+initialization, preserving first-maximum ties and leaving later PSO updates alone.
+The [cross-runtime benchmark](../../tests/wasm-performance/README.md) includes
+source-checked construction, slot-by-slot equivalence tests and actual-call tracing.
+This does not change the application's SDK or make the captured deletion valid.
+
 ## Shell: completion is not validity (2026-09-17)
 
 Source observation at configured OCCT 7.9.3 commit

@@ -4,10 +4,12 @@ import { createInterface } from "node:readline";
 
 // One request at a time; each benchmark process owns its native child.
 export class Client {
-  constructor(executable, threads) {
+  constructor(executable, threads, timeout = 180_000, environment = {}) {
+    this.timeout = timeout;
     this.child = spawn(executable, [], {
       env: {
         ...process.env,
+        ...environment,
         MAKESHIFT_KERNEL_THREADS: String(threads),
         MAKESHIFT_KERNEL_TIMING: "1",
       },
@@ -62,9 +64,9 @@ export class Client {
     const start = performance.now();
     const reply = await new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
-        this.fail(new Error("Benchmark request exceeded 180 seconds"));
+        this.fail(new Error(`Benchmark request exceeded ${this.timeout} ms`));
         this.child.kill("SIGKILL");
-      }, 180_000);
+      }, this.timeout);
       this.pending = { resolve, reject, timer };
       this.child.stdin.write(`${JSON.stringify(input)}\n`);
     });

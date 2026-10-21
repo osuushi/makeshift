@@ -2,7 +2,9 @@ import { readdir, readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { extname, resolve, sep } from "node:path";
 
-export async function serve(root = ".build/web") {
+export const webRoot = process.env.MAKESHIFT_BENCHMARK_WEB ?? ".build/web";
+
+export async function serve(root = webRoot) {
   const directory = resolve(root);
   const scripts = resolve("tests/wasm-performance");
   const types = {
@@ -43,48 +45,54 @@ export async function serve(root = ".build/web") {
   };
 }
 
-export async function browserClient(browser, url) {
+export async function browserClient(browser, url, timeout = 180_000) {
   const page = await browser.newPage();
-  await page.goto(`${url}benchmark/`);
-  const files = await readdir(".build/web/assets");
-  const asset = (pattern) => {
-    const matches = files.filter((file) => pattern.test(file));
-    if (matches.length !== 1) throw new Error(`Expected one asset for ${pattern}`);
-    return new URL(`assets/${matches[0]}`, url).href;
-  };
-  const initialization = await page.evaluate(
-    async (assets) => {
-      const worker = new Worker("/benchmark/kernel-worker.mjs", { type: "module" });
-      window.kernelBenchmarkRequest = (data) =>
-        new Promise((accept, reject) => {
-          const start = performance.now();
-          const timer = setTimeout(() => {
-            worker.terminate();
-            reject(new Error("Kernel benchmark timeout"));
-          }, 180_000);
-          worker.onerror = (event) => {
-            clearTimeout(timer);
-            reject(new Error(event.message));
-          };
-          worker.onmessage = ({ data: result }) => {
-            clearTimeout(timer);
-            if (result.failure) reject(new Error(result.failure));
-            else accept({ ...result, milliseconds: performance.now() - start });
-          };
-          worker.postMessage(data);
-        });
-      return window.kernelBenchmarkRequest({ initialize: true, assets });
-    },
-    {
-      js: asset(/^makeshift-occt-.*\.js$/),
-      wasm: asset(/^makeshift-occt-.*\.wasm$/),
-      side: asset(/^makeshift-kernel-.*\.wasm$/),
-    },
-  );
-  return {
-    initialization,
-    request: (input) =>
-      page.evaluate((value) => window.kernelBenchmarkRequest({ input: value }), input),
-    close: () => page.close(),
-  };
+  try {
+    await page.goto(`${url}benchmark/`);
+    const files = await readdir(resolve(webRoot, "assets"));
+    const asset = (pattern) => {
+      const matches = files.filter((file) => pattern.test(file));
+      if (matches.length !== 1) throw new Error(`Expected one asset for ${pattern}`);
+      return new URL(`assets/${matches[0]}`, url).href;
+    };
+    const initialization = await page.evaluate(
+      async (assets) => {
+        const worker = new Worker("/benchmark/kernel-worker.mjs", { type: "module" });
+        window.kernelBenchmarkRequest = (data) =>
+          new Promise((accept, reject) => {
+            const start = performance.now();
+            const timer = setTimeout(() => {
+              worker.terminate();
+              reject(new Error("Kernel benchmark timeout"));
+            }, assets.timeout);
+            worker.onerror = (event) => {
+              clearTimeout(timer);
+              reject(new Error(event.message));
+            };
+            worker.onmessage = ({ data: result }) => {
+              clearTimeout(timer);
+              if (result.failure) reject(new Error(result.failure));
+              else accept({ ...result, milliseconds: performance.now() - start });
+            };
+            worker.postMessage(data);
+          });
+        return window.kernelBenchmarkRequest({ initialize: true, assets });
+      },
+      {
+        timeout,
+        js: asset(/^makeshift-occt-.*\.js$/),
+        wasm: asset(/^makeshift-occt-.*\.wasm$/),
+        side: asset(/^makeshift-kernel-.*\.wasm$/),
+      },
+    );
+    return {
+      initialization,
+      request: (input) =>
+        page.evaluate((value) => window.kernelBenchmarkRequest({ input: value }), input),
+      close: () => page.close(),
+    };
+  } catch (error) {
+    await page.close();
+    throw error;
+  }
 }

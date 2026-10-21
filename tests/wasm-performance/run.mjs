@@ -3,16 +3,15 @@ import { createHash } from "node:crypto";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { arch, cpus, platform, release } from "node:os";
 import { dirname, resolve } from "node:path";
-import { chromium, webkit } from "playwright";
 import { Client } from "../geometry-performance/client.mjs";
-import { browserClient, serve } from "./browser.mjs";
+import { prepareBroadCases } from "./broad-cases.mjs";
+import { serve, webRoot } from "./browser.mjs";
 import { fixturePath, prepareCases } from "./cases.mjs";
-import { measureDrag } from "./drag.mjs";
-import { compare, measure, summary } from "./measure.mjs";
+import { runRuntime } from "./runtime.mjs";
 
 const output = process.argv[2];
 const repeats = Number(process.argv[3] ?? 5);
-if (!output || !Number.isInteger(repeats) || repeats < 1)
+if (!output || !Number.isInteger(repeats) || repeats < 0)
   throw new Error("Usage: node tests/wasm-performance/run.mjs OUTPUT.json [SAMPLES=5]");
 const executable = resolve(
   process.env.MAKESHIFT_BENCHMARK_NATIVE ?? ".build/kernel/bin/makeshift-kernel",
@@ -25,12 +24,18 @@ if (engines.some((name) => !["native-1", "native-auto", "chromium", "webkit"].in
   throw new Error("Unknown benchmark runtime");
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const git = (...args) => execFileSync("git", args, { encoding: "utf8" }).trim();
+const benchmarkSources = {};
+for (const name of (await readdir(import.meta.dirname))
+  .filter((name) => name.endsWith(".mjs"))
+  .sort())
+  benchmarkSources[name] = digest(await readFile(resolve(import.meta.dirname, name)));
 const report = {
   capturedAt: new Date().toISOString(),
   source: {
     commit: git("rev-parse", "HEAD"),
     diffHash: digest(git("diff", "HEAD")),
     status: git("status", "--short"),
+    benchmarkSources,
   },
   host: {
     platform: platform(),
@@ -46,11 +51,17 @@ const report = {
   runtimes: [],
 };
 await mkdir(dirname(resolve(output)), { recursive: true });
+if (process.env.MAKESHIFT_BENCHMARK_LIBRARY_DIR) {
+  const path = resolve(process.env.MAKESHIFT_BENCHMARK_LIBRARY_DIR, "libTKGeomBase.7.9.3.dylib");
+  report.native.libraryOverride = { path, sha256: digest(await readFile(path)) };
+}
 const save = () => writeFile(output, `${JSON.stringify(report, null, 2)}\n`);
 const native = new Client(executable, 1);
 let prepared;
 try {
-  prepared = await prepareCases(native);
+  prepared = await (process.env.MAKESHIFT_BENCHMARK_SUITE === "broad"
+    ? prepareBroadCases
+    : prepareCases)(native);
 } finally {
   await native.close();
 }
@@ -58,13 +69,28 @@ const selected = prepared.cases.filter((scenario) => filter.test(scenario.name))
 if (!selected.length) throw new Error("No benchmark cases selected");
 const browserRequested = engines.some((name) => name === "chromium" || name === "webkit");
 if (browserRequested)
-  for (const name of await readdir(".build/web/assets"))
+  for (const name of await readdir(`${webRoot}/assets`))
     if (/^makeshift-(occt|kernel)-/.test(name))
-      report.assets[name] = digest(await readFile(`.build/web/assets/${name}`));
+      report.assets[name] = digest(await readFile(`${webRoot}/assets/${name}`));
 const server = browserRequested ? await serve() : null;
+report.inputs = selected.map(({ name, input }) => ({
+  name,
+  sha256: digest(JSON.stringify(input)),
+}));
+report.suite = process.env.MAKESHIFT_BENCHMARK_SUITE ?? "ipad";
 const references = new Map();
 try {
-  for (const name of engines) await runRuntime(name);
+  for (const name of engines)
+    await runRuntime(name, {
+      executable,
+      server,
+      report,
+      selected,
+      repeats,
+      references,
+      save,
+      prepared,
+    });
 } finally {
   await server?.close();
   await save();
@@ -72,67 +98,7 @@ try {
 console.log(`Saved ${output}`);
 if (
   report.runtimes.some((runtime) =>
-    runtime.cases.some((c) => c.comparisons.some((v) => !v.matches)),
+    runtime.cases.some((c) => c.failure || c.comparisons.some((v) => !v.matches)),
   )
 )
   process.exitCode = 1;
-
-async function runRuntime(name) {
-  let browser, client;
-  const runtime = { name, cases: [] };
-  report.runtimes.push(runtime);
-  try {
-    if (name.startsWith("native-")) {
-      runtime.threads = name === "native-auto" ? cpus().length : 1;
-      client = new Client(executable, runtime.threads);
-    } else {
-      if (!{ chromium, webkit }[name]) throw new Error(`Unknown runtime ${name}`);
-      browser = await { chromium, webkit }[name].launch({ headless: true });
-      runtime.version = browser.version();
-      client = await browserClient(browser, server.url);
-      runtime.initialization = client.initialization;
-    }
-    for (const scenario of selected) {
-      const cold = await measure(client, scenario);
-      const samples = [];
-      for (let i = 0; i < repeats; i++) samples.push(await measure(client, scenario));
-      const comparisons = [cold, ...samples].map(({ outcome }) => {
-        try {
-          compare(outcome, scenario.expected ?? references.get(scenario.name) ?? cold.outcome);
-          return { matches: true };
-        } catch (error) {
-          return { matches: false, reason: error.message };
-        }
-      });
-      references.set(scenario.name, references.get(scenario.name) ?? cold.outcome);
-      const measured = {
-        name: scenario.name,
-        first: cold,
-        samples,
-        summary: summary(samples),
-        comparisons,
-      };
-      runtime.cases.push(measured);
-      await save();
-      console.log(
-        `${name} ${scenario.name}: ${measured.summary.median.toFixed(1)} ms; ${measured.summary.probes} probe(s)${measured.summary.size === undefined ? "" : `; radius ${measured.summary.size}`} ${comparisons.every((c) => c.matches) ? "geometry agrees" : "GEOMETRY DIFFERS"}`,
-      );
-    }
-    await client.close();
-    client = null;
-    if (browser && process.env.MAKESHIFT_BENCHMARK_DRAG !== "0") {
-      runtime.drags = [];
-      for (const warm of [false, true]) {
-        const drag = await measureDrag(browser, server.url, prepared.fixture, warm);
-        runtime.drags.push(drag);
-        console.log(
-          `${name} ${warm ? "warmed" : "first"} drag: ${drag.visibleUpdatesDuringDrag} visible updates, ${drag.workerStarts} worker starts, ${drag.finalSettleMilliseconds.toFixed(1)} ms final settle`,
-        );
-        await save();
-      }
-    }
-  } finally {
-    await client?.close();
-    await browser?.close();
-  }
-}

@@ -8,6 +8,7 @@ const before = JSON.parse(await readFile(beforePath, "utf8"));
 const after = JSON.parse(await readFile(afterPath, "utf8"));
 assert.equal(before.fixture.sha256, after.fixture.sha256, "Use the same captured fixture");
 assert.deepEqual(before.host, after.host, "Use the same host and driver runtime");
+assert.equal(before.suite, after.suite, "Use the same benchmark suite");
 for (const runtime of after.runtimes) {
   const baseline = before.runtimes.find((entry) => entry.name === runtime.name);
   assert.ok(baseline, `No baseline for ${runtime.name}`);
@@ -16,6 +17,24 @@ for (const runtime of after.runtimes) {
   for (const scenario of runtime.cases) {
     const original = baseline.cases.find((entry) => entry.name === scenario.name);
     assert.ok(original, `No baseline for ${scenario.name}`);
+    if (before.inputs && after.inputs)
+      assert.equal(
+        before.inputs.find((c) => c.name === scenario.name)?.sha256,
+        after.inputs.find((c) => c.name === scenario.name)?.sha256,
+        "Use the same canonical input",
+      );
+    if (original.failure || scenario.failure) {
+      process.exitCode = 1;
+      console.log(
+        `  ${scenario.name}: baseline ${original.failure ?? "completed"}; after ${scenario.failure ?? "completed"}; no timing ratio`,
+      );
+      continue;
+    }
+    assert.equal(
+      scenario.summaryPhase,
+      original.summaryPhase,
+      "Do not compare scout and warmed timings",
+    );
     assert.equal(scenario.summary.size, original.summary.size);
     assert.equal(scenario.summary.probes, original.summary.probes);
     assert.ok([...original.comparisons, ...scenario.comparisons].every((item) => item.matches));
