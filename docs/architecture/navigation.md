@@ -44,6 +44,10 @@ explicit sketch selection wins when several existing sketches share a plane.
 Entry alone creates no geometry. Drawing continues in that workspace rather than
 creating another sketch on the same visible plane.
 
+When an orientation-cube face has focus, Cmd/Ctrl-Enter enters its corresponding
+canonical sketch plane directly, including while its single-click alignment is
+pending. Plain Enter and Space retain cube alignment behavior.
+
 Finger double taps near visible sketch ink resolve the nearest curve within
 22 CSS pixels after projection, including tilted planes. Sketch entry takes priority
 over the canonical grid at that location and resolves the second tap independently
