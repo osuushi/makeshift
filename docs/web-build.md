@@ -84,6 +84,10 @@ unused DWARF sections that crash the pinned linker. Profiling is off by default;
 use the [benchmark instructions](../tests/wasm-performance/README.md#sampled-cpu-stacks)
 to capture the calculator worker's profile.
 
+The [batched Twist candidate experiment](../tests/wasm-performance/CANDIDATES.md)
+adds an opt-in GPU search bridge and exact CPU witness refinement to the
+WASM-exception calculator. It is not enabled in ordinary web builds.
+
 ## Independent Pages repository
 
 The deployment repository is the minimal public

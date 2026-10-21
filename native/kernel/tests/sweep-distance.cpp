@@ -1,4 +1,7 @@
 #include "sweep-boundary-distance.h"
+#ifdef MAKESHIFT_KERNEL_GPU_SEARCH
+#include "sweep-candidates.h"
+#endif
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakePolygon.hxx>
 #include <BRepBuilderAPI_NurbsConvert.hxx>
@@ -7,6 +10,7 @@
 #include <BRepPrimAPI_MakeCylinder.hxx>
 #include <gp_Pln.hxx>
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include <stdexcept>
 
@@ -20,6 +24,16 @@ void compare(SweepBoundaryDistance& query, const TopoDS_Shape& boundary,
     expect(original.IsDone(), "Reference distance failed");
     expect((original.Value() <= tolerance) == expected, "Incorrect reference expectation");
     expect(query.within(point, tolerance) == expected, "Cached boundary check differs");
+#ifdef MAKESHIFT_KERNEL_GPU_SEARCH
+    for (const char* mode : {"cpu", "invalid", "gpu"}) {
+#ifdef _WIN32
+        _putenv_s("MAKESHIFT_SWEEP_CANDIDATES", mode);
+#else
+        setenv("MAKESHIFT_SWEEP_CANDIDATES", mode, 1);
+#endif
+        expect(sweepCandidatesWithin(boundary, {point}, tolerance) == expected, "Batched boundary check differs");
+    }
+#endif
 }
 void boxBoundary() {
     const auto box = BRepPrimAPI_MakeBox(10, 10, 10).Shape();
@@ -46,7 +60,7 @@ void trimmedLocatedFace() {
     BRepBuilderAPI_MakeFace make(gp_Pln(gp_Pnt(0,0,0), gp_Dir(0,0,1)), outer.Wire());
     make.Add(hole.Wire());
     gp_Trsf transform; transform.SetRotation(gp_Ax1(gp_Pnt(0,0,0), gp_Dir(1,0,0)), 0.7);
-    transform.SetTranslationPart(gp_Vec(12,-8,30));
+    transform.SetTranslationPart(gp_Vec(1e7,-8,30));
     const auto face = BRepBuilderAPI_Transform(make.Face(), transform, false).Shape();
     SweepBoundaryDistance query(face);
     for (const auto& [point, expected] : std::vector<std::pair<gp_Pnt, bool>>{

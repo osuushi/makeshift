@@ -1,3 +1,6 @@
+import { candidateBridge } from "./candidate-bridge.mjs";
+
+let candidates;
 // The same main/side modules, JSON protocol and allocation path as the web app.
 let module;
 let phases = [];
@@ -5,18 +8,29 @@ self.onmessage = async ({ data }) => {
   try {
     if (data.initialize) {
       const start = performance.now();
+      candidates = await candidateBridge(data.assets.candidates);
       const factory = (await import(data.assets.js)).default;
       module = await factory({
+        makeshiftSearch: candidates.search,
         locateFile: (name) =>
           name.endsWith("makeshift-kernel.wasm") ? data.assets.side : data.assets.wasm,
         preRun: [
           (runtime) => {
             runtime.ENV.MAKESHIFT_KERNEL_TIMING = "1";
+            runtime.ENV.MAKESHIFT_SWEEP_CANDIDATES = ["invalid-gpu", "unavailable-gpu"].includes(
+              data.assets.candidates,
+            )
+              ? "gpu"
+              : (data.assets.candidates ?? "off");
           },
         ],
         printErr: (line) => phases.push(line),
       });
-      self.postMessage({ initialized: true, milliseconds: performance.now() - start });
+      self.postMessage({
+        initialized: true,
+        candidates: candidates.info,
+        milliseconds: performance.now() - start,
+      });
       return;
     }
     phases = [];
@@ -30,6 +44,7 @@ self.onmessage = async ({ data }) => {
     }
     self.postMessage({
       reply,
+      candidates: candidates.stats?.(),
       computeMilliseconds: performance.now() - start,
       phases: phases.join("\n"),
     });

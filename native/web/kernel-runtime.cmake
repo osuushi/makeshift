@@ -11,6 +11,10 @@ function(web_kernel_runtime target)
   set_target_properties(${target} PROPERTIES SUFFIX ".wasm")
 
   add_executable(makeshift-occt ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/runtime.cpp)
+  # The opt-in benchmark bridge is absent from the shipping runtime.
+  if(MAKESHIFT_KERNEL_GPU_SEARCH)
+    target_sources(makeshift-occt PRIVATE ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/candidate-bridge.cpp)
+  endif()
   target_compile_options(makeshift-occt PRIVATE ${exception_flag})
   target_link_options(makeshift-occt PRIVATE
     --no-entry ${exception_flag} -sMAIN_MODULE=2 -sMODULARIZE=1 -sEXPORT_ES6=1

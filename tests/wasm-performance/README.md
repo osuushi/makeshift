@@ -335,7 +335,7 @@ separately verifies the heap's ordering and tie behavior.
 A balanced helix-union tree was also tested and removed: it did not improve serial
 timing and its all-core improvement on the long helix was only about 9%.
 
-### GPU results and the next useful experiment
+### GPU surface-evaluation results
 
 Full Chromium used the actual Apple M2 Max Metal adapter, with
 `isFallbackAdapter: false`. The test inputs contain 108 Bézier patches from the
@@ -368,9 +368,8 @@ shader's failed arithmetic probe is documented above; it does not solve this gap
 Playwright WebKit reported no `navigator.gpu`, so this GPU path has no WebKit or
 physical iPad runtime validation.
 
-The strongest next candidate is batching spline-heavy distance/seed evaluation or
-conservative candidate rejection, then refining retained and ambiguous candidates
-with the exact CPU kernel. That requires restructuring current adaptive, serial
-queries and validating candidate retention. It may also benefit a CPU worker pool.
-The experiment establishes useful hardware throughput, not a whole-operation
-speedup, a guaranteed conservative filter, or an accepted GPU topology path.
+The surface-evaluation result motivated a real-operation follow-up:
+[batched Twist candidates](CANDIDATES.md) now compares GPU search, a CPU spatial
+index and unchanged execution, followed by OCCT refinement and validation.
+The surface throughput above remains a subkernel result, not a whole-operation
+speedup or an accepted GPU topology path.

@@ -50,7 +50,12 @@ export async function runRuntime(name, options) {
         libraryDirectory ? { DYLD_LIBRARY_PATH: libraryDirectory } : {},
       );
     }
-    browser ??= await { chromium, webkit }[name].launch({ headless: true });
+    browser ??= await { chromium, webkit }[name].launch({
+      headless: true,
+      ...(name === "chromium" && process.env.MAKESHIFT_BENCHMARK_CANDIDATES
+        ? { channel: "chromium" }
+        : {}),
+    });
     runtime.version = browser.version();
     const next = await browserClient(browser, server.url, timeout);
     runtime.initialization = next.initialization;

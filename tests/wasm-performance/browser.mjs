@@ -16,6 +16,10 @@ export async function serve(root = webRoot) {
   };
   const server = createServer(async (request, response) => {
     try {
+      if (process.env.MAKESHIFT_BENCHMARK_CANDIDATES) {
+        response.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+        response.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+      }
       const path = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
       if (path === "/benchmark/") {
         response.setHeader("Content-Type", "text/html");
@@ -58,6 +62,7 @@ export async function browserClient(browser, url, timeout = 180_000) {
     const initialization = await page.evaluate(
       async (assets) => {
         const worker = new Worker("/benchmark/kernel-worker.mjs", { type: "module" });
+        window.kernelBenchmarkTerminate = () => worker.terminate();
         window.kernelBenchmarkRequest = (data) =>
           new Promise((accept, reject) => {
             const start = performance.now();
@@ -80,6 +85,7 @@ export async function browserClient(browser, url, timeout = 180_000) {
       },
       {
         timeout,
+        candidates: process.env.MAKESHIFT_BENCHMARK_CANDIDATES,
         js: asset(/^makeshift-occt-.*\.js$/),
         wasm: asset(/^makeshift-occt-.*\.wasm$/),
         side: asset(/^makeshift-kernel-.*\.wasm$/),
@@ -89,6 +95,7 @@ export async function browserClient(browser, url, timeout = 180_000) {
       initialization,
       request: (input) =>
         page.evaluate((value) => window.kernelBenchmarkRequest({ input: value }), input),
+      terminate: () => page.evaluate(() => window.kernelBenchmarkTerminate()),
       close: () => page.close(),
     };
   } catch (error) {

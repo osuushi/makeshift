@@ -5,6 +5,7 @@ import { EdgeSizeLimit } from "../../.cache/sketch-tests/src/backend/edge-size-l
 export function summarize(reply) {
   if (reply.error) return { error: reply.error };
   return {
+    replyHash: createHash("sha256").update(JSON.stringify(reply)).digest("hex"),
     results: reply.results.map((body) => ({
       volume: body.volume,
       bounds: body.bounds,
