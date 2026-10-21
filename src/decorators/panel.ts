@@ -217,7 +217,7 @@ export class DecoratorPanel {
     appendDecoratorRepairs(this.root, this.editor, problems);
     if (canContinue && last) {
       if (!isBuiltinDecorator(last.definition)) {
-        appendCustomContinue(this.root, this.editor, last, this.selected());
+        appendCustomContinue(this.root, this.editor, last);
         return;
       }
       this.button(

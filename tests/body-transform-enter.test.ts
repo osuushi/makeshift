@@ -165,10 +165,13 @@ test("fields, native controls, agent/dialog/menu focus and prior keyboard owners
   assert.equal(route.calls(), 0);
 });
 
-test("catalog rechecks availability; an unavailable Transform shows its reason without executing", async (t) => {
+test("Transform admits selection guidance but rechecks calculation guards before executing", async (t) => {
   const route = setup(t);
   route.unavailable("Select valid geometry");
-  await route.key();
+  const catalog = toolCatalog(route.state as unknown as SketchEditor);
+  assert.equal(catalog.results()[0]?.unavailable, null);
+  route.state.blocked = true;
+  await catalog.invoke("transform");
   assert.equal(route.calls(), 0);
-  assert.equal(route.state.message, "Select valid geometry");
+  assert.equal(route.state.message, "Wait for the current calculation");
 });

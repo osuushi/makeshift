@@ -146,6 +146,7 @@ export class ModelControls {
       async (event) => {
         if (
           editor.world.active ||
+          editor.interactions.current?.selectsLocally() ||
           ["body-move", "placement"].includes(editor.interactions.current?.kind ?? "")
         )
           return;

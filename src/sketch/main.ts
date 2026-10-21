@@ -1,3 +1,4 @@
+import "../tools/selection-step.css";
 import { DecoratorPanel } from "../decorators/panel.js";
 import { decoratorOverlay } from "../decorators/preview.js";
 import { BodyActions } from "../model/body-actions.js";
