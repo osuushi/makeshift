@@ -22,8 +22,8 @@ export class ToolMenu {
     app: HTMLElement,
   ) {
     this.trigger.className = "tools-trigger";
-    this.trigger.innerHTML = `More <kbd>${toolShortcut(toolSearchKey())}</kbd>`;
-    this.trigger.setAttribute("aria-label", "More tools");
+    this.trigger.innerHTML = `Search <kbd>${toolShortcut(toolSearchKey())}</kbd>`;
+    this.trigger.setAttribute("aria-label", "Search tools");
     this.trigger.setAttribute("aria-haspopup", "dialog");
     this.trigger.setAttribute("aria-expanded", "false");
     this.backdrop.className = "tool-menu-backdrop";
@@ -90,7 +90,7 @@ export class ToolMenu {
         if (event.target === this.trigger || this.trigger.contains(event.target as Node)) {
           event.preventDefault();
           event.stopImmediatePropagation();
-        } else if (toolMenuOpen()) {
+        } else if (!this.backdrop.hidden) {
           event.stopImmediatePropagation();
           if (!this.panel.contains(event.target as Node)) event.preventDefault();
         }
@@ -106,7 +106,7 @@ export class ToolMenu {
           this.open();
           return;
         }
-        if (toolMenuOpen() && !this.panel.contains(event.target as Node)) {
+        if (!this.backdrop.hidden && !this.panel.contains(event.target as Node)) {
           event.preventDefault();
           event.stopImmediatePropagation();
           this.close();
@@ -139,10 +139,10 @@ export class ToolMenu {
       event.preventDefault();
       event.stopImmediatePropagation();
       if (!toolMenuOpen()) this.open();
-      else this.input.focus();
+      else if (!this.backdrop.hidden) this.input.focus();
       return;
     }
-    if (!toolMenuOpen()) return;
+    if (this.backdrop.hidden) return;
     event.stopImmediatePropagation();
     if (event.isComposing) return;
     const key = event.key;
@@ -179,7 +179,7 @@ export class ToolMenu {
     }
   };
   private update = (): void => {
-    if (toolMenuOpen()) this.render(false);
+    if (!this.backdrop.hidden) this.render(false);
   };
   private render(reset: boolean): void {
     const catalog = toolCatalog(this.editor);
@@ -254,7 +254,7 @@ export class ToolMenu {
     );
   }
   dispose(): void {
-    if (toolMenuOpen()) this.close();
+    if (!this.backdrop.hidden) this.close();
     this.abort.abort();
     this.editor.world.changed.delete(this.update);
     this.trigger.remove();

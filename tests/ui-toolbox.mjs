@@ -39,7 +39,7 @@ export async function toolboxRoute(page, name) {
   await page.keyboard.press("Escape");
   await page.waitForFunction(() => !window.makeshiftInspect().interaction);
 
-  const more = page.getByRole("button", { name: "More tools", exact: true });
+  const more = page.getByRole("button", { name: "Search tools", exact: true });
   assert.ok(await more.locator("kbd").textContent());
   await more.scrollIntoViewIfNeeded();
   await more.click();

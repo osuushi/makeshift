@@ -16,7 +16,7 @@ export async function chooseTool(page, query, id) {
     if (await page.getByRole("dialog", { name: "Find a tool" }).isVisible())
       await page.keyboard.press("Escape");
     // Leave text editing so Undo/Delete apply to geometry, including committed modal parameters.
-    const trigger = page.getByRole("button", { name: "More tools", exact: true });
+    const trigger = page.getByRole("button", { name: "Search tools", exact: true });
     await trigger.focus();
     await page.waitForFunction(() => {
       if (typeof window.makeshiftInspect !== "function") return false;
@@ -80,6 +80,6 @@ export async function toolEnabled(page, query, id) {
 
 async function openTools(page) {
   if (await page.locator(".agent-dock:focus-within").count())
-    await page.getByRole("button", { name: "More tools", exact: true }).click();
+    await page.getByRole("button", { name: "Search tools", exact: true }).click();
   else await page.keyboard.press("Meta+f");
 }

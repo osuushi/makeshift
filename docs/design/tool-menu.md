@@ -8,7 +8,7 @@ immediate next action belong in the local brief.
 Show a fixed, compact common-tools panel below Entities. Sketch mode contains
 Arrow, Line, Rectangle, Circle, Pen and Trim; Modeling mode contains Arrow, Sketch,
 Cube, Cylinder, Sphere, Cone, Drill, Extrude and Offset. Every entry has an icon,
-labels show existing shortcuts, and the current tool is highlighted. The panel's **More ·
+labels show existing shortcuts, and the current tool is highlighted. The panel's **Search ·
 ⌘F** button and Command-F open the searchable menu. A short window moves constraints
 and measurements right to leave room for the panel. The panel uses the shared tool
 catalog and does not own geometry or history. Search remains the full discovery
@@ -25,7 +25,7 @@ agent dock keep their purposes.
 
 ## Interaction
 
-- The More button supports mouse, touch and Pencil. Ctrl-F is the Windows/Linux
+- The Search button supports mouse, touch and Pencil. Ctrl-F is the Windows/Linux
   equivalent. Each opening starts with an empty, focused search box.
 - On an empty root query, show a separate Recent section above Categories when
   tools have been invoked. Keep ten unique visible tools, newest first; invoking
@@ -190,7 +190,7 @@ routing so Command-F opens Tools rather than host/browser Find.
    build catalog/search/menu and invoke actual sketch creation and Shell through
    it. Verify thickness, a typo, disabled reasons, focus and tool switching.
 2. **Common panels:** review both mode-specific lists, every icon, active state,
-   existing shortcuts, disabled reasons and the More entry point. Resize to short
+   existing shortcuts, disabled reasons and the Search entry point. Resize to short
    heights and confirm the toolbox remains below Entities while readouts move right.
 3. **Search acceptance:** deterministic ranking tests plus real keyboard/pointer routes
    in headless Chromium/WebKit and hidden Electron. Cover browsing, global search
@@ -204,3 +204,40 @@ The search menu contract above is implemented. The common panels are the current
 increment; runtime and founder review should be recorded in the active local brief.
 Physical iPad keyboard/Pencil behavior requires device review in addition to automated
 acceptance.
+
+## Illustrated navigator (2026-10-21)
+
+The toolbox now separates **Browse tools** from **Search** (⌘F / Ctrl-F). Browse
+opens a large illustrated 3×3 grid without a text field or software keyboard.
+The approved hierarchy lives in `src/tools/navigator-tree.ts`: Draw & sketch,
+Create solids, Combine & cut, Shape & finish, Move & copy, Constrain, Planes &
+references, Select & organize, and View & utilities. Screens have at most nine
+cards; every tool takes at most three choices after opening. Aliases reference
+ordinary catalog IDs, and Back uses the visited path. Standard File/Edit actions
+remain in their existing menu. New visible commands require a navigator home;
+the focused navigator acceptance checks catalog coverage.
+
+Each category shows illustrated examples. Tool cards show a static before/after
+or operation diagram, a canonical label and an explanation or availability reason.
+Surface detail cards explain export-time generation. Animation is optional future
+polish; no rendering or geometry calculation is needed to navigate.
+
+Tap anywhere on a card, or press Browse and continuously drag through the centered
+green targets. Entering a target navigates or invokes immediately, without dwell.
+Positions never sort by availability, selection, or recency. Missing/unavailable
+commands retain their slots and cannot execute. Targets underneath the pointer on
+a new screen require leaving their radius plus an eight-pixel margin and reentering;
+target positions never move to avoid a finger. The final pointer release and
+compatibility click are consumed rather than reaching geometry controls. Lifting
+between categories leaves the navigator open for continued tapping.
+
+The fixed bottom strip has Back in its left third and Cancel in the remainder.
+Dragging into either section cancels the navigator. Escape, outside press, window
+blur and viewport resize also dismiss it. Backspace goes back; arrows and Tab move
+focus; Enter/Space activate. Opening, browsing and canceling borrow focus without
+accepting numeric input or changing geometry, selection or Undo. Tool invocation
+uses the existing catalog lifecycle and selection collection. Search and Browse
+share the borrowed-focus guard but only handle events for their own visible surface.
+
+The first version uses static diagrams. Physical iPad/Pencil ergonomics, fast paths
+through neighboring targets, and the target diameter still need device review.
