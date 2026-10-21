@@ -222,12 +222,13 @@ or operation diagram, a canonical label and an explanation or availability reaso
 Surface detail cards explain export-time generation. Animation is optional future
 polish; no rendering or geometry calculation is needed to navigate.
 
-Tap anywhere on a card, or press Browse and continuously drag through the centered
+Tap anywhere on a card, or press Browse and continuously drag through the
 blue targets. Entering a target navigates or invokes immediately, without dwell.
 Positions never sort by availability, selection, or recency. Missing/unavailable
-commands retain their slots and cannot execute. Targets underneath the pointer on
-a new screen require leaving their radius plus an eight-pixel margin and reentering;
-target positions never move to avoid a finger. The final pointer release and
+commands retain their slots and cannot execute. On each new screen, targets that would overlap the current pointer shift within
+their cards, leaving a clear margin around the pointer. They stay fixed until the
+next screen; card order never changes. The gesture leave/reenter guard remains
+as a fallback, not a substitute for placing targets clear of the pointer. The final pointer release and
 compatibility click are consumed rather than reaching geometry controls. Lifting
 between categories leaves the navigator open for continued tapping.
 
@@ -245,6 +246,6 @@ through neighboring targets, and the target diameter still need device review.
 Targets use a faint 72px blue circle with a blue outline and no glyph.
 Mouse/Pencil hover and a moving selection gesture increase nearby target opacity over a
 100px approach zone; stationary presses do not. Proximity changes opacity only,
-so hit regions and learned paths stay fixed. Unavailable targets remain dim gray.
+so hit regions stay fixed while navigating each screen. Unavailable targets remain dim gray.
 Back uses a neutral gray surface; Cancel retains its red surface. Dragging into
 either section still cancels.

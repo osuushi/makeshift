@@ -21,7 +21,7 @@ await withUiRuntimes(
     assert.equal(await dialog.isVisible(), true);
     await catalogCoverage(page);
     await page.screenshot({ path: `.cache/sketch-review/${name}-navigator-root.png` });
-    await entry("references").click();
+    await tapCategoryClearPointer(dialog, entry("references"));
     await entry("principal-planes").click();
     await entry("back").click();
     assert.match(await heading(), /Planes & references$/);
@@ -45,14 +45,18 @@ await withUiRuntimes(
     let p = await center("draw");
     await page.mouse.move(p.x, p.y);
     assert.match(await heading(), /Draw & sketch$/);
-    // Line occupies the same slot: staying there cannot activate it.
+    // The next screen must visibly clear the pointer, not just block activation.
+    await targetsClearPointer(dialog, p);
+    const linePosition = await center("line");
+    // Staying at the previous target cannot activate a new tool.
     await page.mouse.move(p.x + 1, p.y + 1);
     assert.equal(await dialog.isVisible(), true);
-    p = await center("rectangle");
+    assert.deepEqual(await center("line"), linePosition, "Targets stay fixed after placement");
+    p = await center("line");
     await page.mouse.move(p.x, p.y);
     assert.equal(await dialog.isVisible(), false);
     await page.mouse.up();
-    assert.equal((await inspect(page)).tool, "rectangle");
+    assert.equal((await inspect(page)).tool, "line");
     assert.deepEqual((await inspect(page)).document, before);
 
     await browse.click();
@@ -190,4 +194,35 @@ async function tap(page, locator) {
   assert.ok(bounds);
   // Opening on pointerdown changes the hit target before WebKit delivers touchstart.
   await page.touchscreen.tap(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+}
+
+async function targetsClearPointer(dialog, pointer) {
+  const targets = await dialog.locator(".navigator-target").evaluateAll((elements) =>
+    elements.map((element) => {
+      const r = element.getBoundingClientRect();
+      return {
+        x: r.x + r.width / 2,
+        y: r.y + r.height / 2,
+        radius: r.width / 2,
+        visible: getComputedStyle(element).visibility !== "hidden",
+      };
+    }),
+  );
+  for (const target of targets) {
+    assert.ok(target.visible, "Every tool keeps a visible gesture target at this viewport");
+    assert.ok(
+      Math.hypot(target.x - pointer.x, target.y - pointer.y) >= target.radius + 10,
+      "New targets clear the pointer with a margin",
+    );
+  }
+}
+
+async function tapCategoryClearPointer(dialog, card) {
+  const bounds = await card.boundingBox();
+  assert.ok(bounds);
+  await card.click();
+  await targetsClearPointer(dialog, {
+    x: bounds.x + bounds.width / 2,
+    y: bounds.y + bounds.height / 2,
+  });
 }

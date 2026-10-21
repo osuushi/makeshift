@@ -1,9 +1,10 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "./catalog.js";
 import { borrowToolFocus, restoreToolFocus, toolMenuOpen } from "./menu-focus.js";
-import { type GestureTarget, NavigatorGesture } from "./navigator-gesture.js";
+import { NavigatorGesture } from "./navigator-gesture.js";
 import { illuminateTargets } from "./navigator-glow.js";
 import { navigatorKeydown } from "./navigator-keyboard.js";
+import { navigatorTargets, placeNavigatorTargets } from "./navigator-targets.js";
 import { navigatorGroups } from "./navigator-tree.js";
 import { navigatorCard } from "./navigator-view.js";
 import { toolSearchShortcut } from "./search-shortcut.js";
@@ -30,6 +31,7 @@ export class ToolNavigator {
   private history = ["root"];
   private gesture = new NavigatorGesture();
   private pointer: Pointer | null = null;
+  private position?: { x: number; y: number };
   private swallowClick = false;
   private signature = "";
   constructor(
@@ -88,17 +90,6 @@ export class ToolNavigator {
     this.trigger.setAttribute("aria-expanded", "false");
     restoreToolFocus();
   }
-  private targets(): GestureTarget[] {
-    return [...this.grid.querySelectorAll<HTMLElement>(".navigator-target")].map((element) => {
-      const r = element.getBoundingClientRect();
-      return {
-        id: element.parentElement?.dataset.entry ?? "",
-        x: r.x + r.width / 2,
-        y: r.y + r.height / 2,
-        radius: r.width / 2,
-      };
-    });
-  }
   private choose(id: string): void {
     if (id === "cancel") this.close();
     else if (id === "back") {
@@ -127,7 +118,9 @@ export class ToolNavigator {
     this.back.disabled = this.history.length === 1;
     this.grid.replaceChildren(...group.entries.map((id) => navigatorCard(id, map)));
     this.signature = JSON.stringify(tools.map((t) => [t.id, t.unavailable]));
-    if (this.pointer) this.gesture.reset(this.targets(), this.pointer.x, this.pointer.y);
+    placeNavigatorTargets(this.grid, this.position);
+    if (this.pointer)
+      this.gesture.reset(navigatorTargets(this.grid), this.pointer.x, this.pointer.y);
     this.grid.querySelector<HTMLButtonElement>("button")?.focus({ preventScroll: true });
   }
   private update = (): void => {
@@ -226,6 +219,7 @@ export class ToolNavigator {
     event.preventDefault();
     event.stopImmediatePropagation();
     if (event.button !== 0 || !event.isPrimary) return;
+    this.position = { x: event.clientX, y: event.clientY };
     if (trigger) this.open();
     if (!this.visible) return;
     this.pointer = {
@@ -240,10 +234,11 @@ export class ToolNavigator {
     this.swallowClick = true;
     illuminateTargets(this.grid);
     if (event.isTrusted) this.root.setPointerCapture(event.pointerId);
-    this.gesture.reset(this.targets(), event.clientX, event.clientY);
+    this.gesture.reset(navigatorTargets(this.grid), event.clientX, event.clientY);
     if (!trigger && !this.panel.contains(event.target as Node)) this.close();
   };
   private move = (event: PointerEvent): void => {
+    this.position = { x: event.clientX, y: event.clientY };
     const p = this.pointer;
     if (!p) {
       const hovering = event.buttons === 0 && event.pointerType !== "touch";
@@ -263,7 +258,7 @@ export class ToolNavigator {
       this.close();
       return;
     }
-    const id = this.gesture.enter(this.targets(), p.x, p.y);
+    const id = this.gesture.enter(navigatorTargets(this.grid), p.x, p.y);
     if (id) this.choose(id);
   };
   private up = (event: PointerEvent): void => {
@@ -272,6 +267,7 @@ export class ToolNavigator {
     event.preventDefault();
     event.stopImmediatePropagation();
     const end = this.entry(document.elementFromPoint(event.clientX, event.clientY));
+    this.position = { x: event.clientX, y: event.clientY };
     this.pointer = null;
     illuminateTargets(this.grid);
     if (this.visible && !p.drag && p.entry && p.entry === end) this.choose(p.entry);
