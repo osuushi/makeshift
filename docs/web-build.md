@@ -45,6 +45,45 @@ dragging, see the [captured-fixture benchmark](../tests/wasm-performance/README.
 It records cold worker initialization, warm operations, phase timings and worker
 restarts separately; run it without concurrent builds or other benchmarks.
 
+## Opt-in exception and profiling builds
+
+The default retains JavaScript-based C++ exception handling. To build the
+experimental standardized WebAssembly exception variant with the same compiler:
+
+```sh
+MAKESHIFT_WEB_EXCEPTIONS=wasm npm run build:web
+node tests/wasm-performance/verify-exceptions.mjs
+npm run test:web
+```
+
+This uses `-fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0` throughout OCCT,
+PlaneGCS and both calculator modules. It also undefines `OCC_CONVERT_SIGNALS`
+consistently in the experimental SDK and calculator: the browser calculator never
+installs OCCT's native signal handlers, but that macro still inserts `setjmp`
+inside geometry loops. Combining those jumps with native WASM exceptions produced
+invalid branch-table code in both exception formats with the pinned compiler.
+The variant retains ordinary C++ exceptions and `-O3`; it does not disable geometry
+validation. It selects the standardized exception format. Its independent inputs
+and SDK live under `.cache/web-wasm-exceptions`, with calculators in
+`.build/web-wasm-exceptions-{solver,kernel}`. The SDK receipt prevents linking
+one exception ABI against the other. The final site still goes to `.build/web`.
+If invoking Vite or notices separately, supply the same environment variable to
+each command. Release metadata records `webExceptions`; a matching source archive
+must be rebuilt with that setting. Unset it to build the default variant again.
+
+This option does not establish support in older browsers or on a physical iPad.
+Verify the intended browser/device before changing the product's default.
+The focused exception check catches a real OCCT exception across the main/side
+module boundary, checks ordinary request errors, and then calculates valid geometry
+in the same worker after each failure.
+
+For named sampled stacks, set `MAKESHIFT_WEB_PROFILING=1` when running
+`npm run build:wasm`, then rebuild the web assets with the matching exception
+setting. This retains function names at Release optimization while stripping
+unused DWARF sections that crash the pinned linker. Profiling is off by default;
+use the [benchmark instructions](../tests/wasm-performance/README.md#sampled-cpu-stacks)
+to capture the calculator worker's profile.
+
 ## Independent Pages repository
 
 The deployment repository is the minimal public

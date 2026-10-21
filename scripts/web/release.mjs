@@ -1,20 +1,26 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { resolve } from "node:path";
+import { relative, resolve } from "node:path";
 import { inputCache, nativeInputs } from "../native-inputs.mjs";
 import { occtArchive } from "../occt-source.mjs";
+import { webBuildConfig } from "./config.mjs";
 import { webNotices } from "./notices.mjs";
 
 const git = (...args) => execFileSync("git", args, { encoding: "utf8" }).trim();
 if (git("status", "--porcelain")) throw new Error("Release requires a clean committed tree");
 const timestamp = new Date().toISOString();
+const config = webBuildConfig();
+const built = JSON.parse(await readFile(".build/web/calculator-build.json", "utf8"));
+if (built.exceptions !== config.exceptions)
+  throw new Error("Rebuild web assets with the same MAKESHIFT_WEB_EXCEPTIONS setting as release");
 const tag = `web-${timestamp.replaceAll(/[-:]/g, "").replace(/\.\d{3}/, "")}`;
 const metadata = {
   tag,
   timestamp,
   commit: git("rev-parse", "HEAD"),
   repository: process.env.GITHUB_REPOSITORY ?? "osuushi/makeshift",
+  webExceptions: config.exceptions,
 };
 await webNotices(metadata);
 await writeFile(".build/web/build.json", `${JSON.stringify(metadata, null, 2)}\n`);
@@ -44,9 +50,10 @@ for (const input of Object.values(nativeInputs)) {
     throw new Error("Source hash mismatch");
   await writeFile(resolve(stage, ".cache/release-inputs", input.archive), bytes);
 }
-await mkdir(resolve(stage, ".cache/web"), { recursive: true });
-await cp(await occtArchive(resolve(".cache/web")), resolve(stage, ".cache/web/occt.tar.gz"));
-await cp(".cache/web/solver-source", resolve(stage, ".cache/web/solver-source"), {
+const bundledCache = resolve(stage, relative(process.cwd(), config.cache));
+await mkdir(bundledCache, { recursive: true });
+await cp(await occtArchive(config.cache), resolve(bundledCache, "occt.tar.gz"));
+await cp(resolve(config.cache, "solver-source"), resolve(bundledCache, "solver-source"), {
   recursive: true,
 });
 await cp(".build/web/licenses", resolve(stage, "release-licenses"), { recursive: true });

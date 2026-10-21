@@ -15,7 +15,11 @@ target_include_directories(planegcs SYSTEM PUBLIC
   ${PLANEGCS_SOURCE} ${EIGEN_INCLUDE_DIR} ${BOOST_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR})
 if(EMSCRIPTEN)
-  target_compile_options(planegcs PRIVATE -fexceptions)
+  if(MAKESHIFT_WEB_WASM_EXCEPTIONS)
+    target_compile_options(planegcs PRIVATE -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0)
+  else()
+    target_compile_options(planegcs PRIVATE -fexceptions)
+  endif()
 endif()
 add_executable(makeshift-solver main.cpp)
 target_link_libraries(makeshift-solver PRIVATE planegcs)
