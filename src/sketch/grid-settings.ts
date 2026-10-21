@@ -30,24 +30,9 @@ export function validateSketchGrid(value: unknown): asserts value is SketchGrid 
 }
 
 export function visibleSketchGrid(grid: SketchGrid, pixelsPerMm: number, minPixels: number) {
-  const clamp = (spacing: number) =>
-    spacing * Math.max(1, Math.ceil(minPixels / (spacing * pixelsPerMm) - 1e-12));
-  const minor = clamp(grid.minor);
-  const major = clamp(grid.major);
-  const hideMinor = minor === major || (minor > major && shareGridFactor(minor, major));
-  return { minor, major, hideMinor, snap: hideMinor ? major : Math.min(minor, major) };
-}
-
-/** Compare decimal spacings in their smallest shared power-of-ten unit. */
-function shareGridFactor(a: number, b: number): boolean {
-  for (let scale = 1; scale <= 1e6; scale *= 10) {
-    const x = Math.round(a * scale);
-    const y = Math.round(b * scale);
-    if (Math.abs(a * scale - x) > 1e-7 || Math.abs(b * scale - y) > 1e-7) continue;
-    let divisor = x;
-    let remainder = y;
-    while (remainder) [divisor, remainder] = [remainder, divisor % remainder];
-    return divisor > 1;
-  }
-  return false;
+  const minor = grid.minor * Math.max(1, Math.ceil(minPixels / (grid.minor * pixelsPerMm) - 1e-12));
+  // Derive major lines from the visible minor grid so every major line aligns.
+  const major = minor * Math.max(1, Math.ceil(grid.major / minor - 1e-12));
+  const hideMinor = minor === major;
+  return { minor, major, hideMinor, snap: minor };
 }
