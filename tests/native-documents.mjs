@@ -1,6 +1,6 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { _electron } from "playwright";
 import { documentTestPage, followDocument } from "./document-test-page.mjs";
 import { reset } from "./ui-helpers.mjs";
@@ -67,6 +67,10 @@ export async function openDocument(page, file) {
   if (!session) {
     const chooser = page.waitForEvent("filechooser");
     await chooseTool(page, "open document", "open");
+    await page
+      .getByRole("dialog", { name: "Open drawing", exact: true })
+      .getByRole("button", { name: "Import file…", exact: true })
+      .click();
     await (await chooser).setFiles(file);
     const discard = page
       .getByRole("dialog", { name: "Unsaved changes" })
@@ -76,7 +80,7 @@ export async function openDocument(page, file) {
   }
   let path = file;
   if (typeof file !== "string") {
-    path = join(session.directory, "fixture.makeshift");
+    path = join(session.directory, basename(file.name ?? "fixture.makeshift"));
     await writeFile(path, file.buffer);
   }
   // Archive fixture cases need a fresh owner when reopening the current file.
