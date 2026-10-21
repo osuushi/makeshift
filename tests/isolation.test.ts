@@ -29,3 +29,30 @@ test("a deliberate hide during isolation stays hidden on exit; reset clears isol
   assert.equal(visibility.isolating, false);
   assert.equal(visibility.visible("body-a"), true);
 });
+
+test("new owners join isolation while existing and deliberately hidden owners stay hidden", () => {
+  const visibility = new EntityVisibility();
+  const original = { sketches: [{ id: "old-sketch" }], bodies: [{ id: "old-body" }] };
+  visibility.observe(original);
+  visibility.isolate(["old-body"]);
+  const created = {
+    sketches: [...original.sketches, { id: "new-sketch" }],
+    bodies: [...original.bodies, { id: "new-body" }],
+    constructionPlanes: [{ id: "new-plane" }],
+  };
+  visibility.observe(created);
+  for (const id of ["new-sketch", "new-body", "new-plane"])
+    assert.equal(visibility.visible(id), true, id);
+  assert.equal(visibility.visible("old-sketch"), false);
+  visibility.hide("new-body");
+  visibility.observe(original);
+  visibility.observe(created);
+  assert.equal(visibility.visible("new-body"), false, "Restore preserves deliberate hiding");
+  assert.equal(visibility.visible("old-sketch"), false, "Restore does not reveal old owners");
+  visibility.isolate(["old-body"]);
+  visibility.observe(created);
+  assert.equal(visibility.visible("new-sketch"), false, "A new isolation excludes known owners");
+  visibility.endIsolation();
+  assert.equal(visibility.visible("new-plane"), true);
+  assert.equal(visibility.visible("new-body"), false);
+});

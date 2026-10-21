@@ -31,6 +31,9 @@ founder feedback update these contracts before further tools depend on them.
   reveal additional entities during isolation. Exiting isolation removes only its
   temporary hiding, so it never hides an entity; entities revealed during isolation
   remain revealed. Isolation does not change the document or geometry Undo.
+  Newly created sketches, bodies and construction planes immediately join the
+  visible set, including temporary previews. Existing hidden entities stay hidden;
+  editing or restoring an already known entity does not reveal it automatically.
   An Exit isolation button appears below the orientation cube while isolation is
   active and performs the same action as the View tool.
 

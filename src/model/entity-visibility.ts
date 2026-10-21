@@ -6,7 +6,24 @@ import type { Extrusion, LiftSource, Revolution } from "./body.js";
 /** Per-window display state; hiding geometry never changes the document. */
 export class EntityVisibility {
   readonly hidden = new Set<string>();
+  private readonly known = new Set<string>();
   private isolated: Set<string> | null = null;
+  /** Observe accepted and preview owners before drawing; existing hidden owners stay hidden. */
+  observe(document: {
+    sketches: readonly { id: string }[];
+    bodies?: readonly { id: string }[];
+    constructionPlanes?: readonly { id: string }[];
+  }): void {
+    for (const entity of [
+      ...document.sketches,
+      ...(document.bodies ?? []),
+      ...(document.constructionPlanes ?? []),
+    ]) {
+      if (this.known.has(entity.id)) continue;
+      this.known.add(entity.id);
+      this.isolated?.add(entity.id);
+    }
+  }
   get isolating(): boolean {
     return this.isolated !== null;
   }
@@ -26,6 +43,7 @@ export class EntityVisibility {
   }
   reset(): void {
     this.hidden.clear();
+    this.known.clear();
     this.isolated = null;
   }
   setUsedSketchesVisible(
