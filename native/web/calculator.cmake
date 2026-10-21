@@ -3,9 +3,9 @@ function(web_calculator target)
   set(exception_flag -fexceptions)
   if(MAKESHIFT_WEB_WASM_EXCEPTIONS)
     set(exception_flag -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0)
-    # Browser calculators do not install OCCT native signal handlers.
-    target_compile_options(${target} PRIVATE -UOCC_CONVERT_SIGNALS)
   endif()
+  # Neither browser exception runtime installs native signal handlers.
+  target_compile_options(${target} PRIVATE -UOCC_CONVERT_SIGNALS)
   set_source_files_properties(main.cpp PROPERTIES COMPILE_DEFINITIONS "main=makeshift_cli_main")
   target_sources(${target} PRIVATE ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/entry.cpp)
   target_compile_options(${target} PRIVATE ${exception_flag})

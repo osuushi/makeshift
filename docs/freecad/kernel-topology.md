@@ -1297,3 +1297,27 @@ the exact solid and all geometry and presentation checks. This does not promise
 tangent propagation across a singular parameterization. The captured Pen
 extrusion regression exercises stationary endpoint controls next to an arc;
 ordinary smooth joins remain covered by existing face-chain/fillet acceptance.
+
+
+### Signal bookkeeping in numerical validation
+
+Source observation at the same OCCT revision: [`OCC_CATCH_SIGNALS`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/Standard/Standard_ErrorHandler.hxx#L30-L69)
+adds an error-handler object and `setjmp` when `OCC_CONVERT_SIGNALS` is defined.
+The documented conversion requires installed OCCT signal handlers. The
+[curve-on-surface target function](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/GeomLib/GeomLib_CheckCurveOnSurface.cxx#L70-L125)
+performs this bookkeeping for repeated function/derivative evaluations. These
+calls are part of intersection-curve tolerance verification. The
+[error-handler constructor](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/Standard/Standard_ErrorHandler.cxx#L63-L78)
+also takes a shared mutex. Removing unused signal conversion removes this
+bookkeeping, not the numerical evaluations or C++ catches.
+[`OSD::SignalMode`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/OSD/OSD_signal.cxx#L22-L30)
+starts at `AsIs`. Native pool workers configure their thread-local floating-point
+state; the [Unix thread-local method](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/OSD/OSD_signal.cxx#L1037-L1060)
+does not itself install signal handlers.
+
+Makeshift inference and contract: its dedicated calculator does not call
+`OSD::SetSignal`, so its Unix SDK and browser builds undefine this macro while
+retaining normal C++ exceptions and every geometry check. Do not reuse this build
+setting for a different host that relies on OCCT signal conversion. Runtime
+comparisons, rejection/recovery checks and measured limits are recorded in the
+existing [performance harness](../../tests/wasm-performance/README.md).

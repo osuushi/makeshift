@@ -45,6 +45,11 @@ libraries, STEP translator (`TKDESTEP`) and Makeshift's separate solid calculato
 Its transitive toolkit dependencies are built without FreeType or X11; STEP
 export does not initialize graphics. This initial source build takes
 longer; its cache is `.cache/kernel` and the calculator is `.build/kernel`.
+On Unix, the dedicated OCCT SDK and calculator undefine `OCC_CONVERT_SIGNALS`.
+Makeshift does not install OCCT's signal-to-exception handlers; retaining their
+`setjmp` bookkeeping adds overhead inside numerical loops. Normal C++ exceptions,
+geometry validation and worker-process failure handling remain enabled. This SDK
+is for Makeshift's calculator, not a host that installs OCCT signal handlers.
 Alternatively, set `OCCT_ROOT` to an installed SDK produced by this checkout's
 `setup:kernel` recipe, including `TKDESTEP`. A stock OCCT 7.9.3 SDK is not equivalent:
 Makeshift adapts rounded offset joins to shared-boundary precision. Setup and direct

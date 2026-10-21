@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { compare } from "./measure.mjs";
 
-const [beforePath, afterPath] = process.argv.slice(2);
-if (!beforePath || !afterPath) throw new Error("Usage: compare.mjs BEFORE.json AFTER.json");
+const [beforePath, afterPath, mode] = process.argv.slice(2);
+if (mode && mode !== "--exact") throw new Error("Unknown comparison option");
+if (!beforePath || !afterPath)
+  throw new Error("Usage: compare.mjs BEFORE.json AFTER.json [--exact]");
 const before = JSON.parse(await readFile(beforePath, "utf8"));
 const after = JSON.parse(await readFile(afterPath, "utf8"));
 assert.equal(before.fixture.sha256, after.fixture.sha256, "Use the same captured fixture");
@@ -38,8 +40,17 @@ for (const runtime of after.runtimes) {
     assert.equal(scenario.summary.size, original.summary.size);
     assert.equal(scenario.summary.probes, original.summary.probes);
     assert.ok([...original.comparisons, ...scenario.comparisons].every((item) => item.matches));
-    for (const sample of [scenario.first, ...scenario.samples])
+    for (const sample of [scenario.first, ...scenario.samples]) {
       compare(sample.outcome, original.first.outcome);
+      if (mode === "--exact") {
+        assert.deepEqual(sample.outcome, original.first.outcome, `${scenario.name}: full reply`);
+        assert.deepEqual(
+          sample.probes.map((probe) => ({ size: probe.size, reply: probe.reply })),
+          original.first.probes.map((probe) => ({ size: probe.size, reply: probe.reply })),
+          `${scenario.name}: every search probe`,
+        );
+      }
+    }
     const a = original.summary.median,
       b = scenario.summary.median;
     console.log(

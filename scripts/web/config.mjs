@@ -13,6 +13,6 @@ export function webBuildConfig() {
     flag:
       exceptions === "wasm"
         ? "-fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0 -UOCC_CONVERT_SIGNALS"
-        : "-fexceptions",
+        : "-fexceptions -UOCC_CONVERT_SIGNALS",
   };
 }

@@ -290,7 +290,9 @@ combined exception and unused-signal-conversion change.
 ### WASM exception experiment
 
 Both 66-case browser comparisons passed canonical-input, repeated-outcome and
-cross-build geometry-summary checks. Warm medians in milliseconds:
+cross-build geometry-summary checks. These historical default measurements still
+include unused signal conversion; see the later self-intersection follow-up for
+the current default. Warm medians in milliseconds:
 
 | Operation | Chromium default → experimental | WebKit default → experimental |
 | --- | ---: | ---: |
@@ -448,3 +450,109 @@ For unprofiled operation timing, use `run.mjs` with
 `^(twist-(90|450|cubic-draft)|loft-(smooth|ruled)|helix-2)$`. Use the same browser
 build mode and canonical inputs before and after a change; compare all returned
 geometry, including full-reply hashes, separately from the timing ratios.
+
+### Face/face and edge/face validation
+
+The opt-in `sweep-validation-benchmark` now times the complete edge/face and
+face/face stages through a subclass that calls the original OCCT implementations.
+With six warm rounds on the M2 Max, the original native serial checker spent
+about 60/162 ms in edge/face and face/face for Twist 450°, and 133/514 ms for the
+two-turn Helix. These are isolated validation timings, not complete operations.
+
+Two geometric shortcuts did not justify changing production validation:
+
+- Disabling the intersection pcurves made Twist validation about five times slower:
+  OCCT then verifies curve tolerances by more expensive surface projections.
+- Subdivided positive-weight control hulls discarded 8 of 40 Twist edge/face pairs,
+  and 42 of 188 Helix edge/face plus 10 of 75 face/face pairs. Including bound
+  construction, total validation improved only about 1–3%. This filter remains
+  exclusively in the opt-in benchmark; unsupported or uncertain supports retain
+  their original pairs. Adjacent faces are not presumed safe to skip.
+
+The useful change removes unused signal-to-exception bookkeeping from the dedicated
+SDK and calculators. Repeated curve-tolerance evaluations previously performed
+`setjmp`, signal-mask work and shared-mutex operations even though Makeshift never
+installs OCCT signal handlers. Rebuilding only the unchanged
+`GeomLib_CheckCurveOnSurface` source without that macro reduced isolated face/face
+time from about 161 to 118 ms for Twist and 514 to 447 ms for Helix. The final build
+setting applies consistently across the SDK and calculator. Normal C++ exceptions,
+intersection algorithms, tolerances, all interference levels and the production
+ArgumentAnalyzer remain unchanged. The default browser exception runtime remains
+JavaScript based; switching to the experimental WASM exception runtime is separate.
+[Source observations and the host boundary](../../docs/freecad/kernel-topology.md#signal-bookkeeping-in-numerical-validation).
+
+The benchmark's `--self-test` compares exact original-shape fault pairs and checks
+that validation does not mutate its input BRep. Cases cover valid boxes, cylindrical
+and toroidal seams, folded ruled/smooth solids, a translated and rotated fold,
+crossing boundaries, separated boundaries, exact contact and contact within the
+existing tolerance. It retains the original analyzer as the reference.
+
+For whole-operation comparisons, preserve an old executable **and its old shared
+SDK**, plus the old web assets, before rebuilding. Copying only a native executable
+is insufficient if its dynamically loaded SDK is then replaced. Independent
+checkouts/SDK directories provide this separation. With both versions prepared:
+
+```sh
+source ~/.nvm/nvm.sh && nvm use
+node tests/wasm-performance/build-interleaved.mjs OLD_KERNEL OLD_WEB .cache/interleaved.json
+node tests/wasm-performance/compare.mjs BEFORE.json AFTER.json --exact
+cmake -S native/kernel -B .build/kernel -DMAKESHIFT_KERNEL_BENCHMARKS=ON
+cmake --build .build/kernel --target sweep-validation-benchmark -j 2
+.build/kernel/benchmarks/sweep-validation-benchmark --self-test
+cmake -S native/kernel -B .build/kernel -DMAKESHIFT_KERNEL_BENCHMARKS=OFF
+```
+
+The interleaved harness alternates both versions over six warm rounds, with only
+one calculator active at a time, and requires identical complete-result hashes.
+It records first calls separately, includes serialization/presentation work, and
+reports calculator latency rather than UI paint latency. The strict report
+comparison also checks every probe of an automatic fillet-size search.
+
+The regression run covers 68 cases on native serial, Chromium and WebKit. All 204
+pass the existing geometry/rejection comparison; 66 per runtime (198 total) also
+have identical complete replies and search probes. The two notched-cylinder shell
+cases have unstable BRep and topology ordering even when the original build
+repeats the same request. Their
+before/after topology counts, bounds and triangle counts agree, with volume
+differences below `1e-11`; they are not claimed to be byte-identical. The strict
+comparator deliberately still fails on those cases. Both engines also pass real
+pointer/Escape cancellation, exception recovery in the same worker, and the
+standalone editor smoke covering drawing, constraints, solids, history and files.
+The rebuilt native SDK also passes all nine CTest targets and the ten diagnostic
+self-intersection cases with exactly the original fault-pair sets. Twenty-one
+focused model tests pass, including rejected folded Lofts, subsequent valid
+preview recovery, Twist, Helix, circular profiles and history. Both native SDK
+receipts have the same adapted-source hash and platform settings.
+
+After the complete rebuild, six alternating warm rounds on the M2 Max produced
+these whole-calculator medians (milliseconds, before → after). No builds or other
+tests ran during timing. These include presentation and serialization; they do
+not measure UI paint latency. The browser builds both use JavaScript exceptions.
+
+| Runtime | Twist 90° | Twist 450° | Cubic Twist + draft | Helix, two turns |
+| --- | ---: | ---: | ---: | ---: |
+| Native, one thread | 194.2 → 185.1 | 662.1 → 608.2 | 1968.0 → 1757.0 | 1322.7 → 1249.8 |
+| Native, all cores | 100.9 → 99.7 | 436.1 → 371.4 | 1858.2 → 1611.8 | 500.3 → 324.6 |
+| Chromium | 323.3 → 317.9 | 1321.1 → 1292.9 | 3405.6 → 3321.4 | 3330.9 → 3344.0 |
+| WebKit | 512.0 → 502.0 | 2122.0 → 2074.0 | 4820.0 → 4657.0 | 3416.0 → 3317.0 |
+
+All 224 first/warm replies in this comparison match exactly within each
+operation/runtime. The largest useful gain is native parallel validation:
+whole-operation Twist 450° improves by 14.8%, and Helix by 35.1%. In their median
+whole-operation samples, self-intersection falls from 139.9 to 72.5 ms and from
+281.3 to 112.0 ms respectively, while volume checks stay around 29/25 ms.
+This is consistent with avoiding the shared error-handler mutex in parallel
+curve-tolerance checks. Browser whole-operation gains are only about 0–3%; native
+speedups do not transfer proportionally to single-threaded WASM.
+
+Repeating the isolated serial checker benchmark against the complete new SDK
+confirms where time was saved (six warm rounds, milliseconds, before → after):
+
+| Shape | Edge/face | Face/face | Complete checker |
+| --- | ---: | ---: | ---: |
+| Twist 450° | 59.8 → 60.5 | 163.4 → 115.7 | 259.8 → 213.5 |
+| Helix, two turns | 133.2 → 133.0 | 515.4 → 443.8 | 731.2 → 659.5 |
+
+Face/face improves by about 29% and 14%; edge/face is essentially unchanged.
+These measurements retain all original candidate pairs. The hull-filter modes
+remain diagnostic experiments and are not enabled in the production calculator.

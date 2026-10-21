@@ -49,11 +49,11 @@ export async function serve(root = webRoot) {
   };
 }
 
-export async function browserClient(browser, url, timeout = 180_000) {
+export async function browserClient(browser, url, timeout = 180_000, root = webRoot) {
   const page = await browser.newPage();
   try {
     await page.goto(`${url}benchmark/`);
-    const files = await readdir(resolve(webRoot, "assets"));
+    const files = await readdir(resolve(root, "assets"));
     const asset = (pattern) => {
       const matches = files.filter((file) => pattern.test(file));
       if (matches.length !== 1) throw new Error(`Expected one asset for ${pattern}`);

@@ -9,7 +9,7 @@ target_include_directories(boolean-pair-profile SYSTEM PRIVATE ${OpenCASCADE_INC
 target_link_libraries(boolean-pair-profile PRIVATE TKPrim TKShHealing TKBO TKBool TKTopAlgo TKGeomAlgo TKGeomBase TKBRep TKG3d TKG2d TKMath TKernel)
 target_link_options(boolean-pair-profile PRIVATE "$<$<PLATFORM_ID:Linux>:-Wl,--disable-new-dtags>")
 
-add_executable(sweep-validation-benchmark sweep-validation.cpp)
+add_executable(sweep-validation-benchmark sweep-validation.cpp sweep-boxes.cpp sweep-validation-cases.cpp)
 target_include_directories(sweep-validation-benchmark SYSTEM PRIVATE ${OpenCASCADE_INCLUDE_DIR})
-target_link_libraries(sweep-validation-benchmark PRIVATE TKBO TKBool TKTopAlgo TKGeomAlgo TKGeomBase TKBRep TKG3d TKG2d TKMath TKernel)
+target_link_libraries(sweep-validation-benchmark PRIVATE TKOffset TKPrim TKShHealing TKBO TKBool TKTopAlgo TKGeomAlgo TKGeomBase TKBRep TKG3d TKG2d TKMath TKernel)
 target_link_options(sweep-validation-benchmark PRIVATE "$<$<PLATFORM_ID:Linux>:-Wl,--disable-new-dtags>")

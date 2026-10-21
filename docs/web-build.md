@@ -47,6 +47,11 @@ restarts separately; run it without concurrent builds or other benchmarks.
 
 ## Opt-in exception and profiling builds
 
+Both browser builds undefine `OCC_CONVERT_SIGNALS`: browser calculators do not
+install OCCT native signal handlers, and their unused `setjmp` bookkeeping is
+expensive inside geometry loops. Normal C++ exceptions, `-O3` and all geometry
+checks remain enabled. This setting also applies to the dedicated native SDK.
+
 The default retains JavaScript-based C++ exception handling. To build the
 experimental standardized WebAssembly exception variant with the same compiler:
 
@@ -57,11 +62,9 @@ npm run test:web
 ```
 
 This uses `-fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0` throughout OCCT,
-PlaneGCS and both calculator modules. It also undefines `OCC_CONVERT_SIGNALS`
-consistently in the experimental SDK and calculator: the browser calculator never
-installs OCCT's native signal handlers, but that macro still inserts `setjmp`
-inside geometry loops. Combining those jumps with native WASM exceptions produced
-invalid branch-table code in both exception formats with the pinned compiler.
+PlaneGCS and both calculator modules. Besides their runtime overhead, combining
+OCCT's unused signal-conversion jumps with native WASM exceptions produced invalid
+branch-table code in both exception formats with the pinned compiler.
 The variant retains ordinary C++ exceptions and `-O3`; it does not disable geometry
 validation. It selects the standardized exception format. Its independent inputs
 and SDK live under `.cache/web-wasm-exceptions`, with calculators in

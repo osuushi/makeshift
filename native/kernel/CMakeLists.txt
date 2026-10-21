@@ -11,6 +11,11 @@ if(EMSCRIPTEN)
 else()
   verify_freac_sdk()
 endif()
+# Match the dedicated SDK: no signal-conversion handlers are installed.
+# Ordinary C++ exceptions and all geometry checks remain enabled.
+if(NOT MSVC)
+  add_compile_options(-UOCC_CONVERT_SIGNALS)
+endif()
 find_path(BOOST_INCLUDE_DIR boost/property_tree/json_parser.hpp REQUIRED)
 add_executable(makeshift-kernel main.cpp shell.cpp shell-validation.cpp shell-canonical.cpp extrude-draft.cpp cleanup.cpp delete-topology.cpp projection.cpp geometry.cpp loft.cpp loft-wire.cpp revolve.cpp screw-sweep.cpp axial-sections.cpp presentation.cpp transform.cpp booleans.cpp edge-finishes.cpp face-offset.cpp offset-contacts.cpp face-chains.cpp offset-validation.cpp blend-recognition.cpp blend-resize.cpp)
 # OCCT's installed libraries have no runtime search path of their own. Linux
