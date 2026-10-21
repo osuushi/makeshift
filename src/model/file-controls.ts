@@ -58,7 +58,18 @@ export function fileControls(editor: SketchEditor, container: HTMLElement): () =
       shortcut: "⌘O",
       category: "Document & Edit",
       reason,
-      run: () => input.click(),
+      run: () => documents.browse(() => input.click()),
+    }),
+    catalog.register({
+      id: "download-document",
+      finishEdit: true,
+      label: "Download drawing…",
+      showInTools: false,
+      category: "Document & Edit",
+      reason,
+      run: async () => {
+        await documents.save(false, true);
+      },
     }),
     catalog.register({
       id: "new",

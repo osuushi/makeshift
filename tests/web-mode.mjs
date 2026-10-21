@@ -3,6 +3,7 @@ import { mkdir, readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { extname, resolve } from "node:path";
 import { chromium, webkit } from "playwright";
+import { downloadDrawing, nameDrawing } from "./browser-library-helpers.mjs";
 import { installPenClassification } from "./ipad-pen.mjs";
 import { at, close, drag, inspect, settled } from "./ui-helpers.mjs";
 import { rectangleRoute } from "./ui-rectangle.mjs";
@@ -169,8 +170,10 @@ async function route(page, name) {
     .getByRole("button", { name: "Cancel", exact: true })
     .click();
   close((await inspect(page)).document.bodies[0].volume, 4000);
-  const downloadPromise = page.waitForEvent("download");
   await chooseTool(page, "save", "save");
+  await nameDrawing(page, name);
+  const downloadPromise = page.waitForEvent("download");
+  await downloadDrawing(page, name);
   const download = await downloadPromise;
   const file = `.cache/web-review/${name}.makeshift`;
   await download.saveAs(file);
