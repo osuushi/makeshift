@@ -1,4 +1,4 @@
-/** Fixed slots are part of the learned gesture. Aliases reference the same command ID. */
+/** Fixed slots support learned tap sequences. Aliases reference the same command ID. */
 export interface NavigatorGroup {
   label: string;
   entries: readonly string[];
@@ -198,7 +198,7 @@ export const navigatorGroups: Record<string, NavigatorGroup> = {
 
 /** First examples stay deterministic, even when unavailable. */
 export function navigatorExamples(group: string): string[] {
-  return navigatorGroups[group].entries
-    .flatMap((id) => (navigatorGroups[id] ? navigatorExamples(id) : [id]))
-    .slice(0, 3);
+  return navigatorGroups[group].entries.flatMap((id) =>
+    navigatorGroups[id] ? navigatorExamples(id) : [id],
+  );
 }

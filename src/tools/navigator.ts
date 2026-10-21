@@ -1,10 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "./catalog.js";
 import { borrowToolFocus, restoreToolFocus, toolMenuOpen } from "./menu-focus.js";
-import { NavigatorGesture } from "./navigator-gesture.js";
-import { illuminateTargets } from "./navigator-glow.js";
 import { navigatorKeydown } from "./navigator-keyboard.js";
-import { navigatorTargets, placeNavigatorTargets } from "./navigator-targets.js";
 import { navigatorGroups } from "./navigator-tree.js";
 import { navigatorCard } from "./navigator-view.js";
 import { toolSearchShortcut } from "./search-shortcut.js";
@@ -12,8 +9,6 @@ import "./navigator.css";
 
 type Pointer = {
   id: number;
-  x: number;
-  y: number;
   startX: number;
   startY: number;
   entry?: string;
@@ -29,9 +24,7 @@ export class ToolNavigator {
   private back = document.createElement("button");
   private abort = new AbortController();
   private history = ["root"];
-  private gesture = new NavigatorGesture();
   private pointer: Pointer | null = null;
-  private position?: { x: number; y: number };
   private swallowClick = false;
   private signature = "";
   constructor(
@@ -49,10 +42,6 @@ export class ToolNavigator {
     this.panel.setAttribute("aria-modal", "true");
     this.panel.setAttribute("aria-label", "Browse tools");
     this.heading.setAttribute("aria-live", "polite");
-    const hint = document.createElement("p");
-    hint.className = "navigator-hint";
-    hint.textContent =
-      "Tap a card, or glide through the blue circles. Drag to the bottom bar to cancel.";
     this.grid.className = "navigator-grid";
     this.footer.className = "navigator-footer";
     this.back.textContent = "‹ Back";
@@ -61,7 +50,7 @@ export class ToolNavigator {
     cancel.textContent = "Cancel";
     cancel.dataset.entry = "cancel";
     this.footer.append(this.back, cancel);
-    this.panel.append(this.heading, hint, this.grid, this.footer);
+    this.panel.append(this.heading, this.grid, this.footer);
     this.root.append(this.panel);
     app.append(this.root);
     this.bindEvents();
@@ -118,9 +107,6 @@ export class ToolNavigator {
     this.back.disabled = this.history.length === 1;
     this.grid.replaceChildren(...group.entries.map((id) => navigatorCard(id, map)));
     this.signature = JSON.stringify(tools.map((t) => [t.id, t.unavailable]));
-    placeNavigatorTargets(this.grid, this.position);
-    if (this.pointer)
-      this.gesture.reset(navigatorTargets(this.grid), this.pointer.x, this.pointer.y);
     this.grid.querySelector<HTMLButtonElement>("button")?.focus({ preventScroll: true });
   }
   private update = (): void => {
@@ -219,47 +205,26 @@ export class ToolNavigator {
     event.preventDefault();
     event.stopImmediatePropagation();
     if (event.button !== 0 || !event.isPrimary) return;
-    this.position = { x: event.clientX, y: event.clientY };
     if (trigger) this.open();
     if (!this.visible) return;
     this.pointer = {
       id: event.pointerId,
-      x: event.clientX,
-      y: event.clientY,
       startX: event.clientX,
       startY: event.clientY,
       entry: trigger ? undefined : this.entry(event.target),
       drag: false,
     };
     this.swallowClick = true;
-    illuminateTargets(this.grid);
     if (event.isTrusted) this.root.setPointerCapture(event.pointerId);
-    this.gesture.reset(navigatorTargets(this.grid), event.clientX, event.clientY);
     if (!trigger && !this.panel.contains(event.target as Node)) this.close();
   };
   private move = (event: PointerEvent): void => {
-    this.position = { x: event.clientX, y: event.clientY };
     const p = this.pointer;
-    if (!p) {
-      const hovering = event.buttons === 0 && event.pointerType !== "touch";
-      if (this.visible) illuminateTargets(this.grid, hovering ? event : undefined);
-      return;
-    }
+    if (!p) return;
     if (p.id !== event.pointerId) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    p.x = event.clientX;
-    p.y = event.clientY;
-    p.drag ||= Math.hypot(p.x - p.startX, p.y - p.startY) > 8;
-    if (this.visible) illuminateTargets(this.grid, p.drag ? p : undefined);
-    if (!this.visible || !p.drag) return;
-    const bar = this.footer.getBoundingClientRect();
-    if (p.y >= bar.top && p.x >= bar.left && p.x <= bar.right) {
-      this.close();
-      return;
-    }
-    const id = this.gesture.enter(navigatorTargets(this.grid), p.x, p.y);
-    if (id) this.choose(id);
+    p.drag ||= Math.hypot(event.clientX - p.startX, event.clientY - p.startY) > 8;
   };
   private up = (event: PointerEvent): void => {
     const p = this.pointer;
@@ -267,9 +232,7 @@ export class ToolNavigator {
     event.preventDefault();
     event.stopImmediatePropagation();
     const end = this.entry(document.elementFromPoint(event.clientX, event.clientY));
-    this.position = { x: event.clientX, y: event.clientY };
     this.pointer = null;
-    illuminateTargets(this.grid);
     if (this.visible && !p.drag && p.entry && p.entry === end) this.choose(p.entry);
   };
   private keydown = (event: KeyboardEvent): void => {

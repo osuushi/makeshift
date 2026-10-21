@@ -217,35 +217,26 @@ ordinary catalog IDs, and Back uses the visited path. Standard File/Edit actions
 remain in their existing menu. New visible commands require a navigator home;
 the focused navigator acceptance checks catalog coverage.
 
-Each category shows illustrated examples. Tool cards show a static before/after
-or operation diagram, a canonical label and an explanation or availability reason.
-Surface detail cards explain export-time generation. Animation is optional future
-polish; no rendering or geometry calculation is needed to navigate.
+Group cards use a short text list of example tools (such as “Union, Subtract,
+Intersect …”) without diagrams or an “Explore tools” caption. Individual tool
+cards keep a static operation diagram, canonical label and explanation or
+availability reason. This text-versus-diagram distinction also identifies nested
+groups among tools. Surface detail cards explain export-time generation.
 
-Tap anywhere on a card, or press Browse and continuously drag through the
-blue targets. Entering a target navigates or invokes immediately, without dwell.
-Positions never sort by availability, selection, or recency. Missing/unavailable
-commands retain their slots and cannot execute. On each new screen, targets that would overlap the current pointer shift within
-their cards, leaving a clear margin around the pointer. They stay fixed until the
-next screen; card order never changes. The gesture leave/reenter guard remains
-as a fallback, not a substitute for placing targets clear of the pointer. The final pointer release and
-compatibility click are consumed rather than reaching geometry controls. Lifting
-between categories leaves the navigator open for continued tapping.
+Tap a card to open a group or invoke a tool. There are no circle targets,
+proximity effects or drag-to-select routes. Card positions never sort by
+availability, selection, or recency. Missing/unavailable commands retain their
+slots and cannot execute. A pointer that moves beyond tap tolerance cannot invoke
+on release; the release and compatibility click are consumed rather than reaching
+geometry controls.
 
 The fixed bottom strip has Back in its left third and Cancel in the remainder.
-Dragging into either section cancels the navigator. Escape, outside press, window
+Both are tap actions. Escape, outside press, window
 blur and viewport resize also dismiss it. Backspace goes back; arrows and Tab move
 focus; Enter/Space activate. Opening, browsing and canceling borrow focus without
 accepting numeric input or changing geometry, selection or Undo. Tool invocation
 uses the existing catalog lifecycle and selection collection. Search and Browse
 share the borrowed-focus guard but only handle events for their own visible surface.
 
-The first version uses static diagrams. Physical iPad/Pencil ergonomics, fast paths
-through neighboring targets, and the target diameter still need device review.
-
-Targets use a faint 72px blue circle with a blue outline and no glyph.
-Mouse/Pencil hover and a moving selection gesture increase nearby target opacity over a
-100px approach zone; stationary presses do not. Proximity changes opacity only,
-so hit regions stay fixed while navigating each screen. Unavailable targets remain dim gray.
-Back uses a neutral gray surface; Cancel retains its red surface. Dragging into
-either section still cancels.
+Tool diagrams are static. Physical iPad/Pencil ergonomics remain part of device review.
+Back uses a neutral gray surface; Cancel retains its red surface.

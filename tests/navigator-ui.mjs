@@ -12,16 +12,11 @@ await withUiRuntimes(
     const dialog = page.getByRole("dialog", { name: "Browse tools", exact: true });
     const entry = (id) => dialog.locator(`[data-entry="${id}"]`);
     const heading = () => dialog.locator("h2").textContent();
-    const center = async (id) => {
-      const box = await entry(id).locator(".navigator-target").boundingBox();
-      assert.ok(box);
-      return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-    };
     await browse.click();
     assert.equal(await dialog.isVisible(), true);
     await catalogCoverage(page);
     await page.screenshot({ path: `.cache/sketch-review/${name}-navigator-root.png` });
-    await tapCategoryClearPointer(dialog, entry("references"));
+    await entry("references").click();
     await entry("principal-planes").click();
     await entry("back").click();
     assert.match(await heading(), /Planes & references$/);
@@ -37,37 +32,25 @@ await withUiRuntimes(
     assert.equal(await page.getByRole("dialog", { name: "Find a tool" }).isVisible(), true);
     await page.keyboard.press("Escape");
 
-    // One held pointer: opening -> category -> tool. Release must not reach the canvas.
-    const trigger = await browse.boundingBox();
-    assert.ok(trigger);
-    await page.mouse.move(trigger.x + trigger.width / 2, trigger.y + trigger.height / 2);
-    await page.mouse.down();
-    let p = await center("draw");
-    await page.mouse.move(p.x, p.y);
-    assert.match(await heading(), /Draw & sketch$/);
-    // The next screen must visibly clear the pointer, not just block activation.
-    await targetsClearPointer(dialog, p);
-    const linePosition = await center("line");
-    // Staying at the previous target cannot activate a new tool.
-    await page.mouse.move(p.x + 1, p.y + 1);
-    assert.equal(await dialog.isVisible(), true);
-    assert.deepEqual(await center("line"), linePosition, "Targets stay fixed after placement");
-    p = await center("line");
-    await page.mouse.move(p.x, p.y);
-    assert.equal(await dialog.isVisible(), false);
-    await page.mouse.up();
-    assert.equal((await inspect(page)).tool, "line");
-    assert.deepEqual((await inspect(page)).document, before);
-
     await browse.click();
-    p = await center("shape");
-    await page.mouse.move(p.x, p.y);
+    assert.equal(await dialog.locator(".navigator-target, svg").count(), 0);
+    assert.match(await entry("combine").textContent(), /Union, Subtract, Intersect/);
+    assert.equal(await dialog.getByText("Explore tools").count(), 0);
+    // A held pointer crossing cards must neither navigate nor activate on release.
+    const draw = await entry("draw").boundingBox();
+    const shape = await entry("shape").boundingBox();
+    assert.ok(draw && shape);
+    await page.mouse.move(draw.x + draw.width / 2, draw.y + draw.height / 2);
     await page.mouse.down();
-    const bar = await dialog.locator(".navigator-footer").boundingBox();
-    assert.ok(bar);
-    await page.mouse.move(bar.x + 20, bar.y + 10);
+    await page.mouse.move(shape.x + shape.width / 2, shape.y + shape.height / 2);
     await page.mouse.up();
+    assert.equal(await heading(), "Browse tools");
+    await entry("draw").click();
+    assert.equal(await entry("line").locator("svg").count(), 1);
+    assert.equal(await entry("sketch-entry").locator("svg").count(), 0);
+    await entry("line").click();
     assert.equal(await dialog.isVisible(), false);
+    assert.equal((await inspect(page)).tool, "line");
     assert.deepEqual((await inspect(page)).document, before);
 
     await browse.focus();
@@ -82,7 +65,7 @@ await withUiRuntimes(
 
     await tabletRoute(page, name, browse, dialog, entry);
     console.log(
-      `${name}: navigator routes, gesture guards, release isolation, catalog IDs, geometry, Undo/Redo and portrait layout pass`,
+      `${name}: navigator tap routes, drag suppression, group/tool styling, catalog IDs, geometry, Undo/Redo and portrait layout pass`,
     );
   },
   { hasTouch: true },
@@ -194,35 +177,4 @@ async function tap(page, locator) {
   assert.ok(bounds);
   // Opening on pointerdown changes the hit target before WebKit delivers touchstart.
   await page.touchscreen.tap(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
-}
-
-async function targetsClearPointer(dialog, pointer) {
-  const targets = await dialog.locator(".navigator-target").evaluateAll((elements) =>
-    elements.map((element) => {
-      const r = element.getBoundingClientRect();
-      return {
-        x: r.x + r.width / 2,
-        y: r.y + r.height / 2,
-        radius: r.width / 2,
-        visible: getComputedStyle(element).visibility !== "hidden",
-      };
-    }),
-  );
-  for (const target of targets) {
-    assert.ok(target.visible, "Every tool keeps a visible gesture target at this viewport");
-    assert.ok(
-      Math.hypot(target.x - pointer.x, target.y - pointer.y) >= target.radius + 10,
-      "New targets clear the pointer with a margin",
-    );
-  }
-}
-
-async function tapCategoryClearPointer(dialog, card) {
-  const bounds = await card.boundingBox();
-  assert.ok(bounds);
-  await card.click();
-  await targetsClearPointer(dialog, {
-    x: bounds.x + bounds.width / 2,
-    y: bounds.y + bounds.height / 2,
-  });
 }

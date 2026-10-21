@@ -14,31 +14,28 @@ export function navigatorCard(id: string, tools: Map<string, ToolResult>): HTMLB
   title.textContent = group?.label ?? tool?.label ?? id;
   button.setAttribute("aria-label", title.textContent);
   button.append(title);
-  const artwork = document.createElement("div");
-  artwork.className = group ? "navigator-examples" : "navigator-artwork";
-  if (group) {
-    for (const example of navigatorExamples(id)) {
-      const figure = document.createElement("figure");
-      const caption = document.createElement("figcaption");
-      caption.textContent = tools.get(example)?.label ?? example;
-      figure.append(toolDiagram(example), caption);
-      artwork.append(figure);
-    }
-    button.setAttribute(
-      "aria-description",
-      `Examples: ${navigatorExamples(id)
-        .map((key) => tools.get(key)?.label ?? key)
-        .join(", ")}`,
-    );
-  } else artwork.append(toolDiagram(id));
-  const target = document.createElement("span");
-  target.className = "navigator-target";
-  target.setAttribute("aria-hidden", "true");
-  const detail = document.createElement("span");
-  detail.className = "navigator-detail";
-  detail.textContent = group ? "Explore tools" : (tool?.unavailable ?? diagramCaption(id));
   button.setAttribute("aria-disabled", String(!group && (!tool || !!tool.unavailable)));
-  if (!group) button.setAttribute("aria-description", detail.textContent);
-  button.append(artwork, target, detail);
+  if (group) {
+    button.classList.add("navigator-group");
+    const examples = navigatorExamples(id);
+    const summary = document.createElement("span");
+    summary.className = "navigator-summary";
+    summary.textContent =
+      examples
+        .slice(0, 3)
+        .map((key) => tools.get(key)?.label ?? key)
+        .join(", ") + (examples.length > 3 ? " …" : "");
+    button.setAttribute("aria-description", summary.textContent);
+    button.append(summary);
+  } else {
+    const artwork = document.createElement("div");
+    artwork.className = "navigator-artwork";
+    artwork.append(toolDiagram(id));
+    const detail = document.createElement("span");
+    detail.className = "navigator-detail";
+    detail.textContent = tool?.unavailable ?? diagramCaption(id);
+    button.setAttribute("aria-description", detail.textContent);
+    button.append(artwork, detail);
+  }
   return button;
 }
