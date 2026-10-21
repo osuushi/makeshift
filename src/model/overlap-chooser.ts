@@ -1,6 +1,7 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { PlaneId } from "../sketch/planes.js";
+import { selectHit } from "../sketch/selection-input.js";
 import { toolCatalog } from "../tools/catalog.js";
 import type { ConstructionPlane } from "./construction-plane.js";
 import { cancelModelSelectionDrag } from "./model-selection-drag.js";
@@ -35,20 +36,23 @@ export class OverlapChooser {
   }
   async open(event: PointerEvent): Promise<void> {
     const e = this.editor;
-    if (e.interactions.current?.kind === "model-selection") await e.interactions.cancel();
+    if (["model-selection", "pointer"].includes(e.interactions.current?.kind ?? ""))
+      await e.interactions.cancel();
     const membership = e.interactions.current?.kind === "tag-membership";
     if (membership) cancelModelSelectionDrag(e);
     if (!membership && e.interactions.current) {
       await toolCatalog(e).activate({ reason: () => null, run: () => this.open(event) });
       return;
     }
-    if (e.blocked || e.world.active || (e.interactions.current && !membership)) return;
+    if (e.blocked || (e.interactions.current && !membership)) return;
     const candidates = overlapCandidates(e, { x: event.clientX, y: event.clientY });
     if (!candidates.length) return;
     this.lease = membership
       ? e.interactions.current
       : e.interactions.acquire("selection-choice", () => this.close());
     if (!this.lease) return;
+    e.overlaps = null;
+    e.hover = null;
     this.document = e.store.data;
     this.snapshot = this.viewKey();
     e.modeling.hover = null;
@@ -120,13 +124,19 @@ export class OverlapChooser {
     this.close();
     const target = candidate.target,
       e = this.editor;
-    if (target.kind === "plane") {
+    if (target.kind === "sketch-hit") {
+      e.modeling.targets = [];
+      selectHit(e, target.hit, event);
+      e.creationArmed = false;
+      e.refresh();
+    } else if (target.kind === "plane") {
       if (target.world) this.selectPlane(target.world);
       else {
         const plane = e.store.data.constructionPlanes?.find((p) => p.id === target.saved);
         if (plane) this.selectPlane(plane);
       }
     } else {
+      if (e.world.active) e.select([]);
       if (target.kind === "profiles")
         e.modeling.chooseProfiles(
           target.sketch,

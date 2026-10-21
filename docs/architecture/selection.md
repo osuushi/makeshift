@@ -55,7 +55,7 @@ founder feedback update these contracts before further tools depend on them.
   which lies nearer the camera. Among otherwise available reference patches, depth
   decides and saved planes win ties. No floating plane labels. Keyboard and
   screen-reader plane entry lives in Tools as Sketch on XY/XZ/YZ.
-- Holding a primary pointer still for 300 ms in Modeling opens an explicit overlap
+- Holding a primary pointer still for 300 ms in Modeling or a sketch workspace opens an explicit overlap
   chooser. Ordinary clicks retain precedence; movement beyond the normal drag
   threshold cancels the hold (6 px for touch). A delayed progress ring signals it.
   Candidates include front-facing body faces, edges with at least one locally
@@ -108,7 +108,12 @@ founder feedback update these contracts before further tools depend on them.
   Enter opens their workspace and saved planes also support Transform. Escape, outside press, navigation,
   view/document changes and window blur dismiss the chooser. The hold's trailing
   click is consumed. This is transient UI state and creates no history entry.
-  Sketch point disambiguation retains its existing interaction.
+  In a sketch workspace, choices show active sketch curves/groups and covered solid
+  faces/edges. Choosing sketch geometry retains ordinary typed selection; choosing
+  solid topology clears sketch selection while retaining the active plane. Project
+  can then copy the selected face boundary or edge into that sketch. Ordinary
+  overlapping sketch clicks also show geometry thumbnails with surrounding context,
+  replacing numbered curve names. Sketch point disambiguation retains its existing interaction.
 - Entering a sketch animates the camera into its aligned plane view while preserving
   spatial context. The transition interpolates orientation and the view target; a
   region double-click also centers and fits that region. Orbiting out reveals the
