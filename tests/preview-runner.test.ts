@@ -76,6 +76,35 @@ test("invalidating a target and closing its lease cannot resume pending calculat
   assert.equal(runner.latest, null);
 });
 
+test("a noninterrupting preview completes its running target and coalesces waiting input", async () => {
+  const started = deferred(),
+    release = deferred();
+  const calculated: number[] = [];
+  let active = 0;
+  const runner = new PreviewRunner<number>({
+    editing: () => true,
+    calculate: async (request) => {
+      assert.equal(active++, 0);
+      calculated.push(request);
+      if (request === 1) {
+        started.resolve();
+        await release.promise;
+      }
+      active--;
+    },
+    settled: () => {},
+  });
+  runner.enqueue(1);
+  await started.promise;
+  runner.enqueue(2);
+  runner.enqueue(3);
+  assert.deepEqual(calculated, [1]);
+  assert.equal(runner.latest, 3);
+  release.resolve();
+  await runner.settle();
+  assert.deepEqual(calculated, [1, 3]);
+});
+
 test("cleanup shares the calculation slot and does not reschedule itself", async () => {
   const started = deferred(),
     release = deferred();
