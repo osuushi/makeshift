@@ -995,6 +995,12 @@ separates surface-extrema initialization from point queries and classifies solut
 against the trimmed face. Its internal extrema retains the surface adaptor's address.
 [`BOPAlgo_ArgumentAnalyzer::TestSelfInterferences`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BOPAlgo/BOPAlgo_ArgumentAnalyzer.cxx#L340-L371)
 forwards the parallel setting to its non-destructive self-interference checker.
+The same method forwards fuzzy tolerance but does not forward `UseOBB`. Testing
+oriented-box filtering therefore requires a direct checker comparison; merely
+setting that option on the analyzer does not exercise it. The native
+`sweep-validation-benchmark` compares both public-API paths and retains the full
+intersection level and original-shape fault predicate. It is an experiment;
+production continues to use the analyzer.
 
 Makeshift inference: keep one stable-address query per loft face, accept a sample only
 when a classified face point is within the existing section tolerance, and retain

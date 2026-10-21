@@ -373,3 +373,78 @@ The surface-evaluation result motivated a real-operation follow-up:
 index and unchanged execution, followed by OCCT refinement and validation.
 The surface throughput above remains a subkernel result, not a whole-operation
 speedup or an accepted GPU topology path.
+
+### Sweep validation profiling and Loft optimization
+
+Validation now reports separate `sweep-validation/volume` and
+`sweep-validation/self-intersection` phases, in addition to BRep validity. The
+checks, tolerances and configured threading are unchanged. On the M2 Max, native
+single-thread warm medians expose the main cost (milliseconds):
+
+| Operation | Volume/orientation | Self-intersection | Whole operation |
+| --- | ---: | ---: | ---: |
+| Twist 450° | 29.2 | 265.4 | 648.6 |
+| Smooth Loft | 1.2 | 69.2 | 121.4 |
+| Two-turn Helix | 19.5 | 733.7 | 1,299.2 |
+
+The Loft row sums two validation calls on the same unchanged outer solid.
+Eight-second native sampled profiles for these three operations point primarily
+to face/face intersection walking and edge/face checks inside the self-intersection
+stage. Sampling runs identify call stacks; the table comes from separate,
+unprofiled runs with a first call and three warm observations, without concurrent
+builds. Cubic Twist/draft also spends 414 ms in self-intersection versus 2.5 ms in
+this orientation check; its separate accurate volume calculation and section
+construction remain significant costs.
+
+The safe change removes the second identical validation for a Loft with no holes.
+Construction still runs BRep validity, positive volume/orientation and full
+self-intersection checking. Hole lofts retain their own validation and the final
+check after subtraction. Whole-operation before/after warm medians:
+
+| Operation | Native 1 thread | Native 12 threads | Chromium | WebKit |
+| --- | ---: | ---: | ---: | ---: |
+| Ruled Loft | 41.1 → 26.9 | 28.6 → 19.3 | 128.2 → 87.1 | 187.0 → 134.0 |
+| Smooth Loft | 121.4 → 85.0 | 79.1 → 58.1 | 249.0 → 185.8 | 335.0 → 254.0 |
+
+These browser timings use the default JavaScript-exception WASM build; they are
+not directly comparable to the optional WASM-exception GPU experiment's absolute
+times. Twist and Helix controls remain within 2% of baseline; this change does
+not claim an acceleration for those operations.
+
+An oriented-box candidate-filter experiment did not justify a production change.
+The native benchmark compares ArgumentAnalyzer, its direct full-level CheckerSI,
+and that same checker with OBB filtering. With six warm rounds and rotated mode
+order, direct checker → OBB medians were 265.3 → 293.7 ms for Twist 450°,
+740.4 → 734.1 ms for Helix, and 34.7 → 33.8 ms for Smooth Loft. The production
+analyzer is retained. Its [pinned self-interference implementation](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BOPAlgo/BOPAlgo_ArgumentAnalyzer.cxx#L340-L430)
+does not forward `UseOBB`, so setting the option on that wrapper alone would not
+exercise the experiment. The benchmark uses public APIs, without copying or
+modifying OCCT code or changing the installed SDK.
+
+All 80 compared first/warm replies have identical complete-result hashes: six
+operations on native serial, native all-core and Chromium, plus both Lofts on
+WebKit. Nineteen focused model tests pass, including hole handling, alignment,
+Undo/archive, cancellation and a new folded Loft that passes BRep and orientation
+checks but is rejected by self-intersection. That regression passes on both the
+original and optimized kernels and verifies subsequent valid-preview recovery.
+No UI interaction or physical-device speedup is inferred from calculator timings.
+
+To reproduce the diagnostic profiles and the opt-in OBB experiment after building
+the normal native calculator and TypeScript test helpers:
+
+```sh
+source ~/.nvm/nvm.sh && nvm use
+node tests/wasm-performance/profile-native.mjs twist-450 .cache/validation-profiles 8
+node tests/wasm-performance/profile-native.mjs loft-smooth .cache/validation-profiles 8
+node tests/wasm-performance/profile-native.mjs helix-2 .cache/validation-profiles 8
+cmake -S native/kernel -B .build/kernel -DMAKESHIFT_KERNEL_BENCHMARKS=ON
+cmake --build .build/kernel --target sweep-validation-benchmark -j 2
+.build/kernel/benchmarks/sweep-validation-benchmark .cache/validation-profiles/twist-450.brep
+cmake -S native/kernel -B .build/kernel -DMAKESHIFT_KERNEL_BENCHMARKS=OFF
+```
+
+For unprofiled operation timing, use `run.mjs` with
+`MAKESHIFT_BENCHMARK_SUITE=broad`, `MAKESHIFT_BENCHMARK_DRAG=0`, and case filter
+`^(twist-(90|450|cubic-draft)|loft-(smooth|ruled)|helix-2)$`. Use the same browser
+build mode and canonical inputs before and after a change; compare all returned
+geometry, including full-reply hashes, separately from the timing ratios.
