@@ -40,6 +40,11 @@ behavior remains a device check. Install them with
 `WEB_MODE=1 node tests/control-menu-ui.mjs` verifies the built web app's Mouse/Trackpad
 menu, saved preference and camera gestures in both browsers; releases also run this route.
 
+For opt-in native/Chromium/WebKit kernel measurements and real-time extrusion
+dragging, see the [captured-fixture benchmark](../tests/wasm-performance/README.md).
+It records cold worker initialization, warm operations, phase timings and worker
+restarts separately; run it without concurrent builds or other benchmarks.
+
 ## Independent Pages repository
 
 The deployment repository is the minimal public

@@ -14,7 +14,7 @@ function(web_kernel_runtime target)
   target_link_options(makeshift-occt PRIVATE
     --no-entry -fexceptions -sMAIN_MODULE=2 -sMODULARIZE=1 -sEXPORT_ES6=1
     -sENVIRONMENT=worker -sALLOW_MEMORY_GROWTH=1 -sMAXIMUM_MEMORY=2147483648
-    -sSTACK_SIZE=4194304 "-sEXPORTED_RUNTIME_METHODS=['ccall','stringToNewUTF8']"
+    -sSTACK_SIZE=4194304 "-sEXPORTED_RUNTIME_METHODS=['ccall','stringToNewUTF8','ENV']"
     "-sEXPORTED_FUNCTIONS=['_calculate','_malloc','_free']")
   target_link_libraries(makeshift-occt PRIVATE "$<TARGET_FILE:${target}>" ${kernel_libraries})
   add_dependencies(makeshift-occt ${target})
