@@ -2,6 +2,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "./catalog.js";
 import { borrowToolFocus, restoreToolFocus, toolMenuOpen } from "./menu-focus.js";
 import { type GestureTarget, NavigatorGesture } from "./navigator-gesture.js";
+import { illuminateTargets } from "./navigator-glow.js";
 import { navigatorKeydown } from "./navigator-keyboard.js";
 import { navigatorGroups } from "./navigator-tree.js";
 import { navigatorCard } from "./navigator-view.js";
@@ -237,18 +238,25 @@ export class ToolNavigator {
       drag: false,
     };
     this.swallowClick = true;
+    illuminateTargets(this.grid);
     if (event.isTrusted) this.root.setPointerCapture(event.pointerId);
     this.gesture.reset(this.targets(), event.clientX, event.clientY);
     if (!trigger && !this.panel.contains(event.target as Node)) this.close();
   };
   private move = (event: PointerEvent): void => {
     const p = this.pointer;
-    if (!p || p.id !== event.pointerId) return;
+    if (!p) {
+      const hovering = event.buttons === 0 && event.pointerType !== "touch";
+      if (this.visible) illuminateTargets(this.grid, hovering ? event : undefined);
+      return;
+    }
+    if (p.id !== event.pointerId) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     p.x = event.clientX;
     p.y = event.clientY;
     p.drag ||= Math.hypot(p.x - p.startX, p.y - p.startY) > 8;
+    if (this.visible) illuminateTargets(this.grid, p.drag ? p : undefined);
     if (!this.visible || !p.drag) return;
     const bar = this.footer.getBoundingClientRect();
     if (p.y >= bar.top && p.x >= bar.left && p.x <= bar.right) {
@@ -265,6 +273,7 @@ export class ToolNavigator {
     event.stopImmediatePropagation();
     const end = this.entry(document.elementFromPoint(event.clientX, event.clientY));
     this.pointer = null;
+    illuminateTargets(this.grid);
     if (this.visible && !p.drag && p.entry && p.entry === end) this.choose(p.entry);
   };
   private keydown = (event: KeyboardEvent): void => {

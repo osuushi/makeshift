@@ -34,7 +34,6 @@ export function navigatorCard(id: string, tools: Map<string, ToolResult>): HTMLB
   const target = document.createElement("span");
   target.className = "navigator-target";
   target.setAttribute("aria-hidden", "true");
-  target.textContent = group ? "›" : "✓";
   const detail = document.createElement("span");
   detail.className = "navigator-detail";
   detail.textContent = group ? "Explore tools" : (tool?.unavailable ?? diagramCaption(id));

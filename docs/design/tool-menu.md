@@ -241,3 +241,10 @@ share the borrowed-focus guard but only handle events for their own visible surf
 
 The first version uses static diagrams. Physical iPad/Pencil ergonomics, fast paths
 through neighboring targets, and the target diameter still need device review.
+
+Targets use a dim 72px white-centered green halo without a border or glyph.
+Mouse/Pencil hover and a moving selection gesture brighten nearby targets over a
+100px approach zone; stationary presses do not. Lighting changes opacity only,
+so hit regions and learned paths stay fixed. Unavailable targets remain dim gray.
+Back uses a neutral gray surface; Cancel retains its red surface. Dragging into
+either section still cancels.
