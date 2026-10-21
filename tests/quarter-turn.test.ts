@@ -15,3 +15,16 @@ test("small twist noise cancels and a deliberate turn fires exactly once", () =>
   assert.equal(gesture.update(-10 * degree), -Math.PI / 2);
   assert.equal(gesture.update(Number.NaN), 0);
 });
+
+test("tablet pan/pinch tolerates angular drift before a deliberate twist in either direction", () => {
+  const gesture = new QuarterTurn(Math.PI / 6),
+    degree = Math.PI / 180;
+  for (const direction of [1, -1]) {
+    gesture.reset();
+    for (const delta of [12, 8, -7, 11, -24, 29])
+      assert.equal(gesture.update(direction * delta * degree), 0);
+    assert.equal(gesture.update(direction * 2 * degree), (direction * Math.PI) / 2);
+    assert.equal(gesture.update(direction * 90 * degree), 0);
+    assert.equal(gesture.update(-direction * 180 * degree), 0);
+  }
+});

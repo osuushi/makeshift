@@ -77,7 +77,7 @@ async function touchRoute(page, name) {
     await chooseTool(page, "Sketch on XY", "sketch-xy");
     await navigationIdle(page);
     if (name === "chromium") {
-      await navigationRoundTrip(
+      const pan = await navigationRoundTrip(
         page,
         async () => {
           await touch.send("touchStart", [[1, 420, 350]]);
@@ -86,13 +86,14 @@ async function touchRoute(page, name) {
             [2, 620, 350],
           ]);
           await touch.send("touchMove", [
-            [1, 400, 380],
-            [2, 660, 380],
+            [1, 407.839959, 335.537381],
+            [2, 652.160041, 424.462619],
           ]);
           await touch.send("touchEnd", []);
         },
-        "Two-finger pan/pinch",
+        "Two-finger pan/pinch with 20° finger drift",
       );
+      assert.deepEqual(pan.after.camera.up, pan.before.camera.up, "Panning drift must not roll");
       const { before, after } = await navigationRoundTrip(
         page,
         async () => {
@@ -105,11 +106,11 @@ async function touchRoute(page, name) {
             [1, 423.407417, 324.118095],
             [2, 616.592583, 375.881905],
           ]);
-          await page.waitForFunction(() => window.makeshiftInspect().camera.moving);
           await touch.send("touchMove", [
             [1, 449.289322, 279.289322],
             [2, 590.710678, 420.710678],
           ]);
+          await page.waitForFunction(() => window.makeshiftInspect().camera.moving);
           await touch.send("touchEnd", []);
         },
         "Two-finger twist",

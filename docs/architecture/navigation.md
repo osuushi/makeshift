@@ -250,7 +250,7 @@ and the renderer rejects input outside the viewport or during editing/orbit.
 The native event is macOS-only; Windows/Linux retain Option-roll.
 
 Tablet one-finger orbit uses the same press-based pivot through pointer events.
-Two fingers continuously pan and pinch; twisting 10° triggers one 90° turn about
+Two fingers continuously pan and pinch; twisting 30° triggers one 90° turn about
 their midpoint. The animation follows the current midpoint as the pair pans,
 keeping the world point under the fingers fixed relative to that midpoint through
 rotation and pinch. Further twist in that contact gesture cannot repeat the turn.
