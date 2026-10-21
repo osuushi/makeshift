@@ -16,7 +16,8 @@ class TabletInput {
   private origin: Point | null = null;
   private pen: number | null = null;
   private rotating = false;
-  private readonly twist = new QuarterTurn();
+  // Fingers drift in angle during pan/pinch; require a deliberate 30° twist.
+  private readonly twist = new QuarterTurn(Math.PI / 6);
   private pairFrame: number | null = null;
   private suppressClickUntil = 0;
   constructor(
