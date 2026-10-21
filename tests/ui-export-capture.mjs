@@ -38,7 +38,7 @@ export async function exportCapture(page, name, app) {
                 (_, item) => {
                   item.setSavePath(path);
                   item.once("done", (_, state) =>
-                    state === "completed" ? resolve(null) : reject(new Error(state)),
+                    state === "completed" ? resolve(item.getFilename()) : reject(new Error(state)),
                   );
                 },
               );
@@ -48,7 +48,12 @@ export async function exportCapture(page, name, app) {
       : page.waitForEvent("download");
     await chooseTool(page, `export ${format}`, `export-${format}`);
     const download = await waiting;
-    if (download) await download.saveAs(path);
+    assert.equal(
+      typeof download === "string" ? download : download.suggestedFilename(),
+      `filleted-export.${format}`,
+      "Export uses the opened document identity",
+    );
+    if (typeof download !== "string") await download.saveAs(path);
     const bytes = await readFile(path);
     if (format === "stl") {
       const geometry = new STLLoader().parse(

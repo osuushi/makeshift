@@ -18,6 +18,9 @@ export class BrowserDocuments {
   private codec = new BrowserArchive();
   private baseline: string;
   private active = false;
+  get name(): string {
+    return this.filename;
+  }
   constructor(private editor: SketchEditor) {
     this.baseline = this.contents();
     window.addEventListener("beforeunload", this.beforeUnload);
