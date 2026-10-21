@@ -19,7 +19,7 @@ test("FDM presets flatten the rod crest and hole groove without filling the hole
     assert.equal(settings.pitch, pitch);
     assert.equal(settings.profile, "triangle");
     assert.equal(threadDepth(settings), 1);
-    assert.equal(settings.clearance, preset === "fdm-fine" ? 0.25 : 0.1);
+    assert.equal(settings.clearance, 0.25);
     assert.equal(settings.tipTruncation, 0.1);
     for (const cut of ["rod", "hole"] as const) {
       const profile = { ...settings, cut };
@@ -54,7 +54,7 @@ test("FDM presets flatten the rod crest and hole groove without filling the hole
   assert.equal(threadDefaults(10.3).preset, "fdm-fine");
   const coarse = patchThreadSettings(10.3, threadDefaults(10.3), { preset: "fdm-coarse" });
   assert.equal(coarse.pitch, 1.5);
-  assert.equal(coarse.clearance, 0.1);
+  assert.equal(coarse.clearance, 0.25);
   const fine = patchThreadSettings(10.3, coarse, { preset: "fdm-fine" });
   assert.equal(fine.pitch, 1);
   assert.equal(fine.clearance, 0.25);

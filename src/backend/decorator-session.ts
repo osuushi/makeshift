@@ -8,6 +8,7 @@ import { type DecoratorInspectionRequest, inspectDecorator } from "../decorators
 import { editJavaScriptDecorators, needsJavaScript } from "../decorators/javascript-edits.js";
 import { type EnabledDefinition, JavaScriptDecorators } from "../decorators/javascript-hooks.js";
 import { initializeDecoratorRuntime } from "../decorators/javascript-runtime.js";
+import { editWithPresets } from "../decorators/preset-edits.js";
 import { inspectThreads } from "../decorators/thread-inspection.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
@@ -45,8 +46,12 @@ export class DecoratorSession {
       this.enable(document, request.id, request.version, request.enabled);
       return document;
     }
-    if (request.kind === "decorator" && needsJavaScript(document, request.edit))
-      return editJavaScriptDecorators(document, request.edit, await this.hooks());
+    if (request.kind === "decorator")
+      return editWithPresets(document, request.edit, async (source, edit) =>
+        needsJavaScript(source, edit)
+          ? editJavaScriptDecorators(source, edit, await this.hooks())
+          : editDecorators(source, edit),
+      );
     return null;
   }
   fork(): DecoratorSession {

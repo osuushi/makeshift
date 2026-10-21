@@ -23,14 +23,14 @@ export async function decoratorPresetRoute(page, name) {
   assert.equal(await advanced.evaluate((element) => element.open), false);
   assert.match(
     await page.getByRole("region", { name: "Decorators", exact: true }).innerText(),
-    /FDM fine starts at 0\.25 mm.*adjust for your printer and orientation/,
+    /FDM fine and coarse start at 0\.25 mm.*adjust for your printer and orientation/,
   );
   await page.screenshot({ path: `.cache/sketch-review/${name}-fdm-fine-controls.png` });
   await preset.selectOption("fdm-coarse");
   let settings = (await inspect(page)).document.decorators[0].settings;
   assert.equal(settings.pitch, 1.5);
   assert.equal(settings.profile, "triangle");
-  assert.equal(settings.clearance, 0.1);
+  assert.equal(settings.clearance, 0.25);
   assert.equal(settings.tipTruncation, 0.1);
   await clearance.fill("0");
   await clearance.press("Enter");
@@ -60,4 +60,27 @@ export async function decoratorPresetRoute(page, name) {
   assert.equal(await layer.count(), 0);
   await advanced.locator("summary").click();
   assert.equal(await pitch.isVisible(), true);
+  await page.getByRole("button", { name: "Duplicate preset", exact: true }).click();
+  const nameInput = page.getByRole("textbox", { name: "Preset name", exact: true });
+  await nameInput.fill("Compatible pair");
+  await nameInput.press("Enter");
+  let saved = (await inspect(page)).document;
+  const local = saved.decoratorPresets.find((entry) => entry.name === "Compatible pair");
+  assert.ok(local);
+  await pitch.fill("2.2");
+  await pitch.press("Enter");
+  saved = (await inspect(page)).document;
+  assert.equal(saved.decoratorPresets.find((entry) => entry.id === local.id).settings.pitch, 2.2);
+  await page.getByRole("button", { name: "Duplicate preset", exact: true }).click();
+  const selector = page.getByRole("combobox", { name: "Document preset", exact: true });
+  await selector.selectOption(local.id);
+  await inspect(page);
+  await page
+    .getByRole("button", { name: "Remove thread decorator from selected faces", exact: true })
+    .click();
+  await inspect(page);
+  await chooseTool(page, "threads", "threads");
+  saved = (await inspect(page)).document;
+  assert.equal(saved.decorators[0].settings.pitch, 2.2);
+  assert.equal(await selector.inputValue(), local.id);
 }

@@ -173,8 +173,7 @@ The opposite tips retain the original sharp profile. Relative to the unmodified
 triangle, tip truncation removes material from both parts and increases their
 local gap; it does not replace the separate radial hole clearance. Neither
 preset changes the modeled diameter or depends on layer/nozzle
-dimensions. FDM fine begins with 0.25 mm hole-side radial relief; FDM coarse
-begins with 0.1 mm, based on the founder's fit tests. Choosing a preset
+dimensions. Both FDM presets begin with 0.25 mm hole-side radial relief. Choosing a preset
 explicitly restores its default clearance and the 0.1 mm truncation.
 Saved explicit clearance values remain unchanged. The simple panel shows preset,
 handedness, Cut into and a Clearance field for this relief. Its hint asks users
@@ -184,6 +183,16 @@ profile or tip truncation marks it Custom; clearance, handedness, cut and
 extent edits keep the chosen preset. Older documents without tip truncation
 retain their sharp profile until a preset is explicitly reapplied. Edits use
 the same owner/Undo path.
+
+Decorator panels also offer named document-local presets, Duplicate preset, and
+Rename preset. A preset stores resolved settings for one definition/version, so
+reusing it preserves explicit dimensions rather than re-inferring them. The last
+accepted choice per definition/version is saved with the document and reused on
+application. Editing a built-in creates a local copy. Editing an unshared local
+preset updates that copy; editing one used by other parts forks it so their settings
+remain unchanged. Preset selection, copies, names, and last choices participate in
+ordinary Undo and archives. Numeric preview/cancellation does not save a preset.
+These settings snapshots do not link geometry or automatically resize mating parts.
 
 The Metric 60° and rounded profiles retain their prior depth rule; the FDM
 triangle's 1 mm radial envelope is fixed across pitch edits.

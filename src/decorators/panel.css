@@ -90,3 +90,15 @@
 .gear-resize::backdrop {
   background: transparent;
 }
+
+.decorator-preset-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px;
+  margin-block: 6px;
+}
+.decorator-preset-controls input,
+.decorator-preset-controls select {
+  min-width: 0;
+  width: 100%;
+}

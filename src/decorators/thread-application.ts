@@ -30,10 +30,10 @@ export class ThreadApplication {
   get active(): boolean {
     return this.current !== null;
   }
-  start(faces: FaceReference[]): void {
+  start(faces: FaceReference[], settings: Settings = {}): void {
     const original = this.editor.store.data;
     try {
-      const instances = this.propose(original, faces, {});
+      const instances = this.propose(original, faces, settings);
       const lease = this.editor.interactions.acquire(
         "numeric",
         () => this.cancel(),
@@ -41,7 +41,7 @@ export class ThreadApplication {
         { navigation: "when-released" },
       );
       if (!lease) return;
-      this.current = { lease, original, faces, settings: {}, instances, error: "", parsed: true };
+      this.current = { lease, original, faces, settings, instances, error: "", parsed: true };
       this.compute();
       this.render();
       lease.trackHistory(
