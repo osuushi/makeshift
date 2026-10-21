@@ -208,11 +208,12 @@ acceptance.
 ## Illustrated navigator (2026-10-21)
 
 The toolbox now separates **Browse tools** from **Search** (⌘F / Ctrl-F). Browse
-opens a large illustrated 3×3 grid without a text field or software keyboard.
-The approved hierarchy lives in `src/tools/navigator-tree.ts`: Draw & sketch,
-Create solids, Combine & cut, Shape & finish, Move & copy, Constrain, Planes &
-references, Select & organize, and View & utilities. Screens have at most nine
-cards; every tool takes at most three choices after opening. Aliases reference
+opens a large grid of two columns and three rows without a text field or software
+keyboard. The hierarchy lives in `src/tools/navigator-tree.ts`: Draw & sketch,
+Create solids, Modify solids, Constrain, Select & organize, and View & utilities.
+Screens have at most six cards. Related tools have named subgroups (for example,
+Primitive solids, Combine & cut, and View & grids); every tool takes at most four
+choices after opening. Aliases reference
 ordinary catalog IDs, and Back uses the visited path. Standard File/Edit actions
 remain in their existing menu. New visible commands require a navigator home;
 the focused navigator acceptance checks catalog coverage.

@@ -6,79 +6,32 @@ export interface NavigatorGroup {
 export const navigatorGroups: Record<string, NavigatorGroup> = {
   root: {
     label: "Browse tools",
-    entries: [
-      "draw",
-      "create",
-      "combine",
-      "shape",
-      "move-copy",
-      "constrain",
-      "references",
-      "organize",
-      "utilities",
-    ],
+    entries: ["draw", "create", "shape", "constrain", "organize", "utilities"],
   },
   draw: {
     label: "Draw & sketch",
-    entries: [
-      "sketch-entry",
-      "edit-curves",
-      "reuse",
-      "line",
-      "rectangle",
-      "circle",
-      "bezier",
-      "pen",
-      "trim",
-    ],
+    entries: ["sketch-entry", "edit-curves", "reuse", "curved-drawing", "line", "rectangle"],
   },
   create: {
     label: "Create solids",
-    entries: [
-      "cube",
-      "cylinder",
-      "sphere",
-      "cone",
-      "extrude",
-      "revolve",
-      "loft",
-      "import-mesh",
-      "duplicate",
-    ],
+    entries: ["primitive-solids", "extrude", "revolve", "loft", "import-mesh", "duplicate"],
   },
   combine: {
     label: "Combine & cut",
-    entries: [
-      "union",
-      "subtract",
-      "intersect",
-      "split",
-      "imprint",
-      "drill",
-      "trim",
-      "shell",
-      "erode",
-    ],
+    entries: ["union", "subtract", "intersect", "split", "imprint", "drill"],
   },
   shape: {
-    label: "Shape & finish",
-    entries: [
-      "surface-details",
-      "offset",
-      "shell",
-      "erode",
-      "fillet",
-      "chamfer",
-      "extrude",
-      "cleanup",
-      "reopen-operation",
-    ],
+    label: "Modify solids",
+    entries: ["combine", "solid-finish", "surface-details", "move-copy", "offset", "extrude"],
   },
   "move-copy": {
     label: "Move & copy",
     entries: ["transform", "duplicate", "mirror", "offset", "sketch-offset"],
   },
-  constrain: { label: "Constrain", entries: ["direction", "connect", "match", "locks"] },
+  constrain: {
+    label: "Constrain",
+    entries: ["direction", "connect", "match", "locks"],
+  },
   references: {
     label: "Planes & references",
     entries: [
@@ -88,8 +41,6 @@ export const navigatorGroups: Record<string, NavigatorGroup> = {
       "use-edge",
       "sketch-on-face",
       "new-sketch-on-plane",
-      "tag-geometry",
-      "cross-section",
     ],
   },
   organize: {
@@ -97,45 +48,34 @@ export const navigatorGroups: Record<string, NavigatorGroup> = {
     entries: [
       "select-visible",
       "refine-selection",
+      "visibility",
       "select",
       "select-face",
       "selection-clear",
-      "tag-geometry",
-      "isolate",
-      "end-isolation",
     ],
   },
   utilities: {
     label: "View & utilities",
-    entries: [
-      "visibility",
-      "exchange",
-      "edit-cleanup",
-      "diagnostics",
-      "cross-section",
-      "sketch-grid",
-      "grid",
-      "modeling",
-      "settings",
-    ],
+    entries: ["references", "exchange", "edit-cleanup", "diagnostics", "view-controls", "settings"],
   },
   "sketch-entry": {
     label: "Start or edit sketch",
     entries: [
+      "principal-planes",
       "start-sketch",
       "edit-sketch",
       "sketch-on-face",
       "new-sketch-on-plane",
-      "sketch-xy",
-      "sketch-xz",
-      "sketch-yz",
     ],
   },
   "edit-curves": {
     label: "Edit curves",
-    entries: ["sketch-offset", "sketch-fillet", "clear-sketch"],
+    entries: ["trim", "sketch-offset", "sketch-fillet", "clear-sketch"],
   },
-  reuse: { label: "Reuse geometry", entries: ["project", "use-edge"] },
+  reuse: {
+    label: "Reuse geometry",
+    entries: ["project", "use-edge"],
+  },
   "surface-details": {
     label: "Surface details",
     entries: ["threads", "gear", "knurling", "decorator-library"],
@@ -155,7 +95,10 @@ export const navigatorGroups: Record<string, NavigatorGroup> = {
       "points-unfuse",
     ],
   },
-  match: { label: "Match geometry", entries: ["constraint-equal", "constraint-concentric"] },
+  match: {
+    label: "Match geometry",
+    entries: ["constraint-equal", "constraint-concentric"],
+  },
   locks: {
     label: "Lock dimensions",
     entries: ["lock-width", "lock-height", "lock-length", "lock-radius", "lock-cornerAngle"],
@@ -165,21 +108,12 @@ export const navigatorGroups: Record<string, NavigatorGroup> = {
     entries: ["sketch-xy", "sketch-xz", "sketch-yz"],
   },
   "select-visible": {
-    label: "Select visible",
-    entries: ["select-all-bodies", "select-all-sketches"],
+    label: "Select & tag",
+    entries: ["select-all-bodies", "select-all-sketches", "tag-geometry"],
   },
   "refine-selection": {
     label: "Refine selection",
-    entries: [
-      "selection-remove-edges",
-      "selection-remove-faces",
-      "selection-only-edges",
-      "selection-only-faces",
-      "selection-add-faces",
-      "selection-add-edges",
-      "selection-bodies",
-      "selection-boundary",
-    ],
+    entries: ["filter-selection", "expand-selection", "selection-bodies", "selection-boundary"],
   },
   visibility: {
     label: "Visibility",
@@ -193,7 +127,39 @@ export const navigatorGroups: Record<string, NavigatorGroup> = {
     label: "Edit & cleanup",
     entries: ["reopen-operation", "clear-sketch", "cleanup"],
   },
-  diagnostics: { label: "Diagnostics", entries: ["capture"] },
+  diagnostics: {
+    label: "Diagnostics",
+    entries: ["capture"],
+  },
+  "curved-drawing": {
+    label: "Curves & freehand",
+    entries: ["circle", "bezier", "pen"],
+  },
+  "primitive-solids": {
+    label: "Primitive solids",
+    entries: ["cube", "cylinder", "sphere", "cone"],
+  },
+  "solid-finish": {
+    label: "Shape & finish",
+    entries: ["shell", "erode", "fillet", "chamfer", "cleanup", "reopen-operation"],
+  },
+  "view-controls": {
+    label: "View & grids",
+    entries: ["cross-section", "sketch-grid", "grid", "modeling"],
+  },
+  "filter-selection": {
+    label: "Filter selection",
+    entries: [
+      "selection-remove-edges",
+      "selection-remove-faces",
+      "selection-only-edges",
+      "selection-only-faces",
+    ],
+  },
+  "expand-selection": {
+    label: "Extend selection",
+    entries: ["selection-add-faces", "selection-add-edges"],
+  },
 };
 
 /** First examples stay deterministic, even when unavailable. */

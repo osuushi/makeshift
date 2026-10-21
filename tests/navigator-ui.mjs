@@ -16,10 +16,12 @@ await withUiRuntimes(
     assert.equal(await dialog.isVisible(), true);
     await catalogCoverage(page);
     await page.screenshot({ path: `.cache/sketch-review/${name}-navigator-root.png` });
+    await entry("utilities").click();
     await entry("references").click();
     await entry("principal-planes").click();
     await entry("back").click();
     assert.match(await heading(), /Planes & references$/);
+    await entry("back").click();
     await entry("back").click();
     await entry("draw").click();
     await entry("sketch-entry").click();
@@ -34,7 +36,7 @@ await withUiRuntimes(
 
     await browse.click();
     assert.equal(await dialog.locator(".navigator-target, svg").count(), 0);
-    assert.match(await entry("combine").textContent(), /Union, Subtract, Intersect/);
+    assert.match(await entry("shape").textContent(), /Union, Subtract, Intersect/);
     assert.equal(await dialog.getByText("Explore tools").count(), 0);
     // A held pointer crossing cards must neither navigate nor activate on release.
     const draw = await entry("draw").boundingBox();
@@ -85,6 +87,7 @@ async function geometryRoute(page, name, browse, dialog, entry) {
   assert.equal((await inspect(page)).document.sketches[0].curves.length, 4);
 
   await browse.click();
+  await entry("shape").click();
   await entry("combine").click();
   assert.equal(await entry("union").getAttribute("aria-disabled"), "true");
   const slots = await dialog
@@ -93,6 +96,7 @@ async function geometryRoute(page, name, browse, dialog, entry) {
   await entry("cancel").click();
   await chooseTool(page, "return to modeling", "modeling");
   await browse.click();
+  await entry("shape").click();
   await entry("combine").click();
   assert.deepEqual(
     await dialog
@@ -154,7 +158,11 @@ async function tabletRoute(page, name, browse, dialog, entry) {
   await page.setViewportSize({ width: 820, height: 1180 });
   if (name === "electron") await browse.click();
   else await tap(page, browse);
-  assert.equal(await dialog.locator(".navigator-card").count(), 9);
+  assert.equal(await dialog.locator(".navigator-card").count(), 6);
+  const columns = await dialog
+    .locator(".navigator-grid")
+    .evaluate((grid) => getComputedStyle(grid).gridTemplateColumns.split(" ").length);
+  assert.equal(columns, 2);
   const bounds = await dialog.boundingBox();
   assert.ok(
     bounds &&

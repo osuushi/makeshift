@@ -30,8 +30,8 @@ export function navigatorKeydown(
         Tab: event.shiftKey ? -1 : 1,
         ArrowLeft: -1,
         ArrowRight: 1,
-        ArrowUp: -3,
-        ArrowDown: 3,
+        ArrowUp: -2,
+        ArrowDown: 2,
       } as Record<string, number>
     )[event.key];
     if (delta) buttons[(index + delta + buttons.length) % buttons.length]?.focus();
