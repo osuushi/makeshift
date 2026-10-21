@@ -1,4 +1,5 @@
 import type { ToolResult } from "./catalog.js";
+import { unavailableHelp } from "./navigator-availability.js";
 import { diagramCaption } from "./navigator-captions.js";
 import { toolDiagram } from "./navigator-diagrams.js";
 import { navigatorExamples, navigatorGroups } from "./navigator-tree.js";
@@ -15,6 +16,10 @@ export function navigatorCard(id: string, tools: Map<string, ToolResult>): HTMLB
   button.setAttribute("aria-label", title.textContent);
   button.append(title);
   button.setAttribute("aria-disabled", String(!group && (!tool || !!tool.unavailable)));
+  const unavailable = group
+    ? navigatorExamples(id).every((key) => !tools.get(key) || !!tools.get(key)?.unavailable)
+    : !tool || !!tool.unavailable;
+  button.dataset.unavailable = String(unavailable);
   if (group) {
     button.classList.add("navigator-group");
     const examples = navigatorExamples(id);
@@ -27,13 +32,24 @@ export function navigatorCard(id: string, tools: Map<string, ToolResult>): HTMLB
         .join(", ") + (examples.length > 3 ? " …" : "");
     button.setAttribute("aria-description", summary.textContent);
     button.append(summary);
+    if (unavailable) {
+      const notice = document.createElement("span");
+      notice.className = "navigator-detail";
+      notice.textContent = "No tools available right now. Open to see what they require.";
+      button.append(notice);
+      button.setAttribute("aria-description", `${summary.textContent}. ${notice.textContent}`);
+    }
   } else {
     const artwork = document.createElement("div");
     artwork.className = "navigator-artwork";
     artwork.append(toolDiagram(id));
     const detail = document.createElement("span");
     detail.className = "navigator-detail";
-    detail.textContent = tool?.unavailable ?? diagramCaption(id);
+    detail.textContent = tool?.unavailable
+      ? unavailableHelp(tool.unavailable)
+      : tool
+        ? diagramCaption(id)
+        : "This tool is not available in this build.";
     button.setAttribute("aria-description", detail.textContent);
     button.append(artwork, detail);
   }

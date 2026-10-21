@@ -15,6 +15,7 @@ await withUiRuntimes(
     await browse.click();
     assert.equal(await dialog.isVisible(), true);
     await catalogCoverage(page);
+    await unavailableGroups(page, dialog, entry);
     await page.screenshot({ path: `.cache/sketch-review/${name}-navigator-root.png` });
     await entry("utilities").click();
     await entry("references").click();
@@ -117,6 +118,7 @@ async function numericFocusRoute(page, browse, entry) {
   await field.fill("27");
   const before = (await inspect(page)).document;
   await browse.click();
+  assert.equal(await entry("constrain").getAttribute("data-unavailable"), "false");
   await entry("shape").click();
   await entry("cancel").click();
   assert.equal(await field.inputValue(), "27");
@@ -185,4 +187,24 @@ async function tap(page, locator) {
   assert.ok(bounds);
   // Opening on pointerdown changes the hit target before WebKit delivers touchstart.
   await page.touchscreen.tap(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+}
+
+// Group availability must propagate through nested groups without blocking exploration.
+async function unavailableGroups(page, dialog, entry) {
+  assert.equal(await entry("constrain").getAttribute("data-unavailable"), "true");
+  assert.equal(await entry("constrain").getAttribute("aria-disabled"), "false");
+  await entry("constrain").click();
+  assert.equal(await entry("direction").getAttribute("data-unavailable"), "true");
+  await entry("direction").click();
+  const horizontal = entry("constraint-horizontal");
+  assert.equal(await horizontal.getAttribute("aria-disabled"), "true");
+  assert.match(await horizontal.textContent(), /Start or edit a sketch/);
+  const before = (await inspect(page)).document;
+  const bounds = await horizontal.boundingBox();
+  assert.ok(bounds);
+  await page.mouse.click(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  assert.equal(await dialog.isVisible(), true);
+  assert.deepEqual((await inspect(page)).document, before);
+  await entry("back").click();
+  await entry("back").click();
 }

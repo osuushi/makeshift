@@ -66,7 +66,7 @@
   outline: 3px solid #467aa4;
   outline-offset: 2px;
 }
-.navigator-card[aria-disabled="true"] {
+.navigator-card[data-unavailable="true"] {
   background: #e8edf0;
   color: #5d6974;
 }

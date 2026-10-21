@@ -228,7 +228,10 @@ individual tools; the authored order within each section stays fixed. Surface de
 Tap a card to open a group or invoke a tool. There are no circle targets,
 proximity effects or drag-to-select routes. Card positions never sort by
 availability, selection, or recency. Missing/unavailable commands retain their
-slots and cannot execute. A pointer that moves beyond tap tolerance cannot invoke
+slots and cannot execute. Disabled tools explain their unmet requirement and how
+to satisfy it. Groups whose descendant tools are all unavailable use the same
+gray styling but remain openable, with a note inviting exploration of requirements.
+Availability updates as the document and workspace change. A pointer that moves beyond tap tolerance cannot invoke
 on release; the release and compatibility click are consumed rather than reaching
 geometry controls.
 
