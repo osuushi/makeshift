@@ -221,7 +221,8 @@ Group cards use a short text list of example tools (such as “Union, Subtract,
 Intersect …”) without diagrams or an “Explore tools” caption. Individual tool
 cards keep a static operation diagram, canonical label and explanation or
 availability reason. This text-versus-diagram distinction also identifies nested
-groups among tools. Surface detail cards explain export-time generation.
+groups among tools. Within every screen, subgroups come first, followed by
+individual tools; the authored order within each section stays fixed. Surface detail cards explain export-time generation.
 
 Tap a card to open a group or invoke a tool. There are no circle targets,
 proximity effects or drag-to-select routes. Card positions never sort by

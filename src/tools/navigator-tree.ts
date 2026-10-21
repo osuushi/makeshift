@@ -21,15 +21,15 @@ export const navigatorGroups: Record<string, NavigatorGroup> = {
   draw: {
     label: "Draw & sketch",
     entries: [
+      "sketch-entry",
+      "edit-curves",
+      "reuse",
       "line",
       "rectangle",
       "circle",
       "bezier",
       "pen",
       "trim",
-      "sketch-entry",
-      "edit-curves",
-      "reuse",
     ],
   },
   create: {
@@ -63,6 +63,7 @@ export const navigatorGroups: Record<string, NavigatorGroup> = {
   shape: {
     label: "Shape & finish",
     entries: [
+      "surface-details",
       "offset",
       "shell",
       "erode",
@@ -70,7 +71,6 @@ export const navigatorGroups: Record<string, NavigatorGroup> = {
       "chamfer",
       "extrude",
       "cleanup",
-      "surface-details",
       "reopen-operation",
     ],
   },
@@ -82,11 +82,11 @@ export const navigatorGroups: Record<string, NavigatorGroup> = {
   references: {
     label: "Planes & references",
     entries: [
+      "principal-planes",
       "construction-plane",
       "project",
       "use-edge",
       "sketch-on-face",
-      "principal-planes",
       "new-sketch-on-plane",
       "tag-geometry",
       "cross-section",
@@ -95,11 +95,11 @@ export const navigatorGroups: Record<string, NavigatorGroup> = {
   organize: {
     label: "Select & organize",
     entries: [
+      "select-visible",
+      "refine-selection",
       "select",
       "select-face",
       "selection-clear",
-      "select-visible",
-      "refine-selection",
       "tag-geometry",
       "isolate",
       "end-isolation",
@@ -108,15 +108,15 @@ export const navigatorGroups: Record<string, NavigatorGroup> = {
   utilities: {
     label: "View & utilities",
     entries: [
-      "cross-section",
       "visibility",
+      "exchange",
+      "edit-cleanup",
+      "diagnostics",
+      "cross-section",
       "sketch-grid",
       "grid",
       "modeling",
       "settings",
-      "exchange",
-      "edit-cleanup",
-      "diagnostics",
     ],
   },
   "sketch-entry": {
