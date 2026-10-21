@@ -1,0 +1,14 @@
+.history-controls {
+  display: flex;
+  gap: 6px;
+  pointer-events: auto;
+}
+.history-controls button {
+  min-width: 44px;
+  min-height: 44px;
+  touch-action: manipulation;
+}
+.history-controls button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

@@ -7,6 +7,7 @@ import { StandardCommandMenu } from "../tools/standard-command-menu.js";
 import { browserHistoryControls } from "./browser-history-controls.js";
 import type { SketchEditor } from "./editor.js";
 import { installGridSnapControl } from "./grid-snap-control.js";
+import { installHistoryControls } from "./history-controls.js";
 import { onModelKeydown } from "./model-keys.js";
 import type { NumericEdit } from "./numeric-edit.js";
 import { focusNumericField } from "./numeric-focus.js";
@@ -17,6 +18,7 @@ export function installControls(
   app: HTMLElement,
 ): () => void {
   const disposeTools = sketchTools(editor);
+  const disposeHistory = installHistoryControls(editor, app);
   const disposeGridSnap = installGridSnapControl(editor);
   const disposeClipboard = clipboardControls(editor);
   const disposeFiles = fileControls(editor, app);
@@ -35,6 +37,7 @@ export function installControls(
   return () => {
     abort.abort();
     standardMenu.dispose();
+    disposeHistory();
     disposeGridSnap();
     disposeTools();
     disposeClipboard();
