@@ -210,12 +210,13 @@ acceptance.
 The toolbox now separates **Browse tools** from **Search** (⌘F / Ctrl-F). Browse
 opens a large grid of two columns and three rows without a text field or software
 keyboard. The hierarchy lives in `src/tools/navigator-tree.ts`: Draw & sketch,
-Create solids, Modify solids, Constrain, Select & organize, and View & utilities.
+Create solids, Modify solids, Move & copy, Select & organize, and View & utilities.
 Screens have at most six cards. Related tools have named subgroups (for example,
 Primitive solids, Combine & cut, and View & grids); every tool takes at most four
 choices after opening. Aliases reference
 ordinary catalog IDs, and Back uses the visited path. Standard File/Edit actions
-remain in their existing menu. New visible commands require a navigator home;
+remain in their existing menu. Constraint tools and dimension locks stay in their contextual controls and Search,
+not Browse. Other new visible commands require a navigator home;
 the focused navigator acceptance checks catalog coverage.
 
 Group cards use a short text list of example tools (such as “Union, Subtract,
@@ -228,8 +229,8 @@ individual tools; the authored order within each section stays fixed. Surface de
 Tap a card to open a group or invoke a tool. There are no circle targets,
 proximity effects or drag-to-select routes. Card positions never sort by
 availability, selection, or recency. Missing/unavailable commands retain their
-slots and cannot execute. Disabled tools explain their unmet requirement and how
-to satisfy it. Groups whose descendant tools are all unavailable use the same
+slots and cannot execute. Disabled tools use short, direct instructions naming what to select or change,
+without generic “requirements” wording. Groups whose descendant tools are all unavailable use the same
 gray styling but remain openable, with a note inviting exploration of requirements.
 Availability updates as the document and workspace change. A pointer that moves beyond tap tolerance cannot invoke
 on release; the release and compatibility click are consumed rather than reaching

@@ -15,7 +15,7 @@ await withUiRuntimes(
     await browse.click();
     assert.equal(await dialog.isVisible(), true);
     await catalogCoverage(page);
-    await unavailableGroups(page, dialog, entry);
+    assert.equal(await entry("constrain").count(), 0);
     await page.screenshot({ path: `.cache/sketch-review/${name}-navigator-root.png` });
     await entry("utilities").click();
     await entry("references").click();
@@ -86,10 +86,20 @@ async function geometryRoute(page, name, browse, dialog, entry) {
   assert.equal((await inspect(page)).document.sketches[0]?.curves.length ?? 0, 0);
   await chooseTool(page, "redo", "redo");
   assert.equal((await inspect(page)).document.sketches[0].curves.length, 4);
+  await browse.click();
+  await entry("organize").click();
+  assert.equal(await entry("refine-selection").getAttribute("data-unavailable"), "true");
+  await entry("refine-selection").click();
+  assert.equal(await entry("filter-selection").getAttribute("data-unavailable"), "true");
+  await entry("filter-selection").click();
+  await entry("cancel").click();
 
   await browse.click();
   await entry("shape").click();
+  assert.equal(await entry("combine").getAttribute("data-unavailable"), "false");
+  assert.equal(await entry("combine").getAttribute("aria-disabled"), "false");
   await entry("combine").click();
+  assert.match(await entry("union").textContent(), /Return to Modeling/);
   assert.equal(await entry("union").getAttribute("aria-disabled"), "true");
   const slots = await dialog
     .locator(".navigator-card")
@@ -118,7 +128,6 @@ async function numericFocusRoute(page, browse, entry) {
   await field.fill("27");
   const before = (await inspect(page)).document;
   await browse.click();
-  assert.equal(await entry("constrain").getAttribute("data-unavailable"), "false");
   await entry("shape").click();
   await entry("cancel").click();
   assert.equal(await field.inputValue(), "27");
@@ -153,7 +162,12 @@ async function catalogCoverage(page) {
     "licenses",
   ]);
   for (const id of availableIds)
-    assert.ok(leaves.has(id) || standard.has(id), `Navigator coverage: ${id}`);
+    assert.ok(
+      leaves.has(id) ||
+        standard.has(id) ||
+        /^(constraint-|lock-|points-|point-on-edge$|point-tangent$)/.test(id),
+      `Navigator coverage: ${id}`,
+    );
 }
 
 async function tabletRoute(page, name, browse, dialog, entry) {
@@ -175,8 +189,8 @@ async function tabletRoute(page, name, browse, dialog, entry) {
   );
   await page.screenshot({ path: `.cache/sketch-review/${name}-navigator-portrait.png` });
   if (name !== "electron") {
-    await tap(page, entry("constrain"));
-    assert.match(await dialog.locator("h2").textContent(), /Constrain$/);
+    await tap(page, entry("move-copy"));
+    assert.match(await dialog.locator("h2").textContent(), /Move & copy$/);
     await tap(page, entry("back"));
   }
   await page.keyboard.press("Escape");
@@ -187,24 +201,4 @@ async function tap(page, locator) {
   assert.ok(bounds);
   // Opening on pointerdown changes the hit target before WebKit delivers touchstart.
   await page.touchscreen.tap(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
-}
-
-// Group availability must propagate through nested groups without blocking exploration.
-async function unavailableGroups(page, dialog, entry) {
-  assert.equal(await entry("constrain").getAttribute("data-unavailable"), "true");
-  assert.equal(await entry("constrain").getAttribute("aria-disabled"), "false");
-  await entry("constrain").click();
-  assert.equal(await entry("direction").getAttribute("data-unavailable"), "true");
-  await entry("direction").click();
-  const horizontal = entry("constraint-horizontal");
-  assert.equal(await horizontal.getAttribute("aria-disabled"), "true");
-  assert.match(await horizontal.textContent(), /Start or edit a sketch/);
-  const before = (await inspect(page)).document;
-  const bounds = await horizontal.boundingBox();
-  assert.ok(bounds);
-  await page.mouse.click(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
-  assert.equal(await dialog.isVisible(), true);
-  assert.deepEqual((await inspect(page)).document, before);
-  await entry("back").click();
-  await entry("back").click();
 }

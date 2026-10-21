@@ -6,7 +6,7 @@ export interface NavigatorGroup {
 export const navigatorGroups: Record<string, NavigatorGroup> = {
   root: {
     label: "Browse tools",
-    entries: ["draw", "create", "shape", "constrain", "organize", "utilities"],
+    entries: ["draw", "create", "shape", "move-copy", "organize", "utilities"],
   },
   draw: {
     label: "Draw & sketch",
@@ -22,15 +22,11 @@ export const navigatorGroups: Record<string, NavigatorGroup> = {
   },
   shape: {
     label: "Modify solids",
-    entries: ["combine", "solid-finish", "surface-details", "move-copy", "offset", "extrude"],
+    entries: ["combine", "solid-finish", "surface-details", "offset", "extrude"],
   },
   "move-copy": {
     label: "Move & copy",
     entries: ["transform", "duplicate", "mirror", "offset", "sketch-offset"],
-  },
-  constrain: {
-    label: "Constrain",
-    entries: ["direction", "connect", "match", "locks"],
   },
   references: {
     label: "Planes & references",
@@ -79,29 +75,6 @@ export const navigatorGroups: Record<string, NavigatorGroup> = {
   "surface-details": {
     label: "Surface details",
     entries: ["threads", "gear", "knurling", "decorator-library"],
-  },
-  direction: {
-    label: "Direction",
-    entries: ["constraint-horizontal", "constraint-vertical", "constraint-parallel"],
-  },
-  connect: {
-    label: "Touch & connect",
-    entries: [
-      "points-coincident",
-      "point-on-edge",
-      "constraint-tangent",
-      "point-tangent",
-      "points-fuse",
-      "points-unfuse",
-    ],
-  },
-  match: {
-    label: "Match geometry",
-    entries: ["constraint-equal", "constraint-concentric"],
-  },
-  locks: {
-    label: "Lock dimensions",
-    entries: ["lock-width", "lock-height", "lock-length", "lock-radius", "lock-cornerAngle"],
   },
   "principal-planes": {
     label: "Principal planes",

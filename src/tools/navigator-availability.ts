@@ -1,38 +1,34 @@
-/** Explain state-only guards; selection guards already name the required input. */
+/** Keep the instruction concrete; don't wrap it in generic requirements language. */
 export function unavailableHelp(reason: string): string {
   const explanations: Record<string, string> = {
-    "Enter sketch mode": "This tool needs a sketch workspace. Start or edit a sketch to enable it.",
+    "Enter sketch mode": "Start or edit a sketch to use this tool.",
     "Already in Modeling":
-      "You are already in Modeling. This becomes available after you enter a sketch.",
+      "You’re already in Modeling. Use this after opening a sketch to return here.",
     "Isolation is not active":
-      "Nothing is isolated. Use Isolate selection first to enable Exit isolation.",
+      "Nothing is isolated. Select an object and choose Isolate selection first.",
     "No export is running":
-      "There is no export to cancel. This becomes available while an export is running.",
+      "There’s no export to cancel. You can use this while a file is being exported.",
     "Bodies are already shown":
-      "Bodies are already visible. Hide bodies first to enable Show bodies.",
+      "The bodies are already visible. Use this to show them again after hiding them.",
     "Bodies are already hidden":
-      "Bodies are already hidden. Show bodies first to enable Hide bodies.",
-    "That relationship already exists":
-      "This constraint is already applied. Select geometry without that relationship to apply it elsewhere.",
-    "Switching tools…": "A tool change is in progress. Wait for it to finish.",
-    "Exporting…":
-      "An export is in progress. Wait for it to finish or cancel it before starting another.",
-    "Capturing fixture…": "A fixture capture is in progress. Wait for it to finish.",
-    "Create a body first": "The document has no solid bodies. Create or import a solid body first.",
-    "Create or show a solid body first":
-      "Export needs a visible solid body. Create, import, or show a body first.",
+      "The bodies are already hidden. Use this to hide them again after showing them.",
+    "Switching tools…": "Wait for the tool change to finish.",
+    "Exporting…": "Wait for the export to finish, or cancel it before starting another.",
+    "Capturing fixture…": "Wait for the current capture to finish.",
+    "Create a body first": "Create or import a solid body first.",
+    "Create or show a solid body first": "Create, import, or show a solid body to export.",
     "Open a sketch containing curves":
-      "This tool needs sketch curves. Open a sketch containing curves, or start a sketch and draw some.",
+      "Open a sketch with lines or curves, or draw some in a new sketch.",
+    "Select solid geometry in Modeling":
+      "Choose Return to Modeling, then select a body, face, or edge.",
+    "Select a closed profile or solid face":
+      "Select a closed sketch shape or a face on a solid body.",
+    "Select a closed profile or planar face":
+      "Select a closed sketch shape or a flat face on a solid body.",
+    "Select one planar solid face": "Select one flat face on a solid body.",
+    "Select a sketch or its filled region":
+      "Select a sketch or click inside one of its closed shapes.",
+    "Select an object or its geometry first": "Select an object, face, or edge first.",
   };
-  if (explanations[reason]) return explanations[reason];
-  if (reason.startsWith("Return to Modeling"))
-    return `This tool needs the Modeling workspace. ${reason}.`;
-  if (/^Select .* in Modeling$/.test(reason))
-    return `This tool needs the Modeling workspace. Use Return to Modeling, then ${reason[0].toLowerCase()}${reason.slice(1)}.`;
-  if (/^Select .*sketch|^Select two circles or arcs/.test(reason))
-    return `This tool needs compatible sketch geometry. Start or edit a sketch, then ${reason[0].toLowerCase()}${reason.slice(1)}.`;
-  if (reason.startsWith("Select "))
-    return `The current selection does not meet this tool’s requirements. ${reason}.`;
-  // Other catalog guards already give a concrete action (finish, wait, open, remove…).
-  return `${reason.replace(/[.…]+$/, "")}.`;
+  return explanations[reason] ?? `${reason.replace(/[.…]+$/, "")}.`;
 }

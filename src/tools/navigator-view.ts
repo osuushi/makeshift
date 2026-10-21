@@ -35,7 +35,7 @@ export function navigatorCard(id: string, tools: Map<string, ToolResult>): HTMLB
     if (unavailable) {
       const notice = document.createElement("span");
       notice.className = "navigator-detail";
-      notice.textContent = "No tools available right now. Open to see what they require.";
+      notice.textContent = "These tools aren’t available yet. Open to see how to use them.";
       button.append(notice);
       button.setAttribute("aria-description", `${summary.textContent}. ${notice.textContent}`);
     }
