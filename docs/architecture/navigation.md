@@ -44,6 +44,10 @@ explicit sketch selection wins when several existing sketches share a plane.
 Entry alone creates no geometry. Drawing continues in that workspace rather than
 creating another sketch on the same visible plane.
 
+When an orientation-cube face has focus, Cmd/Ctrl-Enter enters its corresponding
+canonical sketch plane directly, including while its single-click alignment is
+pending. Plain Enter and Space retain cube alignment behavior.
+
 Finger double taps near visible sketch ink resolve the nearest curve within
 22 CSS pixels after projection, including tilted planes. Sketch entry takes priority
 over the canonical grid at that location and resolves the second tap independently
@@ -250,7 +254,7 @@ and the renderer rejects input outside the viewport or during editing/orbit.
 The native event is macOS-only; Windows/Linux retain Option-roll.
 
 Tablet one-finger orbit uses the same press-based pivot through pointer events.
-Two fingers continuously pan and pinch; twisting 10° triggers one 90° turn about
+Two fingers continuously pan and pinch; twisting 30° triggers one 90° turn about
 their midpoint. The animation follows the current midpoint as the pair pans,
 keeping the world point under the fingers fixed relative to that midpoint through
 rotation and pinch. Further twist in that contact gesture cannot repeat the turn.

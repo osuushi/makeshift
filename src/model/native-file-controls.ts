@@ -11,7 +11,7 @@ export function nativeFileControls(editor: SketchEditor, host: DocumentHost): ()
   title.className = "document-title";
   title.setAttribute("aria-label", "Current document");
   document.querySelector("header")?.append(title);
-  const disposeExport = exportControls(editor);
+  const disposeExport = exportControls(editor, async () => (await host.status()).name);
   const status = (value: DocumentStatus) => {
     title.textContent = `${value.name}${value.edited ? " · Edited" : ""}`;
     title.title = value.path ?? "Unsaved document";

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { inspect, reset } from "./ui-helpers.mjs";
+import { drag, inspect, reset } from "./ui-helpers.mjs";
 import { navigationIdle } from "./ui-navigation-history.mjs";
+import { orientWithTurntable } from "./ui-orbit-orient.mjs";
 
 export async function cubeSettled(page) {
   await page.waitForFunction(
@@ -51,6 +52,41 @@ export async function cubeClicksRoute(page, name) {
   console.log(
     `${name}: nearest single click, direct canonical double click, repeated clicks, cancellation and immediate keyboard passed`,
   );
+}
+
+export async function sketchShortcut(page) {
+  await reset(page);
+  const before = (await inspect(page)).document;
+  for (const [face, plane, normal] of [
+    ["Top", "XY", [0, 0, 1]],
+    ["Bottom", "XY", [0, 0, -1]],
+    ["Front", "XZ", [0, -1, 0]],
+    ["Back", "XZ", [0, 1, 0]],
+    ["Left", "YZ", [-1, 0, 0]],
+    ["Right", "YZ", [1, 0, 0]],
+  ]) {
+    for (const pending of [false, true]) {
+      await orientWithTurntable(page, normal);
+      const point = await surfacePoint(page, face);
+      await page.mouse.click(point.x, point.y);
+      if (!pending) await cubeSettled(page);
+      await page.keyboard.press(pending ? "Control+Enter" : "Meta+Enter");
+      assert.equal((await inspect(page)).activePlane, plane, `${face}: pending=${pending}`);
+      await page.waitForTimeout(300);
+      assert.equal(
+        (await inspect(page)).activePlane,
+        plane,
+        "Delayed alignment cannot exit sketch",
+      );
+      await page.keyboard.press("Escape");
+    }
+  }
+  assert.deepEqual((await inspect(page)).document, before);
+  await page.keyboard.press("Meta+Enter");
+  await page.keyboard.press("l");
+  await drag(page, [-10, 0], [10, 0]);
+  assert.equal((await inspect(page)).document.sketches[0].curves.length, 1);
+  console.log("Cube sketch shortcuts: all six faces, pending clicks and real drawing pass");
 }
 
 async function sidewaysTop(page, oblique) {

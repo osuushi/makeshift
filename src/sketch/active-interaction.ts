@@ -3,6 +3,7 @@ import type { DisplayDocument } from "../model/display-document.js";
 import { InteractionHistory } from "./interaction-history.js";
 
 type Kind =
+  | "tool-selection"
   | "cube"
   | "cylinder"
   | "sphere"

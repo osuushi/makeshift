@@ -42,7 +42,7 @@ from a point in drawing tools. Primary taps do not interrupt plane alignment, an
 sketch gestures wait for the transition to finish. During a held sketch gesture,
 each completed solve is displayed even when a newer pointer target is waiting;
 release drains the newest target before accepting one Undo step.
-Two-finger twist triggers one 90° view turn about the finger midpoint after 10° of
+Two-finger twist triggers one 90° view turn about the finger midpoint after 30° of
 angular travel, alongside continuous pan and zoom. The turn latches until the
 contact gesture ends. It animates directly to the canonical-axis destination in
 280 ms, with no separate release correction. Safari exposes combined

@@ -9,6 +9,7 @@ import type { AgentSettings } from "./agent-settings.js";
 import type { AgentSetup } from "./agent-setup.js";
 import { DocumentIPC } from "./document-ipc.js";
 import { DocumentSession } from "./document-session.js";
+import { exportDestination } from "./export-destination.js";
 import { lockInterfaceZoom } from "./interface-zoom.js";
 import { IPadSession } from "./ipad-session.js";
 import { nativeExecutable } from "./native-paths.js";
@@ -72,6 +73,7 @@ export class DocumentWindow {
       },
     });
     this.window = window;
+    exportDestination(window, () => this.documents.status.path);
     lockInterfaceZoom(window.webContents);
     rememberWindowSize(window);
     this.documents.attach(window);

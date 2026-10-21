@@ -30,24 +30,21 @@ export function validateSketchGrid(value: unknown): asserts value is SketchGrid 
 }
 
 export function visibleSketchGrid(grid: SketchGrid, pixelsPerMm: number, minPixels: number) {
-  const clamp = (spacing: number) =>
-    spacing * Math.max(1, Math.ceil(minPixels / (spacing * pixelsPerMm) - 1e-12));
-  const minor = clamp(grid.minor);
-  const major = clamp(grid.major);
-  const hideMinor = minor === major || (minor > major && shareGridFactor(minor, major));
-  return { minor, major, hideMinor, snap: hideMinor ? major : Math.min(minor, major) };
-}
-
-/** Compare decimal spacings in their smallest shared power-of-ten unit. */
-function shareGridFactor(a: number, b: number): boolean {
-  for (let scale = 1; scale <= 1e6; scale *= 10) {
-    const x = Math.round(a * scale);
-    const y = Math.round(b * scale);
-    if (Math.abs(a * scale - x) > 1e-7 || Math.abs(b * scale - y) > 1e-7) continue;
-    let divisor = x;
-    let remainder = y;
-    while (remainder) [divisor, remainder] = [remainder, divisor % remainder];
-    return divisor > 1;
+  const minimum = minPixels / pixelsPerMm;
+  const major = grid.major * Math.max(1, Math.ceil(minimum / grid.major - 1e-12));
+  const ratio = major / grid.minor;
+  const count = Math.round(ratio);
+  let minor = major;
+  // Thin minor lines only at subdivisions of the configured major lattice.
+  // Incommensurate settings retain the major grid instead of moving its lines.
+  if (Math.abs(ratio - count) < 1e-8) {
+    for (let divisor = 1; divisor * divisor <= count; divisor++) {
+      if (count % divisor) continue;
+      for (const stride of [divisor, count / divisor]) {
+        const spacing = grid.minor * stride;
+        if (spacing >= minimum - 1e-12 && spacing < minor) minor = spacing;
+      }
+    }
   }
-  return false;
+  return { minor, major, hideMinor: minor === major, snap: minor };
 }

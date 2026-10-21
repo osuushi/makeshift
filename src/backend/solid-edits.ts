@@ -113,10 +113,14 @@ export class SolidEdits {
       bodies,
     });
     return result.participants.length
-      ? continueBodyMetadata(document, {
-          ...document,
-          bodies: continuingBodies(bodies, materialize(bodies, result)),
-        })
+      ? continueBodyMetadata(
+          document,
+          {
+            ...document,
+            bodies: continuingBodies(bodies, materialize(bodies, result)),
+          },
+          { kind, selection },
+        )
       : document;
   }
   private async move(

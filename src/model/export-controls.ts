@@ -9,6 +9,7 @@ import { stepExportChoice } from "./step-export-choice.js";
 
 type FileExportFormat = ExportFormat | "step";
 type ExportJob = {
+  name: string;
   worker?: Worker;
   native?: NativeExportBridge;
   cancelled?: boolean;
@@ -18,7 +19,10 @@ type ExportJob = {
 
 class ExportSession {
   private job: ExportJob | null = null;
-  constructor(private editor: SketchEditor) {}
+  constructor(
+    private editor: SketchEditor,
+    private documentName: () => string | Promise<string>,
+  ) {}
   get visibleBodies() {
     const editor = this.editor;
     return (editor.store.data.bodies ?? []).filter(
@@ -54,11 +58,13 @@ class ExportSession {
     const editor = this.editor;
     const bodyIds = this.visibleBodies.map((body) => body.id);
     if (editor.blocked || editor.interactions.current || this.job || !bodyIds.length) return;
-    const current: ExportJob = {};
+    const current: ExportJob = { name: "Untitled" };
     this.job = current;
     editor.notice = "Preparing export…";
     editor.refresh();
     try {
+      current.name = (await this.documentName()).replace(/\.(makeshift|freac)$/i, "");
+      if (this.job !== current || current.cancelled) return;
       if (extension === "step") {
         const snapshot = editor.store.data;
         const decorated = snapshot.decorators?.some((instance) =>
@@ -127,7 +133,7 @@ class ExportSession {
         );
         return;
       }
-      if (event.data.bytes) download(event.data.bytes, extension);
+      if (event.data.bytes) download(event.data.bytes, extension, current.name);
       void this.finish(current, event.data.error);
     };
     worker.onerror = () => {
@@ -151,7 +157,7 @@ class ExportSession {
       const step = await this.editor.store.exportStep(items);
       if (this.job !== current || current.cancelled) return;
       current.step = false;
-      download(new TextEncoder().encode(step), "step");
+      download(new TextEncoder().encode(step), "step", current.name);
       void this.finish(current);
     } catch (error) {
       current.step = false;
@@ -173,8 +179,11 @@ class ExportSession {
   }
 }
 
-export function exportControls(editor: SketchEditor): () => void {
-  const session = new ExportSession(editor);
+export function exportControls(
+  editor: SketchEditor,
+  documentName: () => string | Promise<string>,
+): () => void {
+  const session = new ExportSession(editor, documentName);
   const disposers = (["stl", "3mf", "step"] as const).map((format) =>
     toolCatalog(editor).register({
       id: `export-${format}`,
@@ -214,13 +223,13 @@ export function exportControls(editor: SketchEditor): () => void {
   };
 }
 
-function download(bytes: Uint8Array<ArrayBuffer>, extension: FileExportFormat): void {
+function download(bytes: Uint8Array<ArrayBuffer>, extension: FileExportFormat, name: string): void {
   const type =
     extension === "step" ? "model/step" : extension === "3mf" ? "model/3mf" : "model/stl";
   const url = URL.createObjectURL(new Blob([bytes], { type }));
   const link = document.createElement("a");
   link.href = url;
-  link.download = `Untitled.${extension}`;
+  link.download = `${name}.${extension}`;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

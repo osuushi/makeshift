@@ -91,6 +91,22 @@ class CubeInput {
       (event) => {
         if ((event.key !== "Enter" && event.key !== " ") || !(event.target instanceof Node)) return;
         const entry = this.view.entries.find(({ group }) => group.contains(event.target as Node));
+        if (
+          (event.metaKey || event.ctrlKey) &&
+          !event.altKey &&
+          !event.shiftKey &&
+          event.key === "Enter"
+        ) {
+          const face = this.pending?.face ?? entry?.face;
+          if (face?.kind !== "face") return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          this.cancelPending();
+          const plane = face.normal.x ? "YZ" : face.normal.y ? "XZ" : "XY";
+          this.world.sketchEntry?.(plane);
+          return;
+        }
+        if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
         if (!entry) return;
         event.preventDefault();
         event.stopImmediatePropagation();

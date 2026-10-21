@@ -21,7 +21,7 @@ export function fileControls(editor: SketchEditor, container: HTMLElement): () =
     if (file) await documents.open(file);
     input.value = "";
   };
-  const disposeExport = exportControls(editor);
+  const disposeExport = exportControls(editor, () => documents.name);
   const reason = () => idleReason(editor);
   const catalog = toolCatalog(editor);
   const disposeShortcuts = fileShortcuts(editor, ["new", "open", "save", "save-as"]);
@@ -58,7 +58,18 @@ export function fileControls(editor: SketchEditor, container: HTMLElement): () =
       shortcut: "⌘O",
       category: "Document & Edit",
       reason,
-      run: () => input.click(),
+      run: () => documents.browse(() => input.click()),
+    }),
+    catalog.register({
+      id: "download-document",
+      finishEdit: true,
+      label: "Download drawing…",
+      showInTools: false,
+      category: "Document & Edit",
+      reason,
+      run: async () => {
+        await documents.save(false, true);
+      },
     }),
     catalog.register({
       id: "new",

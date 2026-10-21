@@ -133,6 +133,11 @@ unimplemented; beforeunload cannot protect work from mobile tab eviction.
 
 ## Mesh export
 
+STL, 3MF and STEP downloads use the current document name, replacing its
+`.makeshift` or legacy `.freac` suffix with the export extension. Desktop export
+save dialogs default to the drawing directory, or Documents for an unsaved drawing.
+Browser download destinations remain controlled by the browser.
+
 STL and 3MF export visible accepted solid bodies at their current world positions.
 Both individual body visibility and the global body visibility toggle apply.
 Sketches and temporary operation previews are excluded;

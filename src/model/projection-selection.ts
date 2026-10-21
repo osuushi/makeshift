@@ -33,7 +33,7 @@ export function projectionTargets(
   });
 }
 export function projectionSelection(e: SketchEditor): ProjectionSource[] {
-  if (e.world.active && e.sketch)
+  if (e.world.active && e.sketch && e.selectedCurves.size)
     return [...e.selectedCurves].map((curve) => ({
       kind: "curve",
       sketch: e.sketch?.id ?? "",

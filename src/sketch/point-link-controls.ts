@@ -9,20 +9,17 @@ import { pointSelected } from "./point-selection.js";
 import { sketchIcon } from "./sketch-icons.js";
 
 function selectedPointReferences(editor: SketchEditor): PointReference[] {
-  return editor.selected
-    .pointHits(editor.sketch)
-    .filter((hit) => editor.pointMenu?.hits.some((p) => pointKey(p) === pointKey(hit)))
-    .flatMap<PointReference>((hit) => {
-      if (!pointSelected(editor, pointKey(hit) ?? "")) return [];
-      if (
-        hit.kind === "circleCenter" &&
-        editor.sketch?.curves.some((c) => c.id === hit.curve && c.kind !== "segment")
-      )
-        return [{ curve: hit.curve, end: "center" as const }];
-      if (hit.kind !== "endpoint") return [];
-      const curve = editor.sketch?.curves.find((c) => c.id === hit.endpoint.curve);
-      return curve && curve.kind !== "circle" ? [hit.endpoint] : [];
-    });
+  return editor.selected.pointHits(editor.sketch).flatMap<PointReference>((hit) => {
+    if (!pointSelected(editor, pointKey(hit) ?? "")) return [];
+    if (
+      hit.kind === "circleCenter" &&
+      editor.sketch?.curves.some((c) => c.id === hit.curve && c.kind !== "segment")
+    )
+      return [{ curve: hit.curve, end: "center" as const }];
+    if (hit.kind !== "endpoint") return [];
+    const curve = editor.sketch?.curves.find((c) => c.id === hit.endpoint.curve);
+    return curve && curve.kind !== "circle" ? [hit.endpoint] : [];
+  });
 }
 export class PointLinkControls {
   private disposers: (() => void)[] = [];
@@ -92,7 +89,7 @@ export class PointLinkControls {
     this.fuse.hidden = separated || compact;
     this.unfuse.replaceChildren(compact ? sketchIcon("unfuse") : document.createTextNode("Unfuse"));
     this.unfuse.title = "Unfuse selected points";
-    this.fuse.disabled = this.editor.blocked || points.length < 2;
+    this.fuse.disabled = this.editor.blocked;
     this.unfuse.hidden = !sketch || !points.some((p) => pointLinked(sketch, p));
     this.unfuse.disabled = this.editor.blocked;
   }

@@ -1,8 +1,10 @@
+import { overlapPreviews } from "../model/overlap-preview.js";
 import { bowGuides, selectedBowCurves } from "./arc-edit.js";
 import { arcAt, arcCircle } from "./arc-geometry.js";
 import { bowDirections } from "./bow-direction.js";
 import { circlePoint, displayPoints } from "./curve-geometry.js";
 import type { SketchEditor } from "./editor.js";
+import { sketchOverlapChoices } from "./overlap-targets.js";
 import type { Point } from "./planes.js";
 import { pointLinked } from "./point-links.js";
 import { midpoint } from "./point-math.js";
@@ -161,10 +163,20 @@ export class SelectionOverlay {
     if (!editor.overlaps) return;
     this.chooser.style.left = `${editor.overlaps.screen.x - this.rect.left + 14}px`;
     this.chooser.style.top = `${editor.overlaps.screen.y - this.rect.top + 14}px`;
+    const choices = sketchOverlapChoices(editor, editor.overlaps.hits);
+    const previews = overlapPreviews(editor, choices);
     for (const [index, hit] of editor.overlaps.hits.entries()) {
       const button = document.createElement("button");
-      button.textContent = `${hit.kind === "group" ? "Rectangle" : hit.kind === "circleBody" ? "Circle" : "Edge"} ${index + 1}`;
+      button.setAttribute("aria-label", choices[index].label);
+      button.append(previews[index]);
+      const label = document.createElement("span");
+      label.textContent = choices[index].label;
+      button.append(label);
       button.addEventListener("pointerenter", () => {
+        editor.hover = hit;
+        editor.refresh();
+      });
+      button.addEventListener("focus", () => {
         editor.hover = hit;
         editor.refresh();
       });
@@ -175,6 +187,9 @@ export class SelectionOverlay {
       });
       this.chooser.append(button);
     }
+    const bounds = this.chooser.getBoundingClientRect();
+    this.chooser.style.left = `${Math.max(8, Math.min(editor.overlaps.screen.x - this.rect.left + 14, this.rect.width - bounds.width - 8))}px`;
+    this.chooser.style.top = `${Math.max(8, Math.min(editor.overlaps.screen.y - this.rect.top + 14, this.rect.height - bounds.height - 8))}px`;
   }
   private update = (): void => {
     this.rect = this.editor.world.canvas.getBoundingClientRect();

@@ -1,6 +1,9 @@
+import { displayPoints } from "../sketch/curve-geometry.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { planeCorners } from "../sketch/plane-bounds.js";
 import type { Vector } from "../sketch/planes.js";
+import { worldPoint } from "../sketch/planes.js";
+import { hitIds } from "../sketch/sketch-hit.js";
 import { featureEdges } from "./feature-edges.js";
 import type { OverlapTarget } from "./overlap-candidates.js";
 import { overlapRegionGeometry } from "./overlap-regions.js";
@@ -17,6 +20,18 @@ const points = (values: number[]): Vector[] => {
 };
 export function overlapGeometry(editor: SketchEditor, target?: OverlapTarget): PreviewGeometry {
   const result: PreviewGeometry = { surfaces: [], lines: [] };
+  if (target?.kind === "sketch-hit") {
+    const sketch = editor.display.sketches.find((s) => s.id === target.sketch);
+    if (sketch)
+      result.lines = sketch.curves
+        .filter((curve) => hitIds(target.hit).includes(curve.id))
+        .map((curve) =>
+          displayPoints(curve, editor.world.height / editor.world.canvas.clientHeight).map(
+            (point) => worldPoint(sketch.plane, point),
+          ),
+        );
+    return result;
+  }
   if (target?.kind === "profile" || target?.kind === "profiles")
     return overlapRegionGeometry(editor, target);
   if (target?.kind === "sketch") {

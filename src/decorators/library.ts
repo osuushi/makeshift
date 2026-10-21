@@ -2,6 +2,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { appendBundleControls } from "./bundle-controls.js";
 import type { DecoratorDefinition } from "./definition.js";
+import { selectDecoratorInputs } from "./selection-action.js";
 
 function bundleInput(
   editor: SketchEditor,
@@ -42,7 +43,6 @@ function libraryEntry(
   root: HTMLElement,
   editor: SketchEditor,
   definition: DecoratorDefinition,
-  faces: import("./types.js").FaceReference[],
   button: (label: string, action: () => void) => HTMLButtonElement,
 ): void {
   const title = document.createElement("p");
@@ -62,41 +62,30 @@ function libraryEntry(
     });
   }).disabled = editor.store.busy;
   const apply = button(`Apply ${definition.name}`, () => {
-    void editor.store.request({
-      kind: "decorator",
-      edit: { action: "apply", definition: definition.id, version: definition.version, faces },
-    });
+    void selectDecoratorInputs(
+      editor,
+      `Apply ${definition.name}`,
+      async (faces) =>
+        (
+          await editor.store.inspectDecorator({
+            definition: definition.id,
+            version: definition.version,
+            faces,
+          })
+        ).reason,
+      (faces) =>
+        editor.store.request({
+          kind: "decorator",
+          edit: { action: "apply", definition: definition.id, version: definition.version, faces },
+        }),
+    );
   });
-  apply.disabled =
-    editor.store.busy ||
-    !enabled ||
-    !faces.length ||
-    faces.length !== editor.modeling.targets.length;
+  apply.disabled = editor.store.busy || !enabled || !!editor.world.active;
   apply.title = !enabled
     ? "Enable this bundled code first"
-    : !faces.length
-      ? "Select faces to decorate"
-      : "";
-  if (!apply.disabled) {
-    apply.disabled = true;
-    apply.title = "Checking selected geometry…";
-    const note = document.createElement("p");
-    note.textContent = apply.title;
-    root.append(note);
-    const snapshot = editor.store.data;
-    void editor.store
-      .inspectDecorator({ definition: definition.id, version: definition.version, faces })
-      .then((result) => {
-        if (!apply.isConnected || editor.store.data !== snapshot || editor.store.busy) return;
-        apply.disabled = !!result.reason;
-        apply.title = result.reason ?? "";
-        note.textContent = result.reason ?? "";
-        note.hidden = !result.reason;
-      })
-      .catch((error) => {
-        if (apply.isConnected) note.textContent = String(error);
-      });
-  }
+    : editor.world.active
+      ? "Return to Modeling first"
+      : "Select faces to decorate";
 }
 
 export function decoratorLibrary(editor: SketchEditor, parent: HTMLElement): () => void {
@@ -145,7 +134,7 @@ export function decoratorLibrary(editor: SketchEditor, parent: HTMLElement): () 
       update();
     });
     button("Import decorator bundle", () => input.click()).disabled = editor.store.busy;
-    for (const definition of definitions) libraryEntry(root, editor, definition, faces, button);
+    for (const definition of definitions) libraryEntry(root, editor, definition, button);
   };
   const unregister = toolCatalog(editor).register({
     id: "decorator-library",
