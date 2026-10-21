@@ -283,7 +283,9 @@ repair policy when their topology merges incompatible regions.
 
 Consume immediate operation correspondence when accepting the geometry edit;
 do not add a persistent operation-history graph. Undo restores geometry and
-decorator assignments together. Body deletion removes its decorations.
+decorator assignments together. Body deletion removes its decorations. Explicit
+face deletion also removes a decoration when all its assigned faces were selected
+for deletion and none survive; other lost supports retain the repair diagnostic.
 
 Invalid decorators show red warning stripes on surviving affected faces, including
 when deselected; selection lightens the red while retaining the pattern. Geometry
