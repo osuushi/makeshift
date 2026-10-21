@@ -21,7 +21,7 @@ export function fileControls(editor: SketchEditor, container: HTMLElement): () =
     if (file) await documents.open(file);
     input.value = "";
   };
-  const disposeExport = exportControls(editor);
+  const disposeExport = exportControls(editor, () => documents.name);
   const reason = () => idleReason(editor);
   const catalog = toolCatalog(editor);
   const disposeShortcuts = fileShortcuts(editor, ["new", "open", "save", "save-as"]);
