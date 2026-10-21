@@ -223,7 +223,7 @@ Surface detail cards explain export-time generation. Animation is optional futur
 polish; no rendering or geometry calculation is needed to navigate.
 
 Tap anywhere on a card, or press Browse and continuously drag through the centered
-green targets. Entering a target navigates or invokes immediately, without dwell.
+blue targets. Entering a target navigates or invokes immediately, without dwell.
 Positions never sort by availability, selection, or recency. Missing/unavailable
 commands retain their slots and cannot execute. Targets underneath the pointer on
 a new screen require leaving their radius plus an eight-pixel margin and reentering;
@@ -242,9 +242,9 @@ share the borrowed-focus guard but only handle events for their own visible surf
 The first version uses static diagrams. Physical iPad/Pencil ergonomics, fast paths
 through neighboring targets, and the target diameter still need device review.
 
-Targets use a dim 72px white-centered green halo without a border or glyph.
-Mouse/Pencil hover and a moving selection gesture brighten nearby targets over a
-100px approach zone; stationary presses do not. Lighting changes opacity only,
+Targets use a faint 72px blue circle with a blue outline and no glyph.
+Mouse/Pencil hover and a moving selection gesture increase nearby target opacity over a
+100px approach zone; stationary presses do not. Proximity changes opacity only,
 so hit regions and learned paths stay fixed. Unavailable targets remain dim gray.
 Back uses a neutral gray surface; Cancel retains its red surface. Dragging into
 either section still cancels.

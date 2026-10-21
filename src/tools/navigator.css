@@ -130,30 +130,16 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    #ffffffed 0%,
-    #ffffffb3 12%,
-    #d6ffec80 25%,
-    #72efb866 43%,
-    #4ddb9c33 59%,
-    #4ddb9c00 73%
-  );
-  opacity: calc(0.24 + var(--target-proximity, 0) * 0.7);
-  filter: blur(1px);
+  box-sizing: border-box;
+  background: #398be959;
+  border: 2px solid #287bd8;
+  opacity: calc(0.14 + var(--target-proximity, 0) * 0.66);
   transition: opacity 90ms linear;
   pointer-events: none;
 }
-.navigator-target::after {
-  content: "";
-  position: absolute;
-  inset: 24%;
-  border-radius: 50%;
-  background: radial-gradient(circle, white, #ffffff00 70%);
-  mix-blend-mode: screen;
-}
 .navigator-card[aria-disabled="true"] .navigator-target {
-  filter: grayscale(1) blur(1px);
+  background: #82919c33;
+  border-color: #82919c;
   opacity: 0.16;
 }
 @media (prefers-reduced-motion: reduce) {

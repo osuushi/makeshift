@@ -50,7 +50,7 @@ export class ToolNavigator {
     const hint = document.createElement("p");
     hint.className = "navigator-hint";
     hint.textContent =
-      "Tap a card, or glide through the green circles. Drag to the bottom bar to cancel.";
+      "Tap a card, or glide through the blue circles. Drag to the bottom bar to cancel.";
     this.grid.className = "navigator-grid";
     this.footer.className = "navigator-footer";
     this.back.textContent = "‹ Back";
