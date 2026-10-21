@@ -45,7 +45,9 @@ export class OverlapInput {
         if (event.key === "Escape" && (this.pending || this.chooser.opened)) {
           if (this.pending) {
             this.suppress = this.pending.pointerId;
-            if (this.editor.interactions.current?.kind === "model-selection")
+            if (
+              ["model-selection", "pointer"].includes(this.editor.interactions.current?.kind ?? "")
+            )
               this.editor.interactions.requestCancel();
           }
           this.cancelPending();
@@ -118,7 +120,6 @@ export class OverlapInput {
       (e.interactions.current?.kind === "tag-membership"
         ? e.blocked
         : !!toolCatalog(e).reason({ reason: () => null })) ||
-      e.world.active ||
       e.interactions.current?.selectsLocally() ||
       e.world.planePicker ||
       e.world.cameraTransitioning

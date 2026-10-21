@@ -14,6 +14,10 @@ export function overlapPreviews(
   candidates: OverlapCandidate[],
 ): SVGSVGElement[] {
   const context = overlapGeometry(editor);
+  if (editor.world.active)
+    for (const sketch of editor.display.sketches)
+      if (editor.visibility.visible(sketch.id))
+        context.lines.push(...sketchPreviewLines(editor, sketch));
   const targets = candidates.map((c) => {
     const geometry = overlapGeometry(editor, c.target);
     if (c.target.kind === "plane") {
