@@ -1,8 +1,6 @@
 #include "screw-sweep.h"
 #include "timing.h"
-#ifdef MAKESHIFT_KERNEL_GPU_SEARCH
 #include "sweep-candidates.h"
-#endif
 #include "sweep-boundary-distance.h"
 #include "extrude-twist-curves.h"
 #include <BRepAdaptor_Curve.hxx>
@@ -147,10 +145,8 @@ bool followsSections(const TopoDS_Shape& shape, const Sections& sections, int co
     if (!shells.More()) return false;
     const auto boundary = shells.Current();
     SweepBoundaryDistance distance(boundary);
-#ifdef MAKESHIFT_KERNEL_GPU_SEARCH
     const bool batch = sweepCandidatesEnabled();
     std::vector<gp_Pnt> points;
-#endif
     // Independent samples between construction stations check the requested
     // rotating parallel contours, not merely the loft's interpolated end caps.
     for (int i = 0; i < count; ++i) {
@@ -160,16 +156,12 @@ bool followsSections(const TopoDS_Shape& shape, const Sections& sections, int co
             for (int j = 0; j <= 8; ++j) {
                 const double u = curve.FirstParameter() +
                     (curve.LastParameter() - curve.FirstParameter()) * j / 8;
-#ifdef MAKESHIFT_KERNEL_GPU_SEARCH
                 if (batch) { points.push_back(curve.Value(u)); continue; }
-#endif
                 if (!distance.within(curve.Value(u), sectionTolerance)) return false;
             }
         }
     }
-#ifdef MAKESHIFT_KERNEL_GPU_SEARCH
     if (batch) return sweepCandidatesWithin(boundary, points, sectionTolerance);
-#endif
     return true;
 }
 TopoDS_Shape sweepBoundary(const Sections& sections) {

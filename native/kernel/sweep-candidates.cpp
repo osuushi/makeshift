@@ -9,9 +9,10 @@
 #include <Precision.hxx>
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <string_view>
 
-#ifdef __EMSCRIPTEN__
+#if defined(__EMSCRIPTEN__) && defined(MAKESHIFT_KERNEL_GPU_SEARCH)
 extern "C" int makeshift_search_candidates(const float*, int, const float*, int, int*);
 #endif
 namespace {
@@ -68,9 +69,9 @@ bool witness(const Face& face, const SweepSample& seed, const gp_Pnt& point, dou
 std::vector<int> candidates(const std::vector<SweepSample>& samples, const std::vector<gp_Pnt>& points) {
     std::vector<int> result(points.size(), -1);
     const char* configured = std::getenv("MAKESHIFT_SWEEP_CANDIDATES");
-    const std::string_view mode(configured ? configured : "off");
-    if (mode == "cpu") return sweepCpuCandidates(samples, points);
-#ifdef __EMSCRIPTEN__
+    const std::string_view mode(configured ? configured : "cpu");
+    if (mode == "invalid") return result;
+#if defined(__EMSCRIPTEN__) && defined(MAKESHIFT_KERNEL_GPU_SEARCH)
     if (mode == "gpu" && !samples.empty() && !points.empty()) {
         // Translation reduces float cancellation; float coordinates never validate geometry.
         const auto origin = points.front();
@@ -82,16 +83,16 @@ std::vector<int> candidates(const std::vector<SweepSample>& samples, const std::
         for (const auto& sample : samples) append(grid, sample.point);
         for (const auto& point : points) append(queries, point);
         if (!makeshift_search_candidates(grid.data(), samples.size(), queries.data(), points.size(), result.data()))
-            std::fill(result.begin(), result.end(), -1);
+            return sweepCpuCandidates(samples, points);
+        return result;
     }
 #endif
-    return result;
+    return sweepCpuCandidates(samples, points);
 }
 }
 bool sweepCandidatesEnabled() {
     const char* mode = std::getenv("MAKESHIFT_SWEEP_CANDIDATES");
-    return mode && (std::string_view(mode) == "cpu" || std::string_view(mode) == "gpu"
-        || std::string_view(mode) == "invalid");
+    return !mode || std::string_view(mode) != "off";
 }
 bool sweepCandidatesWithin(const TopoDS_Shape& boundary, const std::vector<gp_Pnt>& points, double tolerance) {
     KernelTiming timing("sweep-candidates");

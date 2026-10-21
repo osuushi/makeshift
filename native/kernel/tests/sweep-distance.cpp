@@ -1,7 +1,5 @@
 #include "sweep-boundary-distance.h"
-#ifdef MAKESHIFT_KERNEL_GPU_SEARCH
 #include "sweep-candidates.h"
-#endif
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakePolygon.hxx>
 #include <BRepBuilderAPI_NurbsConvert.hxx>
@@ -13,6 +11,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
+#include <string_view>
 
 namespace {
 void expect(bool condition, const char* message) {
@@ -24,16 +23,16 @@ void compare(SweepBoundaryDistance& query, const TopoDS_Shape& boundary,
     expect(original.IsDone(), "Reference distance failed");
     expect((original.Value() <= tolerance) == expected, "Incorrect reference expectation");
     expect(query.within(point, tolerance) == expected, "Cached boundary check differs");
-#ifdef MAKESHIFT_KERNEL_GPU_SEARCH
-    for (const char* mode : {"cpu", "invalid", "gpu"}) {
+    for (const char* mode : {"", "cpu", "invalid", "gpu", "off"}) {
 #ifdef _WIN32
         _putenv_s("MAKESHIFT_SWEEP_CANDIDATES", mode);
 #else
-        setenv("MAKESHIFT_SWEEP_CANDIDATES", mode, 1);
+        if (*mode) setenv("MAKESHIFT_SWEEP_CANDIDATES", mode, 1);
+        else unsetenv("MAKESHIFT_SWEEP_CANDIDATES");
 #endif
+        expect(sweepCandidatesEnabled() == (std::string_view(mode) != "off"), "Incorrect default mode");
         expect(sweepCandidatesWithin(boundary, {point}, tolerance) == expected, "Batched boundary check differs");
     }
-#endif
 }
 void boxBoundary() {
     const auto box = BRepPrimAPI_MakeBox(10, 10, 10).Shape();

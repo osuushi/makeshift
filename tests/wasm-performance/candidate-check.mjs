@@ -22,6 +22,8 @@ for (const [index, report] of reports.entries()) {
     const original = baseline.runtimes.find((item) => item.name === runtime.name);
     assert.ok(original);
     assert.equal(runtime.version, original.version);
+    if (runtime.name.startsWith("native-"))
+      assert.equal(report.native.sha256, baseline.native.sha256, "Use the same native binary");
     for (const scenario of runtime.cases) {
       const before = original.cases.find((item) => item.name === scenario.name);
       assert.ok(before);
@@ -38,7 +40,7 @@ for (const [index, report] of reports.entries()) {
         );
       }
     }
-    const gpu = runtime.initialization.candidates;
+    const gpu = runtime.initialization?.candidates ?? {};
     if (gpu.mode === "gpu" || gpu.mode === "invalid-gpu") {
       assert.equal(gpu.ready, true, "Hardware GPU must actually initialize");
       const stats = runtime.cases.flatMap((item) =>

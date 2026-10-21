@@ -1,8 +1,15 @@
-# Batched Twist boundary candidates (opt-in experiment)
+# Batched Twist boundary candidates
 
-`MAKESHIFT_KERNEL_GPU_SEARCH=ON` enables a candidate path in Twist's intermediate
-section accuracy check. Normal builds leave it out. The benchmark worker chooses
-`off`, `cpu`, or `gpu` through `MAKESHIFT_BENCHMARK_CANDIDATES`.
+Native and WASM builds use CPU candidate search and exact refinement by default
+for Twist's intermediate section accuracy check. No runtime setting is needed.
+`MAKESHIFT_KERNEL_GPU_SEARCH=ON` additionally compiles the experimental WebGPU
+bridge; GPU execution still requires an explicit `gpu` runtime mode and a host
+bridge. Missing GPU support falls back to CPU search.
+
+For diagnosis, `MAKESHIFT_SWEEP_CANDIDATES=off` selects the original sequential
+distance checks; `cpu` explicitly selects the default, and `invalid` exercises
+missing-seed fallback. The benchmark worker passes `MAKESHIFT_BENCHMARK_CANDIDATES`
+through to this setting when supplied; leaving it unset exercises the build default.
 
 The CPU samples boundary supports at eight subdivisions per spline knot span (or
 across an analytic surface's finite parameter range). Samples preserve their face
@@ -28,7 +35,7 @@ implementation or a replacement for OCCT topology.
 The experimental WASM runtime calls a benchmark-only bridge. A dedicated child
 worker owns WebGPU; the calculator worker waits on shared memory with a bounded
 timeout. The browser main thread does not wait. Only the benchmark server enables
-COOP/COEP. This is a real calculator-operation experiment, not an enabled editor
+COOP/COEP. The GPU path is a calculator-operation experiment, not an enabled editor
 feature, deployment change, or iPad claim. Closing its page owns both workers.
 
 ## Reproduce
@@ -63,7 +70,7 @@ node tests/wasm-performance/candidate-check.mjs .cache/wasm-performance/candidat
 hashes, and completed hardware GPU batches when GPU execution is requested.
 `invalid-gpu` runs the shader then deliberately corrupts every returned index;
 `unavailable-gpu` leaves the bridge unavailable. Both must reproduce the baseline.
-The native `sweep-distance-test` compiled with the option checks CPU candidates,
+The native `sweep-distance-test` in ordinary builds checks default/explicit CPU candidates,
 missing candidates and native GPU-unavailable fallback on edges/corners, holes,
 large translated/rotated faces, rational splines/seams and tolerance boundaries.
 
@@ -71,7 +78,8 @@ Operation timings include query construction, support sampling, packing, worker
 transport, GPU upload/dispatch/readback, CPU refinement, fallbacks, solid validation,
 tessellation and JSON transport. Worker initialization, including adapter/pipeline setup, is recorded
 separately from operation timing. Rejected first loft attempts still gather a whole batch, which can cost
-more than the original early exit. Limits or GPU errors choose the fallback.
+more than the original early exit. GPU bridge errors choose CPU search; missing or
+invalid candidate indices use the original distance check.
 
 Restore the shared experimental build cache before ordinary exception builds:
 
@@ -117,14 +125,13 @@ The broader 68-case comparison also passed complete-result equality and unchange
 expected rejections. Corrupted and unavailable GPU candidates reproduce all seven
 Twist results. Native witness tests, hardware shader checks, worker cancellation
 and recovery, TypeScript checks and repository lint passed (eight existing lint
-warnings). After disabling the experiment, all three WASM calculator artifacts
-match the saved baseline byte for byte; the native calculator is unchanged.
+warnings).
 
 These are warmed calculator request/reply times, not pointer-to-screen latency or
 a multi-device study. They do not reproduce the earlier large synthetic surface
-batch's GPU throughput advantage inside these whole operations. The feature stays
-an opt-in experiment; the CPU seeding path is the more promising near-term product
-optimization from this result.
+batch's GPU throughput advantage inside these whole operations. The GPU path stays
+an opt-in experiment; CPU seeding and exact refinement are now the default product
+path.
 
 To reproduce the alternating comparison and focused browser boundary checks:
 

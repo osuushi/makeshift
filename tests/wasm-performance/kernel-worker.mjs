@@ -17,11 +17,12 @@ self.onmessage = async ({ data }) => {
         preRun: [
           (runtime) => {
             runtime.ENV.MAKESHIFT_KERNEL_TIMING = "1";
-            runtime.ENV.MAKESHIFT_SWEEP_CANDIDATES = ["invalid-gpu", "unavailable-gpu"].includes(
-              data.assets.candidates,
-            )
-              ? "gpu"
-              : (data.assets.candidates ?? "off");
+            if (data.assets.candidates)
+              runtime.ENV.MAKESHIFT_SWEEP_CANDIDATES = ["invalid-gpu", "unavailable-gpu"].includes(
+                data.assets.candidates,
+              )
+                ? "gpu"
+                : data.assets.candidates;
           },
         ],
         printErr: (line) => phases.push(line),

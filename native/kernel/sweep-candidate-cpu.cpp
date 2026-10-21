@@ -4,7 +4,7 @@
 #include <limits>
 
 namespace {
-// Balanced spatial index is the CPU control for the same sample/refine algorithm.
+// Balanced spatial index supplies seeds for exact trimmed-face refinement.
 class SampleIndex {
     const std::vector<SweepSample>& samples;
     std::vector<int> order;

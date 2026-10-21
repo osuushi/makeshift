@@ -1,5 +1,5 @@
 export async function candidateBridge(mode) {
-  if (mode !== "gpu" && mode !== "invalid-gpu") return { info: { mode } };
+  if (mode !== "gpu" && mode !== "invalid-gpu") return { info: { mode: mode ?? "default" } };
   const worker = new Worker("/benchmark/candidate-worker.mjs", { type: "module" });
   const info = await new Promise((resolve) => {
     const timer = setTimeout(() => {
