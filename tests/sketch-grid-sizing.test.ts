@@ -19,6 +19,9 @@ test("visible grids meet the pixel minimum and major lines align with minor line
         const shown = visibleSketchGrid(grid, pixelsPerMm, minPixels);
         assert.ok(shown.minor * pixelsPerMm >= minPixels - 1e-10);
         assert.ok(shown.major >= grid.major - 1e-10);
+        assert.ok(
+          Math.abs(shown.major / grid.major - Math.round(shown.major / grid.major)) < 1e-10,
+        );
         const ratio = shown.major / shown.minor;
         assert.ok(Math.abs(ratio - Math.round(ratio)) < 1e-10);
         assert.equal(shown.snap, shown.minor);
@@ -28,7 +31,7 @@ test("visible grids meet the pixel minimum and major lines align with minor line
   }
 });
 
-test("zoom thresholds round major spacing onto the visible minor grid", () => {
+test("zoom thins minor lines without moving the configured major lattice", () => {
   assert.deepEqual(visibleSketchGrid(defaultSketchGrid, 20, 10), {
     minor: 0.5,
     major: 10,
@@ -36,10 +39,10 @@ test("zoom thresholds round major spacing onto the visible minor grid", () => {
     snap: 0.5,
   });
   assert.deepEqual(visibleSketchGrid(defaultSketchGrid, 8, 10), {
-    minor: 1.5,
-    major: 10.5,
+    minor: 2,
+    major: 10,
     hideMinor: false,
-    snap: 1.5,
+    snap: 2,
   });
   assert.deepEqual(visibleSketchGrid(defaultSketchGrid, 1, 10), {
     minor: 10,
@@ -48,9 +51,9 @@ test("zoom thresholds round major spacing onto the visible minor grid", () => {
     snap: 10,
   });
   assert.deepEqual(visibleSketchGrid({ ...defaultSketchGrid, minor: 3 }, 0.4, 4), {
-    minor: 12,
-    major: 12,
+    minor: 10,
+    major: 10,
     hideMinor: true,
-    snap: 12,
+    snap: 10,
   });
 });

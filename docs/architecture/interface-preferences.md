@@ -137,13 +137,14 @@ archives, survive renderer reload and geometry Undo/Redo, and do not add Undo st
 Changing them marks the document edited; initial default adoption does not.
 
 Settings exposes Min pixels per grid square (default 10 CSS pixels), stored on the
-device with grid defaults under `makeshift.sketch-grid`. The minor grid uses the
-smallest positive integer multiple of its spacing that reaches that screen size.
-The visible major spacing is the smallest positive integer multiple of the visible
-minor spacing at least as large as the configured major spacing. This keeps every
-major line aligned with the minor grid at every zoom, including for older documents
-with non-divisible configured spacings. Equal grids draw only the major grid.
-Snapping follows the visible minor spacing (also the major spacing when equal).
+device with grid defaults under `makeshift.sketch-grid`. Visible major lines remain
+on the configured major lattice, using an integer multiple of its spacing when
+zoom requires thinning. Visible minor spacing is the smallest multiple of the
+configured minor spacing that meets the pixel minimum and divides visible major
+spacing exactly. Incommensurate settings show only the major grid rather than
+moving major lines. Equal grids also draw only major lines. Snapping follows the
+visible minor spacing (or major when minor lines are hidden). With 0.5/10 mm settings,
+zoom can thin minor lines to 1, 2, 2.5, 5 or 10 mm; it never moves major lines to 10.5 mm.
 Canonical modeling
 grids retain their existing spacing and palette behavior. The searchable Toggle
 grid snapping command remains available, including during a pen gesture.

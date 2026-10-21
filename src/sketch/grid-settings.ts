@@ -30,9 +30,21 @@ export function validateSketchGrid(value: unknown): asserts value is SketchGrid 
 }
 
 export function visibleSketchGrid(grid: SketchGrid, pixelsPerMm: number, minPixels: number) {
-  const minor = grid.minor * Math.max(1, Math.ceil(minPixels / (grid.minor * pixelsPerMm) - 1e-12));
-  // Derive major lines from the visible minor grid so every major line aligns.
-  const major = minor * Math.max(1, Math.ceil(grid.major / minor - 1e-12));
-  const hideMinor = minor === major;
-  return { minor, major, hideMinor, snap: minor };
+  const minimum = minPixels / pixelsPerMm;
+  const major = grid.major * Math.max(1, Math.ceil(minimum / grid.major - 1e-12));
+  const ratio = major / grid.minor;
+  const count = Math.round(ratio);
+  let minor = major;
+  // Thin minor lines only at subdivisions of the configured major lattice.
+  // Incommensurate settings retain the major grid instead of moving its lines.
+  if (Math.abs(ratio - count) < 1e-8) {
+    for (let divisor = 1; divisor * divisor <= count; divisor++) {
+      if (count % divisor) continue;
+      for (const stride of [divisor, count / divisor]) {
+        const spacing = grid.minor * stride;
+        if (spacing >= minimum - 1e-12 && spacing < minor) minor = spacing;
+      }
+    }
+  }
+  return { minor, major, hideMinor: minor === major, snap: minor };
 }

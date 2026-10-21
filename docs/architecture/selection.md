@@ -109,9 +109,10 @@ founder feedback update these contracts before further tools depend on them.
   view/document changes and window blur dismiss the chooser. The hold's trailing
   click is consumed. This is transient UI state and creates no history entry.
   In a sketch workspace, choices show active sketch curves/groups and covered solid
-  faces/edges. Choosing sketch geometry retains ordinary typed selection; choosing
-  solid topology clears sketch selection while retaining the active plane. Project
-  can then copy the selected face boundary or edge into that sketch. Ordinary
+  faces/edges. Choosing sketch geometry retains ordinary typed selection. Choosing a solid face
+  or edge directly pulls its boundary into the active sketch as independent curves
+  in one geometry Undo step, retaining the plane and selecting the resulting curves.
+  It does not select solid topology or require a separate Project/Accept action. Ordinary
   overlapping sketch clicks also show geometry thumbnails with surrounding context,
   replacing numbered curve names. Sketch point disambiguation retains its existing interaction.
 - Entering a sketch animates the camera into its aligned plane view while preserving

@@ -26,13 +26,9 @@ await withUiRuntimes(async (page) => {
   await panel.waitFor({ state: "visible" });
   assert.ok(await panel.locator('[data-kind="sketch-hit"] svg path').count());
   await releaseChoice(page, "Face");
-  let state = await inspect(page);
+  const state = await inspect(page);
   assert.ok(state.activePlane);
-  assert.equal(state.modelingSelection[0]?.kind, "face");
-  assert.deepEqual(state.document, before);
-  await chooseTool(page, "Project", "project");
-  await page.getByRole("button", { name: "Accept projection", exact: true }).click();
-  state = await inspect(page);
+  assert.deepEqual(state.modelingSelection, []);
   assert.equal(state.document.sketches[1].curves.length, 2);
   assert.ok(
     state.document.sketches[1].curves.some(
@@ -41,17 +37,14 @@ await withUiRuntimes(async (page) => {
   );
   const accepted = state.document;
   await chooseTool(page, "undo", "undo");
-  assert.deepEqual(
-    (await inspect(page)).document,
-    accepted,
-    "Completion view Undo retains geometry",
-  );
-  await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before);
+  await chooseTool(page, "redo", "redo");
+  assert.deepEqual((await inspect(page)).document, accepted);
+  await chooseTool(page, "undo", "undo");
 
   await circleChoices(page);
   console.log(
-    "Sketch hold face selection, boundary projection/Undo, visual circle choices and cancellation passed",
+    "Sketch hold pulls face edges directly, single-step Undo/Redo, visual circle choices and cancellation passed",
   );
 });
 

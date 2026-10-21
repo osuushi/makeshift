@@ -9,6 +9,7 @@ import { type OverlapCandidate, overlapCandidates } from "./overlap-candidates.j
 import { OverlapHighlight } from "./overlap-highlight.js";
 import { fitOverlapChoices } from "./overlap-layout.js";
 import { overlapPreviews } from "./overlap-preview.js";
+import { pullSketchEdges } from "./pull-sketch-edges.js";
 
 export class OverlapChooser {
   readonly element = document.createElement("div");
@@ -129,6 +130,8 @@ export class OverlapChooser {
       selectHit(e, target.hit, event);
       e.creationArmed = false;
       e.refresh();
+    } else if (e.world.active && (target.kind === "face" || target.kind === "edge")) {
+      void pullSketchEdges(e, target);
     } else if (target.kind === "plane") {
       if (target.world) this.selectPlane(target.world);
       else {
