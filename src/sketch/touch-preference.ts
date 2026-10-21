@@ -1,14 +1,16 @@
 import type {} from "../ipad/protocol.js";
+import { initialTouchMode, type TouchMode } from "./touch-mode.js";
 
-export type TouchMode = "camera" | "pointer";
+export type { TouchMode } from "./touch-mode.js";
 
 const key = "makeshift.touch-control";
-let mode: TouchMode = "camera";
+let saved: string | null = null;
 try {
-  if (localStorage.getItem(key) === "pointer") mode = "pointer";
+  saved = localStorage.getItem(key);
 } catch {
   // Touch controls remain usable without browser storage.
 }
+let mode: TouchMode = initialTouchMode(navigator.platform, saved);
 
 export function hasTouchControls(): boolean {
   return Boolean(window.makeshiftRemote) || navigator.maxTouchPoints > 0;

@@ -30,7 +30,9 @@ native clipboard ownership. HTTPS uses the system clipboard. No extra paste dial
 Undo/Redo accepts Cmd/Ctrl-Y as well as Cmd/Ctrl-Shift-Z. New uses and displays
 Ctrl-N on iPad after device testing found Cmd-N unavailable; desktop retains Cmd-N.
 Touch browsers, including standalone web mode, use these controls automatically.
-The Camera/Pointer toggle defaults to Camera (fingers navigate, Pencil edits).
+The Camera/Pointer toggle defaults to Camera on iPad (fingers navigate, Pencil edits).
+iPhone/iPod default to Pointer for finger editing. An explicitly
+saved Camera or Pointer choice takes precedence over either device default.
 Pointer sends finger input through ordinary geometry tools for use without Pencil;
 the preference persists locally and does not change the document or Undo history.
 Sketch and modeling selection allow 16 CSS pixels of Pencil tip movement before

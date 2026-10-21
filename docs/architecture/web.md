@@ -7,11 +7,12 @@ The agent pane, terminal and LAN handoff controls are excluded from this build.
 SSH or other agent connectivity is not part of web mode.
 
 Touch-capable browsers default to the iPad/Pencil interaction: Pencil edits,
-one finger rotates, and two fingers pan/pinch/twist. The visible Camera/Pointer
+one finger rotates, and two fingers pan/pinch/twist. iPhone/iPod instead default
+to Pointer so fingers can create geometry without a stylus. The visible Camera/Pointer
 toggle switches fingers between navigation and ordinary geometry editing, making
-the editor usable without a stylus. The choice persists locally, outside document
-Undo. Mouse/trackpad settings remain available for attached desktop input devices;
-the unavailable Tablet handoff action is omitted.
+the editor usable without a stylus. An explicit choice overrides the device default
+and persists locally, outside document Undo. Mouse/trackpad settings remain available
+for attached desktop input devices; the unavailable Tablet handoff action is omitted.
 
 ## Ownership and calculation
 

@@ -21,6 +21,7 @@
     "test:ui": "npm run test:smoke",
     "test:current-tools": "node tests/current-tools-ui.mjs",
     "test:primitives": "node tests/primitive-handoff-ui.mjs",
+    "test:iphone-primitives": "node tests/iphone-primitives-ui.mjs",
     "test:pen": "node tests/pen-ui.mjs",
     "test:booleans": "node tests/boolean-collection-ui.mjs",
     "test:plane-cuts": "node tests/plane-cut-feedback-ui.mjs",
