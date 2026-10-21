@@ -129,7 +129,7 @@ export class FaceOffsetControls {
     this.distance = restored?.distance ?? 0;
     if (restored && !this.blend)
       this.quantity.setMode(restored.radius !== undefined ? "radius" : "offset");
-    this.widget.input.value = String(this.quantity.value(this.distance));
+    this.widget.input.value = this.quantity.text(this.distance);
     this.valid = true;
     this.previews.clear();
     this.lease.trackHistory(
@@ -140,7 +140,7 @@ export class FaceOffsetControls {
       }),
       async (state) => {
         this.quantity.setMode(state.mode);
-        this.widget.input.value = String(this.quantity.value(state.distance));
+        this.widget.input.value = this.quantity.text(state.distance);
         this.queue(state.distance);
         await this.previews.settle();
       },
