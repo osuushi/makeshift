@@ -101,7 +101,11 @@ at the starting guide, while geometry remains unchanged until release. Until a
 snap is acquired, a faded arrow follows the cursor; it is only feedback and does
 not permit free displacement. The enlarged arrowhead remains visible beyond the
 endpoint ring. Targets include saved guides, the origin, ordinary geometry points, and normal
-projections onto planar faces or visible construction/world planes. Unsaved drag
+projections onto planar faces, visible construction planes and all three canonical
+planes. Canonical destinations are available independently of the primary
+grid or global grid visibility. Each canonical destination has a small soft patch
+of its colored grid, aligned to that plane's world grid spacing. Sketch-only moves
+still restrict projections to those remaining in the active sketch plane. Unsaved drag
 destinations appear as small yellow circles without crosses. Projection destinations
 also have a faint dotted gray line to the starting guide; covered destinations are dimmed
 and remain available in the hold-to-choose panel.

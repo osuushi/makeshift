@@ -2,6 +2,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
 import { near } from "./geometry.js";
 import type { GuideMoveCandidate } from "./move-target.js";
+import { guidePlanePatches } from "./plane-patches.js";
 
 const ns = "http://www.w3.org/2000/svg";
 /** Transient destination markers never intercept the drag's captured pointer. */
@@ -17,7 +18,7 @@ export class GuideMoveDestinations {
     this.hide();
   }
   show(origin: Vector, candidates: GuideMoveCandidate[]): void {
-    this.root.replaceChildren();
+    this.root.replaceChildren(guidePlanePatches(this.editor, candidates));
     this.root.style.display = "block";
     this.suppress(false);
     const start = this.editor.world.project(origin);

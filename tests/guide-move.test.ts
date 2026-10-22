@@ -125,9 +125,16 @@ test("origin, sketch corners and normal plane projections are exact snap targets
   const editor = targetEditor(document);
   const origin: Vector = [3, 4, 9];
   const targets = guideMoveTargets(editor, document, origin);
+  assert.deepEqual(
+    targets.filter((p) => p.reference.kind === "plane" && p.plane).map((p) => p.label),
+    ["XY plane", "XZ plane", "YZ plane"],
+    "drag targets include secondary canonical planes even when only XY is selectable",
+  );
   assert.deepEqual(guideMoveProbe(editor, targets, { x: 501, y: 499 }).target?.point, [0, 0, 0]);
   assert.deepEqual(guideMoveProbe(editor, targets, { x: 621, y: 351 }).target?.point, [12, 15, 0]);
   assert.deepEqual(guideMoveProbe(editor, targets, { x: 531, y: 461 }).target?.point, [3, 4, 0]);
+  assert.equal(guideMoveProbe(editor, targets, { x: 530, y: 500 }).target?.label, "XZ plane");
+  assert.equal(guideMoveProbe(editor, targets, { x: 500, y: 460 }).target?.label, "YZ plane");
   assert.equal(
     guideMoveProbe(editor, targets, { x: 700, y: 700 }).target,
     null,

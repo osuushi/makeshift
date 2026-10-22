@@ -180,3 +180,16 @@
 .guide-move-destinations.suppressed {
   opacity: 0.25;
 }
+.guide-move-destinations .guide-plane-patch > g > circle {
+  fill: currentColor;
+  stroke: none;
+}
+.guide-move-destinations .guide-plane-patch line {
+  stroke: currentColor;
+  stroke-dasharray: none;
+  opacity: 0.55;
+}
+.guide-move-destinations .guide-plane-patch line.major {
+  stroke-width: 1.5;
+  opacity: 0.7;
+}

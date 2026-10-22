@@ -227,6 +227,17 @@ async function planeDestinationRoute(page, before, source, guide) {
   await page.mouse.move(surface.x, surface.y, { steps: 5 });
   assert.equal(await vector.getAttribute("data-end"), "");
   const destinations = page.locator(".guide-move-destinations");
+  assert.deepEqual(
+    await destinations
+      .locator(".guide-plane-patch")
+      .evaluateAll((nodes) => nodes.map((node) => node.dataset.plane)),
+    ["XY", "XZ", "YZ"],
+  );
+  assert.equal(
+    await destinations.locator('.guide-plane-patch stop[offset="1"][stop-opacity="0"]').count(),
+    3,
+  );
+  assert.ok((await destinations.locator('.guide-plane-patch[data-plane="XZ"] line').count()) > 0);
   const dot = destinations.locator('circle[data-point="[20,20,18]"]');
   assert.equal(await dot.count(), 1);
   assert.equal(await dot.getAttribute("r"), "4");
@@ -243,6 +254,7 @@ async function planeDestinationRoute(page, before, source, guide) {
   assert.deepEqual(JSON.parse(await vector.getAttribute("data-start")), [20, 20, 10]);
   await page.mouse.up();
   await modalCompleted(page);
+  assert.equal(await destinations.locator(".guide-plane-patch").count(), 0);
   const state = await inspect(page);
   assert.deepEqual(guidePosition(state.document, guide.anchor), [20, 20, 18]);
   assert.equal(state.document.bodies.find((body) => body.id === source.id).volume, source.volume);

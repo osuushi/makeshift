@@ -1,7 +1,5 @@
 import * as THREE from "three";
 import type { DisplayDocument } from "../model/display-document.js";
-import { viewDisplay } from "../preferences/view-display.js";
-import { canonicalPlaneSelectable } from "../sketch/canonical-plane-bounds.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { type PlaneFrame, type PlaneId, planes, type Vector } from "../sketch/planes.js";
 import type { GuideMoveTarget } from "./move-target.js";
@@ -39,10 +37,8 @@ export function guideMovePlanes(
     for (const face of body.faces)
       if (face.plane) add(face.plane, "Face plane", { kind: "face", body: body.id, face: face.id });
   }
-  if (viewDisplay().planes !== 0 || viewDisplay().grid !== 0)
-    for (const [id, frame] of Object.entries(planes))
-      if (canonicalPlaneSelectable(editor.world, id as PlaneId))
-        add(frame, `${id} plane`, { kind: "plane", frame, world: id as PlaneId });
+  for (const [id, frame] of Object.entries(planes))
+    add(frame, `${id} plane`, { kind: "plane", frame, world: id as PlaneId });
   for (const plane of document.constructionPlanes ?? [])
     if (editor.visibility.visible(plane.id))
       add(plane.frame, "Construction plane", {
