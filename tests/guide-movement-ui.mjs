@@ -8,6 +8,7 @@ import { guidePosition } from "../.cache/sketch-tests/src/guides/evaluate.js";
 import { documentArchive } from "../.cache/sketch-tests/src/model/document-archive.js";
 import { prism, square } from "../.cache/sketch-tests/tests/body-edge-fixtures.js";
 import { openDocument } from "./native-documents.mjs";
+import { worldClick } from "./ui-face-offset.mjs";
 import { inspect, modalCompleted } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -69,11 +70,6 @@ try {
   owner.close();
   await withUiRuntimes(async (page, name) => {
     await openDocument(page, path);
-    await page
-      .locator(".entity-viewer")
-      .getByRole("button", { name: "Select Body 1", exact: true })
-      .click();
-    await page.keyboard.press("m");
     const before = (await inspect(page)).document;
     const marker = (name) => page.locator(`.guide-marker[title^="${name}"]`);
     const a = await center(marker("Source anchor")),
@@ -81,7 +77,12 @@ try {
     await page.mouse.move(a.x, a.y);
     await page.mouse.down();
     await page.mouse.move(b.x + 2, b.y + 1, { steps: 8 });
-    assert.equal((await inspect(page)).interaction.kind, "transform-box-move");
+    assert.equal((await inspect(page)).interaction.kind, "guide-move");
+    assert.deepEqual((await inspect(page)).document, before);
+    const vector = page.locator(".guide-move-vector");
+    assert.deepEqual(JSON.parse(await vector.getAttribute("data-start")), [20, 20, 10]);
+    assert.deepEqual(JSON.parse(await vector.getAttribute("data-end")), [45, 0, 18]);
+    await page.screenshot({ path: `.cache/sketch-review/${name}-guide-vector.png` });
     await page.mouse.up();
     await modalCompleted(page);
     let state = await inspect(page);
@@ -97,6 +98,11 @@ try {
     await chooseTool(page, "undo", "undo");
     state = await inspect(page);
     assert.deepEqual(state.document, before);
+    await page
+      .locator(".entity-viewer")
+      .getByRole("button", { name: "Select Body 1", exact: true })
+      .click();
+    await page.keyboard.press("m");
     await snapPivot(page, b);
     assert.deepEqual((await inspect(page)).document, before);
     await page.mouse.move(a.x, a.y);
@@ -132,8 +138,10 @@ try {
     assert.ok(Math.hypot(...copyPoint.map((v, i) => v - [45, 0, 18][i])) < 1e-6);
     await chooseTool(page, "undo", "undo");
     assert.deepEqual((await inspect(page)).document, before);
+    await faceAndPlaneRoute(page, { a, b, before, source, guide });
+    await savedMarkerRoute(page, name, before);
     console.log(
-      `${name}: guide-to-guide 3D Move, exact depth alignment, pivot snap, Option-copy, Undo and Escape passed`,
+      `${name}: direct guide drag, selected-face Move, normal plane target, fixed vector, copy, delete, Undo, Shift and Escape passed`,
     );
   });
 } finally {
@@ -167,4 +175,70 @@ async function snapPivot(page, b) {
     return { x: root.x, y: root.y };
   });
   assert.ok(Math.hypot(pivotEnd.x - b.x, pivotEnd.y - b.y) < 0.1, JSON.stringify({ pivotEnd, b }));
+}
+
+async function faceAndPlaneRoute(page, { a, b, before, source, guide }) {
+  const vector = page.locator(".guide-move-vector");
+  // A guide supplies the displacement; an explicit Move face remains the source.
+  await page.keyboard.press("v");
+  await worldClick(page, [7, 8, 10]);
+  const selectedFace = (await inspect(page)).modelingSelection[0];
+  assert.equal(selectedFace.kind, "face");
+  await page.keyboard.press("m");
+  await page.mouse.move(a.x, a.y);
+  await page.mouse.down();
+  await page.mouse.move(b.x, b.y, { steps: 5 });
+  assert.equal((await inspect(page)).interaction.kind, "guide-move");
+  assert.deepEqual((await inspect(page)).modelingSelection, [selectedFace]);
+  await page.mouse.up();
+  await modalCompleted(page);
+  const movedFaceBody = (await inspect(page)).document.bodies.find((body) => body.id === source.id);
+  assert.ok(Math.abs(movedFaceBody.volume - 7200) < 1e-5, JSON.stringify(movedFaceBody.bounds));
+  assert.ok(Math.abs(movedFaceBody.bounds[2]) < 1e-5, "bottom stays fixed during top-face Move");
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, before);
+  await page.keyboard.press("v");
+  await page.mouse.click(650, 700);
+  assert.deepEqual((await inspect(page)).modelingSelection, []);
+  // Plane target means normal projection of the guide, not the pointer's surface hit.
+  const surface = { x: b.x + (7 * 850) / 80, y: b.y - (8 * 850) / 80 };
+  await page.mouse.move(a.x, a.y);
+  await page.mouse.down();
+  await page.mouse.move(surface.x, surface.y, { steps: 5 });
+  assert.equal(await vector.getAttribute("data-target"), "Face plane");
+  assert.deepEqual(JSON.parse(await vector.getAttribute("data-end")), [20, 20, 18]);
+  assert.deepEqual(JSON.parse(await vector.getAttribute("data-start")), [20, 20, 10]);
+  await page.mouse.up();
+  await modalCompleted(page);
+  const state = await inspect(page);
+  assert.deepEqual(guidePosition(state.document, guide.anchor), [20, 20, 18]);
+  assert.equal(state.document.bodies.find((body) => body.id === source.id).volume, source.volume);
+  await chooseTool(page, "undo", "undo");
+  await page.mouse.move(a.x, a.y);
+  await page.mouse.down();
+  await page.keyboard.down("Shift");
+  await page.mouse.move(b.x, b.y, { steps: 5 });
+  assert.equal(await vector.getAttribute("data-end"), "");
+  await page.mouse.up();
+  await page.keyboard.up("Shift");
+  await modalCompleted(page);
+  assert.deepEqual((await inspect(page)).document, before);
+}
+
+async function savedMarkerRoute(page, name, before) {
+  const marker = (name) => page.locator(`.guide-marker[title^="${name}"]`);
+  await marker("Source anchor").click();
+  assert.equal(await marker("Source anchor").getAttribute("aria-pressed"), "true");
+  assert.equal(await marker("Source anchor").locator("svg path").count(), 1);
+  assert.equal(
+    await marker("Source anchor").evaluate((el) => getComputedStyle(el).color),
+    "rgb(22, 118, 210)",
+  );
+  await page.screenshot({ path: `.cache/sketch-review/${name}-guide-selected.png` });
+  await marker("Source anchor").dblclick();
+  const state = await inspect(page);
+  assert.equal(state.document.guidePoints.length, 1);
+  assert.deepEqual(state.document.bodies, before.bodies);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, before);
 }

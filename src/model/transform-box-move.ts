@@ -4,7 +4,6 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import type { Vector } from "../sketch/planes.js";
 import { toolCatalog } from "../tools/catalog.js";
-import { anchorSnap } from "./anchor-snapping.js";
 import { BufferedPointer } from "./buffered-pointer.js";
 import { MovementShadows } from "./movement-shadows.js";
 import type { ScaleSource } from "./scale.js";
@@ -21,12 +20,9 @@ type Drag = {
   lease: InteractionLease;
   moved: boolean;
   valid: boolean;
-  pending: { delta: Vector; duplicate: boolean } | null;
+  pending: Vector | null;
   running: Promise<void> | null;
   delta: Vector;
-  guide: boolean;
-  duplicate: boolean;
-  copyIds: Map<string, string>;
 };
 
 /** Command-drag the selected box in the same plane used by its sphere anchor. */
@@ -118,14 +114,14 @@ export class TransformBoxMove {
     if (source && anchor) this.shadows.prepare(source, anchor, transformPlane(e, anchor));
     else this.shadows.hide();
   };
-  readonly start = async (event: PointerEvent, guideOrigin?: Vector): Promise<void> => {
+  readonly start = async (event: PointerEvent): Promise<void> => {
     const editor = this.editor;
     if (
       event.button ||
-      (!guideOrigin && !event.metaKey) ||
+      !event.metaKey ||
       this.drag ||
       this.handoff ||
-      (!guideOrigin && !editor.world.transformBoxContains?.(event.clientX, event.clientY))
+      !editor.world.transformBoxContains?.(event.clientX, event.clientY)
     )
       return;
     event.preventDefault();
@@ -149,7 +145,7 @@ export class TransformBoxMove {
     if (editor.blocked || editor.interactions.current) return;
     const source = scaleSelection(editor);
     if (!source) return;
-    const origin = guideOrigin ?? editor.transformAnchor?.point ?? [0, 0, 0];
+    const origin = editor.transformAnchor?.point ?? [0, 0, 0];
     const plane = transformPlane(editor, origin);
     const hit = pointOnTransformPlane(editor, event.clientX, event.clientY, plane);
     if (!hit) return;
@@ -167,9 +163,6 @@ export class TransformBoxMove {
       pending: null,
       running: null,
       delta: [0, 0, 0],
-      guide: !!guideOrigin,
-      duplicate: false,
-      copyIds: new Map(),
     };
     this.shadows.begin(source, origin, plane);
     if (!released) lease.capture(editor.world.canvas, event.pointerId);
@@ -190,7 +183,7 @@ export class TransformBoxMove {
     const hit = pointOnTransformPlane(this.editor, event.clientX, event.clientY, drag.plane);
     if (!hit) return;
     const raw = hit.sub(drag.start);
-    let delta = raw.toArray() as Vector;
+    const delta = raw.toArray() as Vector;
     drag.moved ||=
       raw.length() > (this.editor.world.height * 3) / this.editor.world.canvas.clientHeight;
     if (!drag.moved) return;
@@ -199,22 +192,12 @@ export class TransformBoxMove {
       const spacing = this.editor.world.spacing;
       for (let i = 0; i < 3; i++) delta[i] = Math.round(delta[i] / spacing) * spacing;
     }
-    if (drag.guide && !event.shiftKey) {
-      const excluded = drag.source.kind === "curves" ? [drag.source.sketchId] : drag.source.ids;
-      const snap = anchorSnap(
-        this.editor,
-        { x: event.clientX, y: event.clientY },
-        undefined,
-        excluded,
-      );
-      if (snap) delta = snap.map((v, i) => v - drag.origin[i]) as Vector;
-    }
-    drag.pending = { delta, duplicate: drag.guide && event.altKey };
+    drag.pending = delta;
     if (!drag.running) drag.running = this.drain(drag);
   };
   private async drain(drag: Drag): Promise<void> {
     while (drag.pending && drag.lease.phase === "editing") {
-      const { delta, duplicate } = drag.pending;
+      const delta = drag.pending;
       drag.pending = null;
       drag.valid = false;
       const candidate = await previewBoxMove(
@@ -223,14 +206,11 @@ export class TransformBoxMove {
         drag.origin,
         delta,
         drag.lease,
-        duplicate,
-        drag.copyIds,
       );
       if (drag.lease.phase === "editing" && !drag.pending) {
         drag.valid = candidate;
         if (candidate) {
           drag.delta = delta;
-          drag.duplicate = duplicate;
           this.shadows.move(drag.origin.map((v, i) => v + delta[i]) as Vector);
         }
       }
@@ -251,13 +231,7 @@ export class TransformBoxMove {
       await this.cancel();
       return;
     }
-    const request = boxMoveRequest(
-      this.editor.store.data,
-      drag.source,
-      drag.origin,
-      drag.delta,
-      drag.duplicate,
-    );
+    const request = boxMoveRequest(this.editor.store.data, drag.source, drag.origin, drag.delta);
     if (!request || !drag.lease.close()) {
       await this.cancel();
       return;

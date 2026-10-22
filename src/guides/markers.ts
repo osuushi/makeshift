@@ -14,9 +14,10 @@ export class GuideMarkers {
     private editor: SketchEditor,
     host: HTMLElement,
     private choose: (item: GuideMarker) => void,
-    private hover: (item: GuideMarker | null) => void,
+    private hover: (items: readonly GuideMarker[] | null) => void,
     private drag: (event: PointerEvent, item: GuideMarker) => void,
     private selected: () => string | null,
+    private remove: (item: GuideMarker) => void,
   ) {
     this.root.className = "guide-markers";
     this.choices.className = "guide-choices";
@@ -53,16 +54,27 @@ export class GuideMarkers {
       button.element.style.pointerEvents = interactive ? "auto" : "none";
       button.element.dataset.interactive = String(button.element.style.pointerEvents === "auto");
       button.element.disabled = this.editor.blocked;
+      const selected = groups[i].some((p) => p.guide?.id === this.selected());
+      button.element.classList.toggle("selected", selected);
+      button.element.setAttribute("aria-pressed", String(selected));
     }
   }
   private button(items: GuideMarker[], explicit: boolean) {
     const button = document.createElement("button");
     const entry = { element: button, items };
     button.className = `guide-marker${items.some((p) => p.guide) ? " saved" : " ghost"}`;
-    button.textContent = items.length > 1 ? String(items.length) : "+";
+    button.innerHTML =
+      '<svg class="guide-cross" viewBox="0 0 12 12" aria-hidden="true"><path d="M 1 6 H 11 M 6 1 V 11"/></svg>';
+    if (items.length > 1) {
+      const count = document.createElement("span");
+      count.className = "guide-count";
+      count.textContent = String(items.length);
+      button.append(count);
+    }
     button.title = items
       .map((p) => (p.guide ? `${p.guide.name} · ${p.label}` : p.label))
       .join("\n");
+    if (items.some((p) => p.guide)) button.title += " · Double-click to delete";
     if (!explicit && !items.some((p) => p.guide)) button.title += " · Double-click to keep";
     button.setAttribute(
       "aria-label",
@@ -80,7 +92,10 @@ export class GuideMarkers {
     };
     button.ondblclick = (event) => {
       event.stopPropagation();
-      if (!explicit) open();
+      const saved = entry.items.filter((p) => p.guide);
+      if (saved.length === 1) this.remove(saved[0]);
+      else if (saved.length) this.openChoices(saved, true);
+      else if (!explicit) open();
     };
     button.onpointerdown = (event) => {
       event.stopPropagation();
@@ -89,24 +104,25 @@ export class GuideMarkers {
         (entry.items.length === 1 ? entry.items[0] : undefined);
       if (chosen?.guide) this.drag(event, chosen);
     };
-    button.onpointerenter = () => this.hover(entry.items.length === 1 ? entry.items[0] : null);
+    button.onpointerenter = () => this.hover(entry.items);
     button.onpointerleave = () => this.hover(null);
     this.root.append(button);
     return entry;
   }
-  private openChoices(items: GuideMarker[]): void {
+  private openChoices(items: GuideMarker[], deleting = false): void {
     this.choices.replaceChildren();
     const title = document.createElement("strong");
-    title.textContent = "Choose a guide point";
+    title.textContent = deleting ? "Delete a guide point" : "Choose a guide point";
     this.choices.append(title);
     for (const item of items) {
       const button = document.createElement("button");
       button.textContent = item.guide ? `${item.guide.name} · ${item.label}` : item.label;
       button.onclick = () => {
         this.choices.hidden = true;
-        this.choose(item);
+        if (deleting) this.remove(item);
+        else this.choose(item);
       };
-      button.onpointerenter = () => this.hover(item);
+      button.onpointerenter = () => this.hover([item]);
       button.onpointerleave = () => this.hover(null);
       this.choices.append(button);
     }

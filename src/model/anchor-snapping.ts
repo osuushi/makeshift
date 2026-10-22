@@ -4,6 +4,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { type Point, type Vector, worldPoint } from "../sketch/planes.js";
 import { pointHits } from "../sketch/point-query.js";
 import type { BodyGeometry, Face } from "./body.js";
+import type { DisplayDocument } from "./display-document.js";
 import { featureEdges } from "./feature-edges.js";
 
 function faceCenter(body: BodyGeometry, face: Face): Vector | null {
@@ -29,14 +30,18 @@ function faceCenter(body: BodyGeometry, face: Face): Vector | null {
   return center.toArray() as Vector;
 }
 
-function candidates(editor: SketchEditor, excluded: readonly string[]): Vector[] {
+export function anchorPoints(
+  editor: SketchEditor,
+  excluded: readonly string[],
+  document: DisplayDocument = editor.display,
+): Vector[] {
   const points: Vector[] = [[0, 0, 0]];
-  for (const sketch of editor.display.sketches) {
+  for (const sketch of document.sketches) {
     if (!editor.visibility.visible(sketch.id) || excluded.includes(sketch.id)) continue;
     for (const hit of pointHits(sketch)) points.push(worldPoint(sketch.plane, hit.point));
   }
   if (!editor.bodiesVisible) return points;
-  for (const body of editor.display.bodies ?? []) {
+  for (const body of document.bodies ?? []) {
     if (!editor.visibility.visible(body.id) || excluded.includes(body.id)) continue;
     for (const edge of featureEdges(body)) {
       if (edge.curve?.kind === "circle") continue;
@@ -51,7 +56,11 @@ function candidates(editor: SketchEditor, excluded: readonly string[]): Vector[]
   return points;
 }
 
-function visible(editor: SketchEditor, point: Vector): boolean {
+export function visibleAnchorPoint(
+  editor: SketchEditor,
+  point: Vector,
+  bodies: readonly BodyGeometry[] = editor.display.bodies ?? [],
+): boolean {
   if (!editor.world.visiblePoint(new THREE.Vector3(...point))) return false;
   if (!editor.bodiesVisible) return true;
   const camera = editor.world.camera;
@@ -64,7 +73,7 @@ function visible(editor: SketchEditor, point: Vector): boolean {
     b = new THREE.Vector3(),
     c = new THREE.Vector3(),
     hit = new THREE.Vector3();
-  for (const body of editor.display.bodies ?? []) {
+  for (const body of bodies) {
     if (!editor.visibility.visible(body.id)) continue;
     for (const face of body.faces)
       for (let i = 0; i < face.vertices.length; i += 9) {
@@ -101,7 +110,7 @@ export function anchorSnap(
     return guide;
   const frame = editor.world.activeFrame;
   const normal = frame ? new THREE.Vector3(...frame.u).cross(new THREE.Vector3(...frame.v)) : null;
-  const nearby = candidates(editor, excluded)
+  const nearby = anchorPoints(editor, excluded)
     .filter(
       (point) =>
         !plane ||
@@ -128,5 +137,5 @@ export function anchorSnap(
     })
     .filter((p) => p.distance <= 10)
     .sort((a, b) => a.distance - b.distance || a.depth - b.depth);
-  return nearby.find((p) => visible(editor, p.point))?.point ?? null;
+  return nearby.find((p) => visibleAnchorPoint(editor, p.point))?.point ?? null;
 }

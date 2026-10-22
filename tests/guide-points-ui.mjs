@@ -76,7 +76,35 @@ await withUiRuntimes(async (page, name) => {
   await page.waitForFunction(() => window.makeshiftInspect().document.guidePoints?.length === 2);
   assert.equal((await inspect(page)).document.guidePoints[1].anchor.feature, "midpoint");
   assert.deepEqual((await inspect(page)).selectionTargets, beforeHoverClick);
+  await dragWholeSketch(page);
   console.log(
     `${name}: compact guide rows, tooltip, Delete, visibility, projected circle and hover click precedence passed`,
   );
 });
+
+async function dragWholeSketch(page) {
+  const before = (await inspect(page)).document;
+  const saved = before.guidePoints.find((g) => g.anchor.feature === "midpoint");
+  const sketch = before.sketches.find((s) => s.id === saved.anchor.sketch);
+  const from = await at(page, 14, 27),
+    to = await at(page, 0, 0);
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(to.x, to.y, { steps: 8 });
+  assert.equal((await inspect(page)).interaction.kind, "guide-move");
+  assert.deepEqual((await inspect(page)).document, before);
+  assert.equal(await page.locator(".guide-move-vector").getAttribute("data-target"), "Origin");
+  await page.mouse.up();
+  await modalCompleted(page);
+  const moved = (await inspect(page)).document;
+  const result = moved.sketches.find((s) => s.id === sketch.id);
+  assert.ok(Math.hypot(...result.plane.origin.map((v, i) => v - [-14, -27, 0][i])) < 1e-7);
+  assert.deepEqual(result.curves, sketch.curves);
+  assert.deepEqual(result.constraints, sketch.constraints);
+  assert.deepEqual(
+    moved.sketches.filter((s) => s.id !== sketch.id),
+    before.sketches.filter((s) => s.id !== sketch.id),
+  );
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, before);
+}

@@ -35,7 +35,10 @@ candidates and visible saved guides. Junctions check every incident edge; face
 groups check every referenced face. This prevents guides from covering small or
 foreshortened parents. These discovery filters do not restrict the explicit Guide
 points picker, which retains all candidates and its overlap chooser.
-Double-clicking a ghost saves it.
+Double-clicking a ghost saves it; double-clicking a saved marker deletes only that
+guide. Overlapping saved guides offer a deletion chooser. Markers use a centered
+drawn cross; selected guides use the standard selection blue. Hover highlights
+the referenced parents in purple, including every parent in an overlap cluster.
 Visible guides, including ghosts, own pointer hits before geometry underneath.
 A ghost's single click does not select the underlying geometry or save the point;
 keyboard activation saves it. The explicit Guide points tool saves on one click.
@@ -55,14 +58,26 @@ positions geometry; it does not create a persistent relationship to the guide.
 Existing sketch and transform snapping remains available. Owner visibility also
 controls guide visibility; hidden guides do not contribute targets.
 
-In 3D Transform/Move (M), drag a saved guide to translate its owning body or sketch.
-If its owner is already among the selected whole entities, the selection moves
-together. The free movement plane is the existing camera-facing transform plane;
-snapping to a target uses its exact 3D location, including a different depth.
-Shift bypasses point attraction; Option/Alt copies the moved owners and their
-guides. Release accepts one edit, Escape cancels. The shared rotation/scale anchor
-also snaps to saved guides. Close distinct 3D guides with equally near projections
-do not silently win over one another; hide a competing guide to disambiguate.
+Drag a saved guide directly to move its owning body or whole sketch. When Move
+(M) is active, the actual selection takes precedence, including selected faces,
+edges or sketch points/curves; dragging a guide never replaces a selected face
+with its whole body. Click remains selection until the ordinary pointer movement
+threshold is crossed.
+
+Guide dragging always acquires a snap reference. The display is a vector anchored
+at the starting guide, while geometry remains unchanged until release. Targets
+include saved guides, the origin, ordinary geometry points, and planar faces or
+visible construction/world planes. A plane target ends at the normal projection
+of the starting guide, independent of where the pointer hits that plane. Moving
+geometry is excluded from snapping; stationary references on the same body remain
+eligible. Point targets take precedence over plane interiors. Selected sketch
+geometry uses camera projection onto its continuing planar workspace.
+
+Release on a valid target accepts one edit. Release without a target, Shift,
+Escape or cancellation leaves geometry unchanged. Option/Alt copies complete
+bodies/sketches and their guides. The shared rotation/scale anchor also snaps to
+saved guides. Close distinct 3D guides with equally near projections do not
+silently win over one another; hide a competing guide to disambiguate.
 
 ## Definitions and geometry
 

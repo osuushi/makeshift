@@ -127,9 +127,7 @@ const faceMoves = new TopologyMoveControls(editor, overlay);
 const edgeMoves = new TopologyMoveControls(editor, overlay, "edges");
 const bodyFinishes = new BodyEdgeFinishControls(editor, overlay);
 const tags = new TagControls(editor, app);
-const guides = new GuideControls(editor, overlay, (event, item) => {
-  void scaling.boxMove.start(event, item.point);
-});
+const guides = new GuideControls(editor, overlay);
 const entities = new EntityViewer(editor, app, tags, guides);
 const booleans = new BooleanControls(editor, overlay, entities);
 const bodyMove = new BodyMoveControls(editor, overlay);

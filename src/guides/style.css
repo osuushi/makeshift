@@ -92,3 +92,59 @@
 .entity-hidden .guide-item > .tag-row {
   color: #8c99a8;
 }
+.guide-cross {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  transform: translate(-50%, -50%);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+.guide-count {
+  position: absolute;
+  left: 14px;
+  top: -6px;
+  border-radius: 5px;
+  background: #fff9ed;
+  font: 9px system-ui;
+  padding: 0 2px;
+  pointer-events: none;
+}
+.guide-marker.selected {
+  background: #e4f0ff;
+  color: #1676d2;
+  border-color: #1676d2;
+}
+.guide-marker.selected:hover,
+.guide-marker.selected:focus-visible {
+  outline-color: #1676d2;
+}
+.guide-move-vector {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 32;
+  overflow: visible;
+}
+.guide-move-vector line,
+.guide-move-vector circle {
+  stroke: #1676d2;
+  stroke-width: 2;
+  fill: white;
+}
+.guide-move-vector marker path {
+  fill: #1676d2;
+}
+.guide-move-vector text {
+  fill: #1676d2;
+  stroke: white;
+  stroke-width: 3;
+  paint-order: stroke;
+  font: 12px system-ui;
+}

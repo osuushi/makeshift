@@ -7,6 +7,7 @@ import { guideCandidates } from "./candidates.js";
 import { GuideHighlight } from "./highlight.js";
 import { hoverGuides } from "./hover.js";
 import { type GuideMarker, GuideMarkers } from "./markers.js";
+import { GuideMove } from "./move.js";
 import { visibleGuides } from "./snapping.js";
 import { type GuideAnchor, type GuidePoint, guideKey, guideMeaning, guideOwner } from "./types.js";
 import "./style.css";
@@ -14,9 +15,10 @@ import "./style.css";
 export class GuideControls {
   selected: string | null = null;
   private selectedWith = "";
-  private hovered: GuideAnchor | null = null;
+  private hovered: readonly GuideAnchor[] | null = null;
   private highlight: GuideHighlight;
   private markers: GuideMarkers;
+  private movement: GuideMove;
   private abort = new AbortController();
   private unregister: () => void;
   private lease: InteractionLease | null = null;
@@ -27,16 +29,19 @@ export class GuideControls {
   constructor(
     private editor: SketchEditor,
     host: HTMLElement,
-    private moveGuide: (event: PointerEvent, item: GuideMarker) => void,
   ) {
     this.highlight = new GuideHighlight(editor);
+    this.movement = new GuideMove(editor, host);
     this.markers = new GuideMarkers(
       editor,
       host,
       (item) => void this.choose(item),
-      (item) => this.hover(item?.anchor ?? null),
+      (items) => this.hover(items?.map((p) => p.anchor) ?? null),
       (event, item) => this.drag(event, item),
       () => this.selected,
+      (item) => {
+        if (item.guide) void this.remove(item.guide.id);
+      },
     );
     this.panel.className = "guide-tool";
     this.panel.hidden = true;
@@ -165,8 +170,8 @@ export class GuideControls {
     this.editor.notice = `${guide.name} · ${guideMeaning(guide.anchor)}`;
     this.editor.refresh();
   }
-  hover(anchor: GuideAnchor | null): void {
-    this.hovered = anchor;
+  hover(anchor: GuideAnchor | readonly GuideAnchor[] | null): void {
+    this.hovered = anchor ? (Array.isArray(anchor) ? anchor : [anchor as GuideAnchor]) : null;
     this.update();
     this.editor.world.draw();
   }
@@ -177,30 +182,7 @@ export class GuideControls {
     });
   }
   private drag(event: PointerEvent, item: GuideMarker): void {
-    const e = this.editor;
-    if (
-      event.button ||
-      e.blocked ||
-      e.interactions.current ||
-      this.lease ||
-      !item.guide ||
-      e.world.active ||
-      e.modeling.tool !== "move"
-    )
-      return;
-    const owner = guideOwner(item.anchor);
-    if (
-      !e.modeling.targets.some((t) =>
-        t.kind === "body" ? t.body === owner : t.kind === "sketch" && t.sketch === owner,
-      )
-    ) {
-      e.modeling.targets =
-        item.anchor.kind === "sketch-curve"
-          ? [{ kind: "sketch", sketch: owner }]
-          : [{ kind: "body", body: owner }];
-      e.modeling.setTool("move");
-    }
-    this.moveGuide(event, item);
+    if (!this.lease) this.movement.start(event, item);
   }
   private update = (): void => {
     const e = this.editor;
@@ -238,6 +220,7 @@ export class GuideControls {
     this.unregister();
     this.editor.world.changed.delete(this.update);
     this.markers.dispose();
+    this.movement.dispose();
     this.highlight.dispose();
     this.panel.remove();
   }
