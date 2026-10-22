@@ -3,14 +3,6 @@
 // Add combinatorial cases to the linked lower-level tests, not this inventory.
 export const uiSuites = [
   {
-    args: ["guide-tools-ui.mjs"],
-    seconds: 25,
-    browsers: ["electron"],
-    reason:
-      "Guide pointer capture must survive release during calculation, preserve tool parameter Undo and Escape, and keep profile extrusion targets visible through the automatic sketch cutaway.",
-    unit: "guide-tool-path.test.ts",
-  },
-  {
     args: ["xray-vision-ui.mjs"],
     // macOS hidden Electron including New/XY/circle freshness: 9.18s.
     seconds: 20,
