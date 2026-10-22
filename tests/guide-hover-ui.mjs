@@ -13,6 +13,7 @@ const owner = new DocumentOwner();
 let archive;
 let crowded;
 let cylinder;
+let concave;
 try {
   await prism(owner, [
     [0, 0],
@@ -43,6 +44,18 @@ try {
     { ...owner.view.data, sketches: [], bodies: [body] },
     { position: [0, -70, 100], target: [0, 0, 5], up: [0, 1, 0], height: 65 },
   );
+  const concaveBody = await prism(owner, [
+    [0, 0],
+    [60, 0],
+    [60, 10],
+    [10, 10],
+    [10, 60],
+    [0, 60],
+  ]);
+  concave = documentArchive(
+    { ...owner.view.data, sketches: [], bodies: [concaveBody] },
+    { position: [30, 30, 100], target: [30, 30, 0], up: [0, 1, 0], height: 100 },
+  );
 } finally {
   owner.close();
 }
@@ -50,6 +63,7 @@ try {
 // Real DOM hit targets must win over the model's canvas listeners. Model tests alone
 // cannot catch click-through, overlay double-click handoff or stale hover ghosts.
 await withUiRuntimes(async (page, name) => {
+  await selectedConcaveFace(page, name);
   await cylinderCap(page, name);
   await openDocument(page, {
     name: "guide-crowded.makeshift",
@@ -145,5 +159,43 @@ async function cylinderCap(page, name) {
   assert.equal(await page.locator(".guide-marker.saved").count(), 1);
   console.log(
     `${name}: cylinder cap centers share a reachable marker and save the chosen definition`,
+  );
+}
+
+async function selectedConcaveFace(page, name) {
+  await openDocument(page, {
+    name: "guide-concave.makeshift",
+    mimeType: "application/json",
+    buffer: Buffer.from(concave),
+  });
+  const state = await inspect(page);
+  const face = state.document.bodies[0].faces.find(
+    (f) => f.plane && Math.abs(f.signature[5] - 10) < 1e-6,
+  );
+  const centroid = await project(page, face.signature.slice(3, 6));
+  const inside = await project(page, [8, 8, 10]);
+  const marker = page.locator('.guide-marker.ghost[title*="Face area centroid"]');
+  await page.mouse.move(inside.x, inside.y);
+  assert.equal((await inspect(page)).modelingHover, "face");
+  assert.equal(await marker.count(), 0, "off-face centroid must not appear from hover alone");
+  await page.mouse.click(inside.x, inside.y);
+  assert.equal((await inspect(page)).modelingSelection[0]?.face, face.id);
+  await marker.waitFor({ state: "visible" });
+  await page.mouse.move(1200, 780);
+  assert.equal((await inspect(page)).modelingHover, null);
+  assert.equal(await marker.count(), 1, "selection keeps the centroid beyond the hover radius");
+  await page.screenshot({ path: `.cache/sketch-review/${name}-guide-persistent-selection.png` });
+  await page.mouse.click(1200, 780);
+  assert.equal(await marker.count(), 0, "deselection removes the persistent candidate");
+  await page.mouse.click(inside.x, inside.y);
+  await page.mouse.move(centroid.x, centroid.y, { steps: 20 });
+  await page.mouse.dblclick(centroid.x, centroid.y);
+  await page.waitForFunction(() => window.makeshiftInspect().document.guidePoints?.length === 1);
+  const after = await inspect(page);
+  assert.equal(after.document.guidePoints[0].anchor.feature, "area-center");
+  assert.equal(after.modelingSelection[0]?.face, face.id);
+  assert.deepEqual(after.document.bodies, state.document.bodies);
+  console.log(
+    `${name}: off-face centroid hidden on hover, persistent with selection, reachable and saveable`,
   );
 }

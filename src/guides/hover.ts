@@ -1,63 +1,11 @@
 import type { SketchEditor } from "../sketch/editor.js";
-import type { ModelingTarget } from "../sketch/model-selection-state.js";
 import type { Point } from "../sketch/planes.js";
-import { hitIds } from "../sketch/sketch-hit.js";
-import { type GuideCandidate, guideCandidates } from "./candidates.js";
-import { guidePosition } from "./evaluate.js";
+import type { GuideCandidate } from "./candidates.js";
+import { hoveredCandidates, selectedCandidates } from "./discovery-sources.js";
 import { near } from "./geometry.js";
 import { parentClearance } from "./parent-clearance.js";
 import { visibleGuides } from "./snapping.js";
-import { type GuideAnchor, guideKey, guideMeaning, guideOwner } from "./types.js";
-
-function parentNearHover(editor: SketchEditor, anchor: GuideAnchor, hit: ModelingTarget): boolean {
-  if (anchor.kind === "sketch-curve") return hit.sketch === anchor.sketch;
-  if (!("body" in hit) || hit.body !== anchor.body) return false;
-  if (anchor.kind === "body-center") return true;
-  const body = editor.display.bodies?.find((b) => b.id === anchor.body);
-  const edges =
-    hit.kind === "edge"
-      ? [hit.edge]
-      : hit.kind === "face"
-        ? (body?.faces.find((f) => f.id === hit.face)?.edges ?? [])
-        : [];
-  if (anchor.kind === "body-edge") return edges.includes(anchor.edge);
-  if (anchor.kind === "body-junction") return anchor.edges.some((id) => edges.includes(id));
-  if (hit.kind === "body") return true;
-  if (hit.kind === "face") return anchor.faces.includes(hit.face);
-  return (
-    hit.kind === "edge" &&
-    !!body?.faces.some((f) => anchor.faces.includes(f.id) && f.edges.includes(hit.edge))
-  );
-}
-
-function hoveredCandidates(editor: SketchEditor): GuideCandidate[] {
-  if (editor.world.active) {
-    const hit = editor.hover,
-      sketch = editor.sketch;
-    if (!hit || !sketch) return [];
-    return guideCandidates(editor.display, [], {
-      sketch: sketch.id,
-      curves: "group" in hit && hit.group ? hit.group.members : hitIds(hit),
-    });
-  }
-  const hit = editor.modeling.hover;
-  if (!hit) return [];
-  if (!("body" in hit)) return guideCandidates(editor.display, [hit]);
-  const body = editor.display.bodies?.find((b) => b.id === hit.body);
-  if (!body) return [];
-  const targets: ModelingTarget[] = [hit];
-  if (hit.kind === "edge")
-    for (const face of body.faces)
-      if (face.edges.includes(hit.edge))
-        targets.push({ kind: "face", body: body.id, face: face.id });
-  const candidates = guideCandidates(editor.display, targets).filter((p) =>
-    parentNearHover(editor, p.anchor, hit),
-  );
-  const anchor: GuideAnchor = { kind: "body-center", body: body.id, feature: "bounds-center" };
-  const point = guidePosition(editor.display, anchor);
-  if (point && hit.kind !== "body") candidates.push({ anchor, point, label: guideMeaning(anchor) });
-  return candidates;
-}
+import { guideKey, guideOwner } from "./types.js";
 
 /** Coincident definitions share a marker; distinct crowded points cull both sides. */
 export function spacedGuides(
@@ -76,26 +24,64 @@ export function spacedGuides(
   );
 }
 
-/** Hovered graph neighbors, proximity, spacing, then room to select every parent. */
+function filteredGuides(
+  editor: SketchEditor,
+  hovered: readonly GuideCandidate[],
+  selected: readonly GuideCandidate[],
+  saved: readonly GuideCandidate[],
+  pointer: Point | null,
+): GuideCandidate[] {
+  const selectedKeys = new Set(selected.map((p) => guideKey(p.anchor)));
+  const seen = new Set(saved.map((p) => guideKey(p.anchor)));
+  const candidates = [...selected, ...hovered].filter((candidate) => {
+    const key = guideKey(candidate.anchor);
+    if (
+      seen.has(key) ||
+      !editor.visibility.visible(guideOwner(candidate.anchor)) ||
+      (candidate.anchor.kind !== "sketch-curve" && !editor.bodiesVisible)
+    )
+      return false;
+    seen.add(key);
+    if (selectedKeys.has(key)) return true;
+    const p = editor.world.project(candidate.point);
+    return !!pointer && Math.hypot(p.x - pointer.x, p.y - pointer.y) <= 256;
+  });
+  const spaced = spacedGuides(candidates, saved, (point) => editor.world.project(point));
+  const markers = [...spaced, ...saved].map((p) => editor.world.project(p.point));
+  return spaced.filter((p) => parentClearance(editor, p.anchor, markers));
+}
+
+/** Persistent selection plus hover candidates that survive at their own pointer position. */
 export function hoverGuides(editor: SketchEditor, pointer: Point | null): GuideCandidate[] {
-  if (!pointer) return [];
   const saved = visibleGuides(editor).map(({ guide, point }) => ({
     anchor: guide.anchor,
     point,
     label: guide.name,
   }));
-  const keys = new Set(saved.map((p) => guideKey(p.anchor)));
-  const candidates = hoveredCandidates(editor).filter((candidate) => {
-    if (
-      keys.has(guideKey(candidate.anchor)) ||
-      !editor.visibility.visible(guideOwner(candidate.anchor)) ||
-      (candidate.anchor.kind !== "sketch-curve" && !editor.bodiesVisible)
-    )
-      return false;
-    const p = editor.world.project(candidate.point);
-    return Math.hypot(p.x - pointer.x, p.y - pointer.y) <= 256;
+  const selected = selectedCandidates(editor);
+  const selectedKeys = new Set(selected.map((p) => guideKey(p.anchor)));
+  const candidates = filteredGuides(
+    editor,
+    pointer ? hoveredCandidates(editor) : [],
+    selected,
+    saved,
+    pointer,
+  );
+  // Probe ordinary geometry, not the overlay itself, without mutating hover/selection.
+  const atPoint = new Map<string, Set<string>>();
+  return candidates.filter((candidate) => {
+    if (selectedKeys.has(guideKey(candidate.anchor))) return true;
+    const screen = editor.world.project(candidate.point);
+    const location = `${screen.x}:${screen.y}`;
+    let keys = atPoint.get(location);
+    if (!keys) {
+      keys = new Set(
+        filteredGuides(editor, hoveredCandidates(editor, screen), selected, saved, screen).map(
+          (p) => guideKey(p.anchor),
+        ),
+      );
+      atPoint.set(location, keys);
+    }
+    return keys.has(guideKey(candidate.anchor));
   });
-  const spaced = spacedGuides(candidates, saved, (point) => editor.world.project(point));
-  const markers = [...spaced, ...saved].map((p) => editor.world.project(p.point));
-  return spaced.filter((p) => parentClearance(editor, p.anchor, markers));
 }

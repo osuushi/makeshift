@@ -9,6 +9,7 @@ import { emptySketch, type Sketch } from "../src/sketch/document.js";
 import { pickModel } from "../src/sketch/model-selection.js";
 import { ModelSelection } from "../src/sketch/model-selection-state.js";
 import { planes, type Vector } from "../src/sketch/planes.js";
+import { SelectedTargets } from "../src/sketch/selected-targets.js";
 import { lift, prism, square } from "./body-edge-fixtures.js";
 import { pickingEditor } from "./body-picking-fixtures.js";
 
@@ -77,9 +78,20 @@ function sketchEditor() {
   const editor = pickingEditor([]);
   Object.assign(editor, {
     sketch,
+    selected: new SelectedTargets(),
+    selectedCurves: new Set<string>(),
+    selectionOwners: new Set<string>(),
     hover: { kind: "curve", curve: "line", point: { x: 30, y: 0 } },
   });
-  Object.assign(editor.world, { active: true, activeFrame: planes.XY, height: 80 });
+  Object.assign(editor.world.canvas, { clientHeight: 800 });
+  Object.assign(editor.world, {
+    active: true,
+    activeFrame: planes.XY,
+    height: 80,
+    projectLocal: (_plane: unknown, point: { x: number; y: number }) =>
+      editor.world.project([point.x, point.y, 0]),
+    pointAt: (_plane: unknown, x: number, y: number) => ({ x: (x - 600) / 10, y: (400 - y) / 10 }),
+  });
   Object.assign(editor.display, { sketches: [sketch] });
   return { editor, sketch };
 }
@@ -228,4 +240,58 @@ test("coincident native cylinder cap definitions remain discoverable from the ca
   } finally {
     owner.close();
   }
+});
+
+test("selected sketch curves keep candidates away from the pointer with existing spacing and clearance", () => {
+  const { editor } = sketchEditor();
+  editor.selectionOwners.add("line");
+  editor.hover = null;
+  const candidates = hoverGuides(editor, null);
+  assert.equal(candidates.length, 3);
+  assert.deepEqual(hoverGuides(editor, { x: -1000, y: -1000 }), candidates);
+  Object.assign(editor.world, { project: ([x, y]: Vector) => ({ x, y }) });
+  assert.equal(
+    hoverGuides(editor, null).length,
+    0,
+    "all three guides collide on a small projected line",
+  );
+  editor.selectionOwners.clear();
+  assert.equal(hoverGuides(editor, null).length, 0);
+});
+
+test("hover candidates also satisfy spacing at their destination, beyond the current radius", () => {
+  const { editor, sketch } = sketchEditor();
+  const arc: Sketch = {
+    ...sketch,
+    curves: [
+      {
+        id: "arc",
+        kind: "arc",
+        a: { x: 0, y: 0 },
+        b: { x: 2, y: 0 },
+        bulge: 10,
+        construction: false,
+      },
+    ],
+  };
+  Object.assign(editor, {
+    sketch: arc,
+    hover: { kind: "curve", curve: "arc", point: { x: 2, y: 0 } },
+  });
+  Object.assign(editor.display, { sketches: [arc] });
+  const endpoint = editor.world.project([2, 0, 0]);
+  const pointer = { x: endpoint.x + 256, y: endpoint.y };
+  const raw = guideCandidates(editor.display, [], { sketch: arc.id, curves: ["arc"] }).filter(
+    (p) => {
+      const q = editor.world.project(p.point);
+      return Math.hypot(q.x - pointer.x, q.y - pointer.y) <= 256;
+    },
+  );
+  assert.equal(raw.length, 1, "only the far endpoint is within the original hover radius");
+  assert.ok(parentClearance(editor, raw[0].anchor, [endpoint]));
+  assert.equal(
+    hoverGuides(editor, pointer).length,
+    0,
+    "the other endpoint blocks it at its destination",
+  );
 });

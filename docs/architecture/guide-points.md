@@ -21,6 +21,20 @@ Do not recursively expand through those neighbors to the rest of the body.
 Sketch curves and point handles use their curve or editing-group members.
 All semantic feature kinds participate, including centers.
 
+Hover-only discovery probes ordinary geometry at each candidate's own screen
+position, without changing live hover or selection. The same definition must
+survive discovery, spacing and parent clearance there as well as at the current
+pointer. A centroid outside its face or over unrelated geometry must not appear
+only while hovering a different location and vanish on approach.
+
+Selected geometry also exposes candidates persistently, including selected sketch
+curves, editing groups and point owners. Selection uses the same immediate graph
+neighborhood and also supports combined selected-face definitions. These candidates
+do not require a hovered parent, pointer proximity or a successful destination
+hover probe. They still obey owner visibility, saved-guide blocking, spacing and
+parent clearance, and disappear when selection changes or clears. This makes
+otherwise inaccessible references saveable without relaxing the visual filters.
+
 Definitions at the same 3D location share one marker and the existing definition
 chooser, so a circular rim center and its cap centers do not suppress one another.
 Remove every candidate with a distinct point less than 32 CSS pixels away,
