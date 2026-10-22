@@ -101,9 +101,9 @@ async function settingsRoute(page) {
   const before = (await inspect(page)).document;
   await movePointer(page, row([1, 0]), row([1, 1]));
   assert.deepEqual((await stored(page)).items[1].items[0].items, ["rectangle", "line"]);
-  await row([1, 0, 1]).getByRole("button", { name: "Move out of group", exact: true }).click();
+  await movePointer(page, row([1, 0, 1]), row([1, 0]), 0.95);
   assert.deepEqual((await stored(page)).items[1].items.slice(0, 2), ["rectangle", "line"]);
-  await row([1]).getByRole("button", { name: "Move down", exact: true }).click();
+  await movePointer(page, row([1]), row([2]), 0.95);
   assert.deepEqual((await stored(page)).items[2].items.slice(0, 2), ["rectangle", "line"]);
   assert.deepEqual((await inspect(page)).document, before);
   await dialog.getByRole("button", { name: "Reset toolbox to defaults", exact: true }).click();
@@ -114,15 +114,16 @@ async function settingsRoute(page) {
 async function stored(page) {
   return page.evaluate(() => JSON.parse(localStorage.getItem("makeshift.toolbox.v3")));
 }
-async function movePointer(page, from, to) {
+async function movePointer(page, from, to, fraction = 0.5) {
   await from.scrollIntoViewIfNeeded();
-  await to.scrollIntoViewIfNeeded();
-  const a = await from.boundingBox(),
-    b = await to.boundingBox();
-  assert.ok(a && b);
+  const a = await from.boundingBox();
+  assert.ok(a);
   await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
   await page.mouse.down();
-  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 8 });
+  await to.scrollIntoViewIfNeeded();
+  const b = await to.boundingBox();
+  assert.ok(b);
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height * fraction, { steps: 8 });
   await page.mouse.up();
 }
 

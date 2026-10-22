@@ -147,11 +147,6 @@
   padding-left: 8px;
   border-left: 1px solid #d6dfe9;
 }
-.toolbox-tree-moves {
-  display: flex;
-  gap: 2px;
-  flex-shrink: 0;
-}
 .toolbox-settings-tree small {
   color: #6c7a89;
   font-size: 11px;

@@ -80,40 +80,6 @@ function renderTree(
       count.textContent = `${item.items.length} alternatives`;
       row.append(count);
     }
-    const moves = document.createElement("span");
-    moves.className = "toolbox-tree-moves";
-    moves.dataset.noDrag = "true";
-    const control = (label: string, text: string, action: () => void, disabled: boolean) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = text;
-      button.title = label;
-      button.setAttribute("aria-label", label);
-      button.disabled = disabled;
-      button.onclick = action;
-      moves.append(button);
-    };
-    control(
-      "Move up",
-      "↑",
-      () =>
-        setToolboxTree(moveToolboxItem(toolboxTree(), childPath, [...path, index - 1], "before")),
-      index === 0,
-    );
-    control(
-      "Move down",
-      "↓",
-      () =>
-        setToolboxTree(moveToolboxItem(toolboxTree(), childPath, [...path, index + 1], "after")),
-      index === group.items.length - 1,
-    );
-    control(
-      "Move out of group",
-      "←",
-      () => setToolboxTree(moveToolboxItem(toolboxTree(), childPath, path, "after")),
-      path.length === 0,
-    );
-    if (!row.dataset.toolboxFixed) row.append(moves);
     host.append(row);
     if (typeof item !== "string") {
       const children = document.createElement("div");

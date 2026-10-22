@@ -232,8 +232,8 @@ A group cannot move into itself or its descendants. Empty groups are removed and
 single-child groups collapse. Moving never invokes a tool or edits geometry.
 
 Settings has General and Toolbox tabs. Toolbox shows the entire expanded tree,
-supports the same dragging, and provides Move up/down/out controls and a top-level
-drop area. Selecting a row chooses the representative without launching the tool.
+supports the same dragging and provides a top-level drop area. Rows have no
+separate arrow buttons for moving items. Selecting a row chooses the representative without launching the tool.
 Reset toolbox to defaults restores the authored grouping. The tree and selected
 indices persist under `makeshift.toolbox.v3` on the device, outside documents and
 Undo, and synchronize between windows using browser storage events. Invalid stored
