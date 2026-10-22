@@ -209,8 +209,14 @@ owned tree: a tool ID or `{items: ToolboxItem[], selected: number}`. Groups have
 no names and tools occur once, without aliases. Each group recursively displays
 the selected descendant's icon and canonical name. Selecting an alternative or
 switching tools through a shortcut remembers the selection through its ancestors.
-Constraint tools remain in contextual controls and Search. File/Edit actions keep
-their existing menu. Newly registered visible tools are appended to the toolbox.
+Select is a fixed standalone first row: automatic fallback to Select must not replace
+another group's remembered alternative. It cannot be dragged into a group.
+Defaults have five unnamed groups for drawing, creation, modification, transforms
+and references. Only tools that remain active for further interaction are eligible.
+Immediate commands (selection refinement, workspace entry, visibility toggles,
+cleanup, file/export and diagnostics) stay in Search and existing controls. The
+catalog is not automatically appended to the toolbox. Constraints keep their
+contextual controls and Search.
 
 Hover opens alternatives to the right, including nested flyouts. Click the main
 button to invoke its tool; the separate arrow also opens alternatives for touch
@@ -229,6 +235,10 @@ Settings has General and Toolbox tabs. Toolbox shows the entire expanded tree,
 supports the same dragging, and provides Move up/down/out controls and a top-level
 drop area. Selecting a row chooses the representative without launching the tool.
 Reset toolbox to defaults restores the authored grouping. The tree and selected
-indices persist under `makeshift.toolbox.v1` on the device, outside documents and
+indices persist under `makeshift.toolbox.v2` on the device, outside documents and
 Undo, and synchronize between windows using browser storage events. Invalid stored
 trees fall back to defaults. Physical iPad/Pencil ergonomics require device review.
+
+The v2 preference starts with the compact defaults instead of importing the earlier
+command-heavy v1 tree; the old preference is retained. Saved v2 layouts are filtered
+to eligible tools and Select is always extracted to its fixed first row.

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { defaultToolbox } from "../src/tools/toolbox-defaults.js";
+import { defaultToolbox, normalizeToolbox } from "../src/tools/toolbox-defaults.js";
 import {
   toolboxGroup as group,
   moveToolboxItem,
@@ -60,4 +60,34 @@ test("cannot create cycles, aliases or invalid selected indices", () => {
   assert.equal(validToolboxTree(group("a", group("a", "b"))), false);
   assert.equal(validToolboxTree({ items: ["a"], selected: 5 }), false);
   assert.equal(validToolboxTree({ items: [], selected: 0 }), false);
+});
+
+test("compact defaults keep Select standalone and omit immediate commands", () => {
+  const tree = defaultToolbox();
+  assert.equal(tree.items.length, 6);
+  assert.equal(tree.items[0], "select");
+  const leaves = toolboxLeaves(tree);
+  for (const id of [
+    "select-face",
+    "selection-clear",
+    "show-bodies",
+    "grid",
+    "export-stl",
+    "capture",
+    "cleanup",
+    "start-sketch",
+    "import-mesh",
+  ])
+    assert.equal(leaves.includes(id), false, id);
+});
+test("saved layouts cannot group Select or admit commands; selected tools survive pruning", () => {
+  const root = group(
+    group("grid", "circle", "line"),
+    group("select", "selection-clear"),
+    "export-stl",
+  );
+  (root.items[0] as ReturnType<typeof group>).selected = 2;
+  const clean = normalizeToolbox(root);
+  assert.deepEqual(clean, group("select", { items: ["circle", "line"], selected: 1 }));
+  assert.deepEqual(normalizeToolbox(moveToolboxItem(clean, [0], [1], "inside")), clean);
 });

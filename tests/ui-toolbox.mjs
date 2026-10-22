@@ -9,13 +9,13 @@ export async function toolboxRoute(page, name) {
   const entities = await page.getByRole("complementary", { name: "Entities" }).boundingBox();
   const initialBounds = await toolbox.boundingBox();
   assert.ok(entities && initialBounds && initialBounds.y > entities.y + entities.height);
-  for (const id of ["select", "start-sketch", "cube", "extrude"]) {
+  for (const id of ["select", "line", "cube", "fillet", "transform", "construction-plane"]) {
     const button = page.locator(`.toolbox-grid .toolbox-item[data-tool="${id}"]`);
     assert.equal(await button.count(), 1, id);
     assert.equal(await button.locator("svg").count(), 1, `${id} icon`);
   }
 
-  await page.setViewportSize({ width: 1280, height: 520 });
+  await page.setViewportSize({ width: 1280, height: 400 });
   const bounds = await toolbox.boundingBox();
   const panelHeight = await toolbox
     .locator(".toolbox-grid")
@@ -23,7 +23,7 @@ export async function toolboxRoute(page, name) {
   const panelScrollHeight = await toolbox
     .locator(".toolbox-grid")
     .evaluate((element) => element.scrollHeight);
-  assert.ok(bounds && bounds.y + bounds.height <= 520, "The toolbox must stay in the viewport");
+  assert.ok(bounds && bounds.y + bounds.height <= 400, "The toolbox must stay in the viewport");
   assert.ok(panelHeight < panelScrollHeight, "A short window must scroll the toolbox");
 
   const cube = page.locator('.toolbox-grid .toolbox-item[data-tool="cube"]');
@@ -39,7 +39,7 @@ export async function toolboxRoute(page, name) {
   await more.click();
   assert.equal(await page.getByRole("dialog", { name: "Find a tool" }).isVisible(), true);
   await page.keyboard.press("Escape");
-  await page.locator('.toolbox-grid .toolbox-item[data-tool="start-sketch"]').click();
+  await chooseTool(page, "start sketching", "start-sketch");
   await page.waitForFunction(() => document.querySelector(".toolbox")?.dataset.mode === "sketch");
   await chooseTool(page, "return to modeling", "modeling");
   await page.waitForFunction(() => document.querySelector(".toolbox")?.dataset.mode === "modeling");

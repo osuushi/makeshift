@@ -113,7 +113,7 @@ function renderTree(
       () => setToolboxTree(moveToolboxItem(toolboxTree(), childPath, path, "after")),
       path.length === 0,
     );
-    row.append(moves);
+    if (!row.dataset.toolboxFixed) row.append(moves);
     host.append(row);
     if (typeof item !== "string") {
       const children = document.createElement("div");

@@ -1,47 +1,54 @@
-import { toolboxGroup as group, type ToolboxGroup } from "./toolbox-tree.js";
+import { toolboxGroup as group, type ToolboxGroup, toolboxLeaves } from "./toolbox-tree.js";
 
-/** Unnamed, owned groups. Default representatives are the first tool in each group. */
+/** Select is fixed; the five unnamed groups contain ongoing tools, not commands. */
 export function defaultToolbox(): ToolboxGroup {
   return group(
+    "select",
     group(
-      "select",
-      "select-face",
-      "selection-clear",
-      group("select-all-bodies", "select-all-sketches", "tag-geometry"),
-      group(
-        "selection-only-edges",
-        "selection-only-faces",
-        "selection-remove-edges",
-        "selection-remove-faces",
-        "selection-add-faces",
-        "selection-add-edges",
-        "selection-bodies",
-        "selection-boundary",
-      ),
+      "line",
+      "rectangle",
+      "circle",
+      "bezier",
+      "pen",
+      group("trim", "sketch-offset", "sketch-fillet"),
     ),
+    group("cube", "cylinder", "sphere", "cone", group("extrude", "revolve", "loft")),
     group(
-      "start-sketch",
-      "edit-sketch",
-      "sketch-on-face",
-      "new-sketch-on-plane",
-      group("sketch-xy", "sketch-xz", "sketch-yz"),
+      "fillet",
+      "chamfer",
+      "shell",
+      "offset",
+      "erode",
+      group("union", "subtract", "intersect", "split", "imprint", "drill"),
+      group("threads", "gear", "knurling"),
     ),
-    group("line", "rectangle", "circle", "bezier", "pen"),
-    group("trim", "sketch-offset", "sketch-fillet", "clear-sketch"),
-    group("cube", "cylinder", "sphere", "cone", "import-mesh"),
-    group("extrude", "revolve", "loft", "offset"),
-    group("union", "subtract", "intersect", group("split", "imprint", "drill")),
-    group("fillet", "chamfer", "shell", "erode", "cleanup", "reopen-operation"),
     group("transform", "duplicate", "mirror"),
-    group("construction-plane", "project", "use-edge"),
-    group("threads", "gear", "knurling", "decorator-library"),
-    group(
-      "cross-section",
-      "sketch-grid",
-      "grid",
-      "modeling",
-      group("show-bodies", "hide-bodies", "isolate", "end-isolation"),
-    ),
-    group("export-step", "export-stl", "export-3mf", "cancel-export", "capture"),
+    group("construction-plane", "project", "use-edge", "cross-section"),
   );
+}
+
+const eligible = new Set(toolboxLeaves(defaultToolbox()));
+/** Enforce the toolbox boundary even for saved/custom layouts. Search keeps all commands. */
+export function normalizeToolbox(root: ToolboxGroup): ToolboxGroup {
+  const prune = (item: ToolboxGroup | string): ToolboxGroup | string | null => {
+    if (typeof item === "string") return item !== "select" && eligible.has(item) ? item : null;
+    const selected = item.items[item.selected];
+    const kept = item.items
+      .map((child) => ({ before: child, after: prune(child) }))
+      .filter((child) => child.after !== null);
+    if (!kept.length) return null;
+    if (kept.length === 1) return kept[0].after;
+    return {
+      items: kept.map((child) => child.after as ToolboxGroup | string),
+      selected: Math.max(
+        0,
+        kept.findIndex((child) => child.before === selected),
+      ),
+    };
+  };
+  const items = root.items.flatMap((item) => {
+    const kept = prune(item);
+    return kept === null ? [] : [kept];
+  });
+  return group("select", ...items);
 }

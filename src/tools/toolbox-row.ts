@@ -15,6 +15,7 @@ export function toolboxRow(
   const row = document.createElement("div");
   row.className = "toolbox-row";
   row.dataset.toolboxPath = JSON.stringify(path);
+  if (id === "select") row.dataset.toolboxFixed = "true";
   row.dataset.label = tool?.label ?? id;
   if (group) row.dataset.group = "true";
   const button = document.createElement("button");

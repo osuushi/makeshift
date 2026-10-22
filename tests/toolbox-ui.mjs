@@ -6,11 +6,24 @@ import { chooseTool } from "./ui-tools.mjs";
 // Real pointer routes cover flyout crossings, click suppression after moves and shared settings.
 await withUiRuntimes(
   async (page, name) => {
-    await page.evaluate(() => localStorage.removeItem("makeshift.toolbox.v1"));
+    await page.evaluate(() => localStorage.removeItem("makeshift.toolbox.v2"));
     await page.waitForLoadState("networkidle");
     await page.reload();
     await page.waitForFunction(() => !!window.makeshiftInspect);
     const root = page.locator(".toolbox-grid");
+    assert.equal(await root.locator(":scope > .toolbox-row").count(), 6);
+    assert.equal(await root.locator('[data-tool="select"]').count(), 1);
+    assert.equal(
+      await page.getByRole("button", { name: "Alternatives for Select", exact: true }).count(),
+      0,
+    );
+    const unchanged = await stored(page);
+    await movePointer(
+      page,
+      root.locator('[data-tool="select"]'),
+      root.locator('[data-tool="line"]'),
+    );
+    assert.deepEqual(await stored(page), unchanged, "Select cannot be grouped");
     const cube = root.locator('[data-tool="cube"]');
     await cube.hover();
     const menu = page.locator(".toolbox-flyout").last();
@@ -25,7 +38,7 @@ await withUiRuntimes(
       menu.locator('[data-tool="sphere"]'),
     );
     let tree = await stored(page);
-    assert.deepEqual(tree.items[4].items[1].items, ["sphere", "cylinder"]);
+    assert.deepEqual(tree.items[2].items[1].items, ["sphere", "cylinder"]);
     assert.equal((await inspect(page)).interaction, null, "Dragging does not launch a tool");
     await root.locator('[data-tool="cube"]').hover();
     await page.locator('.toolbox-flyout [data-tool="sphere"]').hover();
@@ -33,8 +46,8 @@ await withUiRuntimes(
     await page.locator(".toolbox-flyout").last().locator('[data-tool="cylinder"]').click();
     await page.keyboard.press("Escape");
     tree = await stored(page);
-    assert.equal(tree.items[4].selected, 1);
-    assert.equal(tree.items[4].items[1].selected, 1);
+    assert.equal(tree.items[2].selected, 1);
+    assert.equal(tree.items[2].items[1].selected, 1);
     await page.waitForLoadState("networkidle");
     await page.reload();
     await page.waitForFunction(() => !!window.makeshiftInspect);
@@ -71,7 +84,7 @@ async function dragIntoGroup(page) {
   assert.ok(sphere);
   await page.mouse.move(sphere.x + sphere.width / 2, sphere.y + 2, { steps: 4 });
   await page.mouse.up();
-  assert.deepEqual((await stored(page)).items[4].items.slice(0, 4), [
+  assert.deepEqual((await stored(page)).items[2].items.slice(0, 4), [
     "cube",
     "cylinder",
     "circle",
@@ -86,20 +99,20 @@ async function settingsRoute(page) {
   const tree = dialog.locator(".toolbox-settings-tree");
   const row = (path) => tree.locator(`[data-toolbox-path='${JSON.stringify(path)}']`);
   const before = (await inspect(page)).document;
-  await movePointer(page, row([2, 0]), row([2, 1]));
-  assert.deepEqual((await stored(page)).items[2].items[0].items, ["rectangle", "line"]);
-  await row([2, 0, 1]).getByRole("button", { name: "Move out of group", exact: true }).click();
-  assert.deepEqual((await stored(page)).items[2].items.slice(0, 2), ["rectangle", "line"]);
-  await row([2]).getByRole("button", { name: "Move up", exact: true }).click();
+  await movePointer(page, row([1, 0]), row([1, 1]));
+  assert.deepEqual((await stored(page)).items[1].items[0].items, ["rectangle", "line"]);
+  await row([1, 0, 1]).getByRole("button", { name: "Move out of group", exact: true }).click();
   assert.deepEqual((await stored(page)).items[1].items.slice(0, 2), ["rectangle", "line"]);
+  await row([1]).getByRole("button", { name: "Move down", exact: true }).click();
+  assert.deepEqual((await stored(page)).items[2].items.slice(0, 2), ["rectangle", "line"]);
   assert.deepEqual((await inspect(page)).document, before);
   await dialog.getByRole("button", { name: "Reset toolbox to defaults", exact: true }).click();
-  assert.equal((await stored(page)).items[4].items[1], "cylinder");
-  assert.equal((await stored(page)).items[2].items[0], "line");
+  assert.equal((await stored(page)).items[2].items[1], "cylinder");
+  assert.equal((await stored(page)).items[1].items[0], "line");
   await dialog.getByRole("button", { name: "Done", exact: true }).click();
 }
 async function stored(page) {
-  return page.evaluate(() => JSON.parse(localStorage.getItem("makeshift.toolbox.v1")));
+  return page.evaluate(() => JSON.parse(localStorage.getItem("makeshift.toolbox.v2")));
 }
 async function movePointer(page, from, to) {
   await from.scrollIntoViewIfNeeded();

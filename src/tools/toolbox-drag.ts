@@ -45,6 +45,7 @@ export class ToolboxDrag {
     const row = (event.target as Element).closest<HTMLElement>("[data-toolbox-path]");
     if (
       !row ||
+      row.dataset.toolboxFixed ||
       event.button !== 0 ||
       !event.isPrimary ||
       (event.target as Element).closest("[data-no-drag]")
@@ -80,7 +81,7 @@ export class ToolboxDrag {
     const row = document
       .elementFromPoint(event.clientX, event.clientY)
       ?.closest<HTMLElement>("[data-toolbox-path]");
-    if (!row || !this.host.contains(row)) {
+    if (!row || row.dataset.toolboxFixed || !this.host.contains(row)) {
       this.clearHover();
       return;
     }

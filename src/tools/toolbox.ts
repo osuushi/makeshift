@@ -1,9 +1,4 @@
-import {
-  addToolboxTools,
-  onToolboxChange,
-  setToolboxTree,
-  toolboxTree,
-} from "../preferences/toolbox.js";
+import { onToolboxChange, setToolboxTree, toolboxTree } from "../preferences/toolbox.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { type ToolResult, toolCatalog } from "./catalog.js";
 import { borrowToolFocus, restoreToolFocus, toolMenuOpen } from "./menu-focus.js";
@@ -109,12 +104,6 @@ export class Toolbox {
       .results()
       .filter((tool) => tool.showInTools !== false);
     this.tools = new Map(catalog.map((tool) => [tool.id, tool]));
-    // Constraints stay in their contextual controls/Search; Settings already has a header entry.
-    addToolboxTools(
-      catalog
-        .filter((tool) => tool.category !== "Constrain" && tool.id !== "settings")
-        .map((tool) => tool.id),
-    );
     this.root.dataset.mode = this.editor.world.active ? "sketch" : "modeling";
     const active = this.activeTool();
     if (active !== this.active) {
