@@ -57,7 +57,7 @@ export function spacedGuides(
 ): GuideCandidate[] {
   const points = [...candidates, ...saved].map((p) => project(p.point));
   return candidates.filter((_, i) =>
-    points.every((p, j) => i === j || Math.hypot(p.x - points[i].x, p.y - points[i].y) >= 64),
+    points.every((p, j) => i === j || Math.hypot(p.x - points[i].x, p.y - points[i].y) >= 32),
   );
 }
 

@@ -19,12 +19,12 @@ const candidate = (x: number, y = 0): GuideCandidate => ({
 const project = ([x, y]: Vector) => ({ x, y });
 
 test("spacing removes both sides and whole collision chains, independent of order", () => {
-  const points = [candidate(0), candidate(60), candidate(120), candidate(300)];
+  const points = [candidate(0), candidate(30), candidate(60), candidate(150)];
   assert.deepEqual(spacedGuides(points, [], project), [points[3]]);
   assert.deepEqual(spacedGuides([...points].reverse(), [], project), [points[3]]);
-  assert.equal(spacedGuides([candidate(0), candidate(64)], [], project).length, 2);
+  assert.equal(spacedGuides([candidate(0), candidate(32)], [], project).length, 2);
   assert.deepEqual(spacedGuides([candidate(0), candidate(0)], [], project), []);
-  assert.deepEqual(spacedGuides([candidate(0)], [candidate(63)], project), []);
+  assert.deepEqual(spacedGuides([candidate(0)], [candidate(31)], project), []);
 });
 
 test("parent clearance uses its largest projected dimension and every marker footprint", () => {

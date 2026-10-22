@@ -18,14 +18,14 @@ its incident faces and containing body; hovering a face does not count as hoveri
 its boundary edges. Sketch point handles use their curve or editing-group members.
 All semantic feature kinds participate, including centers.
 
-Remove every candidate with another candidate less than 64 CSS pixels away,
+Remove every candidate with another candidate less than 32 CSS pixels away,
 using the original set so collisions remove both points and do not depend on
 iteration order. Co-located definitions also collide. Every visible saved guide
 participates in this spacing check regardless of its owner or pointer distance;
 saved guides remain visible, while hidden guides and hidden owners do not block.
 Already-saved definitions do not also appear as ghosts.
 
-After spacing, each ghost must leave a continuous 64 CSS pixels along every
+After spacing, each ghost must leave a continuous 32 CSS pixels along every
 referenced parent's largest projected dimension. Project the displayed curves,
 edges and face meshes and subtract the 20-pixel hit footprints of surviving
 candidates and visible saved guides. Junctions check every incident edge; face

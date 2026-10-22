@@ -67,7 +67,7 @@ export function parentClearance(
         exposedSpan(
           points.map((p) => editor.world.project(p)),
           markers,
-        ) >= 64,
+        ) >= 32,
     )
   );
 }
