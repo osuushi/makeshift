@@ -13,7 +13,7 @@ import {
 
 /** Only the drawer contains named nested menus; ordinary alternatives are one layer. */
 export function normalizeToolbox(root: ToolboxGroup): ToolboxGroup {
-  const seen = new Set(["select"]);
+  const seen = new Set(["select", "transform"]);
   const keep = (id: string) => {
     if (seen.has(id) || !toolboxTools.has(id)) return false;
     seen.add(id);
@@ -27,7 +27,7 @@ export function normalizeToolbox(root: ToolboxGroup): ToolboxGroup {
     });
     return toolboxMenu(item.title ?? toolboxMenuTitle(item), ...items);
   };
-  const items: ToolboxItem[] = ["select"];
+  const items: ToolboxItem[] = ["select", "transform"];
   let drawer: ToolboxGroup | undefined;
   for (const item of root.items) {
     if (typeof item === "string") {
@@ -60,9 +60,13 @@ export function moveToolbox(
 ): ToolboxGroup {
   const source = toolboxItem(root, from),
     target = toolboxItem(root, to);
-  if (source === "select" || (typeof source === "object" && source.title === drawerTitle))
+  if (
+    source === "select" ||
+    source === "transform" ||
+    (typeof source === "object" && source.title === drawerTitle)
+  )
     return root;
-  if (target === "select") return root;
+  if (target === "select" || target === "transform") return root;
   // Within an existing group, a center drop orders siblings instead of nesting them.
   if (to.length > 1 && typeof target === "string" && drop === "inside") drop = "after";
   return normalizeToolbox(moveToolboxItem(root, from, to, drop));

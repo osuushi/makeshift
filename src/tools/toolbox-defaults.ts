@@ -9,11 +9,12 @@ export function toolboxMenu(title: string, ...items: (string | ToolboxGroup)[]):
 export function defaultToolbox(): ToolboxGroup {
   return group(
     "select",
+    "transform",
     group("line", "rectangle", "circle", "bezier", "pen"),
-    group("cube", "cylinder", "sphere", "cone", "extrude", "revolve", "loft"),
-    group("union", "subtract", "intersect", "split", "imprint", "drill"),
+    group("cube", "cylinder", "sphere", "cone", "drill"),
+    group("extrude", "revolve", "loft"),
+    group("union", "subtract", "intersect", "split", "imprint"),
     group("fillet", "chamfer", "shell", "offset"),
-    group("transform", "duplicate", "mirror"),
     toolboxMenu(
       drawerTitle,
       toolboxMenu("Sketch editing", "trim", "sketch-offset", "sketch-fillet"),
@@ -25,6 +26,7 @@ export function defaultToolbox(): ToolboxGroup {
         "use-edge",
         "cross-section",
       ),
+      "mirror",
     ),
   );
 }
@@ -39,10 +41,10 @@ export function toolboxMenuTitle(item: ToolboxGroup): string {
   if (typeof match === "object") return match.title ?? "Tools";
   for (const [title, ids] of [
     ["Drawing", ["line", "rectangle", "circle", "bezier", "pen"]],
-    ["Solid creation", ["cube", "cylinder", "sphere", "cone", "extrude", "revolve", "loft"]],
-    ["Booleans", ["union", "subtract", "intersect", "split", "imprint", "drill"]],
+    ["Primitives", ["cube", "cylinder", "sphere", "cone", "drill"]],
+    ["Extrude & revolve", ["extrude", "revolve", "loft"]],
+    ["Booleans", ["union", "subtract", "intersect", "split", "imprint"]],
     ["Shape editing", ["fillet", "chamfer", "shell", "offset"]],
-    ["Move & copy", ["transform", "duplicate", "mirror"]],
   ] as const) {
     if (ids.some((id) => leaves.includes(id))) return title;
   }

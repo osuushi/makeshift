@@ -18,7 +18,7 @@ export function toolboxRow(
   const row = document.createElement("div");
   row.className = "toolbox-row";
   row.dataset.toolboxPath = JSON.stringify(path);
-  if (id === "select") row.dataset.toolboxFixed = "true";
+  if (id === "select" || id === "transform") row.dataset.toolboxFixed = "true";
   row.dataset.label = label;
   if (title) row.dataset.menu = title;
   if (title === drawerTitle) row.dataset.toolboxAnchored = "true";

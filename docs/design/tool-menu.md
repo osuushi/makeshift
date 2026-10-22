@@ -206,7 +206,8 @@ acceptance.
 
 The toolbox has three behaviors:
 
-- Select is a fixed standalone first row. It cannot be dragged into a group.
+- Select and Transform are fixed standalone first and second rows. Neither can
+  be dragged into a group.
 - Ordinary groups are single-layer alternatives. Each shows its selected tool's
   icon and name; choosing an alternative through the toolbox, Search or a shortcut
   updates that button. Hover opens the alternatives to the right.
@@ -218,8 +219,11 @@ The toolbox has three behaviors:
 The owned tree uses tool IDs or `{items, selected, title?}` groups. A title denotes
 an ordinary menu rather than swapping alternatives; titles only occur in the
 Other Tools subtree. Each tool occurs once, without aliases. Default frequent
-alternatives cover drawing, solid creation, Booleans, shape editing and transforms.
-Other Tools contains Sketch editing, Surface details and Planes & references.
+alternatives cover drawing; basic primitives plus Drill; Extrude, Revolve and Loft;
+Booleans; and shape editing (Fillet, Chamfer, Shell and Offset). Other Tools contains
+Sketch editing, Surface details, Planes & references, and Mirror. Duplicate bodies
+stays available through Search but is excluded from the toolbox. Every toolbox tool
+has a dedicated icon; named menus use a folder.
 Only ongoing tools belong here. Immediate commands and constraints retain their
 contextual controls and Search.
 
@@ -243,9 +247,12 @@ Settings has General and Toolbox tabs. The Toolbox tab shows the entire expanded
 tree, supports the same dragging, and provides a top-level drop area. Selecting a
 tool inside a flat group chooses its displayed alternative without invoking it.
 Reset toolbox to defaults restores the authored grouping. Preferences use
-`makeshift.toolbox.v4`, outside documents and Undo, with storage-event sync between
-windows. Migration from v3/v2 flattens old swapping groups and moves infrequent
-grouped tools into the named drawer. Old preference values remain available.
+`makeshift.toolbox.v5`, outside documents and Undo, with storage-event sync between
+windows. Migration from v4 separates the primitive and profile-based solid families,
+pins Transform, removes Duplicate and moves Mirror into the drawer while preserving
+unrelated customization and remembered alternatives. Migration from v3/v2 also
+flattens old swapping groups and moves infrequent grouped tools into the named
+drawer. Old preference values remain available.
 
 Click the main tool button to invoke it; the separate arrow opens alternatives for
 touch and keyboard access. Up/Down navigates siblings, Right opens a group, Left
