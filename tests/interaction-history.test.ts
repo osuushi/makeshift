@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { ActiveInteraction } from "../src/sketch/active-interaction.js";
 import { InteractionHistory } from "../src/sketch/interaction-history.js";
 
 test("modal checkpoints coalesce a gesture, preserve redo, branch and stop at the baseline", async () => {
@@ -54,6 +55,37 @@ test("an unfinished field is one tweak and asynchronous restoration cannot reent
   release();
   await undo;
   assert.equal(history.canRedo, true);
+});
+
+test("canceling a borrowed guide capture restores a tool value without a canceled history step", async () => {
+  const interactions = new ActiveInteraction(() => {});
+  const lease = interactions.acquire("extrude", () => {});
+  assert.ok(lease);
+  let distance = 2;
+  const element = Object.assign(new EventTarget(), {
+    setPointerCapture: () => {},
+    hasPointerCapture: () => false,
+  }) as unknown as HTMLElement;
+  lease.trackHistory(
+    element,
+    () => distance,
+    (value) => {
+      distance = value;
+    },
+  );
+  distance = 4;
+  lease.history?.checkpoint();
+  lease.capture(element, 1);
+  distance = 8;
+  lease.releaseCapture(false);
+  distance = 4;
+  await lease.history?.navigate("undo");
+  assert.equal(distance, 2);
+  await lease.history?.navigate("redo");
+  assert.equal(distance, 4);
+  assert.equal(lease.history?.canRedo, false);
+  assert.equal(interactions.current, lease);
+  lease.release();
 });
 
 test("editor history stays inside its interaction and refuses navigation while busy", async () => {

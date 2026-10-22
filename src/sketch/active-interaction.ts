@@ -210,10 +210,10 @@ export class InteractionLease {
       if (!(error instanceof DOMException && error.name === "NotFoundError")) throw error;
     }
   }
-  releaseCapture(): void {
+  releaseCapture(checkpoint = true): void {
     const capture = this.captureTarget;
     this.captureTarget = null;
-    if (capture && this.phase === "editing") this.history?.checkpoint();
+    if (checkpoint && capture && this.phase === "editing") this.history?.checkpoint();
     if (capture?.element.hasPointerCapture(capture.id))
       capture.element.releasePointerCapture(capture.id);
   }

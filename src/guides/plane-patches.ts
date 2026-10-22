@@ -38,13 +38,16 @@ export function guideFacePlanePatches(
   const root = document.createElementNS(ns, "g");
   root.classList.add("guide-face-plane-patches");
   for (const [index, parent] of parents.entries()) {
-    if (!parent.plane || parent.reference.kind !== "face") continue;
+    if (!parent.plane || (!parent.alignment && parent.reference.kind !== "face")) continue;
     const reference = parent.reference;
-    const face = editor.display.bodies
-      ?.find((b) => b.id === reference.body)
-      ?.faces.find((f) => f.id === reference.face);
-    if (!face?.vertices.length) continue;
-    const source = nearestFacePoint(face.vertices, parent.point);
+    const face =
+      reference.kind === "face"
+        ? editor.store.data.bodies
+            ?.find((b) => b.id === reference.body)
+            ?.faces.find((f) => f.id === reference.face)
+        : null;
+    if (!parent.alignment && !face?.vertices.length) continue;
+    const source = parent.alignment?.point ?? nearestFacePoint(face?.vertices ?? [], parent.point);
     const patch = gridPatch(
       editor,
       parent.plane.frame,

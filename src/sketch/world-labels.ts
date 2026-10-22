@@ -1,9 +1,39 @@
 import * as THREE from "three";
+import { pickFace } from "../model/body-picking.js";
+import { pickSavedPlane } from "../model/saved-plane-picking.js";
+import type { SketchEditor } from "./editor.js";
 import { gridLabelTransmission } from "./grid-occlusion.js";
 import { installModalPlaneWidgets } from "./modal-plane-widgets.js";
+import { pickModels } from "./model-selection.js";
 import { installPlaneTargets } from "./plane-targets.js";
 import type { Point, Vector } from "./planes.js";
 import type { World } from "./world.js";
+
+/** Geometry takes precedence over canonical-plane labels under the same pointer. */
+export function installWorldLabels(editor: SketchEditor, overlay: HTMLElement) {
+  const world = editor.world;
+  return worldLabels(
+    world,
+    overlay,
+    (point, depth) => {
+      const hit = world.planePicker ? pickFace(editor, point) : undefined;
+      const face =
+        hit &&
+        editor.display.bodies
+          ?.find((body) => body.id === hit.body)
+          ?.faces.find((face) => face.id === hit.face);
+      return (
+        (!world.planePicker && pickModels(editor, point).length > 0) ||
+        (!!face?.plane && !!hit && hit.depth <= depth + 1e-5) ||
+        !!pickSavedPlane(editor, point, depth)
+      );
+    },
+    () => {
+      editor.modeling.hover = null;
+      editor.refresh();
+    },
+  );
+}
 
 export function worldLabels(
   world: World,

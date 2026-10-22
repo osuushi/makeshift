@@ -1,5 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { PlaneId, Vector } from "../sketch/planes.js";
+import { guideCylinderPatches } from "./cylinder-patches.js";
 import { near } from "./geometry.js";
 import type { GuideMoveCandidate } from "./move-target.js";
 import { guideFacePlanePatches, guidePlanePatches } from "./plane-patches.js";
@@ -13,6 +14,7 @@ export class GuideMoveDestinations {
   constructor(
     private editor: SketchEditor,
     host: HTMLElement,
+    private connections = true,
   ) {
     this.root.classList.add("guide-move-destinations");
     this.root.setAttribute("aria-hidden", "true");
@@ -29,10 +31,10 @@ export class GuideMoveDestinations {
     );
     for (const candidate of unique) {
       const group = candidates.filter((p) => near(p.point, candidate.point));
-      const projection = group.some((p) => p.plane);
+      const projection = group.some((p) => p.plane || p.alignment);
       const visible = group.some((p) => p.visible);
       const point = this.editor.world.project(candidate.point);
-      if (projection) {
+      if (projection && this.connections) {
         const line = document.createElementNS(ns, "line");
         line.dataset.point = JSON.stringify(candidate.point);
         for (const [key, value] of Object.entries({
@@ -55,10 +57,32 @@ export class GuideMoveDestinations {
       this.root.append(circle);
     }
   }
+  pending(origin: Vector): void {
+    this.show(origin, []);
+    const point = this.editor.world.project(origin);
+    const label = document.createElementNS(ns, "text");
+    label.setAttribute("x", String(point.x + 16));
+    label.setAttribute("y", String(point.y - 20));
+    label.textContent = "Finding targets…";
+    this.root.append(label);
+  }
   suppress(suppressed: boolean): void {
     this.root.classList.toggle("suppressed", suppressed);
   }
   highlight(parents: readonly GuideMoveCandidate[], locked: boolean): void {
+    this.root.querySelector(".guide-destination-lock")?.remove();
+    const target = locked ? parents[0] : undefined;
+    if (target) {
+      const point = this.editor.world.project(target.point);
+      const circle = document.createElementNS(ns, "circle");
+      circle.classList.add("guide-destination-lock");
+      circle.dataset.point = JSON.stringify(target.point);
+      circle.dataset.distance = String(target.distance ?? "");
+      circle.setAttribute("cx", String(point.x));
+      circle.setAttribute("cy", String(point.y));
+      circle.setAttribute("r", target.guide ? "13" : "7");
+      this.root.append(circle);
+    }
     const planes = new Set(
       parents.flatMap((p) =>
         p.plane && p.reference.kind === "plane" && p.reference.world ? [p.reference.world] : [],
@@ -66,12 +90,15 @@ export class GuideMoveDestinations {
     );
     for (const patch of this.root.querySelectorAll<SVGGElement>(".guide-plane-patch[data-plane]"))
       patch.classList.toggle("highlighted", planes.has(patch.dataset.plane as PlaneId));
-    const faces = locked ? parents.filter((p) => p.plane && p.reference.kind === "face") : [];
-    const key = JSON.stringify(faces.map((p) => [p.reference, p.point]));
+    const faces = locked
+      ? parents.filter((p) => p.alignment || (p.plane && p.reference.kind === "face"))
+      : [];
+    const key = JSON.stringify(faces.map((p) => [p.reference, p.point, p.alignment]));
     if (key === this.lockedKey) return;
     this.lockedKey = key;
     this.facePatches?.remove();
     this.facePatches = guideFacePlanePatches(this.editor, faces);
+    this.facePatches.append(guideCylinderPatches(this.editor, faces));
     this.root.prepend(this.facePatches);
   }
   hide(): void {

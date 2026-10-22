@@ -180,6 +180,11 @@ void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
         edgeFinishSelection(output, input, bodies);
         reply << output.str(); return;
     }
+    if (input.get<std::string>("kind") == "edge-finish-targets") {
+        std::ostringstream output; output << std::setprecision(17);
+        edgeFinishTargets(output, input, bodies);
+        reply << output.str(); return;
+    }
     if (input.get<std::string>("kind") == "offset-sketch") {
         std::ostringstream output; offsetSketch(output, input);
         reply << output.str(); return;

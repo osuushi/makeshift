@@ -113,6 +113,15 @@
 .guide-marker.selected:focus-visible {
   outline-color: #1676d2;
 }
+.guide-marker.start-unavailable {
+  background: #eef0f2;
+  color: #929aa3;
+  border-color: #a7afb8;
+}
+.guide-marker.start-unavailable:hover,
+.guide-marker.start-unavailable:focus-visible {
+  outline-color: #a7afb8;
+}
 .guide-move-vector {
   position: absolute;
   inset: 0;
@@ -171,6 +180,18 @@
 .guide-move-destinations circle.covered {
   opacity: 0.45;
 }
+.guide-move-destinations circle.guide-destination-lock {
+  fill: none;
+  stroke: #1676d2;
+  stroke-width: 2;
+}
+.guide-move-destinations text {
+  fill: #73869a;
+  stroke: white;
+  stroke-width: 3;
+  paint-order: stroke;
+  font: 12px system-ui;
+}
 .guide-move-destinations line {
   stroke: #7f8995;
   stroke-width: 1;
@@ -192,7 +213,7 @@
 .guide-plane-patch.highlighted {
   color: #8b5cf6;
 }
-.guide-move-destinations .guide-plane-patch .guide-grid-reveal {
+.guide-move-destinations .guide-grid-reveal {
   stroke-dasharray: 1;
   animation: guide-grid-reveal 220ms ease-out both;
 }
@@ -205,7 +226,7 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .guide-move-destinations .guide-plane-patch .guide-grid-reveal {
+  .guide-move-destinations .guide-grid-reveal {
     animation: none;
   }
 }

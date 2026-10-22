@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { visibleAnchorPoint } from "../model/anchor-snapping.js";
+import type { Face } from "../model/body.js";
 import type { DisplayDocument } from "../model/display-document.js";
 import type { OverlapTarget } from "../model/overlap-candidates.js";
 import type { SketchEditor } from "../sketch/editor.js";
@@ -15,6 +16,9 @@ export interface GuideMoveTarget {
   reference: OverlapTarget;
   anchor?: GuideAnchor;
   plane?: { frame: PlaneFrame };
+  /** Solved signed tool parameter; independent of screen hit distance. */
+  distance?: number;
+  alignment?: { point: Vector; cylinder?: NonNullable<Face["cylinder"]> };
 }
 export interface GuideMoveCandidate extends GuideMoveTarget {
   saved: boolean;
@@ -64,14 +68,15 @@ export function guideMoveProbe(
   const nearby = candidates
     .map((p) => {
       const q = editor.world.project(p.point);
-      return { ...p, distance: Math.hypot(q.x - screen.x, q.y - screen.y) };
+      return { ...p, screenDistance: Math.hypot(q.x - screen.x, q.y - screen.y) };
     })
-    .filter((p) => p.distance <= 10)
-    .sort((a, b) => a.distance - b.distance || Number(b.saved) - Number(a.saved));
+    .filter((p) => p.screenDistance <= 10)
+    .sort((a, b) => a.screenDistance - b.screenDistance || Number(b.saved) - Number(a.saved));
   const visible = nearby.filter((p) => p.visible);
   const first = visible[0];
   const ambiguous =
-    first && visible.some((p) => p.distance - first.distance < 3 && !near(p.point, first.point));
+    first &&
+    visible.some((p) => p.screenDistance - first.screenDistance < 3 && !near(p.point, first.point));
   const depth = (p: GuideMoveTarget) =>
     new THREE.Vector3(...p.point).distanceTo(editor.world.camera.position);
   const choices = nearby

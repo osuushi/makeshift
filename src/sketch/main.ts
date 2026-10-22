@@ -36,15 +36,12 @@ import { sketchEntryTool } from "./sketch-entry-tool.js";
 import { installViewInspection } from "./view-inspection.js";
 import "../model/entity-viewer.css";
 import { BodyEdgeControls } from "../model/body-edge-controls.js";
-import { pickFace } from "../model/body-picking.js";
 import { bodyView } from "../model/body-view.js";
 import { visibilityControls } from "../model/visibility-controls.js";
 import "./style.css";
 import "./modeling.css";
-import { pickSavedPlane } from "../model/saved-plane-picking.js";
 import { ModelControls } from "./model-controls.js";
 import { modelHighlight } from "./model-highlight.js";
-import { pickModels } from "./model-selection.js";
 import "./edit-overlay.css";
 import "./constraints.css";
 import "./fillet.css";
@@ -74,7 +71,7 @@ import { TransformOverlay } from "./transform-overlay.js";
 import { TrimControls } from "./trim-controls.js";
 import { installWorkspaceStatus } from "./workspace-status.js";
 import { World } from "./world.js";
-import { worldLabels } from "./world-labels.js";
+import { installWorldLabels } from "./world-labels.js";
 
 const app = document.querySelector<HTMLElement>("#app");
 if (!app) throw new Error("Missing app root");
@@ -94,30 +91,15 @@ readouts.className = "selection-readouts";
 app.append(readouts);
 const decorators = new DecoratorPanel(editor, app);
 const disposeDecorators = decoratorOverlay(editor);
-const disposeCalculation = calculationControls(editor, app);
-const disposeLabels = worldLabels(
-    world,
-    overlay,
-    (point, depth) => {
-      const hit = world.planePicker ? pickFace(editor, point) : undefined;
-      const face =
-        hit &&
-        editor.display.bodies
-          ?.find((body) => body.id === hit.body)
-          ?.faces.find((face) => face.id === hit.face);
-      return (
-        (!world.planePicker && pickModels(editor, point).length > 0) ||
-        (!!face?.plane && !!hit && hit.depth <= depth + 1e-5) ||
-        !!pickSavedPlane(editor, point, depth)
-      );
-    },
-    () => {
-      editor.modeling.hover = null;
-      editor.refresh();
-    },
-  ),
+const disposeLabels = installWorldLabels(editor, overlay),
   disposeDrawing = drawSketches(editor),
   disposeFills = drawRegionFills(editor);
+const guides = new GuideControls(
+  editor,
+  overlay,
+  (point) => faceOffsets.guide(point) ?? modelControls.extrusion.guide(point),
+);
+const disposeCalculation = calculationControls(editor, app);
 const modelControls = new ModelControls(editor, overlay);
 const shells = new ShellControls(editor, overlay);
 const erosion = new ErosionControls(editor, overlay);
@@ -127,7 +109,6 @@ const faceMoves = new TopologyMoveControls(editor, overlay);
 const edgeMoves = new TopologyMoveControls(editor, overlay, "edges");
 const bodyFinishes = new BodyEdgeFinishControls(editor, overlay);
 const tags = new TagControls(editor, app);
-const guides = new GuideControls(editor, overlay);
 const entities = new EntityViewer(editor, app, tags, guides);
 const booleans = new BooleanControls(editor, overlay, entities);
 const bodyMove = new BodyMoveControls(editor, overlay);
