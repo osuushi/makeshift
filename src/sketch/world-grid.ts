@@ -123,7 +123,7 @@ function updateGridSpacing(
   grid.material.uniforms.minorVisible.value = work && sketch.hideMinor ? 0 : 1;
 }
 
-function gridSpacing(height: number, viewportHeight: number): number {
+export function gridSpacing(height: number, viewportHeight: number): number {
   // Keep squares near 32 CSS pixels with familiar decimal snap increments.
   // Geometric midpoints select the closest step by proportional screen size.
   const desired = (32 * height) / Math.max(1, viewportHeight);

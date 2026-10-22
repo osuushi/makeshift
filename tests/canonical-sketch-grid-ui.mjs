@@ -9,7 +9,7 @@ await withUiRuntimes(async (page, name) => {
     await chooseTool(page, `Sketch on ${id}`, `sketch-${id.toLowerCase()}`);
     await settled(page);
     assert.equal((await inspect(page)).activePlane, id);
-    await page.locator('.toolbox [data-tool="sketch-grid"]').click();
+    await chooseTool(page, "grid", "sketch-grid");
     const panel = page.getByRole("region", { name: "Sketch grid controls" });
     const color = { XY: "#d4ae3a", XZ: "#55bb6e", YZ: "#b325c1" }[id];
     for (const label of ["Minor grid color", "Major grid color"]) {

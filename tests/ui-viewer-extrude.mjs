@@ -9,7 +9,8 @@ import { chooseTool } from "./ui-tools.mjs";
 export async function viewerExtrudeRoute(page, name) {
   await openDocument(page, resolve("tests/fixtures/extrude-back-view.makeshift"));
   await page.getByRole("button", { name: "Hide Sketch 1", exact: true }).click();
-  const center = await project(page, [0, 0, 0]);
+  // Pick inside the profile, clear of the circle-center guide.
+  const center = await project(page, [8, 0, 0]);
   await page.mouse.click(center.x, center.y);
   await page.keyboard.press("e");
   const arrow = page.getByRole("button", { name: "Drag extrusion", exact: true });

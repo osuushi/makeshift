@@ -12,12 +12,8 @@ const previewWidth = 128,
 export function overlapPreviews(
   editor: SketchEditor,
   candidates: OverlapCandidate[],
+  points: readonly (Vector | undefined)[] = [],
 ): SVGSVGElement[] {
-  const context = overlapGeometry(editor);
-  if (editor.world.active)
-    for (const sketch of editor.display.sketches)
-      if (editor.visibility.visible(sketch.id))
-        context.lines.push(...sketchPreviewLines(editor, sketch));
   const targets = candidates.map((c) => {
     const geometry = overlapGeometry(editor, c.target);
     if (c.target.kind === "plane") {
@@ -29,11 +25,28 @@ export function overlapPreviews(
     }
     return geometry;
   });
+  return geometryPreviews(editor, targets, points);
+}
+/** Render reference geometry and optional exact points in the same scene context. */
+export function geometryPreviews(
+  editor: SketchEditor,
+  targets: PreviewGeometry[],
+  points: readonly (Vector | undefined)[] = [],
+): SVGSVGElement[] {
+  const context = overlapGeometry(editor);
+  if (editor.world.active)
+    for (const sketch of editor.display.sketches)
+      if (editor.visibility.visible(sketch.id))
+        context.lines.push(...sketchPreviewLines(editor, sketch));
   const projectWorld = (p: Vector): Point => editor.world.project(p);
-  const scene = bounds([context, ...targets], projectWorld);
+  const scene = bounds(
+    [context, ...targets, { surfaces: [], lines: points.flatMap((p) => (p ? [[p]] : [])) }],
+    projectWorld,
+  );
   const sceneScale = fitScale(scene);
-  return targets.map((target) => {
-    const area = bounds([target], projectWorld);
+  return targets.map((target, index) => {
+    const point = points[index];
+    const area = bounds([target, { surfaces: [], lines: point ? [[point]] : [] }], projectWorld);
     const scale = Math.max(sceneScale, fitScale(area) * minimumTargetProportion);
     const frame = scale > sceneScale ? area : scene;
     const project = (p: Vector): Point => {
@@ -49,8 +62,19 @@ export function overlapPreviews(
     svg.setAttribute("aria-hidden", "true");
     draw(svg, context, project, "#dbe1e8", "#aab5c1");
     draw(svg, target, project, "#8cbde8", "#1269b5");
+    if (point) drawPoint(svg, point, project);
     return svg;
   });
+}
+function drawPoint(svg: SVGSVGElement, point: Vector, project: (p: Vector) => Point): void {
+  const p = project(point),
+    group = document.createElementNS(ns, "g");
+  group.classList.add("overlap-point");
+  group.dataset.point = JSON.stringify(point);
+  group.setAttribute("transform", `translate(${p.x} ${p.y})`);
+  group.innerHTML =
+    '<circle r="6" fill="white" stroke="#1269b5" stroke-width="2"/><path d="M-4 0H4M0 -4V4" fill="none" stroke="#1269b5" stroke-width="1.5"/>';
+  svg.append(group);
 }
 interface Bounds {
   left: number;

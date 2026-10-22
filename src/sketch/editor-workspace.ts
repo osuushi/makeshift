@@ -1,3 +1,4 @@
+import type { ConstructionPlane } from "../model/construction-plane.js";
 import { toolCatalog } from "../tools/catalog.js";
 import type { CameraFraming } from "./camera-motion.js";
 import { newId, samePlane } from "./document.js";
@@ -5,13 +6,14 @@ import type { SketchEditor } from "./editor.js";
 import { installCameraDepth } from "./editor-camera-depth.js";
 import { modelingSketch } from "./model-selection.js";
 import { orbitPivot } from "./orbit-pivot.js";
-import { type PlaneId, planes } from "./planes.js";
+import { type PlaneId, planeIds, planes } from "./planes.js";
 import { profileFraming } from "./profile-framing.js";
 import { rollSelectionPivot } from "./roll-pivot.js";
 import type { World } from "./world.js";
 
 /** All deliberate sketch entry uses the same idle boundary; history restores context separately. */
 export class WorkspaceEntry {
+  selectedConstructionPlane: () => ConstructionPlane | undefined = () => undefined;
   constructor(private editor: SketchEditor) {}
 
   reason(): string | null {
@@ -40,6 +42,31 @@ export class WorkspaceEntry {
     this.editor.modeling.alternatives = [];
     this.editor.refresh();
     return true;
+  }
+
+  /** Resolve deliberate tool entry just like the Sketch command, without creating geometry. */
+  fromContext(): boolean {
+    if (this.reason()) return false;
+    const editor = this.editor;
+    if (editor.world.active) return true;
+    if (modelingSketch(editor)) return this.selected();
+    const target = editor.modeling.targets.length === 1 ? editor.modeling.targets[0] : null;
+    if (target?.kind === "face") {
+      const face = editor.display.bodies
+        ?.find((body) => body.id === target.body)
+        ?.faces.find((item) => item.id === target.face);
+      if (face?.plane) return this.selected();
+    }
+    const constructionPlane = this.selectedConstructionPlane();
+    if (constructionPlane)
+      return this.enter({
+        key: "Construction plane",
+        frame: structuredClone(constructionPlane.frame),
+      });
+    if (editor.world.selectedPlane) return this.canonical(editor.world.selectedPlane);
+    const primary =
+      planeIds.find((id) => editor.world.canonicalVisibility.states[id].role === "primary") ?? "XY";
+    return this.canonical(primary);
   }
 
   canonical(id: PlaneId): boolean {

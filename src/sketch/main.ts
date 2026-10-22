@@ -1,6 +1,7 @@
 import "../tools/selection-step.css";
 import { DecoratorPanel } from "../decorators/panel.js";
 import { decoratorOverlay } from "../decorators/preview.js";
+import { GuideControls } from "../guides/controls.js";
 import { BodyActions } from "../model/body-actions.js";
 import { BodyEdgeFinishControls } from "../model/body-edge-finish-controls.js";
 import { BodyMoveControls } from "../model/body-move-controls.js";
@@ -27,23 +28,19 @@ import { ShellControls } from "../model/shell-controls.js";
 import { TopologyMoveControls } from "../model/topology-move-controls.js";
 import { installSettings } from "../preferences/settings.js";
 import { TagControls } from "../tags/controls.js";
-import { ToolMenu } from "../tools/menu.js";
-import { Toolbox } from "../tools/toolbox.js";
+import { installToolSurfaces } from "../tools/surfaces.js";
 import { installPlaneBounds } from "./plane-bounds.js";
 import { planeEntryTools } from "./plane-entry-tools.js";
 import { sketchEntryTool } from "./sketch-entry-tool.js";
 import { installViewInspection } from "./view-inspection.js";
 import "../model/entity-viewer.css";
 import { BodyEdgeControls } from "../model/body-edge-controls.js";
-import { pickFace } from "../model/body-picking.js";
 import { bodyView } from "../model/body-view.js";
 import { visibilityControls } from "../model/visibility-controls.js";
 import "./style.css";
 import "./modeling.css";
-import { pickSavedPlane } from "../model/saved-plane-picking.js";
 import { ModelControls } from "./model-controls.js";
 import { modelHighlight } from "./model-highlight.js";
-import { pickModels } from "./model-selection.js";
 import "./edit-overlay.css";
 import "./constraints.css";
 import "./fillet.css";
@@ -73,7 +70,7 @@ import { TransformOverlay } from "./transform-overlay.js";
 import { TrimControls } from "./trim-controls.js";
 import { installWorkspaceStatus } from "./workspace-status.js";
 import { World } from "./world.js";
-import { worldLabels } from "./world-labels.js";
+import { installWorldLabels } from "./world-labels.js";
 
 const app = document.querySelector<HTMLElement>("#app");
 if (!app) throw new Error("Missing app root");
@@ -93,30 +90,15 @@ readouts.className = "selection-readouts";
 app.append(readouts);
 const decorators = new DecoratorPanel(editor, app);
 const disposeDecorators = decoratorOverlay(editor);
-const disposeCalculation = calculationControls(editor, app);
-const disposeLabels = worldLabels(
-    world,
-    overlay,
-    (point, depth) => {
-      const hit = world.planePicker ? pickFace(editor, point) : undefined;
-      const face =
-        hit &&
-        editor.display.bodies
-          ?.find((body) => body.id === hit.body)
-          ?.faces.find((face) => face.id === hit.face);
-      return (
-        (!world.planePicker && pickModels(editor, point).length > 0) ||
-        (!!face?.plane && !!hit && hit.depth <= depth + 1e-5) ||
-        !!pickSavedPlane(editor, point, depth)
-      );
-    },
-    () => {
-      editor.modeling.hover = null;
-      editor.refresh();
-    },
-  ),
+const disposeLabels = installWorldLabels(editor, overlay),
   disposeDrawing = drawSketches(editor),
   disposeFills = drawRegionFills(editor);
+const guides = new GuideControls(
+  editor,
+  overlay,
+  (point) => faceOffsets.guide(point) ?? modelControls.extrusion.guide(point),
+);
+const disposeCalculation = calculationControls(editor, app);
 const modelControls = new ModelControls(editor, overlay);
 const shells = new ShellControls(editor, overlay);
 const erosion = new ErosionControls(editor, overlay);
@@ -126,7 +108,7 @@ const faceMoves = new TopologyMoveControls(editor, overlay);
 const edgeMoves = new TopologyMoveControls(editor, overlay, "edges");
 const bodyFinishes = new BodyEdgeFinishControls(editor, overlay);
 const tags = new TagControls(editor, app);
-const entities = new EntityViewer(editor, app, tags);
+const entities = new EntityViewer(editor, app, tags, guides);
 const booleans = new BooleanControls(editor, overlay, entities);
 const bodyMove = new BodyMoveControls(editor, overlay);
 const disposeReopen = reopenControls(editor, async ({ request }) => {
@@ -188,7 +170,8 @@ const bodyActions = new BodyActions(
 const deleteAction = new DeleteTopologyAction(editor);
 const mirror = new MirrorControls(editor, overlay);
 const constructionPlanes = new ConstructionPlaneControls(editor, overlay, entities.referenceRows);
-const disposeSketchEntryTool = sketchEntryTool(editor, () => constructionPlanes.selected());
+editor.workspaceEntry.selectedConstructionPlane = () => constructionPlanes.selected();
+const disposeSketchEntryTool = sketchEntryTool(editor);
 const scaling = new ScaleControls(
   editor,
   overlay,
@@ -225,8 +208,7 @@ const disposeHost =
     : (await import("./host-controls.js")).installHostControls(editor, app);
 const disposePlaneEntry = planeEntryTools(editor);
 const disposeSettings = installSettings(editor, app);
-const toolMenu = new ToolMenu(editor, app);
-const toolbox = new Toolbox(editor, app, entities.element, (host) => toolMenu.mountTrigger(host));
+const disposeTools = installToolSurfaces(editor, app, entities.element);
 installWorkspaceStatus(editor, app, status);
 installViewInspection(editor, sections);
 world.draw();
@@ -237,8 +219,7 @@ window.addEventListener("pagehide", (event) => {
   disposeDecorators();
   disposeHost();
   disposeSettings();
-  toolMenu.dispose();
-  toolbox.dispose();
+  disposeTools();
   disposeSketchEntryTool();
   modelingTools.dispose();
   disposeControls();
@@ -266,6 +247,7 @@ window.addEventListener("pagehide", (event) => {
   scaling.dispose();
   disposeVisibility();
   tags.dispose();
+  guides.dispose();
   entities.dispose();
   overlaps.dispose();
   crossSection.dispose();

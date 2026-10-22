@@ -6,6 +6,7 @@ import { decoratorSettings } from "./decorator-settings.js";
 import { experimentalSettings } from "./experimental-settings.js";
 import { onSketchGridPreferencesChange } from "./sketch-grid.js";
 import { sketchGridSettings } from "./sketch-grid-settings.js";
+import { installToolboxSettings } from "./toolbox-settings.js";
 import { onUiScaleChange, setUiScale, uiScale, uiScaleChoices } from "./ui-scale.js";
 import { onViewDisplayChange } from "./view-display.js";
 import { viewSettings } from "./view-settings.js";
@@ -19,6 +20,7 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
   button.setAttribute("aria-haspopup", "dialog");
   if (/Mac/.test(navigator.platform)) button.title = "Settings (⌘,)";
   const dialog = settingsDialog();
+  const disposeToolbox = installToolboxSettings(dialog, editor);
   const rememberFocus = settingsFocus(dialog);
   const requestOpen = () => {
     if (dialog.open) return;
@@ -84,6 +86,7 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
   const disposeKeyboard = installSettingsKeyboard(requestOpen);
   update();
   return () => {
+    disposeToolbox();
     disposeTool();
     disposeScale();
     disposeGrid();

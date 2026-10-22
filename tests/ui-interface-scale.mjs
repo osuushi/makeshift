@@ -8,6 +8,8 @@ export async function changeScale(page, value, tools = false) {
   if (tools) await chooseTool(page, "user interface scale", "settings");
   else await page.locator(".settings-trigger").click();
   const dialog = page.getByRole("dialog", { name: "Settings", exact: true });
+  const general = dialog.getByRole("tab", { name: "General", exact: true });
+  if (await general.count()) await general.click();
   await dialog.getByRole("combobox", { name: "User interface scale" }).selectOption(String(value));
   await dialog.getByRole("button", { name: "Done", exact: true }).click();
   await settled(page);
@@ -147,7 +149,7 @@ async function navigationScaleRoute(page, name, scale) {
     before.camera.height,
   );
   const cube = await page.locator(".orientation-cube").boundingBox();
-  const tools = await page.getByRole("button", { name: "More tools", exact: true }).boundingBox();
+  const tools = await page.getByRole("button", { name: "Search tools", exact: true }).boundingBox();
   assert.ok(tools.x + tools.width < cube.x, "Scaled Tools and cube remain separate");
   await page.getByRole("button", { name: "Top view", exact: true }).click();
   await inspect(page);

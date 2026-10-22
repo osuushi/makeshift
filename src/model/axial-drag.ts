@@ -1,3 +1,6 @@
+import { GuideSurfaceSnap } from "../guides/surface-snap.js";
+import { guideSurfacePlan } from "../guides/surface-targets.js";
+import type { GuideToolInput } from "../guides/tool-path.js";
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { pickModels } from "../sketch/model-selection.js";
@@ -8,6 +11,8 @@ import { projectedAxis } from "./extrude-axis.js";
 
 /** Shared signed-distance gesture for extrusion and face offset. */
 export class AxialDrag {
+  private snap: GuideSurfaceSnap;
+  private symmetric = false;
   private pointer: {
     id: number;
     x: number;
@@ -23,6 +28,7 @@ export class AxialDrag {
   }
   reset(): void {
     this.pointer = null;
+    this.snap.clear();
   }
   constructor(
     editor: SketchEditor,
@@ -37,9 +43,14 @@ export class AxialDrag {
       symmetric?: () => boolean;
       focus: () => void;
       modifySelection?: boolean;
+      guide?: GuideToolInput;
     },
   ) {
     const options = { signal };
+    this.snap = new GuideSurfaceSnap(editor, document.body, (value) =>
+      state.queue(value, this.symmetric),
+    );
+    signal.addEventListener("abort", () => this.snap.dispose(), { once: true });
     handle.addEventListener(
       "pointerdown",
       (e) => {
@@ -58,6 +69,9 @@ export class AxialDrag {
         const symmetric = state.symmetric?.() ?? false;
         const value = state.value() / (symmetric ? 2 : 1);
         const center = axis.center.map((v, i) => v + axis.normal[i] * value) as Vector;
+        this.snap.start(() =>
+          state.guide ? guideSurfacePlan(editor, state.guide(axis.center)) : null,
+        );
         this.pointer = {
           id: e.pointerId,
           x: e.clientX,
@@ -84,7 +98,8 @@ export class AxialDrag {
         ((e.clientX - p.x) * p.direction.x + (e.clientY - p.y) * p.direction.y) / p.direction.scale;
       if (editor.gridSnap) value = Math.round(value / editor.world.spacing) * editor.world.spacing;
       const symmetric = !!state.symmetric && (p.symmetric || e.altKey);
-      state.queue(value * (symmetric ? 2 : 1), symmetric);
+      this.symmetric = symmetric;
+      this.snap.move(e, value * (symmetric ? 2 : 1), symmetric ? 2 : 1);
     };
     window.addEventListener("pointermove", move, options);
     replayPointerModifiers(signal, () => !!this.pointer, move);

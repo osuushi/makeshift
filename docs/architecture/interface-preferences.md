@@ -3,11 +3,14 @@
 Settings is available in the editor header, through Tools and with Cmd-, on Mac.
 It opens a compact modal dialog; Escape, clicking the backdrop or Done closes it. User interface scale
 applies immediately at 80%, 90%, 100%, 130%, 125% or 150%; Reset to 100% is always
-available from this dialog. Opening Settings requires completing the current edit.
+available in its General tab. Opening Settings requires completing the current edit.
 Closing restores focus to its opener unless another control has already taken focus.
 The choice is stored locally on the current device/origin under `makeshift.ui-scale`,
 outside accepted geometry, document files and Undo. Invalid stored values fall back
 to 100%; unavailable browser storage keeps the preference for the current window.
+A separate Toolbox tab shows the full editable tool tree, including nested groups,
+selected alternatives and reset to defaults. Its device-local organization is
+independent of geometry and Undo; see [toolbox interaction](../design/tool-menu.md#editable-toolbox-2026-10-22).
 Controls and agent launch configuration retain their existing separate settings.
 
 Floating tool parameter cards have a dimpled left grip. Dragging it (or focusing
@@ -102,6 +105,11 @@ in viewport CSS pixels. Anchored arrow widgets center through a percentage
 translation, and sketch move-marker SVG dimensions and centering scale together.
 Measured panel dimensions govern viewport fitting. The Entities sidebar begins
 below the measured header so wrapped controls remain reachable at narrow widths.
+The sidebar reserves the toolbox's measured natural height first. Entities yields
+the remaining vertical space and scrolls its list; toolbox scrolling is a fallback
+only when the tools cannot fit with Entities reduced to its title. Resizing,
+interface scale, expanded entity children and contextual reference controls all
+recompute the allocation.
 The agent terminal adjusts its font and fits its cell grid when the preference changes. This is presentation;
 geometry dimensions, camera zoom and accepted data are independent of the choice.
 New display code should preserve this coordinate boundary rather than applying

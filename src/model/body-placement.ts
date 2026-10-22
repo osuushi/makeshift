@@ -35,10 +35,22 @@ export function placedBodies(bodies: readonly Body[], edit: BodyTransform): Body
     new THREE.Vector3(...p).transformDirection(matrix).toArray() as Vector;
   const points = (values: number[]) =>
     values.flatMap((_, i) => (i % 3 ? [] : point(values.slice(i, i + 3) as Vector)));
+  const bounds = (box: readonly number[]) => {
+    const transformed = new THREE.Box3().setFromPoints(
+      Array.from(
+        { length: 8 },
+        (_, i) =>
+          new THREE.Vector3(...point([box[i & 1 ? 3 : 0], box[i & 2 ? 4 : 1], box[i & 4 ? 5 : 2]])),
+      ),
+    );
+    return [...transformed.min.toArray(), ...transformed.max.toArray()];
+  };
   return bodies.map((body) => {
     const { brep: _, ...geometry } = body;
     const faces = body.faces.map((face) => ({
       ...face,
+      signature: [...face.signature.slice(0, 3), ...point(face.signature.slice(3, 6) as Vector)],
+      ...(face.bounds ? { bounds: bounds(face.bounds) } : {}),
       vertices: points(face.vertices),
       plane: face.plane
         ? {
@@ -71,6 +83,16 @@ export function placedBodies(bodies: readonly Body[], edit: BodyTransform): Body
       faces,
       edges: body.edges.map((edge) => ({
         ...edge,
+        ...(edge.landmarks
+          ? {
+              landmarks: {
+                ...edge.landmarks,
+                start: point(edge.landmarks.start),
+                end: point(edge.landmarks.end),
+                midpoint: point(edge.landmarks.midpoint),
+              },
+            }
+          : {}),
         points: points(edge.points),
         curve: !edge.curve
           ? null
@@ -93,14 +115,32 @@ export function placedBodies(bodies: readonly Body[], edit: BodyTransform): Body
   });
 }
 
-/** Match client-only rigid body previews with temporary decorator attachments. */
+/** Match client-only rigid body previews with temporary metadata attachments. */
 export function placedDocument(document: SketchDocument, edit: BodyTransform): DisplayDocument {
   const bodies = document.bodies ?? [];
   const selected = bodies.filter((body) => edit.ids.includes(body.id));
   const retained = edit.duplicate ? bodies : bodies.filter((body) => !edit.ids.includes(body.id));
-  return continueDecorators(
+  const preview = continueDecorators(
     document,
     { ...document, bodies: [...retained, ...placedBodies(selected, edit)] },
     { kind: "transform-bodies", transform: edit },
   );
+  if (!edit.duplicate || !document.guidePoints?.length) return preview;
+  return {
+    ...preview,
+    guidePoints: [
+      ...document.guidePoints,
+      ...document.guidePoints.flatMap((guide) =>
+        guide.anchor.kind !== "sketch-curve" && edit.ids.includes(guide.anchor.body)
+          ? [
+              {
+                ...guide,
+                id: `copy-preview/${guide.id}`,
+                anchor: { ...guide.anchor, body: `copy-preview/${guide.anchor.body}` },
+              },
+            ]
+          : [],
+      ),
+    ],
+  };
 }

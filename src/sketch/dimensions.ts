@@ -44,7 +44,13 @@ export class Dimensions implements NumericFields {
                 : dimensionLockTarget(editor, quantity)
             )
               ? null
-              : "Select geometry with this dimension"),
+              : {
+                  width: "Select a rectangle to lock its width",
+                  height: "Select a rectangle to lock its height",
+                  length: "Select a line to lock its length",
+                  radius: "Select a circle or arc to lock its radius",
+                  cornerAngle: "Select a corner to lock its angle",
+                }[quantity]),
           run: () =>
             quantity === "cornerAngle"
               ? toggleCornerLock(editor)

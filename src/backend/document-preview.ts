@@ -1,3 +1,5 @@
+import { pruneGuides } from "../guides/model.js";
+import { continueSketchGuides } from "../guides/sketch-continuation.js";
 import { type SketchDocument, withSketch } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import { mirrorDocument } from "./mirror.js";
@@ -53,8 +55,19 @@ export async function previewDocument(
         request.kind === "edit",
         intent,
       );
-      return { document: withSketch(source, result.sketch), count: result.count, ms: result.ms };
+      return {
+        document: pruneGuides(
+          continueSketchGuides(
+            source,
+            withSketch(source, result.sketch),
+            target.id,
+            intent.kind === "direct" ? (intent.curveOrigins ?? []) : [],
+          ),
+        ),
+        count: result.count,
+        ms: result.ms,
+      };
     }
   }
-  return { document, count: 0, ms: 0 };
+  return { document: pruneGuides(document), count: 0, ms: 0 };
 }

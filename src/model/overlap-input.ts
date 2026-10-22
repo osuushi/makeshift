@@ -7,7 +7,7 @@ import { OverlapChooser } from "./overlap-chooser.js";
 import "./overlap.css";
 
 // Shared by the hold timer and its visual countdown; future preferences can supply this value.
-const longPressDelayMs = 300;
+export const longPressDelayMs = 300;
 
 /** Observe ordinary presses without delaying clicks or claiming normal drags. */
 export class OverlapInput {

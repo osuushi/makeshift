@@ -57,6 +57,14 @@ export class ToolCatalog {
   private entries = new Map<string, ToolDefinition>();
   private running = false;
   private recentIds: string[] = [];
+  private choice: { id: string } | null = null;
+  /** Explicit admitted choices, distinct from controllers' internal steps. */
+  get lastChoice(): { readonly id: string } | null {
+    return this.choice;
+  }
+  private rememberChoice(tool: ToolAction): void {
+    if (tool.id && this.entries.has(tool.id)) this.choice = { id: tool.id };
+  }
   constructor(private editor: SketchEditor) {}
   register(tool: ToolDefinition): () => void {
     if (this.entries.has(tool.id)) throw new Error(`Duplicate tool: ${tool.id}`);
@@ -140,10 +148,12 @@ export class ToolCatalog {
         else {
           const { collectToolSelection } = await import("./selection-step.js");
           collectToolSelection(this.editor, tool, selection, () => this.activate(tool));
+          this.rememberChoice(tool);
           return true;
         }
       }
       const result = await tool.run();
+      if (result !== false) this.rememberChoice(tool);
       const registered = [...this.entries.values()].find((entry) => entry === tool);
       // Recency records an admitted invocation, not later geometry acceptance.
       if (result !== false && registered && registered.showInTools !== false)

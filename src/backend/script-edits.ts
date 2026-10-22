@@ -1,4 +1,5 @@
 import type { ScriptOperation } from "../agent-script/api.js";
+import { pruneGuides } from "../guides/model.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { DecoratorSession } from "./decorator-session.js";
 import type { DocumentStore } from "./document-store.js";
@@ -57,6 +58,7 @@ export class ScriptEdits {
       const result = await pending;
       if (this.cancelled) throw new Error("Script cancelled");
       result.document = await session.continue(result.document);
+      result.document = pruneGuides(result.document);
       if (this.cancelled) throw new Error("Script cancelled");
       validateDocument(result.document);
       this.candidate = result.document;

@@ -4,7 +4,10 @@ import { distance } from "./point-math.js";
 
 // Transient instructions for one calculation, never stored in the document.
 export type EditIntent =
-  | { readonly kind: "direct" }
+  | {
+      readonly kind: "direct";
+      readonly curveOrigins?: readonly import("../guides/sketch-continuation.js").CurveContinuation[];
+    }
   | {
       readonly kind: "point" | "transform" | "dimension";
       readonly targets: readonly PointReference[];

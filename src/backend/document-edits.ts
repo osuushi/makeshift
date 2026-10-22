@@ -1,20 +1,23 @@
 import { editDefinitions } from "../decorators/definition-edits.js";
 import { editDecorators } from "../decorators/edits.js";
+import { editGuides } from "../guides/model.js";
+import { copySketchGuides } from "../guides/sketch-continuation.js";
 import { editBodyAppearance } from "../model/body-appearance.js";
 import { withConstructionPlane } from "../model/construction-plane.js";
 import { editEntityPresentation } from "../model/entity-presentation.js";
 import { copySketch } from "../sketch/copy-selection.js";
-import { deleteProfiles } from "../sketch/delete-profiles.js";
 import { type SketchDocument, withSketch } from "../sketch/document.js";
 import { removeCurves } from "../sketch/geometry.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import { mergeDocumentSketches } from "../sketch/sketch-merge.js";
 import { editTags } from "../tags/model.js";
+import { deleteEntities } from "./delete-entities.js";
 
 export function isDirectDocumentEdit(
   request: ModelRequest,
 ): request is Exclude<Parameters<typeof editDocument>[1], { kind: "delete-entities" }> {
   return [
+    "guide-point",
     "tagged-group",
     "decorator",
     "decorator-definition",
@@ -37,6 +40,7 @@ export function editDocument(
     ModelRequest,
     {
       kind:
+        | "guide-point"
         | "tagged-group"
         | "decorator"
         | "decorator-definition"
@@ -55,6 +59,8 @@ export function editDocument(
   >,
 ): SketchDocument {
   switch (request.kind) {
+    case "guide-point":
+      return editGuides(document, request.edit);
     case "tagged-group":
       return editTags(document, request.edit);
     case "decorator":
@@ -84,55 +90,21 @@ export function editDocument(
       for (const placement of placements) {
         const sketch = document.sketches.find((s) => s.id === placement.sketchId);
         if (!sketch) throw new Error("Sketch no longer exists");
+        const ids = new Map<string, string>();
+        const placed = request.duplicate ? copySketch(sketch, ids) : sketch;
         next = withSketch(next, {
-          ...(request.duplicate ? copySketch(sketch) : sketch),
+          ...placed,
           plane: placement.frame,
         });
+        if (request.duplicate) next = copySketchGuides(next, sketch.id, placed.id, ids);
       }
       return next;
     }
     case "merge-sketches": {
       return mergeDocumentSketches(document, request.targetSketchId, request.sourceSketchIds);
     }
-    case "delete-entities": {
-      const bodyIds = new Set(request.bodyIds);
-      const sketchIds = new Set(request.sketchIds);
-      for (const target of request.profiles ?? [])
-        if (!document.sketches.some((sketch) => sketch.id === target.sketch))
-          throw new Error("Sketch no longer exists");
-      return {
-        ...document,
-        ...(document.bodyAppearances
-          ? {
-              bodyAppearances: document.bodyAppearances.filter((entry) => !bodyIds.has(entry.body)),
-            }
-          : {}),
-        ...(document.taggedGroups
-          ? { taggedGroups: document.taggedGroups.filter((g) => !bodyIds.has(g.body)) }
-          : {}),
-        ...(bodyIds.size
-          ? { bodies: (document.bodies ?? []).filter((body) => !bodyIds.has(body.id)) }
-          : {}),
-        ...(document.decorators && bodyIds.size
-          ? {
-              decorators: document.decorators
-                .map((instance) => ({
-                  ...instance,
-                  faces: instance.faces.filter((face) => !bodyIds.has(face.body)),
-                }))
-                .filter((instance) => instance.faces.length),
-            }
-          : {}),
-        sketches: document.sketches
-          .filter((sketch) => !sketchIds.has(sketch.id))
-          .map((sketch) => {
-            const keys = (request.profiles ?? [])
-              .filter((target) => target.sketch === sketch.id)
-              .map((target) => target.profile);
-            return keys.length ? deleteProfiles(sketch, keys).sketch : sketch;
-          }),
-      };
-    }
+    case "delete-entities":
+      return deleteEntities(document, request);
     case "delete-sketch":
       return {
         ...document,

@@ -15,6 +15,11 @@ async function clickTool(page, tool, point) {
       !s.busy && ["extrude", "revolve"].includes(s.interaction?.kind) && !!s.preview?.bodies?.length
     );
   });
+  // Controller kind changes internally; the user-facing toolbox must keep the primitive.
+  assert.equal(
+    await page.locator(`.toolbox-grid [data-tool="${tool}"]`).getAttribute("aria-pressed"),
+    "true",
+  );
   return inspect(page);
 }
 async function accept(page) {
@@ -39,13 +44,17 @@ await withUiRuntimes(
       assert.equal(s.document.sketches[0].curves[0].kind, "circle");
       assert.equal(s.document.bodies?.length ?? 0, 0);
       assert.equal(
-        await page.getByRole("button", { name: "Union", exact: true }).getAttribute("aria-pressed"),
+        await page
+          .locator(tool === "sphere" ? ".revolve-options" : ".axial-panel")
+          .getByRole("button", { name: "Union", exact: true })
+          .getAttribute("aria-pressed"),
         "true",
       );
       if (tool === "cone") assert.equal(s.preview.bodies[0].faces.length, 2);
       if (tool === "sphere") assert.equal(s.document.sketches[0].curves[1].kind, "segment");
       await accept(page);
       assert.equal((await inspect(page)).document.bodies.length, 1);
+      assert.equal(await page.locator(`.toolbox-grid [data-tool="${tool}"]`).count(), 1);
     }
     await backSidePrimitives(page);
     await reset(page);
@@ -61,6 +70,7 @@ await withUiRuntimes(
     );
     assert.equal(
       await page
+        .locator(".axial-panel")
         .getByRole("button", { name: "Subtract", exact: true })
         .getAttribute("aria-pressed"),
       "true",

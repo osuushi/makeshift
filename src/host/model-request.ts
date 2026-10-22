@@ -5,6 +5,7 @@ export type HostModelRequest = ModelRequest & {
   kind: Exclude<ModelRequest["kind"], "new" | "open">;
 };
 const kinds: Record<HostModelRequest["kind"], true> = {
+  "guide-point": true,
   "sketch-grid": true,
   "paste-geometry": true,
   "navigation-history": true,
@@ -44,6 +45,7 @@ const kinds: Record<HostModelRequest["kind"], true> = {
   "move-faces": true,
   "boolean-bodies": true,
   "edge-finish-selection": true,
+  "edge-finish-targets": true,
   shell: true,
   erode: true,
   "reconstruct-mesh": true,

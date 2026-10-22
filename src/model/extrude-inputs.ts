@@ -1,3 +1,4 @@
+import type { GuideToolInput } from "../guides/tool-path.js";
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { AxialDrag } from "./axial-drag.js";
@@ -5,23 +6,26 @@ import type { Extrusion } from "./body.js";
 import { extrudeKeys } from "./extrude-keys.js";
 import type { ExtrudeWidget } from "./extrude-widget.js";
 
+export interface ExtrudeActions {
+  begin: () => boolean;
+  lease: () => InteractionLease | null;
+  active: () => boolean;
+  distance: () => number;
+  symmetric: () => boolean;
+  queue: (value: number, symmetric?: boolean) => void;
+  mode: (mode: Extrusion["mode"]) => void;
+  finish: () => void;
+  cancel: () => void;
+  guide: GuideToolInput;
+}
+
 /** Extrusion pointer, field and shortcut bindings share one interaction owner. */
 export class ExtrudeInputs {
   private drag: AxialDrag;
   constructor(
     editor: SketchEditor,
     widget: ExtrudeWidget,
-    actions: {
-      begin: () => boolean;
-      lease: () => InteractionLease | null;
-      active: () => boolean;
-      distance: () => number;
-      symmetric: () => boolean;
-      queue: (value: number, symmetric?: boolean) => void;
-      mode: (mode: Extrusion["mode"]) => void;
-      finish: () => void;
-      cancel: () => void;
-    },
+    actions: ExtrudeActions,
     signal: AbortSignal,
   ) {
     const options = { signal };
@@ -38,6 +42,7 @@ export class ExtrudeInputs {
       symmetric: actions.symmetric,
       focus,
       modifySelection: true,
+      guide: actions.guide,
     });
     widget.handle.addEventListener(
       "click",

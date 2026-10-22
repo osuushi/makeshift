@@ -19,7 +19,7 @@ export class ModelControls {
   private placement: PlacementControls;
   private revolve: RevolveControls;
   private loft: LoftControls;
-  private extrusion: ExtrudeControls;
+  readonly extrusion: ExtrudeControls;
   private cube: CubeControls;
   private selectionDrag: ModelSelectionDrag;
   constructor(

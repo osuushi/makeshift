@@ -1,5 +1,6 @@
+import { continueScaledGuides } from "../guides/sketch-continuation.js";
 import { identityScale, type ScaleOperation, validateScale } from "../model/scale.js";
-import type { SketchDocument } from "../sketch/document.js";
+import { type Curve, type SketchDocument, withSketch } from "../sketch/document.js";
 import { continueBodyMetadata } from "./body-metadata.js";
 import { continuingBodies, materialize } from "./kernel-result.js";
 import { scaleSketch } from "./scale-sketch.js";
@@ -12,17 +13,7 @@ export async function scaleDocument(
 ): Promise<SketchDocument> {
   validateScale(operation);
   if (operation.kind === "curves" || operation.kind === "sketches") {
-    const ids = operation.kind === "curves" ? [operation.sketchId] : operation.ids;
-    if (
-      !ids.length ||
-      new Set(ids).size !== ids.length ||
-      ids.some((id) => !document.sketches.some((s) => s.id === id))
-    )
-      throw new Error("Select existing sketches to scale");
-    const sketches = document.sketches.map((s) =>
-      ids.includes(s.id) ? scaleSketch(s, operation) : s,
-    );
-    return identityScale(operation) ? document : { ...document, sketches };
+    return scaledSketches(document, operation);
   }
   if (operation.kind !== "solids") throw new Error("Unknown scale selection");
   const bodies = document.bodies ?? [];
@@ -88,4 +79,24 @@ export async function scaleDocument(
     { ...document, bodies: next },
     { kind: "scale", operation },
   );
+}
+
+function scaledSketches(
+  document: SketchDocument,
+  operation: Extract<ScaleOperation, { kind: "curves" | "sketches" }>,
+): SketchDocument {
+  const ids = operation.kind === "curves" ? [operation.sketchId] : operation.ids;
+  if (
+    !ids.length ||
+    new Set(ids).size !== ids.length ||
+    ids.some((id) => !document.sketches.some((s) => s.id === id))
+  )
+    throw new Error("Select existing sketches to scale");
+  let next = document;
+  for (const sketch of document.sketches.filter((s) => ids.includes(s.id))) {
+    const replacements = new Map<string, Curve[]>();
+    next = withSketch(next, scaleSketch(sketch, operation, replacements));
+    next = continueScaledGuides(next, sketch.id, replacements);
+  }
+  return identityScale(operation) ? document : next;
 }
