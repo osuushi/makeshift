@@ -229,8 +229,12 @@ export function editDecorators(document: SketchDocument, edit: DecoratorEdit): S
         problem: hasSettingsProblem(instance) ? undefined : instance.problem,
         settings:
           instance.definition === knurlDefinition
-            ? patchKnurlSettings(instance.settings, edit.patch)
-            : patchThreadSettings(radius * 2, instance.settings, edit.patch),
+            ? patchKnurlSettings(edit.replace ? {} : instance.settings, edit.patch)
+            : patchThreadSettings(
+                radius * 2,
+                edit.replace ? threadDefaults(radius * 2) : instance.settings,
+                edit.patch,
+              ),
       };
       validateBuiltin(document, updated);
       return updated;

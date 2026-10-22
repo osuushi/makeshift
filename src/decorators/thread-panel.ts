@@ -31,7 +31,7 @@ export function appendThreadSettings(
       const hint = document.createElement("p");
       hint.className = "thread-clearance-hint";
       hint.textContent =
-        "Moves hole threads outward, away from the rod. FDM fine starts at 0.25 mm; adjust for your printer and orientation.";
+        "Moves hole threads outward, away from the rod. FDM fine and coarse start at 0.25 mm; adjust for your printer and orientation.";
       root.append(hint);
     }
   }

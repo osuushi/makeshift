@@ -102,6 +102,11 @@ export interface SketchDocument {
   readonly sketchGrid?: import("./grid-settings.js").SketchGrid;
   readonly taggedGroups?: readonly import("../tags/model.js").TaggedGroup[];
   readonly decoratorDefinitions?: readonly import("../decorators/definition.js").DecoratorDefinition[];
+  readonly decoratorPresets?: readonly import("../decorators/presets.js").DecoratorPreset[];
+  readonly lastDecoratorChoices?: Record<
+    string,
+    import("../decorators/presets.js").DecoratorChoice
+  >;
   readonly decorators?: readonly import("../decorators/types.js").DecoratorInstance[];
   readonly bodyAppearances?: readonly import("../model/body-appearance.js").BodyAppearance[];
   readonly entityPresentation?: readonly import("../model/entity-presentation.js").EntityPresentation[];

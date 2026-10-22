@@ -3,6 +3,7 @@ import { toolCatalog } from "../tools/catalog.js";
 import { appendCustomDiagnostics } from "./custom-diagnostics.js";
 import { appendGearInformation, gearFieldInstances } from "./gear-panel.js";
 import { gearDefinition, gearManifest } from "./gear-settings.js";
+import { appendPresetControls } from "./preset-panel.js";
 import type { DecoratorSettingsDraft } from "./settings-draft.js";
 import { decoratorField } from "./settings-field.js";
 import { threadDefinition } from "./thread-settings.js";
@@ -82,6 +83,7 @@ function appendGroup(
       });
     });
   } else if (!group.some((d) => d.problem)) {
+    appendPresetControls(root, editor, group);
     appendFields(root, editor, group, definition.fields, draft, patch);
   }
 

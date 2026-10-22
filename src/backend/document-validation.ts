@@ -1,5 +1,6 @@
 import { validateDefinitions } from "../decorators/definition-edits.js";
 import { validateDecorators } from "../decorators/edits.js";
+import { validatePresets } from "../decorators/presets.js";
 import { validateBodyAppearances } from "../model/body-appearance.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { validateSketchGrid } from "../sketch/grid-settings.js";
@@ -19,6 +20,7 @@ export function validateDocument(document: SketchDocument): void {
   validateBodyAppearances(document);
   validateTags(document);
   validateDecorators(document);
+  validatePresets(document);
   validateDefinitions(document);
   if (document.entityPresentation !== undefined) {
     if (!Array.isArray(document.entityPresentation)) throw new Error("Invalid entity presentation");

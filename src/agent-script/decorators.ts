@@ -4,6 +4,7 @@ import type { DecoratorEdit, DecoratorField, DecoratorInstance } from "../decora
 
 export interface DecoratorCatalog {
   instances: readonly DecoratorInstance[];
+  presets: readonly import("../decorators/presets.js").DecoratorPreset[];
   definitions: readonly (DecoratorDefinition & { enabled: boolean })[];
   builtins: { id: string; version: number; name: string; fields: readonly DecoratorField[] }[];
 }
