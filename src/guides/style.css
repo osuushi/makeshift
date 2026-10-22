@@ -180,10 +180,6 @@
 .guide-move-destinations.suppressed {
   opacity: 0.25;
 }
-.guide-move-destinations .guide-plane-patch > g > circle {
-  fill: currentColor;
-  stroke: none;
-}
 .guide-move-destinations .guide-plane-patch line {
   stroke: currentColor;
   stroke-dasharray: none;
@@ -195,4 +191,21 @@
 }
 .guide-plane-patch.highlighted {
   color: #8b5cf6;
+}
+.guide-move-destinations .guide-plane-patch .guide-grid-reveal {
+  stroke-dasharray: 1;
+  animation: guide-grid-reveal 220ms ease-out both;
+}
+@keyframes guide-grid-reveal {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .guide-move-destinations .guide-plane-patch .guide-grid-reveal {
+    animation: none;
+  }
 }

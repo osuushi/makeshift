@@ -8,11 +8,10 @@ import { guidePosition } from "../.cache/sketch-tests/src/guides/evaluate.js";
 import { documentArchive } from "../.cache/sketch-tests/src/model/document-archive.js";
 import { prism, square } from "../.cache/sketch-tests/tests/body-edge-fixtures.js";
 import { openDocument } from "./native-documents.mjs";
-import { project } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { guideDisambiguation } from "./ui-guide-disambiguation.mjs";
+import { planeDestinationRoute } from "./ui-guide-plane-destination.mjs";
 import { inspect, modalCompleted } from "./ui-helpers.mjs";
-import { orientWithTurntable } from "./ui-orbit-orient.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -213,62 +212,6 @@ async function faceAndPlaneRoute(page, { a, b, before, source, guide }) {
   await modalCompleted(page);
   assert.deepEqual((await inspect(page)).document, before);
   await planeDestinationRoute(page, before, source, guide);
-}
-
-async function planeDestinationRoute(page, before, source, guide) {
-  const vector = page.locator(".guide-move-vector");
-  // A face has no drag hit area; only its normal destination acquires the snap.
-  await orientWithTurntable(page, [0.2, -0.6, 1]);
-  const sourcePoint = await project(page, [20, 20, 10]);
-  const surface = await project(page, [52, 8, 18]);
-  const destination = await project(page, [20, 20, 18]);
-  await page.mouse.move(sourcePoint.x, sourcePoint.y);
-  await page.mouse.down();
-  await page.mouse.move(surface.x, surface.y, { steps: 5 });
-  assert.equal(await vector.getAttribute("data-end"), "");
-  const destinations = page.locator(".guide-move-destinations");
-  assert.deepEqual(
-    await destinations
-      .locator(".guide-plane-patch")
-      .evaluateAll((nodes) => nodes.map((node) => node.dataset.plane)),
-    ["XY", "XZ", "YZ"],
-  );
-  assert.equal(
-    await destinations.locator('.guide-plane-patch stop[offset="1"][stop-opacity="0"]').count(),
-    3,
-  );
-  assert.ok((await destinations.locator('.guide-plane-patch[data-plane="XZ"] line').count()) > 0);
-  const dot = destinations.locator('circle[data-point="[20,20,18]"]');
-  assert.equal(await dot.count(), 1);
-  assert.equal(await dot.getAttribute("r"), "4");
-  assert.equal(await destinations.locator("path").count(), 0, "destination dots have no crosses");
-  const line = destinations.locator('line[data-point="[20,20,18]"]');
-  assert.equal(await line.count(), 1);
-  assert.ok(Math.abs(Number(await line.getAttribute("x1")) - sourcePoint.x) < 0.1);
-  assert.ok(Math.abs(Number(await line.getAttribute("y2")) - destination.y) < 0.1);
-  assert.equal(await line.evaluate((el) => getComputedStyle(el).strokeDasharray), "2px, 4px");
-  await page.screenshot({ path: ".cache/sketch-review/guide-drag-destinations.png" });
-  const canonical = await project(page, [20, 20, 0]);
-  await page.mouse.move(canonical.x, canonical.y, { steps: 5 });
-  const patch = destinations.locator('.guide-plane-patch[data-plane="XY"]');
-  assert.match(await patch.getAttribute("class"), /highlighted/);
-  assert.equal(await patch.evaluate((el) => getComputedStyle(el).color), "rgb(139, 92, 246)");
-  await page.screenshot({ path: ".cache/sketch-review/guide-plane-parent-highlight.png" });
-  await page.mouse.move(surface.x, surface.y, { steps: 5 });
-  assert.equal(await destinations.locator(".guide-plane-patch.highlighted").count(), 0);
-  await page.mouse.move(destination.x, destination.y, { steps: 5 });
-  assert.equal(await vector.getAttribute("data-target"), "Face plane");
-  assert.deepEqual(JSON.parse(await vector.getAttribute("data-end")), [20, 20, 18]);
-  assert.deepEqual(JSON.parse(await vector.getAttribute("data-start")), [20, 20, 10]);
-  await page.screenshot({ path: ".cache/sketch-review/guide-face-parent-highlight.png" });
-  await page.mouse.up();
-  await modalCompleted(page);
-  assert.equal(await destinations.locator(".guide-plane-patch").count(), 0);
-  const state = await inspect(page);
-  assert.deepEqual(guidePosition(state.document, guide.anchor), [20, 20, 18]);
-  assert.equal(state.document.bodies.find((body) => body.id === source.id).volume, source.volume);
-  await chooseTool(page, "undo", "undo");
-  assert.deepEqual((await inspect(page)).document, before);
 }
 
 async function savedMarkerRoute(page, name, before) {

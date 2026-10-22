@@ -115,6 +115,11 @@ Canonical planes use purple emphasis on their local grid patches. Before resolvi
 an ambiguous endpoint, its potential parents are highlighted together; the chooser
 then follows the selected destination. Moving away, Shift, cancellation or completion
 clears this destination emphasis without changing the geometry selection.
+A locked face-plane destination also reveals a narrow fuzzy grid stroke within
+that face's plane, from the closest point on the actual face to the destination.
+This partial grid makes coplanarity visible across a gap; it does not appear before
+lock-on. The short reveal plays once per lock and respects reduced motion.
+Leaving the target, Shift or ending the drag removes the face grid.
 Each destination has the same 10 CSS pixel hit radius. The rest of a face or plane
 does not acquire a snap. The destination is the normal projection of the starting
 guide, including projections outside a face's trim boundary. Points on

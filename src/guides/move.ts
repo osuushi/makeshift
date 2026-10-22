@@ -193,7 +193,7 @@ export class GuideMove {
       p.plane && p.reference.kind === "plane" && !p.reference.world ? [p.reference] : [],
     );
     this.highlight.show(anchors, references);
-    this.destinations.highlight(parents);
+    this.destinations.highlight(parents, !!target);
     this.view.show(drag.origin, target, this.cursor());
     this.editor.world.requestDraw();
   }
