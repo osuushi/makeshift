@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { drag, inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
+import { toolboxViewportRoute } from "./ui-toolbox-viewport.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 // Real pointer routes cover flyout crossings, click suppression after moves and shared settings.
@@ -54,6 +55,7 @@ await withUiRuntimes(
     await focusAndTouch(page, name);
     await page.mouse.move(700, 500);
     await page.screenshot({ path: `.cache/sketch-review/${name}-nested-toolbox.png` });
+    await toolboxViewportRoute(page, name);
     console.log(
       `${name}: flat alternatives, stable named drawer, drag in/out, persistence, settings and real rectangle passed`,
     );

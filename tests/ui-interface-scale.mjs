@@ -8,6 +8,8 @@ export async function changeScale(page, value, tools = false) {
   if (tools) await chooseTool(page, "user interface scale", "settings");
   else await page.locator(".settings-trigger").click();
   const dialog = page.getByRole("dialog", { name: "Settings", exact: true });
+  const general = dialog.getByRole("tab", { name: "General", exact: true });
+  if (await general.count()) await general.click();
   await dialog.getByRole("combobox", { name: "User interface scale" }).selectOption(String(value));
   await dialog.getByRole("button", { name: "Done", exact: true }).click();
   await settled(page);

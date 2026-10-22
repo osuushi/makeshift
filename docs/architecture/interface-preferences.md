@@ -105,6 +105,11 @@ in viewport CSS pixels. Anchored arrow widgets center through a percentage
 translation, and sketch move-marker SVG dimensions and centering scale together.
 Measured panel dimensions govern viewport fitting. The Entities sidebar begins
 below the measured header so wrapped controls remain reachable at narrow widths.
+The sidebar reserves the toolbox's measured natural height first. Entities yields
+the remaining vertical space and scrolls its list; toolbox scrolling is a fallback
+only when the tools cannot fit with Entities reduced to its title. Resizing,
+interface scale, expanded entity children and contextual reference controls all
+recompute the allocation.
 The agent terminal adjusts its font and fits its cell grid when the preference changes. This is presentation;
 geometry dimensions, camera zoom and accepted data are independent of the choice.
 New display code should preserve this coordinate boundary rather than applying

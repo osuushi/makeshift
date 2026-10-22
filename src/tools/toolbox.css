@@ -18,6 +18,7 @@
   display: grid;
   gap: 2px;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .toolbox-references {
   display: grid;

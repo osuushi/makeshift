@@ -4,6 +4,7 @@ import { onToolboxChange, setToolboxTree, toolboxTree } from "../preferences/too
 import type { SketchEditor } from "../sketch/editor.js";
 import { type ToolResult, toolCatalog } from "./catalog.js";
 import { borrowToolFocus, restoreToolFocus, toolMenuOpen } from "./menu-focus.js";
+import { SidebarLayout } from "./sidebar-layout.js";
 import { ToolboxDrag } from "./toolbox-drag.js";
 import { moveToolbox } from "./toolbox-layout.js";
 import { ToolboxReferences } from "./toolbox-references.js";
@@ -22,7 +23,7 @@ export class Toolbox {
   private root = document.createElement("aside");
   private grid = document.createElement("div");
   private references: ToolboxReferences;
-  private observer: ResizeObserver;
+  private layout: SidebarLayout;
   private abort = new AbortController();
   private drag: ToolboxDrag;
   private disposePreference: () => void;
@@ -36,7 +37,7 @@ export class Toolbox {
   constructor(
     private editor: SketchEditor,
     app: HTMLElement,
-    private entities: HTMLElement,
+    entities: HTMLElement,
     mountMore: (host: HTMLElement) => void,
   ) {
     this.root.className = "toolbox";
@@ -58,9 +59,7 @@ export class Toolbox {
       (path, row) => this.expand(path, row),
       () => this.close(),
     );
-    this.observer = new ResizeObserver(this.position);
-    this.observer.observe(entities);
-    window.addEventListener("resize", this.position, { signal: this.abort.signal });
+    this.layout = new SidebarLayout(app, entities, this.root, this.grid);
     this.root.addEventListener("pointerleave", (event) => {
       this.hoverBlock = null;
       if (event.pointerType !== "touch" && !this.drag.dragging)
@@ -94,14 +93,6 @@ export class Toolbox {
     editor.world.changed.add(this.update);
     this.update();
   }
-  private position = (): void => {
-    const bounds = this.entities.getBoundingClientRect(),
-      top = Math.ceil(bounds.bottom + 8);
-    this.root.style.top = `${top}px`;
-    const chrome =
-      this.root.getBoundingClientRect().height - this.grid.getBoundingClientRect().height;
-    this.grid.style.maxHeight = `${Math.max(60, window.innerHeight - top - chrome - 12)}px`;
-  };
   private update = (): void => {
     const catalog = toolCatalog(this.editor)
       .results()
@@ -129,7 +120,7 @@ export class Toolbox {
     this.close();
     this.grid.replaceChildren(...toolboxTree().items.map((_, index) => this.row([index])));
     this.references.update(this.tools);
-    this.position();
+    this.layout.schedule();
   };
   private activeTool(): string {
     const source = this.editor.interactions.toolId;
@@ -272,7 +263,7 @@ export class Toolbox {
     this.close();
     this.disposePreference();
     this.abort.abort();
-    this.observer.disconnect();
+    this.layout.dispose();
     this.editor.world.changed.delete(this.update);
     this.root.remove();
   }
