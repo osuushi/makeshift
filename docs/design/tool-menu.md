@@ -6,9 +6,9 @@ immediate next action belong in the local brief.
 ## Outcome and agreed direction
 
 Show a compact editable toolbox below Entities. Each row displays its selected
-tool's icon and name. Similar tools live in unnamed nested groups; hovering a group
-opens alternatives to its right. Selecting an alternative promotes it through its
-ancestor groups. The tree is shared across sketch and modeling modes, and uses the
+tool's icon and name. Frequent tools live in flat groups; hovering a group
+opens alternatives to its right. Selecting an alternative updates that group.
+Other Tools holds named nested menus whose titles never change on invocation. The tree is shared across sketch and modeling modes, and uses the
 ordinary catalog activation lifecycle. Search remains the full discovery surface;
 its button and Command-F / Ctrl-F open the searchable menu.
 Search supports fuzzy names, synonyms and related operations. Available matches
@@ -204,49 +204,52 @@ acceptance.
 
 ## Editable toolbox (2026-10-22)
 
-The toolbox replaces the illustrated Browse navigator. Its persisted model is an
-owned tree: a tool ID or `{items: ToolboxItem[], selected: number}`. Groups have
-no names and tools occur once, without aliases. Each group recursively displays
-the selected descendant's icon and canonical name. Selecting an alternative or
-switching tools through Search or a shortcut remembers the selection through its ancestors.
-Only explicit tool choices change these selections. Modal tools retain their parent
-identity through internal steps: Cube, Cylinder and Cone stay selected while
-Extrude edits their depth, and Sphere stays selected while Revolve finishes it.
-Acceptance or cancellation keeps the parent as the remembered alternative;
-explicitly choosing Extrude or Revolve still promotes that tool.
-Select is a fixed standalone first row: automatic fallback to Select must not replace
-another group's remembered alternative. It cannot be dragged into a group.
-Defaults have six unnamed groups for drawing, creation, Booleans, modification, transforms
-and references. Only tools that remain active for further interaction are eligible.
-Immediate commands (selection refinement, workspace entry, visibility toggles,
-cleanup, file/export and diagnostics) stay in Search and existing controls. The
-catalog is not automatically appended to the toolbox. Constraints keep their
+The toolbox has three behaviors:
+
+- Select is a fixed standalone first row. It cannot be dragged into a group.
+- Ordinary groups are single-layer alternatives. Each shows its selected tool's
+  icon and name; choosing an alternative through the toolbox, Search or a shortcut
+  updates that button. Hover opens the alternatives to the right.
+- Other Tools is a fixed named drawer with titled nested submenus. Clicking its
+  row or a submenu opens it, never launches a remembered descendant. Choosing a
+  buried tool changes no group selection or menu title. It remains in the drawer
+  until the user drags it out.
+
+The owned tree uses tool IDs or `{items, selected, title?}` groups. A title denotes
+an ordinary menu rather than swapping alternatives; titles only occur in the
+Other Tools subtree. Each tool occurs once, without aliases. Default frequent
+alternatives cover drawing, solid creation, Booleans, shape editing and transforms.
+Other Tools contains Sketch editing, Surface details and Planes & references.
+Only ongoing tools belong here. Immediate commands and constraints retain their
 contextual controls and Search.
 
-Hover opens alternatives to the right, including nested flyouts. Click the main
-button to invoke its tool; the separate arrow also opens alternatives for touch
-and keyboard access. Up/Down navigates siblings, Right opens a group, Left returns,
-and Escape closes discovery without accepting a pending numeric edit. Opening
-Search closes the flyouts and preserves the same borrowed focus. Unavailable tools
-retain their positions and explanatory tooltips; group arrows remain usable.
+Only explicit choices update an ordinary group's selection. Modal tools retain
+parent identity through internal steps: Cube, Cylinder and Cone remain selected
+while Extrude edits their depth, and Sphere remains selected while Revolve finishes
+it. Completion or cancellation keeps the parent as the remembered alternative.
+Explicitly choosing Extrude or Revolve still promotes it in its own flat group.
 
-Drag a row to move the actual tool or whole group. Dropping onto a tool creates a
-group; hovering a group during a drag opens its alternatives. Drop indicators at
-the top/bottom of a row insert before/after it; the center of a group appends inside.
-A group cannot move into itself or its descendants. Empty groups are removed and
-single-child groups collapse. Moving never invokes a tool or edits geometry.
+Drag to reorder or move tools between the toolbox and drawer. Dropping a tool onto
+another top-level tool creates a flat group. Inside an existing group, dropping onto
+a tool places it after that tool; no nested alternatives are created. Moving an
+entire group into the drawer creates a named menu; moving it out produces flat
+alternatives. Hovering groups during a drag opens them to choose a destination.
+The top/bottom drop indicators insert before/after a row; the center of a group
+appends inside. Cycles are rejected. Empty named menus remain usable drop targets;
+ordinary empty groups disappear and singletons collapse. Dragging never invokes
+commands or edits geometry.
 
-Settings has General and Toolbox tabs. Toolbox shows the entire expanded tree,
-supports the same dragging and provides a top-level drop area. Rows have no
-separate arrow buttons for moving items. Selecting a row chooses the representative without launching the tool.
-Reset toolbox to defaults restores the authored grouping. The tree and selected
-indices persist under `makeshift.toolbox.v3` on the device, outside documents and
-Undo, and synchronize between windows using browser storage events. Invalid stored
-trees fall back to defaults. Physical iPad/Pencil ergonomics require device review.
+Settings has General and Toolbox tabs. The Toolbox tab shows the entire expanded
+tree, supports the same dragging, and provides a top-level drop area. Selecting a
+tool inside a flat group chooses its displayed alternative without invoking it.
+Reset toolbox to defaults restores the authored grouping. Preferences use
+`makeshift.toolbox.v4`, outside documents and Undo, with storage-event sync between
+windows. Migration from v3/v2 flattens old swapping groups and moves infrequent
+grouped tools into the named drawer. Old preference values remain available.
 
-The v2 preference starts with the compact defaults instead of importing the earlier
-command-heavy v1 tree; the old preference is retained. Saved v2 layouts are filtered
-to eligible tools and Select is always extracted to its fixed first row.
-
-The v3 preference promotes the old Boolean subgroup to a top-level row, preserving
-its selected alternative and other saved groups. Fresh defaults show Union.
+Click the main tool button to invoke it; the separate arrow opens alternatives for
+touch and keyboard access. Up/Down navigates siblings, Right opens a group, Left
+returns, and Escape closes discovery without accepting a pending numeric edit.
+Opening Search closes flyouts and preserves borrowed focus. Unavailable tools
+retain their positions and explanatory tooltips; menu/group arrows stay usable.
+Physical iPad/Pencil ergonomics still require device review.

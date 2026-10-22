@@ -1,4 +1,5 @@
 const icons: Record<string, string> = {
+  "toolbox-menu": '<path d="M3 6h7l2 3h9v11H3V6Z"/>',
   "sketch-grid":
     '<rect x="3" y="3" width="18" height="18"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>',
   select: '<path d="M5 3v17l5-5 3 7 3-1-3-7h7L5 3Z"/>',

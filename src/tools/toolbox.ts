@@ -4,10 +4,10 @@ import { type ToolResult, toolCatalog } from "./catalog.js";
 import { borrowToolFocus, restoreToolFocus, toolMenuOpen } from "./menu-focus.js";
 import { toolSearchShortcut } from "./search-shortcut.js";
 import { ToolboxDrag } from "./toolbox-drag.js";
+import { moveToolbox } from "./toolbox-layout.js";
 import { toolboxRow } from "./toolbox-row.js";
 import {
   findToolboxPath,
-  moveToolboxItem,
   selectToolboxPath,
   type ToolboxPath,
   toolboxItem,
@@ -49,7 +49,7 @@ export class Toolbox {
     this.drag = new ToolboxDrag(
       this.root,
       (from, target) => {
-        setToolboxTree(moveToolboxItem(toolboxTree(), from, target.path, target.mode));
+        setToolboxTree(moveToolbox(toolboxTree(), from, target.path, target.mode));
       },
       (path, row) => this.expand(path, row),
       () => this.close(),
@@ -152,7 +152,12 @@ export class Toolbox {
     );
     const leaf = toolboxLeaf(item);
     const active = this.activeTool();
-    row.querySelector(".toolbox-item")?.setAttribute("aria-pressed", String(leaf === active));
+    row
+      .querySelector(".toolbox-item")
+      ?.setAttribute(
+        "aria-pressed",
+        String(!(typeof item !== "string" && item.title) && leaf === active),
+      );
     row.addEventListener("pointerenter", (event) => {
       clearTimeout(this.closeTimer);
       if (event.pointerType === "touch" || this.drag.dragging) return;
@@ -168,7 +173,7 @@ export class Toolbox {
   }
   private async activate(path: ToolboxPath): Promise<void> {
     const item = toolboxItem(toolboxTree(), path);
-    if (item === undefined) return;
+    if (item === undefined || (typeof item !== "string" && item.title)) return;
     const tool = this.tools.get(toolboxLeaf(item));
     if (!tool || toolCatalog(this.editor).reason(tool)) return;
     this.close();
@@ -191,8 +196,20 @@ export class Toolbox {
     menu.setAttribute("role", "menu");
     menu.setAttribute(
       "aria-label",
-      `Alternatives for ${this.tools.get(toolboxLeaf(item))?.label ?? toolboxLeaf(item)}`,
+      item.title ??
+        `Alternatives for ${this.tools.get(toolboxLeaf(item))?.label ?? toolboxLeaf(item)}`,
     );
+    if (item.title) {
+      const title = document.createElement("strong");
+      title.className = "toolbox-menu-title";
+      title.textContent = item.title;
+      menu.append(title);
+    }
+    if (!item.items.length) {
+      const empty = document.createElement("p");
+      empty.textContent = "Drag tools here to add them.";
+      menu.append(empty);
+    }
     menu.append(...item.items.map((_, index) => this.row([...path, index])));
     this.root.append(menu);
     this.menus.push({ path, element: menu });

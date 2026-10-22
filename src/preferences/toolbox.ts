@@ -1,20 +1,20 @@
-import {
-  defaultToolbox,
-  normalizeToolbox,
-  promoteBooleanGroup,
-} from "../tools/toolbox-defaults.js";
+import { defaultToolbox } from "../tools/toolbox-defaults.js";
+import { normalizeToolbox } from "../tools/toolbox-layout.js";
+import { migrateToolbox } from "../tools/toolbox-migration.js";
 import { type ToolboxGroup, validToolboxTree } from "../tools/toolbox-tree.js";
 
-const key = "makeshift.toolbox.v3";
+const key = "makeshift.toolbox.v4";
 const listeners = new Set<() => void>();
 let tree = defaultToolbox();
 try {
   const current = localStorage.getItem(key);
   const saved: unknown = JSON.parse(
-    current ?? localStorage.getItem("makeshift.toolbox.v2") ?? "null",
+    current ??
+      localStorage.getItem("makeshift.toolbox.v3") ??
+      localStorage.getItem("makeshift.toolbox.v2") ??
+      "null",
   );
-  if (validToolboxTree(saved))
-    tree = normalizeToolbox(current ? saved : promoteBooleanGroup(saved));
+  if (validToolboxTree(saved)) tree = current ? normalizeToolbox(saved) : migrateToolbox(saved);
 } catch {
   /* Keep defaults if storage is unavailable or invalid. */
 }

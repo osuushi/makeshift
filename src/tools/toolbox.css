@@ -180,3 +180,19 @@
     left: 12px;
   }
 }
+.toolbox-menu-title {
+  display: block;
+  padding: 7px 8px;
+  color: #647285;
+  font-size: 11px;
+}
+.toolbox-grid > [data-menu] {
+  margin-top: 5px;
+  border-top: 1px solid #e3e8ef;
+  border-radius: 0;
+}
+.toolbox-flyout > p {
+  margin: 8px;
+  color: #647285;
+  font-size: 12px;
+}

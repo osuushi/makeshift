@@ -2,6 +2,8 @@ export type ToolboxItem = string | ToolboxGroup;
 export interface ToolboxGroup {
   items: ToolboxItem[];
   selected: number;
+  /** Named menus open without invoking or remembering a descendant. */
+  title?: string;
 }
 export type ToolboxPath = number[];
 export type ToolboxDrop = "before" | "after" | "inside";
@@ -9,7 +11,9 @@ export function toolboxGroup(...items: ToolboxItem[]): ToolboxGroup {
   return { items, selected: 0 };
 }
 export function toolboxLeaf(item: ToolboxItem): string {
-  return typeof item === "string" ? item : toolboxLeaf(item.items[item.selected] ?? item.items[0]);
+  if (typeof item === "string") return item;
+  const selected = item.items[item.selected] ?? item.items[0];
+  return selected === undefined ? "" : toolboxLeaf(selected);
 }
 export function toolboxItem(root: ToolboxGroup, path: ToolboxPath): ToolboxItem | undefined {
   let item: ToolboxItem = root;
@@ -27,8 +31,9 @@ export function selectToolboxPath(root: ToolboxGroup, path: ToolboxPath): Toolbo
   const next = structuredClone(root);
   let group = next;
   for (const index of path) {
+    if (group.title) return root;
     const item = group.items[index];
-    if (item === undefined) return root;
+    if (item === undefined || (typeof item !== "string" && item.title)) return root;
     group.selected = index;
     if (typeof item === "string") break;
     group = item;
@@ -88,6 +93,7 @@ export function moveToolboxItem(
       0,
       g.items.indexOf(replacements.get(previous as ToolboxItem) ?? (previous as ToolboxItem)),
     );
+    if (g.title) return g;
     return g.items.length === 0 ? null : g.items.length === 1 ? g.items[0] : g;
   };
   clean(next);
@@ -108,10 +114,12 @@ export function validToolboxTree(value: unknown): value is ToolboxGroup {
     const g = item as ToolboxGroup;
     return (
       Array.isArray(g.items) &&
-      g.items.length > 0 &&
+      (g.title === undefined ||
+        (typeof g.title === "string" && !!g.title.trim() && g.title.length <= 80)) &&
+      (g.items.length > 0 || !!g.title) &&
       Number.isInteger(g.selected) &&
       g.selected >= 0 &&
-      g.selected < g.items.length &&
+      (g.selected < g.items.length || (g.items.length === 0 && g.selected === 0)) &&
       g.items.every((i) => visit(i, depth + 1))
     );
   };

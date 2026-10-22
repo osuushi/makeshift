@@ -6,7 +6,7 @@ import { chooseTool } from "./ui-tools.mjs";
 // Real pointer routes cover flyout crossings, click suppression after moves and shared settings.
 await withUiRuntimes(
   async (page, name) => {
-    await page.evaluate(() => localStorage.removeItem("makeshift.toolbox.v3"));
+    await page.evaluate(() => localStorage.removeItem("makeshift.toolbox.v4"));
     await page.waitForLoadState("networkidle");
     await page.reload();
     await page.waitForFunction(() => !!window.makeshiftInspect);
@@ -38,20 +38,19 @@ await withUiRuntimes(
       menu.locator('[data-tool="sphere"]'),
     );
     let tree = await stored(page);
-    assert.deepEqual(tree.items[2].items[1].items, ["sphere", "cylinder"]);
+    assert.deepEqual(tree.items[2].items.slice(0, 3), ["cube", "sphere", "cylinder"]);
     assert.equal((await inspect(page)).interaction, null, "Dragging does not launch a tool");
-    await root.locator('[data-tool="cube"]').hover();
-    await page.locator('.toolbox-flyout [data-tool="sphere"]').hover();
-    assert.equal(await page.locator(".toolbox-flyout").count(), 2);
-    await page.locator(".toolbox-flyout").last().locator('[data-tool="cylinder"]').click();
+    await root.locator('[data-tool="cylinder"]').hover();
+    assert.equal(await page.locator(".toolbox-flyout").count(), 1);
+    await page.locator(".toolbox-flyout").last().locator('[data-tool="sphere"]').click();
     await page.keyboard.press("Escape");
     tree = await stored(page);
     assert.equal(tree.items[2].selected, 1);
-    assert.equal(tree.items[2].items[1].selected, 1);
     await page.waitForLoadState("networkidle");
     await page.reload();
     await page.waitForFunction(() => !!window.makeshiftInspect);
-    assert.equal(await root.locator('[data-tool="cylinder"]').count(), 1);
+    assert.equal(await root.locator('[data-tool="sphere"]').count(), 1);
+    await drawerRoute(page);
     await settingsRoute(page);
     await dragIntoGroup(page);
     await chooseTool(page, "sketch on xy", "sketch-xy");
@@ -64,11 +63,50 @@ await withUiRuntimes(
     await page.mouse.move(700, 500);
     await page.screenshot({ path: `.cache/sketch-review/${name}-nested-toolbox.png` });
     console.log(
-      `${name}: hover, nested selection, toolbox grouping, persistence, settings moves/reset and real rectangle passed`,
+      `${name}: flat alternatives, stable named drawer, drag in/out, persistence, settings and real rectangle passed`,
     );
   },
   { hasTouch: true },
 );
+
+// Escaped UI boundary: executing a buried tool must not replace any top-level button.
+async function drawerRoute(page) {
+  const root = page.locator(".toolbox-grid");
+  const labels = await root.locator(".toolbox-item").allTextContents();
+  const open = async () => {
+    await root.locator('[data-menu="Other Tools"] .toolbox-item').hover();
+    await page.locator('.toolbox-flyout [data-menu="Sketch editing"] .toolbox-item').hover();
+  };
+  await open();
+  await page.locator('.toolbox-flyout [data-tool="trim"]').click();
+  assert.deepEqual(await root.locator(".toolbox-item").allTextContents(), labels);
+  await page.keyboard.press("Escape");
+  await open();
+  await movePointer(
+    page,
+    page.locator('.toolbox-flyout [data-tool="trim"]'),
+    root.locator('[data-tool="line"]'),
+  );
+  assert.ok((await stored(page)).items[1].items.includes("trim"));
+  await root.locator('[data-tool="line"]').hover();
+  const source = await page.locator('.toolbox-flyout [data-tool="trim"]').boundingBox();
+  const target = await root.locator('[data-menu="Other Tools"]').boundingBox();
+  assert.ok(source && target);
+  await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2, { steps: 8 });
+  const submenu = page.locator('.toolbox-flyout [data-menu="Sketch editing"]');
+  await submenu.waitFor();
+  const box = await submenu.boundingBox();
+  assert.ok(box);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 4 });
+  await page.mouse.up();
+  const tree = await stored(page);
+  assert.equal(tree.items[1].items.includes("trim"), false);
+  assert.ok(tree.items[6].items[0].items.includes("trim"));
+  assert.equal(tree.items[6].title, "Other Tools");
+  assert.deepEqual(await root.locator(".toolbox-item").allTextContents(), labels);
+}
 
 async function dragIntoGroup(page) {
   const root = page.locator(".toolbox-grid");
@@ -100,9 +138,8 @@ async function settingsRoute(page) {
   const row = (path) => tree.locator(`[data-toolbox-path='${JSON.stringify(path)}']`);
   const before = (await inspect(page)).document;
   await movePointer(page, row([1, 0]), row([1, 1]));
-  assert.deepEqual((await stored(page)).items[1].items[0].items, ["rectangle", "line"]);
-  await movePointer(page, row([1, 0, 1]), row([1, 0]), 0.95);
   assert.deepEqual((await stored(page)).items[1].items.slice(0, 2), ["rectangle", "line"]);
+
   await movePointer(page, row([1]), row([2]), 0.95);
   assert.deepEqual((await stored(page)).items[2].items.slice(0, 2), ["rectangle", "line"]);
   assert.deepEqual((await inspect(page)).document, before);
@@ -112,7 +149,7 @@ async function settingsRoute(page) {
   await dialog.getByRole("button", { name: "Done", exact: true }).click();
 }
 async function stored(page) {
-  return page.evaluate(() => JSON.parse(localStorage.getItem("makeshift.toolbox.v3")));
+  return page.evaluate(() => JSON.parse(localStorage.getItem("makeshift.toolbox.v4")));
 }
 async function movePointer(page, from, to, fraction = 0.5) {
   await from.scrollIntoViewIfNeeded();

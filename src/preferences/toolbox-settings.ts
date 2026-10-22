@@ -1,13 +1,9 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { type ToolResult, toolCatalog } from "../tools/catalog.js";
 import { ToolboxDrag } from "../tools/toolbox-drag.js";
+import { moveToolbox } from "../tools/toolbox-layout.js";
 import { toolboxRow } from "../tools/toolbox-row.js";
-import {
-  moveToolboxItem,
-  selectToolboxPath,
-  type ToolboxGroup,
-  type ToolboxPath,
-} from "../tools/toolbox-tree.js";
+import { selectToolboxPath, type ToolboxGroup, type ToolboxPath } from "../tools/toolbox-tree.js";
 import { onToolboxChange, resetToolbox, setToolboxTree, toolboxTree } from "./toolbox.js";
 
 /** The complete editable tree, sharing ownership/move rules with the compact toolbox. */
@@ -18,7 +14,7 @@ export function installToolboxSettings(
   const panel = toolboxSettingsTab(dialog);
   const hint = document.createElement("p");
   hint.textContent =
-    "Drag to reorder. Drop onto a tool to group them. Drop between rows to place a tool. Select a row to choose the tool shown for that group.";
+    "Drag tools between the toolbox and Other Tools. Drop one top-level tool onto another to group them. Regular groups have one layer and remember your choice; named menus in Other Tools keep their titles.";
   const tree = document.createElement("div");
   tree.className = "toolbox-settings-tree";
   const reset = document.createElement("button");
@@ -27,7 +23,7 @@ export function installToolboxSettings(
   reset.onclick = resetToolbox;
   panel.append(hint, reset, tree);
   const drag = new ToolboxDrag(tree, (from, target) =>
-    setToolboxTree(moveToolboxItem(toolboxTree(), from, target.path, target.mode)),
+    setToolboxTree(moveToolbox(toolboxTree(), from, target.path, target.mode)),
   );
   const render = () => {
     if (drag.dragging) return;
@@ -74,10 +70,13 @@ function renderTree(
     row.querySelector(".toolbox-item")?.setAttribute("aria-disabled", "false");
     row
       .querySelector(".toolbox-item")
-      ?.setAttribute("aria-pressed", String(group.selected === index));
+      ?.setAttribute(
+        "aria-pressed",
+        String(path.length === 1 && !group.title && group.selected === index),
+      );
     if (typeof item !== "string") {
       const count = document.createElement("small");
-      count.textContent = `${item.items.length} alternatives`;
+      count.textContent = `${item.items.length} ${item.title ? "items" : "alternatives"}`;
       row.append(count);
     }
     host.append(row);

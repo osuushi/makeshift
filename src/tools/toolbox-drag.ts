@@ -46,6 +46,7 @@ export class ToolboxDrag {
     if (
       !row ||
       row.dataset.toolboxFixed ||
+      row.dataset.toolboxAnchored ||
       event.button !== 0 ||
       !event.isPrimary ||
       (event.target as Element).closest("[data-no-drag]")
