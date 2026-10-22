@@ -7,7 +7,8 @@ export async function finishes(page, c, a) {
   await placed(a, 1);
   const original = (await a.state()).document.bodies[0];
   await page.keyboard.press("Escape");
-  await a.click([8, -8, 8]);
+  // Pick geometry away from midpoint and face-center guide markers.
+  await a.click([8, -8, 4]);
   assert.equal((await a.state()).modelingSelection[0]?.kind, "edge");
   await a.button("Fillet edges");
   await a.fill("Fillet radius", 3, "textbox", false);
@@ -17,7 +18,7 @@ export async function finishes(page, c, a) {
   assert.ok(rounded.faces.some((face) => face.blend));
   await c.hold(0.6);
   await page.keyboard.press("Escape");
-  await a.click([0, 0, 16]);
+  await a.click([2, 3, 16]);
   const topSelection = (await a.state()).modelingSelection[0];
   assert.equal(topSelection?.kind, "face");
   const top = rounded.faces.find((face) => face.id === topSelection.face);

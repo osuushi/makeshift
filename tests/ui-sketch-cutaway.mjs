@@ -31,10 +31,10 @@ export async function cutawayRoute(page, name, plane = "XY") {
   await inspect(page);
   // Lift the body clear of the plane so only the foreground pass can show it.
   // A large selected body covers the turntable helper's center-band press points.
-  // Clear through Select, orbit, then reselect its visible cap with the new projection.
+  // Clear through Select, orbit, then reselect off-center to avoid the cap guide.
   await clearSelection(page);
   await orient(page, [1, -1, 1]);
-  await worldClick(page, { XY: [0, 0, 10], XZ: [0, -10, 0], YZ: [10, 0, 0] }[plane]);
+  await worldClick(page, { XY: [5, 3, 10], XZ: [5, -10, 3], YZ: [10, 5, 3] }[plane]);
   await chooseTool(page, "select owning bodies", "selection-bodies");
   await chooseTool(page, "transform", "transform");
   const axis = { XY: "Z", XZ: "Y", YZ: "X" }[plane];
