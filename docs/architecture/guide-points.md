@@ -21,10 +21,12 @@ Do not recursively expand through those neighbors to the rest of the body.
 Sketch curves and point handles use their curve or editing-group members.
 All semantic feature kinds participate, including centers.
 
-Remove every candidate with another candidate less than 32 CSS pixels away,
+Definitions at the same 3D location share one marker and the existing definition
+chooser, so a circular rim center and its cap centers do not suppress one another.
+Remove every candidate with a distinct point less than 32 CSS pixels away,
 using the original set so collisions remove both points and do not depend on
-iteration order. Co-located definitions also collide. Every visible saved guide
-participates in this spacing check regardless of its owner or pointer distance;
+iteration order. Points at different depths still collide when projected together.
+Every visible saved guide participates in this spacing check regardless of its owner or pointer distance;
 saved guides remain visible, while hidden guides and hidden owners do not block.
 Already-saved definitions do not also appear as ghosts.
 

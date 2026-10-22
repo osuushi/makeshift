@@ -2,13 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import { type GuideCandidate, guideCandidates } from "../src/guides/candidates.js";
+import { near } from "../src/guides/geometry.js";
 import { hoverGuides, spacedGuides } from "../src/guides/hover.js";
 import { exposedSpan, parentClearance } from "../src/guides/parent-clearance.js";
 import { emptySketch, type Sketch } from "../src/sketch/document.js";
 import { pickModel } from "../src/sketch/model-selection.js";
 import { ModelSelection } from "../src/sketch/model-selection-state.js";
 import { planes, type Vector } from "../src/sketch/planes.js";
-import { prism, square } from "./body-edge-fixtures.js";
+import { lift, prism, square } from "./body-edge-fixtures.js";
 import { pickingEditor } from "./body-picking-fixtures.js";
 
 const candidate = (x: number, y = 0): GuideCandidate => ({
@@ -23,7 +24,12 @@ test("spacing removes both sides and whole collision chains, independent of orde
   assert.deepEqual(spacedGuides(points, [], project), [points[3]]);
   assert.deepEqual(spacedGuides([...points].reverse(), [], project), [points[3]]);
   assert.equal(spacedGuides([candidate(0), candidate(32)], [], project).length, 2);
-  assert.deepEqual(spacedGuides([candidate(0), candidate(0)], [], project), []);
+  const coincident = [candidate(0), candidate(0)];
+  assert.deepEqual(spacedGuides(coincident, [], project), coincident);
+  assert.deepEqual(spacedGuides([...coincident, candidate(20)], [], project), []);
+  assert.deepEqual(spacedGuides(coincident, [candidate(0)], project), []);
+  const behind = { ...candidate(0), point: [0, 0, -10] as Vector };
+  assert.deepEqual(spacedGuides([candidate(0), behind], [], project), []);
   assert.deepEqual(spacedGuides([candidate(0)], [candidate(31)], project), []);
 });
 
@@ -192,6 +198,33 @@ test("native face hover exposes boundary-edge neighbors and every junction paren
       "vertical incident edge is collapsed on screen",
     );
     assert.deepEqual(probe([50, 50, 10]), { hit: null, guides: [] });
+  } finally {
+    owner.close();
+  }
+});
+
+test("coincident native cylinder cap definitions remain discoverable from the cap and side", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const body = await lift(owner, {
+      ...emptySketch(planes.XY),
+      curves: [
+        { id: "rim", kind: "circle", center: { x: 0, y: 0 }, radius: 20, construction: false },
+      ],
+    });
+    const editor = pickingEditor([body], [0, -100, 70]);
+    Object.assign(editor, { modeling: new ModelSelection() });
+    const cap = body.faces.find((face) => face.plane && Math.abs(face.signature[5] - 10) < 1e-6);
+    const side = body.faces.find((face) => !face.plane);
+    assert.ok(cap && side);
+    const center = [0, 0, 10] as Vector;
+    const centers = (face: string) => {
+      editor.modeling.hover = { kind: "face", body: body.id, face };
+      return hoverGuides(editor, editor.world.project(center)).filter((p) => near(p.point, center));
+    };
+    const top = centers(cap.id);
+    assert.equal(top.length, 4, "rim center plus all three face centers share one marker");
+    assert.equal(centers(side.id).length, 1, "side exposes the same circular rim center");
   } finally {
     owner.close();
   }

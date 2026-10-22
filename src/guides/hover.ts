@@ -4,6 +4,7 @@ import type { Point } from "../sketch/planes.js";
 import { hitIds } from "../sketch/sketch-hit.js";
 import { type GuideCandidate, guideCandidates } from "./candidates.js";
 import { guidePosition } from "./evaluate.js";
+import { near } from "./geometry.js";
 import { parentClearance } from "./parent-clearance.js";
 import { visibleGuides } from "./snapping.js";
 import { type GuideAnchor, guideKey, guideMeaning, guideOwner } from "./types.js";
@@ -58,7 +59,7 @@ function hoveredCandidates(editor: SketchEditor): GuideCandidate[] {
   return candidates;
 }
 
-/** Cull both sides of a collision, using the original candidate set (never greedy). */
+/** Coincident definitions share a marker; distinct crowded points cull both sides. */
 export function spacedGuides(
   candidates: readonly GuideCandidate[],
   saved: readonly GuideCandidate[],
@@ -66,7 +67,12 @@ export function spacedGuides(
 ): GuideCandidate[] {
   const points = [...candidates, ...saved].map((p) => project(p.point));
   return candidates.filter((_, i) =>
-    points.every((p, j) => i === j || Math.hypot(p.x - points[i].x, p.y - points[i].y) >= 32),
+    points.every(
+      (p, j) =>
+        i === j ||
+        (j < candidates.length && near(candidates[i].point, candidates[j].point)) ||
+        Math.hypot(p.x - points[i].x, p.y - points[i].y) >= 32,
+    ),
   );
 }
 
