@@ -6,7 +6,7 @@ App Store. Release builds are manually requested from `main`; they do not run
 on pushes or pull requests. Intel and Windows installers are outside this release
 pipeline. Signed Apple Silicon releases receive automatic preview updates.
 
-The disposable macOS release runner blocks UDP/443 before signing, so Apple's
+The disposable macOS ticket-download jobs block UDP/443, so Apple's
 ticket delivery uses HTTPS over TCP. This follows the
 [hosted-runner HTTP/3 issue](https://github.com/actions/runner-images/issues/14924#issuecomment-6188826956).
 Signature, notarization, stapler validation and Gatekeeper checks remain required.
@@ -26,6 +26,24 @@ available. Publication is independent: one pipeline can finish even if the other
 fails. Retry a failed job in the combined run to avoid repeating successful
 releases. Builds and signing are serialized with individual runs of the same
 pipeline, and another Release all run does not cancel a release in progress.
+
+macOS preserves separate unsigned, signed and notarized package artifacts for
+seven days. Build, signing, app notarization, app stapling/DMG creation, DMG
+notarization and final DMG stapling/verification run as separate jobs. Use
+**Re-run failed jobs** (or rerun the specific failed job) in the existing run:
+a ticket-download failure resumes from the accepted artifact and keeps its original
+release identity. It does not repeat native compilation, signing or notarization
+that already passed. Expired artifacts require a new build. Moving a command into
+another step within the same job would not provide this recovery boundary.
+
+Apple transport failures retry up to three times with 5, 15 and 45 second delays.
+Invalid signatures, credentials, rejected notarizations and invalid tickets still
+fail immediately. App and DMG stapler validation, Gatekeeper and signed-package
+acceptance remain publication gates.
+
+Only the web release records and packages landing-page demos, from its tested
+WASM build. macOS publishes the app, native sources and runtime-source links;
+it does not regenerate or bundle a second copy of the website demos.
 
 ## Local package and verification
 
@@ -105,7 +123,8 @@ verification so their costs are visible in Actions.
 
 Release checks signing secrets before the expensive build, selects arm64
 `macos-15` and Xcode 16.4, builds and tests the unsigned app,
-signs and notarizes the app and DMG, tests the signed
+preserves the unsigned app and matching sources, then signs and notarizes the app and DMG
+through artifact-backed jobs, tests the signed
 app, and only then publishes a prerelease. Failed source preparation prevents
 publishing the app release. Do not enable automatic cancellation while signing.
 GitHub's runner image can remove an Xcode installation; update the explicit
