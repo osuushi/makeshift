@@ -208,7 +208,12 @@ The toolbox replaces the illustrated Browse navigator. Its persisted model is an
 owned tree: a tool ID or `{items: ToolboxItem[], selected: number}`. Groups have
 no names and tools occur once, without aliases. Each group recursively displays
 the selected descendant's icon and canonical name. Selecting an alternative or
-switching tools through a shortcut remembers the selection through its ancestors.
+switching tools through Search or a shortcut remembers the selection through its ancestors.
+Only explicit tool choices change these selections. Modal tools retain their parent
+identity through internal steps: Cube, Cylinder and Cone stay selected while
+Extrude edits their depth, and Sphere stays selected while Revolve finishes it.
+Acceptance or cancellation keeps the parent as the remembered alternative;
+explicitly choosing Extrude or Revolve still promotes that tool.
 Select is a fixed standalone first row: automatic fallback to Select must not replace
 another group's remembered alternative. It cannot be dragged into a group.
 Defaults have six unnamed groups for drawing, creation, Booleans, modification, transforms

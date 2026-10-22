@@ -26,7 +26,7 @@ export class Toolbox {
   private menus: { path: ToolboxPath; element: HTMLElement }[] = [];
   private tools = new Map<string, ToolResult>();
   private signature = "";
-  private active = "";
+  private choice: { readonly id: string } | null = null;
   private hoverBlock: { x: number; y: number } | null = null;
   private borrowed = false;
   private closeTimer: ReturnType<typeof setTimeout> | undefined;
@@ -105,10 +105,10 @@ export class Toolbox {
       .filter((tool) => tool.showInTools !== false);
     this.tools = new Map(catalog.map((tool) => [tool.id, tool]));
     this.root.dataset.mode = this.editor.world.active ? "sketch" : "modeling";
-    const active = this.activeTool();
-    if (active !== this.active) {
-      this.active = active;
-      const path = findToolboxPath(toolboxTree(), active);
+    const choice = toolCatalog(this.editor).lastChoice;
+    if (choice !== this.choice) {
+      this.choice = choice;
+      const path = choice && findToolboxPath(toolboxTree(), choice.id);
       if (path) setToolboxTree(selectToolboxPath(toolboxTree(), path));
     }
     const signature = JSON.stringify([
@@ -117,6 +117,7 @@ export class Toolbox {
       this.editor.tool,
       this.editor.modeling.tool,
       this.editor.interactions.current?.kind,
+      this.editor.interactions.toolId,
     ]);
     if (signature === this.signature || this.drag.dragging) return;
     this.signature = signature;
@@ -125,6 +126,9 @@ export class Toolbox {
     this.position();
   };
   private activeTool(): string {
+    const source = this.editor.interactions.toolId;
+    if (source && source !== this.editor.interactions.current?.kind && this.tools.has(source))
+      return source;
     if (this.editor.world.active) return this.editor.moveMode ? "transform" : this.editor.tool;
     const kind = this.editor.interactions.current?.kind;
     if (kind === "face-offset") return "offset";
@@ -168,8 +172,7 @@ export class Toolbox {
     const tool = this.tools.get(toolboxLeaf(item));
     if (!tool || toolCatalog(this.editor).reason(tool)) return;
     this.close();
-    if (await toolCatalog(this.editor).activate(tool))
-      setToolboxTree(selectToolboxPath(toolboxTree(), path));
+    await toolCatalog(this.editor).activate(tool);
   }
   private expand(path: ToolboxPath, row: HTMLElement): void {
     if (this.editor.interactions.current?.captured || this.editor.isDragging) return;

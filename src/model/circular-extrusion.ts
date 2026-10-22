@@ -44,12 +44,14 @@ export async function circularExtrusion(
   }
   editor.modeling.targets = [{ kind: "profile", sketch: sketch.id, profile }];
   if (
-    !extrude.start(
-      options.distance,
-      options.symmetric,
-      options.mode,
-      options.draft,
-      options.sourceDistance,
+    !editor.interactions.continueTool(lease, () =>
+      extrude.start(
+        options.distance,
+        options.symmetric,
+        options.mode,
+        options.draft,
+        options.sourceDistance,
+      ),
     )
   )
     editor.message = "Select the circle region to extrude";
