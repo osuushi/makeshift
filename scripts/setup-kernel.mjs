@@ -53,6 +53,9 @@ else {
       "-DUSE_FREETYPE=OFF",
       "-DUSE_XLIB=OFF",
       "-DBUILD_USE_PCH=OFF",
+      // The calculator never installs OCCT signal-to-exception handlers.
+      // Retain normal C++ exceptions while removing unused setjmp work.
+      ...(process.platform === "win32" ? [] : ["-DCMAKE_CXX_FLAGS=-UOCC_CONVERT_SIGNALS"]),
     ]);
     run("cmake", [
       "--build",

@@ -190,9 +190,17 @@ void present(std::ostream& out, const Result& result, double deflection) {
         << (result.exactVolume ? *result.exactVolume : volume(result.shape));
     out << ",\"copy\":" << (result.copy ? "true" : "false") << ",\"predecessorBodies\":[";
     for (size_t i = 0; i < result.bodies.size(); ++i) { if (i) out << ','; out << quoted(result.bodies[i]); }
+    timing.phase("serialize-brep");
     // Transform handles need surface extrema, not rational spline control-hull bounds.
-    Bnd_Box box; BRepBndLib::AddOptimal(result.shape, box, false, false);
-    double x, y, z, X, Y, Z; box.Get(x, y, z, X, Y, Z);
+    auto bounds = result.exactBounds;
+    if (!bounds) {
+        Bnd_Box box; BRepBndLib::AddOptimal(result.shape, box, false, false);
+        std::array<double, 6> values;
+        box.Get(values[0], values[1], values[2], values[3], values[4], values[5]);
+        bounds = values;
+    }
+    const auto& [x, y, z, X, Y, Z] = *bounds;
+    timing.phase("bounds");
     out << "],\"center\":"; xyz(out, gp_XYZ((x+X)/2, (y+Y)/2, (z+Z)/2));
     out << ",\"bounds\":"; numbers(out, {x, y, z, X, Y, Z});
     TopTools_IndexedMapOfShape edges; TopExp::MapShapes(result.shape, TopAbs_EDGE, edges);

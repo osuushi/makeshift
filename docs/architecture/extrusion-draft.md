@@ -68,6 +68,14 @@ circle. The wall remains one periodic face. Circular rational quadratic rims are
 recognized from current geometry with per-span radial/planar checks at 1e-8 mm,
 so cap reselection retains circle controls after acceptance and reopening.
 
+Twist's mid-station accuracy check batches query points and uses a CPU spatial
+index of boundary samples to seed OCCT double-precision refinement. Each successful
+witness must satisfy the original distance tolerance and lie on the trimmed face;
+failed proposals use the existing face-extrema/full-shape distance check. This is
+the native and WASM default. WebGPU candidate search remains a compile-time and
+runtime opt-in experiment, with CPU search when its bridge is unavailable. Final
+solid validation and the geometry tolerance budget remain unchanged.
+
 Anchor dragging uses the source plane regardless of camera orientation and may
 place the axis outside the profile. Reuse Move's visible point-of-interest feedback
 and Command bypass, but accept only snap positions in the source plane. Do not

@@ -1,0 +1,110 @@
+{
+  "capturedAt": "2026-10-21T17:18:24.911Z",
+  "source": "c9b67671-39c4-4178-bef6-4bd537f24745.webarchive",
+  "description": "Captured two-arc sketch before its 10 mm extrusion. History subsequently applies a 0.0605 mm fillet to the larger circular top rim, then requests 2 mm on both vertical junction chains and reports 0.4874 mm. The final captured BRep already includes those edits; benchmarks reconstruct the earlier operands from this sketch.",
+  "document": {
+    "units": "mm",
+    "sketches": [
+      {
+        "id": "b7047b41-9368-4703-b797-659cd89f24e3",
+        "plane": {
+          "origin": [0, 0, 0],
+          "u": [1, 0, 0],
+          "v": [0, 1, 0]
+        },
+        "curves": [
+          {
+            "id": "9c6a6370-4238-4f09-a27b-89ee6ad59dd8",
+            "kind": "arc",
+            "construction": false,
+            "a": {
+              "x": 7.000000000000001,
+              "y": 7.999999999999999
+            },
+            "b": {
+              "x": 10.990950226244344,
+              "y": -0.42533936651584753
+            },
+            "bulge": 4.043244494043735
+          },
+          {
+            "id": "fb0a9970-da48-42bb-a58b-407462714ef6",
+            "kind": "arc",
+            "construction": false,
+            "a": {
+              "x": 10.990950226244333,
+              "y": -0.4253393665158285
+            },
+            "b": {
+              "x": 7,
+              "y": 7.999999999999995
+            },
+            "bulge": 5.409354729001544
+          }
+        ],
+        "constraints": [
+          {
+            "id": "f6170d31-77cc-4f61-916b-2f57f080eb61",
+            "kind": "coincident",
+            "a": {
+              "curve": "9c6a6370-4238-4f09-a27b-89ee6ad59dd8",
+              "end": "a"
+            },
+            "b": {
+              "curve": "fb0a9970-da48-42bb-a58b-407462714ef6",
+              "end": "b"
+            }
+          },
+          {
+            "id": "76c2534f-a41c-4e13-8814-34510e7479d1",
+            "kind": "coincident",
+            "a": {
+              "curve": "9c6a6370-4238-4f09-a27b-89ee6ad59dd8",
+              "end": "b"
+            },
+            "b": {
+              "curve": "fb0a9970-da48-42bb-a58b-407462714ef6",
+              "end": "a"
+            }
+          }
+        ],
+        "groups": []
+      }
+    ],
+    "sketchGrid": {
+      "minor": 0.5,
+      "major": 10,
+      "minorColor": "#b8c2cf",
+      "majorColor": "#758296",
+      "snap": true
+    }
+  },
+  "extrusion": {
+    "sources": [
+      {
+        "sketch": "b7047b41-9368-4703-b797-659cd89f24e3",
+        "profile": "b7047b41-9368-4703-b797-659cd89f24e3/0"
+      }
+    ],
+    "distance": 10,
+    "symmetric": false,
+    "draft": {
+      "mode": "angle",
+      "value": 0
+    },
+    "mode": "auto",
+    "eligibleTargets": []
+  },
+  "rimRadius": 0.0605,
+  "requestedRadius": 2,
+  "reportedRadius": 0.4874,
+  "capturedResult": {
+    "volume": 8359.71834496893,
+    "bounds": [
+      -9.000000100000006, -10.000000100000003, -1.000000014072836e-7, 33.038404910405276,
+      22.03840491040529, 10.0000001
+    ],
+    "faces": 10,
+    "edges": 21
+  }
+}

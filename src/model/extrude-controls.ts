@@ -24,7 +24,6 @@ export class ExtrudeControls {
   private previews = new PreviewRunner<Extrusion>({
     editing: () => this.lease?.phase === "editing",
     calculate: (request) => this.calculate(request),
-    supersede: () => this.editor.store.supersedePreview(true),
     settled: () => this.editor.refresh(),
   });
   private valid = false;
@@ -213,9 +212,10 @@ export class ExtrudeControls {
   }
   private async calculate(request: Extrusion): Promise<void> {
     const success = await this.editor.store.request({ kind: "extrude", extrusion: request });
-    if (request === this.previews.latest && this.lease?.phase === "editing") {
-      this.valid = success;
-      this.lease.show(success ? this.editor.store.candidate : null);
+    if (this.previews.latest && this.lease?.phase === "editing") {
+      this.valid = success && request === this.previews.latest;
+      if (success || request === this.previews.latest)
+        this.lease.show(success ? this.editor.store.candidate : null);
       if (success) this.operands.showTool();
     }
     this.editor.refresh();

@@ -6,6 +6,7 @@
 #include <gp_Pnt.hxx>
 #include <gp_Vec.hxx>
 #include <Geom_Curve.hxx>
+#include <array>
 #include <ostream>
 #include <optional>
 #include <string>
@@ -20,10 +21,11 @@ struct Result {
     std::vector<std::string> bodies;
     std::vector<TopoDS_Face> selectedFaces;
     bool copy = false;
-    // Extraction can supply the exact scalar already integrated for this final
-    // shape. No geometry mutation is allowed after setting it; meshing only adds
+    // Extraction can supply measurements already computed for this final shape.
+    // No geometry mutation is allowed after setting them; meshing only adds
     // derived triangulation, which the exact integration does not consume.
     std::optional<double> exactVolume;
+    std::optional<std::array<double, 6>> exactBounds;
 };
 gp_Pnt point(const Tree& tree);
 std::string quoted(const std::string& value);
@@ -34,7 +36,8 @@ TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies, std::v
 std::vector<Result> calculate(const Tree& input, const std::vector<Operand>& bodies, std::string& mode, std::vector<std::string>& participants, std::vector<Result>* tools = nullptr);
 void present(std::ostream& out, const Result& result, double deflection = 0.05);
 // A preferred global flux axis is a numerical integration hint for closed solids.
-double volume(const TopoDS_Shape& shape, int referenceAxis = -1);
+double volume(const TopoDS_Shape& shape, int referenceAxis = -1,
+              std::optional<std::array<double, 6>>* exactBounds = nullptr);
 void validate(const TopoDS_Shape& shape);
 
 std::vector<double> signature(const TopoDS_Shape& shape);

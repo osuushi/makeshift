@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { webBuildConfig } from "./config.mjs";
 
 const recipeFiles = [
   "scripts/web/build-wasm.mjs",
@@ -8,11 +9,13 @@ const recipeFiles = [
   "scripts/occt-source.mjs",
   "scripts/occt-recipe.json",
   "native/web/verify-sdk.cmake",
+  "scripts/web/config.mjs",
 ];
 const digest = (data) => createHash("sha256").update(data).digest("hex");
 export async function webRecipe() {
   let recipe = "";
   for (const path of recipeFiles) recipe += `${path}:${digest(await readFile(path))}\n`;
+  recipe += `exceptions:${webBuildConfig().exceptions}\n`;
   return digest(recipe);
 }
 async function installedFiles(directory, prefix = "") {
