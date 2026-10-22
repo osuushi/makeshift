@@ -58,6 +58,7 @@ test("regions measure as bounded faces against regions, faces and edges without 
       const m = await measure(owner, targets);
       close(m.minimumGap?.value, 20);
       close(m.maximumGap?.value, 20);
+      close(m.properties.find((p) => p.label === "Parallel distance")?.value, 20);
       assert.equal(m.approximate, false);
       assert.ok(m.relationships.includes("Parallel"));
     }
@@ -68,6 +69,7 @@ test("regions measure as bounded faces against regions, faces and edges without 
       const m = await measure(owner, [region(base), target]);
       close(m.distance?.value, 10);
       close(m.maximumGap?.value, 10);
+      close(m.properties.find((p) => p.label === "Parallel distance")?.value, 10);
     }
     assert.deepEqual(owner.view, before);
     assert.deepEqual((await owner.call({ kind: "read-history" })).history, history);
@@ -118,6 +120,7 @@ test("region holes and rotated sketch placement use exact trim loops and world p
     assert.equal((await owner.call({ kind: "edit", sketch: tilted })).error, undefined);
     const m = await measure(owner, [region(disk), region(tilted)]);
     close(m.properties.find((p) => p.label === "Plane angle")?.value, 45);
+    assert.ok(!m.properties.some((p) => p.label === "Parallel distance"));
     close(m.distance?.value, 0);
     assert.equal(owner.view.data.bodies?.length ?? 0, 0);
     await owner.call({ kind: "undo" });

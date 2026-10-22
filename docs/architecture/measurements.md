@@ -22,6 +22,10 @@ not dimensions, constraints, saved annotations or history entries.
   curves and cylindrical faces.
 - Two entities: shortest distance between the actual trimmed shapes, independently
   of facing-region gap. Intersecting shapes have zero shortest distance.
+- Parallel distance: exact perpendicular separation between supporting straight
+  lines, planar faces/regions, or a parallel line and plane. It is available even
+  without trimmed overlap; coplanar/collinear supports report zero. Angled or curved
+  pairs do not show this quantity.
 - Gap corresponds to orthogonal nearest projection onto a supporting curve/surface,
   only where the projected point lies inside the selected trimmed entity. A lateral
   overhang cannot clamp to a boundary and inflate the gap. For like pairs both

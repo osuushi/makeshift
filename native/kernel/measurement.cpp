@@ -84,7 +84,13 @@ void relations(const Support& a, const Support& b, std::vector<Property>& values
         const double gap = a.kind == Support::Plane
             ? std::abs(gp_Vec(a.origin, b.origin).Dot(gp_Vec(a.direction)))
             : gp_Lin(a.origin, a.direction).Distance(b.origin);
+        if (a.direction.IsParallel(b.direction, 1e-10)) values.push_back({"Parallel distance", gap, "mm"});
         if (gap < 1e-6) flags.push_back(a.kind == Support::Plane ? "Coplanar" : "Collinear");
+    }
+    if (mixed && a.direction.IsNormal(b.direction, 1e-10)) {
+        const auto& plane = a.kind == Support::Plane ? a : b;
+        const auto& line = a.kind == Support::Line ? a : b;
+        values.push_back({"Parallel distance", gp_Pln(plane.origin, plane.direction).Distance(line.origin), "mm"});
     }
 }
 TopoDS_Shape selected(const Tree& target, const std::vector<Operand>& bodies) {
