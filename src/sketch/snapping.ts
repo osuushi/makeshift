@@ -1,3 +1,4 @@
+import { sketchGuideTargets } from "../guides/snapping.js";
 import { planarBodyEdges } from "../model/planar-body-edges.js";
 import { drawingAttachment } from "./creation-links.js";
 import { curveFeatures } from "./curve-geometry.js";
@@ -42,6 +43,7 @@ export function snapped(
           .map(({ curve }) => curve)
       : [];
   const targets = [
+    ...sketchGuideTargets(editor, exclude),
     ...curves.flatMap(curveFeatures),
     ...bodyCurves
       .flatMap(curveFeatures)

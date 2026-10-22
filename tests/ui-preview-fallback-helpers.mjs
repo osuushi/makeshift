@@ -35,7 +35,8 @@ export async function circleBody(page, radius, height, origin = [0, 0]) {
   await field.fill(String(radius));
   await field.press("Enter");
   await completed(page);
-  const center = await at(page, ...origin);
+  // Pick the profile away from its circle-center guide.
+  const center = await at(page, origin[0] + radius / 2, origin[1]);
   await command(page, "return to modeling", "modeling");
   await page.mouse.click(center.x, center.y);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "profile");

@@ -1,3 +1,4 @@
+import { pruneGuides } from "../guides/model.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { HistoryNavigation, NavigationChange } from "../sketch/history-navigation.js";
 import {
@@ -6,7 +7,6 @@ import {
   type SelectionChanges,
 } from "../sketch/history-selection.js";
 import type { HistoryOperation, OperationHistoryEntry } from "../sketch/operation-history.js";
-
 import { reopenOperation } from "../sketch/reopen-operation.js";
 import { validateDocument } from "./document-validation.js";
 import type { ReopenPreview } from "./reopen-preview.js";
@@ -176,6 +176,7 @@ export class DocumentStore {
     operation: HistoryOperation = { kind: "accept", parameters: {} },
     preview?: ReopenPreview,
   ): boolean {
+    if (operation.kind !== "guide-point") candidate = pruneGuides(candidate);
     validateDocument(candidate);
     if (JSON.stringify(candidate) === JSON.stringify(this.accepted)) {
       this.record(operation, "noop");

@@ -12,6 +12,7 @@
 #include <BRep_Tool.hxx>
 #include <Bnd_Box.hxx>
 #include <GProp_GProps.hxx>
+#include <GCPnts_AbscissaPoint.hxx>
 #include <Poly_Triangulation.hxx>
 #include <OSD_ThreadPool.hxx>
 #include <TopExp.hxx>
@@ -60,6 +61,12 @@ void analyticSurfaces(std::ostream& out, const TopoDS_Face& shape, const BRepAda
     } else out << "null";
 }
 void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMapOfShape& edges, const std::vector<BlendFace>& blends, const std::vector<BlendFace>& chamfers, const TopTools_IndexedMapOfShape& faces, FaceChainContext& chains, OffsetThicknessContext& thickness) {
+    Bnd_Box bounds;
+    BRepBndLib::AddOptimal(shape, bounds, false, false);
+    double xmin, ymin, zmin, xmax, ymax, zmax;
+    bounds.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+    out << ",\"bounds\":";
+    numbers(out, {xmin, ymin, zmin, xmax, ymax, zmax});
     out << ",\"edgeIndexes\":[";
     bool first = true;
     for (TopExp_Explorer e(shape, TopAbs_EDGE); e.More(); e.Next()) {
@@ -152,6 +159,17 @@ void analyticEdge(std::ostream& out, const TopoDS_Edge& shape, const BRepAdaptor
 void edge(std::ostream& out, const TopoDS_Edge& shape) {
     BRepAdaptor_Curve curve(shape); const double a = curve.FirstParameter(), b = curve.LastParameter();
     analyticEdge(out, shape, curve);
+    if (!BRep_Tool::Degenerated(shape)) {
+        const auto start = curve.Value(a), end = curve.Value(b);
+        const double length = GCPnts_AbscissaPoint::Length(curve, a, b);
+        GCPnts_AbscissaPoint half(curve, length / 2, a);
+        if (half.IsDone()) {
+            out << ",\"landmarks\":{\"start\":"; xyz(out, start.XYZ());
+            out << ",\"end\":"; xyz(out, end.XYZ());
+            out << ",\"midpoint\":"; xyz(out, curve.Value(half.Parameter()).XYZ());
+            out << ",\"closed\":" << (start.Distance(end) < 1e-7 ? "true" : "false") << '}';
+        }
+    }
     int count = 1;
     if (curve.GetType() == GeomAbs_Circle) {
         const double radius = curve.Circle().Radius();

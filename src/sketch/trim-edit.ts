@@ -185,6 +185,8 @@ export function trimOverlappingSketch(
 ) {
   const spans = Array.isArray(target) ? target : [target as TrimSpan];
   let sketch = original;
+  const origins = new Map(original.curves.map((curve) => [curve.id, [curve.id]]));
+  const rewritten = new Set<string>();
   let cast = false;
   const created: ReturnType<typeof newTrimEndpoints> = [];
   for (const span of spans) {
@@ -198,6 +200,16 @@ export function trimOverlappingSketch(
       const overlap = curve === span.curve ? span : overlappingTrim(curve, highlight);
       if (!overlap) continue;
       const next = rewriteTrim(sketch, overlap);
+      for (const [id, descendants] of origins)
+        if (descendants.includes(curve.id)) {
+          origins.set(
+            id,
+            descendants.flatMap((current) =>
+              current === curve.id ? next.pieces.map((p) => p.id) : [current],
+            ),
+          );
+          rewritten.add(id);
+        }
       created.push(...newTrimEndpoints(curve, next.pieces));
       pending.push(...next.pieces);
       sketch = next.sketch;
@@ -206,7 +218,12 @@ export function trimOverlappingSketch(
   }
   sketch = fuseTrimCorners(sketch, created);
   const retained = new Set(sketch.constraints.map((c) => c.id));
-  return { sketch, cast, removed: original.constraints.filter((c) => !retained.has(c.id)) };
+  return {
+    sketch,
+    cast,
+    removed: original.constraints.filter((c) => !retained.has(c.id)),
+    curveOrigins: [...rewritten].map((source) => ({ source, curves: origins.get(source) ?? [] })),
+  };
 }
 
 export function trimSketch(original: Sketch, span: TrimSpan) {

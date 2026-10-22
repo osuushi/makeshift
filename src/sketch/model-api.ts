@@ -20,6 +20,7 @@ import type { HistoryOperation, OperationHistoryEntry } from "./operation-histor
 import type { PlaneFrame } from "./planes.js";
 
 export type ModelRequest =
+  | { kind: "guide-point"; edit: import("../guides/types.js").GuideEdit }
   | { kind: "sketch-grid"; grid: import("./grid-settings.js").SketchGrid; initialize?: boolean }
   | {
       kind: "paste-geometry";

@@ -8,7 +8,7 @@ import { BufferedPointer } from "./buffered-pointer.js";
 import { MovementShadows } from "./movement-shadows.js";
 import type { ScaleSource } from "./scale.js";
 import { scaleSelection } from "./scale-selection.js";
-import { previewBoxMove, translatedSketchFrames } from "./transform-box-preview.js";
+import { boxMoveRequest, previewBoxMove } from "./transform-box-preview.js";
 import { pointOnTransformPlane, transformPlane } from "./transform-plane.js";
 
 type Drag = {
@@ -114,7 +114,7 @@ export class TransformBoxMove {
     if (source && anchor) this.shadows.prepare(source, anchor, transformPlane(e, anchor));
     else this.shadows.hide();
   };
-  private start = async (event: PointerEvent): Promise<void> => {
+  readonly start = async (event: PointerEvent): Promise<void> => {
     const editor = this.editor;
     if (
       event.button ||
@@ -231,39 +231,13 @@ export class TransformBoxMove {
       await this.cancel();
       return;
     }
-    const source = drag.source,
-      delta = drag.delta;
-    const frames =
-      source.kind === "sketches"
-        ? translatedSketchFrames(this.editor.store.data, source.ids, delta)
-        : [];
-    if (!frames) {
+    const request = boxMoveRequest(this.editor.store.data, drag.source, drag.origin, drag.delta);
+    if (!request || !drag.lease.close()) {
       await this.cancel();
       return;
     }
-    if (!drag.lease.close()) {
-      await this.cancel();
-      return;
-    }
-    if (source.kind === "sketches") {
-      await this.editor.store.request({
-        kind: "place-sketch",
-        ...frames[0],
-        additional: frames.slice(1),
-      });
-    } else if (source.kind === "solids" && !source.faces.length && !source.edges.length) {
-      await this.editor.store.request({
-        kind: "transform-bodies",
-        transform: {
-          ids: source.ids,
-          pivot: drag.origin,
-          axis: [0, 0, 1],
-          angle: 0,
-          translation: delta,
-          duplicate: false,
-        },
-      });
-    } else await this.editor.accept();
+    if (request.kind === "accept") await this.editor.accept();
+    else await this.editor.store.request(request);
     this.drag = null;
     this.shadows.hide();
     this.pointer = null;

@@ -1,6 +1,8 @@
 import type { PlaneFrame, Vector } from "../sketch/planes.js";
 
 export interface Face {
+  /** Kernel bounds of the trimmed face, independent of display tessellation. */
+  readonly bounds?: readonly number[];
   /** Oriented wire occurrences; a seam can use the same edge twice. */
   readonly edges: readonly string[];
   readonly id: string;
@@ -35,6 +37,8 @@ export type EdgeCurve =
   | { kind: "arc"; a: Vector; b: Vector; mid: Vector }
   | { kind: "circle"; center: Vector; normal: Vector; radius: number };
 export interface Edge {
+  /** Exact-curve landmarks; never sampled tessellation vertices. */
+  readonly landmarks?: { start: Vector; end: Vector; midpoint: Vector; closed: boolean };
   readonly curve: EdgeCurve | null;
   readonly id: string;
   readonly signature: number[];

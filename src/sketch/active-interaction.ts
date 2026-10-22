@@ -4,6 +4,7 @@ import { InteractionHistory } from "./interaction-history.js";
 
 type Kind =
   | "tool-selection"
+  | "guide-move"
   | "cube"
   | "cylinder"
   | "sphere"

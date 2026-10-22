@@ -18,6 +18,8 @@ export async function sketching(page, capture, a) {
   assert.equal(sketch.curves.filter((curve) => curve.kind === "circle").length, 1);
   await page.keyboard.press("Escape");
   await a.tool("select");
+  // Hide guides to select the coincident sketch corner for rounding.
+  await a.tool("guide-points", "guide points");
   await a.click([-12, 8, 0]);
   // Drag the actual corner guide, showing the fillet grow before release.
   const guide = await a.run(() => filletGuidePoint(page));
@@ -27,5 +29,6 @@ export async function sketching(page, capture, a) {
   sketch = (await a.state()).document.sketches[0];
   assert.equal(sketch.curves.filter((curve) => curve.kind === "arc").length, 2);
   assert.equal(sketch.curves.length, 6);
+  await a.tool("guide-points", "guide points");
   await capture.hold(0.5);
 }

@@ -99,6 +99,7 @@ export interface Sketch {
   readonly groups: readonly EditingGroup[];
 }
 export interface SketchDocument {
+  readonly guidePoints?: readonly import("../guides/types.js").GuidePoint[];
   readonly sketchGrid?: import("./grid-settings.js").SketchGrid;
   readonly taggedGroups?: readonly import("../tags/model.js").TaggedGroup[];
   readonly decoratorDefinitions?: readonly import("../decorators/definition.js").DecoratorDefinition[];

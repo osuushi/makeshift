@@ -22,7 +22,8 @@ export async function decoratorCylinder(page, radius = 8, distance = 10) {
     await page.keyboard.up("Control");
     await inspect(page);
   }
-  const center = await at(page, 0, 0);
+  // Select the region away from its circle-center guide marker.
+  const center = await at(page, radius / 2, 0);
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(center.x, center.y);
   await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
