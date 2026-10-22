@@ -9,30 +9,24 @@ export async function toolboxRoute(page, name) {
   const entities = await page.getByRole("complementary", { name: "Entities" }).boundingBox();
   const initialBounds = await toolbox.boundingBox();
   assert.ok(entities && initialBounds && initialBounds.y > entities.y + entities.height);
-  for (const id of [
-    "select",
-    "start-sketch",
-    "cube",
-    "cylinder",
-    "sphere",
-    "cone",
-    "drill",
-    "extrude",
-    "offset",
-  ]) {
-    const button = page.locator(`.toolbox-item[data-tool="${id}"]`);
+  for (const id of ["select", "start-sketch", "cube", "extrude"]) {
+    const button = page.locator(`.toolbox-grid .toolbox-item[data-tool="${id}"]`);
     assert.equal(await button.count(), 1, id);
     assert.equal(await button.locator("svg").count(), 1, `${id} icon`);
   }
 
   await page.setViewportSize({ width: 1280, height: 520 });
   const bounds = await toolbox.boundingBox();
-  const panelHeight = await toolbox.evaluate((element) => element.clientHeight);
-  const panelScrollHeight = await toolbox.evaluate((element) => element.scrollHeight);
+  const panelHeight = await toolbox
+    .locator(".toolbox-grid")
+    .evaluate((element) => element.clientHeight);
+  const panelScrollHeight = await toolbox
+    .locator(".toolbox-grid")
+    .evaluate((element) => element.scrollHeight);
   assert.ok(bounds && bounds.y + bounds.height <= 520, "The toolbox must stay in the viewport");
   assert.ok(panelHeight < panelScrollHeight, "A short window must scroll the toolbox");
 
-  const cube = page.locator('.toolbox-item[data-tool="cube"]');
+  const cube = page.locator('.toolbox-grid .toolbox-item[data-tool="cube"]');
   await cube.click();
   await page.waitForFunction(() => window.makeshiftInspect().interaction?.kind === "cube");
   assert.equal(await cube.getAttribute("aria-pressed"), "true");
@@ -45,15 +39,15 @@ export async function toolboxRoute(page, name) {
   await more.click();
   assert.equal(await page.getByRole("dialog", { name: "Find a tool" }).isVisible(), true);
   await page.keyboard.press("Escape");
-  await page.locator('.toolbox-item[data-tool="start-sketch"]').click();
+  await page.locator('.toolbox-grid .toolbox-item[data-tool="start-sketch"]').click();
   await page.waitForFunction(() => document.querySelector(".toolbox")?.dataset.mode === "sketch");
   await chooseTool(page, "return to modeling", "modeling");
   await page.waitForFunction(() => document.querySelector(".toolbox")?.dataset.mode === "modeling");
 
   await page.keyboard.press("Control+Enter");
   await page.waitForFunction(() => document.querySelector(".toolbox")?.dataset.mode === "sketch");
-  const line = page.locator('.toolbox-item[data-tool="line"]');
-  assert.equal(await line.locator("kbd").textContent(), "L");
+  const line = page.locator('.toolbox-grid .toolbox-item[data-tool="line"]');
+  assert.equal(await line.textContent(), "Line");
   await line.click();
   assert.equal(await line.getAttribute("aria-pressed"), "true");
   await drag(page, [-10, 0], [0, 0]);

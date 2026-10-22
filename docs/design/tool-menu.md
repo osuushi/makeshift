@@ -5,14 +5,12 @@ immediate next action belong in the local brief.
 
 ## Outcome and agreed direction
 
-Show a fixed, compact common-tools panel below Entities. Sketch mode contains
-Arrow, Line, Rectangle, Circle, Pen and Trim; Modeling mode contains Arrow, Sketch,
-Cube, Cylinder, Sphere, Cone, Drill, Extrude and Offset. Every entry has an icon,
-labels show existing shortcuts, and the current tool is highlighted. The panel's **Search ·
-⌘F** button and Command-F open the searchable menu. A short window moves constraints
-and measurements right to leave room for the panel. The panel uses the shared tool
-catalog and does not own geometry or history. Search remains the full discovery
-surface; an empty query exposes logical submenus.
+Show a compact editable toolbox below Entities. Each row displays its selected
+tool's icon and name. Similar tools live in unnamed nested groups; hovering a group
+opens alternatives to its right. Selecting an alternative promotes it through its
+ancestor groups. The tree is shared across sketch and modeling modes, and uses the
+ordinary catalog activation lifecycle. Search remains the full discovery surface;
+its button and Command-F / Ctrl-F open the searchable menu.
 Search supports fuzzy names, synonyms and related operations. Available matches
 always precede unavailable matches; unavailable tools remain visible. Automatically
 highlight the top result. The following interaction is implemented.
@@ -200,49 +198,37 @@ routing so Command-F opens Tools rather than host/browser Find.
    solid geometry, including Shell via thickness, Undo/Redo and Save/Open. Check
    file/export and selection actions remain reachable; clean up test processes.
 
-The search menu contract above is implemented. The common panels are the current
-increment; runtime and founder review should be recorded in the active local brief.
+The search menu contract above is implemented. Runtime and founder review should be recorded in the active local brief.
 Physical iPad keyboard/Pencil behavior requires device review in addition to automated
 acceptance.
 
-## Illustrated navigator (2026-10-21)
+## Editable toolbox (2026-10-22)
 
-The toolbox now separates **Browse tools** from **Search** (⌘F / Ctrl-F). Browse
-opens a large grid of two columns and three rows without a text field or software
-keyboard. The hierarchy lives in `src/tools/navigator-tree.ts`: Draw & sketch,
-Create solids, Modify solids, Move & copy, Select & organize, and View & utilities.
-Screens have at most six cards. Related tools have named subgroups (for example,
-Primitive solids, Combine & cut, and View & grids); every tool takes at most four
-choices after opening. Aliases reference
-ordinary catalog IDs, and Back uses the visited path. Standard File/Edit actions
-remain in their existing menu. Constraint tools and dimension locks stay in their contextual controls and Search,
-not Browse. Other new visible commands require a navigator home;
-the focused navigator acceptance checks catalog coverage.
+The toolbox replaces the illustrated Browse navigator. Its persisted model is an
+owned tree: a tool ID or `{items: ToolboxItem[], selected: number}`. Groups have
+no names and tools occur once, without aliases. Each group recursively displays
+the selected descendant's icon and canonical name. Selecting an alternative or
+switching tools through a shortcut remembers the selection through its ancestors.
+Constraint tools remain in contextual controls and Search. File/Edit actions keep
+their existing menu. Newly registered visible tools are appended to the toolbox.
 
-Group cards use a short text list of example tools (such as “Union, Subtract,
-Intersect …”) without diagrams or an “Explore tools” caption. Individual tool
-cards keep a static operation diagram, canonical label and explanation or
-availability reason. This text-versus-diagram distinction also identifies nested
-groups among tools. Within every screen, subgroups come first, followed by
-individual tools; the authored order within each section stays fixed. Surface detail cards explain export-time generation.
+Hover opens alternatives to the right, including nested flyouts. Click the main
+button to invoke its tool; the separate arrow also opens alternatives for touch
+and keyboard access. Up/Down navigates siblings, Right opens a group, Left returns,
+and Escape closes discovery without accepting a pending numeric edit. Opening
+Search closes the flyouts and preserves the same borrowed focus. Unavailable tools
+retain their positions and explanatory tooltips; group arrows remain usable.
 
-Tap a card to open a group or invoke a tool. There are no circle targets,
-proximity effects or drag-to-select routes. Card positions never sort by
-availability, selection, or recency. Missing/unavailable commands retain their
-slots and cannot execute. Disabled tools use short, direct instructions naming what to select or change,
-without generic “requirements” wording. Groups whose descendant tools are all unavailable use the same
-gray styling but remain openable, with a note inviting exploration of requirements.
-Availability updates as the document and workspace change. A pointer that moves beyond tap tolerance cannot invoke
-on release; the release and compatibility click are consumed rather than reaching
-geometry controls.
+Drag a row to move the actual tool or whole group. Dropping onto a tool creates a
+group; hovering a group during a drag opens its alternatives. Drop indicators at
+the top/bottom of a row insert before/after it; the center of a group appends inside.
+A group cannot move into itself or its descendants. Empty groups are removed and
+single-child groups collapse. Moving never invokes a tool or edits geometry.
 
-The fixed bottom strip has Back in its left third and Cancel in the remainder.
-Both are tap actions. Escape, outside press, window
-blur and viewport resize also dismiss it. Backspace goes back; arrows and Tab move
-focus; Enter/Space activate. Opening, browsing and canceling borrow focus without
-accepting numeric input or changing geometry, selection or Undo. Tool invocation
-uses the existing catalog lifecycle and selection collection. Search and Browse
-share the borrowed-focus guard but only handle events for their own visible surface.
-
-Tool diagrams are static. Physical iPad/Pencil ergonomics remain part of device review.
-Back uses a neutral gray surface; Cancel retains its red surface.
+Settings has General and Toolbox tabs. Toolbox shows the entire expanded tree,
+supports the same dragging, and provides Move up/down/out controls and a top-level
+drop area. Selecting a row chooses the representative without launching the tool.
+Reset toolbox to defaults restores the authored grouping. The tree and selected
+indices persist under `makeshift.toolbox.v1` on the device, outside documents and
+Undo, and synchronize between windows using browser storage events. Invalid stored
+trees fall back to defaults. Physical iPad/Pencil ergonomics require device review.
