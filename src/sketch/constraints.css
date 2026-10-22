@@ -10,7 +10,7 @@
 }
 .selection-readouts {
   position: absolute;
-  left: 20px;
+  right: 20px;
   bottom: 62px;
   z-index: 12;
   display: flex;

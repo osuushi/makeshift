@@ -3,8 +3,9 @@
 Founder request, 2026-09-20: selecting faces/edges reports separation and geometric
 relationships. Maximum means largest gap, not the farthest pair of points.
 
-A compact lower-left readout automatically measures one or two selected solid faces,
-solid edges, filled sketch regions in 3D, or whole curves in a sketch workspace.
+A compact lower-right readout above the guidance text automatically measures one or
+two selected solid faces, solid edges, filled sketch regions in 3D, or whole curves
+in a sketch workspace.
 Filled regions behave as bounded zero-thickness faces, preserving holes and world
 placement. They measure against regions, solid faces and edges using the same gap,
 angle and relationship rules. A single region shows its area. Hiding bodies does
