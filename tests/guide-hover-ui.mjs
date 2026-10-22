@@ -9,20 +9,25 @@ import { withUiRuntimes } from "./ui-runtime.mjs";
 
 const owner = new DocumentOwner();
 let archive;
+let crowded;
 try {
   await prism(owner, [
     [0, 0],
-    [4, 0],
-    [4, 4],
-    [0, 4],
+    [20, 0],
+    [20, 20],
+    [0, 20],
   ]);
+  crowded = documentArchive(
+    { ...owner.view.data, sketches: [] },
+    { position: [10, 10, 100], target: [10, 10, 0], up: [0, 1, 0], height: 160 },
+  );
   archive = documentArchive(
     { ...owner.view.data, sketches: [] },
     {
-      position: [2, 2, 100],
-      target: [2, 2, 0],
+      position: [80, 70, 100],
+      target: [10, 10, 5],
       up: [0, 1, 0],
-      height: 80,
+      height: 30,
     },
   );
 } finally {
@@ -33,18 +38,34 @@ try {
 // cannot catch click-through, overlay double-click handoff or stale hover ghosts.
 await withUiRuntimes(async (page, name) => {
   await openDocument(page, {
+    name: "guide-crowded.makeshift",
+    mimeType: "application/json",
+    buffer: Buffer.from(crowded),
+  });
+  const crowdedEdge = await project(page, [20, 10, 10]);
+  await page.mouse.move(crowdedEdge.x, crowdedEdge.y);
+  assert.equal((await inspect(page)).modelingHover, "edge");
+  assert.equal(await page.locator(".guide-marker.ghost").count(), 0);
+  await page.mouse.click(crowdedEdge.x, crowdedEdge.y);
+  assert.equal((await inspect(page)).modelingSelection[0]?.kind, "edge");
+  await openDocument(page, {
     name: "guide-hover.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(archive),
   });
-  const face = await project(page, [2, 2, 10]);
+  const face = await project(page, [10, 10, 10]);
   await page.mouse.move(face.x, face.y);
   assert.equal((await inspect(page)).modelingHover, "face");
-  assert.equal(await page.locator(".guide-marker.ghost").count(), 0);
-  const edge = await project(page, [0, 2, 10]);
+  assert.deepEqual(
+    await page
+      .locator(".guide-marker.ghost")
+      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("title"))),
+    ["Body bounding-box center · Double-click to keep"],
+  );
+  const edge = await project(page, [20, 10, 10]);
   await page.mouse.move(edge.x, edge.y);
   assert.equal((await inspect(page)).modelingHover, "edge");
-  const ghost = page.locator(".guide-marker.ghost");
+  const ghost = page.locator('.guide-marker.ghost[title^="Edge midpoint"]');
   assert.equal(await ghost.count(), 1);
   assert.match(await ghost.getAttribute("title"), /Edge midpoint/);
   const before = await inspect(page);
@@ -63,8 +84,13 @@ await withUiRuntimes(async (page, name) => {
   assert.deepEqual(after.document.bodies, before.document.bodies);
   await page.mouse.move(face.x, face.y);
   assert.equal((await inspect(page)).modelingHover, "face");
-  assert.equal(await page.locator(".guide-marker.ghost").count(), 0);
+  assert.deepEqual(
+    await page
+      .locator(".guide-marker.ghost")
+      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("title"))),
+    ["Body bounding-box center · Double-click to keep"],
+  );
   console.log(
-    `${name}: hovered face does not expand; one edge guide owns clicks and double-clicks before geometry`,
+    `${name}: spaced hover candidates retain guide click precedence over native geometry`,
   );
 });

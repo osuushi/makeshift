@@ -98,10 +98,3 @@ export function guideCandidates(
     return [{ anchor, point, label: guideMeaning(anchor) }];
   });
 }
-export function commonGuide(candidate: GuideCandidate): boolean {
-  return (
-    candidate.anchor.kind === "body-junction" ||
-    ((candidate.anchor.kind === "body-edge" || candidate.anchor.kind === "sketch-curve") &&
-      candidate.anchor.feature !== "circle-center")
-  );
-}

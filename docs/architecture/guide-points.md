@@ -11,11 +11,28 @@ Select a body, face, edge, sketch, region or sketch curve and invoke **Guide poi
 The tool displays candidates; clicking one saves it. Nearby candidates share a
 chooser that names each definition and highlights its source on hover. Done,
 Enter or Escape exits the picker; each saved point is already its own Undo step.
-With Select active, automatic discovery uses the ordinary click target. A hovered
-edge or sketch curve can reveal its nearest endpoint, junction or midpoint within
-12 CSS pixels. Hovered faces and bodies do not expand into their boundary edges;
-rectangle point handles reveal only that point. Co-located semantic definitions
-retain the chooser. Double-clicking a ghost saves it or opens that chooser.
+With Select active, automatic discovery uses the ordinary click target. A guide
+is a candidate when the pointer hovers its parent (or a member of that parent)
+and lies within 256 CSS pixels of the guide. Hovering a body edge also counts for
+its incident faces and containing body; hovering a face does not count as hovering
+its boundary edges. Sketch point handles use their curve or editing-group members.
+All semantic feature kinds participate, including centers.
+
+Remove every candidate with another candidate less than 64 CSS pixels away,
+using the original set so collisions remove both points and do not depend on
+iteration order. Co-located definitions also collide. Every visible saved guide
+participates in this spacing check regardless of its owner or pointer distance;
+saved guides remain visible, while hidden guides and hidden owners do not block.
+Already-saved definitions do not also appear as ghosts.
+
+After spacing, each ghost must leave a continuous 64 CSS pixels along every
+referenced parent's largest projected dimension. Project the displayed curves,
+edges and face meshes and subtract the 20-pixel hit footprints of surviving
+candidates and visible saved guides. Junctions check every incident edge; face
+groups check every referenced face. This prevents guides from covering small or
+foreshortened parents. These discovery filters do not restrict the explicit Guide
+points picker, which retains all candidates and its overlap chooser.
+Double-clicking a ghost saves it.
 Visible guides, including ghosts, own pointer hits before geometry underneath.
 A ghost's single click does not select the underlying geometry or save the point;
 keyboard activation saves it. The explicit Guide points tool saves on one click.
