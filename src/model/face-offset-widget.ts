@@ -114,8 +114,7 @@ export class FaceOffsetWidget {
           ? "Absolute face radius (mm)"
           : "Signed material-outward offset (mm)";
     if (!numericFocus(this.input)) {
-      const value = quantity.value(distance);
-      this.input.value = Number.isFinite(value) ? String(Number(value.toPrecision(4))) : "";
+      this.input.value = quantity.text(distance);
     }
     this.input.setAttribute("aria-invalid", String(active && invalid && !valid && !editor.blocked));
     this.accept.disabled = !active || !valid || distance === 0 || editor.blocked;

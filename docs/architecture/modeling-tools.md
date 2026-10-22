@@ -160,7 +160,10 @@ extrusion retains its draft row and fixed Boolean mode icons, followed by accept
 and cancel. Clean up is a separate selection tool. Offset defaults to absolute thickness for planar walls with a
 directly reachable parallel face, or cylindrical/spherical walls with a directly
 reachable concentric face in the same body. A labeled mode dropdown offers Thickness,
-Radius and Offset where applicable; switching units preserves the preview. Radius
+Radius and Offset where applicable; switching units preserves the preview. These
+fields use at most three decimal places for generated text,
+including focus and restored edits. Formatting does not round geometry or explicitly
+typed values. Radius
 sets the absolute cylindrical/spherical radius and defaults when no thickness reference
 exists. Offset is the signed material-outward change. Multiple radius targets must
 share a radius and orientation response. Positive radii/thicknesses are required.
