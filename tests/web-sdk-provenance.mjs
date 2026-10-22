@@ -24,6 +24,11 @@ verify_web_sdk()
     execFileSync("cmake", ["-P", script], { stdio: "pipe" });
   };
   try {
+    delete process.env.MAKESHIFT_WEB_EXCEPTIONS;
+    const defaultConfig = webBuildConfig();
+    assert.equal(defaultConfig.exceptions, "wasm");
+    process.env.MAKESHIFT_WEB_EXCEPTIONS = "wasm";
+    assert.deepEqual(webBuildConfig(), defaultConfig);
     for (const mode of ["javascript", "wasm"]) {
       process.env.MAKESHIFT_WEB_EXCEPTIONS = mode;
       await writeFile(`${sdk}/library.a`, "test library bytes");

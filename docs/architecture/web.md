@@ -27,7 +27,10 @@ The WASM wrapper reuses the native calculator's JSON protocol and operation code
 OCCT and the C++ runtime form an Emscripten main module; Makeshift geometry
 implementation is a separately linked side module in the same worker and memory.
 A fixed protocol trampoline connects them. The solver remains a standalone module.
-C++ exceptions remain enabled. Inputs use heap memory rather than the small WASM
+C++ exceptions remain enabled through standardized native WASM exceptions by
+default. A separate JavaScript-exception build remains available for comparison
+and compatibility investigation; see [build settings](../web-build.md#exception-runtime-and-profiling-builds).
+Inputs use heap memory rather than the small WASM
 stack. The web kernel uses one thread and requires neither SharedArrayBuffer nor
 cross-origin isolation headers. Manifold and QuickJS use the existing browser WASM
 paths for decorated mesh export and custom decorators.

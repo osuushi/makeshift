@@ -6,6 +6,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, symlink, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { webBuildConfig } from "../../scripts/web/config.mjs";
 
 if (process.platform !== "darwin") throw new Error("This interposition experiment is macOS-only");
 const cache = await readFile(".build/kernel/CMakeCache.txt", "utf8");
@@ -14,7 +15,10 @@ assert.ok(config, "Configure the native Release kernel first");
 const sdk = resolve(config, "../../..");
 const output = resolve(".cache/wasm-performance/particle-heap");
 await mkdir(output, { recursive: true });
-const source = await readFile(".cache/web/occt/src/Extrema/Extrema_GenExtCS.cxx", "utf8");
+const source = await readFile(
+  resolve(webBuildConfig().cache, "occt/src/Extrema/Extrema_GenExtCS.cxx"),
+  "utf8",
+);
 assert.equal(
   createHash("sha256").update(source).digest("hex"),
   "74a050f7ba7be194276eda055006264eeea6beb4fb5dd47a2944d7f7a3b7f1ff",

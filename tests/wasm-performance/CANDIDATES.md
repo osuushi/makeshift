@@ -41,7 +41,7 @@ feature, deployment change, or iPad claim. Closing its page owns both workers.
 ## Reproduce
 
 Prepare the native calculator as for the [main benchmark](README.md), then the
-WASM-exception build using [the existing instructions](../../docs/web-build.md#opt-in-exception-and-profiling-builds).
+default WASM-exception build using [the build instructions](../../docs/web-build.md#exception-runtime-and-profiling-builds).
 From the repository root, activate Node before commands:
 
 ```sh

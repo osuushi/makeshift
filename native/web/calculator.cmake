@@ -1,5 +1,6 @@
+option(MAKESHIFT_WEB_WASM_EXCEPTIONS "Use native WebAssembly exception instructions" ON)
+
 function(web_calculator target)
-  option(MAKESHIFT_WEB_WASM_EXCEPTIONS "Use native WebAssembly exception instructions" OFF)
   set(exception_flag -fexceptions)
   if(MAKESHIFT_WEB_WASM_EXCEPTIONS)
     set(exception_flag -fwasm-exceptions -sWASM_LEGACY_EXCEPTIONS=0)

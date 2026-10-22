@@ -290,11 +290,13 @@ combined exception and unused-signal-conversion change.
 ### WASM exception experiment
 
 Both 66-case browser comparisons passed canonical-input, repeated-outcome and
-cross-build geometry-summary checks. These historical default measurements still
-include unused signal conversion; see the later self-intersection follow-up for
-the current default. Warm medians in milliseconds:
+cross-build geometry-summary checks. The historical JavaScript baseline includes
+unused signal conversion; both current runtimes remove it. Native WASM exceptions
+are now the default after browser tests and the founder's iOS 26.3 simulator smoke
+test. The table measures the original experiment, not all later changes combined.
+Warm medians in milliseconds:
 
-| Operation | Chromium default → experimental | WebKit default → experimental |
+| Operation | Chromium JavaScript → WASM | WebKit JavaScript → WASM |
 | --- | ---: | ---: |
 | Two-turn helix | 3,360 → 1,534 | 3,935 → 1,550 |
 | Cubic twist with draft | 3,444 → 2,260 | 4,929 → 2,375 |
@@ -310,7 +312,7 @@ removal of unused OCCT signal conversion; it does not isolate their contribution
 In separate sampled worker profiles, the combined self-sample share of
 WASM/JavaScript transition frames, table lookup and `stackSave` drops from about
 23% to 1%. Those profiled calls are diagnostic evidence, not the timing comparison.
-The default remains JavaScript exceptions. See [the build option](../../docs/web-build.md#opt-in-exception-and-profiling-builds).
+See [exception runtime settings](../../docs/web-build.md#exception-runtime-and-profiling-builds).
 
 Both builds passed the full existing web editing test in Chromium and WebKit.
 The experiment also passed actual-pointer invalid-input/Escape cancellation and
@@ -408,8 +410,8 @@ check after subtraction. Whole-operation before/after warm medians:
 | Ruled Loft | 41.1 → 26.9 | 28.6 → 19.3 | 128.2 → 87.1 | 187.0 → 134.0 |
 | Smooth Loft | 121.4 → 85.0 | 79.1 → 58.1 | 249.0 → 185.8 | 335.0 → 254.0 |
 
-These browser timings use the default JavaScript-exception WASM build; they are
-not directly comparable to the optional WASM-exception GPU experiment's absolute
+These browser timings use the then-default JavaScript-exception WASM build; they are
+not directly comparable to the WASM-exception GPU experiment's absolute
 times. Twist and Helix controls remain within 2% of baseline; this change does
 not claim an acceleration for those operations.
 
@@ -477,8 +479,8 @@ installs OCCT signal handlers. Rebuilding only the unchanged
 time from about 161 to 118 ms for Twist and 514 to 447 ms for Helix. The final build
 setting applies consistently across the SDK and calculator. Normal C++ exceptions,
 intersection algorithms, tolerances, all interference levels and the production
-ArgumentAnalyzer remain unchanged. The default browser exception runtime remains
-JavaScript based; switching to the experimental WASM exception runtime is separate.
+ArgumentAnalyzer remain unchanged. The browser measurements in this section use
+JavaScript exceptions; the later default switch to native WASM exceptions is separate.
 [Source observations and the host boundary](../../docs/freecad/kernel-topology.md#signal-bookkeeping-in-numerical-validation).
 
 The benchmark's `--self-test` compares exact original-shape fault pairs and checks
