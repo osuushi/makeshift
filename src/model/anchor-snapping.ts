@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { guideSnap } from "../guides/snapping.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { type Point, type Vector, worldPoint } from "../sketch/planes.js";
 import { pointHits } from "../sketch/point-query.js";
@@ -28,15 +29,15 @@ function faceCenter(body: BodyGeometry, face: Face): Vector | null {
   return center.toArray() as Vector;
 }
 
-function candidates(editor: SketchEditor): Vector[] {
+function candidates(editor: SketchEditor, excluded: readonly string[]): Vector[] {
   const points: Vector[] = [[0, 0, 0]];
   for (const sketch of editor.display.sketches) {
-    if (!editor.visibility.visible(sketch.id)) continue;
+    if (!editor.visibility.visible(sketch.id) || excluded.includes(sketch.id)) continue;
     for (const hit of pointHits(sketch)) points.push(worldPoint(sketch.plane, hit.point));
   }
   if (!editor.bodiesVisible) return points;
   for (const body of editor.display.bodies ?? []) {
-    if (!editor.visibility.visible(body.id)) continue;
+    if (!editor.visibility.visible(body.id) || excluded.includes(body.id)) continue;
     for (const edge of featureEdges(body)) {
       if (edge.curve?.kind === "circle") continue;
       if (edge.points.length >= 6)
@@ -83,10 +84,24 @@ export function anchorSnap(
   editor: SketchEditor,
   screen: Point,
   plane?: { center: Vector; normal: Vector },
+  excluded: readonly string[] = [],
 ): Vector | null {
+  const snappedGuide = guideSnap(editor, screen, excluded);
+  if (snappedGuide.ambiguous) return null;
+  const guide = snappedGuide.point;
+  if (
+    guide &&
+    (!plane ||
+      Math.abs(
+        new THREE.Vector3(...plane.normal).dot(
+          new THREE.Vector3(...guide).sub(new THREE.Vector3(...plane.center)),
+        ),
+      ) < 1e-6)
+  )
+    return guide;
   const frame = editor.world.activeFrame;
   const normal = frame ? new THREE.Vector3(...frame.u).cross(new THREE.Vector3(...frame.v)) : null;
-  const nearby = candidates(editor)
+  const nearby = candidates(editor, excluded)
     .filter(
       (point) =>
         !plane ||

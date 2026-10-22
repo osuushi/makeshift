@@ -5,44 +5,19 @@ import type { TagControls } from "./controls.js";
 import { type TaggedGroup, tagStatus } from "./model.js";
 
 export class TagRows {
-  private expanded = new Set<string>();
-  private known = new Map<string, Set<string>>();
   constructor(
     private editor: SketchEditor,
     private controls: TagControls,
   ) {}
-  wrap(row: HTMLElement, body: string, refresh: (() => void)[]): HTMLElement {
-    const groups = this.editor.store.data.taggedGroups?.filter((g) => g.body === body) ?? [];
-    if (groups.some((group) => !this.known.get(body)?.has(group.id))) this.expanded.add(body);
-    this.known.set(body, new Set(groups.map((group) => group.id)));
-    if (!groups.length) return row;
-    const wrapper = document.createElement("div"),
-      children = document.createElement("div"),
-      toggle = document.createElement("button");
-    children.className = "tag-children";
-    children.hidden = !this.expanded.has(body);
-    toggle.className = "tag-disclosure";
-    toggle.setAttribute("aria-label", "Toggle tagged groups");
-    toggle.innerHTML =
-      '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 3 5 5-5 5"/></svg>';
-    const display = () => {
-      toggle.setAttribute("aria-expanded", String(!children.hidden));
-    };
-    toggle.onclick = () => {
-      children.hidden = !children.hidden;
-      if (children.hidden) this.expanded.delete(body);
-      else this.expanded.add(body);
-      display();
-    };
-    display();
-    row.prepend(toggle);
-    for (const group of groups) children.append(this.groupRow(group, refresh));
-    wrapper.append(row, children);
-    return wrapper;
+  rows(body: string, refresh: (() => void)[]): HTMLElement[] {
+    return (this.editor.store.data.taggedGroups ?? [])
+      .filter((g) => g.body === body)
+      .map((g) => this.groupRow(g, refresh));
   }
   private groupRow(group: TaggedGroup, refresh: (() => void)[]): HTMLElement {
     const row = document.createElement("div");
     row.className = "tag-item";
+    row.dataset.childId = group.id;
     const button = document.createElement("button");
     button.className = "tag-row";
     button.textContent = group.name + (tagStatus(group) ? " ⚠" : "");

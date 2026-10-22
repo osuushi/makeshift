@@ -22,7 +22,7 @@ export class ScaleControls {
   private disposeTool: () => void;
   private widget: ScaleWidget;
   private gestures: ScaleGestures;
-  private boxMove: TransformBoxMove;
+  readonly boxMove: TransformBoxMove;
   private abort = new AbortController();
   private lease: InteractionLease | null = null;
   private source: ScaleSource | null = null;

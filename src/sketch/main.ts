@@ -1,6 +1,7 @@
 import "../tools/selection-step.css";
 import { DecoratorPanel } from "../decorators/panel.js";
 import { decoratorOverlay } from "../decorators/preview.js";
+import { GuideControls } from "../guides/controls.js";
 import { BodyActions } from "../model/body-actions.js";
 import { BodyEdgeFinishControls } from "../model/body-edge-finish-controls.js";
 import { BodyMoveControls } from "../model/body-move-controls.js";
@@ -126,7 +127,10 @@ const faceMoves = new TopologyMoveControls(editor, overlay);
 const edgeMoves = new TopologyMoveControls(editor, overlay, "edges");
 const bodyFinishes = new BodyEdgeFinishControls(editor, overlay);
 const tags = new TagControls(editor, app);
-const entities = new EntityViewer(editor, app, tags);
+const guides = new GuideControls(editor, overlay, (event, item) => {
+  void scaling.boxMove.start(event, item.point);
+});
+const entities = new EntityViewer(editor, app, tags, guides);
 const booleans = new BooleanControls(editor, overlay, entities);
 const bodyMove = new BodyMoveControls(editor, overlay);
 const disposeReopen = reopenControls(editor, async ({ request }) => {
@@ -266,6 +270,7 @@ window.addEventListener("pagehide", (event) => {
   scaling.dispose();
   disposeVisibility();
   tags.dispose();
+  guides.dispose();
   entities.dispose();
   overlaps.dispose();
   crossSection.dispose();

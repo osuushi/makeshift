@@ -1,0 +1,114 @@
+.guide-markers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 31;
+}
+.guide-marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid #99631f;
+  background: #fff9ed;
+  color: #87501a;
+  font: 12px system-ui;
+  pointer-events: auto;
+}
+.guide-marker.ghost {
+  border-style: dashed;
+  opacity: 0.8;
+}
+.guide-marker.saved {
+  background: #fff3ce;
+  border-width: 2px;
+}
+.guide-marker:hover,
+.guide-marker:focus-visible {
+  outline: 2px solid #c88e3c;
+  outline-offset: 2px;
+}
+.guide-choices,
+.guide-tool {
+  position: absolute;
+  pointer-events: auto;
+  padding: 12px;
+  border: 1px solid #d7e0ec;
+  border-radius: 10px;
+  background: #fffffff5;
+  box-shadow: 0 4px 18px #243a5220;
+  font: 13px system-ui;
+}
+.guide-choices {
+  width: 260px;
+  max-height: min(400px, 70vh);
+  overflow-y: auto;
+  z-index: 40;
+}
+.guide-choices strong {
+  display: block;
+  margin-bottom: 8px;
+}
+.guide-choices button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+}
+.guide-choices button:hover {
+  background: #fff3ce;
+}
+.guide-tool {
+  bottom: 55px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100vw - 40px);
+}
+.guide-tool span {
+  max-width: 280px;
+  color: #52647a;
+}
+.guide-tool button {
+  padding: 6px 12px;
+}
+.guide-choices[hidden],
+.guide-tool[hidden],
+.guide-detail[hidden] {
+  display: none;
+}
+.guide-detail {
+  margin: 2px 5px 8px;
+  font-size: 11px;
+  color: #52647a;
+}
+.guide-name {
+  min-width: 0;
+  width: 100%;
+  font: inherit;
+}
+.tag-item.guide-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px 24px 24px;
+}
+.guide-item > .tag-row,
+.guide-item > .guide-name {
+  grid-column: 1 / -1;
+  padding-bottom: 2px;
+}
+.guide-item > .tag-remove:nth-of-type(2) {
+  grid-column: 2;
+}
+.guide-item > .tag-remove {
+  height: 22px;
+}
+.entity-hidden .guide-item > .tag-row {
+  color: #8c99a8;
+}

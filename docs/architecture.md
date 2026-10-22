@@ -58,6 +58,7 @@ is a later operation on current geometry, through ordinary Undo.
 | Draft and cleanup | [Extrusion draft](architecture/extrusion-draft.md), [solid cleanup](architecture/solid-cleanup.md) |
 | Decorators | [Export-time mesh modifiers, threads and JavaScript extensions](architecture/decorators.md), [knurling](architecture/knurling.md) |
 | Tagged geometry groups | [Named selections, modal editing and topology continuation](architecture/tagged-groups.md) |
+| Guide points | [Semantic anchors, topology continuation and snapping](architecture/guide-points.md) |
 | Gear decorator | [Pitch surfaces, gear controls and agent calculations](architecture/gears.md) |
 
 ## Maintaining this index

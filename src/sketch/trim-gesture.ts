@@ -49,7 +49,7 @@ export class TrimGesture {
       if (!spans.length) return;
       const result = trimOverlappingSketch(this.sketch, spans);
       this.solve = new GestureSolve(this.editor, interaction);
-      this.solve.update(result.sketch);
+      this.solve.update(result.sketch, { kind: "direct", curveOrigins: result.curveOrigins });
       const valid = await this.solve.flush();
       if (this.cancelled) return;
       if (!valid) {
