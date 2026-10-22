@@ -187,7 +187,8 @@ const bodyActions = new BodyActions(
 const deleteAction = new DeleteTopologyAction(editor);
 const mirror = new MirrorControls(editor, overlay);
 const constructionPlanes = new ConstructionPlaneControls(editor, overlay, entities.referenceRows);
-const disposeSketchEntryTool = sketchEntryTool(editor, () => constructionPlanes.selected());
+editor.workspaceEntry.selectedConstructionPlane = () => constructionPlanes.selected();
+const disposeSketchEntryTool = sketchEntryTool(editor);
 const scaling = new ScaleControls(
   editor,
   overlay,

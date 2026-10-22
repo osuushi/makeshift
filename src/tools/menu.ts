@@ -20,6 +20,7 @@ export class ToolMenu {
   constructor(
     private editor: SketchEditor,
     app: HTMLElement,
+    private beforeOpen: () => void,
   ) {
     this.trigger.className = "tools-trigger";
     this.trigger.innerHTML = `Search <kbd>${toolShortcut(toolSearchKey())}</kbd>`;
@@ -116,7 +117,9 @@ export class ToolMenu {
     );
   }
   private open(): void {
-    if (this.editor.interactions.current?.captured || toolMenuOpen()) return;
+    if (this.editor.interactions.current?.captured) return;
+    this.beforeOpen();
+    if (toolMenuOpen()) return;
     for (const menu of document.querySelectorAll<HTMLElement>(".control-menu:popover-open"))
       menu.hidePopover();
     borrowToolFocus();
@@ -138,8 +141,8 @@ export class ToolMenu {
     if (toolSearchShortcut(event)) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      if (!toolMenuOpen()) this.open();
-      else if (!this.backdrop.hidden) this.input.focus();
+      if (this.backdrop.hidden) this.open();
+      else this.input.focus();
       return;
     }
     if (this.backdrop.hidden) return;

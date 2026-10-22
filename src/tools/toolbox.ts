@@ -2,7 +2,6 @@ import { onToolboxChange, setToolboxTree, toolboxTree } from "../preferences/too
 import type { SketchEditor } from "../sketch/editor.js";
 import { type ToolResult, toolCatalog } from "./catalog.js";
 import { borrowToolFocus, restoreToolFocus, toolMenuOpen } from "./menu-focus.js";
-import { toolSearchShortcut } from "./search-shortcut.js";
 import { ToolboxDrag } from "./toolbox-drag.js";
 import { moveToolbox } from "./toolbox-layout.js";
 import { toolboxRow } from "./toolbox-row.js";
@@ -75,8 +74,7 @@ export class Toolbox {
       "keydown",
       (event) => {
         if (!this.menus.length || this.drag.dragging) return;
-        if (toolSearchShortcut(event)) this.close();
-        else if (event.key === "Escape") {
+        if (event.key === "Escape") {
           event.preventDefault();
           event.stopImmediatePropagation();
           this.close();
@@ -221,7 +219,7 @@ export class Toolbox {
   private trim(depth: number): void {
     for (const menu of this.menus.splice(depth)) menu.element.remove();
   }
-  private close = (): void => {
+  close = (): void => {
     clearTimeout(this.closeTimer);
     this.trim(0);
     if (this.borrowed) {

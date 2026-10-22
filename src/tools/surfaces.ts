@@ -10,7 +10,7 @@ export function installToolSurfaces(
   const toolbox = new Toolbox(editor, app, entities, (host) => {
     footer = host;
   });
-  const search = new ToolMenu(editor, app);
+  const search = new ToolMenu(editor, app, toolbox.close);
   search.mountTrigger(footer);
   return () => {
     search.dispose();

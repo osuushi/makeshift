@@ -53,10 +53,14 @@ await withUiRuntimes(
     await drawerRoute(page);
     await settingsRoute(page);
     await dragIntoGroup(page);
-    await chooseTool(page, "sketch on xy", "sketch-xy");
+    await chooseTool(page, "return to modeling", "modeling");
     await root.locator('[data-tool="line"]').hover();
     await page.locator('.toolbox-flyout [data-tool="rectangle"]').click();
     assert.equal(await root.locator('[data-tool="rectangle"]').count(), 1);
+    const drawing = await inspect(page);
+    assert.ok(drawing.activePlane, "Choosing Rectangle enters sketch mode directly");
+    assert.equal(drawing.tool, "rectangle");
+    assert.equal(drawing.document.sketches.length, 0, "Entering does not create an empty sketch");
     await drag(page, [-10, -8], [10, 8]);
     assert.equal((await inspect(page)).document.sketches[0].curves.length, 4);
     await focusAndTouch(page, name);
@@ -176,13 +180,33 @@ async function focusAndTouch(page, name) {
   assert.equal(await width.inputValue(), "24");
   assert.equal(await width.evaluate((e) => e === document.activeElement), true);
   assert.deepEqual((await inspect(page)).document, before);
-  await cube.hover();
-  await page.keyboard.press("Control+f");
-  assert.equal(await page.getByRole("dialog", { name: "Find a tool" }).isVisible(), true);
-  assert.equal(await page.locator(".toolbox-flyout").count(), 0);
-  await page.keyboard.press("Escape");
-  assert.equal(await width.inputValue(), "24");
-  assert.equal(await width.evaluate((e) => e === document.activeElement), true);
+  // Search must take over from flyouts through the actual button as well as the shortcut.
+  const search = page.getByRole("button", { name: "Search tools", exact: true });
+  for (const openSearch of [
+    () => page.keyboard.press("Control+f"),
+    () => search.click(),
+    async () => {
+      await search.focus();
+      await search.press("Enter");
+    },
+    ...(name === "electron" ? [] : [() => search.tap()]),
+  ]) {
+    await page.locator('.toolbox-grid [data-menu="Other Tools"] .toolbox-item').hover();
+    await page.locator('.toolbox-flyout [data-menu="Sketch editing"] .toolbox-item').hover();
+    await openSearch();
+    assert.equal(await page.getByRole("dialog", { name: "Find a tool" }).isVisible(), true);
+    assert.equal(await page.locator(".toolbox-flyout").count(), 0);
+    assert.equal(
+      await page
+        .getByRole("combobox", { name: "Find a tool" })
+        .evaluate((e) => e === document.activeElement),
+      true,
+    );
+    await page.keyboard.press("Escape");
+    assert.equal(await width.inputValue(), "24");
+    assert.equal(await width.evaluate((e) => e === document.activeElement), true);
+    assert.deepEqual((await inspect(page)).document, before);
+  }
   if (name !== "electron") {
     await page.getByRole("button", { name: "Alternatives for Cube", exact: true }).tap();
     assert.equal(await page.locator(".toolbox-flyout").count(), 1);

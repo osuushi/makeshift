@@ -250,6 +250,8 @@ grouped tools into the named drawer. Old preference values remain available.
 Click the main tool button to invoke it; the separate arrow opens alternatives for
 touch and keyboard access. Up/Down navigates siblings, Right opens a group, Left
 returns, and Escape closes discovery without accepting a pending numeric edit.
-Opening Search closes flyouts and preserves borrowed focus. Unavailable tools
+Opening Search by clicking or tapping its button, activating it with the keyboard,
+or using the shortcut closes flyouts and transfers borrowed focus to Search.
+Dismissing Search restores the original numeric field without accepting its draft. Unavailable tools
 retain their positions and explanatory tooltips; menu/group arrows stay usable.
 Physical iPad/Pencil ergonomics still require device review.
