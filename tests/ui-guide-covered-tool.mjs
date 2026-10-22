@@ -82,9 +82,28 @@ export async function coveredGuideRoute(page, fixture) {
       tool === "extrude" ? "profile" : "face",
     );
     if (tool === "extrude") await page.keyboard.press("e");
+    const handle = page.locator('.guide-marker[title^="Handle"]');
+    const inside = page.locator('.guide-marker[title^="Inside"]');
+    assert.equal(await handle.evaluate((e) => e.classList.contains("start-unavailable")), false);
+    assert.equal(await inside.evaluate((e) => e.classList.contains("start-unavailable")), true);
+    assert.equal(await inside.evaluate((e) => getComputedStyle(e).color), "rgb(146, 154, 163)");
+    await inside.click();
+    assert.equal(
+      await inside.getAttribute("aria-pressed"),
+      "true",
+      "gray guides remain selectable",
+    );
+    if (tool === "extrude") {
+      await page.screenshot({ path: ".cache/sketch-review/guide-start-availability.png" });
+    }
     await beginDrag(page);
     await pointerTo(page, [0, 0, 10]);
     await waitLock(page, [0, 0, 10]);
+    assert.equal(
+      await inside.evaluate((e) => e.classList.contains("start-unavailable")),
+      false,
+      "a valid destination is not dimmed by its starting-point eligibility",
+    );
     assert.equal(await page.locator('.guide-marker[title^="Inside"]').count(), 1);
     assert.equal(
       await page.locator(".guide-move-choices").isVisible(),
@@ -104,6 +123,13 @@ export async function coveredGuideRoute(page, fixture) {
     assert.ok(Math.abs((await inspect(page)).document.bodies[0].volume - volume) < 1e-5);
     await chooseTool(page, "undo", "undo");
     assert.deepEqual((await inspect(page)).document, before);
+    if (tool === "offset") {
+      await worldClick(page, [7, 0, 20]);
+      await page.keyboard.press("m");
+      assert.equal(await inside.evaluate((e) => e.classList.contains("start-unavailable")), false);
+      await page.keyboard.press("o");
+      assert.equal(await inside.evaluate((e) => e.classList.contains("start-unavailable")), true);
+    }
   }
   console.log("Saved centroid inside its body snaps directly for Extrude and Offset with one Undo");
 }

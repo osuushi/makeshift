@@ -183,7 +183,11 @@ export class GuideControls {
         (p.anchor.kind === "sketch-curve" || e.bodiesVisible),
     );
     const interactive = this.movement.interactive && (!e.world.active || e.tool === "select");
-    this.markers.update([...saved, ...candidates], interactive);
+    this.markers.update(
+      [...saved, ...candidates],
+      interactive,
+      (item) => this.movement.dragging || this.movement.canStart(item),
+    );
     const selected = e.store.data.guidePoints?.filter((p) => this.selected.has(p.id)) ?? [];
     for (const id of this.selected)
       if (!selected.some((p) => p.id === id)) this.selected.delete(id);

@@ -67,6 +67,13 @@ export class GuideMove {
   get toolActive(): boolean {
     return ["extrude", "face-offset"].includes(this.editor.interactions.current?.kind ?? "");
   }
+  get dragging(): boolean {
+    return !!this.drag;
+  }
+  canStart(item: GuideMarker): boolean {
+    if (this.editor.world.active && this.editor.tool !== "select") return false;
+    return !!guideDragSource(this.editor, item.anchor, item.point, this.toolInput);
+  }
   get interactive(): boolean {
     const lease = this.editor.interactions.current;
     return (

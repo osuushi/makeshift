@@ -1,7 +1,7 @@
 import { faceGuidePath, planarGuidePath } from "../guides/tool-path.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
-import type { extrusionAxis } from "./extrude-axis.js";
+import { extrusionAxis } from "./extrude-axis.js";
 
 /** Guide handles lie on a source support, including its untrimmed plane/cylinder extension. */
 export function extrusionGuidePath(
@@ -10,6 +10,8 @@ export function extrusionGuidePath(
   axis: ReturnType<typeof extrusionAxis>,
   symmetric = false,
 ) {
+  // Eligibility can be queried before the widget refreshes after a selection change.
+  if (editor.interactions.current?.kind !== "extrude") axis = extrusionAxis(editor);
   const resolution = editor.modeling.resolve("extrude");
   if (!resolution.available || !axis) return null;
   const document = editor.store.data;

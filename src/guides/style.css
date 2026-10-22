@@ -113,6 +113,15 @@
 .guide-marker.selected:focus-visible {
   outline-color: #1676d2;
 }
+.guide-marker.start-unavailable {
+  background: #eef0f2;
+  color: #929aa3;
+  border-color: #a7afb8;
+}
+.guide-marker.start-unavailable:hover,
+.guide-marker.start-unavailable:focus-visible {
+  outline-color: #a7afb8;
+}
 .guide-move-vector {
   position: absolute;
   inset: 0;

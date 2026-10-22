@@ -22,7 +22,11 @@ export class GuideMarkers {
     host.append(this.root);
     this.meanings = new GuideMeaningChoices(editor, host, choose, hover);
   }
-  update(items: GuideMarker[], interactive: boolean): void {
+  update(
+    items: GuideMarker[],
+    interactive: boolean,
+    canStart: (item: GuideMarker) => boolean,
+  ): void {
     const groups: GuideMarker[][] = [];
     for (const item of items) {
       const p = this.editor.world.project(item.point);
@@ -53,6 +57,11 @@ export class GuideMarkers {
       const selected = groups[i].some((p) => p.guide && this.selected().has(p.guide.id));
       button.element.classList.toggle("selected", selected);
       button.element.setAttribute("aria-pressed", String(selected));
+      const chosen = groups[i].find((p) => p.guide && this.selected().has(p.guide.id));
+      const available = chosen ? canStart(chosen) : groups[i].some(canStart);
+      button.element.classList.toggle("start-unavailable", !available);
+      if (available) button.element.removeAttribute("aria-description");
+      else button.element.setAttribute("aria-description", "Cannot start the current tool here");
     }
   }
   private button(items: GuideMarker[]) {

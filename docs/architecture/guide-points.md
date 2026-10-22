@@ -159,6 +159,11 @@ The handle must lie on a selected source's supporting plane or cylindrical surfa
 it may lie beyond the trimmed face, including on a cylinder's axial extension.
 The guide is a virtual handle and does not change its owning geometry independently.
 Unsupported tools or handles never fall back to moving the guide's owner.
+Markers that cannot start the current tool are gray, using the same source
+eligibility as dragging. They remain selectable for guide management. Overlapping
+markers follow the selected meaning, or remain available if any meaning can start
+the tool. During a drag, remaining markers show destination availability instead;
+a guide that cannot start the tool can still be a valid destination.
 
 Exact point coincidence is offered only when the destination lies on the permitted
 trajectory. Off-axis references may instead supply a separately labeled Height or
