@@ -6,12 +6,12 @@ import { chooseTool } from "./ui-tools.mjs";
 // Real pointer routes cover flyout crossings, click suppression after moves and shared settings.
 await withUiRuntimes(
   async (page, name) => {
-    await page.evaluate(() => localStorage.removeItem("makeshift.toolbox.v2"));
+    await page.evaluate(() => localStorage.removeItem("makeshift.toolbox.v3"));
     await page.waitForLoadState("networkidle");
     await page.reload();
     await page.waitForFunction(() => !!window.makeshiftInspect);
     const root = page.locator(".toolbox-grid");
-    assert.equal(await root.locator(":scope > .toolbox-row").count(), 6);
+    assert.equal(await root.locator(":scope > .toolbox-row").count(), 7);
     assert.equal(await root.locator('[data-tool="select"]').count(), 1);
     assert.equal(
       await page.getByRole("button", { name: "Alternatives for Select", exact: true }).count(),
@@ -112,7 +112,7 @@ async function settingsRoute(page) {
   await dialog.getByRole("button", { name: "Done", exact: true }).click();
 }
 async function stored(page) {
-  return page.evaluate(() => JSON.parse(localStorage.getItem("makeshift.toolbox.v2")));
+  return page.evaluate(() => JSON.parse(localStorage.getItem("makeshift.toolbox.v3")));
 }
 async function movePointer(page, from, to) {
   await from.scrollIntoViewIfNeeded();

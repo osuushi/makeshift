@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { defaultToolbox, normalizeToolbox } from "../src/tools/toolbox-defaults.js";
+import {
+  defaultToolbox,
+  normalizeToolbox,
+  promoteBooleanGroup,
+} from "../src/tools/toolbox-defaults.js";
 import {
   toolboxGroup as group,
   moveToolboxItem,
@@ -64,8 +68,12 @@ test("cannot create cycles, aliases or invalid selected indices", () => {
 
 test("compact defaults keep Select standalone and omit immediate commands", () => {
   const tree = defaultToolbox();
-  assert.equal(tree.items.length, 6);
+  assert.equal(tree.items.length, 7);
   assert.equal(tree.items[0], "select");
+  assert.deepEqual(
+    tree.items[3],
+    group("union", "subtract", "intersect", "split", "imprint", "drill"),
+  );
   const leaves = toolboxLeaves(tree);
   for (const id of [
     "select-face",
@@ -90,4 +98,21 @@ test("saved layouts cannot group Select or admit commands; selected tools surviv
   const clean = normalizeToolbox(root);
   assert.deepEqual(clean, group("select", { items: ["circle", "line"], selected: 1 }));
   assert.deepEqual(normalizeToolbox(moveToolboxItem(clean, [0], [1], "inside")), clean);
+});
+
+test("Boolean promotion retains chosen alternatives and other saved groups", () => {
+  const booleans = {
+    ...group("union", "subtract", "intersect", "split", "imprint", "drill"),
+    selected: 1,
+  };
+  const old = group("select", group("circle", "line"), group("fillet", booleans, "shell"));
+  const upgraded = promoteBooleanGroup(old);
+  assert.deepEqual(upgraded.items, [
+    "select",
+    group("circle", "line"),
+    booleans,
+    group("fillet", "shell"),
+  ]);
+  assert.ok(validToolboxTree(upgraded));
+  assert.deepEqual(promoteBooleanGroup(upgraded), upgraded);
 });

@@ -1,6 +1,13 @@
-import { toolboxGroup as group, type ToolboxGroup, toolboxLeaves } from "./toolbox-tree.js";
+import {
+  findToolboxPath,
+  toolboxGroup as group,
+  moveToolboxItem,
+  type ToolboxGroup,
+  toolboxItem,
+  toolboxLeaves,
+} from "./toolbox-tree.js";
 
-/** Select is fixed; the five unnamed groups contain ongoing tools, not commands. */
+/** Select is fixed; the six unnamed groups contain ongoing tools, not commands. */
 export function defaultToolbox(): ToolboxGroup {
   return group(
     "select",
@@ -13,15 +20,8 @@ export function defaultToolbox(): ToolboxGroup {
       group("trim", "sketch-offset", "sketch-fillet"),
     ),
     group("cube", "cylinder", "sphere", "cone", group("extrude", "revolve", "loft")),
-    group(
-      "fillet",
-      "chamfer",
-      "shell",
-      "offset",
-      "erode",
-      group("union", "subtract", "intersect", "split", "imprint", "drill"),
-      group("threads", "gear", "knurling"),
-    ),
+    group("union", "subtract", "intersect", "split", "imprint", "drill"),
+    group("fillet", "chamfer", "shell", "offset", "erode", group("threads", "gear", "knurling")),
     group("transform", "duplicate", "mirror"),
     group("construction-plane", "project", "use-edge", "cross-section"),
   );
@@ -51,4 +51,20 @@ export function normalizeToolbox(root: ToolboxGroup): ToolboxGroup {
     return kept === null ? [] : [kept];
   });
   return group("select", ...items);
+}
+
+/** Lift the former Boolean subgroup while retaining customized tools and chosen alternatives. */
+export function promoteBooleanGroup(root: ToolboxGroup): ToolboxGroup {
+  const path = findToolboxPath(root, "union")?.slice(0, -1);
+  if (!path || path.length < 2) return root;
+  const item = toolboxItem(root, path);
+  const ids = ["union", "subtract", "intersect", "split", "imprint", "drill"];
+  if (
+    !item ||
+    typeof item === "string" ||
+    item.items.length !== ids.length ||
+    !item.items.every((child) => typeof child === "string" && ids.includes(child))
+  )
+    return root;
+  return moveToolboxItem(root, path, [path[0]], "before");
 }
