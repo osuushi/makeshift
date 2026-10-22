@@ -61,7 +61,12 @@ Leaving a sketch workspace resets its tool to Select and clears armed creation
 intent. Reentering a sketch or choosing another plane therefore starts in Select,
 without inheriting Circle, Line, Rectangle, Curve or Trim from the previous session.
 Drawing tools continue to take precedence while that session is active. Explicitly
-choosing a drawing tool in Modeling can still arm a new plane-first drawing flow.
+choosing Line, Rectangle, Circle, Curve, Pen or Trim in Modeling immediately enters
+sketch mode, then activates that tool. It uses the same context priority as the
+Sketch command: selected sketch/profile, planar face, saved construction plane,
+selected canonical plane, then primary grid. Existing visible coplanar sketches
+are reused; entry alone never saves an empty sketch. Switching tools while already
+sketching keeps the current workspace. Select alone does not enter sketch mode.
 
 Grid snapping has a touch-accessible **Grid snap: On/Off** button below the
 orientation cube, shared with the searchable Toggle grid snapping command.

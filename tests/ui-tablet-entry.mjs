@@ -48,7 +48,7 @@ export async function tabletEntryRoute(page, name) {
   await page.touchscreen.tap(p.x, p.y);
   assert.ok((await inspect(page)).activePlane, "Finger double tap enters planar face");
   assert.match(
-    await page.getByRole("button", { name: "More tools", exact: true }).textContent(),
+    await page.getByRole("button", { name: "Search tools", exact: true }).textContent(),
     /⌘P/,
   );
   await page.keyboard.press("Meta+p");

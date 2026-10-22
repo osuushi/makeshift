@@ -28,7 +28,10 @@ import { chooseTool } from "./ui-tools.mjs";
 
 async function existingOffsetRoute(page, before, body) {
   await worldClick(page, [7, 8, 10]);
-  await page.getByRole("button", { name: "Offset faces", exact: true }).click();
+  await page
+    .locator(".face-offset-widget")
+    .getByRole("button", { name: "Offset faces", exact: true })
+    .click();
   await (await relativeOffsetInput(page)).fill("2");
   await inspect(page);
   await beginDrag(page);

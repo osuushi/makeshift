@@ -1,97 +1,38 @@
 import { selectedGuides } from "../guides/selection.js";
 import { guidesVisible } from "../guides/view-state.js";
+import { onToolboxChange, setToolboxTree, toolboxTree } from "../preferences/toolbox.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { type ToolResult, toolCatalog } from "./catalog.js";
-import { toolShortcut } from "./menu-list.js";
+import { borrowToolFocus, restoreToolFocus, toolMenuOpen } from "./menu-focus.js";
+import { ToolboxDrag } from "./toolbox-drag.js";
+import { moveToolbox } from "./toolbox-layout.js";
+import { ToolboxReferences } from "./toolbox-references.js";
+import { toolboxRow } from "./toolbox-row.js";
+import {
+  findToolboxPath,
+  selectToolboxPath,
+  type ToolboxPath,
+  toolboxItem,
+  toolboxLeaf,
+} from "./toolbox-tree.js";
 import "./toolbox.css";
 
-type ToolButton = { id: string; label: string; icon: string };
-const guideToggle: ToolButton = {
-  id: "guide-points",
-  label: "Guide points",
-  icon: '<circle cx="12" cy="12" r="8"/><path d="M7 12h10M12 7v10"/>',
-};
-const sketchTools: ToolButton[] = [
-  {
-    id: "sketch-grid",
-    label: "Grid",
-    icon: '<rect x="3" y="3" width="18" height="18"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>',
-  },
-  { id: "select", label: "Arrow", icon: '<path d="M5 3v17l5-5 3 7 3-1-3-7h7L5 3Z"/>' },
-  guideToggle,
-  {
-    id: "line",
-    label: "Line",
-    icon: '<path d="m5 19 14-14"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/>',
-  },
-  {
-    id: "rectangle",
-    label: "Rectangle",
-    icon: '<rect x="4" y="4" width="16" height="16" rx="1"/>',
-  },
-  { id: "circle", label: "Circle", icon: '<circle cx="12" cy="12" r="8"/>' },
-  {
-    id: "pen",
-    label: "Pen",
-    icon: '<path d="m4 20 4-1 10-10-3-3L5 16l-1 4Z"/><path d="m13 7 3 3"/>',
-  },
-  {
-    id: "trim",
-    label: "Trim",
-    icon: '<path d="M4 4 20 20M20 4 4 20"/><path d="M8 8 4 4m12 12 4 4"/>',
-  },
-];
-const modelingTools: ToolButton[] = [
-  sketchTools[1],
-  guideToggle,
-  {
-    id: "start-sketch",
-    label: "Sketch",
-    icon: '<path d="M4 4h12v12H4z"/><path d="m13 13 6-6 2 2-6 6-3 1 1-3Z"/>',
-  },
-  {
-    id: "cube",
-    label: "Cube",
-    icon: '<path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="M3 8v9l9 5 9-5V8M12 13v9"/>',
-  },
-  {
-    id: "cylinder",
-    label: "Cylinder",
-    icon: '<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 18c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
-  },
-  {
-    id: "sphere",
-    label: "Sphere",
-    icon: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 2.5 3 13.5 0 18M12 3c-3 2.5-3 13.5 0 18"/>',
-  },
-  {
-    id: "cone",
-    label: "Cone",
-    icon: '<path d="m12 3 9 17H3L12 3Z"/><ellipse cx="12" cy="20" rx="9" ry="3"/>',
-  },
-  {
-    id: "drill",
-    label: "Drill",
-    icon: '<path d="M9 3h6v4H9zM8 7h8l2 5v5l-6 5-6-5v-5l2-5Z"/><path d="M12 12v7"/>',
-  },
-  {
-    id: "extrude",
-    label: "Extrude",
-    icon: '<path d="M4 9 12 5l8 4-8 4-8-4Z"/><path d="M4 9v7l8 4 8-4V9M12 13v7M8 7l8 4v6"/>',
-  },
-  {
-    id: "offset",
-    label: "Offset",
-    icon: '<path d="M5 5h12v12H5z"/><path d="M8 8h12v12H8zM2 2h12v12"/>',
-  },
-];
-
-/** Compact, mode-specific launchers backed by the shared command catalog. */
+/** A single owned tree; each row launches its remembered leaf or exposes alternatives. */
 export class Toolbox {
   private root = document.createElement("aside");
   private grid = document.createElement("div");
+  private references: ToolboxReferences;
   private observer: ResizeObserver;
+  private abort = new AbortController();
+  private drag: ToolboxDrag;
+  private disposePreference: () => void;
+  private menus: { path: ToolboxPath; element: HTMLElement }[] = [];
+  private tools = new Map<string, ToolResult>();
   private signature = "";
+  private choice: { readonly id: string } | null = null;
+  private hoverBlock: { x: number; y: number } | null = null;
+  private borrowed = false;
+  private closeTimer: ReturnType<typeof setTimeout> | undefined;
   constructor(
     private editor: SketchEditor,
     app: HTMLElement,
@@ -99,88 +40,239 @@ export class Toolbox {
     mountMore: (host: HTMLElement) => void,
   ) {
     this.root.className = "toolbox";
-    this.root.setAttribute("aria-label", "Common tools");
+    this.root.setAttribute("aria-label", "Toolbox");
+    const title = document.createElement("strong");
+    title.textContent = "Tools";
     this.grid.className = "toolbox-grid";
     const footer = document.createElement("div");
     footer.className = "toolbox-footer";
     mountMore(footer);
-    this.root.append(this.grid, footer);
+    this.references = new ToolboxReferences(editor);
+    this.root.append(title, this.grid, this.references.root, footer);
     app.append(this.root);
+    this.drag = new ToolboxDrag(
+      this.root,
+      (from, target) => {
+        setToolboxTree(moveToolbox(toolboxTree(), from, target.path, target.mode));
+      },
+      (path, row) => this.expand(path, row),
+      () => this.close(),
+    );
     this.observer = new ResizeObserver(this.position);
     this.observer.observe(entities);
-    window.addEventListener("resize", this.position);
+    window.addEventListener("resize", this.position, { signal: this.abort.signal });
+    this.root.addEventListener("pointerleave", (event) => {
+      this.hoverBlock = null;
+      if (event.pointerType !== "touch" && !this.drag.dragging)
+        this.closeTimer = setTimeout(() => this.close(), 240);
+    });
+    this.root.addEventListener("pointerenter", () => clearTimeout(this.closeTimer));
+    window.addEventListener(
+      "pointerdown",
+      (event) => {
+        if (!this.root.contains(event.target as Node)) this.close();
+      },
+      { capture: true, signal: this.abort.signal },
+    );
+    this.root.addEventListener("keydown", this.keydown);
+    window.addEventListener(
+      "keydown",
+      (event) => {
+        if (!this.menus.length || this.drag.dragging) return;
+        if (event.key === "Escape") {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          this.close();
+        }
+      },
+      { capture: true, signal: this.abort.signal },
+    );
+    this.disposePreference = onToolboxChange(() => {
+      this.signature = "";
+      this.update();
+    });
     editor.world.changed.add(this.update);
     this.update();
   }
   private position = (): void => {
-    const bounds = this.entities.getBoundingClientRect();
-    const top = Math.ceil(bounds.bottom + 8);
+    const bounds = this.entities.getBoundingClientRect(),
+      top = Math.ceil(bounds.bottom + 8);
     this.root.style.top = `${top}px`;
-    this.root.style.maxHeight = `${Math.max(120, window.innerHeight - top - 12)}px`;
+    const chrome =
+      this.root.getBoundingClientRect().height - this.grid.getBoundingClientRect().height;
+    this.grid.style.maxHeight = `${Math.max(60, window.innerHeight - top - chrome - 12)}px`;
   };
   private update = (): void => {
-    const sketch = this.editor.world.active !== null;
-    const tools = [...(sketch ? sketchTools : modelingTools)];
-    if (selectedGuides(this.editor).size)
-      tools.push({
-        id: "construction-plane",
-        label: "Construction plane",
-        icon: '<path d="m3 16 5-10h13l-5 10Z"/><circle cx="8" cy="6" r="2"/><circle cx="3" cy="16" r="2"/><circle cx="16" cy="16" r="2"/>',
-      });
-    const catalog = toolCatalog(this.editor);
+    const catalog = toolCatalog(this.editor)
+      .results()
+      .filter((tool) => tool.showInTools !== false);
+    this.tools = new Map(catalog.map((tool) => [tool.id, tool]));
+    this.root.dataset.mode = this.editor.world.active ? "sketch" : "modeling";
+    const choice = toolCatalog(this.editor).lastChoice;
+    if (choice !== this.choice) {
+      this.choice = choice;
+      const path = choice && findToolboxPath(toolboxTree(), choice.id);
+      if (path) setToolboxTree(selectToolboxPath(toolboxTree(), path));
+    }
     const signature = JSON.stringify([
-      sketch,
+      toolboxTree(),
+      catalog.map((tool) => [tool.id, tool.unavailable]),
       this.editor.tool,
       this.editor.modeling.tool,
       this.editor.interactions.current?.kind,
+      this.editor.interactions.toolId,
       guidesVisible(this.editor),
       selectedGuides(this.editor).size,
-      catalog.results().map((tool) => [tool.id, tool.unavailable]),
     ]);
-    if (signature === this.signature) return;
+    if (signature === this.signature || this.drag.dragging) return;
     this.signature = signature;
-    this.root.dataset.mode = sketch ? "sketch" : "modeling";
-    this.grid.replaceChildren();
-    for (const item of tools) {
-      const tool = catalog.results().find((candidate) => candidate.id === item.id);
-      if (!tool) continue;
-      this.grid.append(this.button(item, tool, sketch));
-    }
+    this.close();
+    this.grid.replaceChildren(...toolboxTree().items.map((_, index) => this.row([index])));
+    this.references.update(this.tools);
     this.position();
   };
-  private button(item: ToolButton, tool: ToolResult, sketch: boolean): HTMLButtonElement {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "toolbox-item";
-    button.dataset.tool = item.id;
-    button.disabled = !!tool.unavailable;
-    button.title = [
-      item.label,
-      tool.shortcut ? `Shortcut ${toolShortcut(tool.shortcut)}` : "",
-      tool.unavailable,
-    ]
-      .filter(Boolean)
-      .join(" · ");
-    button.setAttribute("aria-label", item.label);
-    const active =
-      item.id === "guide-points" ? guidesVisible(this.editor) : this.activeTool(sketch) === item.id;
-    button.setAttribute("aria-pressed", String(active));
-    button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${item.icon}</svg><span>${item.label}</span>${tool.shortcut ? `<kbd>${toolShortcut(tool.shortcut)}</kbd>` : ""}`;
-    button.onclick = () => void toolCatalog(this.editor).invoke(item.id);
-    return button;
-  }
-  private activeTool(sketch: boolean): string | null {
-    if (sketch) return this.editor.tool;
+  private activeTool(): string {
+    const source = this.editor.interactions.toolId;
+    if (source && source !== this.editor.interactions.current?.kind && this.tools.has(source))
+      return source;
+    if (this.editor.world.active) return this.editor.moveMode ? "transform" : this.editor.tool;
     const kind = this.editor.interactions.current?.kind;
     if (kind === "face-offset") return "offset";
-    if (kind && modelingTools.some((tool) => tool.id === kind)) return kind;
-    const selected = this.editor.modeling.tool;
-    if (selected && modelingTools.some((tool) => tool.id === selected)) return selected;
-    return this.editor.tool === "select" ? "select" : null;
+    if (kind && this.tools.has(kind)) return kind;
+    return this.editor.modeling.tool === "move"
+      ? "transform"
+      : (this.editor.modeling.tool ?? "select");
   }
+  private row(path: ToolboxPath): HTMLElement {
+    const item = toolboxItem(toolboxTree(), path);
+    if (item === undefined) throw new Error("Missing toolbox item");
+    const row = toolboxRow(
+      item,
+      path,
+      this.tools,
+      (event) => {
+        this.hoverBlock = { x: event.clientX, y: event.clientY };
+        void this.activate(path);
+      },
+      () => this.expand(path, row),
+    );
+    const leaf = toolboxLeaf(item);
+    const active = this.activeTool();
+    row
+      .querySelector(".toolbox-item")
+      ?.setAttribute(
+        "aria-pressed",
+        String(!(typeof item !== "string" && item.title) && leaf === active),
+      );
+    row.addEventListener("pointerenter", (event) => {
+      clearTimeout(this.closeTimer);
+      if (event.pointerType === "touch" || this.drag.dragging) return;
+      // Replacing a row under a stationary pointer must not reopen after activation.
+      const block = this.hoverBlock;
+      if (block && Math.hypot(event.clientX - block.x, event.clientY - block.y) < 2) return;
+      this.hoverBlock = null;
+      if (typeof item !== "string") this.expand(path, row);
+      else if (path.length === 1) this.close();
+      else this.trim(path.length - 1);
+    });
+    return row;
+  }
+  private async activate(path: ToolboxPath): Promise<void> {
+    const item = toolboxItem(toolboxTree(), path);
+    if (item === undefined || (typeof item !== "string" && item.title)) return;
+    const tool = this.tools.get(toolboxLeaf(item));
+    if (!tool || toolCatalog(this.editor).reason(tool)) return;
+    this.close();
+    await toolCatalog(this.editor).activate(tool);
+  }
+  private expand(path: ToolboxPath, row: HTMLElement): void {
+    if (this.editor.interactions.current?.captured || this.editor.isDragging) return;
+    const item = toolboxItem(toolboxTree(), path);
+    if (!item || typeof item === "string") return;
+    const depth = path.length - 1;
+    if (JSON.stringify(this.menus[depth]?.path) === JSON.stringify(path)) return;
+    if (!this.borrowed) {
+      if (toolMenuOpen()) return;
+      borrowToolFocus();
+      this.borrowed = true;
+    }
+    this.trim(depth);
+    const menu = document.createElement("div");
+    menu.className = "toolbox-flyout";
+    menu.setAttribute("role", "menu");
+    menu.setAttribute(
+      "aria-label",
+      item.title ??
+        `Alternatives for ${this.tools.get(toolboxLeaf(item))?.label ?? toolboxLeaf(item)}`,
+    );
+    if (item.title) {
+      const title = document.createElement("strong");
+      title.className = "toolbox-menu-title";
+      title.textContent = item.title;
+      menu.append(title);
+    }
+    if (!item.items.length) {
+      const empty = document.createElement("p");
+      empty.textContent = "Drag tools here to add them.";
+      menu.append(empty);
+    }
+    menu.append(...item.items.map((_, index) => this.row([...path, index])));
+    this.root.append(menu);
+    this.menus.push({ path, element: menu });
+    const anchor = row.getBoundingClientRect(),
+      bounds = menu.getBoundingClientRect();
+    menu.style.left = `${Math.max(4, Math.min(anchor.right, window.innerWidth - bounds.width - 4))}px`;
+    menu.style.top = `${Math.max(4, Math.min(anchor.top, window.innerHeight - bounds.height - 4))}px`;
+  }
+  private trim(depth: number): void {
+    for (const menu of this.menus.splice(depth)) menu.element.remove();
+  }
+  close = (): void => {
+    clearTimeout(this.closeTimer);
+    this.trim(0);
+    if (this.borrowed) {
+      restoreToolFocus();
+      this.borrowed = false;
+    }
+  };
+  private keydown = (event: KeyboardEvent): void => {
+    const row = (event.target as Element).closest<HTMLElement>("[data-toolbox-path]");
+    if (!row) return;
+    const path: ToolboxPath = JSON.parse(row.dataset.toolboxPath ?? "[]");
+    if (!["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp", "Escape"].includes(event.key)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.key === "Escape") this.close();
+    else if (event.key === "ArrowRight") {
+      if (row.dataset.group) {
+        this.expand(path, row);
+        this.menus.at(-1)?.element.querySelector<HTMLButtonElement>("button")?.focus();
+      }
+    } else if (event.key === "ArrowLeft") {
+      if (path.length <= 2) this.close();
+      else this.trim(path.length - 2);
+      this.root
+        .querySelector<HTMLElement>(
+          `[data-toolbox-path='${JSON.stringify(path.slice(0, -1))}'] button`,
+        )
+        ?.focus();
+    } else {
+      const siblings = [
+        ...(row.parentElement?.querySelectorAll<HTMLElement>(":scope > .toolbox-row") ?? []),
+      ];
+      const index = siblings.indexOf(row),
+        delta = event.key === "ArrowDown" ? 1 : -1;
+      siblings[(index + delta + siblings.length) % siblings.length]
+        ?.querySelector("button")
+        ?.focus();
+    }
+  };
   dispose(): void {
+    this.drag.dispose();
+    this.close();
+    this.disposePreference();
+    this.abort.abort();
     this.observer.disconnect();
-    window.removeEventListener("resize", this.position);
     this.editor.world.changed.delete(this.update);
     this.root.remove();
   }

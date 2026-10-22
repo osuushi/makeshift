@@ -160,6 +160,7 @@ export class SketchEditor {
   }
   async setTool(tool: Tool): Promise<void> {
     if (!(await completeInteraction(this))) return;
+    if (tool !== "select" && !this.world.active && !this.workspaceEntry.fromContext()) return;
     this.selected.replacePoints([]);
     this.pointMenu = null;
     this.pointHover = null;

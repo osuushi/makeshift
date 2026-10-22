@@ -20,7 +20,7 @@ export async function orientationCubeRoute(page, name) {
   const bounds = await cube.boundingBox();
   const center = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
   const tools = await page
-    .getByRole("button", { name: /More tools/ })
+    .getByRole("button", { name: /Search tools/ })
     .first()
     .boundingBox();
   assert.ok(tools.x + tools.width < bounds.x, "Tools does not overlap the cube");

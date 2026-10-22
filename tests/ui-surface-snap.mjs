@@ -5,7 +5,9 @@ import { assertPreview, pointerTo } from "./ui-guide-tool-helpers.mjs";
 import { inspect, modalCompleted } from "./ui-helpers.mjs";
 
 export async function startToolDrag(page, name) {
-  const handle = page.getByRole("button", { name, exact: true });
+  const handle = page
+    .getByRole("button", { name, exact: true })
+    .and(page.locator(".orientable-handle"));
   const box = await handle.boundingBox();
   assert.ok(box);
   for (const y of [0.5, 0.25, 0.75])
