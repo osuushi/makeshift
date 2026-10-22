@@ -142,6 +142,12 @@ jobs:
         run: |
           npx playwright install chromium
           npm run demos:check
+      # GitHub's hosted network drops stapler HTTP/3 connections; retain HTTPS over TCP.
+      # https://github.com/actions/runner-images/issues/14924#issuecomment-6188826956
+      - name: Use TCP for Apple ticket delivery on the disposable runner
+        run: |
+          printf '%s\n' 'block return out quick proto udp from any to any port 443' | sudo pfctl -f -
+          sudo pfctl -E
       - name: Import certificate, sign and notarize
         env:
           APPLE_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}

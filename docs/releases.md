@@ -6,6 +6,11 @@ App Store. Release builds are manually requested from `main`; they do not run
 on pushes or pull requests. Intel and Windows installers are outside this release
 pipeline. Signed Apple Silicon releases receive automatic preview updates.
 
+The disposable macOS release runner blocks UDP/443 before signing, so Apple's
+ticket delivery uses HTTPS over TCP. This follows the
+[hosted-runner HTTP/3 issue](https://github.com/actions/runner-images/issues/14924#issuecomment-6188826956).
+Signature, notarization, stapler validation and Gatekeeper checks remain required.
+
 ## Release everything from GitHub
 
 After **Check** passes on `main`, run **Actions → Release all → Run workflow**
