@@ -50,9 +50,10 @@ export function guideToolTargets(editor: SketchEditor, path: GuideToolPath): Gui
     .map((p) => ({
       ...p,
       // A virtual cap can lie in front of the selected sketch's automatic X-ray plane.
-      // Keep body occlusion, but do not clip away the tool's own reachable trajectory.
+      // Visible saved markers remain directly hittable through their owning bodies,
+      // just as in Move. Unsaved destinations still respect body occlusion.
       guide: p.guide && editor.world.visiblePoint(new THREE.Vector3(...p.point)),
-      visible: visibleAnchorPoint(editor, p.point, document.bodies, false),
+      visible: p.saved || visibleAnchorPoint(editor, p.point, document.bodies, false),
     }));
 }
 

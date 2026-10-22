@@ -171,7 +171,9 @@ clamped parameter removes the destination; lock feedback appears only after a
 successful preview. Height and radius alignment reveal a local planar or curved
 grid connecting the reference to the solved destination.
 Virtual destinations remain reachable through the selected sketch's automatic
-cutaway; explicit section cuts still filter them, and body occlusion still dims them.
+cutaway; explicit section cuts still filter them. Reachable saved markers remain
+direct snap targets through bodies, consistent with their visible markers and Move.
+Body occlusion still dims unsaved destinations and requires the target chooser.
 
 The gesture borrows the existing tool interaction and previews its geometry.
 Release retains the temporary Offset/Extrude value; ordinary tool completion

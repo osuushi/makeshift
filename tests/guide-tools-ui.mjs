@@ -8,6 +8,7 @@ import { documentArchive } from "../.cache/sketch-tests/src/model/document-archi
 import { prism, square } from "../.cache/sketch-tests/tests/body-edge-fixtures.js";
 import { openDocument } from "./native-documents.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
+import { coveredGuideFixture, coveredGuideRoute } from "./ui-guide-covered-tool.mjs";
 import { cylinderToolFixture, cylinderToolRoute } from "./ui-guide-cylinder-tool.mjs";
 import { profileToolFixture, profileToolRoute } from "./ui-guide-profile-tool.mjs";
 import {
@@ -115,6 +116,7 @@ try {
   owner.close();
   const cylinder = await cylinderToolFixture(directory);
   const profile = await profileToolFixture(directory);
+  const covered = await coveredGuideFixture(directory);
   await withUiRuntimes(async (page) => {
     await openDocument(page, path);
     const before = (await inspect(page)).document;
@@ -174,6 +176,7 @@ try {
     assert.deepEqual((await inspect(page)).document, before);
     await cylinderToolRoute(page, cylinder);
     await profileToolRoute(page, profile);
+    await coveredGuideRoute(page, covered);
     console.log(
       "Guide tool dispatch, unreachable destinations, temporary Offset/Extrude, gesture cancel and Undo passed",
     );
