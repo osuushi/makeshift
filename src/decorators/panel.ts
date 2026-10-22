@@ -260,6 +260,7 @@ export class DecoratorPanel {
       (patch, preview) => this.patch(patch, preview, instances),
       this.draft,
       this.advancedOpen || !!problem,
+      false,
     );
     this.button("Remove thread decorator from selected faces", () => {
       const keys = new Set(this.fresh(instances).flatMap((d) => d.faces.map(faceKey)));

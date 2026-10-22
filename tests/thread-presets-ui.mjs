@@ -72,12 +72,10 @@ await withUiRuntimes(
       await worldClick(page, [0, -8, 5]);
       const selector = page.getByRole("combobox", { name: "Preset", exact: true });
       assert.equal(await selector.inputValue(), "custom");
-      assert.deepEqual(await selector.locator("option").allTextContents(), [
-        "FDM fine",
-        "FDM coarse",
-        "Metric",
-        "Custom",
-      ]);
+      assert.deepEqual(
+        await selector.locator('optgroup[label="Global"] option').allTextContents(),
+        ["FDM fine", "FDM coarse", "Metric", "Custom"],
+      );
       assert.equal(
         await page.getByRole("spinbutton", { name: "Layer height", exact: true }).count(),
         0,

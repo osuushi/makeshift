@@ -1,6 +1,13 @@
 import type { SketchDocument } from "../sketch/document.js";
 import { isBuiltinDecorator } from "./builtins.js";
-import { choiceKey, copyPreset, localPreset, presetName, sameSettings } from "./presets.js";
+import {
+  checkedPresetName,
+  choiceKey,
+  copyPreset,
+  localPreset,
+  presetName,
+  sameSettings,
+} from "./presets.js";
 import type { DecoratorEdit, DecoratorInstance } from "./types.js";
 
 type Run = (document: SketchDocument, edit: DecoratorEdit) => Promise<SketchDocument>;
@@ -42,7 +49,7 @@ export async function editWithPresets(document: SketchDocument, edit: DecoratorE
               p.definition === instance.definition &&
               p.version === instance.version &&
               sameSettings(p.settings, instance.settings),
-          ) ?? copyPreset(presets, instance, `${presetName(instance)} copy`);
+          ) ?? copyPreset(presets, instance, presetName(instance));
         if (!presets.some((p) => p.id === preset.id)) presets.push(preset);
         presetId = preset.id;
       }
@@ -60,7 +67,7 @@ export async function editWithPresets(document: SketchDocument, edit: DecoratorE
       const updated =
         existing && !shared
           ? { ...existing, settings: { ...instance.settings } }
-          : copyPreset(presets, instance, `${existing?.name ?? presetName(previous)} copy`);
+          : copyPreset(presets, instance, existing?.name ?? presetName(previous));
       const index = presets.findIndex((p) => p.id === updated.id);
       if (index < 0) presets.push(updated);
       else presets[index] = updated;
@@ -108,12 +115,9 @@ async function editPreset(
     throw new Error("Select decorators with matching settings");
   if (edit.operation === "rename") {
     const preset = localPreset(document, first);
-    const name = edit.name?.trim();
     if (!preset) throw new Error("Duplicate the built-in preset before renaming it");
     if (group.some((d) => d.presetId !== preset.id)) throw new Error("Select one preset to rename");
-    if (!name || name.length > 200) throw new Error("Enter a preset name of 1–200 characters");
-    if (document.decoratorPresets?.some((p) => p.id !== preset.id && p.name === name))
-      throw new Error("A preset already has this name");
+    const name = checkedPresetName(document.decoratorPresets ?? [], edit.name, preset.id);
     return {
       ...document,
       decoratorPresets: document.decoratorPresets?.map((p) =>
@@ -126,8 +130,9 @@ async function editPreset(
   const preset = copyPreset(
     presets,
     first,
-    `${localPreset(document, first)?.name ?? presetName(first)} copy`,
+    localPreset(document, first)?.name ?? presetName(first),
   );
+  if (edit.name !== undefined) preset.name = checkedPresetName(presets, edit.name);
   return remember({ ...document, decoratorPresets: [...presets, preset] }, edit.ids, preset.id);
 }
 

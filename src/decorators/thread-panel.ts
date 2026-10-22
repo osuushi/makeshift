@@ -8,6 +8,7 @@ export function appendThreadSettings(
   patch: (settings: Settings, preview: boolean) => void,
   draft: DecoratorFieldDraft,
   advancedOpen: boolean,
+  showPreset = true,
 ): void {
   instances = instances.map((instance) => ({
     ...instance,
@@ -20,6 +21,7 @@ export function appendThreadSettings(
   summary.textContent = "Advanced";
   advanced.append(summary);
   for (const field of threadFields) {
+    if (field.key === "preset" && !showPreset) continue;
     if (
       field.visibleWhen &&
       !instances.some((d) => field.visibleWhen?.values.includes(d.settings[field.visibleWhen.key]))

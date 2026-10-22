@@ -117,6 +117,7 @@ function appendFields(
   appendGearInformation(root, editor, group);
   for (const instance of group) appendCustomDiagnostics(root, editor, instance);
   for (const schema of fields) {
+    if (schema.key === "preset" && schema.type === "enum") continue;
     const applicable = gearFieldInstances(editor, group, schema.key);
     if (!applicable.length) continue;
     if (

@@ -184,8 +184,13 @@ extent edits keep the chosen preset. Older documents without tip truncation
 retain their sharp profile until a preset is explicitly reapplied. Edits use
 the same owner/Undo path.
 
-Decorator panels also offer named document-local presets, Duplicate preset, and
-Rename preset. A preset stores resolved settings for one definition/version, so
+Decorator panels use one Preset menu, grouping built-in choices under Global and
+named document-local presets under Document. Save as document preset creates a
+copy through a focused name dialog. Rename… in the same menu edits a document
+preset name in that dialog; no permanent duplicate name field is shown. Automatic
+copies use “copy”, “copy 2”, “copy 3”, including copies of copies. The thread
+reference-diameter paragraph is omitted; actionable geometry warnings and their face-selection controls remain.
+A preset stores resolved settings for one definition/version, so
 reusing it preserves explicit dimensions rather than re-inferring them. The last
 accepted choice per definition/version is saved with the document and reused on
 application. Editing a built-in creates a local copy. Editing an unshared local

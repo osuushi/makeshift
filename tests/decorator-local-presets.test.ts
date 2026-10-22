@@ -9,6 +9,7 @@ import { documentArchive, readArchive } from "../src/model/document-archive.js";
 import { emptySketch } from "../src/sketch/document.js";
 import { planes } from "../src/sketch/planes.js";
 import { lift } from "./body-edge-fixtures.js";
+import { roundBody } from "./decorator-domain-fixtures.js";
 
 test("local presets preserve mating settings, last choice, rename, Undo and archives", async () => {
   const owner = new DocumentOwner();
@@ -144,6 +145,53 @@ test("gear presets copy all settings and remember their own last choice", async 
     data = await edit({ action: "apply", definition: threadDefinition, faces });
     assert.equal(data.decorators?.[0].settings.preset, "fdm-fine");
     assert.equal(data.decorators?.[0].presetId, undefined);
+  } finally {
+    owner.close();
+  }
+});
+
+test("Save as uses the supplied name atomically and rejects duplicate names", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const body = await roundBody(owner, [8]);
+    const face = body.faces.find((f) => f.cylinder);
+    assert.ok(face);
+    assert.equal(
+      (
+        await owner.call({
+          kind: "decorator",
+          edit: {
+            action: "apply",
+            definition: threadDefinition,
+            faces: [{ body: body.id, face: face.id }],
+          },
+        })
+      ).error,
+      undefined,
+    );
+    const id = owner.view.data.decorators?.[0].id;
+    assert.ok(id);
+    const before = owner.view.data;
+    const save = (name: string) =>
+      owner.call({
+        kind: "decorator",
+        edit: {
+          action: "preset",
+          operation: "duplicate",
+          ids: [id],
+          name,
+        },
+      });
+    assert.equal((await save("Named fit")).error, undefined);
+    const saved = owner.view.data;
+    assert.equal(saved.decoratorPresets?.length, 1);
+    assert.equal(saved.decoratorPresets?.[0].name, "Named fit");
+    assert.match((await save("Named fit")).error ?? "", /already has this name/);
+    assert.deepEqual(owner.view.data, saved);
+    await owner.call({ kind: "undo" });
+    assert.deepEqual(owner.view.data, before, "Saving and naming is one Undo step");
+    await owner.call({ kind: "redo" });
+    assert.deepEqual(owner.view.data, saved);
   } finally {
     owner.close();
   }

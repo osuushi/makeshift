@@ -40,7 +40,11 @@ try {
       page.on("pageerror", (error) => errors.push(error.message));
       if (server) await page.goto(server.resolvedUrls.local[0]);
       await reset(page);
-      assert.equal(await toolEnabled(page, "knurling", "knurling"), false);
+      assert.equal(await toolEnabled(page, "knurling", "knurling"), true);
+      await chooseTool(page, "knurling", "knurling");
+      assert.equal((await inspect(page)).interaction.kind, "tool-selection");
+      assert.equal((await inspect(page)).document.decorators?.length ?? 0, 0);
+      await page.keyboard.press("Escape");
       await chooseTool(page, "Sketch on XY", "sketch-xy");
       await page.keyboard.press("c");
       await drag(page, [0, 0], [8, 0]);
@@ -59,8 +63,8 @@ try {
       await chooseTool(page, "knurling", "knurling");
       assert.equal((await inspect(page)).document.decorators[0].definition, "freac.knurling");
       await recessedPreviewRoute(page, `${name}-knurling`);
-      const presets = page.getByRole("combobox", { name: "Knurl preset", exact: true });
-      assert.deepEqual(await presets.locator("option").allTextContents(), [
+      const presets = page.getByRole("combobox", { name: "Preset", exact: true });
+      assert.deepEqual(await presets.locator('optgroup[label="Global"] option').allTextContents(), [
         "Fine",
         "Coarse",
         "Custom",

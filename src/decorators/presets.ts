@@ -44,17 +44,31 @@ export function copyPreset(
   instance: DecoratorInstance,
   name: string,
 ): DecoratorPreset {
-  name = name.slice(0, 180);
-  let unique = name;
-  for (let suffix = 2; presets.some((p) => p.name === unique); suffix++)
-    unique = `${name} ${suffix}`;
   return {
     id: newId(),
-    name: unique,
+    name: presetCopyName(presets, name),
     definition: instance.definition,
     version: instance.version,
     settings: { ...instance.settings },
   };
+}
+export function presetCopyName(presets: readonly DecoratorPreset[], name: string): string {
+  const base = name.replace(/(?: copy(?: \d+)?)+$/, "").slice(0, 180);
+  let unique = `${base} copy`;
+  for (let suffix = 2; presets.some((p) => p.name === unique); suffix++)
+    unique = `${base} copy ${suffix}`;
+  return unique;
+}
+export function checkedPresetName(
+  presets: readonly DecoratorPreset[],
+  name: string | undefined,
+  exceptId?: string,
+): string {
+  name = name?.trim();
+  if (!name || name.length > 200) throw new Error("Enter a preset name of 1–200 characters");
+  if (presets.some((p) => p.id !== exceptId && p.name === name))
+    throw new Error("A preset already has this name");
+  return name;
 }
 export function validatePresets(document: SketchDocument): void {
   const presets = document.decoratorPresets ?? [];
