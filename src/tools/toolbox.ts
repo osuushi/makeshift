@@ -1,9 +1,15 @@
+import { guidesVisible } from "../guides/view-state.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { type ToolResult, toolCatalog } from "./catalog.js";
 import { toolShortcut } from "./menu-list.js";
 import "./toolbox.css";
 
 type ToolButton = { id: string; label: string; icon: string };
+const guideToggle: ToolButton = {
+  id: "guide-points",
+  label: "Guide points",
+  icon: '<circle cx="12" cy="12" r="8"/><path d="M7 12h10M12 7v10"/>',
+};
 const sketchTools: ToolButton[] = [
   {
     id: "sketch-grid",
@@ -11,6 +17,7 @@ const sketchTools: ToolButton[] = [
     icon: '<rect x="3" y="3" width="18" height="18"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>',
   },
   { id: "select", label: "Arrow", icon: '<path d="M5 3v17l5-5 3 7 3-1-3-7h7L5 3Z"/>' },
+  guideToggle,
   {
     id: "line",
     label: "Line",
@@ -35,6 +42,7 @@ const sketchTools: ToolButton[] = [
 ];
 const modelingTools: ToolButton[] = [
   sketchTools[1],
+  guideToggle,
   {
     id: "start-sketch",
     label: "Sketch",
@@ -118,6 +126,7 @@ export class Toolbox {
       this.editor.tool,
       this.editor.modeling.tool,
       this.editor.interactions.current?.kind,
+      guidesVisible(this.editor),
       catalog.results().map((tool) => [tool.id, tool.unavailable]),
     ]);
     if (signature === this.signature) return;
@@ -145,7 +154,8 @@ export class Toolbox {
       .filter(Boolean)
       .join(" · ");
     button.setAttribute("aria-label", item.label);
-    const active = this.activeTool(sketch) === item.id;
+    const active =
+      item.id === "guide-points" ? guidesVisible(this.editor) : this.activeTool(sketch) === item.id;
     button.setAttribute("aria-pressed", String(active));
     button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${item.icon}</svg><span>${item.label}</span>${tool.shortcut ? `<kbd>${toolShortcut(tool.shortcut)}</kbd>` : ""}`;
     button.onclick = () => void toolCatalog(this.editor).invoke(item.id);

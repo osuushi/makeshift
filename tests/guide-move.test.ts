@@ -2,8 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import * as THREE from "three";
 import { DocumentOwner } from "../src/backend/document-owner.js";
-import { guideMoveSource, guideTargetDocument } from "../src/guides/move-source.js";
-import { guideMoveTarget, projectToPlane } from "../src/guides/move-target.js";
+import { projectToPlane } from "../src/guides/move-planes.js";
+import { guideMovePoints } from "../src/guides/move-points.js";
+import { guideMoveSource } from "../src/guides/move-source.js";
+import { guideMoveProbe } from "../src/guides/move-target.js";
+import { guideLabel } from "../src/guides/types.js";
 import type { DisplayDocument } from "../src/model/display-document.js";
 import { emptySketch } from "../src/sketch/document.js";
 import type { SketchEditor } from "../src/sketch/editor.js";
@@ -78,32 +81,31 @@ test("direct guide drag uses its owner; Move keeps the selected face or curve", 
   assert.deepEqual(guideMoveSource(editor, sketchAnchor), { kind: "sketches", ids: ["sketch"] });
 });
 
-test("moving topology is excluded while stationary same-body references survive", async () => {
+test("same-body reference positions include unsaved POIs and remain at the accepted geometry", async () => {
   const owner = new DocumentOwner();
   try {
     const body = await prism(owner, square);
-    const cap = body.faces.find(
-      (f) => f.plane && f.vertices.every((v, i) => i % 3 !== 2 || Math.abs(v - 10) < 1e-7),
+    const document = owner.view.data,
+      editor = targetEditor(document);
+    const references = guideMovePoints(editor, document);
+    const probe = guideMoveProbe(
+      editor,
+      document,
+      [20, 20, 10],
+      { x: 700, y: 500 },
+      undefined,
+      references,
     );
-    assert.ok(cap);
-    const targets = guideTargetDocument(owner.view.data, {
-      kind: "solids",
-      ids: [],
-      faces: [{ body: body.id, face: cap.id }],
-      edges: [],
-    });
-    assert.ok(targets.bodies?.[0].edges.length);
+    assert.deepEqual(probe.target?.point, [20, 0, 10]);
     assert.ok(
-      targets.bodies?.[0].edges.every((e) =>
-        e.points.every((v, i) => i % 3 !== 2 || Math.abs(v) < 1e-7),
-      ),
+      probe.choices.some((p) => p.point.every((v, i) => v === [20, 0, 0][i])),
+      "covered same-body/sketch reference remains in the chooser",
     );
-    assert.ok(targets.bodies?.[0].faces.every((f) => f.id !== cap.id));
-    assert.equal(body.edges.length, 12, "query filtering cannot mutate the accepted body");
-    assert.equal(
-      guideTargetDocument(owner.view.data, { kind: "solids", ids: [body.id], faces: [], edges: [] })
-        .bodies?.length,
-      0,
+    assert.equal(body.edges.length, 12);
+    assert.equal(owner.view.data, document);
+    assert.ok(
+      references.some((p) => p.point.every((v, i) => v === [20, 10, 10][i])),
+      "unsaved edge midpoint is a target",
     );
   } finally {
     owner.close();
@@ -126,21 +128,20 @@ test("origin, sketch corners and normal plane projections are exact snap targets
   const document: DisplayDocument = { units: "mm", sketches: [sketch] };
   const editor = targetEditor(document);
   const origin: Vector = [3, 4, 9];
-  assert.deepEqual(guideMoveTarget(editor, document, origin, { x: 501, y: 499 })?.point, [0, 0, 0]);
   assert.deepEqual(
-    guideMoveTarget(editor, document, origin, { x: 621, y: 351 })?.point,
+    guideMoveProbe(editor, document, origin, { x: 501, y: 499 }).target?.point,
+    [0, 0, 0],
+  );
+  assert.deepEqual(
+    guideMoveProbe(editor, document, origin, { x: 621, y: 351 }).target?.point,
     [12, 15, 0],
   );
-  assert.deepEqual(guideMoveTarget(editor, document, origin, { x: 700, y: 700 })?.point, [3, 4, 0]);
+  assert.deepEqual(
+    guideMoveProbe(editor, document, origin, { x: 700, y: 700 }).target?.point,
+    [3, 4, 0],
+  );
   const frame = { origin: [5, 0, 0] as Vector, u: [0, 1, 0] as Vector, v: [0, 0, 1] as Vector };
   assert.deepEqual(projectToPlane(origin, frame), [5, 4, 9]);
-  const filtered = guideTargetDocument(document, {
-    kind: "curves",
-    sketchId: sketch.id,
-    ids: ["line"],
-  });
-  assert.equal(filtered.sketches[0].curves.length, 0);
-  assert.equal(document.sketches[0].curves.length, 1);
 });
 
 test("distinct saved depths at the same screen point remain ambiguous", () => {
@@ -167,7 +168,21 @@ test("distinct saved depths at the same screen point remain ambiguous", () => {
     })),
   };
   assert.equal(
-    guideMoveTarget(targetEditor(document), document, [1, 2, 3], { x: 620, y: 350 }),
+    guideMoveProbe(targetEditor(document), document, [1, 2, 3], { x: 620, y: 350 }).target,
     null,
+  );
+});
+
+test("tooltips omit generated guide names and retain custom names", () => {
+  const guide = {
+    id: "g",
+    name: "Guide point 2",
+    hidden: false,
+    anchor: { kind: "body-center" as const, body: "b", feature: "bounds-center" as const },
+  };
+  assert.equal(guideLabel(guide), "Body bounding-box center");
+  assert.equal(
+    guideLabel({ ...guide, name: "Axle reference" }),
+    "Axle reference · Body bounding-box center",
   );
 });

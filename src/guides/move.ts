@@ -7,14 +7,17 @@ import { onModelKeydown } from "../sketch/model-keys.js";
 import { type PlaneFrame, type Vector, worldPoint } from "../sketch/planes.js";
 import { pointerDragThreshold } from "../sketch/pointer-intent.js";
 import type { GuideMarker } from "./markers.js";
-import { guideMoveSource, guideTargetDocument } from "./move-source.js";
-import { type GuideMoveTarget, guideMoveTarget } from "./move-target.js";
+import { GuideMoveChooser } from "./move-chooser.js";
+import { type GuideMovePoint, guideMovePoints } from "./move-points.js";
+import { guideMoveSource } from "./move-source.js";
+import { type GuideMoveTarget, guideMoveProbe } from "./move-target.js";
 import { GuideMoveView } from "./move-view.js";
 
 type Press = { event: PointerEvent; source: ScaleSource; origin: Vector; sketchPlane?: PlaneFrame };
 type Drag = Press & {
   lease: InteractionLease;
   targets: DisplayDocument;
+  points: GuideMovePoint[];
   target: GuideMoveTarget | null;
   duplicate: boolean;
 };
@@ -27,11 +30,17 @@ export class GuideMove {
   private running: Promise<void> | null = null;
   private consumeClick = false;
   private view: GuideMoveView;
+  private chooser: GuideMoveChooser;
   constructor(
     private editor: SketchEditor,
     host: HTMLElement,
   ) {
     this.view = new GuideMoveView(editor, host);
+    this.chooser = new GuideMoveChooser(editor, (target) => {
+      if (!this.drag) return;
+      this.drag.target = target;
+      this.view.show(this.drag.origin, target);
+    });
     const options = { capture: true, signal: this.abort.signal };
     window.addEventListener("pointermove", this.move, options);
     window.addEventListener("pointerup", this.release, options);
@@ -99,7 +108,8 @@ export class GuideMove {
       this.drag = {
         ...press,
         lease,
-        targets: guideTargetDocument(this.editor.store.data, press.source),
+        targets: this.editor.store.data,
+        points: guideMovePoints(this.editor, this.editor.store.data),
         target: null,
         duplicate: false,
       };
@@ -111,15 +121,21 @@ export class GuideMove {
     if (!drag || drag.event.pointerId !== event.pointerId || drag.lease.phase !== "editing") return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    drag.target = event.shiftKey
-      ? null
-      : guideMoveTarget(
-          this.editor,
-          drag.targets,
-          drag.origin,
-          { x: event.clientX, y: event.clientY },
-          drag.sketchPlane,
-        );
+    if (this.chooser.opened) drag.target = event.shiftKey ? null : this.chooser.drag(event);
+    else {
+      const probe = event.shiftKey
+        ? { target: null, choices: [] }
+        : guideMoveProbe(
+            this.editor,
+            drag.targets,
+            drag.origin,
+            { x: event.clientX, y: event.clientY },
+            drag.sketchPlane,
+            drag.points,
+          );
+      drag.target = probe.target;
+      this.chooser.track(event, probe.choices);
+    }
     drag.duplicate =
       event.altKey &&
       (drag.source.kind === "sketches" ||
@@ -131,6 +147,7 @@ export class GuideMove {
     const drag = this.drag;
     if (!drag || drag.event.pointerId !== event.pointerId) return;
     this.move(event);
+    this.chooser.close();
     drag.lease.releaseCapture();
     if (!drag.target || drag.target.point.every((v, i) => Math.abs(v - drag.origin[i]) < 1e-8)) {
       void this.cancel();
@@ -179,6 +196,7 @@ export class GuideMove {
     const drag = this.drag;
     if (!drag?.lease.close()) return;
     this.drag = null;
+    this.chooser.close();
     this.view.hide();
     drag.lease.show(null);
     if (this.running) await this.editor.store.cancelPreview();
@@ -187,6 +205,7 @@ export class GuideMove {
   }
   private end(drag: Drag): void {
     this.drag = null;
+    this.chooser.close();
     this.view.hide();
     drag.lease.release();
     this.editor.refresh();
@@ -195,5 +214,6 @@ export class GuideMove {
     void this.cancel();
     this.abort.abort();
     this.view.dispose();
+    this.chooser.dispose();
   }
 }

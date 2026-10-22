@@ -31,8 +31,7 @@
   outline: 2px solid #c88e3c;
   outline-offset: 2px;
 }
-.guide-choices,
-.guide-tool {
+.guide-choices {
   position: absolute;
   pointer-events: auto;
   padding: 12px;
@@ -64,24 +63,7 @@
 .guide-choices button:hover {
   background: #fff3ce;
 }
-.guide-tool {
-  bottom: 55px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  max-width: calc(100vw - 40px);
-}
-.guide-tool span {
-  max-width: 280px;
-  color: #52647a;
-}
-.guide-tool button {
-  padding: 6px 12px;
-}
-.guide-choices[hidden],
-.guide-tool[hidden] {
+.guide-choices[hidden] {
   display: none;
 }
 .guide-name {

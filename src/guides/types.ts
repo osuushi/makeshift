@@ -23,6 +23,10 @@ export type GuideEdit =
   | { action: "remove"; id: string };
 export const guideOwner = (anchor: GuideAnchor): string =>
   anchor.kind === "sketch-curve" ? anchor.sketch : anchor.body;
+export function guideLabel(guide: GuidePoint): string {
+  const meaning = guideMeaning(guide.anchor);
+  return /^Guide point [1-9]\d*$/.test(guide.name) ? meaning : `${guide.name} · ${meaning}`;
+}
 export function guideMeaning(anchor: GuideAnchor): string {
   if (anchor.kind === "body-junction") return "Edge junction";
   if (anchor.kind === "body-center") return "Body bounding-box center";

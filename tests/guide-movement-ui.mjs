@@ -9,6 +9,7 @@ import { documentArchive } from "../.cache/sketch-tests/src/model/document-archi
 import { prism, square } from "../.cache/sketch-tests/tests/body-edge-fixtures.js";
 import { openDocument } from "./native-documents.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
+import { guideDisambiguation } from "./ui-guide-disambiguation.mjs";
 import { inspect, modalCompleted } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -82,7 +83,6 @@ try {
     const vector = page.locator(".guide-move-vector");
     assert.deepEqual(JSON.parse(await vector.getAttribute("data-start")), [20, 20, 10]);
     assert.deepEqual(JSON.parse(await vector.getAttribute("data-end")), [45, 0, 18]);
-    await page.screenshot({ path: `.cache/sketch-review/${name}-guide-vector.png` });
     await page.mouse.up();
     await modalCompleted(page);
     let state = await inspect(page);
@@ -140,6 +140,7 @@ try {
     assert.deepEqual((await inspect(page)).document, before);
     await faceAndPlaneRoute(page, { a, b, before, source, guide });
     await savedMarkerRoute(page, name, before);
+    await guideDisambiguation(page, name, source.id);
     console.log(
       `${name}: direct guide drag, selected-face Move, normal plane target, fixed vector, copy, delete, Undo, Shift and Escape passed`,
     );

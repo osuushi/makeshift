@@ -1,7 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
 import type { GuideCandidate } from "./candidates.js";
-import { type GuidePoint, guideKey } from "./types.js";
+import { type GuidePoint, guideKey, guideLabel } from "./types.js";
 
 export type GuideMarker = GuideCandidate & { guide?: GuidePoint };
 /** Nearby points share one hit target; labels preserve their distinct definitions. */
@@ -24,7 +24,7 @@ export class GuideMarkers {
     this.choices.hidden = true;
     host.append(this.root, this.choices);
   }
-  update(items: GuideMarker[], explicit: boolean, interactive: boolean): void {
+  update(items: GuideMarker[], interactive: boolean): void {
     const groups: GuideMarker[][] = [];
     for (const item of items) {
       const p = this.editor.world.project(item.point);
@@ -36,15 +36,14 @@ export class GuideMarkers {
       else groups.push([item]);
     }
     const key = JSON.stringify([
-      explicit,
       interactive,
-      groups.map((g) => g.map((p) => [p.guide?.id, p.label, guideKey(p.anchor)])),
+      groups.map((g) => g.map((p) => [p.guide?.id, p.guide?.name, p.label, guideKey(p.anchor)])),
     ]);
     if (key !== this.key) {
       this.key = key;
       this.root.replaceChildren();
       this.choices.hidden = true;
-      this.buttons = groups.map((group) => this.button(group, explicit));
+      this.buttons = groups.map((group) => this.button(group));
     }
     for (const [i, button] of this.buttons.entries()) {
       button.items = groups[i];
@@ -59,7 +58,7 @@ export class GuideMarkers {
       button.element.setAttribute("aria-pressed", String(selected));
     }
   }
-  private button(items: GuideMarker[], explicit: boolean) {
+  private button(items: GuideMarker[]) {
     const button = document.createElement("button");
     const entry = { element: button, items };
     button.className = `guide-marker${items.some((p) => p.guide) ? " saved" : " ghost"}`;
@@ -71,11 +70,9 @@ export class GuideMarkers {
       count.textContent = String(items.length);
       button.append(count);
     }
-    button.title = items
-      .map((p) => (p.guide ? `${p.guide.name} · ${p.label}` : p.label))
-      .join("\n");
+    button.title = items.map((p) => (p.guide ? guideLabel(p.guide) : p.label)).join("\n");
     if (items.some((p) => p.guide)) button.title += " · Double-click to delete";
-    if (!explicit && !items.some((p) => p.guide)) button.title += " · Double-click to keep";
+    if (!items.some((p) => p.guide)) button.title += " · Double-click to keep";
     button.setAttribute(
       "aria-label",
       items.length > 1
@@ -88,14 +85,14 @@ export class GuideMarkers {
     };
     button.onclick = (event) => {
       event.stopPropagation();
-      if (explicit || entry.items.some((p) => p.guide) || event.detail === 0) open();
+      if (entry.items.some((p) => p.guide) || event.detail === 0) open();
     };
     button.ondblclick = (event) => {
       event.stopPropagation();
       const saved = entry.items.filter((p) => p.guide);
       if (saved.length === 1) this.remove(saved[0]);
       else if (saved.length) this.openChoices(saved, true);
-      else if (!explicit) open();
+      else open();
     };
     button.onpointerdown = (event) => {
       event.stopPropagation();

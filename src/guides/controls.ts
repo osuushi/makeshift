@@ -1,15 +1,13 @@
-import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
-import type { ModelingTarget } from "../sketch/model-selection-state.js";
 import { toolCatalog } from "../tools/catalog.js";
-import { guideCandidates } from "./candidates.js";
 import { GuideHighlight } from "./highlight.js";
 import { hoverGuides } from "./hover.js";
 import { type GuideMarker, GuideMarkers } from "./markers.js";
 import { GuideMove } from "./move.js";
 import { visibleGuides } from "./snapping.js";
 import { type GuideAnchor, type GuidePoint, guideKey, guideMeaning, guideOwner } from "./types.js";
+import { guidesVisible, toggleGuides } from "./view-state.js";
 import "./style.css";
 
 export class GuideControls {
@@ -21,11 +19,7 @@ export class GuideControls {
   private movement: GuideMove;
   private abort = new AbortController();
   private unregister: () => void;
-  private lease: InteractionLease | null = null;
-  private targets: ModelingTarget[] = [];
-  private curves: { sketch: string; curves: string[] } | undefined;
   private pointer: { x: number; y: number } | null = null;
-  private panel = document.createElement("div");
   constructor(
     private editor: SketchEditor,
     host: HTMLElement,
@@ -43,21 +37,21 @@ export class GuideControls {
         if (item.guide) void this.remove(item.guide.id);
       },
     );
-    this.panel.className = "guide-tool";
-    this.panel.hidden = true;
-    this.panel.innerHTML =
-      "<strong>Guide points</strong><span>Click a point to keep it. Overlapping points offer a choice.</span><button>Done</button>";
-    this.panel.querySelector("button")?.addEventListener("click", () => this.finish());
-    host.append(this.panel);
     this.unregister = toolCatalog(editor).register({
       id: "guide-points",
       label: "Guide points",
-      category: "Reference",
-      description: "Keep endpoints, midpoints and centers attached to selected geometry",
+      category: "View",
+      description: "Show or hide saved guides and nearby points of interest",
       aliases: ["points of interest", "snap points", "centroid"],
-      reason: () =>
-        this.selectionCandidates().length ? null : "Select a body, face, edge or sketch curve",
-      run: () => this.begin(),
+      shortcut: "G",
+      finishEdit: false,
+      reason: () => null,
+      run: () => {
+        this.selected = null;
+        this.hovered = null;
+        this.markers.choices.hidden = true;
+        toggleGuides(editor);
+      },
     });
     window.addEventListener(
       "pointermove",
@@ -89,10 +83,17 @@ export class GuideControls {
           event.target.closest("input,textarea,[contenteditable]")
         )
           return;
-        if (this.lease && (event.key === "Escape" || event.key === "Enter")) {
+        if (
+          event.key.toLowerCase() === "g" &&
+          !event.metaKey &&
+          !event.ctrlKey &&
+          !event.altKey &&
+          !event.repeat &&
+          !event.isComposing
+        ) {
           event.preventDefault();
           event.stopImmediatePropagation();
-          this.finish();
+          void toolCatalog(editor).invoke("guide-points");
         } else if (
           this.selected &&
           !editor.interactions.current &&
@@ -106,52 +107,13 @@ export class GuideControls {
       { capture: true, signal: this.abort.signal },
     );
   }
-  private selectionCandidates() {
-    const e = this.editor;
-    return guideCandidates(
-      e.display,
-      e.world.active ? [] : e.modeling.targets,
-      e.world.active && e.sketch
-        ? { sketch: e.sketch.id, curves: [...e.selectionOwners] }
-        : undefined,
-    );
-  }
-  private begin(): void {
-    const e = this.editor;
-    if (e.blocked || e.interactions.current) return;
-    this.targets = e.world.active ? [] : [...e.modeling.targets];
-    this.curves =
-      e.world.active && e.sketch
-        ? { sketch: e.sketch.id, curves: [...e.selectionOwners] }
-        : undefined;
-    this.lease = e.interactions.acquire(
-      "guide-points",
-      () => this.finish(),
-      async () => {
-        this.finish();
-        return true;
-      },
-      { navigation: "when-released" },
-    );
-    this.panel.hidden = !this.lease;
-    e.refresh();
-  }
-  private finish(): void {
-    if (this.editor.blocked) return;
-    const lease = this.lease;
-    this.lease = null;
-    this.panel.hidden = true;
-    this.hovered = null;
-    lease?.release();
-    this.editor.refresh();
-  }
   private async choose(item: GuideMarker): Promise<void> {
     if (this.editor.blocked) return;
     if (item.guide) {
       this.select(item.guide);
       return;
     }
-    if (this.editor.interactions.current && this.editor.interactions.current !== this.lease) return;
+    if (this.editor.interactions.current) return;
     if (
       await this.editor.store.request({
         kind: "guide-point",
@@ -182,7 +144,7 @@ export class GuideControls {
     });
   }
   private drag(event: PointerEvent, item: GuideMarker): void {
-    if (!this.lease) this.movement.start(event, item);
+    this.movement.start(event, item);
   }
   private update = (): void => {
     const e = this.editor;
@@ -194,8 +156,8 @@ export class GuideControls {
       label: guideMeaning(guide.anchor),
     }));
     const keys = new Set(saved.map((p) => guideKey(p.anchor)));
-    let candidates = this.lease ? guideCandidates(e.display, this.targets, this.curves) : [];
-    if (!this.lease && !e.interactions.current && (!e.world.active || e.tool === "select"))
+    let candidates: GuideMarker[] = [];
+    if (guidesVisible(e) && !e.interactions.current && (!e.world.active || e.tool === "select"))
       candidates = hoverGuides(e, this.pointer);
     candidates = candidates.filter(
       (p) =>
@@ -203,9 +165,8 @@ export class GuideControls {
         e.visibility.visible(guideOwner(p.anchor)) &&
         (p.anchor.kind === "sketch-curve" || e.bodiesVisible),
     );
-    const interactive =
-      !!this.lease || (!e.interactions.current && (!e.world.active || e.tool === "select"));
-    this.markers.update([...saved, ...candidates], !!this.lease, interactive);
+    const interactive = !e.interactions.current && (!e.world.active || e.tool === "select");
+    this.markers.update([...saved, ...candidates], interactive);
     const selected = e.store.data.guidePoints?.find((p) => p.id === this.selected);
     if (!selected) this.selected = null;
     this.highlight.show(this.hovered ?? selected?.anchor ?? null);
@@ -215,13 +176,11 @@ export class GuideControls {
     return JSON.stringify([e.world.active, e.modeling.targets, [...e.selectionOwners]]);
   }
   dispose(): void {
-    this.finish();
     this.abort.abort();
     this.unregister();
     this.editor.world.changed.delete(this.update);
     this.markers.dispose();
     this.movement.dispose();
     this.highlight.dispose();
-    this.panel.remove();
   }
 }

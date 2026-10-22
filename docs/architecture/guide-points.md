@@ -7,10 +7,10 @@ stored world position or an offset from an owner's center.
 
 ## Interaction
 
-Select a body, face, edge, sketch, region or sketch curve and invoke **Guide points**.
-The tool displays candidates; clicking one saves it. Nearby candidates share a
-chooser that names each definition and highlights its source on hover. Done,
-Enter or Escape exits the picker; each saved point is already its own Undo step.
+**Guide points** is a toolbar visibility toggle in both workspaces, with shortcut
+**G**. It starts on and controls saved markers, their snapping, and hover-only
+candidate discovery together. This is per-window view state, separate from each
+guide's eye control and document Undo. There is no modal Guide points creation tool.
 With Select active, automatic discovery uses the ordinary click target. A guide
 is a candidate when its parent is hovered or directly neighbors the hovered entity
 in the geometry graph, and the pointer lies within 256 CSS pixels of the guide.
@@ -33,15 +33,17 @@ referenced parent's largest projected dimension. Project the displayed curves,
 edges and face meshes and subtract the 20-pixel hit footprints of surviving
 candidates and visible saved guides. Junctions check every incident edge; face
 groups check every referenced face. This prevents guides from covering small or
-foreshortened parents. These discovery filters do not restrict the explicit Guide
-points picker, which retains all candidates and its overlap chooser.
+foreshortened parents. These discovery filters govern hover markers, not the
+references available while dragging an already-saved guide.
 Double-clicking a ghost saves it; double-clicking a saved marker deletes only that
 guide. Overlapping saved guides offer a deletion chooser. Markers use a centered
 drawn cross; selected guides use the standard selection blue. Hover highlights
 the referenced parents in purple, including every parent in an overlap cluster.
 Visible guides, including ghosts, own pointer hits before geometry underneath.
 A ghost's single click does not select the underlying geometry or save the point;
-keyboard activation saves it. The explicit Guide points tool saves on one click.
+keyboard activation saves it. Each saved point is its own Undo step.
+Marker tooltips show the semantic meaning and a custom guide name when present;
+generated `Guide point N` prefixes are omitted. Renaming updates the tooltip immediately.
 
 Saved guides appear beneath their owning body or sketch, sharing the disclosure
 with tagged groups. Each compact row contains the name and the standard Entities
@@ -68,16 +70,27 @@ Guide dragging always acquires a snap reference. The display is a vector anchore
 at the starting guide, while geometry remains unchanged until release. Targets
 include saved guides, the origin, ordinary geometry points, and planar faces or
 visible construction/world planes. A plane target ends at the normal projection
-of the starting guide, independent of where the pointer hits that plane. Moving
-geometry is excluded from snapping; stationary references on the same body remain
-eligible. Point targets take precedence over plane interiors. Selected sketch
+of the starting guide, independent of where the pointer hits that plane. Points on
+the moving body or sketch are valid targets too: every reference uses its accepted
+position at drag start, so it never chases the moving geometry. The starting point
+itself is excluded. Unsaved midpoints and other semantic points remain available.
+Point targets take precedence over plane interiors. Selected sketch
 geometry uses camera projection onto its continuing planar workspace.
+
+While dragging, hold relatively still over an ambiguous location for 300 ms to
+open a geometry chooser. The usual growing hold indicator shows the delay;
+movement beyond 6 CSS pixels (16 for Pencil) restarts it. The chooser includes
+covered point and plane alternatives, ordered by depth. Each diagram marks the
+exact target point, with coordinates shown to at most three decimals. Keep holding,
+drag into a diagram, and release to apply that target. Hover previews the vector
+and referenced parents. Release outside the chooser or Escape cancels the drag.
+The existing drag lease owns this chooser; it creates no separate edit or history.
 
 Release on a valid target accepts one edit. Release without a target, Shift,
 Escape or cancellation leaves geometry unchanged. Option/Alt copies complete
 bodies/sketches and their guides. The shared rotation/scale anchor also snaps to
 saved guides. Close distinct 3D guides with equally near projections do not
-silently win over one another; hide a competing guide to disambiguate.
+silently win over one another; hold to choose the intended target.
 
 ## Definitions and geometry
 
