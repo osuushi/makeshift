@@ -14,6 +14,7 @@ export class GuideMoveDestinations {
   constructor(
     private editor: SketchEditor,
     host: HTMLElement,
+    private connections = true,
   ) {
     this.root.classList.add("guide-move-destinations");
     this.root.setAttribute("aria-hidden", "true");
@@ -33,7 +34,7 @@ export class GuideMoveDestinations {
       const projection = group.some((p) => p.plane || p.alignment);
       const visible = group.some((p) => p.visible);
       const point = this.editor.world.project(candidate.point);
-      if (projection) {
+      if (projection && this.connections) {
         const line = document.createElementNS(ns, "line");
         line.dataset.point = JSON.stringify(candidate.point);
         for (const [key, value] of Object.entries({
@@ -56,10 +57,32 @@ export class GuideMoveDestinations {
       this.root.append(circle);
     }
   }
+  pending(origin: Vector): void {
+    this.show(origin, []);
+    const point = this.editor.world.project(origin);
+    const label = document.createElementNS(ns, "text");
+    label.setAttribute("x", String(point.x + 16));
+    label.setAttribute("y", String(point.y - 20));
+    label.textContent = "Finding targets…";
+    this.root.append(label);
+  }
   suppress(suppressed: boolean): void {
     this.root.classList.toggle("suppressed", suppressed);
   }
   highlight(parents: readonly GuideMoveCandidate[], locked: boolean): void {
+    this.root.querySelector(".guide-destination-lock")?.remove();
+    const target = locked ? parents[0] : undefined;
+    if (target) {
+      const point = this.editor.world.project(target.point);
+      const circle = document.createElementNS(ns, "circle");
+      circle.classList.add("guide-destination-lock");
+      circle.dataset.point = JSON.stringify(target.point);
+      circle.dataset.distance = String(target.distance ?? "");
+      circle.setAttribute("cx", String(point.x));
+      circle.setAttribute("cy", String(point.y));
+      circle.setAttribute("r", target.guide ? "13" : "7");
+      this.root.append(circle);
+    }
     const planes = new Set(
       parents.flatMap((p) =>
         p.plane && p.reference.kind === "plane" && p.reference.world ? [p.reference.world] : [],

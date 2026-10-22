@@ -14,6 +14,7 @@ interface QueryReplies {
   project: { curves: Curve[] };
   "offset-sketch": { curves: Curve[] };
   "edge-finish-selection": { edgeSelection: BodyEdgeFinish["edges"] };
+  "edge-finish-targets": { edgeFinishTargets: (number | null)[] };
 }
 export type KernelModelRequest = Exclude<KernelRequest, { kind: keyof QueryReplies }>;
 export type KernelReply<Input extends KernelRequest> = Input extends {

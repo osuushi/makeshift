@@ -58,6 +58,7 @@ export class FaceOffsetControls {
         this.widget.input.select();
       },
       modifySelection: true,
+      guide: (point) => this.guide(point),
     });
     faceOffsetInputs(editor, this.widget, this.quantity, this.abort.signal, {
       begin: () => this.begin(),

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { guideMoveSource } from "../src/guides/move-source.js";
 import { guideMoveProbe } from "../src/guides/move-target.js";
+import { surfacePointDistance } from "../src/guides/surface-targets.js";
 import {
   faceGuidePath,
   planarGuidePath,
@@ -24,6 +25,16 @@ test("planar tools distinguish exact coincidence from matching height", () => {
   assert.deepEqual(alignment?.alignment.point, [9, 7, 18]);
   assert.equal(alignment?.distance, 8);
   assert.equal(planarGuidePath([2, 3, 11], { ...planes.XY, origin: [0, 0, 10] }), null);
+});
+
+test("ordinary tool handles solve surface coincidence at the actual off-axis reference", () => {
+  const planar = planarGuidePath([2, 3, 10], { ...planes.XY, origin: [0, 0, 10] });
+  const cylinder = faceGuidePath([5, 0, 20], cylinderFace(1));
+  assert.ok(planar && cylinder);
+  assert.equal(surfacePointDistance(planar, [40, -20, 18]), 8);
+  assert.equal(surfacePointDistance(planar, [40, -20, 4]), -6);
+  assert.equal(surfacePointDistance(cylinder, [0, 8, -50]), 3);
+  assert.equal(surfacePointDistance(cylinder, [0, 0, 20]), null);
 });
 
 test("plane targets intersect the permitted path rather than projecting sideways", () => {

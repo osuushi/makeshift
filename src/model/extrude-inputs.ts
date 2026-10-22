@@ -1,3 +1,4 @@
+import type { GuideToolInput } from "../guides/tool-path.js";
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { AxialDrag } from "./axial-drag.js";
@@ -15,6 +16,7 @@ export interface ExtrudeActions {
   mode: (mode: Extrusion["mode"]) => void;
   finish: () => void;
   cancel: () => void;
+  guide: GuideToolInput;
 }
 
 /** Extrusion pointer, field and shortcut bindings share one interaction owner. */
@@ -40,6 +42,7 @@ export class ExtrudeInputs {
       symmetric: actions.symmetric,
       focus,
       modifySelection: true,
+      guide: actions.guide,
     });
     widget.handle.addEventListener(
       "click",

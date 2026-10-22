@@ -22,6 +22,8 @@ import {
 import { inspect, modalCompleted } from "./ui-helpers.mjs";
 import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
+import { filletSurfaceFixture, filletSurfaceRoute } from "./ui-surface-fillet.mjs";
+import { surfaceCylinderRoute, surfaceToolRoute } from "./ui-surface-snap.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function existingOffsetRoute(page, before, body) {
@@ -117,6 +119,7 @@ try {
   const cylinder = await cylinderToolFixture(directory);
   const profile = await profileToolFixture(directory);
   const covered = await coveredGuideFixture(directory);
+  const fillet = await filletSurfaceFixture(directory);
   await withUiRuntimes(async (page) => {
     await openDocument(page, path);
     const before = (await inspect(page)).document;
@@ -177,6 +180,9 @@ try {
     await cylinderToolRoute(page, cylinder);
     await profileToolRoute(page, profile);
     await coveredGuideRoute(page, covered);
+    await surfaceToolRoute(page, path, body.id);
+    await surfaceCylinderRoute(page, cylinder);
+    await filletSurfaceRoute(page, fillet);
     console.log(
       "Guide tool dispatch, unreachable destinations, temporary Offset/Extrude, gesture cancel and Undo passed",
     );

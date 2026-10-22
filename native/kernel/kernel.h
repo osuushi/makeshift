@@ -51,6 +51,7 @@ std::vector<Result> booleanBodies(const Tree&, const std::vector<Operand>&, std:
 std::vector<Result> finishEdges(const Tree&, const std::vector<Operand>&, std::vector<std::string>&);
 
 void edgeFinishSelection(std::ostream&, const Tree&, const std::vector<Operand>&);
+void edgeFinishTargets(std::ostream&, const Tree&, const std::vector<Operand>&);
 
 std::vector<Result> offsetFaces(const Tree&, const std::vector<Operand>&, std::vector<std::string>&);
 

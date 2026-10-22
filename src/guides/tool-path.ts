@@ -11,6 +11,13 @@ export interface GuideToolPath {
   /** Symmetric extrusion's parameter is total cap-to-cap depth. */
   distanceScale?: number;
 }
+export interface GuideSurfacePlan {
+  origin: Vector;
+  targets:
+    | import("./move-target.js").GuideMoveCandidate[]
+    | Promise<import("./move-target.js").GuideMoveCandidate[]>;
+  settled(value: number): Promise<boolean>;
+}
 export interface GuideToolSession {
   lease: InteractionLease;
   preview(distance: number | null): void;

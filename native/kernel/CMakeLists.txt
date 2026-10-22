@@ -37,6 +37,7 @@ target_sources(makeshift-kernel PRIVATE extrude-twist.cpp extrude-twist-curves.c
 target_sources(makeshift-kernel PRIVATE normal-extrude.cpp)
 target_sources(makeshift-kernel PRIVATE circular-rim.cpp)
 target_sources(makeshift-kernel PRIVATE edge-finish-conditioning.cpp)
+target_sources(makeshift-kernel PRIVATE edge-finish-targets.cpp)
 target_sources(makeshift-kernel PRIVATE plane-cut.cpp path-sweep.cpp)
 target_sources(makeshift-kernel PRIVATE affine-planes.cpp)
 target_link_libraries(makeshift-kernel PRIVATE TKFeat)

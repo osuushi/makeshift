@@ -188,6 +188,32 @@ Symmetric planar extrusion solves total cap-to-cap depth. Guide solving currentl
 excludes nonzero draft/twist and blend/chamfer resizing. Persistent relationships
 are not created.
 
+## Snapping ordinary tool handles
+
+With Guide points visible, dragging an ordinary Offset, Extrude or Fillet handle
+also exposes reachable reference points. Offset/Extrude fit their supporting plane
+or cylinder through the actual target, including off-axis references; the handle
+itself need not meet that point. Their existing source-support restrictions above
+still apply. A locked planar or cylindrical fit reveals the same local surface
+grid used by guide dragging. Fillet fits the newly rounded surface through the
+point, rather than placing its tangency boundary there. Chamfer's shared size
+handle follows the same surface rule.
+
+Fillet/Chamfer targets use a read-only native calculation against generated faces.
+The bounded scalar search follows the feasible size range from zero and verifies
+point-to-trimmed-face distance within 0.000001 mm. Unchanged source faces cannot
+satisfy this check. Failed or unreachable fits are omitted. Target discovery can
+show a small “Finding targets…” indicator while native calculations run; ordinary
+dragging remains available throughout.
+
+References stay at their accepted positions for the gesture. The ordinary tool
+owns free dragging, preview and Undo; snapping only supplies its parameter.
+Shift bypasses target snaps, and hiding Guide points disables them. Covered
+unsaved points use hold-to-choose, including when only one covered choice exists.
+Native preview success is required for lock feedback; rejected or clamped values
+lose their target. Release retains the temporary tool result and removes target
+feedback. Completion accepts it with the tool's existing single document Undo.
+
 ## Definitions and geometry
 
 Supported definitions are:

@@ -10,7 +10,7 @@ import { trackExtrudeHistory } from "./extrude-history.js";
 import type { ExtrudeInputs } from "./extrude-inputs.js";
 import type { ExtrudeTargets } from "./extrude-targets.js";
 import type { ExtrudeTwist } from "./extrude-twist.js";
-import { createExtrudeView } from "./extrude-view.js";
+import { createExtrudeView, updateExtrudeView } from "./extrude-view.js";
 import type { ExtrudeWidget } from "./extrude-widget.js";
 import { PreviewRunner } from "./preview-runner.js";
 import { sourceExtrusion } from "./viewer-extrusion.js";
@@ -59,6 +59,7 @@ export class ExtrudeControls {
         },
         finish: () => void this.finish(),
         cancel: () => void this.cancel(),
+        guide: (point) => this.guide(point),
       },
       this.abort.signal,
       () => {
@@ -263,32 +264,18 @@ export class ExtrudeControls {
   }
   private update = (): void => {
     if (!this.lease?.candidate) this.operands.clear();
-    const editor = this.editor;
-    this.widget.update(
-      editor,
-      this.active,
-      this.distance,
-      this.mode === "auto" ? editor.store.booleanMode : this.mode,
-      this.valid,
-      this.twist.value,
-      this.symmetric,
+    updateExtrudeView(
+      this.editor,
+      this,
+      { widget: this.widget, twist: this.twist, targets: this.targets },
+      {
+        distance: this.distance,
+        mode: this.mode === "auto" ? this.editor.store.booleanMode : this.mode,
+        valid: this.valid,
+        symmetric: this.symmetric,
+        pending: !!this.previews.latest,
+      },
     );
-    this.twist.update(this.widget.axis, this.active, this.distance, this.valid, this.symmetric);
-    this.twist.row.hidden = !!this.widget.axis?.normalExtrusion;
-    this.root.dataset.previewPending = String(
-      this.active && !!this.previews.latest && !this.valid && this.editor.store.working,
-    );
-    if (
-      (!this.active && editor.modeling.tool !== "extrude") ||
-      (editor.interactions.current && editor.interactions.current.kind !== "extrude")
-    )
-      this.root.hidden = true;
-    this.targets.update(
-      this.active &&
-        (this.mode === "auto" ? editor.store.booleanMode : this.mode) !== "new" &&
-        !!editor.store.data.bodies?.length,
-    );
-    this.widget.fit();
   };
   dispose(): void {
     this.operands.dispose();

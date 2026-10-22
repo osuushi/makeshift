@@ -7,7 +7,15 @@ import { StepExporter } from "./step-exporter.js";
 
 type Query = Extract<
   ModelRequest,
-  { kind: "sections" | "measure" | "export-geometry" | "export-step" | "center-of-mass" }
+  {
+    kind:
+      | "sections"
+      | "measure"
+      | "export-geometry"
+      | "export-step"
+      | "center-of-mass"
+      | "edge-finish-targets";
+  }
 >;
 
 export function isGeometryQuery(request: ModelRequest): request is Query {
@@ -15,6 +23,7 @@ export function isGeometryQuery(request: ModelRequest): request is Query {
     request.kind === "sections" ||
     request.kind === "measure" ||
     request.kind === "center-of-mass" ||
+    request.kind === "edge-finish-targets" ||
     request.kind === "export-step" ||
     request.kind === "export-geometry"
   );
@@ -39,6 +48,17 @@ export class GeometryQueries {
   private async calculate(view: ModelView, request: Query): Promise<ModelReply> {
     try {
       if (this.closed) throw new Error("Geometry query cancelled");
+      if (request.kind === "edge-finish-targets") {
+        const reply = await this.kernel.calculate({
+          ...request.operation,
+          kind: request.kind,
+          points: request.points,
+          bodies: (view.data.bodies ?? []).filter((b) =>
+            request.operation.edges.some((e) => e.body === b.id),
+          ),
+        });
+        return { view, edgeFinishTargets: reply.edgeFinishTargets };
+      }
       if (request.kind === "center-of-mass") {
         const body = view.data.bodies?.find((body) => body.id === request.body);
         if (!body) throw new Error("Unknown center-of-mass body");

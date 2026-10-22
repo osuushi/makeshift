@@ -2,6 +2,15 @@ import { call } from "./model-transport.js";
 
 /** Read-only backend queries do not occupy the document edit slot. */
 export class ModelQueries {
+  async edgeFinishTargets(
+    operation: Omit<import("../model/body.js").BodyEdgeFinish, "size">,
+    points: import("./planes.js").Vector[],
+  ) {
+    const reply = await call({ kind: "edge-finish-targets", operation, points });
+    if (reply.error || !reply.edgeFinishTargets)
+      throw new Error(reply.error ?? "Snap targets unavailable");
+    return reply.edgeFinishTargets;
+  }
   async sections(frame: import("./planes.js").PlaneFrame, bodies: string[]) {
     const reply = await call({ kind: "sections", frame, bodies });
     if (reply.error) throw new Error(reply.error);

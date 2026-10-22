@@ -49,7 +49,7 @@ export class GuideMoveChooser {
   }
   track(event: PointerEvent, choices: GuideMoveTarget[], selected: GuideMoveTarget | null): void {
     if (this.opened) return;
-    if (choices.length < 2 || event.shiftKey) {
+    if (!choices.length || (choices.length === 1 && selected) || event.shiftKey) {
       this.clearPending();
       return;
     }

@@ -8,15 +8,16 @@ import { GuideMoveView } from "./move-view.js";
 
 /** One presentation for rigid movement and tool-constrained guide gestures. */
 export class GuideDragFeedback {
-  private view: GuideMoveView;
+  private view: GuideMoveView | null;
   readonly destinations: GuideMoveDestinations;
   private highlight: GuideHighlight;
   constructor(
     private editor: SketchEditor,
     host: HTMLElement,
+    vector = true,
   ) {
-    this.view = new GuideMoveView(editor, host);
-    this.destinations = new GuideMoveDestinations(editor, host);
+    this.view = vector ? new GuideMoveView(editor, host) : null;
+    this.destinations = new GuideMoveDestinations(editor, host, vector);
     this.highlight = new GuideHighlight(editor);
   }
   show(
@@ -51,16 +52,16 @@ export class GuideDragFeedback {
       ? parents.filter((p) => p.alignment && near(p.alignment.point, alignment.point)).slice(0, 1)
       : parents;
     this.destinations.highlight(emphasis, !!target);
-    this.view.show(origin, target, cursor);
+    this.view?.show(origin, target, cursor);
     this.editor.world.requestDraw();
   }
   hide(): void {
-    this.view.hide();
+    this.view?.hide();
     this.destinations.hide();
     this.highlight.show(null);
   }
   dispose(): void {
-    this.view.dispose();
+    this.view?.dispose();
     this.destinations.dispose();
     this.highlight.dispose();
   }

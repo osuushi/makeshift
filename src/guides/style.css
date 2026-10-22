@@ -180,6 +180,18 @@
 .guide-move-destinations circle.covered {
   opacity: 0.45;
 }
+.guide-move-destinations circle.guide-destination-lock {
+  fill: none;
+  stroke: #1676d2;
+  stroke-width: 2;
+}
+.guide-move-destinations text {
+  fill: #73869a;
+  stroke: white;
+  stroke-width: 3;
+  paint-order: stroke;
+  font: 12px system-ui;
+}
 .guide-move-destinations line {
   stroke: #7f8995;
   stroke-width: 1;

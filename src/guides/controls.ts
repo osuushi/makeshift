@@ -1,12 +1,14 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import { toolCatalog } from "../tools/catalog.js";
+import { near } from "./geometry.js";
 import { GuideHighlight } from "./highlight.js";
 import { hoverGuides } from "./hover.js";
 import { type GuideMarker, GuideMarkers } from "./markers.js";
 import { GuideMove } from "./move.js";
 import { selectedGuides } from "./selection.js";
 import { visibleGuides } from "./snapping.js";
+import { surfaceDragActive, surfaceDragTargets } from "./surface-snap.js";
 import { type GuideAnchor, type GuidePoint, guideKey, guideMeaning, guideOwner } from "./types.js";
 import { guidesVisible, toggleGuides } from "./view-state.js";
 import "./style.css";
@@ -95,7 +97,8 @@ export class GuideControls {
         ) {
           event.preventDefault();
           event.stopImmediatePropagation();
-          void toolCatalog(editor).invoke("guide-points");
+          if (surfaceDragActive(editor)) toggleGuides(editor);
+          else void toolCatalog(editor).invoke("guide-points");
         } else if (event.key === "Escape" && this.selected.size && !editor.interactions.current) {
           event.preventDefault();
           event.stopImmediatePropagation();
@@ -163,9 +166,14 @@ export class GuideControls {
   }
   private update = (): void => {
     const e = this.editor;
+    const surfaceTargets = surfaceDragTargets(e);
     if (this.selected.size && this.selectedWith !== this.selectionKey()) this.selected.clear();
-    const saved = visibleGuides(e, this.movement.toolActive)
-      .filter(({ point }) => this.movement.includes(point))
+    const saved = visibleGuides(e, this.movement.toolActive || !!surfaceTargets)
+      .filter(({ point }) =>
+        surfaceTargets
+          ? surfaceTargets.some((target) => target.guide && near(target.point, point))
+          : this.movement.includes(point),
+      )
       .map(({ guide, point }) => ({
         guide,
         point,
@@ -186,7 +194,7 @@ export class GuideControls {
     this.markers.update(
       [...saved, ...candidates],
       interactive,
-      (item) => this.movement.dragging || this.movement.canStart(item),
+      (item) => !!surfaceTargets || this.movement.dragging || this.movement.canStart(item),
     );
     const selected = e.store.data.guidePoints?.filter((p) => this.selected.has(p.id)) ?? [];
     for (const id of this.selected)
