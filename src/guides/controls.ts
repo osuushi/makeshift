@@ -36,9 +36,6 @@ export class GuideControls {
       (items) => this.hover(items?.map((p) => p.anchor) ?? null),
       (event, item) => this.drag(event, item),
       () => this.selected,
-      (item) => {
-        if (item.guide) void this.remove(item.guide.id);
-      },
     );
     this.unregister = toolCatalog(editor).register({
       id: "guide-points",

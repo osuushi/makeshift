@@ -17,11 +17,10 @@ export class GuideMarkers {
     private hover: (items: readonly GuideMarker[] | null) => void,
     private drag: (event: PointerEvent, item: GuideMarker) => void,
     private selected: () => ReadonlySet<string>,
-    private remove: (item: GuideMarker) => void,
   ) {
     this.root.className = "guide-markers";
     host.append(this.root);
-    this.meanings = new GuideMeaningChoices(editor, host, choose, remove, hover);
+    this.meanings = new GuideMeaningChoices(editor, host, choose, hover);
   }
   update(items: GuideMarker[], interactive: boolean): void {
     const groups: GuideMarker[][] = [];
@@ -69,7 +68,6 @@ export class GuideMarkers {
       button.append(count);
     }
     button.title = items.map((p) => (p.guide ? guideLabel(p.guide) : p.label)).join("\n");
-    if (items.some((p) => p.guide)) button.title += " · Double-click to delete";
     if (!items.some((p) => p.guide)) button.title += " · Click to keep";
     button.setAttribute(
       "aria-label",
@@ -87,9 +85,6 @@ export class GuideMarkers {
     };
     button.ondblclick = (event) => {
       event.stopPropagation();
-      const saved = entry.items.filter((p) => p.guide);
-      if (saved.length === 1) this.remove(saved[0]);
-      else if (saved.length) this.meanings.open(saved, false, true);
     };
     button.onpointerdown = (event) => {
       event.stopPropagation();

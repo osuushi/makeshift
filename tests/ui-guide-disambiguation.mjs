@@ -13,6 +13,10 @@ export async function guideDisambiguation(page, name, sourceId) {
   const ownMidpoint = await project(page, [20, 10, 10]);
   await dragTo(page, a, ownMidpoint);
   const vector = page.locator(".guide-move-vector");
+  assert.equal(
+    await page.locator('.guide-move-destinations circle[data-point="[20,10,10]"]').count(),
+    1,
+  );
   assert.deepEqual(JSON.parse(await vector.getAttribute("data-end")), [20, 10, 10]);
   await page.mouse.up();
   await modalCompleted(page);

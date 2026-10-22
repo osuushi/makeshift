@@ -1,4 +1,3 @@
-import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Point, Vector } from "../sketch/planes.js";
 import type { GuideMoveTarget } from "./move-target.js";
@@ -10,17 +9,6 @@ export class GuideMoveView {
   private start: SVGCircleElement;
   private end: SVGCircleElement;
   private label: SVGTextElement;
-  private plane = new THREE.Mesh(
-    new THREE.BufferGeometry(),
-    new THREE.MeshBasicMaterial({
-      color: "#8b5cf6",
-      transparent: true,
-      opacity: 0.18,
-      side: THREE.DoubleSide,
-      depthTest: false,
-      depthWrite: false,
-    }),
-  );
   constructor(
     private editor: SketchEditor,
     host: HTMLElement,
@@ -33,8 +21,6 @@ export class GuideMoveView {
     this.end = this.root.querySelector(".end") as SVGCircleElement;
     this.label = this.root.querySelector("text") as SVGTextElement;
     host.append(this.root);
-    this.plane.renderOrder = 39;
-    editor.world.scene.add(this.plane);
     this.hide();
   }
   show(origin: Vector, target: GuideMoveTarget | null, cursor?: Point): void {
@@ -58,25 +44,12 @@ export class GuideMoveView {
     const distance = target ? Math.hypot(...target.point.map((v, i) => v - origin[i])) : 0;
     this.label.textContent = target
       ? `${target.label} · ${Number(distance.toFixed(3))} mm`
-      : "Snap to a point or plane";
-    this.plane.geometry.dispose();
-    this.plane.geometry = new THREE.BufferGeometry();
-    this.plane.visible = !!target?.plane;
-    if (target?.plane)
-      this.plane.geometry.setAttribute(
-        "position",
-        new THREE.Float32BufferAttribute(target.plane.vertices, 3),
-      );
-    this.editor.world.draw();
+      : "Snap to a destination point";
   }
   hide(): void {
     this.root.style.display = "none";
-    this.plane.visible = false;
   }
   dispose(): void {
     this.root.remove();
-    this.editor.world.scene.remove(this.plane);
-    this.plane.geometry.dispose();
-    this.plane.material.dispose();
   }
 }

@@ -185,6 +185,41 @@ async function cylinderCap(page, name) {
   console.log(
     `${name}: cylinder cap centers share a reachable marker and save the chosen definition`,
   );
+  await overlappingSavedGuides(page, after);
+}
+
+async function overlappingSavedGuides(page, document) {
+  const first = document.guidePoints[0];
+  const archive = documentArchive(
+    {
+      ...document,
+      guidePoints: [
+        first,
+        {
+          ...first,
+          id: "overlapping-guide",
+          name: "Overlapping guide",
+          anchor: { ...first.anchor, feature: "bounds-center" },
+        },
+      ],
+    },
+    { position: [0, -70, 100], target: [0, 0, 5], up: [0, 1, 0], height: 65 },
+  );
+  await openDocument(page, {
+    name: "overlapping-guides.makeshift",
+    mimeType: "application/json",
+    buffer: Buffer.from(archive),
+  });
+  await page.locator(".guide-marker.saved").dblclick();
+  assert.equal(
+    (await inspect(page)).document.guidePoints.length,
+    2,
+    "overlapping guides survive double-click",
+  );
+  await page.keyboard.press("Delete");
+  await page.waitForFunction(() => window.makeshiftInspect().document.guidePoints.length === 1);
+  await chooseTool(page, "undo", "undo");
+  assert.equal((await inspect(page)).document.guidePoints.length, 2);
 }
 
 async function selectedConcaveFace(page, name) {

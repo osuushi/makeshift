@@ -8,14 +8,13 @@ import "../model/overlap.css";
 /** A pending meaning has a default, but no accepted document edit until confirmed. */
 export class GuideMeaningChoices {
   readonly element = document.createElement("div");
-  private pending: { item: GuideMarker; additive: boolean; deleting: boolean } | null = null;
+  private pending: { item: GuideMarker; additive: boolean } | null = null;
   private abort = new AbortController();
   private dismiss: GuideChoiceDismiss;
   constructor(
     private editor: SketchEditor,
     host: HTMLElement,
     private choose: (item: GuideMarker, additive: boolean) => void,
-    private remove: (item: GuideMarker) => void,
     private hover: (items: readonly GuideMarker[] | null) => void,
   ) {
     this.element.className = "guide-choices";
@@ -23,12 +22,12 @@ export class GuideMeaningChoices {
     this.element.setAttribute("aria-label", "Choose guide meaning");
     this.element.hidden = true;
     host.append(this.element);
-    this.dismiss = new GuideChoiceDismiss(this.element, () => this.finish(!this.pending?.deleting));
+    this.dismiss = new GuideChoiceDismiss(this.element, () => this.finish(true));
     window.addEventListener(
       "pointerdown",
       (event) => {
         if (!this.pending || this.element.contains(event.target as Node)) return;
-        this.finish(!this.pending.deleting);
+        this.finish(true);
       },
       { capture: true, signal: this.abort.signal },
     );
@@ -43,11 +42,11 @@ export class GuideMeaningChoices {
       { capture: true, signal: this.abort.signal },
     );
   }
-  open(items: GuideMarker[], additive: boolean, deleting = false): void {
+  open(items: GuideMarker[], additive: boolean): void {
     this.close();
-    this.pending = { item: items[0], additive, deleting };
+    this.pending = { item: items[0], additive };
     const title = document.createElement("strong");
-    title.textContent = deleting ? "Delete a guide point" : "Choose a guide point";
+    title.textContent = "Choose a guide point";
     const list = document.createElement("div");
     list.className = "selection-overlap-items";
     const previews = guideMeaningPreviews(this.editor, items);
@@ -58,9 +57,9 @@ export class GuideMeaningChoices {
       label.textContent = item.guide ? guideLabel(item.guide) : item.label;
       button.setAttribute("aria-label", label.textContent);
       button.append(previews[index], label);
-      button.setAttribute("aria-pressed", String(!deleting && item === items[0]));
+      button.setAttribute("aria-pressed", String(item === items[0]));
       button.onclick = () => {
-        this.pending = { item, additive, deleting };
+        this.pending = { item, additive };
         this.finish(true);
       };
       button.onpointerenter = () => this.hover([item]);
@@ -85,8 +84,7 @@ export class GuideMeaningChoices {
     this.close();
     this.hover(null);
     if (!accept || !pending) return;
-    if (pending.deleting) this.remove(pending.item);
-    else this.choose(pending.item, pending.additive);
+    this.choose(pending.item, pending.additive);
   }
   close(): void {
     this.pending = null;

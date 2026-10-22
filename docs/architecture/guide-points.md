@@ -57,8 +57,9 @@ referenced parents and exact point, with a short meaning label. Generated guide
 numbers are omitted; custom names remain. Clicking a diagram chooses that meaning; clicking away
 or moving away from both marker and panel for 500 ms accepts the default. Escape or Cancel discards
 it. The panel fades over 150 ms after the away delay; reentering either area resets
-the delay. Double-clicking a saved marker deletes only that guide. Overlapping
-saved guides offer a deletion chooser. Markers use a centered
+the delay. Saved markers use the same selection chooser when overlapping;
+double-clicking never removes them. Select guides and use Delete/Backspace to remove them.
+Markers use a centered
 drawn cross; selected guides use the standard selection blue. Hover highlights
 the referenced parents in purple, including every parent in an overlap cluster.
 Visible guides, including ghosts, own pointer hits before geometry underneath.
@@ -99,13 +100,18 @@ Guide dragging always acquires a snap reference. The display is a vector anchore
 at the starting guide, while geometry remains unchanged until release. Until a
 snap is acquired, a faded arrow follows the cursor; it is only feedback and does
 not permit free displacement. The enlarged arrowhead remains visible beyond the
-endpoint ring. Targets include saved guides, the origin, ordinary geometry points, and planar faces or
-visible construction/world planes. A plane target ends at the normal projection
-of the starting guide, independent of where the pointer hits that plane. Points on
+endpoint ring. Targets include saved guides, the origin, ordinary geometry points, and normal
+projections onto planar faces or visible construction/world planes. Unsaved drag
+destinations appear as small yellow circles without crosses. Projection destinations
+also have a faint dotted gray line to the starting guide; covered destinations are dimmed
+and remain available in the hold-to-choose panel.
+Each destination has the same 10 CSS pixel hit radius. The rest of a face or plane
+does not acquire a snap. The destination is the normal projection of the starting
+guide, including projections outside a face's trim boundary. Points on
 the moving body or sketch are valid targets too: every reference uses its accepted
 position at drag start, so it never chases the moving geometry. The starting point
 itself is excluded. Unsaved midpoints and other semantic points remain available.
-Point targets take precedence over plane interiors. Selected sketch
+Coincident destinations share a marker and a displacement. Selected sketch
 geometry uses camera projection onto its continuing planar workspace.
 
 While dragging, hold relatively still over an ambiguous location for 300 ms to

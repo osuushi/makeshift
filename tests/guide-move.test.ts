@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import * as THREE from "three";
 import { DocumentOwner } from "../src/backend/document-owner.js";
-import { projectToPlane } from "../src/guides/move-planes.js";
+import { guideMovePlanes, projectToPlane } from "../src/guides/move-planes.js";
 import { guideMovePoints } from "../src/guides/move-points.js";
 import { guideMoveSource } from "../src/guides/move-source.js";
-import { guideMoveProbe } from "../src/guides/move-target.js";
+import { guideMoveProbe, guideMoveTargets } from "../src/guides/move-target.js";
 import { guideLabel } from "../src/guides/types.js";
 import type { DisplayDocument } from "../src/model/display-document.js";
 import { emptySketch } from "../src/sketch/document.js";
@@ -88,14 +88,10 @@ test("same-body reference positions include unsaved POIs and remain at the accep
     const document = owner.view.data,
       editor = targetEditor(document);
     const references = guideMovePoints(editor, document);
-    const probe = guideMoveProbe(
-      editor,
-      document,
-      [20, 20, 10],
-      { x: 700, y: 500 },
-      undefined,
-      references,
-    );
+    const probe = guideMoveProbe(editor, guideMoveTargets(editor, document, [20, 20, 10]), {
+      x: 700,
+      y: 500,
+    });
     assert.deepEqual(probe.target?.point, [20, 0, 10]);
     assert.ok(
       probe.choices.some((p) => p.point.every((v, i) => v === [20, 0, 0][i])),
@@ -128,20 +124,51 @@ test("origin, sketch corners and normal plane projections are exact snap targets
   const document: DisplayDocument = { units: "mm", sketches: [sketch] };
   const editor = targetEditor(document);
   const origin: Vector = [3, 4, 9];
-  assert.deepEqual(
-    guideMoveProbe(editor, document, origin, { x: 501, y: 499 }).target?.point,
-    [0, 0, 0],
-  );
-  assert.deepEqual(
-    guideMoveProbe(editor, document, origin, { x: 621, y: 351 }).target?.point,
-    [12, 15, 0],
-  );
-  assert.deepEqual(
-    guideMoveProbe(editor, document, origin, { x: 700, y: 700 }).target?.point,
-    [3, 4, 0],
+  const targets = guideMoveTargets(editor, document, origin);
+  assert.deepEqual(guideMoveProbe(editor, targets, { x: 501, y: 499 }).target?.point, [0, 0, 0]);
+  assert.deepEqual(guideMoveProbe(editor, targets, { x: 621, y: 351 }).target?.point, [12, 15, 0]);
+  assert.deepEqual(guideMoveProbe(editor, targets, { x: 531, y: 461 }).target?.point, [3, 4, 0]);
+  assert.equal(
+    guideMoveProbe(editor, targets, { x: 700, y: 700 }).target,
+    null,
+    "the rest of a plane has no snap hit area",
   );
   const frame = { origin: [5, 0, 0] as Vector, u: [0, 1, 0] as Vector, v: [0, 0, 1] as Vector };
   assert.deepEqual(projectToPlane(origin, frame), [5, 4, 9]);
+});
+
+test("plane destinations respect parent visibility and the moving sketch plane", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const body = await prism(owner, square);
+    const frame = { ...planes.YZ, origin: [40, 0, 0] as Vector };
+    const document = { ...owner.view.data, constructionPlanes: [{ id: "reference", frame }] };
+    const editor = targetEditor(document);
+    const origin: Vector = [25, 30, 15];
+    const targets = guideMovePlanes(editor, document, origin);
+    assert.ok(
+      targets.some(
+        (p) => p.reference.kind === "face" && p.point.every((v, i) => v === [25, 30, 10][i]),
+      ),
+      "a normal destination remains available beyond the face boundary",
+    );
+    assert.ok(targets.some((p) => p.label === "Construction plane" && p.point[0] === 40));
+    const planar = guideMovePlanes(editor, document, origin, planes.XY);
+    assert.ok(planar.length > 0);
+    assert.ok(
+      planar.every((p) => p.point[2] === origin[2]),
+      "sketch moves remain in their plane",
+    );
+    editor.visibility.visible = (id) => id !== body.id && id !== "reference";
+    assert.ok(
+      guideMovePlanes(editor, document, origin).every(
+        (p) => p.reference.kind === "plane" && p.reference.world,
+      ),
+      "hidden faces and saved planes contribute no destinations",
+    );
+  } finally {
+    owner.close();
+  }
 });
 
 test("distinct saved depths at the same screen point remain ambiguous", () => {
@@ -168,7 +195,11 @@ test("distinct saved depths at the same screen point remain ambiguous", () => {
     })),
   };
   assert.equal(
-    guideMoveProbe(targetEditor(document), document, [1, 2, 3], { x: 620, y: 350 }).target,
+    guideMoveProbe(
+      targetEditor(document),
+      guideMoveTargets(targetEditor(document), document, [1, 2, 3]),
+      { x: 620, y: 350 },
+    ).target,
     null,
   );
 });

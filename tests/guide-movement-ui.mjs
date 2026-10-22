@@ -8,9 +8,11 @@ import { guidePosition } from "../.cache/sketch-tests/src/guides/evaluate.js";
 import { documentArchive } from "../.cache/sketch-tests/src/model/document-archive.js";
 import { prism, square } from "../.cache/sketch-tests/tests/body-edge-fixtures.js";
 import { openDocument } from "./native-documents.mjs";
+import { project } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { guideDisambiguation } from "./ui-guide-disambiguation.mjs";
 import { inspect, modalCompleted } from "./ui-helpers.mjs";
+import { orientWithTurntable } from "./ui-orbit-orient.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -138,9 +140,9 @@ try {
     assert.ok(Math.hypot(...copyPoint.map((v, i) => v - [45, 0, 18][i])) < 1e-6);
     await chooseTool(page, "undo", "undo");
     assert.deepEqual((await inspect(page)).document, before);
-    await faceAndPlaneRoute(page, { a, b, before, source, guide });
     await savedMarkerRoute(page, name, before);
     await guideDisambiguation(page, name, source.id);
+    await faceAndPlaneRoute(page, { a, b, before, source, guide });
     console.log(
       `${name}: direct guide drag, selected-face Move, normal plane target, fixed vector, copy, delete, Undo, Shift and Escape passed`,
     );
@@ -201,11 +203,41 @@ async function faceAndPlaneRoute(page, { a, b, before, source, guide }) {
   await page.keyboard.press("v");
   await page.mouse.click(650, 700);
   assert.deepEqual((await inspect(page)).modelingSelection, []);
-  // Plane target means normal projection of the guide, not the pointer's surface hit.
-  const surface = { x: b.x + (7 * 850) / 80, y: b.y - (8 * 850) / 80 };
   await page.mouse.move(a.x, a.y);
   await page.mouse.down();
+  await page.keyboard.down("Shift");
+  await page.mouse.move(b.x, b.y, { steps: 5 });
+  assert.equal(await vector.getAttribute("data-end"), "");
+  await page.mouse.up();
+  await page.keyboard.up("Shift");
+  await modalCompleted(page);
+  assert.deepEqual((await inspect(page)).document, before);
+  await planeDestinationRoute(page, before, source, guide);
+}
+
+async function planeDestinationRoute(page, before, source, guide) {
+  const vector = page.locator(".guide-move-vector");
+  // A face has no drag hit area; only its normal destination acquires the snap.
+  await orientWithTurntable(page, [0.2, -0.6, 1]);
+  const sourcePoint = await project(page, [20, 20, 10]);
+  const surface = await project(page, [52, 8, 18]);
+  const destination = await project(page, [20, 20, 18]);
+  await page.mouse.move(sourcePoint.x, sourcePoint.y);
+  await page.mouse.down();
   await page.mouse.move(surface.x, surface.y, { steps: 5 });
+  assert.equal(await vector.getAttribute("data-end"), "");
+  const destinations = page.locator(".guide-move-destinations");
+  const dot = destinations.locator('circle[data-point="[20,20,18]"]');
+  assert.equal(await dot.count(), 1);
+  assert.equal(await dot.getAttribute("r"), "4");
+  assert.equal(await destinations.locator("path").count(), 0, "destination dots have no crosses");
+  const line = destinations.locator('line[data-point="[20,20,18]"]');
+  assert.equal(await line.count(), 1);
+  assert.ok(Math.abs(Number(await line.getAttribute("x1")) - sourcePoint.x) < 0.1);
+  assert.ok(Math.abs(Number(await line.getAttribute("y2")) - destination.y) < 0.1);
+  assert.equal(await line.evaluate((el) => getComputedStyle(el).strokeDasharray), "2px, 4px");
+  await page.screenshot({ path: ".cache/sketch-review/guide-drag-destinations.png" });
+  await page.mouse.move(destination.x, destination.y, { steps: 5 });
   assert.equal(await vector.getAttribute("data-target"), "Face plane");
   assert.deepEqual(JSON.parse(await vector.getAttribute("data-end")), [20, 20, 18]);
   assert.deepEqual(JSON.parse(await vector.getAttribute("data-start")), [20, 20, 10]);
@@ -215,14 +247,6 @@ async function faceAndPlaneRoute(page, { a, b, before, source, guide }) {
   assert.deepEqual(guidePosition(state.document, guide.anchor), [20, 20, 18]);
   assert.equal(state.document.bodies.find((body) => body.id === source.id).volume, source.volume);
   await chooseTool(page, "undo", "undo");
-  await page.mouse.move(a.x, a.y);
-  await page.mouse.down();
-  await page.keyboard.down("Shift");
-  await page.mouse.move(b.x, b.y, { steps: 5 });
-  assert.equal(await vector.getAttribute("data-end"), "");
-  await page.mouse.up();
-  await page.keyboard.up("Shift");
-  await modalCompleted(page);
   assert.deepEqual((await inspect(page)).document, before);
 }
 
@@ -237,6 +261,8 @@ async function savedMarkerRoute(page, name, before) {
   );
   await page.screenshot({ path: `.cache/sketch-review/${name}-guide-selected.png` });
   await marker("Source anchor").dblclick();
+  assert.deepEqual((await inspect(page)).document, before, "double-click selects without deleting");
+  await page.keyboard.press("Delete");
   const state = await inspect(page);
   assert.equal(state.document.guidePoints.length, 1);
   assert.deepEqual(state.document.bodies, before.bodies);

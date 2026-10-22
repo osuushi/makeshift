@@ -12,6 +12,7 @@ export interface GuideMovePoint {
   reference: OverlapTarget;
   anchor?: GuideAnchor;
   saved: boolean;
+  guide?: boolean;
 }
 function reference(anchor: GuideAnchor): OverlapTarget {
   if (anchor.kind === "sketch-curve")
@@ -48,6 +49,7 @@ export function guideMovePoints(editor: SketchEditor, document: DisplayDocument)
         reference: reference(guide.anchor),
         anchor: guide.anchor,
         saved: true,
+        guide: true,
       })),
     {
       point: [0, 0, 0],
