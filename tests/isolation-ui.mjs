@@ -23,11 +23,19 @@ async function route(page, name) {
   assert.ok(Math.abs(exitBounds.x + exitBounds.width / 2 - (cube.x + cube.width / 2)) < 2);
   assert.equal(await page.getByRole("button", { name: "Hide Body 1", exact: true }).count(), 1);
   assert.equal(await page.getByRole("button", { name: "Show Sketch 1", exact: true }).count(), 1);
-  await exitButton.click();
-  assert.equal(await exitButton.isVisible(), false);
+  // New gesture owners must enter isolation before the editor paints/picks them.
+  // Visibility unit tests cannot verify this editor-to-renderer notification boundary.
   await chooseTool(page, "Sketch on XZ", "sketch-xz");
   await page.keyboard.press("l");
   await drag(page, [20, 20], [30, 30]);
+  assert.equal(await page.getByRole("button", { name: "Hide Sketch 2", exact: true }).count(), 1);
+  assert.equal(await page.getByRole("button", { name: "Show Sketch 1", exact: true }).count(), 1);
+  await page.keyboard.press("Escape");
+  const createdMidpoint = await at(page, 25, 25);
+  await page.mouse.click(createdMidpoint.x, createdMidpoint.y);
+  assert.ok((await inspect(page)).selectionTargets.length, "New isolated sketch is pickable");
+  await exitButton.click();
+  assert.equal(await exitButton.isVisible(), false);
   await chooseTool(page, "return to modeling", "modeling");
   const before = (await inspect(page)).document;
   const button = (label) => page.getByRole("button", { name: label, exact: true });
