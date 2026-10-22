@@ -42,8 +42,9 @@
   font: 13px system-ui;
 }
 .guide-choices {
-  width: 260px;
-  max-height: min(400px, 70vh);
+  box-sizing: border-box;
+  width: min(480px, calc(100vw - 16px));
+  max-height: min(520px, calc(100vh - 16px));
   overflow-y: auto;
   z-index: 40;
 }
@@ -51,7 +52,7 @@
   display: block;
   margin-bottom: 8px;
 }
-.guide-choices button {
+.guide-choices > button {
   display: block;
   width: 100%;
   text-align: left;
@@ -59,6 +60,13 @@
   border: 0;
   background: transparent;
   font: inherit;
+}
+.guide-choices .selection-overlap-items {
+  grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr));
+  margin-bottom: 8px;
+}
+.guide-choices .selection-overlap-items span {
+  padding: 0 6px;
 }
 .guide-choices button:hover {
   background: #fff3ce;

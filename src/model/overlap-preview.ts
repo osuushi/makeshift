@@ -14,11 +14,6 @@ export function overlapPreviews(
   candidates: OverlapCandidate[],
   points: readonly (Vector | undefined)[] = [],
 ): SVGSVGElement[] {
-  const context = overlapGeometry(editor);
-  if (editor.world.active)
-    for (const sketch of editor.display.sketches)
-      if (editor.visibility.visible(sketch.id))
-        context.lines.push(...sketchPreviewLines(editor, sketch));
   const targets = candidates.map((c) => {
     const geometry = overlapGeometry(editor, c.target);
     if (c.target.kind === "plane") {
@@ -30,6 +25,19 @@ export function overlapPreviews(
     }
     return geometry;
   });
+  return geometryPreviews(editor, targets, points);
+}
+/** Render reference geometry and optional exact points in the same scene context. */
+export function geometryPreviews(
+  editor: SketchEditor,
+  targets: PreviewGeometry[],
+  points: readonly (Vector | undefined)[] = [],
+): SVGSVGElement[] {
+  const context = overlapGeometry(editor);
+  if (editor.world.active)
+    for (const sketch of editor.display.sketches)
+      if (editor.visibility.visible(sketch.id))
+        context.lines.push(...sketchPreviewLines(editor, sketch));
   const projectWorld = (p: Vector): Point => editor.world.project(p);
   const scene = bounds(
     [context, ...targets, { surfaces: [], lines: points.flatMap((p) => (p ? [[p]] : [])) }],

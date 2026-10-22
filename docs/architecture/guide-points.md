@@ -52,7 +52,9 @@ groups check every referenced face. This prevents guides from covering small or
 foreshortened parents. These discovery filters govern hover markers, not the
 references available while dragging an already-saved guide.
 Single-clicking a ghost saves it. Coincident meanings open a chooser with the first
-listed definition preselected. Clicking a row chooses that meaning; clicking away
+listed definition preselected. Each choice uses a geometry diagram showing its
+referenced parents and exact point, with a short meaning label. Generated guide
+numbers are omitted; custom names remain. Clicking a diagram chooses that meaning; clicking away
 or moving away from both marker and panel for 500 ms accepts the default. Escape or Cancel discards
 it. The panel fades over 150 ms after the away delay; reentering either area resets
 the delay. Double-clicking a saved marker deletes only that guide. Overlapping

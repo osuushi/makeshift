@@ -1,6 +1,9 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { GuideChoiceDismiss } from "./choice-dismiss.js";
 import type { GuideMarker } from "./markers.js";
+import { guideMeaningPreviews } from "./meaning-previews.js";
+import { guideLabel } from "./types.js";
+import "../model/overlap.css";
 
 /** A pending meaning has a default, but no accepted document edit until confirmed. */
 export class GuideMeaningChoices {
@@ -45,10 +48,16 @@ export class GuideMeaningChoices {
     this.pending = { item: items[0], additive, deleting };
     const title = document.createElement("strong");
     title.textContent = deleting ? "Delete a guide point" : "Choose a guide point";
-    this.element.replaceChildren(title);
-    for (const item of items) {
+    const list = document.createElement("div");
+    list.className = "selection-overlap-items";
+    const previews = guideMeaningPreviews(this.editor, items);
+    this.element.replaceChildren(title, list);
+    for (const [index, item] of items.entries()) {
       const button = document.createElement("button");
-      button.textContent = item.guide ? `${item.guide.name} · ${item.label}` : item.label;
+      const label = document.createElement("span");
+      label.textContent = item.guide ? guideLabel(item.guide) : item.label;
+      button.setAttribute("aria-label", label.textContent);
+      button.append(previews[index], label);
       button.setAttribute("aria-pressed", String(!deleting && item === items[0]));
       button.onclick = () => {
         this.pending = { item, additive, deleting };
@@ -56,16 +65,17 @@ export class GuideMeaningChoices {
       };
       button.onpointerenter = () => this.hover([item]);
       button.onpointerleave = () => this.hover([items[0]]);
-      this.element.append(button);
+      list.append(button);
     }
     const cancel = document.createElement("button");
     cancel.textContent = "Cancel";
     cancel.onclick = () => this.finish(false);
     this.element.append(cancel);
     const p = this.editor.world.project(items[0].point);
-    this.element.style.left = `${Math.max(8, Math.min(p.x + 15, innerWidth - 290))}px`;
-    this.element.style.top = `${Math.max(60, Math.min(p.y + 15, innerHeight - 50 - items.length * 34))}px`;
     this.element.hidden = false;
+    const bounds = this.element.getBoundingClientRect();
+    this.element.style.left = `${Math.max(8, Math.min(p.x + 15, innerWidth - bounds.width - 8))}px`;
+    this.element.style.top = `${Math.max(8, Math.min(p.y + 15, innerHeight - bounds.height - 8))}px`;
     this.dismiss.open(p);
     this.hover([items[0]]);
     this.element.querySelector("button")?.focus();
