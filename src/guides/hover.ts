@@ -8,15 +8,21 @@ import { parentClearance } from "./parent-clearance.js";
 import { visibleGuides } from "./snapping.js";
 import { type GuideAnchor, guideKey, guideMeaning, guideOwner } from "./types.js";
 
-function parentHovered(editor: SketchEditor, anchor: GuideAnchor, hit: ModelingTarget): boolean {
+function parentNearHover(editor: SketchEditor, anchor: GuideAnchor, hit: ModelingTarget): boolean {
   if (anchor.kind === "sketch-curve") return hit.sketch === anchor.sketch;
   if (!("body" in hit) || hit.body !== anchor.body) return false;
   if (anchor.kind === "body-center") return true;
-  if (anchor.kind === "body-edge") return hit.kind === "edge" && hit.edge === anchor.edge;
-  if (anchor.kind === "body-junction")
-    return hit.kind === "edge" && anchor.edges.includes(hit.edge);
-  if (hit.kind === "face") return anchor.faces.includes(hit.face);
   const body = editor.display.bodies?.find((b) => b.id === anchor.body);
+  const edges =
+    hit.kind === "edge"
+      ? [hit.edge]
+      : hit.kind === "face"
+        ? (body?.faces.find((f) => f.id === hit.face)?.edges ?? [])
+        : [];
+  if (anchor.kind === "body-edge") return edges.includes(anchor.edge);
+  if (anchor.kind === "body-junction") return anchor.edges.some((id) => edges.includes(id));
+  if (hit.kind === "body") return true;
+  if (hit.kind === "face") return anchor.faces.includes(hit.face);
   return (
     hit.kind === "edge" &&
     !!body?.faces.some((f) => anchor.faces.includes(f.id) && f.edges.includes(hit.edge))
@@ -28,24 +34,27 @@ function hoveredCandidates(editor: SketchEditor): GuideCandidate[] {
     const hit = editor.hover,
       sketch = editor.sketch;
     if (!hit || !sketch) return [];
-    return guideCandidates(editor.display, [], { sketch: sketch.id, curves: hitIds(hit) });
+    return guideCandidates(editor.display, [], {
+      sketch: sketch.id,
+      curves: "group" in hit && hit.group ? hit.group.members : hitIds(hit),
+    });
   }
   const hit = editor.modeling.hover;
   if (!hit) return [];
   if (!("body" in hit)) return guideCandidates(editor.display, [hit]);
   const body = editor.display.bodies?.find((b) => b.id === hit.body);
   if (!body) return [];
-  const targets: ModelingTarget[] = hit.kind === "body" ? [] : [hit];
+  const targets: ModelingTarget[] = [hit];
   if (hit.kind === "edge")
     for (const face of body.faces)
       if (face.edges.includes(hit.edge))
         targets.push({ kind: "face", body: body.id, face: face.id });
   const candidates = guideCandidates(editor.display, targets).filter((p) =>
-    parentHovered(editor, p.anchor, hit),
+    parentNearHover(editor, p.anchor, hit),
   );
   const anchor: GuideAnchor = { kind: "body-center", body: body.id, feature: "bounds-center" };
   const point = guidePosition(editor.display, anchor);
-  if (point) candidates.push({ anchor, point, label: guideMeaning(anchor) });
+  if (point && hit.kind !== "body") candidates.push({ anchor, point, label: guideMeaning(anchor) });
   return candidates;
 }
 
@@ -61,7 +70,7 @@ export function spacedGuides(
   );
 }
 
-/** Hovered parents, proximity, symmetric spacing, then room to select every parent. */
+/** Hovered graph neighbors, proximity, spacing, then room to select every parent. */
 export function hoverGuides(editor: SketchEditor, pointer: Point | null): GuideCandidate[] {
   if (!pointer) return [];
   const saved = visibleGuides(editor).map(({ guide, point }) => ({

@@ -12,10 +12,13 @@ The tool displays candidates; clicking one saves it. Nearby candidates share a
 chooser that names each definition and highlights its source on hover. Done,
 Enter or Escape exits the picker; each saved point is already its own Undo step.
 With Select active, automatic discovery uses the ordinary click target. A guide
-is a candidate when the pointer hovers its parent (or a member of that parent)
-and lies within 256 CSS pixels of the guide. Hovering a body edge also counts for
-its incident faces and containing body; hovering a face does not count as hovering
-its boundary edges. Sketch point handles use their curve or editing-group members.
+is a candidate when its parent is hovered or directly neighbors the hovered entity
+in the geometry graph, and the pointer lies within 256 CSS pixels of the guide.
+A hovered face exposes its boundary-edge and junction guides; a hovered edge
+exposes its own guides and those of its incident faces. Body-center guides remain
+eligible from body members, and hovering a whole body exposes face guides.
+Do not recursively expand through those neighbors to the rest of the body.
+Sketch curves and point handles use their curve or editing-group members.
 All semantic feature kinds participate, including centers.
 
 Remove every candidate with another candidate less than 32 CSS pixels away,

@@ -56,18 +56,16 @@ await withUiRuntimes(async (page, name) => {
   const face = await project(page, [10, 10, 10]);
   await page.mouse.move(face.x, face.y);
   assert.equal((await inspect(page)).modelingHover, "face");
-  assert.deepEqual(
-    await page
-      .locator(".guide-marker.ghost")
-      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("title"))),
-    ["Body bounding-box center · Double-click to keep"],
-  );
+  const faceGuides = await page
+    .locator(".guide-marker.ghost")
+    .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("title")));
+  assert.ok(faceGuides.includes("Body bounding-box center · Double-click to keep"));
+  assert.ok(faceGuides.some((title) => title?.startsWith("Edge midpoint")));
   const edge = await project(page, [20, 10, 10]);
   await page.mouse.move(edge.x, edge.y);
-  assert.equal((await inspect(page)).modelingHover, "edge");
-  const ghost = page.locator('.guide-marker.ghost[title^="Edge midpoint"]');
-  assert.equal(await ghost.count(), 1);
-  assert.match(await ghost.getAttribute("title"), /Edge midpoint/);
+  // The guide was exposed from the neighboring face and catches the pointer before
+  // the canvas can switch its ordinary hover to the edge underneath.
+  assert.equal((await inspect(page)).modelingHover, "face");
   const before = await inspect(page);
   await page.mouse.click(edge.x, edge.y);
   assert.deepEqual((await inspect(page)).modelingSelection, before.modelingSelection);
@@ -88,9 +86,9 @@ await withUiRuntimes(async (page, name) => {
     await page
       .locator(".guide-marker.ghost")
       .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("title"))),
-    ["Body bounding-box center · Double-click to keep"],
+    faceGuides,
   );
   console.log(
-    `${name}: spaced hover candidates retain guide click precedence over native geometry`,
+    `${name}: face hover exposes neighboring edge guides; those guides retain click precedence`,
   );
 });

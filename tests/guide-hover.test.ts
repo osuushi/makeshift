@@ -152,7 +152,7 @@ test("small parents cannot be hidden by a lone guide and saved definitions do no
   assert.deepEqual(hoverGuides(editor, pointer), []);
 });
 
-test("native edge/face hover follows actual parent membership and every junction parent has clearance", async () => {
+test("native face hover exposes boundary-edge neighbors and every junction parent has clearance", async () => {
   const owner = new DocumentOwner();
   try {
     const body = await prism(owner, square);
@@ -165,8 +165,20 @@ test("native edge/face hover follows actual parent membership and every junction
     };
     const face = probe([10, 10, 10]);
     assert.equal(face.hit?.kind, "face");
+    assert.ok(face.hit?.kind === "face");
+    const hoveredFace = face.hit.face;
+    const boundary = body.faces.find((f) => f.id === hoveredFace)?.edges ?? [];
+    const edgeGuides = face.guides.filter((p) => p.anchor.kind === "body-edge");
+    assert.ok(edgeGuides.length > 0, "hovering the face exposes off-pointer edge guides");
     assert.ok(
-      face.guides.every((p) => p.anchor.kind === "body-faces" || p.anchor.kind === "body-center"),
+      edgeGuides.every((p) => p.anchor.kind === "body-edge" && boundary.includes(p.anchor.edge)),
+    );
+    const edge = probe([20, 10, 10]);
+    assert.ok(edge.hit?.kind === "edge");
+    const hoveredEdge = edge.hit.edge;
+    assert.ok(
+      edge.guides.every((p) => p.anchor.kind !== "body-edge" || p.anchor.edge === hoveredEdge),
+      "do not traverse through the neighboring face to its other edges",
     );
     assert.ok(guideCandidates(editor.display, [{ kind: "body", body: body.id }]).length > 20);
     const junction = guideCandidates(editor.display, [{ kind: "body", body: body.id }]).find(
