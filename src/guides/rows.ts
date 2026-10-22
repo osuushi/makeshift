@@ -1,3 +1,4 @@
+import { visibilityIcon } from "../model/visibility-icon.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "../tools/catalog.js";
 import type { GuideControls } from "./controls.js";
@@ -27,21 +28,11 @@ export class GuideRows {
     line.onpointerenter = () => this.controls.hover(guide.anchor);
     line.onpointerleave = () => this.controls.hover(null);
     label.ondblclick = () => this.rename(guide, label);
-    const info = document.createElement("button"),
-      eye = document.createElement("button"),
-      remove = document.createElement("button"),
-      detail = document.createElement("p");
-    detail.className = "guide-detail";
-    detail.textContent = guideMeaning(guide.anchor);
-    detail.hidden = true;
-    info.textContent = "ⓘ";
-    info.setAttribute("aria-label", `About ${guide.name}`);
-    info.onclick = () => {
-      detail.hidden = !detail.hidden;
-      this.controls.select(guide);
-    };
-    eye.textContent = guide.hidden ? "○" : "◉";
+    const eye = document.createElement("button");
+    eye.className = "tag-remove";
+    eye.innerHTML = visibilityIcon(!guide.hidden);
     eye.setAttribute("aria-label", `${guide.hidden ? "Show" : "Hide"} ${guide.name}`);
+    eye.title = `${guide.hidden ? "Show" : "Hide"} ${guide.name}`;
     eye.onclick = () =>
       void toolCatalog(this.editor).activate({
         reason: () => null,
@@ -51,18 +42,14 @@ export class GuideRows {
             edit: { action: "update", id: guide.id, hidden: !guide.hidden },
           }),
       });
-    remove.textContent = "×";
-    remove.setAttribute("aria-label", `Remove ${guide.name}`);
-    remove.onclick = () => void this.controls.remove(guide.id);
-    for (const button of [info, eye, remove]) button.className = "tag-remove";
     refresh.push(() => {
       label.setAttribute("aria-pressed", String(this.controls.selected === guide.id));
       row.classList.toggle("entity-hidden", guide.hidden);
-      for (const button of [label, info, eye, remove])
+      for (const button of [label, eye])
         button.disabled = !!toolCatalog(this.editor).reason({ reason: () => null });
     });
-    line.append(label, info, eye, remove);
-    row.append(line, detail);
+    line.append(label, eye);
+    row.append(line);
     return row;
   }
   private rename(guide: GuidePoint, label: HTMLButtonElement): void {

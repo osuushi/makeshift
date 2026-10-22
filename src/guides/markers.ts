@@ -50,21 +50,10 @@ export class GuideMarkers {
       const p = this.editor.world.project(groups[i][0].point);
       button.element.style.left = `${p.x}px`;
       button.element.style.top = `${p.y}px`;
-      button.element.style.pointerEvents =
-        interactive && (explicit || button.items.some((p) => p.guide)) ? "auto" : "none";
+      button.element.style.pointerEvents = interactive ? "auto" : "none";
       button.element.dataset.interactive = String(button.element.style.pointerEvents === "auto");
       button.element.disabled = this.editor.blocked;
     }
-  }
-  reifyAt(x: number, y: number, candidates: GuideMarker[]): boolean {
-    const items = candidates.filter((item) => {
-      const p = this.editor.world.project(item.point);
-      return !item.guide && Math.hypot(p.x - x, p.y - y) <= 12;
-    });
-    if (!items.length) return false;
-    if (items.length === 1) this.choose(items[0]);
-    else this.openChoices(items);
-    return true;
   }
   private button(items: GuideMarker[], explicit: boolean) {
     const button = document.createElement("button");
@@ -74,6 +63,7 @@ export class GuideMarkers {
     button.title = items
       .map((p) => (p.guide ? `${p.guide.name} · ${p.label}` : p.label))
       .join("\n");
+    if (!explicit && !items.some((p) => p.guide)) button.title += " · Double-click to keep";
     button.setAttribute(
       "aria-label",
       items.length > 1
@@ -93,6 +83,7 @@ export class GuideMarkers {
       if (!explicit) open();
     };
     button.onpointerdown = (event) => {
+      event.stopPropagation();
       const chosen =
         entry.items.find((p) => p.guide?.id === this.selected()) ??
         (entry.items.length === 1 ? entry.items[0] : undefined);

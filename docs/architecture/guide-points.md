@@ -11,14 +11,21 @@ Select a body, face, edge, sketch, region or sketch curve and invoke **Guide poi
 The tool displays candidates; clicking one saves it. Nearby candidates share a
 chooser that names each definition and highlights its source on hover. Done,
 Enter or Escape exits the picker; each saved point is already its own Undo step.
-With Select active, hovering geometry reveals nearby endpoint, junction and
-midpoint ghosts. Double-clicking one saves it or opens the same chooser. Ghosts
-pass ordinary single clicks through to geometry.
+With Select active, automatic discovery uses the ordinary click target. A hovered
+edge or sketch curve can reveal its nearest endpoint, junction or midpoint within
+12 CSS pixels. Hovered faces and bodies do not expand into their boundary edges;
+rectangle point handles reveal only that point. Co-located semantic definitions
+retain the chooser. Double-clicking a ghost saves it or opens that chooser.
+Visible guides, including ghosts, own pointer hits before geometry underneath.
+A ghost's single click does not select the underlying geometry or save the point;
+keyboard activation saves it. The explicit Guide points tool saves on one click.
 
 Saved guides appear beneath their owning body or sketch, sharing the disclosure
-with tagged groups. Double-click the name to rename it; info describes its meaning;
-hovering or selecting the row highlights the referenced geometry. Hide excludes
-the guide from display and snapping. Remove deletes only the guide. Selecting a
+with tagged groups. Each compact row contains the name and the standard Entities
+eye icon. Double-click the name to rename it; its tooltip describes the meaning.
+Hovering or selecting the row highlights the referenced geometry. Hide excludes
+the guide from display and snapping. Select the guide and press Delete/Backspace
+to remove only the guide. Selecting a
 guide does not replace the geometry selection. A subsequent geometry selection
 clears the guide selection so Delete keeps its ordinary selection meaning.
 
@@ -85,5 +92,6 @@ Implementation: `src/guides/` owns definitions, evaluation, continuation, marker
 and rows; document edits own persistence/history; existing sketch snapping and
 Transform controllers consume the resolved points. Focused model tests cover
 native split/cleanup/destruction/copy, sketch rewrites, projection and archive
-round trips. The two guide UI fixtures exercise real pointer dispatch, overlap
-choice, projected sketch creation, widget clearance and 3D movement.
+round trips. Focused guide UI fixtures exercise real pointer dispatch, overlap
+choice, projected sketch creation, widget clearance, 3D movement, automatic hover
+scope and guide precedence over underlying geometry.

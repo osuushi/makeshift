@@ -2,10 +2,10 @@ import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import type { ModelingTarget } from "../sketch/model-selection-state.js";
-import { hitIds } from "../sketch/sketch-hit.js";
 import { toolCatalog } from "../tools/catalog.js";
-import { commonGuide, guideCandidates } from "./candidates.js";
+import { guideCandidates } from "./candidates.js";
 import { GuideHighlight } from "./highlight.js";
+import { hoverGuides } from "./hover.js";
 import { type GuideMarker, GuideMarkers } from "./markers.js";
 import { visibleGuides } from "./snapping.js";
 import { type GuideAnchor, type GuidePoint, guideKey, guideMeaning, guideOwner } from "./types.js";
@@ -23,8 +23,6 @@ export class GuideControls {
   private targets: ModelingTarget[] = [];
   private curves: { sketch: string; curves: string[] } | undefined;
   private pointer: { x: number; y: number } | null = null;
-  private ghosts: GuideMarker[] = [];
-  private pressedGhosts: GuideMarker[] = [];
   private panel = document.createElement("div");
   constructor(
     private editor: SketchEditor,
@@ -60,7 +58,6 @@ export class GuideControls {
       "pointermove",
       (event) => {
         if (event.target !== editor.world.canvas) return;
-        this.pressedGhosts = [];
         this.pointer = { x: event.clientX, y: event.clientY };
         this.update();
       },
@@ -69,26 +66,9 @@ export class GuideControls {
     editor.world.canvas.addEventListener(
       "pointerdown",
       () => {
-        if (this.ghosts.length) this.pressedGhosts = this.ghosts;
         this.selected = null;
         this.hovered = null;
         this.markers.choices.hidden = true;
-      },
-      { capture: true, signal: this.abort.signal },
-    );
-    editor.world.canvas.addEventListener(
-      "dblclick",
-      (event) => {
-        if (
-          !this.lease &&
-          !editor.blocked &&
-          !editor.interactions.current &&
-          (!editor.world.active || editor.tool === "select") &&
-          this.markers.reifyAt(event.clientX, event.clientY, this.pressedGhosts)
-        ) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-        }
       },
       { capture: true, signal: this.abort.signal },
     );
@@ -233,23 +213,8 @@ export class GuideControls {
     }));
     const keys = new Set(saved.map((p) => guideKey(p.anchor)));
     let candidates = this.lease ? guideCandidates(e.display, this.targets, this.curves) : [];
-    if (!this.lease && !e.interactions.current && (!e.world.active || e.tool === "select")) {
-      const hover = e.modeling.hover;
-      candidates = guideCandidates(
-        e.display,
-        !e.world.active && hover ? [hover] : [],
-        e.world.active && e.sketch && e.hover
-          ? { sketch: e.sketch.id, curves: [...hitIds(e.hover)] }
-          : undefined,
-      )
-        .filter(commonGuide)
-        .filter((p) => {
-          const screen = e.world.project(p.point);
-          return (
-            this.pointer && Math.hypot(screen.x - this.pointer.x, screen.y - this.pointer.y) < 36
-          );
-        });
-    }
+    if (!this.lease && !e.interactions.current && (!e.world.active || e.tool === "select"))
+      candidates = hoverGuides(e, this.pointer);
     candidates = candidates.filter(
       (p) =>
         !keys.has(guideKey(p.anchor)) &&
@@ -259,7 +224,6 @@ export class GuideControls {
     const interactive =
       !!this.lease || (!e.interactions.current && (!e.world.active || e.tool === "select"));
     this.markers.update([...saved, ...candidates], !!this.lease, interactive);
-    this.ghosts = candidates;
     const selected = e.store.data.guidePoints?.find((p) => p.id === this.selected);
     if (!selected) this.selected = null;
     this.highlight.show(this.hovered ?? selected?.anchor ?? null);

@@ -32,11 +32,16 @@ await withUiRuntimes(async (page, name) => {
   const field = page.getByRole("textbox", { name: "Guide point name" });
   await field.fill("Corner anchor");
   await field.press("Enter");
-  await page.getByRole("button", { name: "About Corner anchor" }).click();
-  assert.match(
-    await page.locator(".guide-detail:visible").textContent(),
-    /Sketch curve end endpoint/,
-  );
+  const savedRow = page
+    .locator(".entity-viewer")
+    .getByRole("button", { name: "Select Corner anchor", exact: true });
+  assert.match(await savedRow.getAttribute("title"), /Sketch curve end endpoint/);
+  const compactRow = savedRow.locator("..");
+  assert.equal(await compactRow.getByRole("button").count(), 2);
+  const labelBox = await savedRow.boundingBox();
+  const eyeBox = await page.getByRole("button", { name: "Hide Corner anchor" }).boundingBox();
+  assert.ok(Math.abs(labelBox.y + labelBox.height / 2 - eyeBox.y - eyeBox.height / 2) < 1);
+  assert.equal(await compactRow.locator("svg").count(), 1);
   await page.getByRole("button", { name: "Hide Corner anchor" }).click();
   assert.equal((await inspect(page)).document.guidePoints[0].hidden, true);
   assert.equal(await page.locator(".guide-marker.saved").count(), 0);
@@ -51,8 +56,11 @@ await withUiRuntimes(async (page, name) => {
   assert.ok(circle);
   assert.ok(Math.hypot(circle.center.x - 24, circle.center.y) < 1e-6, JSON.stringify(circle));
   await page.screenshot({ path: `.cache/sketch-review/${name}-guide-points.png` });
-  await page.getByRole("button", { name: "Remove Corner anchor" }).click();
+  const beforeRemove = (await inspect(page)).document.sketches;
+  await savedRow.click();
+  await page.keyboard.press("Delete");
   assert.equal((await inspect(page)).document.guidePoints.length, 0);
+  assert.deepEqual((await inspect(page)).document.sketches, beforeRemove);
   await chooseTool(page, "undo", "undo");
   assert.equal((await inspect(page)).document.guidePoints[0].name, "Corner anchor");
   await chooseTool(page, "Sketch on XY", "sketch-xy");
@@ -60,10 +68,15 @@ await withUiRuntimes(async (page, name) => {
   const midpoint = await at(page, 14, 27);
   await page.mouse.move(midpoint.x, midpoint.y);
   await page.locator(".guide-marker.ghost").first().waitFor({ state: "visible" });
+  const beforeHoverClick = (await inspect(page)).selectionTargets;
+  await page.mouse.click(midpoint.x, midpoint.y);
+  assert.deepEqual((await inspect(page)).selectionTargets, beforeHoverClick);
+  assert.equal((await inspect(page)).document.guidePoints.length, 1);
   await page.mouse.dblclick(midpoint.x, midpoint.y);
   await page.waitForFunction(() => window.makeshiftInspect().document.guidePoints?.length === 2);
   assert.equal((await inspect(page)).document.guidePoints[1].anchor.feature, "midpoint");
+  assert.deepEqual((await inspect(page)).selectionTargets, beforeHoverClick);
   console.log(
-    `${name}: guide overlap choice, metadata, visibility, camera-projected circle and Undo passed`,
+    `${name}: compact guide rows, tooltip, Delete, visibility, projected circle and hover click precedence passed`,
   );
 });

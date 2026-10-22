@@ -12,6 +12,7 @@ import { EntityChildren } from "./entity-children.js";
 import { entityRows } from "./entity-presentation.js";
 import { renameEntity } from "./entity-rename.js";
 import { EntityReorder } from "./entity-reorder.js";
+import { visibilityIcon } from "./visibility-icon.js";
 
 export class EntityViewer {
   private localSourcePicker: {
@@ -190,7 +191,7 @@ export class EntityViewer {
       if (shown !== visible) {
         shown = visible;
         eye.setAttribute("aria-label", `${visible ? "Hide" : "Show"} ${name}`);
-        eye.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>${visible ? "" : '<path d="m3 3 18 18"/>'}</svg>`;
+        eye.innerHTML = visibilityIcon(visible);
       }
       eye.disabled = !!toolCatalog(this.editor).reason({ reason: () => null });
       row.classList.toggle("entity-mergeable", mergeable);
