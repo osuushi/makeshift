@@ -32,6 +32,12 @@ surface display cannot stand in for a successful geometry operation. This check
 also applies when regenerating presentation during Open. It does not prove that
 a fully meshed shape is free of self-intersections.
 
+Solid extraction retains the exact volume and, when volume integration needs
+them, the optimal surface bounds for that final shape. Presentation reuses those
+measurements; no geometry mutation may follow them. Both bounds paths use
+`BRepBndLib::AddOptimal` with triangulation and shape-tolerance expansion disabled.
+Planar volume integration does not need bounds, so presentation computes them once.
+
 Temporary profile wires also collapse sub-0.0001 mm remnants at cubic junctions
 (a cubic edge or an adjoining edge). Tangent trimming can otherwise leave sliver
 walls whose display facets cannot form a closed export mesh. This reconnects only

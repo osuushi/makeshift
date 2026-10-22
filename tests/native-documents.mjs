@@ -107,7 +107,10 @@ export async function openDocument(page, file) {
   if (!next) throw new Error(`Open did not create or focus document: ${path}`);
   await installTestFrames(next);
   await followDocument(page, next);
-  await page.waitForFunction(() => !window.makeshiftInspect().busy);
+  // Wait for renderer inspection to be available as well as an idle document.
+  await page.waitForFunction(
+    () => typeof window.makeshiftInspect === "function" && !window.makeshiftInspect().busy,
+  );
 }
 
 export async function saveDocument(page, path) {

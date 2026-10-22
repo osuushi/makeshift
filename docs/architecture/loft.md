@@ -50,7 +50,10 @@ holes escaping the outer solid or intersecting one another reject. This is a
 conservative matching rule, not a guarantee that every valid arrangement can be
 resolved. Guide rails, point terminals and open surface lofts remain outside scope.
 Closed BRep validity, positive volume/orientation and self-interference checks run
-before publication. Presentation meshes do not define the solid or its sections.
+before publication. The outer and each hole solid are checked during construction.
+The final result is checked again after hole subtraction; a loft without holes
+retains the already-checked outer solid. Presentation meshes do not define the
+solid or its sections.
 
 ## Ownership and later editing
 

@@ -8,16 +8,9 @@ export function appendThreadInformation(
   editor: SketchEditor,
   instances: DecoratorInstance[],
 ): void {
-  const descriptions = new Set<string>();
   for (const instance of instances) {
     if (instance.problem) continue;
-    const { description, warnings } = threadInformation(editor.store.data.bodies ?? [], instance);
-    if (!descriptions.has(description)) {
-      const text = document.createElement("p");
-      text.textContent = description;
-      root.append(text);
-      descriptions.add(description);
-    }
+    const { warnings } = threadInformation(editor.store.data.bodies ?? [], instance);
     for (const warning of warnings) {
       const text = document.createElement("p");
       text.className = "decorator-warning";

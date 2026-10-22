@@ -12,6 +12,7 @@ export interface DecoratorInstance {
   readonly version: number;
   readonly faces: readonly FaceReference[];
   readonly settings: Settings;
+  readonly presetId?: string;
   /** Persistent local coordinates keep a helix continuous across face changes. */
   readonly frame: PlaneFrame;
   /** Original axial reference retained when coverage is split or partially removed. */
@@ -36,13 +37,20 @@ export interface MeshModification {
 }
 export type DecoratorEdit =
   | {
+      action: "preset";
+      ids: string[];
+      operation: "duplicate" | "rename" | "select";
+      presetId?: string;
+      name?: string;
+    }
+  | {
       action: "apply";
       definition: string;
       version?: number;
       faces: FaceReference[];
       settings?: Settings;
     }
-  | { action: "settings"; ids: string[]; patch: Settings }
+  | { action: "settings"; ids: string[]; patch: Settings; replace?: boolean }
   | { action: "continue"; id: string; faces: FaceReference[] }
   | { action: "reassign"; id: string; faces: FaceReference[] }
   | { action: "discard"; id: string }

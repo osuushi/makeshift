@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { presetCopyName } from "../src/decorators/presets.js";
 import { threadRadius } from "../src/decorators/thread-mesh.js";
 import {
   coarseMetric,
@@ -19,7 +20,7 @@ test("FDM presets flatten the rod crest and hole groove without filling the hole
     assert.equal(settings.pitch, pitch);
     assert.equal(settings.profile, "triangle");
     assert.equal(threadDepth(settings), 1);
-    assert.equal(settings.clearance, preset === "fdm-fine" ? 0.25 : 0.1);
+    assert.equal(settings.clearance, 0.25);
     assert.equal(settings.tipTruncation, 0.1);
     for (const cut of ["rod", "hole"] as const) {
       const profile = { ...settings, cut };
@@ -54,7 +55,7 @@ test("FDM presets flatten the rod crest and hole groove without filling the hole
   assert.equal(threadDefaults(10.3).preset, "fdm-fine");
   const coarse = patchThreadSettings(10.3, threadDefaults(10.3), { preset: "fdm-coarse" });
   assert.equal(coarse.pitch, 1.5);
-  assert.equal(coarse.clearance, 0.1);
+  assert.equal(coarse.clearance, 0.25);
   const fine = patchThreadSettings(10.3, coarse, { preset: "fdm-fine" });
   assert.equal(fine.pitch, 1);
   assert.equal(fine.clearance, 0.25);
@@ -111,4 +112,19 @@ test("legacy printer metadata is validated without changing thread dimensions", 
   assert.throws(() => patchThreadSettings(10, legacy, { nozzleDiameter: NaN }), /nozzle/);
   assert.throws(() => patchThreadSettings(10, legacy, { layerHeight: 0 }), /layer/);
   assert.deepEqual(coarseMetric(11), { diameter: 10, pitch: 1.5, listed: false });
+});
+
+test("copies of preset copies use one copy suffix and successive numbers", () => {
+  const names = ["FDM fine copy", "FDM fine copy 2"];
+  const presets = names.map((name, index) => ({
+    id: String(index),
+    name,
+    definition: "freac.threads",
+    version: 1,
+    settings: {},
+  }));
+  for (const source of ["FDM fine", "FDM fine copy", "FDM fine copy 2", "FDM fine copy copy"])
+    assert.equal(presetCopyName(presets, source), "FDM fine copy 3");
+  assert.equal(presetCopyName([], "FDM fine"), "FDM fine copy");
+  assert.equal(presetCopyName([], "My setting 2"), "My setting 2 copy");
 });

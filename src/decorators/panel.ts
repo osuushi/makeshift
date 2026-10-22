@@ -8,6 +8,8 @@ import { editDecorators, faceKey } from "./edits.js";
 import { appendKnurlSettings } from "./knurl-panel.js";
 import { decoratorLibrary } from "./library.js";
 import { appendThreadInformation, appendThreadProblem } from "./panel-information.js";
+import { appendPresetControls } from "./preset-panel.js";
+import { choiceKey } from "./presets.js";
 import { appendDecoratorRepairs } from "./repair-panel.js";
 import { DecoratorSettingsDraft } from "./settings-draft.js";
 import { ThreadApplication } from "./thread-application.js";
@@ -122,12 +124,13 @@ export class DecoratorPanel {
   }
   private async apply(definition = threadDefinition): Promise<void> {
     const faces = this.selected();
+    const settings = this.editor.store.data.lastDecoratorChoices?.[choiceKey(definition)]?.settings;
     const edit = { action: "apply" as const, definition, faces };
     if (definition === threadDefinition) {
       try {
-        editDecorators(this.editor.store.data, edit);
+        editDecorators(this.editor.store.data, { ...edit, settings });
       } catch {
-        this.application.start(faces);
+        this.application.start(faces, settings);
         return;
       }
     }
@@ -248,6 +251,7 @@ export class DecoratorPanel {
       this.expand(instances);
       this.editor.refresh();
     });
+    appendPresetControls(this.root, this.editor, instances);
     appendThreadInformation(this.root, this.editor, instances);
     const problem = appendThreadProblem(this.root, instances);
     appendThreadSettings(
@@ -256,6 +260,7 @@ export class DecoratorPanel {
       (patch, preview) => this.patch(patch, preview, instances),
       this.draft,
       this.advancedOpen || !!problem,
+      false,
     );
     this.button("Remove thread decorator from selected faces", () => {
       const keys = new Set(this.fresh(instances).flatMap((d) => d.faces.map(faceKey)));
@@ -270,6 +275,7 @@ export class DecoratorPanel {
       this.expand(instances);
       this.editor.refresh();
     });
+    appendPresetControls(this.root, this.editor, instances);
     appendKnurlSettings(this.root, this.editor, instances, this.draft, (patch, preview) =>
       this.patch(patch, preview, instances),
     );

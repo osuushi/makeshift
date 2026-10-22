@@ -13,7 +13,9 @@ export function appendKnurlSettings(
   patch: (settings: Settings, preview: boolean) => void,
 ): void {
   if (!instances.some((d) => d.problem)) {
-    for (const field of knurlFields) decoratorField(root, field, instances, patch, draft);
+    for (const field of knurlFields) {
+      if (field.key !== "preset") decoratorField(root, field, instances, patch, draft);
+    }
     const note = document.createElement("p");
     note.textContent =
       "Diamond pattern with flat tops. Recessed preserves the original envelope; raised adds material. Fine assumes a 0.4 mm nozzle, Coarse a 0.6 mm nozzle; both assume an upright cylinder and 0.2 mm layers. Print a sample for your material and orientation.";

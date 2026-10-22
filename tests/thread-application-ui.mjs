@@ -59,7 +59,11 @@ await withUiRuntimes(
     await decoratorCylinder(page, 8);
     await chooseTool(page, "threads", "threads");
     assert.equal((await inspect(page)).document.decorators.length, 1);
-    assert.equal(await apply.count(), 0);
+    // New document uses a fresh native window; reacquire its locator.
+    assert.equal(
+      await page.getByRole("button", { name: "Create threads", exact: true }).count(),
+      0,
+    );
     await page.getByRole("button", { name: "Offset faces", exact: true }).click();
     assert.equal(
       await page.getByRole("combobox", { name: "Preset", exact: true }).isEnabled(),

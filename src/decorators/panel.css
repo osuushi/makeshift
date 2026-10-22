@@ -90,3 +90,10 @@
 .gear-resize::backdrop {
   background: transparent;
 }
+
+.decorator-preset-controls {
+  margin-block: 6px;
+}
+.decorator-preset-controls label {
+  margin: 0;
+}

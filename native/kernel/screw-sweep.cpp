@@ -121,15 +121,16 @@ void validateSweptSolids(const TopoDS_Shape& shape) {
     for (TopExp_Explorer e(shape, TopAbs_SOLID); e.More(); e.Next()) {
         ++count;
         GProp_GProps props; BRepGProp::VolumeProperties(e.Current(), props);
+        timing.phase("volume");
         if (props.Mass() <= 1e-10) throw std::runtime_error("Swept solid has invalid material orientation or no volume");
         BOPAlgo_ArgumentAnalyzer check;
         check.SetShape1(e.Current()); check.SelfInterMode() = true;
         check.SetRunParallel(OSD_ThreadPool::DefaultPool()->HasThreads());
         check.Perform();
+        timing.phase("self-intersection");
         if (check.HasFaulty()) throw std::runtime_error("Cannot resolve swept material into a non-intersecting solid");
     }
     if (!count) throw std::runtime_error("Sweep produced no closed solid");
-    timing.phase("volume-and-self-interference");
 }
 TopoDS_Shape screwSweep(const TopoDS_Face& face, const gp_Ax1& axis, double angle, double height) {
     KernelTiming timing("screw-sweep");

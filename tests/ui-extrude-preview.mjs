@@ -10,13 +10,15 @@ export async function extrusionPreviewRoute(page) {
   const pick = await at(page, 0, 0);
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(pick.x, pick.y);
-  const gates = Array.from({ length: 3 }, () => ({
+  const gates = Array.from({ length: 4 }, () => ({
     reached: Promise.withResolvers(),
     release: Promise.withResolvers(),
   }));
-  const requests = [];
+  const requests = [],
+    superseded = [];
   await page.route("**/sketch-api", async (route) => {
     const request = route.request().postDataJSON();
+    if (request.kind === "supersede-preview") superseded.push(request);
     if (request.kind !== "extrude") return route.continue();
     const gate = gates[requests.length];
     requests.push(request.extrusion);
@@ -48,22 +50,42 @@ export async function extrusionPreviewRoute(page) {
     );
     assert.equal(intermediate.document.bodies?.length ?? 0, 0);
     close(intermediate.preview.bodies[0].volume, requests[0].distance * 600);
-    for (let i = 0; i < 5; i++) await page.mouse.move(x + i, y - 100);
-    gates[1].release.resolve();
-    await settled(page);
-    assert.equal(requests.length, 2, "Unchanged snapped distance must not recompute");
-    close((await inspect(page)).preview.bodies[0].volume, requests[1].distance * 600);
+    await queuedExtrusion(page, gates, requests, superseded, x, y);
     await page.mouse.up();
     await page.keyboard.press("Enter");
-    close((await inspect(page)).document.bodies[0].volume, requests[1].distance * 600);
+    close((await inspect(page)).document.bodies[0].volume, requests[2].distance * 600);
     await chooseTool(page, "undo", "undo");
     assert.equal((await inspect(page)).document.bodies?.length ?? 0, 0);
-    await invalidatedPreview(page, pick, gates[2]);
+    await invalidatedPreview(page, pick, gates[3]);
   } finally {
     for (const gate of gates) gate.release.resolve();
     await page.mouse.up();
     await page.unroute("**/sketch-api");
   }
+}
+// Real native replies are held at the transport boundary so an older successful
+// target can arrive while a newer drag target is waiting in the controller.
+async function queuedExtrusion(page, gates, requests, superseded, x, y) {
+  for (let i = 0; i < 5; i++) await page.mouse.move(x + i, y - 100);
+  assert.equal(requests.length, 2, "Unchanged snapped distance must not recompute");
+  await page.mouse.move(x, y - 150);
+  await page.mouse.move(x, y - 200);
+  assert.equal(requests.length, 2, "Waiting targets stay in the serial controller slot");
+  assert.deepEqual(superseded, [], "Drag changes keep the initialized worker alive");
+  gates[1].release.resolve();
+  await reachedPreview(gates[2], "latest queued drag");
+  const intermediate = await page.evaluate(() => window.makeshiftInspect());
+  close(intermediate.preview.bodies[0].volume, requests[1].distance * 600);
+  assert.equal(intermediate.document.bodies?.length ?? 0, 0);
+  assert.equal(
+    await page.getByRole("button", { name: "Accept extrusion", exact: true }).isDisabled(),
+    true,
+    "An intermediate successful target cannot be accepted",
+  );
+  assert.equal(requests.length, 3, "Only the latest waiting target reaches native geometry");
+  gates[2].release.resolve();
+  await settled(page);
+  close((await inspect(page)).preview.bodies[0].volume, requests[2].distance * 600);
 }
 async function invalidatedPreview(page, pick, gate) {
   await page.mouse.click(pick.x, pick.y);

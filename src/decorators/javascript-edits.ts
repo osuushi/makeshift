@@ -9,6 +9,7 @@ import type { JavaScriptDecorators } from "./javascript-hooks.js";
 import type { DecoratorEdit, DecoratorInstance } from "./types.js";
 
 export function needsJavaScript(document: SketchDocument, edit: DecoratorEdit): boolean {
+  if (edit.action === "preset") return false;
   if (edit.action === "apply") return !isBuiltinDecorator(edit.definition);
   if (edit.action === "remove" || edit.action === "discard") return false;
   const ids = edit.action === "settings" ? edit.ids : [edit.id];
@@ -73,7 +74,10 @@ export function editJavaScriptDecorators(
       const definition = hooks.definition(document, instance.definition, instance.version);
       return {
         ...instance,
-        settings: definitionSettings(definition, { ...instance.settings, ...edit.patch }),
+        settings: definitionSettings(
+          definition,
+          edit.replace ? edit.patch : { ...instance.settings, ...edit.patch },
+        ),
       };
     });
   } else if (edit.action === "continue" || edit.action === "reassign") {

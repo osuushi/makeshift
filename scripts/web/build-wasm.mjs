@@ -5,10 +5,12 @@ import { resolve } from "node:path";
 import { prepareHeaders, run } from "../native-inputs.mjs";
 import { occtArchive, prepareOcctSource } from "../occt-source.mjs";
 import { prepareSolverSource } from "../solver-source.mjs";
+import { webBuildConfig } from "./config.mjs";
 import { recordWebSdk, webRecipe } from "./sdk.mjs";
 
 const root = resolve(import.meta.dirname, "../..");
-const cache = resolve(root, ".cache/web");
+const config = webBuildConfig();
+const { cache } = config;
 const sdk = resolve(cache, "sdk");
 const compiler = execFileSync("emcc", ["--version"], { encoding: "utf8" });
 if (!/\b4\.0\.20\b/.test(compiler)) throw new Error("Use the pinned Emscripten 4.0.20 SDK");
@@ -38,7 +40,7 @@ configure([
   `-DCMAKE_INSTALL_PREFIX=${sdk}`,
   "-DCMAKE_BUILD_TYPE=Release",
   "-DBUILD_LIBRARY_TYPE=Static",
-  "-DCMAKE_CXX_FLAGS=-fexceptions",
+  `-DCMAKE_CXX_FLAGS=${config.flag}`,
   "-DBUILD_ADDITIONAL_TOOLKITS=TKDESTEP",
   ...["FoundationClasses", "ModelingData", "ModelingAlgorithms"].map(
     (m) => `-DBUILD_MODULE_${m}=ON`,
@@ -55,14 +57,16 @@ build(occtBuild);
 run("cmake", ["--install", occtBuild]);
 await recordWebSdk(sdk);
 for (const kind of ["solver", "kernel"]) {
-  const directory = resolve(root, `.build/web-${kind}`);
+  const directory = `${config.buildPrefix}-${kind}`;
   configure([
     "-S",
     resolve(root, `native/${kind}`),
     "-B",
     directory,
     "-DCMAKE_BUILD_TYPE=Release",
-    "-DCMAKE_CXX_FLAGS=-fexceptions",
+    `-DCMAKE_CXX_FLAGS=${config.flag}`,
+    `-DMAKESHIFT_WEB_WASM_EXCEPTIONS=${config.exceptions === "wasm" ? "ON" : "OFF"}`,
+    `-DMAKESHIFT_WEB_PROFILING=${process.env.MAKESHIFT_WEB_PROFILING === "1" ? "ON" : "OFF"}`,
     `-DCMAKE_PREFIX_PATH=${sdk}`,
     `-DOpenCASCADE_DIR=${resolve(sdk, "lib/cmake/opencascade")}`,
     `-DPLANEGCS_SOURCE=${solverSource}`,

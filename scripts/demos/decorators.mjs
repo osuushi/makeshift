@@ -66,9 +66,9 @@ export async function knurling(page, c, a) {
   await a.tool("knurling");
   await preview(a, page);
   await c.hold(0.8);
-  await preset(a, page, "Knurl preset", "coarse");
+  await preset(a, page, "Preset", "coarse");
   await c.hold(0.8);
-  await preset(a, page, "Knurl preset", "fine");
+  await preset(a, page, "Preset", "fine");
   const state = await a.state();
   assert.equal(state.document.decorators[0].definition, "freac.knurling");
   assert.equal(state.document.decorators[0].settings.preset, "fine");

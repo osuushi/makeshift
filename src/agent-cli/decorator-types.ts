@@ -33,16 +33,21 @@ export interface DecoratorInstance {
   readonly id: string; readonly definition: string; readonly version: number;
   readonly faces: readonly DecoratorFace[]; readonly settings: DecoratorSettings;
   readonly frame: Plane; readonly axialReference?: [number, number];
-  readonly problem?: string; readonly state?: unknown;
+  readonly problem?: string; readonly state?: unknown; readonly presetId?: string;
+}
+export interface DecoratorPreset {
+  id: string; name: string; definition: string; version: number; settings: DecoratorSettings;
 }
 export interface DecoratorCatalog {
+  presets: readonly DecoratorPreset[];
   instances: readonly DecoratorInstance[];
   definitions: readonly (DecoratorDefinition & { enabled: boolean })[];
   builtins: { id: string; version: number; name: string; fields: readonly DecoratorField[] }[];
 }
 export type DecoratorEdit =
   | { action: "apply"; definition: string; version?: number; faces: DecoratorFace[]; settings?: DecoratorSettings }
-  | { action: "settings"; ids: string[]; patch: DecoratorSettings }
+  | { action: "settings"; ids: string[]; patch: DecoratorSettings; replace?: boolean }
+  | { action: "preset"; ids: string[]; operation: "duplicate" | "rename" | "select"; presetId?: string; name?: string }
   | { action: "continue" | "reassign"; id: string; faces: DecoratorFace[] }
   | { action: "discard"; id: string }
   | { action: "remove"; faces: DecoratorFace[] };

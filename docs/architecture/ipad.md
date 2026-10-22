@@ -30,6 +30,10 @@ native clipboard ownership. HTTPS uses the system clipboard. No extra paste dial
 Undo/Redo accepts Cmd/Ctrl-Y as well as Cmd/Ctrl-Shift-Z. New uses and displays
 Ctrl-N on iPad after device testing found Cmd-N unavailable; desktop retains Cmd-N.
 Touch browsers, including standalone web mode, use these controls automatically.
+A single segmented Undo/Redo control beside the app name provides direct history
+access on touch devices and remote tablet sessions. Its arrows are SVG paths,
+independent of platform glyph/font availability. Each segment has a 44 CSS-pixel
+minimum target and uses the same command availability and modal/view/document history routes as keyboard commands.
 The Camera/Pointer toggle defaults to Camera (fingers navigate, Pencil edits).
 Pointer sends finger input through ordinary geometry tools for use without Pencil;
 the preference persists locally and does not change the document or Undo history.

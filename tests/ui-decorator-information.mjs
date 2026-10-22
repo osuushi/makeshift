@@ -29,9 +29,9 @@ export async function decoratorInformationRoute(page) {
   await pitch.fill("8");
   await pitch.press("Enter");
   await inspect(page);
-  assert.match(
+  assert.doesNotMatch(
     await page.getByRole("region", { name: "Decorators", exact: true }).innerText(),
-    /Reference Ø16 mm/,
+    /Reference Ø/,
   );
   await page.getByRole("button", { name: "Show affected faces", exact: true }).click();
   const selection = (await inspect(page)).modelingSelection;
@@ -43,7 +43,7 @@ export async function decoratorInformationRoute(page) {
     await page.getByRole("button", { name: "Show affected faces", exact: true }).count(),
     0,
   );
-  assert.match(
+  assert.doesNotMatch(
     await page.getByRole("region", { name: "Decorators", exact: true }).innerText(),
     /rod minor diameter/,
   );

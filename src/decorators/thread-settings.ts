@@ -168,7 +168,7 @@ export function threadDefaults(
     profile: fdm ? "triangle" : "metric",
     hand: "right",
     cut: "rod",
-    clearance: preset === "fdm-fine" ? 0.25 : 0.1,
+    clearance: fdm ? 0.25 : 0.1,
     tipTruncation: fdm ? 0.1 : 0,
     start: 0,
     end: 0,
