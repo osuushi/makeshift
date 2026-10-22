@@ -14,7 +14,7 @@ await withUiRuntimes(async (page, name) => {
   const initialPoint = await at(page, 14, 27);
   await page.mouse.move(initialPoint.x, initialPoint.y);
   await page.locator(".guide-marker.ghost").first().waitFor({ state: "visible" });
-  await page.mouse.dblclick(initialPoint.x, initialPoint.y);
+  await page.mouse.click(initialPoint.x, initialPoint.y);
   await page.waitForFunction(() => window.makeshiftInspect().document.guidePoints?.length === 1);
   assert.equal((await inspect(page)).interaction, null);
   assert.equal(await page.locator(".guide-tool").count(), 0);
@@ -76,8 +76,7 @@ await withUiRuntimes(async (page, name) => {
   const beforeHoverClick = (await inspect(page)).selectionTargets;
   await page.mouse.click(midpoint.x, midpoint.y);
   assert.deepEqual((await inspect(page)).selectionTargets, beforeHoverClick);
-  assert.equal((await inspect(page)).document.guidePoints.length, 1);
-  await page.mouse.dblclick(midpoint.x, midpoint.y);
+
   await page.waitForFunction(() => window.makeshiftInspect().document.guidePoints?.length === 2);
   assert.equal((await inspect(page)).document.guidePoints[1].anchor.feature, "midpoint");
   assert.deepEqual((await inspect(page)).selectionTargets, beforeHoverClick);

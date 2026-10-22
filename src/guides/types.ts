@@ -20,7 +20,8 @@ export interface GuidePoint {
 export type GuideEdit =
   | { action: "create"; anchor: GuideAnchor; name?: string }
   | { action: "update"; id: string; name?: string; hidden?: boolean }
-  | { action: "remove"; id: string };
+  | { action: "remove"; id: string }
+  | { action: "remove-many"; ids: readonly string[] };
 export const guideOwner = (anchor: GuideAnchor): string =>
   anchor.kind === "sketch-curve" ? anchor.sketch : anchor.body;
 export function guideLabel(guide: GuidePoint): string {

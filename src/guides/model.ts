@@ -82,6 +82,15 @@ export function editGuides(document: SketchDocument, edit: GuideEdit): SketchDoc
     validateGuides(candidate);
     return candidate;
   }
+  if (edit.action === "remove-many") {
+    if (
+      !Array.isArray(edit.ids) ||
+      !edit.ids.length ||
+      edit.ids.some((id) => !points.some((p) => p.id === id))
+    )
+      throw new Error("Select existing guide points to delete");
+    return { ...document, guidePoints: points.filter((p) => !edit.ids.includes(p.id)) };
+  }
   if (!points.some((p) => p.id === edit.id)) throw new Error("Guide point no longer exists");
   if (edit.action === "remove")
     return { ...document, guidePoints: points.filter((p) => p.id !== edit.id) };

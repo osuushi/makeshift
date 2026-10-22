@@ -24,7 +24,7 @@ export class GuideRows {
     label.textContent = guide.name;
     label.setAttribute("aria-label", `Select ${guide.name}`);
     label.title = `${guide.name} · ${guideMeaning(guide.anchor)}`;
-    label.onclick = () => this.controls.select(guide);
+    label.onclick = (event) => this.controls.select(guide, event.shiftKey);
     line.onpointerenter = () => this.controls.hover(guide.anchor);
     line.onpointerleave = () => this.controls.hover(null);
     label.ondblclick = () => this.rename(guide, label);
@@ -43,7 +43,7 @@ export class GuideRows {
           }),
       });
     refresh.push(() => {
-      label.setAttribute("aria-pressed", String(this.controls.selected === guide.id));
+      label.setAttribute("aria-pressed", String(this.controls.selected.has(guide.id)));
       row.classList.toggle("entity-hidden", guide.hidden);
       for (const button of [label, eye])
         button.disabled = !!toolCatalog(this.editor).reason({ reason: () => null });

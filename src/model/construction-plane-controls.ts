@@ -1,3 +1,4 @@
+import { guidePlaneReason, selectedGuides } from "../guides/selection.js";
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import { newId } from "../sketch/document.js";
 import type { SketchEditor } from "../sketch/editor.js";
@@ -5,6 +6,7 @@ import { type PlaneFrame, type PlaneId, planes } from "../sketch/planes.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { type ConstructionPlane, withConstructionPlane } from "./construction-plane.js";
 import { installConstructionPlaneEvents } from "./construction-plane-events.js";
+import { constructionPlaneReference } from "./construction-plane-reference.js";
 import { ConstructionPlaneView } from "./construction-plane-view.js";
 import { PlanePlacement } from "./plane-placement.js";
 import { PlaneReferencePicker } from "./plane-reference-picker.js";
@@ -41,7 +43,10 @@ export class ConstructionPlaneControls {
       label: "Construction plane",
       category: "Reference",
       aliases: ["workplane", "reference plane"],
-      reason: () => idleReason(editor) ?? (editor.world.active ? "Return to Modeling first" : null),
+      reason: () =>
+        idleReason(editor) ??
+        guidePlaneReason(editor) ??
+        (editor.world.active && !selectedGuides(editor).size ? "Return to Modeling first" : null),
       run: () => this.create(),
     });
     this.placement = new PlanePlacement(
@@ -137,23 +142,16 @@ export class ConstructionPlaneControls {
   }
   private async create(): Promise<void> {
     const e = this.editor;
-    if (e.blocked || e.interactions.current || e.world.active) return;
-    const selected = e.modeling.targets;
-    const reference = this.selectedFrame();
-    if (reference) return this.place(structuredClone(reference));
-    const target = selected.length === 1 ? selected[0] : undefined;
-    const frame =
-      target?.kind === "face"
-        ? e.store.data.bodies
-            ?.find((b) => b.id === target.body)
-            ?.faces.find((f) => f.id === target.face)?.plane
-        : null;
+    if (e.blocked || e.interactions.current) return;
+    const frame = constructionPlaneReference(e, this.selectedFrame());
     if (!frame) return this.begin();
-    await this.place(structuredClone(frame));
+    await this.place(frame);
   }
   private async place(frame: PlaneFrame): Promise<void> {
     const plane = { id: newId(), frame };
     if (await this.editor.store.request({ kind: "construction-plane", plane })) {
+      selectedGuides(this.editor).clear();
+      if (this.editor.world.active) this.editor.world.exit();
       this.editor.modeling.targets = [];
       this.editor.world.selectedPlane = null;
       this.view.selected = plane.id;

@@ -6,6 +6,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import { type PlaneFrame, type Vector, worldPoint } from "../sketch/planes.js";
 import { pointerDragThreshold } from "../sketch/pointer-intent.js";
+import { near } from "./geometry.js";
 import type { GuideMarker } from "./markers.js";
 import { GuideMoveChooser } from "./move-chooser.js";
 import { type GuideMovePoint, guideMovePoints } from "./move-points.js";
@@ -31,16 +32,23 @@ export class GuideMove {
   private consumeClick = false;
   private view: GuideMoveView;
   private chooser: GuideMoveChooser;
+  private pointer: PointerEvent | null = null;
   constructor(
     private editor: SketchEditor,
     host: HTMLElement,
   ) {
     this.view = new GuideMoveView(editor, host);
-    this.chooser = new GuideMoveChooser(editor, (target) => {
-      if (!this.drag) return;
-      this.drag.target = target;
-      this.view.show(this.drag.origin, target);
-    });
+    this.chooser = new GuideMoveChooser(
+      editor,
+      (target) => {
+        if (!this.drag) return;
+        this.drag.target = target;
+        this.view.show(this.drag.origin, target, this.cursor());
+      },
+      () => {
+        if (this.pointer) this.move(this.pointer);
+      },
+    );
     const options = { capture: true, signal: this.abort.signal };
     window.addEventListener("pointermove", this.move, options);
     window.addEventListener("pointerup", this.release, options);
@@ -121,6 +129,7 @@ export class GuideMove {
     if (!drag || drag.event.pointerId !== event.pointerId || drag.lease.phase !== "editing") return;
     event.preventDefault();
     event.stopImmediatePropagation();
+    this.pointer = event;
     if (this.chooser.opened) drag.target = event.shiftKey ? null : this.chooser.drag(event);
     else {
       const probe = event.shiftKey
@@ -133,15 +142,22 @@ export class GuideMove {
             drag.sketchPlane,
             drag.points,
           );
-      drag.target = probe.target;
-      this.chooser.track(event, probe.choices);
+      const previous = drag.target;
+      drag.target =
+        probe.target ??
+        probe.choices.find((p) => previous && near(p.point, previous.point)) ??
+        null;
+      this.chooser.track(event, probe.choices, drag.target);
     }
     drag.duplicate =
       event.altKey &&
       (drag.source.kind === "sketches" ||
         (drag.source.kind === "solids" && !drag.source.faces.length && !drag.source.edges.length));
-    this.view.show(drag.origin, drag.target);
+    this.view.show(drag.origin, drag.target, this.cursor());
   };
+  private cursor() {
+    return this.pointer ? { x: this.pointer.clientX, y: this.pointer.clientY } : undefined;
+  }
   private release = (event: PointerEvent): void => {
     if (this.press?.event.pointerId === event.pointerId) this.press = null;
     const drag = this.drag;
@@ -205,6 +221,7 @@ export class GuideMove {
   }
   private end(drag: Drag): void {
     this.drag = null;
+    this.pointer = null;
     this.chooser.close();
     this.view.hide();
     drag.lease.release();

@@ -130,3 +130,19 @@
   paint-order: stroke;
   font: 12px system-ui;
 }
+
+.guide-choices,
+.guide-move-choices {
+  transition: opacity 150ms ease;
+}
+.guide-choices.fading,
+.guide-move-choices.fading {
+  opacity: 0;
+}
+.guide-choices button[aria-pressed="true"] {
+  background: #e4f0ff;
+  color: #1676d2;
+}
+.guide-move-vector.unsnapped {
+  opacity: 0.35;
+}

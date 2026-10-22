@@ -1,3 +1,4 @@
+import { selectedGuides } from "../guides/selection.js";
 import { guidesVisible } from "../guides/view-state.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { type ToolResult, toolCatalog } from "./catalog.js";
@@ -119,7 +120,13 @@ export class Toolbox {
   };
   private update = (): void => {
     const sketch = this.editor.world.active !== null;
-    const tools = sketch ? sketchTools : modelingTools;
+    const tools = [...(sketch ? sketchTools : modelingTools)];
+    if (selectedGuides(this.editor).size)
+      tools.push({
+        id: "construction-plane",
+        label: "Construction plane",
+        icon: '<path d="m3 16 5-10h13l-5 10Z"/><circle cx="8" cy="6" r="2"/><circle cx="3" cy="16" r="2"/><circle cx="16" cy="16" r="2"/>',
+      });
     const catalog = toolCatalog(this.editor);
     const signature = JSON.stringify([
       sketch,
@@ -127,6 +134,7 @@ export class Toolbox {
       this.editor.modeling.tool,
       this.editor.interactions.current?.kind,
       guidesVisible(this.editor),
+      selectedGuides(this.editor).size,
       catalog.results().map((tool) => [tool.id, tool.unavailable]),
     ]);
     if (signature === this.signature) return;

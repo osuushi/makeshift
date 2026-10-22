@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
-import type { Vector } from "../sketch/planes.js";
+import type { Point, Vector } from "../sketch/planes.js";
 import type { GuideMoveTarget } from "./move-target.js";
 
 /** Screen-sized arrow whose tail stays at the original guide, never at the cursor. */
@@ -27,7 +27,7 @@ export class GuideMoveView {
   ) {
     this.root.classList.add("guide-move-vector");
     this.root.innerHTML =
-      '<defs><marker id="guide-move-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs><line marker-end="url(#guide-move-arrow)"/><circle class="start" r="4"/><circle class="end" r="7"/><text/>';
+      '<defs><marker id="guide-move-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="12" markerHeight="12" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs><line marker-end="url(#guide-move-arrow)"/><circle class="start" r="4"/><circle class="end" r="7"/><text/>';
     this.line = this.root.querySelector("line") as SVGLineElement;
     this.start = this.root.querySelector(".start") as SVGCircleElement;
     this.end = this.root.querySelector(".end") as SVGCircleElement;
@@ -37,16 +37,18 @@ export class GuideMoveView {
     editor.world.scene.add(this.plane);
     this.hide();
   }
-  show(origin: Vector, target: GuideMoveTarget | null): void {
+  show(origin: Vector, target: GuideMoveTarget | null, cursor?: Point): void {
     const a = this.editor.world.project(origin),
-      b = this.editor.world.project(target?.point ?? origin);
+      b = target ? this.editor.world.project(target.point) : (cursor ?? a);
     this.root.style.display = "block";
+    this.root.classList.toggle("unsnapped", !target);
     this.root.dataset.start = JSON.stringify(origin);
     this.root.dataset.end = target ? JSON.stringify(target.point) : "";
     this.root.dataset.target = target?.label ?? "";
     this.start.setAttribute("cx", String(a.x));
     this.start.setAttribute("cy", String(a.y));
-    this.line.style.display = this.end.style.display = target ? "" : "none";
+    this.line.style.display = "";
+    this.end.style.display = target ? "" : "none";
     for (const [key, value] of Object.entries({ x1: a.x, y1: a.y, x2: b.x, y2: b.y }))
       this.line.setAttribute(key, String(value));
     this.end.setAttribute("cx", String(b.x));

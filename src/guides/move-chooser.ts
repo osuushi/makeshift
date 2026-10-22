@@ -3,11 +3,19 @@ import { fitOverlapChoices } from "../model/overlap-layout.js";
 import { overlapPreviews } from "../model/overlap-preview.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { pointerDragThreshold } from "../sketch/pointer-intent.js";
+import { GuideChoiceDismiss } from "./choice-dismiss.js";
+import { near } from "./geometry.js";
 import { GuideHighlight } from "./highlight.js";
 import type { GuideMoveTarget } from "./move-target.js";
 import "../model/overlap.css";
 
-type Pending = { x: number; y: number; key: string; choices: GuideMoveTarget[] };
+type Pending = {
+  x: number;
+  y: number;
+  key: string;
+  choices: GuideMoveTarget[];
+  selected: GuideMoveTarget | null;
+};
 /** A drag's existing lease stays authoritative while this transient chooser is open. */
 export class GuideMoveChooser {
   readonly element = document.createElement("div");
@@ -17,9 +25,12 @@ export class GuideMoveChooser {
   private choices = new Map<HTMLButtonElement, GuideMoveTarget>();
   private highlight: GuideHighlight;
   private hovered: HTMLButtonElement | null = null;
+  private selected: GuideMoveTarget | null = null;
+  private dismiss: GuideChoiceDismiss;
   constructor(
     private editor: SketchEditor,
     private changed: (target: GuideMoveTarget | null) => void,
+    resumed: () => void,
   ) {
     this.element.className = "selection-overlap guide-move-choices";
     this.element.setAttribute("role", "dialog");
@@ -31,11 +42,15 @@ export class GuideMoveChooser {
     this.ring.hidden = true;
     document.body.append(this.element, this.ring);
     this.highlight = new GuideHighlight(editor);
+    this.dismiss = new GuideChoiceDismiss(this.element, () => {
+      this.close();
+      resumed();
+    });
   }
   get opened(): boolean {
     return !this.element.hidden;
   }
-  track(event: PointerEvent, choices: GuideMoveTarget[]): void {
+  track(event: PointerEvent, choices: GuideMoveTarget[], selected: GuideMoveTarget | null): void {
     if (this.opened) return;
     if (choices.length < 2 || event.shiftKey) {
       this.clearPending();
@@ -47,10 +62,12 @@ export class GuideMoveChooser {
       this.pending.key === key &&
       Math.hypot(event.clientX - this.pending.x, event.clientY - this.pending.y) <=
         Math.max(6, pointerDragThreshold(event))
-    )
+    ) {
+      this.pending.selected = selected;
       return;
+    }
     this.clearPending();
-    this.pending = { x: event.clientX, y: event.clientY, key, choices };
+    this.pending = { x: event.clientX, y: event.clientY, key, choices, selected };
     this.ring.style.left = `${event.clientX}px`;
     this.ring.style.top = `${event.clientY}px`;
     this.ring.hidden = false;
@@ -61,12 +78,16 @@ export class GuideMoveChooser {
     }, longPressDelayMs);
   }
   private open(pending: Pending): void {
+    const selected =
+      pending.choices.find((p) => pending.selected && near(p.point, pending.selected.point)) ??
+      pending.choices[0];
+    const targets = [selected, ...pending.choices.filter((p) => p !== selected)];
     const title = document.createElement("div"),
       list = document.createElement("div");
     title.className = "selection-overlap-title";
     title.textContent = "Drag to a target · release to snap";
     list.className = "selection-overlap-items";
-    const candidates = pending.choices.map((p, i) => ({
+    const candidates = targets.map((p, i) => ({
       target: p.reference,
       key: String(i),
       depth: i,
@@ -75,9 +96,9 @@ export class GuideMoveChooser {
     const previews = overlapPreviews(
       this.editor,
       candidates,
-      pending.choices.map((p) => p.point),
+      targets.map((p) => p.point),
     );
-    for (const [i, target] of pending.choices.entries()) {
+    for (const [i, target] of targets.entries()) {
       const button = document.createElement("button"),
         label = document.createElement("span"),
         position = document.createElement("small");
@@ -96,20 +117,26 @@ export class GuideMoveChooser {
     const bounds = this.element.getBoundingClientRect();
     this.element.style.left = `${Math.max(8, Math.min(pending.x + 16, innerWidth - bounds.width - 8))}px`;
     this.element.style.top = `${Math.max(8, Math.min(pending.y + 16, innerHeight - bounds.height - 8))}px`;
-    this.changed(null);
+    this.dismiss.open(pending);
+    this.select([...this.choices].find(([, target]) => target === selected)?.[0] ?? null);
+    this.changed(this.selected);
   }
   drag(event: PointerEvent): GuideMoveTarget | null {
     const element = document.elementFromPoint(event.clientX, event.clientY)?.closest("button");
     const button =
       element instanceof HTMLButtonElement && this.choices.has(element) ? element : null;
-    const target = button ? (this.choices.get(button) ?? null) : null;
-    if (this.hovered !== button) {
-      this.hovered?.classList.remove("hovered");
-      button?.classList.add("hovered");
-      this.hovered = button;
-      this.highlight.show(target?.anchor ?? null);
-    }
-    return target;
+    if (button) this.select(button);
+    return this.selected;
+  }
+  private select(button: HTMLButtonElement | null): void {
+    if (this.hovered === button) return;
+    this.hovered?.classList.remove("hovered");
+    this.hovered?.setAttribute("aria-pressed", "false");
+    button?.classList.add("hovered");
+    button?.setAttribute("aria-pressed", "true");
+    this.hovered = button;
+    this.selected = button ? (this.choices.get(button) ?? null) : null;
+    this.highlight.show(this.selected?.anchor ?? null);
   }
   private clearPending(): void {
     if (this.timer !== null) clearTimeout(this.timer);
@@ -119,7 +146,9 @@ export class GuideMoveChooser {
   }
   close(): void {
     this.clearPending();
+    this.dismiss.close();
     this.element.hidden = true;
+    this.selected = null;
     this.hovered = null;
     this.choices.clear();
     this.highlight.show(null);
@@ -129,5 +158,6 @@ export class GuideMoveChooser {
     this.element.remove();
     this.ring.remove();
     this.highlight.dispose();
+    this.dismiss.dispose();
   }
 }

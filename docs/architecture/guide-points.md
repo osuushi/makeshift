@@ -51,13 +51,17 @@ candidates and visible saved guides. Junctions check every incident edge; face
 groups check every referenced face. This prevents guides from covering small or
 foreshortened parents. These discovery filters govern hover markers, not the
 references available while dragging an already-saved guide.
-Double-clicking a ghost saves it; double-clicking a saved marker deletes only that
-guide. Overlapping saved guides offer a deletion chooser. Markers use a centered
+Single-clicking a ghost saves it. Coincident meanings open a chooser with the first
+listed definition preselected. Clicking a row chooses that meaning; clicking away
+or moving away from both marker and panel for 500 ms accepts the default. Escape or Cancel discards
+it. The panel fades over 150 ms after the away delay; reentering either area resets
+the delay. Double-clicking a saved marker deletes only that guide. Overlapping
+saved guides offer a deletion chooser. Markers use a centered
 drawn cross; selected guides use the standard selection blue. Hover highlights
 the referenced parents in purple, including every parent in an overlap cluster.
 Visible guides, including ghosts, own pointer hits before geometry underneath.
-A ghost's single click does not select the underlying geometry or save the point;
-keyboard activation saves it. Each saved point is its own Undo step.
+A ghost's click does not select the underlying geometry; keyboard activation also
+saves it. Each saved point is its own Undo step.
 Marker tooltips show the semantic meaning and a custom guide name when present;
 generated `Guide point N` prefixes are omitted. Renaming updates the tooltip immediately.
 
@@ -65,9 +69,16 @@ Saved guides appear beneath their owning body or sketch, sharing the disclosure
 with tagged groups. Each compact row contains the name and the standard Entities
 eye icon. Double-click the name to rename it; its tooltip describes the meaning.
 Hovering or selecting the row highlights the referenced geometry. Hide excludes
-the guide from display and snapping. Select the guide and press Delete/Backspace
-to remove only the guide. Selecting a
-guide does not replace the geometry selection. A subsequent geometry selection
+the guide from display and snapping. Shift-click markers or rows to toggle guides
+in an ordered multiselection; ordinary click selects one. All selected markers and
+rows are blue. Delete/Backspace removes the selected guides together in one Undo.
+Escape clears guide selection. Three distinct non-collinear selected guides expose
+Construction plane in the toolbox, also while sketching. The first point defines
+the origin, the second the positive U direction, and the third the plane orientation.
+Creation copies their current positions into an independent saved plane, selects
+that plane in Modeling, and adds one Undo step. Invalid point counts or collinear
+points disable the command with a reason. Selecting a guide does not replace the
+geometry selection. A subsequent geometry selection
 clears the guide selection so Delete keeps its ordinary selection meaning.
 
 Visible saved guides are sketch snap targets, projected along the current camera
@@ -83,8 +94,10 @@ with its whole body. Click remains selection until the ordinary pointer movement
 threshold is crossed.
 
 Guide dragging always acquires a snap reference. The display is a vector anchored
-at the starting guide, while geometry remains unchanged until release. Targets
-include saved guides, the origin, ordinary geometry points, and planar faces or
+at the starting guide, while geometry remains unchanged until release. Until a
+snap is acquired, a faded arrow follows the cursor; it is only feedback and does
+not permit free displacement. The enlarged arrowhead remains visible beyond the
+endpoint ring. Targets include saved guides, the origin, ordinary geometry points, and planar faces or
 visible construction/world planes. A plane target ends at the normal projection
 of the starting guide, independent of where the pointer hits that plane. Points on
 the moving body or sketch are valid targets too: every reference uses its accepted
@@ -96,10 +109,16 @@ geometry uses camera projection onto its continuing planar workspace.
 While dragging, hold relatively still over an ambiguous location for 300 ms to
 open a geometry chooser. The usual growing hold indicator shows the delay;
 movement beyond 6 CSS pixels (16 for Pencil) restarts it. The chooser includes
-covered point and plane alternatives, ordered by depth. Each diagram marks the
+covered point and plane alternatives, with the current snap first and remaining
+choices ordered by depth. It preselects the current snap (or the first choice if
+none was acquired), keeping the arrow visible. Each diagram marks the
 exact target point, with coordinates shown to at most three decimals. Keep holding,
-drag into a diagram, and release to apply that target. Hover previews the vector
-and referenced parents. Release outside the chooser or Escape cancels the drag.
+drag into a diagram, and release to apply that target. Hover selects the diagram
+and previews its vector and parents; moving off a diagram retains the choice.
+Release uses the selected target, including at the original point or outside the
+panel. Leaving both the trigger point and panel for 500 ms starts a 150 ms fade,
+then returns to ordinary dragging at the current cursor. Reentering either area
+resets dismissal. Escape cancels the drag.
 The existing drag lease owns this chooser; it creates no separate edit or history.
 
 Release on a valid target accepts one edit. Release without a target, Shift,

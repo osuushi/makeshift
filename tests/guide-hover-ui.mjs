@@ -8,6 +8,7 @@ import { openDocument } from "./native-documents.mjs";
 import { project } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
+import { chooseTool } from "./ui-tools.mjs";
 
 const owner = new DocumentOwner();
 let archive;
@@ -87,7 +88,7 @@ await withUiRuntimes(async (page, name) => {
   const faceGuides = await page
     .locator(".guide-marker.ghost")
     .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("title")));
-  assert.ok(faceGuides.includes("Body bounding-box center · Double-click to keep"));
+  assert.ok(faceGuides.includes("Body bounding-box center · Click to keep"));
   assert.ok(faceGuides.some((title) => title?.startsWith("Edge midpoint")));
   const edge = await project(page, [20, 10, 10]);
   await page.mouse.move(edge.x, edge.y);
@@ -97,8 +98,7 @@ await withUiRuntimes(async (page, name) => {
   const before = await inspect(page);
   await page.mouse.click(edge.x, edge.y);
   assert.deepEqual((await inspect(page)).modelingSelection, before.modelingSelection);
-  assert.deepEqual((await inspect(page)).document, before.document);
-  await page.mouse.dblclick(edge.x, edge.y);
+
   await page.waitForFunction(() => window.makeshiftInspect().document.guidePoints?.length === 1);
   assert.deepEqual((await inspect(page)).modelingSelection, before.modelingSelection);
   const saved = page.locator(".guide-marker.saved");
@@ -146,8 +146,33 @@ async function cylinderCap(page, name) {
     "the cap center owns the actual pointer hit after crossing from the side",
   );
   const before = (await inspect(page)).document;
-  await page.mouse.dblclick(cap.x, cap.y);
+  await page.mouse.click(cap.x, cap.y);
   const choices = page.locator(".guide-choices");
+  await choices.waitFor({ state: "visible" });
+  assert.equal(await choices.locator('button[aria-pressed="true"]').count(), 1);
+  await page.mouse.click(1200, 780);
+  await page.waitForFunction(() => window.makeshiftInspect().document.guidePoints?.length === 1);
+  assert.equal((await inspect(page)).document.guidePoints[0].anchor.kind, "body-edge");
+  await chooseTool(page, "undo", "undo");
+  await page.mouse.move(cap.x, cap.y);
+  await page.mouse.click(cap.x, cap.y);
+  await choices.waitFor({ state: "visible" });
+  await page.keyboard.press("Escape");
+  assert.equal(await choices.isVisible(), false);
+  assert.deepEqual((await inspect(page)).document, before);
+  await page.mouse.click(cap.x, cap.y);
+  await choices.waitFor({ state: "visible" });
+  await page.mouse.move(1200, 780);
+  await choices.waitFor({ state: "hidden" });
+  await page.waitForFunction(() => window.makeshiftInspect().document.guidePoints?.length === 1);
+  assert.equal(
+    (await inspect(page)).document.guidePoints[0].anchor.kind,
+    "body-edge",
+    "dismissal keeps the default meaning",
+  );
+  await chooseTool(page, "undo", "undo");
+  await page.mouse.move(cap.x, cap.y);
+  await page.mouse.click(cap.x, cap.y);
   await choices.waitFor({ state: "visible" });
   await page.screenshot({ path: `.cache/sketch-review/${name}-guide-cylinder-center.png` });
   await choices.getByRole("button", { name: "Face circle center", exact: true }).click();
@@ -189,7 +214,7 @@ async function selectedConcaveFace(page, name) {
   assert.equal(await marker.count(), 0, "deselection removes the persistent candidate");
   await page.mouse.click(inside.x, inside.y);
   await page.mouse.move(centroid.x, centroid.y, { steps: 20 });
-  await page.mouse.dblclick(centroid.x, centroid.y);
+  await page.mouse.click(centroid.x, centroid.y);
   await page.waitForFunction(() => window.makeshiftInspect().document.guidePoints?.length === 1);
   const after = await inspect(page);
   assert.equal(after.document.guidePoints[0].anchor.feature, "area-center");

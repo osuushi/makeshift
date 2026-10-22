@@ -57,6 +57,7 @@ export async function guideDisambiguation(page, name, sourceId) {
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before);
   await cancelChoices(page, a, b, before);
+  await defaultAndResume(page, a, b, before);
   console.log(
     `${name}: same-body unsaved midpoint, dwell disambiguation, marked diagrams, covered target, release/Undo and chooser cancellation passed`,
   );
@@ -85,5 +86,53 @@ async function cancelChoices(page, a, b, before) {
   await page.mouse.up();
   await modalCompleted(page);
   assert.equal(await panel.isVisible(), false);
+  assert.notDeepEqual(
+    (await inspect(page)).document,
+    before,
+    "release outside retains the selected snap",
+  );
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, before);
+}
+
+async function defaultAndResume(page, a, b, before) {
+  const panel = page.getByRole("dialog", { name: "Choose snap target" });
+  const vector = page.locator(".guide-move-vector");
+  await dragTo(page, a, b);
+  const snapped = await vector.getAttribute("data-end");
+  await panel.waitFor({ state: "visible" });
+  assert.equal(await vector.getAttribute("data-end"), snapped);
+  assert.equal(await panel.locator('button[aria-pressed="true"]').count(), 1);
+  await page.mouse.up();
+  await modalCompleted(page);
+  assert.notDeepEqual((await inspect(page)).document, before);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, before);
+
+  await dragTo(page, a, b);
+  await panel.waitFor({ state: "visible" });
+  await page.mouse.move(1, 1);
+  await page.waitForTimeout(250);
+  await page.mouse.move(b.x, b.y);
+  await page.waitForTimeout(400);
+  assert.equal(await panel.isVisible(), true, "returning to the point resets dismissal");
+  await page.keyboard.down("Shift");
+  await page.mouse.move(1, 1);
+  await page.waitForTimeout(550);
+  assert.match(await panel.getAttribute("class"), /fading/);
+  await panel.waitFor({ state: "hidden" });
+  assert.equal((await inspect(page)).interaction.kind, "guide-move");
+  assert.match(await vector.getAttribute("class"), /unsnapped/);
+  assert.equal(await vector.locator("line").getAttribute("x2"), "1");
+  assert.equal(await vector.locator("line").getAttribute("y2"), "1");
+  assert.equal(await vector.locator("marker").getAttribute("markerWidth"), "12");
+  await page.screenshot({ path: ".cache/sketch-review/guide-unsnapped-cursor.png" });
+  await page.keyboard.up("Shift");
+  await page.mouse.move(b.x, b.y);
+  assert.equal(await vector.getAttribute("data-end"), snapped);
+  await page.mouse.up();
+  await modalCompleted(page);
+  assert.notDeepEqual((await inspect(page)).document, before);
+  await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before);
 }
