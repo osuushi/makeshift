@@ -193,3 +193,6 @@
   stroke-width: 1.5;
   opacity: 0.7;
 }
+.guide-plane-patch.highlighted {
+  color: #8b5cf6;
+}

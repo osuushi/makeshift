@@ -109,6 +109,12 @@ still restrict projections to those remaining in the active sketch plane. Unsave
 destinations appear as small yellow circles without crosses. Projection destinations
 also have a faint dotted gray line to the starting guide; covered destinations are dimmed
 and remain available in the hold-to-choose panel.
+Dragging over a destination highlights all of its potential parent curves, edges,
+faces or saved planes in purple, including parents of coincident point meanings.
+Canonical planes use purple emphasis on their local grid patches. Before resolving
+an ambiguous endpoint, its potential parents are highlighted together; the chooser
+then follows the selected destination. Moving away, Shift, cancellation or completion
+clears this destination emphasis without changing the geometry selection.
 Each destination has the same 10 CSS pixel hit radius. The rest of a face or plane
 does not acquire a snap. The destination is the normal projection of the starting
 guide, including projections outside a face's trim boundary. Points on

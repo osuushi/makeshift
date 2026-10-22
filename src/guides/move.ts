@@ -6,6 +6,7 @@ import { onModelKeydown } from "../sketch/model-keys.js";
 import { type PlaneFrame, type Vector, worldPoint } from "../sketch/planes.js";
 import { pointerDragThreshold } from "../sketch/pointer-intent.js";
 import { near } from "./geometry.js";
+import { GuideHighlight } from "./highlight.js";
 import type { GuideMarker } from "./markers.js";
 import { GuideMoveChooser } from "./move-chooser.js";
 import { GuideMoveDestinations } from "./move-destinations.js";
@@ -36,6 +37,7 @@ export class GuideMove {
   private view: GuideMoveView;
   private chooser: GuideMoveChooser;
   private destinations: GuideMoveDestinations;
+  private highlight: GuideHighlight;
   private pointer: PointerEvent | null = null;
   constructor(
     private editor: SketchEditor,
@@ -43,12 +45,13 @@ export class GuideMove {
   ) {
     this.view = new GuideMoveView(editor, host);
     this.destinations = new GuideMoveDestinations(editor, host);
+    this.highlight = new GuideHighlight(editor);
     this.chooser = new GuideMoveChooser(
       editor,
       (target) => {
         if (!this.drag) return;
         this.drag.target = target;
-        this.view.show(this.drag.origin, target, this.cursor());
+        this.feedback(target);
       },
       () => {
         if (this.pointer) this.move(this.pointer);
@@ -140,6 +143,7 @@ export class GuideMove {
     event.preventDefault();
     event.stopImmediatePropagation();
     this.pointer = event;
+    let potential: GuideMoveTarget[] = [];
     if (this.chooser.opened) drag.target = event.shiftKey ? null : this.chooser.drag(event);
     else {
       const probe = event.shiftKey
@@ -151,16 +155,47 @@ export class GuideMove {
         probe.choices.find((p) => previous && near(p.point, previous.point)) ??
         null;
       this.chooser.track(event, probe.choices, drag.target);
+      potential = probe.choices;
     }
     drag.duplicate =
       event.altKey &&
       (drag.source.kind === "sketches" ||
         (drag.source.kind === "solids" && !drag.source.faces.length && !drag.source.edges.length));
-    this.view.show(drag.origin, drag.target, this.cursor());
+    this.feedback(drag.target, event.shiftKey ? [] : potential);
     this.destinations.suppress(event.shiftKey);
   };
   private cursor() {
     return this.pointer ? { x: this.pointer.clientX, y: this.pointer.clientY } : undefined;
+  }
+  private feedback(
+    target: GuideMoveTarget | null,
+    potential: readonly GuideMoveTarget[] = [],
+  ): void {
+    const drag = this.drag;
+    if (!drag) return;
+    const points = target ? [target] : potential;
+    const parents = drag.targets.filter((p) => points.some((q) => near(p.point, q.point)));
+    const anchors = parents.flatMap((p) =>
+      p.anchor
+        ? [p.anchor]
+        : p.reference.kind === "face"
+          ? [
+              {
+                kind: "body-faces" as const,
+                body: p.reference.body,
+                faces: [p.reference.face],
+                feature: "area-center" as const,
+              },
+            ]
+          : [],
+    );
+    const references = parents.flatMap((p) =>
+      p.plane && p.reference.kind === "plane" && !p.reference.world ? [p.reference] : [],
+    );
+    this.highlight.show(anchors, references);
+    this.destinations.highlight(parents);
+    this.view.show(drag.origin, target, this.cursor());
+    this.editor.world.requestDraw();
   }
   private release = (event: PointerEvent): void => {
     if (this.press?.event.pointerId === event.pointerId) this.press = null;
@@ -219,6 +254,7 @@ export class GuideMove {
     this.chooser.close();
     this.view.hide();
     this.destinations.hide();
+    this.highlight.show(null);
     drag.lease.show(null);
     if (this.running) await this.editor.store.cancelPreview();
     await this.running;
@@ -230,6 +266,7 @@ export class GuideMove {
     this.chooser.close();
     this.view.hide();
     this.destinations.hide();
+    this.highlight.show(null);
     drag.lease.release();
     this.editor.refresh();
   }
@@ -238,6 +275,7 @@ export class GuideMove {
     this.abort.abort();
     this.view.dispose();
     this.destinations.dispose();
+    this.highlight.dispose();
     this.chooser.dispose();
   }
 }

@@ -1,5 +1,5 @@
 import type { SketchEditor } from "../sketch/editor.js";
-import type { Vector } from "../sketch/planes.js";
+import type { PlaneId, Vector } from "../sketch/planes.js";
 import { near } from "./geometry.js";
 import type { GuideMoveCandidate } from "./move-target.js";
 import { guidePlanePatches } from "./plane-patches.js";
@@ -55,6 +55,15 @@ export class GuideMoveDestinations {
   }
   suppress(suppressed: boolean): void {
     this.root.classList.toggle("suppressed", suppressed);
+  }
+  highlight(parents: readonly GuideMoveCandidate[]): void {
+    const planes = new Set(
+      parents.flatMap((p) =>
+        p.plane && p.reference.kind === "plane" && p.reference.world ? [p.reference.world] : [],
+      ),
+    );
+    for (const patch of this.root.querySelectorAll<SVGGElement>(".guide-plane-patch"))
+      patch.classList.toggle("highlighted", planes.has(patch.dataset.plane as PlaneId));
   }
   hide(): void {
     this.root.style.display = "none";

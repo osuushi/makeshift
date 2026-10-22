@@ -5,7 +5,6 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { pointerDragThreshold } from "../sketch/pointer-intent.js";
 import { GuideChoiceDismiss } from "./choice-dismiss.js";
 import { near } from "./geometry.js";
-import { GuideHighlight } from "./highlight.js";
 import type { GuideMoveTarget } from "./move-target.js";
 import "../model/overlap.css";
 
@@ -23,7 +22,6 @@ export class GuideMoveChooser {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private pending: Pending | null = null;
   private choices = new Map<HTMLButtonElement, GuideMoveTarget>();
-  private highlight: GuideHighlight;
   private hovered: HTMLButtonElement | null = null;
   private selected: GuideMoveTarget | null = null;
   private dismiss: GuideChoiceDismiss;
@@ -41,7 +39,6 @@ export class GuideMoveChooser {
     this.ring.innerHTML = '<span class="selection-hold-progress" aria-hidden="true"></span>';
     this.ring.hidden = true;
     document.body.append(this.element, this.ring);
-    this.highlight = new GuideHighlight(editor);
     this.dismiss = new GuideChoiceDismiss(this.element, () => {
       this.close();
       resumed();
@@ -136,7 +133,6 @@ export class GuideMoveChooser {
     button?.setAttribute("aria-pressed", "true");
     this.hovered = button;
     this.selected = button ? (this.choices.get(button) ?? null) : null;
-    this.highlight.show(this.selected?.anchor ?? null);
   }
   private clearPending(): void {
     if (this.timer !== null) clearTimeout(this.timer);
@@ -151,13 +147,11 @@ export class GuideMoveChooser {
     this.selected = null;
     this.hovered = null;
     this.choices.clear();
-    this.highlight.show(null);
   }
   dispose(): void {
     this.close();
     this.element.remove();
     this.ring.remove();
-    this.highlight.dispose();
     this.dismiss.dispose();
   }
 }
