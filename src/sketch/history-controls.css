@@ -1,12 +1,29 @@
 .history-controls {
   display: flex;
-  gap: 6px;
+  gap: 0;
+  border: 1px solid #d9dfe7;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffffed;
   pointer-events: auto;
 }
 .history-controls button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   min-width: 44px;
   min-height: 44px;
   touch-action: manipulation;
+}
+.history-controls button + button {
+  border-left: 1px solid #d9dfe7;
+}
+.history-controls button:focus-visible {
+  outline-offset: -3px;
 }
 .history-controls button:disabled {
   opacity: 0.4;

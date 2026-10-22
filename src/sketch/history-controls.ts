@@ -1,5 +1,6 @@
 import { toolCatalog } from "../tools/catalog.js";
 import type { SketchEditor } from "./editor.js";
+import { sketchIcon } from "./sketch-icons.js";
 import { hasTouchControls } from "./touch-preference.js";
 import "./history-controls.css";
 
@@ -11,10 +12,10 @@ export function installHistoryControls(editor: SketchEditor, app: HTMLElement): 
   group.className = "history-controls";
   group.setAttribute("role", "group");
   group.setAttribute("aria-label", "History");
-  const buttons = ["undo", "redo"].map((id) => {
+  const buttons = (["undo", "redo"] as const).map((id) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.textContent = id === "undo" ? "↶ Undo" : "↷ Redo";
+    button.append(sketchIcon(id), id === "undo" ? "Undo" : "Redo");
     button.setAttribute("aria-label", id === "undo" ? "Undo" : "Redo");
     button.onclick = () => void catalog.invoke(id);
     group.append(button);
