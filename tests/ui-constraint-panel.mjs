@@ -35,8 +35,9 @@ export async function constraintPanelRoute(page, name) {
   assert.equal(b.x, a.x, "Panel stays anchored while geometry pans");
   assert.ok(b.y >= readouts.y && b.y + b.height <= readouts.y + readouts.height);
   assert.ok(
-    b.x < 50 && readouts.y + readouts.height > viewport.height - 100,
-    "Constraints live in the lower-left readouts area",
+    b.x + b.width > viewport.x + viewport.width - 50 &&
+      readouts.y + readouts.height > viewport.height - 100,
+    "Constraints live in the lower-right readouts area",
   );
   await add.click();
   await inspect(page);
@@ -57,6 +58,6 @@ export async function constraintPanelRoute(page, name) {
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before, "Panel actions preserve snapshot Undo");
   console.log(
-    `${name}: stable lower-left constraint sections, add/remove transfer and Undo passed`,
+    `${name}: stable lower-right constraint sections, add/remove transfer and Undo passed`,
   );
 }

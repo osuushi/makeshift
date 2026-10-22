@@ -35,10 +35,12 @@ test("exact planar face, edge and mixed gaps exclude diagonal span and preserve 
     const m = await measure(owner, pair);
     close(m.minimumGap?.value, 10);
     close(m.maximumGap?.value, 10);
+    close(m.properties.find((p) => p.label === "Parallel distance")?.value, 10);
     assert.equal(m.approximate, false);
     assert.ok(m.relationships.includes("Parallel"));
     const reversed = await measure(owner, [...pair].reverse());
     close(reversed.maximumGap?.value, 10);
+    close(reversed.properties.find((p) => p.label === "Parallel distance")?.value, 10);
     const edges = [vertical(body, 0, 0), vertical(body, 20, 0)];
     const e = await measure(
       owner,
@@ -46,6 +48,7 @@ test("exact planar face, edge and mixed gaps exclude diagonal span and preserve 
     );
     close(e.maximumGap?.value, 20);
     close(e.minimumGap?.value, 20);
+    close(e.properties.find((p) => p.label === "Parallel distance")?.value, 20);
     const top = caps.find((f) => f.plane?.origin[2] === 10);
     const bottomEdge = body.edges.find(
       (e) => e.curve?.kind === "line" && e.curve.a[2] === 0 && e.curve.b[2] === 0,
@@ -55,8 +58,11 @@ test("exact planar face, edge and mixed gaps exclude diagonal span and preserve 
       face(body, top),
       { kind: "edge", body: body.id, edge: bottomEdge.id },
     ];
-    close((await measure(owner, mixed)).maximumGap?.value, 10);
-    close((await measure(owner, mixed.reverse())).maximumGap?.value, 10);
+    for (const targets of [mixed, [...mixed].reverse()]) {
+      const result = await measure(owner, targets);
+      close(result.maximumGap?.value, 10);
+      close(result.properties.find((p) => p.label === "Parallel distance")?.value, 10);
+    }
     const single = await measure(owner, [face(body, top)]);
     close(single.properties.find((p) => p.label === "Area")?.value, 400);
     assert.deepEqual(owner.view, before);
@@ -100,6 +106,7 @@ test("partially overlapping and disjoint faces distinguish gap from shortest dis
     );
     const separated = await measure(owner, [face(a, cap(a, 0)), face(c, cap(c, 10))]);
     assert.equal(separated.maximumGap, undefined);
+    close(separated.properties.find((p) => p.label === "Parallel distance")?.value, 10);
     close(separated.distance?.value, Math.sqrt(500));
   } finally {
     owner.close();
@@ -128,6 +135,7 @@ test("concentric circles and coaxial cylindrical walls expose radius and radial 
     close(m.maximumGap?.value, 4);
     close(m.minimumGap?.value, 4);
     assert.ok(m.relationships.includes("Coaxial"));
+    assert.ok(!m.properties.some((p) => p.label === "Parallel distance"));
     assert.equal(m.approximate, false);
     const circles = body.edges.filter(
       (e) => e.curve?.kind === "circle" && Math.abs(e.curve.center[2]) < 1e-8,
@@ -138,6 +146,7 @@ test("concentric circles and coaxial cylindrical walls expose radius and radial 
       circles.map((e) => ({ kind: "edge", body: body.id, edge: e.id })),
     );
     assert.ok(c.relationships.includes("Concentric"));
+    assert.ok(!c.properties.some((p) => p.label === "Parallel distance"));
     close(c.maximumGap?.value, 4);
   } finally {
     owner.close();
@@ -165,6 +174,7 @@ test("wedge wall maximum is exact over projected overlap and selection order ind
     const m = await measure(owner, [face(body, left), face(body, right)]);
     close(m.minimumGap?.value, 20);
     close(m.maximumGap?.value, 30);
+    assert.ok(!m.properties.some((p) => p.label === "Parallel distance"));
     assert.equal(m.approximate, false);
     close(
       m.properties.find((p) => p.label === "Plane angle")?.value,

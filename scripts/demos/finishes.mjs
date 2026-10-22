@@ -10,7 +10,7 @@ export async function finishes(page, c, a) {
   // Pick geometry away from midpoint and face-center guide markers.
   await a.click([8, -8, 4]);
   assert.equal((await a.state()).modelingSelection[0]?.kind, "edge");
-  await a.button("Fillet edges");
+  // Focusing the radius field begins the edit without a second click on the edge.
   await a.fill("Fillet radius", 3, "textbox", false);
   await a.button("Accept fillet");
   const rounded = (await a.state()).document.bodies[0];

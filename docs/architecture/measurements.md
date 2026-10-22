@@ -3,8 +3,9 @@
 Founder request, 2026-09-20: selecting faces/edges reports separation and geometric
 relationships. Maximum means largest gap, not the farthest pair of points.
 
-A compact lower-left readout automatically measures one or two selected solid faces,
-solid edges, filled sketch regions in 3D, or whole curves in a sketch workspace.
+A compact lower-right readout above the guidance text automatically measures one or
+two selected solid faces, solid edges, filled sketch regions in 3D, or whole curves
+in a sketch workspace.
 Filled regions behave as bounded zero-thickness faces, preserving holes and world
 placement. They measure against regions, solid faces and edges using the same gap,
 angle and relationship rules. A single region shows its area. Hiding bodies does
@@ -21,6 +22,10 @@ not dimensions, constraints, saved annotations or history entries.
   curves and cylindrical faces.
 - Two entities: shortest distance between the actual trimmed shapes, independently
   of facing-region gap. Intersecting shapes have zero shortest distance.
+- Parallel distance: exact perpendicular separation between supporting straight
+  lines, planar faces/regions, or a parallel line and plane. It is available even
+  without trimmed overlap; coplanar/collinear supports report zero. Angled or curved
+  pairs do not show this quantity.
 - Gap corresponds to orthogonal nearest projection onto a supporting curve/surface,
   only where the projected point lies inside the selected trimmed entity. A lateral
   overhang cannot clamp to a boundary and inflate the gap. For like pairs both
