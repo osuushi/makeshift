@@ -9,7 +9,8 @@ await build();
 // Vite's build sets NODE_ENV; do not leak production mode into the desktop dev server.
 if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
 else process.env.NODE_ENV = previousNodeEnv;
-const server = await createServer();
+const port = process.env.MAKESHIFT_DEV_PORT;
+const server = await createServer(port === undefined ? {} : { server: { port: Number(port) } });
 await server.listen();
 const compiler = spawn(
   process.execPath,

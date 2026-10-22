@@ -27,7 +27,9 @@ npm run dev
 `dev` starts Vite and one Electron window, with renderer hot reload. Closing the
 window or pressing Ctrl+C stops the owned development server. Electron launch flags
 can be passed after `--`; use `npm run dev -- --user-data-dir=/path/to/qa-profile`
-for an isolated review session. Changes to the
+for an isolated review session. Set `MAKESHIFT_DEV_PORT=5174` to use another port
+when a development session is already running, or `MAKESHIFT_DEV_PORT=0` to choose
+an available port automatically. Changes to the
 Electron entry or backend require restarting `dev`. `setup:native` downloads hash-verified PlaneGCS sources at the recorded FreeCAD
 commit and builds a separate calculator. It needs network access on first use;
 its source and build caches live in `.cache/solver` and `.build/solver`. Normal
