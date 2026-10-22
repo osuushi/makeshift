@@ -90,14 +90,14 @@ positions geometry; it does not create a persistent relationship to the guide.
 Existing sketch and transform snapping remains available. Owner visibility also
 controls guide visibility; hidden guides do not contribute targets.
 
-Drag a saved guide directly to move its owning body or whole sketch. When Move
+With no active modeling tool, drag a saved guide to move its owning body or whole sketch. When Move
 (M) is active, the actual selection takes precedence, including selected faces,
 edges or sketch points/curves; dragging a guide never replaces a selected face
 with its whole body. Click remains selection until the ordinary pointer movement
 threshold is crossed.
 
 Guide dragging always acquires a snap reference. The display is a vector anchored
-at the starting guide, while geometry remains unchanged until release. Until a
+at the starting guide; Move leaves geometry unchanged until release. Until a
 snap is acquired, a faded arrow follows the cursor; it is only feedback and does
 not permit free displacement. The enlarged arrowhead remains visible beyond the
 endpoint ring. Targets include saved guides, the origin, ordinary geometry points, and normal
@@ -144,11 +144,42 @@ then returns to ordinary dragging at the current cursor. Reentering either area
 resets dismissal. Escape cancels the drag.
 The existing drag lease owns this chooser; it creates no separate edit or history.
 
-Release on a valid target accepts one edit. Release without a target, Shift,
+For Move, release on a valid target accepts one edit. Release without a target, Shift,
 Escape or cancellation leaves geometry unchanged. Option/Alt copies complete
 bodies/sketches and their guides. The shared rotation/scale anchor also snaps to
 saved guides. Close distinct 3D guides with equally near projections do not
 silently win over one another; hold to choose the intended target.
+
+## Offset and Extrude constraints
+
+The active modeling tool, including the selection's default tool, owns a guide
+drag. A selected face normally supplies Offset; a selected profile supplies Extrude.
+These tools solve their distance parameter from the guide's permitted trajectory.
+The handle must lie on a selected source's supporting plane or cylindrical surface;
+it may lie beyond the trimmed face, including on a cylinder's axial extension.
+The guide is a virtual handle and does not change its owning geometry independently.
+Unsupported tools or handles never fall back to moving the guide's owner.
+
+Exact point coincidence is offered only when the destination lies on the permitted
+trajectory. Off-axis references may instead supply a separately labeled Height or
+Radius destination on that trajectory. Plane references use its intersection with
+the permitted trajectory, rather than a sideways projection. Parallel planes,
+collapsed radii and otherwise unsolvable relationships are omitted from both
+markers and hit testing. Unreachable saved guides disappear during the gesture.
+References remain frozen at their accepted positions. Kernel rejection or a
+clamped parameter removes the destination; lock feedback appears only after a
+successful preview. Height and radius alignment reveal a local planar or curved
+grid connecting the reference to the solved destination.
+Virtual destinations remain reachable through the selected sketch's automatic
+cutaway; explicit section cuts still filter them, and body occlusion still dims them.
+
+The gesture borrows the existing tool interaction and previews its geometry.
+Release retains the temporary Offset/Extrude value; ordinary tool completion
+accepts one document Undo step. Escape, Shift-release or release without a target
+restores the parameter from before the gesture, or cancels a newly started tool.
+Symmetric planar extrusion solves total cap-to-cap depth. Guide solving currently
+excludes nonzero draft/twist and blend/chamfer resizing. Persistent relationships
+are not created.
 
 ## Definitions and geometry
 

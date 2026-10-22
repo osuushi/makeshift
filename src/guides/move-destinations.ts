@@ -1,5 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { PlaneId, Vector } from "../sketch/planes.js";
+import { guideCylinderPatches } from "./cylinder-patches.js";
 import { near } from "./geometry.js";
 import type { GuideMoveCandidate } from "./move-target.js";
 import { guideFacePlanePatches, guidePlanePatches } from "./plane-patches.js";
@@ -29,7 +30,7 @@ export class GuideMoveDestinations {
     );
     for (const candidate of unique) {
       const group = candidates.filter((p) => near(p.point, candidate.point));
-      const projection = group.some((p) => p.plane);
+      const projection = group.some((p) => p.plane || p.alignment);
       const visible = group.some((p) => p.visible);
       const point = this.editor.world.project(candidate.point);
       if (projection) {
@@ -66,12 +67,15 @@ export class GuideMoveDestinations {
     );
     for (const patch of this.root.querySelectorAll<SVGGElement>(".guide-plane-patch[data-plane]"))
       patch.classList.toggle("highlighted", planes.has(patch.dataset.plane as PlaneId));
-    const faces = locked ? parents.filter((p) => p.plane && p.reference.kind === "face") : [];
-    const key = JSON.stringify(faces.map((p) => [p.reference, p.point]));
+    const faces = locked
+      ? parents.filter((p) => p.alignment || (p.plane && p.reference.kind === "face"))
+      : [];
+    const key = JSON.stringify(faces.map((p) => [p.reference, p.point, p.alignment]));
     if (key === this.lockedKey) return;
     this.lockedKey = key;
     this.facePatches?.remove();
     this.facePatches = guideFacePlanePatches(this.editor, faces);
+    this.facePatches.append(guideCylinderPatches(this.editor, faces));
     this.root.prepend(this.facePatches);
   }
   hide(): void {

@@ -1,51 +1,51 @@
-import type { ScaleSource } from "../model/scale.js";
-import { boxMoveRequest, previewBoxMove } from "../model/transform-box-preview.js";
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import { onModelKeydown } from "../sketch/model-keys.js";
-import { type PlaneFrame, type Vector, worldPoint } from "../sketch/planes.js";
 import { pointerDragThreshold } from "../sketch/pointer-intent.js";
+import { GuideDragEvents } from "./drag-events.js";
+import { GuideDragFeedback } from "./drag-feedback.js";
 import { near } from "./geometry.js";
-import { GuideHighlight } from "./highlight.js";
 import type { GuideMarker } from "./markers.js";
+import { acceptGuideMove } from "./move-accept.js";
 import { GuideMoveChooser } from "./move-chooser.js";
-import { GuideMoveDestinations } from "./move-destinations.js";
-import { guideMoveSource } from "./move-source.js";
+import { guideDragSource } from "./move-source.js";
 import {
   type GuideMoveCandidate,
   type GuideMoveTarget,
   guideMoveProbe,
   guideMoveTargets,
 } from "./move-target.js";
-import { GuideMoveView } from "./move-view.js";
+import type { GuideToolInput, GuideToolSession } from "./tool-path.js";
+import { guideToolTargets } from "./tool-targets.js";
 
-type Press = { event: PointerEvent; source: ScaleSource; origin: Vector; sketchPlane?: PlaneFrame };
+type Press = NonNullable<ReturnType<typeof guideDragSource>> & {
+  event: PointerEvent;
+};
 type Drag = Press & {
   lease: InteractionLease;
   targets: GuideMoveCandidate[];
   target: GuideMoveTarget | null;
   duplicate: boolean;
+  session?: GuideToolSession;
+  requested?: number | null;
+  validated?: number;
+  released?: boolean;
 };
 
-/** A saved guide defines a displacement, applied once only after acquiring a snap. */
+/** A guide supplies a solvable destination to Move or the active distance tool. */
 export class GuideMove {
-  private abort = new AbortController();
+  private events: GuideDragEvents;
   private press: Press | null = null;
   private drag: Drag | null = null;
   private running: Promise<void> | null = null;
-  private consumeClick = false;
-  private view: GuideMoveView;
+  private presentation: GuideDragFeedback;
   private chooser: GuideMoveChooser;
-  private destinations: GuideMoveDestinations;
-  private highlight: GuideHighlight;
   private pointer: PointerEvent | null = null;
   constructor(
     private editor: SketchEditor,
     host: HTMLElement,
+    private toolInput: GuideToolInput = () => null,
   ) {
-    this.view = new GuideMoveView(editor, host);
-    this.destinations = new GuideMoveDestinations(editor, host);
-    this.highlight = new GuideHighlight(editor);
+    this.presentation = new GuideDragFeedback(editor, host);
     this.chooser = new GuideMoveChooser(
       editor,
       (target) => {
@@ -57,58 +57,36 @@ export class GuideMove {
         if (this.pointer) this.move(this.pointer);
       },
     );
-    const options = { capture: true, signal: this.abort.signal };
-    window.addEventListener("pointermove", this.move, options);
-    window.addEventListener("pointerup", this.release, options);
-    window.addEventListener("pointercancel", () => void this.cancel(), options);
-    window.addEventListener("blur", () => void this.cancel(), { signal: this.abort.signal });
-    window.addEventListener(
-      "pointerdown",
-      () => {
-        this.consumeClick = false;
-      },
-      options,
+    this.events = new GuideDragEvents({
+      move: this.move,
+      release: this.release,
+      cancel: () => void this.cancel(),
+      active: () => !!this.press || !!this.drag,
+    });
+  }
+  get toolActive(): boolean {
+    return ["extrude", "face-offset"].includes(this.editor.interactions.current?.kind ?? "");
+  }
+  get interactive(): boolean {
+    const lease = this.editor.interactions.current;
+    return (
+      !lease || (this.toolActive && !lease.captured && lease.phase === "editing" && !this.drag)
     );
-    window.addEventListener(
-      "click",
-      (event) => {
-        if (!this.consumeClick) return;
-        this.consumeClick = false;
-        event.preventDefault();
-        event.stopImmediatePropagation();
-      },
-      options,
+  }
+  includes(point: Parameters<GuideToolInput>[0]): boolean {
+    const drag = this.drag;
+    return (
+      !drag?.session ||
+      near(point, drag.origin) ||
+      drag.targets.some((target) => target.guide && near(target.point, point))
     );
-    onModelKeydown((event) => {
-      if (event.key === "Escape" && (this.press || this.drag)) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        void this.cancel();
-      }
-    }, options);
   }
   start(event: PointerEvent, item: GuideMarker): void {
     const e = this.editor;
-    if (
-      event.button ||
-      !item.guide ||
-      e.blocked ||
-      e.interactions.current ||
-      this.press ||
-      this.drag
-    )
+    if (event.button || !item.guide || e.blocked || !this.interactive || this.press || this.drag)
       return;
-    const source = guideMoveSource(e, item.anchor);
-    if (!source) return;
-    const sketchPlane = source.kind === "curves" ? e.sketch?.plane : undefined;
-    let origin = item.point;
-    if (sketchPlane) {
-      const screen = e.world.project(origin),
-        local = e.world.pointAt(sketchPlane, screen.x, screen.y);
-      if (!local) return;
-      origin = worldPoint(sketchPlane, local);
-    }
-    this.press = { event, source, origin, sketchPlane };
+    const source = guideDragSource(e, item.anchor, item.point, this.toolInput);
+    if (source) this.press = { event, ...source };
   }
   private move = (event: PointerEvent): void => {
     const press = this.press;
@@ -118,28 +96,35 @@ export class GuideMove {
         pointerDragThreshold(press.event)
       )
         return;
-      const lease = this.editor.interactions.acquire("guide-move", () => this.cancel());
+      const session = press.plan?.begin();
+      const lease = press.plan
+        ? session?.lease
+        : this.editor.interactions.acquire("guide-move", () => this.cancel());
       this.press = null;
       if (!lease) return;
       this.drag = {
         ...press,
         lease,
-        targets: guideMoveTargets(
-          this.editor,
-          this.editor.store.data,
-          press.origin,
-          press.sketchPlane,
-        ),
+        session: session ?? undefined,
+        targets: press.plan
+          ? guideToolTargets(this.editor, press.plan.path)
+          : guideMoveTargets(this.editor, this.editor.store.data, press.origin, press.sketchPlane),
         target: null,
         duplicate: false,
       };
       lease.capture(this.editor.world.canvas, event.pointerId);
-      this.consumeClick = true;
+      this.events.consume();
       this.editor.refresh();
-      this.destinations.show(this.drag.origin, this.drag.targets);
+      this.presentation.destinations.show(this.drag.origin, this.drag.targets);
     }
     const drag = this.drag;
-    if (!drag || drag.event.pointerId !== event.pointerId || drag.lease.phase !== "editing") return;
+    if (
+      !drag ||
+      drag.released ||
+      drag.event.pointerId !== event.pointerId ||
+      drag.lease.phase !== "editing"
+    )
+      return;
     event.preventDefault();
     event.stopImmediatePropagation();
     this.pointer = event;
@@ -159,10 +144,10 @@ export class GuideMove {
     }
     drag.duplicate =
       event.altKey &&
-      (drag.source.kind === "sketches" ||
-        (drag.source.kind === "solids" && !drag.source.faces.length && !drag.source.edges.length));
+      (drag.source?.kind === "sketches" ||
+        (drag.source?.kind === "solids" && !drag.source.faces.length && !drag.source.edges.length));
     this.feedback(drag.target, event.shiftKey ? [] : potential);
-    this.destinations.suppress(event.shiftKey);
+    this.presentation.destinations.suppress(event.shiftKey);
   };
   private cursor() {
     return this.pointer ? { x: this.pointer.clientX, y: this.pointer.clientY } : undefined;
@@ -173,29 +158,37 @@ export class GuideMove {
   ): void {
     const drag = this.drag;
     if (!drag) return;
-    const points = target ? [target] : potential;
-    const parents = drag.targets.filter((p) => points.some((q) => near(p.point, q.point)));
-    const anchors = parents.flatMap((p) =>
-      p.anchor
-        ? [p.anchor]
-        : p.reference.kind === "face"
-          ? [
-              {
-                kind: "body-faces" as const,
-                body: p.reference.body,
-                faces: [p.reference.face],
-                feature: "area-center" as const,
-              },
-            ]
-          : [],
+    this.previewTool(drag, target);
+    const locked = !drag.session || (target && drag.validated === target.distance);
+    this.presentation.show(
+      drag.origin,
+      drag.targets,
+      locked ? target : null,
+      potential,
+      this.cursor(),
     );
-    const references = parents.flatMap((p) =>
-      p.plane && p.reference.kind === "plane" && !p.reference.world ? [p.reference] : [],
-    );
-    this.highlight.show(anchors, references);
-    this.destinations.highlight(parents, !!target);
-    this.view.show(drag.origin, target, this.cursor());
-    this.editor.world.requestDraw();
+  }
+  private previewTool(drag: Drag, target: GuideMoveTarget | null): void {
+    const distance = target?.distance ?? null;
+    if (!drag.session || drag.requested === distance) return;
+    drag.requested = distance;
+    drag.validated = undefined;
+    drag.session.preview(distance);
+    if (distance === null) return;
+    void drag.session.settled(distance).then((valid) => {
+      if (this.drag !== drag || drag.requested !== distance) return;
+      if (valid) drag.validated = distance;
+      else {
+        drag.targets = drag.targets.filter(
+          (p) => p.distance === undefined || Math.abs(p.distance - distance) > 1e-7,
+        );
+        drag.target = null;
+        this.chooser.close();
+        this.presentation.destinations.show(drag.origin, drag.targets);
+        this.editor.refresh();
+      }
+      this.feedback(drag.target);
+    });
   }
   private release = (event: PointerEvent): void => {
     if (this.press?.event.pointerId === event.pointerId) this.press = null;
@@ -203,6 +196,12 @@ export class GuideMove {
     if (!drag || drag.event.pointerId !== event.pointerId) return;
     this.move(event);
     this.chooser.close();
+    drag.released = true;
+    if (drag.session) {
+      drag.lease.releaseCapture(false);
+      void this.releaseTool(drag);
+      return;
+    }
     drag.lease.releaseCapture();
     if (!drag.target || drag.target.point.every((v, i) => Math.abs(v - drag.origin[i]) < 1e-8)) {
       void this.cancel();
@@ -213,30 +212,28 @@ export class GuideMove {
       this.editor.refresh();
     }
   };
+  private async releaseTool(drag: Drag): Promise<void> {
+    const session = drag.session;
+    if (!session) return;
+    const distance = drag.target?.distance;
+    const valid = distance !== undefined && (await session.settled(distance));
+    if (this.drag !== drag) return;
+    this.drag = null;
+    if (valid) drag.lease.history?.checkpoint();
+    await session.release(valid);
+    this.end(drag);
+  }
   private async finish(drag: Drag, target: GuideMoveTarget): Promise<void> {
-    const delta = target.point.map((v, i) => v - drag.origin[i]) as Vector;
-    const request = boxMoveRequest(
-      this.editor.store.data,
-      drag.source,
-      drag.origin,
-      delta,
-      drag.duplicate,
-    );
+    if (!drag.source) return;
     try {
-      if (!request) return;
-      if (request.kind === "accept") {
-        const valid = await previewBoxMove(
-          this.editor,
-          drag.source,
-          drag.origin,
-          delta,
-          drag.lease,
-        );
-        if (!valid || drag.lease.phase !== "waiting") return;
-      }
-      if (!drag.lease.close()) return;
-      if (request.kind === "accept") await this.editor.accept();
-      else await this.editor.store.request(request);
+      await acceptGuideMove(
+        this.editor,
+        drag.source,
+        drag.origin,
+        target.point,
+        drag.duplicate,
+        drag.lease,
+      );
     } finally {
       if (drag.lease.phase === "waiting") {
         drag.lease.close();
@@ -249,12 +246,18 @@ export class GuideMove {
   private async cancel(): Promise<void> {
     this.press = null;
     const drag = this.drag;
+    if (drag?.session) {
+      this.drag = null;
+      drag.lease.releaseCapture(false);
+      this.presentation.hide();
+      await drag.session.release(false);
+      this.end(drag);
+      return;
+    }
     if (!drag?.lease.close()) return;
     this.drag = null;
     this.chooser.close();
-    this.view.hide();
-    this.destinations.hide();
-    this.highlight.show(null);
+    this.presentation.hide();
     drag.lease.show(null);
     if (this.running) await this.editor.store.cancelPreview();
     await this.running;
@@ -264,18 +267,14 @@ export class GuideMove {
     this.drag = null;
     this.pointer = null;
     this.chooser.close();
-    this.view.hide();
-    this.destinations.hide();
-    this.highlight.show(null);
-    drag.lease.release();
+    this.presentation.hide();
+    if (!drag.session) drag.lease.release();
     this.editor.refresh();
   }
   dispose(): void {
     void this.cancel();
-    this.abort.abort();
-    this.view.dispose();
-    this.destinations.dispose();
-    this.highlight.dispose();
+    this.events.dispose();
+    this.presentation.dispose();
     this.chooser.dispose();
   }
 }

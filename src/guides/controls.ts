@@ -10,6 +10,7 @@ import { visibleGuides } from "./snapping.js";
 import { type GuideAnchor, type GuidePoint, guideKey, guideMeaning, guideOwner } from "./types.js";
 import { guidesVisible, toggleGuides } from "./view-state.js";
 import "./style.css";
+import type { GuideToolInput } from "./tool-path.js";
 
 export class GuideControls {
   get selected(): Set<string> {
@@ -26,9 +27,10 @@ export class GuideControls {
   constructor(
     private editor: SketchEditor,
     host: HTMLElement,
+    toolInput: GuideToolInput = () => null,
   ) {
     this.highlight = new GuideHighlight(editor);
-    this.movement = new GuideMove(editor, host);
+    this.movement = new GuideMove(editor, host, toolInput);
     this.markers = new GuideMarkers(
       editor,
       host,
@@ -162,12 +164,14 @@ export class GuideControls {
   private update = (): void => {
     const e = this.editor;
     if (this.selected.size && this.selectedWith !== this.selectionKey()) this.selected.clear();
-    const saved = visibleGuides(e).map(({ guide, point }) => ({
-      guide,
-      point,
-      anchor: guide.anchor,
-      label: guideMeaning(guide.anchor),
-    }));
+    const saved = visibleGuides(e, this.movement.toolActive)
+      .filter(({ point }) => this.movement.includes(point))
+      .map(({ guide, point }) => ({
+        guide,
+        point,
+        anchor: guide.anchor,
+        label: guideMeaning(guide.anchor),
+      }));
     const keys = new Set(saved.map((p) => guideKey(p.anchor)));
     let candidates: GuideMarker[] = [];
     if (guidesVisible(e) && !e.interactions.current && (!e.world.active || e.tool === "select"))
@@ -178,7 +182,7 @@ export class GuideControls {
         e.visibility.visible(guideOwner(p.anchor)) &&
         (p.anchor.kind === "sketch-curve" || e.bodiesVisible),
     );
-    const interactive = !e.interactions.current && (!e.world.active || e.tool === "select");
+    const interactive = this.movement.interactive && (!e.world.active || e.tool === "select");
     this.markers.update([...saved, ...candidates], interactive);
     const selected = e.store.data.guidePoints?.filter((p) => this.selected.has(p.id)) ?? [];
     for (const id of this.selected)

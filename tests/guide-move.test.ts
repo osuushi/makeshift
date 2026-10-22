@@ -45,7 +45,7 @@ test("direct guide drag uses its owner; Move keeps the selected face or curve", 
   const editor = {
     world: { active: false },
     modeling: {
-      tool: "select",
+      tool: null,
       targets: [{ kind: "face", body: "other", face: "cap" }],
       resolve: () => ({
         available: true,
@@ -77,7 +77,7 @@ test("direct guide drag uses its owner; Move keeps the selected face or curve", 
     curve: "line",
     feature: "start" as const,
   };
-  Object.assign(editor.modeling, { tool: "select" });
+  Object.assign(editor.modeling, { tool: null });
   assert.deepEqual(guideMoveSource(editor, sketchAnchor), { kind: "sketches", ids: ["sketch"] });
 });
 

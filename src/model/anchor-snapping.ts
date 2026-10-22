@@ -60,8 +60,9 @@ export function visibleAnchorPoint(
   editor: SketchEditor,
   point: Vector,
   bodies: readonly BodyGeometry[] = editor.display.bodies ?? [],
+  clipTarget = true,
 ): boolean {
-  if (!editor.world.visiblePoint(new THREE.Vector3(...point))) return false;
+  if (clipTarget && !editor.world.visiblePoint(new THREE.Vector3(...point))) return false;
   if (!editor.bodiesVisible) return true;
   const camera = editor.world.camera;
   const p = new THREE.Vector3(...point),

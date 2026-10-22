@@ -192,7 +192,7 @@
 .guide-plane-patch.highlighted {
   color: #8b5cf6;
 }
-.guide-move-destinations .guide-plane-patch .guide-grid-reveal {
+.guide-move-destinations .guide-grid-reveal {
   stroke-dasharray: 1;
   animation: guide-grid-reveal 220ms ease-out both;
 }
@@ -205,7 +205,7 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .guide-move-destinations .guide-plane-patch .guide-grid-reveal {
+  .guide-move-destinations .guide-grid-reveal {
     animation: none;
   }
 }

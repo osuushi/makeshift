@@ -1,8 +1,11 @@
+import { faceGuidePath, type GuideToolPlan } from "../guides/tool-path.js";
+import { guideToolSession } from "../guides/tool-session.js";
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import { onModelKeydown } from "../sketch/model-keys.js";
+import type { Vector } from "../sketch/planes.js";
 import { AxialDrag } from "./axial-drag.js";
 import type { BodyFaceOffset } from "./body.js";
+import { faceOffsetInputs } from "./face-offset-inputs.js";
 import {
   expandFaceTargets,
   type FaceFinish,
@@ -44,7 +47,6 @@ export class FaceOffsetControls {
       () => void this.finish(),
       () => void this.cancel(),
     );
-    const options = { signal: this.abort.signal };
     this.drag = new AxialDrag(editor, this.widget.handle, this.abort.signal, {
       begin: () => this.begin(),
       lease: () => this.lease,
@@ -57,45 +59,14 @@ export class FaceOffsetControls {
       },
       modifySelection: true,
     });
-    this.widget.handle.addEventListener(
-      "click",
-      (event) => {
-        if (event.detail === 0 && this.begin()) this.focus();
-      },
-      options,
-    );
-    this.widget.input.addEventListener("focus", () => this.begin(), options);
-    this.widget.input.addEventListener(
-      "input",
-      () => {
-        const value = this.widget.input.value.trim() ? Number(this.widget.input.value) : NaN;
-        this.queue(this.quantity.distance(value));
-      },
-      options,
-    );
-    this.widget.quantity.addEventListener("keydown", (event) => event.stopPropagation(), options);
-    this.widget.quantity.addEventListener(
-      "change",
-      () => {
-        const mode = this.widget.quantity.value;
-        if (!this.begin()) return;
-        this.quantity.setMode(mode);
-        this.widget.input.blur();
-        editor.refresh();
-      },
-      options,
-    );
-    onModelKeydown(
-      (event) => {
-        if (event.target === this.widget.quantity) return;
-        if (!this.lease || !["Enter", "Escape"].includes(event.key)) return;
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        if (event.key === "Escape") void this.cancel();
-        else void this.finish();
-      },
-      { ...options, capture: true },
-    );
+    faceOffsetInputs(editor, this.widget, this.quantity, this.abort.signal, {
+      begin: () => this.begin(),
+      lease: () => this.lease,
+      focus: () => this.focus(),
+      queue: (value) => this.queue(value),
+      finish: () => void this.finish(),
+      cancel: () => void this.cancel(),
+    });
     editor.world.changed.add(this.update);
     this.update();
   }
@@ -107,6 +78,29 @@ export class FaceOffsetControls {
     await this.previews.settle();
     if (!this.valid) throw new Error("Cannot regenerate the accepted face offset");
     this.focus();
+  }
+  guide(point: Vector): GuideToolPlan | null {
+    if (this.editor.world.active || this.editor.modeling.tool !== "offset") return null;
+    const selected = offsetTargets(this.editor);
+    const path = selected?.faces.map((face) => faceGuidePath(point, face)).find((p) => p);
+    if (!path || !selected || sharedBlend(selected.faces)) return null;
+    return {
+      path,
+      begin: () => {
+        const existing = !!this.lease;
+        if (!this.begin() || !this.lease) return null;
+        return guideToolSession({
+          lease: this.lease,
+          initial: this.distance,
+          existing,
+          queue: (distance) => this.queue(distance),
+          settle: () => this.previews.settle(),
+          valid: () => this.valid && !this.invalid,
+          distance: () => this.distance,
+          cancel: () => this.cancel(),
+        });
+      },
+    };
   }
   private begin(restored?: BodyFaceOffset): boolean {
     if (this.lease) return this.lease.phase === "editing";
@@ -203,7 +197,7 @@ export class FaceOffsetControls {
   private async finish(): Promise<boolean> {
     await this.previews.settle();
     const lease = this.lease;
-    if (this.drag.active || !lease || !this.valid) return false;
+    if (this.drag.active || !lease || lease.captured || !this.valid) return false;
     if (Math.abs(this.distance) < 1e-8) {
       await this.cancel();
       return true;
