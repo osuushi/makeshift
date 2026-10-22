@@ -110,8 +110,10 @@ file operation in another window is never unlocked by canceled Quit.
 
 On macOS, Finder/Open With, Dock file opening and the native Open Recent menu feed
 the same deduplicated Open route. The bundle declares `.makeshift` and legacy
-`.freac` documents. Closing the last document leaves the app available; New/Open
-and Dock activation create a document window. The native Window menu lists document
+`.freac` documents, with a dedicated PEI build-plate document icon. Both the
+document declaration and exported UTI reference the bundled ICNS; the application
+and Dock keep their own icon. Closing the last document leaves the app available;
+New/Open and Dock activation create a document window. The native Window menu lists document
 windows. New windows cascade from the active window and use the remembered default
 size. Launch restores all windows from the last successful Quit/update, with each
 saved file's last saved camera and its window position/size; bounds are clamped to

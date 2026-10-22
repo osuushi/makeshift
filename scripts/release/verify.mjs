@@ -10,6 +10,29 @@ const run = (command, args) => execFileSync(command, args, { encoding: "utf8" })
 const metadata = JSON.parse(await readFile(join(resources, "build.json"), "utf8"));
 const packaged = JSON.parse(await readFile(join(resources, "app/package.json"), "utf8"));
 assert.equal(packaged.version, metadata.version, "Updater version must match the feed");
+const info = JSON.parse(
+  run("plutil", ["-convert", "json", "-o", "-", join(app, "Contents/Info.plist")]),
+);
+const documentType = info.CFBundleDocumentTypes.find((type) =>
+  type.LSItemContentTypes?.includes("com.osuushi.makeshift.document"),
+);
+assert.equal(documentType?.CFBundleTypeRole, "Editor");
+assert.equal(documentType?.LSHandlerRank, "Owner");
+assert.equal(documentType?.CFBundleTypeIconFile, "makeshift-document.icns");
+const exportedType = info.UTExportedTypeDeclarations.find(
+  (type) => type.UTTypeIdentifier === "com.osuushi.makeshift.document",
+);
+assert.deepEqual(exportedType?.UTTypeTagSpecification["public.filename-extension"], [
+  "makeshift",
+  "freac",
+]);
+assert.equal(exportedType?.UTTypeIconFile, documentType.CFBundleTypeIconFile);
+assert.notEqual(info.CFBundleIconFile, documentType.CFBundleTypeIconFile);
+assert.deepEqual(
+  await readFile(join(resources, documentType.CFBundleTypeIconFile)),
+  await readFile("packaging/icons/makeshift-document.icns"),
+  "The document association must reference the approved bundled icon",
+);
 const updateConfig = await readFile(join(resources, "updates.json"), "utf8").catch(() => null);
 assert.equal(updateConfig !== null, process.env.MAKESHIFT_SIGN === "1");
 if (updateConfig)
@@ -87,5 +110,5 @@ if (process.env.MAKESHIFT_SIGN === "1") {
   run("spctl", ["--assess", "--type", "execute", "--verbose=2", app]);
 }
 console.log(
-  `Verified ${binaries} arm64 binaries, dependency paths, deployment targets and offline licenses`,
+  `Verified document association/icon, ${binaries} arm64 binaries, dependency paths, deployment targets and offline licenses`,
 );

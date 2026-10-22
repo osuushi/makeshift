@@ -25,6 +25,7 @@ export default {
         {
           CFBundleTypeName: "Makeshift Document",
           CFBundleTypeRole: "Editor",
+          CFBundleTypeIconFile: "makeshift-document.icns",
           LSHandlerRank: "Owner",
           LSItemContentTypes: ["com.osuushi.makeshift.document"],
         },
@@ -33,6 +34,7 @@ export default {
         {
           UTTypeIdentifier: "com.osuushi.makeshift.document",
           UTTypeDescription: "Makeshift Document",
+          UTTypeIconFile: "makeshift-document.icns",
           UTTypeConformsTo: ["public.data"],
           UTTypeTagSpecification: { "public.filename-extension": ["makeshift", "freac"] },
         },
@@ -50,6 +52,7 @@ export default {
       join(release, "native"),
       join(release, "licenses"),
       join(release, "build.json"),
+      resolve("packaging/icons/makeshift-document.icns"),
       ...(signed ? [resolve("packaging/updates.json")] : []),
     ],
     ignore: (path) =>

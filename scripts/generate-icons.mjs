@@ -6,20 +6,24 @@ import { join } from "node:path";
 // macOS authoring utility; generated assets are committed for all build hosts.
 const source = "assets/branding/makeshift-icon.png";
 const temporary = await mkdtemp(join(tmpdir(), "makeshift-icons-"));
-const iconset = join(temporary, "makeshift.iconset");
-const resize = (size, output) =>
-  execFileSync("sips", ["-z", String(size), String(size), source, "--out", output], {
+const resize = (size, output, input = source) =>
+  execFileSync("sips", ["-z", String(size), String(size), input, "--out", output], {
     stdio: "ignore",
   });
-try {
+async function icns(name, input) {
+  const iconset = join(temporary, `${name}.iconset`);
   await mkdir(iconset);
+  for (const size of [16, 32, 128, 256, 512]) {
+    resize(size, join(iconset, `icon_${size}x${size}.png`), input);
+    resize(size * 2, join(iconset, `icon_${size}x${size}@2x.png`), input);
+  }
+  execFileSync("iconutil", ["-c", "icns", iconset, "-o", `packaging/icons/${name}.icns`]);
+}
+try {
   await mkdir("packaging/icons", { recursive: true });
   await mkdir("assets/public", { recursive: true });
-  for (const size of [16, 32, 128, 256, 512]) {
-    resize(size, join(iconset, `icon_${size}x${size}.png`));
-    resize(size * 2, join(iconset, `icon_${size}x${size}@2x.png`));
-  }
-  execFileSync("iconutil", ["-c", "icns", iconset, "-o", "packaging/icons/makeshift.icns"]);
+  await icns("makeshift", source);
+  await icns("makeshift-document", "assets/branding/document-icon/makeshift-document.png");
   resize(512, "assets/public/makeshift.png");
   resize(180, "assets/public/apple-touch-icon.png");
   // ICO directory with PNG payloads, supported by modern Windows/Electron.

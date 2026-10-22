@@ -61,6 +61,13 @@ The Finder agent test launches the packaged app with a minimal PATH and an isola
 shell configuration. It checks agent discovery, child-tool PATH inheritance and
 explicit PATH precedence. The release workflow runs it before and after signing.
 
+The bundle registers `.makeshift` and legacy `.freac` documents as editable by
+Makeshift and supplies the dedicated PEI document icon. Package verification
+checks both document/UTI icon references and the actual resource bytes. To review
+in Finder, install the build in Applications, then open a saved `.makeshift` file
+and confirm its icon and document window. Finder may retain a cached icon from an
+older installation; use Get Info → Open with → Makeshift when choosing the handler.
+
 ## GitHub signing setup
 
 Create a GitHub environment named `macos-release` with these secrets:
