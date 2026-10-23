@@ -112,6 +112,7 @@ export async function geometryScaleRoute(page, scale, name) {
   await page.locator(".body-transform-value").fill("4");
   await page.keyboard.press("Enter");
   close((await inspect(page)).document.bodies[0].center[0], 20);
+  await page.getByRole("button", { name: "Scale layer", exact: true }).click();
   await page.locator(".transform-box-handle:visible").last().click();
   const card = await page.locator(".scale-card:visible").boundingBox();
   const viewport = await page.getByLabel("Modeling viewport", { exact: true }).boundingBox();
