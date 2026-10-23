@@ -37,7 +37,8 @@ try {
       await chooseTool(page, "Sketch on XY", "sketch-xy");
       await page.keyboard.press("c");
       await drag(page, [0, 0], [10, 0]);
-      const center = await at(page, 0, 0);
+      // Select the profile interior clear of its circle-center guide marker.
+      const center = await at(page, 5, 0);
       await chooseTool(page, "return to modeling", "modeling");
       await page.mouse.click(center.x, center.y);
       await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
@@ -105,7 +106,7 @@ try {
       await chooseTool(page, "Sketch on XY", "sketch-xy");
       await page.keyboard.press("c");
       await drag(page, [0, 0], [10, 0]);
-      const bevelCenter = await at(page, 0, 0);
+      const bevelCenter = await at(page, 5, 0);
       await chooseTool(page, "return to modeling", "modeling");
       await page.mouse.click(bevelCenter.x, bevelCenter.y);
       await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
