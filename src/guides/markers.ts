@@ -1,6 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { GuideCandidate } from "./candidates.js";
 import { GuideMeaningChoices } from "./meaning-choices.js";
+import { guideVisibleThroughSolids } from "./solid-visibility.js";
 import { type GuidePoint, guideKey, guideLabel } from "./types.js";
 import { GuideWidgetClearance, guideOverlapsWidget } from "./widget-clearance.js";
 
@@ -92,7 +93,9 @@ export class GuideMarkers {
       const point = this.editor.world.project(button.items[0].point);
       button.element.style.left = `${point.x}px`;
       button.element.style.top = `${point.y}px`;
-      button.element.hidden = guideOverlapsWidget(point, bounds);
+      button.element.hidden =
+        guideOverlapsWidget(point, bounds) ||
+        !guideVisibleThroughSolids(this.editor, button.items[0].point);
     }
   }
   private animate = (now: number): void => {

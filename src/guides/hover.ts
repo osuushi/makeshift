@@ -5,6 +5,7 @@ import { hoveredCandidates, selectedCandidates } from "./discovery-sources.js";
 import { near } from "./geometry.js";
 import { parentClearance } from "./parent-clearance.js";
 import { visibleGuides } from "./snapping.js";
+import { guideVisibleThroughSolids } from "./solid-visibility.js";
 import { guideKey, guideOwner } from "./types.js";
 
 /** Coincident definitions share a marker; distinct crowded points cull both sides. */
@@ -83,10 +84,12 @@ export function hoverGuides(editor: SketchEditor, pointer: Point | null): GuideC
     return keys.has(guideKey(candidate.anchor));
   });
   if (!pointer) return [];
-  const projected = reachable.map((candidate) => ({
-    candidate,
-    screen: editor.world.project(candidate.point),
-  }));
+  const projected = reachable
+    .filter((candidate) => guideVisibleThroughSolids(editor, candidate.point))
+    .map((candidate) => ({
+      candidate,
+      screen: editor.world.project(candidate.point),
+    }));
   projected.sort(
     (a, b) =>
       Math.hypot(a.screen.x - pointer.x, a.screen.y - pointer.y) -

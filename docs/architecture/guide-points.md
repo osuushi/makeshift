@@ -44,6 +44,10 @@ fading in or out over 100 ms, with a minimum 100 ms on-screen lifetime before
 fading out. Returning targets reverse their fade without recreating the marker.
 Departing markers are noninteractive; panel/widget occlusion remains immediate.
 Transitions may briefly show outgoing markers alongside the three incoming targets.
+Saved, candidate and destination markers are hidden immediately behind opaque visible
+solid surfaces or section caps. The visibility probe follows the current display geometry,
+per-screen clipping and body transparency; translucent bodies and sketch X-ray foreground
+passes do not occlude markers. Occluded candidates are excluded before the three-marker cap.
 
 Definitions at the same 3D location share one marker and the existing definition
 chooser, so a circular rim center and its cap centers do not suppress one another.
