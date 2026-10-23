@@ -6,15 +6,13 @@ import { sketchGridFields } from "../preferences/sketch-grid-fields.js";
 import { toolCatalog } from "../tools/catalog.js";
 import type { SketchEditor } from "./editor.js";
 import { defaultSketchGrid } from "./grid-settings.js";
+import { viewOptions } from "./view-options.js";
 import "./grid-controls.css";
 
-/** Grid is a slide-out setting, never a drawing tool. */
+/** Document grid and device display settings share the viewport popover. */
 export function installGridSnapControl(editor: SketchEditor): () => void {
-  const panel = document.createElement("section");
-  panel.className = "sketch-grid-panel";
-  panel.id = "sketch-grid-panel";
-  panel.hidden = true;
-  panel.setAttribute("aria-label", "Sketch grid controls");
+  const view = viewOptions(editor);
+  const { panel, button } = view;
   const read = () => editor.store.data.sketchGrid ?? { ...defaultSketchGrid };
   const fields = sketchGridFields(read, (grid) => {
     feedback.textContent = "";
@@ -35,64 +33,40 @@ export function installGridSnapControl(editor: SketchEditor): () => void {
   const close = document.createElement("button");
   close.type = "button";
   close.textContent = "Done";
-  const hide = () => {
-    panel.hidden = true;
-    update();
-    document.querySelector<HTMLButtonElement>('.toolbox [data-tool="sketch-grid"]')?.focus();
+  close.onclick = view.hide;
+  const note = document.createElement("p");
+  note.textContent = "Sketch grid spacing, colors and snapping apply to this document's sketches.";
+  panel.append(note, fields.root, save, close, feedback);
+  button.onclick = (event) => {
+    event.preventDefault();
+    void toolCatalog(editor).invoke("sketch-grid");
   };
-  close.onclick = hide;
-  panel.append(fields.root, save, close, feedback);
-  editor.world.host.append(panel);
   const disposeTool = toolCatalog(editor).register({
     id: "sketch-grid",
-    label: "Grid",
+    label: "View options",
     category: "View",
     finishEdit: false,
-    aliases: ["grid settings", "grid snap", "snap to grid"],
-    reason: () =>
-      !editor.world.active
-        ? "Enter sketch mode"
-        : editor.interactions.current
-          ? "Finish the current gesture first"
-          : null,
+    aliases: ["grid", "grid settings", "grid snap", "snap to grid", "view settings"],
+    reason: () => (editor.interactions.current ? "Finish the current gesture first" : null),
     run: () => {
-      panel.hidden = !panel.hidden;
       feedback.textContent = "";
       update();
-      if (!panel.hidden) panel.querySelector<HTMLInputElement>("input")?.focus();
+      view.toggle();
     },
   });
   const update = () => {
-    if (!editor.world.active) panel.hidden = true;
+    button.disabled = editor.blocked || !!editor.interactions.current;
     fields.root.disabled = editor.blocked || !!editor.interactions.current;
-    save.disabled = !!editor.interactions.current || editor.store.scriptRunning;
+    save.disabled = editor.blocked || !!editor.interactions.current;
     fields.update();
-    const button = document.querySelector<HTMLButtonElement>('.toolbox [data-tool="sketch-grid"]');
-    button?.setAttribute("aria-expanded", String(!panel.hidden));
-    button?.setAttribute("aria-controls", panel.id);
-    if (!panel.hidden && button) {
-      const bounds = button.closest(".toolbox")?.getBoundingClientRect();
-      if (!bounds) return;
-      panel.style.left = `${Math.max(8, Math.min(bounds.right + 8, window.innerWidth - 288))}px`;
-      panel.style.top = `${Math.max(8, Math.min(bounds.top, window.innerHeight - panel.offsetHeight - 8))}px`;
-    }
   };
-  const onEscape = (event: KeyboardEvent) => {
-    if (!panel.hidden && event.key === "Escape") {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      hide();
-    }
-  };
-  window.addEventListener("keydown", onEscape, true);
   const disposePreferences = onSketchGridPreferencesChange(() => editor.world.requestDraw());
   editor.world.changed.add(update);
   update();
   return () => {
     disposeTool();
     disposePreferences();
-    window.removeEventListener("keydown", onEscape, true);
     editor.world.changed.delete(update);
-    panel.remove();
+    view.dispose();
   };
 }

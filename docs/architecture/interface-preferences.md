@@ -135,7 +135,10 @@ requires no opt-in.
 
 ## Sketch grid controls
 
-The sketch toolbox Grid icon opens a slide-out without selecting a drawing tool.
+View options beneath the orientation cube opens a nonmodal popover in both modeling
+and sketch views, without selecting a drawing tool. Find also opens it through Grid
+or View options. Escape, an outside click or Done closes it. The popover shares the
+viewport display and plane grid preferences with Settings.
 Minor and major spacings (mm), their independent colors, and Snap to grid belong
 to the document. Set default copies those values to device defaults; Settings
 also edits those defaults. Built-in defaults are 0.5 mm minor, 10 mm major,

@@ -58,3 +58,35 @@
     animation: none;
   }
 }
+
+.view-options-trigger {
+  position: absolute;
+  top: 168px;
+  right: 26px;
+  width: 128px;
+  padding: 7px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.view-options-panel {
+  inset: auto;
+  margin: 0;
+  width: min(360px, calc(100vw - 16px));
+  color: #293547;
+}
+.view-options-panel h2 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+.view-options-panel label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.view-options-panel h3 {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+}
