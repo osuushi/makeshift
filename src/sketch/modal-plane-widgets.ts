@@ -1,4 +1,5 @@
 import { canonicalPlanes } from "../preferences/canonical-planes.js";
+import { createModalPlaneGrid, updateModalPlaneGrid } from "./modal-plane-grid.js";
 import { type PlaneId, planeIds, planes, worldPoint } from "./planes.js";
 import type { World } from "./world.js";
 
@@ -21,7 +22,12 @@ export function installModalPlaneWidgets(world: World, overlay: HTMLElement): ()
     pointerEvents: "none",
     zIndex: "30",
   });
-  const widgets = planeIds.map((id) => ({ id, polygon: createWidget(world, id, options) }));
+  const widgets = planeIds.map((id) => ({
+    id,
+    polygon: createWidget(world, id, options),
+    grid: createModalPlaneGrid(),
+  }));
+  svg.append(...widgets.map(({ grid }) => grid));
   svg.append(...widgets.map(({ polygon }) => polygon));
   overlay.append(svg);
 
@@ -31,7 +37,7 @@ export function installModalPlaneWidgets(world: World, overlay: HTMLElement): ()
     if (!visible) return;
     const rect = world.canvas.getBoundingClientRect();
     const scale = (world.camera.top - world.camera.bottom) / world.camera.zoom / rect.height;
-    for (const { id, polygon } of widgets) {
+    for (const { id, polygon, grid } of widgets) {
       const accepted = !world.planePickerAccept || world.planePickerAccept(planes[id]);
       const enabled = accepted && world.canNavigate();
       polygon.setAttribute("aria-disabled", String(!enabled));
@@ -42,6 +48,7 @@ export function installModalPlaneWidgets(world: World, overlay: HTMLElement): ()
       polygon.setAttribute("stroke", color);
       if (!polygon.hasAttribute("fill-opacity")) polygon.setAttribute("fill-opacity", "0.16");
       polygon.setAttribute("points", widgetPoints(world, id, rect, scale));
+      updateModalPlaneGrid(grid, polygon, size, color, accepted);
     }
   };
   world.changed.add(update);
