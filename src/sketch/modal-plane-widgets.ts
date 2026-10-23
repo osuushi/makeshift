@@ -121,11 +121,16 @@ function createWidget(
 /** Keep an origin clearance even when a plane's projected axes oppose each other. */
 function widgetPoints(world: World, id: PlaneId, rect: DOMRect, scale: number): string {
   const origin = world.project([0, 0, 0]);
-  const diagonal = world.project(worldPoint(planes[id], { x: scale, y: scale }));
+  const towardCamera = world.camera.position.clone().sub(world.target);
+  const side = (axis: number[]): number =>
+    axis.reduce((dot, value, i) => dot + value * towardCamera.getComponent(i), 0) < 0 ? -1 : 1;
+  const x = scale * side(planes[id].u);
+  const y = scale * side(planes[id].v);
+  const diagonal = world.project(worldPoint(planes[id], { x, y }));
   let dx = diagonal.x - origin.x;
   let dy = diagonal.y - origin.y;
   if (Math.hypot(dx, dy) < 0.001) {
-    const axis = world.project(worldPoint(planes[id], { x: scale, y: 0 }));
+    const axis = world.project(worldPoint(planes[id], { x, y: 0 }));
     dx = axis.x - origin.x;
     dy = axis.y - origin.y;
   }
