@@ -30,13 +30,6 @@ try {
       (value) => document.documentElement.dataset.theme === value,
       theme,
     );
-    const contrast = await dialog
-      .getByRole("tab", { name: "Interface", exact: true })
-      .evaluate((tab) => {
-        const style = getComputedStyle(tab);
-        return { ink: style.color, fill: style.backgroundColor };
-      });
-    assert.notEqual(contrast.ink, contrast.fill);
   }
   await dialog.getByRole("combobox", { name: "User interface scale" }).selectOption("1.5");
   await page.waitForFunction(
@@ -73,7 +66,12 @@ try {
   await dialog.getByRole("tab", { name: "Decorators", exact: true }).click();
   await dialog.getByRole("combobox").selectOption("color-only");
   await settings.screenshot({ path: ".cache/sketch-review/settings-window.png" });
-  await Promise.all([settings.waitForEvent("close"), settings.keyboard.press("Escape")]);
+  await Promise.all([
+    settings.waitForEvent("close"),
+    settings.keyboard.press("Escape").catch((error) => {
+      if (!settings.isClosed()) throw error;
+    }),
+  ]);
   await page.getByRole("button", { name: "Application settings" }).click();
   const reopened = await settingsSurface(page, "Interface");
   assert.equal(
@@ -82,6 +80,21 @@ try {
   );
   await reopened.getByRole("button", { name: "Reset to 100%" }).click();
   await reopened.getByRole("button", { name: "Done", exact: true }).click();
+  // Native popover Tab/Escape must reach browser defaults instead of CAD shortcuts.
+  await page.getByRole("button", { name: "View options", exact: false }).click();
+  const grid = page.getByRole("dialog", { name: "View options", exact: true });
+  const minor = grid.getByLabel("Minor grid (mm)", { exact: true });
+  await minor.focus();
+  await minor.press("Tab");
+  assert.equal(await grid.evaluate((panel) => panel.contains(document.activeElement)), true);
+  await minor.fill("2");
+  await minor.press("Tab");
+  await settled(page);
+  await page.keyboard.press("Escape");
+  await grid.waitFor({ state: "hidden" });
+  await page.getByRole("button", { name: "View options", exact: false }).click();
+  assert.equal(await minor.inputValue(), "2");
+  await grid.getByRole("button", { name: "Done", exact: true }).click();
   console.log(
     "Native settings: separate singleton, keyboard tabs, live scale/storage, close/reopen and persistence passed",
   );

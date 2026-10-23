@@ -8,7 +8,7 @@ import { chooseTool } from "./ui-tools.mjs";
 // Real pointer routes cover flyout crossings, click suppression after moves and shared settings.
 await withUiRuntimes(
   async (page, name) => {
-    await page.evaluate(() => localStorage.removeItem("makeshift.toolbox.v5"));
+    await page.evaluate(() => localStorage.removeItem("makeshift.toolbox.v7"));
     await page.waitForLoadState("networkidle");
     await page.reload();
     await page.waitForFunction(() => !!window.makeshiftInspect);
@@ -76,7 +76,7 @@ async function defaultRows(page, root) {
   assert.deepEqual(await stored(page), unchanged, "Select cannot be grouped");
   assert.deepEqual(await root.locator(".toolbox-item").allTextContents(), [
     "Select",
-    "Transform",
+    "Move",
     "Line",
     "Cube",
     "Extrude",
@@ -85,9 +85,16 @@ async function defaultRows(page, root) {
     "Other Tools",
   ]);
   assert.equal(
-    await root.locator('[data-tool="transform"]').locator("..").locator(".toolbox-expand").count(),
-    0,
+    await root.locator('[data-tool="move"]').locator("..").locator(".toolbox-expand").count(),
+    1,
   );
+  await root.locator('[data-tool="move"]').hover();
+  assert.deepEqual(await page.locator(".toolbox-flyout .toolbox-item").allTextContents(), [
+    "Move",
+    "Rotate",
+    "Scale",
+    "Transform",
+  ]);
 }
 
 // Escaped UI boundary: executing a buried tool must not replace any top-level button.
@@ -160,9 +167,17 @@ async function settingsRoute(page) {
   const row = (path) => tree.locator(`[data-toolbox-path='${JSON.stringify(path)}']`);
   const before = (await inspect(page)).document;
   await movePointer(settingsPage, row([2, 0]), row([2, 1]));
+  await page.waitForFunction(
+    () =>
+      JSON.parse(localStorage.getItem("makeshift.toolbox.v7"))?.items[2].items[0] === "rectangle",
+  );
   assert.deepEqual((await stored(page)).items[2].items.slice(0, 2), ["rectangle", "line"]);
 
   await movePointer(settingsPage, row([2]), row([3]), 0.95);
+  await page.waitForFunction(
+    () =>
+      JSON.parse(localStorage.getItem("makeshift.toolbox.v7"))?.items[3].items[0] === "rectangle",
+  );
   assert.deepEqual((await stored(page)).items[3].items.slice(0, 2), ["rectangle", "line"]);
   assert.deepEqual((await inspect(page)).document, before);
   await dialog.getByRole("button", { name: "Reset toolbox to defaults", exact: true }).click();
@@ -171,7 +186,7 @@ async function settingsRoute(page) {
   await dialog.getByRole("button", { name: "Done", exact: true }).click();
 }
 async function stored(page) {
-  return page.evaluate(() => JSON.parse(localStorage.getItem("makeshift.toolbox.v5")));
+  return page.evaluate(() => JSON.parse(localStorage.getItem("makeshift.toolbox.v7")));
 }
 async function movePointer(page, from, to, fraction = 0.5) {
   await from.scrollIntoViewIfNeeded();
@@ -179,6 +194,8 @@ async function movePointer(page, from, to, fraction = 0.5) {
   assert.ok(a);
   await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
   await page.mouse.down();
+  // Begin dragging before scrolling the second native window to the destination.
+  await page.mouse.move(a.x + a.width / 2 + 12, a.y + a.height / 2, { steps: 2 });
   await to.scrollIntoViewIfNeeded();
   const b = await to.boundingBox();
   assert.ok(b);
