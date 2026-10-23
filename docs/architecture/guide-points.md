@@ -39,6 +39,11 @@ otherwise inaccessible references saveable without relaxing the visual filters.
 
 At most three candidate markers are shown, prioritized by screen distance to the pointer
 after discovery and clearance filtering. Saved guides do not count toward this limit.
+This is the steady-state target set: candidate marker DOM nodes are retained while
+fading in or out over 100 ms, with a minimum 100 ms on-screen lifetime before
+fading out. Returning targets reverse their fade without recreating the marker.
+Departing markers are noninteractive; panel/widget occlusion remains immediate.
+Transitions may briefly show outgoing markers alongside the three incoming targets.
 
 Definitions at the same 3D location share one marker and the existing definition
 chooser, so a circular rim center and its cap centers do not suppress one another.

@@ -5,13 +5,22 @@ import { type GuidePoint, guideKey, guideLabel } from "./types.js";
 import { GuideWidgetClearance, guideOverlapsWidget } from "./widget-clearance.js";
 
 export type GuideMarker = GuideCandidate & { guide?: GuidePoint };
+interface MarkerEntry {
+  element: HTMLButtonElement;
+  items: GuideMarker[];
+  key: string;
+  desired: boolean;
+  born: number;
+  opacity: number;
+  updated: number;
+}
 /** Nearby points share one hit target; labels preserve their distinct definitions. */
 export class GuideMarkers {
   readonly root = document.createElement("div");
   private meanings: GuideMeaningChoices;
-  private key = "";
+  private frame = 0;
   private clearance: GuideWidgetClearance;
-  private buttons: { element: HTMLButtonElement; items: GuideMarker[] }[] = [];
+  private buttons: MarkerEntry[] = [];
   constructor(
     private editor: SketchEditor,
     host: HTMLElement,
@@ -40,32 +49,40 @@ export class GuideMarkers {
       if (group) group.push(item);
       else groups.push([item]);
     }
-    const key = JSON.stringify([
-      interactive,
-      groups.map((g) => g.map((p) => [p.guide?.id, p.guide?.name, p.label, guideKey(p.anchor)])),
-    ]);
-    if (key !== this.key) {
-      this.key = key;
-      this.root.replaceChildren();
-      this.buttons = groups.map((group) => this.button(group));
-    }
-    for (const [i, button] of this.buttons.entries()) {
-      button.items = groups[i];
-      const p = this.editor.world.project(groups[i][0].point);
+    const previous = new Map(this.buttons.map((button) => [button, button.desired]));
+    for (const button of this.buttons) button.desired = false;
+    for (const group of groups) {
+      const key = JSON.stringify(
+        group.map((p) => [p.guide?.id, p.guide?.name, p.label, guideKey(p.anchor)]).sort(),
+      );
+      let button = this.buttons.find((entry) => entry.key === key);
+      if (!button) {
+        button = this.button(group, key);
+        this.buttons.push(button);
+      }
+      button.desired = true;
+      button.items = group;
+      const p = this.editor.world.project(group[0].point);
       button.element.style.left = `${p.x}px`;
       button.element.style.top = `${p.y}px`;
       button.element.style.pointerEvents = interactive ? "auto" : "none";
       button.element.dataset.interactive = String(button.element.style.pointerEvents === "auto");
       button.element.disabled = this.editor.blocked;
-      const selected = groups[i].some((p) => p.guide && this.selected().has(p.guide.id));
+      const selected = group.some((p) => p.guide && this.selected().has(p.guide.id));
       button.element.classList.toggle("selected", selected);
       button.element.setAttribute("aria-pressed", String(selected));
-      const chosen = groups[i].find((p) => p.guide && this.selected().has(p.guide.id));
-      const available = chosen ? canStart(chosen) : groups[i].some(canStart);
+      const chosen = group.find((p) => p.guide && this.selected().has(p.guide.id));
+      const available = chosen ? canStart(chosen) : group.some(canStart);
       button.element.classList.toggle("start-unavailable", !available);
       if (available) button.element.removeAttribute("aria-description");
       else button.element.setAttribute("aria-description", "Cannot start the current tool here");
     }
+    // Departing ghosts are visual only; they cannot accept stale geometry actions.
+    for (const button of this.buttons) {
+      if (previous.get(button) !== button.desired) button.updated = performance.now();
+      if (!button.desired) button.element.style.pointerEvents = "none";
+    }
+    if (!this.frame) this.frame = requestAnimationFrame(this.animate);
     this.hideOverlaps();
     this.clearance.schedule();
   }
@@ -73,12 +90,51 @@ export class GuideMarkers {
     const bounds = this.clearance.bounds();
     for (const button of this.buttons) {
       const point = this.editor.world.project(button.items[0].point);
+      button.element.style.left = `${point.x}px`;
+      button.element.style.top = `${point.y}px`;
       button.element.hidden = guideOverlapsWidget(point, bounds);
     }
   }
-  private button(items: GuideMarker[]) {
+  private animate = (now: number): void => {
+    this.frame = 0;
+    let pending = false;
+    this.buttons = this.buttons.filter((entry) => {
+      const saved = entry.items.some((item) => item.guide);
+      const target = entry.desired || (!saved && now < entry.born + 100) ? 1 : 0;
+      const elapsed = Math.max(
+        0,
+        now - Math.max(entry.updated, target ? entry.updated : entry.born + 100),
+      );
+      entry.opacity = saved
+        ? target
+        : target
+          ? Math.min(1, entry.opacity + elapsed / 100)
+          : Math.max(0, entry.opacity - elapsed / 100);
+      entry.updated = now;
+      entry.element.style.opacity = String(entry.opacity * (saved ? 1 : 0.8));
+      if (!entry.desired && entry.opacity === 0) {
+        entry.element.remove();
+        return false;
+      }
+      pending ||= entry.opacity !== target || (!entry.desired && target === 1);
+      return true;
+    });
+    if (pending) this.frame = requestAnimationFrame(this.animate);
+  };
+  private button(items: GuideMarker[], key: string): MarkerEntry {
     const button = document.createElement("button");
-    const entry = { element: button, items };
+    const now = performance.now();
+    const saved = items.some((item) => item.guide);
+    const entry = {
+      element: button,
+      items,
+      key,
+      desired: true,
+      born: now,
+      updated: now,
+      opacity: saved ? 1 : 0,
+    };
+    button.style.opacity = String(entry.opacity);
     button.className = `guide-marker${items.some((p) => p.guide) ? " saved" : " ghost"}`;
     button.innerHTML =
       '<svg class="guide-cross" viewBox="0 0 12 12" aria-hidden="true"><path d="M 1 6 H 11 M 6 1 V 11"/></svg>';
@@ -123,6 +179,7 @@ export class GuideMarkers {
     this.meanings.close();
   }
   dispose(): void {
+    cancelAnimationFrame(this.frame);
     this.root.remove();
     this.meanings.dispose();
     this.clearance.dispose();
