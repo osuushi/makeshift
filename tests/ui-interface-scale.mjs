@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { settingsSurface } from "./settings-surface.mjs";
 import { project } from "./ui-blend-edit.mjs";
 import { at, click, close, corners, drag, inspect, reset, settled } from "./ui-helpers.mjs";
 import { previewActionReady } from "./ui-preview-readiness.mjs";
@@ -7,9 +8,7 @@ import { chooseTool } from "./ui-tools.mjs";
 export async function changeScale(page, value, tools = false) {
   if (tools) await chooseTool(page, "user interface scale", "settings");
   else await page.locator(".settings-trigger").click();
-  const dialog = page.getByRole("dialog", { name: "Settings", exact: true });
-  const general = dialog.getByRole("tab", { name: "General", exact: true });
-  if (await general.count()) await general.click();
+  const dialog = await settingsSurface(page, "Interface");
   await dialog.getByRole("combobox", { name: "User interface scale" }).selectOption(String(value));
   await dialog.getByRole("button", { name: "Done", exact: true }).click();
   await settled(page);
@@ -41,7 +40,7 @@ export async function preferencesRoute(page) {
   await page.reload();
   await settled(page);
   await page.locator(".settings-trigger").click();
-  const dialog = page.getByRole("dialog", { name: "Settings", exact: true });
+  const dialog = await settingsSurface(page, "Interface");
   assert.equal(
     await dialog.getByRole("combobox", { name: "User interface scale" }).inputValue(),
     "1.5",

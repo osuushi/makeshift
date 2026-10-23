@@ -5,8 +5,8 @@
   gap: 4px;
   padding: 5px;
   transform: translateX(-50%);
-  background: #fffffff0;
-  border: 1px solid #d4dee7;
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 10px;
   pointer-events: auto;
 }
@@ -19,14 +19,14 @@
   gap: 4px;
   min-height: 32px;
   padding: 5px 8px;
-  border: 1px solid #c9d5df;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: white;
-  color: #344657;
+  background: var(--panel);
+  color: var(--text);
 }
 .transform-layers button[aria-pressed="true"] {
-  background: #dcecff;
-  border-color: #528ec9;
+  background: var(--selected);
+  border-color: var(--accent);
 }
 .transform-layers svg {
   width: 18px;

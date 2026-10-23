@@ -4,6 +4,7 @@ import { readFile, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { launchElectron } from "./native-documents.mjs";
+import { settingsSurface } from "./settings-surface.mjs";
 import { inspect, settled } from "./ui-helpers.mjs";
 
 const run = promisify(execFile);
@@ -70,9 +71,16 @@ try {
     }),
   );
   assert.equal(changed.canonicalPlanes.angleCutoff, 0.6);
-  assert.equal(await page.getByRole("slider", { name: "Angle cutoff", exact: true }).count(), 0);
   assert.equal(
-    await page.getByRole("slider", { name: "Grid line thickness", exact: true }).inputValue(),
+    await (await settingsSurface(page, "View"))
+      .getByRole("slider", { name: "Angle cutoff", exact: true })
+      .count(),
+    0,
+  );
+  assert.equal(
+    await (await settingsSurface(page, "View"))
+      .getByRole("slider", { name: "Grid line thickness", exact: true })
+      .inputValue(),
     "2",
   );
   await assert.rejects(
@@ -80,7 +88,9 @@ try {
     /finite number/,
   );
   assert.deepEqual(await query("settings"), changed, "Invalid patch applies no fields");
-  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await (await settingsSurface(page, "View"))
+    .getByRole("button", { name: "Done", exact: true })
+    .click();
   await writeFile(
     join(workspace, "settings-view.ts"),
     "const current = await makeshift.settings(); await makeshift.settings({canonicalPlanes:{angleCutoff:current.canonicalPlanes.angleCutoff - 0.1}});",

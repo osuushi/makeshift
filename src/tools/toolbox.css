@@ -168,15 +168,7 @@
   color: var(--muted);
   font-size: 12px;
 }
-.settings-tabs {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-.settings-tabs [aria-selected="true"] {
-  background: var(--selected);
-  border-color: var(--accent);
-}
+
 @media (max-width: 700px) {
   .toolbox {
     left: 12px;

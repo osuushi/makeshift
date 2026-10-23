@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { openDocument } from "./native-documents.mjs";
+import { settingsSurface } from "./settings-surface.mjs";
 import { project } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { chooseWidget } from "./ui-modal-plane-widgets.mjs";
@@ -24,44 +25,42 @@ const probes = [
   [8.4, 0, 25],
 ];
 await withUiRuntimes(async (page, name) => {
-  await emptyXrayRoute(page, name);
-  await openDocument(page, {
-    name: "xray.makeshift",
-    mimeType: "application/json",
-    buffer: Buffer.from(JSON.stringify(fixture)),
-  });
-  await page.getByRole("button", { name: "Hide Sketch 1", exact: true }).click();
+  let preferences;
+  await prepareXray(page, name);
   const original = (await inspect(page)).document;
   const normal = await samples(page);
   await page.getByRole("button", { name: "Select Sketch 2", exact: true }).click();
-  await settings(page);
+  preferences = await settings(page);
   await assertDefaults(page);
-  await page.getByRole("checkbox", { name: "Global X-ray vision" }).check();
-  await page.getByRole("slider", { name: "X-ray front opacity", exact: true }).press("Home");
-  assert.equal(await page.getByRole("slider", { name: "Bleed", exact: true }).isDisabled(), true);
-  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await preferences.getByRole("checkbox", { name: "Global X-ray vision" }).check();
+  await preferences.getByRole("slider", { name: "X-ray front opacity", exact: true }).press("Home");
+  assert.equal(
+    await preferences.getByRole("slider", { name: "Bleed", exact: true }).isDisabled(),
+    true,
+  );
+  await preferences.getByRole("button", { name: "Done", exact: true }).click();
   const global = await samples(page);
   assert.ok(delta(global[0], normal[0]) > 10, "Global X-ray cuts away from sketch contents");
-  await settings(page);
-  await page.getByRole("checkbox", { name: "Global X-ray vision" }).uncheck();
-  await page.getByRole("slider", { name: "Bleed", exact: true }).press("Home");
-  await page.getByRole("slider", { name: "Radius", exact: true }).press("Home");
-  await page.getByRole("button", { name: "Done", exact: true }).click();
+  preferences = await settings(page);
+  await preferences.getByRole("checkbox", { name: "Global X-ray vision" }).uncheck();
+  await preferences.getByRole("slider", { name: "Bleed", exact: true }).press("Home");
+  await preferences.getByRole("slider", { name: "Radius", exact: true }).press("Home");
+  await preferences.getByRole("button", { name: "Done", exact: true }).click();
   const local = await samples(page);
   await assertCachedXrayWork(page);
   console.log(name, { normal, global, local });
   assert.ok(delta(local[0], normal[0]) <= 2, "Outside aperture retains ordinary body");
   assert.ok(delta(local[1], global[1]) <= 2, "Inside sketch contents retains full X-ray cut");
   assert.ok(delta(local[2], normal[2]) <= 2, "Zero bleed leaves nearby exterior opaque");
-  await settings(page);
+  preferences = await settings(page);
   await slider(page, "Bleed", 20);
-  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await preferences.getByRole("button", { name: "Done", exact: true }).click();
   const expanded = await samples(page);
   assert.ok(delta(expanded[2], global[2]) <= 2, "Bleed dilates the content mask in screen pixels");
-  await settings(page);
+  preferences = await settings(page);
   await slider(page, "Bleed", 0);
   await slider(page, "Radius", 40);
-  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await preferences.getByRole("button", { name: "Done", exact: true }).click();
   const softened = await samples(page);
   assert.ok(
     delta(softened[2], normal[2]) > 2 && delta(softened[2], global[2]) > 2,
@@ -109,7 +108,9 @@ await withUiRuntimes(async (page, name) => {
 
 async function assertDefaults(page) {
   assert.equal(
-    await page.getByRole("checkbox", { name: "Global X-ray vision" }).isChecked(),
+    await (await settingsSurface(page, "View"))
+      .getByRole("checkbox", { name: "Global X-ray vision" })
+      .isChecked(),
     false,
   );
   for (const [name, value] of [
@@ -117,7 +118,12 @@ async function assertDefaults(page) {
     ["Bleed", "100"],
     ["Radius", "50"],
   ]) {
-    assert.equal(await page.getByRole("slider", { name, exact: true }).inputValue(), value);
+    assert.equal(
+      await (await settingsSurface(page, "View"))
+        .getByRole("slider", { name, exact: true })
+        .inputValue(),
+      value,
+    );
   }
 }
 function delta(a, b) {
@@ -125,9 +131,10 @@ function delta(a, b) {
 }
 async function settings(page) {
   await page.getByRole("button", { name: "Application settings" }).click();
+  return settingsSurface(page, "View");
 }
 async function slider(page, name, value) {
-  const input = page.getByRole("slider", { name, exact: true });
+  const input = (await settingsSurface(page, "View")).getByRole("slider", { name, exact: true });
   await input.press("Home");
   for (let i = 0; i < value; i++) await input.press("ArrowRight");
 }
@@ -158,9 +165,21 @@ async function coarseMask(page, normal, global) {
   await settings(page);
   await slider(page, "Bleed", 16);
   await slider(page, "Radius", 16);
-  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await (await settingsSurface(page, "View"))
+    .getByRole("button", { name: "Done", exact: true })
+    .click();
   const coarse = await samples(page);
   await assertCachedXrayWork(page, 8);
   assert.ok(delta(coarse[0], normal[0]) < 6, "Coarse mask retains opaque exterior");
   assert.ok(delta(coarse[1], global[1]) < 6, "Coarse mask retains cut interior");
+}
+
+async function prepareXray(page, name) {
+  await emptyXrayRoute(page, name);
+  await openDocument(page, {
+    name: "xray.makeshift",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(fixture)),
+  });
+  await page.getByRole("button", { name: "Hide Sketch 1", exact: true }).click();
 }

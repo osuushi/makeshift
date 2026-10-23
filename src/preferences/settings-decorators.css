@@ -1,0 +1,58 @@
+.decorator-display-settings {
+  border-top: 1px solid var(--border);
+  margin-top: 20px;
+  padding-top: 16px;
+}
+.decorator-display-settings h3 {
+  font-size: 15px;
+  margin: 0 0 8px;
+}
+.decorator-display-settings > label {
+  max-width: 200px;
+}
+.decorator-display-row {
+  display: grid;
+  grid-template-columns: 44px 110px minmax(0, 1fr);
+  gap: 6px 12px;
+  align-items: end;
+  margin: 16px 0;
+}
+.decorator-display-row > span {
+  grid-column: 1 / -1;
+  font-weight: 500;
+}
+.application-settings .decorator-display-row > label {
+  margin: 0;
+}
+.application-settings .decorator-display-row input[type="color"] {
+  width: 44px;
+  height: 34px;
+}
+.application-settings .decorator-display-row input[type="range"] {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+.application-settings .decorator-color-value {
+  box-sizing: border-box;
+  width: 100%;
+  flex-shrink: 0;
+  font: inherit;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: max(16px, calc(14px * var(--ui-scale, 1)));
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.decorator-display-row output {
+  width: 36px;
+}
+
+@container settings (max-width: 420px) {
+  .decorator-display-row {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+  .application-settings .decorator-display-row > label {
+    grid-column: 1 / -1;
+  }
+}

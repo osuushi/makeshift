@@ -18,6 +18,9 @@ export function experimentalSettings(): HTMLElement {
   const input = section.querySelector("input");
   if (!input) throw new Error("Missing experimental trim setting");
   input.checked = enabled;
+  section.addEventListener("preferences-refresh", () => {
+    input.checked = enabled;
+  });
   input.onchange = () => {
     enabled = input.checked;
     try {
@@ -28,3 +31,8 @@ export function experimentalSettings(): HTMLElement {
   };
   return section;
 }
+
+if (typeof window !== "undefined")
+  window.addEventListener("storage", (event) => {
+    if (event.key === storageKey || event.key === null) enabled = event.newValue === "true";
+  });

@@ -19,7 +19,7 @@ export function decoratorSettings(): HTMLElement {
     ];
     const row = document.createElement("div");
     row.className = "decorator-display-row";
-    row.innerHTML = `<span>${title}</span><input type="color" aria-label="${title} preview color"><input type="text" class="decorator-color-value" aria-label="${title} preview hex color" maxlength="7" spellcheck="false"><label>Opacity<input type="range" min="20" max="100" step="1" aria-label="${title} preview opacity"><output></output></label>`;
+    row.innerHTML = `<span>${title}</span><input type="color" aria-label="${title} preview color"><input type="text" class="decorator-color-value" aria-label="${title} preview hex color" maxlength="7" spellcheck="false"><label><span>Opacity</span><input type="range" min="20" max="100" step="1" aria-label="${title} preview opacity"><output></output></label>`;
     const color = row.querySelector<HTMLInputElement>("[type=color]");
     const opacity = row.querySelector<HTMLInputElement>("[type=range]");
     const hex = row.querySelector<HTMLInputElement>("[type=text]");
@@ -59,6 +59,7 @@ export function decoratorSettings(): HTMLElement {
       row.output.textContent = `${row.opacity.value}%`;
     }
   };
+  section.addEventListener("preferences-refresh", update);
   mode.onchange = () => {
     const next = decoratorDisplay();
     next.mode = mode.value === "color-only" ? "color-only" : "detailed";

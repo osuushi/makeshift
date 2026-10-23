@@ -3,10 +3,12 @@ import { unavailableHelp } from "./navigator-availability.js";
 import { drawerTitle } from "./toolbox-defaults.js";
 import { toolboxIcon } from "./toolbox-icons.js";
 import { type ToolboxItem, type ToolboxPath, toolboxLeaf } from "./toolbox-tree.js";
+export type ToolboxTool = Pick<ToolResult, "id" | "label" | "description" | "unavailable">;
+
 export function toolboxRow(
   item: ToolboxItem,
   path: ToolboxPath,
-  tools: Map<string, ToolResult>,
+  tools: Map<string, ToolboxTool>,
   activate: (event: MouseEvent) => void,
   expand: () => void,
 ): HTMLElement {

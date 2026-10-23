@@ -120,3 +120,7 @@ contextBridge.exposeInMainWorld("makeshiftNavigation", {
     return () => ipcRenderer.removeListener("navigation-rotate", listener);
   },
 });
+
+contextBridge.exposeInMainWorld("makeshiftSettings", {
+  open: (tools: unknown) => ipcRenderer.invoke("settings-open", tools),
+});

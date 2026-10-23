@@ -1,9 +1,16 @@
 # Interface preferences
 
 Settings is available in the editor header, through Tools and with Cmd-, on Mac.
-It opens a compact modal dialog; Escape, clicking the backdrop or Done closes it. User interface scale
-applies immediately at 80%, 90%, 100%, 130%, 125% or 150%; Reset to 100% is always
-available in its General tab. Opening Settings requires completing the current edit.
+It opens a separate, reusable Settings window on native desktop and a compact modal
+dialog in browsers. Interface, Sketch Grid, View, Decorators, Experimental and Toolbox tabs
+support arrow keys and Home/End. Labels sit above their controls; related grid
+spacing and color fields share compact Minor/Major groups. Groups stack at narrow
+widths, and the tab strip scrolls horizontally instead of wrapping. The native window fits each tab vertically,
+with scrolling once the available screen height is reached. Escape or Done closes Settings; browsers also
+allow backdrop dismissal. Native preferences update all open drawings immediately
+through storage events, without changing their geometry or Undo history. User interface scale
+applies immediately at 80%, 90%, 100%, 110%, 125% or 150%; Reset to 100% is always
+available from this dialog. Opening Settings requires completing the current edit.
 Closing restores focus to its opener unless another control has already taken focus.
 The choice is stored locally on the current device/origin under `makeshift.ui-scale`,
 outside accepted geometry, document files and Undo. Invalid stored values fall back
@@ -161,7 +168,7 @@ grid snapping command remains available, including during a pen gesture.
 
 ## Appearance and color contrast
 
-Appearance in Settings → General offers System (default), Light and Dark. The
+Appearance in Settings → Interface offers System (default), Light and Dark. The
 choice is device/origin-local in `makeshift.theme`, outside document data and Undo.
 System follows `prefers-color-scheme` live on Electron, browsers and iPad Safari;
 clients without that API fall back to Light and still allow explicit Dark.
