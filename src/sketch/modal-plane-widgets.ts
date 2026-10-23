@@ -3,8 +3,8 @@ import { type PlaneId, planeIds, planes, worldPoint } from "./planes.js";
 import type { World } from "./world.js";
 
 const svgNamespace = "http://www.w3.org/2000/svg";
-const inset = 18;
 const size = 84;
+const centerDistance = size * 2.5;
 
 /** Fixed pixel-scale plane cues: view state only, using the ordinary modal picker. */
 export function installModalPlaneWidgets(world: World, overlay: HTMLElement): () => void {
@@ -130,8 +130,8 @@ function widgetPoints(world: World, id: PlaneId, rect: DOMRect, scale: number): 
     dy = axis.y - origin.y;
   }
   const distance = Math.hypot(dx, dy);
-  const offsetX = (dx / distance) * (inset + size);
-  const offsetY = (dy / distance) * (inset + size);
+  const offsetX = (dx / distance) * centerDistance;
+  const offsetY = (dy / distance) * centerDistance;
   return [
     [-size / 2, -size / 2],
     [size / 2, -size / 2],
