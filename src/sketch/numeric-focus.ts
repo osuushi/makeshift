@@ -3,10 +3,25 @@ const panels =
   ".draggable-parameter-panel, .dimension, .transform-layers, .axial-panel, .scale-card, .edge-finish-panel, .revolve-quantity";
 const fields = 'input[inputmode="decimal"], input[type="number"]';
 let lastTarget: Element | null = null;
+function clearWidgetHighlight(): void {
+  document.querySelectorAll(".keyboard-widget-active").forEach((node) => {
+    node.classList.remove("keyboard-widget-active");
+  });
+  delete document.documentElement.dataset.keyboardSketchWidget;
+}
+window.addEventListener("blur", clearWidgetHighlight);
+document.addEventListener(
+  "keydown",
+  (event) => {
+    if (event.key === "Escape" || event.key === "Enter") clearWidgetHighlight();
+  },
+  true,
+);
 document.addEventListener(
   "pointerdown",
   () => {
     lastTarget = null;
+    clearWidgetHighlight();
   },
   true,
 );
@@ -54,6 +69,13 @@ export function focusNumericField(root: ParentNode, reverse = false, numericOnly
       : (index + (reverse ? -1 : 1) + targets.length) % targets.length;
   const target = targets[next];
   lastTarget = target;
+  clearWidgetHighlight();
+  if (target.matches(widgets)) {
+    target.classList.add("keyboard-widget-active");
+    if (target.hasAttribute("data-move-marker"))
+      document.documentElement.dataset.keyboardSketchWidget =
+        target.getAttribute("data-move-marker") ?? "";
+  }
   if (target.matches("[data-move-marker]")) {
     target.dispatchEvent(new Event("widget-numeric-activate"));
   } else if (target.matches(widgets) && target instanceof HTMLElement) {

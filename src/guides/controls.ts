@@ -62,8 +62,17 @@ export class GuideControls {
         this.pointer = { x: event.clientX, y: event.clientY };
         this.update();
       },
-      { signal: this.abort.signal },
+      { capture: true, signal: this.abort.signal },
     );
+    const clearPointer = () => {
+      this.pointer = null;
+      this.hovered = null;
+      this.update();
+    };
+    window.addEventListener("blur", clearPointer, { signal: this.abort.signal });
+    document.documentElement.addEventListener("pointerleave", clearPointer, {
+      signal: this.abort.signal,
+    });
     editor.world.canvas.addEventListener(
       "pointerdown",
       () => {

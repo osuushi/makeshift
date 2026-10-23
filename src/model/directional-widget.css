@@ -10,3 +10,14 @@
 .orientable-handle[data-geometry-invalid="true"] > svg {
   filter: drop-shadow(0 0 2px #ce3737);
 }
+
+/* Numeric focus stays in the field while its keyboard-activated widget stays visible. */
+.keyboard-widget-active,
+:root[data-keyboard-sketch-widget="x"] [data-move-marker="x"],
+:root[data-keyboard-sketch-widget="y"] [data-move-marker="y"],
+:root[data-keyboard-sketch-widget="rotation"] [data-move-marker="rotation"] {
+  outline: 3px solid #1672d4;
+  outline-offset: 5px;
+  border-radius: 8px;
+  filter: drop-shadow(0 0 3px #549ee8);
+}
