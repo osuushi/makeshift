@@ -111,7 +111,8 @@ async function acceptedWidgetEdits(page, before) {
   await page.mouse.wheel(0, 20);
   await page.keyboard.up("Control");
   await settled(page);
-  await worldClick(page, [0, 0, 20]);
+  // Pick face interior clear of the center guide-point marker.
+  await worldClick(page, [4, 4, 20]);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   await chooseTool(page, "Imprint", "imprint");
   await chooseWidget(page, "YZ");
