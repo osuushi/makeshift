@@ -15,7 +15,6 @@ let tools: ToolboxTool[] = [];
 installToolboxSettings(toolbox, () => tools);
 document.body.className = "settings-window";
 document.body.append(dialog);
-dialog.addEventListener("close", () => window.close());
 window.addEventListener("storage", () => {
   dialog.dispatchEvent(new Event("preferences-refresh"));
   for (const section of dialog.querySelectorAll("section"))
@@ -31,6 +30,7 @@ onViewDisplayChange(() => {
 const host = (
   window as Window & {
     makeshiftSettingsWindow?: {
+      close(): Promise<void>;
       availableSize(): Promise<{ width: number; height: number }>;
       fitTab(size: SettingsSize): Promise<void>;
       tools(): Promise<ToolboxTool[]>;
@@ -40,6 +40,15 @@ const host = (
 ).makeshiftSettingsWindow;
 
 if (host) {
+  // Submit/cancel occur before the dialog's queued close event. Let the native
+  // host own closing, so another opener cannot reuse a closed HTML dialog.
+  const close = (event: Event) => {
+    event.preventDefault();
+    void host.close();
+  };
+  dialog.addEventListener("submit", close);
+  dialog.addEventListener("cancel", close);
+  dialog.addEventListener("close", () => void host.close());
   const fitSelectedTab = async () => {
     const available = await host.availableSize();
     await host.fitTab(measureSettings(dialog, available));

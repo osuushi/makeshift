@@ -20,7 +20,8 @@ and display reserve matching scrollbar space to avoid wrapping feedback.
 Manual resizing is enforced by native window limits; there are no resize observers or
 resize callbacks that request another size. Re-selecting the active tab preserves the
 user's size; switching tabs or explicitly changing interface scale measures and applies
-the new pane policy once. Escape or Done closes Settings; browsers also
+the new pane policy once. Native Done and Escape request closing directly from the
+host; a closing window stops being reusable before destruction completes. Escape or Done closes Settings; browsers also
 allow backdrop dismissal. Native preferences update all open drawings immediately
 through storage events, without changing their geometry or Undo history. User interface scale
 applies immediately at 80%, 90%, 100%, 110%, 125% or 150%; Reset to 100% is always

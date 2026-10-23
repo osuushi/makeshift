@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { _electron } from "playwright";
 import { documentTestPage } from "./document-test-page.mjs";
 import { electronTestArguments } from "./native-documents.mjs";
+import { reopenDuringSettingsClose } from "./settings-close-checks.mjs";
 import { settingsSurface } from "./settings-surface.mjs";
 import { failureContext } from "./ui-failure-context.mjs";
 import { settled } from "./ui-helpers.mjs";
@@ -84,6 +85,8 @@ try {
   });
   assert.deepEqual(zoomRoles, []);
   await preferencesRoute(page);
+  await page.getByRole("button", { name: "Application settings" }).click();
+  await reopenDuringSettingsClose(app, page, await settingsSurface(page, "Interface"));
   for (const scale of [0.8, 1.5]) {
     await geometryScaleRoute(page, scale, "electron");
     const zoom = await app.evaluate(({ BrowserWindow }) =>

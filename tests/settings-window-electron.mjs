@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { launchElectron } from "./native-documents.mjs";
+import { reopenDuringSettingsClose } from "./settings-close-checks.mjs";
 import {
   settingsResizeChecks,
   settingsScaleChecks,
@@ -118,7 +119,7 @@ try {
     "1.5",
   );
   await reopened.getByRole("button", { name: "Reset to 100%" }).click();
-  await reopened.getByRole("button", { name: "Done", exact: true }).click();
+  await reopenDuringSettingsClose(app, page, reopened);
   // Native popover Tab/Escape must reach browser defaults instead of CAD shortcuts.
   await page.getByRole("button", { name: "View options", exact: false }).click();
   const grid = page.getByRole("dialog", { name: "View options", exact: true });

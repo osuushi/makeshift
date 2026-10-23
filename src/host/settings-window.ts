@@ -49,7 +49,7 @@ export async function openSettingsWindow(directory: string, input: unknown): Pro
   settings = window;
   lockInterfaceZoom(window.webContents);
   window.setMenu(null);
-  window.on("closed", () => {
+  window.on("close", () => {
     if (settings === window) settings = undefined;
   });
   try {
@@ -66,6 +66,9 @@ export async function openSettingsWindow(directory: string, input: unknown): Pro
 /** Only tab selection or an explicit scale change applies a new native policy. */
 function settingsIPC(window: BrowserWindow): DocumentIPC {
   const ipc = new DocumentIPC();
+  ipc.handle("settings-close", () => {
+    if (!window.isDestroyed()) window.close();
+  });
   ipc.handle("settings-tools", () => toolboxTools);
   ipc.handle("settings-space", () => {
     const current = window.getBounds(),

@@ -187,7 +187,7 @@ export const uiSuites = [
     seconds: 23,
     browsers: ["electron"],
     reason:
-      "Native Settings must preserve field focus and camera coordinates when UI scale changes.",
+      "Native Settings must preserve field focus and camera coordinates on scale changes, and an opener during native close must not reuse the dying window.",
     unit: "ui-scale-preference.test.ts",
   },
   {

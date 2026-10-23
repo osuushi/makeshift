@@ -67,31 +67,7 @@ await withUiRuntimes(async (page, name) => {
     "Radius blends the aperture edge",
   );
   await coarseMask(page, normal, global);
-  await page.setViewportSize({ width: 1100, height: 760 });
-  const resized = await samples(page);
-  assert.ok(delta(resized[0], normal[0]) < 6, "Resize keeps exterior opaque");
-  const height = (await inspect(page)).camera.height;
-  await page.mouse.move(950, 600);
-  await page.keyboard.down("Control");
-  await page.mouse.wheel(0, -12);
-  await page.keyboard.up("Control");
-  await page.waitForFunction(
-    (height) => window.makeshiftInspect().camera.height !== height,
-    height,
-  );
-  const zoomed = await samples(page);
-  assert.ok(
-    delta(zoomed[0], normal[0]) < 6,
-    "Pinch zoom retains opaque geometry outside the rebuilt mask",
-  );
-  const outside = await project(page, probes[0]);
-  await page.mouse.move(outside.x, outside.y);
-  assert.equal(
-    (await inspect(page)).modelingHover,
-    "face",
-    "Outside aperture picks the normal front face",
-  );
-  await page.screenshot({ path: `.cache/sketch-review/${name}-xray-vision.png` });
+  await resizeAndPinch(page, normal, name);
   await chooseTool(page, "cross section", "cross-section");
   await chooseWidget(page, "XZ");
   await page.getByRole("button", { name: "Done", exact: true }).click();
@@ -105,6 +81,40 @@ await withUiRuntimes(async (page, name) => {
     `${name}: X-ray content aperture, bleed, blur, resize/pinch, exterior picking and explicit global cut passed`,
   );
 });
+
+async function resizeAndPinch(page, normal, name) {
+  await page.setViewportSize({ width: 1100, height: 760 });
+  const resized = await samples(page);
+  assert.ok(delta(resized[0], normal[0]) < 6, "Resize keeps exterior opaque");
+  const height = (await inspect(page)).camera.height;
+  await page.mouse.move(950, 600);
+  await page.keyboard.down("Control");
+  await page.mouse.wheel(0, -12);
+  await page.keyboard.up("Control");
+  await page.waitForFunction(
+    (height) => window.makeshiftInspect().camera.height !== height,
+    height,
+  );
+  // Pinch completion levels the captured camera after wheel input goes idle.
+  // Project and pick only after that navigation intent and animation finish.
+  await page.waitForFunction(() => {
+    const camera = window.makeshiftInspect().camera;
+    return !camera.navigationPending && !camera.moving;
+  });
+  const zoomed = await samples(page);
+  assert.ok(
+    delta(zoomed[0], normal[0]) < 6,
+    "Pinch zoom retains opaque geometry outside the rebuilt mask",
+  );
+  const outside = await project(page, probes[0]);
+  await page.mouse.move(outside.x, outside.y);
+  assert.equal(
+    (await inspect(page)).modelingHover,
+    "face",
+    "Outside aperture picks the normal front face",
+  );
+  await page.screenshot({ path: `.cache/sketch-review/${name}-xray-vision.png` });
+}
 
 async function assertDefaults(page) {
   assert.equal(
