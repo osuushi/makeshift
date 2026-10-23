@@ -48,9 +48,9 @@ export class TransformOverlay {
     });
     this.move.className = "move-control";
     this.move.type = "button";
-    this.move.setAttribute("aria-label", "Transform (M)");
-    this.move.append(sketchIcon("move"), "Transform");
-    this.move.addEventListener("click", () => void editor.activateMove());
+    this.move.setAttribute("aria-label", "Move");
+    this.move.append(sketchIcon("move"), "Move");
+    this.move.addEventListener("click", () => void toolCatalog(editor).invoke("move"));
     this.anchor.className = "move-anchor sketch-move-anchor";
     this.anchor.setAttribute("aria-label", "Reposition sketch pivot");
     this.anchor.title = "Drag anchor · Command for free placement";

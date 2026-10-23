@@ -2,7 +2,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import { toolCatalog } from "../tools/catalog.js";
 
-/** Idle whole-body Enter is the same explicit Transform action as M. */
+/** Idle whole-body Enter is the default Move action. */
 export function installBodyTransformEnter(editor: SketchEditor, signal: AbortSignal): void {
   onModelKeydown(
     (event) => {
@@ -25,7 +25,7 @@ export function installBodyTransformEnter(editor: SketchEditor, signal: AbortSig
       )
         return;
       event.preventDefault();
-      void toolCatalog(editor).invoke("transform");
+      void toolCatalog(editor).invoke("move");
     },
     { signal },
   );

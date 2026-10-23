@@ -2,6 +2,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import type { GuideCandidate } from "./candidates.js";
 import { GuideMeaningChoices } from "./meaning-choices.js";
 import { type GuidePoint, guideKey, guideLabel } from "./types.js";
+import { GuideWidgetClearance, guideOverlapsWidget } from "./widget-clearance.js";
 
 export type GuideMarker = GuideCandidate & { guide?: GuidePoint };
 /** Nearby points share one hit target; labels preserve their distinct definitions. */
@@ -9,6 +10,7 @@ export class GuideMarkers {
   readonly root = document.createElement("div");
   private meanings: GuideMeaningChoices;
   private key = "";
+  private clearance: GuideWidgetClearance;
   private buttons: { element: HTMLButtonElement; items: GuideMarker[] }[] = [];
   constructor(
     private editor: SketchEditor,
@@ -21,6 +23,7 @@ export class GuideMarkers {
     this.root.className = "guide-markers";
     host.append(this.root);
     this.meanings = new GuideMeaningChoices(editor, host, choose, hover);
+    this.clearance = new GuideWidgetClearance(host, () => this.hideOverlaps());
   }
   update(
     items: GuideMarker[],
@@ -62,6 +65,15 @@ export class GuideMarkers {
       button.element.classList.toggle("start-unavailable", !available);
       if (available) button.element.removeAttribute("aria-description");
       else button.element.setAttribute("aria-description", "Cannot start the current tool here");
+    }
+    this.hideOverlaps();
+    this.clearance.schedule();
+  }
+  private hideOverlaps(): void {
+    const bounds = this.clearance.bounds();
+    for (const button of this.buttons) {
+      const point = this.editor.world.project(button.items[0].point);
+      button.element.hidden = guideOverlapsWidget(point, bounds);
     }
   }
   private button(items: GuideMarker[]) {
@@ -113,5 +125,6 @@ export class GuideMarkers {
   dispose(): void {
     this.root.remove();
     this.meanings.dispose();
+    this.clearance.dispose();
   }
 }

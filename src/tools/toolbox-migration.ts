@@ -49,3 +49,18 @@ export function migrateToolbox(root: ToolboxGroup): ToolboxGroup {
   });
   return normalizeToolbox(group(...items, toolboxMenu(drawerTitle, ...menus)));
 }
+
+/** Upgrade the reserved transform group while preserving the rest of the owned layout. */
+export function addTransformTools(root: ToolboxGroup): ToolboxGroup {
+  const upgraded = structuredClone(root);
+  for (const item of upgraded.items) {
+    if (typeof item === "string" || item.title !== drawerTitle) continue;
+    item.items = item.items.flatMap((child) => {
+      if (typeof child === "string" || child.title !== "Transform") return [child];
+      const leaves = toolboxLeaves(child);
+      if (!leaves.every((id) => ["move", "rotate", "scale", "mirror"].includes(id))) return [child];
+      return leaves.includes("mirror") ? ["mirror"] : [];
+    });
+  }
+  return normalizeToolbox(upgraded);
+}

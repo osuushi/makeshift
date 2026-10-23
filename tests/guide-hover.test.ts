@@ -242,16 +242,17 @@ test("coincident native cylinder cap definitions remain discoverable from the ca
   }
 });
 
-test("selected sketch curves keep candidates away from the pointer with existing spacing and clearance", () => {
+test("selected sketch curves obey pointer proximity, spacing and clearance", () => {
   const { editor } = sketchEditor();
   editor.selectionOwners.add("line");
   editor.hover = null;
-  const candidates = hoverGuides(editor, null);
-  assert.equal(candidates.length, 3);
-  assert.deepEqual(hoverGuides(editor, { x: -1000, y: -1000 }), candidates);
+  const pointer = editor.world.project([30, 0, 0]);
+  assert.equal(hoverGuides(editor, pointer).length, 1);
+  assert.deepEqual(hoverGuides(editor, null), []);
+  assert.deepEqual(hoverGuides(editor, { x: -1000, y: -1000 }), []);
   Object.assign(editor.world, { project: ([x, y]: Vector) => ({ x, y }) });
   assert.equal(
-    hoverGuides(editor, null).length,
+    hoverGuides(editor, { x: 30, y: 0 }).length,
     0,
     "all three guides collide on a small projected line",
   );

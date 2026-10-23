@@ -55,6 +55,7 @@ export function selectVisibleTools(editor: SketchEditor): () => void {
           editor.modeling.targets = targets;
           editor.world.selectedPlane = null;
         }
+        for (const notify of editor.modeling.selectionChosen) notify();
         editor.modeling.hover = null;
         editor.modeling.alternatives = [];
         editor.overlaps = null;

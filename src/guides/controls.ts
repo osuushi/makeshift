@@ -1,7 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import { toolCatalog } from "../tools/catalog.js";
-import { near } from "./geometry.js";
 import { GuideHighlight } from "./highlight.js";
 import { hoverGuides } from "./hover.js";
 import { type GuideMarker, GuideMarkers } from "./markers.js";
@@ -10,7 +9,7 @@ import { selectedGuides } from "./selection.js";
 import { visibleGuides } from "./snapping.js";
 import { surfaceDragActive, surfaceDragTargets } from "./surface-snap.js";
 import { type GuideAnchor, type GuidePoint, guideKey, guideMeaning, guideOwner } from "./types.js";
-import { guidesVisible, toggleGuides } from "./view-state.js";
+import { editingGuides, toggleGuideEditing } from "./view-state.js";
 import "./style.css";
 import type { GuideToolInput } from "./tool-path.js";
 
@@ -43,9 +42,9 @@ export class GuideControls {
     );
     this.unregister = toolCatalog(editor).register({
       id: "guide-points",
-      label: "Guide points",
+      label: "Edit Guide Points",
       category: "View",
-      description: "Show or hide saved guides and nearby points of interest",
+      description: "Turn guide point candidates on or off; saved guides remain visible",
       aliases: ["points of interest", "snap points", "centroid"],
       shortcut: "G",
       finishEdit: false,
@@ -54,13 +53,12 @@ export class GuideControls {
         this.selected.clear();
         this.hovered = null;
         this.markers.closeChoices();
-        toggleGuides(editor);
+        toggleGuideEditing(editor);
       },
     });
     window.addEventListener(
       "pointermove",
       (event) => {
-        if (event.target !== editor.world.canvas) return;
         this.pointer = { x: event.clientX, y: event.clientY };
         this.update();
       },
@@ -97,7 +95,7 @@ export class GuideControls {
         ) {
           event.preventDefault();
           event.stopImmediatePropagation();
-          if (surfaceDragActive(editor)) toggleGuides(editor);
+          if (surfaceDragActive(editor)) toggleGuideEditing(editor);
           else void toolCatalog(editor).invoke("guide-points");
         } else if (event.key === "Escape" && this.selected.size && !editor.interactions.current) {
           event.preventDefault();
@@ -168,21 +166,17 @@ export class GuideControls {
     const e = this.editor;
     const surfaceTargets = surfaceDragTargets(e);
     if (this.selected.size && this.selectedWith !== this.selectionKey()) this.selected.clear();
-    const saved = visibleGuides(e, this.movement.toolActive || !!surfaceTargets)
-      .filter(({ point }) =>
-        surfaceTargets
-          ? surfaceTargets.some((target) => target.guide && near(target.point, point))
-          : this.movement.includes(point),
-      )
-      .map(({ guide, point }) => ({
+    const saved = visibleGuides(e, this.movement.toolActive || !!surfaceTargets).map(
+      ({ guide, point }) => ({
         guide,
         point,
         anchor: guide.anchor,
         label: guideMeaning(guide.anchor),
-      }));
+      }),
+    );
     const keys = new Set(saved.map((p) => guideKey(p.anchor)));
     let candidates: GuideMarker[] = [];
-    if (guidesVisible(e) && !e.interactions.current && (!e.world.active || e.tool === "select"))
+    if (editingGuides(e) && !e.interactions.current && (!e.world.active || e.tool === "select"))
       candidates = hoverGuides(e, this.pointer);
     candidates = candidates.filter(
       (p) =>

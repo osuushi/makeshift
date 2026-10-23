@@ -243,10 +243,10 @@ async function selectedConcaveFace(page, name) {
   await marker.waitFor({ state: "visible" });
   await page.mouse.move(1200, 780);
   assert.equal((await inspect(page)).modelingHover, null);
-  assert.equal(await marker.count(), 1, "selection keeps the centroid beyond the hover radius");
-  await page.screenshot({ path: `.cache/sketch-review/${name}-guide-persistent-selection.png` });
+  assert.equal(await marker.count(), 0, "selection does not bypass the pointer radius");
+  await page.screenshot({ path: `.cache/sketch-review/${name}-guide-selected-proximity.png` });
   await page.mouse.click(1200, 780);
-  assert.equal(await marker.count(), 0, "deselection removes the persistent candidate");
+  assert.equal(await marker.count(), 0, "deselection removes the candidate");
   await page.mouse.click(inside.x, inside.y);
   await page.mouse.move(centroid.x, centroid.y, { steps: 20 });
   await page.mouse.click(centroid.x, centroid.y);
@@ -256,6 +256,6 @@ async function selectedConcaveFace(page, name) {
   assert.equal(after.modelingSelection[0]?.face, face.id);
   assert.deepEqual(after.document.bodies, state.document.bodies);
   console.log(
-    `${name}: off-face centroid hidden on hover, persistent with selection, reachable and saveable`,
+    `${name}: off-face centroid hidden on hover, selected within pointer range, reachable and saveable`,
   );
 }

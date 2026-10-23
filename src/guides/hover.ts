@@ -31,7 +31,6 @@ function filteredGuides(
   saved: readonly GuideCandidate[],
   pointer: Point | null,
 ): GuideCandidate[] {
-  const selectedKeys = new Set(selected.map((p) => guideKey(p.anchor)));
   const seen = new Set(saved.map((p) => guideKey(p.anchor)));
   const candidates = [...selected, ...hovered].filter((candidate) => {
     const key = guideKey(candidate.anchor);
@@ -42,7 +41,6 @@ function filteredGuides(
     )
       return false;
     seen.add(key);
-    if (selectedKeys.has(key)) return true;
     const p = editor.world.project(candidate.point);
     return !!pointer && Math.hypot(p.x - pointer.x, p.y - pointer.y) <= 256;
   });
@@ -51,7 +49,7 @@ function filteredGuides(
   return spaced.filter((p) => parentClearance(editor, p.anchor, markers));
 }
 
-/** Persistent selection plus hover candidates that survive at their own pointer position. */
+/** Nearby selection and hover candidates, with stable hover discovery on approach. */
 export function hoverGuides(editor: SketchEditor, pointer: Point | null): GuideCandidate[] {
   const saved = visibleGuides(editor).map(({ guide, point }) => ({
     anchor: guide.anchor,

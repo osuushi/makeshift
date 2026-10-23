@@ -80,14 +80,6 @@ export class GuideMove {
       !lease || (this.toolActive && !lease.captured && lease.phase === "editing" && !this.drag)
     );
   }
-  includes(point: Parameters<GuideToolInput>[0]): boolean {
-    const drag = this.drag;
-    return (
-      !drag?.session ||
-      near(point, drag.origin) ||
-      drag.targets.some((target) => target.guide && near(target.point, point))
-    );
-  }
   start(event: PointerEvent, item: GuideMarker): void {
     const e = this.editor;
     if (event.button || !item.guide || e.blocked || !this.interactive || this.press || this.drag)

@@ -1,6 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 
-const visibility = new WeakMap<SketchEditor, boolean>();
+const editing = new WeakMap<SketchEditor, { sketch?: boolean; model?: boolean }>();
 const listeners = new WeakMap<SketchEditor, Set<() => void>>();
 export function observeGuides(editor: SketchEditor, changed: () => void): () => void {
   const callbacks = listeners.get(editor) ?? new Set();
@@ -8,10 +8,15 @@ export function observeGuides(editor: SketchEditor, changed: () => void): () => 
   callbacks.add(changed);
   return () => callbacks.delete(changed);
 }
-/** Per-window view state, independent of individual saved-guide visibility and Undo. */
-export const guidesVisible = (editor: SketchEditor): boolean => visibility.get(editor) !== false;
-export function toggleGuides(editor: SketchEditor): void {
-  visibility.set(editor, !guidesVisible(editor));
+/** Each workspace remembers candidate editing; saved-guide visibility and Undo stay separate. */
+export const editingGuides = (editor: SketchEditor): boolean =>
+  editor.world.active
+    ? (editing.get(editor)?.sketch ?? false)
+    : (editing.get(editor)?.model ?? true);
+export function toggleGuideEditing(editor: SketchEditor): void {
+  const state = editing.get(editor) ?? {};
+  state[editor.world.active ? "sketch" : "model"] = !editingGuides(editor);
+  editing.set(editor, state);
   for (const changed of listeners.get(editor) ?? []) changed();
   editor.refresh();
 }

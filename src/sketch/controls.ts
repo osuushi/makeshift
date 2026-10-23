@@ -1,6 +1,7 @@
 import { clipboardControls } from "../clipboard/controls.js";
 import { fileControls } from "../model/file-controls.js";
 import { fixtureControls } from "../model/fixture-controls.js";
+import { transformLayerEnabled } from "../model/transform-layers.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { sketchTools } from "../tools/sketch-tools.js";
 import { StandardCommandMenu } from "../tools/standard-command-menu.js";
@@ -55,7 +56,12 @@ function installShortcuts(
     if (event.defaultPrevented) return;
     if (event.type === "keypress" && !(event.metaKey || event.ctrlKey)) return;
     if (event.key === "Tab" && !event.metaKey && !event.ctrlKey && !event.altKey) {
-      if (editor.moveMode && editor.sketch && !editor.interactions.current) {
+      if (
+        editor.moveMode &&
+        editor.sketch &&
+        !editor.interactions.current &&
+        (transformLayerEnabled(editor, "move") || transformLayerEnabled(editor, "rotate"))
+      ) {
         event.preventDefault();
         void numeric.focusTransform(event.shiftKey);
       } else if (focusNumericField(app, event.shiftKey)) event.preventDefault();
@@ -108,7 +114,7 @@ function installShortcuts(
         l: "line",
         c: "circle",
         t: "trim",
-        m: "transform",
+        m: "move",
         v: "select",
       } as Record<string, string>
     )[event.key.toLowerCase()];

@@ -1,5 +1,6 @@
 import { selectedGuides } from "../guides/selection.js";
-import { guidesVisible } from "../guides/view-state.js";
+import { editingGuides } from "../guides/view-state.js";
+import { activeTransformTool } from "../model/transform-layers.js";
 import { onToolboxChange, setToolboxTree, toolboxTree } from "../preferences/toolbox.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { type ToolResult, toolCatalog } from "./catalog.js";
@@ -105,14 +106,22 @@ export class Toolbox {
       const path = choice && findToolboxPath(toolboxTree(), choice.id);
       if (path) setToolboxTree(selectToolboxPath(toolboxTree(), path));
     }
+    if (this.editor.world.active ? this.editor.moveMode : this.editor.modeling.tool === "move") {
+      const tree = toolboxTree();
+      const active = activeTransformTool(this.editor);
+      const path = findToolboxPath(tree, active);
+      if (path && toolboxLeaf(tree.items[1]) !== active)
+        setToolboxTree(selectToolboxPath(tree, path));
+    }
     const signature = JSON.stringify([
       toolboxTree(),
       catalog.map((tool) => [tool.id, tool.unavailable]),
       this.editor.tool,
       this.editor.modeling.tool,
+      activeTransformTool(this.editor),
       this.editor.interactions.current?.kind,
       this.editor.interactions.toolId,
-      guidesVisible(this.editor),
+      editingGuides(this.editor),
       selectedGuides(this.editor).size,
     ]);
     if (signature === this.signature || this.drag.dragging) return;
@@ -126,12 +135,13 @@ export class Toolbox {
     const source = this.editor.interactions.toolId;
     if (source && source !== this.editor.interactions.current?.kind && this.tools.has(source))
       return source;
-    if (this.editor.world.active) return this.editor.moveMode ? "transform" : this.editor.tool;
+    if (this.editor.world.active)
+      return this.editor.moveMode ? activeTransformTool(this.editor) : this.editor.tool;
     const kind = this.editor.interactions.current?.kind;
     if (kind === "face-offset") return "offset";
     if (kind && this.tools.has(kind)) return kind;
     return this.editor.modeling.tool === "move"
-      ? "transform"
+      ? activeTransformTool(this.editor)
       : (this.editor.modeling.tool ?? "select");
   }
   private row(path: ToolboxPath): HTMLElement {

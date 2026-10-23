@@ -1,3 +1,4 @@
+import { Vector3 } from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
 import {
@@ -8,6 +9,8 @@ import {
   boxWorld,
   type TransformBox,
 } from "./transform-box.js";
+import { boxHandleVisible } from "./transform-box-layout.js";
+import { displayedTransformBox } from "./transform-clearance.js";
 import { WidgetClearance } from "./widget-clearance.js";
 import "./scale.css";
 
@@ -23,6 +26,7 @@ export class ScaleWidget {
   private svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   private buttons = new Map<string, HTMLButtonElement>();
   private geometry = new Map<string, BoxHandle>();
+  private editor: SketchEditor | null = null;
   onstart: (event: PointerEvent, handle: BoxHandle) => void = () => {};
   constructor(overlay: HTMLElement) {
     this.root.className = "scale-widget";
@@ -120,6 +124,8 @@ export class ScaleWidget {
     widgetPivot: Vector,
     factors: Vector,
   ): void {
+    this.editor = editor;
+    displayedTransformBox(editor, box, pivot, factors);
     const bounds = editor.world.canvas.getBoundingClientRect();
     const local = boxLocal(box, pivot);
     const project = (point: Vector) => {
@@ -137,7 +143,15 @@ export class ScaleWidget {
         line.setAttribute(key, String(value));
       this.svg.append(line);
     }
-    this.geometry = new Map(boxHandles(box).map((handle) => [handle.key, handle]));
+    const towardCamera = editor.world.camera
+      .getWorldDirection(new Vector3())
+      .negate()
+      .toArray() as Vector;
+    this.geometry = new Map(
+      boxHandles(box)
+        .filter((handle) => boxHandleVisible(box, handle, towardCamera))
+        .map((handle) => [handle.key, handle]),
+    );
     this.positionHandles(project, boxLocal(box, widgetPivot));
     const points = [...this.geometry.values()].map((handle) => project(handle.point));
     for (const control of this.root.parentElement?.querySelectorAll(
@@ -209,6 +223,7 @@ export class ScaleWidget {
     }
   }
   update(visible: boolean, active: boolean, valid: boolean, busy: boolean, closing: boolean): void {
+    if (!visible && this.editor) displayedTransformBox(this.editor, null);
     this.root.hidden = !visible;
     this.card.hidden = !active;
     this.accept.hidden = this.cancel.hidden = !active;
@@ -220,6 +235,7 @@ export class ScaleWidget {
     });
   }
   dispose(): void {
+    if (this.editor) displayedTransformBox(this.editor, null);
     this.placement.dispose();
     this.root.remove();
   }

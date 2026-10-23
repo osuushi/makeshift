@@ -1,6 +1,8 @@
 import { toolboxGroup as group, type ToolboxGroup, toolboxLeaves } from "./toolbox-tree.js";
 
 export const drawerTitle = "Other Tools";
+export const transformTools = ["move", "rotate", "scale", "transform"] as const;
+export const transformToolGroup = (): ToolboxGroup => group(...transformTools);
 export function toolboxMenu(title: string, ...items: (string | ToolboxGroup)[]): ToolboxGroup {
   return { ...group(...items), title };
 }
@@ -9,7 +11,7 @@ export function toolboxMenu(title: string, ...items: (string | ToolboxGroup)[]):
 export function defaultToolbox(): ToolboxGroup {
   return group(
     "select",
-    "transform",
+    transformToolGroup(),
     group("line", "rectangle", "circle", "bezier", "pen"),
     group("cube", "cylinder", "sphere", "cone", "drill"),
     group("extrude", "revolve", "loft"),
@@ -40,6 +42,7 @@ export function toolboxMenuTitle(item: ToolboxGroup): string {
   );
   if (typeof match === "object") return match.title ?? "Tools";
   for (const [title, ids] of [
+    ["Transform", transformTools],
     ["Drawing", ["line", "rectangle", "circle", "bezier", "pen"]],
     ["Primitives", ["cube", "cylinder", "sphere", "cone", "drill"]],
     ["Extrude & revolve", ["extrude", "revolve", "loft"]],

@@ -4,7 +4,7 @@ import { near } from "./geometry.js";
 import { GuideMoveChooser } from "./move-chooser.js";
 import { type GuideMoveCandidate, type GuideMoveTarget, guideMoveProbe } from "./move-target.js";
 import type { GuideSurfacePlan } from "./tool-path.js";
-import { guidesVisible, observeGuides } from "./view-state.js";
+import { editingGuides, observeGuides } from "./view-state.js";
 
 const activeTargets = new WeakMap<SketchEditor, readonly GuideMoveCandidate[]>();
 const activeDrags = new WeakSet<SketchEditor>();
@@ -39,7 +39,7 @@ export class GuideSurfaceSnap {
   }
   private visibilityChanged(): void {
     if (!this.create) return;
-    if (!guidesVisible(this.editor)) {
+    if (!editingGuides(this.editor)) {
       this.pending = this.confirmed = null;
       activeTargets.delete(this.editor);
       this.chooser?.close();
@@ -55,7 +55,7 @@ export class GuideSurfaceSnap {
     if (this.event) this.move(this.event, this.fallback, this.scale);
   }
   private initialize(plan: GuideSurfacePlan | null): void {
-    if (!plan || !guidesVisible(this.editor)) return;
+    if (!plan || !editingGuides(this.editor)) return;
     this.plan = plan;
     this.feedback = new GuideDragFeedback(this.editor, this.host, false);
     if (plan.targets instanceof Promise) this.feedback.destinations.pending(plan.origin);
@@ -71,7 +71,7 @@ export class GuideSurfaceSnap {
       .then((targets) => {
         if (this.plan !== plan) return;
         this.targets = targets;
-        if (guidesVisible(this.editor)) {
+        if (editingGuides(this.editor)) {
           activeTargets.set(this.editor, targets);
           this.feedback?.destinations.show(plan.origin, targets);
         }
@@ -86,7 +86,7 @@ export class GuideSurfaceSnap {
     this.event = event;
     this.fallback = fallback;
     this.scale = scale;
-    if (!this.plan || !guidesVisible(this.editor)) {
+    if (!this.plan || !editingGuides(this.editor)) {
       this.queue(fallback);
       return;
     }

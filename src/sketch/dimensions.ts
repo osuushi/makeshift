@@ -1,4 +1,5 @@
 import { handoffModalPointer } from "../model/modal-pointer-handoff.js";
+import { transformLayerEnabled } from "../model/transform-layers.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { layoutLocalControls } from "./control-layout.js";
@@ -182,7 +183,16 @@ export class Dimensions implements NumericFields {
     // iPad focus must stay in the initiating key event when no edit needs saving.
     const finished = this.draft.finish();
     if (!(typeof finished === "boolean" ? finished : await finished)) return false;
-    const next = index < 0 ? (reverse ? 2 : 0) : (index + (reverse ? 2 : 1)) % 3;
+    const available = [
+      ...(transformLayerEnabled(e, "move") ? [0, 1] : []),
+      ...(transformLayerEnabled(e, "rotate") ? [2] : []),
+    ];
+    if (!available.length) return false;
+    const position = available.indexOf(index);
+    const next =
+      position < 0
+        ? available[reverse ? available.length - 1 : 0]
+        : available[(position + (reverse ? available.length - 1 : 1)) % available.length];
     e.transformAxis = next === 0 ? "x" : next === 1 ? "y" : null;
     e.transformRotation = next === 2;
     e.refresh();

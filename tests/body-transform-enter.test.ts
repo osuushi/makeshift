@@ -49,7 +49,7 @@ function setup(t: TestContext) {
   let calls = 0;
   let reason: string | null = null;
   toolCatalog(editor).register({
-    id: "transform",
+    id: "move",
     label: "Transform",
     category: "Transform",
     reason: () => reason,
@@ -92,7 +92,7 @@ function setup(t: TestContext) {
   };
 }
 
-test("idle Enter invokes shared Transform for one or several whole bodies; disposal stops it", async (t) => {
+test("idle Enter invokes default Move for one or several whole bodies; disposal stops it", async (t) => {
   const route = setup(t);
   assert.equal((await route.key()).defaultPrevented, true);
   assert.equal(route.calls(), 1);
@@ -171,7 +171,7 @@ test("Transform admits selection guidance but rechecks calculation guards before
   const catalog = toolCatalog(route.state as unknown as SketchEditor);
   assert.equal(catalog.results()[0]?.unavailable, null);
   route.state.blocked = true;
-  await catalog.invoke("transform");
+  await catalog.invoke("move");
   assert.equal(route.calls(), 0);
   assert.equal(route.state.message, "Wait for the current calculation");
 });

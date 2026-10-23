@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { defaultToolbox, drawerTitle, toolboxMenu as menu } from "../src/tools/toolbox-defaults.js";
+import {
+  defaultToolbox,
+  drawerTitle,
+  toolboxMenu as menu,
+  transformToolGroup as transforms,
+} from "../src/tools/toolbox-defaults.js";
 import { moveToolbox, normalizeToolbox } from "../src/tools/toolbox-layout.js";
 import { migrateToolbox } from "../src/tools/toolbox-migration.js";
 import {
@@ -73,7 +78,7 @@ test("compact defaults keep Select standalone and omit immediate commands", () =
   assert.equal(tree.items.length, 8);
   assert.equal(tree.items[0], "select");
   assert.deepEqual(tree.items[5], group("union", "subtract", "intersect", "split", "imprint"));
-  assert.equal(tree.items[1], "transform");
+  assert.deepEqual(tree.items[1], transforms());
   assert.deepEqual(tree.items[3], group("cube", "cylinder", "sphere", "cone", "drill"));
   assert.deepEqual(tree.items[4], group("extrude", "revolve", "loft"));
   const leaves = toolboxLeaves(tree);
@@ -101,7 +106,7 @@ test("saved layouts cannot group Select or admit commands; selected tools surviv
   const clean = normalizeToolbox(root);
   assert.deepEqual(
     clean,
-    group("select", "transform", { items: ["circle", "line"], selected: 1 }, menu(drawerTitle)),
+    group("select", transforms(), { items: ["circle", "line"], selected: 1 }, menu(drawerTitle)),
   );
   assert.deepEqual(normalizeToolbox(moveToolboxItem(clean, [0], [2], "inside")), clean);
 });
@@ -117,7 +122,7 @@ test("migration keeps Booleans at the root and moves buried rare tools into name
   const upgraded = migrateToolbox(old);
   assert.deepEqual(upgraded.items.slice(0, 5), [
     "select",
-    "transform",
+    transforms(),
     "line",
     group("cube", "extrude", "revolve"),
     group("union", "subtract"),
@@ -126,12 +131,20 @@ test("migration keeps Booleans at the root and moves buried rare tools into name
     upgraded.items.at(-1),
     menu(drawerTitle, menu("Sketch editing", "trim", "sketch-offset")),
   );
-  assert.deepEqual(toolboxLeaves(upgraded).sort(), [...toolboxLeaves(old), "transform"].sort());
+  assert.deepEqual(
+    toolboxLeaves(upgraded).sort(),
+    [...toolboxLeaves(old), "move", "rotate", "scale", "transform"].sort(),
+  );
   assert.ok(validToolboxTree(upgraded));
 });
 
 test("dragging within an ordinary group reorders instead of creating nested alternatives", () => {
-  const tree = group("select", "transform", group("cube", "cylinder", "sphere"), menu(drawerTitle));
+  const tree = group(
+    "select",
+    transforms(),
+    group("cube", "cylinder", "sphere"),
+    menu(drawerTitle),
+  );
   const next = moveToolbox(tree, [2, 1], [2, 2], "inside");
   assert.deepEqual(next.items[2], group("cube", "sphere", "cylinder"));
   assert.equal(moveToolbox(tree, [0], [2], "inside"), tree);
@@ -141,7 +154,7 @@ test("dragging within an ordinary group reorders instead of creating nested alte
 test("tools move in and out of named menus without changing labels or creating aliases", () => {
   const tree = group(
     "select",
-    "transform",
+    transforms(),
     group("line", "circle"),
     menu(drawerTitle, menu("Sketch editing", "trim")),
   );
@@ -156,13 +169,21 @@ test("tools move in and out of named menus without changing labels or creating a
 });
 
 test("whole groups become named menus in the drawer and flat alternatives outside it", () => {
-  const tree = group("select", "transform", group("line", "circle"), menu(drawerTitle));
+  const tree = group("select", transforms(), group("line", "circle"), menu(drawerTitle));
   const inside = moveToolbox(tree, [2], [3], "inside");
   const drawer = inside.items[2] as ReturnType<typeof group>;
   assert.ok((drawer.items[0] as ReturnType<typeof group>).title);
   const outside = moveToolbox(inside, [2, 0], [], "inside");
   assert.deepEqual(outside.items.at(-1), group("line", "circle"));
-  assert.deepEqual(toolboxLeaves(outside).sort(), ["circle", "line", "select", "transform"]);
+  assert.deepEqual(toolboxLeaves(outside).sort(), [
+    "circle",
+    "line",
+    "move",
+    "rotate",
+    "scale",
+    "select",
+    "transform",
+  ]);
 });
 
 test("v2 migration retains the earlier top-level Boolean promotion", () => {

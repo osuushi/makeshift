@@ -12,6 +12,8 @@ import { axes } from "./body-placement.js";
 import { projectedAxis } from "./extrude-axis.js";
 import { scaleSelection } from "./scale-selection.js";
 import { boxHandles, boxWorld, selectionBox } from "./transform-box.js";
+import { clearTransformControl, observeTransformBox } from "./transform-clearance.js";
+import { transformLayerEnabled } from "./transform-layers.js";
 import { WidgetClearance, type WidgetTarget } from "./widget-clearance.js";
 import { cameraFacingWidth } from "./widget-frame.js";
 import "./body-gizmo.css";
@@ -21,6 +23,9 @@ export class BodyGizmo {
   readonly input = document.createElement("input");
   readonly pivot = document.createElement("button");
   private clearance: WidgetClearance;
+  private boxEditor: SketchEditor | null = null;
+  private unobserveBox: () => void = () => {};
+  private repaint: () => void = () => {};
   private handles: { axis: string; rotate: boolean; button: HTMLButtonElement }[] = [];
   constructor(
     overlay: HTMLElement,
@@ -61,6 +66,12 @@ export class BodyGizmo {
     translationOnly = false,
     normal: Vector | null = null,
   ): void {
+    this.repaint = () => this.update(editor, pivot, movingPivot, translationOnly, normal);
+    if (this.boxEditor !== editor) {
+      this.unobserveBox();
+      this.boxEditor = editor;
+      this.unobserveBox = observeTransformBox(editor, () => this.repaint());
+    }
     const world = editor.world,
       origin = world.project(pivot);
     if (!this.root.hidden) editor.transformAnchor = { point: [...pivot], active: true };
@@ -75,6 +86,7 @@ export class BodyGizmo {
     for (const handle of this.handles) {
       const index = names.indexOf(handle.axis);
       handle.button.hidden =
+        !transformLayerEnabled(editor, handle.rotate ? "rotate" : "move") ||
         (handle.axis === "N" && !normal) ||
         (handle.rotate &&
           (movingPivot || translationOnly || !rotationVisible(world.camera, axes[handle.axis]))) ||
@@ -107,6 +119,9 @@ export class BodyGizmo {
         end.y = origin.y + boundary.y * 144;
       }
       const local = { x: end.x - origin.x, y: end.y - origin.y };
+      const ratio = clearTransformControl(editor, pivot, local);
+      local.x *= ratio;
+      local.y *= ratio;
       handle.button.innerHTML = markerMarkup(world.camera, u, v, handle.rotate);
       const hit = handle.button.getBoundingClientRect();
       entries.push({
@@ -115,7 +130,7 @@ export class BodyGizmo {
       });
     }
     const source = scaleSelection(editor);
-    const box = source && selectionBox(editor, source);
+    const box = transformLayerEnabled(editor, "scale") && source && selectionBox(editor, source);
     const obstacles: WidgetTarget[] = [{ x: 0, y: 0, size: 20 }];
     if (box)
       for (const handle of boxHandles(box)) {
@@ -133,6 +148,7 @@ export class BodyGizmo {
     );
   }
   dispose(): void {
+    this.unobserveBox();
     this.clearance.dispose();
     this.root.remove();
   }

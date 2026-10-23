@@ -7,10 +7,12 @@ stored world position or an offset from an owner's center.
 
 ## Interaction
 
-**Guide points** is a toolbar visibility toggle in both workspaces, with shortcut
-**G**. It starts on and controls saved markers, their snapping, and hover-only
-candidate discovery together. This is per-window view state, separate from each
-guide's eye control and document Undo. There is no modal Guide points creation tool.
+**Edit Guide Points** is an on/off toolbar toggle in both workspaces, with shortcut
+**G**. It controls candidate discovery, remembered independently for sketch and 3D
+workspaces. Sketch editing starts off; 3D editing starts on. Non-hidden saved guides and
+their ordinary snapping remain available with editing off. This is per-window view
+state, separate from each guide's eye control and document Undo. There is no modal
+Guide points creation tool.
 With Select active, automatic discovery uses the ordinary click target. A guide
 is a candidate when its parent is hovered or directly neighbors the hovered entity
 in the geometry graph, and the pointer lies within 256 CSS pixels of the guide.
@@ -27,12 +29,12 @@ survive discovery, spacing and parent clearance there as well as at the current
 pointer. A centroid outside its face or over unrelated geometry must not appear
 only while hovering a different location and vanish on approach.
 
-Selected geometry also exposes candidates persistently, including selected sketch
+Selected geometry also exposes nearby candidates, including selected sketch
 curves, editing groups and point owners. Selection uses the same immediate graph
 neighborhood and also supports combined selected-face definitions. These candidates
-do not require a hovered parent, pointer proximity or a successful destination
-hover probe. They still obey owner visibility, saved-guide blocking, spacing and
-parent clearance, and disappear when selection changes or clears. This makes
+do not require a hovered parent or a successful destination hover probe. They
+still require pointer proximity within 256 CSS pixels and obey owner visibility,
+saved-guide blocking, spacing and parent clearance, and disappear when selection changes or clears. This makes
 otherwise inaccessible references saveable without relaxing the visual filters.
 
 Definitions at the same 3D location share one marker and the existing definition
@@ -42,7 +44,11 @@ using the original set so collisions remove both points and do not depend on
 iteration order. Points at different depths still collide when projected together.
 Every visible saved guide participates in this spacing check regardless of its owner or pointer distance;
 saved guides remain visible, while hidden guides and hidden owners do not block.
-Already-saved definitions do not also appear as ghosts.
+Already-saved definitions do not also appear as ghosts. Saved and candidate markers
+are suppressed wherever their hit footprint overlaps a visible orientable control
+or application panel, including parameter cards, menus, toolbars and Entities.
+Transient destination circles and lock rings obey the same clearance. Saved guides
+remain displayed during tool gestures regardless of whether they are reachable targets.
 
 After spacing, each ghost must leave a continuous 32 CSS pixels along every
 referenced parent's largest projected dimension. Project the displayed curves,
@@ -190,7 +196,7 @@ are not created.
 
 ## Snapping ordinary tool handles
 
-With Guide points visible, dragging an ordinary Offset, Extrude or Fillet handle
+With Edit Guide Points on, dragging an ordinary Offset, Extrude or Fillet handle
 also exposes reachable reference points. Offset/Extrude fit their supporting plane
 or cylinder through the actual target, including off-axis references; the handle
 itself need not meet that point. Their existing source-support restrictions above
@@ -208,8 +214,8 @@ dragging remains available throughout.
 
 References stay at their accepted positions for the gesture. The ordinary tool
 owns free dragging, preview and Undo; snapping only supplies its parameter.
-Shift bypasses target snaps, and hiding Guide points disables them. Covered
-unsaved points use hold-to-choose, including when only one covered choice exists.
+Shift bypasses target snaps, and turning Edit Guide Points off disables generated
+tool targets. Covered unsaved points use hold-to-choose, including when only one covered choice exists.
 Native preview success is required for lock feedback; rejected or clamped values
 lose their target. Release retains the temporary tool result and removes target
 feedback. Completion accepts it with the tool's existing single document Undo.

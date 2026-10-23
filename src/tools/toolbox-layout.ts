@@ -1,4 +1,11 @@
-import { drawerTitle, toolboxMenu, toolboxMenuTitle, toolboxTools } from "./toolbox-defaults.js";
+import {
+  drawerTitle,
+  toolboxMenu,
+  toolboxMenuTitle,
+  toolboxTools,
+  transformToolGroup,
+  transformTools,
+} from "./toolbox-defaults.js";
 import {
   toolboxGroup as group,
   moveToolboxItem,
@@ -13,7 +20,17 @@ import {
 
 /** Only the drawer contains named nested menus; ordinary alternatives are one layer. */
 export function normalizeToolbox(root: ToolboxGroup): ToolboxGroup {
-  const seen = new Set(["select", "transform"]);
+  const seen = new Set<string>(["select", ...transformTools]);
+  const transforms = transformToolGroup();
+  const prior = root.items.find(
+    (item) =>
+      typeof item !== "string" &&
+      !item.title &&
+      toolboxLeaves(item).some((id) => (transformTools as readonly string[]).includes(id)),
+  );
+  const selected = prior && toolboxLeaf(prior);
+  if (selected && (transformTools as readonly string[]).includes(selected))
+    transforms.selected = transformTools.indexOf(selected as (typeof transformTools)[number]);
   const keep = (id: string) => {
     if (seen.has(id) || !toolboxTools.has(id)) return false;
     seen.add(id);
@@ -27,7 +44,7 @@ export function normalizeToolbox(root: ToolboxGroup): ToolboxGroup {
     });
     return toolboxMenu(item.title ?? toolboxMenuTitle(item), ...items);
   };
-  const items: ToolboxItem[] = ["select", "transform"];
+  const items: ToolboxItem[] = ["select", transforms];
   let drawer: ToolboxGroup | undefined;
   for (const item of root.items) {
     if (typeof item === "string") {
@@ -62,11 +79,11 @@ export function moveToolbox(
     target = toolboxItem(root, to);
   if (
     source === "select" ||
-    source === "transform" ||
+    from[0] === 1 ||
     (typeof source === "object" && source.title === drawerTitle)
   )
     return root;
-  if (target === "select" || target === "transform") return root;
+  if (target === "select" || to[0] === 1) return root;
   // Within an existing group, a center drop orders siblings instead of nesting them.
   if (to.length > 1 && typeof target === "string" && drop === "inside") drop = "after";
   return normalizeToolbox(moveToolboxItem(root, from, to, drop));
