@@ -28,6 +28,7 @@ export class ScaleWidget {
   private geometry = new Map<string, BoxHandle>();
   private editor: SketchEditor | null = null;
   onstart: (event: PointerEvent, handle: BoxHandle) => void = () => {};
+  onnumeric: (handle: BoxHandle) => void = () => {};
   constructor(overlay: HTMLElement) {
     this.root.className = "scale-widget";
     this.root.hidden = true;
@@ -197,7 +198,11 @@ export class ScaleWidget {
           const current = this.geometry.get(key);
           if (current) this.onstart(event, current);
         });
-        button.addEventListener("click", (e) => e.stopPropagation());
+        button.addEventListener("click", (event) => {
+          event.stopPropagation();
+          const current = this.geometry.get(key);
+          if (event.detail === 0 && current) this.onnumeric(current);
+        });
         this.buttons.set(key, button);
         this.handles.append(button);
       }

@@ -237,9 +237,7 @@ after an earlier nonuniform preview. Nonuniform scaling retains destination grid
 entry remains exact. Held modifiers update the preview during
 the drag. The scale card stays hidden until a resize handle is used; clicking a handle
 opens exact entry without requiring a drag. It hides again on acceptance or cancellation.
-In sketch Transform, Tab reveals and focuses enabled-layer fields: X translation,
-Y translation, then rotation in a cycle (Shift-Tab reverses it). Only the active
-Move field is shown; rotation is revealed by its widget or its turn in the Tab cycle and updates during dragging.
+Tab visits visible action widgets and controls in already open parameter panels; Shift-Tab reverses traversal. Visiting a widget activates its ordinary numeric action and focuses/selects the corresponding field. Drag-only pivots, guide markers and panel grips are excluded. Sketch transform targets follow the visible axes and rotation glyph. During a held gesture, Tab stays within visible numeric fields. Enter uses the active tool’s normal numeric acceptance.
 Local X/Y/Z factors allow exact entry and use the box's lower bound
 on each changed axis; **Uniform scale** links the factors. Positive finite
 factors are required; collapsed or reflected scale candidates cannot accept.

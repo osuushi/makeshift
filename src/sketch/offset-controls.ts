@@ -57,14 +57,7 @@ export class OffsetControls {
               )
             ? "Select one closed loop to offset cubic curves"
             : "Select a sketch edge or closed loop"),
-      run: () => {
-        const rect = this.handle.getBoundingClientRect();
-        this.begin({ x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 });
-        if (this.session) {
-          this.input.focus();
-          this.input.select();
-        }
-      },
+      run: () => this.activate(),
     });
     this.root.className = "offset-control";
     this.handle.type = "button";
@@ -77,6 +70,13 @@ export class OffsetControls {
     this.root.append(this.handle, this.input);
     overlay.append(this.root);
     const options = { signal: this.abort.signal };
+    this.handle.addEventListener(
+      "click",
+      (event) => {
+        if (event.detail === 0) this.activate();
+      },
+      options,
+    );
     this.handle.addEventListener("pointerdown", this.start, options);
     this.handle.addEventListener("pointermove", this.move, options);
     this.handle.addEventListener("pointerup", this.release, options);
@@ -110,6 +110,14 @@ export class OffsetControls {
     );
     editor.world.changed.add(this.update);
     this.update();
+  }
+  private activate(): void {
+    const rect = this.handle.getBoundingClientRect();
+    this.begin({ x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 });
+    if (this.session) {
+      this.input.focus();
+      this.input.select();
+    }
   }
   private start = (event: PointerEvent): void => {
     if (event.button !== 0) return;

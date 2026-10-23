@@ -138,7 +138,7 @@ const cleanup = new CleanupControls(editor, overlay);
 const disposeModelHighlight = modelHighlight(editor);
 const disposeBodies = bodyView(editor);
 const selection = new SelectionOverlay(editor, overlay);
-const transforms = new TransformOverlay(editor, overlay);
+const transforms = new TransformOverlay(editor, overlay, (axis) => numeric.activateTransform(axis));
 const constraints = new ConstraintDisplay(editor, readouts);
 const pointEdge = new PointEdgeControls(editor, constraints.available);
 const pointTangent = new PointTangentControls(editor, constraints.available);

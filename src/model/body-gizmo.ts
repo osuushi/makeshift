@@ -8,6 +8,7 @@ import {
   widgetRadius,
 } from "../sketch/move-widget/geometry.js";
 import type { Vector } from "../sketch/planes.js";
+import { toolCatalog } from "../tools/catalog.js";
 import { axes } from "./body-placement.js";
 import { projectedAxis } from "./extrude-axis.js";
 import { scaleSelection } from "./scale-selection.js";
@@ -48,6 +49,17 @@ export class BodyGizmo {
         button.addEventListener("transform-numeric-tap", () =>
           start(new PointerEvent("pointerdown", { pointerId: -1 }), axis, rotate),
         );
+        button.addEventListener("click", (event) => {
+          if (event.detail !== 0 || !this.boxEditor) return;
+          if (!this.boxEditor.interactions.current) {
+            button.dispatchEvent(new Event("transform-numeric-tap"));
+            return;
+          }
+          void toolCatalog(this.boxEditor).activate({
+            reason: () => null,
+            run: () => button.dispatchEvent(new Event("transform-numeric-tap")),
+          });
+        });
         this.root.append(button);
         this.handles.push({ axis, rotate, button });
       }

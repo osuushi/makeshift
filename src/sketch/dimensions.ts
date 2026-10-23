@@ -1,5 +1,4 @@
 import { handoffModalPointer } from "../model/modal-pointer-handoff.js";
-import { transformLayerEnabled } from "../model/transform-layers.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { layoutLocalControls } from "./control-layout.js";
@@ -13,6 +12,7 @@ import type { SketchEditor } from "./editor.js";
 import type { NumericFields } from "./numeric-edit.js";
 import { focusNumericField } from "./numeric-focus.js";
 import { sketchIcon } from "./sketch-icons.js";
+import { sketchRotationVisible, transformHandles } from "./transform-handles.js";
 
 export class Dimensions implements NumericFields {
   private key = "";
@@ -155,7 +155,7 @@ export class Dimensions implements NumericFields {
     const field = { quantity, label, input, lock };
     this.fields.push(field);
     this.draft.bind(field, async (reverse) => {
-      if (!(await this.focusTransform(reverse))) focusNumericField(this.overlay, reverse);
+      focusNumericField(document.body, reverse);
     });
   }
   async commitFocused(): Promise<void> {
@@ -164,40 +164,32 @@ export class Dimensions implements NumericFields {
   cancel(): void {
     this.draft.cancel();
   }
-  async focusTransform(reverse = false): Promise<boolean> {
+  async activateTransform(axis: "x" | "y" | "rotation"): Promise<boolean> {
     const e = this.editor;
     if (
-      !e.moveMode ||
       !e.sketch ||
       e.isDragging ||
       (e.interactions.current && e.interactions.current.kind !== "numeric")
     )
       return false;
-    const index = e.transformRotation
-      ? 2
-      : e.transformAxis === "y"
-        ? 1
-        : e.transformAxis === "x"
-          ? 0
-          : -1;
-    // iPad focus must stay in the initiating key event when no edit needs saving.
+    // Preserve synchronous iPad focus when the previous field needs no acceptance.
     const finished = this.draft.finish();
     if (!(typeof finished === "boolean" ? finished : await finished)) return false;
-    const available = [
-      ...(transformLayerEnabled(e, "move") ? [0, 1] : []),
-      ...(transformLayerEnabled(e, "rotate") ? [2] : []),
-    ];
-    if (!available.length) return false;
-    const position = available.indexOf(index);
-    const next =
-      position < 0
-        ? available[reverse ? available.length - 1 : 0]
-        : available[(position + (reverse ? available.length - 1 : 1)) % available.length];
-    e.transformAxis = next === 0 ? "x" : next === 1 ? "y" : null;
-    e.transformRotation = next === 2;
+    const widget = transformHandles(e);
+    if (
+      !e.sketch ||
+      (axis === "rotation"
+        ? !(widget ? widget.rotationVisible : sketchRotationVisible(e))
+        : !widget?.axes.some((handle) => handle.axis === axis))
+    )
+      return false;
+    e.transformAxis = axis === "rotation" ? null : axis;
+    e.transformRotation = axis === "rotation";
     e.refresh();
-    this.focus(next === 0 ? "translateX" : next === 1 ? "translateY" : "angle");
-    return true;
+    const quantity = axis === "rotation" ? "angle" : axis === "x" ? "translateX" : "translateY";
+    const field = this.fields.find((field) => field.quantity === quantity);
+    field?.input.focus();
+    return !!field;
   }
   focus(quantity: Quantity, duplicate = false): void {
     this.fields.find((field) => field.quantity === quantity)?.input.focus();

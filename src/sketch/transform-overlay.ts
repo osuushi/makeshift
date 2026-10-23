@@ -28,11 +28,13 @@ export class TransformOverlay {
   constructor(
     private editor: SketchEditor,
     overlay: HTMLElement,
+    private activateNumeric: (axis: "x" | "y" | "rotation") => Promise<boolean>,
   ) {
     this.root.style.cssText = "position:absolute;inset:0;pointer-events:none";
     this.unregister = registerSketchWidgets(editor, this.root, this.redraw);
     this.svg.classList.add("handles");
-    this.svg.setAttribute("aria-hidden", "true");
+    this.svg.setAttribute("role", "group");
+    this.svg.setAttribute("aria-label", "Sketch transform controls");
     this.pivot.className = "pivot-control";
     this.pivot.textContent = "Pivot";
     this.pivot.setAttribute("aria-label", "Place rotation pivot");
@@ -172,6 +174,12 @@ export class TransformOverlay {
     const group = this.node("g", {
       transform: `translate(${x - size / 2} ${y - size / 2})`,
       "data-move-marker": axis,
+      tabindex: -1,
+      role: "button",
+      "aria-label": axis === "rotation" ? "Rotate sketch" : `Move sketch ${axis.toUpperCase()}`,
+    });
+    group.addEventListener("widget-numeric-activate", () => {
+      if (axis === "x" || axis === "y" || axis === "rotation") void this.activateNumeric(axis);
     });
     group.innerHTML = markup;
     const svg = group.firstElementChild;

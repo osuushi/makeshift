@@ -174,11 +174,11 @@ export class PlacementControls {
     this.input.setAttribute("aria-label", `${rotate ? "Rotation" : "Translation"} ${axis}`);
     this.input.value = "0";
     if (event.pointerId !== -1) lease.capture(event.currentTarget as Element, event.pointerId);
-    else {
+    this.editor.refresh();
+    if (event.pointerId === -1) {
       this.input.focus();
       this.input.select();
     }
-    this.editor.refresh();
   }
   private preview(value: number): void {
     const s = this.session;
