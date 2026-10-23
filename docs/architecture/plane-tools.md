@@ -169,6 +169,6 @@ as the camera orbits; panning does not change sides. A dense plane-aligned grid
 extends beyond each square and fades softly into its surroundings. This decorative
 halo does not enlarge the square's input target. They draw above body geometry
 and remain available independently of canonical fill/grid angular fades. An
-inapplicable plane appears disabled. Clicking uses the tool's ordinary reference
+inapplicable plane and its grid halo are hidden. Clicking uses the tool's ordinary reference
 selection callback, preserving preview, cancellation and Undo. Outside modal
 plane picking the cues disappear; ordinary canonical-plane selection is unchanged.

@@ -62,14 +62,8 @@ export async function modalPlaneWidgetRoute(page, name) {
   assert.deepEqual((await inspect(page)).modelingSelection, before.modelingSelection);
   await chooseTool(page, "Split Body", "split");
   await orient(page, [1, -1, 1]);
-  assert.equal(
-    await page
-      .getByRole("button", { name: "Use XY plane", exact: true })
-      .getAttribute("aria-disabled"),
-    "true",
-  );
-  await chooseWidget(page, "XY");
-  assert.equal((await inspect(page)).preview, null, "Inapplicable cue cannot change the tool");
+  assert.equal(await page.locator('[data-modal-plane="XY"]').isVisible(), false);
+  assert.equal((await inspect(page)).preview, null, "Hidden cue leaves the preview unchanged");
   const originalSize = await yz.boundingBox();
   const point = await widgetPoint(page, "YZ");
   await page.mouse.move(point.x, point.y);

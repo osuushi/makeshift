@@ -39,16 +39,18 @@ export function installModalPlaneWidgets(world: World, overlay: HTMLElement): ()
     const scale = (world.camera.top - world.camera.bottom) / world.camera.zoom / rect.height;
     for (const { id, polygon, grid } of widgets) {
       const accepted = !world.planePickerAccept || world.planePickerAccept(planes[id]);
-      const enabled = accepted && world.canNavigate();
+      polygon.style.display = accepted ? "" : "none";
+      grid.style.display = accepted ? "" : "none";
+      if (!accepted) continue;
+      const enabled = world.canNavigate();
       polygon.setAttribute("aria-disabled", String(!enabled));
       polygon.style.cursor = enabled ? "pointer" : "default";
-      polygon.style.opacity = accepted ? "1" : "0.3";
       const color = canonicalPlanes().colors[id];
       polygon.setAttribute("fill", color);
       polygon.setAttribute("stroke", color);
       if (!polygon.hasAttribute("fill-opacity")) polygon.setAttribute("fill-opacity", "0.16");
       polygon.setAttribute("points", widgetPoints(world, id, rect, scale));
-      updateModalPlaneGrid(grid, polygon, size, color, accepted);
+      updateModalPlaneGrid(grid, polygon, size, color);
     }
   };
   world.changed.add(update);

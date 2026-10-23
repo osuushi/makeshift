@@ -33,7 +33,6 @@ export function updateModalPlaneGrid(
   polygon: SVGPolygonElement,
   size: number,
   color: string,
-  accepted: boolean,
 ): void {
   const [a, b, , d] = Array.from(polygon.points);
   const ux = (b.x - a.x) / size;
@@ -44,6 +43,4 @@ export function updateModalPlaneGrid(
   const cy = a.y + ((uy + vy) * size) / 2;
   grid.setAttribute("transform", `matrix(${ux} ${uy} ${vx} ${vy} ${cx} ${cy})`);
   grid.style.color = color;
-  // Keep pale disabled grids legible; the square itself retains its stronger dimming.
-  grid.style.opacity = accepted ? "1" : "0.65";
 }
