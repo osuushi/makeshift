@@ -73,9 +73,9 @@ export async function modalPlaneWidgetRoute(page, name) {
   const originalSize = await yz.boundingBox();
   const point = await widgetPoint(page, "YZ");
   await page.mouse.move(point.x, point.y);
-  // Ctrl-wheel is the ordinary pinch path.
+  // Ctrl-wheel is the ordinary pinch path; keep the origin and larger cues onscreen.
   await page.keyboard.down("Control");
-  await page.mouse.wheel(0, -100);
+  await page.mouse.wheel(0, -20);
   await page.keyboard.up("Control");
   await settled(page);
   const zoomedSize = await yz.boundingBox();
@@ -114,7 +114,7 @@ async function acceptedWidgetEdits(page, before) {
   const box = await page.locator("canvas").boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.keyboard.down("Control");
-  await page.mouse.wheel(0, 100);
+  await page.mouse.wheel(0, 20);
   await page.keyboard.up("Control");
   await settled(page);
   await worldClick(page, [0, 0, 20]);

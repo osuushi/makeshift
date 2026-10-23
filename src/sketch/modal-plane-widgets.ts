@@ -4,7 +4,7 @@ import type { World } from "./world.js";
 
 const svgNamespace = "http://www.w3.org/2000/svg";
 const inset = 18;
-const size = 28;
+const size = 84;
 
 /** Fixed pixel-scale plane cues: view state only, using the ordinary modal picker. */
 export function installModalPlaneWidgets(world: World, overlay: HTMLElement): () => void {
