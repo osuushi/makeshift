@@ -100,7 +100,15 @@ export function validateDecorators(document: SketchDocument): void {
       !Number.isInteger(instance.version) ||
       !instance.settings ||
       typeof instance.settings !== "object" ||
-      (instance.problem !== undefined && typeof instance.problem !== "string")
+      (instance.problem !== undefined && typeof instance.problem !== "string") ||
+      (instance.gearGroup !== undefined &&
+        (instance.definition !== gearDefinition ||
+          typeof instance.gearGroup !== "string" ||
+          !instance.gearGroup)) ||
+      (instance.gearPitchRadius !== undefined &&
+        (instance.definition !== gearDefinition ||
+          !Number.isFinite(instance.gearPitchRadius) ||
+          instance.gearPitchRadius <= 0))
     )
       throw new Error("Invalid decorator instance");
     ids.add(instance.id);

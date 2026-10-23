@@ -4,6 +4,7 @@ import {
   resolveCustomContinuation,
 } from "../decorators/custom-continuation.js";
 import { editDecorators } from "../decorators/edits.js";
+import { continueGearGroups } from "../decorators/gear-support.js";
 import { type DecoratorInspectionRequest, inspectDecorator } from "../decorators/inspection.js";
 import { editJavaScriptDecorators, needsJavaScript } from "../decorators/javascript-edits.js";
 import { type EnabledDefinition, JavaScriptDecorators } from "../decorators/javascript-hooks.js";
@@ -33,7 +34,8 @@ export class DecoratorSession {
     }
   }
   async continue(document: SketchDocument): Promise<SketchDocument> {
-    if (!document.decorators?.some((d) => pendingCustomContinuation.has(d))) return document;
+    if (!document.decorators?.some((d) => pendingCustomContinuation.has(d)))
+      return continueGearGroups(document);
     return resolveCustomContinuation(document, await this.hooks());
   }
   async inspect(document: SketchDocument, query: DecoratorInspectionRequest) {

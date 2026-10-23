@@ -1,6 +1,8 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { appendCustomDiagnostics } from "./custom-diagnostics.js";
+import { gearGroupMembers } from "./gear-group.js";
+import { gearFitFailure } from "./gear-group-geometry.js";
 import { appendGearInformation, gearFieldInstances } from "./gear-panel.js";
 import { gearDefinition, gearManifest } from "./gear-settings.js";
 import { appendPresetControls } from "./preset-panel.js";
@@ -28,9 +30,13 @@ export function appendCustomDecorators(
 ) {
   const groups = new Map<string, DecoratorInstance[]>();
   for (const instance of instances) {
-    const key = `${instance.definition}/${instance.version}`;
+    const key = `${instance.definition}/${instance.version}/${instance.gearGroup ?? ""}`;
     const group = groups.get(key) ?? [];
-    group.push(instance);
+    for (const member of instance.gearGroup
+      ? gearGroupMembers(editor.store.data, instance)
+      : [instance]) {
+      if (!group.some((d) => d.id === member.id)) group.push(member);
+    }
     groups.set(key, group);
   }
   for (const group of groups.values()) appendGroup(root, editor, group, draft, patch);
@@ -82,8 +88,8 @@ function appendGroup(
         enabled: true,
       });
     });
-  } else if (!group.some((d) => d.problem)) {
-    appendPresetControls(root, editor, group);
+  } else if (!group.some((d) => d.problem && !d.problem.startsWith(gearFitFailure))) {
+    if (!(group[0].gearGroup && group.length > 1)) appendPresetControls(root, editor, group);
     appendFields(root, editor, group, definition.fields, draft, patch);
   }
 
@@ -115,11 +121,26 @@ function appendFields(
   patch: (instances: DecoratorInstance[], settings: Settings, preview: boolean) => void,
 ): void {
   appendGearInformation(root, editor, group);
-  for (const instance of group) appendCustomDiagnostics(root, editor, instance);
+  for (const instance of group) {
+    if (!instance.problem?.startsWith(gearFitFailure))
+      appendCustomDiagnostics(root, editor, instance);
+  }
   for (const schema of fields) {
     if (schema.key === "preset" && schema.type === "enum") continue;
+    const shared = group[0].gearGroup && group.length > 1;
+    if (shared && ["teeth", "phase", "helix", "hand", "shift"].includes(schema.key)) continue;
     const applicable = gearFieldInstances(editor, group, schema.key);
     if (!applicable.length) continue;
+    if (group[0].gearGroup && schema.key === "module") {
+      decoratorField(
+        root,
+        { ...schema, label: "Maximum normal module" },
+        group,
+        (settings, preview) => patch(group, settings, preview),
+        draft,
+      );
+      continue;
+    }
     if (
       schema.visibleWhen &&
       !group.some((d) => schema.visibleWhen?.values.includes(d.settings[schema.visibleWhen.key]))

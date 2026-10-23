@@ -46,7 +46,7 @@ test("external spur gears remain clear over a full tooth engagement", async () =
             action: "apply",
             definition: gearDefinition,
             faces: [{ body: body.id, face: face.id }],
-            settings: { thinning: 0.03 },
+            settings: { teeth: 40, thinning: 0.03 },
           },
         })
       ).error,
@@ -215,7 +215,13 @@ test("real external/internal gears apply, edit, reopen and export spur/helical m
         assert.equal(meshes.length, 1);
         validateMesh(meshes[0]);
         const radii = meshes[0].vertices.map(([x, y]) => Math.hypot(x, y));
-        if (!hole) assert.ok(Math.abs(Math.max(...radii) - 10.5) < 0.06);
+        if (!hole)
+          assert.ok(
+            Math.abs(
+              Math.max(...radii) -
+                (10 + (20 * Math.cos((helix * Math.PI) / 180)) / Number(updated.settings.teeth)),
+            ) < 0.06,
+          );
       }
     } finally {
       owner.close();

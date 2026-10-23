@@ -19,8 +19,8 @@ Attach editable settings to selected geometry without replacing that geometry.
 At export, generate mesh modifications using the accepted geometry
 as read-only input. Threads and [knurling](knurling.md) are built-in decorators. JavaScript authors
 must be able to implement the same hooks. The built-in [gear decorator](gears.md)
-adds pitch-cylinder, pitch-cone and rack tools using the same owner and mesh pipeline. Gear relationships,
-approximate cylinder recognition, shader previews and print-color assignment remain
+adds pitch-cylinder, pitch-cone and rack tools using the same owner and mesh pipeline. Automatic external spur gear groups are described there; approximate cylinder
+recognition, shader previews and print-color assignment remain
 later work.
 
 Apply to multiple cylindrical faces, internal or external. Reject incompatible
@@ -198,6 +198,9 @@ preset updates that copy; editing one used by other parts forks it so their sett
 remain unchanged. Preset selection, copies, names, and last choices participate in
 ordinary Undo and archives. Numeric preview/cancellation does not save a preset.
 These settings snapshots do not link geometry or automatically resize mating parts.
+Automatic [spur-gear groups](gears.md) recall shared fitting limits and pressure,
+then refit integer counts and phase to the current cylinders. Their group membership,
+rather than preset sharing, maintains compatible generated profiles through resize.
 
 The Metric 60° and rounded profiles retain their prior depth rule; the FDM
 triangle's 1 mm radial envelope is fixed across pitch edits.

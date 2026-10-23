@@ -34,6 +34,7 @@ export interface DecoratorInstance {
   readonly faces: readonly DecoratorFace[]; readonly settings: DecoratorSettings;
   readonly frame: Plane; readonly axialReference?: [number, number];
   readonly problem?: string; readonly state?: unknown; readonly presetId?: string;
+  readonly gearGroup?: string; readonly gearPitchRadius?: number;
 }
 export interface DecoratorPreset {
   id: string; name: string; definition: string; version: number; settings: DecoratorSettings;
@@ -45,7 +46,7 @@ export interface DecoratorCatalog {
   builtins: { id: string; version: number; name: string; fields: readonly DecoratorField[] }[];
 }
 export type DecoratorEdit =
-  | { action: "apply"; definition: string; version?: number; faces: DecoratorFace[]; settings?: DecoratorSettings }
+  | { action: "apply"; definition: string; version?: number; faces: DecoratorFace[]; settings?: DecoratorSettings; gearGroup?: string }
   | { action: "settings"; ids: string[]; patch: DecoratorSettings; replace?: boolean }
   | { action: "preset"; ids: string[]; operation: "duplicate" | "rename" | "select"; presetId?: string; name?: string }
   | { action: "continue" | "reassign"; id: string; faces: DecoratorFace[] }
