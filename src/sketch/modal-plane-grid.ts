@@ -44,5 +44,6 @@ export function updateModalPlaneGrid(
   const cy = a.y + ((uy + vy) * size) / 2;
   grid.setAttribute("transform", `matrix(${ux} ${uy} ${vx} ${vy} ${cx} ${cy})`);
   grid.style.color = color;
-  grid.style.opacity = accepted ? "1" : "0.3";
+  // Keep pale disabled grids legible; the square itself retains its stronger dimming.
+  grid.style.opacity = accepted ? "1" : "0.65";
 }
