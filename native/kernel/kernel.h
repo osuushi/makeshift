@@ -95,3 +95,5 @@ void inspectTopology(std::ostream&, const Tree&, const std::vector<Operand>&);
 void exportStep(std::ostream&, const Tree&);
 
 TopoDS_Shape loftSections(const Tree&, const std::vector<Operand>&);
+
+std::vector<Result> importStep(const Tree&);

@@ -208,6 +208,9 @@ std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>
 }
 std::vector<Result> calculate(const Tree& input, const std::vector<Operand>& bodies,
                              std::string& mode, std::vector<std::string>& participants, std::vector<Result>* tools) {
+    if (input.get<std::string>("kind", "") == "import-step") {
+        mode = "new"; return importStep(input);
+    }
     if (input.get<std::string>("kind", "") == "replace-face") {
         mode = "new"; return replaceFace(input, bodies, participants);
     }
