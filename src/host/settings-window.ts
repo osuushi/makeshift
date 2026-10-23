@@ -31,8 +31,8 @@ export async function openSettingsWindow(directory: string, input: unknown): Pro
   const hidden = process.env.MAKESHIFT_TEST_HIDDEN === "1";
   const window = new BrowserWindow({
     title: "Settings — Makeshift",
-    width: 520,
-    height: 520,
+    width: 760,
+    height: 720,
     minWidth: 400,
     minHeight: 260,
     show: false,
@@ -44,14 +44,16 @@ export async function openSettingsWindow(directory: string, input: unknown): Pro
       nodeIntegration: false,
     },
   });
+  const bounds = window.getBounds();
+  window.setBounds(
+    settingsBounds(
+      bounds,
+      window.getContentBounds().height,
+      bounds.height - window.getContentBounds().height,
+      screen.getDisplayMatching(bounds).workArea,
+    ),
+  );
   const ipc = new DocumentIPC();
-  ipc.handle("settings-fit", (_event, height: unknown) => {
-    if (typeof height !== "number" || !Number.isFinite(height)) return;
-    const bounds = window.getBounds();
-    const frame = bounds.height - window.getContentBounds().height;
-    const work = screen.getDisplayMatching(bounds).workArea;
-    window.setBounds(settingsBounds(bounds, Math.ceil(height), frame, work));
-  });
   ipc.handle("settings-tools", () => toolboxTools);
   ipc.attach(window);
   settings = window;

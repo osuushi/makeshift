@@ -9,6 +9,7 @@ export function installToolboxSettings(
   panel: HTMLElement,
   readTools: () => readonly ToolboxTool[],
 ): () => void {
+  panel.classList.add("settings-toolbox");
   const dialog = panel.closest("dialog");
   const hint = document.createElement("p");
   hint.textContent =

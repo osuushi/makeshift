@@ -1,5 +1,6 @@
 export function settingsTabs(entries: [string, HTMLElement][]): HTMLElement {
   const container = document.createElement("div");
+  container.className = "settings-pages";
   const tabs = document.createElement("div");
   tabs.className = "settings-tabs";
   tabs.setAttribute("role", "tablist");

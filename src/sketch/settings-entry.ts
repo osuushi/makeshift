@@ -29,19 +29,11 @@ onViewDisplayChange(() => {
 const host = (
   window as Window & {
     makeshiftSettingsWindow?: {
-      fit(height: number): Promise<void>;
       tools(): Promise<ToolboxTool[]>;
       onTools(callback: (tools: ToolboxTool[]) => void): void;
     };
   }
 ).makeshiftSettingsWindow;
-const form = dialog.querySelector("form");
-if (host && form) {
-  new ResizeObserver(() => {
-    const padding = parseFloat(getComputedStyle(dialog).paddingTop) * 2;
-    void host.fit(Math.ceil(form.getBoundingClientRect().height + padding) + 2);
-  }).observe(form);
-}
 
 if (host) {
   const updateTools = (next: ToolboxTool[]) => {

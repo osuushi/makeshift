@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { launchElectron } from "./native-documents.mjs";
+import { settingsResizeChecks } from "./settings-resize-checks.mjs";
 import { settingsSurface } from "./settings-surface.mjs";
 import { settled } from "./ui-helpers.mjs";
 
@@ -21,6 +22,7 @@ try {
   assert.equal(await page.locator("dialog.application-settings[open]").count(), 0);
   await page.getByRole("button", { name: "Application settings" }).click();
   assert.equal(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length), 2);
+  await settingsResizeChecks(app, settings, dialog);
   // Theme storage must reach both the new Settings renderer and the drawing.
   const appearance = dialog.getByRole("combobox", { name: "Appearance" });
   for (const theme of ["dark", "light"]) {
@@ -31,9 +33,21 @@ try {
       theme,
     );
   }
+  const sizeBeforeScale = await settings.evaluate(() => [outerWidth, outerHeight]);
   await dialog.getByRole("combobox", { name: "User interface scale" }).selectOption("1.5");
   await page.waitForFunction(
     () => document.documentElement.style.getPropertyValue("--ui-scale") === "1.5",
+  );
+  await settings.evaluate(
+    () =>
+      new Promise((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(resolve));
+      }),
+  );
+  assert.deepEqual(
+    await settings.evaluate(() => [outerWidth, outerHeight]),
+    sizeBeforeScale,
+    "Interface scale does not take ownership of native window size",
   );
   await dialog.getByRole("tab", { name: "Interface", exact: true }).focus();
   await settings.keyboard.press("ArrowRight");
@@ -51,7 +65,7 @@ try {
   await dialog.getByRole("tab", { name: "Experimental", exact: true }).click();
   await dialog.getByRole("checkbox", { name: "Fast trim checks" }).check();
   await page.waitForFunction(() => localStorage.getItem("makeshift.fast-trim-checks") === "true");
-  // A taller tab must stay on screen even when the small tab was at the bottom.
+  // Tab changes retain the user position and size, including at the display bottom.
   await app.evaluate(({ BrowserWindow, screen }) => {
     const window = BrowserWindow.getAllWindows().find(
       (window) => window.getTitle() === "Settings — Makeshift",

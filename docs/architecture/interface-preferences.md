@@ -3,11 +3,12 @@
 Settings is available in the editor header, through Tools and with Cmd-, on Mac.
 It opens a separate, reusable Settings window on native desktop and a compact modal
 dialog in browsers. Interface, Sketch Grid, View, Decorators, Experimental and Toolbox tabs
-support arrow keys and Home/End and remain visible in a compact grid. Labels sit above their controls; related grid
+support arrow keys and Home/End. The active tab has an accent underline; tabs share a
+continuous strip, wrapping at narrow widths without sideways scrolling. Labels sit above their controls; related grid
 spacing and color fields share compact Minor/Major groups. Groups stack at narrow
-widths. View sliders pair their labels, controls and values on compact rows. The native window
-fits each tab vertically and moves upward when growth would cross the display work area,
-including its title bar. Taller content scrolls inside the window. Escape or Done closes Settings; browsers also
+widths. View sliders pair their labels, controls and values on compact rows. The native window opens at 760 × 720 pixels, clamped to the display work area.
+Its size belongs to the user: tab switches, content updates and interface scaling never
+resize it. Taller content scrolls inside the window. Escape or Done closes Settings; browsers also
 allow backdrop dismissal. Native preferences update all open drawings immediately
 through storage events, without changing their geometry or Undo history. User interface scale
 applies immediately at 80%, 90%, 100%, 110%, 125% or 150%; Reset to 100% is always

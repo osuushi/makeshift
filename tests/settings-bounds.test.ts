@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { settingsBounds } from "../src/host/settings-bounds.js";
 
-test("a taller Settings tab stays inside the work area including native chrome", () => {
+test("the initial Settings window stays inside the work area including native chrome", () => {
   assert.deepEqual(
     settingsBounds({ x: 700, y: 700, width: 520, height: 300 }, 800, 28, {
       x: 0,
@@ -13,7 +13,7 @@ test("a taller Settings tab stays inside the work area including native chrome",
     { x: 700, y: 147, width: 520, height: 828 },
   );
 });
-test("oversize content fits an offset display while fitting tabs retain their position", () => {
+test("oversize content fits an offset display while fitting windows retain their position", () => {
   const work = { x: -1280, y: 40, width: 1280, height: 720 };
   const current = { x: -800, y: 180, width: 520, height: 300 };
   assert.deepEqual(settingsBounds(current, 300, 28, work), { ...current, height: 328 });

@@ -5,7 +5,7 @@ interface Bounds {
   height: number;
 }
 
-/** Fit content without letting a taller tab grow below the display's work area. */
+/** Clamp the initial Settings window to its display, including native chrome. */
 export function settingsBounds(
   current: Bounds,
   contentHeight: number,

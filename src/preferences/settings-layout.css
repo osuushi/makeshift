@@ -1,9 +1,9 @@
 /* All categories remain visible; tab changes never require sideways scrolling. */
 .settings-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 4px;
-  padding: 4px 0 10px;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0;
+  padding: 0;
   border-bottom: 1px solid var(--border);
   margin: 8px 0 12px;
   position: sticky;
@@ -11,12 +11,25 @@
   z-index: 1;
   background: var(--panel);
 }
-.settings-tabs button {
+.application-settings .settings-tabs [role="tab"] {
   min-width: 0;
+  padding: 10px 6px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
 }
-.settings-tabs [aria-selected="true"] {
-  background: var(--selected);
-  border-color: var(--accent);
+.application-settings .settings-tabs [role="tab"]:hover {
+  background: var(--surface);
+  border-color: transparent;
+}
+.application-settings .settings-tabs [aria-selected="true"],
+.application-settings .settings-tabs [aria-selected="true"]:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: transparent;
+  font-weight: 600;
 }
 .application-settings [role="tabpanel"][hidden] {
   display: none;
@@ -60,4 +73,41 @@
   .application-settings .settings-view label:has(input[type="range"]) > span {
     grid-column: 1 / -1;
   }
+}
+
+/* The native window owns its size; only the selected panel scrolls. */
+.settings-window .application-settings form,
+.settings-window .settings-pages {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.settings-window .application-settings form {
+  height: 100%;
+}
+.settings-window .settings-pages {
+  flex: 1;
+}
+.settings-window .settings-tabs,
+.settings-window .settings-actions {
+  flex-shrink: 0;
+}
+.settings-window .settings-pages > [role="tabpanel"] {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.settings-window .settings-toolbox:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.settings-window .settings-toolbox > :is(p, button) {
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+.settings-window .toolbox-settings-tree {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
 }

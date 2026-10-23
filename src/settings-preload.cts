@@ -5,5 +5,4 @@ contextBridge.exposeInMainWorld("makeshiftSettingsWindow", {
   onTools: (callback: (tools: unknown) => void) => {
     ipcRenderer.on("settings-tools", (_event, tools: unknown) => callback(tools));
   },
-  fit: (height: number) => ipcRenderer.invoke("settings-fit", height),
 });
