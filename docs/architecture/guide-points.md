@@ -15,7 +15,7 @@ state, separate from each guide's eye control and document Undo. There is no mod
 Guide points creation tool.
 With Select active, automatic discovery uses the ordinary click target. A guide
 is a candidate when its parent is hovered or directly neighbors the hovered entity
-in the geometry graph, and the pointer lies within 128 CSS pixels of the guide.
+in the geometry graph, and the pointer lies within 256 CSS pixels of the guide.
 A hovered face exposes its boundary-edge and junction guides; a hovered edge
 exposes its own guides and those of its incident faces. Body-center guides remain
 eligible from body members, and hovering a whole body exposes face guides.
@@ -33,13 +33,16 @@ Selected geometry also exposes nearby candidates, including selected sketch
 curves, editing groups and point owners. Selection uses the same immediate graph
 neighborhood and also supports combined selected-face definitions. These candidates
 do not require a hovered parent or a successful destination hover probe. They
-still require pointer proximity within 128 CSS pixels and obey owner visibility,
+still require pointer proximity within 256 CSS pixels and obey owner visibility,
 saved-guide blocking, spacing and parent clearance, and disappear when selection changes or clears. This makes
 otherwise inaccessible references saveable without relaxing the visual filters.
 
+At most three candidate markers are shown, prioritized by screen distance to the pointer
+after discovery and clearance filtering. Saved guides do not count toward this limit.
+
 Definitions at the same 3D location share one marker and the existing definition
 chooser, so a circular rim center and its cap centers do not suppress one another.
-Remove every candidate with a distinct point less than 48 CSS pixels away,
+Remove every candidate with a distinct point less than 32 CSS pixels away,
 using the original set so collisions remove both points and do not depend on
 iteration order. Points at different depths still collide when projected together.
 Every visible saved guide participates in this spacing check regardless of its owner or pointer distance;

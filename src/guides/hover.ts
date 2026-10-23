@@ -19,7 +19,7 @@ export function spacedGuides(
       (p, j) =>
         i === j ||
         (j < candidates.length && near(candidates[i].point, candidates[j].point)) ||
-        Math.hypot(p.x - points[i].x, p.y - points[i].y) >= 48,
+        Math.hypot(p.x - points[i].x, p.y - points[i].y) >= 32,
     ),
   );
 }
@@ -42,7 +42,7 @@ function filteredGuides(
       return false;
     seen.add(key);
     const p = editor.world.project(candidate.point);
-    return !!pointer && Math.hypot(p.x - pointer.x, p.y - pointer.y) <= 128;
+    return !!pointer && Math.hypot(p.x - pointer.x, p.y - pointer.y) <= 256;
   });
   const spaced = spacedGuides(candidates, saved, (point) => editor.world.project(point));
   const markers = [...spaced, ...saved].map((p) => editor.world.project(p.point));
@@ -67,7 +67,7 @@ export function hoverGuides(editor: SketchEditor, pointer: Point | null): GuideC
   );
   // Probe ordinary geometry, not the overlay itself, without mutating hover/selection.
   const atPoint = new Map<string, Set<string>>();
-  return candidates.filter((candidate) => {
+  const reachable = candidates.filter((candidate) => {
     if (selectedKeys.has(guideKey(candidate.anchor))) return true;
     const screen = editor.world.project(candidate.point);
     const location = `${screen.x}:${screen.y}`;
@@ -82,4 +82,24 @@ export function hoverGuides(editor: SketchEditor, pointer: Point | null): GuideC
     }
     return keys.has(guideKey(candidate.anchor));
   });
+  if (!pointer) return [];
+  const projected = reachable.map((candidate) => ({
+    candidate,
+    screen: editor.world.project(candidate.point),
+  }));
+  projected.sort(
+    (a, b) =>
+      Math.hypot(a.screen.x - pointer.x, a.screen.y - pointer.y) -
+      Math.hypot(b.screen.x - pointer.x, b.screen.y - pointer.y),
+  );
+  // Count visible markers, retaining every meaning in a coincident marker's chooser.
+  const groups: (typeof projected)[] = [];
+  for (const item of projected) {
+    const group = groups.find(
+      ([first]) => Math.hypot(first.screen.x - item.screen.x, first.screen.y - item.screen.y) < 14,
+    );
+    if (group) group.push(item);
+    else if (groups.length < 3) groups.push([item]);
+  }
+  return groups.flatMap((group) => group.map(({ candidate }) => candidate));
 }
