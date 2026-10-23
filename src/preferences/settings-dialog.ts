@@ -7,6 +7,7 @@ import { setUiScale, uiScale, uiScaleChoices } from "./ui-scale.js";
 import { viewSettings } from "./view-settings.js";
 import "./settings.css";
 import "./settings-decorators.css";
+import "./settings-grid.css";
 
 export function settingsDialog(): HTMLDialogElement {
   const dialog = document.createElement("dialog");
@@ -42,6 +43,7 @@ export function settingsDialog(): HTMLDialogElement {
   const form = dialog.querySelector("form");
   if (!form) throw new Error("Missing settings form");
   const general = document.createElement("section");
+  general.className = "settings-interface";
   const scaleLabel = select.closest("label");
   if (!scaleLabel) throw new Error("Missing scale label");
   general.append(scaleLabel, reset);

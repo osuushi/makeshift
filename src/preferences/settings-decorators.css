@@ -7,6 +7,9 @@
   font-size: 15px;
   margin: 0 0 8px;
 }
+.decorator-display-settings > label {
+  max-width: 200px;
+}
 .decorator-display-row {
   display: grid;
   grid-template-columns: 44px 110px minmax(0, 1fr);

@@ -17,7 +17,7 @@ export async function openSettingsWindow(directory: string): Promise<void> {
   const hidden = process.env.MAKESHIFT_TEST_HIDDEN === "1";
   const window = new BrowserWindow({
     title: "Settings — Makeshift",
-    width: 560,
+    width: 520,
     height: 520,
     minWidth: 400,
     minHeight: 260,
