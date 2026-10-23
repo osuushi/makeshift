@@ -24,12 +24,13 @@ export function gearMeshes(
   const faces = resolveFaces(document.bodies ?? [], instance.faces);
   const body = document.bodies?.find((b) => b.id === instance.faces[0].body);
   if (!body) throw new Error("Gear body is missing");
-  const { radius, outward } = faces[0].cylinder;
+  const { radius: supportRadius, outward } = faces[0].cylinder;
+  const radius = instance.gearPitchRadius ?? supportRadius;
   const settings = gearSettings(instance.settings),
     d = gearDimensions(radius, settings, outward);
   const tolerance = gearTolerance(document, instance, quality);
-  const low = Math.min(d.rootRadius, d.tipRadius) - tolerance * 8;
-  const high = Math.max(d.rootRadius, d.tipRadius) + tolerance * 8;
+  const low = Math.min(d.rootRadius, d.tipRadius, supportRadius) - tolerance * 8;
+  const high = Math.max(d.rootRadius, d.tipRadius, supportRadius) + tolerance * 8;
   const bounds = cylinderExtent(instance.frame, faces);
   const twist = ((settings.hand === "right" ? 1 : -1) * Math.tan(radians(settings.helix))) / radius;
   const steps = Math.max(
@@ -59,9 +60,13 @@ export function gearMeshes(
     outward,
     fill: profileShell(instance.frame, profile, bounds, steps, twist, radians(settings.phase)),
     referenceRemove:
-      outward > 0 ? ring(low, radius + tolerance * 4) : ring(radius - tolerance * 4, high),
+      outward > 0
+        ? ring(low, supportRadius + tolerance * 4)
+        : ring(supportRadius - tolerance * 4, high),
     referenceAdd:
-      outward > 0 ? ring(low, radius - tolerance * 4) : ring(radius + tolerance * 4, high),
+      outward > 0
+        ? ring(low, supportRadius - tolerance * 4)
+        : ring(supportRadius + tolerance * 4, high),
     envelope: ring(low + tolerance * 4, high - tolerance * 4),
   };
   return { geometry, faces, body };

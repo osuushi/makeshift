@@ -76,6 +76,7 @@ export function continueDecorators<Document extends DisplayDocument>(
 ): Document {
   if (!source.decorators?.length || source.bodies === candidate.bodies) return candidate;
   const decorators: DecoratorInstance[] = [];
+  const copiedGearGroups = new Map<string, string>();
   for (const instance of source.decorators) {
     const split =
       (candidate.bodies ?? []).filter((b) => {
@@ -95,6 +96,14 @@ export function continueDecorators<Document extends DisplayDocument>(
       const next = descendants(reference, source, body, request);
       if (!next) continue;
       let updated = { ...next, id: count++ === 0 ? instance.id : newId() };
+      if (instance.gearGroup && topologyOrigins.get(body)?.copy) {
+        let group = copiedGearGroups.get(instance.gearGroup);
+        if (!group) {
+          group = newId();
+          copiedGearGroups.set(instance.gearGroup, group);
+        }
+        updated = { ...updated, gearGroup: group };
+      }
       if (
         !isBuiltinDecorator(instance.definition) &&
         !updated.problem &&

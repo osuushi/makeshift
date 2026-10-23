@@ -37,7 +37,8 @@ try {
       await chooseTool(page, "Sketch on XY", "sketch-xy");
       await page.keyboard.press("c");
       await drag(page, [0, 0], [10, 0]);
-      const center = await at(page, 0, 0);
+      // Select the profile interior clear of its circle-center guide marker.
+      const center = await at(page, 5, 0);
       await chooseTool(page, "return to modeling", "modeling");
       await page.mouse.click(center.x, center.y);
       await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
@@ -53,7 +54,7 @@ try {
       const teeth = page.getByRole("spinbutton", { name: "Teeth per revolution", exact: true });
       await teeth.fill("36");
       await teeth.press("Escape");
-      assert.equal((await inspect(page)).document.decorators[0].settings.teeth, 40);
+      assert.equal((await inspect(page)).document.decorators[0].settings.teeth, 20);
       await teeth.fill("36");
       await teeth.press("Enter");
       assert.equal((await inspect(page)).document.decorators[0].settings.teeth, 36);
@@ -61,32 +62,18 @@ try {
       await helix.fill("25");
       await helix.press("Enter");
       assert.equal((await inspect(page)).document.decorators[0].settings.helix, 25);
+      assert.equal(
+        await page.getByRole("spinbutton", { name: "Maximum normal module", exact: true }).count(),
+        0,
+      );
       await chooseTool(page, "undo", "undo");
       assert.equal((await inspect(page)).document.decorators[0].settings.helix, 0);
       await chooseTool(page, "redo", "redo");
       assert.equal((await inspect(page)).document.decorators[0].settings.helix, 25);
-      await page.getByRole("button", { name: "Resize to module", exact: true }).click();
-      const targetModule = page.getByRole("spinbutton", {
-        name: "Target normal module",
-        exact: true,
-      });
-      await targetModule.fill("0.6");
-      await page.getByRole("button", { name: "Preview radius", exact: true }).click();
-      await inspect(page);
       assert.equal(
-        (await inspect(page)).document.bodies[0].faces.find((f) => f.cylinder).cylinder.radius,
-        10,
+        await page.getByRole("button", { name: "Resize to module", exact: true }).count(),
+        0,
       );
-      await page.getByRole("button", { name: "Cancel", exact: true }).click();
-      await inspect(page);
-      await page.getByRole("button", { name: "Resize to module", exact: true }).click();
-      await targetModule.fill("0.6");
-      await page.getByRole("button", { name: "Preview radius", exact: true }).click();
-      await page.getByRole("button", { name: "Accept radius", exact: true }).click();
-      const resized = (await inspect(page)).document.bodies[0].faces.find((f) => f.cylinder)
-        .cylinder.radius;
-      assert.ok(Math.abs(resized - (36 * 0.6) / (2 * Math.cos((25 * Math.PI) / 180))) < 1e-7);
-      await chooseTool(page, "undo", "undo");
       assert.equal(
         (await inspect(page)).document.bodies[0].faces.find((f) => f.cylinder).cylinder.radius,
         10,
@@ -96,7 +83,12 @@ try {
       await bodyArchiveRoute(page, `${name}-gear`);
       await orient(page, [0, -1, 0.3]);
       await worldClick(page, [0, -10, 5]);
-      assert.equal(await teeth.inputValue(), "36");
+      assert.equal(
+        await page
+          .getByRole("spinbutton", { name: "Teeth per revolution", exact: true })
+          .inputValue(),
+        "36",
+      );
       await page
         .getByRole("button", { name: "Remove Gear decorator from selected faces", exact: true })
         .click();
@@ -114,7 +106,7 @@ try {
       await chooseTool(page, "Sketch on XY", "sketch-xy");
       await page.keyboard.press("c");
       await drag(page, [0, 0], [10, 0]);
-      const bevelCenter = await at(page, 0, 0);
+      const bevelCenter = await at(page, 5, 0);
       await chooseTool(page, "return to modeling", "modeling");
       await page.mouse.click(bevelCenter.x, bevelCenter.y);
       await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();

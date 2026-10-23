@@ -135,3 +135,10 @@ radius-5, height-9 cylinder failed with a zero radial normal while presenting it
 diameter-cut faces to chamfer recognition. History and transient presentation
 are omitted; regressions preserve the exact BRep and check both XZ/YZ cuts,
 half-volumes, absence of false chamfers, cancellation and Undo/Redo.
+
+`gear-cylinders.json` retains the founder's 2026-10-23T21-49-40-802Z capture of
+radius-13/radius-7 pitch cylinders on their axle plate. Exact BReps, topology IDs,
+sketches and the original independent 40/40 decorators are preserved; derived
+presentation, camera and history are omitted. Gear-group regressions cover both
+application orders, legacy repair, fitted dimensions, engagement, actual mesh
+encoding, native resize and shared tolerance/printability controls.

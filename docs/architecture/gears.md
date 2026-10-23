@@ -7,20 +7,55 @@ inclined racks; conic gears use straight spherical-involute teeth.
 
 ## Interaction and ownership
 
-Select faces and invoke **Gear**. The selected geometry represents the pitch
+Select faces and invoke **Gear**. The selected geometry supplies a target pitch
 surface, not the tooth-tip blank. Teeth add and remove material around it.
-The accepted BRep remains unchanged; the existing decorator compositor previews
-teeth and the export worker applies closed mesh operands for STL/3MF.
-DocumentOwner owns settings and attachment state with snapshot Undo. There is
-no gear-set object, persistent mating relationship or chain solver.
+Decorators never resize or move accepted BRep geometry. DocumentOwner owns
+attachments, fitted dimensions and settings with snapshot Undo; preview and export
+consume that same accepted metadata.
 
-The panel supplies integer teeth per revolution (initially 40), normal pressure
-angle (20 degrees), helix angle/hand, phase, normal tooth thinning, root-clearance
-coefficient and profile shift. Tooth count refers to a complete revolution even
-on a sector. The normal module is derived from pitch radius, count and helix.
-Rotary phase is degrees. Thinning is millimeters in the normal section, applied
-once per gear, not a pair-wide backlash automatically applied to both parts.
-Root clearance is a dimensionless module coefficient, initially 0.25.
+External spur cylinders applied together share a saved gear group. Applying Gear
+separately joins contacting gear groups as well. Reapplying Gear to selected older
+independent gears creates a group. An explicit `gearGroup` on Apply adds selected
+cylinders to an existing group. The sidebar lists groups even without a selection;
+clicking a group selects all members and discloses body names, face counts, target
+and fitted pitch diameters, and individual integer tooth counts. Select new faces
+and use **Add selection to Gears N**; removal still acts only on selected faces.
+Groups are independent of tagged geometry groups and cross body boundaries.
+Remembered spur presets restore pressure and fitting limits; rotary count and
+phase are fitted to the current cylinders rather than recalled from another gear.
+Adding faces to an existing group uses that group's settings.
+
+Shared controls are **Maximum normal module** (initially 1 mm), **Pitch diameter
+tolerance** (initially 0.2 mm on diameter, not radius), **Minimum tooth tip width**
+(initially 0.4 mm), pressure angle, thinning and root clearance. Tooth counts and
+phases are fitted rather than directly edited on a multi-gear group. The fit
+minimizes squared pitch-diameter corrections, preferring the larger module on a
+tie. Counts remain within 6–400 and above the existing undercut threshold. Tip
+width is measured as the chord between the involute flanks at the tip circle,
+after thinning. This is a geometric feature-size limit, not a printer calibration.
+The saved `gearPitchRadius` affects only the decorator's generated geometry.
+
+Every geometry edit refits the whole group in its temporary candidate, including
+other members' tooth counts and profiles. Existing tangent, parallel, axially
+overlapping pitch contacts retain current axis spacing and receive tooth/space
+phase alignment. A contacting pair fixes module from its integer tooth-count sum;
+other contacts propagate those integer sums. Conflicting phase loops reject.
+Nothing moves the axes or changes another body's BRep. If fitting cannot satisfy
+the limits, the geometry edit remains valid and the group shows **Gear group
+cannot fit**. Invalid profiles are withheld from preview/export; changing the group
+limits or geometry can repair them. Resize and its group refit share one Undo step.
+Copied groups receive independent IDs. Undo/Redo and save/open retain membership,
+limits and fitted dimensions. Sampling error remains separate from fit tolerance.
+
+Automatic group fitting currently covers external spur cylinders with zero
+profile shift. Internal, helical, bevel and rack gears retain independent controls;
+explicit settings with a tooth count retain the independent calculation route.
+A single automatically grouped spur gear also fits the printable limits. Independent
+gears with explicit settings retain integer teeth per revolution (default 40), pressure angle
+(20 degrees), helix angle/hand, phase, normal thinning, root clearance (initially
+0.25 module) and profile shift. Counts refer to a full revolution even on a sector.
+Thinning is millimeters per gear, not pair-wide backlash. The former **Resize to
+module** geometry control has been removed: decorator controls never edit BRep.
 
 Racks expose normal module (initially 1 mm), numeric in-plane travel direction,
 linear phase in mm and tooth inclination using the helix/hand controls. The
@@ -30,12 +65,6 @@ for racks; helix/hand are hidden for bevels. Mixed selections patch only instanc
 to which a field applies. Numeric typing previews; Enter/blur accepts and Escape
 cancels. Reselection, continuation, partial removal and repair share the existing
 decorator routes. A face still has at most one active decoration.
-
-**Resize to module** on one cylindrical instance reports the required radius,
-previews a native face offset, then explicitly accepts or cancels it. Acceptance
-is one geometry Undo step; count and settings remain fixed and the displayed
-module follows the new radius. Clamped or otherwise unachievable target radii
-cannot be accepted by this control. Applying Gear alone never resizes geometry.
 
 ## Support and continuity
 
@@ -49,8 +78,8 @@ Save a reference frame, settings and support kind/material side. Cones also save
 an axial reference range at application; its far section defines the reported
 module and physical thinning. Partial removal does not change that reference.
 Rigid transforms carry the frame; copies receive independent instance IDs.
-Scaling preserves integer count, angles, phase, clearance/profile coefficients
-and physical thinning, deriving module from the resized support. Reflection
+Scaling independent gears preserves integer count, angles, phase, clearance/profile
+coefficients and physical thinning; grouped gears refit within the shared limits. Reflection
 preserves configured hand. Ineligible surface changes and ambiguous merges become
 unresolved. Explicit reassign establishes a new frame/reference section.
 
@@ -109,8 +138,15 @@ No upstream implementation code was copied.
 
 ## Verification and limits
 
+`tests/gear-groups.test.ts` and `tests/gear-group-resize.test.ts` use the founder's
+13/7 mm capture for both application orders, legacy matching, shared sizing,
+engagement, STL/3MF encoding, native resize, fit limits, repair and atomic Undo.
+`tests/gear-groups-ui.mjs` checks real group disclosure/addition, layout, numeric
+cancellation, removal and cylinder offset followed by warning repair in hidden
+Electron.
+
 `tests/gears-ui.mjs` exercises real pointer/keyboard creation, gear/rack/bevel
-settings, numeric cancellation, explicit radius resize, Undo/Redo, reselection,
+settings, numeric cancellation, Undo/Redo, reselection,
 removal, save/open, previews and STL/3MF downloads in headless Chromium/WebKit and
 hidden Electron. Native tests cover internal/external and helical export,
 disconnected sectors/axial patches, continuation, copied placement, agent dimension
@@ -124,4 +160,4 @@ models; transcripts separately establish what the agent actually verified.
 
 These checks do not establish arbitrary gear-chain interference, assembly, load
 capacity, physical printer fit, or iPad input. Agents remain responsible for
-choosing and checking a particular arrangement; the tool saves independent gears.
+choosing and checking arrangements outside automatic external spur-group fitting.

@@ -1,5 +1,7 @@
 import type { SketchDocument } from "../sketch/document.js";
 import { isBuiltinDecorator } from "./builtins.js";
+import { gearFaces } from "./gear-faces.js";
+import { gearDefinition } from "./gear-settings.js";
 import {
   checkedPresetName,
   choiceKey,
@@ -30,8 +32,15 @@ export async function editWithPresets(document: SketchDocument, edit: DecoratorE
           )
         ]
       : undefined;
+  const groupSettings =
+    edit.action === "apply" && edit.settings === undefined && edit.gearGroup
+      ? document.decorators?.find((d) => d.gearGroup === edit.gearGroup)?.settings
+      : undefined;
+  const recalled = groupSettings ?? choice?.settings;
   const resolved =
-    edit.action === "apply" && choice ? { ...edit, settings: choice.settings } : edit;
+    edit.action === "apply" && recalled
+      ? { ...edit, settings: recalledSettings(document, edit, recalled) }
+      : edit;
   const next = await run(document, resolved);
   if (edit.action !== "apply" && edit.action !== "settings") return next;
   const presets = [...(document.decoratorPresets ?? [])];
@@ -82,6 +91,24 @@ export async function editWithPresets(document: SketchDocument, edit: DecoratorE
     return result;
   });
   return { ...next, decorators, decoratorPresets: presets, lastDecoratorChoices: last };
+}
+
+/** Rotary count and phase are fitted to current cylinders, not recalled from another gear. */
+function recalledSettings(
+  document: SketchDocument,
+  edit: Extract<DecoratorEdit, { action: "apply" }>,
+  settings: DecoratorInstance["settings"],
+) {
+  if (
+    edit.definition !== gearDefinition ||
+    settings.helix ||
+    settings.shift ||
+    !gearFaces(document, edit.faces).every((f) => f.cylinder?.outward === 1)
+  )
+    return settings;
+  return Object.fromEntries(
+    Object.entries(settings).filter(([key]) => key !== "teeth" && key !== "phase"),
+  );
 }
 
 async function editPreset(

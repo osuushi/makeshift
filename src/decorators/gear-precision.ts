@@ -13,6 +13,7 @@ export function gearTolerance(
     face = faces[0],
     settings = gearSettings(instance.settings);
   const radius =
+    instance.gearPitchRadius ??
     face.cylinder?.radius ??
     (face.cone
       ? cylinderExtent(instance.frame, faces)[0] * Math.tan(radians(face.cone.semiAngle))

@@ -19,6 +19,10 @@ export interface DecoratorInstance {
   readonly axialReference?: [number, number];
   readonly problem?: string;
   readonly state?: unknown;
+  /** Cylindrical gears sharing tooth sizing and contact alignment. */
+  readonly gearGroup?: string;
+  /** Fitted decorator pitch radius; never changes the support BRep. */
+  readonly gearPitchRadius?: number;
 }
 export interface DecoratorField {
   key: string;
@@ -49,6 +53,7 @@ export type DecoratorEdit =
       version?: number;
       faces: FaceReference[];
       settings?: Settings;
+      gearGroup?: string;
     }
   | { action: "settings"; ids: string[]; patch: Settings; replace?: boolean }
   | { action: "continue"; id: string; faces: FaceReference[] }
