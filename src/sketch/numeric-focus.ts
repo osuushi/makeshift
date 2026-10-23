@@ -10,7 +10,7 @@ function clearWidgetHighlight(): void {
   delete document.documentElement.dataset.keyboardSketchWidget;
 }
 window.addEventListener("blur", clearWidgetHighlight);
-document.addEventListener(
+window.addEventListener(
   "keydown",
   (event) => {
     if (event.key === "Escape" || event.key === "Enter") clearWidgetHighlight();

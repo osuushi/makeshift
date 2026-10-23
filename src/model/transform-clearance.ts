@@ -1,3 +1,4 @@
+import { uiScale } from "../preferences/ui-scale.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
 import { scaleSelection } from "./scale-selection.js";
@@ -10,6 +11,7 @@ import {
 } from "./transform-box.js";
 import { outsideBoxRatio, projectedHull } from "./transform-box-layout.js";
 import { transformLayerEnabled } from "./transform-layers.js";
+import type { WidgetRect } from "./widget-viewport.js";
 
 const displayedBoxes = new WeakMap<
   SketchEditor,
@@ -43,12 +45,12 @@ export function displayedTransformBox(
   repaintTransformControls(editor);
 }
 
-/** Keep translation and rotation controls outside the visible scale box. */
+/** Clear the 48px hit square's half-diagonal plus an 8px gap at the current UI scale. */
 export function clearTransformArrow(
   editor: SketchEditor,
   pivot: Vector,
   tip: Vector,
-  radius = 32,
+  radius = 42 * uiScale(),
 ): Vector {
   const origin = editor.world.project(pivot),
     end = editor.world.project(tip);
@@ -65,16 +67,25 @@ export function clearTransformControl(
   editor: SketchEditor,
   pivot: Vector,
   tip: { x: number; y: number },
-  radius = 32,
+  radius = 42 * uiScale(),
 ): number {
-  if (!transformLayerEnabled(editor, "scale")) return 1;
+  const origin = editor.world.project(pivot);
+  const hull = transformBoxHull(editor).map((point) => ({
+    x: point.x - origin.x,
+    y: point.y - origin.y,
+  }));
+  return outsideBoxRatio(tip, hull, radius);
+}
+
+/** Current scale silhouette in absolute viewport pixels, including a temporary scale preview. */
+export function transformBoxHull(editor: SketchEditor): { x: number; y: number }[] {
+  if (!transformLayerEnabled(editor, "scale")) return [];
   const displayed = displayedBoxes.get(editor);
   const source = scaleSelection(editor);
   const box = displayed?.box ?? (source && selectionBox(editor, source));
-  if (!box) return 1;
-  const origin = editor.world.project(pivot);
+  if (!box) return [];
   const local = displayed && boxLocal(box, displayed.pivot);
-  const hull = projectedHull(
+  return projectedHull(
     boxHandles(box).map((h) => {
       const scaled =
         local && displayed
@@ -83,8 +94,21 @@ export function clearTransformControl(
             ) as Vector)
           : h.point;
       const point = editor.world.project(boxWorld(box, scaled));
-      return { x: point.x - origin.x, y: point.y - origin.y };
+      return { x: point.x, y: point.y };
     }),
   );
-  return outsideBoxRatio(tip, hull, radius);
+}
+
+/** A conservative reservation keeps viewport fitting from returning controls into the box. */
+export function transformBoxRect(editor: SketchEditor): WidgetRect | null {
+  const hull = transformBoxHull(editor);
+  if (hull.length < 3) return null;
+  const xs = hull.map((point) => point.x),
+    ys = hull.map((point) => point.y);
+  return {
+    x: (Math.min(...xs) + Math.max(...xs)) / 2,
+    y: (Math.min(...ys) + Math.max(...ys)) / 2,
+    width: Math.max(...xs) - Math.min(...xs),
+    height: Math.max(...ys) - Math.min(...ys),
+  };
 }

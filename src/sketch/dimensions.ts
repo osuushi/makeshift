@@ -166,12 +166,10 @@ export class Dimensions implements NumericFields {
   }
   async activateTransform(axis: "x" | "y" | "rotation"): Promise<boolean> {
     const e = this.editor;
-    if (
-      !e.sketch ||
-      e.isDragging ||
-      (e.interactions.current && e.interactions.current.kind !== "numeric")
-    )
-      return false;
+    if (!e.sketch || e.isDragging) return false;
+    if (e.interactions.current && e.interactions.current.kind !== "numeric") {
+      if (!(await toolCatalog(e).activate({ reason: () => null, run: () => true }))) return false;
+    }
     // Preserve synchronous iPad focus when the previous field needs no acceptance.
     const finished = this.draft.finish();
     if (!(typeof finished === "boolean" ? finished : await finished)) return false;

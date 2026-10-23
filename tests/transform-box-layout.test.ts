@@ -80,3 +80,31 @@ test("clearance follows a rotated silhouette without using its larger axis-align
   assert.equal(outsideBoxRatio({ x: 80, y: 80 }, hull, 10), 1);
   assert.ok(outsideBoxRatio({ x: 20, y: 20 }, hull, 10) > 2.5);
 });
+
+test("a relocated anchor moves only controls intersecting the distant box", () => {
+  const hull = projectedHull([
+    { x: 100, y: -50 },
+    { x: 200, y: -50 },
+    { x: 200, y: 50 },
+    { x: 100, y: 50 },
+  ]);
+  assert.equal(outsideBoxRatio({ x: 50, y: 0 }, hull, 10), 1);
+  assert.equal(outsideBoxRatio({ x: 150, y: 100 }, hull, 10), 1);
+  assert.ok(outsideBoxRatio({ x: 150, y: 0 }, hull, 10) > 210 / 150);
+});
+
+test("end-on and point-size projected boxes preserve finite control placement", () => {
+  for (const points of [
+    [{ x: 10, y: 20 }],
+    [
+      { x: 10, y: 20 },
+      { x: 10, y: 20 },
+    ],
+    [
+      { x: -20, y: 0 },
+      { x: 0, y: 0 },
+      { x: 20, y: 0 },
+    ],
+  ])
+    assert.equal(outsideBoxRatio({ x: 60, y: 0 }, projectedHull(points), 32), 1);
+});

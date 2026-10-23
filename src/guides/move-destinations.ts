@@ -2,9 +2,9 @@ import type { SketchEditor } from "../sketch/editor.js";
 import type { PlaneId, Vector } from "../sketch/planes.js";
 import { guideCylinderPatches } from "./cylinder-patches.js";
 import { near } from "./geometry.js";
+import { guideMarkerOccluded } from "./marker-visibility.js";
 import type { GuideMoveCandidate } from "./move-target.js";
 import { guideFacePlanePatches, guidePlanePatches } from "./plane-patches.js";
-import { guideVisibleThroughSolids } from "./solid-visibility.js";
 import { GuideWidgetClearance, guideOverlapsWidget } from "./widget-clearance.js";
 
 const ns = "http://www.w3.org/2000/svg";
@@ -118,11 +118,10 @@ export class GuideMoveDestinations {
       };
       const radius = Number(circle.getAttribute("r"));
       const worldPoint = JSON.parse(circle.getAttribute("data-point") ?? "null") as Vector | null;
-      circle.style.display =
-        guideOverlapsWidget(point, bounds, radius) ||
-        (worldPoint && !guideVisibleThroughSolids(this.editor, worldPoint))
-          ? "none"
-          : "";
+      const occluded = worldPoint
+        ? guideMarkerOccluded(this.editor, worldPoint, bounds, radius)
+        : guideOverlapsWidget(point, bounds, radius);
+      circle.style.display = occluded ? "none" : "";
     }
   }
   hide(): void {

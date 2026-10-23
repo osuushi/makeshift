@@ -138,9 +138,11 @@ export const uiSuites = [
   },
   {
     args: ["transform-enter-ui.mjs"],
-    seconds: 12,
+    // macOS hidden Electron: 12.2s including escaped Tab focus and cross-layer handoff.
+    seconds: 14,
     browsers: ["electron"],
-    reason: "Enter must accept Transform exactly once rather than reopen the idle extrusion.",
+    reason:
+      "Enter accepts once; real Tab dispatch must open and highlight widgets, preserve invalid drafts, and accept Scale-to-Move edits separately rather than losing geometry across numeric focus handoffs.",
     unit: "body-transform-enter.test.ts",
   },
   {

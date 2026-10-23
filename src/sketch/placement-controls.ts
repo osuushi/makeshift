@@ -131,9 +131,15 @@ export class PlacementControls {
       sketch = sketches[0];
     if (event.button || !sketch || this.session || this.editor.blocked) return;
     event.preventDefault();
-    const lease = this.editor.interactions.acquire("placement", () => this.cancel(), undefined, {
-      navigation: "when-released",
-    });
+    const lease = this.editor.interactions.acquire(
+      "placement",
+      () => this.cancel(),
+      async () => {
+        await this.commit();
+        return !this.session;
+      },
+      { navigation: "when-released" },
+    );
     if (!lease) return;
     this.session = {
       sketch,

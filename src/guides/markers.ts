@@ -1,19 +1,16 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { GuideCandidate } from "./candidates.js";
+import { advanceMarkerFade, desireMarker, type MarkerFade } from "./marker-fade.js";
+import { guideMarkerOccluded } from "./marker-visibility.js";
 import { GuideMeaningChoices } from "./meaning-choices.js";
-import { guideVisibleThroughSolids } from "./solid-visibility.js";
 import { type GuidePoint, guideKey, guideLabel } from "./types.js";
-import { GuideWidgetClearance, guideOverlapsWidget } from "./widget-clearance.js";
+import { GuideWidgetClearance } from "./widget-clearance.js";
 
 export type GuideMarker = GuideCandidate & { guide?: GuidePoint };
-interface MarkerEntry {
+interface MarkerEntry extends MarkerFade {
   element: HTMLButtonElement;
   items: GuideMarker[];
   key: string;
-  desired: boolean;
-  born: number;
-  opacity: number;
-  updated: number;
 }
 /** Nearby points share one hit target; labels preserve their distinct definitions. */
 export class GuideMarkers {
@@ -50,8 +47,7 @@ export class GuideMarkers {
       if (group) group.push(item);
       else groups.push([item]);
     }
-    const previous = new Map(this.buttons.map((button) => [button, button.desired]));
-    for (const button of this.buttons) button.desired = false;
+    const desired = new Set<MarkerEntry>();
     for (const group of groups) {
       const key = JSON.stringify(
         group.map((p) => [p.guide?.id, p.guide?.name, p.label, guideKey(p.anchor)]).sort(),
@@ -61,7 +57,7 @@ export class GuideMarkers {
         button = this.button(group, key);
         this.buttons.push(button);
       }
-      button.desired = true;
+      desired.add(button);
       button.items = group;
       const p = this.editor.world.project(group[0].point);
       button.element.style.left = `${p.x}px`;
@@ -80,7 +76,12 @@ export class GuideMarkers {
     }
     // Departing ghosts are visual only; they cannot accept stale geometry actions.
     for (const button of this.buttons) {
-      if (previous.get(button) !== button.desired) button.updated = performance.now();
+      desireMarker(
+        button,
+        desired.has(button),
+        performance.now(),
+        button.items.some((item) => item.guide),
+      );
       if (!button.desired) button.element.style.pointerEvents = "none";
     }
     if (!this.frame) this.frame = requestAnimationFrame(this.animate);
@@ -93,9 +94,7 @@ export class GuideMarkers {
       const point = this.editor.world.project(button.items[0].point);
       button.element.style.left = `${point.x}px`;
       button.element.style.top = `${point.y}px`;
-      button.element.hidden =
-        guideOverlapsWidget(point, bounds) ||
-        !guideVisibleThroughSolids(this.editor, button.items[0].point);
+      button.element.hidden = guideMarkerOccluded(this.editor, button.items[0].point, bounds);
     }
   }
   private animate = (now: number): void => {
@@ -103,23 +102,13 @@ export class GuideMarkers {
     let pending = false;
     this.buttons = this.buttons.filter((entry) => {
       const saved = entry.items.some((item) => item.guide);
-      const target = entry.desired || (!saved && now < entry.born + 100) ? 1 : 0;
-      const elapsed = Math.max(
-        0,
-        now - Math.max(entry.updated, target ? entry.updated : entry.born + 100),
-      );
-      entry.opacity = saved
-        ? target
-        : target
-          ? Math.min(1, entry.opacity + elapsed / 100)
-          : Math.max(0, entry.opacity - elapsed / 100);
-      entry.updated = now;
+      const fading = advanceMarkerFade(entry, now, saved);
       entry.element.style.opacity = String(entry.opacity * (saved ? 1 : 0.8));
       if (!entry.desired && entry.opacity === 0) {
         entry.element.remove();
         return false;
       }
-      pending ||= entry.opacity !== target || (!entry.desired && target === 1);
+      pending ||= fading;
       return true;
     });
     if (pending) this.frame = requestAnimationFrame(this.animate);

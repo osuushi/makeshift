@@ -140,6 +140,12 @@ async function toggleGuides(page, point) {
   assert.equal(await toggle.getAttribute("aria-pressed"), "true");
   await page.keyboard.press("g");
   assert.equal(await toggle.getAttribute("aria-pressed"), "false");
+  assert.ok(
+    await page
+      .locator(".guide-marker.ghost")
+      .evaluateAll((nodes) => nodes.every((node) => node.style.pointerEvents === "none")),
+  );
+  await page.waitForFunction(() => document.querySelectorAll(".guide-marker.ghost").length === 0);
   assert.equal(await page.locator(".guide-marker.ghost").count(), 0);
   assert.equal(await page.locator(".guide-marker.saved").count(), 1);
   await page.mouse.move(point.x + 1, point.y + 1);
