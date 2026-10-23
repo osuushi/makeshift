@@ -3,7 +3,7 @@ import { BrowserWindow, screen } from "electron";
 import type { DocumentCommand } from "../model/document-host.js";
 import { DocumentIPC } from "./document-ipc.js";
 import { lockInterfaceZoom } from "./interface-zoom.js";
-import { settingsBounds } from "./settings-bounds.js";
+import { settingsTabBounds } from "./settings-bounds.js";
 
 let settings: BrowserWindow | undefined;
 let toolboxTools: { id: string; label: string; description?: string; unavailable: null }[] = [];
@@ -32,7 +32,7 @@ export async function openSettingsWindow(directory: string, input: unknown): Pro
   const window = new BrowserWindow({
     title: "Settings — Makeshift",
     width: 760,
-    height: 720,
+    height: 278,
     minWidth: 400,
     minHeight: 260,
     show: false,
@@ -44,17 +44,7 @@ export async function openSettingsWindow(directory: string, input: unknown): Pro
       nodeIntegration: false,
     },
   });
-  const bounds = window.getBounds();
-  window.setBounds(
-    settingsBounds(
-      bounds,
-      window.getContentBounds().height,
-      bounds.height - window.getContentBounds().height,
-      screen.getDisplayMatching(bounds).workArea,
-    ),
-  );
-  const ipc = new DocumentIPC();
-  ipc.handle("settings-tools", () => toolboxTools);
+  const ipc = settingsIPC(window);
   ipc.attach(window);
   settings = window;
   lockInterfaceZoom(window.webContents);
@@ -71,6 +61,33 @@ export async function openSettingsWindow(directory: string, input: unknown): Pro
     window.destroy();
     throw error;
   }
+}
+
+/** Only tab selection or an explicit scale change applies a new native policy. */
+function settingsIPC(window: BrowserWindow): DocumentIPC {
+  const ipc = new DocumentIPC();
+  ipc.handle("settings-tools", () => toolboxTools);
+  ipc.handle("settings-tab", (_event, tab: unknown, scale: unknown) => {
+    const current = window.getBounds(),
+      content = window.getContentBounds();
+    const policy = settingsTabBounds(
+      tab,
+      scale,
+      current,
+      {
+        width: current.width - content.width,
+        height: current.height - content.height,
+      },
+      screen.getDisplayMatching(current).workArea,
+    );
+    // Release the previous tab's limits before applying this tab's preferred size.
+    window.setMinimumSize(0, 0);
+    window.setMaximumSize(0, 0);
+    window.setBounds(policy.preferred);
+    window.setMinimumSize(policy.min.width, policy.min.height);
+    window.setMaximumSize(policy.max.width, policy.max.height);
+  });
+  return ipc;
 }
 
 /** Keep document menu commands from modifying the last drawing behind Settings. */

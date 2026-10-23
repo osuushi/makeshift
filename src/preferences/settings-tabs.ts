@@ -38,12 +38,22 @@ export function settingsTabs(entries: [string, HTMLElement][]): HTMLElement {
     container.append(panel);
     return button;
   });
+  let selected = -1;
   function select(index: number): void {
+    const changed = selected !== index;
+    selected = index;
     buttons.forEach((button, i) => {
       button.setAttribute("aria-selected", String(i === index));
       button.tabIndex = i === index ? 0 : -1;
       entries[i][1].hidden = i !== index;
     });
+    if (changed)
+      container.dispatchEvent(
+        new CustomEvent("settings-tab-change", {
+          bubbles: true,
+          detail: entries[index][0],
+        }),
+      );
   }
   select(0);
   return container;

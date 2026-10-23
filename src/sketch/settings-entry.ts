@@ -5,6 +5,7 @@ import type { ToolboxTool } from "../tools/toolbox-row.js";
 import "../tools/toolbox.css";
 import { settingsDialog } from "../preferences/settings-dialog.js";
 
+import { onUiScaleChange, uiScale } from "../preferences/ui-scale.js";
 import { onViewDisplayChange } from "../preferences/view-display.js";
 
 const toolbox = document.createElement("section");
@@ -29,6 +30,7 @@ onViewDisplayChange(() => {
 const host = (
   window as Window & {
     makeshiftSettingsWindow?: {
+      fitTab(tab: string, scale: number): Promise<void>;
       tools(): Promise<ToolboxTool[]>;
       onTools(callback: (tools: ToolboxTool[]) => void): void;
     };
@@ -36,6 +38,13 @@ const host = (
 ).makeshiftSettingsWindow;
 
 if (host) {
+  const fitSelectedTab = () => {
+    const tab = dialog.querySelector('[role="tab"][aria-selected="true"]')?.textContent;
+    if (tab) void host.fitTab(tab, uiScale());
+  };
+  dialog.addEventListener("settings-tab-change", fitSelectedTab);
+  onUiScaleChange(fitSelectedTab);
+  fitSelectedTab();
   const updateTools = (next: ToolboxTool[]) => {
     tools = next;
     toolbox.dispatchEvent(new Event("toolbox-refresh"));

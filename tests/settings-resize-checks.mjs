@@ -1,52 +1,87 @@
 import assert from "node:assert/strict";
 
-// A native resize changes renderer layout; an observer-driven IPC resize can then
-// overwrite it. CSS/unit tests cannot catch that feedback across the host boundary.
+// Cross-process sizing is applied once by a real tab click. Native limits own
+// manual resize constraints; no renderer observer may reset the resulting size.
 export async function settingsResizeChecks(app, page, dialog) {
-  const initial = await bounds(app);
-  assert.ok(initial.width >= 720 && initial.height >= 640, JSON.stringify(initial));
-  await dialog.getByRole("tab", { name: "Toolbox", exact: true }).click();
-  await frames(page);
-  assert.deepEqual(await bounds(app), initial, "Toolbox keeps the useful initial window size");
-  const tree = await dialog.locator(".toolbox-settings-tree").boundingBox();
-  assert.ok(tree.height >= 400, `Toolbox uses available window space: ${JSON.stringify(tree)}`);
-  await page.screenshot({ path: ".cache/sketch-review/settings-toolbox-stable.png" });
-  const names = ["Interface", "Sketch Grid", "View", "Decorators", "Experimental", "Toolbox"];
-  for (const name of names) {
-    const before = await bounds(app);
+  const names = [
+    ["Interface", 250],
+    ["Sketch Grid", 400],
+    ["View", 620],
+    ["Decorators", 660],
+    ["Experimental", 300],
+    ["Toolbox", 720],
+  ];
+  for (const [name, height] of names) {
     await dialog.getByRole("tab", { name, exact: true }).click();
-    await frames(page);
-    assert.deepEqual(await bounds(app), before, `${name} does not resize the window`);
-    for (const [width, height] of [
-      [620, 480],
-      [800, 700],
-    ]) {
-      await app.evaluate(
-        ({ BrowserWindow }, size) => {
-          BrowserWindow.getAllWindows()
-            .find((window) => window.getTitle() === "Settings — Makeshift")
-            .setContentSize(size.width, size.height);
-        },
-        { width, height },
-      );
-      await page.waitForFunction(
-        (size) => innerWidth === size.width && innerHeight === size.height,
-        { width, height },
-      );
+    await page.waitForFunction((height) => innerHeight === height && innerWidth === 760, height);
+    const preferred = await nativeState(app);
+    assert.ok(
+      preferred.min[0] <= preferred.bounds.width && preferred.bounds.width <= preferred.max[0],
+    );
+    assert.ok(
+      preferred.min[1] <= preferred.bounds.height && preferred.bounds.height <= preferred.max[1],
+    );
+    if (name === "Toolbox") {
+      const tree = await dialog.locator(".toolbox-settings-tree").boundingBox();
+      assert.ok(tree.height >= 400, JSON.stringify(tree));
+      await page.screenshot({ path: ".cache/sketch-review/settings-toolbox-stable.png" });
+    }
+    for (const size of [preferred.min, preferred.max]) {
+      await app.evaluate(({ BrowserWindow }, size) => {
+        BrowserWindow.getAllWindows()
+          .find((window) => window.getTitle() === "Settings — Makeshift")
+          .setSize(...size);
+      }, size);
+      await page.waitForFunction((size) => outerWidth === size[0] && outerHeight === size[1], size);
       await frames(page);
-      const size = await page.evaluate(() => [innerWidth, innerHeight]);
-      assert.deepEqual(size, [width, height], `${name} retains the requested manual size`);
+      if (name === "Interface") {
+        const appearance = await dialog.getByRole("combobox", { name: "Appearance" }).boundingBox();
+        const done = await dialog.getByRole("button", { name: "Done", exact: true }).boundingBox();
+        assert.ok(
+          appearance.y + appearance.height <= done.y,
+          "Native minimum leaves room for Interface controls above Done",
+        );
+      }
+      const actual = await nativeState(app);
+      assert.deepEqual(
+        [actual.bounds.width, actual.bounds.height],
+        size,
+        `${name} retains manual resizing to its native limit`,
+      );
+      await dialog.getByRole("tab", { name, exact: true }).click();
+      await frames(page);
+      assert.deepEqual(
+        (await nativeState(app)).bounds,
+        actual.bounds,
+        "Clicking the already-selected tab does not grab sizing back",
+      );
+    }
+    if (name === "Interface") {
+      const row = await dialog.locator(".settings-interface").boundingBox();
+      const panel = await dialog.getByRole("tabpanel", { name, exact: true }).boundingBox();
+      assert.ok(row.y - panel.y < 2, "Interface controls stay at the top when enlarged");
+      assert.ok(row.height < 100, "Interface row keeps its natural height");
+      await page.screenshot({ path: ".cache/sketch-review/settings-interface-max.png" });
     }
   }
   await dialog.getByRole("tab", { name: "Interface", exact: true }).click();
-  console.log("Native Settings: six tabs preserve manual resizes and Toolbox initial size");
-}
-async function bounds(app) {
-  return app.evaluate(({ BrowserWindow }) =>
-    BrowserWindow.getAllWindows()
-      .find((window) => window.getTitle() === "Settings — Makeshift")
-      .getBounds(),
+  await page.waitForFunction(() => innerHeight === 250 && innerWidth === 760);
+  await page.screenshot({ path: ".cache/sketch-review/settings-interface-preferred.png" });
+  console.log(
+    "Native Settings: per-tab preferred/min/max, stable manual resizing and top-aligned Interface passed",
   );
+}
+async function nativeState(app) {
+  return app.evaluate(({ BrowserWindow }) => {
+    const window = BrowserWindow.getAllWindows().find(
+      (window) => window.getTitle() === "Settings — Makeshift",
+    );
+    return {
+      bounds: window.getBounds(),
+      min: window.getMinimumSize(),
+      max: window.getMaximumSize(),
+    };
+  });
 }
 async function frames(page) {
   await page.evaluate(
@@ -55,4 +90,25 @@ async function frames(page) {
         requestAnimationFrame(() => requestAnimationFrame(resolve));
       }),
   );
+}
+
+export async function settingsScaleChecks(page, dialog) {
+  const scale = dialog.getByRole("combobox", { name: "User interface scale" });
+  for (const [value, width, height] of [
+    [0.8, 608, 200],
+    [1.5, 1140, 375],
+    [1, 760, 250],
+  ]) {
+    await scale.selectOption(String(value));
+    await page.waitForFunction(
+      ({ width, height }) => innerWidth === width && innerHeight === height,
+      { width, height },
+    );
+    const appearance = await dialog.getByRole("combobox", { name: "Appearance" }).boundingBox();
+    const done = await dialog.getByRole("button", { name: "Done", exact: true }).boundingBox();
+    assert.ok(
+      appearance.y + appearance.height <= done.y,
+      `Interface controls fit the preferred size at ${value * 100}%`,
+    );
+  }
 }

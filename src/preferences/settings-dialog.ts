@@ -45,10 +45,12 @@ export function settingsDialog(extra: [string, HTMLElement][] = []): HTMLDialogE
   const form = dialog.querySelector("form");
   if (!form) throw new Error("Missing settings form");
   const general = document.createElement("section");
-  general.className = "settings-interface";
+  const interfaceRow = document.createElement("div");
+  interfaceRow.className = "settings-interface";
   const scaleLabel = select.closest("label");
   if (!scaleLabel) throw new Error("Missing scale label");
-  general.append(themeSettings(), scaleLabel, reset);
+  interfaceRow.append(themeSettings(), scaleLabel, reset);
+  general.append(interfaceRow);
   const view = document.createElement("div");
   view.className = "settings-view";
   view.append(viewSettings(), canonicalPlaneSettings());
