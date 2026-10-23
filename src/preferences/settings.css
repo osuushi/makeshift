@@ -182,30 +182,6 @@
   gap: 6px 16px;
 }
 
-.settings-tabs {
-  display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: thin;
-  gap: 4px;
-  padding: 4px 4px 12px;
-  border-bottom: 1px solid var(--border);
-  margin: 8px -4px 20px;
-}
-.settings-tabs [aria-selected="true"] {
-  background: var(--selected);
-  border-color: var(--accent);
-}
-.application-settings [role="tabpanel"][hidden] {
-  display: none;
-}
-.application-settings [role="tabpanel"] > :first-child,
-.application-settings [role="tabpanel"].view-display-settings,
-.application-settings [role="tabpanel"].decorator-display-settings {
-  border-top: 0;
-  margin-top: 0;
-  padding-top: 0;
-}
 .settings-window {
   margin: 0;
   font:
@@ -259,9 +235,6 @@
   padding-top: 0;
 }
 
-.settings-tabs button {
-  flex-shrink: 0;
-}
 .settings-actions > button {
   margin-left: auto;
 }

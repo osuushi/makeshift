@@ -86,7 +86,9 @@ async function sketchActive(page, marker, label) {
 async function sketchKeyboard(page, name) {
   await chooseTool(page, "move", "move");
   const beforeSketch = (await inspect(page)).document;
-  await page.keyboard.press("Tab");
+  const widget = await page.locator('[data-move-marker="x"] > svg').boundingBox();
+  assert.ok(widget);
+  await page.mouse.click(widget.x + widget.width / 2, widget.y + widget.height / 2);
   await sketchActive(page, "x", "Move X");
   const moveX = page.getByRole("textbox", { name: "Move X", exact: true });
   await moveX.fill("bad");
@@ -128,7 +130,13 @@ export async function bodyKeyboardRoute(page, name) {
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   await layers(page, ["move"]);
   assert.equal(await page.locator(".scale-widget:visible").count(), 0);
-  await page.keyboard.press("Tab");
+  const pointerWidget = page.getByRole("button", { name: "Move body X", exact: true });
+  await pointerWidget.click();
+  await page.waitForFunction(() =>
+    document
+      .querySelector('[aria-label="Move body X"]')
+      ?.classList.contains("keyboard-widget-active"),
+  );
   const bodyX = page.getByRole("textbox", { name: "Body translation X", exact: true });
   await bodyX.waitFor({ state: "visible" });
   await page.waitForFunction(

@@ -10,6 +10,7 @@ import type { SketchEditor } from "./editor.js";
 import { hoverPointer } from "./gesture-hover.js";
 import { GestureSolve } from "./gesture-solve.js";
 import type { DragQuantityEdit } from "./numeric-edit.js";
+import { highlightWidget } from "./numeric-focus.js";
 import { distance } from "./point-math.js";
 import { pointKey } from "./point-query.js";
 import { choosePoints, chosenPoints, openPointMenu } from "./point-selection.js";
@@ -264,10 +265,14 @@ export class PointerGestures implements DragQuantityEdit {
     editor.hover = null;
     editor.refresh();
     if (!drag.moved && drag.hits[0]?.kind === "bow") editor.numeric.focus("radius");
-    if (!drag.moved && drag.hits[0]?.kind === "translate")
+    if (!drag.moved && drag.hits[0]?.kind === "translate") {
+      highlightWidget(document.querySelector(`[data-move-marker="${drag.hits[0].axis}"]`));
       editor.numeric.focus(axisQuantity(drag.hits[0].axis), drag.symmetric);
-    if (!drag.moved && drag.hits[0]?.kind === "rotate")
+    }
+    if (!drag.moved && drag.hits[0]?.kind === "rotate") {
+      highlightWidget(document.querySelector('[data-move-marker="rotation"]'));
       editor.numeric.focus("angle", drag.symmetric);
+    }
   };
   dispose(): void {
     this.cancelAndDraw();

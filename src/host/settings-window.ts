@@ -3,6 +3,7 @@ import { BrowserWindow, screen } from "electron";
 import type { DocumentCommand } from "../model/document-host.js";
 import { DocumentIPC } from "./document-ipc.js";
 import { lockInterfaceZoom } from "./interface-zoom.js";
+import { settingsBounds } from "./settings-bounds.js";
 
 let settings: BrowserWindow | undefined;
 let toolboxTools: { id: string; label: string; description?: string; unavailable: null }[] = [];
@@ -46,11 +47,10 @@ export async function openSettingsWindow(directory: string, input: unknown): Pro
   const ipc = new DocumentIPC();
   ipc.handle("settings-fit", (_event, height: unknown) => {
     if (typeof height !== "number" || !Number.isFinite(height)) return;
-    const limit = screen.getDisplayMatching(window.getBounds()).workAreaSize.height - 100;
-    window.setContentSize(
-      window.getContentSize()[0],
-      Math.round(Math.max(240, Math.min(limit, height))),
-    );
+    const bounds = window.getBounds();
+    const frame = bounds.height - window.getContentBounds().height;
+    const work = screen.getDisplayMatching(bounds).workArea;
+    window.setBounds(settingsBounds(bounds, Math.ceil(height), frame, work));
   });
   ipc.handle("settings-tools", () => toolboxTools);
   ipc.attach(window);

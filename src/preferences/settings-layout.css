@@ -1,0 +1,63 @@
+/* All categories remain visible; tab changes never require sideways scrolling. */
+.settings-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px 0 10px;
+  border-bottom: 1px solid var(--border);
+  margin: 8px 0 12px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--panel);
+}
+.settings-tabs button {
+  min-width: 0;
+}
+.settings-tabs [aria-selected="true"] {
+  background: var(--selected);
+  border-color: var(--accent);
+}
+.application-settings [role="tabpanel"][hidden] {
+  display: none;
+}
+.application-settings [role="tabpanel"] > :first-child,
+.application-settings [role="tabpanel"].view-display-settings,
+.application-settings [role="tabpanel"].decorator-display-settings {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+.application-settings .settings-view label:has(input[type="range"]) {
+  grid-template-columns: minmax(110px, 1fr) minmax(80px, 1.25fr) 48px;
+  gap: 8px;
+  margin: 6px 0;
+}
+.application-settings .settings-view label:has(input[type="range"]) > span {
+  grid-column: auto;
+}
+.settings-view .view-display-settings {
+  margin-top: 12px;
+  padding-top: 10px;
+}
+.settings-view .view-display-settings h3 {
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+.settings-view .view-display-settings h3 button {
+  margin-left: auto;
+}
+.settings-view .view-display-settings output {
+  text-align: right;
+}
+@container settings (max-width: 350px) {
+  .settings-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .application-settings .settings-view label:has(input[type="range"]) {
+    grid-template-columns: minmax(0, 1fr) 48px;
+  }
+  .application-settings .settings-view label:has(input[type="range"]) > span {
+    grid-column: 1 / -1;
+  }
+}

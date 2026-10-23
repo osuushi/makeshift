@@ -9,6 +9,15 @@ function clearWidgetHighlight(): void {
   });
   delete document.documentElement.dataset.keyboardSketchWidget;
 }
+export function highlightWidget(target: Element | null): void {
+  lastTarget = target;
+  clearWidgetHighlight();
+  if (!target?.matches(widgets) || target.matches(":disabled")) return;
+  target.classList.add("keyboard-widget-active");
+  if (target.hasAttribute("data-move-marker"))
+    document.documentElement.dataset.keyboardSketchWidget =
+      target.getAttribute("data-move-marker") ?? "";
+}
 window.addEventListener("blur", clearWidgetHighlight);
 window.addEventListener(
   "keydown",
@@ -19,9 +28,9 @@ window.addEventListener(
 );
 document.addEventListener(
   "pointerdown",
-  () => {
-    lastTarget = null;
-    clearWidgetHighlight();
+  (event) => {
+    const target = event.target instanceof Element ? event.target.closest(widgets) : null;
+    highlightWidget(event.button === 0 ? target : null);
   },
   true,
 );
@@ -68,14 +77,7 @@ export function focusNumericField(root: ParentNode, reverse = false, numericOnly
         : 0
       : (index + (reverse ? -1 : 1) + targets.length) % targets.length;
   const target = targets[next];
-  lastTarget = target;
-  clearWidgetHighlight();
-  if (target.matches(widgets)) {
-    target.classList.add("keyboard-widget-active");
-    if (target.hasAttribute("data-move-marker"))
-      document.documentElement.dataset.keyboardSketchWidget =
-        target.getAttribute("data-move-marker") ?? "";
-  }
+  highlightWidget(target);
   if (target.matches("[data-move-marker]")) {
     target.dispatchEvent(new Event("widget-numeric-activate"));
   } else if (target.matches(widgets) && target instanceof HTMLElement) {

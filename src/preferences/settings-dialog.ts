@@ -9,6 +9,7 @@ import { viewSettings } from "./view-settings.js";
 import "./settings.css";
 import "./settings-decorators.css";
 import "./settings-grid.css";
+import "./settings-layout.css";
 
 export function settingsDialog(extra: [string, HTMLElement][] = []): HTMLDialogElement {
   const dialog = document.createElement("dialog");
@@ -49,6 +50,7 @@ export function settingsDialog(extra: [string, HTMLElement][] = []): HTMLDialogE
   if (!scaleLabel) throw new Error("Missing scale label");
   general.append(themeSettings(), scaleLabel, reset);
   const view = document.createElement("div");
+  view.className = "settings-view";
   view.append(viewSettings(), canonicalPlaneSettings());
   const tabs = settingsTabs([
     ["Interface", general],

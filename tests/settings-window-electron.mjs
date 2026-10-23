@@ -51,7 +51,32 @@ try {
   await dialog.getByRole("tab", { name: "Experimental", exact: true }).click();
   await dialog.getByRole("checkbox", { name: "Fast trim checks" }).check();
   await page.waitForFunction(() => localStorage.getItem("makeshift.fast-trim-checks") === "true");
+  // A taller tab must stay on screen even when the small tab was at the bottom.
+  await app.evaluate(({ BrowserWindow, screen }) => {
+    const window = BrowserWindow.getAllWindows().find(
+      (window) => window.getTitle() === "Settings — Makeshift",
+    );
+    const bounds = window.getBounds();
+    const work = screen.getDisplayMatching(bounds).workArea;
+    window.setPosition(work.x + work.width - bounds.width, work.y + work.height - bounds.height);
+  });
   await dialog.getByRole("tab", { name: "View", exact: true }).click();
+  await settings.waitForFunction(() => document.querySelector('[aria-label="Grid opacity"]'));
+  await settings.waitForFunction(() => {
+    const tabs = document.querySelector(".settings-tabs");
+    return tabs.scrollWidth <= tabs.clientWidth;
+  });
+  await app.evaluate(({ BrowserWindow, screen }) => {
+    const window = BrowserWindow.getAllWindows().find(
+      (window) => window.getTitle() === "Settings — Makeshift",
+    );
+    const bounds = window.getBounds(),
+      work = screen.getDisplayMatching(bounds).workArea;
+    if (bounds.y < work.y || bounds.y + bounds.height > work.y + work.height)
+      throw new Error(`Settings outside work area: ${JSON.stringify({ bounds, work })}`);
+  });
+  await settings.screenshot({ path: ".cache/sketch-review/settings-view-compact.png" });
+
   await dialog.getByRole("checkbox", { name: "Global X-ray vision" }).check();
   assert.equal(await dialog.getByRole("slider", { name: "Bleed", exact: true }).isDisabled(), true);
   await dialog.getByRole("checkbox", { name: "Global X-ray vision" }).uncheck();
