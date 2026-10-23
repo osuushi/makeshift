@@ -13,6 +13,7 @@ import { exportDestination } from "./export-destination.js";
 import { lockInterfaceZoom } from "./interface-zoom.js";
 import { IPadSession } from "./ipad-session.js";
 import { nativeExecutable } from "./native-paths.js";
+import { openSettingsWindow } from "./settings-window.js";
 import { rememberWindowSize, restoreWindowSize } from "./window-size.js";
 
 export interface WindowHost {
@@ -92,6 +93,7 @@ export class DocumentWindow {
       this.documents.checkDesktop();
       await this.mesh.cancel();
     });
+    ipc.handle("settings-open", () => openSettingsWindow(directory));
     ipc.attach(window);
     window.on("rotate-gesture", (_event, rotation) => {
       if (this.documents.remote?.active() || !Number.isFinite(rotation)) return;

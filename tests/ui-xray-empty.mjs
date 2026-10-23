@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { settingsSurface } from "./settings-surface.mjs";
 import { drag, inspect, reset } from "./ui-helpers.mjs";
 import { findRaycastPoint } from "./ui-plane-targets.mjs";
 
@@ -23,8 +24,12 @@ export async function emptyXrayRoute(page, name) {
 async function sameGrid(page, label) {
   const local = await image(page);
   await page.getByRole("button", { name: "Application settings" }).click();
-  await page.getByRole("checkbox", { name: "Global X-ray vision" }).check();
-  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await (await settingsSurface(page, "View"))
+    .getByRole("checkbox", { name: "Global X-ray vision" })
+    .check();
+  await (await settingsSurface(page, "View"))
+    .getByRole("button", { name: "Done", exact: true })
+    .click();
   const global = await image(page);
   const difference = await page.evaluate(
     async ({ local, global }) => {
@@ -50,8 +55,12 @@ async function sameGrid(page, label) {
   );
   assert.ok(difference < 20, `${label}: local/global grid differs at ${difference} pixels`);
   await page.getByRole("button", { name: "Application settings" }).click();
-  await page.getByRole("checkbox", { name: "Global X-ray vision" }).uncheck();
-  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await (await settingsSurface(page, "View"))
+    .getByRole("checkbox", { name: "Global X-ray vision" })
+    .uncheck();
+  await (await settingsSurface(page, "View"))
+    .getByRole("button", { name: "Done", exact: true })
+    .click();
 }
 
 async function image(page) {

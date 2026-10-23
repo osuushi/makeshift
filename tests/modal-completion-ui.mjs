@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { settingsSurface } from "./settings-surface.mjs";
 import { decoratorCylinder } from "./ui-decorator-cylinder.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
@@ -54,16 +55,16 @@ async function route(page, name) {
       );
       await dialog.getByRole("button", { name: choice, exact: true }).click();
       await page.evaluate(() => window.calculationProbe.release());
-      await page
-        .getByRole("dialog", { name: "Settings", exact: true })
-        .waitFor({ state: "visible" });
+      await settingsSurface(page);
       const state = await inspect(page);
       assert.equal(state.interaction, null);
       if (choice === "Wait") {
         assert.ok(state.document.bodies[0].volume < original.bodies[0].volume);
       } else
         assert.deepEqual(state.document, original, "Cancellation preserves the accepted document");
-      await page.getByRole("button", { name: "Done", exact: true }).click();
+      await (await settingsSurface(page))
+        .getByRole("button", { name: "Done", exact: true })
+        .click();
       if (choice === "Wait") {
         await chooseTool(page, "undo", "undo");
         assert.deepEqual(
@@ -102,11 +103,11 @@ async function settingsShortcutCompletion(page, name) {
   );
   try {
     await page.keyboard.press("Meta+Comma");
-    await page.getByRole("dialog", { name: "Settings", exact: true }).waitFor();
+    await settingsSurface(page);
     const state = await inspect(page);
     assert.equal(state.interaction, null);
     close(state.document.sketches[0].curves[0].radius, 9, "Shortcut completes numeric edit");
-    await page.getByRole("button", { name: "Done", exact: true }).click();
+    await (await settingsSurface(page)).getByRole("button", { name: "Done", exact: true }).click();
     await chooseTool(page, "undo", "undo");
     assert.deepEqual((await inspect(page)).document, original);
   } finally {

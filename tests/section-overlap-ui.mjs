@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { openDocument } from "./native-documents.mjs";
+import { settingsSurface } from "./settings-surface.mjs";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { drag, inspect } from "./ui-helpers.mjs";
 import { chooseWidget } from "./ui-modal-plane-widgets.mjs";
@@ -14,9 +15,10 @@ await withUiRuntimes(async (page, name) => {
   await openDocument(page, resolve("tests/fixtures/section-overlap.makeshift"));
   await inspect(page);
   await page.getByRole("button", { name: "Application settings" }).click();
-  await page.getByRole("checkbox", { name: "Global X-ray vision" }).check();
-  await page.getByRole("slider", { name: "X-ray front opacity", exact: true }).press("Home");
-  await page.getByRole("button", { name: "Done", exact: true }).click();
+  const settings = await settingsSurface(page, "View");
+  await settings.getByRole("checkbox", { name: "Global X-ray vision" }).check();
+  await settings.getByRole("slider", { name: "X-ray front opacity", exact: true }).press("Home");
+  await settings.getByRole("button", { name: "Done", exact: true }).click();
   await page.getByRole("button", { name: "Select Sketch 1", exact: true }).click();
   await orient(page, [0, -1, 0]);
   await page.getByRole("button", { name: "Hide Body 3", exact: true }).click();

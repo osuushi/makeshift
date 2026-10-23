@@ -59,6 +59,7 @@ export function decoratorSettings(): HTMLElement {
       row.output.textContent = `${row.opacity.value}%`;
     }
   };
+  section.addEventListener("preferences-refresh", update);
   mode.onchange = () => {
     const next = decoratorDisplay();
     next.mode = mode.value === "color-only" ? "color-only" : "detailed";

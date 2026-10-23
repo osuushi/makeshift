@@ -43,6 +43,15 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: mode === "web" ? "../../.build/web" : "../../.build/renderer",
     emptyOutDir: true,
+    rollupOptions: {
+      input:
+        mode === "web"
+          ? resolve("src/sketch/index.html")
+          : {
+              main: resolve("src/sketch/index.html"),
+              settings: resolve("src/sketch/settings.html"),
+            },
+    },
   },
   server: { host: "127.0.0.1", strictPort: true, port: 5173 },
 }));

@@ -1,15 +1,12 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
-import { canonicalPlaneSettings } from "./canonical-plane-settings.js";
 import { onCanonicalPlanesChange } from "./canonical-planes.js";
-import { decoratorSettings } from "./decorator-settings.js";
-import { experimentalSettings } from "./experimental-settings.js";
+import { settingsDialog } from "./settings-dialog.js";
+import { nativeSettings } from "./settings-host.js";
 import { onSketchGridPreferencesChange } from "./sketch-grid.js";
-import { sketchGridSettings } from "./sketch-grid-settings.js";
 import { installToolboxSettings } from "./toolbox-settings.js";
-import { onUiScaleChange, setUiScale, uiScale, uiScaleChoices } from "./ui-scale.js";
+import { onUiScaleChange } from "./ui-scale.js";
 import { onViewDisplayChange } from "./view-display.js";
-import { viewSettings } from "./view-settings.js";
 import "./settings.css";
 
 export function installSettings(editor: SketchEditor, app: HTMLElement): () => void {
@@ -29,7 +26,8 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
   };
   const open = () => {
     if (editor.blocked || editor.interactions.current) return;
-    if (!dialog.open) dialog.showModal();
+    if (nativeSettings()) void nativeSettings()?.open();
+    else if (!dialog.open) dialog.showModal();
   };
   button.onclick = requestOpen;
   const header = app.querySelector("header");
@@ -149,65 +147,4 @@ function installSettingsKeyboard(open: () => void): () => void {
     document.removeEventListener("keydown", blockZoom, true);
     window.removeEventListener("keydown", shortcut, true);
   };
-}
-
-function settingsDialog(): HTMLDialogElement {
-  const dialog = document.createElement("dialog");
-  dialog.className = "application-settings";
-  dialog.setAttribute("aria-labelledby", "settings-title");
-  const outside = (event: PointerEvent) => {
-    const bounds = dialog.getBoundingClientRect();
-    return (
-      event.target === dialog &&
-      (event.clientX < bounds.left ||
-        event.clientX > bounds.right ||
-        event.clientY < bounds.top ||
-        event.clientY > bounds.bottom)
-    );
-  };
-  let backdropPress = false;
-  dialog.addEventListener("pointerdown", (event) => {
-    backdropPress = event.button === 0 && outside(event);
-  });
-  dialog.addEventListener("pointerup", (event) => {
-    if (backdropPress && outside(event)) dialog.close();
-    backdropPress = false;
-  });
-  dialog.addEventListener("pointercancel", () => {
-    backdropPress = false;
-  });
-  dialog.innerHTML = `<form method="dialog"><h2 id="settings-title">Settings</h2>
-    <label>User interface scale<select aria-label="User interface scale"></select></label>
-    <p>Changes apply immediately and are saved on this device.</p>
-    <div class="settings-actions"><button type="button" data-reset>Reset to 100%</button><button value="close">Done</button></div></form>`;
-  const select = dialog.querySelector<HTMLSelectElement>("select");
-  const reset = dialog.querySelector<HTMLButtonElement>("[data-reset]");
-  if (!select || !reset) throw new Error("Missing scale settings controls");
-  dialog
-    .querySelector(".settings-actions")
-    ?.before(
-      sketchGridSettings(),
-      viewSettings(),
-      canonicalPlaneSettings(),
-      decoratorSettings(),
-      experimentalSettings(),
-    );
-  for (const scale of uiScaleChoices)
-    select.add(new Option(`${Math.round(scale * 100)}%`, String(scale)));
-  const update = () => {
-    select.value = String(uiScale());
-    reset.disabled = uiScale() === 1;
-  };
-  select.onchange = () => {
-    setUiScale(Number(select.value));
-    update();
-  };
-  reset.onclick = () => {
-    setUiScale(1);
-    update();
-    select.focus();
-  };
-  dialog.addEventListener("beforetoggle", update);
-  update();
-  return dialog;
 }

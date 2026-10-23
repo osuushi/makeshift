@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { _electron } from "playwright";
 import { documentTestPage } from "./document-test-page.mjs";
 import { electronTestArguments } from "./native-documents.mjs";
+import { settingsSurface } from "./settings-surface.mjs";
 import { failureContext } from "./ui-failure-context.mjs";
 import { settled } from "./ui-helpers.mjs";
 import { changeScale, geometryScaleRoute, preferencesRoute } from "./ui-interface-scale.mjs";
@@ -98,7 +99,7 @@ try {
   const reopened = await launch();
   await settled(reopened);
   await reopened.locator(".settings-trigger").click();
-  const restored = reopened.getByRole("dialog", { name: "Settings", exact: true });
+  const restored = await settingsSurface(reopened, "Interface");
   assert.equal(
     await restored.getByRole("combobox", { name: "User interface scale" }).inputValue(),
     "1.5",
@@ -189,7 +190,7 @@ async function agentScaleRoute(page) {
   await page.getByRole("button", { name: "Stop", exact: true }).click();
   await agentSettled(page, false);
   await page.locator(".settings-trigger").click();
-  const dialog = page.getByRole("dialog", { name: "Settings", exact: true });
+  const dialog = await settingsSurface(page, "Interface");
   await dialog.getByRole("button", { name: "Reset to 100%" }).click();
   await dialog.getByRole("button", { name: "Done", exact: true }).click();
 }
