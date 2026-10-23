@@ -176,15 +176,28 @@ Geometry movement/rotation retains its existing solver/kernel, preview and Undo 
 
 ### Transform (founder-directed, 2026-09-22)
 
-**Transform (M)** combines the former Move and Scale tools. The existing capsule
-arrows, rotation markers and movable sphere anchor remain, with a bounding box
-for resizing. Move, rotate, resize and scale are search aliases for Transform.
-The earlier Move widget and Option-copy contracts above continue to govern its
-movement controls.
+**Transform (Command-T)** has three independently toggled layers: Move,
+Rotate and Scale. Its local buttons add or remove layers, with the last enabled
+layer remaining on. The separate **Move**, **Rotate** and **Scale** tool entries
+enter Transform with only their matching layer enabled. Command-T (Control-T on
+other platforms) and the general Transform entry restore the combination last
+changed through the layer buttons; entering a singular tool does not replace that
+remembered combination. Fresh selection exposes Move alone. Transform initially recalls all three layers;
+subsequent explicit layer changes replace that recalled combination.
+Layer choices are window UI state, outside document history. Changing a layer
+completes the current valid temporary edit through ordinary tool switching.
 
-In idle Modeling, Enter invokes the same Transform action for one or more selected
-whole-body targets. Fresh body selection already exposes Transform by default;
-Enter restores it after another idle tool choice without starting a geometry edit.
+The existing capsule arrows, rotation markers and movable sphere anchor remain;
+only enabled layers expose their corresponding controls. The bounding box is
+visible only while Scale is enabled. The earlier Move widget and Option-copy
+contracts above continue to govern its movement controls.
+
+The toolbox groups Move, Rotate, Scale and Transform directly below Select, with
+Move as its initial choice. M invokes Move alone. Mirror remains in Other Tools.
+
+In idle Modeling, Enter invokes the default Move action for one or more selected
+whole-body targets. Fresh body selection already exposes Move by default;
+Enter restores Move after another idle tool choice without starting a geometry edit.
 Sketch and planar-face Enter retain their existing workspace-entry behavior.
 Numeric fields, editable text, native button/select actions, modal acceptance,
 captured drags and calculations retain ownership of Enter. Held-key repeats and
@@ -224,9 +237,7 @@ after an earlier nonuniform preview. Nonuniform scaling retains destination grid
 entry remains exact. Held modifiers update the preview during
 the drag. The scale card stays hidden until a resize handle is used; clicking a handle
 opens exact entry without requiring a drag. It hides again on acceptance or cancellation.
-In sketch Move, Tab reveals and focuses X translation, Y translation, then rotation
-in a cycle (Shift-Tab reverses it). Only the active Move field is shown; rotation
-is revealed by its widget or its turn in the Tab cycle and updates during dragging.
+Tab visits visible action widgets and controls in already open parameter panels; Shift-Tab reverses traversal. Visiting a widget activates its ordinary numeric action and focuses/selects the corresponding field. Clicking a widget uses the same active fill and glow as Tab activation, including sketch widgets picked through the canvas. Enter, Escape, clicking elsewhere and window blur clear the highlight. Drag-only pivots, guide markers and panel grips are excluded. Sketch transform targets follow the visible axes and rotation glyph. During a held gesture, Tab stays within visible numeric fields. Enter uses the active tool’s normal numeric acceptance.
 Local X/Y/Z factors allow exact entry and use the box's lower bound
 on each changed axis; **Uniform scale** links the factors. Positive finite
 factors are required; collapsed or reflected scale candidates cannot accept.

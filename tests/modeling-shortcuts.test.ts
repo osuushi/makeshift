@@ -24,7 +24,7 @@ test("common shortcuts distinguish shifted Boolean from existing keys", () => {
     ["F", true, "chamfer", "⇧F"],
     ["R", true, "revolve", "⇧R"],
     ["o", false, "offset", "O"],
-    ["m", false, "transform", "M"],
+    ["m", false, "move", "M"],
   ] as const) {
     assert.equal(modelingShortcut(event(key, shift), null), id);
     assert.equal(modelingShortcutLabel(id), label);
@@ -32,7 +32,7 @@ test("common shortcuts distinguish shifted Boolean from existing keys", () => {
   assert.equal(modelingShortcut(event("E", true), null), null);
   assert.equal(modelingShortcutLabel("erode"), "");
   assert.equal(modelingShortcut(event("O", true), null), "offset");
-  assert.equal(modelingShortcut(event("M", true), null), "transform");
+  assert.equal(modelingShortcut(event("M", true), null), "move");
   for (const key of ["u", "i", "n", "r"]) assert.equal(modelingShortcut(event(key), null), null);
 });
 

@@ -24,11 +24,7 @@ export async function directionalWidgetRoute(page, plate) {
   assert.equal(await input.inputValue(), "0");
   assert.ok(await page.getByRole("button", { name: "Accept fillet", exact: true }).isDisabled());
   await standaloneOnly(page);
-  for (const key of ["Tab", "Tab", "Shift+Tab"]) {
-    await page.keyboard.press(key);
-    await inspect(page);
-    assert.ok(await input.evaluate((field) => field === document.activeElement));
-  }
+  await directionalTabs(page, input);
   await page.keyboard.press("Escape");
   await inspect(page);
   const handle = page.getByRole("button", { name: "Fillet edges", exact: true });
@@ -94,4 +90,12 @@ export async function directionalWidgetRoute(page, plate) {
   );
   await page.keyboard.press("Escape");
   await inspect(page);
+}
+
+async function directionalTabs(page, input) {
+  for (const key of ["Tab", "Tab", "Shift+Tab"]) {
+    await page.keyboard.press(key);
+    await inspect(page);
+    assert.ok(await input.evaluate((field) => field === document.activeElement));
+  }
 }

@@ -5,8 +5,8 @@
 .agent-dock {
   position: fixed;
   z-index: 30;
-  background: white;
-  border-left: 1px solid #d9dfe7;
+  background: var(--panel);
+  border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -23,7 +23,7 @@
   left: var(--agent-viewport-left, 0px);
   bottom: var(--agent-viewport-bottom, 0px);
   height: var(--agent-size);
-  border-top: 1px solid #d9dfe7;
+  border-top: 1px solid var(--border);
 }
 .agent-header {
   flex-shrink: 0;
@@ -33,7 +33,7 @@
   padding: 6px;
   min-height: 42px;
   flex-wrap: wrap;
-  background: #f8f9fb;
+  background: var(--canvas);
 }
 .agent-header button {
   padding: 4px 7px;
@@ -44,7 +44,7 @@
 }
 .agent-status {
   font-size: 11px;
-  color: #697587;
+  color: var(--muted);
   margin-right: auto;
 }
 .agent-body {
@@ -74,7 +74,7 @@
   font-size: max(16px, calc(16px * var(--ui-scale, 1)));
 }
 .agent-message {
-  color: #805016;
+  color: var(--warning);
   font-size: 12px;
   padding: 0 10px;
   overflow-wrap: anywhere;
@@ -84,7 +84,7 @@
 }
 .agent-workspace {
   font-size: 11px;
-  color: #697587;
+  color: var(--muted);
   padding: 5px 10px;
   margin: 0;
   overflow-wrap: anywhere;
@@ -96,7 +96,7 @@
   padding: 12px;
   max-height: 65%;
   overflow-y: auto;
-  border-bottom: 1px solid #d9dfe7;
+  border-bottom: 1px solid var(--border);
 }
 .agent-settings[hidden] {
   display: none;
@@ -113,13 +113,13 @@
 .agent-settings select {
   font: inherit;
   padding: 6px;
-  border: 1px solid #c7cfda;
+  border: 1px solid var(--border);
   border-radius: 4px;
   width: 100%;
 }
 .agent-settings p {
   font-size: 11px;
-  color: #697587;
+  color: var(--muted);
   overflow-wrap: anywhere;
 }
 .agent-splitter {
@@ -168,15 +168,15 @@
   z-index: 5;
   display: grid;
   place-items: center;
-  border: 2px dashed #1769aa;
-  background: #eaf4ffed;
-  color: #1769aa;
+  border: 2px dashed var(--accent);
+  background: var(--surface);
+  color: var(--accent);
   font-weight: 600;
   pointer-events: none;
 }
 .agent-attachment-warning {
   max-width: min(420px, 90vw);
-  border: 1px solid #c7cfda;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 18px;
 }
@@ -187,7 +187,7 @@
 }
 
 .agent-setup {
-  border: 1px solid #c7cfda;
+  border: 1px solid var(--border);
   padding: 8px;
   margin: 0 0 10px;
 }

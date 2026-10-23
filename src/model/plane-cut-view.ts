@@ -40,13 +40,13 @@ export class PlaneCutView {
     this.cutterKey = key;
     this.clear(this.cutter);
     if (!frame && !surface) return;
-    this.cutter.add(this.surface(vertices, "#d08a35", 0.22));
+    this.cutter.add(this.surface(vertices, "#a66a16", 0.22));
     const outlines = surface
       ? featureEdges(surface.body)
           .filter((edge) => surface.face.edges.includes(edge.id))
           .map((edge) => edge.points)
       : [[...vertices.slice(0, 9), ...vertices.slice(15, 18), ...vertices.slice(0, 3)]];
-    for (const outline of outlines) this.cutter.add(this.line(outline, "#d08a35", 2.5, 1));
+    for (const outline of outlines) this.cutter.add(this.line(outline, "#a66a16", 2.5, 1));
   }
   showEdges(edges: { body: BodyGeometry; edge: Edge }[]): void {
     this.clear(this.edges);

@@ -14,6 +14,7 @@
 #include <GProp_GProps.hxx>
 #include <GCPnts_AbscissaPoint.hxx>
 #include <Poly_Triangulation.hxx>
+#include <Poly_PolygonOnTriangulation.hxx>
 #include <OSD_ThreadPool.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
@@ -156,7 +157,29 @@ void analyticEdge(std::ostream& out, const TopoDS_Edge& shape, const BRepAdaptor
     if (curve.GetType() == GeomAbs_Circle) { out << ",\"mid\":"; xyz(out, curve.Value((a + b) / 2).XYZ()); }
     out << '}';
 }
-void edge(std::ostream& out, const TopoDS_Edge& shape) {
+// Use the active face mesh, not an independently sampled curve: curved chords
+// with different endpoints can fall inside the triangles they should outline.
+std::vector<std::vector<gp_Pnt>> meshEdges(const TopTools_IndexedMapOfShape& faces,
+                                        const TopTools_IndexedMapOfShape& edges) {
+    std::vector<std::vector<gp_Pnt>> points(edges.Extent());
+    for (int i = 1; i <= faces.Extent(); ++i) {
+        const auto face = TopoDS::Face(faces(i));
+        TopLoc_Location location;
+        const auto mesh = BRep_Tool::Triangulation(face, location);
+        if (mesh.IsNull()) continue;
+        for (TopExp_Explorer e(face, TopAbs_EDGE); e.More(); e.Next()) {
+            const auto edge = TopoDS::Edge(e.Current());
+            auto& samples = points[edges.FindIndex(edge) - 1];
+            if (!samples.empty() || BRep_Tool::Degenerated(edge)) continue;
+            const auto polygon = BRep_Tool::PolygonOnTriangulation(edge, mesh, location);
+            if (polygon.IsNull()) continue;
+            for (int j = 1; j <= polygon->NbNodes(); ++j)
+                samples.push_back(mesh->Node(polygon->Node(j)).Transformed(location.Transformation()));
+        }
+    }
+    return points;
+}
+void edge(std::ostream& out, const TopoDS_Edge& shape, const std::vector<gp_Pnt>& samples) {
     BRepAdaptor_Curve curve(shape); const double a = curve.FirstParameter(), b = curve.LastParameter();
     analyticEdge(out, shape, curve);
     if (!BRep_Tool::Degenerated(shape)) {
@@ -170,6 +193,17 @@ void edge(std::ostream& out, const TopoDS_Edge& shape) {
             out << ",\"closed\":" << (start.Distance(end) < 1e-7 ? "true" : "false") << '}';
         }
     }
+    if (!samples.empty()) {
+        out << ",\"points\":[";
+        for (size_t i = 0; i < samples.size(); ++i) {
+            if (i) out << ',';
+            const auto& p = samples[i];
+            out << p.X() << ',' << p.Y() << ',' << p.Z();
+        }
+        out << ']';
+        return;
+    }
+    // Free wires and degenerate edges need not have a face triangulation.
     int count = 1;
     if (curve.GetType() == GeomAbs_Circle) {
         const double radius = curve.Circle().Radius();
@@ -223,6 +257,7 @@ void present(std::ostream& out, const Result& result, double deflection) {
     out << ",\"bounds\":"; numbers(out, {x, y, z, X, Y, Z});
     TopTools_IndexedMapOfShape edges; TopExp::MapShapes(result.shape, TopAbs_EDGE, edges);
     TopTools_IndexedMapOfShape faces; TopExp::MapShapes(result.shape, TopAbs_FACE, faces);
+    const auto edgeSamples = meshEdges(faces, edges);
     const auto blends = recognizeBlends(result.shape);
     const auto chamfers = recognizeChamfers(result.shape);
     OffsetThicknessContext thickness(result.shape);
@@ -240,7 +275,7 @@ void present(std::ostream& out, const Result& result, double deflection) {
                     [&](const TopoDS_Face& face) { return face.IsSame(shapes(i)); });
                 out << ",\"offsetSelected\":" << (selected ? "true" : "false");
             }
-            if (type == TopAbs_FACE) face(out, TopoDS::Face(shapes(i)), edges, blends, chamfers, faces, chains, thickness); else edge(out, TopoDS::Edge(shapes(i)));
+            if (type == TopAbs_FACE) face(out, TopoDS::Face(shapes(i)), edges, blends, chamfers, faces, chains, thickness); else edge(out, TopoDS::Edge(shapes(i)), edgeSamples[i - 1]);
             out << '}';
         }
         out << ']';

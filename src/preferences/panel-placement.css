@@ -21,8 +21,8 @@
   top: 4px;
   bottom: 4px;
   background:
-    radial-gradient(circle at 3px 3px, #63758a40 0.8px, transparent 1.2px),
-    radial-gradient(circle at 3px 4px, #ffffffbf 0.8px, transparent 1.3px);
+    radial-gradient(circle at 3px 3px, var(--muted) 0.8px, transparent 1.2px),
+    radial-gradient(circle at 3px 4px, var(--panel) 0.8px, transparent 1.3px);
   background-size: 6px 6px;
   filter: blur(0.3px);
   mask-image: linear-gradient(transparent, #000 21%, #000 79%, transparent);
@@ -32,5 +32,5 @@
   cursor: grabbing;
 }
 .parameter-panel-grip:focus-visible {
-  outline: 2px solid #3981ca;
+  outline: 2px solid var(--accent);
 }

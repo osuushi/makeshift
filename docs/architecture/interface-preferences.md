@@ -1,9 +1,31 @@
 # Interface preferences
 
 Settings is available in the editor header, through Tools and with Cmd-, on Mac.
-It opens a compact modal dialog; Escape, clicking the backdrop or Done closes it. User interface scale
-applies immediately at 80%, 90%, 100%, 130%, 125% or 150%; Reset to 100% is always
-available in its General tab. Opening Settings requires completing the current edit.
+It opens a separate, reusable Settings window on native desktop and a compact modal
+dialog in browsers. Interface, Sketch Grid, View, Decorators, Experimental and Toolbox tabs
+support arrow keys and Home/End. The active tab has an accent underline; tabs share a
+continuous strip, wrapping at narrow widths without sideways scrolling. Labels sit above their controls; related grid
+spacing and color fields share compact Minor/Major groups. Groups stack at narrow
+widths. View sliders pair their labels, controls and values on compact rows. Native tab
+selection measures an invisible, natural-flow copy of the current rendered pane, using
+the actual fonts, controls and interface scale. Ordinary preference panes are fixed to
+their measured content size. The tab strip and Interface row determine natural width;
+width can increase when doing so reduces overflow on a short display. Toolbox keeps
+that width and permits vertical resizing: its minimum shows the first two top-level
+groups, its preferred height shows the first three, and its maximum shows the full tree.
+These heights come from the current tree, including nested groups. The host adds native
+window chrome and clamps sizes and position to the display work area. Content scrolls
+only when the display cannot fit it, or within the resizable Toolbox tree. Measurement
+and display reserve matching scrollbar space to avoid wrapping feedback.
+Manual resizing is enforced by native window limits; there are no resize observers or
+resize callbacks that request another size. Re-selecting the active tab preserves the
+user's size; switching tabs or explicitly changing interface scale measures and applies
+the new pane policy once. Native Done and Escape request closing directly from the
+host; a closing window stops being reusable before destruction completes. Escape or Done closes Settings; browsers also
+allow backdrop dismissal. Native preferences update all open drawings immediately
+through storage events, without changing their geometry or Undo history. User interface scale
+applies immediately at 80%, 90%, 100%, 110%, 125% or 150%; Reset to 100% is always
+available from this dialog. Opening Settings requires completing the current edit.
 Closing restores focus to its opener unless another control has already taken focus.
 The choice is stored locally on the current device/origin under `makeshift.ui-scale`,
 outside accepted geometry, document files and Undo. Invalid stored values fall back
@@ -135,7 +157,9 @@ requires no opt-in.
 
 ## Sketch grid controls
 
-The sketch toolbox Grid icon opens a slide-out without selecting a drawing tool.
+View options beneath the orientation cube opens a nonmodal popover in both modeling
+and sketch views, without selecting a drawing tool. Find also opens it through Grid
+or View options. Escape, an outside click or Done closes it. The popover contains document grid sizes, sketch grid colors and snapping.
 Minor and major spacings (mm), their independent colors, and Snap to grid belong
 to the document. Set default copies those values to device defaults; Settings
 also edits those defaults. Built-in defaults are 0.5 mm minor, 10 mm major,
@@ -153,6 +177,39 @@ spacing exactly. Incommensurate settings show only the major grid rather than
 moving major lines. Equal grids also draw only major lines. Snapping follows the
 visible minor spacing (or major when minor lines are hidden). With 0.5/10 mm settings,
 zoom can thin minor lines to 1, 2, 2.5, 5 or 10 mm; it never moves major lines to 10.5 mm.
-Canonical modeling
-grids retain their existing spacing and palette behavior. The searchable Toggle
+Canonical modeling grids use the same document spacing and visible snap step,
+while retaining their plane palette colors. The searchable Toggle
 grid snapping command remains available, including during a pen gesture.
+
+## Appearance and color contrast
+
+Appearance in Settings → Interface offers System (default), Light and Dark. The
+choice is device/origin-local in `makeshift.theme`, outside document data and Undo.
+System follows `prefers-color-scheme` live on Electron, browsers and iPad Safari;
+clients without that API fall back to Light and still allow explicit Dark.
+Invalid stored values use System. Denied storage keeps the current choice in
+memory. Storage events synchronize same-origin windows. Startup resolves the
+choice before the app paints; CSS `color-scheme` also themes native form controls.
+Native desktop dialogs and the license viewer follow the operating system.
+
+`src/preferences/theme.css` owns semantic interface colors. Panels are opaque:
+model geometry cannot bleed through and lower text contrast. The audit covers
+all application CSS, SVG controls/labels, sketch ink and axes, preview outlines,
+terminal default/ANSI colors, startup backgrounds and the license viewer. The
+marketing website is a separate surface and retains its independent design.
+
+`tests/theme-contrast.test.ts` checks WCAG relative luminance: at least 4.5:1 for
+normal text (including muted/status/accent text) on panel, canvas, raised, selected
+and warning surfaces; at least 3:1 for control borders and opaque viewport ink.
+It also prevents new literal colors in application styles outside the palette.
+Focus uses the accent token; primary buttons pair accent with on-accent ink.
+Terminal colors update without restarting the session. Programs can still supply
+arbitrary true-color output or their own foreground/background combinations.
+
+Document body colors, configurable grid/plane/decorator palettes, lit surfaces,
+translucent region/section fills and shadows represent geometry or user data;
+they are not forced to meet text contrast or rewritten when appearance changes.
+Faint grids and occluded geometry are deliberately subordinate. Geometry controls
+use opaque ink or light/dark double outlines; orientation face labels choose black
+or white against the configured face. Branding, QR images and color swatches keep
+their source colors. These exceptions do not justify low-contrast interface text.

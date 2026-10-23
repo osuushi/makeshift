@@ -49,7 +49,11 @@ integration. Nonfinite or failed integration rejects; tessellation is not a volu
 source. Offset reversal, shell-cap differences, plane-cut conservation and rigid
 placement are regression checks for these measurements.
 Display meshes/outlines and planar frames derive from the exact geometry. Body
-results report `center` as the bounding-box midpoint for widget placement and
+edge polylines use the active face triangulation's boundary nodes so curved
+chords cannot sink beneath independently sampled surface triangles. Exact curve
+descriptions and landmarks remain independent of display sampling; edges without
+a face mesh retain curve sampling. Body results report `center` as the bounding-box
+midpoint for widget placement and
 nearby mesh coordinates, without a separate center-of-mass integration. Precise uniform-density
 center of mass is a read-only `center-of-mass` query or
 `makeshift.centerOfMass({body})` script call. Each calculator caches up to 16

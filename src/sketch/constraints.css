@@ -29,14 +29,14 @@
   display: grid;
   gap: 4px;
   padding: 9px;
-  background: #ffffffed;
-  border: 1px solid #d9dfe7;
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 8px;
   pointer-events: auto;
 }
 .constraint-list > span {
   font-size: 11px;
-  color: #667588;
+  color: var(--muted);
 }
 .constraint-list button {
   text-align: left;
@@ -53,7 +53,7 @@
   width: 100%;
 }
 .constraint-list section + section {
-  border-top: 1px solid #d9dfe7;
+  border-top: 1px solid var(--border);
   margin-top: 6px;
   padding-top: 6px;
 }
@@ -61,11 +61,11 @@
   margin: 0 0 5px;
   font-size: 12px;
   font-weight: 600;
-  color: #536477;
+  color: var(--teal);
 }
 .constraint-empty {
   font-size: 11px;
-  color: #667588;
+  color: var(--muted);
 }
 .existing-constraints:not(:empty) + .constraint-empty,
 .available-constraints:has(.line-constraints:not([hidden]) button:not([hidden]))
@@ -94,8 +94,8 @@
 }
 
 .constrained-point {
-  fill: white;
-  stroke: #79569f;
+  fill: var(--panel);
+  stroke: var(--purple);
   stroke-width: 1.7;
 }
 

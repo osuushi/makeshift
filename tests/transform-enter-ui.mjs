@@ -4,6 +4,10 @@ import { project } from "./ui-blend-edit.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
+import {
+  bodyKeyboardRoute,
+  transformLayersKeyboardRoute,
+} from "./ui-transform-layers-keyboard.mjs";
 
 const viewport = (page) => page.getByLabel("Modeling viewport", { exact: true });
 async function commandIdle(page) {
@@ -123,6 +127,7 @@ async function singleAndMultiple(page, name) {
   }
   await history(page, pair, shifted);
   // Numeric scale Enter belongs to its modal controller, never the idle alias.
+  await chooseTool(page, "scale", "scale");
   await page.locator(".transform-box-handle:visible").last().click();
   await page.getByRole("checkbox", { name: "Uniform scale", exact: true }).check();
   await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("1.5");
@@ -268,8 +273,13 @@ async function workspaceEnter(page, name) {
   assert.deepEqual(onSketch.document, document);
   console.log(`${name}: selected planar-face/sketch Enter retains workspace entry`);
 }
+const started = Date.now();
 await withUiRuntimes(async (page, name) => {
   await singleAndMultiple(page, name);
+  await bodyKeyboardRoute(page, name);
   await nativeFocusAndModal(page, name);
   await workspaceEnter(page, name);
+  await transformLayersKeyboardRoute(page, name);
 });
+
+console.log(`Transform Enter and keyboard suite: ${((Date.now() - started) / 1000).toFixed(1)}s`);

@@ -1,11 +1,11 @@
 .step-export-choice {
   max-width: 480px;
   padding: 24px;
-  color: var(--text, #26364a);
-  background: var(--panel, white);
-  border: 1px solid var(--border, #cbd5e1);
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 12px 48px #0003;
+  box-shadow: 0 12px 48px var(--shadow);
 }
 
 .step-export-choice h2 {
@@ -25,5 +25,5 @@
 }
 
 .step-export-choice::backdrop {
-  background: #0004;
+  background: var(--backdrop);
 }

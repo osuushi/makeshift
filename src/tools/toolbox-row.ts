@@ -3,10 +3,12 @@ import { unavailableHelp } from "./navigator-availability.js";
 import { drawerTitle } from "./toolbox-defaults.js";
 import { toolboxIcon } from "./toolbox-icons.js";
 import { type ToolboxItem, type ToolboxPath, toolboxLeaf } from "./toolbox-tree.js";
+export type ToolboxTool = Pick<ToolResult, "id" | "label" | "description" | "unavailable">;
+
 export function toolboxRow(
   item: ToolboxItem,
   path: ToolboxPath,
-  tools: Map<string, ToolResult>,
+  tools: Map<string, ToolboxTool>,
   activate: (event: MouseEvent) => void,
   expand: () => void,
 ): HTMLElement {
@@ -18,7 +20,7 @@ export function toolboxRow(
   const row = document.createElement("div");
   row.className = "toolbox-row";
   row.dataset.toolboxPath = JSON.stringify(path);
-  if (id === "select" || id === "transform") row.dataset.toolboxFixed = "true";
+  if (id === "select" || path[0] === 1) row.dataset.toolboxFixed = "true";
   row.dataset.label = label;
   if (title) row.dataset.menu = title;
   if (title === drawerTitle) row.dataset.toolboxAnchored = "true";

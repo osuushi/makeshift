@@ -85,10 +85,11 @@ await withUiRuntimes(async (page, name) => {
   const face = await project(page, [10, 10, 10]);
   await page.mouse.move(face.x, face.y);
   assert.equal((await inspect(page)).modelingHover, "face");
-  const faceGuides = await page
-    .locator(".guide-marker.ghost")
-    .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("title")));
-  assert.ok(faceGuides.includes("Body bounding-box center · Click to keep"));
+  const faceGuides = await activeGhostTitles(page);
+  assert.ok(
+    !faceGuides.includes("Body bounding-box center · Click to keep"),
+    "an opaque body's internal center must not appear through the front surface",
+  );
   assert.ok(faceGuides.some((title) => title?.startsWith("Edge midpoint")));
   const edge = await project(page, [20, 10, 10]);
   await page.mouse.move(edge.x, edge.y);
@@ -110,12 +111,7 @@ await withUiRuntimes(async (page, name) => {
   assert.deepEqual(after.document.bodies, before.document.bodies);
   await page.mouse.move(face.x, face.y);
   assert.equal((await inspect(page)).modelingHover, "face");
-  assert.deepEqual(
-    await page
-      .locator(".guide-marker.ghost")
-      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("title"))),
-    faceGuides,
-  );
+  assert.deepEqual(await activeGhostTitles(page), faceGuides);
   console.log(
     `${name}: face hover exposes neighboring edge guides; those guides retain click precedence`,
   );
@@ -243,10 +239,11 @@ async function selectedConcaveFace(page, name) {
   await marker.waitFor({ state: "visible" });
   await page.mouse.move(1200, 780);
   assert.equal((await inspect(page)).modelingHover, null);
-  assert.equal(await marker.count(), 1, "selection keeps the centroid beyond the hover radius");
-  await page.screenshot({ path: `.cache/sketch-review/${name}-guide-persistent-selection.png` });
+  await marker.waitFor({ state: "detached" });
+  assert.equal(await marker.count(), 0, "selection does not bypass the pointer radius after fade");
+  await page.screenshot({ path: `.cache/sketch-review/${name}-guide-selected-proximity.png` });
   await page.mouse.click(1200, 780);
-  assert.equal(await marker.count(), 0, "deselection removes the persistent candidate");
+  assert.equal(await marker.count(), 0, "deselection removes the candidate");
   await page.mouse.click(inside.x, inside.y);
   await page.mouse.move(centroid.x, centroid.y, { steps: 20 });
   await page.mouse.click(centroid.x, centroid.y);
@@ -256,6 +253,16 @@ async function selectedConcaveFace(page, name) {
   assert.equal(after.modelingSelection[0]?.face, face.id);
   assert.deepEqual(after.document.bodies, state.document.bodies);
   console.log(
-    `${name}: off-face centroid hidden on hover, persistent with selection, reachable and saveable`,
+    `${name}: off-face centroid hidden on hover, selected within pointer range, reachable and saveable`,
   );
+}
+
+async function activeGhostTitles(page) {
+  return page
+    .locator(".guide-marker.ghost:visible")
+    .evaluateAll((nodes) =>
+      nodes
+        .filter((node) => node.style.pointerEvents !== "none")
+        .map((node) => node.getAttribute("title")),
+    );
 }

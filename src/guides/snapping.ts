@@ -3,10 +3,8 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { type Point, type Vector, worldPoint } from "../sketch/planes.js";
 import { resolvedGuides } from "./evaluate.js";
 import { guideOwner } from "./types.js";
-import { guidesVisible } from "./view-state.js";
 
 export function visibleGuides(editor: SketchEditor, accepted = false) {
-  if (!guidesVisible(editor)) return [];
   return resolvedGuides(accepted ? editor.store.data : editor.display).filter(
     ({ guide, point }) =>
       !guide.hidden &&

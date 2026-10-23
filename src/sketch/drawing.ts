@@ -3,6 +3,7 @@ import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import { LineSegments2 } from "three/addons/lines/LineSegments2.js";
 import { LineSegmentsGeometry } from "three/addons/lines/LineSegmentsGeometry.js";
 import type { DisplayDocument } from "../model/display-document.js";
+import { viewportPalette } from "../preferences/viewport-theme.js";
 import { constraintCurves, visibleConstraints } from "./constraint-geometry.js";
 import type { SketchEditor } from "./editor.js";
 import { worldPoint } from "./planes.js";
@@ -43,7 +44,7 @@ export function drawSketches(editor: SketchEditor, obscured = false): () => void
     const mergeable = !editor.world.active
       ? editor.mergeableSketches.map((sketch) => sketch.id)
       : [];
-    const key = `${editor.visibility.key}:${modeling.join()}:${mergeable.join()}:${editor.modeling.hover?.sketch}:${[...selected].sort().join(",")}:${[...editor.selectedCurves].join(",")}:${[...hover].join(",")}:${editor.constraintHover}:${editor.selected.firstPointKey}:${[...(editor.selected.pointKeys ?? [])].join()}:${JSON.stringify(editor.pointHover)}:${editor.world.active}:${editor.world.height}:${rect.height}`;
+    const key = `${viewportPalette().background}:${editor.visibility.key}:${modeling.join()}:${mergeable.join()}:${editor.modeling.hover?.sketch}:${[...selected].sort().join(",")}:${[...editor.selectedCurves].join(",")}:${[...hover].join(",")}:${editor.constraintHover}:${editor.selected.firstPointKey}:${[...(editor.selected.pointKeys ?? [])].join()}:${JSON.stringify(editor.pointHover)}:${editor.world.active}:${editor.world.height}:${rect.height}`;
     material.resolution.set(rect.width, rect.height);
     if (previous !== editor.display || selection !== key) {
       const { positions, colors } = sketchSegments(
@@ -105,18 +106,18 @@ function sketchSegments(
           (!editor.world.active &&
             editor.modeling.hover?.sketch === sketch.id &&
             editor.modeling.hover.kind === "sketch")
-          ? "#bc7b2b"
+          ? viewportPalette().hover
           : modeling.includes(sketch.id) ||
               editor.selectedCurves.has(curve.id) ||
               (selected.has(curve.id) && !feedback.affected.has(curve.id))
-            ? "#337ac4"
+            ? viewportPalette().selected
             : mergeable.has(sketch.id)
-              ? "#c78a36"
+              ? viewportPalette().hover
               : editor.world.active && sketch.id !== editor.sketch?.id
-                ? "#9ba6b4"
+                ? viewportPalette().inactive
                 : constrained.has(curve.id)
-                  ? "#79569f"
-                  : "#283d51",
+                  ? viewportPalette().constrained
+                  : viewportPalette().ink,
       );
       const rendered = coloredCurve(
         curve,

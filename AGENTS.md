@@ -65,7 +65,7 @@ current brief. They do not override these documents or later founder input.
   indexes and raw pointers are not persistent model identities.
 - Sketches contain ordinary curves and constraints. A rectangle is a creation
   tool and convenience editing group, not the definition of a sketch.
-- Preserve continuing planar workspaces, local controls, light-mode default,
+- Preserve continuing planar workspaces, local controls, system appearance default,
   explicit plane selection and sketch creation on gesture completion. Hover and
   visible point handles are not point selection. A point click switches to Select;
   Select immediately drags coincident point targets unless narrowed in the point

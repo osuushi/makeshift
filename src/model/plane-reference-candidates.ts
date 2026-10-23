@@ -88,7 +88,7 @@ export class PlaneCandidateView {
             .join(" "),
         );
         path.setAttribute("fill", "none");
-        path.setAttribute("stroke", "#4786b5");
+        path.setAttribute("stroke", "var(--accent)");
         path.setAttribute("stroke-opacity", "0.55");
         path.setAttribute("stroke-width", "1.5");
         this.svg.append(path);

@@ -11,6 +11,7 @@ await withUiRuntimes(async (page, name) => {
   await drag(page, [4, 7], [24, 27]);
   const original = (await inspect(page)).document;
   await page.keyboard.press("v");
+  await page.keyboard.press("g");
   const initialPoint = await at(page, 14, 27);
   await page.mouse.move(initialPoint.x, initialPoint.y);
   await page.locator(".guide-marker.ghost").first().waitFor({ state: "visible" });
@@ -135,12 +136,21 @@ async function dragWholeSketch(page) {
 async function toggleGuides(page, point) {
   const before = (await inspect(page)).document;
   const toggle = page.locator('.toolbox [data-tool="guide-points"]');
+  assert.equal(await toggle.getAttribute("aria-label"), "Edit Guide Points");
   assert.equal(await toggle.getAttribute("aria-pressed"), "true");
   await page.keyboard.press("g");
   assert.equal(await toggle.getAttribute("aria-pressed"), "false");
-  assert.equal(await page.locator(".guide-marker").count(), 0);
+  assert.ok(
+    await page
+      .locator(".guide-marker.ghost")
+      .evaluateAll((nodes) => nodes.every((node) => node.style.pointerEvents === "none")),
+  );
+  await page.waitForFunction(() => document.querySelectorAll(".guide-marker.ghost").length === 0);
+  assert.equal(await page.locator(".guide-marker.ghost").count(), 0);
+  assert.equal(await page.locator(".guide-marker.saved").count(), 1);
   await page.mouse.move(point.x + 1, point.y + 1);
-  assert.equal(await page.locator(".guide-marker").count(), 0);
+  assert.equal(await page.locator(".guide-marker.ghost").count(), 0);
+  assert.equal(await page.locator(".guide-marker.saved").count(), 1);
   assert.deepEqual((await inspect(page)).document, before);
   await toggle.click();
   assert.equal(await toggle.getAttribute("aria-pressed"), "true");

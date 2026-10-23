@@ -1,3 +1,12 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Makeshift</title><link rel="icon" type="image/png" href="./makeshift.png"/><link rel="apple-touch-icon" href="./apple-touch-icon.png"/></head>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Makeshift</title><link rel="icon" type="image/png" href="./makeshift.png"/><link rel="apple-touch-icon" href="./apple-touch-icon.png"/><meta name="color-scheme" content="light dark"/><meta name="theme-color" content="#f8f9fb"/><script>
+(() => {
+  let preference = "system";
+  try { preference = localStorage.getItem("makeshift.theme") || "system"; } catch {}
+  const dark = preference === "dark" || (preference !== "light" && typeof matchMedia === "function" && matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  document.documentElement.style.colorScheme = dark ? "dark" : "light";
+  document.querySelector('meta[name="theme-color"]').content = dark ? "#161e29" : "#f8f9fb";
+})();
+</script></head>
 <body><main id="app" aria-label="Makeshift sketch editor"></main><script type="module" src="/entry.ts"></script></body></html>

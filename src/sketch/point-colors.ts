@@ -1,4 +1,5 @@
 import { Color } from "three";
+import { viewportPalette } from "../preferences/viewport-theme.js";
 import { displayPoints } from "./curve-geometry.js";
 import type { Curve, Sketch } from "./document.js";
 import type { SketchEditor } from "./editor.js";
@@ -50,8 +51,8 @@ export function coloredCurve(
           : Math.max(0, 1 - Math.abs(length - b.fraction * total) / (48 * unit)),
       ),
     );
-  const blue = new Color("#337ac4"),
-    amber = new Color("#bc7b2b");
+  const blue = new Color(viewportPalette().selected),
+    amber = new Color(viewportPalette().hover);
   const colors = lengths.map((length) =>
     base.clone().lerp(blue, strength(branches, length)).lerp(amber, strength(hover, length)),
   );

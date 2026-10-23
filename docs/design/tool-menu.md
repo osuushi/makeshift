@@ -227,7 +227,8 @@ has a dedicated icon; named menus use a folder.
 Only ongoing tools belong here. Immediate commands and constraints retain their
 contextual controls and Search.
 
-Guide points remains a persistent visibility toggle below the editable tool tree.
+Edit Guide Points remains a persistent candidate-editing toggle below the editable
+tool tree; non-hidden saved guides remain visible.
 Selecting guides also reveals a contextual Construction plane button there, with
 the three-point availability rule. These reference controls do not participate in
 tool regrouping or change remembered alternatives.
@@ -252,10 +253,12 @@ Settings has General and Toolbox tabs. The Toolbox tab shows the entire expanded
 tree, supports the same dragging, and provides a top-level drop area. Selecting a
 tool inside a flat group chooses its displayed alternative without invoking it.
 Reset toolbox to defaults restores the authored grouping. Preferences use
-`makeshift.toolbox.v5`, outside documents and Undo, with storage-event sync between
+`makeshift.toolbox.v7`, outside documents and Undo, with storage-event sync between
 windows. Migration from v4 separates the primitive and profile-based solid families,
-pins Transform, removes Duplicate and moves Mirror into the drawer while preserving
-unrelated customization and remembered alternatives. Migration from v3/v2 also
+pins the Move/Rotate/Scale/Transform group below Select, removes Duplicate and keeps
+Mirror in Other Tools while preserving
+unrelated customization and remembered alternatives. v5/v6 preferences upgrade the
+former Transform slot to this group without resetting unrelated tools. Migration from v3/v2 also
 flattens old swapping groups and moves infrequent grouped tools into the named
 drawer. Old preference values remain available.
 

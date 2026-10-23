@@ -5,7 +5,7 @@
   height: 100%;
   overflow: hidden;
   pointer-events: none;
-  color: #738598;
+  color: var(--accent);
 }
 .movement-shadows path {
   fill: none;
@@ -13,14 +13,14 @@
 }
 .movement-shadows .shadow-soft {
   opacity: 0.22;
-  color: #39434f;
+  color: var(--text);
 }
 .movement-shadows .shadow-surface {
   fill: currentColor;
   stroke: none;
 }
 .movement-shadows .shadow-occluder {
-  fill: black;
+  fill: var(--handle-dark);
   stroke: none;
 }
 .movement-shadows .shadow-lines {
@@ -28,14 +28,14 @@
   stroke-width: 4;
 }
 .movement-shadows [data-active="true"] {
-  color: #1769b5;
+  color: var(--accent);
 }
 .movement-shadows [data-active="true"] .shadow-soft {
-  color: #344f68;
+  color: var(--teal);
   opacity: 0.28;
 }
 .movement-shadows [data-contact="true"] .shadow-soft {
-  color: #168bff;
+  color: var(--accent);
   opacity: 0.65;
 }
 .movement-shadows [data-contact="true"] .shadow-lines {
@@ -50,7 +50,7 @@
 }
 .movement-shadows .shadow-label {
   fill: currentColor;
-  stroke: #f8f9fb;
+  stroke: var(--panel);
   stroke-width: 3px;
   paint-order: stroke;
   font:

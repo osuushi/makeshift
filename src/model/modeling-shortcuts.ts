@@ -2,7 +2,7 @@
 const bindings = [
   ["extrude", "e", false],
   ["offset", "o", false],
-  ["transform", "m", false],
+  ["move", "m", false],
   ["shell", "s", false],
   ["fillet", "f", false],
   ["chamfer", "f", true],
@@ -32,7 +32,7 @@ export function modelingShortcut(
   const binding = bindings.find(
     ([id, key, shift]) =>
       key === event.key.toLowerCase() &&
-      (shift === event.shiftKey || id === "offset" || id === "transform"),
+      (shift === event.shiftKey || id === "offset" || id === "move"),
   );
   if (!binding) return null;
   if (owner && switches.has(binding[0])) {

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { openDocument } from "./native-documents.mjs";
+import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { drag, inspect, reset, settled } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
@@ -101,8 +102,10 @@ async function distantPanRoute(page, point) {
 async function independentAxesRoute(page, name) {
   await orient(page, [1, 1, 1]);
   await page.getByRole("button", { name: "Application settings" }).click();
-  await page.getByRole("slider", { name: "Grid opacity", exact: true }).press("Home");
-  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await (await settingsSurface(page, "View"))
+    .getByRole("slider", { name: "Grid opacity", exact: true })
+    .press("Home");
+  await closeSettings(await settingsSurface(page, "View"));
   await settled(page);
   assert.ok((await inspect(page)).planeTargets.every((p) => !p.selectable));
   // Present the retained canvas before reading pixels in on-demand CI mode.
@@ -130,6 +133,8 @@ async function independentAxesRoute(page, name) {
   for (const [axis, count] of Object.entries(counts))
     assert.ok(count > 20, `${axis} world axis renders with grids hidden (${count} colored pixels)`);
   await page.getByRole("button", { name: "Application settings" }).click();
-  await page.getByRole("button", { name: "Reset grid display" }).click();
-  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await (await settingsSurface(page, "View"))
+    .getByRole("button", { name: "Reset grid display" })
+    .click();
+  await closeSettings(await settingsSurface(page, "View"));
 }

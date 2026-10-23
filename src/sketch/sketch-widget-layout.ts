@@ -1,3 +1,4 @@
+import { transformBoxRect } from "../model/transform-clearance.js";
 import {
   fitWidgets,
   measuredRect,
@@ -99,6 +100,8 @@ export function updateSketchWidgets(
     return;
   }
   const { viewport, obstacles } = widgetViewport(registration.root);
+  const boxRect = editor.moveMode && transformBoxRect(editor);
+  if (boxRect) obstacles.push(boxRect);
   for (const control of registration.root.querySelectorAll(
     ".move-control, .pivot-control, .move-anchor",
   )) {

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { pixels } from "./ui-fill.mjs";
@@ -8,13 +9,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function cutawayRoute(page, name, plane = "XY") {
   await reset(page);
-  await page.getByRole("button", { name: "Application settings" }).click();
-  await page.getByRole("checkbox", { name: "Global X-ray vision" }).check();
-  const opacity = page.getByRole("slider", { name: "X-ray front opacity", exact: true });
-  await opacity.press("Home");
-  await opacity.press("PageUp");
-  await opacity.press("PageUp");
-  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await configureCutaway(page);
   await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
   await chooseTool(page, "rectangle", "rectangle");
   await drag(page, [-18, -18], [18, 18]);
@@ -89,4 +84,18 @@ export async function cutawayRoute(page, name, plane = "XY") {
   console.log(
     `${name} ${plane}: real extrusion, visible sketch line through solid, unchanged body and exit restoration pass`,
   );
+}
+
+async function configureCutaway(page) {
+  await page.getByRole("button", { name: "Application settings" }).click();
+  const preferences = await settingsSurface(page, "View");
+  await preferences.getByRole("checkbox", { name: "Global X-ray vision" }).check();
+  const opacity = preferences.getByRole("slider", {
+    name: "X-ray front opacity",
+    exact: true,
+  });
+  await opacity.press("Home");
+  await opacity.press("PageUp");
+  await opacity.press("PageUp");
+  await closeSettings(preferences);
 }

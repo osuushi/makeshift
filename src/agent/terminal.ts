@@ -1,7 +1,9 @@
 import type { FitAddon, Terminal } from "ghostty-web";
 import wasmUrl from "ghostty-web/ghostty-vt.wasm?url";
+import { onThemeChange } from "../preferences/theme.js";
 import { onUiScaleChange, uiScale } from "../preferences/ui-scale.js";
 import type { AgentHost, AgentReply } from "./protocol.js";
+import { terminalTheme } from "./terminal-theme.js";
 import { terminalTouch } from "./terminal-touch.js";
 
 export class AgentTerminal {
@@ -10,6 +12,9 @@ export class AgentTerminal {
   private observer: ResizeObserver;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private disposed = false;
+  private disposeTheme = onThemeChange(() => {
+    if (this.terminal) this.terminal.options.theme = terminalTheme();
+  });
   private disposeScale: () => void;
   private ready: Promise<void>;
   private workspace: string | null = null;
@@ -39,12 +44,7 @@ export class AgentTerminal {
       fontSize: 13 * uiScale(),
       cursorBlink: true,
       scrollback: 5000,
-      theme: {
-        background: "#ffffff",
-        foreground: "#283444",
-        cursor: "#1769aa",
-        selectionBackground: "#c9def2",
-      },
+      theme: terminalTheme(),
     });
     this.terminal = terminal;
     terminal.attachCustomKeyEventHandler((event) => {
@@ -132,6 +132,7 @@ export class AgentTerminal {
     clearTimeout(this.timer);
     this.observer.disconnect();
     this.disposeScale();
+    this.disposeTheme();
     this.disposeTouch?.();
     this.terminal?.dispose();
   }

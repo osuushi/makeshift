@@ -65,7 +65,7 @@ export async function generateNotices(destination, metadata) {
     join(destination, "index.html"),
     `<!doctype html><html lang="en"><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
-<title>Makeshift — Third-party licenses</title><style>body{font:16px system-ui;max-width:900px;margin:40px auto;padding:0 24px;color:#263243;background:#f8f9fb}h1{font-size:28px}summary{cursor:pointer;padding:14px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px ui-monospace}details{border-bottom:1px solid #d6dce5}a{color:#275bba}p{line-height:1.6}</style>
+<title>Makeshift — Third-party licenses</title><style>body{font:16px system-ui;max-width:900px;margin:40px auto;padding:0 24px;color:#263243;background:#f8f9fb}h1{font-size:28px}summary{cursor:pointer;padding:14px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px ui-monospace}details{border-bottom:1px solid #d6dce5}a{color:#275bba}p{line-height:1.6}:root{color-scheme:light dark}@media(prefers-color-scheme:dark){body{color:#e4edf7;background:#161e29}details{border-color:#8598ae}a{color:#87c5ff}}</style>
 <h1>Third-party licenses</h1><p>${htmlEscape(intro)}</p><p><a href="chromium.html">Chromium and Electron bundled component notices</a></p>
 ${entries.map((e) => `<details><summary>${htmlEscape(e.name)} — ${htmlEscape(e.version)} · ${htmlEscape(e.license)}</summary><p>${htmlEscape(e.source)}</p><pre>${htmlEscape(e.text)}</pre></details>`).join("\n")}</html>`,
   );

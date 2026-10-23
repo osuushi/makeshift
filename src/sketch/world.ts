@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { type CameraState, defaultCameraPosition, restoreCamera } from "../model/camera-state.js";
 import { canonicalPlanes } from "../preferences/canonical-planes.js";
+import { onThemeChange } from "../preferences/theme.js";
+import { viewportPalette } from "../preferences/viewport-theme.js";
 import { alignCameraToPlane, type CameraFraming, planeCameraPose } from "./camera-motion.js";
 import {
   levelOrientation,
@@ -80,6 +82,10 @@ export class World {
   private readonly removeNavigation: () => void;
   private readonly motion = new CameraTransition(this);
   readonly navigation = new NavigationHistory(this);
+  private readonly disposeTheme = onThemeChange(() => {
+    (this.scene.background as THREE.Color).set(viewportPalette().background);
+    this.requestDraw();
+  });
   private pendingDraw: number | null = null;
   private readonly frame = new WorldFrame(this, () => this.present(true));
   private readonly sketchClip = new THREE.Plane();
@@ -111,7 +117,7 @@ export class World {
     readonly host: HTMLElement,
     readonly overlay: HTMLElement,
   ) {
-    this.scene.background = new THREE.Color("#f8f9fb");
+    this.scene.background = new THREE.Color(viewportPalette().background);
     this.camera.position.set(...defaultCameraPosition);
     this.camera.up.set(0, 0, 1);
     this.canvas.setAttribute("aria-label", "Modeling viewport");
@@ -287,6 +293,7 @@ export class World {
     return { x: hit.dot(u), y: hit.dot(v) };
   }
   dispose(): void {
+    this.disposeTheme();
     this.navigation.clear();
     this.cancelCameraMotion();
     if (this.pendingDraw !== null) cancelAnimationFrame(this.pendingDraw);

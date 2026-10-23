@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { openThreadAdvanced } from "./ui-decorator-advanced.mjs";
 import { holdPreviews, previewReady, previewStats } from "./ui-decorator-worker-control.mjs";
@@ -11,9 +12,9 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function displaySettings(page, change) {
   await page.getByRole("button", { name: "Application settings", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "Settings", exact: true });
+  const dialog = await settingsSurface(page, "Decorators");
   await change(dialog);
-  await dialog.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(dialog);
 }
 export async function createDecoratedCylinder(page, kind = "threads") {
   await reset(page);

@@ -1,4 +1,5 @@
 import "./style.css";
+import "../preferences/theme.js";
 import "../ipad/style.css";
 import { connectBrowser } from "../ipad/browser-host.js";
 import { showDesktopConnection } from "../ipad/desktop.js";

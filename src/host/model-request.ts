@@ -48,6 +48,7 @@ const kinds: Record<HostModelRequest["kind"], true> = {
   "edge-finish-targets": true,
   shell: true,
   erode: true,
+  "import-step": true,
   "reconstruct-mesh": true,
   "offset-faces": true,
   "finish-edges": true,

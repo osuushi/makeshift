@@ -29,9 +29,9 @@ test("point selection fades along edge without coloring the far endpoint", () =>
   const curve = segment({ x: 0, y: 0 }, { x: 100, y: 0 }),
     base = new Color("#283d51");
   const rendered = coloredCurve(curve, 1, base, [{ curve: curve.id, fraction: 0 }], []);
-  assert.ok(rendered.colors[0].equals(new Color("#337ac4")));
+  assert.equal(rendered.colors[0].getHexString(), "155c9e");
   assert.ok(rendered.colors.at(-1)?.equals(base));
   assert.ok(!rendered.colors[4].equals(base));
   const hover = coloredCurve(curve, 1, base, [], [{ curve: curve.id, fraction: 1 }]);
-  assert.ok(hover.colors.at(-1)?.equals(new Color("#bc7b2b")));
+  assert.equal(hover.colors.at(-1)?.getHexString(), "946000");
 });

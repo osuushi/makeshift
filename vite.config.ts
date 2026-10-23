@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => ({
                   .replace('src="/entry.ts"', 'src="/web-entry.ts"')
                   .replace(
                     "</head>",
-                    '<link rel="manifest" href="./manifest.webmanifest"/><meta name="theme-color" content="#f8f9fb"/></head>',
+                    '<link rel="manifest" href="./manifest.webmanifest"/></head>',
                   );
               },
             },
@@ -43,6 +43,15 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: mode === "web" ? "../../.build/web" : "../../.build/renderer",
     emptyOutDir: true,
+    rollupOptions: {
+      input:
+        mode === "web"
+          ? resolve("src/sketch/index.html")
+          : {
+              main: resolve("src/sketch/index.html"),
+              settings: resolve("src/sketch/settings.html"),
+            },
+    },
   },
   server: { host: "127.0.0.1", strictPort: true, port: 5173 },
 }));

@@ -19,7 +19,7 @@ export function onModelKeydown(
         return;
       if (
         toolMenuOpen() ||
-        document.querySelector(".control-menu:popover-open") ||
+        document.querySelector(".control-menu:popover-open, .sketch-grid-panel:popover-open") ||
         toolSearchShortcut(event)
       )
         return;

@@ -19,11 +19,13 @@ import { FaceOffsetEdit } from "./face-offset-edit.js";
 import { kernelInput, loftInput, revolveInput } from "./kernel-input.js";
 import { continuingBodies, materialize } from "./kernel-result.js";
 import type { SolidCalculator } from "./solid-calculator.js";
+import { importStep } from "./step-import.js";
 
 export type SolidRequest = Extract<
   ModelRequest,
   {
     kind:
+      | "import-step"
       | "reconstruct-mesh"
       | "loft"
       | "revolve"
@@ -41,6 +43,7 @@ export type SolidRequest = Extract<
 
 export function isSolidRequest(request: ModelRequest): request is SolidRequest {
   return [
+    "import-step",
     "reconstruct-mesh",
     "loft",
     "revolve",
@@ -220,7 +223,9 @@ export class SolidEdits {
     this.meshFit = undefined;
     this.erosionQuality = undefined;
     const bodies = document.bodies ?? [];
-    if (request.kind === "reconstruct-mesh") {
+    if (request.kind === "import-step") {
+      candidate = await importStep(this.kernel, document, request.step);
+    } else if (request.kind === "reconstruct-mesh") {
       candidate = await this.reconstruct(document, request.input);
     } else if (request.kind === "move-faces" || request.kind === "move-edges") {
       candidate = await this.move(document, request);

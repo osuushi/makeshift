@@ -14,6 +14,8 @@ export interface OperationHistoryEntry {
   error?: string;
 }
 export function describeOperation(request: ModelRequest): HistoryOperation {
+  if (request.kind === "import-step")
+    return { kind: request.kind, parameters: { characters: request.step?.length } };
   if (request.kind === "reconstruct-mesh")
     return {
       kind: request.kind,

@@ -161,6 +161,21 @@ the [3MF Core specification](https://github.com/3MFConsortium/spec_core/blob/mas
 Placement is baked into vertices. Exports contain geometry only, without printer,
 material or slicing settings. Exact editable geometry remains in the Makeshift file.
 
+## STEP import
+
+**Import STEP** in Document & Edit accepts `.step` and `.stp` files up to 25 MB
+from Modeling. OCCT reads exact solid geometry and converts declared units to
+millimeters. Assembly instances become independent bodies at their placed world
+coordinates; hierarchy, part names, colors and source feature history are not
+retained. Imported faces and edges receive fresh document-local identities and
+remain available to the ordinary solid editing tools and Makeshift Save/Open.
+
+Reading and calculation block conflicting edits and support cancellation. A
+successful import appends all bodies in one Undo step, selects them and frames
+the camera around them. Existing bodies remain intact. Invalid files, failed root
+transfers, open surfaces/curves, tessellation-only bodies and solids below the
+kernel's minimum volume are rejected without accepting a partial import.
+
 ## STEP export
 
 STEP exports the same visible accepted bodies and world placement as STL/3MF,

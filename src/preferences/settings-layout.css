@@ -1,0 +1,151 @@
+/* All categories remain visible; tab changes never require sideways scrolling. */
+.settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 0;
+  border-bottom: 1px solid var(--border);
+  margin: 8px 0 12px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--panel);
+}
+.application-settings .settings-tabs [role="tab"] {
+  min-width: 0;
+  flex: 1 0 auto;
+  white-space: nowrap;
+  padding: 10px 6px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+}
+.application-settings .settings-tabs [role="tab"]:hover {
+  background: var(--surface);
+  border-color: transparent;
+}
+.application-settings .settings-tabs [aria-selected="true"],
+.application-settings .settings-tabs [aria-selected="true"]:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: transparent;
+  font-weight: 600;
+}
+.application-settings [role="tabpanel"][hidden] {
+  display: none;
+}
+.application-settings [role="tabpanel"] > :first-child,
+.application-settings [role="tabpanel"].view-display-settings,
+.application-settings [role="tabpanel"].decorator-display-settings {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+.application-settings .settings-view label:has(input[type="range"]) {
+  grid-template-columns: minmax(110px, 1fr) minmax(80px, 1.25fr) 48px;
+  gap: 8px;
+  margin: 6px 0;
+}
+.application-settings .settings-view label:has(input[type="range"]) > span {
+  grid-column: auto;
+}
+.settings-view .view-display-settings {
+  margin-top: 12px;
+  padding-top: 10px;
+}
+.settings-view .view-display-settings h3 {
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+.settings-view .view-display-settings h3 button {
+  margin-left: auto;
+}
+.settings-view .view-display-settings output {
+  text-align: right;
+}
+@container settings (max-width: 350px) {
+  .application-settings .settings-view label:has(input[type="range"]) {
+    grid-template-columns: minmax(0, 1fr) 48px;
+  }
+  .application-settings .settings-view label:has(input[type="range"]) > span {
+    grid-column: 1 / -1;
+  }
+}
+
+/* The native window owns its size; only the selected panel scrolls. */
+.settings-window .application-settings form,
+.settings-window .settings-pages {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.settings-window .application-settings form {
+  height: 100%;
+}
+.settings-window .settings-pages {
+  flex: 1;
+}
+.settings-window .settings-tabs,
+.settings-window .settings-actions {
+  flex-shrink: 0;
+}
+.settings-window .settings-pages > [role="tabpanel"] {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+.settings-window .settings-toolbox:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.settings-window .settings-toolbox > :is(p, button) {
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+.settings-window .toolbox-settings-tree {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+
+/* Intrinsic measurement copy: same flow/margins, without viewport flex growth. */
+.settings-window .settings-measure {
+  inset: auto;
+  left: -100000px;
+  top: 0;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  visibility: hidden;
+  pointer-events: none;
+}
+.settings-window .settings-measure form {
+  height: auto;
+}
+.settings-window .settings-measure .settings-pages,
+.settings-window .settings-measure .toolbox-settings-tree {
+  flex: none;
+  overflow: visible;
+}
+.settings-window .settings-measure .settings-pages > [role="tabpanel"] {
+  flex: none;
+}
+.settings-measure .settings-tabs {
+  position: static;
+}
+.settings-measure-width .settings-tabs {
+  width: max-content;
+  flex-wrap: nowrap;
+}
+.settings-measure-width .settings-interface {
+  width: max-content;
+  flex-wrap: nowrap;
+}
+.application-settings.settings-measure .settings-tabs [role="tab"] {
+  flex: none;
+  font-weight: 600;
+}

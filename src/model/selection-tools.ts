@@ -23,6 +23,8 @@ export class SelectionTools {
                 editor.store.data.bodies ?? [],
                 action,
               );
+            if (!editor.world.active)
+              for (const notify of editor.modeling.selectionChosen) notify();
             editor.modeling.hover = null;
             editor.modeling.alternatives = [];
             editor.notice = "";

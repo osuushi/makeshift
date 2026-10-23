@@ -162,9 +162,13 @@ on thin triangles. The clipping tolerance and actual section plane remain unchan
 
 While a tool is selecting a plane reference, three faint rectangular cues appear
 near the world origin, aligned with XY, XZ and YZ. Their axis lengths and origin-relative center distance
-are fixed in CSS pixels, with at least an 18-pixel origin clearance; orbit projects their plane orientation while zoom keeps
-their size and distance from the origin consistent. They draw above body geometry
+are fixed at 84 and 210 CSS pixels respectively; orbit projects their plane orientation while zoom keeps
+their size and distance from the origin consistent. Each in-plane axis chooses its
+camera-facing sign from the viewing direction, placing the cue in the near quadrant
+as the camera orbits; panning does not change sides. A dense plane-aligned grid
+extends beyond each square and fades softly into its surroundings. This decorative
+halo does not enlarge the square's input target. They draw above body geometry
 and remain available independently of canonical fill/grid angular fades. An
-inapplicable plane appears disabled. Clicking uses the tool's ordinary reference
+inapplicable plane and its grid halo are hidden. Clicking uses the tool's ordinary reference
 selection callback, preserving preview, cancellation and Undo. Outside modal
 plane picking the cues disappear; ordinary canonical-plane selection is unchanged.

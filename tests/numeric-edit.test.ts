@@ -15,8 +15,8 @@ test("numeric composition requires live owners and propagates their completion",
     commitFocused: () => pending,
     cancel: () => calls.push("cancel"),
     focus: (quantity, duplicate) => calls.push([quantity, duplicate]),
-    focusTransform: async (reverse) => {
-      calls.push(reverse);
+    activateTransform: async (axis) => {
+      calls.push(axis);
       return true;
     },
     focusFirst: (initial) => calls.push(initial),

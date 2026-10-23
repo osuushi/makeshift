@@ -5,11 +5,11 @@
   overflow: auto;
   pointer-events: auto;
   padding: 12px;
-  background: #fff;
-  border: 1px solid #bfd3e7;
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 4px 16px #18355020;
-  color: #245b91;
+  box-shadow: 0 4px 16px var(--shadow);
+  color: var(--accent);
   font-size: 12px;
 }
 .loft-controls[hidden] {
@@ -43,8 +43,8 @@
 }
 .loft-options select {
   color: inherit;
-  background: #fff;
-  border: 1px solid #bfd3e7;
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 5px;
 }
@@ -57,8 +57,8 @@
   height: 22px;
 }
 .loft-controls button[aria-pressed="true"] {
-  background: #d9ebfa;
-  border-color: #4486c1;
+  background: var(--selected);
+  border-color: var(--accent);
 }
 .loft-controls .extrude-targets {
   position: static;
@@ -74,15 +74,15 @@
 }
 .loft-guides polyline {
   fill: none;
-  stroke: #4486c1;
+  stroke: var(--accent);
   stroke-width: 1.2;
 }
 .loft-guides circle {
-  fill: #fff;
-  stroke: #4486c1;
+  fill: var(--panel);
+  stroke: var(--accent);
 }
 .loft-guides text {
-  fill: #245b91;
+  fill: var(--accent);
   text-anchor: middle;
   font: 12px system-ui;
 }

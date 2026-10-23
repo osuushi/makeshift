@@ -69,3 +69,14 @@ export function onDecoratorDisplayChange(listener: () => void): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);
 }
+
+if (typeof window !== "undefined")
+  window.addEventListener("storage", (event) => {
+    if (event.key !== key && event.key !== null) return;
+    try {
+      value = normalized(JSON.parse(event.newValue ?? "null"));
+    } catch {
+      return;
+    }
+    for (const listener of listeners) listener();
+  });

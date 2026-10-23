@@ -9,7 +9,7 @@ import { ModelSelection } from "../src/sketch/model-selection-state.js";
 import { prism } from "./body-edge-fixtures.js";
 import { pickingEditor } from "./body-picking-fixtures.js";
 
-test("off-face centroid requires selection and persists beyond hover range without mutating hover", async () => {
+test("selected off-face centroid obeys pointer range without mutating hover", async () => {
   const owner = new DocumentOwner();
   try {
     const body = await prism(owner, [
@@ -44,12 +44,17 @@ test("off-face centroid requires selection and persists beyond hover range witho
 
     editor.modeling.targets = [hit];
     editor.modeling.hover = null;
-    assert.equal(includes(hoverGuides(editor, null)), true);
-    assert.equal(includes(hoverGuides(editor, { x: -1000, y: -1000 })), true);
+    assert.equal(includes(hoverGuides(editor, pointer)), true);
+    assert.equal(includes(hoverGuides(editor, null)), false);
+    assert.equal(includes(hoverGuides(editor, { x: -1000, y: -1000 })), false);
     Object.assign(editor.display, {
       guidePoints: [{ id: "saved", name: "Centroid", hidden: false, anchor: centroid.anchor }],
     });
-    assert.equal(includes(hoverGuides(editor, null)), false, "saved definitions do not duplicate");
+    assert.equal(
+      includes(hoverGuides(editor, pointer)),
+      false,
+      "saved definitions do not duplicate",
+    );
     Object.assign(editor.display, { guidePoints: [] });
     Object.assign(editor.visibility, { visible: () => false });
     assert.equal(hoverGuides(editor, null).length, 0);
@@ -58,7 +63,7 @@ test("off-face centroid requires selection and persists beyond hover range witho
     assert.equal(
       hoverGuides(editor, null).length,
       0,
-      "clearing selection removes persistent ghosts",
+      "clearing selection removes off-face candidates",
     );
   } finally {
     owner.close();

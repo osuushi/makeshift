@@ -14,6 +14,7 @@ import type { kernelInput, loftInput, pathSweepInput, revolveInput } from "./ker
 import type { projectionInput } from "./projection.js";
 
 type Request =
+  | { kind: "import-step"; step: string; bodies: readonly ExactBody[] }
   | ((
       | import("../model/mesh-fit.js").MeshFitInput
       | import("../model/mesh-fit.js").MeshReconstructionInput

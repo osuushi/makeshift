@@ -4,8 +4,7 @@ export function canonicalPlaneSettings(): HTMLElement {
   const section = document.createElement("section");
   section.className = "view-display-settings";
   section.innerHTML = `<h3>Plane grids</h3>
-    <p>Keep the current plane until the view is within the switch angle of its surface,
-    then choose the most face-on plane. Grids blend smoothly.</p>`;
+    <p>Switch to the most face-on plane within this angle.</p>`;
   const angle = document.createElement("label");
   angle.innerHTML = `<span>Plane switch angle</span><input type="range" min="0" max="90" step="1" aria-label="Plane switch angle"><output></output>`;
   const input = angle.querySelector("input");

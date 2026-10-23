@@ -16,7 +16,7 @@ export class BodyEdgeControls {
   private drawn: Edge | null = null;
   private outline = new THREE.Line(
     new THREE.BufferGeometry(),
-    new THREE.LineBasicMaterial({ color: "#d28b22", depthTest: false }),
+    new THREE.LineBasicMaterial({ color: "#a66a16", depthTest: false }),
   );
   constructor(private editor: SketchEditor) {
     this.outline.renderOrder = 15;

@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { BrowserWindow, screen } from "electron";
+import { BrowserWindow, nativeTheme, screen } from "electron";
 import { DocumentOwner } from "../backend/document-owner.js";
 import { MeshCalculator } from "../backend/mesh-calculator.js";
 import { NativeSolver } from "../backend/native-solver.js";
@@ -13,6 +13,7 @@ import { exportDestination } from "./export-destination.js";
 import { lockInterfaceZoom } from "./interface-zoom.js";
 import { IPadSession } from "./ipad-session.js";
 import { nativeExecutable } from "./native-paths.js";
+import { openSettingsWindow } from "./settings-window.js";
 import { rememberWindowSize, restoreWindowSize } from "./window-size.js";
 
 export interface WindowHost {
@@ -62,7 +63,7 @@ export class DocumentWindow {
       ...restoreWindowSize(),
       ...host.bounds,
       show: !hidden,
-      backgroundColor: "#f8f9fb",
+      backgroundColor: nativeTheme.shouldUseDarkColors ? "#161e29" : "#f8f9fb",
       webPreferences: {
         preload: join(directory, "preload.cjs"),
         sandbox: true,
@@ -92,6 +93,7 @@ export class DocumentWindow {
       this.documents.checkDesktop();
       await this.mesh.cancel();
     });
+    ipc.handle("settings-open", (_event, tools: unknown) => openSettingsWindow(directory, tools));
     ipc.attach(window);
     window.on("rotate-gesture", (_event, rotation) => {
       if (this.documents.remote?.active() || !Number.isFinite(rotation)) return;

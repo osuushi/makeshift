@@ -5,6 +5,7 @@ import { inspect } from "./ui-helpers.mjs";
 export async function widgetNavigationRoute(page, name) {
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   await page.keyboard.press("m");
+  await page.getByRole("button", { name: "Rotate layer", exact: true }).click();
   const original = (await inspect(page)).document;
   for (const label of ["Reposition body pivot", "Move body X", "Rotate body Z"]) {
     const widget = page.getByRole("button", { name: label, exact: true });

@@ -37,6 +37,14 @@ export class ScaleGestures {
     private change: (factors: Vector, pivot: Vector) => void,
   ) {
     widget.onstart = (event, handle) => this.start(event, handle);
+    widget.onnumeric = (handle) => {
+      if (editor.blocked || this.state()?.lease.phase !== "editing") return;
+      this.stop();
+      editor.refresh();
+      const input = widget.factors[handle.axes[0]];
+      input.focus();
+      input.select();
+    };
     const options = { signal: this.abort.signal };
     window.addEventListener("pointermove", this.move, options);
     replayPointerModifiers(this.abort.signal, () => !!this.drag, this.move);

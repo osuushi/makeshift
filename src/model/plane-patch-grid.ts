@@ -22,7 +22,7 @@ export function planePatchGrid(
       new THREE.Float32BufferAttribute(points, 3),
     ),
     new THREE.LineBasicMaterial({
-      color: "#7198b8",
+      color: "#648bab",
       opacity: 0.3,
       transparent: true,
       depthWrite: false,

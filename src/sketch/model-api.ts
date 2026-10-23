@@ -27,6 +27,7 @@ export type ModelRequest =
       text: string;
       target?: import("../clipboard/geometry.js").PasteTarget;
     }
+  | { kind: "import-step"; step: string }
   | { kind: "reconstruct-mesh"; input: import("../model/mesh-fit.js").MeshReconstructionInput }
   | { kind: "tagged-group"; edit: import("../tags/model.js").TagEdit }
   | { kind: "export-step"; items: import("../model/step-export.js").StepItem[] }

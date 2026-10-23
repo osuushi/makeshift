@@ -1,5 +1,6 @@
 @import "./orientation-cube.css";
 @import "../preferences/panel-placement.css";
+@import "../preferences/theme.css";
 
 * {
   box-sizing: border-box;
@@ -10,8 +11,8 @@
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
-  color: #283444;
-  background: #f8f9fb;
+  color: var(--text);
+  background: var(--canvas);
 }
 body {
   margin: 0;
@@ -68,18 +69,33 @@ header .document-title {
   white-space: nowrap;
 }
 header span {
-  color: #87909d;
+  color: var(--muted);
   font-size: 13px;
+}
+header .brand,
+header span,
+.origin,
+.axis,
+.status,
+.navigation-hint {
+  background: var(--canvas);
+  border-radius: 4px;
+}
+.origin,
+.axis,
+.status,
+.navigation-hint {
+  padding: 2px 4px;
 }
 button {
   font: inherit;
   color: inherit;
   cursor: pointer;
-  background: #ffffffed;
-  border: 1px solid #d9dfe7;
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 12px;
-  box-shadow: 0 2px 6px #28344408;
+  box-shadow: 0 2px 6px var(--shadow);
 }
 input,
 textarea,
@@ -88,18 +104,18 @@ textarea,
   -webkit-user-select: text;
 }
 button:hover {
-  background: #edf4ff;
-  border-color: #99b8e9;
+  background: var(--surface);
+  border-color: var(--accent);
 }
 button:focus-visible {
-  outline: 2px solid #3c7bc7;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 .origin {
   position: absolute;
   font-size: 11px;
-  color: #687486;
+  color: var(--muted);
   transform: translate(8px, 8px);
   white-space: nowrap;
 }
@@ -110,13 +126,13 @@ button:focus-visible {
   transform: translate(6px, 6px);
 }
 .axis-X {
-  color: #bf5965;
+  color: var(--danger);
 }
 .axis-Y {
-  color: #35865c;
+  color: var(--success);
 }
 .axis-Z {
-  color: #4876b8;
+  color: var(--accent);
 }
 .workspace-footer {
   position: absolute;
@@ -132,13 +148,13 @@ button:focus-visible {
 }
 .status {
   max-width: 100%;
-  color: #5c6c80;
+  color: var(--muted);
   font-size: 12px;
 }
 .navigation-hint {
   max-width: 100%;
   margin-left: auto;
-  color: #8c96a4;
+  color: var(--muted);
   font-size: 11px;
 }
 

@@ -131,9 +131,15 @@ export class PlacementControls {
       sketch = sketches[0];
     if (event.button || !sketch || this.session || this.editor.blocked) return;
     event.preventDefault();
-    const lease = this.editor.interactions.acquire("placement", () => this.cancel(), undefined, {
-      navigation: "when-released",
-    });
+    const lease = this.editor.interactions.acquire(
+      "placement",
+      () => this.cancel(),
+      async () => {
+        await this.commit();
+        return !this.session;
+      },
+      { navigation: "when-released" },
+    );
     if (!lease) return;
     this.session = {
       sketch,
@@ -174,11 +180,11 @@ export class PlacementControls {
     this.input.setAttribute("aria-label", `${rotate ? "Rotation" : "Translation"} ${axis}`);
     this.input.value = "0";
     if (event.pointerId !== -1) lease.capture(event.currentTarget as Element, event.pointerId);
-    else {
+    this.editor.refresh();
+    if (event.pointerId === -1) {
       this.input.focus();
       this.input.select();
     }
-    this.editor.refresh();
   }
   private preview(value: number): void {
     const s = this.session;
