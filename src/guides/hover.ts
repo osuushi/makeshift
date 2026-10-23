@@ -19,7 +19,7 @@ export function spacedGuides(
       (p, j) =>
         i === j ||
         (j < candidates.length && near(candidates[i].point, candidates[j].point)) ||
-        Math.hypot(p.x - points[i].x, p.y - points[i].y) >= 32,
+        Math.hypot(p.x - points[i].x, p.y - points[i].y) >= 48,
     ),
   );
 }
@@ -42,7 +42,7 @@ function filteredGuides(
       return false;
     seen.add(key);
     const p = editor.world.project(candidate.point);
-    return !!pointer && Math.hypot(p.x - pointer.x, p.y - pointer.y) <= 256;
+    return !!pointer && Math.hypot(p.x - pointer.x, p.y - pointer.y) <= 128;
   });
   const spaced = spacedGuides(candidates, saved, (point) => editor.world.project(point));
   const markers = [...spaced, ...saved].map((p) => editor.world.project(p.point));
