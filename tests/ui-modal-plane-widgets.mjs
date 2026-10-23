@@ -62,20 +62,14 @@ export async function modalPlaneWidgetRoute(page, name) {
   assert.deepEqual((await inspect(page)).modelingSelection, before.modelingSelection);
   await chooseTool(page, "Split Body", "split");
   await orient(page, [1, -1, 1]);
-  assert.equal(
-    await page
-      .getByRole("button", { name: "Use XY plane", exact: true })
-      .getAttribute("aria-disabled"),
-    "true",
-  );
-  await chooseWidget(page, "XY");
-  assert.equal((await inspect(page)).preview, null, "Inapplicable cue cannot change the tool");
+  assert.equal(await page.locator('[data-modal-plane="XY"]').isVisible(), false);
+  assert.equal((await inspect(page)).preview, null, "Hidden cue leaves the preview unchanged");
   const originalSize = await yz.boundingBox();
   const point = await widgetPoint(page, "YZ");
   await page.mouse.move(point.x, point.y);
-  // Ctrl-wheel is the ordinary pinch path.
+  // Ctrl-wheel is the ordinary pinch path; keep the origin and larger cues onscreen.
   await page.keyboard.down("Control");
-  await page.mouse.wheel(0, -100);
+  await page.mouse.wheel(0, -20);
   await page.keyboard.up("Control");
   await settled(page);
   const zoomedSize = await yz.boundingBox();
@@ -114,10 +108,11 @@ async function acceptedWidgetEdits(page, before) {
   const box = await page.locator("canvas").boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.keyboard.down("Control");
-  await page.mouse.wheel(0, 100);
+  await page.mouse.wheel(0, 20);
   await page.keyboard.up("Control");
   await settled(page);
-  await worldClick(page, [0, 0, 20]);
+  // Pick face interior clear of the center guide-point marker.
+  await worldClick(page, [4, 4, 20]);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   await chooseTool(page, "Imprint", "imprint");
   await chooseWidget(page, "YZ");
