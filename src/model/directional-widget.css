@@ -17,6 +17,7 @@
 :root[data-keyboard-sketch-widget="y"] [data-move-marker="y"],
 :root[data-keyboard-sketch-widget="rotation"] [data-move-marker="rotation"] {
   --widget-selection-fill: #82b5e0;
+  filter: drop-shadow(0 0 3px #f28c28) drop-shadow(0 0 6px #f28c2880);
 }
 button.keyboard-widget-active,
 button.keyboard-widget-active:focus-visible {
