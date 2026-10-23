@@ -10,6 +10,7 @@ type Kind =
   | "sphere"
   | "cone"
   | "drill"
+  | "step-import"
   | "mesh-import"
   | "tag-membership"
   | "entity-reorder"

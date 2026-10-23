@@ -14,6 +14,7 @@ export function cancellableCalculation(kind: ModelRequest["kind"]): boolean {
     "offset-faces",
     "shell",
     "erode",
+    "import-step",
     "reconstruct-mesh",
     "move-faces",
     "move-edges",
@@ -39,6 +40,8 @@ export function calculationLabel(kind: ModelRequest["kind"] | undefined): string
       return "Deleting geometry";
     case "shell":
       return "Calculating shell";
+    case "import-step":
+      return "Importing STEP";
     case "reconstruct-mesh":
       return "Reconstructing mesh";
     case "erode":
