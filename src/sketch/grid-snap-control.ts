@@ -9,7 +9,7 @@ import { defaultSketchGrid } from "./grid-settings.js";
 import { viewOptions } from "./view-options.js";
 import "./grid-controls.css";
 
-/** Document grid and device display settings share the viewport popover. */
+/** Document grid size controls live beside the orientation cube. */
 export function installGridSnapControl(editor: SketchEditor): () => void {
   const view = viewOptions(editor);
   const { panel, button } = view;
@@ -35,8 +35,8 @@ export function installGridSnapControl(editor: SketchEditor): () => void {
   close.textContent = "Done";
   close.onclick = view.hide;
   const note = document.createElement("p");
-  note.textContent = "Sketch grid spacing, colors and snapping apply to this document's sketches.";
-  panel.append(note, fields.root, save, close, feedback);
+  note.textContent = "Grid sizes apply to this document. Zooming out hides finer grid lines.";
+  panel.append(fields.root, note, save, close, feedback);
   button.onclick = (event) => {
     event.preventDefault();
     void toolCatalog(editor).invoke("sketch-grid");

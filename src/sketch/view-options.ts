@@ -1,7 +1,3 @@
-import { canonicalPlaneSettings } from "../preferences/canonical-plane-settings.js";
-import { onCanonicalPlanesChange } from "../preferences/canonical-planes.js";
-import { onViewDisplayChange } from "../preferences/view-display.js";
-import { viewSettings } from "../preferences/view-settings.js";
 import type { SketchEditor } from "./editor.js";
 
 /** A nonmodal settings popover anchored beneath the orientation cube. */
@@ -22,7 +18,7 @@ export function viewOptions(editor: SketchEditor) {
   button.setAttribute("aria-controls", panel.id);
   const heading = document.createElement("h2");
   heading.textContent = "View options";
-  panel.append(heading, viewSettings(), canonicalPlaneSettings());
+  panel.append(heading);
   editor.world.host.append(button, panel);
   const position = () => {
     const bounds = button.getBoundingClientRect();
@@ -30,25 +26,17 @@ export function viewOptions(editor: SketchEditor) {
     panel.style.left = `${Math.max(8, Math.min(bounds.right - panel.offsetWidth, window.innerWidth - panel.offsetWidth - 8))}px`;
     panel.style.top = `${Math.max(8, Math.min(bounds.bottom + 6, window.innerHeight - panel.offsetHeight - 8))}px`;
   };
-  const refresh = () => {
-    for (const section of panel.querySelectorAll(".view-display-settings"))
-      section.dispatchEvent(new Event("preferences-refresh"));
-    editor.world.requestDraw();
-  };
   panel.addEventListener("toggle", () => {
     const open = panel.matches(":popover-open");
     button.setAttribute("aria-expanded", String(open));
     if (open) position();
     editor.world.requestDraw();
   });
-  const disposeView = onViewDisplayChange(refresh);
-  const disposePlanes = onCanonicalPlanesChange(refresh);
   window.addEventListener("resize", position);
   return {
     button,
     panel,
     toggle: () => {
-      refresh();
       panel.togglePopover();
       if (panel.matches(":popover-open")) {
         position();
@@ -60,8 +48,6 @@ export function viewOptions(editor: SketchEditor) {
       button.focus();
     },
     dispose: () => {
-      disposeView();
-      disposePlanes();
       window.removeEventListener("resize", position);
       button.remove();
       panel.remove();

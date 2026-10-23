@@ -137,8 +137,7 @@ requires no opt-in.
 
 View options beneath the orientation cube opens a nonmodal popover in both modeling
 and sketch views, without selecting a drawing tool. Find also opens it through Grid
-or View options. Escape, an outside click or Done closes it. The popover shares the
-viewport display and plane grid preferences with Settings.
+or View options. Escape, an outside click or Done closes it. The popover contains document grid sizes, sketch grid colors and snapping.
 Minor and major spacings (mm), their independent colors, and Snap to grid belong
 to the document. Set default copies those values to device defaults; Settings
 also edits those defaults. Built-in defaults are 0.5 mm minor, 10 mm major,
@@ -156,6 +155,6 @@ spacing exactly. Incommensurate settings show only the major grid rather than
 moving major lines. Equal grids also draw only major lines. Snapping follows the
 visible minor spacing (or major when minor lines are hidden). With 0.5/10 mm settings,
 zoom can thin minor lines to 1, 2, 2.5, 5 or 10 mm; it never moves major lines to 10.5 mm.
-Canonical modeling
-grids retain their existing spacing and palette behavior. The searchable Toggle
+Canonical modeling grids use the same document spacing and visible snap step,
+while retaining their plane palette colors. The searchable Toggle
 grid snapping command remains available, including during a pen gesture.
