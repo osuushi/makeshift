@@ -1,17 +1,15 @@
-import type { SketchEditor } from "../sketch/editor.js";
-import { type ToolResult, toolCatalog } from "../tools/catalog.js";
 import { ToolboxDrag } from "../tools/toolbox-drag.js";
 import { moveToolbox } from "../tools/toolbox-layout.js";
-import { toolboxRow } from "../tools/toolbox-row.js";
+import { type ToolboxTool, toolboxRow } from "../tools/toolbox-row.js";
 import { selectToolboxPath, type ToolboxGroup, type ToolboxPath } from "../tools/toolbox-tree.js";
 import { onToolboxChange, resetToolbox, setToolboxTree, toolboxTree } from "./toolbox.js";
 
 /** The complete editable tree, sharing ownership/move rules with the compact toolbox. */
 export function installToolboxSettings(
-  dialog: HTMLDialogElement,
-  editor: SketchEditor,
+  panel: HTMLElement,
+  readTools: () => readonly ToolboxTool[],
 ): () => void {
-  const panel = toolboxSettingsTab(dialog);
+  const dialog = panel.closest("dialog");
   const hint = document.createElement("p");
   hint.textContent =
     "Drag tools between the toolbox and Other Tools. Drop one top-level tool onto another to group them. Regular groups have one layer and remember your choice; named menus in Other Tools keep their titles.";
@@ -27,11 +25,7 @@ export function installToolboxSettings(
   );
   const render = () => {
     if (drag.dragging) return;
-    const tools = new Map(
-      toolCatalog(editor)
-        .results()
-        .map((tool) => [tool.id, tool]),
-    );
+    const tools = new Map(readTools().map((tool) => [tool.id, tool]));
     tree.replaceChildren();
     renderTree(toolboxTree(), [], tree, tools);
     const outside = document.createElement("div");
@@ -42,12 +36,14 @@ export function installToolboxSettings(
     tree.append(outside);
   };
   const dispose = onToolboxChange(render);
-  dialog.addEventListener("beforetoggle", render);
+  dialog?.addEventListener("beforetoggle", render);
+  panel.addEventListener("toolbox-refresh", render);
   render();
   return () => {
+    panel.removeEventListener("toolbox-refresh", render);
     dispose();
     drag.dispose();
-    dialog.removeEventListener("beforetoggle", render);
+    dialog?.removeEventListener("beforetoggle", render);
   };
 }
 
@@ -55,7 +51,7 @@ function renderTree(
   group: ToolboxGroup,
   path: ToolboxPath,
   host: HTMLElement,
-  tools: Map<string, ToolResult>,
+  tools: Map<string, ToolboxTool>,
 ): void {
   group.items.forEach((item, index) => {
     const childPath = [...path, index];
@@ -87,59 +83,4 @@ function renderTree(
       renderTree(item, childPath, children, tools);
     }
   });
-}
-
-function toolboxSettingsTab(dialog: HTMLDialogElement): HTMLElement {
-  const form = dialog.querySelector("form");
-  const actions = dialog.querySelector(".settings-actions");
-  if (!form || !actions) throw new Error("Missing settings form");
-  const general = document.createElement("section");
-  general.id = "settings-general";
-  for (const child of [...form.children])
-    if (child.tagName !== "H2" && child !== actions) general.append(child);
-  const panel = document.createElement("section");
-  panel.id = "settings-toolbox";
-  panel.hidden = true;
-  const tabs = document.createElement("div");
-  tabs.className = "settings-tabs";
-  tabs.setAttribute("role", "tablist");
-  tabs.setAttribute("aria-label", "Settings sections");
-  for (const [label, content] of [
-    ["General", general],
-    ["Toolbox", panel],
-  ] as const) {
-    const tab = document.createElement("button");
-    tab.type = "button";
-    tab.textContent = label;
-    tab.id = `${content.id}-tab`;
-    tab.setAttribute("role", "tab");
-    tab.setAttribute("aria-controls", content.id);
-    content.setAttribute("role", "tabpanel");
-    content.setAttribute("aria-labelledby", tab.id);
-    const choose = () => {
-      for (const section of [general, panel]) section.hidden = section !== content;
-      for (const button of tabs.querySelectorAll<HTMLButtonElement>("button")) {
-        button.setAttribute("aria-selected", String(button === tab));
-        button.tabIndex = button === tab ? 0 : -1;
-      }
-      const scaleReset = dialog.querySelector<HTMLElement>("[data-reset]");
-      if (scaleReset) scaleReset.hidden = content !== general;
-    };
-    tab.onclick = choose;
-    tab.onkeydown = (event) => {
-      if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
-      event.preventDefault();
-      const other = [...tabs.querySelectorAll("button")].find((b) => b !== tab);
-      other?.click();
-      other?.focus();
-    };
-    tabs.append(tab);
-    if (content === general) choose();
-    else {
-      tab.tabIndex = -1;
-      tab.setAttribute("aria-selected", "false");
-    }
-  }
-  actions.before(tabs, general, panel);
-  return panel;
 }

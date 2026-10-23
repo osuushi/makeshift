@@ -16,8 +16,9 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
   button.setAttribute("aria-label", "Application settings");
   button.setAttribute("aria-haspopup", "dialog");
   if (/Mac/.test(navigator.platform)) button.title = "Settings (⌘,)";
-  const dialog = settingsDialog();
-  const disposeToolbox = installToolboxSettings(dialog, editor);
+  const toolbox = document.createElement("section");
+  const dialog = settingsDialog([["Toolbox", toolbox]]);
+  const disposeToolbox = installToolboxSettings(toolbox, () => toolCatalog(editor).results());
   const rememberFocus = settingsFocus(dialog);
   const requestOpen = () => {
     if (dialog.open) return;
@@ -26,23 +27,22 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
   };
   const open = () => {
     if (editor.blocked || editor.interactions.current) return;
-    if (nativeSettings()) void nativeSettings()?.open();
-    else if (!dialog.open) dialog.showModal();
+    if (nativeSettings()) {
+      const tools = toolCatalog(editor)
+        .results()
+        .map(({ id, label, description }) => ({
+          id,
+          label,
+          description,
+          unavailable: null,
+        }));
+      void nativeSettings()?.open(tools);
+    } else if (!dialog.open) dialog.showModal();
   };
   button.onclick = requestOpen;
   const header = app.querySelector("header");
   header?.append(button);
-  const fitHeader = () => {
-    if (!header) return;
-    const bottom = `${header.getBoundingClientRect().bottom - app.getBoundingClientRect().top}px`;
-    if (app.style.getPropertyValue("--editor-header-bottom") === bottom) return;
-    app.style.setProperty("--editor-header-bottom", bottom);
-    // Entities moves with this offset after the viewport's resize draw.
-    editor.world.requestDraw();
-  };
-  const headerObserver = new ResizeObserver(fitHeader);
-  if (header) headerObserver.observe(header);
-  fitHeader();
+  const disposeHeader = trackSettingsHeader(editor, app, header);
   document.body.append(dialog);
   const disposeTool = toolCatalog(editor).register({
     id: "settings",
@@ -92,8 +92,7 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
     disposePlanes();
     editor.world.changed.delete(update);
     disposeKeyboard();
-    headerObserver.disconnect();
-    app.style.removeProperty("--editor-header-bottom");
+    disposeHeader();
     button.remove();
     dialog.remove();
   };
@@ -146,5 +145,27 @@ function installSettingsKeyboard(open: () => void): () => void {
   return () => {
     document.removeEventListener("keydown", blockZoom, true);
     window.removeEventListener("keydown", shortcut, true);
+  };
+}
+
+function trackSettingsHeader(
+  editor: SketchEditor,
+  app: HTMLElement,
+  header: HTMLElement | null,
+): () => void {
+  const fitHeader = () => {
+    if (!header) return;
+    const bottom = `${header.getBoundingClientRect().bottom - app.getBoundingClientRect().top}px`;
+    if (app.style.getPropertyValue("--editor-header-bottom") === bottom) return;
+    app.style.setProperty("--editor-header-bottom", bottom);
+    // Entities moves with this offset after the viewport's resize draw.
+    editor.world.requestDraw();
+  };
+  const headerObserver = new ResizeObserver(fitHeader);
+  if (header) headerObserver.observe(header);
+  fitHeader();
+  return () => {
+    headerObserver.disconnect();
+    app.style.removeProperty("--editor-header-bottom");
   };
 }

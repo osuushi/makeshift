@@ -122,5 +122,5 @@ contextBridge.exposeInMainWorld("makeshiftNavigation", {
 });
 
 contextBridge.exposeInMainWorld("makeshiftSettings", {
-  open: () => ipcRenderer.invoke("settings-open"),
+  open: (tools: unknown) => ipcRenderer.invoke("settings-open", tools),
 });

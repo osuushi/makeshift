@@ -93,7 +93,7 @@ export class DocumentWindow {
       this.documents.checkDesktop();
       await this.mesh.cancel();
     });
-    ipc.handle("settings-open", () => openSettingsWindow(directory));
+    ipc.handle("settings-open", (_event, tools: unknown) => openSettingsWindow(directory, tools));
     ipc.attach(window);
     window.on("rotate-gesture", (_event, rotation) => {
       if (this.documents.remote?.active() || !Number.isFinite(rotation)) return;

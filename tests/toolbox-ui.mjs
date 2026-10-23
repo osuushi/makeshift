@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { settingsSurface } from "./settings-surface.mjs";
 import { drag, inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { toolboxViewportRoute } from "./ui-toolbox-viewport.mjs";
@@ -152,15 +153,16 @@ async function dragIntoGroup(page) {
 
 async function settingsRoute(page) {
   await page.getByRole("button", { name: "Application settings", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "Settings", exact: true });
+  const dialog = await settingsSurface(page);
+  const settingsPage = dialog.page();
   await dialog.getByRole("tab", { name: "Toolbox", exact: true }).click();
   const tree = dialog.locator(".toolbox-settings-tree");
   const row = (path) => tree.locator(`[data-toolbox-path='${JSON.stringify(path)}']`);
   const before = (await inspect(page)).document;
-  await movePointer(page, row([2, 0]), row([2, 1]));
+  await movePointer(settingsPage, row([2, 0]), row([2, 1]));
   assert.deepEqual((await stored(page)).items[2].items.slice(0, 2), ["rectangle", "line"]);
 
-  await movePointer(page, row([2]), row([3]), 0.95);
+  await movePointer(settingsPage, row([2]), row([3]), 0.95);
   assert.deepEqual((await stored(page)).items[3].items.slice(0, 2), ["rectangle", "line"]);
   assert.deepEqual((await inspect(page)).document, before);
   await dialog.getByRole("button", { name: "Reset toolbox to defaults", exact: true }).click();

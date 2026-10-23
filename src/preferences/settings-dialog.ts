@@ -9,7 +9,7 @@ import "./settings.css";
 import "./settings-decorators.css";
 import "./settings-grid.css";
 
-export function settingsDialog(): HTMLDialogElement {
+export function settingsDialog(extra: [string, HTMLElement][] = []): HTMLDialogElement {
   const dialog = document.createElement("dialog");
   dialog.className = "application-settings";
   dialog.setAttribute("aria-labelledby", "settings-title");
@@ -55,6 +55,7 @@ export function settingsDialog(): HTMLDialogElement {
     ["View", view],
     ["Decorators", decoratorSettings()],
     ["Experimental", experimentalSettings()],
+    ...extra,
   ]);
   form.querySelector(".settings-actions")?.before(tabs);
   for (const scale of uiScaleChoices)

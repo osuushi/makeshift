@@ -34,6 +34,11 @@ try {
     "true",
   );
   await settings.keyboard.press("End");
+  assert.equal(
+    await dialog.getByRole("tab", { name: "Toolbox", exact: true }).getAttribute("aria-selected"),
+    "true",
+  );
+  await dialog.getByRole("tab", { name: "Experimental", exact: true }).click();
   await dialog.getByRole("checkbox", { name: "Fast trim checks" }).check();
   await page.waitForFunction(() => localStorage.getItem("makeshift.fast-trim-checks") === "true");
   await dialog.getByRole("tab", { name: "View", exact: true }).click();

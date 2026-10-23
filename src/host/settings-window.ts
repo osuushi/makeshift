@@ -5,8 +5,21 @@ import { DocumentIPC } from "./document-ipc.js";
 import { lockInterfaceZoom } from "./interface-zoom.js";
 
 let settings: BrowserWindow | undefined;
-export async function openSettingsWindow(directory: string): Promise<void> {
+let toolboxTools: { id: string; label: string; description?: string; unavailable: null }[] = [];
+export async function openSettingsWindow(directory: string, input: unknown): Promise<void> {
+  if (
+    !Array.isArray(input) ||
+    input.some((tool) => !tool || typeof tool.id !== "string" || typeof tool.label !== "string")
+  )
+    throw new Error("Invalid settings tool catalog");
+  toolboxTools = input.map(({ id, label, description }) => ({
+    id,
+    label,
+    description: typeof description === "string" ? description : undefined,
+    unavailable: null,
+  }));
   if (settings && !settings.isDestroyed()) {
+    settings.webContents.send("settings-tools", toolboxTools);
     if (settings.isMinimized()) settings.restore();
     if (process.env.MAKESHIFT_TEST_HIDDEN !== "1") {
       settings.show();
@@ -39,6 +52,7 @@ export async function openSettingsWindow(directory: string): Promise<void> {
       Math.round(Math.max(240, Math.min(limit, height))),
     );
   });
+  ipc.handle("settings-tools", () => toolboxTools);
   ipc.attach(window);
   settings = window;
   lockInterfaceZoom(window.webContents);

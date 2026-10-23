@@ -2,7 +2,7 @@
 
 Settings is available in the editor header, through Tools and with Cmd-, on Mac.
 It opens a separate, reusable Settings window on native desktop and a compact modal
-dialog in browsers. Interface, Sketch Grid, View, Decorators and Experimental tabs
+dialog in browsers. Interface, Sketch Grid, View, Decorators, Experimental and Toolbox tabs
 support arrow keys and Home/End. Labels sit above their controls; related grid
 spacing and color fields share compact Minor/Major groups. Groups stack at narrow
 widths, and the tab strip scrolls horizontally instead of wrapping. The native window fits each tab vertically,
