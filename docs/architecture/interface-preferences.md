@@ -6,14 +6,21 @@ dialog in browsers. Interface, Sketch Grid, View, Decorators, Experimental and T
 support arrow keys and Home/End. The active tab has an accent underline; tabs share a
 continuous strip, wrapping at narrow widths without sideways scrolling. Labels sit above their controls; related grid
 spacing and color fields share compact Minor/Major groups. Groups stack at narrow
-widths. View sliders pair their labels, controls and values on compact rows. Native tab selection applies that pane's preferred size once, together with native
-minimum/maximum window sizes. Interface stays compact; Toolbox opens with working room
-for its tree. Limits scale with the interface and include native window chrome, clamped
-to the display work area. Manual resizing is enforced by the window manager and never
-triggers renderer-driven resizing. Re-selecting the active tab preserves the user's size;
-switching tabs or explicitly changing interface scale applies the new pane policy once.
-Taller content scrolls inside the pane. Interface controls keep their natural row height
-at the top even when enlarged. Escape or Done closes Settings; browsers also
+widths. View sliders pair their labels, controls and values on compact rows. Native tab
+selection measures an invisible, natural-flow copy of the current rendered pane, using
+the actual fonts, controls and interface scale. Ordinary preference panes are fixed to
+their measured content size. The tab strip and Interface row determine natural width;
+width can increase when doing so reduces overflow on a short display. Toolbox keeps
+that width and permits vertical resizing: its minimum shows the first two top-level
+groups, its preferred height shows the first three, and its maximum shows the full tree.
+These heights come from the current tree, including nested groups. The host adds native
+window chrome and clamps sizes and position to the display work area. Content scrolls
+only when the display cannot fit it, or within the resizable Toolbox tree. Measurement
+and display reserve matching scrollbar space to avoid wrapping feedback.
+Manual resizing is enforced by native window limits; there are no resize observers or
+resize callbacks that request another size. Re-selecting the active tab preserves the
+user's size; switching tabs or explicitly changing interface scale measures and applies
+the new pane policy once. Escape or Done closes Settings; browsers also
 allow backdrop dismissal. Native preferences update all open drawings immediately
 through storage events, without changing their geometry or Undo history. User interface scale
 applies immediately at 80%, 90%, 100%, 110%, 125% or 150%; Reset to 100% is always

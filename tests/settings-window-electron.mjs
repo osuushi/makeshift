@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { launchElectron } from "./native-documents.mjs";
-import { settingsResizeChecks, settingsScaleChecks } from "./settings-resize-checks.mjs";
+import {
+  settingsResizeChecks,
+  settingsScaleChecks,
+  settingsSmallDisplayChecks,
+} from "./settings-resize-checks.mjs";
 import { settingsSurface } from "./settings-surface.mjs";
 import { settled } from "./ui-helpers.mjs";
 
@@ -23,7 +27,8 @@ try {
   await page.getByRole("button", { name: "Application settings" }).click();
   assert.equal(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().length), 2);
   await settingsResizeChecks(app, settings, dialog);
-  await settingsScaleChecks(settings, dialog);
+  await settingsScaleChecks(app, settings, dialog);
+  await settingsSmallDisplayChecks(app, settings, dialog);
   // Theme storage must reach both the new Settings renderer and the drawing.
   const appearance = dialog.getByRole("combobox", { name: "Appearance" });
   for (const theme of ["dark", "light"]) {
@@ -39,7 +44,7 @@ try {
   await page.waitForFunction(
     () => document.documentElement.style.getPropertyValue("--ui-scale") === "1.5",
   );
-  await settings.waitForFunction(() => innerHeight === 375);
+  await settings.waitForFunction((height) => outerHeight > height, sizeBeforeScale[1]);
   assert.ok(
     (await settings.evaluate(() => outerHeight)) > sizeBeforeScale[1],
     "An explicit interface-scale change applies the pane's scaled native policy once",

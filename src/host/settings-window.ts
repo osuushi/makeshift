@@ -3,7 +3,7 @@ import { BrowserWindow, screen } from "electron";
 import type { DocumentCommand } from "../model/document-host.js";
 import { DocumentIPC } from "./document-ipc.js";
 import { lockInterfaceZoom } from "./interface-zoom.js";
-import { settingsTabBounds } from "./settings-bounds.js";
+import { readSettingsSize, settingsTabBounds } from "./settings-bounds.js";
 
 let settings: BrowserWindow | undefined;
 let toolboxTools: { id: string; label: string; description?: string; unavailable: null }[] = [];
@@ -67,12 +67,24 @@ export async function openSettingsWindow(directory: string, input: unknown): Pro
 function settingsIPC(window: BrowserWindow): DocumentIPC {
   const ipc = new DocumentIPC();
   ipc.handle("settings-tools", () => toolboxTools);
-  ipc.handle("settings-tab", (_event, tab: unknown, scale: unknown) => {
+  ipc.handle("settings-space", () => {
+    const current = window.getBounds(),
+      content = window.getContentBounds();
+    const work = screen.getDisplayMatching(current).workArea;
+    return {
+      width: work.width - (current.width - content.width),
+      height: work.height - (current.height - content.height),
+    };
+  });
+  ipc.handle("settings-tab", (_event, input: unknown) => {
+    const measured = readSettingsSize(input);
+    window.setMinimumSize(0, 0);
+    window.setMaximumSize(0, 0);
+    window.setResizable(measured.tab === "Toolbox");
     const current = window.getBounds(),
       content = window.getContentBounds();
     const policy = settingsTabBounds(
-      tab,
-      scale,
+      measured,
       current,
       {
         width: current.width - content.width,
@@ -80,9 +92,6 @@ function settingsIPC(window: BrowserWindow): DocumentIPC {
       },
       screen.getDisplayMatching(current).workArea,
     );
-    // Release the previous tab's limits before applying this tab's preferred size.
-    window.setMinimumSize(0, 0);
-    window.setMaximumSize(0, 0);
     window.setBounds(policy.preferred);
     window.setMinimumSize(policy.min.width, policy.min.height);
     window.setMaximumSize(policy.max.width, policy.max.height);
