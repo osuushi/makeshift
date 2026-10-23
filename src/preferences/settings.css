@@ -225,7 +225,7 @@
 
 .application-settings .sketch-grid-fields {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 100px;
+  grid-template-columns: minmax(0, 120px) 80px;
   column-gap: 16px;
   border: 0;
   padding: 0;
@@ -261,11 +261,15 @@
   border-radius: 3px;
 }
 
+.application-settings .sketch-grid-fields input[type="number"] {
+  width: 90px;
+  max-width: 100%;
+}
 .application-settings .sketch-grid-fields input[type="color"] {
   width: 100%;
 }
 .application-settings label:has(input[aria-label="Min pixels per grid square"]) input {
-  width: 120px;
+  width: 90px;
 }
 .application-settings form {
   container: settings / inline-size;
