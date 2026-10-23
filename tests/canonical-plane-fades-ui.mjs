@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { openDocument } from "./native-documents.mjs";
-import { settingsSurface } from "./settings-surface.mjs";
+import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { drag, inspect, reset, settled } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
@@ -105,9 +105,7 @@ async function independentAxesRoute(page, name) {
   await (await settingsSurface(page, "View"))
     .getByRole("slider", { name: "Grid opacity", exact: true })
     .press("Home");
-  await (await settingsSurface(page, "View"))
-    .getByRole("button", { name: "Done", exact: true })
-    .click();
+  await closeSettings(await settingsSurface(page, "View"));
   await settled(page);
   assert.ok((await inspect(page)).planeTargets.every((p) => !p.selectable));
   // Present the retained canvas before reading pixels in on-demand CI mode.
@@ -138,7 +136,5 @@ async function independentAxesRoute(page, name) {
   await (await settingsSurface(page, "View"))
     .getByRole("button", { name: "Reset grid display" })
     .click();
-  await (await settingsSurface(page, "View"))
-    .getByRole("button", { name: "Done", exact: true })
-    .click();
+  await closeSettings(await settingsSurface(page, "View"));
 }

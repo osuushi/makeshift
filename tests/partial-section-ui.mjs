@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { settingsSurface } from "./settings-surface.mjs";
+import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { project } from "./ui-blend-edit.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { findRaycastPoint } from "./ui-plane-targets.mjs";
@@ -18,7 +18,7 @@ await withUiRuntimes(
         .inputValue(),
       "80",
     );
-    await preferences.getByRole("button", { name: "Done", exact: true }).click();
+    await closeSettings(preferences);
     await cutawayRoute(page, name);
     const facePoint = await project(page, [3.4, 6.4, 12]);
     await page.mouse.click(facePoint.x, facePoint.y);
@@ -133,13 +133,13 @@ async function opacityRoute(page, accepted) {
     "20",
   );
   await preferences.getByRole("slider", { name: "X-ray front opacity", exact: true }).press("Home");
-  await preferences.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(preferences);
   const clear = await linePixels(page);
   assert.ok(clear[0] < clear[1] - 30, `Zero front opacity reveals sketch ink: ${clear}`);
   await page.getByRole("button", { name: "Application settings" }).click();
   preferences = await settingsSurface(page, "View");
   await preferences.getByRole("slider", { name: "X-ray front opacity", exact: true }).press("End");
-  await preferences.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(preferences);
   const opaque = await linePixels(page);
   assert.ok(Math.abs(opaque[0] - opaque[1]) <= 3, `Full front opacity covers ink: ${opaque}`);
   await page.reload();
@@ -166,6 +166,6 @@ async function opacityRoute(page, accepted) {
       .inputValue(),
     "20",
   );
-  await preferences.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(preferences);
   assert.deepEqual((await inspect(page)).document, accepted, "Opacity never changes geometry");
 }

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { settingsSurface } from "./settings-surface.mjs";
+import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { project } from "./ui-blend-edit.mjs";
 import { at, click, close, corners, drag, inspect, reset, settled } from "./ui-helpers.mjs";
 import { previewActionReady } from "./ui-preview-readiness.mjs";
@@ -10,7 +10,7 @@ export async function changeScale(page, value, tools = false) {
   else await page.locator(".settings-trigger").click();
   const dialog = await settingsSurface(page, "Interface");
   await dialog.getByRole("combobox", { name: "User interface scale" }).selectOption(String(value));
-  await dialog.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(dialog);
   await settled(page);
 }
 
@@ -50,7 +50,7 @@ export async function preferencesRoute(page) {
     await dialog.getByRole("combobox", { name: "User interface scale" }).inputValue(),
     "1",
   );
-  await dialog.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(dialog);
   await page.reload();
   await settled(page);
   assert.equal(await page.evaluate(() => localStorage.getItem("makeshift.ui-scale")), "1");

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { openDocument } from "./native-documents.mjs";
-import { settingsSurface } from "./settings-surface.mjs";
+import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { project } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { chooseWidget } from "./ui-modal-plane-widgets.mjs";
@@ -38,14 +38,14 @@ await withUiRuntimes(async (page, name) => {
     await preferences.getByRole("slider", { name: "Bleed", exact: true }).isDisabled(),
     true,
   );
-  await preferences.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(preferences);
   const global = await samples(page);
   assert.ok(delta(global[0], normal[0]) > 10, "Global X-ray cuts away from sketch contents");
   preferences = await settings(page);
   await preferences.getByRole("checkbox", { name: "Global X-ray vision" }).uncheck();
   await preferences.getByRole("slider", { name: "Bleed", exact: true }).press("Home");
   await preferences.getByRole("slider", { name: "Radius", exact: true }).press("Home");
-  await preferences.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(preferences);
   const local = await samples(page);
   await assertCachedXrayWork(page);
   console.log(name, { normal, global, local });
@@ -54,13 +54,13 @@ await withUiRuntimes(async (page, name) => {
   assert.ok(delta(local[2], normal[2]) <= 2, "Zero bleed leaves nearby exterior opaque");
   preferences = await settings(page);
   await slider(page, "Bleed", 20);
-  await preferences.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(preferences);
   const expanded = await samples(page);
   assert.ok(delta(expanded[2], global[2]) <= 2, "Bleed dilates the content mask in screen pixels");
   preferences = await settings(page);
   await slider(page, "Bleed", 0);
   await slider(page, "Radius", 40);
-  await preferences.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(preferences);
   const softened = await samples(page);
   assert.ok(
     delta(softened[2], normal[2]) > 2 && delta(softened[2], global[2]) > 2,
@@ -175,9 +175,7 @@ async function coarseMask(page, normal, global) {
   await settings(page);
   await slider(page, "Bleed", 16);
   await slider(page, "Radius", 16);
-  await (await settingsSurface(page, "View"))
-    .getByRole("button", { name: "Done", exact: true })
-    .click();
+  await closeSettings(await settingsSurface(page, "View"));
   const coarse = await samples(page);
   await assertCachedXrayWork(page, 8);
   assert.ok(delta(coarse[0], normal[0]) < 6, "Coarse mask retains opaque exterior");

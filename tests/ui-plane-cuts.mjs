@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { openDocument, saveDocument } from "./native-documents.mjs";
-import { settingsSurface } from "./settings-surface.mjs";
+import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { at, drag, inspect, modalCompleted, reset, settled } from "./ui-helpers.mjs";
@@ -159,9 +159,7 @@ async function faceSubset(page, original, name) {
   await (await settingsSurface(page, "View"))
     .getByRole("button", { name: "Reset grid display" })
     .click();
-  await (await settingsSurface(page, "View"))
-    .getByRole("button", { name: "Done", exact: true })
-    .click();
+  await closeSettings(await settingsSurface(page, "View"));
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);
   await chooseTool(page, "redo", "redo");
@@ -174,9 +172,7 @@ async function hideCanonicalReferences(page) {
   await (await settingsSurface(page, "View"))
     .getByRole("slider", { name: "Grid opacity", exact: true })
     .press("Home");
-  await (await settingsSurface(page, "View"))
-    .getByRole("button", { name: "Done", exact: true })
-    .click();
+  await closeSettings(await settingsSurface(page, "View"));
   await settled(page);
 }
 async function splitBody(page, name) {

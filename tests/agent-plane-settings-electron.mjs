@@ -4,7 +4,7 @@ import { readFile, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { launchElectron } from "./native-documents.mjs";
-import { settingsSurface } from "./settings-surface.mjs";
+import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { inspect, settled } from "./ui-helpers.mjs";
 
 const run = promisify(execFile);
@@ -88,9 +88,7 @@ try {
     /finite number/,
   );
   assert.deepEqual(await query("settings"), changed, "Invalid patch applies no fields");
-  await (await settingsSurface(page, "View"))
-    .getByRole("button", { name: "Done", exact: true })
-    .click();
+  await closeSettings(await settingsSurface(page, "View"));
   await writeFile(
     join(workspace, "settings-view.ts"),
     "const current = await makeshift.settings(); await makeshift.settings({canonicalPlanes:{angleCutoff:current.canonicalPlanes.angleCutoff - 0.1}});",

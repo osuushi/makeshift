@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { settingsSurface } from "./settings-surface.mjs";
+import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { inspect, settled } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
@@ -17,7 +17,7 @@ await withUiRuntimes(async (page, name) => {
     0,
   );
   await slider.press("Home");
-  await settings.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(settings);
   await settled(page);
   assert.equal((await secondary()).opacity, 0);
   const emptyFill = await page.locator("canvas").screenshot();
@@ -26,7 +26,7 @@ await withUiRuntimes(async (page, name) => {
   slider = settings.getByRole("slider", { name: "Grid fill opacity", exact: true });
   await slider.press("End");
   await slider.press("ArrowLeft");
-  await settings.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(settings);
   await settled(page);
   assert.ok(Math.abs((await secondary()).opacity - 0) < 0.001);
   assert.equal((await secondary()).selectable, false);
@@ -44,7 +44,7 @@ await withUiRuntimes(async (page, name) => {
   assert.equal(await slider.inputValue(), "99.9");
   await settings.getByRole("button", { name: "Reset grid display", exact: true }).click();
   assert.equal(await slider.inputValue(), "30");
-  await settings.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(settings);
   await orient(page, [1, -0.8, 0.3]);
   await settled(page);
   assert.ok(Math.abs((await secondary()).opacity - 0) < 0.001);

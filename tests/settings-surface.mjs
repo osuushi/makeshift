@@ -30,3 +30,24 @@ export async function settingsSurface(page, tab) {
   if (tab) await dialog.getByRole("tab", { name: tab, exact: true }).click();
   return dialog;
 }
+
+/** A native Done click destroys its Page before Chromium may acknowledge it. */
+export async function closeSettings(dialog) {
+  const page = dialog.page();
+  const native = await page.evaluate(() => !!window.makeshiftSettingsWindow);
+  const closed = native ? page.waitForEvent("close") : dialog.waitFor({ state: "hidden" });
+  await Promise.all([
+    closed,
+    dialog
+      .getByRole("button", { name: "Done", exact: true })
+      .click()
+      .catch((error) => {
+        if (
+          !native ||
+          !page.isClosed() ||
+          !error.message.includes("Target page, context or browser has been closed")
+        )
+          throw error;
+      }),
+  ]);
+}

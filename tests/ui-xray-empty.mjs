@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { settingsSurface } from "./settings-surface.mjs";
+import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { drag, inspect, reset } from "./ui-helpers.mjs";
 import { findRaycastPoint } from "./ui-plane-targets.mjs";
 
@@ -27,9 +27,7 @@ async function sameGrid(page, label) {
   await (await settingsSurface(page, "View"))
     .getByRole("checkbox", { name: "Global X-ray vision" })
     .check();
-  await (await settingsSurface(page, "View"))
-    .getByRole("button", { name: "Done", exact: true })
-    .click();
+  await closeSettings(await settingsSurface(page, "View"));
   const global = await image(page);
   const difference = await page.evaluate(
     async ({ local, global }) => {
@@ -58,9 +56,7 @@ async function sameGrid(page, label) {
   await (await settingsSurface(page, "View"))
     .getByRole("checkbox", { name: "Global X-ray vision" })
     .uncheck();
-  await (await settingsSurface(page, "View"))
-    .getByRole("button", { name: "Done", exact: true })
-    .click();
+  await closeSettings(await settingsSurface(page, "View"));
 }
 
 async function image(page) {

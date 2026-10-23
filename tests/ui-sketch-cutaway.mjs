@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { settingsSurface } from "./settings-surface.mjs";
+import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { pixels } from "./ui-fill.mjs";
@@ -97,5 +97,5 @@ async function configureCutaway(page) {
   await opacity.press("Home");
   await opacity.press("PageUp");
   await opacity.press("PageUp");
-  await preferences.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(preferences);
 }

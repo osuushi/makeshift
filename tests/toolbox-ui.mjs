@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { settingsSurface } from "./settings-surface.mjs";
+import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { drag, inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { toolboxViewportRoute } from "./ui-toolbox-viewport.mjs";
@@ -183,7 +183,7 @@ async function settingsRoute(page) {
   await dialog.getByRole("button", { name: "Reset toolbox to defaults", exact: true }).click();
   assert.equal((await stored(page)).items[3].items[1], "cylinder");
   assert.equal((await stored(page)).items[2].items[0], "line");
-  await dialog.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(dialog);
 }
 async function stored(page) {
   return page.evaluate(() => JSON.parse(localStorage.getItem("makeshift.toolbox.v7")));

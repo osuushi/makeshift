@@ -6,7 +6,7 @@ import { _electron } from "playwright";
 import { documentTestPage } from "./document-test-page.mjs";
 import { electronTestArguments } from "./native-documents.mjs";
 import { reopenDuringSettingsClose } from "./settings-close-checks.mjs";
-import { settingsSurface } from "./settings-surface.mjs";
+import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { failureContext } from "./ui-failure-context.mjs";
 import { settled } from "./ui-helpers.mjs";
 import { changeScale, geometryScaleRoute, preferencesRoute } from "./ui-interface-scale.mjs";
@@ -108,7 +108,7 @@ try {
     "1.5",
   );
   await restored.getByRole("button", { name: "Reset to 100%" }).click();
-  await restored.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(restored);
   console.log(
     "Hidden Electron: menu/key zoom locked, real sketch/solid routes at 80/150%, host rotate coordinate transport, agent settings/dock/terminal and scale reset passed",
   );
@@ -195,5 +195,5 @@ async function agentScaleRoute(page) {
   await page.locator(".settings-trigger").click();
   const dialog = await settingsSurface(page, "Interface");
   await dialog.getByRole("button", { name: "Reset to 100%" }).click();
-  await dialog.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(dialog);
 }

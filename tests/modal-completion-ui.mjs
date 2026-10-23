@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { settingsSurface } from "./settings-surface.mjs";
+import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { decoratorCylinder } from "./ui-decorator-cylinder.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
@@ -62,9 +62,7 @@ async function route(page, name) {
         assert.ok(state.document.bodies[0].volume < original.bodies[0].volume);
       } else
         assert.deepEqual(state.document, original, "Cancellation preserves the accepted document");
-      await (await settingsSurface(page))
-        .getByRole("button", { name: "Done", exact: true })
-        .click();
+      await closeSettings(await settingsSurface(page));
       if (choice === "Wait") {
         await chooseTool(page, "undo", "undo");
         assert.deepEqual(
@@ -107,7 +105,7 @@ async function settingsShortcutCompletion(page, name) {
     const state = await inspect(page);
     assert.equal(state.interaction, null);
     close(state.document.sketches[0].curves[0].radius, 9, "Shortcut completes numeric edit");
-    await (await settingsSurface(page)).getByRole("button", { name: "Done", exact: true }).click();
+    await closeSettings(await settingsSurface(page));
     await chooseTool(page, "undo", "undo");
     assert.deepEqual((await inspect(page)).document, original);
   } finally {
