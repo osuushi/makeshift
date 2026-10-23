@@ -7,7 +7,7 @@ export interface WidgetRect {
 
 /** Visible application chrome shared by widget placement and guide occlusion. */
 export const widgetChromeSelector =
-  "header, .toolbox, .tools-trigger, .entity-viewer, .orientation-cube, .sketch-grid-panel, .exit-isolation, .agent-dock, .agent-toggle, .workspace-footer, .selection-readouts, .calculation-progress, .transform-layers, [data-modal-plane]";
+  "header, .toolbox, .tools-trigger, .entity-viewer, .orientation-cube, .view-options-trigger, .sketch-grid-panel, .exit-isolation, .agent-dock, .agent-toggle, .workspace-footer, .selection-readouts, .calculation-progress, .transform-layers, [data-modal-plane]";
 
 export function rectsOverlap(a: WidgetRect, b: WidgetRect, gap = 6): boolean {
   return (

@@ -58,3 +58,23 @@
     animation: none;
   }
 }
+
+.view-options-trigger {
+  position: absolute;
+  top: 168px;
+  right: 26px;
+  width: 128px;
+  padding: 7px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.view-options-panel {
+  inset: auto;
+  margin: 0;
+  width: min(280px, calc(100vw - 16px));
+  color: #293547;
+}
+.view-options-panel h2 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
