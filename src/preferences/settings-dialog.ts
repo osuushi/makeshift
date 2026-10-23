@@ -6,6 +6,7 @@ import { sketchGridSettings } from "./sketch-grid-settings.js";
 import { setUiScale, uiScale, uiScaleChoices } from "./ui-scale.js";
 import { viewSettings } from "./view-settings.js";
 import "./settings.css";
+import "./settings-decorators.css";
 
 export function settingsDialog(): HTMLDialogElement {
   const dialog = document.createElement("dialog");
@@ -34,8 +35,7 @@ export function settingsDialog(): HTMLDialogElement {
   });
   dialog.innerHTML = `<form method="dialog"><h2 id="settings-title">Settings</h2>
     <label>User interface scale<select aria-label="User interface scale"></select></label>
-    <p>Changes apply immediately and are saved on this device.</p>
-    <div class="settings-actions"><button type="button" data-reset>Reset to 100%</button><button value="close">Done</button></div></form>`;
+    <div class="settings-actions"><p>Changes saved automatically.</p><button type="button" data-reset>Reset to 100%</button><button value="close">Done</button></div></form>`;
   const select = dialog.querySelector<HTMLSelectElement>("select");
   const reset = dialog.querySelector<HTMLButtonElement>("[data-reset]");
   if (!select || !reset) throw new Error("Missing scale settings controls");
@@ -54,7 +54,7 @@ export function settingsDialog(): HTMLDialogElement {
     ["Decorators", decoratorSettings()],
     ["Experimental", experimentalSettings()],
   ]);
-  form.querySelector("p")?.before(tabs);
+  form.querySelector(".settings-actions")?.before(tabs);
   for (const scale of uiScaleChoices)
     select.add(new Option(`${Math.round(scale * 100)}%`, String(scale)));
   const update = () => {

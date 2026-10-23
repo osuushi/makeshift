@@ -37,6 +37,13 @@ try {
   await dialog.getByRole("checkbox", { name: "Fast trim checks" }).check();
   await page.waitForFunction(() => localStorage.getItem("makeshift.fast-trim-checks") === "true");
   await dialog.getByRole("tab", { name: "View", exact: true }).click();
+  await dialog.getByRole("checkbox", { name: "Global X-ray vision" }).check();
+  assert.equal(await dialog.getByRole("slider", { name: "Bleed", exact: true }).isDisabled(), true);
+  await dialog.getByRole("checkbox", { name: "Global X-ray vision" }).uncheck();
+  assert.equal(
+    await dialog.getByRole("slider", { name: "Bleed", exact: true }).isDisabled(),
+    false,
+  );
   await dialog.getByRole("slider", { name: "Grid opacity", exact: true }).press("End");
   await page.waitForFunction(
     () => JSON.parse(localStorage.getItem("makeshift.view-display")).grid === 1,

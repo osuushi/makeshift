@@ -2,10 +2,11 @@
   pointer-events: auto;
 }
 .application-settings {
-  width: min(600px, calc(100vw - 24px));
+  box-sizing: border-box;
+  width: min(540px, calc(100vw - 24px));
   max-height: min(720px, calc(100dvh - 24px));
   overflow: auto;
-  padding: 16px;
+  padding: 20px;
   border: 1px solid #d6dfe9;
   border-radius: 12px;
   background: #fff;
@@ -20,17 +21,31 @@
   margin: 0 0 8px;
 }
 .application-settings label {
-  display: grid;
-  text-align: right;
-  grid-template-columns: minmax(0, 180px) minmax(0, 160px) max-content;
-  justify-content: start;
-  align-items: center;
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
   margin: 8px 0;
+  font-size: 13px;
+}
+.application-settings label:has(input[type="checkbox"]) {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+.application-settings label:has(input[type="range"]) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+.application-settings label:has(input[type="range"]) > span {
+  grid-column: 1 / -1;
 }
 .application-settings :is(select, input[type="number"], input[type="text"]) {
   box-sizing: border-box;
   text-align: left;
+  min-height: 34px;
   min-width: 0;
   width: 100%;
   font: inherit;
@@ -51,60 +66,15 @@
 .settings-actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
   gap: 8px;
-  margin-top: 8px;
-}
-.decorator-display-settings {
-  border-top: 1px solid #d6dfe9;
-  margin-top: 8px;
-  padding-top: 8px;
-}
-.decorator-display-settings h3 {
-  font-size: 15px;
-  margin: 0 0 8px;
-}
-.decorator-display-row {
-  display: flex;
-  flex-wrap: wrap;
+  margin-top: 20px;
   align-items: center;
-  gap: 12px;
-  margin: 4px 0;
-}
-.decorator-display-row > label {
-  display: flex;
-  max-width: 100%;
-  flex-wrap: wrap;
-}
-.decorator-display-row > span {
-  width: 64px;
-}
-.decorator-display-row input[type="color"] {
-  width: 44px;
-  height: 30px;
-  padding: 2px;
-}
-.decorator-display-row input[type="range"] {
-  width: 100px;
-}
-.decorator-color-value {
-  box-sizing: content-box;
-  width: 8ch;
-  flex-shrink: 0;
-  font: inherit;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: max(16px, calc(14px * var(--ui-scale, 1)));
-  padding: 4px;
-  border: 1px solid #d6dfe9;
-  border-radius: 4px;
-}
-.decorator-display-row output {
-  width: 36px;
+  justify-content: space-between;
 }
 .view-display-settings {
-  border-top: 1px solid #d6dfe9;
-  margin-top: 8px;
-  padding-top: 8px;
+  border-top: 1px solid #e5eaf0;
+  margin-top: 20px;
+  padding-top: 16px;
 }
 .view-display-settings h3 {
   font-size: 15px;
@@ -214,8 +184,10 @@
 .settings-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin: 16px 0;
+  gap: 4px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5eaf0;
+  margin: 12px 0 20px;
 }
 .settings-tabs [aria-selected="true"] {
   background: #e4effb;
@@ -224,8 +196,12 @@
 .application-settings [role="tabpanel"][hidden] {
   display: none;
 }
-.application-settings [role="tabpanel"] {
-  min-height: 180px;
+.application-settings [role="tabpanel"] > :first-child,
+.application-settings [role="tabpanel"].view-display-settings,
+.application-settings [role="tabpanel"].decorator-display-settings {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
 }
 .settings-window {
   margin: 0;
@@ -248,10 +224,16 @@
 }
 
 .application-settings .sketch-grid-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 100px;
+  column-gap: 16px;
   border: 0;
   padding: 0;
   margin: 0;
   min-width: 0;
+}
+.application-settings .sketch-grid-fields label:has(input[type="checkbox"]) {
+  grid-column: 1 / -1;
 }
 .application-settings .sketch-grid-fields legend {
   display: none;
@@ -260,7 +242,7 @@
   box-sizing: border-box;
   justify-self: start;
   width: 56px;
-  height: 32px;
+  height: 34px;
   margin: 0;
   padding: 4px;
   border: 1px solid #d6dfe9;
@@ -277,4 +259,20 @@
 .application-settings input[type="color"]::-moz-color-swatch {
   border: 0;
   border-radius: 3px;
+}
+
+.application-settings .sketch-grid-fields input[type="color"] {
+  width: 100%;
+}
+.application-settings label:has(input[aria-label="Min pixels per grid square"]) input {
+  width: 120px;
+}
+.application-settings form {
+  container: settings / inline-size;
+}
+
+.application-settings [role="tabpanel"] > div:first-child > section:first-child {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
 }

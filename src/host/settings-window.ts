@@ -1,6 +1,7 @@
 import { join } from "node:path";
-import { BrowserWindow } from "electron";
+import { BrowserWindow, screen } from "electron";
 import type { DocumentCommand } from "../model/document-host.js";
+import { DocumentIPC } from "./document-ipc.js";
 import { lockInterfaceZoom } from "./interface-zoom.js";
 
 let settings: BrowserWindow | undefined;
@@ -16,14 +17,29 @@ export async function openSettingsWindow(directory: string): Promise<void> {
   const hidden = process.env.MAKESHIFT_TEST_HIDDEN === "1";
   const window = new BrowserWindow({
     title: "Settings — Makeshift",
-    width: 760,
-    height: 760,
+    width: 560,
+    height: 520,
     minWidth: 400,
-    minHeight: 400,
+    minHeight: 260,
     show: false,
     backgroundColor: "#ffffff",
-    webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false },
+    webPreferences: {
+      preload: join(directory, "settings-preload.cjs"),
+      sandbox: true,
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
   });
+  const ipc = new DocumentIPC();
+  ipc.handle("settings-fit", (_event, height: unknown) => {
+    if (typeof height !== "number" || !Number.isFinite(height)) return;
+    const limit = screen.getDisplayMatching(window.getBounds()).workAreaSize.height - 100;
+    window.setContentSize(
+      window.getContentSize()[0],
+      Math.round(Math.max(240, Math.min(limit, height))),
+    );
+  });
+  ipc.attach(window);
   settings = window;
   lockInterfaceZoom(window.webContents);
   window.setMenu(null);
