@@ -7,18 +7,18 @@
   pointer-events: none;
 }
 .edit-handle {
-  fill: white;
-  stroke: #337ac4;
+  fill: var(--panel);
+  stroke: var(--accent);
   stroke-width: 1.5px;
 }
 .center-handle {
-  fill: white;
-  stroke: #337ac4;
+  fill: var(--panel);
+  stroke: var(--accent);
   stroke-width: 1.5px;
 }
 .snap-cue {
   fill: none;
-  stroke: #cb8c2e;
+  stroke: var(--warning);
   stroke-width: 1.5px;
 }
 .dimension {
@@ -27,33 +27,33 @@
   display: flex;
   align-items: center;
   gap: 2px;
-  background: #fffffff2;
-  border: 1px solid #c4d6eb;
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 4px 6px;
   pointer-events: auto;
-  box-shadow: 0 2px 5px #2b477b08;
+  box-shadow: 0 2px 5px var(--shadow);
 }
 .dimension input {
   width: 56px;
   border: 0;
   outline: none;
   background: transparent;
-  color: #235a98;
+  color: var(--accent);
   text-align: center;
   font: inherit;
   font-variant-numeric: tabular-nums;
 }
 .dimension:focus-within {
-  border-color: #397ec7;
-  box-shadow: 0 0 0 2px #397ec72b;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--shadow);
 }
 .dimension span {
   font-size: 10px;
-  color: #8292a6;
+  color: var(--accent);
 }
 .dimension input[aria-invalid="true"] {
-  color: #b04545;
+  color: var(--danger);
 }
 
 .pivot-control {
@@ -61,37 +61,37 @@
   pointer-events: auto;
   font-size: 10px;
   padding: 5px 8px;
-  color: #597da9;
+  color: var(--accent);
 }
 .rotation-guide {
-  stroke: #91adcf;
+  stroke: var(--accent);
   stroke-width: 1px;
   stroke-dasharray: 3 5;
   opacity: 0.45;
 }
 .rotation-handle {
-  fill: white;
-  stroke: #337ac4;
+  fill: var(--panel);
+  stroke: var(--accent);
   stroke-width: 1.3px;
 }
 .rotation-arrow {
-  fill: #337ac4;
+  fill: var(--accent);
   font-size: 13px;
   text-anchor: middle;
 }
 .pivot-marker {
   fill: none;
-  stroke: #b77828;
+  stroke: var(--warning);
   stroke-width: 2px;
 }
 .line-hint {
-  stroke: #568ac5;
+  stroke: var(--accent);
   stroke-width: 1.5px;
   stroke-dasharray: 5 4;
 }
 .selection-box {
-  fill: #528ad812;
-  stroke: #528ad8;
+  fill: var(--selection-fill);
+  stroke: var(--accent);
   stroke-width: 1px;
   stroke-dasharray: 4 3;
 }
@@ -103,10 +103,10 @@
   display: grid;
   gap: 3px;
   padding: 5px;
-  background: white;
-  border: 1px solid #c5d7ef;
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: 0 4px 12px #29416620;
+  box-shadow: 0 4px 12px var(--shadow);
 }
 .overlap-chooser[hidden] {
   display: none;
@@ -124,40 +124,40 @@
   position: absolute;
   max-width: 250px;
   padding: 7px 10px;
-  color: #8b5b2c;
-  background: #fff9ed;
-  border: 1px solid #ecd7b8;
+  color: var(--warning);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 7px;
   font-size: 12px;
   pointer-events: none;
 }
 
 .selected-point {
-  fill: #337ac4;
-  stroke: white;
+  fill: var(--accent);
+  stroke: var(--panel);
   stroke-width: 1.5px;
 }
 .hover-point {
   fill: none;
-  stroke: #bc7b2b;
+  stroke: var(--warning);
   stroke-width: 2px;
 }
 .bow-guide {
   fill: none;
-  stroke: #337ac4;
+  stroke: var(--accent);
   stroke-width: 1.5;
   opacity: 0.35;
 }
 .bow-handle {
-  fill: #f8fafc;
-  stroke: #337ac4;
+  fill: var(--panel);
+  stroke: var(--accent);
   stroke-width: 1.5;
   opacity: 0.65;
 }
 
 .bow-guide.bow-match,
 .bow-handle.bow-match {
-  stroke: #245b99;
+  stroke: var(--accent);
   opacity: 1;
   stroke-width: 2;
 }
@@ -170,10 +170,10 @@
   max-width: 248px;
   gap: 5px;
   padding: 7px;
-  background: #fff;
-  border: 1px solid #c5d7ef;
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 9px;
-  box-shadow: 0 4px 12px #29416620;
+  box-shadow: 0 4px 12px var(--shadow);
 }
 .point-chooser[hidden] {
   display: none;
@@ -185,9 +185,9 @@
   overflow: hidden;
 }
 .point-chooser button[aria-pressed="true"] {
-  border-color: #337ac4;
-  background: #e6f0ff;
-  color: #337ac4;
+  border-color: var(--accent);
+  background: var(--selected);
+  color: var(--accent);
 }
 .point-chooser svg {
   width: 52px;
@@ -201,38 +201,38 @@
 }
 .point-chooser circle {
   fill: currentColor;
-  stroke: white;
+  stroke: var(--panel);
   /* ui-scale: viewbox */
   stroke-width: 1px;
 }
 .point-choice-hint {
   flex-basis: 100%;
   font-size: 11px;
-  color: #5c6c80;
+  color: var(--accent);
 }
 .transform-ring {
   fill: none;
-  stroke: #337ac4;
+  stroke: var(--accent);
   stroke-width: 2;
 }
 .transform-axis {
   stroke-width: 2;
 }
 .axis-x {
-  stroke: #c95465;
-  fill: #c95465;
+  stroke: var(--danger);
+  fill: var(--danger);
 }
 .axis-y {
-  stroke: #33855b;
-  fill: #33855b;
+  stroke: var(--success);
+  fill: var(--success);
 }
 .axis-z {
-  stroke: #467fc2;
-  fill: #467fc2;
+  stroke: var(--accent);
+  fill: var(--accent);
 }
 .axis-label {
   font: 11px sans-serif;
-  fill: #526579;
+  fill: var(--teal);
 }
 .overlap-chooser svg {
   width: 144px;

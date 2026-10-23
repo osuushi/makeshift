@@ -2,13 +2,13 @@
   width: min(360px, calc(100vw - 40px));
   box-sizing: border-box;
   padding: 20px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: white;
-  color: #26364a;
+  background: var(--panel);
+  color: var(--text);
 }
 .preset-name-dialog::backdrop {
-  background: #172b4540;
+  background: var(--backdrop);
 }
 .preset-name-dialog h2 {
   margin: 0 0 16px;
@@ -22,7 +22,7 @@
   width: 100%;
   box-sizing: border-box;
   padding: 10px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border);
   border-radius: 6px;
   font: inherit;
 }

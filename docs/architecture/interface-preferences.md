@@ -156,3 +156,36 @@ zoom can thin minor lines to 1, 2, 2.5, 5 or 10 mm; it never moves major lines t
 Canonical modeling
 grids retain their existing spacing and palette behavior. The searchable Toggle
 grid snapping command remains available, including during a pen gesture.
+
+## Appearance and color contrast
+
+Appearance in Settings → General offers System (default), Light and Dark. The
+choice is device/origin-local in `makeshift.theme`, outside document data and Undo.
+System follows `prefers-color-scheme` live on Electron, browsers and iPad Safari;
+clients without that API fall back to Light and still allow explicit Dark.
+Invalid stored values use System. Denied storage keeps the current choice in
+memory. Storage events synchronize same-origin windows. Startup resolves the
+choice before the app paints; CSS `color-scheme` also themes native form controls.
+Native desktop dialogs and the license viewer follow the operating system.
+
+`src/preferences/theme.css` owns semantic interface colors. Panels are opaque:
+model geometry cannot bleed through and lower text contrast. The audit covers
+all application CSS, SVG controls/labels, sketch ink and axes, preview outlines,
+terminal default/ANSI colors, startup backgrounds and the license viewer. The
+marketing website is a separate surface and retains its independent design.
+
+`tests/theme-contrast.test.ts` checks WCAG relative luminance: at least 4.5:1 for
+normal text (including muted/status/accent text) on panel, canvas, raised, selected
+and warning surfaces; at least 3:1 for control borders and opaque viewport ink.
+It also prevents new literal colors in application styles outside the palette.
+Focus uses the accent token; primary buttons pair accent with on-accent ink.
+Terminal colors update without restarting the session. Programs can still supply
+arbitrary true-color output or their own foreground/background combinations.
+
+Document body colors, configurable grid/plane/decorator palettes, lit surfaces,
+translucent region/section fills and shadows represent geometry or user data;
+they are not forced to meet text contrast or rewritten when appearance changes.
+Faint grids and occluded geometry are deliberately subordinate. Geometry controls
+use opaque ink or light/dark double outlines; orientation face labels choose black
+or white against the configured face. Branding, QR images and color swatches keep
+their source colors. These exceptions do not justify low-contrast interface text.

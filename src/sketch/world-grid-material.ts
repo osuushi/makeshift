@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { colorTheme } from "../preferences/theme.js";
 import { coordinateDepthFragment } from "./coordinate-plane-depth.js";
 import { gridFillGradientFragment } from "./grid-fill-gradient.js";
 import type { PlaneId } from "./planes.js";
@@ -23,6 +24,7 @@ export function gridMaterial(id: PlaneId | "work"): THREE.ShaderMaterial {
       strength: { value: 0.2 },
       opacityScale: { value: 1 },
       fillOpacity: { value: 0.3 },
+      fillColor: { value: new THREE.Color() },
       gridViewport: { value: new THREE.Vector2(1, 1) },
       radius: { value: 160 },
       center: { value: new THREE.Vector2() },
@@ -40,7 +42,7 @@ export function gridMaterial(id: PlaneId | "work"): THREE.ShaderMaterial {
         varying vec2 coordinate;
         uniform float spacing; uniform float lineWidth; uniform float strength; uniform float radius;
         uniform float opacityScale; uniform float fillOpacity;
-        uniform vec2 center; uniform vec3 gridColor; uniform vec3 majorColor;
+        uniform vec2 center; uniform vec3 gridColor; uniform vec3 majorColor; uniform vec3 fillColor;
         uniform float majorSpacing; uniform float minorVisible;
         float grid(float stepSize) {
           vec2 p = coordinate / stepSize;
@@ -58,11 +60,12 @@ export function gridMaterial(id: PlaneId | "work"): THREE.ShaderMaterial {
           float lineAlpha = min(1.0, lines * strength * opacityScale) * fade * depthFade;
           float fillAlpha = fillOpacity * gridFillGradient() * (1.0 - lineAlpha);
           float alpha = lineAlpha + fillAlpha;
-          vec3 color = (lineColor * lineAlpha + vec3(1.0) * fillAlpha) / max(alpha, 0.00001);
+          vec3 color = (lineColor * lineAlpha + fillColor * fillAlpha) / max(alpha, 0.00001);
           gl_FragColor = vec4(color, alpha);
         }`,
   });
   material.onBeforeRender = (renderer) => {
+    material.uniforms.fillColor.value.set(colorTheme() === "dark" ? "#161e29" : "#ffffff");
     renderer.getDrawingBufferSize(material.uniforms.gridViewport.value);
   };
   return material;

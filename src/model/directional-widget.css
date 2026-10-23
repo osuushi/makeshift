@@ -5,8 +5,8 @@
   pointer-events: none;
 }
 .orientable-handle:hover > svg {
-  filter: drop-shadow(0 0 2px #549ee8);
+  filter: drop-shadow(0 0 2px var(--accent));
 }
 .orientable-handle[data-geometry-invalid="true"] > svg {
-  filter: drop-shadow(0 0 2px #ce3737);
+  filter: drop-shadow(0 0 2px var(--danger));
 }

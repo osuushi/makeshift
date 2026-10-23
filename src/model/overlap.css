@@ -4,11 +4,11 @@
   box-sizing: border-box;
   overflow: clip;
   padding: 10px;
-  background: #fff;
-  border: 1px solid #b9c7d6;
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 14px;
-  box-shadow: 0 8px 32px #26374733;
-  color: #344657;
+  box-shadow: 0 8px 32px var(--shadow);
+  color: var(--text);
   touch-action: none;
   user-select: none;
 }
@@ -23,7 +23,7 @@
   border: 0;
   background: transparent;
   font-size: 24px;
-  color: #63758a;
+  color: var(--accent);
   cursor: pointer;
 }
 .selection-overlap-items {
@@ -36,19 +36,19 @@
   flex-direction: column;
   align-items: stretch;
   padding: 0 0 8px;
-  background: #f8fafc;
-  border: 1px solid #dce3eb;
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  color: #344657;
+  color: var(--text);
   cursor: pointer;
   font: inherit;
   font-size: 13px;
 }
 .selection-overlap-items button.hovered,
 .selection-overlap-items button:focus-visible {
-  background: #eef5ff;
-  border-color: #287bd1;
-  outline: 2px solid #287bd1;
+  background: var(--surface);
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
   outline-offset: -1px;
 }
 .selection-overlap-items svg {
@@ -63,7 +63,7 @@
   pointer-events: none;
   z-index: 110;
   box-sizing: border-box;
-  border: 3px solid #acc9e3;
+  border: 3px solid var(--border);
   border-radius: 50%;
 }
 .selection-hold-progress {
@@ -71,7 +71,7 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: #237acc;
+  background: var(--accent);
   transform: scale(0);
   animation: selection-hold-fill var(--hold-duration) linear both;
 }

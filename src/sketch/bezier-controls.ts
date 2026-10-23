@@ -143,7 +143,7 @@ export class BezierControls {
         y2: b.y - bounds.top,
       }))
         line.setAttribute(name, String(value));
-      line.setAttribute("stroke", "#337ac4");
+      line.setAttribute("stroke", "var(--accent)");
       line.setAttribute("stroke-dasharray", "4 3");
       const handle = document.createElementNS(ns, "circle");
       handle.setAttribute("cx", String(b.x - bounds.left));

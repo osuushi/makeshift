@@ -11,9 +11,9 @@
   height: 20px;
   padding: 0;
   border-radius: 50%;
-  border: 1px solid #99631f;
-  background: #fff9ed;
-  color: #87501a;
+  border: 1px solid var(--warning);
+  background: var(--surface);
+  color: var(--danger);
   font: 12px system-ui;
   pointer-events: auto;
   touch-action: none;
@@ -23,22 +23,22 @@
   opacity: 0.8;
 }
 .guide-marker.saved {
-  background: #fff3ce;
+  background: var(--warning-surface);
   border-width: 2px;
 }
 .guide-marker:hover,
 .guide-marker:focus-visible {
-  outline: 2px solid #c88e3c;
+  outline: 2px solid var(--warning);
   outline-offset: 2px;
 }
 .guide-choices {
   position: absolute;
   pointer-events: auto;
   padding: 12px;
-  border: 1px solid #d7e0ec;
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: #fffffff5;
-  box-shadow: 0 4px 18px #243a5220;
+  background: var(--panel);
+  box-shadow: 0 4px 18px var(--shadow);
   font: 13px system-ui;
 }
 .guide-choices {
@@ -69,7 +69,7 @@
   padding: 0 6px;
 }
 .guide-choices button:hover {
-  background: #fff3ce;
+  background: var(--warning-surface);
 }
 .guide-choices[hidden] {
   display: none;
@@ -80,7 +80,7 @@
   font: inherit;
 }
 .entity-hidden .guide-item > .tag-row {
-  color: #8c99a8;
+  color: var(--muted);
 }
 .guide-cross {
   position: absolute;
@@ -99,28 +99,28 @@
   left: 14px;
   top: -6px;
   border-radius: 5px;
-  background: #fff9ed;
+  background: var(--surface);
   font: 9px system-ui;
   padding: 0 2px;
   pointer-events: none;
 }
 .guide-marker.selected {
-  background: #e4f0ff;
-  color: #1676d2;
-  border-color: #1676d2;
+  background: var(--selected);
+  color: var(--accent);
+  border-color: var(--accent);
 }
 .guide-marker.selected:hover,
 .guide-marker.selected:focus-visible {
-  outline-color: #1676d2;
+  outline-color: var(--accent);
 }
 .guide-marker.start-unavailable {
-  background: #eef0f2;
-  color: #929aa3;
-  border-color: #a7afb8;
+  background: var(--panel);
+  color: var(--muted);
+  border-color: var(--border);
 }
 .guide-marker.start-unavailable:hover,
 .guide-marker.start-unavailable:focus-visible {
-  outline-color: #a7afb8;
+  outline-color: var(--border);
 }
 .guide-move-vector {
   position: absolute;
@@ -133,16 +133,16 @@
 }
 .guide-move-vector line,
 .guide-move-vector circle {
-  stroke: #1676d2;
+  stroke: var(--accent);
   stroke-width: 2;
-  fill: white;
+  fill: var(--panel);
 }
 .guide-move-vector marker path {
-  fill: #1676d2;
+  fill: var(--accent);
 }
 .guide-move-vector text {
-  fill: #1676d2;
-  stroke: white;
+  fill: var(--accent);
+  stroke: var(--panel);
   stroke-width: 3;
   paint-order: stroke;
   font: 12px system-ui;
@@ -157,8 +157,8 @@
   opacity: 0;
 }
 .guide-choices button[aria-pressed="true"] {
-  background: #e4f0ff;
-  color: #1676d2;
+  background: var(--selected);
+  color: var(--accent);
 }
 .guide-move-vector.unsnapped {
   opacity: 0.35;
@@ -173,8 +173,8 @@
   overflow: hidden;
 }
 .guide-move-destinations circle {
-  fill: #f6d675;
-  stroke: #b08b2b;
+  fill: var(--warning);
+  stroke: var(--warning);
   stroke-width: 1;
 }
 .guide-move-destinations circle.covered {
@@ -182,18 +182,18 @@
 }
 .guide-move-destinations circle.guide-destination-lock {
   fill: none;
-  stroke: #1676d2;
+  stroke: var(--accent);
   stroke-width: 2;
 }
 .guide-move-destinations text {
-  fill: #73869a;
-  stroke: white;
+  fill: var(--accent);
+  stroke: var(--panel);
   stroke-width: 3;
   paint-order: stroke;
   font: 12px system-ui;
 }
 .guide-move-destinations line {
-  stroke: #7f8995;
+  stroke: var(--muted);
   stroke-width: 1;
   stroke-dasharray: 2 4;
   opacity: 0.4;
@@ -211,7 +211,7 @@
   opacity: 0.7;
 }
 .guide-plane-patch.highlighted {
-  color: #8b5cf6;
+  color: var(--purple);
 }
 .guide-move-destinations .guide-grid-reveal {
   stroke-dasharray: 1;

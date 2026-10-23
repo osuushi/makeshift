@@ -35,7 +35,7 @@ export class SavedPlaneView {
     for (const p of visible) {
       const active = p.id === selected || p.id === hovered;
       const bounds = e.world.planeBounds(p.frame),
-        mesh = planePatch(active ? "#83b9ee" : "#7198b8");
+        mesh = planePatch(active ? "#83b9ee" : "#648bab");
       mesh.material.opacity = active ? 0.35 : 0.12;
       mesh.material.stencilWrite = p.id !== selected && !e.world.planePicker;
       positionPlanePatch(mesh, p.frame, bounds);
@@ -45,7 +45,7 @@ export class SavedPlaneView {
       );
       const outline = new THREE.LineLoop(
         geometry,
-        new THREE.LineBasicMaterial({ color: active ? "#1676d2" : "#7198b8" }),
+        new THREE.LineBasicMaterial({ color: active ? "#1676d2" : "#648bab" }),
       );
       this.group.add(outline);
     }

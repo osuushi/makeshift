@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { BrowserWindow, screen } from "electron";
+import { BrowserWindow, nativeTheme, screen } from "electron";
 import { DocumentOwner } from "../backend/document-owner.js";
 import { MeshCalculator } from "../backend/mesh-calculator.js";
 import { NativeSolver } from "../backend/native-solver.js";
@@ -62,7 +62,7 @@ export class DocumentWindow {
       ...restoreWindowSize(),
       ...host.bounds,
       show: !hidden,
-      backgroundColor: "#f8f9fb",
+      backgroundColor: nativeTheme.shouldUseDarkColors ? "#161e29" : "#f8f9fb",
       webPreferences: {
         preload: join(directory, "preload.cjs"),
         sandbox: true,

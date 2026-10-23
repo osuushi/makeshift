@@ -12,7 +12,7 @@ export class BooleanOperands {
   show(bodies: readonly BodyGeometry[], mode: BodyBoolean["mode"], target: string | null): void {
     this.clear();
     bodies.forEach((body) => {
-      const color = mode === "subtract" && body.id !== target ? "#d08a35" : "#287cbd";
+      const color = mode === "subtract" && body.id !== target ? "#a66a16" : "#287cbd";
       for (const face of body.faces) {
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute("position", new THREE.Float32BufferAttribute(face.vertices, 3));

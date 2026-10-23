@@ -60,7 +60,7 @@ export class SelectionEmphasis {
     const keys = new Set(this.selection.targets.map((t) => this.selection.key(t)));
     for (const child of this.group.children) {
       const object = child as THREE.Line<THREE.BufferGeometry, THREE.LineBasicMaterial>;
-      object.material.color.set(keys.has(object.userData.selectionKey) ? "#1678d2" : "#dc9828");
+      object.material.color.set(keys.has(object.userData.selectionKey) ? "#1678d2" : "#a66a16");
     }
   }
   dispose(): void {

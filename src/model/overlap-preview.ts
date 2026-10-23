@@ -60,8 +60,8 @@ export function geometryPreviews(
     svg.setAttribute("viewBox", "0 0 144 104");
     svg.setAttribute("overflow", "hidden");
     svg.setAttribute("aria-hidden", "true");
-    draw(svg, context, project, "#dbe1e8", "#aab5c1");
-    draw(svg, target, project, "#8cbde8", "#1269b5");
+    draw(svg, context, project, "var(--surface)", "var(--border)");
+    draw(svg, target, project, "var(--selected)", "var(--accent)");
     if (point) drawPoint(svg, point, project);
     return svg;
   });
@@ -73,7 +73,7 @@ function drawPoint(svg: SVGSVGElement, point: Vector, project: (p: Vector) => Po
   group.dataset.point = JSON.stringify(point);
   group.setAttribute("transform", `translate(${p.x} ${p.y})`);
   group.innerHTML =
-    '<circle r="6" fill="white" stroke="#1269b5" stroke-width="2"/><path d="M-4 0H4M0 -4V4" fill="none" stroke="#1269b5" stroke-width="1.5"/>';
+    '<circle r="6" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/><path d="M-4 0H4M0 -4V4" fill="none" stroke="var(--accent)" stroke-width="1.5"/>';
   svg.append(group);
 }
 interface Bounds {

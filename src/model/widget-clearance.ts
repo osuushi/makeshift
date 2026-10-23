@@ -208,7 +208,7 @@ export class WidgetClearance {
       const line = document.createElementNS(this.guide.namespaceURI, "path");
       line.setAttribute("d", `M${a.x - root.x} ${a.y - root.y}L${b.x - root.x} ${b.y - root.y}`);
       line.setAttribute("fill", "none");
-      line.setAttribute("stroke", "#7c96af");
+      line.setAttribute("stroke", "var(--muted)");
       line.setAttribute("stroke-width", "1");
       line.setAttribute("stroke-dasharray", "3 4");
       this.guide.append(line);

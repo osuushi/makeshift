@@ -1,10 +1,10 @@
 .history-controls {
   display: flex;
   gap: 0;
-  border: 1px solid #d9dfe7;
+  border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
-  background: #ffffffed;
+  background: var(--panel);
   pointer-events: auto;
 }
 .history-controls button {
@@ -20,7 +20,7 @@
   touch-action: manipulation;
 }
 .history-controls button + button {
-  border-left: 1px solid #d9dfe7;
+  border-left: 1px solid var(--border);
 }
 .history-controls button:focus-visible {
   outline-offset: -3px;

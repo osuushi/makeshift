@@ -14,10 +14,10 @@
   position: absolute;
   left: 54px;
   width: 82px;
-  border: 1px solid #b8cfea;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: white;
-  color: #245eac;
+  background: var(--panel);
+  color: var(--accent);
   font: inherit;
   padding: 6px;
 }
@@ -32,5 +32,5 @@
   touch-action: none;
 }
 .offset-control input[aria-invalid="true"] {
-  color: #b04545;
+  color: var(--danger);
 }

@@ -1,6 +1,6 @@
 .mode-label {
   font-weight: 650;
-  color: #345678;
+  color: var(--teal);
 }
 .model-actions {
   position: absolute;
@@ -17,9 +17,9 @@
   bottom: 58px;
 }
 .projection-actions button[aria-pressed="true"] {
-  background: #e5efff;
-  border-color: #93b9ee;
-  color: #215797;
+  background: var(--selected);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 .projection-actions button:disabled {
   opacity: 0.45;
@@ -44,6 +44,6 @@
 .model-selection-box {
   position: absolute;
   pointer-events: none;
-  border: 1px dashed #528ad8;
-  background: #528ad812;
+  border: 1px dashed var(--accent);
+  background: var(--selection-fill);
 }

@@ -14,8 +14,8 @@
   gap: 2px;
 }
 .touch-control-toggle button[aria-pressed="true"] {
-  background: #dce8f4;
-  color: #243e58;
+  background: var(--selected);
+  color: var(--text);
 }
 .control-selector > button::after {
   content: "";
@@ -31,11 +31,11 @@
   margin: 0;
   padding: 8px;
   min-width: 170px;
-  border: 1px solid #d6dfe9;
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: #fff;
-  color: #293547;
-  box-shadow: 0 8px 24px #24344b20;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 8px 24px var(--shadow);
 }
 .control-menu fieldset {
   border: 0;
@@ -59,14 +59,14 @@
 }
 .control-menu label:hover,
 .control-menu label:focus-within {
-  background: #edf2f8;
+  background: var(--panel);
 }
 .control-menu input {
-  accent-color: #385979;
+  accent-color: var(--teal);
 }
 .control-menu hr {
   border: 0;
-  border-top: 1px solid #d6dfe9;
+  border-top: 1px solid var(--border);
   margin: 6px 0;
 }
 .control-menu > button {

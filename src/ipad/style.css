@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   z-index: 10000;
-  background: #f8f9fb;
+  background: var(--canvas);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -19,9 +19,9 @@
   font-size: 28px;
 }
 .wifi-warning {
-  color: #8c3500;
-  background: #ffdf9e;
-  border: 2px solid #c96b00;
+  color: var(--danger);
+  background: var(--warning-surface);
+  border: 2px solid var(--danger);
   padding: 14px 24px;
   border-radius: 10px;
   font-size: 23px;
@@ -47,15 +47,15 @@
   margin: 0 0 18px;
 }
 .ipad-dialog {
-  border: 1px solid #b8c1ce;
+  border: 1px solid var(--border);
   border-radius: 16px;
   width: min(640px, 92vw);
   max-height: 85dvh;
   padding: 24px;
-  color: #283444;
+  color: var(--text);
 }
 .ipad-dialog::backdrop {
-  background: #202a3b88;
+  background: var(--backdrop);
 }
 .ipad-dialog input {
   padding: 12px;
@@ -73,7 +73,7 @@
   overflow: auto;
   max-height: 40dvh;
   margin: 12px 0;
-  border: 1px solid #d9dfe7;
+  border: 1px solid var(--border);
   border-radius: 8px;
 }
 .ipad-file-list button {
@@ -93,8 +93,8 @@
   left: 0;
   right: 0;
   height: 28px;
-  background: #ffdf9e;
-  color: #743100;
+  background: var(--warning-surface);
+  color: var(--danger);
   font-weight: 700;
   text-align: center;
   padding: 5px;

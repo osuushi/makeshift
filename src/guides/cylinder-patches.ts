@@ -46,7 +46,7 @@ export function guideCylinderPatches(editor: SketchEditor, parents: readonly Gui
     patch.append(defs);
     const grid = document.createElementNS(ns, "g");
     grid.setAttribute("mask", `url(#${id})`);
-    grid.setAttribute("stroke", "#8b5cf6");
+    grid.setAttribute("stroke", "var(--purple)");
     grid.setAttribute("fill", "none");
     const width = (54 * editor.world.height) / editor.world.canvas.clientHeight;
     const spacing = gridSpacing(editor.world.height, editor.world.canvas.clientHeight);

@@ -17,17 +17,17 @@
 .fillet-control input,
 .bow-control input {
   width: 92px;
-  border: 1px solid #b8cfea;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: white;
-  color: #245eac;
+  background: var(--panel);
+  color: var(--accent);
   font: inherit;
   padding: 8px;
 }
 .fillet-control span,
 .bow-control span {
   padding: 6px;
-  background: #fff9eb;
+  background: var(--warning-surface);
   border-radius: 6px;
   font-size: 12px;
 }
@@ -41,7 +41,7 @@
 }
 .fillet-guide {
   fill: none;
-  stroke: #337ac4;
+  stroke: var(--accent);
   stroke-width: 1.5;
 }
 .fillet-guide-hit {

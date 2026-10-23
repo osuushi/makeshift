@@ -6,6 +6,8 @@ import { decoratorSettings } from "./decorator-settings.js";
 import { experimentalSettings } from "./experimental-settings.js";
 import { onSketchGridPreferencesChange } from "./sketch-grid.js";
 import { sketchGridSettings } from "./sketch-grid-settings.js";
+import { onThemeChange } from "./theme.js";
+import { themeSettings } from "./theme-settings.js";
 import { installToolboxSettings } from "./toolbox-settings.js";
 import { onUiScaleChange, setUiScale, uiScale, uiScaleChoices } from "./ui-scale.js";
 import { onViewDisplayChange } from "./view-display.js";
@@ -50,9 +52,12 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
     id: "settings",
     label: "Settings",
     category: "View",
-    description: "Adjust interface scale, viewport opacity and decorator display",
+    description: "Adjust appearance, interface scale, viewport opacity and decorator display",
     aliases: [
       "preferences",
+      "dark mode",
+      "light mode",
+      "system appearance",
       "user interface scale",
       "decorator display",
       "grid opacity",
@@ -83,6 +88,11 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
   const disposeGrid = onSketchGridPreferencesChange(refreshPreferences);
   const disposeView = onViewDisplayChange(refreshPreferences);
   const disposePlanes = onCanonicalPlanesChange(refreshPreferences);
+  const disposeTheme = onThemeChange(() => {
+    dialog
+      .querySelector('[aria-label="Appearance"]')
+      ?.dispatchEvent(new Event("preferences-refresh"));
+  });
   const disposeKeyboard = installSettingsKeyboard(requestOpen);
   update();
   return () => {
@@ -92,6 +102,7 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
     disposeGrid();
     disposeView();
     disposePlanes();
+    disposeTheme();
     editor.world.changed.delete(update);
     disposeKeyboard();
     headerObserver.disconnect();
@@ -186,6 +197,7 @@ function settingsDialog(): HTMLDialogElement {
   dialog
     .querySelector(".settings-actions")
     ?.before(
+      themeSettings(),
       sketchGridSettings(),
       viewSettings(),
       canonicalPlaneSettings(),
@@ -195,6 +207,9 @@ function settingsDialog(): HTMLDialogElement {
   for (const scale of uiScaleChoices)
     select.add(new Option(`${Math.round(scale * 100)}%`, String(scale)));
   const update = () => {
+    dialog
+      .querySelector<HTMLSelectElement>('[aria-label="Appearance"]')
+      ?.dispatchEvent(new Event("preferences-refresh"));
     select.value = String(uiScale());
     reset.disabled = uiScale() === 1;
   };

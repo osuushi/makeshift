@@ -19,10 +19,10 @@
   display: grid;
   gap: 8px;
   padding: 10px;
-  border: 1px solid #bac4ce;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fffffff5;
-  box-shadow: 0 3px 14px #26374726;
+  background: var(--panel);
+  box-shadow: 0 3px 14px var(--shadow);
   font-size: 13px;
   white-space: nowrap;
 }
@@ -39,7 +39,7 @@
   min-height: 28px;
 }
 .scale-card input[aria-invalid="true"] {
-  border-color: #b3261e;
+  border-color: var(--danger);
 }
 
 /* Bounding geometry stays in the workspace frame; only handle size is screen-space. */
@@ -50,7 +50,7 @@
   height: 100%;
   overflow: visible;
   fill: none;
-  stroke: #687b8d;
+  stroke: var(--accent);
   stroke-width: 1;
   stroke-dasharray: 4 3;
   pointer-events: none;
@@ -62,17 +62,17 @@
   padding: 0;
   transform: translate(-50%, -50%);
   border: 5px solid transparent;
-  background: white;
+  background: var(--panel);
   background-clip: padding-box;
   border-radius: 2px;
-  box-shadow: inset 0 0 0 1.5px #151515;
+  box-shadow: inset 0 0 0 1.5px var(--accent);
   touch-action: none;
 }
 .transform-box-handle:hover {
-  background-color: #b7dfff;
+  background-color: var(--selected);
 }
 .scale-widget[data-invalid="true"] .transform-box-lines {
-  stroke: #b3261e;
+  stroke: var(--danger);
 }
 .scale-card input[type="checkbox"] {
   width: auto;

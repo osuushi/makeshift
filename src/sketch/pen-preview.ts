@@ -25,7 +25,7 @@ export function drawPen(
       const line = document.createElementNS(ns, "line");
       for (const [key, value] of Object.entries({ x1: a.x, y1: a.y, x2: b.x, y2: b.y }))
         line.setAttribute(key, String(value));
-      line.setAttribute("stroke", "#337ac4");
+      line.setAttribute("stroke", "var(--accent)");
       root.append(line);
       const handle = document.createElementNS(ns, "circle");
       handle.setAttribute("cx", String(b.x));

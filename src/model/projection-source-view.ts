@@ -6,7 +6,7 @@ import { projectionLines, projectionTargets } from "./projection-selection.js";
 /** Source fills use ordinary selection rendering; explicit curves also have persistent outlines. */
 export class ProjectionSourceView {
   private group = new THREE.Group();
-  private selected = new THREE.LineBasicMaterial({ color: "#d28b22", depthTest: false });
+  private selected = new THREE.LineBasicMaterial({ color: "#a66a16", depthTest: false });
   private hovered = new THREE.LineBasicMaterial({ color: "#1676d2", depthTest: false });
   private key = "";
   constructor(private editor: SketchEditor) {

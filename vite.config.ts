@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => ({
                   .replace('src="/entry.ts"', 'src="/web-entry.ts"')
                   .replace(
                     "</head>",
-                    '<link rel="manifest" href="./manifest.webmanifest"/><meta name="theme-color" content="#f8f9fb"/></head>',
+                    '<link rel="manifest" href="./manifest.webmanifest"/></head>',
                   );
               },
             },
