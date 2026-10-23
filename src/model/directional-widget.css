@@ -11,12 +11,13 @@
   filter: drop-shadow(0 0 2px #ce3737);
 }
 
-/* Numeric entry highlights the widget's inner paint, preserving its dark silhouette. */
+/* Numeric entry uses selection fill with a contrasting orange silhouette and glow. */
 .keyboard-widget-active,
 :root[data-keyboard-sketch-widget="x"] [data-move-marker="x"],
 :root[data-keyboard-sketch-widget="y"] [data-move-marker="y"],
 :root[data-keyboard-sketch-widget="rotation"] [data-move-marker="rotation"] {
   --widget-selection-fill: #82b5e0;
+  --widget-selection-outline: #f28c28;
   filter: drop-shadow(0 0 3px #f28c28) drop-shadow(0 0 6px #f28c2880);
 }
 button.keyboard-widget-active,
@@ -29,6 +30,13 @@ button.keyboard-widget-active:focus-visible {
 :is(.orientable-handle, .body-axis-handle, [data-move-marker]) [fill="#fff"] {
   fill: var(--widget-selection-fill, #fff);
 }
+:is(.orientable-handle, .body-axis-handle, [data-move-marker]) [stroke="#151515"] {
+  stroke: var(--widget-selection-outline, #151515);
+}
+:is(.orientable-handle, .body-axis-handle, [data-move-marker]) [fill="#151515"] {
+  fill: var(--widget-selection-outline, #151515);
+}
 .transform-box-handle.keyboard-widget-active {
   background: var(--widget-selection-fill);
+  box-shadow: inset 0 0 0 1.5px var(--widget-selection-outline);
 }
