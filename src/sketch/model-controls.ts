@@ -278,6 +278,7 @@ export class ModelControls {
     )
       return;
     this.placement.enabled = true;
+    this.editor.modeling.setTool("move");
     this.editor.refresh();
   }
   private enter(fresh = false): boolean {

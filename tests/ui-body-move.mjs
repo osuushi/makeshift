@@ -67,6 +67,7 @@ async function bodyMoveAtAlignedViewport(page, name) {
   await quantity(page, "Move body X", -10);
   assert.deepEqual((await inspect(page)).document.bodies, [body]);
   await page.getByRole("button", { name: "Reposition body pivot", exact: true }).click();
+  await page.getByRole("button", { name: "Rotate layer", exact: true }).click();
   await quantity(page, "Rotate body Z", 90);
   body = (await inspect(page)).document.bodies[0];
   close(body.center[0], 0);

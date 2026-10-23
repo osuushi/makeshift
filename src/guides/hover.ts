@@ -5,6 +5,7 @@ import { hoveredCandidates, selectedCandidates } from "./discovery-sources.js";
 import { near } from "./geometry.js";
 import { parentClearance } from "./parent-clearance.js";
 import { visibleGuides } from "./snapping.js";
+import { guideVisibleThroughSolids } from "./solid-visibility.js";
 import { guideKey, guideOwner } from "./types.js";
 
 /** Coincident definitions share a marker; distinct crowded points cull both sides. */
@@ -31,7 +32,6 @@ function filteredGuides(
   saved: readonly GuideCandidate[],
   pointer: Point | null,
 ): GuideCandidate[] {
-  const selectedKeys = new Set(selected.map((p) => guideKey(p.anchor)));
   const seen = new Set(saved.map((p) => guideKey(p.anchor)));
   const candidates = [...selected, ...hovered].filter((candidate) => {
     const key = guideKey(candidate.anchor);
@@ -42,7 +42,6 @@ function filteredGuides(
     )
       return false;
     seen.add(key);
-    if (selectedKeys.has(key)) return true;
     const p = editor.world.project(candidate.point);
     return !!pointer && Math.hypot(p.x - pointer.x, p.y - pointer.y) <= 256;
   });
@@ -51,7 +50,7 @@ function filteredGuides(
   return spaced.filter((p) => parentClearance(editor, p.anchor, markers));
 }
 
-/** Persistent selection plus hover candidates that survive at their own pointer position. */
+/** Nearby selection and hover candidates, with stable hover discovery on approach. */
 export function hoverGuides(editor: SketchEditor, pointer: Point | null): GuideCandidate[] {
   const saved = visibleGuides(editor).map(({ guide, point }) => ({
     anchor: guide.anchor,
@@ -69,7 +68,7 @@ export function hoverGuides(editor: SketchEditor, pointer: Point | null): GuideC
   );
   // Probe ordinary geometry, not the overlay itself, without mutating hover/selection.
   const atPoint = new Map<string, Set<string>>();
-  return candidates.filter((candidate) => {
+  const reachable = candidates.filter((candidate) => {
     if (selectedKeys.has(guideKey(candidate.anchor))) return true;
     const screen = editor.world.project(candidate.point);
     const location = `${screen.x}:${screen.y}`;
@@ -84,4 +83,26 @@ export function hoverGuides(editor: SketchEditor, pointer: Point | null): GuideC
     }
     return keys.has(guideKey(candidate.anchor));
   });
+  if (!pointer) return [];
+  const projected = reachable
+    .filter((candidate) => guideVisibleThroughSolids(editor, candidate.point))
+    .map((candidate) => ({
+      candidate,
+      screen: editor.world.project(candidate.point),
+    }));
+  projected.sort(
+    (a, b) =>
+      Math.hypot(a.screen.x - pointer.x, a.screen.y - pointer.y) -
+      Math.hypot(b.screen.x - pointer.x, b.screen.y - pointer.y),
+  );
+  // Count visible markers, retaining every meaning in a coincident marker's chooser.
+  const groups: (typeof projected)[] = [];
+  for (const item of projected) {
+    const group = groups.find(
+      ([first]) => Math.hypot(first.screen.x - item.screen.x, first.screen.y - item.screen.y) < 14,
+    );
+    if (group) group.push(item);
+    else if (groups.length < 3) groups.push([item]);
+  }
+  return groups.flatMap((group) => group.map(({ candidate }) => candidate));
 }

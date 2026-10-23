@@ -4,6 +4,7 @@ import {
   fitFrozenWidgets,
   freeCardSpace,
   measuredControlRect,
+  type WidgetRect,
   widgetPathsSafe,
   widgetPointerOffset,
   widgetViewport,
@@ -75,6 +76,7 @@ export class WidgetClearance {
     entries: { element: HTMLElement; nominal: WidgetTarget }[],
     obstacles: WidgetTarget[],
     extra: HTMLElement[] = [],
+    reserved: WidgetRect[] = [],
   ): void {
     const positions = separateWidgets(
       entries.map((entry) => entry.nominal),
@@ -89,12 +91,17 @@ export class WidgetClearance {
         y: positions[index].y - nominal.y,
       });
     });
-    this.fit([...entries.map((entry) => entry.element), ...extra], baseline);
+    this.fit([...entries.map((entry) => entry.element), ...extra], baseline, reserved);
   }
 
-  fit(elements: HTMLElement[], baseline = new Map<HTMLElement, { x: number; y: number }>()): void {
+  fit(
+    elements: HTMLElement[],
+    baseline = new Map<HTMLElement, { x: number; y: number }>(),
+    reserved: WidgetRect[] = [],
+  ): void {
     if (this.root.hidden) return;
     const { viewport, obstacles } = widgetViewport(this.root);
+    obstacles.push(...reserved);
     for (const element of elements)
       if (!element.hidden && element.getClientRects().length) placeFloatingPanel(element);
     for (const element of elements) this.constrain(element, viewport);

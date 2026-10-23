@@ -10,3 +10,25 @@
 .orientable-handle[data-geometry-invalid="true"] > svg {
   filter: drop-shadow(0 0 2px var(--danger));
 }
+
+/* Numeric entry keeps dark outlines, selection fill and a contrasting orange glow. */
+.keyboard-widget-active,
+:root[data-keyboard-sketch-widget="x"] [data-move-marker="x"],
+:root[data-keyboard-sketch-widget="y"] [data-move-marker="y"],
+:root[data-keyboard-sketch-widget="rotation"] [data-move-marker="rotation"] {
+  --widget-selection-fill: #82b5e0;
+  filter: drop-shadow(0 0 3px #f28c28) drop-shadow(0 0 6px #f28c2880);
+}
+button.keyboard-widget-active,
+button.keyboard-widget-active:focus-visible {
+  outline: none;
+}
+:is(.orientable-handle, .body-axis-handle, [data-move-marker]) [stroke="#fff"] {
+  stroke: var(--widget-selection-fill, #fff);
+}
+:is(.orientable-handle, .body-axis-handle, [data-move-marker]) [fill="#fff"] {
+  fill: var(--widget-selection-fill, #fff);
+}
+.transform-box-handle.keyboard-widget-active {
+  background: var(--widget-selection-fill);
+}

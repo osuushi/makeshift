@@ -2,8 +2,10 @@ import type { SketchEditor } from "../sketch/editor.js";
 import type { PlaneId, Vector } from "../sketch/planes.js";
 import { guideCylinderPatches } from "./cylinder-patches.js";
 import { near } from "./geometry.js";
+import { guideMarkerOccluded } from "./marker-visibility.js";
 import type { GuideMoveCandidate } from "./move-target.js";
 import { guideFacePlanePatches, guidePlanePatches } from "./plane-patches.js";
+import { GuideWidgetClearance, guideOverlapsWidget } from "./widget-clearance.js";
 
 const ns = "http://www.w3.org/2000/svg";
 /** Transient destination markers never intercept the drag's captured pointer. */
@@ -11,6 +13,7 @@ export class GuideMoveDestinations {
   private root = document.createElementNS(ns, "svg");
   private facePatches: SVGGElement | null = null;
   private lockedKey = "";
+  private clearance: GuideWidgetClearance;
   constructor(
     private editor: SketchEditor,
     host: HTMLElement,
@@ -19,6 +22,7 @@ export class GuideMoveDestinations {
     this.root.classList.add("guide-move-destinations");
     this.root.setAttribute("aria-hidden", "true");
     host.append(this.root);
+    this.clearance = new GuideWidgetClearance(host, () => this.hideOverlaps());
     this.hide();
   }
   show(origin: Vector, candidates: GuideMoveCandidate[]): void {
@@ -56,6 +60,8 @@ export class GuideMoveDestinations {
       circle.classList.toggle("covered", !visible);
       this.root.append(circle);
     }
+    this.hideOverlaps();
+    this.clearance.schedule();
   }
   pending(origin: Vector): void {
     this.show(origin, []);
@@ -83,6 +89,8 @@ export class GuideMoveDestinations {
       circle.setAttribute("r", target.guide ? "13" : "7");
       this.root.append(circle);
     }
+    this.hideOverlaps();
+    this.clearance.schedule();
     const planes = new Set(
       parents.flatMap((p) =>
         p.plane && p.reference.kind === "plane" && p.reference.world ? [p.reference.world] : [],
@@ -101,6 +109,21 @@ export class GuideMoveDestinations {
     this.facePatches.append(guideCylinderPatches(this.editor, faces));
     this.root.prepend(this.facePatches);
   }
+  private hideOverlaps(): void {
+    const bounds = this.clearance.bounds();
+    for (const circle of this.root.querySelectorAll("circle")) {
+      const point = {
+        x: Number(circle.getAttribute("cx")),
+        y: Number(circle.getAttribute("cy")),
+      };
+      const radius = Number(circle.getAttribute("r"));
+      const worldPoint = JSON.parse(circle.getAttribute("data-point") ?? "null") as Vector | null;
+      const occluded = worldPoint
+        ? guideMarkerOccluded(this.editor, worldPoint, bounds, radius)
+        : guideOverlapsWidget(point, bounds, radius);
+      circle.style.display = occluded ? "none" : "";
+    }
+  }
   hide(): void {
     this.root.style.display = "none";
     this.root.replaceChildren();
@@ -108,6 +131,7 @@ export class GuideMoveDestinations {
     this.lockedKey = "";
   }
   dispose(): void {
+    this.clearance.dispose();
     this.root.remove();
   }
 }

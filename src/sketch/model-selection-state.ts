@@ -28,6 +28,7 @@ export const modelingKey = (target: ModelingTarget): string =>
           ? target.sketch
           : target.profile.key;
 export class ModelSelection {
+  readonly selectionChosen = new Set<() => void>();
   memberBody: string | null = null;
   allows(target: ModelingTarget): boolean {
     return (
@@ -119,12 +120,16 @@ export class ModelSelection {
         : add || toggle
           ? [...this.targets, ...targets.filter((target) => !selected.has(modelingKey(target)))]
           : targets;
+    for (const notify of this.selectionChosen) notify();
   }
   choose(target: ModelingTarget | null, add: boolean, toggle: boolean): void {
     if (target && !this.allows(target)) return;
     this.chosenTool = null;
     if (!target) {
-      if (!add && !toggle) this.targets = [];
+      if (!add && !toggle) {
+        this.targets = [];
+        for (const notify of this.selectionChosen) notify();
+      }
       return;
     }
     if (target.kind === "edge" && target.point)
@@ -146,5 +151,6 @@ export class ModelSelection {
             ? this.targets
             : [...this.targets, target]
           : [target];
+    for (const notify of this.selectionChosen) notify();
   }
 }

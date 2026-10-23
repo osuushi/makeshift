@@ -1,10 +1,10 @@
 import { selectedGuides } from "../guides/selection.js";
-import { guidesVisible } from "../guides/view-state.js";
+import { editingGuides } from "../guides/view-state.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { type ToolResult, toolCatalog } from "./catalog.js";
 import { toolboxIcon } from "./toolbox-icons.js";
 
-/** Reference visibility and contextual construction stay outside the editable tool tree. */
+/** Guide candidate editing and contextual construction stay outside the editable tool tree. */
 export class ToolboxReferences {
   readonly root = document.createElement("div");
   constructor(private editor: SketchEditor) {
@@ -24,7 +24,7 @@ export class ToolboxReferences {
         button.setAttribute("aria-label", tool.label);
         button.setAttribute(
           "aria-pressed",
-          String(id === "guide-points" && guidesVisible(this.editor)),
+          String(id === "guide-points" && editingGuides(this.editor)),
         );
         button.disabled = !!tool.unavailable;
         button.title = tool.unavailable ?? tool.description ?? tool.label;

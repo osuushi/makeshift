@@ -49,12 +49,23 @@ export async function orientableArrowViews(page, handle, root, normal, name, sec
     }
     const v = facing.normalize().applyQuaternion(inverse);
     const placementWidth = width.clone().applyQuaternion(inverse);
-    const b = await handle.boundingBox(),
-      anchor = await root.boundingBox();
-    assert.equal(b.width, 64);
-    assert.equal(b.height, 64);
-    assert.ok(Math.abs(b.x + 32 - anchor.x - u.x * 48 - placementWidth.x * 32) < 0.1);
-    assert.ok(Math.abs(b.y + 32 - anchor.y + u.y * 48 + placementWidth.y * 32) < 0.1);
+    const frame = await measuredWidgetFrame(handle, root);
+    assert.ok(Math.abs(frame.width - 64) < 1e-3);
+    assert.ok(Math.abs(frame.height - 64) < 1e-3);
+    // The rendered target may move clear of panels; its projected local frame
+    // must still match exactly after removing that measured display correction.
+    assert.ok(
+      Math.abs(
+        frame.x + 32 - frame.correction.x - frame.anchor.x - u.x * 48 - placementWidth.x * 32,
+      ) < 0.1,
+      JSON.stringify(frame),
+    );
+    assert.ok(
+      Math.abs(
+        frame.y + 32 - frame.correction.y - frame.anchor.y + u.y * 48 + placementWidth.y * 32,
+      ) < 0.1,
+      JSON.stringify(frame),
+    );
     const paths = await handle.locator("svg path").evaluateAll((elements) =>
       elements.map((p) => ({
         d: p.getAttribute("d"),
@@ -92,4 +103,24 @@ export async function orientableArrowViews(page, handle, root, normal, name, sec
   );
   await check();
   assert.deepEqual((await inspect(page)).document, original);
+}
+
+async function measuredWidgetFrame(handle, root) {
+  const rootElement = await root.elementHandle();
+  const frame = await handle.evaluate((node, anchor) => {
+    const b = node.getBoundingClientRect(),
+      origin = anchor.getBoundingClientRect();
+    const translate = getComputedStyle(node).translate;
+    const [x = 0, y = 0] = translate === "none" ? [] : translate.split(" ").map(parseFloat);
+    return {
+      x: b.x,
+      y: b.y,
+      width: b.width,
+      height: b.height,
+      anchor: { x: origin.x, y: origin.y },
+      correction: { x, y },
+    };
+  }, rootElement);
+  await rootElement.dispose();
+  return frame;
 }
