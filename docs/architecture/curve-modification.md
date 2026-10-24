@@ -92,6 +92,10 @@ disjoint cells, crossings and tangent contacts. Display tessellation is never th
 canonical closed boundary. Coincident duplicates and tiny trim remnants need
 explicit tests; they must not poison unrelated valid cells. Unsupported numerical
 cases get a local diagnostic, not a silently unselectable profile.
+Profile nesting separates a face walk at repeated tangent vertices into simple
+outer loops and holes. A tangent inner disk is adjacent to its surrounding
+crescent, not nested inside that crescent; enclosing rings exclude both regions.
+Picking and native profile construction use the same derived loops.
 
 Sketch-to-sketch projection initially makes an explicit independent copy of the
 projected curves, using source/target frames. A dynamic linked projection is a

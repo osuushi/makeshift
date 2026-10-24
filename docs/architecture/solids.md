@@ -19,6 +19,24 @@ holes. Modeling hit tests use exact segment/circular ray crossings; triangulatio
 is only the highlight representation. Profile keys are temporary and selection
 clears when accepted geometry changes. They are not persistent operation inputs.
 
+Tangent profile holes must share native contact topology before sweeping. If
+direct wire assembly reports intersecting wires, the temporary profile face is
+constructed by subtracting the hole faces from its outer face, without added
+Boolean fuzz. Every boundary and the result still validate; the result must be
+one face with outer area minus the summed hole areas. Crossing/overlapping holes
+therefore reject instead of being silently clipped. Straight crescent extrusion
+supports either direction, symmetry, ordinary Boolean modes and document history.
+Extrusion rounds the two tips of an internally tangent circular crescent before
+sweeping. The founder approved visible relief for the 3D-printing-hobbyist target
+on 2026-10-24. The default fillet radius is 0.01 mm, capped at 1% of the inner
+radius and radial wall thickness for small parts; relief may remove at most 1%
+of the original area. In the captured R10/R5 crescent it opens a roughly 1.24 mm
+gap and removes less than 0.004% of the area. The preview, accepted body and
+STL/3MF use the same rounded geometry; source sketch circles stay unchanged.
+Ordinary annuli and finite gaps are not rounded. Existing saved singular bodies
+are not silently rewritten; recompute their extrusion to get the relief.
+The independent closed-mesh export guard remains in force.
+
 A selected exact face can also contain INTERNAL edges, wires or vertices from
 earlier edits. These remain accepted topology, but do not bound swept material.
 The shared face-profile path for extrusion, revolve, path sweep and loft removes

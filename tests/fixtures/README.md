@@ -1,3 +1,13 @@
+# Tangent nested circles
+
+`tangent-circles.json` and `tangent-circles-post.json` retain the sketches, exact
+BReps and topology from the founder's 2026-10-24 captures at 17:28:26.475 and
+17:29:09.217 UTC. Derived meshes and transient UI/history are omitted. The R5
+circle touches the R10 disk internally; an R2.5 circle lies inside it and an R12
+circle surrounds the disk. The second capture includes an extruded center post
+and reordered redrawn circles. Tests verify independent disk/ring/crescent picks
+and extrusion of the inner disk and ring, including cancellation and history.
+
 # Periodic cylinder
 
 `thread-deleted-face.json` retains the tilted threaded body and attachment from the

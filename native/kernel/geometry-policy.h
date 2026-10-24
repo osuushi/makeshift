@@ -15,4 +15,7 @@ constexpr double cubicBooleanToleranceMm = 0.0001;
 constexpr double projectionCollapsedLengthMm = 1e-7;
 constexpr double edgeOnDirectionDot = 1e-12;
 constexpr double fullCircleAngleRad = 1e-9;
+// Printable relief at an otherwise nonmanifold tangent crescent; this is an
+// intentional modeling adjustment, not an enlarged validation tolerance.
+constexpr double crescentFilletMm = 0.01;
 }
