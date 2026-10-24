@@ -88,7 +88,12 @@ for (const [name, x, y, area] of [
       assert.equal(accepted.bodies?.length, 1);
       const result = accepted.bodies[0];
       near(result.volume, expected);
-      assert.ok(exportMesh(result).triangles.length > 0);
+      try {
+        assert.ok(exportMesh(result).triangles.length > 0);
+      } catch (error) {
+        console.error("tangent-export-body", JSON.stringify(result));
+        throw error;
+      }
       await owner.call({ kind: "undo" });
       assert.deepEqual(owner.view.data, before);
       await owner.call({ kind: "redo" });
