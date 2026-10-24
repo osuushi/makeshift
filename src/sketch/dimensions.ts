@@ -155,7 +155,7 @@ export class Dimensions implements NumericFields {
     const field = { quantity, label, input, lock };
     this.fields.push(field);
     this.draft.bind(field, async (reverse) => {
-      focusNumericField(document.body, reverse);
+      focusNumericField(document.body, reverse, !this.editor.moveMode);
     });
   }
   async commitFocused(): Promise<void> {
