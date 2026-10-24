@@ -18,7 +18,8 @@ export function alignGearPhases(document: DisplayDocument, members: DecoratorIns
         const a = gearSettings(result[i].settings),
           b = gearSettings(result[j].settings);
         const turnA = (a.teeth * (contact.a - radians(a.phase))) / (2 * Math.PI);
-        const turnB = 0.5 - contact.orientation * turnA;
+        const turnB =
+          (contact.meshSign === 1 ? 0.5 : 0) - contact.meshSign * contact.orientation * turnA;
         const phase = contact.b - (2 * Math.PI * turnB) / b.teeth;
         if (visited.has(j)) {
           const residual = (b.teeth * (phase - radians(b.phase))) / (2 * Math.PI);

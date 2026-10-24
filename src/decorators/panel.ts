@@ -138,6 +138,27 @@ export class DecoratorPanel {
     if (preview && this.draft.active) run();
     else return toolCatalog(this.editor).activate({ finishEdit: true, reason: () => null, run });
   }
+  private updateDraftControls(instances: DecoratorInstance[]): HTMLParagraphElement {
+    for (const input of this.root.querySelectorAll<HTMLInputElement>("input, select, button"))
+      input.disabled =
+        input.dataset.unavailable === "true" ||
+        (this.editor.store.busy && (!this.editor.interactions.current || this.draft.active)) ||
+        this.draft.waiting ||
+        toolCatalog(this.editor).switching ||
+        !!this.editor.interactions.current?.captured;
+    let feedback = this.root.querySelector<HTMLParagraphElement>(".decorator-draft-feedback");
+    if (!feedback) {
+      feedback = document.createElement("p");
+      feedback.className = "decorator-warning decorator-draft-feedback";
+      feedback.setAttribute("role", "status");
+      this.root.append(feedback);
+    }
+    feedback.textContent = this.draft.active
+      ? this.draft.feedback
+      : (instances.find((d) => d.problem?.startsWith(gearFitFailure))?.problem ?? "");
+    feedback.hidden = !feedback.textContent;
+    return feedback;
+  }
   private update = (): void => {
     if (this.application.active) {
       this.root.hidden = false;
@@ -162,13 +183,7 @@ export class DecoratorPanel {
       this.editor.interactions.current?.kind === "tag-membership" ||
       !!this.editor.world.active ||
       (!instances.length && !canContinue && !problems.length);
-    for (const input of this.root.querySelectorAll<HTMLInputElement>("input, select, button"))
-      input.disabled =
-        input.dataset.unavailable === "true" ||
-        (this.editor.store.busy && (!this.editor.interactions.current || this.draft.active)) ||
-        this.draft.waiting ||
-        toolCatalog(this.editor).switching ||
-        !!this.editor.interactions.current?.captured;
+    const feedback = this.updateDraftControls(instances);
     if (this.draft.active) return;
     const key = JSON.stringify([
       instances,
@@ -182,7 +197,7 @@ export class DecoratorPanel {
     this.shownDocument = this.editor.store.data;
     const advanced = this.root.querySelector<HTMLDetailsElement>("details.thread-advanced");
     if (advanced) this.advancedOpen = advanced.open;
-    this.root.replaceChildren();
+    this.root.replaceChildren(feedback);
     const heading = document.createElement("h2");
     heading.textContent = "Decorators";
     this.root.append(heading);

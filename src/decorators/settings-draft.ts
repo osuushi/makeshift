@@ -15,6 +15,7 @@ interface Draft {
 /** One numeric gesture, shared by built-in and bundled decorator controls. */
 export class DecoratorSettingsDraft {
   private current: Draft | null = null;
+  feedback = "";
   private committing: Promise<boolean> | null = null;
   constructor(
     private editor: SketchEditor,
@@ -46,6 +47,7 @@ export class DecoratorSettingsDraft {
     if (draft.lease.phase !== "editing") return;
     draft.edit = edit;
     draft.valid = false;
+    this.feedback = "";
     const custom = this.editor.store.data.decorators?.some(
       (d) => edit.ids.includes(d.id) && !isBuiltinDecorator(d.definition),
     );
@@ -58,7 +60,8 @@ export class DecoratorSettingsDraft {
         this.editor.message = "";
       } catch (error) {
         draft.lease.show(null);
-        this.editor.message = error instanceof Error ? error.message : String(error);
+        this.feedback = error instanceof Error ? error.message : String(error);
+        this.editor.message = this.feedback;
       }
     }
     this.editor.refresh();
@@ -78,13 +81,16 @@ export class DecoratorSettingsDraft {
           if (draft.edit !== edit) continue;
           draft.lease.show({ ...snapshot, decorators });
           draft.valid = true;
+          this.feedback =
+            decorators.find((d) => edit.ids.includes(d.id) && d.problem)?.problem ?? "";
           this.editor.message = "";
         } catch (error) {
           if (this.current !== draft) return;
           if (draft.edit !== edit) continue;
           draft.valid = false;
           draft.lease.show(null);
-          this.editor.message = error instanceof Error ? error.message : String(error);
+          this.feedback = error instanceof Error ? error.message : String(error);
+          this.editor.message = this.feedback;
         }
         this.editor.refresh();
         if (draft.edit === edit) return;
@@ -96,6 +102,8 @@ export class DecoratorSettingsDraft {
   cancel(): void {
     const draft = this.current;
     this.current = null;
+    this.feedback = "";
+    this.editor.message = "";
     this.ended();
     draft?.lease.release();
     this.editor.refresh();
@@ -129,6 +137,7 @@ export class DecoratorSettingsDraft {
       else {
         draft.lease.resume();
         this.editor.message ||= "Could not apply these decorator settings";
+        this.feedback = this.editor.message;
         this.editor.refresh();
       }
     }

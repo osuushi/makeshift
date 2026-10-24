@@ -21,7 +21,7 @@ export const gearManifest: DecoratorDefinition = {
     },
     {
       key: "minimumTooth",
-      label: "Minimum tooth tip width",
+      label: "Minimum printable width",
       type: "number",
       unit: "mm",
       default: 0.4,
@@ -54,6 +54,16 @@ export const gearManifest: DecoratorDefinition = {
       default: 0,
       min: -10000,
       max: 10000,
+    },
+    { key: "addendum", label: "Fitted tooth depth", type: "number", default: 1, min: 0.6, max: 1 },
+    {
+      key: "rootClearance",
+      label: "Tooth root clearance",
+      type: "number",
+      unit: "mm",
+      default: -1,
+      min: -1,
+      max: 10,
     },
     { key: "teeth", label: "Teeth per revolution", type: "number", default: 40, min: 6, max: 400 },
     {
@@ -116,6 +126,8 @@ export const gearManifest: DecoratorDefinition = {
 };
 
 export interface GearSettings extends Settings {
+  addendum: number;
+  rootClearance: number;
   teeth: number;
   pressure: number;
   helix: number;
@@ -135,6 +147,8 @@ export const involute = (angle: number) => Math.tan(angle) - angle;
 
 export function gearSettings(input: Settings): GearSettings {
   const settings = definitionSettings(gearManifest, input) as GearSettings;
+  if (settings.rootClearance < 0 && settings.rootClearance !== -1)
+    throw new Error("Tooth root clearance must be nonnegative");
   if (!Number.isInteger(settings.teeth)) throw new Error("Gear tooth count must be an integer");
   return settings;
 }
@@ -147,9 +161,13 @@ export function gearDimensions(radius: number, settings: GearSettings, outward: 
   const normalModule = transverseModule * Math.cos(beta);
   const transversePressure = Math.atan(Math.tan(alpha) / Math.cos(beta));
   const baseRadius = radius * Math.cos(transversePressure);
-  const tipRadius = radius + outward * normalModule * (1 + outward * settings.shift);
+  const tipRadius =
+    radius + outward * normalModule * (settings.addendum + outward * settings.shift);
   const rootRadius =
-    radius - outward * normalModule * (1 + settings.clearance - outward * settings.shift);
+    radius -
+    outward *
+      (normalModule * (settings.addendum - outward * settings.shift) +
+        (settings.rootClearance >= 0 ? settings.rootClearance : normalModule * settings.clearance));
   const halfWidth =
     Math.PI / (2 * settings.teeth) +
     (2 * settings.shift * Math.tan(alpha)) / settings.teeth -

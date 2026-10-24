@@ -4,6 +4,7 @@ import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import { gearGroupProblem } from "../src/decorators/gear-group.js";
 import { toothTipWidth } from "../src/decorators/gear-group-fit.js";
+import { gearDefinition } from "../src/decorators/gear-settings.js";
 import { inspectGear } from "../src/decorators/gear-support.js";
 import { decoratedMeshes, initializeMeshRuntime } from "../src/decorators/mesh-runtime.js";
 import { documentArchive, readArchive } from "../src/model/document-archive.js";
@@ -11,6 +12,7 @@ import { validateMesh } from "../src/model/export-mesh.js";
 import { encodeMeshes } from "../src/model/mesh-export.js";
 import type { SketchDocument } from "../src/sketch/document.js";
 import { assertGearEngagement } from "./gear-group-engagement.js";
+import { captured, checkPair, geometryArchive } from "./gear-group-fixture.js";
 
 test("native cylinder resize refits decorator groups without changing other BReps, and recovers from unsatisfiable limits", async () => {
   const owner = new DocumentOwner();
@@ -129,3 +131,70 @@ async function verifyExport(owner: DocumentOwner) {
   for (const format of ["3mf", "stl"] as const)
     assert.ok(encodeMeshes(meshes, format).length > 1000);
 }
+
+test("printing limits persist through failed fits and repair the entire group atomically", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const faces = await captured(owner);
+    assert.equal(
+      (
+        await owner.call({
+          kind: "decorator",
+          edit: {
+            action: "apply",
+            definition: gearDefinition,
+            faces,
+          },
+        })
+      ).error,
+      undefined,
+    );
+    const gears = checkPair(owner);
+    const before = documentArchive(owner.view.data);
+    assert.equal(
+      (
+        await owner.call({
+          kind: "decorator",
+          edit: {
+            action: "settings",
+            ids: [gears[1].id],
+            patch: { minimumTooth: 10 },
+          },
+        })
+      ).error,
+      undefined,
+    );
+    const warned = documentArchive(owner.view.data);
+    assert.match(
+      (await owner.call({ kind: "export-geometry" })).error ?? "",
+      /Gear group cannot fit/,
+    );
+    for (const gear of owner.view.data.decorators ?? []) {
+      assert.equal(gear.settings.minimumTooth, 10);
+      assert.match(gear.problem ?? "", /Gear group cannot fit/);
+    }
+    assert.equal(geometryArchive(owner.view.data), geometryArchive(readArchive(before)));
+    assert.equal(
+      (
+        await owner.call({
+          kind: "decorator",
+          edit: {
+            action: "settings",
+            ids: [gears[1].id],
+            patch: { minimumTooth: 0.4, rootClearance: 0.2 },
+          },
+        })
+      ).error,
+      undefined,
+    );
+    checkPair(owner);
+    for (const gear of owner.view.data.decorators ?? [])
+      assert.equal(gear.settings.rootClearance, 0.2);
+    await owner.call({ kind: "undo" });
+    assert.equal(documentArchive(owner.view.data), warned);
+    await owner.call({ kind: "undo" });
+    assert.equal(documentArchive(owner.view.data), before);
+  } finally {
+    owner.close();
+  }
+});

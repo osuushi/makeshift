@@ -51,25 +51,32 @@ try {
       await worldClick(page, [0, -10, 5]);
       await chooseTool(page, "gear", "gear");
       assert.equal((await inspect(page)).document.decorators[0].definition, "freac.gear");
-      const teeth = page.getByRole("spinbutton", { name: "Teeth per revolution", exact: true });
-      await teeth.fill("36");
-      await teeth.press("Escape");
-      assert.equal((await inspect(page)).document.decorators[0].settings.teeth, 20);
-      await teeth.fill("36");
-      await teeth.press("Enter");
-      assert.equal((await inspect(page)).document.decorators[0].settings.teeth, 36);
-      const helix = page.getByRole("spinbutton", { name: "Helix angle", exact: true });
-      await helix.fill("25");
-      await helix.press("Enter");
-      assert.equal((await inspect(page)).document.decorators[0].settings.helix, 25);
+      assert.equal(
+        await page.getByRole("spinbutton", { name: "Teeth per revolution", exact: true }).count(),
+        0,
+      );
+      const width = page.getByRole("spinbutton", { name: "Minimum printable width", exact: true });
+      await width.fill("0.8");
+      await width.press("Escape");
+      assert.equal((await inspect(page)).document.decorators[0].settings.minimumTooth, 0.4);
+      await width.fill("0.8");
+      await width.press("Enter");
+      assert.equal((await inspect(page)).document.decorators[0].settings.minimumTooth, 0.8);
+      const clearance = page.getByRole("spinbutton", {
+        name: "Tooth clearance per gear",
+        exact: true,
+      });
+      await clearance.fill("0.1");
+      await clearance.press("Enter");
+      assert.equal((await inspect(page)).document.decorators[0].settings.thinning, 0.1);
       assert.equal(
         await page.getByRole("spinbutton", { name: "Maximum normal module", exact: true }).count(),
         0,
       );
       await chooseTool(page, "undo", "undo");
-      assert.equal((await inspect(page)).document.decorators[0].settings.helix, 0);
+      assert.equal((await inspect(page)).document.decorators[0].settings.thinning, 0.05);
       await chooseTool(page, "redo", "redo");
-      assert.equal((await inspect(page)).document.decorators[0].settings.helix, 25);
+      assert.equal((await inspect(page)).document.decorators[0].settings.thinning, 0.1);
       assert.equal(
         await page.getByRole("button", { name: "Resize to module", exact: true }).count(),
         0,
@@ -85,9 +92,9 @@ try {
       await worldClick(page, [0, -10, 5]);
       assert.equal(
         await page
-          .getByRole("spinbutton", { name: "Teeth per revolution", exact: true })
+          .getByRole("spinbutton", { name: "Minimum printable width", exact: true })
           .inputValue(),
-        "36",
+        "0.8",
       );
       await page
         .getByRole("button", { name: "Remove Gear decorator from selected faces", exact: true })

@@ -13,12 +13,14 @@ export function appendGearInformation(
 ) {
   if (instances[0].definition !== gearDefinition) return;
   const note = document.createElement("p");
-  if (instances[0].gearGroup && instances.length > 1) {
+  if (instances[0].gearGroup) {
     const sizes = instances.map((instance) => inspectGear(editor.store.data, instance));
     const width = Math.min(
       ...instances.map((instance, i) => toothTipWidth(instance, sizes[i].pitchRadius)),
     );
-    note.textContent = `Normal module ${Number(sizes[0].normalModule.toFixed(3))} mm · minimum tip width ${Number(width.toFixed(3))} mm`;
+    note.textContent = instances.some((g) => g.problem)
+      ? "Adjust the printing limits below to fit these pitch surfaces."
+      : `${instances.map((g) => g.settings.teeth).join(" / ")} teeth · minimum tip width ${Number(width.toFixed(3))} mm`;
     root.append(note);
     return;
   }

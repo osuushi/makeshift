@@ -2,6 +2,8 @@ export interface GearContactDistance {
   a: number;
   b: number;
   distance: number;
+  signA?: number;
+  signB?: number;
 }
 export interface GearFit {
   module: number;
@@ -10,22 +12,24 @@ export interface GearFit {
 }
 type CountCost = (index: number, count: number, module: number) => number | null;
 
-/** A contacting pair fixes module from its integer tooth-count sum (12..800).
- * Propagate those integer sums through each contact component, including loops. */
+/** A contacting pair fixes module from its integer tooth-count sum (external)
+ * or difference (internal). Propagate signed counts through each contact component. */
 export function fitContactingGears(
   diameters: number[],
   contacts: GearContactDistance[],
   maximum: number,
   tolerance: number,
   cost: CountCost,
+  accepts: (fit: GearFit) => boolean = () => true,
 ): GearFit | null {
   let best: GearFit | null = null;
-  for (let sum = 12; sum <= 800; sum++) {
+  for (let sum = 1; sum <= 800; sum++) {
     const module = (2 * contacts[0].distance) / sum;
     if (module > maximum + 1e-10) continue;
     const solution = countsAtModule(diameters, contacts, module, tolerance, cost);
     if (
       solution &&
+      accepts(solution) &&
       (!best ||
         solution.error < best.error - 1e-12 ||
         (Math.abs(solution.error - best.error) <= 1e-12 && module > best.module))
@@ -80,7 +84,10 @@ function propagate(root: number, count: number, contacts: GearContactDistance[],
       if (neighbor < 0) continue;
       const sum = (2 * edge.distance) / module;
       if (Math.abs(sum - Math.round(sum)) > 1e-7) return null;
-      const n = Math.round(sum) - (values.get(index) ?? 0);
+      const ownSign = (edge.a === index ? edge.signA : edge.signB) ?? 1;
+      const otherSign = (edge.a === index ? edge.signB : edge.signA) ?? 1;
+      const signedSum = edge.signA === -1 || edge.signB === -1 ? -Math.round(sum) : Math.round(sum);
+      const n = (signedSum - ownSign * (values.get(index) ?? 0)) / otherSign;
       if (n < 6 || n > 400) return null;
       if (values.has(neighbor)) {
         if (values.get(neighbor) !== n) return null;

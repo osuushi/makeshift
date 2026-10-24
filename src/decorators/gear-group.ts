@@ -20,10 +20,11 @@ export function matchGearApplication(
   decorators: readonly DecoratorInstance[],
   selected: ReadonlySet<string>,
   requestedGroup?: string,
+  retainFailure = false,
 ): readonly DecoratorInstance[] {
   const eligible = decorators.filter((d) => groupEligible(document, d));
   if (requestedGroup && decorators.some((d) => selected.has(d.id) && !eligible.includes(d)))
-    throw new Error("Gear groups require external spur cylinders with zero profile shift");
+    throw new Error("Gear groups require spur cylinders with zero profile shift");
   const members = eligible.filter(
     (d) => selected.has(d.id) || (requestedGroup && d.gearGroup === requestedGroup),
   );
@@ -33,7 +34,7 @@ export function matchGearApplication(
     );
   if (!members.length) {
     if (requestedGroup)
-      throw new Error("Gear groups require external spur cylinders with zero profile shift");
+      throw new Error("Gear groups require spur cylinders with zero profile shift");
     return decorators;
   }
   if (requestedGroup && !decorators.some((d) => d.gearGroup === requestedGroup))
@@ -59,15 +60,18 @@ export function matchGearApplication(
       module: settings.module,
       diameterTolerance: settings.diameterTolerance,
       minimumTooth: settings.minimumTooth,
+      thinning: settings.rootClearance < 0 && settings.thinning === 0 ? 0.05 : settings.thinning,
+      clearance: settings.clearance,
+      rootClearance: settings.rootClearance < 0 ? 0.15 : settings.rootClearance,
     },
   }));
   let matched: DecoratorInstance[];
   try {
     matched = fitGearGroup(document, grouped);
   } catch (error) {
-    // Applying still exposes the failed group's settings for repair. Settings
-    // drafts retain their existing invalid-edit cancellation/acceptance behavior.
-    if (requestedGroup) throw error;
+    // Keep valid printing limits even when no profile fits, so the next field
+    // can repair the group. Schema errors still reject the numeric draft.
+    if (requestedGroup && !retainFailure) throw error;
     const problem = error instanceof Error ? error.message : String(error);
     if (!problem.startsWith(gearFitFailure)) throw error;
     matched = grouped.map((d) => ({ ...d, problem }));
@@ -84,7 +88,7 @@ export function gearGroupProblem(
   const members = gearGroupMembers(document, instance);
   if (members.length === 1 && !groupEligible(document, instance)) return null;
   if (members.some((d) => !groupEligible(document, d)))
-    return "Gear groups require external spur cylinders with zero profile shift";
+    return "Gear groups require spur cylinders with zero profile shift";
   const modules = members.map(
     (d) =>
       (2 * (d.gearPitchRadius ?? gearCylinder(document, d)?.radius ?? 0)) /
@@ -94,8 +98,6 @@ export function gearGroupProblem(
     const settings = gearSettings(member.settings);
     const radius = member.gearPitchRadius ?? gearCylinder(document, member)?.radius ?? 0;
     const target = gearCylinder(document, member)?.radius ?? 0;
-    if ((2 * radius) / settings.teeth > settings.module + 1e-8)
-      return `${gearFitFailure}the tooth size exceeds the maximum module.`;
     if (Math.abs(2 * (radius - target)) > settings.diameterTolerance + 1e-7)
       return `${gearFitFailure}the fitted pitch diameter exceeds the diameter tolerance.`;
     if (toothTipWidth(member, radius) < settings.minimumTooth - 1e-7)
@@ -113,10 +115,10 @@ export function gearGroupProblem(
       const a = gearSettings(members[i].settings),
         b = gearSettings(members[j].settings);
       const turns =
-        (contact.orientation * a.teeth * (contact.a - radians(a.phase)) +
+        (contact.meshSign * contact.orientation * a.teeth * (contact.a - radians(a.phase)) +
           b.teeth * (contact.b - radians(b.phase))) /
           (2 * Math.PI) -
-        0.5;
+        (contact.meshSign === 1 ? 0.5 : 0);
       if (Math.abs(turns - Math.round(turns)) > 1e-6)
         return "Gear group phases no longer mesh. Select its faces and apply Gear to align them again.";
     }
