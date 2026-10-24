@@ -231,7 +231,9 @@ renderer supplies the editing workspace and ordered typed sketch and modeling
 targets; the backend owns their navigation snapshots alongside the
 geometry snapshots. Gesture previews and automatic result-selection updates do
 not create independent selection steps. Undo restores the operation's input
-selection and workspace; Redo restores its result selection. Selection history does not replay tool state, hover or chooser visibility;
+selection and workspace; Redo restores its result selection. Restoring a selection
+keeps the current drawing tool and creation intent so the next gesture can continue
+drawing after Undo/Redo. Selection history does not replay tool state, hover or chooser visibility;
 ephemeral view history separately restores camera and workspace as described below. These
 selection snapshots are in-memory history, not saved document content.
 
