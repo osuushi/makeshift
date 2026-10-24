@@ -142,7 +142,7 @@ export const uiSuites = [
     seconds: 14,
     browsers: ["electron"],
     reason:
-      "Enter accepts once; real Tab dispatch must open and highlight widgets, preserve invalid drafts, and accept Scale-to-Move edits separately rather than losing geometry across numeric focus handoffs.",
+      "Enter accepts once; real Tab dispatch must focus sketch dimensions without starting Offset, retain single-field editing, open and highlight transform widgets, preserve invalid drafts, and accept Scale-to-Move edits separately across numeric focus handoffs.",
     unit: "body-transform-enter.test.ts",
   },
   {

@@ -99,15 +99,6 @@ async function rectangleDimensionsAndHistory(page, name) {
   await page.getByRole("textbox", { name: "Width", exact: true }).fill("40");
   await page.keyboard.press("Tab");
   await settled(page);
-  // Tab includes visible panel actions, so the width lock precedes Height.
-  assert.equal(
-    await page
-      .getByRole("button", { name: "Lock Width", exact: true })
-      .evaluate((el) => el === document.activeElement),
-    true,
-  );
-  await page.keyboard.press("Tab");
-  await settled(page);
   assert.equal(
     await page
       .getByRole("textbox", { name: "Height", exact: true })
