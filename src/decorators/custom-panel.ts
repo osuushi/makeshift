@@ -2,8 +2,9 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { appendCustomDiagnostics } from "./custom-diagnostics.js";
 import { gearGroupMembers } from "./gear-group.js";
-import { gearFitFailure } from "./gear-group-geometry.js";
+import { gearFitFailure, groupEligible } from "./gear-group-geometry.js";
 import { appendGearInformation, gearFieldInstances } from "./gear-panel.js";
+import { appendGearPrintFields } from "./gear-print-panel.js";
 import { gearDefinition, gearManifest } from "./gear-settings.js";
 import { appendPresetControls } from "./preset-panel.js";
 import type { DecoratorSettingsDraft } from "./settings-draft.js";
@@ -89,7 +90,7 @@ function appendGroup(
       });
     });
   } else if (!group.some((d) => d.problem && !d.problem.startsWith(gearFitFailure))) {
-    if (!(group[0].gearGroup && group.length > 1)) appendPresetControls(root, editor, group);
+    if (!group[0].gearGroup) appendPresetControls(root, editor, group);
     appendFields(root, editor, group, definition.fields, draft, patch);
   }
 
@@ -125,22 +126,15 @@ function appendFields(
     if (!instance.problem?.startsWith(gearFitFailure))
       appendCustomDiagnostics(root, editor, instance);
   }
+  if (group[0].gearGroup && group.every((d) => groupEligible(editor.store.data, d))) {
+    appendGearPrintFields(root, editor, group, draft, patch);
+    return;
+  }
   for (const schema of fields) {
+    if (["addendum", "rootClearance"].includes(schema.key)) continue;
     if (schema.key === "preset" && schema.type === "enum") continue;
-    const shared = group[0].gearGroup && group.length > 1;
-    if (shared && ["teeth", "phase", "helix", "hand", "shift"].includes(schema.key)) continue;
     const applicable = gearFieldInstances(editor, group, schema.key);
     if (!applicable.length) continue;
-    if (group[0].gearGroup && schema.key === "module") {
-      decoratorField(
-        root,
-        { ...schema, label: "Maximum normal module" },
-        group,
-        (settings, preview) => patch(group, settings, preview),
-        draft,
-      );
-      continue;
-    }
     if (
       schema.visibleWhen &&
       !group.some((d) => schema.visibleWhen?.values.includes(d.settings[schema.visibleWhen.key]))

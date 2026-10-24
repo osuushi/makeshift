@@ -30,36 +30,7 @@ export function editJavaScriptDecorators(
   if (edit.action === "apply") {
     next = applyJavaScriptDecorator(document, edit, hooks);
   } else if (edit.action === "settings") {
-    if (!edit.ids.length || edit.ids.some((id) => !previous.some((d) => d.id === id)))
-      throw new Error("Select existing decorators");
-    next = previous.map((instance) => {
-      if (!edit.ids.includes(instance.id)) return instance;
-      if (isBuiltinDecorator(instance.definition))
-        return (
-          editDecorators(document, { ...edit, ids: [instance.id] }).decorators?.find(
-            (d) => d.id === instance.id,
-          ) ?? instance
-        );
-      const definition = hooks.definition(document, instance.definition, instance.version);
-      return {
-        ...instance,
-        settings: definitionSettings(
-          definition,
-          edit.replace ? edit.patch : { ...instance.settings, ...edit.patch },
-        ),
-      };
-    });
-    if (
-      ["module", "diameterTolerance", "minimumTooth", "pressure", "thinning"].some(
-        (key) => edit.patch[key] !== undefined,
-      )
-    ) {
-      for (const group of new Set(
-        next.filter((d) => edit.ids.includes(d.id) && d.gearGroup).map((d) => d.gearGroup),
-      )) {
-        if (group) next = matchGearApplication(document, next, new Set<string>(), group);
-      }
-    }
+    next = patchJavaScriptSettings(document, edit, hooks);
   } else if (edit.action === "continue" || edit.action === "reassign") {
     const original = previous.find((d) => d.id === edit.id);
     if (!original) throw new Error("Select an existing decorator");
@@ -85,12 +56,62 @@ export function editJavaScriptDecorators(
   const candidate = { ...document, decorators: next };
   validateDecorators(candidate);
   for (const instance of next) {
-    if (edit.action === "apply" && instance.problem?.startsWith(gearFitFailure)) continue;
+    if (instance.problem?.startsWith(gearFitFailure)) continue;
     if (isBuiltinDecorator(instance.definition) || previous.includes(instance)) continue;
     const error = hooks.diagnostics(candidate, instance).find((d) => d.severity === "error");
     if (error) throw new Error(error.message);
   }
   return candidate;
+}
+
+function patchJavaScriptSettings(
+  document: SketchDocument,
+  edit: Extract<DecoratorEdit, { action: "settings" }>,
+  hooks: JavaScriptDecorators,
+): readonly DecoratorInstance[] {
+  const previous = document.decorators ?? [];
+  let next: readonly DecoratorInstance[];
+  if (!edit.ids.length || edit.ids.some((id) => !previous.some((d) => d.id === id)))
+    throw new Error("Select existing decorators");
+  const groups = new Set(
+    previous.filter((d) => edit.ids.includes(d.id) && d.gearGroup).map((d) => d.gearGroup),
+  );
+  next = previous.map((instance) => {
+    if (!edit.ids.includes(instance.id) && !(instance.gearGroup && groups.has(instance.gearGroup)))
+      return instance;
+    if (isBuiltinDecorator(instance.definition))
+      return (
+        editDecorators(document, { ...edit, ids: [instance.id] }).decorators?.find(
+          (d) => d.id === instance.id,
+        ) ?? instance
+      );
+    const definition = hooks.definition(document, instance.definition, instance.version);
+    return {
+      ...instance,
+      settings: definitionSettings(
+        definition,
+        edit.replace ? edit.patch : { ...instance.settings, ...edit.patch },
+      ),
+    };
+  });
+  if (
+    [
+      "module",
+      "diameterTolerance",
+      "minimumTooth",
+      "pressure",
+      "thinning",
+      "clearance",
+      "rootClearance",
+    ].some((key) => edit.patch[key] !== undefined)
+  ) {
+    for (const group of new Set(
+      next.filter((d) => edit.ids.includes(d.id) && d.gearGroup).map((d) => d.gearGroup),
+    )) {
+      if (group) next = matchGearApplication(document, next, new Set<string>(), group, true);
+    }
+  }
+  return next;
 }
 
 function applyJavaScriptDecorator(
@@ -110,7 +131,9 @@ function applyJavaScriptDecorator(
     );
   const definition = hooks.definition(document, edit.definition, version);
   const occupied = new Map(
-    previous.filter((d) => !d.problem).flatMap((d) => d.faces.map((f) => [faceKey(f), d] as const)),
+    previous
+      .filter((d) => !d.problem || d.problem.startsWith(gearFitFailure))
+      .flatMap((d) => d.faces.map((f) => [faceKey(f), d] as const)),
   );
   if (
     edit.faces.some(

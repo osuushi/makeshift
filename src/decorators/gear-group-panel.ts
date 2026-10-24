@@ -2,7 +2,7 @@ import { entityRows } from "../model/entity-presentation.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { faceKey } from "./edits.js";
-import { gearGroupMembers, gearGroupProblem } from "./gear-group.js";
+import { gearContact, gearGroupMembers, gearGroupProblem } from "./gear-group.js";
 import { groupEligible } from "./gear-group-geometry.js";
 import { gearDefinition } from "./gear-settings.js";
 import type { DecoratorInstance } from "./types.js";
@@ -107,6 +107,26 @@ function appendGroupActions(
   control: (label: string, action: () => unknown) => HTMLButtonElement,
 ) {
   const problem = gearGroupProblem(editor.store.data, gear);
+  const unmatched = (editor.store.data.decorators ?? []).some(
+    (other) =>
+      !members.includes(other) &&
+      groupEligible(editor.store.data, other) &&
+      members.some((member) => gearContact(editor.store.data, member, other)),
+  );
+  if (groupEligible(editor.store.data, gear) && (!gear.gearGroup || problem || unmatched)) {
+    root.append(
+      control("Fit contacting gears", () =>
+        editor.store.request({
+          kind: "decorator",
+          edit: {
+            action: "apply",
+            definition: gearDefinition,
+            faces: members.flatMap((d) => d.faces),
+          },
+        }),
+      ),
+    );
+  }
   if (problem) {
     const note = document.createElement("p");
     note.className = "decorator-warning";
