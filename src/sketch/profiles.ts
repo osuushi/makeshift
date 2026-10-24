@@ -4,7 +4,7 @@ import { type CurveSpan, curvePoint, regionTolerance, spanArea } from "./curve-s
 import type { Sketch } from "./document.js";
 import type { Point } from "./planes.js";
 import { derivative, roots } from "./polynomial.js";
-import { closedBoundaries } from "./regions.js";
+import { profileLoops } from "./profile-loops.js";
 
 export interface Profile {
   key: string;
@@ -60,7 +60,7 @@ const cache = new WeakMap<Sketch, Profile[]>();
 export function profilesFor(sketch: Sketch): Profile[] {
   const previous = cache.get(sketch);
   if (previous) return previous;
-  const loops = closedBoundaries(sketch.curves);
+  const loops = profileLoops(sketch.curves);
   const areas = loops.map((loop) => loop.reduce((sum, span) => sum + spanArea(span), 0));
   const parents = loops.map((loop, index) => {
     const probes = loop.map((span) => curvePoint(span.curve, (span.start + span.end) / 2));
