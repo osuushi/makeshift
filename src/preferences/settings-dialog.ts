@@ -1,6 +1,7 @@
 import { canonicalPlaneSettings } from "./canonical-plane-settings.js";
 import { decoratorSettings } from "./decorator-settings.js";
 import { experimentalSettings } from "./experimental-settings.js";
+import { radialSettings } from "./radial-settings.js";
 import { settingsTabs } from "./settings-tabs.js";
 import { sketchGridSettings } from "./sketch-grid-settings.js";
 import { themeSettings } from "./theme-settings.js";
@@ -50,7 +51,7 @@ export function settingsDialog(extra: [string, HTMLElement][] = []): HTMLDialogE
   const scaleLabel = select.closest("label");
   if (!scaleLabel) throw new Error("Missing scale label");
   interfaceRow.append(themeSettings(), scaleLabel, reset);
-  general.append(interfaceRow);
+  general.append(interfaceRow, radialSettings());
   const view = document.createElement("div");
   view.className = "settings-view";
   view.append(viewSettings(), canonicalPlaneSettings());
@@ -68,6 +69,9 @@ export function settingsDialog(extra: [string, HTMLElement][] = []): HTMLDialogE
   const update = () => {
     dialog
       .querySelector('[aria-label="Appearance"]')
+      ?.dispatchEvent(new Event("preferences-refresh"));
+    dialog
+      .querySelector('[aria-label="Circular dimensions"]')
       ?.dispatchEvent(new Event("preferences-refresh"));
     select.value = String(uiScale());
     reset.disabled = uiScale() === 1;

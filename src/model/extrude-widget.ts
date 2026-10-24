@@ -1,3 +1,4 @@
+import { RadialInput } from "../preferences/radial-input.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { distanceField, positionAxialPanel, toolAction, updateAxialArrow } from "./axial-widget.js";
 import { ExtrudeDraft } from "./extrude-draft.js";
@@ -18,6 +19,7 @@ export class ExtrudeWidget {
   private placement = new WidgetClearance(this.root);
   readonly handle = document.createElement("button");
   readonly input = document.createElement("input");
+  private radial = new RadialInput(this.input);
   readonly symmetric = document.createElement("input");
   private currentAxis: ReturnType<typeof extrusionAxis> = null;
   get axis() {
@@ -53,7 +55,9 @@ export class ExtrudeWidget {
     symmetry.className = "extrude-symmetry";
     symmetry.append(this.symmetric, "Symmetric");
     symmetry.title = "Center about source plane · distance is total depth · Option while dragging";
-    this.options.append(distanceField(this.input), this.quantity.select, symmetry, this.draft.root);
+    const field = distanceField(this.input);
+    field.prepend(this.radial.button);
+    this.options.append(field, this.quantity.select, symmetry, this.draft.root);
     const actions = document.createElement("div");
     actions.className = "axial-actions";
     this.accept = toolAction("Accept extrusion", "m5 12 4 4L19 6", finish);
@@ -102,6 +106,13 @@ export class ExtrudeWidget {
       : symmetric
         ? "Total symmetric extrusion depth (mm)"
         : "Extrusion distance (mm)";
+    this.input.setAttribute(
+      "aria-label",
+      axis?.normalExtrusion && this.quantity.mode === "radius"
+        ? "Extrusion radius"
+        : "Extrusion distance",
+    );
+    this.radial.update(!!axis?.normalExtrusion && this.quantity.mode === "radius");
     if (!axis) return;
     const straight = axis.center.map(
       (v, i) => v + axis.normal[i] * (Number.isFinite(capDistance) ? capDistance : 0),
@@ -141,6 +152,7 @@ export class ExtrudeWidget {
     );
   }
   dispose(): void {
+    this.radial.dispose();
     this.placement.dispose();
     this.root.remove();
   }

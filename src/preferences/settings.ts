@@ -1,6 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { onCanonicalPlanesChange } from "./canonical-planes.js";
+import { onRadialDimensionChange } from "./radial-dimension.js";
 import { settingsDialog } from "./settings-dialog.js";
 import { nativeSettings } from "./settings-host.js";
 import { onSketchGridPreferencesChange } from "./sketch-grid.js";
@@ -73,31 +74,19 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
     button.disabled = !!toolCatalog(editor).reason({ reason: () => null });
   };
   editor.world.changed.add(update);
-  const disposeScale = onUiScaleChange(() => {
-    // Refit geometry-relative controls to their new measured dimensions.
-    editor.world.draw();
-  });
-  const refreshPreferences = () => {
-    editor.world.requestDraw();
-    for (const panel of dialog.querySelectorAll(".view-display-settings"))
-      panel.dispatchEvent(new Event("preferences-refresh"));
-  };
-  const disposeGrid = onSketchGridPreferencesChange(refreshPreferences);
-  const disposeView = onViewDisplayChange(refreshPreferences);
-  const disposePlanes = onCanonicalPlanesChange(refreshPreferences);
+  const disposePreferences = refreshSettingsPreferences(editor, dialog);
   const disposeKeyboard = installSettingsKeyboard(requestOpen);
   update();
   return () => {
     disposeToolbox();
     disposeTool();
-    disposeScale();
-    disposeGrid();
-    disposeView();
-    disposePlanes();
+    disposePreferences();
     editor.world.changed.delete(update);
     disposeKeyboard();
     disposeHeader();
     button.remove();
+    for (const section of dialog.querySelectorAll("section"))
+      section.dispatchEvent(new Event("preferences-dispose"));
     dialog.remove();
   };
 }
@@ -171,5 +160,31 @@ function trackSettingsHeader(
   return () => {
     headerObserver.disconnect();
     app.style.removeProperty("--editor-header-bottom");
+  };
+}
+
+function refreshSettingsPreferences(editor: SketchEditor, dialog: HTMLDialogElement): () => void {
+  const disposeScale = onUiScaleChange(() => {
+    // Refit geometry-relative controls to their new measured dimensions.
+    editor.world.draw();
+  });
+  const refreshPreferences = () => {
+    editor.world.requestDraw();
+    for (const panel of dialog.querySelectorAll(".view-display-settings"))
+      panel.dispatchEvent(new Event("preferences-refresh"));
+  };
+  const disposeRadial = onRadialDimensionChange(() => {
+    editor.world.requestDraw();
+    dialog.dispatchEvent(new Event("preferences-refresh"));
+  });
+  const disposeGrid = onSketchGridPreferencesChange(refreshPreferences);
+  const disposeView = onViewDisplayChange(refreshPreferences);
+  const disposePlanes = onCanonicalPlanesChange(refreshPreferences);
+  return () => {
+    disposeScale();
+    disposeRadial();
+    disposeGrid();
+    disposeView();
+    disposePlanes();
   };
 }

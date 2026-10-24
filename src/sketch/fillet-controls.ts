@@ -1,4 +1,5 @@
 import { placeFloatingPanel } from "../preferences/panel-placement.js";
+import { RadialInput } from "../preferences/radial-input.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import type { InteractionLease } from "./active-interaction.js";
@@ -34,6 +35,7 @@ export class FilletControls {
   private guide = new FilletGuide();
   private handle = this.guide.hit;
   private input = document.createElement("input");
+  private radial = new RadialInput(this.input);
   private abort = new AbortController();
   private session: Session | null = null;
   private interaction: InteractionLease | null = null;
@@ -66,14 +68,15 @@ export class FilletControls {
     this.input.type = "text";
     this.input.inputMode = "decimal";
     this.input.setAttribute("aria-label", "Fillet radius");
-    this.root.append(this.input);
+    this.radial.update();
+    this.root.append(this.radial.button, this.input);
     overlay.append(this.guide.element, this.root);
     const options = { signal: this.abort.signal };
     this.handle.addEventListener("pointerdown", this.start, options);
     this.handle.addEventListener("pointermove", this.move, options);
     this.handle.addEventListener("pointerup", this.release, options);
     this.handle.addEventListener("pointercancel", () => void this.cancel(), options);
-    this.input.addEventListener("input", () => this.preview(Number(this.input.value)), options);
+    this.input.addEventListener("input", () => this.preview(this.radial.read()), options);
     onModelKeydown(
       (event) => {
         if (!this.session) return;
@@ -153,7 +156,8 @@ export class FilletControls {
       session.solve.update(result.sketch);
       this.editor.message = "";
       this.input.removeAttribute("aria-invalid");
-      if (!numericFocus(this.input)) this.input.value = String(Number(radius.toFixed(4)));
+      if (!numericFocus(this.input))
+        this.input.value = String(Number(this.radial.display(radius).toFixed(4)));
     } catch (error) {
       session.valid = false;
       session.solve.invalidate();
@@ -240,6 +244,7 @@ export class FilletControls {
     this.disposeTool();
     this.abort.abort();
     this.editor.world.changed.delete(this.update);
+    this.radial.dispose();
     this.root.remove();
     this.guide.element.remove();
   }

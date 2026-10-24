@@ -1,3 +1,4 @@
+import { radialName } from "../preferences/radial-dimension.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { OffsetMode } from "./offset-quantity.js";
 import { OffsetQuantity } from "./offset-quantity.js";
@@ -18,6 +19,8 @@ export class ExtrudeQuantity {
   configure(editor: SketchEditor, active: boolean, normal: boolean) {
     this.normal = normal;
     this.select.hidden = !normal;
+    const radialOption = this.select.querySelector('option[value="radius"]');
+    if (radialOption) radialOption.textContent = radialName();
     if (!normal || active) return;
     const resolution = editor.modeling.resolve("extrude");
     if (!resolution.available) return;
@@ -34,7 +37,7 @@ export class ExtrudeQuantity {
     this.quantity.mode = this.quantity.radius ? "radius" : "offset";
     this.select.replaceChildren(
       ...this.quantity.modes.map(
-        (mode) => new Option(mode === "radius" ? "Radius" : "Distance", mode),
+        (mode) => new Option(mode === "radius" ? radialName() : "Distance", mode),
       ),
     );
     this.select.value = this.quantity.mode;

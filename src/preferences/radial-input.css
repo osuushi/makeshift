@@ -1,0 +1,25 @@
+button.radial-toggle {
+  flex: 0 0 auto;
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--panel);
+  color: var(--accent);
+  font-size: 16px;
+  line-height: 1;
+}
+button.radial-toggle[hidden] {
+  display: none;
+}
+button.radial-toggle:hover {
+  background: var(--selected);
+}
+.radial-slider {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}

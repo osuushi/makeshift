@@ -1,3 +1,4 @@
+import { radialDisplay, radialName, radialRadius } from "../preferences/radial-dimension.js";
 import type { BodyFaceOffset, Face } from "./body.js";
 import { type FaceFinish, sharedThickness } from "./face-offset-targets.js";
 
@@ -43,8 +44,14 @@ export class OffsetQuantity {
     if (this.mode === "thickness" && this.thickness)
       return this.thickness.distance + this.thickness.slope * distance;
     if (this.mode === "radius" && this.radius)
-      return this.radius.radius + this.radius.outward * distance * this.scale;
+      return this.radial ? radialDisplay(this.radiusValue(distance)) : this.radiusValue(distance);
     return distance;
+  }
+  get radial(): boolean {
+    return this.mode === "radius" && !this.blend?.chamfer;
+  }
+  private radiusValue(distance: number): number {
+    return (this.radius?.radius ?? 0) + (this.radius?.outward ?? 1) * distance * this.scale;
   }
   text(distance: number): string {
     const value = this.value(distance);
@@ -55,7 +62,10 @@ export class OffsetQuantity {
     if (this.mode === "thickness" && this.thickness)
       return (value - this.thickness.distance) * this.thickness.slope;
     if (this.mode === "radius" && this.radius)
-      return ((value - this.radius.radius) * this.radius.outward) / this.scale;
+      return (
+        (((this.radial ? radialRadius(value) : value) - this.radius.radius) * this.radius.outward) /
+        this.scale
+      );
     return value;
   }
   clamp(distance: number): number {
@@ -76,7 +86,7 @@ export class OffsetQuantity {
     const action = this.blend
       ? this.blend.chamfer
         ? "Resize chamfer · enter distance"
-        : "Resize fillet · enter radius"
+        : `Resize fillet · enter ${radialName().toLowerCase()}`
       : "Offset faces";
     return `${action} · drag outward to add material · Enter to accept · Escape to cancel`;
   }

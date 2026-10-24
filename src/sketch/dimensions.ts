@@ -1,4 +1,6 @@
 import { handoffModalPointer } from "../model/modal-pointer-handoff.js";
+import { radialName } from "../preferences/radial-dimension.js";
+import { RadialInput } from "../preferences/radial-input.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { layoutLocalControls } from "./control-layout.js";
@@ -70,7 +72,8 @@ export class Dimensions implements NumericFields {
   private pointerDown = (event: PointerEvent): void => {
     const editor = this.editor;
     if (event.target instanceof HTMLInputElement) return;
-    if (event.target instanceof Element && event.target.closest(".dimension-lock")) return;
+    if (event.target instanceof Element && event.target.closest(".dimension-lock, .radial-toggle"))
+      return;
     if (editor.interactions.current?.kind === "numeric") {
       if (
         event.target === editor.world.canvas &&
@@ -98,7 +101,10 @@ export class Dimensions implements NumericFields {
     if (key !== this.key) {
       this.key = key;
       if (!this.draft.waiting) this.cancel();
-      for (const field of this.fields) field.label.remove();
+      for (const field of this.fields) {
+        field.radial?.dispose();
+        field.label.remove();
+      }
       this.fields = [];
       for (const value of values) this.addField(value.quantity, value.label, value.unit);
     }
@@ -118,12 +124,17 @@ export class Dimensions implements NumericFields {
           : !dimensionLockTarget(this.editor, value.quantity)) || this.editor.isDragging;
       field.lock.disabled = this.editor.blocked;
       field.lock.replaceChildren(sketchIcon(locked ? "lock" : "unlock"));
-      field.lock.setAttribute("aria-label", `${locked ? "Unlock" : "Lock"} ${value.label}`);
+      field.lock.setAttribute(
+        "aria-label",
+        `${locked ? "Unlock" : "Lock"} ${value.quantity === "radius" ? radialName() : value.label}`,
+      );
       field.lock.setAttribute("aria-pressed", String(locked));
       field.label.style.left = `${Math.max(50, Math.min(bounds.width - 50, value.screen.x - bounds.left))}px`;
       field.label.style.top = `${Math.max(70, Math.min(bounds.height - 60, value.screen.y - bounds.top))}px`;
       if (!numericFocus(field.input) && !this.draft.owns(field.input))
-        field.input.value = this.format(value.value);
+        field.input.value = this.format(
+          field.radial ? field.radial.display(value.value) : value.value,
+        );
     }
     layoutLocalControls(this.editor, this.overlay);
   };
@@ -152,7 +163,9 @@ export class Dimensions implements NumericFields {
     });
     label.append(input, unit, lock);
     this.overlay.append(label);
-    const field = { quantity, label, input, lock };
+    const radial = quantity === "radius" ? new RadialInput(input) : undefined;
+    if (radial) input.before(radial.button);
+    const field = { quantity, label, input, lock, radial };
     this.fields.push(field);
     this.draft.bind(field, async (reverse) => {
       focusNumericField(document.body, reverse, !this.editor.moveMode);
@@ -204,6 +217,9 @@ export class Dimensions implements NumericFields {
     this.disposeTools();
     this.abort.abort();
     this.editor.world.changed.delete(this.update);
-    for (const field of this.fields) field.label.remove();
+    for (const field of this.fields) {
+      field.radial?.dispose();
+      field.label.remove();
+    }
   }
 }
