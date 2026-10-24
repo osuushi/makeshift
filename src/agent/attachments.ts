@@ -30,7 +30,7 @@ export function agentAttachments(
   action: (run: () => Promise<void>) => Promise<void>,
   insert: (value: string) => void,
   running: () => boolean,
-): { choose: () => void; dispose: () => void } {
+): { choose: () => void; attach: (files: File[]) => void; dispose: () => void } {
   const input = document.createElement("input");
   input.type = "file";
   input.multiple = true;
@@ -87,6 +87,7 @@ export function agentAttachments(
   panel.addEventListener("drop", drop);
   return {
     choose: () => input.click(),
+    attach,
     dispose: () => {
       panel.removeEventListener("dragover", dragOver);
       panel.removeEventListener("dragleave", dragLeave);

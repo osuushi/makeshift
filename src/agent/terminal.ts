@@ -24,6 +24,7 @@ export class AgentTerminal {
     private host: AgentHost,
     private update: (reply: AgentReply) => void,
     private report: (error: unknown) => void,
+    private attach: (files: File[]) => void,
   ) {
     this.disposeScale = onUiScaleChange(() => {
       if (this.terminal) this.terminal.options.fontSize = 13 * uiScale();
@@ -61,6 +62,7 @@ export class AgentTerminal {
     });
     terminal.loadAddon(this.fit);
     terminal.open(this.element);
+    this.element.addEventListener("paste", this.pasteImages, true);
     this.disposeTouch = terminalTouch(this.element, terminal);
     terminal.onData((data) => {
       terminal.scrollToBottom();
@@ -80,9 +82,23 @@ export class AgentTerminal {
   private async paste(): Promise<void> {
     const reply = await this.host.request({ kind: "clipboard" });
     if (reply.error) throw new Error(reply.error);
-    if (reply.clipboardText !== undefined) this.terminal?.paste(reply.clipboardText);
+    if (this.disposed) return;
+    if (reply.clipboardImage !== undefined) {
+      const bytes = Uint8Array.from(atob(reply.clipboardImage), (value) => value.charCodeAt(0));
+      this.attach([new File([bytes], "clipboard-image.png", { type: "image/png" })]);
+    } else if (reply.clipboardText !== undefined) this.terminal?.paste(reply.clipboardText);
     else this.terminal?.paste(await navigator.clipboard.readText());
   }
+  private pasteImages = (event: ClipboardEvent): void => {
+    const files = Array.from(event.clipboardData?.files ?? []).filter((file) =>
+      file.type.startsWith("image/"),
+    );
+    if (!files.length) return;
+    // Capture before Ghostty consumes the event as text (also covers native Edit > Paste).
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    this.attach(files);
+  };
   insert(value: string): void {
     if (!this.terminal || this.disposed) throw new Error("Wait for the agent terminal to open.");
     this.terminal.paste(value);
@@ -134,6 +150,7 @@ export class AgentTerminal {
     this.disposeScale();
     this.disposeTheme();
     this.disposeTouch?.();
+    this.element.removeEventListener("paste", this.pasteImages, true);
     this.terminal?.dispose();
   }
 }
