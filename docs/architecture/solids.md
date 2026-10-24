@@ -19,6 +19,16 @@ holes. Modeling hit tests use exact segment/circular ray crossings; triangulatio
 is only the highlight representation. Profile keys are temporary and selection
 clears when accepted geometry changes. They are not persistent operation inputs.
 
+Tangent profile holes must share native contact topology before sweeping. If
+direct wire assembly reports intersecting wires, the temporary profile face is
+constructed by subtracting the hole faces from its outer face, without added
+Boolean fuzz. Every boundary and the result still validate; the result must be
+one face with outer area minus the summed hole areas. Crossing/overlapping holes
+therefore reject instead of being silently clipped. Straight crescent extrusion
+supports either direction, symmetry, ordinary Boolean modes and document history.
+An exact zero-thickness pinch can remain nonmanifold in a triangulated export;
+the independent closed-mesh export guard remains in force.
+
 A selected exact face can also contain INTERNAL edges, wires or vertices from
 earlier edits. These remain accepted topology, but do not bound swept material.
 The shared face-profile path for extrusion, revolve, path sweep and loft removes
