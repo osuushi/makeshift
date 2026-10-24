@@ -17,6 +17,7 @@ not one global precision setting or a replacement for OCCT entity tolerances.
 | Collapsed projected segment | 1e-7 mm | Reject an edge whose planar image is a point. |
 | Edge-on direction dot | 1e-12, dimensionless | Recognize a circle viewed along its plane and project its extrema to a segment. |
 | Full circle angle | 1e-9 radians | Distinguish a complete circle from a trimmed arc. |
+| Tangent crescent fillet | 0.01 mm radius | Intentional printable relief during extrusion, capped at 1% of inner radius and wall thickness; this is not a validation tolerance. |
 
 The volume floor does not establish a minimum supported feature size. Operations
 also enforce valid BReps, closed shells, noncollapsed boundaries and their own
@@ -43,6 +44,15 @@ Temporary profile wires also collapse sub-0.0001 mm remnants at cubic junctions
 walls whose display facets cannot form a closed export mesh. This reconnects only
 the native profile wire; accepted sketch curves/constraints remain editable and
 unchanged. Analytic-only profile junctions retain their existing precision.
+
+The founder-approved tangent-crescent relief is a separate modeling adjustment.
+It rounds the two otherwise singular tips of an internally tangent pair of
+circular boundaries, removing at most 1% of the original profile area. The
+R10/R5 example loses about 0.00813 mm² and gains a roughly 1.24 mm opening.
+This favors useful printed geometry over preserving an unprintable contact.
+Source circles and ordinary finite ligaments remain exact; preview, accepted
+solid and export agree on the relieved geometry. BRep and mesh validation remain
+unchanged. See [materialized solids](solids.md) for scope and saved-body behavior.
 
 For Boolean operands containing non-rational cubic Bézier or cubic B-spline
 boundary curves, use an additional 0.0001 mm contact tolerance. The founder

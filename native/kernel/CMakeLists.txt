@@ -32,6 +32,7 @@ target_sources(makeshift-kernel PRIVATE offset-geometry.cpp offset-boundaries.cp
 target_sources(makeshift-kernel PRIVATE measurement.cpp measurement-gaps.cpp measurement-planar.cpp)
 target_sources(makeshift-kernel PRIVATE sketch-curve.cpp)
 target_sources(makeshift-kernel PRIVATE profile-face.cpp)
+target_sources(makeshift-kernel PRIVATE crescent-profile.cpp)
 target_sources(makeshift-kernel PRIVATE boolean-periodic.cpp)
 target_sources(makeshift-kernel PRIVATE boolean-filter-filler.cpp boolean-filter.cpp boolean-trims.cpp boolean-torus-bounds.cpp)
 target_sources(makeshift-kernel PRIVATE extrude-twist.cpp extrude-twist-curves.cpp extrude-symmetric.cpp)

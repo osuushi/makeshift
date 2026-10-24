@@ -1340,6 +1340,15 @@ and its prism has volume `75 * pi * abs(distance)`. Makeshift now uses that boun
 construction only after the intersecting-wire diagnostic, retaining shape checks,
 a single-face requirement, and an outer-minus-holes area check. Both captures pass
 native signed/symmetric extrusion, history, movement and reopening; hidden Electron
-also verifies pointer selection and Save/Open. The zero-thickness raised crescent
-still fails the independent closed-mesh export guard; native BRep validity alone
-does not establish a manifold triangulation.
+also verifies pointer selection and Save/Open. The exact zero-thickness raised
+crescent still fails the independent closed-mesh export guard; native BRep
+validity alone does not establish a manifold triangulation.
+
+The founder subsequently approved visible rounding at this singularity for
+3D-printing use. Extrusion now constructs two tangent circular fillets, normally
+0.01 mm in radius, on the temporary profile before sweeping. This is Makeshift's
+own analytic circle construction, not copied upstream code. The support circles
+retain their centers/radii, but their tip arcs are replaced with printable relief.
+The R10/R5 example removes about 0.00813 mm² and opens a roughly 1.24 mm gap;
+the accepted body retains that same geometry. Mesh validity remains an independent
+requirement rather than being inferred from the repaired native shape.

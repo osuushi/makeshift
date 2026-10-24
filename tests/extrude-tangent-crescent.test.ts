@@ -16,6 +16,9 @@ const near = (actual: number, expected: number) =>
 const fixture = (name = "tangent-circles"): SketchDocument =>
   JSON.parse(readFileSync(`tests/fixtures/${name}.json`, "utf8")).document;
 const area = 75 * Math.PI;
+// Area of the circular contour after two 0.01 mm tangent fillets; the source
+// region remains 75*pi, while the printable result loses 0.0081287011 mm².
+const roundedArea = 235.61132031817297;
 function extrusion(document: SketchDocument, distance: number): Extrusion {
   const sketch = document.sketches[0];
   const selected = profileAt(sketch, { x: -5, y: 0 });
@@ -40,7 +43,7 @@ for (const name of ["tangent-circles", "tangent-circles-post"])
         );
         const before = owner.view.data;
         const operation = extrusion(before, distance);
-        const expected = (before.bodies?.[0].volume ?? 0) + area * distance;
+        const expected = (before.bodies?.[0].volume ?? 0) + roundedArea * distance;
         assert.equal(
           (await owner.call({ kind: "extrude", extrusion: operation })).error,
           undefined,
@@ -66,11 +69,7 @@ for (const name of ["tangent-circles", "tangent-circles-post"])
         const body = reopened.bodies?.[0];
         assert.ok(body);
         near(body.volume, expected);
-        // Exact tangent topology is a valid BRep, but its zero-thickness contact
-        // is not a closed manifold mesh. Do not weaken the independent export guard.
-        if (distance > 0)
-          assert.throws(() => exportMesh(body), /not closed and consistently oriented/);
-        else assert.ok(exportMesh(body).triangles.length > 0);
+        assert.ok(exportMesh(body).triangles.length > 0);
         assert.equal(
           (
             await owner.call({
@@ -98,7 +97,7 @@ for (const name of ["tangent-circles", "tangent-circles-post"])
       }
     });
 
-test("tangent crescents retain exact area for rotated contacts, both signs and symmetric depth", async () => {
+test("rounded crescents retain their area for rotated contacts, both signs and symmetric depth", async () => {
   const owner = new DocumentOwner();
   try {
     const original = fixture();
@@ -138,7 +137,8 @@ test("tangent crescents retain exact area for rotated contacts, both signs and s
           );
           const body = owner.view.candidate?.bodies?.[0];
           assert.ok(body);
-          near(body.volume, area * 6);
+          near(body.volume, roundedArea * 6);
+          assert.ok(exportMesh(body).triangles.length > 0);
           const normal = planeNormal(plane);
           const axis = normal.findIndex((value) => Math.abs(value) > 0.5);
           const travel = distance * normal[axis];
@@ -147,6 +147,16 @@ test("tangent crescents retain exact area for rotated contacts, both signs and s
           const radii = body.faces.flatMap((face) => (face.cylinder ? [face.cylinder.radius] : []));
           assert.ok(radii.some((radius) => Math.abs(radius - 5) < 1e-8));
           assert.ok(radii.some((radius) => Math.abs(radius - 10) < 1e-8));
+          assert.equal(radii.filter((radius) => Math.abs(radius - 0.01) < 1e-8).length, 2);
+          if (plane === planes.XY && angle === 0) {
+            const tips = body.faces.flatMap((face) =>
+              face.cylinder && Math.abs(face.cylinder.radius - 0.01) < 1e-8
+                ? [face.cylinder.origin[1]]
+                : [],
+            );
+            const gap = Math.abs(tips[0] - tips[1]) - 0.02;
+            assert.ok(gap > 1.2 && gap < 1.3, `Printable opening: ${gap} mm`);
+          }
           await owner.call({ kind: "cancel-preview" });
         }
     }
@@ -177,8 +187,36 @@ test("touching-hole construction rejects crossing and overlapping holes, then re
         /Profile holes overlap or cross the outer boundary/,
       );
     const reply = await kernel.calculate(input);
-    near(reply.results[0].volume, area * 6);
+    near(reply.results[0].volume, roundedArea * 6);
   } finally {
     kernel.close();
+  }
+});
+
+test("a near-tangent circle with a finite ligament remains exact", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const original = fixture();
+    const sketch = original.sketches[0];
+    const document = {
+      ...original,
+      bodies: [],
+      sketches: [
+        {
+          ...sketch,
+          curves: sketch.curves.map((curve) =>
+            curve.kind === "circle" && curve.radius === 5
+              ? { ...curve, center: { x: 4.999, y: 0 } }
+              : curve,
+          ),
+        },
+      ],
+    };
+    assert.equal((await owner.call({ kind: "open", document })).error, undefined);
+    const operation = { ...extrusion(document, 6), mode: "new" as const };
+    assert.equal((await owner.call({ kind: "extrude", extrusion: operation })).error, undefined);
+    near(owner.view.candidate?.bodies?.[0].volume ?? 0, area * 6);
+  } finally {
+    owner.close();
   }
 });
