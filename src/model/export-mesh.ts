@@ -1,5 +1,6 @@
 import type { BodyGeometry } from "./body.js";
 import { facetArea } from "./collinear-facets.js";
+import { stitchBoundaryJunctions } from "./mesh-boundary-junctions.js";
 
 export interface ExportMesh {
   vertices: number[][];
@@ -51,8 +52,15 @@ export function exportMesh(body: BodyGeometry): ExportMesh {
     }
   }
   const mesh = { vertices, triangles };
-  validateMesh(mesh);
-  return mesh;
+  try {
+    validateMesh(mesh);
+    return mesh;
+  } catch (error) {
+    const stitched = stitchBoundaryJunctions(mesh);
+    if (stitched === mesh) throw error;
+    validateMesh(stitched);
+    return stitched;
+  }
 }
 
 export function triangleNormal(points: number[][]): number[] {

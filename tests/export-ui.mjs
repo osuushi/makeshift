@@ -5,11 +5,12 @@ import { chromium, webkit } from "playwright";
 import { strFromU8, unzipSync } from "three/addons/libs/fflate.module.js";
 import { STLLoader } from "three/addons/loaders/STLLoader.js";
 import { createServer } from "vite";
-import { launchElectron } from "./native-documents.mjs";
+import { exportDocument, launchElectron } from "./native-documents.mjs";
 import { readStep } from "./step-readback.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { exportCapture } from "./ui-export-capture.mjs";
-import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { at, close, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
+import { previewActionReady } from "./ui-preview-readiness.mjs";
 import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool, toolEnabled } from "./ui-tools.mjs";
 
@@ -57,22 +58,24 @@ try {
   if (!(await page.getByRole("textbox", { name: "Extrusion distance" }).isVisible()))
     await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
   await page.getByRole("textbox", { name: "Extrusion distance" }).fill("5");
-  await page.keyboard.press("Enter");
-  assert.equal(
-    !(await toolEnabled(page, "export 3mf", "export-3mf")),
-    true,
-    "Temporary geometry is not exported",
-  );
-  assert.equal(await toolEnabled(page, "export step", "export-step"), false);
-  await page.keyboard.press("Enter");
-  await inspect(page);
+  await previewActionReady(page, "Accept extrusion");
+  assert.equal((await inspect(page)).document.bodies?.length ?? 0, 0);
+  assert.equal(await toolEnabled(page, "export 3mf", "export-3mf"), true);
+  assert.equal(await toolEnabled(page, "export step", "export-step"), true);
+  assert.equal((await inspect(page)).document.bodies?.length ?? 0, 0);
+  // Export is a tool switch: it completes the extrusion before reading accepted
+  // bodies. Merely browsing its availability must leave the preview temporary.
+  await exportDocument(page, "3mf", resolve(`.cache/sketch-review/${name}-preview-export.3mf`));
+  assert.equal((await inspect(page)).document.bodies.length, 1);
+  close((await inspect(page)).document.bodies[0].volume, 4000);
   assert.equal(await toolEnabled(page, "export 3mf", "export-3mf"), true);
   await page.mouse.click(second.x, second.y);
   if (!(await page.getByRole("textbox", { name: "Extrusion distance" }).isVisible()))
     await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
   await page.getByRole("textbox", { name: "Extrusion distance" }).fill("10");
-  await page.keyboard.press("Enter");
-  await page.keyboard.press("Enter");
+  await previewActionReady(page, "Accept extrusion");
+  await page.getByRole("button", { name: "Accept extrusion", exact: true }).click();
+  await modalCompleted(page);
   assert.equal((await inspect(page)).document.bodies.length, 2);
   await page.getByRole("button", { name: "Hide Body 2", exact: true }).click();
   for (const format of ["3mf", "stl", "step"]) {

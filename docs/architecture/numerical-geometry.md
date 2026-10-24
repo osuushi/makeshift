@@ -33,6 +33,15 @@ surface display cannot stand in for a successful geometry operation. This check
 also applies when regenerating presentation during Open. It does not prove that
 a fully meshed shape is free of self-intersections.
 
+Tangent-circle tessellation can omit a collinear facet, leaving a long boundary
+edge opposite two shorter edges through an existing middle vertex. Export splits
+that long edge at the middle vertex only when the complete opposite edge path
+exists and collinearity differs by no more than arithmetic roundoff (16 machine
+epsilons times the two vector lengths). No vertex moves. Ordinary missing faces,
+finite gaps and inconsistent winding still fail the same closed-mesh validation.
+STL conversion also retriangulates facets that become exactly collinear in
+Float32, using their existing vertices, before validating the packed mesh.
+
 Solid extraction retains the exact volume and, when volume integration needs
 them, the optimal surface bounds for that final shape. Presentation reuses those
 measurements; no geometry mutation may follow them. Both bounds paths use
