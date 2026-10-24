@@ -2,15 +2,23 @@ export const decoratorGuide = `
 ## Gear design
 
 The built-in freac.gear v1 decorates pitch cylinders (external/internal), cones
-(straight spherical-involute bevel) and planar racks. It never creates gear-set
-relationships or changes exact geometry merely by applying a decoration.
+(straight spherical-involute bevel) and planar racks. Decorators never change BRep.
+Default external spur application creates compatible groups across cylinders,
+joining contacting groups even when applied separately. Apply with gearGroup adds
+to that saved group. Group members expose gearGroup and gearPitchRadius. The
+shared settings module (maximum), diameterTolerance and minimumTooth (tip chord
+width) bound fitting; counts and phase are resolved automatically. Geometry edits
+refit all group members in the same Undo step. An unsatisfiable fit remains an
+explicit problem and blocks generated preview/export until repaired. Read actual
+fitted pitchRadius/module through inspection; support.radius stays the BRep radius.
+Explicit tooth settings and other gear types retain independent controls.
 Read its schema through decorators(). Use inspectDecorator with definition,
 version:1, faces, settings and optional normalModule to obtain resolved rotary
 dimensions and requiredPitchRadius. Tooth counts are integers per full revolution,
 including partial faces. Helix uses the normal module/pressure-angle convention;
 inspection transversePressure and halfWidth are radians. Phase/direction settings
 are degrees. Rack phase and normal module are mm. Helical cones are unsupported.
-For a gear train, calculate matching modules, pressure angles, tooth counts,
+Outside automatic external spur grouping, calculate matching modules, pressure angles, tooth counts,
 centers and hands; explicitly adjust geometry with replaceFace/offsetFaces and
 placement operations, then editDecorator in the same awaited script transaction.
 The unshifted external reference center distance is r1+r2; an internal pair uses

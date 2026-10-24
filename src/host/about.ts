@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { app, BrowserWindow, dialog } from "electron";
+import { app, BrowserWindow, dialog, nativeTheme } from "electron";
 
 let licenses: BrowserWindow | null = null;
 function resources(): string {
@@ -28,7 +28,7 @@ export async function showLicenses(): Promise<void> {
     width: 900,
     height: 720,
     show: process.env.MAKESHIFT_TEST_HIDDEN !== "1",
-    backgroundColor: "#f8f9fb",
+    backgroundColor: nativeTheme.shouldUseDarkColors ? "#161e29" : "#f8f9fb",
     webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false },
   });
   licenses.webContents.setWindowOpenHandler(() => ({ action: "deny" }));

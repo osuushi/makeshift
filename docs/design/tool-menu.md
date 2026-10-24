@@ -5,14 +5,12 @@ immediate next action belong in the local brief.
 
 ## Outcome and agreed direction
 
-Show a fixed, compact common-tools panel below Entities. Sketch mode contains
-Arrow, Line, Rectangle, Circle, Pen and Trim; Modeling mode contains Arrow, Sketch,
-Cube, Cylinder, Sphere, Cone, Drill, Extrude and Offset. Every entry has an icon,
-labels show existing shortcuts, and the current tool is highlighted. The panel's **More ·
-⌘F** button and Command-F open the searchable menu. A short window moves constraints
-and measurements right to leave room for the panel. The panel uses the shared tool
-catalog and does not own geometry or history. Search remains the full discovery
-surface; an empty query exposes logical submenus.
+Show a compact editable toolbox below Entities. Each row displays its selected
+tool's icon and name. Frequent tools live in flat groups; hovering a group
+opens alternatives to its right. Selecting an alternative updates that group.
+Other Tools holds named nested menus whose titles never change on invocation. The tree is shared across sketch and modeling modes, and uses the
+ordinary catalog activation lifecycle. Search remains the full discovery surface;
+its button and Command-F / Ctrl-F open the searchable menu.
 Search supports fuzzy names, synonyms and related operations. Available matches
 always precede unavailable matches; unavailable tools remain visible. Automatically
 highlight the top result. The following interaction is implemented.
@@ -25,7 +23,7 @@ agent dock keep their purposes.
 
 ## Interaction
 
-- The More button supports mouse, touch and Pencil. Ctrl-F is the Windows/Linux
+- The Search button supports mouse, touch and Pencil. Ctrl-F is the Windows/Linux
   equivalent. Each opening starts with an empty, focused search box.
 - On an empty root query, show a separate Recent section above Categories when
   tools have been invoked. Keep ten unique visible tools, newest first; invoking
@@ -132,8 +130,38 @@ was copied. Ranking examples and menu activation are verified by Makeshift's sea
 and UI tests.
 
 An “Unavailable in this context” divider separates the groups. Alias matches may
-explain “Also called thickness.” Search never changes operation eligibility or
-implies that a kernel calculation will succeed.
+explain “Also called thickness.” Search admits selection-dependent tools through
+the selection step below; it does not imply that a kernel calculation will succeed.
+
+## Selection-first entry (2026-10-17)
+
+Selection-dependent commands remain invokable in their applicable workspace. On
+invocation, reuse the existing operation validation. If removing whole categories
+makes the selection valid, keep the unique maximal valid combination, in original
+order. Never select fewer members of a retained category, or guess between two
+incomparable valid combinations. For example, Union keeps all selected bodies and
+deselects a sketch; three faces for a one-face operation require explicit picking.
+
+Otherwise enter a transient selection step: emphasize eligible visible geometry
+in amber, selected inputs in blue, and show the tool's input prompt and count.
+Clicks toggle inputs without modifier keys; Entities rows also participate. A
+single-input tool proceeds after a valid pick. Multi-input tools require the
+bottom-center **Next** button (or Enter), enabled only when existing validation
+passes. Cancel/Escape restores the previous selection. Switching tools cancels
+collection. A refinement already satisfied by the picked selection completes as
+a no-op. Collecting inputs neither previews geometry nor edits the document;
+the destination tool retains its normal preview, acceptance, cancellation and Undo.
+
+`selection-policy.ts` inventories the affected commands: solid operations,
+transforms, decorators, tag membership, sketch entry from selected geometry,
+sketch offset/fillet, constraints and dimension locks, selection refinements,
+isolation, copy and delete. Custom decorator Apply, Continue and Reassign use
+the same picker, with Next waiting for asynchronous geometry inspection. Booleans
+require two owning bodies before Next; Loft requires two ordered sections. Existing reference/axis pickers continue after
+this source-selection step. Workspace, busy/calculation, missing-document,
+history, visibility-state and no-export-in-progress guards remain independent;
+they are not selection failures. Creation and reference tools that already start
+without preselection keep their existing pickers.
 
 ## Implementation and ownership
 
@@ -160,7 +188,7 @@ routing so Command-F opens Tools rather than host/browser Find.
    build catalog/search/menu and invoke actual sketch creation and Shell through
    it. Verify thickness, a typo, disabled reasons, focus and tool switching.
 2. **Common panels:** review both mode-specific lists, every icon, active state,
-   existing shortcuts, disabled reasons and the More entry point. Resize to short
+   existing shortcuts, disabled reasons and the Search entry point. Resize to short
    heights and confirm the toolbox remains below Entities while readouts move right.
 3. **Search acceptance:** deterministic ranking tests plus real keyboard/pointer routes
    in headless Chromium/WebKit and hidden Electron. Cover browsing, global search
@@ -170,7 +198,75 @@ routing so Command-F opens Tools rather than host/browser Find.
    solid geometry, including Shell via thickness, Undo/Redo and Save/Open. Check
    file/export and selection actions remain reachable; clean up test processes.
 
-The search menu contract above is implemented. The common panels are the current
-increment; runtime and founder review should be recorded in the active local brief.
+The search menu contract above is implemented. Runtime and founder review should be recorded in the active local brief.
 Physical iPad keyboard/Pencil behavior requires device review in addition to automated
 acceptance.
+
+## Editable toolbox (2026-10-22)
+
+The toolbox has three behaviors:
+
+- Select and Transform are fixed standalone first and second rows. Neither can
+  be dragged into a group.
+- Ordinary groups are single-layer alternatives. Each shows its selected tool's
+  icon and name; choosing an alternative through the toolbox, Search or a shortcut
+  updates that button. Hover opens the alternatives to the right.
+- Other Tools is a fixed named drawer with titled nested submenus. Clicking its
+  row or a submenu opens it, never launches a remembered descendant. Choosing a
+  buried tool changes no group selection or menu title. It remains in the drawer
+  until the user drags it out.
+
+The owned tree uses tool IDs or `{items, selected, title?}` groups. A title denotes
+an ordinary menu rather than swapping alternatives; titles only occur in the
+Other Tools subtree. Each tool occurs once, without aliases. Default frequent
+alternatives cover drawing; basic primitives plus Drill; Extrude, Revolve and Loft;
+Booleans; and shape editing (Fillet, Chamfer, Shell and Offset). Other Tools contains
+Sketch editing, Surface details, Planes & references, and Mirror. Duplicate bodies
+stays available through Search but is excluded from the toolbox. Every toolbox tool
+has a dedicated icon; named menus use a folder.
+Only ongoing tools belong here. Immediate commands and constraints retain their
+contextual controls and Search.
+
+Edit Guide Points remains a persistent candidate-editing toggle below the editable
+tool tree; non-hidden saved guides remain visible.
+Selecting guides also reveals a contextual Construction plane button there, with
+the three-point availability rule. These reference controls do not participate in
+tool regrouping or change remembered alternatives.
+
+Only explicit choices update an ordinary group's selection. Modal tools retain
+parent identity through internal steps: Cube, Cylinder and Cone remain selected
+while Extrude edits their depth, and Sphere remains selected while Revolve finishes
+it. Completion or cancellation keeps the parent as the remembered alternative.
+Explicitly choosing Extrude or Revolve still promotes it in its own flat group.
+
+Drag to reorder or move tools between the toolbox and drawer. Dropping a tool onto
+another top-level tool creates a flat group. Inside an existing group, dropping onto
+a tool places it after that tool; no nested alternatives are created. Moving an
+entire group into the drawer creates a named menu; moving it out produces flat
+alternatives. Hovering groups during a drag opens them to choose a destination.
+The top/bottom drop indicators insert before/after a row; the center of a group
+appends inside. Cycles are rejected. Empty named menus remain usable drop targets;
+ordinary empty groups disappear and singletons collapse. Dragging never invokes
+commands or edits geometry.
+
+Settings has General and Toolbox tabs. The Toolbox tab shows the entire expanded
+tree, supports the same dragging, and provides a top-level drop area. Selecting a
+tool inside a flat group chooses its displayed alternative without invoking it.
+Reset toolbox to defaults restores the authored grouping. Preferences use
+`makeshift.toolbox.v7`, outside documents and Undo, with storage-event sync between
+windows. Migration from v4 separates the primitive and profile-based solid families,
+pins the Move/Rotate/Scale/Transform group below Select, removes Duplicate and keeps
+Mirror in Other Tools while preserving
+unrelated customization and remembered alternatives. v5/v6 preferences upgrade the
+former Transform slot to this group without resetting unrelated tools. Migration from v3/v2 also
+flattens old swapping groups and moves infrequent grouped tools into the named
+drawer. Old preference values remain available.
+
+Click the main tool button to invoke it; the separate arrow opens alternatives for
+touch and keyboard access. Up/Down navigates siblings, Right opens a group, Left
+returns, and Escape closes discovery without accepting a pending numeric edit.
+Opening Search by clicking or tapping its button, activating it with the keyboard,
+or using the shortcut closes flyouts and transfers borrowed focus to Search.
+Dismissing Search restores the original numeric field without accepting its draft. Unavailable tools
+retain their positions and explanatory tooltips; menu/group arrows stay usable.
+Physical iPad/Pencil ergonomics still require device review.

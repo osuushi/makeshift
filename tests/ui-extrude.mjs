@@ -10,6 +10,14 @@ export async function extrudeRoute(page, name) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-15, -10], [15, 10]);
+  // These pointer targets can straddle a coarse grid midpoint on the runner.
+  // Set the intended fixture dimensions through the ordinary precision controls.
+  await page.getByRole("textbox", { name: "Width", exact: true }).fill("30");
+  await page.keyboard.press("Enter");
+  await inspect(page);
+  await page.getByRole("textbox", { name: "Height", exact: true }).fill("20");
+  await page.keyboard.press("Enter");
+  await inspect(page);
   const pick = await at(page, 5, 3);
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(pick.x, pick.y);

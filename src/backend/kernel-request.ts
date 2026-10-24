@@ -14,6 +14,7 @@ import type { kernelInput, loftInput, pathSweepInput, revolveInput } from "./ker
 import type { projectionInput } from "./projection.js";
 
 type Request =
+  | { kind: "import-step"; step: string; bodies: readonly ExactBody[] }
   | ((
       | import("../model/mesh-fit.js").MeshFitInput
       | import("../model/mesh-fit.js").MeshReconstructionInput
@@ -64,6 +65,11 @@ type Request =
     }
   | ReturnType<typeof import("./measurement-input.js").measurementInput>
   | (Omit<BodyEdgeFinish, "size"> & { kind: "edge-finish-selection"; bodies: readonly ExactBody[] })
+  | (Omit<BodyEdgeFinish, "size"> & {
+      kind: "edge-finish-targets";
+      points: import("../sketch/planes.js").Vector[];
+      bodies: readonly ExactBody[];
+    })
   | (Omit<Extract<import("../model/mirror.js").MirrorOperation, { kind: "bodies" }>, "kind"> & {
       kind: "mirror";
       bodies: readonly ExactBody[];

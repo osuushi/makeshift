@@ -1,5 +1,5 @@
 import type { SketchEditor } from "../sketch/editor.js";
-import { idleReason, toolCatalog } from "../tools/catalog.js";
+import { toolCatalog } from "../tools/catalog.js";
 import { isBuiltinDecorator, knurlDefinition } from "./builtins.js";
 import { appendCustomContinue } from "./custom-continue.js";
 import { appendCustomDecorators } from "./custom-panel.js";
@@ -8,6 +8,8 @@ import { editDecorators, faceKey } from "./edits.js";
 import { appendKnurlSettings } from "./knurl-panel.js";
 import { decoratorLibrary } from "./library.js";
 import { appendThreadInformation, appendThreadProblem } from "./panel-information.js";
+import { appendPresetControls } from "./preset-panel.js";
+import { choiceKey } from "./presets.js";
 import { appendDecoratorRepairs } from "./repair-panel.js";
 import { DecoratorSettingsDraft } from "./settings-draft.js";
 import { ThreadApplication } from "./thread-application.js";
@@ -15,15 +17,16 @@ import { appendThreadSettings } from "./thread-panel.js";
 import { threadDefinition } from "./thread-settings.js";
 import type { DecoratorEdit, DecoratorInstance, FaceReference, Settings } from "./types.js";
 import "./panel.css";
-import { gearFaces } from "./gear-faces.js";
-import { gearDefinition } from "./gear-settings.js";
+import { gearFitFailure } from "./gear-group-geometry.js";
+import { gearGroupPanel } from "./gear-group-panel.js";
+import { registerDecoratorTools } from "./tool-registration.js";
 
 export class DecoratorPanel {
+  private surface = document.createElement("div");
   private root = document.createElement("section");
   private unregister: () => void;
-  private unregisterGear: () => void;
-  private unregisterKnurl: () => void;
   private disposeLibrary: () => void;
+  private disposeGearGroups: () => void;
   private key = "";
   private shownDocument: SketchEditor["store"]["data"] | null = null;
   private last: string | null = null;
@@ -42,49 +45,16 @@ export class DecoratorPanel {
     });
     this.root.className = "decorator-panel";
     this.root.setAttribute("aria-label", "Decorators");
-    parent.append(this.root);
+    this.surface.className = "decorator-stack";
+    this.surface.append(this.root);
+    parent.append(this.surface);
     this.disposeLibrary = decoratorLibrary(editor, parent);
-    this.unregister = toolCatalog(editor).register({
-      id: "threads",
-      finishEdit: true,
-      label: "Threads",
-      category: "Solid",
-      aliases: ["decorate", "screw", "thread"],
-      description: "Editable threads on cylindrical faces; generated at mesh export",
-      reason: () => idleReason(editor) ?? this.eligibility(),
-      run: () => this.apply(),
-    });
-    this.unregisterGear = toolCatalog(editor).register({
-      id: "gear",
-      finishEdit: true,
-      label: "Gear",
-      category: "Solid",
-      aliases: ["involute", "helical", "teeth"],
-      description: "Involute teeth around selected pitch surfaces; generated at mesh export",
-      reason: () => {
-        const reason = idleReason(editor);
-        if (reason) return reason;
-        if (editor.world.active || this.selected().length !== editor.modeling.targets.length)
-          return "Select pitch faces in Modeling";
-        try {
-          gearFaces(editor.store.data, this.selected());
-          return null;
-        } catch (error) {
-          return error instanceof Error ? error.message : String(error);
-        }
-      },
-      run: () => this.apply(gearDefinition),
-    });
-    this.unregisterKnurl = toolCatalog(editor).register({
-      id: "knurling",
-      finishEdit: true,
-      label: "Knurling",
-      category: "Solid",
-      aliases: ["knurl", "grip", "diamond texture"],
-      description: "Editable diamond knurling on cylindrical faces; generated at mesh export",
-      reason: () => idleReason(editor) ?? this.eligibility(knurlDefinition),
-      run: () => this.apply(knurlDefinition),
-    });
+    this.disposeGearGroups = gearGroupPanel(editor, this.surface);
+    this.unregister = registerDecoratorTools(
+      editor,
+      (definition) => this.apply(definition),
+      (definition) => this.eligibility(definition),
+    );
     editor.world.changed.add(this.update);
     this.update();
   }
@@ -122,12 +92,13 @@ export class DecoratorPanel {
   }
   private async apply(definition = threadDefinition): Promise<void> {
     const faces = this.selected();
+    const settings = this.editor.store.data.lastDecoratorChoices?.[choiceKey(definition)]?.settings;
     const edit = { action: "apply" as const, definition, faces };
     if (definition === threadDefinition) {
       try {
-        editDecorators(this.editor.store.data, edit);
+        editDecorators(this.editor.store.data, { ...edit, settings });
       } catch {
-        this.application.start(faces);
+        this.application.start(faces, settings);
         return;
       }
     }
@@ -175,7 +146,8 @@ export class DecoratorPanel {
     }
     const instances = this.instances();
     const problems = (this.editor.store.data.decorators ?? []).filter(
-      (d) => d.problem && d.definition !== threadDefinition,
+      (d) =>
+        d.problem && !d.problem.startsWith(gearFitFailure) && d.definition !== threadDefinition,
     );
     const last = this.editor.store.data.decorators?.find((d) => d.id === this.last);
     const canContinue =
@@ -217,7 +189,7 @@ export class DecoratorPanel {
     appendDecoratorRepairs(this.root, this.editor, problems);
     if (canContinue && last) {
       if (!isBuiltinDecorator(last.definition)) {
-        appendCustomContinue(this.root, this.editor, last, this.selected());
+        appendCustomContinue(this.root, this.editor, last);
         return;
       }
       this.button(
@@ -248,6 +220,7 @@ export class DecoratorPanel {
       this.expand(instances);
       this.editor.refresh();
     });
+    appendPresetControls(this.root, this.editor, instances);
     appendThreadInformation(this.root, this.editor, instances);
     const problem = appendThreadProblem(this.root, instances);
     appendThreadSettings(
@@ -256,6 +229,7 @@ export class DecoratorPanel {
       (patch, preview) => this.patch(patch, preview, instances),
       this.draft,
       this.advancedOpen || !!problem,
+      false,
     );
     this.button("Remove thread decorator from selected faces", () => {
       const keys = new Set(this.fresh(instances).flatMap((d) => d.faces.map(faceKey)));
@@ -270,6 +244,7 @@ export class DecoratorPanel {
       this.expand(instances);
       this.editor.refresh();
     });
+    appendPresetControls(this.root, this.editor, instances);
     appendKnurlSettings(this.root, this.editor, instances, this.draft, (patch, preview) =>
       this.patch(patch, preview, instances),
     );
@@ -284,11 +259,10 @@ export class DecoratorPanel {
   dispose(): void {
     this.editor.world.changed.delete(this.update);
     this.disposeLibrary();
+    this.disposeGearGroups();
     this.application.cancel();
     this.draft.cancel();
     this.unregister();
-    this.unregisterGear();
-    this.unregisterKnurl();
-    this.root.remove();
+    this.surface.remove();
   }
 }

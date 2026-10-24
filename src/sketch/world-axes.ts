@@ -1,11 +1,13 @@
 import * as THREE from "three";
+import { viewportPalette } from "../preferences/viewport-theme.js";
 
 /** World coordinates remain visible independently of plane-grid fading and opacity. */
 export function createWorldAxes(scene: THREE.Scene) {
   const geometry = new THREE.BufferGeometry();
   const positions = new Float32Array(18);
   geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  const colors = ["#ca6470", "#43916b", "#5983c8"].flatMap((hex) => {
+  const initial = viewportPalette();
+  const colors = [initial.x, initial.y, initial.z].flatMap((hex) => {
     const color = new THREE.Color(hex);
     return [...color.toArray(), ...color.toArray()];
   });
@@ -13,7 +15,7 @@ export function createWorldAxes(scene: THREE.Scene) {
   const material = new THREE.LineBasicMaterial({
     vertexColors: true,
     transparent: true,
-    opacity: 0.65,
+    opacity: 1,
     depthWrite: false,
   });
   // Coordinate references stay independent of sketch and section clipping.
@@ -43,6 +45,13 @@ export function createWorldAxes(scene: THREE.Scene) {
         positions[axis * 6 + axis] = -extent;
         positions[axis * 6 + 3 + axis] = extent;
       }
+      const palette = viewportPalette();
+      const colors = [palette.x, palette.y, palette.z].flatMap((hex) => {
+        const color = new THREE.Color(hex);
+        return [...color.toArray(), ...color.toArray()];
+      });
+      (geometry.attributes.color as THREE.BufferAttribute).set(colors);
+      geometry.attributes.color.needsUpdate = true;
       geometry.attributes.position.needsUpdate = true;
       geometry.computeBoundingSphere();
     },

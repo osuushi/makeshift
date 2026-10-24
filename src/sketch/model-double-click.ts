@@ -100,7 +100,9 @@ class ModelDoubleClick {
       !(event.target instanceof Node) ||
       !this.overlay.contains(event.target) ||
       (event.target instanceof Element &&
-        event.target.closest(".extrude-axis-sphere, .extrude-twist-handle"))
+        event.target.closest(
+          ".extrude-axis-sphere, .extrude-twist-handle, .guide-markers, .guide-choices",
+        ))
     )
       return;
     this.second = { down: event, pick: previous };

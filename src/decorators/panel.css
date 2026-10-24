@@ -6,10 +6,10 @@
   width: 250px;
   max-width: calc(100% - 40px);
   padding: 12px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: #fffffff5;
-  color: #26364a;
+  background: var(--panel);
+  color: var(--text);
   pointer-events: auto;
   font-size: 12px;
   max-height: calc(100vh - 210px);
@@ -17,6 +17,34 @@
 }
 .decorator-panel[hidden] {
   display: none;
+}
+.decorator-stack {
+  position: absolute;
+  top: 145px;
+  right: 20px;
+  z-index: 12;
+  width: 250px;
+  max-width: calc(100% - 40px);
+  max-height: calc(100vh - 210px);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: auto;
+}
+.decorator-stack > .decorator-panel {
+  position: static;
+  width: 100%;
+  max-width: 100%;
+  max-height: none;
+  flex: 0 0 auto;
+}
+.gear-groups ul {
+  padding-left: 16px;
+  line-height: 1.5;
+}
+.gear-groups li + li {
+  margin-top: 6px;
 }
 .decorator-library {
   right: 290px;
@@ -41,9 +69,9 @@
   width: 100%;
   min-width: 0;
   padding: 5px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border);
   border-radius: 5px;
-  background: white;
+  background: var(--panel);
   color: inherit;
 }
 .decorator-panel button {
@@ -52,7 +80,7 @@
   margin: 4px 0;
 }
 .decorator-panel p {
-  color: #526477;
+  color: var(--teal);
   line-height: 1.4;
 }
 .decorator-panel .thread-clearance-hint {
@@ -61,32 +89,19 @@
 }
 .decorator-panel .thread-advanced {
   margin: 8px 0;
-  border-top: 1px solid #dbe3ec;
+  border-top: 1px solid var(--border);
   padding-top: 8px;
 }
 .decorator-panel .thread-advanced summary {
   cursor: pointer;
-  color: #526477;
+  color: var(--teal);
 }
 .decorator-panel .decorator-warning {
-  color: #8a4b0b;
+  color: var(--danger);
 }
-.gear-resize {
-  margin: 145px 20px auto auto;
-  width: 270px;
-  padding: 16px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  color: #26364a;
-  background: white;
+.decorator-preset-controls {
+  margin-block: 6px;
 }
-.gear-resize label {
-  display: grid;
-  gap: 6px;
-}
-.gear-resize button {
-  margin: 5px 3px;
-}
-.gear-resize::backdrop {
-  background: transparent;
+.decorator-preset-controls label {
+  margin: 0;
 }

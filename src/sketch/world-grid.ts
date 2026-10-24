@@ -24,7 +24,6 @@ export function createGrids(scene: THREE.Scene) {
     ) {
       axes.update(camera, target, height);
       const direction = camera.getWorldDirection(new THREE.Vector3());
-      const spacing = gridSpacing(height, viewportHeight);
       const sketch = visibleSketchGrid(
         settings,
         viewportHeight / height,
@@ -42,7 +41,7 @@ export function createGrids(scene: THREE.Scene) {
             new THREE.Matrix4().makeBasis(grid.u, grid.v, grid.normal),
           );
         }
-        updateGridSpacing(grid, settings, sketch, spacing);
+        updateGridSpacing(grid, settings, sketch);
         grid.material.uniforms.coordinateDepthDistance.value = height * 2.5;
         grid.material.uniforms.coordinateViewCenter.value.copy(target);
         grid.material.uniforms.coordinateViewDirection.value.copy(direction);
@@ -77,7 +76,7 @@ export function createGrids(scene: THREE.Scene) {
             ? facing > 0.005
             : !active && facing > 1e-8 && visibility[grid.id].opacity > 0;
       }
-      return active ? sketch.snap : spacing;
+      return sketch.snap;
     },
     dispose() {
       axes.dispose();
@@ -109,21 +108,19 @@ function updateGridSpacing(
   grid: ReturnType<typeof createGrid>,
   settings: SketchGrid,
   sketch: ReturnType<typeof visibleSketchGrid>,
-  spacing: number,
 ): void {
-  const work = grid.id === "work";
   grid.material.uniforms.gridColor.value.set(
     grid.id === "work" ? settings.minorColor : canonicalPlanes().colors[grid.id],
   );
   grid.material.uniforms.majorColor.value.set(
     grid.id === "work" ? settings.majorColor : canonicalPlanes().colors[grid.id],
   );
-  grid.material.uniforms.spacing.value = work ? sketch.minor : spacing;
-  grid.material.uniforms.majorSpacing.value = work ? sketch.major : spacing * 10;
-  grid.material.uniforms.minorVisible.value = work && sketch.hideMinor ? 0 : 1;
+  grid.material.uniforms.spacing.value = sketch.minor;
+  grid.material.uniforms.majorSpacing.value = sketch.major;
+  grid.material.uniforms.minorVisible.value = sketch.hideMinor ? 0 : 1;
 }
 
-function gridSpacing(height: number, viewportHeight: number): number {
+export function gridSpacing(height: number, viewportHeight: number): number {
   // Keep squares near 32 CSS pixels with familiar decimal snap increments.
   // Geometric midpoints select the closest step by proportional screen size.
   const desired = (32 * height) / Math.max(1, viewportHeight);

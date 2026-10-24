@@ -60,7 +60,7 @@ export class MirrorReferenceView {
     const line = new Line2(
       geometry,
       new LineMaterial({
-        color: this.hover ? "#1676d2" : "#d28b22",
+        color: this.hover ? "#1676d2" : "#a66a16",
         linewidth: this.hover ? 3 : 1.5,
         dashed: !this.hover,
         dashSize: reach / 30,
@@ -84,7 +84,7 @@ export class MirrorReferenceView {
     const mesh = new THREE.Mesh(
       face ? geometry : new THREE.PlaneGeometry(reach, reach),
       new THREE.MeshBasicMaterial({
-        color: this.hover ? "#1676d2" : "#d28b22",
+        color: this.hover ? "#1676d2" : "#a66a16",
         transparent: true,
         opacity: this.hover ? 0.4 : 0.16,
         depthTest: !this.hover,

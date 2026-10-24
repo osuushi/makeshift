@@ -1,5 +1,7 @@
 import { validateDefinitions } from "../decorators/definition-edits.js";
 import { validateDecorators } from "../decorators/edits.js";
+import { validatePresets } from "../decorators/presets.js";
+import { validateGuides } from "../guides/model.js";
 import { validateBodyAppearances } from "../model/body-appearance.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { validateSketchGrid } from "../sketch/grid-settings.js";
@@ -18,7 +20,9 @@ export function validateDocument(document: SketchDocument): void {
   if (document.sketchGrid !== undefined) validateSketchGrid(document.sketchGrid);
   validateBodyAppearances(document);
   validateTags(document);
+  validateGuides(document);
   validateDecorators(document);
+  validatePresets(document);
   validateDefinitions(document);
   if (document.entityPresentation !== undefined) {
     if (!Array.isArray(document.entityPresentation)) throw new Error("Invalid entity presentation");
@@ -52,6 +56,7 @@ export function validateDocument(document: SketchDocument): void {
     validateFrame(plane.frame);
   }
   for (const group of document.taggedGroups ?? []) identify(group.id);
+  for (const point of document.guidePoints ?? []) identify(point.id);
   for (const instance of document.decorators ?? []) identify(instance.id);
   for (const body of document.bodies ?? []) {
     identify(body.id);

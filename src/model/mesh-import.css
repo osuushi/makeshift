@@ -7,11 +7,11 @@
   max-height: calc(100vh - 150px);
   overflow-y: auto;
   padding: 16px;
-  border: 1px solid var(--border, #d7dee8);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--panel, #fff);
-  color: var(--text, #26394c);
-  box-shadow: 0 5px 24px #24364c1a;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 5px 24px var(--shadow);
   pointer-events: auto;
   font:
     13px system-ui,
@@ -39,7 +39,7 @@
   font: inherit;
   color: inherit;
   background: transparent;
-  border: 1px solid #b8c5d5;
+  border: 1px solid var(--border);
   border-radius: 5px;
 }
 .mesh-import-widget p {
@@ -53,7 +53,7 @@
 }
 .mesh-import-actions button {
   padding: 7px 9px;
-  border: 1px solid #b8c5d5;
+  border: 1px solid var(--border);
   border-radius: 6px;
   background: transparent;
   color: inherit;
@@ -67,7 +67,7 @@
 .mesh-import-legend {
   display: block;
   border-top: 6px solid;
-  border-image: linear-gradient(to right, #246db5, #e69720) 1;
+  border-image: linear-gradient(to right, var(--accent), var(--warning)) 1;
   padding-top: 5px;
   line-height: 1.4;
 }

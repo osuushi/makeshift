@@ -46,6 +46,15 @@ export class ExtrudeTwist {
     this.handle.title = "Drag twist · Shift bypasses whole-degree snapping · click to type";
     this.guide.classList.add("extrude-axis-guide");
     root.append(this.guide, this.sphere, this.handle);
+    this.handle.addEventListener(
+      "click",
+      (event) => {
+        if (event.detail !== 0 || this.handle.disabled || !this.begin()) return;
+        this.input.focus();
+        this.input.select();
+      },
+      { signal },
+    );
     this.input.addEventListener("focus", () => this.begin(), { signal });
     this.input.addEventListener(
       "input",

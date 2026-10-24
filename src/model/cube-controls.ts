@@ -244,7 +244,11 @@ export class CubeControls {
     }
     this.editor.modeling.targets = [{ kind: "profile", sketch: sketch.id, profile }];
     this.editor.notice = "Extrude · Drag the arrow or edit the depth · Click away to finish";
-    if (!this.extrude(Math.min(bounds.width, bounds.height), bounds.symmetric))
+    if (
+      !this.editor.interactions.continueTool(lease, () =>
+        this.extrude(Math.min(bounds.width, bounds.height), bounds.symmetric),
+      )
+    )
       this.editor.message = "Select the rectangle region to extrude";
     this.editor.refresh();
   }

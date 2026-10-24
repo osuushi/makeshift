@@ -3,10 +3,10 @@
   display: grid;
   gap: 8px;
   padding: 10px;
-  border: 1px solid #bac4ce;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fffffff5;
-  box-shadow: 0 3px 14px #26374726;
+  background: var(--panel);
+  box-shadow: 0 3px 14px var(--shadow);
   pointer-events: auto;
   font-size: 13px;
   z-index: 30;
@@ -27,5 +27,5 @@
   min-height: 28px;
 }
 .mirror-widget input[aria-invalid="true"] {
-  border-color: #b3261e;
+  border-color: var(--danger);
 }

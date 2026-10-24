@@ -19,7 +19,7 @@ export class ModelControls {
   private placement: PlacementControls;
   private revolve: RevolveControls;
   private loft: LoftControls;
-  private extrusion: ExtrudeControls;
+  readonly extrusion: ExtrudeControls;
   private cube: CubeControls;
   private selectionDrag: ModelSelectionDrag;
   constructor(
@@ -146,6 +146,7 @@ export class ModelControls {
       async (event) => {
         if (
           editor.world.active ||
+          editor.interactions.current?.selectsLocally() ||
           ["body-move", "placement"].includes(editor.interactions.current?.kind ?? "")
         )
           return;
@@ -277,6 +278,7 @@ export class ModelControls {
     )
       return;
     this.placement.enabled = true;
+    this.editor.modeling.setTool("move");
     this.editor.refresh();
   }
   private enter(fresh = false): boolean {

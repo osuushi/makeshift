@@ -36,11 +36,11 @@ export async function customDecoratorRoute(page) {
   await clearSelection(page);
   await orient(page, [0, -1, 0.3]);
   await worldClick(page, [0, -8, 5]);
-  await page.getByText("Raised pads require planar faces", { exact: true }).waitFor();
-  assert.equal(
-    await page.getByRole("button", { name: "Apply Raised pad", exact: true }).isDisabled(),
-    true,
-  );
+  await page.getByRole("button", { name: "Apply Raised pad", exact: true }).click();
+  const step = page.getByRole("group", { name: "Select tool inputs", exact: true });
+  await step.waitFor();
+  assert.equal(await step.getByRole("button", { name: "Next", exact: true }).isDisabled(), true);
+  await step.getByRole("button", { name: "Cancel", exact: true }).click();
   await clearSelection(page);
   await orient(page, [1, -1, 1]);
   await worldClick(page, [2, -2, 10]);

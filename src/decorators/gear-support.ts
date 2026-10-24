@@ -2,9 +2,24 @@ import type { DisplayDocument } from "../model/display-document.js";
 import { bevelFrame, bevelProfile } from "./bevel-profile.js";
 import { cross, cylinderExtent, cylinderFrame, dot, resolveFaces, subtract } from "./cylinder.js";
 import { gearFaces, sameGearSupport } from "./gear-faces.js";
+import { gearGroupProblem, refitGearGroups } from "./gear-group.js";
 import { gearDimensions, gearSettings, involute, radians } from "./gear-settings.js";
 import type { DecoratorDiagnostic } from "./javascript-hooks.js";
 import type { DecoratorInstance, FaceReference } from "./types.js";
+
+/** Refit shared dimensions before validating each member's ordinary support contract. */
+export function continueGearGroups<Document extends DisplayDocument>(document: Document): Document {
+  const fitted = refitGearGroups(document);
+  let changed = false;
+  const decorators = fitted.decorators?.map((instance) => {
+    if (!instance.gearGroup || instance.problem) return instance;
+    const error = gearDiagnostics(fitted, instance).find((d) => d.severity === "error");
+    if (!error) return instance;
+    changed = true;
+    return { ...instance, problem: `Decorator continuation needs attention: ${error.message}` };
+  });
+  return changed ? { ...fitted, decorators } : fitted;
+}
 
 export function partitionGears(document: DisplayDocument, instance: DecoratorInstance) {
   const faces = gearFaces(document, instance.faces);
@@ -74,7 +89,11 @@ export function inspectGear(document: DisplayDocument, instance: DecoratorInstan
   }
   const cylinder = resolveFaces(document.bodies ?? [], instance.faces)[0].cylinder;
   return {
-    ...gearDimensions(cylinder.radius, gearSettings(instance.settings), cylinder.outward),
+    ...gearDimensions(
+      instance.gearPitchRadius ?? cylinder.radius,
+      gearSettings(instance.settings),
+      cylinder.outward,
+    ),
     support: cylinder,
     frame: instance.frame,
   };
@@ -87,6 +106,8 @@ export function gearDiagnostics(
   try {
     if (instance.version !== 1) throw new Error("Unsupported Gear version");
     const settings = gearSettings(instance.settings);
+    const groupProblem = gearGroupProblem(document, instance);
+    if (groupProblem) throw new Error(groupProblem);
     if (partitionGears(document, instance).length !== 1)
       throw new Error("Gear faces must share one pitch surface and material side");
     if (gearFaces(document, instance.faces)[0].plane) {

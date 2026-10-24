@@ -11,6 +11,24 @@ export const gearManifest: DecoratorDefinition = {
   preview: true,
   fields: [
     {
+      key: "diameterTolerance",
+      label: "Pitch diameter tolerance",
+      type: "number",
+      unit: "mm",
+      default: 0.2,
+      min: 0,
+      max: 10,
+    },
+    {
+      key: "minimumTooth",
+      label: "Minimum tooth tip width",
+      type: "number",
+      unit: "mm",
+      default: 0.4,
+      min: 0.05,
+      max: 10,
+    },
+    {
       key: "module",
       label: "Rack normal module",
       type: "number",
@@ -109,6 +127,8 @@ export interface GearSettings extends Settings {
   module: number;
   direction: number;
   rackPhase: number;
+  diameterTolerance: number;
+  minimumTooth: number;
 }
 export const radians = (degrees: number) => (degrees * Math.PI) / 180;
 export const involute = (angle: number) => Math.tan(angle) - angle;

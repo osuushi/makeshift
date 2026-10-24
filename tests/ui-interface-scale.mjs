@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { project } from "./ui-blend-edit.mjs";
 import { at, click, close, corners, drag, inspect, reset, settled } from "./ui-helpers.mjs";
 import { previewActionReady } from "./ui-preview-readiness.mjs";
@@ -7,9 +8,9 @@ import { chooseTool } from "./ui-tools.mjs";
 export async function changeScale(page, value, tools = false) {
   if (tools) await chooseTool(page, "user interface scale", "settings");
   else await page.locator(".settings-trigger").click();
-  const dialog = page.getByRole("dialog", { name: "Settings", exact: true });
+  const dialog = await settingsSurface(page, "Interface");
   await dialog.getByRole("combobox", { name: "User interface scale" }).selectOption(String(value));
-  await dialog.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(dialog);
   await settled(page);
 }
 
@@ -39,7 +40,7 @@ export async function preferencesRoute(page) {
   await page.reload();
   await settled(page);
   await page.locator(".settings-trigger").click();
-  const dialog = page.getByRole("dialog", { name: "Settings", exact: true });
+  const dialog = await settingsSurface(page, "Interface");
   assert.equal(
     await dialog.getByRole("combobox", { name: "User interface scale" }).inputValue(),
     "1.5",
@@ -49,7 +50,7 @@ export async function preferencesRoute(page) {
     await dialog.getByRole("combobox", { name: "User interface scale" }).inputValue(),
     "1",
   );
-  await dialog.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(dialog);
   await page.reload();
   await settled(page);
   assert.equal(await page.evaluate(() => localStorage.getItem("makeshift.ui-scale")), "1");
@@ -110,6 +111,7 @@ export async function geometryScaleRoute(page, scale, name) {
   await page.locator(".body-transform-value").fill("4");
   await page.keyboard.press("Enter");
   close((await inspect(page)).document.bodies[0].center[0], 20);
+  await page.getByRole("button", { name: "Scale layer", exact: true }).click();
   await page.locator(".transform-box-handle:visible").last().click();
   const card = await page.locator(".scale-card:visible").boundingBox();
   const viewport = await page.getByLabel("Modeling viewport", { exact: true }).boundingBox();
@@ -147,7 +149,7 @@ async function navigationScaleRoute(page, name, scale) {
     before.camera.height,
   );
   const cube = await page.locator(".orientation-cube").boundingBox();
-  const tools = await page.getByRole("button", { name: "More tools", exact: true }).boundingBox();
+  const tools = await page.getByRole("button", { name: "Search tools", exact: true }).boundingBox();
   assert.ok(tools.x + tools.width < cube.x, "Scaled Tools and cube remain separate");
   await page.getByRole("button", { name: "Top view", exact: true }).click();
   await inspect(page);

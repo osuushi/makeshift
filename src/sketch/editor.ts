@@ -149,6 +149,8 @@ export class SketchEditor {
     this.selectTargets([...ids].map((curve) => ({ kind: "curve", curve })));
   }
   refresh(): void {
+    this.visibility.observe(this.store.data);
+    if (this.candidate) this.visibility.observe(this.candidate);
     const sketch = this.store.data.sketches.find((s) => s.id === this.world.workspace?.sketchId);
     if (sketch) this.world.syncWorkspaceFrame(sketch.plane);
     // Pointer input and calculator notifications can arrive several times per paint.
@@ -158,6 +160,7 @@ export class SketchEditor {
   }
   async setTool(tool: Tool): Promise<void> {
     if (!(await completeInteraction(this))) return;
+    if (tool !== "select" && !this.world.active && !this.workspaceEntry.fromContext()) return;
     this.selected.replacePoints([]);
     this.pointMenu = null;
     this.pointHover = null;

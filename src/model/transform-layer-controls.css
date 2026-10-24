@@ -1,0 +1,37 @@
+.transform-layers {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px;
+  transform: translateX(-50%);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  pointer-events: auto;
+}
+.transform-layers[hidden] {
+  display: none;
+}
+.transform-layers button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--text);
+}
+.transform-layers button[aria-pressed="true"] {
+  background: var(--selected);
+  border-color: var(--accent);
+}
+.transform-layers svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+}

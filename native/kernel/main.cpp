@@ -50,8 +50,10 @@ gp_Pnt point(const Tree& tree) {
 void validate(const TopoDS_Shape& shape) {
     if (shape.IsNull() || !BRepCheck_Analyzer(shape).IsValid()) throw std::runtime_error("Kernel produced invalid geometry");
 }
-double volume(const TopoDS_Shape& shape, int referenceAxis) {
+double volume(const TopoDS_Shape& shape, int referenceAxis,
+              std::optional<std::array<double, 6>>* exactBounds) {
     KernelTiming timing("volume");
+    if (exactBounds) exactBounds->reset();
     if (shape.IsNull()) return 0;
     GProp_GProps props;
     bool planar = true;
@@ -64,6 +66,7 @@ double volume(const TopoDS_Shape& shape, int referenceAxis) {
         timing.phase("bounds");
         if (bounds.IsVoid()) return 0;
         double lo[3], hi[3]; bounds.Get(lo[0], lo[1], lo[2], hi[0], hi[1], hi[2]);
+        if (exactBounds) *exactBounds = std::array{lo[0], lo[1], lo[2], hi[0], hi[1], hi[2]};
         // Integrate across spline spans. Ordinary adaptive quadrature can converge
         // to different volumes for the same solid after its faces are repartitioned.
         // A nearby exterior plane avoids near-zero integrals on trimmed faces,
@@ -175,6 +178,11 @@ void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
     if (input.get<std::string>("kind") == "edge-finish-selection") {
         std::ostringstream output;
         edgeFinishSelection(output, input, bodies);
+        reply << output.str(); return;
+    }
+    if (input.get<std::string>("kind") == "edge-finish-targets") {
+        std::ostringstream output; output << std::setprecision(17);
+        edgeFinishTargets(output, input, bodies);
         reply << output.str(); return;
     }
     if (input.get<std::string>("kind") == "offset-sketch") {

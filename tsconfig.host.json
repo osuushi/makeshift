@@ -12,6 +12,7 @@
   "include": [
     "src/main.ts",
     "src/preload.cts",
+    "src/settings-preload.cts",
     "src/agent-cli/main.ts",
     "src/agent-cli/script-worker.ts",
     "src/agent-cli/view-worker.ts"

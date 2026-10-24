@@ -20,12 +20,14 @@ import type { HistoryOperation, OperationHistoryEntry } from "./operation-histor
 import type { PlaneFrame } from "./planes.js";
 
 export type ModelRequest =
+  | { kind: "guide-point"; edit: import("../guides/types.js").GuideEdit }
   | { kind: "sketch-grid"; grid: import("./grid-settings.js").SketchGrid; initialize?: boolean }
   | {
       kind: "paste-geometry";
       text: string;
       target?: import("../clipboard/geometry.js").PasteTarget;
     }
+  | { kind: "import-step"; step: string }
   | { kind: "reconstruct-mesh"; input: import("../model/mesh-fit.js").MeshReconstructionInput }
   | { kind: "tagged-group"; edit: import("../tags/model.js").TagEdit }
   | { kind: "export-step"; items: import("../model/step-export.js").StepItem[] }
@@ -59,6 +61,11 @@ export type ModelRequest =
   | { kind: "mirror"; operation: import("../model/mirror.js").MirrorOperation }
   | { kind: "measure"; targets: import("../model/measurement.js").MeasurementTarget[] }
   | { kind: "center-of-mass"; body: string }
+  | {
+      kind: "edge-finish-targets";
+      operation: Omit<BodyEdgeFinish, "size">;
+      points: import("./planes.js").Vector[];
+    }
   | { kind: "cancel-preview" }
   | { kind: "supersede-preview"; interrupt?: boolean }
   | { kind: "check-cleanup" | "read-history" }
@@ -138,5 +145,6 @@ export type ModelReply = {
   history?: OperationHistoryEntry[];
   measurement?: import("../model/measurement.js").Measurement;
   centerOfMass?: import("./planes.js").Vector;
+  edgeFinishTargets?: (number | null)[];
 };
 export type ModelCall = (request: ModelRequest) => Promise<ModelReply>;

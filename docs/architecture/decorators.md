@@ -19,8 +19,8 @@ Attach editable settings to selected geometry without replacing that geometry.
 At export, generate mesh modifications using the accepted geometry
 as read-only input. Threads and [knurling](knurling.md) are built-in decorators. JavaScript authors
 must be able to implement the same hooks. The built-in [gear decorator](gears.md)
-adds pitch-cylinder, pitch-cone and rack tools using the same owner and mesh pipeline. Gear relationships,
-approximate cylinder recognition, shader previews and print-color assignment remain
+adds pitch-cylinder, pitch-cone and rack tools using the same owner and mesh pipeline. Automatic external spur gear groups are described there; approximate cylinder
+recognition, shader previews and print-color assignment remain
 later work.
 
 Apply to multiple cylindrical faces, internal or external. Reject incompatible
@@ -173,8 +173,7 @@ The opposite tips retain the original sharp profile. Relative to the unmodified
 triangle, tip truncation removes material from both parts and increases their
 local gap; it does not replace the separate radial hole clearance. Neither
 preset changes the modeled diameter or depends on layer/nozzle
-dimensions. FDM fine begins with 0.25 mm hole-side radial relief; FDM coarse
-begins with 0.1 mm, based on the founder's fit tests. Choosing a preset
+dimensions. Both FDM presets begin with 0.25 mm hole-side radial relief. Choosing a preset
 explicitly restores its default clearance and the 0.1 mm truncation.
 Saved explicit clearance values remain unchanged. The simple panel shows preset,
 handedness, Cut into and a Clearance field for this relief. Its hint asks users
@@ -184,6 +183,24 @@ profile or tip truncation marks it Custom; clearance, handedness, cut and
 extent edits keep the chosen preset. Older documents without tip truncation
 retain their sharp profile until a preset is explicitly reapplied. Edits use
 the same owner/Undo path.
+
+Decorator panels use one Preset menu, grouping built-in choices under Global and
+named document-local presets under Document. Save as document preset creates a
+copy through a focused name dialog. Rename… in the same menu edits a document
+preset name in that dialog; no permanent duplicate name field is shown. Automatic
+copies use “copy”, “copy 2”, “copy 3”, including copies of copies. The thread
+reference-diameter paragraph is omitted; actionable geometry warnings and their face-selection controls remain.
+A preset stores resolved settings for one definition/version, so
+reusing it preserves explicit dimensions rather than re-inferring them. The last
+accepted choice per definition/version is saved with the document and reused on
+application. Editing a built-in creates a local copy. Editing an unshared local
+preset updates that copy; editing one used by other parts forks it so their settings
+remain unchanged. Preset selection, copies, names, and last choices participate in
+ordinary Undo and archives. Numeric preview/cancellation does not save a preset.
+These settings snapshots do not link geometry or automatically resize mating parts.
+Automatic [spur-gear groups](gears.md) recall shared fitting limits and pressure,
+then refit integer counts and phase to the current cylinders. Their group membership,
+rather than preset sharing, maintains compatible generated profiles through resize.
 
 The Metric 60° and rounded profiles retain their prior depth rule; the FDM
 triangle's 1 mm radial envelope is fixed across pitch edits.
@@ -283,7 +300,9 @@ repair policy when their topology merges incompatible regions.
 
 Consume immediate operation correspondence when accepting the geometry edit;
 do not add a persistent operation-history graph. Undo restores geometry and
-decorator assignments together. Body deletion removes its decorations.
+decorator assignments together. Body deletion removes its decorations. Explicit
+face deletion also removes a decoration when all its assigned faces were selected
+for deletion and none survive; other lost supports retain the repair diagnostic.
 
 Invalid decorators show red warning stripes on surviving affected faces, including
 when deselected; selection lightens the red while retaining the pattern. Geometry

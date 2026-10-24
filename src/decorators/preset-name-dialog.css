@@ -1,0 +1,39 @@
+.preset-name-dialog {
+  width: min(360px, calc(100vw - 40px));
+  box-sizing: border-box;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--text);
+}
+.preset-name-dialog::backdrop {
+  background: var(--backdrop);
+}
+.preset-name-dialog h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+}
+.preset-name-dialog label {
+  display: grid;
+  gap: 6px;
+}
+.preset-name-dialog input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+}
+.preset-name-dialog form > div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.preset-name-dialog button {
+  min-height: 44px;
+}
+.preset-name-dialog [role="status"]:empty {
+  margin: 8px 0;
+}

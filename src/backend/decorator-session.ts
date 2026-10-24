@@ -4,10 +4,12 @@ import {
   resolveCustomContinuation,
 } from "../decorators/custom-continuation.js";
 import { editDecorators } from "../decorators/edits.js";
+import { continueGearGroups } from "../decorators/gear-support.js";
 import { type DecoratorInspectionRequest, inspectDecorator } from "../decorators/inspection.js";
 import { editJavaScriptDecorators, needsJavaScript } from "../decorators/javascript-edits.js";
 import { type EnabledDefinition, JavaScriptDecorators } from "../decorators/javascript-hooks.js";
 import { initializeDecoratorRuntime } from "../decorators/javascript-runtime.js";
+import { editWithPresets } from "../decorators/preset-edits.js";
 import { inspectThreads } from "../decorators/thread-inspection.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
@@ -32,7 +34,8 @@ export class DecoratorSession {
     }
   }
   async continue(document: SketchDocument): Promise<SketchDocument> {
-    if (!document.decorators?.some((d) => pendingCustomContinuation.has(d))) return document;
+    if (!document.decorators?.some((d) => pendingCustomContinuation.has(d)))
+      return continueGearGroups(document);
     return resolveCustomContinuation(document, await this.hooks());
   }
   async inspect(document: SketchDocument, query: DecoratorInspectionRequest) {
@@ -45,8 +48,12 @@ export class DecoratorSession {
       this.enable(document, request.id, request.version, request.enabled);
       return document;
     }
-    if (request.kind === "decorator" && needsJavaScript(document, request.edit))
-      return editJavaScriptDecorators(document, request.edit, await this.hooks());
+    if (request.kind === "decorator")
+      return editWithPresets(document, request.edit, async (source, edit) =>
+        needsJavaScript(source, edit)
+          ? editJavaScriptDecorators(source, edit, await this.hooks())
+          : editDecorators(source, edit),
+      );
     return null;
   }
   fork(): DecoratorSession {

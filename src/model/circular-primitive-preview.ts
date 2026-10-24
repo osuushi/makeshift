@@ -24,7 +24,7 @@ export class CircularPrimitivePreview {
   );
   private circle = new THREE.LineLoop(
     new THREE.BufferGeometry(),
-    new THREE.LineBasicMaterial({ color: "#28643a", depthTest: false, depthWrite: false }),
+    new THREE.LineBasicMaterial({ color: "#32834e", depthTest: false, depthWrite: false }),
   );
   private label = document.createElement("span");
   constructor(

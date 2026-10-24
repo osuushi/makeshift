@@ -25,7 +25,7 @@ export async function createSphere(
     return false;
   }
   editor.modeling.targets = [{ kind: "profile", sketch: sketch.id, profile }];
-  if (revolve.start(axis, "union")) return true;
+  if (editor.interactions.continueTool(lease, () => revolve.start(axis, "union"))) return true;
   editor.message = "Select the half-circle region to revolve";
   editor.refresh();
   return false;

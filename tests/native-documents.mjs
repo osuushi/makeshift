@@ -1,6 +1,6 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { _electron } from "playwright";
 import { documentTestPage, followDocument } from "./document-test-page.mjs";
 import { reset } from "./ui-helpers.mjs";
@@ -67,6 +67,10 @@ export async function openDocument(page, file) {
   if (!session) {
     const chooser = page.waitForEvent("filechooser");
     await chooseTool(page, "open document", "open");
+    await page
+      .getByRole("dialog", { name: "Open drawing", exact: true })
+      .getByRole("button", { name: "Import file…", exact: true })
+      .click();
     await (await chooser).setFiles(file);
     const discard = page
       .getByRole("dialog", { name: "Unsaved changes" })
@@ -76,7 +80,7 @@ export async function openDocument(page, file) {
   }
   let path = file;
   if (typeof file !== "string") {
-    path = join(session.directory, "fixture.makeshift");
+    path = join(session.directory, basename(file.name ?? "fixture.makeshift"));
     await writeFile(path, file.buffer);
   }
   // Archive fixture cases need a fresh owner when reopening the current file.
@@ -103,7 +107,10 @@ export async function openDocument(page, file) {
   if (!next) throw new Error(`Open did not create or focus document: ${path}`);
   await installTestFrames(next);
   await followDocument(page, next);
-  await page.waitForFunction(() => !window.makeshiftInspect().busy);
+  // Wait for renderer inspection to be available as well as an idle document.
+  await page.waitForFunction(
+    () => typeof window.makeshiftInspect === "function" && !window.makeshiftInspect().busy,
+  );
 }
 
 export async function saveDocument(page, path) {
@@ -164,7 +171,7 @@ export async function exportDocument(page, format, path, stepChoice) {
 
 /** Exercise the ordinary native Edit menu or the browser File/Edit menu. */
 export async function historyMenu(page, direction = "undo") {
-  await page.getByRole("button", { name: "More tools", exact: true }).focus();
+  await page.getByRole("button", { name: "Search tools", exact: true }).focus();
   const session = sessions.get(page);
   if (session) {
     await session.app.evaluate(({ Menu }, direction) => {

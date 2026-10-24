@@ -4,7 +4,7 @@ export interface NumericFields {
   commitFocused(): Promise<void>;
   cancel(): void;
   focus(quantity: Quantity, duplicate?: boolean): void;
-  focusTransform(reverse?: boolean): Promise<boolean>;
+  activateTransform(axis: "x" | "y" | "rotation"): Promise<boolean>;
   focusFirst(initial?: string): void;
 }
 
@@ -37,8 +37,8 @@ export class NumericEdit {
   focus(quantity: Quantity, duplicate = false): void {
     this.requireOwners().fields.focus(quantity, duplicate);
   }
-  focusTransform(reverse = false): Promise<boolean> {
-    return this.requireOwners().fields.focusTransform(reverse);
+  activateTransform(axis: "x" | "y" | "rotation"): Promise<boolean> {
+    return this.requireOwners().fields.activateTransform(axis);
   }
   focusFirst(initial?: string): void {
     this.requireOwners().fields.focusFirst(initial);

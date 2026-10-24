@@ -1,27 +1,40 @@
+import type { GuideControls } from "../guides/controls.js";
+import { GuideRows } from "../guides/rows.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { modelingSketch } from "../sketch/model-selection.js";
 import { type ModelingTarget, modelingKey } from "../sketch/model-selection-state.js";
 import type { TagControls } from "../tags/controls.js";
 import { TagRows } from "../tags/rows.js";
 import { toolCatalog } from "../tools/catalog.js";
+import { selectionPickers } from "../tools/tool-selection.js";
 import { bodyAppearanceControl } from "./body-appearance-control.js";
+import { EntityChildren } from "./entity-children.js";
 import { entityRows } from "./entity-presentation.js";
 import { renameEntity } from "./entity-rename.js";
 import { EntityReorder } from "./entity-reorder.js";
+import { visibilityIcon } from "./visibility-icon.js";
 
 export class EntityViewer {
-  sourcePicker: {
+  private localSourcePicker: {
     choose?: (target: ModelingTarget) => void;
     hover: (target: ModelingTarget | null) => void;
     selected: (target: ModelingTarget) => boolean;
     available?: (target: ModelingTarget) => boolean;
     role?: (target: ModelingTarget) => "target" | "tool" | "input" | undefined;
   } | null = null;
+  get sourcePicker(): EntityViewer["localSourcePicker"] {
+    return this.localSourcePicker ?? selectionPickers.get(this.editor) ?? null;
+  }
+  set sourcePicker(picker: EntityViewer["localSourcePicker"]) {
+    this.localSourcePicker = picker;
+  }
   readonly operationRows = document.createElement("section");
   readonly referenceRows = document.createElement("section");
   private root = document.createElement("aside");
   private key = "";
   private tags: TagRows;
+  private guides: GuideRows;
+  private children = new EntityChildren();
   private refreshRows: (() => void)[] = [];
   private selectionRows: ModelingTarget[] = [];
   private selectionAnchor: string | null = null;
@@ -32,8 +45,10 @@ export class EntityViewer {
     private editor: SketchEditor,
     app: HTMLElement,
     tags: TagControls,
+    guides: GuideControls,
   ) {
     this.tags = new TagRows(editor, tags);
+    this.guides = new GuideRows(editor, guides);
     this.root.className = "entity-viewer";
     this.root.setAttribute("aria-label", "Entities");
     app.append(this.root);
@@ -103,6 +118,32 @@ export class EntityViewer {
     };
     return select;
   }
+  private toggleVisibility(id: string, target: ModelingTarget): void {
+    void toolCatalog(this.editor).activate({
+      reason: () => null,
+      run: () => {
+        if (
+          !this.editor.store.data.bodies?.some((body) => body.id === id) &&
+          !this.editor.store.data.sketches.some((sketch) => sketch.id === id)
+        )
+          return;
+        const visible = this.editor.visibility.visible(id);
+        if (visible) this.editor.visibility.hide(id);
+        else {
+          this.editor.visibility.show(id);
+          if (target.kind === "body") this.editor.bodiesVisible = true;
+        }
+        if (visible && this.editor.world.workspace?.sketchId === id) this.editor.world.exit();
+        this.editor.modeling.targets = this.editor.modeling.targets.filter(
+          (t) =>
+            t.sketch !== id &&
+            !((t.kind === "body" || t.kind === "face" || t.kind === "edge") && t.body === id),
+        );
+        this.editor.modeling.hover = null;
+        this.editor.refresh();
+      },
+    });
+  }
   private row(id: string, name: string, target: ModelingTarget): HTMLElement {
     this.selectionRows.push(target);
     const row = document.createElement("div");
@@ -111,32 +152,7 @@ export class EntityViewer {
       eye = document.createElement("button");
     new EntityReorder(this.editor, row, select, id, target.kind, () => !!this.sourcePicker);
 
-    eye.onclick = () => {
-      void toolCatalog(this.editor).activate({
-        reason: () => null,
-        run: () => {
-          if (
-            !this.editor.store.data.bodies?.some((body) => body.id === id) &&
-            !this.editor.store.data.sketches.some((sketch) => sketch.id === id)
-          )
-            return;
-          const visible = this.editor.visibility.visible(id);
-          if (visible) this.editor.visibility.hide(id);
-          else {
-            this.editor.visibility.show(id);
-            if (target.kind === "body") this.editor.bodiesVisible = true;
-          }
-          if (visible && this.editor.world.workspace?.sketchId === id) this.editor.world.exit();
-          this.editor.modeling.targets = this.editor.modeling.targets.filter(
-            (t) =>
-              t.sketch !== id &&
-              !((t.kind === "body" || t.kind === "face" || t.kind === "edge") && t.body === id),
-          );
-          this.editor.modeling.hover = null;
-          this.editor.refresh();
-        },
-      });
-    };
+    eye.onclick = () => this.toggleVisibility(id, target);
     const merge = target.kind === "sketch" ? document.createElement("button") : undefined;
     if (merge) {
       merge.className = "entity-merge";
@@ -175,7 +191,7 @@ export class EntityViewer {
       if (shown !== visible) {
         shown = visible;
         eye.setAttribute("aria-label", `${visible ? "Hide" : "Show"} ${name}`);
-        eye.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>${visible ? "" : '<path d="m3 3 18 18"/>'}</svg>`;
+        eye.innerHTML = visibilityIcon(visible);
       }
       eye.disabled = !!toolCatalog(this.editor).reason({ reason: () => null });
       row.classList.toggle("entity-mergeable", mergeable);
@@ -192,7 +208,10 @@ export class EntityViewer {
     if (target.kind === "body")
       row.append(bodyAppearanceControl(this.editor, id, name, this.refreshRows));
     row.append(eye);
-    return target.kind === "body" ? this.tags.wrap(row, id, this.refreshRows) : row;
+    return this.children.wrap(row, id, [
+      ...(target.kind === "body" ? this.tags.rows(id, this.refreshRows) : []),
+      ...this.guides.rows(id, this.refreshRows),
+    ]);
   }
   private update = (): void => {
     const editor = this.editor,
@@ -202,6 +221,7 @@ export class EntityViewer {
       data.bodies?.map((b) => b.id),
       data.entityPresentation,
       data.taggedGroups,
+      data.guidePoints,
     ]);
     if (key === this.key) {
       for (const refresh of this.refreshRows) refresh();

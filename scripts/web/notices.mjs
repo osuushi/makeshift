@@ -3,10 +3,12 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { nativeInputs } from "../native-inputs.mjs";
+import { webBuildConfig } from "./config.mjs";
 
 const htmlEscape = (value) =>
   value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
 export async function webNotices(metadata) {
+  const { cache } = webBuildConfig();
   const entries = [];
   const add = async (name, files) =>
     entries.push({
@@ -15,10 +17,10 @@ export async function webNotices(metadata) {
     });
   await add("Makeshift · LGPL-2.1-or-later", ["LICENSE", "COPYING.md"]);
   await add("Open CASCADE Technology 7.9.3 · LGPL-2.1 with OCCT exception", [
-    ".cache/web/occt/LICENSE_LGPL_21.txt",
-    ".cache/web/occt/OCCT_LGPL_EXCEPTION.txt",
+    `${cache}/occt/LICENSE_LGPL_21.txt`,
+    `${cache}/occt/OCCT_LGPL_EXCEPTION.txt`,
   ]);
-  const originals = (await readdir(".cache/web/solver-source")).filter((path) =>
+  const originals = (await readdir(`${cache}/solver-source`)).filter((path) =>
     path.endsWith(".upstream"),
   );
   entries.push({
@@ -26,7 +28,7 @@ export async function webNotices(metadata) {
     text: (
       await Promise.all(
         originals.map(async (file) => {
-          const text = await readFile(`.cache/web/solver-source/${file}`, "utf8");
+          const text = await readFile(`${cache}/solver-source/${file}`, "utf8");
           return `${file}\n${text.slice(0, text.indexOf("*/") + 2)}`;
         }),
       )

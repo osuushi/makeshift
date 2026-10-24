@@ -29,7 +29,9 @@ An operation is a document change with concrete targets and parameters. The type
 selection to all required inputs or an unavailable reason. Toolbar eligibility,
 shortcuts and operation controllers use this same resolution. Applicability does
 not promise that every parameter value will succeed; the exact kernel remains the
-geometry authority. Unsupported selections never silently drop targets.
+geometry authority. Operation resolution never drops targets. Explicit tool entry
+may narrow whole categories, or collect replacement inputs, under the
+[selection-first entry](../design/tool-menu.md#selection-first-entry-2026-10-17) contract.
 
 Planar Extrude and Revolve accept parallel supports with either normal orientation. The
 first selected support sets the stored common extrusion direction. Interactive
@@ -72,7 +74,9 @@ Explicit Boolean, Duplicate, Mirror and Erode invocations expand selected solid
 faces and edges to their owning bodies. Split bodies does the same for cutting
 targets. Body order follows the first selected target of each body, and repeated
 faces/edges contribute only one operand. Eligibility and operation inputs share
-this interpretation; stale topology and mixed sketch/profile targets still reject.
+this interpretation; stale topology still rejects. Explicit tool entry can remove
+whole sketch/profile categories before resolving inputs under the selection-first
+entry contract above.
 Boolean operand collection and Duplicate/Erode selection show complete bodies.
 Move/Delete retain partial topology edits, Shell retains selected opening faces,
 and face/edge operations retain their own input interpretation.
@@ -156,7 +160,10 @@ extrusion retains its draft row and fixed Boolean mode icons, followed by accept
 and cancel. Clean up is a separate selection tool. Offset defaults to absolute thickness for planar walls with a
 directly reachable parallel face, or cylindrical/spherical walls with a directly
 reachable concentric face in the same body. A labeled mode dropdown offers Thickness,
-Radius and Offset where applicable; switching units preserves the preview. Radius
+Radius and Offset where applicable; switching units preserves the preview. These
+fields use at most three decimal places for generated text,
+including focus and restored edits. Formatting does not round geometry or explicitly
+typed values. Radius
 sets the absolute cylindrical/spherical radius and defaults when no thickness reference
 exists. Offset is the signed material-outward change. Multiple radius targets must
 share a radius and orientation response. Positive radii/thicknesses are required.
@@ -376,10 +383,13 @@ Boolean targets and temporary acceptance lifecycle.
 
 Union, Subtract and Intersect can start with no selection or geometry from one body.
 Two or more owning bodies retain their ordered preview route. Selected solid
-faces/edges expand to those bodies; mixed sketch/profile targets stay unavailable.
+faces/edges expand to those bodies; mixed sketch/profile targets are removed by
+category on explicit tool entry when that produces valid inputs. Empty or one-body
+selection enters the guided first step, with Next enabled for two owning bodies.
 The operation itself requires at least two complete accepted bodies. While choosing
 operands, viewport clicks and existing Entities rows operate on whole bodies, including enclosed
-ones. Subtract clicks cycle unselected → target → cutting tool → unselected.
+ones. After Next, Subtract clicks cycle unselected → target → cutting tool →
+unselected; the first collected body starts as the target.
 Choosing a new target demotes the previous target to cutting tool. Preselected
 bodies start with their first body as target and the others as tools.
 Union/Intersect clicks toggle membership.

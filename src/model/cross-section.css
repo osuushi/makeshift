@@ -9,9 +9,9 @@
   flex-wrap: wrap;
   gap: 5px;
   padding: 6px 9px;
-  border: 1px solid #c5cbd3;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #f8f9fb;
+  background: var(--canvas);
   pointer-events: auto;
 }
 .cross-section-actions[hidden],

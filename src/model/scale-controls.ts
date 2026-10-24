@@ -4,6 +4,7 @@ import type { Vector } from "../sketch/planes.js";
 import { redrawSketchWidgets } from "../sketch/sketch-widget-layout.js";
 import { installBodyTransformEnter } from "./body-transform-enter.js";
 import { type ScaleOperation, type ScaleSource, scaleFactors } from "./scale.js";
+import { installScaleBoxTarget } from "./scale-box-target.js";
 import { installScaleEvents } from "./scale-events.js";
 import { ScaleGestures } from "./scale-gestures.js";
 import {
@@ -16,13 +17,16 @@ import { ScaleWidget } from "./scale-widget.js";
 import { boxLocal, selectionBox, type TransformBox } from "./transform-box.js";
 import { TransformBoxMove } from "./transform-box-move.js";
 import { installTransformHandoff } from "./transform-handoff.js";
+import { TransformLayerControls } from "./transform-layer-controls.js";
+import { transformLayerEnabled } from "./transform-layers.js";
 import { registerTransformTool } from "./transform-tool.js";
 
 export class ScaleControls {
   private disposeTool: () => void;
   private widget: ScaleWidget;
+  private layers: TransformLayerControls;
   private gestures: ScaleGestures;
-  private boxMove: TransformBoxMove;
+  readonly boxMove: TransformBoxMove;
   private abort = new AbortController();
   private lease: InteractionLease | null = null;
   private source: ScaleSource | null = null;
@@ -44,6 +48,7 @@ export class ScaleControls {
   ) {
     this.disposeTool = registerTransformTool(editor, activate, referenceSelected);
     this.widget = new ScaleWidget(overlay);
+    this.layers = new TransformLayerControls(editor, overlay);
     this.gestures = new ScaleGestures(
       editor,
       this.widget,
@@ -87,19 +92,11 @@ export class ScaleControls {
     );
     installBodyTransformEnter(editor, this.abort.signal);
     installTransformHandoff(editor, () => !!this.lease && !this.gestures.active, this.abort.signal);
-    editor.world.transformBoxContains = (x, y) => {
-      const source = this.source ?? scaleSelection(editor);
-      const box = this.box ?? (source ? selectionBox(editor, source) : null);
-      if (!box || (!this.lease && !editor.transformAnchor?.active)) return false;
-      return this.widget.contains(
-        editor,
-        box,
-        this.lease ? this.operationPivot : (editor.transformAnchor?.point ?? scalePivot(editor)),
-        this.lease ? this.widget.values() : [1, 1, 1],
-        x,
-        y,
-      );
-    };
+    installScaleBoxTarget(editor, this.widget, () =>
+      this.lease && this.box
+        ? { box: this.box, pivot: this.operationPivot, factors: this.widget.values() }
+        : null,
+    );
     editor.world.changed.add(this.update);
     this.update();
   }
@@ -260,7 +257,11 @@ export class ScaleControls {
       source = this.source ?? scaleSelection(e);
     const box = this.box ?? (source ? selectionBox(e, source) : null);
     const active = !!this.lease;
-    const visible = !!box && (active || (!!e.transformAnchor?.active && !e.interactions.current));
+    const visible =
+      transformLayerEnabled(e, "scale") &&
+      !!box &&
+      (active || (!!e.transformAnchor?.active && !e.interactions.current));
+    this.layers.update();
     this.widget.update(
       visible,
       active,
@@ -286,6 +287,7 @@ export class ScaleControls {
     this.gestures.dispose();
     this.boxMove.dispose();
     this.widget.dispose();
+    this.layers.dispose();
     this.editor.world.transformBoxContains = null;
     this.disposeTool();
   }

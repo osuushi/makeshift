@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { inspect } from "./ui-helpers.mjs";
+import { navigationIdle } from "./ui-navigation-history.mjs";
 
 export async function blockedDuringDrawing(page) {
+  // Pinch completion can schedule a later camera animation; idle paint alone
+  // does not establish that drawing is available again.
+  await navigationIdle(page);
   await page.keyboard.press("l");
   const bounds = await page.locator("canvas").boundingBox();
   assert.ok(bounds, "The drawing canvas is visible");

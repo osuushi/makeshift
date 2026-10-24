@@ -3,11 +3,14 @@ import type { DisplayDocument } from "../model/display-document.js";
 import { InteractionHistory } from "./interaction-history.js";
 
 type Kind =
+  | "tool-selection"
+  | "guide-move"
   | "cube"
   | "cylinder"
   | "sphere"
   | "cone"
   | "drill"
+  | "step-import"
   | "mesh-import"
   | "tag-membership"
   | "entity-reorder"
@@ -54,6 +57,21 @@ interface InteractionCapabilities {
 }
 export class ActiveInteraction {
   private active: InteractionLease | null = null;
+  private startingTool: string | null = null;
+  /** User-facing parent tool while a controller runs one of its internal steps. */
+  get toolId(): string | null {
+    return this.active?.toolId ?? this.startingTool;
+  }
+  /** A synchronous controller handoff; new leases inherit the original tool. */
+  continueTool<T>(from: InteractionLease, start: () => T): T {
+    const previous = this.startingTool;
+    this.startingTool = from.toolId;
+    try {
+      return start();
+    } finally {
+      this.startingTool = previous;
+    }
+  }
   constructor(
     private changed: () => void,
     readonly edited: () => void = () => {},
@@ -77,7 +95,14 @@ export class ActiveInteraction {
     capabilities: InteractionCapabilities = { navigation: "blocked" },
   ): InteractionLease | null {
     if (this.active) return null;
-    this.active = new InteractionLease(this, kind, cancel, finish, capabilities);
+    this.active = new InteractionLease(
+      this,
+      kind,
+      cancel,
+      finish,
+      capabilities,
+      this.startingTool ?? kind,
+    );
     return this.active;
   }
   async cancel(): Promise<void> {
@@ -136,6 +161,7 @@ export class InteractionLease {
     readonly cancel: () => Promise<void> | void,
     readonly finish?: () => Promise<boolean>,
     capabilities: InteractionCapabilities = { navigation: "blocked" },
+    readonly toolId: string = kind,
   ) {
     this.settled = capabilities.settled;
     this.selectsLocally = capabilities.selectsLocally ?? (() => false);
@@ -208,10 +234,10 @@ export class InteractionLease {
       if (!(error instanceof DOMException && error.name === "NotFoundError")) throw error;
     }
   }
-  releaseCapture(): void {
+  releaseCapture(checkpoint = true): void {
     const capture = this.captureTarget;
     this.captureTarget = null;
-    if (capture && this.phase === "editing") this.history?.checkpoint();
+    if (checkpoint && capture && this.phase === "editing") this.history?.checkpoint();
     if (capture?.element.hasPointerCapture(capture.id))
       capture.element.releasePointerCapture(capture.id);
   }

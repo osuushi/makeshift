@@ -1,0 +1,44 @@
+.application-settings .sketch-grid-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 180px));
+  gap: 12px 24px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.application-settings .sketch-grid-fields label:has(input[type="checkbox"]) {
+  grid-column: 1 / -1;
+}
+.application-settings .sketch-grid-fields legend {
+  display: none;
+}
+.application-settings .sketch-grid-fields input[type="number"] {
+  width: 90px;
+  max-width: 100%;
+}
+.application-settings .sketch-grid-fields input[type="color"] {
+  width: 100%;
+}
+.application-settings label:has(input[aria-label="Min pixels per grid square"]) input {
+  width: 90px;
+}
+
+.settings-grid-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 90px) 56px;
+  gap: 0 12px;
+  align-content: start;
+}
+.settings-grid-pair h4 {
+  grid-column: 1 / -1;
+  margin: 8px 0 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@container settings (max-width: 390px) {
+  .application-settings .sketch-grid-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

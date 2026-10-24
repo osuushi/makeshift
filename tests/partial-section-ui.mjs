@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { project } from "./ui-blend-edit.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { findRaycastPoint } from "./ui-plane-targets.mjs";
@@ -10,11 +11,14 @@ import { chooseTool } from "./ui-tools.mjs";
 await withUiRuntimes(
   async (page, name) => {
     await page.getByRole("button", { name: "Application settings" }).click();
+    const preferences = await settingsSurface(page, "View");
     assert.equal(
-      await page.getByRole("slider", { name: "X-ray front opacity", exact: true }).inputValue(),
+      await preferences
+        .getByRole("slider", { name: "X-ray front opacity", exact: true })
+        .inputValue(),
       "80",
     );
-    await page.getByRole("button", { name: "Done", exact: true }).click();
+    await closeSettings(preferences);
     await cutawayRoute(page, name);
     const facePoint = await project(page, [3.4, 6.4, 12]);
     await page.mouse.click(facePoint.x, facePoint.y);
@@ -27,28 +31,7 @@ await withUiRuntimes(
     const accepted = state.document;
     assert.equal(state.activePlane, null);
     assert.deepEqual(state.partialSection, accepted.sketches[0].plane);
-    const slider = page.getByRole("slider", { name: "X-ray front opacity", exact: true });
-    await page.getByRole("button", { name: "Application settings" }).click();
-    assert.equal(await slider.inputValue(), "20");
-    await slider.press("Home");
-    await page.getByRole("button", { name: "Done", exact: true }).click();
-    const clear = await linePixels(page);
-    assert.ok(clear[0] < clear[1] - 30, `Zero front opacity reveals sketch ink: ${clear}`);
-    await page.getByRole("button", { name: "Application settings" }).click();
-    await slider.press("End");
-    await page.getByRole("button", { name: "Done", exact: true }).click();
-    const opaque = await linePixels(page);
-    assert.ok(Math.abs(opaque[0] - opaque[1]) <= 3, `Full front opacity covers ink: ${opaque}`);
-    await page.reload();
-    await inspect(page);
-    await page.getByRole("button", { name: "Application settings" }).click();
-    assert.equal(await slider.inputValue(), "100", "Front opacity persists on this device");
-    await slider.press("Home");
-    await slider.press("PageUp");
-    await slider.press("PageUp");
-    assert.equal(await slider.inputValue(), "20");
-    await page.getByRole("button", { name: "Done", exact: true }).click();
-    assert.deepEqual((await inspect(page)).document, accepted, "Opacity never changes geometry");
+    await opacityRoute(page, accepted);
 
     await reset(page);
     const point = await findRaycastPoint(page, "XY");
@@ -137,4 +120,52 @@ async function previewRoute(page) {
   assert.deepEqual(state.partialSection, frame);
   await page.keyboard.press("Escape");
   assert.equal((await inspect(page)).document.bodies?.length ?? 0, 0);
+}
+
+async function opacityRoute(page, accepted) {
+  let preferences;
+  await page.getByRole("button", { name: "Application settings" }).click();
+  preferences = await settingsSurface(page, "View");
+  assert.equal(
+    await preferences
+      .getByRole("slider", { name: "X-ray front opacity", exact: true })
+      .inputValue(),
+    "20",
+  );
+  await preferences.getByRole("slider", { name: "X-ray front opacity", exact: true }).press("Home");
+  await closeSettings(preferences);
+  const clear = await linePixels(page);
+  assert.ok(clear[0] < clear[1] - 30, `Zero front opacity reveals sketch ink: ${clear}`);
+  await page.getByRole("button", { name: "Application settings" }).click();
+  preferences = await settingsSurface(page, "View");
+  await preferences.getByRole("slider", { name: "X-ray front opacity", exact: true }).press("End");
+  await closeSettings(preferences);
+  const opaque = await linePixels(page);
+  assert.ok(Math.abs(opaque[0] - opaque[1]) <= 3, `Full front opacity covers ink: ${opaque}`);
+  await page.reload();
+  await inspect(page);
+  await page.getByRole("button", { name: "Application settings" }).click();
+  preferences = await settingsSurface(page, "View");
+  assert.equal(
+    await preferences
+      .getByRole("slider", { name: "X-ray front opacity", exact: true })
+      .inputValue(),
+    "100",
+    "Front opacity persists on this device",
+  );
+  await preferences.getByRole("slider", { name: "X-ray front opacity", exact: true }).press("Home");
+  await preferences
+    .getByRole("slider", { name: "X-ray front opacity", exact: true })
+    .press("PageUp");
+  await preferences
+    .getByRole("slider", { name: "X-ray front opacity", exact: true })
+    .press("PageUp");
+  assert.equal(
+    await preferences
+      .getByRole("slider", { name: "X-ray front opacity", exact: true })
+      .inputValue(),
+    "20",
+  );
+  await closeSettings(preferences);
+  assert.deepEqual((await inspect(page)).document, accepted, "Opacity never changes geometry");
 }

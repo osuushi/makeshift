@@ -14,7 +14,7 @@
   height: 42px;
   padding: 8px;
   transform: translate(-50%, -50%);
-  color: #2165a8;
+  color: var(--accent);
 }
 .revolve-controls button svg {
   width: 24px;
@@ -38,14 +38,14 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #63758a;
+  color: var(--accent);
 }
 .revolve-quantity input {
   width: 100px;
-  background: #fff;
-  border: 1px solid #bfd3e7;
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  color: #245b91;
+  color: var(--accent);
   font: inherit;
   font-size: 18px;
   padding: 9px;
@@ -61,8 +61,8 @@
   padding: 5px;
 }
 .revolve-options button[aria-pressed="true"] {
-  background: #d9ebfa;
-  border-color: #4486c1;
+  background: var(--selected);
+  border-color: var(--accent);
 }
 .revolve-guides {
   width: 100%;
@@ -72,7 +72,7 @@
 }
 .revolve-guides polyline {
   fill: none;
-  stroke: #4c86bb;
+  stroke: var(--accent);
   stroke-width: 1.5;
   stroke-dasharray: 5 5;
   opacity: 0.65;
@@ -105,5 +105,5 @@
   opacity: 1;
 }
 .revolve-quantity input[aria-invalid="true"] {
-  border-color: #bd793a;
+  border-color: var(--warning);
 }

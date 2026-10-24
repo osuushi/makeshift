@@ -46,6 +46,10 @@ export class OffsetQuantity {
       return this.radius.radius + this.radius.outward * distance * this.scale;
     return distance;
   }
+  text(distance: number): string {
+    const value = this.value(distance);
+    return Number.isFinite(value) ? String(Number(value.toFixed(3))) : "";
+  }
   distance(value: number): number {
     if (this.mode !== "offset" && (value < 0 || (value === 0 && !this.blend))) return NaN;
     if (this.mode === "thickness" && this.thickness)

@@ -1,10 +1,11 @@
 import { canonicalPlanes } from "../preferences/canonical-planes.js";
+import { createModalPlaneGrid, updateModalPlaneGrid } from "./modal-plane-grid.js";
 import { type PlaneId, planeIds, planes, worldPoint } from "./planes.js";
 import type { World } from "./world.js";
 
 const svgNamespace = "http://www.w3.org/2000/svg";
-const inset = 18;
-const size = 28;
+const size = 84;
+const centerDistance = size * 2.5;
 
 /** Fixed pixel-scale plane cues: view state only, using the ordinary modal picker. */
 export function installModalPlaneWidgets(world: World, overlay: HTMLElement): () => void {
@@ -21,7 +22,12 @@ export function installModalPlaneWidgets(world: World, overlay: HTMLElement): ()
     pointerEvents: "none",
     zIndex: "30",
   });
-  const widgets = planeIds.map((id) => ({ id, polygon: createWidget(world, id, options) }));
+  const widgets = planeIds.map((id) => ({
+    id,
+    polygon: createWidget(world, id, options),
+    grid: createModalPlaneGrid(),
+  }));
+  svg.append(...widgets.map(({ grid }) => grid));
   svg.append(...widgets.map(({ polygon }) => polygon));
   overlay.append(svg);
 
@@ -31,17 +37,20 @@ export function installModalPlaneWidgets(world: World, overlay: HTMLElement): ()
     if (!visible) return;
     const rect = world.canvas.getBoundingClientRect();
     const scale = (world.camera.top - world.camera.bottom) / world.camera.zoom / rect.height;
-    for (const { id, polygon } of widgets) {
+    for (const { id, polygon, grid } of widgets) {
       const accepted = !world.planePickerAccept || world.planePickerAccept(planes[id]);
-      const enabled = accepted && world.canNavigate();
+      polygon.style.display = accepted ? "" : "none";
+      grid.style.display = accepted ? "" : "none";
+      if (!accepted) continue;
+      const enabled = world.canNavigate();
       polygon.setAttribute("aria-disabled", String(!enabled));
       polygon.style.cursor = enabled ? "pointer" : "default";
-      polygon.style.opacity = accepted ? "1" : "0.3";
       const color = canonicalPlanes().colors[id];
       polygon.setAttribute("fill", color);
       polygon.setAttribute("stroke", color);
       if (!polygon.hasAttribute("fill-opacity")) polygon.setAttribute("fill-opacity", "0.16");
       polygon.setAttribute("points", widgetPoints(world, id, rect, scale));
+      updateModalPlaneGrid(grid, polygon, size, color);
     }
   };
   world.changed.add(update);
@@ -121,17 +130,22 @@ function createWidget(
 /** Keep an origin clearance even when a plane's projected axes oppose each other. */
 function widgetPoints(world: World, id: PlaneId, rect: DOMRect, scale: number): string {
   const origin = world.project([0, 0, 0]);
-  const diagonal = world.project(worldPoint(planes[id], { x: scale, y: scale }));
+  const towardCamera = world.camera.position.clone().sub(world.target);
+  const side = (axis: number[]): number =>
+    axis.reduce((dot, value, i) => dot + value * towardCamera.getComponent(i), 0) < 0 ? -1 : 1;
+  const x = scale * side(planes[id].u);
+  const y = scale * side(planes[id].v);
+  const diagonal = world.project(worldPoint(planes[id], { x, y }));
   let dx = diagonal.x - origin.x;
   let dy = diagonal.y - origin.y;
   if (Math.hypot(dx, dy) < 0.001) {
-    const axis = world.project(worldPoint(planes[id], { x: scale, y: 0 }));
+    const axis = world.project(worldPoint(planes[id], { x, y: 0 }));
     dx = axis.x - origin.x;
     dy = axis.y - origin.y;
   }
   const distance = Math.hypot(dx, dy);
-  const offsetX = (dx / distance) * (inset + size);
-  const offsetY = (dy / distance) * (inset + size);
+  const offsetX = (dx / distance) * centerDistance;
+  const offsetY = (dy / distance) * centerDistance;
   return [
     [-size / 2, -size / 2],
     [size / 2, -size / 2],

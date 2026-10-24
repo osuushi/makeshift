@@ -14,13 +14,30 @@ export type PlaneReferenceSource =
   | { kind: "plane"; id: string }
   | { kind: "world-plane"; id: PlaneId };
 
+export interface PlaneInterior {
+  frame: PlaneFrame;
+  vertices: number[];
+  depth: number;
+  source: PlaneReferenceSource;
+}
+
 /** Canonical references cover the view; saved planes retain their displayed bounds. */
 export function pickPlaneInterior(
   editor: SketchEditor,
   screen: Point,
   accepts: (frame: PlaneFrame) => boolean,
   faceHit: ReturnType<typeof pickFace> | null = pickFace(editor, screen),
-): { frame: PlaneFrame; vertices: number[]; depth: number; source: PlaneReferenceSource } | null {
+): PlaneInterior | null {
+  return planeInteriors(editor, screen, accepts, faceHit)[0] ?? null;
+}
+
+/** Depth-ordered plane references for explicit disambiguation as well as ordinary picking. */
+export function planeInteriors(
+  editor: SketchEditor,
+  screen: Point,
+  accepts: (frame: PlaneFrame) => boolean,
+  faceHit: ReturnType<typeof pickFace> | null = pickFace(editor, screen),
+): PlaneInterior[] {
   const rect = editor.world.canvas.getBoundingClientRect();
   const ray = new THREE.Raycaster();
   ray.setFromCamera(
@@ -35,20 +52,17 @@ export function pickPlaneInterior(
     editor.display.bodies
       ?.find((body) => body.id === faceHit.body)
       ?.faces.find((face) => face.id === faceHit.face);
-  let closest: {
-    frame: PlaneFrame;
-    depth: number;
-    vertices: number[];
-    source: PlaneReferenceSource;
-  } | null =
+  const choices: PlaneInterior[] =
     faceHit && face?.plane && accepts(face.plane)
-      ? {
-          frame: face.plane,
-          depth: faceHit.depth,
-          vertices: face.vertices,
-          source: { kind: "face", body: faceHit.body, face: faceHit.face },
-        }
-      : null;
+      ? [
+          {
+            frame: face.plane,
+            depth: faceHit.depth,
+            vertices: face.vertices,
+            source: { kind: "face", body: faceHit.body, face: faceHit.face },
+          },
+        ]
+      : [];
   const frames = [
     ...Object.entries(planes).map(([id, frame]) => ({
       frame,
@@ -88,10 +102,9 @@ export function pickPlaneInterior(
     )
       continue;
     const depth = hit.distanceTo(editor.world.camera.position);
-    if (!closest || depth < closest.depth - 1e-5)
-      closest = { frame, depth, vertices: planePatchVertices(frame, bounds), source };
+    choices.push({ frame, depth, vertices: planePatchVertices(frame, bounds), source });
   }
-  return closest;
+  return choices.sort((a, b) => (Math.abs(a.depth - b.depth) <= 1e-5 ? 0 : a.depth - b.depth));
 }
 
 export function planePatchVertices(

@@ -8,7 +8,11 @@ import { scaledSketchFrame } from "./scale-frame.js";
 type Operation = Extract<ScaleOperation, { kind: "curves" | "sketches" }>;
 
 /** Exact affine coordinates, with bounded cubic replacement only where necessary. */
-export function scaleSketch(sketch: Sketch, operation: Operation): Sketch {
+export function scaleSketch(
+  sketch: Sketch,
+  operation: Operation,
+  replacements = new Map<string, Curve[]>(),
+): Sketch {
   const selected = new Set(
     operation.kind === "sketches" ? sketch.curves.map((c) => c.id) : operation.ids,
   );
@@ -24,7 +28,6 @@ export function scaleSketch(sketch: Sketch, operation: Operation): Sketch {
   const similarity =
     Math.abs(frame.x - frame.y) <= 1e-12 * Math.max(frame.x, frame.y) &&
     Math.abs(frame.shear) <= 1e-12 * Math.max(frame.x, frame.y);
-  const replacements = new Map<string, Curve[]>();
   const used = new Set([...sketch.curves, ...sketch.constraints].map((item) => item.id));
   const allocate = (base: string): string => {
     let id = base;

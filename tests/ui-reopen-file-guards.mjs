@@ -86,9 +86,17 @@ function assertOpenedGeometry(opened, saved) {
     assert.equal(edges.length, 12);
     assert.equal(oldEdges.length, 12);
     for (const [i, face] of faces.entries()) {
-      const { signature, vertices, ...other } = face;
-      const { signature: oldSignature, vertices: oldVertices, ...oldOther } = oldFaces[i];
+      const { signature, vertices, bounds, ...other } = face;
+      const {
+        signature: oldSignature,
+        vertices: oldVertices,
+        bounds: oldBounds,
+        ...oldOther
+      } = oldFaces[i];
       assert.deepEqual(other, oldOther);
+      // Face bounds are recomputed from the exact saved BRep, like body bounds.
+      assert.equal(bounds.length, 6);
+      closeArray(bounds, oldBounds, `body${index} face${i} bounds`);
       closeArray(signature, oldSignature, `body${index} face${i} signature`);
       closeArray(vertices, oldVertices, `body${index} face${i} vertices`);
     }
@@ -98,11 +106,23 @@ function assertOpenedGeometry(opened, saved) {
 }
 /** This fixture's plate has twelve lines; exact BRep remains the geometry authority. */
 function assertPlateEdge(edge, saved, label) {
-  const { signature, points, curve, ...identity } = edge;
-  const { signature: oldSignature, points: oldPoints, curve: oldCurve, ...oldIdentity } = saved;
+  const { signature, points, curve, landmarks, ...identity } = edge;
+  const {
+    signature: oldSignature,
+    points: oldPoints,
+    curve: oldCurve,
+    landmarks: oldLandmarks,
+    ...oldIdentity
+  } = saved;
   assert.deepEqual(identity, oldIdentity);
   closeArray(signature, oldSignature, `${label} signature`);
   closeArray(points, oldPoints, `${label} points`);
+  assert.deepEqual(Object.keys(landmarks), Object.keys(oldLandmarks));
+  assert.equal(landmarks.closed, oldLandmarks.closed);
+  for (const key of ["start", "end", "midpoint"]) {
+    assert.equal(landmarks[key].length, 3);
+    closeArray(landmarks[key], oldLandmarks[key], `${label} ${key}`);
+  }
   assert.equal(curve?.kind, "line");
   assert.equal(oldCurve?.kind, "line");
   const { a, b, ...line } = curve,

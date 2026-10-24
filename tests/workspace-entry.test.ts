@@ -31,11 +31,16 @@ function entryFixture() {
     display: data,
     visibility: { visible: (id: string) => id !== hidden.id, show: () => {} },
     world: {
+      selectedPlane: null,
+      canonicalVisibility: {
+        states: { XY: { role: "secondary" }, XZ: { role: "primary" }, YZ: { role: "secondary" } },
+      },
       enterWorkspace: (workspace: NonNullable<World["workspace"]>) => entered.push(workspace),
     },
     refresh: () => {},
   } as unknown as SketchEditor;
   return {
+    editor,
     entry: new WorkspaceEntry(editor),
     interactions,
     modeling,
@@ -134,4 +139,37 @@ test("an unoccupied plane retains its frame without saving an empty sketch", () 
   assert.equal(fixture.entry.enter({ key: "saved", frame: planes.XZ }), true);
   assert.deepEqual(fixture.entered[0], { key: "saved", frame: planes.XZ });
   assert.equal(fixture.data.sketches.length, 2);
+});
+
+test("tool entry prefers the selected sketch before saved and canonical planes", () => {
+  const { entry, editor, visible, entered } = entryFixture();
+  entry.selectedConstructionPlane = () => ({ id: "saved", frame: planes.YZ });
+  editor.world.selectedPlane = "XZ";
+  assert.equal(entry.fromContext(), true);
+  assert.equal(entered[0].sketchId, visible.id);
+});
+
+test("tool entry uses saved plane, selected canonical plane, then primary grid", () => {
+  for (const mode of ["saved", "canonical", "primary"] as const) {
+    const { entry, editor, entered } = entryFixture();
+    editor.modeling.targets = [];
+    if (mode !== "primary") editor.world.selectedPlane = "XY";
+    if (mode === "saved")
+      entry.selectedConstructionPlane = () => ({ id: "saved", frame: planes.YZ });
+    assert.equal(entry.fromContext(), true);
+    assert.deepEqual(
+      entered[0].frame,
+      planes[mode === "saved" ? "YZ" : mode === "canonical" ? "XY" : "XZ"],
+    );
+  }
+});
+
+test("tool entry preserves an active workspace and refuses entry during an edit", () => {
+  const { entry, editor, entered, interactions } = entryFixture();
+  Object.defineProperty(editor.world, "active", { value: "XY" });
+  assert.equal(entry.fromContext(), true);
+  assert.equal(entered.length, 0);
+  const lease = interactions.acquire("extrude", () => {});
+  assert.equal(entry.fromContext(), false);
+  lease?.release();
 });

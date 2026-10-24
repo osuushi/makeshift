@@ -1,4 +1,5 @@
 import "./style.css";
+import "../preferences/theme.js";
 import { installWebModel } from "../web/start.js";
 import { installEscapeAlias } from "./escape-key.js";
 

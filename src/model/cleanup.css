@@ -5,10 +5,10 @@
   gap: 8px;
   padding: 8px;
   transform: translateX(-50%);
-  border: 1px solid #c9d5df;
+  border: 1px solid var(--border);
   border-radius: 9px;
-  background: #fffffff5;
-  color: #344657;
+  background: var(--panel);
+  color: var(--text);
   pointer-events: auto;
   font-size: 13px;
   white-space: nowrap;
@@ -17,11 +17,11 @@
   display: none;
 }
 .cleanup-widget button {
-  border: 1px solid #c9d5df;
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 6px 9px;
-  background: white;
-  color: #344657;
+  background: var(--panel);
+  color: var(--text);
 }
 
 .body-actions .selection-cleanup {

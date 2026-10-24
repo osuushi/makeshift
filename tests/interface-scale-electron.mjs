@@ -5,6 +5,8 @@ import { join } from "node:path";
 import { _electron } from "playwright";
 import { documentTestPage } from "./document-test-page.mjs";
 import { electronTestArguments } from "./native-documents.mjs";
+import { reopenDuringSettingsClose } from "./settings-close-checks.mjs";
+import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { failureContext } from "./ui-failure-context.mjs";
 import { settled } from "./ui-helpers.mjs";
 import { changeScale, geometryScaleRoute, preferencesRoute } from "./ui-interface-scale.mjs";
@@ -83,6 +85,8 @@ try {
   });
   assert.deepEqual(zoomRoles, []);
   await preferencesRoute(page);
+  await page.getByRole("button", { name: "Application settings" }).click();
+  await reopenDuringSettingsClose(app, page, await settingsSurface(page, "Interface"));
   for (const scale of [0.8, 1.5]) {
     await geometryScaleRoute(page, scale, "electron");
     const zoom = await app.evaluate(({ BrowserWindow }) =>
@@ -98,13 +102,13 @@ try {
   const reopened = await launch();
   await settled(reopened);
   await reopened.locator(".settings-trigger").click();
-  const restored = reopened.getByRole("dialog", { name: "Settings", exact: true });
+  const restored = await settingsSurface(reopened, "Interface");
   assert.equal(
     await restored.getByRole("combobox", { name: "User interface scale" }).inputValue(),
     "1.5",
   );
   await restored.getByRole("button", { name: "Reset to 100%" }).click();
-  await restored.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(restored);
   console.log(
     "Hidden Electron: menu/key zoom locked, real sketch/solid routes at 80/150%, host rotate coordinate transport, agent settings/dock/terminal and scale reset passed",
   );
@@ -189,7 +193,7 @@ async function agentScaleRoute(page) {
   await page.getByRole("button", { name: "Stop", exact: true }).click();
   await agentSettled(page, false);
   await page.locator(".settings-trigger").click();
-  const dialog = page.getByRole("dialog", { name: "Settings", exact: true });
+  const dialog = await settingsSurface(page, "Interface");
   await dialog.getByRole("button", { name: "Reset to 100%" }).click();
-  await dialog.getByRole("button", { name: "Done", exact: true }).click();
+  await closeSettings(dialog);
 }

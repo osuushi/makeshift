@@ -1,14 +1,17 @@
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { ModelingTarget } from "../sketch/model-selection-state.js";
+import { sketchHoldChoices } from "../sketch/overlap-targets.js";
 import { type PlaneFrame, type PlaneId, type Point, planes } from "../sketch/planes.js";
 import type { Profile } from "../sketch/profiles.js";
+import type { Hit } from "../sketch/sketch-hit.js";
 import { BodyPickProbe } from "./body-picking.js";
 import { edgeRayHits } from "./edge-selection.js";
 import { overlapSketchCandidates } from "./overlap-sketches.js";
 import { sectionBodyHits } from "./section-picking.js";
 
 export type OverlapTarget =
+  | { kind: "sketch-hit"; sketch: string; hit: Hit }
   | Extract<ModelingTarget, { kind: "body" | "face" | "edge" | "sketch" | "profile" }>
   | { kind: "profiles"; sketch: string; profiles: Profile[] }
   | { kind: "plane"; frame: PlaneFrame; world?: PlaneId; saved?: string };
@@ -37,6 +40,8 @@ export function overlapCandidates(editor: SketchEditor, screen: Point): OverlapC
       key: hit.edge,
       label: "Edge",
     });
+  if (editor.world.active)
+    return [...sketchHoldChoices(editor, screen), ...result.sort((a, b) => a.depth - b.depth)];
   const sections = sectionBodyHits(
     bodies,
     ray,
@@ -82,6 +87,7 @@ export function overlapCandidates(editor: SketchEditor, screen: Point): OverlapC
         !editor.modeling.memberBody ||
         (c.target.kind !== "plane" &&
           c.target.kind !== "profiles" &&
+          c.target.kind !== "sketch-hit" &&
           editor.modeling.allows(c.target)),
     )
     .sort((a, b) => a.depth - b.depth || rank(a) - rank(b) || a.key.localeCompare(b.key));

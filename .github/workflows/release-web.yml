@@ -57,11 +57,11 @@ jobs:
           path: |
             .cache/release-inputs
             .cache/solver/source
-            .cache/web
-            .build/web-solver
-            .build/web-kernel
-          key: wasm-linux-4.0.20-${{ hashFiles('scripts/web/build-wasm.mjs', 'scripts/web/sdk.mjs', 'scripts/occt-source.mjs', 'scripts/occt-recipe.json', 'scripts/native-inputs.mjs', 'scripts/solver-source.mjs', 'native/**') }}
-          restore-keys: wasm-linux-4.0.20-
+            .cache/web-wasm-exceptions
+            .build/web-wasm-exceptions-solver
+            .build/web-wasm-exceptions-kernel
+          key: wasm-eh-linux-4.0.20-${{ hashFiles('scripts/web/build-wasm.mjs', 'scripts/web/sdk.mjs', 'scripts/web/config.mjs', 'scripts/occt-source.mjs', 'scripts/occt-recipe.json', 'scripts/native-inputs.mjs', 'scripts/solver-source.mjs', 'native/**') }}
+          restore-keys: wasm-eh-linux-4.0.20-
       - name: Fetch mirrored Eigen source
         env:
           GH_TOKEN: ${{ github.token }}
@@ -87,10 +87,10 @@ jobs:
           path: |
             .cache/release-inputs
             .cache/solver/source
-            .cache/web
-            .build/web-solver
-            .build/web-kernel
-          key: wasm-linux-4.0.20-${{ hashFiles('scripts/web/build-wasm.mjs', 'scripts/web/sdk.mjs', 'scripts/occt-source.mjs', 'scripts/occt-recipe.json', 'scripts/native-inputs.mjs', 'scripts/solver-source.mjs', 'native/**') }}
+            .cache/web-wasm-exceptions
+            .build/web-wasm-exceptions-solver
+            .build/web-wasm-exceptions-kernel
+          key: wasm-eh-linux-4.0.20-${{ hashFiles('scripts/web/build-wasm.mjs', 'scripts/web/sdk.mjs', 'scripts/web/config.mjs', 'scripts/occt-source.mjs', 'scripts/occt-recipe.json', 'scripts/native-inputs.mjs', 'scripts/solver-source.mjs', 'native/**') }}
       - name: Verify static web mode
         run: |
           npm run typecheck

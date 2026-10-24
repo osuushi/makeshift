@@ -2,11 +2,11 @@
   width: 100%;
   pointer-events: auto;
   padding: 12px 14px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: rgb(255 255 255 / 96%);
-  box-shadow: 0 3px 15px #0001;
-  color: #26364a;
+  background: var(--panel);
+  box-shadow: 0 3px 15px var(--shadow);
+  color: var(--text);
   font-size: 12px;
   user-select: text;
 }
@@ -34,11 +34,11 @@
   width: 18px;
   height: 18px;
   padding: 0;
-  border: 1px solid #a5b0be;
+  border: 1px solid var(--border);
   border-radius: 50%;
   background: transparent;
   box-shadow: none;
-  color: #596779;
+  color: var(--muted);
   font-size: 11px;
   line-height: 16px;
   cursor: help;
@@ -52,16 +52,16 @@
   z-index: 5;
 }
 .measurement-witnesses line {
-  stroke: #007d85;
+  stroke: var(--teal);
   stroke-width: 2;
   stroke-dasharray: 5 3;
 }
 .measurement-witnesses line.max {
-  stroke: #a55f00;
+  stroke: var(--danger);
 }
 .measurement-witnesses text {
-  fill: #26364a;
-  stroke: white;
+  fill: var(--text);
+  stroke: var(--panel);
   stroke-width: 3;
   paint-order: stroke;
   font: 12px system-ui;

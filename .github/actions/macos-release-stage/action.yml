@@ -1,0 +1,40 @@
+name: Restore macOS release package
+description: Restore the exact accepted package, preserving symlinks, modes and release identity.
+inputs:
+  artifact:
+    description: Package checkpoint from an earlier job in this run.
+    required: true
+  ticket-network:
+    description: Use HTTPS over TCP for Apple ticket downloads on this disposable runner.
+    default: 'false'
+  dmg-tools:
+    description: Build the small macOS Finder-metadata addons needed only for DMG creation.
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+    - run: |
+        sudo xcode-select --switch /Applications/Xcode_16.4.app
+        test "$(uname -m)" = arm64
+      shell: bash
+    - run: npm ci --ignore-scripts
+      shell: bash
+    - if: inputs.dmg-tools == 'true'
+      run: npm rebuild macos-alias fs-xattr
+      shell: bash
+    - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      with:
+        name: ${{ inputs.artifact }}
+        path: .build
+    - run: node scripts/release/package-checkpoint.mjs restore
+      shell: bash
+    # https://github.com/actions/runner-images/issues/14924#issuecomment-6188826956
+    - if: inputs.ticket-network == 'true'
+      run: |
+        printf '%s\n' 'block return out quick proto udp from any to any port 443' | sudo pfctl -f -
+        sudo pfctl -E
+      shell: bash

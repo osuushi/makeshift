@@ -15,7 +15,7 @@ export function primitivePreviewMesh(geometry: THREE.BufferGeometry, color = "#a
   const silhouette = new THREE.Mesh(
     geometry,
     new THREE.MeshBasicMaterial({
-      color: "#28643a",
+      color: "#32834e",
       side: THREE.BackSide,
     }),
   );
@@ -23,7 +23,7 @@ export function primitivePreviewMesh(geometry: THREE.BufferGeometry, color = "#a
   silhouette.renderOrder = -1;
   const edges = new THREE.LineSegments(
     new THREE.EdgesGeometry(geometry, 25),
-    new THREE.LineBasicMaterial({ color: "#28643a" }),
+    new THREE.LineBasicMaterial({ color: "#32834e" }),
   );
   solid.add(silhouette, edges);
   solid.traverse((object) => object.layers.set(primitivePreviewLayer));

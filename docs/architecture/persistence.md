@@ -110,8 +110,10 @@ file operation in another window is never unlocked by canceled Quit.
 
 On macOS, Finder/Open With, Dock file opening and the native Open Recent menu feed
 the same deduplicated Open route. The bundle declares `.makeshift` and legacy
-`.freac` documents. Closing the last document leaves the app available; New/Open
-and Dock activation create a document window. The native Window menu lists document
+`.freac` documents, with a dedicated PEI build-plate document icon. Both the
+document declaration and exported UTI reference the bundled ICNS; the application
+and Dock keep their own icon. Closing the last document leaves the app available;
+New/Open and Dock activation create a document window. The native Window menu lists document
 windows. New windows cascade from the active window and use the remembered default
 size. Launch restores all windows from the last successful Quit/update, with each
 saved file's last saved camera and its window position/size; bounds are clamped to
@@ -133,6 +135,11 @@ unimplemented; beforeunload cannot protect work from mobile tab eviction.
 
 ## Mesh export
 
+STL, 3MF and STEP downloads use the current document name, replacing its
+`.makeshift` or legacy `.freac` suffix with the export extension. Desktop export
+save dialogs default to the drawing directory, or Documents for an unsaved drawing.
+Browser download destinations remain controlled by the browser.
+
 STL and 3MF export visible accepted solid bodies at their current world positions.
 Both individual body visibility and the global body visibility toggle apply.
 Sketches and temporary operation previews are excluded;
@@ -153,6 +160,21 @@ indexes and keeps one model object/build item per body in an OPC ZIP package per
 the [3MF Core specification](https://github.com/3MFConsortium/spec_core/blob/master/3MF%20Core%20Specification.md).
 Placement is baked into vertices. Exports contain geometry only, without printer,
 material or slicing settings. Exact editable geometry remains in the Makeshift file.
+
+## STEP import
+
+**Import STEP** in Document & Edit accepts `.step` and `.stp` files up to 25 MB
+from Modeling. OCCT reads exact solid geometry and converts declared units to
+millimeters. Assembly instances become independent bodies at their placed world
+coordinates; hierarchy, part names, colors and source feature history are not
+retained. Imported faces and edges receive fresh document-local identities and
+remain available to the ordinary solid editing tools and Makeshift Save/Open.
+
+Reading and calculation block conflicting edits and support cancellation. A
+successful import appends all bodies in one Undo step, selects them and frames
+the camera around them. Existing bodies remain intact. Invalid files, failed root
+transfers, open surfaces/curves, tessellation-only bodies and solids below the
+kernel's minimum volume are rejected without accepting a partial import.
 
 ## STEP export
 

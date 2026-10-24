@@ -50,9 +50,11 @@ for (const [definition, internal, cut] of [
   test(`native export matches WASM: ${definition}, internal=${internal}, cut=${cut}`, async () => {
     const owner = new DocumentOwner();
     try {
-      const body = await roundBody(owner, internal ? [8, 5] : [5], 5);
+      // Default spur fitting needs room for printable tips without undercut teeth.
+      const radius = definition === "freac.gear" ? 13 : 5;
+      const body = await roundBody(owner, internal ? [8, radius] : [radius], 5);
       const faces = body.faces
-        .filter((f) => f.cylinder?.radius === 5)
+        .filter((f) => f.cylinder?.radius === radius)
         .map((f) => ({ body: body.id, face: f.id }));
       assert.equal(
         (

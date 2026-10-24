@@ -19,5 +19,8 @@ security import "$certificate" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pk
 security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$keychain_password" "$keychain" >/dev/null
 security list-keychains -d user -s "$keychain"
 export APPLE_SIGNING_KEYCHAIN="$keychain"
-npx electron-forge make --platform=darwin --arch=arm64
-node scripts/release/notarize-dmg.mjs
+case "${1:-}" in
+  app) node scripts/release/sign-app.mjs ;;
+  dmg) node scripts/release/make-dmg.mjs ;;
+  *) echo 'Choose app or dmg signing' >&2; exit 1 ;;
+esac

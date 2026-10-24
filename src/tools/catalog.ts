@@ -1,5 +1,7 @@
 import { completeInteraction } from "../sketch/complete-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import type { SelectionPolicy } from "./selection-policy.js";
+import { toolSelection } from "./tool-selection.js";
 
 export const categories = [
   ["Sketch", "Line, rectangle, curve and trim"],
@@ -27,8 +29,13 @@ export interface ToolDefinition {
   finishEdit?: boolean | (() => boolean);
   allowBusy?: boolean;
   showInTools?: boolean;
+  selection?: SelectionPolicy;
 }
-export type ToolAction = Pick<ToolDefinition, "reason" | "run" | "finishEdit" | "allowBusy">;
+export type ToolAction = Pick<
+  ToolDefinition,
+  "reason" | "run" | "finishEdit" | "allowBusy" | "selection"
+> &
+  Partial<Pick<ToolDefinition, "id" | "label">>;
 export interface ToolResult extends ToolDefinition {
   unavailable: string | null;
 }
@@ -42,12 +49,22 @@ export function toolCatalog(editor: SketchEditor): ToolCatalog {
   return catalog;
 }
 export function idleReason(editor: SketchEditor): string | null {
-  return editor.interactions.current ? "Finish or cancel the current edit first" : null;
+  return editor.interactions.current && editor.interactions.current.kind !== "tool-selection"
+    ? "Finish or cancel the current edit first"
+    : null;
 }
 export class ToolCatalog {
   private entries = new Map<string, ToolDefinition>();
   private running = false;
   private recentIds: string[] = [];
+  private choice: { id: string } | null = null;
+  /** Explicit admitted choices, distinct from controllers' internal steps. */
+  get lastChoice(): { readonly id: string } | null {
+    return this.choice;
+  }
+  private rememberChoice(tool: ToolAction): void {
+    if (tool.id && this.entries.has(tool.id)) this.choice = { id: tool.id };
+  }
   constructor(private editor: SketchEditor) {}
   register(tool: ToolDefinition): () => void {
     if (this.entries.has(tool.id)) throw new Error(`Duplicate tool: ${tool.id}`);
@@ -61,6 +78,7 @@ export class ToolCatalog {
     return this.running;
   }
   private switches(tool: Pick<ToolAction, "finishEdit">): boolean {
+    if (this.editor.interactions.current?.kind === "tool-selection") return true;
     return typeof tool.finishEdit === "function" ? tool.finishEdit() : tool.finishEdit !== false;
   }
   reason(tool: Omit<ToolAction, "run">): string | null {
@@ -76,7 +94,8 @@ export class ToolCatalog {
     )
       return null;
     if (this.editor.blocked && !tool.allowBusy) return "Wait for the current calculation";
-    return tool.reason();
+    if (current && !this.switches(tool)) return tool.reason();
+    return toolSelection(this.editor, tool) ? null : tool.reason();
   }
   results(): ToolResult[] {
     return [...this.entries.values()].map((tool) => ({ ...tool, unavailable: this.reason(tool) }));
@@ -113,12 +132,28 @@ export class ToolCatalog {
         }
         this.editor.refresh();
         const unavailable = tool.reason();
-        if (unavailable) {
+        if (unavailable && !toolSelection(this.editor, tool)) {
           this.editor.message = unavailable;
           return false;
         }
       }
+      const selection = toolSelection(this.editor, tool);
+      if (
+        selection &&
+        (tool.reason() ||
+          (["union", "subtract", "intersect", "loft"].includes(selection.id) && !selection.valid()))
+      ) {
+        const narrowed = selection.narrow();
+        if (narrowed) selection.targets = narrowed;
+        else {
+          const { collectToolSelection } = await import("./selection-step.js");
+          collectToolSelection(this.editor, tool, selection, () => this.activate(tool));
+          this.rememberChoice(tool);
+          return true;
+        }
+      }
       const result = await tool.run();
+      if (result !== false) this.rememberChoice(tool);
       const registered = [...this.entries.values()].find((entry) => entry === tool);
       // Recency records an admitted invocation, not later geometry acceptance.
       if (result !== false && registered && registered.showInTools !== false)

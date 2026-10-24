@@ -12,7 +12,9 @@
 #include <BRep_Tool.hxx>
 #include <Bnd_Box.hxx>
 #include <GProp_GProps.hxx>
+#include <GCPnts_AbscissaPoint.hxx>
 #include <Poly_Triangulation.hxx>
+#include <Poly_PolygonOnTriangulation.hxx>
 #include <OSD_ThreadPool.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
@@ -60,6 +62,12 @@ void analyticSurfaces(std::ostream& out, const TopoDS_Face& shape, const BRepAda
     } else out << "null";
 }
 void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMapOfShape& edges, const std::vector<BlendFace>& blends, const std::vector<BlendFace>& chamfers, const TopTools_IndexedMapOfShape& faces, FaceChainContext& chains, OffsetThicknessContext& thickness) {
+    Bnd_Box bounds;
+    BRepBndLib::AddOptimal(shape, bounds, false, false);
+    double xmin, ymin, zmin, xmax, ymax, zmax;
+    bounds.Get(xmin, ymin, zmin, xmax, ymax, zmax);
+    out << ",\"bounds\":";
+    numbers(out, {xmin, ymin, zmin, xmax, ymax, zmax});
     out << ",\"edgeIndexes\":[";
     bool first = true;
     for (TopExp_Explorer e(shape, TopAbs_EDGE); e.More(); e.Next()) {
@@ -149,9 +157,53 @@ void analyticEdge(std::ostream& out, const TopoDS_Edge& shape, const BRepAdaptor
     if (curve.GetType() == GeomAbs_Circle) { out << ",\"mid\":"; xyz(out, curve.Value((a + b) / 2).XYZ()); }
     out << '}';
 }
-void edge(std::ostream& out, const TopoDS_Edge& shape) {
+// Use the active face mesh, not an independently sampled curve: curved chords
+// with different endpoints can fall inside the triangles they should outline.
+std::vector<std::vector<gp_Pnt>> meshEdges(const TopTools_IndexedMapOfShape& faces,
+                                        const TopTools_IndexedMapOfShape& edges) {
+    std::vector<std::vector<gp_Pnt>> points(edges.Extent());
+    for (int i = 1; i <= faces.Extent(); ++i) {
+        const auto face = TopoDS::Face(faces(i));
+        TopLoc_Location location;
+        const auto mesh = BRep_Tool::Triangulation(face, location);
+        if (mesh.IsNull()) continue;
+        for (TopExp_Explorer e(face, TopAbs_EDGE); e.More(); e.Next()) {
+            const auto edge = TopoDS::Edge(e.Current());
+            auto& samples = points[edges.FindIndex(edge) - 1];
+            if (!samples.empty() || BRep_Tool::Degenerated(edge)) continue;
+            const auto polygon = BRep_Tool::PolygonOnTriangulation(edge, mesh, location);
+            if (polygon.IsNull()) continue;
+            for (int j = 1; j <= polygon->NbNodes(); ++j)
+                samples.push_back(mesh->Node(polygon->Node(j)).Transformed(location.Transformation()));
+        }
+    }
+    return points;
+}
+void edge(std::ostream& out, const TopoDS_Edge& shape, const std::vector<gp_Pnt>& samples) {
     BRepAdaptor_Curve curve(shape); const double a = curve.FirstParameter(), b = curve.LastParameter();
     analyticEdge(out, shape, curve);
+    if (!BRep_Tool::Degenerated(shape)) {
+        const auto start = curve.Value(a), end = curve.Value(b);
+        const double length = GCPnts_AbscissaPoint::Length(curve, a, b);
+        GCPnts_AbscissaPoint half(curve, length / 2, a);
+        if (half.IsDone()) {
+            out << ",\"landmarks\":{\"start\":"; xyz(out, start.XYZ());
+            out << ",\"end\":"; xyz(out, end.XYZ());
+            out << ",\"midpoint\":"; xyz(out, curve.Value(half.Parameter()).XYZ());
+            out << ",\"closed\":" << (start.Distance(end) < 1e-7 ? "true" : "false") << '}';
+        }
+    }
+    if (!samples.empty()) {
+        out << ",\"points\":[";
+        for (size_t i = 0; i < samples.size(); ++i) {
+            if (i) out << ',';
+            const auto& p = samples[i];
+            out << p.X() << ',' << p.Y() << ',' << p.Z();
+        }
+        out << ']';
+        return;
+    }
+    // Free wires and degenerate edges need not have a face triangulation.
     int count = 1;
     if (curve.GetType() == GeomAbs_Circle) {
         const double radius = curve.Circle().Radius();
@@ -190,13 +242,22 @@ void present(std::ostream& out, const Result& result, double deflection) {
         << (result.exactVolume ? *result.exactVolume : volume(result.shape));
     out << ",\"copy\":" << (result.copy ? "true" : "false") << ",\"predecessorBodies\":[";
     for (size_t i = 0; i < result.bodies.size(); ++i) { if (i) out << ','; out << quoted(result.bodies[i]); }
+    timing.phase("serialize-brep");
     // Transform handles need surface extrema, not rational spline control-hull bounds.
-    Bnd_Box box; BRepBndLib::AddOptimal(result.shape, box, false, false);
-    double x, y, z, X, Y, Z; box.Get(x, y, z, X, Y, Z);
+    auto bounds = result.exactBounds;
+    if (!bounds) {
+        Bnd_Box box; BRepBndLib::AddOptimal(result.shape, box, false, false);
+        std::array<double, 6> values;
+        box.Get(values[0], values[1], values[2], values[3], values[4], values[5]);
+        bounds = values;
+    }
+    const auto& [x, y, z, X, Y, Z] = *bounds;
+    timing.phase("bounds");
     out << "],\"center\":"; xyz(out, gp_XYZ((x+X)/2, (y+Y)/2, (z+Z)/2));
     out << ",\"bounds\":"; numbers(out, {x, y, z, X, Y, Z});
     TopTools_IndexedMapOfShape edges; TopExp::MapShapes(result.shape, TopAbs_EDGE, edges);
     TopTools_IndexedMapOfShape faces; TopExp::MapShapes(result.shape, TopAbs_FACE, faces);
+    const auto edgeSamples = meshEdges(faces, edges);
     const auto blends = recognizeBlends(result.shape);
     const auto chamfers = recognizeChamfers(result.shape);
     OffsetThicknessContext thickness(result.shape);
@@ -214,7 +275,7 @@ void present(std::ostream& out, const Result& result, double deflection) {
                     [&](const TopoDS_Face& face) { return face.IsSame(shapes(i)); });
                 out << ",\"offsetSelected\":" << (selected ? "true" : "false");
             }
-            if (type == TopAbs_FACE) face(out, TopoDS::Face(shapes(i)), edges, blends, chamfers, faces, chains, thickness); else edge(out, TopoDS::Edge(shapes(i)));
+            if (type == TopAbs_FACE) face(out, TopoDS::Face(shapes(i)), edges, blends, chamfers, faces, chains, thickness); else edge(out, TopoDS::Edge(shapes(i)), edgeSamples[i - 1]);
             out << '}';
         }
         out << ']';

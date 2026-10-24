@@ -100,7 +100,15 @@ export function validateDecorators(document: SketchDocument): void {
       !Number.isInteger(instance.version) ||
       !instance.settings ||
       typeof instance.settings !== "object" ||
-      (instance.problem !== undefined && typeof instance.problem !== "string")
+      (instance.problem !== undefined && typeof instance.problem !== "string") ||
+      (instance.gearGroup !== undefined &&
+        (instance.definition !== gearDefinition ||
+          typeof instance.gearGroup !== "string" ||
+          !instance.gearGroup)) ||
+      (instance.gearPitchRadius !== undefined &&
+        (instance.definition !== gearDefinition ||
+          !Number.isFinite(instance.gearPitchRadius) ||
+          instance.gearPitchRadius <= 0))
     )
       throw new Error("Invalid decorator instance");
     ids.add(instance.id);
@@ -229,8 +237,12 @@ export function editDecorators(document: SketchDocument, edit: DecoratorEdit): S
         problem: hasSettingsProblem(instance) ? undefined : instance.problem,
         settings:
           instance.definition === knurlDefinition
-            ? patchKnurlSettings(instance.settings, edit.patch)
-            : patchThreadSettings(radius * 2, instance.settings, edit.patch),
+            ? patchKnurlSettings(edit.replace ? {} : instance.settings, edit.patch)
+            : patchThreadSettings(
+                radius * 2,
+                edit.replace ? threadDefaults(radius * 2) : instance.settings,
+                edit.patch,
+              ),
       };
       validateBuiltin(document, updated);
       return updated;

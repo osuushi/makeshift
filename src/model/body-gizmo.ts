@@ -8,12 +8,20 @@ import {
   widgetRadius,
 } from "../sketch/move-widget/geometry.js";
 import type { Vector } from "../sketch/planes.js";
+import { toolCatalog } from "../tools/catalog.js";
 import { axes } from "./body-placement.js";
 import { projectedAxis } from "./extrude-axis.js";
 import { scaleSelection } from "./scale-selection.js";
 import { boxHandles, boxWorld, selectionBox } from "./transform-box.js";
+import {
+  clearTransformControl,
+  observeTransformBox,
+  transformBoxRect,
+} from "./transform-clearance.js";
+import { transformLayerEnabled } from "./transform-layers.js";
 import { WidgetClearance, type WidgetTarget } from "./widget-clearance.js";
 import { cameraFacingWidth } from "./widget-frame.js";
+import { measuredControlRect } from "./widget-viewport.js";
 import "./body-gizmo.css";
 
 export class BodyGizmo {
@@ -21,6 +29,10 @@ export class BodyGizmo {
   readonly input = document.createElement("input");
   readonly pivot = document.createElement("button");
   private clearance: WidgetClearance;
+  private anchorClearance: WidgetClearance;
+  private boxEditor: SketchEditor | null = null;
+  private unobserveBox: () => void = () => {};
+  private repaint: () => void = () => {};
   private handles: { axis: string; rotate: boolean; button: HTMLButtonElement }[] = [];
   constructor(
     overlay: HTMLElement,
@@ -29,6 +41,7 @@ export class BodyGizmo {
   ) {
     this.root.className = "body-gizmo";
     this.clearance = new WidgetClearance(this.root);
+    this.anchorClearance = new WidgetClearance(this.root);
     for (const rotate of [false, true])
       for (const axis of target === "edges" && !rotate ? ["X", "Y", "Z", "N"] : ["X", "Y", "Z"]) {
         const button = document.createElement("button");
@@ -43,6 +56,17 @@ export class BodyGizmo {
         button.addEventListener("transform-numeric-tap", () =>
           start(new PointerEvent("pointerdown", { pointerId: -1 }), axis, rotate),
         );
+        button.addEventListener("click", (event) => {
+          if (event.detail !== 0 || !this.boxEditor) return;
+          if (target === "plane" || !this.boxEditor.interactions.current) {
+            button.dispatchEvent(new Event("transform-numeric-tap"));
+            return;
+          }
+          void toolCatalog(this.boxEditor).activate({
+            reason: () => null,
+            run: () => button.dispatchEvent(new Event("transform-numeric-tap")),
+          });
+        });
         this.root.append(button);
         this.handles.push({ axis, rotate, button });
       }
@@ -61,6 +85,12 @@ export class BodyGizmo {
     translationOnly = false,
     normal: Vector | null = null,
   ): void {
+    this.repaint = () => this.update(editor, pivot, movingPivot, translationOnly, normal);
+    if (this.boxEditor !== editor) {
+      this.unobserveBox();
+      this.boxEditor = editor;
+      this.unobserveBox = observeTransformBox(editor, () => this.repaint());
+    }
     const world = editor.world,
       origin = world.project(pivot);
     if (!this.root.hidden) editor.transformAnchor = { point: [...pivot], active: true };
@@ -75,6 +105,7 @@ export class BodyGizmo {
     for (const handle of this.handles) {
       const index = names.indexOf(handle.axis);
       handle.button.hidden =
+        !transformLayerEnabled(editor, handle.rotate ? "rotate" : "move") ||
         (handle.axis === "N" && !normal) ||
         (handle.rotate &&
           (movingPivot || translationOnly || !rotationVisible(world.camera, axes[handle.axis]))) ||
@@ -107,6 +138,9 @@ export class BodyGizmo {
         end.y = origin.y + boundary.y * 144;
       }
       const local = { x: end.x - origin.x, y: end.y - origin.y };
+      const ratio = clearTransformControl(editor, pivot, local);
+      local.x *= ratio;
+      local.y *= ratio;
       handle.button.innerHTML = markerMarkup(world.camera, u, v, handle.rotate);
       const hit = handle.button.getBoundingClientRect();
       entries.push({
@@ -114,26 +148,38 @@ export class BodyGizmo {
         nominal: { ...local, size: Math.max(hit.width, hit.height) },
       });
     }
+    this.fit(editor, pivot, entries);
+  }
+  /** Viewport docking preserves box clearance while the anchor keeps its own position. */
+  private fit(
+    editor: SketchEditor,
+    pivot: Vector,
+    entries: { element: HTMLElement; nominal: WidgetTarget }[],
+  ): void {
+    const world = editor.world,
+      origin = world.project(pivot);
     const source = scaleSelection(editor);
-    const box = source && selectionBox(editor, source);
+    const box = transformLayerEnabled(editor, "scale") && source && selectionBox(editor, source);
     const obstacles: WidgetTarget[] = [{ x: 0, y: 0, size: 20 }];
     if (box)
       for (const handle of boxHandles(box)) {
         const point = world.project(boxWorld(box, handle.point));
         obstacles.push({ x: point.x - origin.x, y: point.y - origin.y, size: 16 });
       }
-    this.clearance.update(
-      entries,
-      obstacles,
-      [...this.root.children].filter(
-        (element): element is HTMLElement =>
-          element instanceof HTMLElement &&
-          !this.handles.some((handle) => handle.button === element),
-      ),
+    const extra = [...this.root.children].filter(
+      (element): element is HTMLElement =>
+        element instanceof HTMLElement && !this.handles.some((handle) => handle.button === element),
     );
+    this.anchorClearance.fit(extra);
+    const reserved = extra.filter((element) => !element.hidden).map(measuredControlRect);
+    const boxRect = transformBoxRect(editor);
+    if (boxRect) reserved.push(boxRect);
+    this.clearance.update(entries, obstacles, [], reserved);
   }
   dispose(): void {
+    this.unobserveBox();
     this.clearance.dispose();
+    this.anchorClearance.dispose();
     this.root.remove();
   }
 }

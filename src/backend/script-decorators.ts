@@ -14,6 +14,7 @@ export function decoratorCatalog(
 ): DecoratorCatalog {
   return {
     instances: document.decorators ?? [],
+    presets: document.decoratorPresets ?? [],
     definitions: (document.decoratorDefinitions ?? []).map((d) => ({
       ...d,
       enabled: session.sources.some(

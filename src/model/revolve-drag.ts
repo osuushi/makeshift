@@ -21,6 +21,25 @@ export function installRevolveDrag(tool: RevolveControls, signal: AbortSignal): 
   for (const key of ["angle", "height"] as const) {
     const handle = key === "angle" ? tool.widget.angleHandle : tool.widget.heightHandle;
     handle.addEventListener(
+      "click",
+      (event) => {
+        if (
+          event.detail !== 0 ||
+          tool.editor.blocked ||
+          !tool.axis ||
+          !tool.frame ||
+          tool.lease?.phase !== "editing"
+        )
+          return;
+        if (drag) tool.lease.releaseCapture();
+        drag = null;
+        tool.editor.refresh();
+        tool.widget[key].focus();
+        tool.widget[key].select();
+      },
+      { signal },
+    );
+    handle.addEventListener(
       "pointerdown",
       (event) => {
         if (event.button !== 0 || !tool.axis || !tool.frame || tool.editor.blocked) return;

@@ -1,12 +1,17 @@
+import type { GuideToolPlan } from "../guides/tool-path.js";
+import { guideToolSession } from "../guides/tool-session.js";
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import type { Vector } from "../sketch/planes.js";
 import type { Extrusion, LiftSource } from "./body.js";
 import { BooleanOperands } from "./boolean-operands.js";
+import { extrusionGuidePath } from "./extrude-guide.js";
 import { trackExtrudeHistory } from "./extrude-history.js";
-import { ExtrudeInputs } from "./extrude-inputs.js";
-import { ExtrudeTargets } from "./extrude-targets.js";
-import { ExtrudeTwist } from "./extrude-twist.js";
-import { ExtrudeWidget } from "./extrude-widget.js";
+import type { ExtrudeInputs } from "./extrude-inputs.js";
+import type { ExtrudeTargets } from "./extrude-targets.js";
+import type { ExtrudeTwist } from "./extrude-twist.js";
+import { createExtrudeView, updateExtrudeView } from "./extrude-view.js";
+import type { ExtrudeWidget } from "./extrude-widget.js";
 import { PreviewRunner } from "./preview-runner.js";
 import { sourceExtrusion } from "./viewer-extrusion.js";
 
@@ -24,7 +29,6 @@ export class ExtrudeControls {
   private previews = new PreviewRunner<Extrusion>({
     editing: () => this.lease?.phase === "editing",
     calculate: (request) => this.calculate(request),
-    supersede: () => this.editor.store.supersedePreview(true),
     settled: () => this.editor.refresh(),
   });
   private valid = false;
@@ -38,45 +42,9 @@ export class ExtrudeControls {
     overlay: HTMLElement,
   ) {
     this.operands = new BooleanOperands(editor);
-    this.targets = new ExtrudeTargets(editor, () => {
-      if (this.mode === "auto") this.mode = editor.store.booleanMode ?? "auto";
-      this.queue(this.distance);
-    });
-    this.widget = new ExtrudeWidget(
-      (mode) => {
-        if (this.begin()) {
-          this.mode = mode;
-          this.queue(this.distance);
-        }
-      },
-      () => {
-        if (this.begin()) this.queue(this.distance);
-        editor.refresh();
-      },
-      (symmetric) => {
-        if (this.begin()) this.queue(this.distance, symmetric);
-      },
-      () => void this.finish(),
-      () => void this.cancel(),
-    );
-    this.root = this.widget.root;
-    this.twist = new ExtrudeTwist(
+    const view = createExtrudeView(
       editor,
-      this.root,
-      () => this.begin(),
-      () => this.lease,
-      () => {
-        this.queue(this.distance);
-        editor.refresh();
-      },
-      this.abort.signal,
-    );
-    this.widget.addQuantity(this.twist.row);
-    this.root.append(this.targets.root);
-    overlay.append(this.root);
-    this.inputs = new ExtrudeInputs(
-      editor,
-      this.widget,
+      overlay,
       {
         begin: () => this.begin(),
         lease: () => this.lease,
@@ -91,9 +59,19 @@ export class ExtrudeControls {
         },
         finish: () => void this.finish(),
         cancel: () => void this.cancel(),
+        guide: (point) => this.guide(point),
       },
       this.abort.signal,
+      () => {
+        if (this.mode === "auto") this.mode = editor.store.booleanMode ?? "auto";
+        this.queue(this.distance);
+      },
     );
+    this.widget = view.widget;
+    this.targets = view.targets;
+    this.twist = view.twist;
+    this.inputs = view.inputs;
+    this.root = view.widget.root;
     editor.world.changed.add(this.update);
     this.update();
   }
@@ -106,6 +84,29 @@ export class ExtrudeControls {
     if (!this.valid) throw new Error("Cannot regenerate the accepted extrusion");
     this.widget.input.focus();
     this.widget.input.select();
+  }
+  guide(point: Vector): GuideToolPlan | null {
+    if (this.editor.world.active || this.editor.modeling.tool !== "extrude") return null;
+    if (this.twist.angle || this.widget.draft.value.value) return null;
+    const path = extrusionGuidePath(this.editor, point, this.widget.axis, this.symmetric);
+    if (!path) return null;
+    return {
+      path,
+      begin: () => {
+        const existing = !!this.lease;
+        if (!this.begin() || !this.lease) return null;
+        return guideToolSession({
+          lease: this.lease,
+          initial: this.distance,
+          existing,
+          queue: (distance) => this.queue(distance),
+          settle: () => this.previews.settle(),
+          valid: () => this.valid,
+          distance: () => this.distance,
+          cancel: () => this.cancel(),
+        });
+      },
+    };
   }
   /** Guided tools hand off to the ordinary temporary extrusion interaction. */
   start(
@@ -213,9 +214,10 @@ export class ExtrudeControls {
   }
   private async calculate(request: Extrusion): Promise<void> {
     const success = await this.editor.store.request({ kind: "extrude", extrusion: request });
-    if (request === this.previews.latest && this.lease?.phase === "editing") {
-      this.valid = success;
-      this.lease.show(success ? this.editor.store.candidate : null);
+    if (this.previews.latest && this.lease?.phase === "editing") {
+      this.valid = success && request === this.previews.latest;
+      if (success || request === this.previews.latest)
+        this.lease.show(success ? this.editor.store.candidate : null);
       if (success) this.operands.showTool();
     }
     this.editor.refresh();
@@ -226,7 +228,7 @@ export class ExtrudeControls {
       await this.cancel();
       return true;
     }
-    if (!this.lease || !this.valid || !this.lease.close()) return false;
+    if (!this.lease || this.lease.captured || !this.valid || !this.lease.close()) return false;
     const success = await this.editor.accept();
     if (!success) {
       if (this.lease) this.lease.phase = "editing";
@@ -262,32 +264,18 @@ export class ExtrudeControls {
   }
   private update = (): void => {
     if (!this.lease?.candidate) this.operands.clear();
-    const editor = this.editor;
-    this.widget.update(
-      editor,
-      this.active,
-      this.distance,
-      this.mode === "auto" ? editor.store.booleanMode : this.mode,
-      this.valid,
-      this.twist.value,
-      this.symmetric,
+    updateExtrudeView(
+      this.editor,
+      this,
+      { widget: this.widget, twist: this.twist, targets: this.targets },
+      {
+        distance: this.distance,
+        mode: this.mode === "auto" ? this.editor.store.booleanMode : this.mode,
+        valid: this.valid,
+        symmetric: this.symmetric,
+        pending: !!this.previews.latest,
+      },
     );
-    this.twist.update(this.widget.axis, this.active, this.distance, this.valid, this.symmetric);
-    this.twist.row.hidden = !!this.widget.axis?.normalExtrusion;
-    this.root.dataset.previewPending = String(
-      this.active && !!this.previews.latest && !this.valid && this.editor.store.working,
-    );
-    if (
-      (!this.active && editor.modeling.tool !== "extrude") ||
-      (editor.interactions.current && editor.interactions.current.kind !== "extrude")
-    )
-      this.root.hidden = true;
-    this.targets.update(
-      this.active &&
-        (this.mode === "auto" ? editor.store.booleanMode : this.mode) !== "new" &&
-        !!editor.store.data.bodies?.length,
-    );
-    this.widget.fit();
   };
   dispose(): void {
     this.operands.dispose();

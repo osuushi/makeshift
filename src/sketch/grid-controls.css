@@ -4,10 +4,10 @@
   width: min(280px, calc(100vw - 16px));
   box-sizing: border-box;
   padding: 12px;
-  border: 1px solid #d4dce6;
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 4px 20px #0002;
+  background: var(--panel);
+  box-shadow: 0 4px 20px var(--shadow);
   animation: grid-slide-in 140ms ease-out;
   max-height: calc(100vh - 16px);
   overflow: auto;
@@ -41,7 +41,7 @@
 }
 .sketch-grid-panel p {
   font-size: 11px;
-  color: #566578;
+  color: var(--muted);
 }
 @keyframes grid-slide-in {
   from {
@@ -57,4 +57,24 @@
   .sketch-grid-panel {
     animation: none;
   }
+}
+
+.view-options-trigger {
+  position: absolute;
+  top: 168px;
+  right: 26px;
+  width: 128px;
+  padding: 7px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.view-options-panel {
+  inset: auto;
+  margin: 0;
+  width: min(280px, calc(100vw - 16px));
+  color: var(--text);
+}
+.view-options-panel h2 {
+  font-size: 16px;
+  margin: 0 0 8px;
 }

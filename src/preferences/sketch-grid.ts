@@ -5,7 +5,7 @@ let cached: { grid: SketchGrid; minPixels: number } | undefined;
 const listeners = new Set<() => void>();
 export function sketchGridPreferences(): { grid: SketchGrid; minPixels: number } {
   if (!cached) {
-    cached = { grid: { ...defaultSketchGrid }, minPixels: 4 };
+    cached = { grid: { ...defaultSketchGrid }, minPixels: 10 };
     try {
       const stored = JSON.parse(localStorage.getItem(key) ?? "null");
       if (stored) {
@@ -17,7 +17,7 @@ export function sketchGridPreferences(): { grid: SketchGrid; minPixels: number }
       /* Storage is optional; malformed preferences use built-in defaults. */
     }
   }
-  return structuredClone(cached ?? { grid: { ...defaultSketchGrid }, minPixels: 4 });
+  return structuredClone(cached ?? { grid: { ...defaultSketchGrid }, minPixels: 10 });
 }
 export function saveSketchGridDefaults(grid: SketchGrid): void {
   validateSketchGrid(grid);
@@ -44,3 +44,15 @@ export function onSketchGridPreferencesChange(listener: () => void): () => void 
   listeners.add(listener);
   return () => listeners.delete(listener);
 }
+
+if (typeof window !== "undefined")
+  window.addEventListener("storage", (event) => {
+    if (event.key !== key && event.key !== null) return;
+    try {
+      cached = undefined;
+      sketchGridPreferences();
+    } catch {
+      return;
+    }
+    for (const listener of listeners) listener();
+  });

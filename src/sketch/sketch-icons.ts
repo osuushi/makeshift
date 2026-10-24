@@ -1,4 +1,6 @@
 const paths = {
+  undo: "M3 10h11a6 6 0 0 1 0 12 M3 10l6-6 M3 10l6 6",
+  redo: "M21 10H10a6 6 0 0 0 0 12 M21 10l-6-6 M21 10l-6 6",
   rotate: "M19 8a8 8 0 1 0 1 7 M19 3v5h-5",
   translate: "M3 12h18 M7 8l-4 4 4 4 M17 8l4 4-4 4",
   parallel: "M5 18 11 6 M13 18 19 6",

@@ -49,6 +49,7 @@ export async function bodyAnchorRoute(page, name) {
   await page.keyboard.press("Escape");
   await page.mouse.up();
   assert.deepEqual(await center(anchor), moved);
+  await page.getByRole("button", { name: "Rotate layer", exact: true }).click();
   await page.getByRole("button", { name: "Rotate body Z", exact: true }).click();
   await page.locator(".body-transform-value").fill("90");
   await page.keyboard.press("Enter");

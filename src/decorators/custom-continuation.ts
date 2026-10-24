@@ -1,4 +1,5 @@
 import { newId, type SketchDocument } from "../sketch/document.js";
+import { continueGearGroups } from "./gear-support.js";
 import type { JavaScriptDecorators } from "./javascript-hooks.js";
 import type { DecoratorInstance } from "./types.js";
 
@@ -21,6 +22,7 @@ export function resolveCustomContinuation(
         id: index === 0 ? instance.id : newId(),
       }));
       for (const next of results) {
+        if (next.gearGroup) continue;
         const error = hooks.diagnostics(document, next).find((d) => d.severity === "error");
         if (error) throw new Error(error.message);
       }
@@ -34,5 +36,5 @@ export function resolveCustomContinuation(
       ];
     }
   });
-  return changed ? { ...document, decorators } : document;
+  return continueGearGroups(changed ? { ...document, decorators } : document);
 }

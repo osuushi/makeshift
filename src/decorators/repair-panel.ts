@@ -1,6 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "../tools/catalog.js";
-import { resolveFaces } from "./cylinder.js";
+import { selectDecoratorInputs } from "./selection-action.js";
 import { threadDefinition } from "./thread-settings.js";
 import type { DecoratorEdit, DecoratorInstance } from "./types.js";
 
@@ -9,20 +9,7 @@ export function appendDecoratorRepairs(
   editor: SketchEditor,
   instances: DecoratorInstance[],
 ): void {
-  const selected = () =>
-    editor.modeling.targets.flatMap((t) =>
-      t.kind === "face" ? [{ body: t.body, face: t.face }] : [],
-    );
   const edit = (edit: DecoratorEdit) => editor.store.request({ kind: "decorator", edit });
-  const ineligible = () => {
-    try {
-      if (selected().length !== editor.modeling.targets.length) return true;
-      resolveFaces(editor.store.data.bodies ?? [], selected());
-      return false;
-    } catch {
-      return true;
-    }
-  };
   const button = (label: string, action: () => unknown) => {
     const element = document.createElement("button");
     element.type = "button";
@@ -50,30 +37,27 @@ export function appendDecoratorRepairs(
       editor.refresh();
     });
     const custom = instance.definition !== threadDefinition;
-    const reassign = button(
-      custom ? "Use selected faces for this decorator" : "Use selected faces for these threads",
-      () => {
-        return edit({ action: "reassign", id: instance.id, faces: selected() });
-      },
-    );
-    reassign.disabled = custom || !!ineligible();
-    reassign.dataset.unavailable = String(reassign.disabled);
-    if (custom)
-      void editor.store
-        .inspectDecorator({
-          definition: instance.definition,
-          version: instance.version,
-          faces: selected(),
-          instanceId: instance.id,
-          reassign: true,
-        })
-        .then((result) => {
-          if (!reassign.isConnected) return;
-          reassign.disabled = !!result.reason;
-          reassign.dataset.unavailable = String(reassign.disabled);
-          reassign.title = result.reason ?? "";
-        })
-        .catch(() => {});
+    const label = custom
+      ? "Use selected faces for this decorator"
+      : "Use selected faces for these threads";
+    const reassign = button(label, () => {});
+    reassign.disabled = editor.store.busy;
+    reassign.onclick = () =>
+      void selectDecoratorInputs(
+        editor,
+        label,
+        async (faces) =>
+          (
+            await editor.store.inspectDecorator({
+              definition: instance.definition,
+              version: instance.version,
+              faces,
+              instanceId: instance.id,
+              reassign: true,
+            })
+          ).reason,
+        (faces) => edit({ action: "reassign", id: instance.id, faces }),
+      );
     button(custom ? "Remove unresolved decorator" : "Remove unresolved thread decorator", () => {
       return edit({ action: "discard", id: instance.id });
     });

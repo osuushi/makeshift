@@ -7,11 +7,11 @@
   width: 270px;
   padding: 10px;
   transform: translateX(-50%);
-  background: #fffffff0;
-  border: 1px solid #d4dee7;
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 10px;
   pointer-events: auto;
-  color: #344657;
+  color: var(--text);
   font-size: 12px;
 }
 .plane-cut-widget[hidden] {
@@ -27,10 +27,10 @@
 .plane-cut-widget button {
   height: 32px;
   padding: 5px 10px;
-  border: 1px solid #c9d5df;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: white;
-  color: #344657;
+  background: var(--panel);
+  color: var(--text);
 }
 .plane-cut-widget button:disabled {
   opacity: 0.5;
@@ -44,11 +44,11 @@
   line-height: 1.5;
 }
 .plane-cut-inputs [data-role="target"] {
-  color: #246fb8;
+  color: var(--accent);
 }
 .plane-cut-inputs [data-role="tool"] {
-  color: #8b571b;
+  color: var(--warning);
 }
 .plane-cut-inputs [data-role="result"] {
-  color: #a32b8c;
+  color: var(--danger);
 }

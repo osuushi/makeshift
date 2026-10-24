@@ -5,6 +5,10 @@ export interface WidgetRect {
   height: number;
 }
 
+/** Visible application chrome shared by widget placement and guide occlusion. */
+export const widgetChromeSelector =
+  "header, .toolbox, .tools-trigger, .entity-viewer, .orientation-cube, .view-options-trigger, .sketch-grid-panel, .exit-isolation, .agent-dock, .agent-toggle, .workspace-footer, .selection-readouts, .calculation-progress, .transform-layers, [data-modal-plane]";
+
 export function rectsOverlap(a: WidgetRect, b: WidgetRect, gap = 6): boolean {
   return (
     Math.abs(a.x - b.x) < (a.width + b.width) / 2 + gap &&
@@ -213,15 +217,15 @@ export function widgetViewport(root: HTMLElement): {
     width: Math.max(0, r.width - 16),
     height: Math.max(0, r.height - 16),
   };
-  const chrome =
-    "header, .toolbox, .tools-trigger, .entity-viewer, .orientation-cube, .sketch-grid-panel, .exit-isolation, .agent-dock, .agent-toggle, .workspace-footer, .selection-readouts, .calculation-progress, [data-modal-plane]";
+  const chrome = `${widgetChromeSelector}, .guide-marker.saved[data-interactive="true"]`;
   const controls = ".body-axis-handle, .move-control, .pivot-control, .move-anchor";
   const scale = root.classList.contains("scale-widget");
   const selector = scale ? `${chrome}, ${controls}` : chrome;
   const obstacles = [...root.ownerDocument.querySelectorAll(selector)]
     .filter((element) => !root.contains(element))
     .map((element) =>
-      scale && element instanceof HTMLElement && element.matches(controls)
+      element instanceof HTMLElement &&
+      (element.matches(".transform-layers") || (scale && element.matches(controls)))
         ? measuredTransportRect(element)
         : measuredRect(element),
     )
@@ -229,7 +233,7 @@ export function widgetViewport(root: HTMLElement): {
   return { viewport, obstacles };
 }
 
-/** Reserve the full body-priority corridor while its CSS correction is animating. */
+/** Reserve priority controls' full corridors while their CSS corrections animate. */
 function measuredTransportRect(element: HTMLElement): WidgetRect {
   const current = measuredControlRect(element),
     actual = widgetPointerOffset(element);

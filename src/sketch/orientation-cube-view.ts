@@ -61,7 +61,7 @@ function labelColor(color: string): string {
     return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
   });
   const luminance = 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
-  return (luminance + 0.05) / (0.0075 + 0.05) >= 1.05 / (luminance + 0.05) ? "#151515" : "#ffffff";
+  return (luminance + 0.05) / 0.05 >= 1.05 / (luminance + 0.05) ? "#000000" : "#ffffff";
 }
 
 function createSurface(cube: SVGSVGElement, face: CubeSurface) {

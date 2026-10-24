@@ -8,8 +8,8 @@
   gap: 8px;
   padding: 7px;
   transform: translateX(-50%);
-  background: #fffffff0;
-  border: 1px solid #d4dee7;
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 10px;
   pointer-events: auto;
 }
@@ -21,15 +21,15 @@
   min-width: 32px;
   height: 32px;
   padding: 5px;
-  border: 1px solid #c9d5df;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: white;
-  color: #344657;
+  background: var(--panel);
+  color: var(--text);
   white-space: nowrap;
 }
 .boolean-widget button[aria-pressed="true"] {
-  background: #dcecff;
-  border-color: #528ec9;
+  background: var(--selected);
+  border-color: var(--accent);
 }
 .boolean-widget svg {
   width: 20px;

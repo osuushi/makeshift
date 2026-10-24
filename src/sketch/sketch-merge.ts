@@ -9,7 +9,11 @@ import {
 import { coplanar, type PlaneFrame, type Point } from "./planes.js";
 import { validateSketch } from "./sketch-validation.js";
 
-export function mergeSketches(target: Sketch, sources: readonly Sketch[]): Sketch {
+export function mergeSketches(
+  target: Sketch,
+  sources: readonly Sketch[],
+  correspondence = new Map<string, Map<string, string>>(),
+): Sketch {
   if (sources.some((source) => source.id === target.id))
     throw new Error("A sketch cannot be merged with itself");
   if (sources.some((source) => !coplanar(target.plane, source.plane)))
@@ -23,6 +27,7 @@ export function mergeSketches(target: Sketch, sources: readonly Sketch[]): Sketc
   for (const source of sources) {
     const transform = planeTransform(source.plane, target.plane);
     const curveMap = new Map<string, string>();
+    correspondence.set(source.id, curveMap);
     const sourceCurves = source.curves.map((curve) => {
       const id = uniqueId(curve.id, curveIds);
       curveMap.set(curve.id, id);
@@ -57,9 +62,20 @@ export function mergeDocumentSketches(
   const sources = document.sketches.filter((sketch) => ids.has(sketch.id));
   if (!target || sources.length !== ids.size || !ids.size)
     throw new Error("Sketch no longer exists");
-  const merged = mergeSketches(target, sources);
+  const correspondence = new Map<string, Map<string, string>>();
+  const merged = mergeSketches(target, sources, correspondence);
   return {
     ...document,
+    ...(document.guidePoints
+      ? {
+          guidePoints: document.guidePoints.map((guide) => {
+            const anchor = guide.anchor;
+            if (anchor.kind !== "sketch-curve") return guide;
+            const curve = correspondence.get(anchor.sketch)?.get(anchor.curve);
+            return curve ? { ...guide, anchor: { ...anchor, sketch: targetId, curve } } : guide;
+          }),
+        }
+      : {}),
     sketches: document.sketches
       .filter((sketch) => !ids.has(sketch.id))
       .map((sketch) => (sketch.id === target.id ? merged : sketch)),

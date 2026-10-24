@@ -12,21 +12,21 @@
   cursor: grabbing;
 }
 .orientation-cube polygon {
-  stroke: #151515;
+  stroke: var(--handle-dark);
   stroke-width: 1.5;
   stroke-linejoin: round;
 }
 .orientation-cube g:hover polygon,
 .orientation-cube g:focus polygon {
-  fill: #dcecff;
-  stroke: #3276bf;
+  fill: var(--selected);
+  stroke: var(--accent);
   stroke-width: 1.8;
 }
 .orientation-cube g:focus {
   outline: none;
 }
 .orientation-cube text {
-  fill: var(--cube-label-color, #151515);
+  fill: var(--cube-label-color, var(--handle-dark));
   /* ui-scale: viewbox */
   font-size: 10px;
   font-weight: 600;
@@ -36,7 +36,7 @@
 }
 .orientation-cube g:hover text,
 .orientation-cube g:focus text {
-  fill: #151515;
+  fill: var(--text);
 }
 .exit-isolation {
   position: absolute;

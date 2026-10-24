@@ -20,10 +20,11 @@ export class ToolMenu {
   constructor(
     private editor: SketchEditor,
     app: HTMLElement,
+    private beforeOpen: () => void,
   ) {
     this.trigger.className = "tools-trigger";
-    this.trigger.innerHTML = `More <kbd>${toolShortcut(toolSearchKey())}</kbd>`;
-    this.trigger.setAttribute("aria-label", "More tools");
+    this.trigger.innerHTML = `Search <kbd>${toolShortcut(toolSearchKey())}</kbd>`;
+    this.trigger.setAttribute("aria-label", "Search tools");
     this.trigger.setAttribute("aria-haspopup", "dialog");
     this.trigger.setAttribute("aria-expanded", "false");
     this.backdrop.className = "tool-menu-backdrop";
@@ -90,7 +91,7 @@ export class ToolMenu {
         if (event.target === this.trigger || this.trigger.contains(event.target as Node)) {
           event.preventDefault();
           event.stopImmediatePropagation();
-        } else if (toolMenuOpen()) {
+        } else if (!this.backdrop.hidden) {
           event.stopImmediatePropagation();
           if (!this.panel.contains(event.target as Node)) event.preventDefault();
         }
@@ -106,7 +107,7 @@ export class ToolMenu {
           this.open();
           return;
         }
-        if (toolMenuOpen() && !this.panel.contains(event.target as Node)) {
+        if (!this.backdrop.hidden && !this.panel.contains(event.target as Node)) {
           event.preventDefault();
           event.stopImmediatePropagation();
           this.close();
@@ -116,7 +117,9 @@ export class ToolMenu {
     );
   }
   private open(): void {
-    if (this.editor.interactions.current?.captured || toolMenuOpen()) return;
+    if (this.editor.interactions.current?.captured) return;
+    this.beforeOpen();
+    if (toolMenuOpen()) return;
     for (const menu of document.querySelectorAll<HTMLElement>(".control-menu:popover-open"))
       menu.hidePopover();
     borrowToolFocus();
@@ -138,11 +141,11 @@ export class ToolMenu {
     if (toolSearchShortcut(event)) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      if (!toolMenuOpen()) this.open();
+      if (this.backdrop.hidden) this.open();
       else this.input.focus();
       return;
     }
-    if (!toolMenuOpen()) return;
+    if (this.backdrop.hidden) return;
     event.stopImmediatePropagation();
     if (event.isComposing) return;
     const key = event.key;
@@ -179,7 +182,7 @@ export class ToolMenu {
     }
   };
   private update = (): void => {
-    if (toolMenuOpen()) this.render(false);
+    if (!this.backdrop.hidden) this.render(false);
   };
   private render(reset: boolean): void {
     const catalog = toolCatalog(this.editor);
@@ -254,7 +257,7 @@ export class ToolMenu {
     );
   }
   dispose(): void {
-    if (toolMenuOpen()) this.close();
+    if (!this.backdrop.hidden) this.close();
     this.abort.abort();
     this.editor.world.changed.delete(this.update);
     this.trigger.remove();

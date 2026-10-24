@@ -27,6 +27,8 @@ jobs:
       - run: node tests/ui-scale-css.mjs
       - run: npx tsc -p tsconfig.host.json
       - run: npm run test:setup
+      - name: Release artifact recovery and Apple transport regressions
+        run: npm run test:release
       - name: CI partition coverage
         run: node --test tests/ci-partition.mjs tests/demo-shards.mjs tests/demo-frame-sync.mjs
   linux-build:
@@ -177,6 +179,10 @@ jobs:
       - uses: ./.github/actions/ci-linux-runtime
       - name: Install recording tools
         run: |
+          # Match the browser dependency setup: avoid the runner's slow Azure mirror.
+          if [ -f /etc/apt/apt-mirrors.txt ]; then
+            sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|http://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
+          fi
           sudo apt-get update
           sudo apt-get install -y ffmpeg
           npx playwright install --with-deps chromium

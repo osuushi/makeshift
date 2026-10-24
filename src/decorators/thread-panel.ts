@@ -8,6 +8,7 @@ export function appendThreadSettings(
   patch: (settings: Settings, preview: boolean) => void,
   draft: DecoratorFieldDraft,
   advancedOpen: boolean,
+  showPreset = true,
 ): void {
   instances = instances.map((instance) => ({
     ...instance,
@@ -20,6 +21,7 @@ export function appendThreadSettings(
   summary.textContent = "Advanced";
   advanced.append(summary);
   for (const field of threadFields) {
+    if (field.key === "preset" && !showPreset) continue;
     if (
       field.visibleWhen &&
       !instances.some((d) => field.visibleWhen?.values.includes(d.settings[field.visibleWhen.key]))
@@ -31,7 +33,7 @@ export function appendThreadSettings(
       const hint = document.createElement("p");
       hint.className = "thread-clearance-hint";
       hint.textContent =
-        "Moves hole threads outward, away from the rod. FDM fine starts at 0.25 mm; adjust for your printer and orientation.";
+        "Moves hole threads outward, away from the rod. FDM fine and coarse start at 0.25 mm; adjust for your printer and orientation.";
       root.append(hint);
     }
   }

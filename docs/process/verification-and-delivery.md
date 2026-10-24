@@ -56,7 +56,10 @@ canceled application Quit, which document-owner tests cannot exercise. Section
 regressions cover GPU composition, cavities, captured cap overlap/hover/selection,
 distant-camera clipping, and localized X-ray masks. CPU geometry tests cannot
 observe these escaped rendering failures.
-The inventory permits 26 suites, totaling 553 seconds with the existing shard count.
+The inventory permits 26 suites, totaling 555 seconds with the existing shard count.
+The transform entry regression includes escaped Tab focus and cross-layer acceptance
+checks in the same app session; its measured 12.2-second macOS run has a 14-second
+allocation (previously 12). No additional suite or shard was added.
 Feature-demo recording runs separately as one Linux job per recipe. Each uploads
 its own media and manifest; the final `feature-demos` job requires all recordings,
 checks their source/configuration and completeness, then validates the assembled

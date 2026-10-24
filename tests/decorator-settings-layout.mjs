@@ -38,9 +38,11 @@ try {
         for (const scale of [0.8, 1, 1.5]) {
           await page.getByRole("button", { name: "Application settings" }).click();
           const dialog = page.getByRole("dialog", { name: "Settings", exact: true });
+          await dialog.getByRole("tab", { name: "Interface", exact: true }).click();
           await dialog
             .getByRole("combobox", { name: "User interface scale" })
             .selectOption(String(scale));
+          await dialog.getByRole("tab", { name: "Decorators", exact: true }).click();
           const layout = await dialog.evaluate((element) => ({
             width: element.clientWidth,
             scroll: element.scrollWidth,

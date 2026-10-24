@@ -14,7 +14,7 @@ export class CubePreview {
   private solid = this.mesh.solid;
   private line = new THREE.LineLoop(
     new THREE.BufferGeometry(),
-    new THREE.LineBasicMaterial({ color: "#28643a", depthTest: false, depthWrite: false }),
+    new THREE.LineBasicMaterial({ color: "#32834e", depthTest: false, depthWrite: false }),
   );
   private labels = [document.createElement("span"), document.createElement("span")];
   constructor(

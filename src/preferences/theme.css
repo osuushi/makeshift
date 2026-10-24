@@ -1,0 +1,77 @@
+/* Semantic UI colors. Text pairs are audited at 4.5:1; controls at 3:1.
+   Keep panels opaque so geometry underneath cannot reduce text contrast. */
+:root {
+  color-scheme: light;
+  --widget-active-fill: #82b5e0;
+  --widget-active-glow: #f28c28;
+  --widget-active-shadow: #f28c2880;
+  --canvas: #f8f9fb;
+  --panel: #ffffff;
+  --surface: #f0f3f7;
+  --selected: #e4efff;
+  --warning-surface: #fff1d6;
+  --text: #283444;
+  --muted: #526174;
+  --border: #718094;
+  --accent: #155c9e;
+  --warning: #794700;
+  --danger: #a52c36;
+  --success: #21653d;
+  --purple: #70419e;
+  --teal: #006269;
+  --on-accent: #ffffff;
+  --shadow: #10182026;
+  --backdrop: #10182066;
+  --selection-fill: #155c9e18;
+  --danger-fill: #a52c3618;
+  --handle-light: #ffffff;
+  --handle-dark: #151515;
+  --handle-shade: #d9d9d9;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #161e29;
+  --panel: #202b39;
+  --surface: #283546;
+  --selected: #253f59;
+  --warning-surface: #49391e;
+  --text: #e4edf7;
+  --muted: #b9c8d9;
+  --border: #8598ae;
+  --accent: #87c5ff;
+  --warning: #f2c16f;
+  --danger: #ffacb5;
+  --success: #8ad6a3;
+  --purple: #d5afff;
+  --teal: #80d7df;
+  --on-accent: #161e29;
+  --shadow: #00000066;
+  --backdrop: #00000088;
+  --selection-fill: #87c5ff18;
+  --danger-fill: #ffacb518;
+}
+input,
+textarea,
+select,
+dialog {
+  color: var(--text);
+  background-color: var(--panel);
+}
+input,
+textarea,
+select {
+  border-color: var(--border);
+  accent-color: var(--accent);
+}
+::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+:is(button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+::selection {
+  color: var(--on-accent);
+  background: var(--accent);
+}

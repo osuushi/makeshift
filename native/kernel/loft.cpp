@@ -114,6 +114,8 @@ TopoDS_Shape loftSections(const Tree& input, const std::vector<Operand>& bodies)
         if (std::abs(volume(result)-expected) > 1e-6*std::max(1.0, expected))
             throw std::runtime_error("Loft holes intersect one another");
     }
-    validateSweptSolids(result);
+    // build() already checked the unchanged outer solid. Hole subtraction
+    // changes its boundary and requires a fresh final check.
+    if (!inner.empty()) validateSweptSolids(result);
     return result;
 }

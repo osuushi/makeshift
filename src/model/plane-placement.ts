@@ -77,7 +77,7 @@ export class PlanePlacement {
     return origin.map((v, i) => v + this.offset[i]) as Vector;
   }
   private start(event: PointerEvent, axis: PlacementAxis, rotate: boolean): void {
-    if (event.button || this.editor.blocked || this.pointer) return;
+    if (event.button || this.editor.blocked || (this.pointer && this.pointer.id !== -1)) return;
     if (!this.current()?.lease) this.begin();
     const current = this.current();
     if (!current?.lease) return;

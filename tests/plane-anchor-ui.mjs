@@ -30,6 +30,7 @@ await withUiRuntimes(async (page) => {
   await page.mouse.up();
   const cancelled = await anchor.boundingBox();
   assert.ok(Math.hypot(cancelled.x - moved.x, cancelled.y - moved.y) < 1);
+  await page.getByRole("button", { name: "Rotate layer", exact: true }).click();
   const rotation = page
     .locator(".body-gizmo:not([hidden]) .body-rotate-handle:not([hidden])")
     .first();

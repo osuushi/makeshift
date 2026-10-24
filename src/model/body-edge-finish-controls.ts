@@ -1,10 +1,11 @@
+import { edgeFinishSurfacePlan } from "../guides/edge-finish-targets.js";
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import { onModelKeydown } from "../sketch/model-keys.js";
 import type { BodyEdgeFinish } from "./body.js";
 import { BodyEdgeFinishWidget } from "./body-edge-finish-widget.js";
 import { selectedEdgeFrame } from "./edge-finish-direction.js";
 import { EdgeFinishDrag } from "./edge-finish-drag.js";
+import { edgeFinishInputs } from "./edge-finish-inputs.js";
 import { PreviewRunner } from "./preview-runner.js";
 
 export class BodyEdgeFinishControls {
@@ -43,8 +44,18 @@ export class BodyEdgeFinishControls {
       () => this.size,
       (size) => this.queue(size),
       () => this.focus(),
+      () =>
+        edgeFinishSurfacePlan(editor, this.frame, this.mode, async (size) => {
+          await this.previews.settle();
+          return (
+            this.lease?.phase === "editing" &&
+            this.valid &&
+            !this.invalid &&
+            Math.abs(this.size - size) < 1e-6
+          );
+        }),
     );
-    this.widget.bind(this.abort.signal, {
+    edgeFinishInputs(this.widget, this.abort.signal, {
       begin: () => this.begin(this.mode),
       activate: (mode) => {
         if (this.begin(mode)) this.focus();
@@ -54,18 +65,10 @@ export class BodyEdgeFinishControls {
         else if (this.begin(mode)) this.focus();
       },
       size: (value) => this.queue(value),
+      active: () => !!this.lease,
+      finish: () => void this.finish(),
+      cancel: () => void this.cancel(),
     });
-    const options = { signal: this.abort.signal };
-    onModelKeydown(
-      (event) => {
-        if (!this.lease || !["Enter", "Escape"].includes(event.key)) return;
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        if (event.key === "Escape") void this.cancel();
-        else void this.finish();
-      },
-      { ...options, capture: true },
-    );
     editor.world.changed.add(this.update);
     this.update();
   }

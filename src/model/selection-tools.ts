@@ -23,6 +23,8 @@ export class SelectionTools {
                 editor.store.data.bodies ?? [],
                 action,
               );
+            if (!editor.world.active)
+              for (const notify of editor.modeling.selectionChosen) notify();
             editor.modeling.hover = null;
             editor.modeling.alternatives = [];
             editor.notice = "";
@@ -33,10 +35,7 @@ export class SelectionTools {
   }
   private reason(action: Refinement): string | null {
     const e = this.editor;
-    if (e.world.active)
-      return action === "clear" && e.selectionOwners.size
-        ? null
-        : "Select solid geometry in Modeling";
+    if (e.world.active) return action === "clear" ? null : "Select solid geometry in Modeling";
     if (
       (action === "boundary" || action === "only-faces") &&
       !e.modeling.targets.some((t) => t.kind === "face" || t.kind === "body")
@@ -44,10 +43,9 @@ export class SelectionTools {
       return "Select faces or bodies";
     if (action === "only-edges" && !e.modeling.targets.some((t) => t.kind === "edge"))
       return "Select edges";
-    const next = refineSelection(e.modeling.targets, e.store.data.bodies ?? [], action);
-    return JSON.stringify(next) === JSON.stringify(e.modeling.targets)
-      ? "Would not change the current selection"
-      : null;
+    // A refinement that already matches the selection is an admitted no-op.
+    // Otherwise the picker could never finish (e.g. Only edges after picking edges).
+    return null;
   }
   dispose(): void {
     for (const dispose of this.disposers) dispose();

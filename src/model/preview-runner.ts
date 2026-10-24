@@ -1,7 +1,7 @@
 interface PreviewCallbacks<Request> {
   editing: () => boolean;
   calculate: (request: Request) => Promise<void>;
-  supersede: () => void;
+  supersede?: () => void;
   settled: (calculated: boolean) => void;
 }
 
@@ -18,7 +18,7 @@ export class PreviewRunner<Request> {
 
   enqueue(request: Request): void {
     this.current = this.pending = request;
-    if (this.running) this.callbacks.supersede();
+    if (this.running) this.callbacks.supersede?.();
     else this.start();
   }
 

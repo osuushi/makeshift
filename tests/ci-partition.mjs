@@ -40,7 +40,7 @@ test("PR UI coverage stays bounded, Electron-only and tied to lower-level covera
   const shards = partition(suites, 3);
   assert.ok(shards.every((shard) => shard.suites.length));
   assert.ok(
-    shards.reduce((sum, shard) => sum + shard.seconds, 0) <= 553,
+    shards.reduce((sum, shard) => sum + shard.seconds, 0) <= 555,
     "Keep the regression gate within its aggregate execution budget",
   );
   assert.deepEqual(

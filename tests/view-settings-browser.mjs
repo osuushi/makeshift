@@ -8,7 +8,10 @@ await withUiRuntimes(
     await modalSettingsRoute(page);
     await migrationRoute(page);
     await opacitySettingsRoute(page);
-    const open = () => page.getByRole("button", { name: "Application settings" }).click();
+    const open = async () => {
+      await page.getByRole("button", { name: "Application settings" }).click();
+      await page.getByRole("tab", { name: "View", exact: true }).click();
+    };
     const done = () => page.getByRole("button", { name: "Done", exact: true }).click();
     const slider = (title) => page.getByRole("slider", { name: title, exact: true });
     await page.getByRole("button", { name: "Reset grid display" }).click();
@@ -99,6 +102,7 @@ async function modalSettingsRoute(page) {
   );
   await page.keyboard.press("Meta+Comma");
   assert.equal(await dialog.isVisible(), true, "Mac shortcut opens settings");
+  await page.getByRole("tab", { name: "View", exact: true }).click();
   await page.getByRole("textbox", { name: "Plane palette name" }).fill("Unsaved palette");
   await page.keyboard.press("Meta+Comma");
   assert.equal(await dialog.isVisible(), true, "Shortcut is safe while settings are open");
@@ -128,7 +132,10 @@ async function modalSettingsRoute(page) {
 async function opacitySettingsRoute(page) {
   await reset(page);
   await orient(page, [0, 0, 1]);
-  const open = () => page.getByRole("button", { name: "Application settings" }).click();
+  const open = async () => {
+    await page.getByRole("button", { name: "Application settings" }).click();
+    await page.getByRole("tab", { name: "View", exact: true }).click();
+  };
   const done = () => page.getByRole("button", { name: "Done", exact: true }).click();
   const slider = (title) => page.getByRole("slider", { name: title, exact: true });
   await open();
@@ -174,6 +181,7 @@ async function migrationRoute(page) {
   await page.reload();
   await settled(page);
   await page.getByRole("button", { name: "Application settings" }).click();
+  await page.getByRole("tab", { name: "View", exact: true }).click();
   assert.equal(await page.getByLabel("XY plane color", { exact: true }).inputValue(), "#d4ae3a");
   assert.equal(await page.getByLabel("XZ plane color", { exact: true }).inputValue(), "#123456");
   await page.getByRole("combobox", { name: "Saved plane palette" }).selectOption("Kept");

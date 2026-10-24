@@ -13,6 +13,12 @@ import {
 import { rotatedHandles } from "./ui-rotated-handles.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
+async function resetRectangle(page) {
+  await reset(page);
+  // This route edits the underlying resize handles; visible guides own their shared hits.
+  await page.locator('.toolbox-references [data-tool="guide-points"]').click();
+}
+
 // WebKit truncates fractional CSS coordinates; round our chosen pixels explicitly.
 // At the route's integer pixel/mm scale this also removes solved-coordinate noise.
 async function drag(page, from, to, modifiers = []) {
@@ -28,10 +34,10 @@ async function drag(page, from, to, modifiers = []) {
 }
 
 async function rectangleEditing(page, name) {
-  await reset(page);
+  await resetRectangle(page);
   assert.equal(await page.getByRole("button", { name: "Rectangle (R)" }).isVisible(), false);
   await page.keyboard.press("r");
-  assert.equal((await inspect(page)).activePlane, null, "R must not choose a plane");
+  assert.equal((await inspect(page)).activePlane, "XY", "R enters the primary sketch plane");
   assert.equal((await inspect(page)).document.sketches.length, 0);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await drag(page, [0, 0], [20, 10]);
@@ -93,6 +99,15 @@ async function rectangleDimensionsAndHistory(page, name) {
   await page.getByRole("textbox", { name: "Width", exact: true }).fill("40");
   await page.keyboard.press("Tab");
   await settled(page);
+  // Tab includes visible panel actions, so the width lock precedes Height.
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Lock Width", exact: true })
+      .evaluate((el) => el === document.activeElement),
+    true,
+  );
+  await page.keyboard.press("Tab");
+  await settled(page);
   assert.equal(
     await page
       .getByRole("textbox", { name: "Height", exact: true })
@@ -134,7 +149,7 @@ async function rectangleDimensionsAndHistory(page, name) {
 async function planesAndCancellation(page) {
   // Separate fresh routes ensure vertical planes use local coordinates identically.
   for (const plane of ["XZ", "YZ"]) {
-    await reset(page);
+    await resetRectangle(page);
     await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await chooseTool(page, "grid snap", "grid");
     await page.keyboard.press("r");
@@ -150,7 +165,7 @@ async function planesAndCancellation(page) {
     await rotatedHandles(page);
   }
   // Grid off plus Shift allows a fractional position without geometry attraction.
-  await reset(page);
+  await resetRectangle(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await chooseTool(page, "grid snap", "grid");
@@ -191,7 +206,7 @@ async function planesAndCancellation(page) {
 }
 
 export async function numericDuringDrag(page) {
-  await reset(page);
+  await resetRectangle(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   const start = await at(page, -20, 0),

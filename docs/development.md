@@ -27,7 +27,9 @@ npm run dev
 `dev` starts Vite and one Electron window, with renderer hot reload. Closing the
 window or pressing Ctrl+C stops the owned development server. Electron launch flags
 can be passed after `--`; use `npm run dev -- --user-data-dir=/path/to/qa-profile`
-for an isolated review session. Changes to the
+for an isolated review session. Set `MAKESHIFT_DEV_PORT=5174` to use another port
+when a development session is already running, or `MAKESHIFT_DEV_PORT=0` to choose
+an available port automatically. Changes to the
 Electron entry or backend require restarting `dev`. `setup:native` downloads hash-verified PlaneGCS sources at the recorded FreeCAD
 commit and builds a separate calculator. It needs network access on first use;
 its source and build caches live in `.cache/solver` and `.build/solver`. Normal
@@ -45,6 +47,11 @@ libraries, STEP translator (`TKDESTEP`) and Makeshift's separate solid calculato
 Its transitive toolkit dependencies are built without FreeType or X11; STEP
 export does not initialize graphics. This initial source build takes
 longer; its cache is `.cache/kernel` and the calculator is `.build/kernel`.
+On Unix, the dedicated OCCT SDK and calculator undefine `OCC_CONVERT_SIGNALS`.
+Makeshift does not install OCCT's signal-to-exception handlers; retaining their
+`setjmp` bookkeeping adds overhead inside numerical loops. Normal C++ exceptions,
+geometry validation and worker-process failure handling remain enabled. This SDK
+is for Makeshift's calculator, not a host that installs OCCT signal handlers.
 Alternatively, set `OCCT_ROOT` to an installed SDK produced by this checkout's
 `setup:kernel` recipe, including `TKDESTEP`. A stock OCCT 7.9.3 SDK is not equivalent:
 Makeshift adapts rounded offset joins to shared-boundary precision. Setup and direct

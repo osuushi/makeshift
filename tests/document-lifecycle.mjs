@@ -2,10 +2,9 @@ import assert from "node:assert/strict";
 import { mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { _electron } from "playwright";
 import { blankDocumentOpen } from "./document-blank-open.mjs";
+import { closeDocuments, launchDocuments } from "./document-lifecycle-host.mjs";
 import { hostModelBoundary } from "./host-model-boundary.mjs";
-import { electronTestArguments } from "./native-documents.mjs";
 import { drag, inspect, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -29,46 +28,6 @@ async function until(check) {
     await new Promise((resolve) => setTimeout(resolve, 30));
   }
   throw new Error(`Document lifecycle did not settle: ${check}`);
-}
-async function close() {
-  const current = app;
-  const timer = setTimeout(() => current.process().kill("SIGKILL"), 15000);
-  try {
-    await current.close();
-  } finally {
-    clearTimeout(timer);
-  }
-}
-async function launch() {
-  app = await _electron.launch({
-    args: electronTestArguments([".", `--user-data-dir=${profile}`]),
-    env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
-  });
-  await app.evaluate(({ dialog, BrowserWindow }) => {
-    // Hidden windows cannot acquire OS focus; exercise routing via their native focus events.
-    BrowserWindow.getFocusedWindow = () => null;
-    globalThis.answers = [];
-    globalThis.promptNames = [];
-    globalThis.savePath = undefined;
-    globalThis.openPaths = [];
-    dialog.showMessageBox = async (_window, options) => {
-      const value = options ?? _window;
-      globalThis.promptNames.push(value.message);
-      return { response: globalThis.answers.shift() ?? 2 };
-    };
-    dialog.showSaveDialog = async () => ({
-      canceled: !globalThis.savePath,
-      filePath: globalThis.savePath,
-    });
-    dialog.showOpenDialog = async () => ({
-      canceled: !globalThis.openPaths.length,
-      filePaths: globalThis.openPaths.splice(0),
-    });
-  });
-  const page = await app.firstWindow();
-  page.setDefaultTimeout(15000);
-  await settled(page);
-  return page;
 }
 async function menu(label, group = "File", page) {
   if (page) {
@@ -121,7 +80,9 @@ async function openFile(path) {
   throw new Error("Missing opened file");
 }
 try {
-  const first = await launch();
+  const initial = await launchDocuments(profile);
+  app = initial.app;
+  const first = initial.page;
   await draw(first);
   const firstDocument = (await inspect(first)).document;
   await hostModelBoundary(first);
@@ -214,6 +175,11 @@ try {
     true,
     "Closing one agent leaves the other running",
   );
+  // Agent stop precedes the canceled Close command's final native publication.
+  // Quit must start after that command releases document access.
+  await until(
+    async () => !(await first.evaluate(() => window.makeshiftModel({ kind: "read" }))).error,
+  );
   await app.evaluate(({ app }) => {
     globalThis.answers = [2, 1];
     globalThis.promptNames = [];
@@ -237,9 +203,9 @@ try {
       bounds: window.getBounds(),
     }));
   });
-  await close();
+  await closeDocuments(app);
 
-  await launch();
+  ({ app } = await launchDocuments(profile));
   await until(() => app.windows().length === 2);
   assert.deepEqual(
     await app.evaluate(({ BrowserWindow }) =>
@@ -287,7 +253,7 @@ try {
   );
   await until(() => app.evaluate((_, count) => globalThis.promptNames.length > count, promptCount));
   assert.equal(app.windows().length, 2, "Failed Open removes only its provisional window");
-  await close();
+  await closeDocuments(app);
   console.log(
     "PASS independent document windows: pointer geometry, menu Undo/Redo, save collision, Finder duplicate focus, agents, Close/Quit cancellation and restoration",
   );

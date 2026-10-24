@@ -1,6 +1,9 @@
+import { copySketchGuides } from "../guides/sketch-continuation.js";
 import type { InteractionLease } from "../sketch/active-interaction.js";
+import { copySketch } from "../sketch/copy-selection.js";
 import { type SketchDocument, withSketch } from "../sketch/document.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import type { ModelRequest } from "../sketch/model-api.js";
 import type { PlaneFrame, Vector } from "../sketch/planes.js";
 import { transformSelected } from "../sketch/selection-transform.js";
 import { placedDocument } from "./body-placement.js";
@@ -12,6 +15,8 @@ export async function previewBoxMove(
   origin: Vector,
   delta: Vector,
   lease: InteractionLease,
+  duplicate = false,
+  copyIds = new Map<string, string>(),
 ): Promise<boolean> {
   const document = editor.store.data;
   if (source.kind === "curves") {
@@ -31,7 +36,11 @@ export async function previewBoxMove(
     if (!frames) return false;
     for (const { sketchId, frame } of frames) {
       const sketch = document.sketches.find((s) => s.id === sketchId);
-      if (sketch) next = withSketch(next, { ...sketch, plane: frame });
+      if (sketch) {
+        const placed = duplicate ? copySketch(sketch, copyIds) : sketch;
+        next = withSketch(next, { ...placed, plane: frame });
+        if (duplicate) next = copySketchGuides(next, sketch.id, placed.id, copyIds);
+      }
     }
     lease.show(next);
     return true;
@@ -45,7 +54,7 @@ export async function previewBoxMove(
         translation: delta,
         axis: [0, 0, 1],
         angle: 0,
-        duplicate: false,
+        duplicate,
       }),
     );
     return true;
@@ -89,4 +98,33 @@ export function translatedSketchFrames(
     });
   }
   return frames;
+}
+
+/** Build the accepted edit from the same source and delta used for preview. */
+export function boxMoveRequest(
+  document: SketchDocument,
+  source: ScaleSource,
+  origin: Vector,
+  delta: Vector,
+  duplicate = false,
+): ModelRequest | null {
+  if (source.kind === "sketches") {
+    const frames = translatedSketchFrames(document, source.ids, delta);
+    return frames?.length
+      ? { kind: "place-sketch", ...frames[0], additional: frames.slice(1), duplicate }
+      : null;
+  }
+  if (source.kind === "solids" && !source.faces.length && !source.edges.length)
+    return {
+      kind: "transform-bodies",
+      transform: {
+        ids: source.ids,
+        pivot: origin,
+        axis: [0, 0, 1],
+        angle: 0,
+        translation: delta,
+        duplicate,
+      },
+    };
+  return { kind: "accept" };
 }

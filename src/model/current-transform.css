@@ -4,9 +4,9 @@
   top: 65px;
   width: 220px;
   padding: 8px;
-  border: 1px solid #c9d5df;
+  border: 1px solid var(--border);
   border-radius: 7px;
-  background: #fffffff0;
+  background: var(--panel);
   pointer-events: auto;
 }
 .current-transform summary {
@@ -31,6 +31,6 @@
 }
 
 .current-transform input[aria-invalid="true"] {
-  color: #a83f27;
+  color: var(--danger);
   text-decoration: underline wavy;
 }

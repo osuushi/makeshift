@@ -27,7 +27,10 @@ The WASM wrapper reuses the native calculator's JSON protocol and operation code
 OCCT and the C++ runtime form an Emscripten main module; Makeshift geometry
 implementation is a separately linked side module in the same worker and memory.
 A fixed protocol trampoline connects them. The solver remains a standalone module.
-C++ exceptions remain enabled. Inputs use heap memory rather than the small WASM
+C++ exceptions remain enabled through standardized native WASM exceptions by
+default. A separate JavaScript-exception build remains available for comparison
+and compatibility investigation; see [build settings](../web-build.md#exception-runtime-and-profiling-builds).
+Inputs use heap memory rather than the small WASM
 stack. The web kernel uses one thread and requires neither SharedArrayBuffer nor
 cross-origin isolation headers. Manifold and QuickJS use the existing browser WASM
 paths for decorated mesh export and custom decorators.
@@ -65,16 +68,22 @@ Save, Cancel and Don't Save. A failed or cancelled save does not replace file id
 or the saved-content baseline. Browser close/navigation gets a beforeunload prompt
 where the browser supports it.
 
-Browsers with a save picker can save repeatedly to a selected destination. Safari
-uses file upload and download, including the Files picker on iPad. A download is
-reported as a download: the application cannot confirm where Safari stored it.
-Opening a file does not grant overwrite access; the first direct Save chooses a
-writable destination. Camera data is saved alongside geometry; navigation alone
-is not an edit. Undo back to the saved contents is clean.
+Save stores a complete archive in IndexedDB on this browser and origin. First Save
+asks for a name; subsequent Save updates the same drawing. Save As asks for a name
+and creates an independent copy. Open shows the browser library, newest saved first,
+with an Import file action. Imported files acquire a browser identity on first Save.
+Names are labels; distinct drawings can share a name. The saved baseline and identity
+change only after the storage transaction commits. Failed storage writes leave work dirty.
 
-This first target does not restore unsaved work after tab eviction or browser
-termination. iPad can terminate a background tab without a beforeunload prompt;
-regular `.makeshift` saves remain necessary. The Home Screen manifest supplies a
+Download drawing asks for a name and exports a portable copy through a file picker
+where available, or a browser download in Safari. Download does not mark unsaved
+browser changes clean. Camera and portable workspace bytes travel with both forms
+of save; navigation alone is not an edit. Undo back to saved contents is clean.
+
+Browser storage belongs to this browser profile and site; clearing site data removes
+the library and private browsing may discard it. Downloaded copies remain the backup
+and device-transfer route. There is no automatic recovery of edits since the last Save
+after tab eviction or termination. The Home Screen manifest supplies a
 standalone window and icon, without promising offline availability. Physical
 Pencil/palm behavior and large-model memory limits require device review, even
 when desktop WebKit tests pass.

@@ -12,7 +12,7 @@ export async function moveFieldsRoute(page, name) {
   const angle = page.getByRole("textbox", { name: "Angle", exact: true });
   assert.equal(await angle.count(), 0);
   assert.equal(await page.locator(".scale-card").isVisible(), false);
-  for (const label of ["Move X", "Move Y", "Angle", "Move X"]) {
+  for (const label of ["Move X", "Move Y"]) {
     await page.keyboard.press("Tab");
     await page.waitForFunction(
       (label) => document.activeElement?.getAttribute("aria-label") === label,
@@ -20,6 +20,7 @@ export async function moveFieldsRoute(page, name) {
     );
     assert.equal(await page.locator(".dimension input:visible").count(), 1);
   }
+  await page.keyboard.press("Shift+Tab");
   await page.getByRole("textbox", { name: "Move X", exact: true }).fill("3");
   await page.keyboard.press("Tab");
   await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "Move Y");
@@ -28,10 +29,7 @@ export async function moveFieldsRoute(page, name) {
   await page.keyboard.press("Enter");
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);
-  await page.keyboard.press("m");
-  await page.keyboard.press("Shift+Tab");
-  await page.waitForFunction(() => document.activeElement?.getAttribute("aria-label") === "Angle");
-  await page.keyboard.press("Enter");
+  await chooseTool(page, "rotate", "rotate");
   const from = (await inspect(page)).rotationHandle;
   const origin = await at(page, 0, 0);
   const dx = from.x - origin.x,
@@ -55,7 +53,7 @@ export async function moveFieldsRoute(page, name) {
   await inspect(page);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);
-  await page.keyboard.press("m");
+  await chooseTool(page, "rotate", "rotate");
   const rotation = (await inspect(page)).rotationHandle;
   await page.mouse.click(rotation.x, rotation.y);
   assert.equal(await angle.isVisible(), true);
@@ -64,7 +62,7 @@ export async function moveFieldsRoute(page, name) {
   await inspect(page);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);
-  await page.keyboard.press("m");
+  await chooseTool(page, "scale", "scale");
   await page.locator(".transform-box-handle:not([hidden])").first().click();
   assert.equal(await page.locator(".scale-card").isVisible(), true);
   await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("2");
