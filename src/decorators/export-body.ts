@@ -50,7 +50,7 @@ function threadOperands<S extends MeshSolid<S>>(
   const prepared = prepareThreadGeometry(document, instance, quality);
   if (!prepared) return null;
   const { body, faces, geometry } = prepared;
-  const mask = geometry.masks ? threadDomain(scope, body, faces, geometry) : null;
+  const mask = geometry.masks ? threadDomain(scope, body, faces, geometry, true) : null;
   return { mask, geometry };
 }
 
