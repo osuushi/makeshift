@@ -1,3 +1,4 @@
+import { retriangulateCollapsedEdges } from "./collapsed-edge-facets.js";
 import { facetArea, retriangulateCollinear } from "./collinear-facets.js";
 import type { ExportMesh } from "./export-mesh.js";
 
@@ -57,10 +58,9 @@ export function packedMesh(mesh: ExportMesh, rounding: number): ExportMesh {
   for (let i = 0; i < parents.length; i++)
     if (distance(i, root(i)) > rounding)
       throw new Error("Mesh packing exceeds numerical precision");
-  const triangles = mesh.triangles
-    .map((triangle) => triangle.map(root))
-    .filter((ids) => new Set(ids).size === 3);
-  const retriangulated = retriangulateCollinear({ vertices: mesh.vertices, triangles }, rounding);
+  const mapped = mesh.triangles.map((triangle) => triangle.map(root));
+  const normalized = retriangulateCollapsedEdges(mesh, mapped, rounding);
+  const retriangulated = retriangulateCollinear(normalized, rounding);
   const result = {
     ...retriangulated,
     triangles: cancelOppositeFacets(retriangulated.triangles),
