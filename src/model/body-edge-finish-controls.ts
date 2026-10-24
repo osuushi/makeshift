@@ -79,6 +79,7 @@ export class BodyEdgeFinishControls {
     if (this.mode === mode && !faces) return;
     this.editor.modeling.setTool(mode);
     this.mode = mode;
+    this.widget.radial.update(mode !== "chamfer");
     if (this.lease) {
       this.previews.clear();
       this.valid = false;
@@ -104,6 +105,7 @@ export class BodyEdgeFinishControls {
     if (this.lease) return this.mode === mode && this.lease.phase === "editing";
     if (this.editor.blocked || this.editor.world.active) return false;
     this.mode = mode;
+    this.widget.radial.update(mode !== "chamfer");
     this.frame = selectedEdgeFrame(this.editor, mode, restored?.edges);
     if (!this.frame) return false;
     this.edges = this.frame.edges;
@@ -118,7 +120,7 @@ export class BodyEdgeFinishControls {
     this.editor.modeling.targets = this.edges.map((edge) => ({ kind: "edge", ...edge }));
     this.editor.modeling.setTool(mode);
     this.size = restored?.size ?? 0;
-    this.widget.input.value = String(this.size);
+    this.widget.input.value = String(this.widget.radial.display(this.size));
     this.valid = false;
     this.invalid = false;
     this.previews.clear();
@@ -134,7 +136,7 @@ export class BodyEdgeFinishControls {
       }),
       async (state) => {
         this.setMode(state.mode);
-        this.widget.input.value = String(state.size);
+        this.widget.input.value = String(this.widget.radial.display(state.size));
         this.queue(state.size);
         await this.previews.settle();
       },
@@ -174,7 +176,7 @@ export class BodyEdgeFinishControls {
     if (size < 0) this.widget.input.value = "0";
     if (this.previews.latest?.size === Math.max(0, size)) {
       if (this.valid && this.size !== this.previews.latest.size) {
-        this.widget.input.value = String(this.size);
+        this.widget.input.value = String(this.widget.radial.display(this.size));
         this.drag.rebase(this.size);
       }
       return;
@@ -208,8 +210,8 @@ export class BodyEdgeFinishControls {
         this.lease.show(this.editor.store.candidate);
         this.size = this.editor.store.edgeSize ?? 0;
         if (request === latest && this.size !== request.size) {
-          this.widget.input.value = String(this.size);
-          this.editor.notice = `Limited to ${this.size} mm`;
+          this.widget.input.value = String(this.widget.radial.display(this.size));
+          this.editor.notice = `Limited to ${this.widget.radial.display(this.size)} mm`;
           this.drag.rebase(this.size);
         }
       }

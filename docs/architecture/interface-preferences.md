@@ -35,6 +35,18 @@ selected alternatives and reset to defaults. Its device-local organization is
 independent of geometry and Undo; see [toolbox interaction](../design/tool-menu.md#editable-toolbox-2026-10-22).
 Controls and agent launch configuration retain their existing separate settings.
 
+Circular dimension fields have an **R / Ø** button that switches between radius
+and diameter. The last choice applies to all radius entry fields and open drawings,
+and is also available under Settings → Interface → Circular dimensions. It persists
+on the current device/origin under `makeshift.radial-dimension`, defaulting to radius
+for missing/invalid storage. Denied storage retains the choice for the current window.
+Switching converts the displayed value and any pending numeric draft without editing
+geometry, accepting a preview, or adding Undo history. Geometry, constraints and agent
+APIs retain radius units. Sketch circle/arc dimensions and locks, bow and corner fillets,
+solid edge fillets, and radius modes of Offset/normal Extrude share the preference.
+Chamfer setbacks, thickness and relative distances keep their distance units. The X-ray
+radius slider also offers the toggle; its underlying screen-pixel radius is unchanged.
+
 Floating tool parameter cards have a dimpled left grip. Dragging it (or focusing
 it and using arrow keys) stores a screen position per card type under
 `makeshift.panel-positions`. Manually placed cards keep that position through

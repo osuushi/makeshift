@@ -1,3 +1,4 @@
+import { RadialInput } from "../preferences/radial-input.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { directionalOffset, directionalWidget } from "./directional-widget.js";
 import { WidgetClearance } from "./widget-clearance.js";
@@ -24,6 +25,7 @@ export class BodyEdgeFinishWidget {
     chamfer: document.createElement("button"),
   };
   readonly input = document.createElement("input");
+  readonly radial = new RadialInput(this.input);
   readonly modeButtons = {
     fillet: document.createElement("button"),
     chamfer: document.createElement("button"),
@@ -52,7 +54,7 @@ export class BodyEdgeFinishWidget {
     const unit = document.createElement("span");
     unit.textContent = "mm";
     const field = this.field;
-    field.append(this.input, unit);
+    field.append(this.radial.button, this.input, unit);
     const dismiss = this.dismiss;
     for (const [button, label, path, action] of [
       [this.accept, "Accept fillet", "m5 12 4 4L19 6", finish],
@@ -83,11 +85,7 @@ export class BodyEdgeFinishWidget {
       );
     }
     this.input.addEventListener("focus", input.begin, options);
-    this.input.addEventListener(
-      "input",
-      () => input.size(this.input.value.trim() ? Number(this.input.value) : NaN),
-      options,
-    );
+    this.input.addEventListener("input", () => input.size(this.radial.read()), options);
   }
   update(
     world: World,
@@ -132,6 +130,7 @@ export class BodyEdgeFinishWidget {
       mode === "chamfer"
         ? "Equal setback on both adjacent faces (mm)"
         : "Shared fillet radius (mm)";
+    this.radial.update(mode !== "chamfer");
     for (const [button, verb] of [
       [this.accept, "Accept"],
       [this.dismiss, "Cancel"],
@@ -148,10 +147,13 @@ export class BodyEdgeFinishWidget {
     this.accept.disabled = !active || !valid || busy;
     this.input.setAttribute("aria-invalid", String(active && invalid && !valid && !busy));
     if (!numericFocus(this.input))
-      this.input.value = Number.isFinite(size) ? String(Number(size.toPrecision(4))) : "";
+      this.input.value = Number.isFinite(size)
+        ? String(Number(this.radial.display(size).toPrecision(4)))
+        : "";
     this.placement.fit([this.handles[mode], this.panel]);
   }
   dispose() {
+    this.radial.dispose();
     this.placement.dispose();
     this.root.remove();
   }

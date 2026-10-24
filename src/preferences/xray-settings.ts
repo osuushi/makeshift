@@ -1,3 +1,5 @@
+import { radialDisplay, radialName } from "./radial-dimension.js";
+import { RadialInput } from "./radial-input.js";
 import { setViewDisplay, viewDisplay } from "./view-display.js";
 
 export function xraySettings(): HTMLElement {
@@ -20,13 +22,23 @@ export function xraySettings(): HTMLElement {
     const input = row.querySelector("input");
     const output = row.querySelector("output");
     if (!input || !output) throw new Error("Missing X-ray controls");
+    const radial = field === "xrayRadius" ? new RadialInput(input, () => update()) : null;
+    if (radial) {
+      const control = document.createElement("div");
+      control.className = "radial-slider";
+      input.before(control);
+      control.append(radial.button, input);
+      section.addEventListener("preferences-dispose", () => radial.dispose(), { once: true });
+    }
     input.oninput = () =>
       setViewDisplay({
         ...viewDisplay(),
-        [field]: Number(input.value) / (field === "sectionFrontOpacity" ? 100 : 1),
+        [field]:
+          (radial ? radial.read() : Number(input.value)) /
+          (field === "sectionFrontOpacity" ? 100 : 1),
       });
     section.append(row);
-    return { field, input, output };
+    return { field, input, output, radial, row };
   });
   const hint = document.createElement("p");
   hint.textContent =
@@ -37,7 +49,18 @@ export function xraySettings(): HTMLElement {
     global.checked = value.xrayGlobal;
     for (const row of rows) {
       const opacity = row.field === "sectionFrontOpacity";
-      row.input.value = String(Math.round(value[row.field] * (opacity ? 100 : 1)));
+      if (row.radial) {
+        row.input.max = String(radialDisplay(100));
+        row.input.step = String(radialDisplay(1));
+        const title = row.row.querySelector("span");
+        if (title) title.textContent = radialName();
+        row.radial.update();
+      }
+      row.input.value = String(
+        Math.round(
+          row.radial ? radialDisplay(value[row.field]) : value[row.field] * (opacity ? 100 : 1),
+        ),
+      );
       row.input.disabled = !opacity && value.xrayGlobal;
       row.output.textContent = `${row.input.value}${opacity ? "%" : " px"}`;
     }
