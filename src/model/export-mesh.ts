@@ -1,4 +1,4 @@
-import type { Body } from "./body.js";
+import type { BodyGeometry } from "./body.js";
 import { facetArea } from "./collinear-facets.js";
 
 export interface ExportMesh {
@@ -10,7 +10,7 @@ export interface ExportMesh {
 
 // Below kernel modeling tolerance; spatial neighbors avoid rounding-bin seams.
 const tolerance = 1e-7;
-export function exportMesh(body: Body): ExportMesh {
+export function exportMesh(body: BodyGeometry): ExportMesh {
   const vertices: number[][] = [],
     triangles: number[][] = [];
   const buckets = new Map<string, number[]>();

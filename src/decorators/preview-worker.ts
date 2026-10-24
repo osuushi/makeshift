@@ -8,12 +8,13 @@ import { gearDefinition } from "./gear-settings.js";
 import type { EnabledDefinition } from "./javascript-hooks.js";
 import {
   decoratorLivePreview,
-  decoratorPreview,
+  decoratorPreviewOutput,
   initializeMeshRuntime,
   PreviewRuntimeRequired,
 } from "./mesh-runtime.js";
 import { type PreviewFeedback, PreviewHistories } from "./preview-feedback.js";
 import { packPreviewMesh } from "./preview-wire.js";
+import { threadPreviewFaces } from "./thread-preview-surface.js";
 import type { DecoratorInstance } from "./types.js";
 
 async function renderGear(document: DisplayDocument, instance: DecoratorInstance) {
@@ -109,7 +110,7 @@ async function renderInstance(
   const preview = (module?: Awaited<ReturnType<typeof initializeMeshRuntime>>) =>
     live
       ? decoratorLivePreview(module, document, instance, feedback)
-      : { mesh: decoratorPreview(module, document, instance), state: null };
+      : decoratorPreviewOutput(module, document, instance);
   let result: ReturnType<typeof preview>;
   try {
     result = preview();
@@ -124,8 +125,9 @@ async function renderInstance(
     mesh: {
       id: instance.id,
       body: instance.faces[0].body,
-      faces: instance.faces,
+      faces: threadPreviewFaces(document, instance),
       ...packPreviewMesh(result.mesh),
+      occlusion: result.occlusion ? packPreviewMesh(result.occlusion) : undefined,
     },
     state: result.state,
   };
@@ -188,7 +190,13 @@ self.onmessage = async (
         elapsedMs: performance.now() - messageStarted,
         samples,
       },
-      meshes.flatMap(({ positions, indices }) => [positions.buffer, indices.buffer]),
+      meshes.flatMap((mesh) => [
+        mesh.positions.buffer,
+        mesh.indices.buffer,
+        ...("occlusion" in mesh && mesh.occlusion
+          ? [mesh.occlusion.positions.buffer, mesh.occlusion.indices.buffer]
+          : []),
+      ]),
     );
   } catch (error) {
     self.postMessage({ error: error instanceof Error ? error.message : String(error) });

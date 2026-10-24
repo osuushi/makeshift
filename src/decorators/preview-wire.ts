@@ -3,6 +3,7 @@ import type { ExportMesh } from "../model/export-mesh.js";
 export interface PackedPreviewMesh {
   positions: Float32Array;
   indices: Uint32Array;
+  occlusion?: { positions: Float32Array; indices: Uint32Array };
 }
 
 /** Transfer compact buffers instead of cloning nested triangle arrays. */

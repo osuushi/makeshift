@@ -11,6 +11,7 @@ import { exportTolerance } from "./precision.js";
 import type { PreviewFeedback } from "./preview-feedback.js";
 import { threadDomain } from "./thread-domain.js";
 import { nextThreadResolution } from "./thread-preview.js";
+import { threadFlatOcclusion } from "./thread-preview-occlusion.js";
 import { threadPreviewSurface } from "./thread-preview-surface.js";
 import type { ThreadPreviewResolution } from "./thread-sampling.js";
 import type { DecoratorInstance } from "./types.js";
@@ -52,12 +53,7 @@ export function decoratorPreview(
   document: DisplayDocument,
   instance: DecoratorInstance,
 ): ExportMesh {
-  if (instance.definition === knurlDefinition) {
-    const mesh = knurlPreview(runtime, document, instance);
-    if (!mesh) throw new PreviewRuntimeRequired();
-    return mesh;
-  }
-  return renderThreadPreview(runtime, document, instance).mesh;
+  return decoratorPreviewOutput(runtime, document, instance).mesh;
 }
 
 export function decoratorLivePreview(
@@ -65,18 +61,21 @@ export function decoratorLivePreview(
   document: DisplayDocument,
   instance: DecoratorInstance,
   feedback: PreviewFeedback,
-): { mesh: ExportMesh; state: ThreadPreviewResolution | null } {
-  if (instance.definition === knurlDefinition)
-    return { mesh: decoratorPreview(runtime, document, instance), state: null };
-  return renderThreadPreview(runtime, document, instance, nextThreadResolution(feedback));
+): { mesh: ExportMesh; state: ThreadPreviewResolution | null; occlusion?: ExportMesh } {
+  return decoratorPreviewOutput(runtime, document, instance, nextThreadResolution(feedback));
 }
 
-function renderThreadPreview(
+export function decoratorPreviewOutput(
   runtime: ManifoldToplevel | undefined,
   document: DisplayDocument,
   instance: DecoratorInstance,
   resolution?: ThreadPreviewResolution,
-): { mesh: ExportMesh; state: ThreadPreviewResolution | null } {
+): { mesh: ExportMesh; state: ThreadPreviewResolution | null; occlusion?: ExportMesh } {
+  if (instance.definition === knurlDefinition) {
+    const mesh = knurlPreview(runtime, document, instance);
+    if (!mesh) throw new PreviewRuntimeRequired();
+    return { mesh, state: null };
+  }
   const prepared = prepareThreadGeometry(document, instance, "preview", resolution);
   if (!prepared) return { mesh: { vertices: [], triangles: [] }, state: null };
   const { body, faces, geometry } = prepared;
@@ -95,6 +94,7 @@ function renderThreadPreview(
     return {
       mesh: surface(scope.mesh(scope.keep(generated.intersect(mask)))),
       state: geometry.resolution,
+      occlusion: threadFlatOcclusion(scope, body, faces, geometry),
     };
   } finally {
     scope.close();

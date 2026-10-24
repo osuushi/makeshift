@@ -77,6 +77,22 @@ function threadToolMeshes(
     hasAdd: outward > 0 ? maximum > radius : minimum < radius,
     hasRemove: outward > 0 ? minimum < radius : maximum > radius,
     band: ring(low, high),
+    // The generated operand owns the axial ends. Keep this auxiliary domain's
+    // caps clear of them to avoid coincident Boolean facets on tilted rods.
+    get planarCutBand() {
+      const start = grid.coords[0].z;
+      const coords = grid.coords.map(({ angle, z }) => ({
+        angle,
+        z: z + (z === start ? -1 : 1) * 4 * tolerance,
+      }));
+      return radialShell(
+        frame,
+        coords,
+        grid.triangles,
+        () => low,
+        () => high,
+      );
+    },
     // Reference overlap compensates base tessellation, without changing the target profile.
     referenceRemove: reference(overlap),
     referenceAdd: reference(-overlap),
@@ -166,6 +182,7 @@ export function threadMeshes(
     previewAuxiliaryRadius: cylinder.outward > 0 ? low : high,
     ...threadToolMeshes(frame, bandGrid, cylinder, settings, low, high, tolerance),
     tolerance,
+    extendPlanarCuts: cylinder.outward === 1 && settings.cut === "rod",
     masks: complete ? null : faces.map((face) => faceMask(frame, [face], low, high)),
     get direct() {
       return directOperand(
