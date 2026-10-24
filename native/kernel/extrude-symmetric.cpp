@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "crescent-profile.h"
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepPrimAPI_MakePrism.hxx>
 #include <BRepGProp.hxx>
@@ -30,12 +31,13 @@ TopoDS_Shape centeredPrism(const TopoDS_Face& face, const gp_Vec& travel) {
 }
 
 TopoDS_Shape extrudeProfile(const TopoDS_Face& face, const gp_Vec& travel, const Tree& input) {
-    if (!input.get<bool>("symmetric", false)) return half(face, travel, input);
+    const auto profile = printableCrescent(face);
+    if (!input.get<bool>("symmetric", false)) return half(profile, travel, input);
     // Constant sections form one exact prism. The half-depth draft calculation
     // retains the existing validation and zero-offset threshold for this path.
     if (!input.get_child_optional("twist") &&
         std::abs(extrusionDraftOffset(travel * 0.5, input)) < 1e-10)
-        return centeredPrism(face, travel);
+        return centeredPrism(profile, travel);
     Tree forward = input, backward = input;
     if (input.get_child_optional("twist")) {
         const auto angle = input.get<double>("twist.angle");
@@ -44,8 +46,8 @@ TopoDS_Shape extrudeProfile(const TopoDS_Face& face, const gp_Vec& travel, const
     }
     // Draft offset remains the displacement per wall at either cap. Angle mode
     // naturally uses half the total depth; the unchanged source is the midplane.
-    const auto a = half(face, travel * 0.5, forward);
-    const auto b = half(face, travel * -0.5, backward);
+    const auto a = half(profile, travel * 0.5, forward);
+    const auto b = half(profile, travel * -0.5, backward);
     validate(a); validate(b);
     const double expected = adaptiveVolume(a) + adaptiveVolume(b);
     std::vector<SourceEntity> unused;

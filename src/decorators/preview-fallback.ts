@@ -3,6 +3,7 @@ import type { Face } from "../model/body.js";
 import type { DisplayDocument } from "../model/display-document.js";
 import { decoratorAppearance } from "../preferences/decorator-display.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import { gearColor } from "./gear-colors.js";
 import {
   type DecoratorPreviewCompositor,
   decoratorPreviewLayer,
@@ -14,6 +15,7 @@ interface AttachedSurface extends PreviewSurface {
   id: string;
   signature: string;
   definition: string;
+  color: string;
   sourceFaces: readonly Face[];
 }
 
@@ -49,6 +51,7 @@ export class PreviewFallback {
         ) {
           previous.signature = signature;
           previous.definition = instance.definition;
+          previous.color = gearColor(instance, document.decorators ?? []);
           continue;
         }
         if (previous) {
@@ -75,6 +78,7 @@ export class PreviewFallback {
           id: instance.id,
           signature,
           definition: instance.definition,
+          color: gearColor(instance, document.decorators ?? []),
           sourceFaces,
           faces: new Set(references.map((face) => previewFaceKey(face.body, face.face))),
         });
@@ -93,7 +97,7 @@ export class PreviewFallback {
       surface.mesh.visible =
         !ready.has(`${surface.id}/${surface.mesh.userData.body}`) &&
         editor.visibility.visible(surface.mesh.userData.body);
-      const appearance = decoratorAppearance(surface.definition);
+      const appearance = decoratorAppearance(surface.definition, surface.color);
       (surface.mesh.material as THREE.MeshStandardMaterial).color.set(appearance.color);
       surface.displayOpacity = appearance.opacity;
       if (surface.mesh.visible) result.push(surface);

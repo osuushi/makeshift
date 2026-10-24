@@ -3,6 +3,7 @@ import "../preferences/theme.css";
 import { installToolboxSettings } from "../preferences/toolbox-settings.js";
 import type { ToolboxTool } from "../tools/toolbox-row.js";
 import "../tools/toolbox.css";
+import { onRadialDimensionChange } from "../preferences/radial-dimension.js";
 import { settingsDialog } from "../preferences/settings-dialog.js";
 
 import { measureSettings, type SettingsSize } from "../preferences/settings-size.js";
@@ -21,6 +22,7 @@ window.addEventListener("storage", () => {
     section.dispatchEvent(new Event("preferences-refresh"));
 });
 dialog.showModal();
+onRadialDimensionChange(() => dialog.dispatchEvent(new Event("preferences-refresh")));
 
 onViewDisplayChange(() => {
   for (const section of dialog.querySelectorAll(".view-display-settings"))

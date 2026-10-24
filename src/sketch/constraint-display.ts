@@ -1,3 +1,4 @@
+import { radialDisplay, radialName } from "../preferences/radial-dimension.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { selectedConstraints } from "./constraint-selection.js";
 import type { Constraint } from "./document.js";
@@ -51,7 +52,7 @@ export class ConstraintDisplay {
           : constraint.kind === "corner-angle"
             ? `Angle ${Number(Math.abs(constraint.value).toFixed(4))}°`
             : "value" in constraint
-              ? `${constraint.kind === "radius" ? "Radius" : "Length"} ${Number(constraint.value.toFixed(4))} mm`
+              ? `${constraint.kind === "radius" ? radialName() : "Length"} ${Number((constraint.kind === "radius" ? radialDisplay(constraint.value) : constraint.value).toFixed(4))} mm`
               : constraint.kind === "equal"
                 ? "Equal length"
                 : constraint.kind[0].toUpperCase() + constraint.kind.slice(1);
@@ -105,7 +106,7 @@ export class ConstraintDisplay {
   private update = (): void => {
     const { editor } = this;
     const { locks } = selectedConstraints(editor);
-    const key = JSON.stringify(locks);
+    const key = radialName() + JSON.stringify(locks);
     this.panel.hidden = !editor.selectionOwners.size || editor.isDragging || !editor.sketch;
     if (key !== this.key) {
       this.key = key;

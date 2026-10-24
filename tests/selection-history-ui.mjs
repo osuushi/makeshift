@@ -4,6 +4,7 @@ import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
 import { bodySelectionEntryRoute } from "./ui-body-selection-entry.mjs";
+import { historyToolRoute } from "./ui-history-tool.mjs";
 import { modelFrustumSelectionRoute } from "./ui-model-frustum-selection.mjs";
 import { runtimeNames } from "./ui-runtime.mjs";
 import { selectionGeometryRedoRoute } from "./ui-selection-geometry-redo.mjs";
@@ -34,6 +35,7 @@ try {
   page.on("pageerror", (error) => {
     throw error;
   });
+  await historyToolRoute(page, name);
   await selectionGeometryRedoRoute(page, name);
   await selectionHistoryRoute(page, name);
   await bodySelectionEntryRoute(page, name);

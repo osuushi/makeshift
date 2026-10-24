@@ -125,8 +125,6 @@ export class SelectionHistory {
       editor.modeling.sync(editor.store.data);
       editor.selectTargets(selection.sketch);
       editor.modeling.targets = structuredClone(selection.modeling);
-      editor.tool = "select";
-      editor.creationArmed = false;
       editor.modeling.alternatives = [];
       editor.modeling.hover = null;
       editor.refresh();

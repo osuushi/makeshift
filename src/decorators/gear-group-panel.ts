@@ -2,7 +2,9 @@ import { entityRows } from "../model/entity-presentation.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { faceKey } from "./edits.js";
+import { gearColor } from "./gear-colors.js";
 import { gearGroupMembers, gearGroupProblem } from "./gear-group.js";
+import { gearGroupColorControl } from "./gear-group-color-control.js";
 import { groupEligible } from "./gear-group-geometry.js";
 import { gearDefinition } from "./gear-settings.js";
 import type { DecoratorInstance } from "./types.js";
@@ -57,10 +59,18 @@ export function gearGroupPanel(editor: SketchEditor, parent: HTMLElement): () =>
         },
       );
       select.setAttribute("aria-expanded", String(expanded === id));
+      const swatch = document.createElement("span");
+      swatch.className = "gear-group-swatch";
+      swatch.style.backgroundColor = gearColor(gear, gears);
+      select.prepend(swatch);
       root.append(select);
-      if (expanded === id) appendMembers(root, editor, members);
+      if (expanded === id) {
+        appendMembers(root, editor, members);
+        root.append(gearGroupColorControl(editor, gear, label));
+      }
       appendGroupActions(root, editor, gear, members, label, control);
     }
+    appendNewGroup(root, editor, gears, control);
   };
   const control = (label: string, action: () => unknown) => {
     const button = document.createElement("button");
@@ -140,4 +150,37 @@ function appendGroupActions(
       ),
     );
   }
+}
+
+function appendNewGroup(
+  root: HTMLElement,
+  editor: SketchEditor,
+  gears: DecoratorInstance[],
+  control: (label: string, action: () => unknown) => HTMLButtonElement,
+) {
+  const selected = editor.modeling.targets.flatMap((t) =>
+    t.kind === "face" ? [{ body: t.body, face: t.face }] : [],
+  );
+  if (
+    selected.length &&
+    selected.length === editor.modeling.targets.length &&
+    gears.some(
+      (d) =>
+        groupEligible(editor.store.data, d) &&
+        d.faces.some((f) => selected.some((s) => faceKey(s) === faceKey(f))),
+    )
+  )
+    root.append(
+      control("New gear group from selection", () =>
+        editor.store.request({
+          kind: "decorator",
+          edit: {
+            action: "apply",
+            definition: gearDefinition,
+            faces: selected,
+            newGearGroup: true,
+          },
+        }),
+      ),
+    );
 }

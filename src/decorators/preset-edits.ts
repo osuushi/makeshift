@@ -103,7 +103,7 @@ function recalledSettings(
     edit.definition !== gearDefinition ||
     settings.helix ||
     settings.shift ||
-    !gearFaces(document, edit.faces).every((f) => f.cylinder?.outward === 1)
+    !gearFaces(document, edit.faces).every((f) => !!f.cylinder)
   )
     return settings;
   return Object.fromEntries(

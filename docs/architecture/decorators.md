@@ -19,7 +19,7 @@ Attach editable settings to selected geometry without replacing that geometry.
 At export, generate mesh modifications using the accepted geometry
 as read-only input. Threads and [knurling](knurling.md) are built-in decorators. JavaScript authors
 must be able to implement the same hooks. The built-in [gear decorator](gears.md)
-adds pitch-cylinder, pitch-cone and rack tools using the same owner and mesh pipeline. Automatic external spur gear groups are described there; approximate cylinder
+adds pitch-cylinder, pitch-cone and rack tools using the same owner and mesh pipeline. Automatic spur gear groups are described there; approximate cylinder
 recognition, shader previews and print-color assignment remain
 later work.
 
@@ -32,7 +32,9 @@ settings, not the internal grouping noun.
 ## Preview display and pending work
 
 Application Settings offers shaded Detailed previews or Color only, plus separate
-thread/gear/knurling/custom colors and opacity. These are device preferences outside
+thread/knurling/custom colors and per-kind opacity. Gear colors belong to saved, editable
+[gear groups](gears.md), including both detailed and color-only previews. Other display
+choices are device preferences outside
 accepted attachments, files and Undo; they never turn decorators into native BRep.
 The compositor excludes only a surface's own supports when resolving occlusion,
 then blends its configured opacity once. Generated previews and attachment markers
@@ -199,7 +201,8 @@ remain unchanged. Preset selection, copies, names, and last choices participate 
 ordinary Undo and archives. Numeric preview/cancellation does not save a preset.
 These settings snapshots do not link geometry or automatically resize mating parts.
 Automatic [spur-gear groups](gears.md) recall shared fitting limits and pressure,
-then refit integer counts and phase to the current cylinders. Their group membership,
+then refit integer counts and profiles to the group dimensions independently of placement.
+Phase remains attached to each part. Their group membership,
 rather than preset sharing, maintains compatible generated profiles through resize.
 
 The Metric 60° and rounded profiles retain their prior depth rule; the FDM

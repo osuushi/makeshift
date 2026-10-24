@@ -1,5 +1,6 @@
 import { strToU8, zipSync } from "three/addons/libs/fflate.module.js";
 import type { Body } from "./body.js";
+import { retriangulateCollinear } from "./collinear-facets.js";
 import { type ExportMesh, exportMesh, triangleNormal, validateMesh } from "./export-mesh.js";
 import type { ExportTiming } from "./export-timing.js";
 import { packedMesh } from "./packed-mesh.js";
@@ -23,8 +24,14 @@ export function encodeMeshes(
 }
 
 function stlMesh(mesh: ExportMesh): ExportMesh {
-  if (mesh.precision === undefined) return mesh;
   const vertices = mesh.vertices.map((p) => p.map(Math.fround));
+  if (mesh.precision === undefined) {
+    // Float32 can make tangent-circle facets exactly collinear. Reuse their
+    // vertices in adjacent triangles without moving or welding coordinates.
+    const result = retriangulateCollinear({ ...mesh, vertices }, 0);
+    validateMesh(result);
+    return result;
+  }
   let rounding = 0;
   for (let i = 0; i < vertices.length; i++)
     rounding = Math.max(

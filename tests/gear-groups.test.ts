@@ -32,6 +32,7 @@ for (const order of ["together", "large first", "small first", "legacy"] as cons
                 action: "apply",
                 definition: gearDefinition,
                 faces: selection,
+                gearGroup: owner.view.data.decorators?.find((d) => d.gearGroup)?.gearGroup,
               },
             })
           ).error,
@@ -91,7 +92,7 @@ test("captured gear preview and exported bodies engage through a complete tooth 
   }
 });
 
-test("explicit group additions, shared sizing and rejection remain atomic", async () => {
+test("explicit group additions and removal remain atomic", async () => {
   const owner = new DocumentOwner();
   try {
     const faces = await captured(owner);
@@ -120,7 +121,7 @@ test("explicit group additions, shared sizing and rejection remain atomic", asyn
       ).error,
       undefined,
     );
-    const gears = checkPair(owner);
+    checkPair(owner);
     const before = documentArchive(owner.view.data);
     assert.match(
       (
@@ -131,39 +132,6 @@ test("explicit group additions, shared sizing and rejection remain atomic", asyn
       ).error ?? "",
       /existing gear group/,
     );
-    assert.equal(documentArchive(owner.view.data), before);
-    assert.match(
-      (
-        await owner.call({
-          kind: "decorator",
-          edit: {
-            action: "settings",
-            ids: gears.map((g) => g.id),
-            patch: { module: 0.5 },
-          },
-        })
-      ).error ?? "",
-      /minimum tooth tip width/,
-    );
-    assert.equal(documentArchive(owner.view.data), before);
-    assert.equal(
-      (
-        await owner.call({
-          kind: "decorator",
-          edit: {
-            action: "settings",
-            ids: gears.map((g) => g.id),
-            patch: { module: 0.5, minimumTooth: 0.3 },
-          },
-        })
-      ).error,
-      undefined,
-    );
-    assert.deepEqual(
-      owner.view.data.decorators?.map((g) => g.settings.teeth),
-      [52, 28],
-    );
-    await owner.call({ kind: "undo" });
     assert.equal(documentArchive(owner.view.data), before);
     assert.equal(
       (await owner.call({ kind: "decorator", edit: { action: "remove", faces: [faces[1]] } }))

@@ -19,8 +19,10 @@ export interface DecoratorInstance {
   readonly axialReference?: [number, number];
   readonly problem?: string;
   readonly state?: unknown;
-  /** Cylindrical gears sharing tooth sizing and contact alignment. */
+  /** Cylindrical gears sharing compatible tooth profiles independent of placement. */
   readonly gearGroup?: string;
+  /** Saved group preview color; synchronized across members by document edits. */
+  readonly gearColor?: string;
   /** Fitted decorator pitch radius; never changes the support BRep. */
   readonly gearPitchRadius?: number;
 }
@@ -54,7 +56,9 @@ export type DecoratorEdit =
       faces: FaceReference[];
       settings?: Settings;
       gearGroup?: string;
+      newGearGroup?: boolean;
     }
+  | { action: "gear-color"; id: string; color: string }
   | { action: "settings"; ids: string[]; patch: Settings; replace?: boolean }
   | { action: "continue"; id: string; faces: FaceReference[] }
   | { action: "reassign"; id: string; faces: FaceReference[] }

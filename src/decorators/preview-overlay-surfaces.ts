@@ -2,6 +2,7 @@ import * as THREE from "three";
 import type { DisplayDocument } from "../model/display-document.js";
 import { decoratorAppearance, decoratorPreviewMode } from "../preferences/decorator-display.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import { gearColor } from "./gear-colors.js";
 import {
   DecoratorPreviewCompositor,
   decoratorPreviewLayer,
@@ -26,6 +27,7 @@ export class PreviewOverlaySurfaces {
   private readonly fallback = new PreviewFallback(this.group, this.compositor);
   private readonly surfaces: GeneratedSurface[] = [];
   private definitions = new Map<string, string>();
+  private colors = new Map<string, string>();
   private clipping = new Map<string, THREE.Plane[]>();
 
   constructor(private readonly editor: SketchEditor) {
@@ -47,6 +49,9 @@ export class PreviewOverlaySurfaces {
         this.surfaces.splice(index, 1);
       }
     if (document) {
+      this.colors = new Map(
+        document.decorators?.map((d) => [d.id, gearColor(d, document.decorators ?? [])]),
+      );
       this.definitions = new Map(
         document.decorators?.map((instance) => [instance.id, instance.definition]),
       );
@@ -166,7 +171,7 @@ export class PreviewOverlaySurfaces {
         (surface.mesh.geometry.index?.count ?? 0) >= 3;
       surface.mesh.visible =
         detailed && drawable && this.editor.visibility.visible(surface.mesh.userData.body);
-      const appearance = decoratorAppearance(surface.definition);
+      const appearance = decoratorAppearance(surface.definition, this.colors.get(surface.id));
       (surface.mesh.material as THREE.MeshStandardMaterial).color.set(appearance.color);
       surface.displayOpacity = appearance.opacity;
       surface.clipPlanes = this.clipping.get(surface.id);

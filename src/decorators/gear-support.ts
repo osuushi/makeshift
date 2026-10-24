@@ -162,7 +162,7 @@ export function gearDiagnostics(
         "Internal tooth tips reach below the base circle; increase tooth count or pressure angle",
       );
     const minimumTeeth =
-      (2 * (1 - settings.shift) * Math.cos(radians(settings.helix)) ** 3) /
+      (2 * (settings.addendum - settings.shift) * Math.cos(radians(settings.helix)) ** 3) /
       Math.sin(radians(settings.pressure)) ** 2;
     if (support.outward > 0 && settings.teeth < minimumTeeth)
       throw new Error(

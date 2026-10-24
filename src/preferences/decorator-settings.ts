@@ -19,29 +19,38 @@ export function decoratorSettings(): HTMLElement {
     ];
     const row = document.createElement("div");
     row.className = "decorator-display-row";
-    row.innerHTML = `<span>${title}</span><input type="color" aria-label="${title} preview color"><input type="text" class="decorator-color-value" aria-label="${title} preview hex color" maxlength="7" spellcheck="false"><label><span>Opacity</span><input type="range" min="20" max="100" step="1" aria-label="${title} preview opacity"><output></output></label>`;
+    const colors =
+      kind === "gear"
+        ? "<span>Colors are set per gear group</span>"
+        : `<input type="color" aria-label="${title} preview color"><input type="text" class="decorator-color-value" aria-label="${title} preview hex color" maxlength="7" spellcheck="false">`;
+    row.innerHTML = `<span>${title}</span>${colors}<label><span>Opacity</span><input type="range" min="20" max="100" step="1" aria-label="${title} preview opacity"><output></output></label>`;
     const color = row.querySelector<HTMLInputElement>("[type=color]");
     const opacity = row.querySelector<HTMLInputElement>("[type=range]");
     const hex = row.querySelector<HTMLInputElement>("[type=text]");
     const output = row.querySelector("output");
-    if (!color || !opacity || !output || !hex)
-      throw new Error("Missing decorator appearance controls");
+    if (!opacity || !output) throw new Error("Missing decorator appearance controls");
     const change = () => {
       const next = decoratorDisplay();
-      next.types[kind] = { color: color.value, opacity: Number(opacity.value) / 100 };
+      next.types[kind] = {
+        color: color?.value ?? next.types[kind].color,
+        opacity: Number(opacity.value) / 100,
+      };
       setDecoratorDisplay(next);
       output.textContent = `${opacity.value}%`;
-      hex.value = color.value;
+      if (hex && color) hex.value = color.value;
     };
-    color.oninput = opacity.oninput = change;
-    hex.oninput = () => {
-      if (!/^#[\da-f]{6}$/i.test(hex.value)) return;
-      color.value = hex.value;
-      change();
-    };
-    hex.onblur = () => {
-      hex.value = color.value;
-    };
+    opacity.oninput = change;
+    if (color) color.oninput = change;
+    if (hex && color)
+      hex.oninput = () => {
+        if (!/^#[\da-f]{6}$/i.test(hex.value)) return;
+        color.value = hex.value;
+        change();
+      };
+    if (hex && color)
+      hex.onblur = () => {
+        if (hex && color) hex.value = color.value;
+      };
     section.append(row);
     return { kind, color, opacity, output, hex };
   });
@@ -53,8 +62,10 @@ export function decoratorSettings(): HTMLElement {
     const value = decoratorDisplay();
     mode.value = value.mode;
     for (const row of rows) {
-      row.color.value = value.types[row.kind].color;
-      row.hex.value = row.color.value;
+      if (row.color && row.hex) {
+        row.color.value = value.types[row.kind].color;
+        row.hex.value = row.color.value;
+      }
       row.opacity.value = String(Math.round(value.types[row.kind].opacity * 100));
       row.output.textContent = `${row.opacity.value}%`;
     }

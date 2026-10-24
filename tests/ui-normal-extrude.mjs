@@ -7,7 +7,7 @@ import { previewActionReady } from "./ui-preview-readiness.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function acceptDistance(page, value) {
-  await page.getByRole("textbox", { name: "Extrusion distance" }).fill(String(value));
+  await page.getByRole("textbox", { name: /^Extrusion (distance|radius)$/ }).fill(String(value));
   await previewActionReady(page, "Accept extrusion");
   await page.getByRole("button", { name: "Accept extrusion", exact: true }).click();
   await modalCompleted(page);
@@ -24,13 +24,13 @@ export async function normalExtrudeRoute(page, name) {
     "radius",
   );
   assert.equal(await page.getByRole("textbox", { name: "Draft value" }).isVisible(), false);
-  await page.getByRole("textbox", { name: "Extrusion distance" }).fill("22");
+  await page.getByRole("textbox", { name: /^Extrusion (distance|radius)$/ }).fill("22");
   await previewActionReady(page, "Accept extrusion");
   let state = await inspect(page);
   assert.deepEqual(state.document, original);
   close(state.preview.bodies[0].volume, Math.PI * (1000 + 4840));
   await page.screenshot({ path: `.cache/sketch-review/${name}-normal-extrude.png` });
-  await page.getByRole("textbox", { name: "Extrusion distance" }).fill("-1");
+  await page.getByRole("textbox", { name: /^Extrusion (distance|radius)$/ }).fill("-1");
   assert.equal(
     await page.getByRole("button", { name: "Accept extrusion", exact: true }).isEnabled(),
     false,
@@ -44,8 +44,11 @@ export async function normalExtrudeRoute(page, name) {
   await worldClick(page, [12, -Math.sqrt(22 ** 2 - 12 ** 2), 15]);
   await page.getByRole("button", { name: "Search tools", exact: true }).focus();
   await page.keyboard.press("e");
-  assert.equal(await page.getByRole("textbox", { name: "Extrusion distance" }).inputValue(), "22");
-  await page.getByRole("textbox", { name: "Extrusion distance" }).fill("24");
+  assert.equal(
+    await page.getByRole("textbox", { name: /^Extrusion (distance|radius)$/ }).inputValue(),
+    "22",
+  );
+  await page.getByRole("textbox", { name: /^Extrusion (distance|radius)$/ }).fill("24");
   await previewActionReady(page, "Accept extrusion");
   await page.keyboard.press("Enter");
   await page.keyboard.press("o");
@@ -69,7 +72,7 @@ export async function normalExtrudeRoute(page, name) {
   assert.deepEqual(state.document, original);
   assert.ok(state.preview, "Drag release preserves a temporary candidate");
   await page.getByRole("combobox", { name: "Extrusion measurement" }).selectOption("offset");
-  await page.getByRole("textbox", { name: "Extrusion distance" }).fill("-3");
+  await page.getByRole("textbox", { name: /^Extrusion (distance|radius)$/ }).fill("-3");
   await previewActionReady(page, "Accept extrusion");
   close((await inspect(page)).preview.bodies[0].volume, Math.PI * 1490);
   await page.keyboard.press("Enter");

@@ -3,7 +3,9 @@ import { readFile } from "node:fs/promises";
 import { openDocument } from "./native-documents.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
+import { gearGroupColors } from "./ui-gear-group-colors.mjs";
 import { resizeGroupedGear } from "./ui-gear-group-resize.mjs";
+import { capturedPrintControls } from "./ui-gear-printing.mjs";
 import { inspect, settled } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -49,28 +51,26 @@ await withUiRuntimes(
     assert.equal(await groups.getByRole("listitem").count(), 2);
     state = await inspect(page);
     assert.equal(state.modelingSelection.length, 2);
-    const maximum = page.getByRole("spinbutton", { name: "Maximum normal module", exact: true });
-    await maximum.fill("0.5");
-    await maximum.press("Escape");
-    assert.deepEqual(
-      (await inspect(page)).document.decorators.map((d) => d.settings.teeth),
-      [39, 21],
+    assert.equal(
+      await page.getByRole("spinbutton", { name: "Teeth per revolution", exact: true }).count(),
+      0,
     );
-    const minimum = page.getByRole("spinbutton", { name: "Minimum tooth tip width", exact: true });
-    await minimum.fill("0.3");
-    await minimum.press("Enter");
-    await inspect(page);
-    await maximum.fill("0.5");
-    await maximum.press("Enter");
-    assert.deepEqual(
-      (await inspect(page)).document.decorators.map((d) => d.settings.teeth),
-      [52, 28],
+    assert.equal(
+      await page.getByRole("spinbutton", { name: "Maximum normal module", exact: true }).count(),
+      0,
     );
+    const clearance = page.getByRole("spinbutton", {
+      name: "Tooth clearance per gear",
+      exact: true,
+    });
+    await clearance.fill("0.08");
+    await clearance.press("Escape");
+    assert.ok((await inspect(page)).document.decorators.every((d) => d.settings.thinning === 0.05));
+    await clearance.fill("0.08");
+    await clearance.press("Enter");
+    assert.ok((await inspect(page)).document.decorators.every((d) => d.settings.thinning === 0.08));
     await chooseTool(page, "undo", "undo");
-    assert.deepEqual(
-      (await inspect(page)).document.decorators.map((d) => d.settings.teeth),
-      [39, 21],
-    );
+    assert.ok((await inspect(page)).document.decorators.every((d) => d.settings.thinning === 0.05));
     await worldClick(page, [-10, -17, 2]);
     await page
       .getByRole("button", { name: "Remove Gear decorator from selected faces", exact: true })
@@ -91,6 +91,8 @@ await withUiRuntimes(
       "Group membership and settings must not overlap",
     );
     await page.screenshot({ path: `.cache/sketch-review/${name}-gear-groups.png` });
+    await gearGroupColors(page, name);
+    await capturedPrintControls(page, name);
     console.log(
       `${name}: captured cylinders, membership disclosure, add, shared sizing, cancellation, removal and Undo passed`,
     );

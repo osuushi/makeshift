@@ -1,3 +1,4 @@
+import type { RadialInput } from "../preferences/radial-input.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { toolMenuOpen } from "../tools/menu-focus.js";
 import type { InteractionLease } from "./active-interaction.js";
@@ -10,6 +11,7 @@ export interface DimensionField {
   label: HTMLLabelElement;
   input: HTMLInputElement;
   lock: HTMLButtonElement;
+  radial?: RadialInput;
 }
 
 /** Own one field's text until ordinary acceptance succeeds or the user cancels. */
@@ -105,12 +107,12 @@ export class DimensionFieldDraft {
       });
     return this.committing;
   }
-  private async apply({ input, quantity }: DimensionField): Promise<boolean> {
+  private async apply({ input, quantity, radial }: DimensionField): Promise<boolean> {
     const current = dimensionValues(this.editor).find((item) => item.quantity === quantity);
     try {
       if (!current) throw new Error("Select geometry with this dimension");
       if (!input.value.trim()) throw new Error("Enter a number");
-      const value = Number(input.value.trim());
+      const value = radial ? radial.read() : Number(input.value.trim());
       if (value !== current.value || (this.editor.line && quantity === "radius"))
         await changeDimension(
           this.editor,
@@ -120,7 +122,8 @@ export class DimensionFieldDraft {
           this.duplicate,
         );
       const accepted = dimensionValues(this.editor).find((item) => item.quantity === quantity);
-      if (accepted) input.value = this.format(accepted.value);
+      if (accepted)
+        input.value = this.format(radial ? radial.display(accepted.value) : accepted.value);
       input.dataset.original = input.value;
       input.removeAttribute("aria-invalid");
       return true;
@@ -143,7 +146,9 @@ export class DimensionFieldDraft {
     for (const field of this.fields()) {
       const value = values.find((item) => item.quantity === field.quantity);
       if (value) {
-        field.input.value = this.format(value.value);
+        field.input.value = this.format(
+          field.radial ? field.radial.display(value.value) : value.value,
+        );
         field.input.dataset.original = field.input.value;
         field.input.removeAttribute("aria-invalid");
       }

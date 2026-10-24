@@ -15,8 +15,10 @@ export async function resizeGroupedGear(page) {
   await chooseTool(page, "undo", "undo");
   await offsetRadius(page, "0.27");
   const resized = (await inspect(page)).document;
-  assert.ok(resized.decorators.every((d) => d.problem?.includes("Gear group cannot fit")));
-  assert.match(await groups.textContent(), /Gear group cannot fit/);
+  assert.ok(
+    resized.decorators.every((d) => !d.problem),
+    "Resizing no longer enforces the old axis spacing",
+  );
   const tolerance = page.getByRole("spinbutton", { name: "Pitch diameter tolerance", exact: true });
   await tolerance.fill("1");
   await tolerance.press("Enter");

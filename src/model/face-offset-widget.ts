@@ -1,3 +1,5 @@
+import { radialName } from "../preferences/radial-dimension.js";
+import { RadialInput } from "../preferences/radial-input.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
 import { numericFocus } from "../tools/menu-focus.js";
@@ -12,6 +14,7 @@ export class FaceOffsetWidget {
   private placement = new WidgetClearance(this.root);
   readonly handle = document.createElement("button");
   readonly input = document.createElement("input");
+  private radial = new RadialInput(this.input);
   readonly quantity = document.createElement("select");
   readonly options = document.createElement("div");
   private dismiss = document.createElement("button");
@@ -38,7 +41,9 @@ export class FaceOffsetWidget {
     const actions = document.createElement("div");
     actions.className = "axial-actions";
     actions.append(this.quantity, this.accept, dismiss);
-    this.options.append(distanceField(this.input), actions);
+    const field = distanceField(this.input);
+    field.prepend(this.radial.button);
+    this.options.append(field, actions);
     this.root.append(this.handle, this.options);
     overlay.append(this.root);
     this.root.hidden = true;
@@ -69,7 +74,7 @@ export class FaceOffsetWidget {
       : blend
         ? blend.chamfer
           ? "Resize chamfer · drag or click to enter distance"
-          : "Resize fillet · drag outward to add material, or click to enter radius"
+          : `Resize fillet · drag outward to add material, or click to enter ${radialName().toLowerCase()}`
         : "Offset faces · drag along arrow or click to type (positive adds material)";
     updateAxialArrow(
       this.handle,
@@ -90,6 +95,8 @@ export class FaceOffsetWidget {
             new Option({ thickness: "Thickness", radius: "Radius", offset: "Offset" }[mode], mode),
         ),
       );
+    const radialOption = this.quantity.querySelector('option[value="radius"]');
+    if (radialOption) radialOption.textContent = radialName();
     this.quantity.value = quantity.mode;
     this.quantity.disabled = modes.length === 1 || editor.blocked;
     this.input.setAttribute(
@@ -113,6 +120,7 @@ export class FaceOffsetWidget {
         : quantity.mode === "radius"
           ? "Absolute face radius (mm)"
           : "Signed material-outward offset (mm)";
+    this.radial.update(quantity.radial);
     if (!numericFocus(this.input)) {
       this.input.value = quantity.text(distance);
     }
@@ -122,6 +130,7 @@ export class FaceOffsetWidget {
     this.placement.fit([this.handle, this.options]);
   }
   dispose() {
+    this.radial.dispose();
     this.placement.dispose();
     this.root.remove();
   }

@@ -1,90 +1,19 @@
 #include "kernel.h"
 #include "erosion.h"
 #include "boundary-move.h"
-#include "sketch-curve.h"
-#include "geometry-policy.h"
 #include "normal-extrude.h"
 #include "boolean-probe.h"
 #include "streaming-sweep-cuts.h"
-#include <BRepAdaptor_Curve.hxx>
-#include <ShapeFix_Wire.hxx>
-#include <ShapeExtend_WireData.hxx>
-#include <BRepBuilderAPI_MakeEdge.hxx>
-#include <BRepBuilderAPI_MakeWire.hxx>
-#include <BRepBuilderAPI_MakeFace.hxx>
-#include <BRepBuilderAPI_Copy.hxx>
-#include <BRepTools.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepBndLib.hxx>
 #include <Bnd_Box.hxx>
 #include <TopoDS.hxx>
-#include <TopoDS_Wire.hxx>
 #include <TopExp_Explorer.hxx>
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
 #include <utility>
 
-namespace {
-TopoDS_Face sweepBoundaryFace(const TopoDS_Face& face) {
-    for (const auto kind : {TopAbs_WIRE, TopAbs_EDGE, TopAbs_VERTEX}) {
-        for (TopExp_Explorer entities(face, kind); entities.More(); entities.Next()) {
-            if (entities.Current().Orientation() != TopAbs_INTERNAL) continue;
-            // Internal imprints are not material boundaries. Sweeping them can
-            // add internal faces to the closed shell and invalidate the solid.
-            // Cleanup mutates topology, so keep the accepted source untouched.
-            auto boundary = BRepBuilderAPI_Copy(face, true, false).Shape();
-            BRepTools::RemoveInternals(boundary, false);
-            validate(boundary);
-            return TopoDS::Face(boundary);
-        }
-    }
-    return face;
-}
-TopoDS_Wire wire(const Tree& spans) {
-    BRepBuilderAPI_MakeWire builder;
-    for (const auto& item : spans) {
-        BRepBuilderAPI_MakeEdge edge(sketchCurve(item.second));
-        if (!edge.IsDone()) throw std::runtime_error("Cannot construct profile span");
-        builder.Add(edge.Edge());
-    }
-    if (!builder.IsDone()) throw std::runtime_error("Profile boundary is not a valid wire");
-    ShapeFix_Wire boundary;
-    boundary.Load(builder.Wire());
-    boundary.SetPrecision(geometry_policy::cubicBooleanToleranceMm);
-    boundary.SetMaxTolerance(geometry_policy::cubicBooleanToleranceMm);
-    boundary.ModifyTopologyMode() = true;
-    // Trimming a tangent cubic can leave a microscopic curve or adjoining line
-    // remnant. Collapse within the contact budget on this temporary profile wire;
-    // retaining them creates long sliver walls with unweldable mesh boundaries.
-    for (int i = boundary.NbEdges(); i > 0; --i) {
-        const int count = boundary.NbEdges();
-        bool cubicJunction = false;
-        for (int adjacent : {i == 1 ? count : i - 1, i, i == count ? 1 : i + 1})
-            if (BRepAdaptor_Curve(boundary.WireData()->Edge(adjacent)).GetType() == GeomAbs_BezierCurve)
-                cubicJunction = true;
-        if (cubicJunction)
-            boundary.FixSmall(i, false, geometry_policy::cubicBooleanToleranceMm);
-    }
-    return boundary.Wire();
-}
-
-}
-TopoDS_Face profileFace(const Tree& profile, const std::vector<Operand>& bodies) {
-    TopoDS_Face face;
-    if (auto key = profile.get_optional<std::string>("face")) {
-        bool found = false;
-        for (const auto& body : bodies) for (const auto& entity : body.entities)
-            if (entity.id == *key && entity.shape.ShapeType() == TopAbs_FACE) { face = TopoDS::Face(entity.shape); found = true; }
-        if (!found) throw std::runtime_error("Selected face no longer exists");
-    } else {
-        BRepBuilderAPI_MakeFace builder(wire(profile.get_child("outer")), true);
-        for (const auto& hole : profile.get_child("holes")) builder.Add(TopoDS::Wire(wire(hole.second).Reversed()));
-        if (!builder.IsDone()) throw std::runtime_error("Profile is not a planar face");
-        face = builder.Face(); validate(face);
-    }
-    return sweepBoundaryFace(face);
-}
 TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies, std::vector<SourceEntity>& origins) {
     const double distance = input.get<double>("distance");
     if (!std::isfinite(distance) || std::abs(distance) < 1e-8) throw std::runtime_error("Extrusion needs a nonzero distance");

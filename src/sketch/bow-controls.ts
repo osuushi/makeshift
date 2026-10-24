@@ -1,4 +1,5 @@
 import { placeFloatingPanel } from "../preferences/panel-placement.js";
+import { RadialInput } from "../preferences/radial-input.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import type { InteractionLease } from "./active-interaction.js";
 import { selectedBowCurves } from "./arc-edit.js";
@@ -29,6 +30,7 @@ type Session = {
 export class BowControls {
   private root = document.createElement("div");
   private input = document.createElement("input");
+  private radial = new RadialInput(this.input);
   private abort = new AbortController();
   private session: Session | null = null;
   private interaction: InteractionLease | null = null;
@@ -44,7 +46,8 @@ export class BowControls {
     this.input.type = "text";
     this.input.inputMode = "decimal";
     this.input.setAttribute("aria-label", "Bow radius");
-    this.root.append(this.input);
+    this.radial.update();
+    this.root.append(this.radial.button, this.input);
     overlay.append(this.root);
     const options = { signal: this.abort.signal, capture: true };
     const canvas = editor.world.canvas;
@@ -57,7 +60,7 @@ export class BowControls {
       () => {
         const s = this.session;
         if (!s) return;
-        this.preview(() => bowRadius(s.curve, Number(this.input.value), s.side));
+        this.preview(() => bowRadius(s.curve, this.radial.read(), s.side));
       },
       options,
     );
@@ -132,7 +135,7 @@ export class BowControls {
       s.solve.update(result);
       this.editor.message = "";
       if (curve.kind === "arc" && !numericFocus(this.input))
-        this.input.value = String(Number(arcCircle(curve).radius.toFixed(4)));
+        this.input.value = String(Number(this.radial.display(arcCircle(curve).radius).toFixed(4)));
     } catch (error) {
       s.valid = false;
       s.solve.invalidate();
@@ -206,6 +209,7 @@ export class BowControls {
     void this.cancel();
     this.abort.abort();
     this.editor.world.changed.delete(this.update);
+    this.radial.dispose();
     this.root.remove();
   }
 }

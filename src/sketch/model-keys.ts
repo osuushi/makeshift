@@ -11,6 +11,12 @@ export function onModelKeydown(
     (event) => {
       if (
         event.target instanceof Element &&
+        event.target.closest(".radial-toggle") &&
+        ["Enter", " "].includes(event.key)
+      )
+        return;
+      if (
+        event.target instanceof Element &&
         event.target.closest(".parameter-panel-grip") &&
         ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)
       )
