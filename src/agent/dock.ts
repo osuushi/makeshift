@@ -81,6 +81,7 @@ class AgentDock {
       host,
       this.update,
       this.report,
+      (files) => this.attachments.attach(files),
     );
     this.button("start").onclick = () => void this.action(() => this.terminal.start());
     this.button("stop").onclick = () =>

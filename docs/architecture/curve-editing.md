@@ -20,6 +20,10 @@ the tool or changing focus preserves it. A zero-size or invalid gesture creates
 nothing and adds no Undo entry. Creating another shape does not steal or rewrite
 the prior shape's numeric fields.
 
+Tab and Shift-Tab focus and cycle the visible editable numeric fields for the
+selection, skipping action handles and dimension locks. They do not start Offset.
+Explicit transform tools retain their widget navigation and numeric handoffs.
+
 ### Pen paths
 
 P or Tools → Pen starts click-to-place drawing in the active planar workspace.

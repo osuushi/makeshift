@@ -56,7 +56,11 @@ function installShortcuts(
     if (event.type === "keypress" && !(event.metaKey || event.ctrlKey)) return;
     if (event.key === "Tab" && !event.metaKey && !event.ctrlKey && !event.altKey) {
       event.preventDefault();
-      focusNumericField(app, event.shiftKey, !!editor.interactions.current?.captured);
+      focusNumericField(
+        app,
+        event.shiftKey,
+        !!editor.interactions.current?.captured || (!!editor.world.active && !editor.moveMode),
+      );
       return;
     }
     const input =

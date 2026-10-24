@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { project } from "./ui-blend-edit.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
+import { sketchDimensionTabRoute } from "./ui-sketch-dimension-tab.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 import {
   bodyKeyboardRoute,
@@ -280,6 +281,7 @@ await withUiRuntimes(async (page, name) => {
   await nativeFocusAndModal(page, name);
   await workspaceEnter(page, name);
   await transformLayersKeyboardRoute(page, name);
+  await sketchDimensionTabRoute(page, name);
 });
 
 console.log(`Transform Enter and keyboard suite: ${((Date.now() - started) / 1000).toFixed(1)}s`);

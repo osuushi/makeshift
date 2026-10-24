@@ -1,5 +1,15 @@
 # Periodic cylinder
 
+`thread-deleted-face.json` retains the tilted threaded body and attachment from the
+founder's `2026-10-24T14-06-19-916Z` capture after deleting a face. Presentation is
+retained to test export directly from the editing snapshot, without Open changing
+its descriptors. The regression also rounds tessellation coordinates to 1e-7 mm
+to exercise sensitivity to numerical differences between platforms.
+`thread-collapsed-edge.json` is a closed 28-triangle patch extracted from that
+rounded export's Boolean result, with its boundary capped for a small unit test.
+Float conversion makes two vertices coincide; merging them used to leave four
+facets on one edge. Both fixtures derive from user-created Makeshift geometry.
+
 `periodic-face-fillet.json` retains exact BRep and topology IDs/signatures from the
 founder's `makeshift-fixture-2026-10-06T03-28-08-927Z.json` capture. The short inner
 cylindrical wall has two circular rims and a doubled seam occurrence. Ordinary Open

@@ -1,7 +1,28 @@
 import type { Face } from "../model/body.js";
+import type { DisplayDocument } from "../model/display-document.js";
 import type { ExportMesh } from "../model/export-mesh.js";
 import type { PlaneFrame, Vector } from "../sketch/planes.js";
 import { cross, dot, subtract } from "./cylinder.js";
+import { planarThreadBoundary } from "./thread-planar-boundary.js";
+import { threadDefinition, threadSettings } from "./thread-settings.js";
+import type { DecoratorInstance } from "./types.js";
+
+/** Flats cut by the thread must not occlude the profile behind their original skin.
+ * This is display-only support; decorator membership and picking stay unchanged. */
+export function threadPreviewFaces(document: DisplayDocument, instance: DecoratorInstance) {
+  const faces = [...instance.faces];
+  if (instance.definition !== threadDefinition || threadSettings(instance.settings).cut !== "rod")
+    return faces;
+  for (const reference of instance.faces) {
+    const body = document.bodies?.find((body) => body.id === reference.body);
+    const face = body?.faces.find((face) => face.id === reference.face);
+    if (!body || !face) continue;
+    for (const flat of planarThreadBoundary(body, face) ?? [])
+      if (!faces.some((reference) => reference.body === body.id && reference.face === flat.id))
+        faces.push({ body: body.id, face: flat.id });
+  }
+  return faces;
+}
 
 /** End planes also clip partial MSAA fragments whose centers exceed the mesh boundary. */
 export function threadPreviewPlanes(faces: readonly Face[], adjacent: readonly Face[]) {

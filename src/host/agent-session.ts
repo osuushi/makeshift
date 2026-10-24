@@ -88,8 +88,18 @@ export class AgentSession {
       if (!this.busy && !this.process.status.running) await this.disconnect();
       return { ...this.status, output: this.process.read() };
     }
-    if (request.kind === "clipboard")
+    if (request.kind === "clipboard") {
+      for (const item of await clipboard.read()) {
+        if (!item.types.includes("image/png")) continue;
+        const image = await item.getType("image/png");
+        if (!(image instanceof Blob)) throw new Error("The clipboard image could not be read.");
+        return {
+          ...this.status,
+          clipboardImage: Buffer.from(await image.arrayBuffer()).toString("base64"),
+        };
+      }
       return { ...this.status, clipboardText: await clipboard.readText() };
+    }
     if (request.kind === "focus") {
       this.window?.webContents.setIgnoreMenuShortcuts(request.focused === true);
       return this.status;

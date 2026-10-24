@@ -42,6 +42,8 @@ export interface AgentReply extends AgentStatus {
   attachment?: string;
   output?: string;
   clipboardText?: string;
+  /** Base64-encoded PNG, preferred over an accompanying text representation. */
+  clipboardImage?: string;
   preferences?: AgentPreferences;
   executable?: string;
   stateDirectory?: string;

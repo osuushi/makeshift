@@ -92,7 +92,7 @@ export class PreviewOverlaySurfaces {
         this.remove(this.surfaces[index]);
         this.surfaces.splice(index, 1);
       }
-    for (const { id, body, faces, positions, indices } of meshes) {
+    for (const { id, body, faces, positions, indices, occlusion } of meshes) {
       const signature = signatures.get(id);
       if (signature === undefined || signature !== current.get(id)) continue;
       const geometry = new THREE.BufferGeometry();
@@ -106,8 +106,22 @@ export class PreviewOverlaySurfaces {
       mesh.raycast = () => {};
       mesh.layers.set(decoratorPreviewLayer);
       this.group.add(mesh);
+      let occluder: THREE.Mesh | undefined;
+      if (occlusion) {
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute("position", new THREE.BufferAttribute(occlusion.positions, 3));
+        geometry.setIndex(new THREE.BufferAttribute(occlusion.indices, 1));
+        occluder = new THREE.Mesh(
+          geometry,
+          new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }),
+        );
+        occluder.visible = false;
+        occluder.raycast = () => {};
+        this.group.add(occluder);
+      }
       this.surfaces.push({
         mesh,
+        occluder,
         faces: new Set(faces.map((face) => previewFaceKey(face.body, face.face))),
         id,
         signature,
@@ -136,6 +150,11 @@ export class PreviewOverlaySurfaces {
     this.group.remove(surface.mesh);
     surface.mesh.geometry.dispose();
     (surface.mesh.material as THREE.Material).dispose();
+    if (surface.occluder) {
+      this.group.remove(surface.occluder);
+      surface.occluder.geometry.dispose();
+      (surface.occluder.material as THREE.Material).dispose();
+    }
   }
 
   private style(): PreviewSurface[] {

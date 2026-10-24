@@ -47,7 +47,11 @@ export class DimensionFieldDraft {
         const committed = this.commit(field);
         if (!(typeof committed === "boolean" ? committed : await committed)) return;
         if (event.key === "Enter") input.blur();
-        else await next(event.shiftKey);
+        else {
+          await next(event.shiftKey);
+          // A single-field cycle stays focused, so no focus event reacquires it.
+          if (document.activeElement === input && !this.owns(input)) await this.focus(field);
+        }
       }
     });
   }

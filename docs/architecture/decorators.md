@@ -216,8 +216,11 @@ current preset's dimensions through the ordinary owner/Undo path.
 
 ## Thread extent and ends
 
-Confirmed: default to full selected-face coverage without extending beyond its
-boundaries. Start/end taper lengths are configurable, initially zero. Tapers reduce
+Confirmed: default to full selected-face coverage. Exterior Cut-into-rod threads
+on a cylinder bounded by one longitudinal flat and two axial end planes continue
+to the flat's actual intersection with the profile, including groove notches in
+that neighboring flat. Other trimmed boundaries retain face-domain coverage.
+Start/end taper lengths are configurable, initially zero. Tapers reduce
 thread depth near axial ends; they do not chamfer the underlying BRep. They do not
 restart at face seams or angular interruptions such as flattened sides.
 
@@ -227,10 +230,11 @@ geometry configuration.
 
 The controls for an unsplit cylindrical face are start/end
 insets along the saved thread axis, initially zero, bounding the threaded band
-within the selected geometry. Intersect that band with actual selected face domains;
-do not fill flats or gaps. Apply optional tapers at its axial ends and preserve
-helix phase when changing extent. Exact behavior at separated axial patches must
-remain consistent with one continuous helix and the requested face coverage.
+within the selected geometry. Intersect that band with actual selected face domains,
+with the planar cutting exception above; do not fill flats or gaps. Apply optional
+tapers at its axial ends and preserve helix phase when changing extent. Exact
+behavior at separated axial patches must remain consistent with one continuous
+helix and the requested face coverage.
 
 Body splitting and partial decorator removal retain the previous axial reference
 in the saved thread frame. Insets and tapers use that reference, while generated
@@ -258,7 +262,7 @@ again from the first remaining face or its parameter seam. Transport this frame
 through rigid movement; copying creates independent instances with copied settings.
 
 Use the actual trimmed face domains, including holes and sloping ends. A full
-cylinder or min/max axial bounds is insufficient: it could fill flats, bridge gaps,
+cylinder or min/max axial bounds alone is insufficient: it could fill flats, bridge gaps,
 cut a neighboring wall, or extend threads beyond selected geometry. Construct
 bounded, closed modifier volumes from the selected domain and chosen radial range.
 Thread-specific diagnostics can inspect adjacent original geometry and report
@@ -287,6 +291,22 @@ both addition and removal after hole relief and retains the general difference
 path. Both use the same analytic target and trimmed domains. Thread cuts can still pierce a wall when the requested
 depth exceeds its thickness; that needs an explicit diagnostic, not a silent
 change to thread dimensions.
+
+For exterior Cut-into-rod threads, a patch whose complete boundary is one
+longitudinal plane and two axial planes uses those planes in place of its radial
+footprint. The analytic cylindrical area must match that complete patch;
+unselected cylindrical neighbors, holes, multiple flats and oblique ends do not
+qualify. Coplanar support faces on either side of a ridge count as one plane.
+Threading a flattened rod therefore agrees with flattening the threaded rod;
+a ridge's grooves stop at its supporting plane. Axial insets still bound the
+operand. Auxiliary domain caps avoid coincident operand caps, and removal covers
+the planar boundary's actual Float32 coordinates to avoid residual numerical skins.
+Preview uses the same domain rule and replaces affected flats' occlusion with
+their remaining triangulated surface: groove openings reveal the profile, while
+solid flat areas still hide the far side. This changes no decorator membership,
+picking, accepted BRep or Undo. `tests/thread-flat-preview-ui.mjs` checks this
+worker/compositor boundary, ordinary flat picking and native 3MF export in hidden
+Electron; geometric equivalence and support preservation live in model tests.
 
 Confirmed topology policy: follow compatible split
 descendants, preserve phase and exclude newly generated unrelated faces. For
@@ -543,7 +563,12 @@ Mesh Booleans run in body-local coordinates so world placement does not consume
 float precision. Their recorded numerical rounding must fit within one quarter
 of the sampling target. Float packing can collapse very small Boolean facets;
 short edges of actually collapsed facets are normalized within the existing
-rounding bound. An exactly collinear facet with distinct vertices is re-triangulated
+rounding bound. If a collapsed edge would join two other edges, an original adjacent
+facet pair can exchange its diagonal when the new diagonal is unused, its projection
+remains convex and the surface change, including prior vertex collapse, fits that
+same rounding allowance.
+Vertices do not move, and pairs on already nonmanifold input edges are not repaired.
+An exactly collinear facet with distinct vertices is re-triangulated
 against its adjacent face at the existing middle vertex, without moving vertices
 or changing the represented surface. Duplicate packed vertices are resolved first.
 If a collapsed zero-thickness sheet leaves exact coincident facets with opposite

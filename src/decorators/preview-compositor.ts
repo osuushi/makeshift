@@ -4,6 +4,7 @@ import { stableClipping } from "../sketch/stable-clipping.js";
 export const decoratorPreviewLayer = 2;
 export interface PreviewSurface {
   mesh: THREE.Mesh;
+  occluder?: THREE.Mesh;
   faces: ReadonlySet<string>;
   opacity?: number;
   displayOpacity?: number;
@@ -139,6 +140,7 @@ if (gl_FragCoord.z > texture2D(decoratorOcclusion, gl_FragCoord.xy / decoratorRe
     );
     try {
       for (const object of hidden) object.visible = false;
+      if (surface.occluder) surface.occluder.visible = true;
       // Preserve display offsets for edge lines, but use actual solid depth for occlusion.
       for (const material of offsets) material.polygonOffset = false;
       camera.layers.mask = layers;
@@ -146,6 +148,7 @@ if (gl_FragCoord.z > texture2D(decoratorOcclusion, gl_FragCoord.xy / decoratorRe
       renderer.autoClear = true;
       renderer.render(scene, camera);
     } finally {
+      if (surface.occluder) surface.occluder.visible = false;
       for (const object of hidden) object.visible = true;
       for (const material of offsets) material.polygonOffset = true;
     }
