@@ -34,7 +34,11 @@ function normalized(input: unknown): DecoratorDisplay {
   for (const kind of decoratorKinds) {
     const appearance = candidate.types?.[kind];
     if (!appearance) continue;
-    if (typeof appearance.color === "string" && /^#[\da-f]{6}$/i.test(appearance.color))
+    if (
+      kind !== "gear" &&
+      typeof appearance.color === "string" &&
+      /^#[\da-f]{6}$/i.test(appearance.color)
+    )
       result.types[kind].color = appearance.color;
     if (Number.isFinite(appearance.opacity))
       result.types[kind].opacity = Math.max(0.2, Math.min(1, appearance.opacity));
@@ -50,8 +54,10 @@ export function decoratorDisplay(): DecoratorDisplay {
 export function decoratorPreviewMode(): DecoratorDisplay["mode"] {
   return value.mode;
 }
-export function decoratorAppearance(definition: string): DecoratorAppearance {
-  return { ...value.types[decoratorKind(definition)] };
+export function decoratorAppearance(definition: string, gearColor?: string): DecoratorAppearance {
+  const appearance = { ...value.types[decoratorKind(definition)] };
+  if (definition === "freac.gear" && gearColor) appearance.color = gearColor;
+  return appearance;
 }
 export function setDecoratorDisplay(next: DecoratorDisplay): void {
   value = normalized(next);

@@ -1,14 +1,15 @@
 import type { DisplayDocument } from "../model/display-document.js";
-import {
-  type GearContactDistance as Contact,
-  type GearFit as Fit,
-  fitContactingGears,
-} from "./gear-contact-fit.js";
-import { contactsFit, ringRootLimit } from "./gear-fit-limits.js";
-import { gearContact, gearCylinder, gearFitFailure, groupEligible } from "./gear-group-geometry.js";
-import { alignGearPhases } from "./gear-group-phase.js";
+import { compatibleProfiles, ringRootLimit } from "./gear-fit-limits.js";
+import { gearCylinder, gearFitFailure, groupEligible } from "./gear-group-geometry.js";
 import { gearDimensions, gearSettings, involute, radians } from "./gear-settings.js";
 import type { DecoratorInstance } from "./types.js";
+
+export interface GearFit {
+  module: number;
+  counts: number[];
+  error: number;
+}
+type Fit = GearFit;
 
 export function toothTipWidth(instance: DecoratorInstance, radius: number): number {
   const settings = gearSettings(instance.settings);
@@ -59,7 +60,6 @@ function countCost(
 function chooseFit(
   members: DecoratorInstance[],
   diameters: number[],
-  contacts: Contact[],
   rootLimits: number[],
 ): Fit | null {
   const settings = gearSettings(members[0].settings);
@@ -74,23 +74,13 @@ function chooseFit(
       }
     }
   }
-  let best: Fit | null = contacts.length
-    ? fitContactingGears(
-        diameters,
-        contacts,
-        maximum,
-        tolerance,
-        (i, count, module) => {
-          return countCost(members[i], diameters[i], count, module, rootLimits[i]);
-        },
-        (fit) => contactsFit(members, contacts, fit),
-      )
-    : null;
-  for (const candidate of contacts.length ? [] : candidates) {
+  let best: Fit | null = null;
+  for (const candidate of candidates) {
     const counts = diameters.map((d) => Math.round(d / candidate));
     const fit = evaluateFit(members, diameters, counts, rootLimits);
     if (
       fit &&
+      compatibleProfiles(members, fit) &&
       (!best ||
         fit.error < best.error - 1e-12 ||
         (Math.abs(fit.error - best.error) <= 1e-12 && fit.module > best.module))
@@ -130,7 +120,7 @@ function evaluateFit(
   };
 }
 
-/** Fit only decorator geometry. Existing pitch contacts retain their current axis spacing. */
+/** Fit group profiles from support dimensions, never relative placement or contact. */
 export function fitGearGroup(
   document: DisplayDocument,
   members: DecoratorInstance[],
@@ -144,20 +134,6 @@ export function fitGearGroup(
   if (cleared.some((d) => !groupEligible(document, d)))
     throw new Error(`${gearFitFailure}groups require spur cylinders with zero profile shift.`);
   const diameters = cleared.map((d) => 2 * (gearCylinder(document, d)?.radius ?? 0));
-  const contacts: Contact[] = [];
-  for (let a = 0; a < cleared.length; a++) {
-    for (let b = a + 1; b < cleared.length; b++) {
-      const contact = gearContact(document, cleared[a], cleared[b]);
-      if (contact)
-        contacts.push({
-          a,
-          b,
-          distance: contact.distance,
-          signA: contact.signA,
-          signB: contact.signB,
-        });
-    }
-  }
   const rootLimits = cleared.map((d) => ringRootLimit(document, d));
   let best: { fit: Fit; members: DecoratorInstance[] } | undefined;
   // Diameter fidelity wins. On a tie prefer full-depth teeth and the lower pressure angle.
@@ -167,7 +143,7 @@ export function fitGearGroup(
         ...d,
         settings: { ...d.settings, addendum, pressure },
       }));
-      const fit = chooseFit(candidates, diameters, contacts, rootLimits);
+      const fit = chooseFit(candidates, diameters, rootLimits);
       if (fit && (!best || fit.error < best.fit.error - 1e-12)) best = { fit, members: candidates };
       if (best && best.fit.error < 1e-12) break;
     }
@@ -178,14 +154,11 @@ export function fitGearGroup(
       `${gearFitFailure}no tooth profile meets the printable width and clearance at these diameters. Reduce the minimum printable width or clearance, increase pitch diameter tolerance, or enlarge the pitch surfaces.`,
     );
   const { fit: chosen, members: fitted } = best;
-  return alignGearPhases(
-    document,
-    fitted.map((d, i) => ({
-      ...d,
-      gearPitchRadius: (chosen.module * chosen.counts[i]) / 2,
-      settings: { ...d.settings, teeth: chosen.counts[i] },
-    })),
-  );
+  return fitted.map((d, i) => ({
+    ...d,
+    gearPitchRadius: (chosen.module * chosen.counts[i]) / 2,
+    settings: { ...d.settings, teeth: chosen.counts[i] },
+  }));
 }
 
 /** Geometry continuation refits the whole group in the same temporary candidate/Undo. */

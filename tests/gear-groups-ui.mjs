@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { openDocument } from "./native-documents.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
+import { gearGroupColors } from "./ui-gear-group-colors.mjs";
 import { resizeGroupedGear } from "./ui-gear-group-resize.mjs";
 import { capturedPrintControls } from "./ui-gear-printing.mjs";
 import { inspect, settled } from "./ui-helpers.mjs";
@@ -90,6 +91,7 @@ await withUiRuntimes(
       "Group membership and settings must not overlap",
     );
     await page.screenshot({ path: `.cache/sketch-review/${name}-gear-groups.png` });
+    await gearGroupColors(page, name);
     await capturedPrintControls(page, name);
     console.log(
       `${name}: captured cylinders, membership disclosure, add, shared sizing, cancellation, removal and Undo passed`,

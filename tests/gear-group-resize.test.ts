@@ -14,7 +14,7 @@ import type { SketchDocument } from "../src/sketch/document.js";
 import { assertGearEngagement } from "./gear-group-engagement.js";
 import { captured, checkPair, geometryArchive } from "./gear-group-fixture.js";
 
-test("native cylinder resize refits decorator groups without changing other BReps, and recovers from unsatisfiable limits", async () => {
+test("native cylinder resize refits a compatible group without constraining its axis spacing", async () => {
   const owner = new DocumentOwner();
   try {
     const fixture: { document: SketchDocument } = JSON.parse(
@@ -70,8 +70,7 @@ test("native cylinder resize refits decorator groups without changing other BRep
     );
     assert.equal((await owner.call({ kind: "accept" })).error, undefined);
     data = owner.view.data;
-    for (const gear of data.decorators ?? [])
-      assert.match(gear.problem ?? "", /Gear group cannot fit/);
+    for (const gear of data.decorators ?? []) assert.equal(gear.problem, undefined);
     const warned = documentArchive(data);
     const breps = data.bodies?.map((b) => b.brep);
     const ids = (data.decorators ?? []).map((g) => g.id);
@@ -118,7 +117,8 @@ function verifyFit(data: SketchDocument) {
     assert.ok(2 * Math.abs(radius - support) <= 1 + 1e-8);
   }
   assert.ok(
-    Math.abs((gears[0].gearPitchRadius ?? 0) + (gears[1].gearPitchRadius ?? 0) - 20) < 1e-8,
+    Math.abs((gears[0].gearPitchRadius ?? 0) + (gears[1].gearPitchRadius ?? 0) - 20) > 0.01,
+    "Fitted sizes follow edited diameters, not the old axis spacing",
   );
 }
 

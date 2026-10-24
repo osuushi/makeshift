@@ -18,7 +18,8 @@ export async function capturedPrintControls(page, name) {
   await settled(page);
   await orient(page, [0, -1, 0.7]);
   const groups = page.getByRole("region", { name: "Gear groups", exact: true });
-  await groups.getByRole("button", { name: "Fit contacting gears", exact: true }).first().click();
+  await groups.getByRole("button", { name: "Gears 2 · 1 gear", exact: true }).click();
+  await groups.getByRole("button", { name: "Add selection to Gears 1", exact: true }).click();
   await settled(page);
   await groups.getByRole("button", { name: "Gears 1 · 2 gears", exact: true }).click();
   const panel = page.getByRole("region", { name: "Decorators", exact: true });

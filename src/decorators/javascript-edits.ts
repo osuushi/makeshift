@@ -3,7 +3,8 @@ import { planes } from "../sketch/planes.js";
 import { isBuiltinDecorator } from "./builtins.js";
 import { definitionSettings } from "./definition.js";
 import { editDecorators, faceKey, validateDecorators } from "./edits.js";
-import { matchGearApplication } from "./gear-group.js";
+import { withGearColors } from "./gear-colors.js";
+import { matchGearApplication, refitGearGroups } from "./gear-group.js";
 import { gearFitFailure } from "./gear-group-geometry.js";
 import { gearDefinition } from "./gear-settings.js";
 import { gearPlacement } from "./gear-support.js";
@@ -11,7 +12,7 @@ import type { JavaScriptDecorators } from "./javascript-hooks.js";
 import type { DecoratorEdit, DecoratorInstance } from "./types.js";
 
 export function needsJavaScript(document: SketchDocument, edit: DecoratorEdit): boolean {
-  if (edit.action === "preset") return false;
+  if (edit.action === "preset" || edit.action === "gear-color") return false;
   if (edit.action === "apply") return !isBuiltinDecorator(edit.definition);
   if (edit.action === "remove" || edit.action === "discard") return false;
   const ids = edit.action === "settings" ? edit.ids : [edit.id];
@@ -166,7 +167,10 @@ function applyJavaScriptDecorator(
         .filter((d) => d.faces.some((f) => edit.faces.some((r) => faceKey(r) === faceKey(f))))
         .map((d) => d.id),
     );
-    next = matchGearApplication(document, next, selected, edit.gearGroup);
+    if (edit.gearGroup && edit.newGearGroup)
+      throw new Error("Choose an existing or a new gear group");
+    next = matchGearApplication(document, next, selected, edit.gearGroup, true, edit.newGearGroup);
+    next = refitGearGroups({ ...document, decorators: next }).decorators ?? [];
   }
-  return next;
+  return withGearColors(next);
 }

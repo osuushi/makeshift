@@ -13,56 +13,66 @@ Decorators never resize or move accepted BRep geometry. DocumentOwner owns
 attachments, fitted dimensions and settings with snapshot Undo; preview and export
 consume that same accepted metadata.
 
-External and internal spur cylinders applied together share a saved gear group. Applying Gear
-separately joins contacting gear groups as well. Reapplying Gear to selected older
-independent gears creates a group. An explicit `gearGroup` on Apply adds selected
-cylinders to an existing group. The sidebar lists groups even without a selection;
-clicking a group selects all members and discloses body names, face counts, target
-and fitted pitch diameters, and individual integer tooth counts. Select new faces
-and use **Add selection to Gears N**; removal still acts only on selected faces.
-Groups are independent of tagged geometry groups and cross body boundaries.
-Remembered spur presets restore printing limits; rotary count, pressure and
-phase are fitted to the current cylinders rather than recalled from another gear.
-Adding faces to an existing group uses that group's settings.
+2026-10-24 founder revision: compatibility belongs to explicit decorator groups,
+independent of placement. Select the cylindrical faces that should share tooth
+profiles and invoke **Gear** to group them. Applying Gear separately creates
+separate groups even when the cylinders touch. **Add selection to Gears N** moves
+selected gears into that group (or decorates new selected cylinders); **New gear
+group from selection** splits selected members into their own group. Other
+members of their previous group remain there and refit. No proximity/contact
+search joins groups. Groups can span bodies, separated parts, and partial gears.
+Different cylinders on the same compound body can belong to different groups.
+
+The sidebar lists groups without requiring a selection. Clicking a group selects
+its members and reveals body names, face counts, target/fitted pitch diameters,
+tooth counts and **Preview color** (picker and hex entry). New groups receive
+distinct hues, then variations in lightness/saturation; color is saved in the
+drawing, shared by its members, editable, and included in Undo/Redo. Copies get
+independent group IDs and new colors. Detailed and Color only previews use the
+same group colors. Settings retains global gear opacity, but has no global gear
+color override. Legacy groups without a saved color get a deterministic fallback;
+ordinary group edits save the color.
 
 Shared controls describe printing: **Minimum printable width** (initially 0.4 mm),
 **Tooth clearance per gear** (initially 0.05 mm), **Tooth root clearance** (initially
 0.15 mm), and **Pitch diameter tolerance** (initially 0.2 mm on diameter). Counts,
-module, pressure, tooth depth and contact phases are fitted rather than entered,
-including for a single spur gear. The width limit protects the chord between tooth
-flanks at the tip circle and the remaining wall behind an internal ring's roots
-when a coaxial outer cylinder bounds it. Root clearance is stored in millimeters
-and remains fixed when the fitted module changes. Tooth clearance is normal tooth
-thinning in millimeters per gear; the pair's clearance is the sum.
+module, pressure and tooth depth are fitted rather than entered, including for a
+single spur gear. The width limit protects tooth tips and the remaining wall
+behind an internal ring's roots when a coaxial outer cylinder bounds it. Root
+clearance stays in millimeters when module changes. Tooth clearance is normal
+thinning per gear; the pair's clearance is the sum.
 
-The fit minimizes squared pitch-diameter corrections. Among equally accurate fits
-it prefers full-depth involutes and then lower pressure; within each profile it
-prefers larger teeth. It searches pressure angles 20/25/30 degrees and addendum
-coefficients 1/0.9/0.8/0.75/0.7/0.65/0.6. Counts remain within 6–400 and satisfy the
-profile's undercut, base-circle and tooth-thickness limits. Contact paths must stay
-on the active involutes and provide at least 1.1 transverse contact ratio. The
-saved `gearPitchRadius` affects only the decorator's generated geometry. Legacy
-module ceilings no longer constrain automatic fits. These are geometric limits;
-printer-specific fit still depends on the user's clearance calibration.
+The fit minimizes squared pitch-diameter corrections, preferring full-depth
+involutes, then lower pressure, then larger teeth on ties. It searches pressure
+angles 20/25/30 degrees, addenda 1/0.9/0.8/0.75/0.7/0.65/0.6 and 6–400 teeth,
+with undercut, base-circle, tooth-thickness and ring-wall limits. Every external
+pair and every ring/pinion combination within the group is checked for active
+involute contact and at least 1.1 transverse contact ratio at its fitted reference
+spacing. Rings do not mesh with one another; each is checked against the group's
+pinions. These calculations use radii and shared profiles, never current axes,
+relative location, orientation, axial overlap or partial-sector contact.
 
-Every geometry edit refits the whole group in its temporary candidate, including
-other members' tooth counts and profiles. Existing tangent, parallel, axially
-overlapping pitch contacts retain current axis spacing and receive tooth/space
-phase alignment. An external contacting pair fixes module from its integer tooth-count sum;
-an internal ring/pinion pair uses their difference. Other contacts propagate those
-signed count relations. Internal pairs rotate in the same direction and align a
-pinion tooth with a ring space. Conflicting phase loops reject.
-Nothing moves the axes or changes another body's BRep. If fitting cannot satisfy
-the limits, the geometry edit remains valid and the group shows **Gear group
-cannot fit**. Invalid profiles are withheld from preview/export; changing the group
-limits or geometry can repair them. Numerically valid printing limits are saved
-even when they cannot currently fit, so adjusting one field never requires first
-solving every other field. Fit warnings and invalid-number feedback appear in the
-settings panel. Escape cancels a numeric draft; Enter/blur accepts. **Fit contacting
-gears** repairs older independent decorations and joins touching groups in one edit.
-Resize and its group refit share one Undo step.
-Copied groups receive independent IDs. Undo/Redo and save/open retain membership,
-limits and fitted dimensions. Sampling error remains separate from fit tolerance.
+Dimensional changes, printing limits and membership refit the whole group in the
+same candidate and Undo step. Rigid movement/rotation carries each gear's frame
+and preserves tooth parameters and phase. Fitting never moves axes or aligns
+phase. To assemble, place the fitted pitch surfaces at their reference spacing
+(sum of radii externally, difference internally) and rotate the parts so teeth
+enter spaces. Diameter tolerance can make fitted pitch sizes differ from support
+sizes; use the displayed fitted diameters for placement. Exploding the view or
+rotating a partial gear away does not affect compatibility.
+
+If a fit cannot satisfy the limits, the dimension/settings edit remains accepted
+and the group shows **Gear group cannot fit** beside its controls. Invalid profiles
+are withheld from preview/export; changing limits, dimensions or membership can
+repair them. Escape cancels numeric drafts; Enter/blur accepts. Group sizing,
+colors and membership survive Undo/Redo and save/open. Original BRep geometry is
+unchanged by decorator edits. Sampling error is separate from fit tolerance.
+
+For a simple design, put all intended spur-gear faces in one group. For a compound
+train, use separate groups for separate mesh stages to avoid unnecessary shared
+constraints. A group establishes compatible tooth profiles; physical axis
+placement, phase, clearance calibration and unrelated-body interference remain
+design responsibilities. This does not add Geneva mechanisms or other gear types.
 
 Automatic fitting covers internal/external spur cylinders with zero profile shift.
 Helical, bevel and rack gears retain their independent calculation route; explicit
@@ -161,17 +171,22 @@ No upstream implementation code was copied.
 13/7 mm capture for both application orders, legacy matching, shared sizing,
 engagement, STL/3MF encoding, native resize, fit limits, repair and atomic Undo.
 `tests/gear-groups-ui.mjs` checks real group disclosure/addition, layout, numeric
-cancellation, removal and cylinder offset followed by warning repair in hidden
-Electron.
+cancellation, removal, cylinder offset, explicit split/rejoin and saved group colors
+in hidden Electron.
 
 `tests/gear-ring-fit.test.ts` loads the founder's 20/10 mm ring/pinion capture,
-checks both application orders and legacy repair, 2:1 counts at unchanged diameters,
+checks explicit additions in both orders and legacy repair, 2:1 counts at unchanged diameters,
 ring wall/tip width, physical clearance changes, save/open and atomic Undo. It checks
-preview profiles and exported solids over a tooth period and encodes STL/3MF.
-The default capture fits 18/36 teeth at 20 degrees with 0.8-module addenda; increased
+preview profiles and exported solids over a tooth period after explicit assembly alignment and encodes STL/3MF.
+After explicit grouping, the default capture fits 18/36 teeth at 20 degrees with 0.8-module addenda; increased
 printing clearances can select shorter teeth while preserving the ratio.
 `tests/ui-gear-printing.mjs`, exercised by the existing gear-group UI route, checks
 saved unsatisfiable limits, subsequent repair, local feedback and the four controls.
+
+`tests/gear-group-placement.test.ts` checks rigid movement/rotation invariance,
+explicit regrouping, independent constraints, color history and save/open.
+`tests/gear-group-domains.test.ts` checks separated partial gears with closed exports
+and independently grouped cylinders on a compound body.
 
 `tests/gears-ui.mjs` exercises real pointer/keyboard creation, gear/rack/bevel
 settings, numeric cancellation, Undo/Redo, reselection,

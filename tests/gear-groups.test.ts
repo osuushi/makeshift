@@ -32,6 +32,7 @@ for (const order of ["together", "large first", "small first", "legacy"] as cons
                 action: "apply",
                 definition: gearDefinition,
                 faces: selection,
+                gearGroup: owner.view.data.decorators?.find((d) => d.gearGroup)?.gearGroup,
               },
             })
           ).error,

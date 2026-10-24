@@ -1,6 +1,6 @@
 import type { DisplayDocument } from "../model/display-document.js";
 import { cross, cylinderExtent, subtract } from "./cylinder.js";
-import type { GearContactDistance, GearFit } from "./gear-contact-fit.js";
+import type { GearFit } from "./gear-group-fit.js";
 import { gearCylinder } from "./gear-group-geometry.js";
 import { gearDimensions, gearSettings } from "./gear-settings.js";
 import type { DecoratorInstance } from "./types.js";
@@ -29,25 +29,27 @@ export function ringRootLimit(document: DisplayDocument, member: DecoratorInstan
 
 /** Bound the active involute contact path by the base circles and require overlap
  * between successive tooth contacts. This does not certify arbitrary assemblies. */
-export function contactsFit(
-  members: DecoratorInstance[],
-  contacts: GearContactDistance[],
-  fit: GearFit,
-): boolean {
-  return contacts.every((contact) => {
-    const dimensions = [contact.a, contact.b].map((i) => {
-      const member = members[i];
-      const settings = gearSettings({ ...member.settings, teeth: fit.counts[i] });
-      const outward = (member.state as { outward?: number } | undefined)?.outward === -1 ? -1 : 1;
-      const d = gearDimensions((fit.module * fit.counts[i]) / 2, settings, outward);
-      const pitchPath = d.pitchRadius * Math.sin(d.transversePressure);
-      const tipPath = Math.sqrt(Math.max(0, d.tipRadius ** 2 - d.baseRadius ** 2));
-      return { ...d, outward, pitchPath, path: outward * (tipPath - pitchPath) };
-    });
-    const [a, b] = dimensions;
-    if (a.outward > 0 && b.path > a.pitchPath + 1e-8) return false;
-    if (b.outward > 0 && a.path > b.pitchPath + 1e-8) return false;
-    const basePitch = Math.PI * fit.module * Math.cos(a.transversePressure);
-    return (a.path + b.path) / basePitch >= 1.1;
+export function compatibleProfiles(members: DecoratorInstance[], fit: GearFit): boolean {
+  const dimensions = members.map((member, i) => {
+    const settings = gearSettings({ ...member.settings, teeth: fit.counts[i] });
+    const outward = (member.state as { outward?: number } | undefined)?.outward === -1 ? -1 : 1;
+    const d = gearDimensions((fit.module * fit.counts[i]) / 2, settings, outward);
+    const pitchPath = d.pitchRadius * Math.sin(d.transversePressure);
+    const tipPath = Math.sqrt(Math.max(0, d.tipRadius ** 2 - d.baseRadius ** 2));
+    return { ...d, outward, pitchPath, path: outward * (tipPath - pitchPath) };
   });
+  for (let i = 0; i < dimensions.length; i++) {
+    for (const b of dimensions.slice(i + 1)) {
+      const a = dimensions[i];
+      // Two rings do not mesh directly; each is checked against every pinion.
+      if (a.outward < 0 && b.outward < 0) continue;
+      if (a.outward < 0 && a.pitchRadius <= b.pitchRadius) return false;
+      if (b.outward < 0 && b.pitchRadius <= a.pitchRadius) return false;
+      if (a.outward > 0 && b.path > a.pitchPath + 1e-8) return false;
+      if (b.outward > 0 && a.path > b.pitchPath + 1e-8) return false;
+      const basePitch = Math.PI * fit.module * Math.cos(a.transversePressure);
+      if ((a.path + b.path) / basePitch < 1.1) return false;
+    }
+  }
+  return true;
 }

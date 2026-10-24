@@ -51,6 +51,7 @@ for (const order of ["together", "pinion first", "ring first", "repair capture"]
                 action: "apply",
                 definition: gearDefinition,
                 faces: selection,
+                gearGroup: owner.view.data.decorators?.find((d) => d.gearGroup)?.gearGroup,
               },
             })
           ).error,
@@ -187,7 +188,14 @@ async function engagement(owner: DocumentOwner) {
             .keep(scope.keep(a.translate([-5, 0, 0])).rotate([0, 0, angle]))
             .translate([5, 0, 0]),
         );
-        const rotating = scope.keep(b.rotate([0, 0, angle / 2]));
+        // The fixture frames start on +Y. Assemble the ring's tooth spaces
+        // with the pinion's teeth; compatibility no longer rotates either part.
+        const assembly =
+          -90 +
+          ((90 + Number(pinion.settings.phase)) * Number(pinion.settings.teeth)) /
+            Number(ring.settings.teeth) -
+          Number(ring.settings.phase);
+        const rotating = scope.keep(b.rotate([0, 0, angle / 2 + assembly]));
         const volume = scope.keep(moving.intersect(rotating)).volume();
         assert.ok(volume < 1e-5, `${quality} internal interference ${volume} at ${angle}`);
       }

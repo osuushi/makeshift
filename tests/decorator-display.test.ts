@@ -105,6 +105,7 @@ test("parameter drafts reuse trimmed faces and current decorator type controls t
       decorators: initial.decorators?.map((instance) => ({
         ...instance,
         definition: "freac.gear",
+        gearColor: "#de3489",
       })),
     });
     assert.deepEqual(group.children, initialMeshes);
@@ -112,7 +113,7 @@ test("parameter drafts reuse trimmed faces and current decorator type controls t
       (
         (group.children[0] as THREE.Mesh).material as THREE.MeshStandardMaterial
       ).color.getHexString(),
-      decoratorAppearance("freac.gear").color.slice(1),
+      "de3489",
       "Reused support geometry takes the current decorator type's appearance",
     );
   } finally {
@@ -238,5 +239,61 @@ test("vertex-only generated results retain the attachment marker until drawable 
     assert.ok(group.children.every((child) => child.userData.previewFallback));
   } finally {
     overlay.dispose();
+  }
+});
+
+test("gear group colors update generated and fallback surfaces independently", () => {
+  const { overlay, group } = previewScene();
+  const initial = documentAt();
+  const template = initial.decorators?.[0];
+  assert.ok(template);
+  const gears = ["a", "b"].map((body, i) => ({
+    ...template,
+    id: body,
+    definition: "freac.gear",
+    gearGroup: body,
+    gearColor: ["#de3489", "#3682ca"][i],
+    faces: [{ body, face: "face" }],
+  }));
+  const signatures = new Map([
+    ["a", "first"],
+    ["b", "second"],
+  ]);
+  try {
+    overlay.sync(signatures, { ...initial, decorators: gears });
+    overlay.replace(
+      gears.map((d) => ({
+        id: d.id,
+        body: d.id,
+        faces: [...d.faces],
+        positions: new Float32Array(vertices),
+        indices: new Uint32Array([0, 1, 2]),
+      })),
+      ["a", "b"],
+      signatures,
+      signatures,
+    );
+    const meshes = [...group.children];
+    overlay.sync(signatures, {
+      ...initial,
+      decorators: gears.map((d) => (d.id === "a" ? { ...d, gearColor: "#12abcd" } : d)),
+    });
+    assert.deepEqual(group.children, meshes, "A color refresh does not replace surface geometry");
+    for (const mode of ["detailed", "color-only"] as const) {
+      setDecoratorDisplay({ ...decoratorDisplay(), mode });
+      overlay.updateVisibility();
+      const visible = group.children.filter((m) => m.visible);
+      assert.equal(visible.length, 2);
+      for (const mesh of visible) {
+        const material = (mesh as THREE.Mesh).material as THREE.MeshStandardMaterial;
+        assert.equal(
+          material.color.getHexString(),
+          mesh.userData.body === "a" ? "12abcd" : "3682ca",
+        );
+      }
+    }
+  } finally {
+    overlay.dispose();
+    resetDecoratorDisplay();
   }
 });

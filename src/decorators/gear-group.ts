@@ -1,26 +1,27 @@
 import type { DisplayDocument } from "../model/display-document.js";
 import { newId } from "../sketch/document.js";
+import { nextGearColor } from "./gear-colors.js";
 import { fitGearGroup, toothTipWidth } from "./gear-group-fit.js";
 import {
-  gearContact,
   gearCylinder,
   gearFitFailure,
   gearGroupMembers,
   groupEligible,
 } from "./gear-group-geometry.js";
-import { gearSettings, radians } from "./gear-settings.js";
+import { gearSettings } from "./gear-settings.js";
 import type { DecoratorInstance } from "./types.js";
 
 export { refitGearGroups } from "./gear-group-fit.js";
-export { gearContact, gearGroupMembers } from "./gear-group-geometry.js";
+export { gearGroupMembers } from "./gear-group-geometry.js";
 
-/** One accepted application can join selected gears and their contacting saved groups. */
+/** One accepted application assigns selected gears to explicit saved membership. */
 export function matchGearApplication(
   document: DisplayDocument,
   decorators: readonly DecoratorInstance[],
   selected: ReadonlySet<string>,
   requestedGroup?: string,
   retainFailure = false,
+  newGroup = false,
 ): readonly DecoratorInstance[] {
   const eligible = decorators.filter((d) => groupEligible(document, d));
   if (requestedGroup && decorators.some((d) => selected.has(d.id) && !eligible.includes(d)))
@@ -39,21 +40,23 @@ export function matchGearApplication(
   }
   if (requestedGroup && !decorators.some((d) => d.gearGroup === requestedGroup))
     throw new Error("Select an existing gear group");
-  for (const member of members) {
-    for (const candidate of eligible) {
-      if (members.includes(candidate)) continue;
-      if (
-        (member.gearGroup && member.gearGroup === candidate.gearGroup) ||
-        gearContact(document, member, candidate)
-      )
-        members.push(candidate);
-    }
+  const id =
+    requestedGroup ?? ((!newGroup && members.find((d) => d.gearGroup)?.gearGroup) || newId());
+  // Membership is explicit. Moving selected gears leaves the rest of their old group intact.
+  if (!newGroup) {
+    for (const candidate of eligible)
+      if (candidate.gearGroup === id && !members.includes(candidate)) members.push(candidate);
   }
-  const id = requestedGroup ?? members.find((d) => d.gearGroup)?.gearGroup ?? newId();
-  const settings = gearSettings(members[0].settings);
+  const color =
+    decorators.find((d) => d.gearGroup === id)?.gearColor ??
+    nextGearColor(decorators.filter((d) => d.gearGroup || !members.includes(d)));
+  const settings = gearSettings(
+    (decorators.find((d) => d.gearGroup === id) ?? members[0]).settings,
+  );
   const grouped = members.map((d) => ({
     ...d,
     gearGroup: id,
+    gearColor: color,
     settings: {
       ...d.settings,
       pressure: settings.pressure,
@@ -108,20 +111,5 @@ export function gearGroupProblem(
     members.some((d) => d.settings.pressure !== members[0].settings.pressure)
   )
     return "Gear group tooth sizes differ. Select its faces and apply Gear to match them again.";
-  for (let i = 0; i < members.length; i++) {
-    for (let j = i + 1; j < members.length; j++) {
-      const contact = gearContact(document, members[i], members[j]);
-      if (!contact) continue;
-      const a = gearSettings(members[i].settings),
-        b = gearSettings(members[j].settings);
-      const turns =
-        (contact.meshSign * contact.orientation * a.teeth * (contact.a - radians(a.phase)) +
-          b.teeth * (contact.b - radians(b.phase))) /
-          (2 * Math.PI) -
-        (contact.meshSign === 1 ? 0.5 : 0);
-      if (Math.abs(turns - Math.round(turns)) > 1e-6)
-        return "Gear group phases no longer mesh. Select its faces and apply Gear to align them again.";
-    }
-  }
   return null;
 }

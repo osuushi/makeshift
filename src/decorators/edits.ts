@@ -3,6 +3,8 @@ import { newId, type SketchDocument } from "../sketch/document.js";
 import { validateFrame } from "../sketch/planes.js";
 import { isBuiltinDecorator, knurlDefinition } from "./builtins.js";
 import { cylinderExtent, cylinderFrame, resolveFaces, sameCylinder } from "./cylinder.js";
+import { editGearColor } from "./gear-color-edit.js";
+import { refitGearGroups } from "./gear-group-fit.js";
 import { gearDefinition, gearSettings } from "./gear-settings.js";
 import { knurlSettings, patchKnurlSettings } from "./knurl-settings.js";
 import { threadReference, validateAxialReference } from "./thread-extent.js";
@@ -105,6 +107,10 @@ export function validateDecorators(document: SketchDocument): void {
         (instance.definition !== gearDefinition ||
           typeof instance.gearGroup !== "string" ||
           !instance.gearGroup)) ||
+      (instance.gearColor !== undefined &&
+        (instance.definition !== gearDefinition ||
+          typeof instance.gearColor !== "string" ||
+          !/^#[\da-f]{6}$/i.test(instance.gearColor))) ||
       (instance.gearPitchRadius !== undefined &&
         (instance.definition !== gearDefinition ||
           !Number.isFinite(instance.gearPitchRadius) ||
@@ -219,7 +225,9 @@ function continueBuiltin(
 export function editDecorators(document: SketchDocument, edit: DecoratorEdit): SketchDocument {
   const previous = document.decorators ?? [];
   let next: readonly DecoratorInstance[] = previous;
-  if (edit.action === "apply") {
+  if (edit.action === "gear-color") {
+    next = editGearColor(document, edit.id, edit.color);
+  } else if (edit.action === "apply") {
     next = prepareBuiltinApplication(document, edit);
     for (const instance of next) {
       if (!previous.includes(instance)) validateBuiltin(document, instance);
@@ -270,5 +278,7 @@ export function editDecorators(document: SketchDocument, edit: DecoratorEdit): S
   } else throw new Error("Unknown decorator edit");
   const candidate = { ...document, decorators: next };
   validateDecorators(candidate);
-  return candidate;
+  return edit.action === "remove" || edit.action === "discard"
+    ? refitGearGroups(candidate)
+    : candidate;
 }
