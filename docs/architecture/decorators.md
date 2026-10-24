@@ -543,7 +543,12 @@ Mesh Booleans run in body-local coordinates so world placement does not consume
 float precision. Their recorded numerical rounding must fit within one quarter
 of the sampling target. Float packing can collapse very small Boolean facets;
 short edges of actually collapsed facets are normalized within the existing
-rounding bound. An exactly collinear facet with distinct vertices is re-triangulated
+rounding bound. If a collapsed edge would join two other edges, an original adjacent
+facet pair can exchange its diagonal when the new diagonal is unused, its projection
+remains convex and the surface change, including prior vertex collapse, fits that
+same rounding allowance.
+Vertices do not move, and pairs on already nonmanifold input edges are not repaired.
+An exactly collinear facet with distinct vertices is re-triangulated
 against its adjacent face at the existing middle vertex, without moving vertices
 or changing the represented surface. Duplicate packed vertices are resolved first.
 If a collapsed zero-thickness sheet leaves exact coincident facets with opposite
