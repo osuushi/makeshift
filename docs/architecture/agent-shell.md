@@ -615,8 +615,11 @@ not a named taper command. They retain ordinary script atomicity and stable IDs.
 
 ## Mesh references and recovery skill
 
-The Agent header's **Attach file…** control and file drop on the pane share one
-route. Each file is copied into `attachments/` in the drawing workspace, with
+The Agent header's **Attach file…** control, file drop on the pane and image paste
+in the terminal share one route. Desktop paste shortcuts read clipboard PNG images;
+native/browser paste events accept image files from the clipboard. When an image
+also has a text representation, the image takes precedence. Text-only paste stays
+terminal input. Each file is copied into `attachments/` in the drawing workspace, with
 numbered names for collisions. The resulting workspace-relative path is pasted
 at the terminal cursor so the agent can reference the portable copy. For a batch
 over 20 MiB, a confirmation explains that the files will enlarge the saved drawing.
