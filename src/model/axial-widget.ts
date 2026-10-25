@@ -16,6 +16,9 @@ export function toolAction(label: string, path: string, action: () => void): HTM
 export function distanceField(input: HTMLInputElement): HTMLLabelElement {
   const label = document.createElement("label");
   label.className = "axial-distance";
+  // A prepended R/Ø button must not become this label's implicit control.
+  input.id ||= `distance-${crypto.randomUUID()}`;
+  label.htmlFor = input.id;
   const unit = document.createElement("span");
   unit.textContent = "mm";
   label.append(input, unit);

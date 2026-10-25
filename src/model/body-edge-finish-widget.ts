@@ -54,6 +54,8 @@ export class BodyEdgeFinishWidget {
     const unit = document.createElement("span");
     unit.textContent = "mm";
     const field = this.field;
+    this.input.id = `edge-finish-${crypto.randomUUID()}`;
+    field.htmlFor = this.input.id;
     field.append(this.radial.button, this.input, unit);
     const dismiss = this.dismiss;
     for (const [button, label, path, action] of [

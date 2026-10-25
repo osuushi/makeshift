@@ -4,6 +4,7 @@ import { plate } from "./ui-body-fillet.mjs";
 import { makePlate, worldClick } from "./ui-face-offset.mjs";
 import { close, inspect } from "./ui-helpers.mjs";
 import { previewActionReady } from "./ui-preview-readiness.mjs";
+import { radialLabelClicks } from "./ui-radial-label.mjs";
 
 export async function radialSolids(page) {
   // New tools inherit the diameter selected in the sketch; chamfers stay distances.
@@ -15,6 +16,8 @@ export async function radialSolids(page) {
   let state = await inspect(page);
   close(state.preview.bodies[0].faces.find((face) => face.blend).blend.radius, 2);
   const preview = state.preview;
+  await radialLabelClicks(page.locator(".edge-finish-panel input"));
+  assert.deepEqual((await inspect(page)).preview, preview);
   await page
     .getByRole("button", { name: "Switch to radius", exact: false })
     .filter({ visible: true })
@@ -53,6 +56,7 @@ export async function radialSolids(page) {
     .filter({ visible: true })
     .click();
   const face = page.getByRole("textbox", { name: "Face diameter", exact: true });
+  await radialLabelClicks(page.locator(".face-offset-options input"));
   assert.equal(await face.inputValue(), "3");
   await face.fill("5");
   await previewActionReady(page, "Accept face offset");
@@ -61,6 +65,7 @@ export async function radialSolids(page) {
   await page.keyboard.press("Escape");
   await page.keyboard.press("e");
   const extrusion = page.getByRole("textbox", { name: "Extrusion diameter", exact: true });
+  await radialLabelClicks(page.locator(".extrude-options .axial-distance input"));
   assert.equal(await extrusion.inputValue(), "3");
   await extrusion.fill("5");
   await previewActionReady(page, "Accept extrusion");
