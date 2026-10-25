@@ -11,3 +11,11 @@
     gap: 12px;
   }
 }
+
+.exchange-menus {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: var(--canvas);
+  border-radius: 4px;
+}

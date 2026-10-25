@@ -27,6 +27,8 @@ export function installControls(
   const abort = installShortcuts(editor, numeric, app);
   browserHistoryControls(editor, abort.signal);
   const standardMenu = new StandardCommandMenu(editor);
+  const importMenu = new StandardCommandMenu(editor, "Import");
+  const exportMenu = new StandardCommandMenu(editor, "Export");
   window.addEventListener(
     "blur",
     () => {
@@ -37,6 +39,8 @@ export function installControls(
   return () => {
     abort.abort();
     standardMenu.dispose();
+    importMenu.dispose();
+    exportMenu.dispose();
     disposeHistory();
     disposeGridSnap();
     disposeTools();

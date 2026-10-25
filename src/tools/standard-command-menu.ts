@@ -8,19 +8,32 @@ export class StandardCommandMenu {
   private wrapper = document.createElement("div");
   private trigger = document.createElement("button");
   private menu = document.createElement("div");
-  constructor(private editor: SketchEditor) {
-    if (window.makeshiftDocument) return;
+  constructor(
+    private editor: SketchEditor,
+    private exchange?: "Import" | "Export",
+  ) {
+    if (!exchange && window.makeshiftDocument) return;
     this.wrapper.className = "control-selector standard-command-selector";
-    this.trigger.innerHTML = "<strong>Makeshift</strong>";
-    this.trigger.setAttribute("aria-label", "File / Edit");
+    this.trigger.innerHTML = exchange ?? "<strong>Makeshift</strong>";
+    this.trigger.setAttribute("aria-label", exchange ?? "File / Edit");
     this.trigger.setAttribute("aria-haspopup", "menu");
     this.trigger.setAttribute("aria-expanded", "false");
     this.menu.className = "control-menu";
     this.menu.popover = "auto";
     this.menu.setAttribute("role", "menu");
-    this.menu.setAttribute("aria-label", "File and edit");
+    this.menu.setAttribute("aria-label", exchange ?? "File and edit");
     this.wrapper.append(this.trigger);
-    document.querySelector("header strong")?.replaceWith(this.wrapper);
+    if (exchange) {
+      let group = document.querySelector<HTMLElement>(".exchange-menus");
+      if (!group) {
+        group = document.createElement("div");
+        group.className = "exchange-menus";
+        group.setAttribute("role", "group");
+        group.setAttribute("aria-label", "Import and export");
+        document.querySelector("header")?.append(group);
+      }
+      group.append(this.wrapper);
+    } else document.querySelector("header strong")?.replaceWith(this.wrapper);
     document.body.append(this.menu);
     this.trigger.onclick = () => {
       if (editor.interactions.current?.captured) return;
@@ -57,7 +70,11 @@ export class StandardCommandMenu {
     this.menu.replaceChildren();
     for (const tool of toolCatalog(this.editor)
       .results()
-      .filter((tool) => tool.showInTools === false)) {
+      .filter((tool) =>
+        this.exchange
+          ? tool.id.startsWith(`${this.exchange.toLowerCase()}-`)
+          : tool.showInTools === false,
+      )) {
       const button = document.createElement("button");
       button.textContent = `${tool.label}${tool.shortcut ? ` · ${tool.shortcut}` : ""}`;
       button.dataset.command = tool.id;
@@ -75,7 +92,9 @@ export class StandardCommandMenu {
   }
   dispose(): void {
     this.editor.world.changed.delete(this.update);
+    const parent = this.wrapper.parentElement;
     this.wrapper.remove();
+    if (this.exchange && !parent?.childElementCount) parent?.remove();
     this.menu.remove();
   }
 }

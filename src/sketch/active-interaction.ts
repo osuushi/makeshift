@@ -10,6 +10,7 @@ type Kind =
   | "sphere"
   | "cone"
   | "drill"
+  | "dxf-import"
   | "step-import"
   | "mesh-import"
   | "tag-membership"
