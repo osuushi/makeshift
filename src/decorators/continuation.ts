@@ -97,7 +97,11 @@ export function continueDecorators<Document extends DisplayDocument>(
       const next = descendants(reference, source, body, request);
       if (!next) continue;
       let updated = { ...next, id: count++ === 0 ? instance.id : newId() };
-      if (instance.gearGroup && topologyOrigins.get(body)?.copy) {
+      if (
+        instance.gearGroup &&
+        !source.bodies?.some((original) => original === body) &&
+        topologyOrigins.get(body)?.copy
+      ) {
         let group = copiedGearGroups.get(instance.gearGroup);
         if (!group) {
           group = {

@@ -62,6 +62,22 @@ test("copying a gear group creates independent membership and inspection stays r
     await owner.scripts.step({ kind: "decorators", input: {} });
     assert.equal(owner.scripts.finish(), false);
     assert.equal(documentArchive(owner.view.data), before);
+    const membership = () =>
+      owner.view.data.decorators?.map(({ id, faces, gearGroup }) => ({ id, faces, gearGroup }));
+    const copiedMembership = membership();
+    // Editing an original must not replay the unchanged copies' creation correspondence.
+    assert.equal(
+      (await owner.call({ kind: "offset-faces", operation: { faces: [faces[0]], distance: 0.02 } }))
+        .error,
+      undefined,
+    );
+    assert.deepEqual(membership(), copiedMembership);
+    assert.equal((await owner.call({ kind: "accept" })).error, undefined);
+    assert.deepEqual(membership(), copiedMembership);
+    await owner.call({ kind: "undo" });
+    assert.equal(documentArchive(owner.view.data), before);
+    await owner.call({ kind: "redo" });
+    assert.deepEqual(membership(), copiedMembership);
   } finally {
     owner.close();
   }
