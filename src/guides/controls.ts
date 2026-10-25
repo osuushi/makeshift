@@ -1,8 +1,8 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import { toolCatalog } from "../tools/catalog.js";
+import { GuideDiscovery } from "./discovery.js";
 import { GuideHighlight } from "./highlight.js";
-import { hoverGuides } from "./hover.js";
 import { type GuideMarker, GuideMarkers } from "./markers.js";
 import { GuideMove } from "./move.js";
 import { selectedGuides } from "./selection.js";
@@ -22,6 +22,7 @@ export class GuideControls {
   private highlight: GuideHighlight;
   private markers: GuideMarkers;
   private movement: GuideMove;
+  private discovery: GuideDiscovery;
   private abort = new AbortController();
   private unregister: () => void;
   private pointer: { x: number; y: number } | null = null;
@@ -31,6 +32,7 @@ export class GuideControls {
     toolInput: GuideToolInput = () => null,
   ) {
     this.highlight = new GuideHighlight(editor);
+    this.discovery = new GuideDiscovery(editor, () => this.update());
     this.movement = new GuideMove(editor, host, toolInput);
     this.markers = new GuideMarkers(
       editor,
@@ -59,6 +61,13 @@ export class GuideControls {
     window.addEventListener(
       "pointermove",
       (event) => {
+        // Keep the discovered hit target while entering it; a deferred refresh
+        // must not make the marker noninteractive just before pointerdown.
+        if (
+          event.target instanceof Element &&
+          event.target.closest(".guide-marker, .guide-choices")
+        )
+          return;
         this.pointer = { x: event.clientX, y: event.clientY };
         this.update();
       },
@@ -184,9 +193,13 @@ export class GuideControls {
       }),
     );
     const keys = new Set(saved.map((p) => guideKey(p.anchor)));
-    let candidates: GuideMarker[] = [];
-    if (editingGuides(e) && !e.interactions.current && (!e.world.active || e.tool === "select"))
-      candidates = hoverGuides(e, this.pointer);
+    let candidates: GuideMarker[] = this.discovery.update(
+      this.pointer,
+      editingGuides(e) &&
+        !e.interactions.current &&
+        !e.blocked &&
+        (!e.world.active || e.tool === "select"),
+    );
     candidates = candidates.filter(
       (p) =>
         !keys.has(guideKey(p.anchor)) &&
@@ -209,6 +222,7 @@ export class GuideControls {
     return JSON.stringify([e.world.active, e.modeling.targets, [...e.selectionOwners]]);
   }
   dispose(): void {
+    this.discovery.dispose();
     this.abort.abort();
     this.unregister();
     this.editor.world.changed.delete(this.update);

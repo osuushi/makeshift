@@ -52,12 +52,25 @@ function filteredGuides(
 
 /** Nearby selection and hover candidates, with stable hover discovery on approach. */
 export function hoverGuides(editor: SketchEditor, pointer: Point | null): GuideCandidate[] {
+  const work = discoverHoverGuides(editor, pointer);
+  let step = work.next();
+  while (!step.done) step = work.next();
+  return step.value;
+}
+
+/** Yield between discovery and destination probes so input and tool painting take priority. */
+export function* discoverHoverGuides(
+  editor: SketchEditor,
+  pointer: Point | null,
+): Generator<void, GuideCandidate[]> {
+  if (!pointer) return [];
   const saved = visibleGuides(editor).map(({ guide, point }) => ({
     anchor: guide.anchor,
     point,
     label: guide.name,
   }));
   const selected = selectedCandidates(editor);
+  yield;
   const selectedKeys = new Set(selected.map((p) => guideKey(p.anchor)));
   const candidates = filteredGuides(
     editor,
@@ -66,10 +79,15 @@ export function hoverGuides(editor: SketchEditor, pointer: Point | null): GuideC
     saved,
     pointer,
   );
+  yield;
   // Probe ordinary geometry, not the overlay itself, without mutating hover/selection.
   const atPoint = new Map<string, Set<string>>();
-  const reachable = candidates.filter((candidate) => {
-    if (selectedKeys.has(guideKey(candidate.anchor))) return true;
+  const reachable: GuideCandidate[] = [];
+  for (const candidate of candidates) {
+    if (selectedKeys.has(guideKey(candidate.anchor))) {
+      reachable.push(candidate);
+      continue;
+    }
     const screen = editor.world.project(candidate.point);
     const location = `${screen.x}:${screen.y}`;
     let keys = atPoint.get(location);
@@ -80,10 +98,10 @@ export function hoverGuides(editor: SketchEditor, pointer: Point | null): GuideC
         ),
       );
       atPoint.set(location, keys);
+      yield;
     }
-    return keys.has(guideKey(candidate.anchor));
-  });
-  if (!pointer) return [];
+    if (keys.has(guideKey(candidate.anchor))) reachable.push(candidate);
+  }
   const projected = reachable
     .filter((candidate) => guideVisibleThroughSolids(editor, candidate.point))
     .map((candidate) => ({

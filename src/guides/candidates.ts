@@ -3,8 +3,9 @@ import type { DisplayDocument } from "../model/display-document.js";
 import { featureEdges } from "../model/feature-edges.js";
 import type { ModelingTarget } from "../sketch/model-selection-state.js";
 import type { Vector } from "../sketch/planes.js";
+import { incidentEdges } from "./edge-junctions.js";
 import { guidePosition } from "./evaluate.js";
-import { edgeFeature, junction, near } from "./geometry.js";
+import { edgeFeature, junction } from "./geometry.js";
 import { type CurveFeature, type GuideAnchor, guideKey, guideMeaning } from "./types.js";
 
 export interface GuideCandidate {
@@ -27,12 +28,7 @@ function bodyCandidates(body: BodyGeometry, target: ModelingTarget): GuideAnchor
       const point = edgeFeature(edge, feature);
       if (!point) continue;
       if (feature === "start" || feature === "end") {
-        const incident = featureEdges(body).filter((e) =>
-          (["start", "end"] as const).some((f) => {
-            const p = edgeFeature(e, f);
-            return p && near(point, p);
-          }),
-        );
+        const incident = incidentEdges(body, point);
         if (junction(incident)) {
           anchors.push({
             kind: "body-junction",
@@ -91,9 +87,10 @@ export function guideCandidates(
       });
   const seen = new Set<string>();
   return anchors.flatMap((anchor) => {
-    const key = guideKey(anchor),
-      point = guidePosition(document, anchor);
-    if (!point?.every(Number.isFinite) || seen.has(key)) return [];
+    const key = guideKey(anchor);
+    if (seen.has(key)) return [];
+    const point = guidePosition(document, anchor);
+    if (!point?.every(Number.isFinite)) return [];
     seen.add(key);
     return [{ anchor, point, label: guideMeaning(anchor) }];
   });
