@@ -56,7 +56,14 @@ canceled application Quit, which document-owner tests cannot exercise. Section
 regressions cover GPU composition, cavities, captured cap overlap/hover/selection,
 distant-camera clipping, and localized X-ray masks. CPU geometry tests cannot
 observe these escaped rendering failures.
-The inventory permits 26 suites, totaling 555 seconds with the existing shard count.
+The inventory permits 28 suites, totaling 580 seconds with the existing shard count.
+The mesh-first movement and Offset/Fillet regressions cover real paint ordering,
+numeric supersession and acceptance while metadata is pending. They measured
+4.59 and 7.05 seconds in hidden macOS Electron, respectively; allocations of 10
+and 15 seconds include startup/software-rendering headroom. Offset and Fillet
+share one app session. These add 25 seconds to the previous 555-second budget;
+they do not add shards or repeat a cross-browser matrix. Geometry and clamping
+combinations remain in lower-level tests. Linux timings are not yet measured.
 The transform entry regression includes escaped Tab focus and cross-layer acceptance
 checks in the same app session; its measured 12.2-second macOS run has a 14-second
 allocation (previously 12). No additional suite or shard was added.
