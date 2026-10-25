@@ -15,7 +15,7 @@ function scene(faceZ: number) {
   camera.updateMatrixWorld();
   return {
     bodiesVisible: true,
-    visibility: { visible: () => true },
+    visibility: { xray: new Set<string>(), visible: () => true },
     modeling: new ModelSelection(),
     world: {
       camera,

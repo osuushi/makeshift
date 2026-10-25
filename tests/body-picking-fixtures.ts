@@ -23,7 +23,7 @@ export function pickingEditor(
   return {
     bodiesVisible: true,
     display: { units: "mm", sketches: [], bodies },
-    visibility: { visible: (id: string) => !hidden.includes(id) },
+    visibility: { xray: new Set<string>(), visible: (id: string) => !hidden.includes(id) },
     world: {
       camera,
       project,

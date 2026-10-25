@@ -90,8 +90,14 @@ chooses the most face-on plane.
 (0–100%, default 80%), and **Bleed**/**Radius** (0–100 screen pixels, defaults 100/50).
 Global disables the two mask controls. Local mode dilates and blurs visible sketch
 contents on the current plane; the cut and front translucency appear only through
-that mask. Only sketch/profile selection or an active sketch workspace starts
-automatic X-ray vision. Explicit Cross section always remains global.
+that mask. Sketch/profile selection or an active sketch workspace starts automatic
+sketch X-ray vision. The Entities body X-ray toggle uses the same settings: whole
+visible non-X-ray body silhouettes form the aperture, including their actual holes
+and curved outlines. All X-ray bodies keep ordinary internal depth order and are
+composited once at the selected front opacity, revealing enclosed normal bodies.
+Global removes this body aperture; Bleed and Radius soften it in screen pixels.
+Body X-ray and automatic sketch sections can be used together. Explicit Cross
+section always remains global.
 These choices persist under `makeshift.view-display` as `xrayGlobal`, `xrayBleed`,
 `xrayRadius` and the compatible `sectionFrontOpacity`, outside geometry and Undo.
 Reset grid display preserves all X-ray choices.

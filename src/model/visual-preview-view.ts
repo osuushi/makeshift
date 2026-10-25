@@ -39,6 +39,7 @@ export class VisualBodyDrawable {
     this.group.add(this.mesh, this.onSection, this.outline, this.highlight);
     this.highlight.renderOrder = 20;
     for (const mesh of [this.mesh, this.onSection]) {
+      mesh.userData.bodyMask = true;
       mesh.material.vertexColors = true;
       mesh.material.color.set("white");
     }
@@ -153,6 +154,10 @@ export function visualPreviewView(editor: SketchEditor): () => void {
       drawing.group.visible =
         !body.sourceBodies?.length ||
         (editor.bodiesVisible && body.sourceBodies.some((id) => editor.visibility.visible(id)));
+      drawing.group.userData.xrayBody =
+        body.sourceBodies?.length && body.sourceBodies.every((id) => editor.visibility.xray.has(id))
+          ? body.sourceBodies[0]
+          : null;
       drawing.update(body, editor.world.partialSection ?? editor.world.crossSection, {
         ...appearance,
         selected,

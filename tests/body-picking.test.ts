@@ -102,3 +102,64 @@ test("native cylindrical picking rejects missed bounds and reduces nearby edge i
     owner.close();
   }
 });
+
+test("x-ray bodies share a demoted layer for faces and edges, independent of distance", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const front = await prism(owner, square);
+    const rear = await lift(owner, {
+      ...emptySketch({ ...planes.XY, origin: [0, 0, -20] }),
+      curves: structuredClone(owner.view.data.sketches[0].curves),
+    });
+    const editor = pickingEditor([front, rear]);
+    const center = editor.world.project([10, 10, 10]);
+    const edge = editor.world.project([0, 10, 10]);
+    editor.visibility.xray.add(front.id);
+    assert.equal(new BodyPickProbe(editor, center).faces()[0]?.body, rear.id);
+    assert.equal(pickBodyEdge(editor, edge)?.body, rear.id);
+    editor.visibility.xray.add(rear.id);
+    assert.equal(new BodyPickProbe(editor, center).faces()[0]?.body, front.id);
+    assert.equal(pickBodyEdge(editor, edge)?.body, front.id);
+    editor.visibility.xray.delete(front.id);
+    assert.equal(new BodyPickProbe(editor, center).faces()[0]?.body, front.id);
+    editor.bodiesVisible = false;
+    assert.equal(new BodyPickProbe(editor, center).faces().length, 0);
+  } finally {
+    owner.close();
+  }
+});
+
+test("an x-ray edge cannot steal a click from a normal body's face", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const front = await prism(owner, [
+      [5, 5],
+      [15, 5],
+      [15, 15],
+      [5, 15],
+    ]);
+    const rear = await lift(owner, {
+      ...emptySketch({ ...planes.XY, origin: [0, 0, -20] }),
+      curves: square.map(([x, y], i) => ({
+        id: `rear-${i}`,
+        kind: "segment" as const,
+        construction: false,
+        a: { x, y },
+        b: { x: square[(i + 1) % 4][0], y: square[(i + 1) % 4][1] },
+      })),
+    });
+    const editor = pickingEditor([front, rear]);
+    editor.visibility.xray.add(front.id);
+    const screen = editor.world.project([5, 10, 10]);
+    assert.equal(new BodyPickProbe(editor, screen).faces()[0]?.body, rear.id);
+    assert.equal(pickBodyEdge(editor, screen), null);
+    editor.visibility.visible = (id) => id !== rear.id;
+    assert.equal(
+      pickBodyEdge(editor, screen)?.body,
+      front.id,
+      "Hidden bodies do not steal the click",
+    );
+  } finally {
+    owner.close();
+  }
+});

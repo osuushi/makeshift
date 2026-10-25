@@ -1,5 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
+import { bodyXrayTool } from "./body-xray-controls.js";
 
 export function visibilityControls(
   editor: SketchEditor,
@@ -31,6 +32,7 @@ export function visibilityControls(
     }),
   );
   dispose.push(
+    bodyXrayTool(editor),
     catalog.register({
       id: "isolate",
       finishEdit: true,

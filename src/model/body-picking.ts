@@ -18,6 +18,10 @@ export class BodyPickProbe {
     this.ray = screenRay(editor, screen);
   }
 
+  layer(body: string): number {
+    return Number(this.editor.visibility.xray.has(body));
+  }
+
   faces(screen = this.screen): ReturnType<typeof faceRayHits> {
     const key = `${screen.x},${screen.y}`;
     let hits = this.hits.get(key);
@@ -28,6 +32,7 @@ export class BodyPickProbe {
         this.editor.world.camera.position,
         this.editor.world.clippingAt(screen),
       );
+      hits.sort((a, b) => this.layer(a.body) - this.layer(b.body) || a.depth - b.depth);
       this.hits.set(key, hits);
     }
     return hits;

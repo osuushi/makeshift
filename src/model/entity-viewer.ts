@@ -8,6 +8,7 @@ import { TagRows } from "../tags/rows.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { selectionPickers } from "../tools/tool-selection.js";
 import { bodyAppearanceControl } from "./body-appearance-control.js";
+import { bodyXrayButton } from "./body-xray-controls.js";
 import { EntityChildren } from "./entity-children.js";
 import { entityRows } from "./entity-presentation.js";
 import { renameEntity } from "./entity-rename.js";
@@ -206,7 +207,10 @@ export class EntityViewer {
     });
     row.append(select, ...(merge ? [merge] : []));
     if (target.kind === "body")
-      row.append(bodyAppearanceControl(this.editor, id, name, this.refreshRows));
+      row.append(
+        bodyAppearanceControl(this.editor, id, name, this.refreshRows),
+        bodyXrayButton(this.editor, id, name, this.refreshRows),
+      );
     row.append(eye);
     return this.children.wrap(row, id, [
       ...(target.kind === "body" ? this.tags.rows(id, this.refreshRows) : []),

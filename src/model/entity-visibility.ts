@@ -6,6 +6,7 @@ import type { Extrusion, LiftSource, Revolution } from "./body.js";
 /** Per-window display state; hiding geometry never changes the document. */
 export class EntityVisibility {
   readonly hidden = new Set<string>();
+  readonly xray = new Set<string>();
   private readonly known = new Set<string>();
   private isolated: Set<string> | null = null;
   /** Observe accepted and preview owners before drawing; existing hidden owners stay hidden. */
@@ -43,6 +44,7 @@ export class EntityVisibility {
   }
   reset(): void {
     this.hidden.clear();
+    this.xray.clear();
     this.known.clear();
     this.isolated = null;
   }

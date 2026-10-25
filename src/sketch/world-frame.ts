@@ -1,6 +1,7 @@
 import type * as THREE from "three";
 import { SectionCaps } from "../model/section-caps.js";
 import { viewDisplay } from "../preferences/view-display.js";
+import { BodyXrayComposite } from "./body-xray-composite.js";
 import { GridOcclusion } from "./grid-occlusion.js";
 import type { Point } from "./planes.js";
 import type { World } from "./world.js";
@@ -21,6 +22,7 @@ export class WorldFrame {
   private readonly foreground = new SketchForeground();
   private readonly primitives = new PrimitiveOverlay();
   private readonly xray = new XrayComposite();
+  private readonly bodyXray = new BodyXrayComposite();
   private width = -1;
   private height = -1;
 
@@ -32,7 +34,10 @@ export class WorldFrame {
     world.canvas.addEventListener("webglcontextrestored", this.restoreXray);
   }
 
-  private readonly restoreXray = (): void => this.xray.invalidate();
+  private readonly restoreXray = (): void => {
+    this.xray.invalidate();
+    this.bodyXray.invalidate();
+  };
 
   private readonly captureFrame = (): void => {
     if (window.makeshiftTestFrameMode === "on-demand") this.capture();
@@ -48,6 +53,12 @@ export class WorldFrame {
   render(clip: THREE.Plane, force: boolean): void {
     if (window.makeshiftTestFrameMode === "on-demand" && !force) return;
     this.gridOcclusion.update(this.world);
+    this.bodyXray.render(this.world, () => this.renderSections(clip));
+    const { renderer, scene, camera } = this.world;
+    this.primitives.render(renderer, scene, camera);
+  }
+
+  private renderSections(clip: THREE.Plane): void {
     if (this.xray.enabled(this.world))
       this.xray.render(
         this.world,
@@ -55,8 +66,6 @@ export class WorldFrame {
         () => this.section(clip),
       );
     else this.section(clip);
-    const { renderer, scene, camera } = this.world;
-    this.primitives.render(renderer, scene, camera);
   }
 
   sectionEnabled(point: Point): boolean {
@@ -94,5 +103,6 @@ export class WorldFrame {
     this.sections.dispose();
     this.primitives.dispose();
     this.xray.dispose();
+    this.bodyXray.dispose();
   }
 }
