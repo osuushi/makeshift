@@ -49,7 +49,7 @@ terminal loading and harness launch wait until the first expansion. Expanding
 returns keyboard focus to terminal input; collapsing returns it to the drawing.
 The expanded header labels terminal, agent-control or drawing focus, with an
 accented header and pane border when terminal input owns the keyboard. The
-unfocused pane has a 15% white overlay in light mode or black overlay in dark
+unfocused pane has a 50% white overlay in light mode or black overlay in dark
 mode. The overlay passes clicks through and clears for terminal or control focus.
 The browser caret is hidden because Ghostty draws the terminal cursor itself.
 Ghostty cursor blinking follows terminal input focus explicitly: it stops when
