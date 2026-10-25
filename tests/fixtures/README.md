@@ -162,3 +162,10 @@ sketches and the original independent 40/40 decorators are preserved; derived
 presentation, camera and history are omitted. Gear-group regressions cover both
 application orders, legacy repair, fitted dimensions, engagement, actual mesh
 encoding, native resize and shared tolerance/printability controls.
+
+`populated-sketch.json` retains the accepted 95-curve, 154-constraint document
+from the founder's `2026-10-25T19-25-03-455Z-da3ce1dd` Capture fixture. History,
+transient edits and camera are omitted. Point-query tests preserve ordered current
+handles and guard against evaluating unrelated geometry. The opt-in
+`populated-sketch-ui.mjs` route measures drawing and point editing through real
+controls on this document; it adds no automatic UI suite.

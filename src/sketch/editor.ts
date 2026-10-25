@@ -140,9 +140,10 @@ export class SketchEditor {
     );
   }
   get rectangleContext(): EditingGroup | undefined {
-    if (!this.selectionOwners.size) return undefined;
+    const owners = this.selectionOwners;
+    if (!owners.size) return undefined;
     return this.sketch?.groups.find((group) =>
-      [...this.selectionOwners].every((id) => group.members.includes(id)),
+      [...owners].every((id) => group.members.includes(id)),
     );
   }
   select(ids: Iterable<string>): void {
