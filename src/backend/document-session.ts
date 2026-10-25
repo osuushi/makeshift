@@ -11,6 +11,7 @@ export class DocumentSession {
   solveMs = 0;
   pendingOperation: HistoryOperation | null = null;
   candidate: SketchDocument | null = null;
+  visualPreview: import("../model/visual-preview.js").VisualPreview | undefined;
   reopenedPreview: ReopenPreview | null = null;
 
   preview(result: { count: number; ms: number; document: SketchDocument }): void {
@@ -29,6 +30,7 @@ export class DocumentSession {
   }
   clearPreview(): void {
     this.candidate = null;
+    this.visualPreview = undefined;
     this.pendingOperation = null;
     this.reopenedPreview = null;
   }
@@ -36,6 +38,7 @@ export class DocumentSession {
     if (this.pendingOperation) this.store.record(this.pendingOperation, "cancelled");
     this.pendingOperation = null;
     this.candidate = null;
+    this.visualPreview = undefined;
   }
   accept(cleanup: boolean, preview: ReopenPreview): void {
     if (!this.candidate) throw new Error("No valid edit to accept");
@@ -54,10 +57,11 @@ export class DocumentSession {
     this.store = new DocumentStore(document);
     this.pendingOperation = null;
     this.candidate = null;
+    this.visualPreview = undefined;
   }
   navigate(direction: "reopen" | "undo" | "redo"): void {
     if (direction === "reopen") {
-      if (this.candidate) throw new Error("Finish the current edit first");
+      if (this.candidate || this.visualPreview) throw new Error("Finish the current edit first");
       const restored = this.store.reopen();
       this.candidate = restored.candidate;
       this.pendingOperation = this.store.restoredOperation ?? null;
@@ -65,6 +69,7 @@ export class DocumentSession {
     } else {
       this.pendingOperation = null;
       this.candidate = null;
+      this.visualPreview = undefined;
       this.store[direction]();
     }
   }

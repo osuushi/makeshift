@@ -131,10 +131,10 @@ export class Dimensions implements NumericFields {
       field.lock.setAttribute("aria-pressed", String(locked));
       field.label.style.left = `${Math.max(50, Math.min(bounds.width - 50, value.screen.x - bounds.left))}px`;
       field.label.style.top = `${Math.max(70, Math.min(bounds.height - 60, value.screen.y - bounds.top))}px`;
-      if (!numericFocus(field.input) && !this.draft.owns(field.input))
-        field.input.value = this.format(
-          field.radial ? field.radial.display(value.value) : value.value,
-        );
+      if (!numericFocus(field.input) && !this.draft.owns(field.input)) {
+        const requested = this.editor.numeric.dragValues?.[value.quantity] ?? value.value;
+        field.input.value = this.format(field.radial ? field.radial.display(requested) : requested);
+      }
     }
     layoutLocalControls(this.editor, this.overlay);
   };

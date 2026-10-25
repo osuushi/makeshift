@@ -6,6 +6,7 @@ import { planes } from "../.cache/sketch-tests/src/sketch/planes.js";
 import { lift, prism } from "../.cache/sketch-tests/tests/body-edge-fixtures.js";
 import { openDocument } from "./native-documents.mjs";
 import { project } from "./ui-blend-edit.mjs";
+import { deferredDiscovery } from "./ui-guide-discovery.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -64,6 +65,7 @@ try {
 // Real DOM hit targets must win over the model's canvas listeners. Model tests alone
 // cannot catch click-through, overlay double-click handoff or stale hover ghosts.
 await withUiRuntimes(async (page, name) => {
+  await deferredDiscovery(page, name, archive);
   await selectedConcaveFace(page, name);
   await cylinderCap(page, name);
   await openDocument(page, {
@@ -142,7 +144,7 @@ async function cylinderCap(page, name) {
     "the cap center owns the actual pointer hit after crossing from the side",
   );
   const before = (await inspect(page)).document;
-  await page.mouse.click(cap.x, cap.y);
+  await marker.click();
   const choices = page.locator(".guide-choices");
   await choices.waitFor({ state: "visible" });
   assert.equal(await choices.locator('button[aria-pressed="true"]').count(), 1);
@@ -151,12 +153,12 @@ async function cylinderCap(page, name) {
   assert.equal((await inspect(page)).document.guidePoints[0].anchor.kind, "body-edge");
   await chooseTool(page, "undo", "undo");
   await page.mouse.move(cap.x, cap.y);
-  await page.mouse.click(cap.x, cap.y);
+  await marker.click();
   await choices.waitFor({ state: "visible" });
   await page.keyboard.press("Escape");
   assert.equal(await choices.isVisible(), false);
   assert.deepEqual((await inspect(page)).document, before);
-  await page.mouse.click(cap.x, cap.y);
+  await marker.click();
   await choices.waitFor({ state: "visible" });
   await page.mouse.move(1200, 780);
   await choices.waitFor({ state: "hidden" });
@@ -168,7 +170,7 @@ async function cylinderCap(page, name) {
   );
   await chooseTool(page, "undo", "undo");
   await page.mouse.move(cap.x, cap.y);
-  await page.mouse.click(cap.x, cap.y);
+  await marker.click();
   await choices.waitFor({ state: "visible" });
   await page.screenshot({ path: `.cache/sketch-review/${name}-guide-cylinder-center.png` });
   await choices.getByRole("button", { name: "Face circle center", exact: true }).click();
@@ -246,6 +248,10 @@ async function selectedConcaveFace(page, name) {
   assert.equal(await marker.count(), 0, "deselection removes the candidate");
   await page.mouse.click(inside.x, inside.y);
   await page.mouse.move(centroid.x, centroid.y, { steps: 20 });
+  await page.waitForFunction(() => {
+    const marker = document.querySelector('.guide-marker.ghost[title*="Face area centroid"]');
+    return marker instanceof HTMLElement && !marker.hidden && marker.style.pointerEvents !== "none";
+  });
   await page.mouse.click(centroid.x, centroid.y);
   await page.waitForFunction(() => window.makeshiftInspect().document.guidePoints?.length === 1);
   const after = await inspect(page);
@@ -258,6 +264,11 @@ async function selectedConcaveFace(page, name) {
 }
 
 async function activeGhostTitles(page) {
+  await page.waitForFunction(() =>
+    [...document.querySelectorAll(".guide-marker.ghost")].some(
+      (node) => node instanceof HTMLElement && !node.hidden && node.style.pointerEvents !== "none",
+    ),
+  );
   return page
     .locator(".guide-marker.ghost:visible")
     .evaluateAll((nodes) =>

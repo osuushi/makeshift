@@ -46,5 +46,6 @@ export function visibleSketchGrid(grid: SketchGrid, pixelsPerMm: number, minPixe
       }
     }
   }
-  return { minor, major, hideMinor: minor === major, snap: minor };
+  // Display thinning must not change a drag's distance increments as we zoom.
+  return { minor, major, hideMinor: minor === major, snap: grid.minor };
 }

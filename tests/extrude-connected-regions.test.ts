@@ -25,6 +25,64 @@ const caps = (body: Body, z: number) =>
       Math.abs(face.plane.origin[2] - z) < 1e-7,
   );
 
+test("changing the perforated drain depth preserves openings and reachable curved guides", async () => {
+  const owner = new DocumentOwner();
+  try {
+    assert.equal((await owner.call({ kind: "open", document })).error, undefined);
+    const before = owner.view.data;
+    const sketch = before.sketches[0];
+    const profile = profilesFor(sketch)[0];
+    for (const distance of [5, 5.5, -7]) {
+      const reply = await owner.call({
+        kind: "extrude",
+        extrusion: {
+          sources: [{ sketch: sketch.id, profile: profile.key }],
+          distance,
+          mode: "new",
+        },
+      });
+      assert.equal(reply.error, undefined);
+      assert.deepEqual(owner.view.data, before);
+      const body = reply.view.candidate?.bodies?.[0];
+      assert.ok(body);
+      near(body.volume, profile.area * Math.abs(distance));
+      assert.equal(body.faces.length, 142);
+      assert.equal(body.edges.length, 420);
+      assert.equal(caps(body, 0).length, 1);
+      assert.equal(caps(body, distance).length, 1);
+      for (const cap of [...caps(body, 0), ...caps(body, distance)]) {
+        assert.ok(cap.thickness);
+        near(cap.thickness.distance, Math.abs(distance));
+      }
+      const curvedWalls = body.faces.filter(
+        (face) => face.cylinder && Math.abs(face.cylinder.radius - 40) < 1e-7,
+      );
+      assert.equal(curvedWalls.length, 32);
+      for (const face of curvedWalls) {
+        const reference = body.faces.find((other) => other.id === face.thickness?.face);
+        assert.ok(reference?.cylinder);
+        near(reference.cylinder.radius, 20);
+        near(face.thickness?.distance ?? 0, 20);
+        // The facing arc is in the same angular sector, not a stationary
+        // projection onto a trimmed arc on the opposite side of the drain.
+        assert.ok(
+          face.signature[3] * reference.signature[3] + face.signature[4] * reference.signature[4] >
+            0,
+        );
+      }
+      assert.ok(exportMesh(body).triangles.length > 0);
+    }
+    assert.equal((await owner.call({ kind: "accept" })).error, undefined);
+    const accepted = owner.view.data;
+    await owner.call({ kind: "undo" });
+    assert.deepEqual(owner.view.data, before);
+    await owner.call({ kind: "redo" });
+    assert.deepEqual(owner.view.data, accepted);
+  } finally {
+    owner.close();
+  }
+});
+
 test("connected drain regions form one partitioned prism within the preview budget", async () => {
   const owner = new DocumentOwner();
   try {

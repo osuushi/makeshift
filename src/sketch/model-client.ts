@@ -4,6 +4,7 @@ import type { ModelRequest, ModelView } from "./model-api.js";
 import { ModelQueries } from "./model-queries.js";
 import { call } from "./model-transport.js";
 import type { HistoryOperation, OperationHistoryEntry } from "./operation-history.js";
+import { retainViewSketches } from "./retain-view-sketches.js";
 import type { SelectionHistory } from "./selection-history.js";
 
 // A read-only rendering copy. Accepted edits and all Undo snapshots live in the host.
@@ -27,7 +28,7 @@ export class ModelClient extends ModelQueries {
     this.scriptRunning = running;
     if (view) {
       const changed = JSON.stringify(this.view.data) !== JSON.stringify(view.data);
-      this.view = view;
+      this.view = retainViewSketches(this.view, view);
       if (changed) this.selectionHistory?.accepted();
     }
     this.changed();
@@ -123,6 +124,9 @@ export class ModelClient extends ModelQueries {
   get cutEdges() {
     return this.view.cutEdges ?? [];
   }
+  get visualPreview() {
+    return this.view.visualPreview;
+  }
   get candidate() {
     return this.view.candidate;
   }
@@ -145,7 +149,7 @@ export class ModelClient extends ModelQueries {
     if (!this.selectionHistory || !this.initialized) return;
     const reply = await call({ kind: "selection", changes: this.selectionHistory.take() });
     if (reply.error) throw new Error(reply.error);
-    this.view = reply.view;
+    this.view = retainViewSketches(this.view, reply.view);
   }
   async history(): Promise<OperationHistoryEntry[]> {
     if (!this.working && this.selectionHistory) await this.request({ kind: "read" });
@@ -200,7 +204,7 @@ export class ModelClient extends ModelQueries {
     const timer = setTimeout(() => {
       this.slow = true;
       this.changed();
-    }, 150);
+    }, 500);
     try {
       await this.selectionSending;
       await this.flushSelection();
@@ -225,7 +229,7 @@ export class ModelClient extends ModelQueries {
           initialize: true,
         });
       if (this.interrupted) return false;
-      this.view = reply.view;
+      this.view = retainViewSketches(this.view, reply.view);
       this.erosionAllowance = reply.erosionAllowance;
       if (reply.error) throw new Error(reply.error);
       if (direction && reply.view.historyOperation)
@@ -278,7 +282,7 @@ export class ModelClient extends ModelQueries {
     try {
       const reply = await call({ kind: "cancel-preview" });
       await this.waiting;
-      this.view = reply.view;
+      this.view = retainViewSketches(this.view, reply.view);
       this.error(reply.error ?? "");
     } catch (error) {
       this.error(error instanceof Error ? error.message : String(error));

@@ -8,11 +8,11 @@ import { BooleanOperands } from "./boolean-operands.js";
 import { extrusionGuidePath } from "./extrude-guide.js";
 import { trackExtrudeHistory } from "./extrude-history.js";
 import type { ExtrudeInputs } from "./extrude-inputs.js";
+import { ExtrudePreview } from "./extrude-preview.js";
 import type { ExtrudeTargets } from "./extrude-targets.js";
 import type { ExtrudeTwist } from "./extrude-twist.js";
 import { createExtrudeView, updateExtrudeView } from "./extrude-view.js";
 import type { ExtrudeWidget } from "./extrude-widget.js";
-import { PreviewRunner } from "./preview-runner.js";
 import { sourceExtrusion } from "./viewer-extrusion.js";
 
 export class ExtrudeControls {
@@ -26,12 +26,10 @@ export class ExtrudeControls {
   private mode: Extrusion["mode"] = "auto";
   private distance = 0;
   private symmetric = false;
-  private previews = new PreviewRunner<Extrusion>({
-    editing: () => this.lease?.phase === "editing",
-    calculate: (request) => this.calculate(request),
-    settled: () => this.editor.refresh(),
-  });
-  private valid = false;
+  private previews: ExtrudePreview;
+  private get valid(): boolean {
+    return this.previews.valid;
+  }
   private inputs: ExtrudeInputs;
   private twist: ExtrudeTwist;
   get active(): boolean {
@@ -42,6 +40,11 @@ export class ExtrudeControls {
     overlay: HTMLElement,
   ) {
     this.operands = new BooleanOperands(editor);
+    this.previews = new ExtrudePreview(
+      editor,
+      () => this.lease,
+      () => this.operands.showTool(),
+    );
     const view = createExtrudeView(
       editor,
       overlay,
@@ -52,6 +55,7 @@ export class ExtrudeControls {
         distance: () => this.distance,
         symmetric: () => this.symmetric,
         queue: (value, symmetric) => this.queue(value, symmetric),
+        released: () => this.previews.complete(),
         mode: (mode) => {
           this.mode = mode;
           this.queue(this.distance);
@@ -150,7 +154,7 @@ export class ExtrudeControls {
     this.widget.draft.restore(restored?.draft ?? { mode: "angle", value: 0 });
     this.distance = parameters?.distance ?? 0;
     this.symmetric = restored?.symmetric ?? false;
-    this.valid = false;
+    this.previews.valid = false;
     this.twist.angle = parameters?.twist?.angle ?? 0;
     this.twist.origin =
       restored?.twist?.origin ?? (this.widget.axis ? [...this.widget.axis.center] : null);
@@ -185,7 +189,7 @@ export class ExtrudeControls {
       !Number.isFinite(this.twist.value?.angle ?? 0)
     ) {
       this.distance = value;
-      this.valid = false;
+      this.previews.valid = false;
       this.previews.clear();
       this.editor.store.supersedePreview(true);
       this.lease?.show(null);
@@ -208,18 +212,8 @@ export class ExtrudeControls {
     // Pointer events within one grid step do not require another calculation.
     if (JSON.stringify(request) === JSON.stringify(this.previews.latest)) return;
     this.distance = value;
-    this.valid = false;
+    this.previews.valid = false;
     this.previews.enqueue(request);
-    this.editor.refresh();
-  }
-  private async calculate(request: Extrusion): Promise<void> {
-    const success = await this.editor.store.request({ kind: "extrude", extrusion: request });
-    if (this.previews.latest && this.lease?.phase === "editing") {
-      this.valid = success && request === this.previews.latest;
-      if (success || request === this.previews.latest)
-        this.lease.show(success ? this.editor.store.candidate : null);
-      if (success) this.operands.showTool();
-    }
     this.editor.refresh();
   }
   async finish(): Promise<boolean> {

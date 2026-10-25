@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { boundaryPoints } from "../sketch/curve-spans.js";
+import { boundaryPoints, type CurveSpan } from "../sketch/curve-spans.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import {
   type Point,
@@ -87,7 +87,7 @@ function planarExtrusionAxis(editor: SketchEditor): ExtrusionAxis | null {
       }
     } else if (target.kind === "profile") {
       for (const [index, loop] of [target.profile.outer, ...target.profile.holes].entries()) {
-        const { center, area } = polygonCentroid(boundaryPoints(loop, 0.001));
+        const { center, area } = loopCentroid(loop);
         add(worldPoint(plane, center), (index === 0 ? 1 : -1) * area);
       }
     }
@@ -103,6 +103,17 @@ function planarExtrusionAxis(editor: SketchEditor): ExtrusionAxis | null {
         circleCenter,
       }
     : null;
+}
+
+const loopCentroids = new WeakMap<readonly CurveSpan[], { center: Point; area: number }>();
+/** Source spans are immutable; camera motion and extrusion depth do not change their centroid. */
+function loopCentroid(loop: readonly CurveSpan[]): { center: Point; area: number } {
+  let result = loopCentroids.get(loop);
+  if (!result) {
+    result = polygonCentroid(boundaryPoints(loop, 0.001));
+    loopCentroids.set(loop, result);
+  }
+  return result;
 }
 
 function polygonCentroid(points: Point[]): { center: Point; area: number } {

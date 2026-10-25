@@ -10,7 +10,7 @@ export async function extrusionPreviewRoute(page) {
   const pick = await at(page, 0, 0);
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(pick.x, pick.y);
-  const gates = Array.from({ length: 4 }, () => ({
+  const gates = Array.from({ length: 5 }, () => ({
     reached: Promise.withResolvers(),
     release: Promise.withResolvers(),
   }));
@@ -21,7 +21,7 @@ export async function extrusionPreviewRoute(page) {
     if (request.kind === "supersede-preview") superseded.push(request);
     if (request.kind !== "extrude") return route.continue();
     const gate = gates[requests.length];
-    requests.push(request.extrusion);
+    requests.push({ ...request.extrusion, presentation: request.presentation });
     const response = await route.fetch(); // Real native geometry; delay only its delivery.
     gate?.reached.resolve();
     await gate?.release.promise;
@@ -38,25 +38,50 @@ export async function extrusionPreviewRoute(page) {
     await page.mouse.down();
     await page.mouse.move(x, y - 50);
     await reachedPreview(gates[0], "first drag");
+    close(
+      Number(
+        await page.getByRole("textbox", { name: "Extrusion distance", exact: true }).inputValue(),
+      ),
+      requests[0].distance,
+    );
     gates[0].release.resolve();
     await settled(page);
-    close((await inspect(page)).preview.bodies[0].volume, requests[0].distance * 600);
+    assert.equal(requests[0].presentation, "visual");
+    assert.equal(
+      await page
+        .getByRole("textbox", { name: "Extrusion distance", exact: true })
+        .getAttribute("aria-invalid"),
+      "false",
+      "A valid visual result is pending completion, not invalid geometry",
+    );
+    close((await inspect(page)).visualPreview.bodies[0].bounds[5], requests[0].distance);
     await page.mouse.move(x, y - 100);
     await reachedPreview(gates[1], "second drag");
     const intermediate = await page.evaluate(() => window.makeshiftInspect());
     assert.ok(
-      intermediate.preview,
+      intermediate.visualPreview,
       "Completed geometry must display even while another target is pending",
     );
     assert.equal(intermediate.document.bodies?.length ?? 0, 0);
-    close(intermediate.preview.bodies[0].volume, requests[0].distance * 600);
+    close(intermediate.visualPreview.bodies[0].bounds[5], requests[0].distance);
     await queuedExtrusion(page, gates, requests, superseded, x, y);
     await page.mouse.up();
+    await reachedPreview(gates[3], "complete latest target after release");
+    const completing = await page.evaluate(() => window.makeshiftInspect());
+    assert.equal(requests[3].presentation, undefined);
+    assert.equal(requests[3].distance, requests[2].distance);
+    assert.equal(completing.preview, null, "Visual targets are not acceptable document candidates");
+    close(completing.visualPreview.bodies[0].bounds[5], requests[2].distance);
+    assert.equal(
+      await page.getByRole("button", { name: "Accept extrusion", exact: true }).isDisabled(),
+      true,
+    );
     await page.keyboard.press("Enter");
+    gates[3].release.resolve();
     close((await inspect(page)).document.bodies[0].volume, requests[2].distance * 600);
     await chooseTool(page, "undo", "undo");
     assert.equal((await inspect(page)).document.bodies?.length ?? 0, 0);
-    await invalidatedPreview(page, pick, gates[3]);
+    await invalidatedPreview(page, pick, gates[4]);
   } finally {
     for (const gate of gates) gate.release.resolve();
     await page.mouse.up();
@@ -70,12 +95,22 @@ async function queuedExtrusion(page, gates, requests, superseded, x, y) {
   assert.equal(requests.length, 2, "Unchanged snapped distance must not recompute");
   await page.mouse.move(x, y - 150);
   await page.mouse.move(x, y - 200);
+  const requested = Number(
+    await page.getByRole("textbox", { name: "Extrusion distance", exact: true }).inputValue(),
+  );
+  assert.ok(requested > requests[1].distance, "The field follows the latest queued drag target");
   assert.equal(requests.length, 2, "Waiting targets stay in the serial controller slot");
   assert.deepEqual(superseded, [], "Drag changes keep the initialized worker alive");
   gates[1].release.resolve();
   await reachedPreview(gates[2], "latest queued drag");
+  close(
+    Number(
+      await page.getByRole("textbox", { name: "Extrusion distance", exact: true }).inputValue(),
+    ),
+    requested,
+  );
   const intermediate = await page.evaluate(() => window.makeshiftInspect());
-  close(intermediate.preview.bodies[0].volume, requests[1].distance * 600);
+  close(intermediate.visualPreview.bodies[0].bounds[5], requests[1].distance);
   assert.equal(intermediate.document.bodies?.length ?? 0, 0);
   assert.equal(
     await page.getByRole("button", { name: "Accept extrusion", exact: true }).isDisabled(),
@@ -85,7 +120,7 @@ async function queuedExtrusion(page, gates, requests, superseded, x, y) {
   assert.equal(requests.length, 3, "Only the latest waiting target reaches native geometry");
   gates[2].release.resolve();
   await settled(page);
-  close((await inspect(page)).preview.bodies[0].volume, requests[2].distance * 600);
+  close((await inspect(page)).visualPreview.bodies[0].bounds[5], requests[2].distance);
 }
 async function invalidatedPreview(page, pick, gate) {
   await page.mouse.click(pick.x, pick.y);
@@ -130,16 +165,22 @@ export async function extrusionCancelRoute(page) {
     await route.fulfill({ response });
   });
   try {
-    await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
-    await page.getByRole("textbox", { name: "Extrusion distance" }).fill("5");
-    await reachedPreview({ reached }, "cancel preview");
+    const handle = await page
+      .getByRole("button", { name: "Drag extrusion", exact: true })
+      .boundingBox();
+    await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2 - 50);
+    await reachedPreview({ reached }, "cancel visual preview");
     await page.keyboard.press("Escape");
     for (let i = 0; i < 50 && !cancelled; i++) await new Promise((r) => setTimeout(r, 20));
     assert.ok(cancelled, "Escape must send cancellation without waiting for the preview reply");
     release.resolve();
+    await page.mouse.up();
     await settled(page);
     const result = await inspect(page);
     assert.equal(result.preview, null);
+    assert.equal(result.visualPreview, null);
     assert.equal(result.document.bodies?.length ?? 0, 0);
   } finally {
     release.resolve();

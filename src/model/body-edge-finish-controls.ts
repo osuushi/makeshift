@@ -181,6 +181,7 @@ export class BodyEdgeFinishControls {
       }
       return;
     }
+    this.size = Math.max(0, size);
     this.valid = false;
     if (!Number.isFinite(size)) {
       this.previews.clear();
@@ -208,7 +209,7 @@ export class BodyEdgeFinishControls {
       }
       if (success) {
         this.lease.show(this.editor.store.candidate);
-        this.size = this.editor.store.edgeSize ?? 0;
+        if (request === latest) this.size = this.editor.store.edgeSize ?? 0;
         if (request === latest && this.size !== request.size) {
           this.widget.input.value = String(this.widget.radial.display(this.size));
           this.editor.notice = `Limited to ${this.widget.radial.display(this.size)} mm`;

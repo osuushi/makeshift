@@ -4,6 +4,7 @@ import { extrusionCancelRoute, extrusionPreviewRoute } from "./ui-extrude-previe
 import { makePlate, worldClick } from "./ui-face-offset.mjs";
 import { close, inspect } from "./ui-helpers.mjs";
 import { relativeOffsetInput } from "./ui-offset-input.mjs";
+import { revolveLiveDrag } from "./ui-revolve-live-drag.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -121,8 +122,9 @@ await withUiRuntimes(
     await extrusionPreviewRoute(page);
     await extrusionCancelRoute(page);
     await offsetScheduling(page);
+    await revolveLiveDrag(page);
     console.log(
-      `${name}: real Extrude/Offset delayed delivery, coalescing, invalidation, cancellation, clamp feedback and no completion-cleanup probes pass`,
+      `${name}: real Extrude/Offset/Revolve delayed delivery, live fields, coalescing, cancellation and clamp feedback pass`,
     );
   },
   { allowed: ["chromium", "webkit"], timeout: 30000 },

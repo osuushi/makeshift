@@ -120,7 +120,7 @@ export class PlacementControls {
     s.duplicate = event.altKey;
     s.moved ||= Math.hypot(event.clientX - s.start.x, event.clientY - s.start.y) > s.threshold;
     if (!s.moved) return;
-    const step = this.editor.world.spacing / (event.shiftKey ? 10 : 1);
+    const step = this.editor.world.spacing;
     const value = s.rotate
       ? snapRotation(s.frame.angle(event.clientX, event.clientY), event.shiftKey)
       : s.frame.translation(event.clientX, event.clientY);

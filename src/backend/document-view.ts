@@ -32,6 +32,7 @@ export function documentView(
     canUndo: store.canUndo,
     canRedo: store.canRedo,
     candidate,
+    visualPreview: session.visualPreview,
     cutEdges:
       candidate && candidate !== store.data
         ? (reopenedPreview?.cutEdges ?? cutEdgeHighlights.get(candidate))

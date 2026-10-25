@@ -39,7 +39,7 @@ use the ordinary gesture route against fresh geometry; cancelled contacts do not
 replay. Pan/orbit/zoom remain available except during a held geometry gesture.
 
 While a calculation runs, keep the window repainting and show a delayed busy
-indicator after about 150 ms. Actions that conflict with nonmodal backend work or
+indicator only after at least 500 ms. Actions that conflict with nonmodal backend work or
 a running script still retain the single-owner guard.
 The delayed calculation indicator names the operation, shows elapsed time and
 offers Cancel/Escape for cancellable calculations. Heavy native work
@@ -56,8 +56,14 @@ lost pointer capture before completion discards the gesture. An in-flight call
 may finish, but a discarded gesture has no path to acceptance. This is ordinary
 gesture ownership, not a document-version or retry protocol.
 
+Straight sketch extrusion may display validated mesh-only results while dragging.
+These are separate from complete document candidates: release or explicit guide
+confirmation completes the latest target, and acceptance waits for that result.
+The last visual result stays on screen during completion. An older acceptable
+candidate cannot survive a newer visual target. See [materialized solids](solids.md).
+
 `ActiveInteraction` is the sole owner of the current edit's phase, displayed
-candidate and pointer-capture cleanup. Pointer, rectangle bow, fillet, offset,
+candidate/visual preview and pointer-capture cleanup. Pointer, rectangle bow, fillet, offset,
 trim and numeric controllers acquire it; a second interaction cannot acquire it
 until cleanup completes. Concrete controllers still own their geometry and
 completion rules. `GestureSolve` publishes only into its owning interaction.
@@ -71,6 +77,14 @@ Numeric fields acquire an edit while focused. Tab transfers that ownership;
 numeric entry during a held drag belongs to the existing pointer edit. Acceptance
 and discard finish before ownership is released. Waiting for a final calculation
 remains cancellable; an acceptance already sent to the backend completes normally.
+
+During pointer dragging, fields display the latest requested quantity immediately,
+including while an earlier calculation is pending. An older result can update
+the geometry preview but must not roll the field back. Sketch dimension readouts
+retain only requested numbers, independently of solver-owned geometry. Verified
+size limits apply when the latest target finishes; explicit typed text keeps its
+ordinary focus ownership.
+
 The composition root passes a named NumericEdit collaborator to the editor and
 connects Dimensions and PointerGestures as its field and gesture owners before
 installing input shortcuts. Field focus, commit/cancel and held-drag quantity

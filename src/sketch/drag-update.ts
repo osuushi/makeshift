@@ -140,7 +140,7 @@ function axisDrag(editor: SketchEditor, drag: Drag, point: Point, bypass: boolea
   const axis = drag.axis;
   if (!axis) return drag.sketch;
   const desired = translatedPoint(drag.pivot, axis, point[axis] - drag.start[axis]);
-  const target = snapped(editor, desired, drag.ids, bypass, drag.pivot, bypass ? 0.1 : 1);
+  const target = snapped(editor, desired, drag.ids, bypass, drag.pivot);
   const value = drag.quantities[axisQuantity(axis)] ?? target[axis] - drag.pivot[axis];
   const other = axis === "x" ? "y" : "x";
   if (drag.quantities[axisQuantity(axis)] !== undefined) editor.snap = null;

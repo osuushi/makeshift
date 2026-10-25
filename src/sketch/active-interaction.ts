@@ -153,6 +153,7 @@ export class InteractionLease {
     this.closing = null;
   }
   candidate: DisplayDocument | null = null;
+  visualPreview: import("../model/visual-preview.js").VisualPreview | null = null;
   private captureTarget: { element: Element; id: number } | null = null;
   private abort = new AbortController();
   constructor(
@@ -213,8 +214,15 @@ export class InteractionLease {
     return true;
   }
   show(candidate: DisplayDocument | null): void {
-    if (this.owner.current === this && (candidate === null || this.phase !== "closing"))
+    if (this.owner.current === this && (candidate === null || this.phase !== "closing")) {
       this.candidate = candidate;
+      this.visualPreview = null;
+    }
+  }
+  showVisual(preview: import("../model/visual-preview.js").VisualPreview): void {
+    if (this.owner.current !== this || this.phase === "closing") return;
+    this.candidate = null;
+    this.visualPreview = preview;
   }
   capture(element: Element, id: number): void {
     this.history?.checkpoint();

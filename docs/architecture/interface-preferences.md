@@ -186,10 +186,12 @@ on the configured major lattice, using an integer multiple of its spacing when
 zoom requires thinning. Visible minor spacing is the smallest multiple of the
 configured minor spacing that meets the pixel minimum and divides visible major
 spacing exactly. Incommensurate settings show only the major grid rather than
-moving major lines. Equal grids also draw only major lines. Snapping follows the
-visible minor spacing (or major when minor lines are hidden). With 0.5/10 mm settings,
+moving major lines. Equal grids also draw only major lines. Distance snapping and
+drag increments always use the configured minor spacing, even when its lines
+are hidden. Shift bypasses geometry snaps without subdividing that grid step.
+With 0.5/10 mm settings,
 zoom can thin minor lines to 1, 2, 2.5, 5 or 10 mm; it never moves major lines to 10.5 mm.
-Canonical modeling grids use the same document spacing and visible snap step,
+Canonical modeling grids use the same document spacing and fixed minor snap step,
 while retaining their plane palette colors. The searchable Toggle
 grid snapping command remains available, including during a pen gesture.
 

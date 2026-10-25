@@ -5,11 +5,11 @@
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepLib.hxx>
 #include <BRep_Builder.hxx>
+#include <BRepTools_WireExplorer.hxx>
 #include <BRep_Tool.hxx>
 #include <Geom2d_Curve.hxx>
 #include <GeomProjLib.hxx>
 #include <Geom_CylindricalSurface.hxx>
-#include <TopoDS_Iterator.hxx>
 #include <gp_Lin.hxx>
 
 namespace boundary_move {
@@ -71,8 +71,12 @@ TopoDS_Face cylinderFace(const TopoDS_Face& source, const Edit& edit) {
     }
     for (TopExp_Explorer wires(source, TopAbs_WIRE); wires.More(); wires.Next()) {
         BRepBuilderAPI_MakeWire wire;
-        for (TopoDS_Iterator edges(wires.Current()); edges.More(); edges.Next())
-            wire.Add(edit.edge(TopoDS::Edge(edges.Value())));
+        // Stored edge order need not be connected. MakeWire can reject a detached
+        // edge, then report success after later additions while omitting that edge.
+        for (BRepTools_WireExplorer edges(TopoDS::Wire(wires.Current()), source); edges.More(); edges.Next()) {
+            wire.Add(edit.edge(edges.Current()));
+            require(wire.IsDone(), "Cannot reconnect a cylindrical boundary edge");
+        }
         require(wire.IsDone(), "Cannot reconnect the cylindrical wire");
         builder.Add(result, wire.Wire());
     }
