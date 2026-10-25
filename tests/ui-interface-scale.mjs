@@ -80,7 +80,9 @@ export async function geometryScaleRoute(page, scale, name) {
   close(points[1].x - points[0].x, 24);
   await page.keyboard.press("Escape");
   await click(page, 12, 5);
-  await drag(page, [12, 5], [16, 9]);
+  // At 150%, Inspector clearance can place the Move button over the center.
+  // Start inside the selected rectangle, below that button, with the same delta.
+  await drag(page, [12, 2], [16, 6]);
   points = await corners(page);
   close(points[0].x, 4);
   close(points[0].y, 4);
