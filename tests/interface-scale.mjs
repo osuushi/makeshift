@@ -52,6 +52,14 @@ try {
         settings.x >= 0 && settings.x + settings.width <= 820 && settings.y + settings.height < 250,
         `Settings stays inside the narrow header: ${JSON.stringify(settings)}`,
       );
+      const cube = await page.locator(".orientation-cube").boundingBox();
+      for (const label of ["Import", "Export"]) {
+        const bounds = await page.getByRole("button", { name: label, exact: true }).boundingBox();
+        assert.ok(
+          bounds.x >= 0 && bounds.x + bounds.width < cube.x && bounds.y + bounds.height < 250,
+          `${label} stays in the narrow header, clear of the orientation cube: ${JSON.stringify(bounds)}`,
+        );
+      }
       await page.screenshot({ path: `.cache/sketch-review/${name}-interface-scale-narrow.png` });
       assert.deepEqual(errors, []);
       console.log(
