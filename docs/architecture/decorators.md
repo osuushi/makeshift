@@ -32,11 +32,14 @@ settings, not the internal grouping noun.
 ## Preview display and pending work
 
 Application Settings chooses the default display: Geometry, Texture (normal projection),
-or Color only. Each decorator's Display control offers By default plus those three
+or Color only. Each Display control offers Default (Geometry/Texture/Color only),
+showing the current inherited choice, plus those three
 explicit modes. An omitted override follows the device default, including existing
 documents. Explicit overrides are saved attachment metadata and use ordinary Undo/Redo;
-multi-selection patches only the selected instances, including individual gear-group
-members. Mixed values show Mixed. Overrides do not change geometry settings or presets,
+gear groups own one shared display choice, edited beside their group preview color.
+Editing any member applies the choice to its whole group in one Undo step; joining
+members inherit the destination group's mode. Ungrouped decorators remain independent.
+Mixed selections show Mixed. Overrides do not change geometry settings or presets,
 and custom decorators need no executable code enabled to change display.
 Settings also offers thread/knurling/custom colors and per-kind opacity. Gear colors
 belong to saved, editable [gear groups](gears.md), including all three display modes.

@@ -14,6 +14,16 @@ export function effectiveDecoratorDisplay(
   return instance.display ?? defaultMode;
 }
 
+export function decoratorDisplayMembers(
+  decorators: readonly DecoratorInstance[],
+  ids: readonly string[],
+): readonly DecoratorInstance[] {
+  const groups = new Set(
+    decorators.filter((d) => ids.includes(d.id) && d.gearGroup).map((d) => d.gearGroup),
+  );
+  return decorators.filter((d) => ids.includes(d.id) || (d.gearGroup && groups.has(d.gearGroup)));
+}
+
 /** Display overrides are saved metadata, independent of geometry/plugin settings and presets. */
 export function editDecoratorDisplay(
   document: SketchDocument,
@@ -28,8 +38,9 @@ export function editDecoratorDisplay(
     edit.ids.some((id) => !previous.some((d) => d.id === id))
   )
     throw new Error("Select existing decorators");
+  const members = new Set(decoratorDisplayMembers(previous, edit.ids));
   return previous.map((instance) => {
-    if (!edit.ids.includes(instance.id)) return instance;
+    if (!members.has(instance)) return instance;
     const next = { ...instance };
     if (edit.mode === "default") delete next.display;
     else next.display = edit.mode;

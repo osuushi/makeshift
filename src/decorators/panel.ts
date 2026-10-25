@@ -1,3 +1,4 @@
+import { onDecoratorDisplayChange } from "../preferences/decorator-display.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { isBuiltinDecorator, knurlDefinition } from "./builtins.js";
@@ -28,6 +29,7 @@ export class DecoratorPanel {
   private unregister: () => void;
   private disposeLibrary: () => void;
   private disposeGearGroups: () => void;
+  private disposeDisplay: () => void;
   private key = "";
   private shownDocument: SketchEditor["store"]["data"] | null = null;
   private last: string | null = null;
@@ -51,6 +53,10 @@ export class DecoratorPanel {
     parent.append(this.surface);
     this.disposeLibrary = decoratorLibrary(editor, parent);
     this.disposeGearGroups = gearGroupPanel(editor, this.surface);
+    this.disposeDisplay = onDecoratorDisplayChange(() => {
+      this.key = "";
+      this.update();
+    });
     this.unregister = registerDecoratorTools(
       editor,
       (definition) => this.apply(definition),
@@ -219,7 +225,8 @@ export class DecoratorPanel {
       return;
     }
     if (!instances.length) return;
-    appendDecoratorDisplay(this.root, this.editor, instances);
+    const ungrouped = instances.filter((d) => !d.gearGroup);
+    if (ungrouped.length) appendDecoratorDisplay(this.root, this.editor, ungrouped);
     if (instances.length === 1) this.last = instances[0].id;
     const custom = instances.filter((d) => !isBuiltinDecorator(d.definition));
     if (custom.length) {
@@ -277,6 +284,7 @@ export class DecoratorPanel {
     this.editor.world.changed.delete(this.update);
     this.disposeLibrary();
     this.disposeGearGroups();
+    this.disposeDisplay();
     this.application.cancel();
     this.draft.cancel();
     this.unregister();

@@ -1,6 +1,8 @@
 import { entityRows } from "../model/entity-presentation.js";
+import { onDecoratorDisplayChange } from "../preferences/decorator-display.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "../tools/catalog.js";
+import { appendDecoratorDisplay } from "./display-control.js";
 import { faceKey } from "./edits.js";
 import { gearColor } from "./gear-colors.js";
 import { gearGroupMembers, gearGroupProblem } from "./gear-group.js";
@@ -67,6 +69,7 @@ export function gearGroupPanel(editor: SketchEditor, parent: HTMLElement): () =>
       if (expanded === id) {
         appendMembers(root, editor, members);
         root.append(gearGroupColorControl(editor, gear, label));
+        appendDecoratorDisplay(root, editor, members, `${label} display`);
       }
       appendGroupActions(root, editor, gear, members, label, control);
     }
@@ -82,9 +85,14 @@ export function gearGroupPanel(editor: SketchEditor, parent: HTMLElement): () =>
     return button;
   };
   editor.world.changed.add(update);
+  const disposeDisplay = onDecoratorDisplayChange(() => {
+    key = "";
+    update();
+  });
   update();
   return () => {
     editor.world.changed.delete(update);
+    disposeDisplay();
     root.remove();
   };
 }

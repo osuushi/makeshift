@@ -19,6 +19,7 @@ export async function displayOverrideRoute(page, original) {
     await acceptedDisplay(mode);
   };
   assert.equal(await display.inputValue(), "default");
+  assert.equal(await display.locator("option[value=default]").textContent(), "Default (Texture)");
   const defaultMode = (mode) =>
     displaySettings(page, (dialog) =>
       dialog
@@ -31,6 +32,9 @@ export async function displayOverrideRoute(page, original) {
   assert.equal(state.document.decorators[0].display, "detailed");
   const geometryTriangles = state.decoratorPreviewBounds[0].triangles;
   await defaultMode("color-only");
+  await display
+    .getByRole("option", { name: "Default (Color only)", exact: true })
+    .waitFor({ state: "attached" });
   await previewReady(page);
   state = await inspect(page);
   assert.equal(
