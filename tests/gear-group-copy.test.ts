@@ -6,7 +6,7 @@ import { gearGroupProblem } from "../src/decorators/gear-group.js";
 import { documentArchive } from "../src/model/document-archive.js";
 import type { SketchDocument } from "../src/sketch/document.js";
 
-test("copying a gear group creates independent membership and inspection stays read-only", async () => {
+test("copied gears retain their original group through later edits and read-only inspection", async () => {
   const owner = new DocumentOwner();
   try {
     const fixture: { document: SketchDocument } = JSON.parse(
@@ -45,14 +45,13 @@ test("copying a gear group creates independent membership and inspection stays r
     );
     const gears = owner.view.data.decorators ?? [];
     assert.equal(gears.length, 4);
-    const groups = new Map<string, number>();
+    assert.equal(new Set(gears.map((gear) => gear.id)).size, 4);
     for (const gear of gears) {
       assert.ok(gear.gearGroup);
-      groups.set(gear.gearGroup, (groups.get(gear.gearGroup) ?? 0) + 1);
+      assert.equal(gear.gearGroup, original[0].gearGroup);
       assert.equal(gear.problem, undefined);
       assert.equal(gearGroupProblem(owner.view.data, gear), null);
     }
-    assert.deepEqual([...groups.values()], [2, 2]);
     assert.deepEqual(
       gears.filter((g) => original.some((o) => o.id === g.id)),
       original,
@@ -62,6 +61,22 @@ test("copying a gear group creates independent membership and inspection stays r
     await owner.scripts.step({ kind: "decorators", input: {} });
     assert.equal(owner.scripts.finish(), false);
     assert.equal(documentArchive(owner.view.data), before);
+    const membership = () =>
+      owner.view.data.decorators?.map(({ id, faces, gearGroup }) => ({ id, faces, gearGroup }));
+    const copiedMembership = membership();
+    // Editing an original must not replay the unchanged copies' creation correspondence.
+    assert.equal(
+      (await owner.call({ kind: "offset-faces", operation: { faces: [faces[0]], distance: 0.02 } }))
+        .error,
+      undefined,
+    );
+    assert.deepEqual(membership(), copiedMembership);
+    assert.equal((await owner.call({ kind: "accept" })).error, undefined);
+    assert.deepEqual(membership(), copiedMembership);
+    await owner.call({ kind: "undo" });
+    assert.equal(documentArchive(owner.view.data), before);
+    await owner.call({ kind: "redo" });
+    assert.deepEqual(membership(), copiedMembership);
   } finally {
     owner.close();
   }
