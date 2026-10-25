@@ -1,9 +1,9 @@
 import type { BodyGeometry } from "../model/body.js";
 import type { DisplayDocument } from "../model/display-document.js";
 import { isBuiltinDecorator } from "./builtins.js";
-import { type DecoratorDisplayMode, effectiveDecoratorDisplay } from "./display-mode.js";
 import type { GeometryDependency } from "./definition.js";
 import { decoratorDefinition, geometryDependency } from "./dependencies.js";
+import { type DecoratorDisplayMode, effectiveDecoratorDisplay } from "./display-mode.js";
 import { gearDefinition } from "./gear-settings.js";
 import type { DecoratorInstance } from "./types.js";
 

@@ -7,6 +7,7 @@
   --widget-active-shadow: #f28c2880;
   --canvas: #f8f9fb;
   --panel: #ffffff;
+  --agent-unfocused-overlay: #ffffff;
   --surface: #f0f3f7;
   --selected: #e4efff;
   --warning-surface: #fff1d6;
@@ -32,6 +33,7 @@
   color-scheme: dark;
   --canvas: #161e29;
   --panel: #202b39;
+  --agent-unfocused-overlay: #000000;
   --surface: #283546;
   --selected: #253f59;
   --warning-surface: #49391e;

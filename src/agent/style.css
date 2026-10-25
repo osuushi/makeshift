@@ -12,12 +12,9 @@
   position: absolute;
   inset: 0;
   z-index: 4;
-  background: #fff;
+  background: var(--agent-unfocused-overlay);
   opacity: 0.5;
   pointer-events: none;
-}
-:root[data-theme="dark"] .agent-dock::before {
-  background: #000;
 }
 .agent-dock[data-focus="terminal"]::before,
 .agent-dock[data-focus="controls"]::before {
