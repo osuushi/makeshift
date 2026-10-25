@@ -1,4 +1,4 @@
-import type { FitAddon, Terminal } from "ghostty-web";
+import type { Terminal } from "ghostty-web";
 import wasmUrl from "ghostty-web/ghostty-vt.wasm?url";
 import { onThemeChange } from "../preferences/theme.js";
 import { onUiScaleChange, uiScale } from "../preferences/ui-scale.js";
@@ -8,7 +8,6 @@ import { terminalTouch } from "./terminal-touch.js";
 
 export class AgentTerminal {
   private terminal: Terminal | null = null;
-  private fit: FitAddon | null = null;
   private observer: ResizeObserver;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private disposed = false;
@@ -37,8 +36,7 @@ export class AgentTerminal {
     void this.ready.then(() => this.poll()).catch(report);
   }
   private async initialize(): Promise<void> {
-    const { FitAddon, Ghostty, Terminal } = await import("ghostty-web");
-    this.fit = new FitAddon();
+    const { Ghostty, Terminal } = await import("ghostty-web");
     const ghostty = await Ghostty.load(wasmUrl);
     if (this.disposed) return;
     const terminal = new Terminal({
@@ -61,7 +59,6 @@ export class AgentTerminal {
       if (event.key.toLowerCase() === "a") terminal.selectAll();
       return true;
     });
-    terminal.loadAddon(this.fit);
     this.open(terminal);
     this.element.addEventListener("paste", this.pasteImages, true);
     this.disposeTouch = terminalTouch(this.element, terminal);
@@ -160,8 +157,15 @@ export class AgentTerminal {
     if (!this.disposed) this.timer = setTimeout(() => void this.poll(), running ? 16 : 100);
   }
   resize(): void {
-    if (this.terminal && this.element.clientWidth > 0 && this.element.clientHeight > 0)
-      this.fit?.fit();
+    const terminal = this.terminal;
+    const metrics = terminal?.renderer?.getMetrics();
+    const { clientWidth: width, clientHeight: height } = this.element;
+    if (!terminal || !metrics || width <= 0 || height <= 0) return;
+    // FitAddon reserves space for a scrollbar already drawn inside the canvas,
+    // and drops resize requests during its 50 ms lock without a trailing fit.
+    const cols = Math.max(2, Math.floor(width / metrics.width));
+    const rows = Math.max(2, Math.floor(height / metrics.height));
+    if (cols !== terminal.cols || rows !== terminal.rows) terminal.resize(cols, rows);
   }
   async start(): Promise<void> {
     await this.ready;
