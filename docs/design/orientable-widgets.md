@@ -29,20 +29,17 @@ around each glyph. Ordinary value inputs and accept/cancel controls can stay nea
 
 ## Orientation, scale and visibility
 
-Keep the assembly’s geometric orientation in its chosen frame. The tool decides whether
-that frame is the sketch plane, world axes, or a meaningful frame on selected geometry.
-Keep each glyph’s meaningful axes fixed in that frame during camera orbit. Its
-nominal position supplies the starting point for screen-space clearance.
-An intentional tool or selection change can establish a new frame.
+**Founder refinement, 2026-10-25:** keep the geometry-defined frame as the starting
+orientation, then correct the displayed glyph in camera space. Its front must stay
+at least 30° away from edge-on, and its positive axis at least 30° away from pointing
+toward or away from the camera. Preserve projected direction where defined; exactly
+end-on uses camera up. Correct only the glyph: anchors, clearance, operation axes,
+drag mapping, accepted geometry and Undo retain their existing semantics.
 
-**Founder refinement, 2026-09-21:** a tool may roll its whole glyph around an
-operation axis when that roll has no geometric meaning. Move translation arrows
-(body, face, edge and sketch; clarified 2026-09-23), Extrude, Offset and Shell use the perpendicular direction that faces the camera, preserving the actual edit
-axis and the fixed anchor/marker position. Exactly end-on uses camera right as its
-otherwise undefined roll. Move arrows roll around their shafts as the camera moves;
-the shaft direction, placement and rotation-marker planes retain their geometric frame.
-This is not permission to redirect meaningful axes toward the camera. Offset can
-still be ambiguous directly along its normal; this first pass does not add a different end-on symbol.
+Arrow portions face the camera independently of the tool contour, including Move,
+height, modeling-tool arrows and curved rotation arrowheads. Their screen-facing
+heads retain their recognizable proportions. Existing Move assembly selection and
+rotation-handle hiding rules still determine which controls are available.
 
 **Offset follow-up, 2026-09-21:** use two separated curved surface contours instead
 of overlapping rectangular outlines. On cylindrical faces, choose a visible surface
@@ -53,24 +50,23 @@ continuously toward back-facing normals. Candidate points come from display tria
 projected onto the analytic cylinder, including inward walls. This view-only memory
 resets with changed face geometry. Freeze placement for the entire active edit so dragging never changes
 its axis. This is an explicit exception to fixed idle anchor placement, not permission
-to redirect a planar face's normal. Exact end-on planar Offset remains foreshortened.
+to redirect a planar face's normal. The display correction also applies to planar Offset.
 
 Fillet and Chamfer have a meaningful section orientation: use the normal section
 at the closest point on the selected edge to the widget anchor, perpendicular to
 that edge's local tangent. Circular edges use their analytic tangent; other curves
 use their nearest displayed segment. Existing fillet-face resizing uses the nearest
-boundary's section. Do not substitute an arbitrary world perpendicular for this
-geometry-defined frame or independently turn the contour toward the camera.
+boundary's section. Use this geometry-defined frame as the starting orientation before applying the
+shared display correction.
 
-Project the assembly through the viewport camera. Roll a direction-only arrow as a
-whole around its shaft; do not independently turn its head toward the camera.
-Foreshortening is expected.
+Project the corrected glyph through the viewport camera; arrowheads use a
+camera-facing plane at their projected tip.
 
 **Founder refinement, 2026-10-02:** multiple 3D controls must avoid overlap in
 screen projection. The shared Move assembly separates actual hit rectangles with
 6 CSS pixels of clearance, extending outward along each marker’s projected ray
-from the anchor. Glyph orientations, geometric edit axes and rotation planes stay
-unchanged. The anchor and scale-box handles are obstacles. Stable handle priority
+from the anchor. Clearance leaves the glyph display correction, geometric edit axes and rotation
+planes unchanged. The anchor and scale-box handles are obstacles. Stable handle priority
 makes the result deterministic, including coincident projections. Collision corrections
 settle with a 100 ms ease-out transition; ordinary camera/model tracking is immediate.
 A press freezes the displayed correction, including the hit region, through pointer
@@ -81,8 +77,8 @@ reachability contract below extends this treatment to active modeling assemblies
 and floating planar Move/rotation markers.
 
 Keep the widget's nominal size and outline weight constant in CSS pixels when zooming.
-A glyph still foreshortens along its meaningful axes; direction-only arrow widths
-remain camera-facing. Move uses the viewport's orthographic camera and converts its
+Contour foreshortening is bounded by the 30° visibility limits; arrows remain
+camera-facing. Move uses the viewport's orthographic camera and converts its
 pixel offsets to world units with `world.height / canvas.clientHeight`.
 
 Hide a planar rotation marker when its plane becomes nearly edge-on. Hiding must
@@ -150,7 +146,8 @@ is fine if it preserves the same visual and spatial behavior.
   fixture-derived curved arrow, combined outlines and fills.
 - [Camera rules and dimensions](../../src/sketch/move-widget/geometry.ts): reference
   planes, alignment, edge-on visibility and upright-axis selection.
-- [Axial roll](../../src/model/widget-frame.ts): camera-facing width around an unchanged shaft.
+- [Axial roll](../../src/model/widget-frame.ts): initial camera-facing width.
+- [Display correction](../../src/model/widget-projection.ts): 30° visibility bounds and camera-facing arrows.
 - [Modeling assembly](../../src/model/body-gizmo.ts) and
   [styles](../../src/model/body-gizmo.css): world projection, buttons, sphere and state.
 - [Projected clearance](../../src/model/widget-clearance.ts): shared hit-rectangle
@@ -186,7 +183,7 @@ keeps an end-on handle clear of the geometry selection click. Fillet/Chamfer ret
 their last-picked edge anchor and distinct mode buttons; Extrude/face Offset follow
 the temporary displaced surface. No movable anchor is added.
 
-These forms retain their operation axis and foreshorten along it. Numeric access remains available;
+These forms retain their operation axis for edits and use the shared display correction. Numeric access remains available;
 the existing axial up/down fallback remains on Extrude/Offset/Shell when end-on.
 Edge-finish size is typed until orbit reveals a direction. Blue hover and red
 invalid/limit feedback supplement the white/black contours.

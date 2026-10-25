@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { uiScale } from "../preferences/ui-scale.js";
 import { arrowWidthAxis, markerMarkup } from "../sketch/move-widget/geometry.js";
 import type { Vector } from "../sketch/planes.js";
+import { arrowPoint, readableWidgetFrame } from "./widget-projection.js";
 import "./directional-widget.css";
 
 export type DirectionalShape = "fillet" | "chamfer" | "extrude" | "offset" | "shell" | "height";
@@ -85,18 +86,16 @@ export function directionalWidget(
   width: Vector = arrowWidthAxis(normal),
 ): string {
   if (shape === "height") return markerMarkup(camera, normal, width, false);
-  const inverse = camera.quaternion.clone().invert();
-  const u = new THREE.Vector3(...normal),
-    v = new THREE.Vector3(...width);
-  const w = u.clone().cross(v).applyQuaternion(inverse);
-  u.applyQuaternion(inverse);
-  v.applyQuaternion(inverse);
-  const paths = toolStrokes(shape).map((points) =>
+  const { u, v, w } = readableWidgetFrame(camera, normal, width);
+  const paths = toolStrokes(shape).map((points, contour) =>
     points
-      .map(
-        ([x, y, z], i) =>
-          `${i ? "L" : "M"}${u.x * x + v.x * y + w.x * z},${-u.y * x - v.y * y - w.y * z}`,
-      )
+      .map(([x, y, z], i) => {
+        const p =
+          contour === 1
+            ? arrowPoint(u, u.clone().multiplyScalar(24), x - 24, y)
+            : u.clone().multiplyScalar(x).addScaledVector(v, y).addScaledVector(w, z);
+        return `${i ? "L" : "M"}${p.x},${-p.y}`;
+      })
       .join(" "),
   );
   const layer = (outline: boolean) =>
