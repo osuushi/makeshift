@@ -228,8 +228,11 @@ export function trimOverlappingSketch(
 
 export function trimSketch(original: Sketch, span: TrimSpan) {
   const result = rewriteTrim(original, span);
+  const sketch = fuseTrimCorners(result.sketch, newTrimEndpoints(span.curve, result.pieces));
+  const retained = new Set(sketch.constraints.map((c) => c.id));
   return {
     ...result,
-    sketch: fuseTrimCorners(result.sketch, newTrimEndpoints(span.curve, result.pieces)),
+    sketch,
+    removed: original.constraints.filter((c) => !retained.has(c.id)),
   };
 }
