@@ -13,6 +13,10 @@ export interface DecoratorField {
 export interface DecoratorDefinition {
   id: string; version: number; name: string; source: string;
   fields: readonly DecoratorField[]; preview?: boolean; livePreview?: boolean;
+  dependencies?: {
+    continuation?: "faces" | "adjacent-faces" | "bodies";
+    preview?: "faces" | "adjacent-faces" | "bodies";
+  };
 }
 export interface DecoratorPreviewSample<State = unknown> {
   durationMs: number; state: State | null;

@@ -2,9 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { openDocument } from "./native-documents.mjs";
 import { orient } from "./ui-blend-edit.mjs";
+import { installPreviewControl } from "./ui-decorator-worker-control.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { gearGroupColors } from "./ui-gear-group-colors.mjs";
 import { resizeGroupedGear } from "./ui-gear-group-resize.mjs";
+import { gearPreviewStability } from "./ui-gear-preview-stability.mjs";
 import { capturedPrintControls } from "./ui-gear-printing.mjs";
 import { inspect, settled } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
@@ -15,18 +17,7 @@ import { chooseTool } from "./ui-tools.mjs";
 const fixture = JSON.parse(await readFile("tests/fixtures/gear-cylinders.json", "utf8"));
 await withUiRuntimes(
   async (page, name) => {
-    await openDocument(page, {
-      name: "gear-cylinders.makeshift",
-      mimeType: "application/json",
-      buffer: Buffer.from(
-        JSON.stringify({
-          format: "makeshift",
-          version: 1,
-          document: { ...fixture.document, decorators: [] },
-        }),
-      ),
-    });
-    await settled(page);
+    await openGearFixture(page);
     await orient(page, [0, -1, 0.4]);
     await worldClick(page, [10, -23, 2]);
     await chooseTool(page, "gear", "gear");
@@ -93,9 +84,28 @@ await withUiRuntimes(
     await page.screenshot({ path: `.cache/sketch-review/${name}-gear-groups.png` });
     await gearGroupColors(page, name);
     await capturedPrintControls(page, name);
+    await gearPreviewStability(page);
     console.log(
       `${name}: captured cylinders, membership disclosure, add, shared sizing, cancellation, removal and Undo passed`,
     );
   },
   { timeout: 30000 },
 );
+
+async function openGearFixture(page) {
+  await installPreviewControl(page);
+  await page.reload();
+  await page.waitForFunction(() => Boolean(window.makeshiftInspect));
+  await openDocument(page, {
+    name: "gear-cylinders.makeshift",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify({
+        format: "makeshift",
+        version: 1,
+        document: { ...fixture.document, decorators: [] },
+      }),
+    ),
+  });
+  await settled(page);
+}

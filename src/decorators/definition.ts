@@ -1,6 +1,7 @@
 import type { DecoratorField, Settings } from "./types.js";
 
 export const maxDecoratorSource = 256 * 1024;
+export type GeometryDependency = "faces" | "adjacent-faces" | "bodies";
 export interface DecoratorDefinition {
   id: string;
   version: number;
@@ -9,6 +10,8 @@ export interface DecoratorDefinition {
   fields: readonly DecoratorField[];
   preview?: boolean;
   livePreview?: boolean;
+  /** Opt-in promises about geometry read by each hook; omitted scopes stay conservative. */
+  dependencies?: { continuation?: GeometryDependency; preview?: GeometryDependency };
 }
 export type DefinitionEdit =
   | { action: "install"; definition: DecoratorDefinition }
@@ -52,6 +55,7 @@ export function validateDefinition(definition: DecoratorDefinition): void {
     (definition.preview !== undefined && typeof definition.preview !== "boolean") ||
     (definition.livePreview !== undefined && typeof definition.livePreview !== "boolean") ||
     (definition.livePreview === true && definition.preview !== true) ||
+    !validDependencies(definition.dependencies) ||
     !Array.isArray(definition.fields) ||
     definition.fields.length > 32
   )
@@ -110,4 +114,18 @@ export function validateDefinition(definition: DecoratorDefinition): void {
       throw new Error("Invalid decorator field condition");
   }
   definitionSettings(definition, {});
+}
+
+function validDependencies(value: DecoratorDefinition["dependencies"]): boolean {
+  return (
+    value === undefined ||
+    (!!value &&
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      Object.entries(value).every(
+        ([key, scope]) =>
+          ["continuation", "preview"].includes(key) &&
+          ["faces", "adjacent-faces", "bodies"].includes(scope),
+      ))
+  );
 }

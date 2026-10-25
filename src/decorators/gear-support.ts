@@ -3,22 +3,34 @@ import { bevelFrame, bevelProfile } from "./bevel-profile.js";
 import { cross, cylinderExtent, cylinderFrame, dot, resolveFaces, subtract } from "./cylinder.js";
 import { gearFaces, sameGearSupport } from "./gear-faces.js";
 import { gearGroupProblem, refitGearGroups } from "./gear-group.js";
+import { unchangedGearGroup } from "./gear-group-fit.js";
 import { gearDimensions, gearSettings, involute, radians } from "./gear-settings.js";
 import type { DecoratorDiagnostic } from "./javascript-hooks.js";
 import type { DecoratorInstance, FaceReference } from "./types.js";
 
+/** Repeated preview/accept passes over the same immutable candidate need no work. */
+const continuedDocuments = new WeakSet<DisplayDocument>();
+
 /** Refit shared dimensions before validating each member's ordinary support contract. */
-export function continueGearGroups<Document extends DisplayDocument>(document: Document): Document {
-  const fitted = refitGearGroups(document);
+export function continueGearGroups<Document extends DisplayDocument>(
+  document: Document,
+  source?: DisplayDocument,
+): Document {
+  if (continuedDocuments.has(document)) return document;
+  const fitted = refitGearGroups(document, source);
   let changed = false;
   const decorators = fitted.decorators?.map((instance) => {
     if (!instance.gearGroup || instance.problem) return instance;
+    const members = fitted.decorators?.filter((d) => d.gearGroup === instance.gearGroup) ?? [];
+    if (unchangedGearGroup(source, fitted, members)) return instance;
     const error = gearDiagnostics(fitted, instance).find((d) => d.severity === "error");
     if (!error) return instance;
     changed = true;
     return { ...instance, problem: `Decorator continuation needs attention: ${error.message}` };
   });
-  return changed ? { ...fitted, decorators } : fitted;
+  const result = changed ? { ...fitted, decorators } : fitted;
+  continuedDocuments.add(result);
+  return result;
 }
 
 export function partitionGears(document: DisplayDocument, instance: DecoratorInstance) {
