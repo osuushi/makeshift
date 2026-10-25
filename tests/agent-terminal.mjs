@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { access, mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { agentFocusRoute } from "./agent-focus.mjs";
 import { agentMenuRoute } from "./agent-menu.mjs";
 import { launchElectron } from "./native-documents.mjs";
 import { corners, drag, pointEquals, settled } from "./ui-helpers.mjs";
@@ -13,8 +14,16 @@ const app = await launchElectron({
 });
 try {
   const page = await app.firstWindow();
+  page.setDefaultTimeout(15000);
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  await page.locator(".agent-dock.collapsed").waitFor();
+  assert.equal(await page.locator(".agent-toggle, .agent-screen canvas").count(), 0);
+  assert.equal(
+    (await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }))).running,
+    false,
+  );
+  await page.screenshot({ path: ".cache/sketch-review/agent-sliver.png" });
   await page.evaluate(() =>
     window.makeshiftAgent.request({
       kind: "configure",
@@ -27,7 +36,19 @@ try {
     }),
   );
   await page.getByRole("button", { name: "Open agent terminal" }).click();
-  await page.locator(".agent-message").filter({ hasText: "Could not start" }).waitFor();
+  await page.getByRole("button", { name: "Collapse agent terminal" }).click();
+  await page
+    .locator(".agent-message")
+    .filter({ hasText: "Could not start" })
+    .waitFor({ state: "attached" });
+  assert.equal(
+    await page
+      .locator('canvas[aria-label="Modeling viewport"]')
+      .evaluate((canvas) => document.activeElement === canvas),
+    true,
+    "late startup must not steal focus from the collapsed pane",
+  );
+  await page.getByRole("button", { name: "Expand agent terminal" }).click();
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByLabel("Executable", { exact: true }).fill("/bin/sh");
   await page.getByLabel("Arguments · one per line").fill("-i");
@@ -40,13 +61,21 @@ try {
   const first = await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }));
   assert(first.workspace);
   const input = page.locator(".agent-screen textarea");
-  await input.focus();
+  assert.equal(
+    await page
+      .locator(".agent-screen")
+      .evaluate((screen) => screen.contains(document.activeElement)),
+    true,
+    "starting the terminal targets its input",
+  );
   await page.keyboard.type('printf "%s" "$MAKESHIFT_TERMINAL_CHECK" > terminal-check.txt');
   await page.keyboard.press("Enter");
   await waitFile(join(first.workspace, "terminal-check.txt"));
   assert.equal(await readFile(join(first.workspace, "terminal-check.txt"), "utf8"), "retained");
+  await agentFocusRoute(page);
   // Supply test clipboard data without reading or modifying the user's clipboard.
   await app.evaluate(({ clipboard }) => {
+    clipboard.read = async () => [];
     clipboard.readText = () => 'printf "paste worked" > paste-check.txt';
   });
   await page.keyboard.press("Meta+v");
@@ -74,6 +103,7 @@ try {
     before,
   );
   await page.getByRole("button", { name: "Change agent dock position" }).click();
+  assert.equal(await page.locator(".agent-focus").textContent(), "Agent controls focused");
   assert.equal(await page.locator(".agent-dock").getAttribute("data-side"), "bottom");
   const splitter = page.getByRole("separator", { name: "Resize agent pane" });
   await splitter.focus();
@@ -123,6 +153,9 @@ try {
   console.log(
     "PASS hidden Electron terminal: real PTY input, env/cwd, collapse, resize, stop/restart, independent New window, retained files",
   );
+} catch (error) {
+  await app.windows()[0]?.screenshot({ path: ".cache/sketch-review/agent-terminal-failure.png" });
+  throw error;
 } finally {
   const page = app.windows()[0];
   if (page && !page.isClosed()) {

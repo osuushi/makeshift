@@ -61,7 +61,7 @@ export class AgentTerminal {
       return true;
     });
     terminal.loadAddon(this.fit);
-    terminal.open(this.element);
+    this.open(terminal);
     this.element.addEventListener("paste", this.pasteImages, true);
     this.disposeTouch = terminalTouch(this.element, terminal);
     terminal.onData((data) => {
@@ -78,6 +78,26 @@ export class AgentTerminal {
         void this.host.request({ kind: "resize", cols, rows }).catch(this.report);
     });
     this.resize();
+  }
+  private open(terminal: Terminal): void {
+    const previous = document.activeElement;
+    const focus = this.ownsInputIntent();
+    terminal.open(this.element);
+    // Ghostty focuses its editable host now and once more on a zero-delay timer.
+    // Restore the user's target if they left/collapsed the pane while WASM loaded.
+    setTimeout(() => {
+      if (this.disposed || document.activeElement !== this.element) return;
+      if (focus && this.element.clientHeight > 0) this.focus();
+      else if (previous instanceof HTMLElement) previous.focus({ preventScroll: true });
+    }, 0);
+  }
+  private ownsInputIntent(): boolean {
+    const active = document.activeElement;
+    return (
+      this.element.contains(active) ||
+      (!!active?.matches("[data-start], [data-collapse]") &&
+        !!this.element.closest(".agent-dock")?.contains(active))
+    );
   }
   private async paste(): Promise<void> {
     const reply = await this.host.request({ kind: "clipboard" });
@@ -102,13 +122,20 @@ export class AgentTerminal {
   insert(value: string): void {
     if (!this.terminal || this.disposed) throw new Error("Wait for the agent terminal to open.");
     this.terminal.paste(value);
-    this.terminal.focus();
+    this.focus();
+  }
+  focus(): void {
+    if (this.disposed || this.element.clientHeight === 0) return;
+    this.resize();
+    this.element.querySelector("textarea")?.focus({ preventScroll: true });
   }
   private async poll(): Promise<void> {
     if (this.disposed) return;
+    let running = false;
     try {
-      const reply = await this.host.request({ kind: "read" });
+      const reply = await this.host.request({ kind: "read", wait: true });
       if (this.disposed) return;
+      running = reply.running;
       if (this.workspace && reply.workspace !== this.workspace) this.terminal?.reset();
       this.workspace = reply.workspace;
       if (reply.output && this.terminal) {
@@ -123,7 +150,7 @@ export class AgentTerminal {
     } catch (error) {
       this.report(error);
     }
-    if (!this.disposed) this.timer = setTimeout(() => void this.poll(), 100);
+    if (!this.disposed) this.timer = setTimeout(() => void this.poll(), running ? 16 : 100);
   }
   resize(): void {
     if (this.terminal && this.element.clientWidth > 0 && this.element.clientHeight > 0)
@@ -141,7 +168,7 @@ export class AgentTerminal {
     if (reply.error) throw new Error(reply.error);
     this.terminal.write("\r\n\x1b[90m── Agent started ──\x1b[0m\r\n");
     this.update(reply);
-    this.terminal.focus();
+    if (this.ownsInputIntent()) this.focus();
   }
   dispose(): void {
     this.disposed = true;

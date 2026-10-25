@@ -1,7 +1,3 @@
-.agent-toggle {
-  pointer-events: auto;
-  z-index: 10;
-}
 .agent-dock {
   position: fixed;
   z-index: 30;
@@ -47,6 +43,22 @@
   color: var(--muted);
   margin-right: auto;
 }
+.agent-focus {
+  width: 100%;
+  order: 1;
+  font-size: 11px;
+  color: var(--muted);
+}
+.agent-dock[data-focus="terminal"] {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.agent-dock[data-focus="terminal"] .agent-header {
+  background: color-mix(in srgb, var(--accent) 14%, var(--canvas));
+}
+.agent-dock[data-focus="terminal"] .agent-focus {
+  color: var(--accent);
+  font-weight: 600;
+}
 .agent-body {
   display: flex;
   flex: 1;
@@ -64,6 +76,8 @@
   margin: 4px;
   user-select: text;
   -webkit-user-select: text;
+  /* Ghostty owns the drawn cursor; its editable host must not draw a second caret. */
+  caret-color: transparent;
 }
 .agent-screen canvas {
   width: auto;
@@ -142,9 +156,13 @@
   cursor: row-resize;
 }
 .agent-dock.collapsed .agent-body,
+.agent-dock.collapsed .agent-focus,
 .agent-dock.collapsed .agent-splitter,
 .agent-dock.collapsed .agent-header button:not([data-collapse]) {
   display: none;
+}
+.agent-dock.collapsed .agent-header {
+  cursor: pointer;
 }
 .agent-dock[data-side="right"].collapsed {
   width: 42px;
