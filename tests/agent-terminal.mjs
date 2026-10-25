@@ -103,7 +103,7 @@ try {
     before,
   );
   await page.getByRole("button", { name: "Change agent dock position" }).click();
-  assert.equal(await page.locator(".agent-focus").textContent(), "Agent controls focused");
+  assert.equal(await page.locator(".agent-dock").getAttribute("data-focus"), "controls");
   assert.equal(await page.locator(".agent-dock").getAttribute("data-side"), "bottom");
   const splitter = page.getByRole("separator", { name: "Resize agent pane" });
   await splitter.focus();

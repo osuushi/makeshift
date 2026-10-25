@@ -2,7 +2,6 @@
   position: fixed;
   z-index: 30;
   background: var(--panel);
-  border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -59,21 +58,8 @@
   color: var(--muted);
   margin-right: auto;
 }
-.agent-focus {
-  width: 100%;
-  order: 1;
-  font-size: 11px;
-  color: var(--muted);
-}
-.agent-dock[data-focus="terminal"] {
-  box-shadow: inset 0 0 0 2px var(--accent);
-}
 .agent-dock[data-focus="terminal"] .agent-header {
   background: color-mix(in srgb, var(--accent) 14%, var(--canvas));
-}
-.agent-dock[data-focus="terminal"] .agent-focus {
-  color: var(--accent);
-  font-weight: 600;
 }
 .agent-body {
   display: flex;
@@ -172,7 +158,6 @@
   cursor: row-resize;
 }
 .agent-dock.collapsed .agent-body,
-.agent-dock.collapsed .agent-focus,
 .agent-dock.collapsed .agent-splitter,
 .agent-dock.collapsed .agent-header button:not([data-collapse]) {
   display: none;

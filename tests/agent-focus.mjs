@@ -16,7 +16,6 @@ export async function agentFocusRoute(page) {
   await page.getByRole("button", { name: "Expand agent terminal" }).click();
   assert.equal(await screen.evaluate((element) => element.contains(document.activeElement)), true);
   assert.equal(await panel.getAttribute("data-focus"), "terminal");
-  assert.equal(await page.locator(".agent-focus").textContent(), "Terminal focused");
   assert((await cursorFrames(page)) > 1, "focused terminal cursor visibly blinks");
   assert.equal(
     await screen.evaluate((element) => getComputedStyle(element).caretColor),
@@ -27,7 +26,6 @@ export async function agentFocusRoute(page) {
     .locator('canvas[aria-label="Modeling viewport"]')
     .click({ position: { x: 400, y: 300 } });
   assert.equal(await panel.getAttribute("data-focus"), "drawing");
-  assert.equal(await page.locator(".agent-focus").textContent(), "Drawing focused");
   assert.equal(
     await cursorFrames(page),
     1,

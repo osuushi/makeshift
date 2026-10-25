@@ -33,7 +33,7 @@ class AgentDock {
   ) {
     this.panel.className = "agent-dock";
     this.panel.setAttribute("aria-label", "Agent terminal");
-    this.panel.innerHTML = `<div class="agent-header"><button data-collapse aria-label="Open agent terminal" aria-expanded="false">+</button><strong>Agent</strong><span class="agent-status">Stopped</span><span class="agent-focus">Drawing focused</span><button data-attach>Attach file…</button><button data-position aria-label="Change agent dock position">Dock</button><button data-settings>Settings</button><button data-start>Start</button><button data-stop disabled>Stop</button></div>
+    this.panel.innerHTML = `<div class="agent-header"><button data-collapse aria-label="Open agent terminal" aria-expanded="false">+</button><strong>Agent</strong><span class="agent-status">Stopped</span><button data-attach>Attach file…</button><button data-position aria-label="Change agent dock position">Dock</button><button data-settings>Settings</button><button data-start>Start</button><button data-stop disabled>Stop</button></div>
       <div class="agent-body"><div class="agent-message" aria-live="polite"></div><div class="agent-screen"></div><p class="agent-workspace">Files and Codex conversations are included when you save.</p></div>`;
     document.body.append(this.panel);
     this.layout = dockLayout(this.panel, app);
@@ -179,16 +179,6 @@ class AgentDock {
     const terminal = focused && this.element(".agent-screen").contains(document.activeElement);
     this.terminal?.setFocused(terminal);
     this.panel.dataset.focus = terminal ? "terminal" : focused ? "controls" : "drawing";
-    this.text(
-      ".agent-focus",
-      !document.hasFocus()
-        ? "Window inactive"
-        : terminal
-          ? "Terminal focused"
-          : focused
-            ? "Agent controls focused"
-            : "Drawing focused",
-    );
     if (focused === this.hostFocused) return;
     this.hostFocused = focused;
     void this.host.request({ kind: "focus", focused }).catch(this.report);
