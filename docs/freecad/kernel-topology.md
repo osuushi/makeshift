@@ -1352,3 +1352,29 @@ retain their centers/radii, but their tip arcs are replaced with printable relie
 The R10/R5 example removes about 0.00813 mm² and opens a roughly 1.24 mm gap;
 the accepted body retains that same geometry. Mesh validity remains an independent
 requirement rather than being inferred from the repaired native shape.
+
+## Trimmed thickness visibility (2026-10-25)
+
+Source observation at OCCT `a016080bf6738d6aeae020badee4e888ad1540a5`:
+[`BRepClass_FaceClassifier::Perform` for a 3D point](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepClass/BRepClass_FaceClassifier.cxx#L76-L125)
+constructs bounded surface extrema and classifies the nearest returned stationary
+projection in UV. It does not establish that the original point lies on that
+trimmed surface. [`IntCurvesFace_ShapeIntersector::Perform`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/IntCurvesFace/IntCurvesFace_ShapeIntersector.cxx#L46-L56)
+intersects every loaded face and then sorts the results. These implementations
+were inspected locally; no upstream code was copied.
+
+Makeshift inference: analytic support coordinates plus a point-to-support check
+avoid generic extrema work and prevent a reverse witness from jumping to an
+opposite cylinder/sphere sector. Once a candidate endpoint is known, exact
+per-face intersection can reject on the first obstruction, after conservative
+bounds filtering. Cached hits can only reject farther candidates on identical
+rays. The calculator still computes and validates exact solids and uses the
+same trimming/ray tolerances and sample locations.
+
+Runtime verification: the captured perforated drain retains 142 faces, 420 edges,
+its openings and signed-extrusion volume. Curved references now stay in the same
+angular sector. Native cases cover spherical/cylindrical seams, located patches,
+tiny reverse-sampled patches and agreement with the previous all-face ray method
+for blockers, edge ties and repeated queries in both distance orders. Native
+performance and hidden Electron interaction were measured separately; neither
+establishes standalone WASM or physical iPad performance.

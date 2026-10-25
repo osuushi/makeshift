@@ -4,6 +4,7 @@
 #include "normal-extrude.h"
 #include "boolean-probe.h"
 #include "streaming-sweep-cuts.h"
+#include "timing.h"
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepBndLib.hxx>
 #include <Bnd_Box.hxx>
@@ -22,11 +23,15 @@ TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies, std::v
     if (std::abs(vector.Magnitude() - 1) > 1e-7) throw std::runtime_error("Extrusion axis must be a unit vector");
     vector *= distance; TopoDS_Shape tool;
     for (const auto& item : input.get_child("profiles")) {
+        KernelTiming timing("sweep-profile");
         const auto face = profileFace(item.second, bodies);
+        timing.phase("profile");
         const auto shape = input.get<bool>("normalExtrusion", false)
             ? normalExtrude(face, distance, item.second.get<std::string>("face"), origins)
             : extrudeProfile(face, vector, input);
+        timing.phase("sweep");
         validate(shape);
+        timing.phase("validate");
         if (tool.IsNull()) tool = shape;
         else tool = booleanShape(tool, shape, "union", origins);
     }
