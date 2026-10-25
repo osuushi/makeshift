@@ -147,7 +147,10 @@ export class DocumentOwner {
     }
     const feedback = this.view.cutEdges;
     if (!this.session.reopenedPreview)
-      this.session.candidate = await this.decorators.continue(this.session.candidate);
+      this.session.candidate = await this.decorators.continue(
+        this.session.candidate,
+        this.session.store.data,
+      );
     if (feedback) cutEdgeHighlights.set(this.session.candidate, feedback);
     this.checkCancellation();
     this.session.accept(cleanup, reopenPreview(this.view));
@@ -165,7 +168,7 @@ export class DocumentOwner {
         );
       else await this.dispatch(request, operation);
       if (this.session.candidate && !this.session.reopenedPreview)
-        this.session.candidate = await this.decorators.continue(this.session.candidate);
+        this.session.candidate = await this.decorators.continue(this.session.candidate, before);
       this.checkCancellation();
       return { view: this.view, documentChanged: before !== this.session.store.data };
     } catch (error) {

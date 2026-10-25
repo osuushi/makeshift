@@ -57,7 +57,7 @@ export class ScriptEdits {
     try {
       const result = await pending;
       if (this.cancelled) throw new Error("Script cancelled");
-      result.document = await session.continue(result.document);
+      result.document = await session.continue(result.document, this.candidate);
       result.document = pruneGuides(result.document);
       if (this.cancelled) throw new Error("Script cancelled");
       validateDocument(result.document);

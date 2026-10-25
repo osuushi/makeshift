@@ -52,8 +52,13 @@ spacing. Rings do not mesh with one another; each is checked against the group's
 pinions. These calculations use radii and shared profiles, never current axes,
 relative location, orientation, axial overlap or partial-sector contact.
 
-Dimensional changes, printing limits and membership refit the whole group in the
-same candidate and Undo step. Rigid movement/rotation carries each gear's frame
+Dimensional changes, printing limits and membership refit only affected groups in
+the same candidate and Undo step. Sketch-only edits and unrelated body/face edits
+skip fitting; internal-ring fits also track the available wall behind their roots.
+Equal effective preview inputs preserve generated meshes even when a refit runs.
+Preview keys include fitted pitch radius, selected trimmed faces and immediate
+neighbors for clipping. Mesh coordinates use the saved gear frame origin,
+independent of unrelated body bounds. Rigid movement/rotation carries each gear's frame
 and preserves tooth parameters and phase. Fitting never moves axes or aligns
 phase. To assemble, place the fitted pitch surfaces at their reference spacing
 (sum of radii externally, difference internally) and rotate the parts so teeth

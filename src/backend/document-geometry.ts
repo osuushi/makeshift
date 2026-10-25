@@ -28,6 +28,6 @@ export class DocumentGeometry {
     const candidate = request.topology?.length
       ? await this.solids.removeTopology(reduced, request.topology, "delete-topology")
       : reduced;
-    return this.decorators.continue(candidate);
+    return this.decorators.continue(candidate, document);
   }
 }

@@ -6,6 +6,11 @@ import type { ModelRequest } from "../sketch/model-api.js";
 import { isBuiltinDecorator } from "./builtins.js";
 import { pendingCustomContinuation } from "./custom-continuation.js";
 import { cross, sameCylinder, subtract } from "./cylinder.js";
+import {
+  decoratorDefinition,
+  hasDecoratorDescendants,
+  unchangedDecoratorGeometry,
+} from "./dependencies.js";
 import { hasSettingsProblem, validateBuiltin } from "./edits.js";
 import { nextGearColor } from "./gear-colors.js";
 import { threadReference } from "./thread-extent.js";
@@ -79,6 +84,14 @@ export function continueDecorators<Document extends DisplayDocument>(
   const decorators: DecoratorInstance[] = [];
   const copiedGearGroups = new Map<string, { id: string; color: string }>();
   for (const instance of source.decorators) {
+    const scope = decoratorDefinition(source, instance)?.dependencies?.continuation ?? "bodies";
+    if (
+      !hasDecoratorDescendants(source, candidate, instance) &&
+      unchangedDecoratorGeometry(source, candidate, instance, scope)
+    ) {
+      decorators.push(instance);
+      continue;
+    }
     const split =
       (candidate.bodies ?? []).filter((b) => {
         const origins = topologyOrigins.get(b);

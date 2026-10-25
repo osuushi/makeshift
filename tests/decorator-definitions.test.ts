@@ -80,6 +80,15 @@ test("definition schema rejects ambiguous keys and validates settings without ex
     /Invalid/,
   );
   validateDefinition({ ...definition, preview: true, livePreview: true });
+  validateDefinition({
+    ...definition,
+    dependencies: { continuation: "faces", preview: "adjacent-faces" },
+  });
+  for (const dependencies of [null, [], { preview: "everything" }, { unknown: "faces" }])
+    assert.throws(
+      () => validateDefinition({ ...definition, dependencies: dependencies as never }),
+      /Invalid/,
+    );
   assert.throws(
     () =>
       validateDefinition({ ...definition, fields: [...definition.fields, ...definition.fields] }),

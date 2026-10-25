@@ -490,6 +490,28 @@ the same cylinder partition, settings resolution and highlighted local warnings.
 
 ## Mesh export and preview
 
+Manifests may declare `dependencies: { continuation, preview }` independently.
+Each value is `"faces"`, `"adjacent-faces"`, or `"bodies"`. `faces` covers the
+selected face descriptors and trimmed tessellation; `adjacent-faces` also includes
+every current face sharing an edge with a selected face; `bodies` covers the full
+geometry context (IDs, volume, center, bounds, faces and edges). These are author
+promises about hook reads, not restrictions on the supplied context. A face-scoped
+hook must not depend on body center, volume, bounds or nonselected edges/faces.
+Instance state/settings and bundled definition/source enablement still participate
+in preview keys. Missing continuation scope conservatively uses whole support
+bodies; missing custom preview scope retains whole-document/source invalidation.
+No arbitrary plugin code runs to decide whether a cached preview is still current.
+
+Continuation first checks immutable support identity, then declared geometry
+values when a body was rebuilt. Copies, splits and merged supports still consume
+topology correspondence. Gear uses selected faces for continuation, adjacent faces
+for previews, and independently checks group-wide fitting dependencies, including
+the available outer wall behind internal-ring roots. Preview
+invalidation compares effective inputs, not document identity or whether fitting
+ran. Unchanged meshes remain visible and pending matching results stay valid.
+These keys and continuation memoization are transient; no revision or cache data
+is added to the saved application document.
+
 The export path captures accepted geometry/settings; prepares geometry context
 and sufficiently accurate base tessellation; validates inputs; generates independent
 modifications from the original geometry; applies those modifications to
