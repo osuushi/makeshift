@@ -16,7 +16,11 @@ export class FramePacer {
   request(render: () => void, force = false): void {
     if (force) this.reset();
     this.latest = render;
-    if (this.scheduled === null) this.present(render, force);
+    // A fresh camera draw supersedes an older retry. Leaving that retry in
+    // control can starve forever when it always runs before the camera RAF.
+    if (this.scheduled !== null) cancelAnimationFrame(this.scheduled);
+    this.scheduled = null;
+    this.present(render, force);
   }
 
   private present(render: () => void, force = false): void {

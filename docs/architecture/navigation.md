@@ -78,7 +78,9 @@ immediate; synchronous refresh remains available outside sketch gestures.
 GPU presentation keeps at most one unfinished frame plus one request for the latest
 scene. A zero-timeout WebGL2 fence poll defers presentation while the GPU is busy;
 wheel deltas and picking transforms still update immediately. Pending camera refreshes
-update clipping, grids and overlays before that scene is presented. Repeated unrecorded
+update clipping, grids and overlays before that scene is presented. Fresh
+camera draws supersede an older GPU retry and attempt presentation immediately,
+so continuous input cannot starve rendering while the GPU is ready. Unrecorded
 pan/wheel input expires navigation history once, until another recorded view or restored
 history context can require expiration again; it does not send one backend write per event.
 

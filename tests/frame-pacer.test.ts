@@ -118,3 +118,26 @@ test("a ready GPU waits for camera-dependent scene updates before presenting", (
   assert.deepEqual(painted, ["updated grids", "explicit capture"]);
   f.pacer.reset();
 });
+
+test("fresh camera draws make progress when every retry runs before a pending camera update", (t) => {
+  const f = fixture(t);
+  const painted: number[] = [];
+  f.pacer.request(() => painted.push(0));
+  f.busy(true);
+  f.pacer.request(() => painted.push(1));
+  f.busy(false);
+  // Input queues the next camera update behind an already queued GPU retry.
+  // This ordering repeats during momentum; waiting for input to stop starves rendering.
+  for (let frame = 2; frame <= 20; frame++) {
+    f.ready(false);
+    f.tick();
+    f.ready(true);
+    f.pacer.request(() => painted.push(frame));
+    assert.equal(painted.at(-1), frame, "Paint the fresh scene in this frame, during input");
+    f.busy(true);
+    f.pacer.request(() => painted.push(-frame));
+    f.busy(false);
+  }
+  assert.equal(painted.length, 20);
+  f.pacer.reset();
+});
