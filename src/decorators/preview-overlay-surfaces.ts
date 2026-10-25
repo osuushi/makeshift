@@ -193,6 +193,9 @@ export class PreviewOverlaySurfaces {
       surface.mesh.visible =
         (surface.mesh.userData.previewTexture ? mode === "texture" : mode === "detailed") &&
         drawable &&
+        !this.editor.interactions.current?.visualPreview?.replaces?.includes(
+          surface.mesh.userData.body,
+        ) &&
         this.editor.visibility.visible(surface.mesh.userData.body);
       const appearance = decoratorAppearance(surface.definition, this.colors.get(surface.id));
       (surface.mesh.material as THREE.MeshStandardMaterial).color.set(appearance.color);

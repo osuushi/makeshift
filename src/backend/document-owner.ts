@@ -5,9 +5,10 @@ import { describeOperation, type HistoryOperation } from "../sketch/operation-hi
 import { acceptedParameters } from "./accepted-parameters.js";
 import { cutEdgeHighlights } from "./cut-edge-highlights.js";
 import { DecoratorSession } from "./decorator-session.js";
+import { editPresentation } from "./deferred-edit.js";
+import { DocumentCommands } from "./document-commands.js";
 import { editDocument, isDirectDocumentEdit } from "./document-edits.js";
 import { documentFailure } from "./document-failure.js";
-import { DocumentGeometry } from "./document-geometry.js";
 import { isPreviewRequest, type PreviewRequest, previewDocument } from "./document-preview.js";
 import { DocumentSession } from "./document-session.js";
 import { documentView } from "./document-view.js";
@@ -25,8 +26,7 @@ export class DocumentOwner {
   private decorators = new DecoratorSession();
   private queries: GeometryQueries;
   private solids: SolidEdits;
-  private geometry: DocumentGeometry;
-  private cleanupAvailable = false;
+  private commands: DocumentCommands;
   private planeCutAvailable = false;
   private session = new DocumentSession();
   private active: { kind: ModelRequest["kind"]; promise: Promise<ModelReply> } | null = null;
@@ -39,7 +39,14 @@ export class DocumentOwner {
     this.kernel = new SolidCalculator(kernelExecutable);
     this.queries = new GeometryQueries(kernelExecutable);
     this.solids = new SolidEdits(this.kernel);
-    this.geometry = new DocumentGeometry(this.kernel, this.solids, this.decorators);
+    this.commands = new DocumentCommands(
+      this.session,
+      this.solids,
+      this.kernel,
+      this.decorators,
+      (cleanup) => this.accept(cleanup),
+      () => this.checkCancellation(),
+    );
     this.scripts = new ScriptEdits(
       () => this.session.store,
       this.solids,
@@ -56,7 +63,7 @@ export class DocumentOwner {
   get view(): ModelView {
     return documentView(this.session, this.solids, this.decorators, {
       planeCutAvailable: this.planeCutAvailable,
-      cleanupAvailable: this.cleanupAvailable,
+      cleanupAvailable: this.commands.cleanupAvailable,
     });
   }
 
@@ -92,7 +99,7 @@ export class DocumentOwner {
       if (
         request.interrupt &&
         this.active &&
-        ["extrude", "erode", "check-cleanup"].includes(this.active.kind)
+        ["extrude", "erode", "check-cleanup", "complete-preview"].includes(this.active.kind)
       ) {
         this.kernel.supersede();
         await this.kernel.cancel();
@@ -170,6 +177,8 @@ export class DocumentOwner {
       else await this.dispatch(request, operation);
       if (this.session.candidate && !this.session.reopenedPreview)
         this.session.candidate = await this.decorators.continue(this.session.candidate, before);
+      if (request.kind === "complete-preview" && this.kernel.wasSuperseded)
+        throw new Error("Preview superseded");
       this.checkCancellation();
       return { view: this.view, documentChanged: before !== this.session.store.data };
     } catch (error) {
@@ -181,7 +190,9 @@ export class DocumentOwner {
       );
       this.session.store.record(operation, outcome, failure.error);
       if (request.kind !== "accept" && request.kind !== "check-cleanup") {
+        await this.kernel.cancel();
         this.session.visualPreview = undefined;
+        this.session.deferredEdit = null;
         this.session.candidate = null;
         this.session.pendingOperation = null;
       }
@@ -189,6 +200,17 @@ export class DocumentOwner {
     }
   }
   private async dispatch(request: ModelRequest, operation: HistoryOperation): Promise<void> {
+    this.commands.cleanupAvailable = false;
+    if (await editPresentation(this.session, this.kernel, this.solids, request, operation)) return;
+    if (!["read", "accept"].includes(request.kind)) {
+      if (
+        this.session.deferredEdit &&
+        request.kind !== "move-faces" &&
+        request.kind !== "move-edges"
+      )
+        await this.kernel.cancel();
+      this.session.deferredEdit = null;
+    }
     if (request.kind === "sketch-grid") {
       this.session.store.setGrid(request.grid, request.initialize);
       if (this.session.candidate)
@@ -200,8 +222,7 @@ export class DocumentOwner {
     }
     if (!["read", "reopen", "accept", "check-cleanup", "navigation-history"].includes(request.kind))
       this.session.reopenedPreview = null;
-    this.cleanupAvailable = false;
-    if (request.kind !== "read" && request.kind !== "reopen")
+    if (!["read", "reopen", "accept"].includes(request.kind))
       this.session.visualPreview = undefined;
     const decoratorEdit =
       request.kind === "decorator" || request.kind === "decorator-enable"
@@ -243,76 +264,7 @@ export class DocumentOwner {
       await this.preview(request);
       return;
     }
-    await this.dispatchCommand(request, operation);
-  }
-  private async dispatchCommand(request: ModelRequest, operation: HistoryOperation): Promise<void> {
-    switch (request.kind) {
-      case "check-cleanup":
-        if (this.session.candidate && !this.session.reopenedPreview)
-          this.cleanupAvailable = await this.solids.checkCleanup(
-            this.session.store.data,
-            this.session.candidate,
-          );
-        break;
-      case "cleanup":
-      case "delete-topology":
-        this.session.pendingOperation = operation;
-        this.session.candidate = await this.solids.removeTopology(
-          this.session.store.data,
-          request.selection,
-          request.kind,
-        );
-        if (request.kind === "delete-topology") await this.accept();
-        break;
-      case "paste-geometry": {
-        const document = await this.geometry.paste(this.session.store.data, request);
-        this.checkCancellation();
-        this.session.pendingOperation = null;
-        this.session.candidate = null;
-        this.session.store.accept(document, operation);
-        break;
-      }
-      case "open": {
-        const document = await this.geometry.open(request.document);
-        this.checkCancellation();
-        this.session.replace(document);
-        this.decorators.clear();
-        break;
-      }
-      case "edge-finish-selection":
-        await this.solids.selectFinishEdges(this.session.store.data, request.operation);
-        break;
-      case "accept":
-        await this.accept(request.cleanup);
-        break;
-      case "discard":
-        this.session.discard();
-        break;
-      case "reopen":
-      case "undo":
-      case "redo":
-        this.session.navigate(request.kind);
-        break;
-      case "navigation-history":
-        this.session.store.navigateView(request.direction);
-        break;
-      case "new":
-        this.session.replace();
-        this.decorators.clear();
-        break;
-      case "delete-entities": {
-        this.session.pendingOperation = null;
-        this.session.candidate = null;
-        const document = await this.geometry.delete(this.session.store.data, request);
-        this.checkCancellation();
-        this.session.store.accept(document, operation);
-        break;
-      }
-      case "read":
-        break;
-      default:
-        throw new Error("Unknown sketch operation");
-    }
+    await this.commands.run(request, operation);
   }
   close(): void {
     this.queries.close();

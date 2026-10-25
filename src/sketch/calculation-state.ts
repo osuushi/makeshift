@@ -4,6 +4,7 @@ import type { ModelRequest } from "./model-api.js";
 export function cancellableCalculation(kind: ModelRequest["kind"]): boolean {
   return [
     "preview",
+    "complete-preview",
     "mirror",
     "scale",
     "plane-cut",

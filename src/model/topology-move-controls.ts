@@ -56,6 +56,7 @@ export class TopologyMoveControls {
         this.invalid = invalid;
         this.valid = false;
         this.pending = this.latest = movement;
+        if (this.running) this.editor.store.supersedePreview();
         if (movement) {
           this.edit = movement;
           this.gizmo.input.value = "0";
@@ -133,6 +134,7 @@ export class TopologyMoveControls {
       async (state) => {
         this.edit = this.latest = this.pending = state;
         this.valid = false;
+        if (this.running) this.editor.store.supersedePreview();
         if (!this.running) this.running = this.drain();
         await this.running;
       },
@@ -179,6 +181,7 @@ export class TopologyMoveControls {
   private queue(value: number): void {
     if (!this.edit || this.lease?.phase !== "editing") return;
     this.valid = false;
+    if (this.running) this.editor.store.supersedePreview();
     this.invalid = !Number.isFinite(value);
     this.editor.notice = this.invalid
       ? "Enter a finite movement"
@@ -201,7 +204,14 @@ export class TopologyMoveControls {
     while (this.pending && this.lease?.phase === "editing") {
       const request = this.pending;
       this.pending = null;
-      const success = await this.editor.store.request(movementRequest(request));
+      const operation = movementRequest(request);
+      const success = await this.editor.store.request(
+        request.bodyIds?.length ? operation : { ...operation, presentation: "deferred" },
+        (preview) => {
+          this.lease?.showVisual(preview);
+          this.editor.refresh();
+        },
+      );
       if (this.lease?.phase !== "editing" || request !== this.latest) continue;
       this.valid = success;
       this.invalid = !success;

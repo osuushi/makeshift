@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "deferred-presentation.h"
 #include "presentation-mesh.h"
 #include "erosion.h"
 #include "measurement.h"
@@ -13,10 +14,6 @@
 #include <BRep_Builder.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepGProp.hxx>
-#include <BRepAdaptor_Surface.hxx>
-#include <BRepBndLib.hxx>
-#include <Bnd_Box.hxx>
-#include <gp_Pln.hxx>
 #include <GProp_GProps.hxx>
 #include <Standard_Failure.hxx>
 #include <TopExp_Explorer.hxx>
@@ -50,51 +47,6 @@ gp_Pnt point(const Tree& tree) {
 }
 void validate(const TopoDS_Shape& shape) {
     if (shape.IsNull() || !BRepCheck_Analyzer(shape).IsValid()) throw std::runtime_error("Kernel produced invalid geometry");
-}
-double volume(const TopoDS_Shape& shape, int referenceAxis,
-              std::optional<std::array<double, 6>>* exactBounds) {
-    KernelTiming timing("volume");
-    if (exactBounds) exactBounds->reset();
-    if (shape.IsNull()) return 0;
-    GProp_GProps props;
-    bool planar = true;
-    for (TopExp_Explorer e(shape, TopAbs_FACE); e.More(); e.Next())
-        if (BRepAdaptor_Surface(TopoDS::Face(e.Current())).GetType() != GeomAbs_Plane) planar = false;
-    double error;
-    if (planar) error = BRepGProp::VolumeProperties(shape, props, 1e-10);
-    else {
-        Bnd_Box bounds; BRepBndLib::AddOptimal(shape, bounds, false, false);
-        timing.phase("bounds");
-        if (bounds.IsVoid()) return 0;
-        double lo[3], hi[3]; bounds.Get(lo[0], lo[1], lo[2], hi[0], hi[1], hi[2]);
-        if (exactBounds) *exactBounds = std::array{lo[0], lo[1], lo[2], hi[0], hi[1], hi[2]};
-        // Integrate across spline spans. Ordinary adaptive quadrature can converge
-        // to different volumes for the same solid after its faces are repartitioned.
-        // A nearby exterior plane avoids near-zero integrals on trimmed faces,
-        // without amplifying boundary tolerances along the body's longest axis.
-        std::array<int,3> axes{0,1,2};
-        std::stable_sort(axes.begin(),axes.end(),[&](int a,int b) { return hi[a]-lo[a] < hi[b]-lo[b]; });
-        if (referenceAxis >= 0 && referenceAxis < 3 && shape.ShapeType() == TopAbs_SOLID) {
-            const auto preferred = std::find(axes.begin(), axes.end(), referenceAxis);
-            std::rotate(axes.begin(), preferred, preferred + 1);
-        }
-        for (const int axis : axes) {
-            gp_Pnt origin(lo[0],lo[1],lo[2]);
-            origin.SetCoord(axis+1,lo[axis]-1);
-            const gp_Dir normal(axis == 0,axis == 1,axis == 2);
-            error = BRepGProp::VolumePropertiesGK(shape,props,gp_Pln(origin,normal),1e-10,false,true);
-            if (std::isfinite(error) && error >= 0) break;
-            // A failed face aborts GK before all properties are accumulated. Try a
-            // different integral reference, never accept its partial mass or error.
-            if (std::getenv("MAKESHIFT_KERNEL_TIMING"))
-                std::cerr << "volume integration reference " << axis << " failed: " << error << std::endl;
-        }
-    }
-    if (!std::isfinite(error) || error < 0) throw std::runtime_error("Solid volume integration failed");
-    const double value = std::abs(props.Mass());
-    timing.phase("integrate");
-    if (!std::isfinite(value)) throw std::runtime_error("Non-finite solid volume");
-    return value;
 }
 std::string encode(const TopoDS_Shape& shape) {
     std::ostringstream stream; BRepTools::Write(shape, stream, false, false, TopTools_FormatVersion_CURRENT);
@@ -154,6 +106,11 @@ void writeMassCenter(std::ostream& reply, const std::vector<Operand>& bodies) {
           << center.Y() << ',' << center.Z() << "]}";
 }
 void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
+    if (input.get<std::string>("kind") == "complete-preview") {
+        completePresentation(reply);
+        return;
+    }
+    clearDeferredPresentation();
     if (input.get<std::string>("kind") == "fit-mesh") {
         std::ostringstream output; mesh_fit::reconstruct(output,input);
         reply << output.str(); return;
@@ -207,6 +164,13 @@ void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
         : calculate(input,bodies,mode,participants,&tools);
 
     timing.phase("calculate");
+    if (input.get<std::string>("presentation", "") == "deferred") {
+        const auto kind = input.get<std::string>("kind");
+        if (kind != "move-faces" && kind != "move-edges" && kind != "offset-faces" && kind != "edge-finish")
+            throw std::runtime_error("Deferred presentation requires a supported solid edit");
+        deferPresentation(reply, results, mode, participants);
+        return;
+    }
     const bool visual = input.get<std::string>("presentation", "") == "visual";
     if (visual && (input.get<std::string>("kind") != "extrude" || (mode != "new" && mode != "union") || !participants.empty()))
         throw std::runtime_error("Visual presentation currently requires a new extrusion");
@@ -249,18 +213,23 @@ int main() {
             request(output,input,timing);
             std::cout << output.str() << std::endl;
         } catch (const erosion::AllowanceFailure& e) {
+            clearDeferredPresentation();
             std::cout << "{\"error\":" << quoted(e.what());
             if (std::isfinite(e.allowance))
                 std::cout << ",\"erosionAllowance\":" << std::setprecision(17) << e.allowance;
             std::cout << "}" << std::endl;
         } catch (const Standard_Failure& e) {
+            clearDeferredPresentation();
             const std::string detail = e.GetMessageString() ? e.GetMessageString() : "Geometry calculation failed";
             const auto message = detail.find("Courbes non jointives") != std::string::npos
                 ? "The operation could not join the curves within tolerance." : detail;
             std::cerr << detail << std::endl;
             std::cout << "{\"error\":" << quoted(message) << "}" << std::endl;
         }
-        catch (const std::exception& e) { std::cout << "{\"error\":" << quoted(e.what()) << "}" << std::endl; }
+        catch (const std::exception& e) {
+            clearDeferredPresentation();
+            std::cout << "{\"error\":" << quoted(e.what()) << "}" << std::endl;
+        }
     }
     return 0;
 }

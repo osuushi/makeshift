@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import * as THREE from "three";
 import { EntityVisibility } from "../src/model/entity-visibility.js";
+import type { VisualPreview } from "../src/model/visual-preview.js";
 import { emptySketch, type SketchDocument } from "../src/sketch/document.js";
 import type { SketchEditor } from "../src/sketch/editor.js";
 import { installCameraDepth } from "../src/sketch/editor-camera-depth.js";
@@ -30,6 +31,7 @@ test("tilted sketch circles are enclosed; visibility and previews invalidate cac
     display: document,
     visibility: new EntityVisibility(),
     bodiesVisible: true,
+    interactions: { current: { visualPreview: undefined as VisualPreview | undefined } },
   };
   installCameraDepth(state as unknown as SketchEditor);
   const bounds = state.world.depthBounds();
@@ -48,4 +50,10 @@ test("tilted sketch circles are enclosed; visibility and previews invalidate cac
   assert.ok(state.world.depthBounds().max.z > 900, "Preview geometry participates immediately");
   state.visibility.hidden.add(sketch.id);
   assert.deepEqual(state.world.depthBounds().max.toArray(), [0, 0, 0]);
+  state.interactions.current.visualPreview = {
+    bodies: [{ bounds: [0, 0, 0, 10, 20, 1200], faces: [], edges: [], planes: [] }],
+  };
+  assert.equal(state.world.depthBounds().max.z, 1200, "Mesh-first previews extend the clip range");
+  state.interactions.current.visualPreview = undefined;
+  assert.equal(state.world.depthBounds().max.z, 0, "Discard restores accepted depth bounds");
 });

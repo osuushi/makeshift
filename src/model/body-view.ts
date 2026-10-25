@@ -17,16 +17,21 @@ function bodyLights(): THREE.Light[] {
   return [ambient, light];
 }
 
-export function bodyView(editor: SketchEditor): () => void {
-  const disposeVisual = visualPreviewView(editor);
-  const group = new THREE.Group();
-  const stats = { created: 0, disposed: 0 };
-  group.userData.bodyDrawableStats = stats;
-  const lights = bodyLights();
-  editor.world.scene.add(group, ...lights);
-  const drawings = new Map<string | number, BodyDrawable>();
-  const sectionSeeds = new SectionStyleSeeds();
-  const update = () => {
+class BodyView {
+  private group = new THREE.Group();
+  private stats = { created: 0, disposed: 0 };
+  private lights = bodyLights();
+  private drawings = new Map<string | number, BodyDrawable>();
+  private sectionSeeds = new SectionStyleSeeds();
+  private disposeVisual: () => void;
+  constructor(private editor: SketchEditor) {
+    this.disposeVisual = visualPreviewView(editor);
+    this.group.userData.bodyDrawableStats = this.stats;
+    editor.world.scene.add(this.group, ...this.lights);
+    editor.world.changed.add(this.update);
+  }
+  private update = () => {
+    const { editor, drawings, group, stats, sectionSeeds } = this;
     const bodies = editor.display.bodies ?? [];
     const accepted = editor.store.data.bodies ?? [];
     const kind = editor.candidate ? (editor.interactions.current?.kind ?? null) : null;
@@ -74,6 +79,7 @@ export function bodyView(editor: SketchEditor): () => void {
         accepted.some((source) => source.id === body.id),
       );
       drawing.group.visible =
+        !editor.interactions.current?.visualPreview?.replaces?.includes(body.id) &&
         editor.visibility.visible(body.id) &&
         (editor.bodiesVisible || !accepted.some((accepted) => accepted.id === body.id));
       drawing.style(
@@ -96,12 +102,16 @@ export function bodyView(editor: SketchEditor): () => void {
       drawing.highlight(source, selectedEdges, hover?.kind === "edge" ? hover.edge : undefined);
     }
   };
-  editor.world.changed.add(update);
-  return () => {
-    disposeVisual();
-    editor.world.changed.delete(update);
-    for (const drawing of drawings.values()) drawing.dispose();
-    drawings.clear();
-    editor.world.scene.remove(group, ...lights);
-  };
+  dispose(): void {
+    this.disposeVisual();
+    this.editor.world.changed.delete(this.update);
+    for (const drawing of this.drawings.values()) drawing.dispose();
+    this.drawings.clear();
+    this.editor.world.scene.remove(this.group, ...this.lights);
+  }
+}
+
+export function bodyView(editor: SketchEditor): () => void {
+  const view = new BodyView(editor);
+  return () => view.dispose();
 }

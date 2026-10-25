@@ -23,6 +23,7 @@ add_executable(makeshift-kernel main.cpp shell.cpp shell-validation.cpp shell-ca
 # RUNPATH only finds direct dependencies; RPATH also finds transitive STEP/OCAF libs.
 target_link_options(makeshift-kernel PRIVATE "$<$<PLATFORM_ID:Linux>:-Wl,--disable-new-dtags>")
 target_include_directories(makeshift-kernel SYSTEM PRIVATE ${OpenCASCADE_INCLUDE_DIR} ${BOOST_INCLUDE_DIR})
+target_sources(makeshift-kernel PRIVATE volume.cpp deferred-presentation.cpp)
 target_sources(makeshift-kernel PRIVATE boundary-move.cpp boundary-selection.cpp boundary-edges.cpp boundary-faces.cpp boundary-cylinder.cpp boundary-filling.cpp boundary-polynomial.cpp)
 target_sources(makeshift-kernel PRIVATE offset-collapse.cpp)
 target_sources(makeshift-kernel PRIVATE chamfer-recognition.cpp)

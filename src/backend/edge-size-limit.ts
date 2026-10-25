@@ -2,16 +2,20 @@ import type { BodyEdgeFinish } from "../model/body.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { KernelResult } from "./kernel-result.js";
 
-type Verified = { size: number; result: KernelResult };
-type Calculate = (size: number) => Promise<KernelResult>;
+type Verified<Result> = { size: number; result: Result };
+type Calculate<Result> = (size: number) => Promise<Result>;
 /** Feasibility is local to one fixed selection on one immutable document.
  * Retain only verified geometry; this is not a claim of a global mathematical maximum. */
-export class EdgeSizeLimit {
+export class EdgeSizeLimit<Result = KernelResult> {
   private document: SketchDocument | null = null;
   private key = "";
-  private best: Verified | null = null;
+  private best: Verified<Result> | null = null;
   private upper = Infinity;
-  async calculate(document: SketchDocument, operation: BodyEdgeFinish, calculate: Calculate) {
+  async calculate(
+    document: SketchDocument,
+    operation: BodyEdgeFinish,
+    calculate: Calculate<Result>,
+  ) {
     const key = JSON.stringify([operation.mode, operation.edges]);
     if (this.document !== document || this.key !== key) {
       this.document = document;
@@ -66,7 +70,10 @@ export class EdgeSizeLimit {
     this.upper = high;
     return low;
   }
-  private async probe(size: number, calculate: Calculate): Promise<Verified | null> {
+  private async probe(
+    size: number,
+    calculate: Calculate<Result>,
+  ): Promise<Verified<Result> | null> {
     try {
       return { size, result: await calculate(size) };
     } catch (error) {

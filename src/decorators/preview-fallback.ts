@@ -96,6 +96,9 @@ export class PreviewFallback {
     for (const surface of this.attached.values()) {
       surface.mesh.visible =
         !ready.has(`${surface.id}/${surface.mesh.userData.body}`) &&
+        !editor.interactions.current?.visualPreview?.replaces?.includes(
+          surface.mesh.userData.body,
+        ) &&
         editor.visibility.visible(surface.mesh.userData.body);
       const appearance = decoratorAppearance(surface.definition, surface.color);
       (surface.mesh.material as THREE.MeshStandardMaterial).color.set(appearance.color);

@@ -17,6 +17,13 @@ interface QueryReplies {
   "edge-finish-targets": { edgeFinishTargets: (number | null)[] };
 }
 export type KernelModelRequest = Exclude<KernelRequest, { kind: keyof QueryReplies }>;
+export interface DeferredKernelReply {
+  presentation: "deferred";
+  mode: "new";
+  participants: string[];
+  tools: [];
+  results: import("../model/visual-preview.js").VisualBody[];
+}
 export type KernelReply<Input extends KernelRequest> = Input extends { presentation: "visual" }
   ? {
       presentation: "visual";
@@ -25,16 +32,18 @@ export type KernelReply<Input extends KernelRequest> = Input extends { presentat
       tools: [];
       results: import("../model/visual-preview.js").VisualBody[];
     }
-  : Input extends {
-        kind: infer Kind extends keyof QueryReplies;
-      }
-    ? QueryReplies[Kind]
-    : Input extends { kind: "fit-mesh" }
-      ? KernelResult & { fit: import("../model/mesh-fit.js").MeshFitStatistics }
-      : Input extends { kind: "inspect" }
-        ? KernelResult<"inspect">
-        : Input extends { kind: "erode" }
-          ? KernelResult & {
-              erosionQuality?: import("../model/erosion-quality.js").ErosionQuality[];
-            }
-          : KernelResult;
+  : Input extends { presentation: "deferred" }
+    ? DeferredKernelReply
+    : Input extends {
+          kind: infer Kind extends keyof QueryReplies;
+        }
+      ? QueryReplies[Kind]
+      : Input extends { kind: "fit-mesh" }
+        ? KernelResult & { fit: import("../model/mesh-fit.js").MeshFitStatistics }
+        : Input extends { kind: "inspect" }
+          ? KernelResult<"inspect">
+          : Input extends { kind: "erode" }
+            ? KernelResult & {
+                erosionQuality?: import("../model/erosion-quality.js").ErosionQuality[];
+              }
+            : KernelResult;

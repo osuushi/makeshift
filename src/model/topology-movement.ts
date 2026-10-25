@@ -66,7 +66,9 @@ export function movementTargets(editor: SketchEditor, kind: "faces" | "edges"): 
   return null;
 }
 
-export function movementRequest(operation: TopologyMovement): ModelRequest {
+export function movementRequest(
+  operation: TopologyMovement,
+): Extract<ModelRequest, { kind: "move-faces" | "move-edges" }> {
   return "faces" in operation
     ? { kind: "move-faces", operation }
     : {
