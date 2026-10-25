@@ -335,6 +335,10 @@ face IDs; edge continuation requires length and bidirectional sampled-distance
 agreement with the constructed boundary, with a bijection and unchanged topology.
 These are bounded numerical checks, not certified global error/swept-path proofs.
 
+Cylindrical wires are rebuilt in connected traversal order, checking each edge
+addition. Storage order can contain nonadjacent edges; accepting only the builder's
+final status can omit an earlier rejected edge and make ordinary cap lowering fail.
+
 Only positional boundary continuity is requested. Tangency, original interior
 curvature and surface fairness are not additional acceptance constraints. An
 unselected curved neighbor may change substantially when refitted. Those outcomes
