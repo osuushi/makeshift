@@ -10,15 +10,15 @@ export function selectionFrame(
   editor: SketchEditor,
 ): { center: Point; pivot: Point; handle: Point } | null {
   const sketch = editor.sketch;
-  if (!sketch || !editor.selectionOwners.size || editor.tool === "pen") return null;
+  const owners = editor.selectionOwners;
+  if (!sketch || !owners.size || editor.tool === "pen") return null;
+  const selected = editor.selectedCurves;
   const points = editor.moveMode
     ? [
-        ...sketch.curves
-          .filter((curve) => editor.selectedCurves.has(curve.id))
-          .flatMap(curveBounds),
+        ...sketch.curves.filter((curve) => selected.has(curve.id)).flatMap(curveBounds),
         ...editor.selected.pointHits(editor.sketch).map((hit) => hit.point),
       ]
-    : sketch.curves.filter((curve) => editor.selectionOwners.has(curve.id)).flatMap(curveBounds);
+    : sketch.curves.filter((curve) => owners.has(curve.id)).flatMap(curveBounds);
   if (!points.length) return null;
   const min = { x: Math.min(...points.map((p) => p.x)), y: Math.min(...points.map((p) => p.y)) };
   const max = { x: Math.max(...points.map((p) => p.x)), y: Math.max(...points.map((p) => p.y)) };

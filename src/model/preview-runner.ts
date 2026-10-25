@@ -24,6 +24,7 @@ export class PreviewRunner<Request> {
 
   clear(): void {
     this.current = this.pending = null;
+    if (this.running) this.callbacks.supersede?.();
   }
 
   /** Selection queries share the same serial slot; pending geometry follows them. */

@@ -51,6 +51,7 @@ test("invalidating a target and closing its lease cannot resume pending calculat
   const started = deferred(),
     release = deferred();
   let editing = true;
+  let superseded = 0;
   const calculated: number[] = [],
     published: number[] = [];
   const runner = new PreviewRunner<number>({
@@ -61,7 +62,9 @@ test("invalidating a target and closing its lease cannot resume pending calculat
       await release.promise;
       if (editing && request === runner.latest) published.push(request);
     },
-    supersede: () => {},
+    supersede: () => {
+      superseded++;
+    },
     settled: () => {},
   });
   runner.enqueue(1);
@@ -74,6 +77,7 @@ test("invalidating a target and closing its lease cannot resume pending calculat
   assert.deepEqual(calculated, [1]);
   assert.deepEqual(published, []);
   assert.equal(runner.latest, null);
+  assert.equal(superseded, 2, "Both a newer target and clearing it supersede deferred work");
 });
 
 test("a noninterrupting preview completes its running target and coalesces waiting input", async () => {

@@ -173,18 +173,20 @@ export class FaceOffsetControls {
     this.editor.refresh();
   }
   private async calculate(request: BodyFaceOffset): Promise<void> {
-    const success = await this.editor.store.request({ kind: "offset-faces", operation: request });
+    const success = await this.editor.store.request(
+      { kind: "offset-faces", operation: request, presentation: "deferred" },
+      (preview) => {
+        if (this.lease?.phase !== "editing" || !this.previews.latest) return;
+        this.lease.showVisual(preview);
+        if (request === this.previews.latest) this.measure(request);
+        this.editor.refresh();
+      },
+    );
     if (this.lease?.phase === "editing" && this.previews.latest) {
       if (success) this.lease.show(this.editor.store.candidate);
       if (request !== this.previews.latest) return;
       if (success) {
-        const distance = this.editor.store.offsetDistance ?? request.distance;
-        this.invalid = distance !== request.distance;
-        if (this.invalid) {
-          this.widget.input.blur();
-          this.editor.notice = "Offset stopped at the last verified position";
-        }
-        this.distance = distance;
+        this.measure(request);
         this.editor.modeling.targets = (this.editor.store.offsetSelection ?? this.faces).map(
           (face) => ({ kind: "face", ...face }),
         );
@@ -194,6 +196,14 @@ export class FaceOffsetControls {
       this.lease.show(success ? this.editor.store.candidate : null);
     }
     this.editor.refresh();
+  }
+  private measure(request: BodyFaceOffset): void {
+    this.distance = this.editor.store.offsetDistance ?? request.distance;
+    this.invalid = this.distance !== request.distance;
+    if (this.invalid) {
+      this.widget.input.blur();
+      this.editor.notice = "Offset stopped at the last verified position";
+    }
   }
   private async finish(): Promise<boolean> {
     await this.previews.settle();

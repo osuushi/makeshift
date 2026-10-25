@@ -74,14 +74,15 @@ export type ModelRequest =
   | { kind: "project"; projection: Projection }
   | { kind: "open"; document: SketchDocument }
   | { kind: "transform-bodies"; transform: BodyTransform }
-  | { kind: "move-edges"; operation: EdgeMovement }
-  | { kind: "move-faces"; operation: FaceMovement }
+  | { kind: "complete-preview" }
+  | { kind: "move-edges"; operation: EdgeMovement; presentation?: "deferred" }
+  | { kind: "move-faces"; operation: FaceMovement; presentation?: "deferred" }
   | { kind: "boolean-bodies"; operation: BodyBoolean }
   | { kind: "edge-finish-selection"; operation: Omit<BodyEdgeFinish, "size"> }
   | { kind: "shell"; operation: BodyShell }
   | { kind: "erode"; operation: BodyErosion }
-  | { kind: "offset-faces"; operation: BodyFaceOffset }
-  | { kind: "finish-edges"; operation: BodyEdgeFinish }
+  | { kind: "offset-faces"; operation: BodyFaceOffset; presentation?: "deferred" }
+  | { kind: "finish-edges"; operation: BodyEdgeFinish; presentation?: "deferred" }
   | { kind: "loft"; operation: import("../model/loft.js").Loft }
   | { kind: "revolve"; revolution: Revolution }
   | { kind: "extrude"; extrusion: Extrusion; presentation?: "visual" }

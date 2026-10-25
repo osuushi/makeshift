@@ -3,6 +3,24 @@
 // Add combinatorial cases to the linked lower-level tests, not this inventory.
 export const uiSuites = [
   {
+    args: ["surface-preview-ui.mjs"],
+    // Hidden macOS Electron: 7.05s for Offset and Fillet in one app session.
+    seconds: 15,
+    browsers: ["electron"],
+    reason:
+      "Offset and Fillet must display meshes before metadata through actual controls, retain the latest numeric target, and gate acceptance through the renderer/host boundary.",
+    unit: "surface-preview.test.ts",
+  },
+  {
+    args: ["movement-preview-ui.mjs"],
+    // Hidden macOS Electron: 4.59s with the captured face-movement fixture.
+    seconds: 10,
+    browsers: ["electron"],
+    reason:
+      "Face movement must draw the real mesh through IPC while metadata is pending, hide its accepted operand, and accept only the latest target; model tests cannot prove frame ordering or tool readiness.",
+    unit: "movement-preview.test.ts",
+  },
+  {
     args: ["xray-vision-ui.mjs"],
     // macOS hidden Electron including New/XY/circle freshness: 9.18s.
     seconds: 20,

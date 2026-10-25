@@ -161,6 +161,35 @@ the [3MF Core specification](https://github.com/3MFConsortium/spec_core/blob/mas
 Placement is baked into vertices. Exports contain geometry only, without printer,
 material or slicing settings. Exact editable geometry remains in the Makeshift file.
 
+## DXF sketch import and exchange menus
+
+Top-level **Import** and **Export** dropdowns share the tool catalog's availability
+and execution rules in desktop and browser builds. Import exposes DXF sketch,
+STEP and mesh; Export exposes STL, 3MF and STEP.
+
+**Import DXF sketch** reads ASCII DXF files up to 25 MB / 10,000 curves. LINE,
+CIRCLE, ARC, LWPOLYLINE and ordinary 2D POLYLINE become editable sketch curves;
+polyline bulges preserve circular arcs, including clockwise and major arcs.
+Coordinates are local to the current planar workspace, or XY in Modeling.
+Declared `$INSUNITS` are converted to millimeters; absent/unitless declarations
+use millimeters and report that assumption. The import selects and frames the new
+geometry, appends through DocumentOwner with fresh IDs, and is one Undo step.
+Imported geometry supports ordinary selection, Move, curve editing and Save/Open.
+Parsing runs in a disposable worker; Escape cancels reading/parsing before atomic
+acceptance. Invalid/unsupported geometry leaves the document unchanged.
+
+This is a planar model-space curve importer. Binary DXF, blocks/INSERT, splines,
+ellipses, meshes, non-XY source coordinates/extrusion directions and fitted
+polylines are rejected with an error. Explode blocks and convert unsupported curves
+to ordinary 2D polylines in the source application. Text, dimensions and points are
+omitted with a count; layers, styling and polyline widths are not retained (curves
+represent centerlines). No source constraints are inferred.
+
+The parser implements group-code semantics from Autodesk's
+[LWPOLYLINE reference](https://help.autodesk.com/cloudhelp/2020/ENU/AutoCAD-DXF/files/GUID-748FC305-F3F2-4F74-825A-61F04D757A50.htm)
+and [HEADER units reference](https://help.autodesk.com/cloudhelp/2026/ENU/AutoCAD-DXF/files/GUID-A85E8E67-27CD-4C59-BE61-4DC9FADBE74A.htm);
+no upstream implementation code is copied.
+
 ## STEP import
 
 **Import STEP** in Document & Edit accepts `.step` and `.stp` files up to 25 MB

@@ -44,7 +44,7 @@ header {
   align-items: center;
   gap: 10px 22px;
   flex-wrap: wrap;
-  max-width: calc(100% - 350px);
+  max-width: calc(100% - 210px);
   pointer-events: none;
 }
 header .brand {
