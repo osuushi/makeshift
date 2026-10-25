@@ -23,6 +23,7 @@ export class GuideSurfaceSnap {
   private pending: { target: GuideMoveTarget; value: number } | null = null;
   private confirmed: { target: GuideMoveTarget; value: number } | null = null;
   private create: (() => GuideSurfacePlan | null) | null = null;
+  private bypass = false;
   private unobserve: () => void;
   constructor(
     private editor: SketchEditor,
@@ -31,15 +32,17 @@ export class GuideSurfaceSnap {
   ) {
     this.unobserve = observeGuides(editor, () => this.visibilityChanged());
   }
-  start(create: () => GuideSurfacePlan | null): void {
+  start(create: () => GuideSurfacePlan | null, bypass = false): void {
     this.clear();
     this.create = create;
+    this.bypass = bypass;
     activeDrags.add(this.editor);
     this.visibilityChanged();
   }
   private visibilityChanged(): void {
     if (!this.create) return;
-    if (!editingGuides(this.editor)) {
+    if (!editingGuides(this.editor) || this.bypass) {
+      if (this.plan?.cancel) this.releasePlan();
       this.pending = this.confirmed = null;
       activeTargets.delete(this.editor);
       this.chooser?.close();
@@ -86,6 +89,10 @@ export class GuideSurfaceSnap {
     this.event = event;
     this.fallback = fallback;
     this.scale = scale;
+    this.bypass = event.shiftKey;
+    if (this.bypass && this.plan?.cancel) this.releasePlan();
+    if (!this.bypass && !this.plan && this.create && editingGuides(this.editor))
+      this.initialize(this.create());
     if (!this.plan || !editingGuides(this.editor)) {
       this.queue(fallback);
       return;
@@ -131,13 +138,19 @@ export class GuideSurfaceSnap {
     });
   }
   clear(): void {
-    this.plan = null;
     this.create = null;
+    this.event = null;
+    this.bypass = false;
+    activeDrags.delete(this.editor);
+    this.releasePlan();
+  }
+  private releasePlan(): void {
+    const plan = this.plan;
+    this.plan = null;
+    plan?.cancel?.();
     this.targets = [];
     this.pending = this.confirmed = null;
-    this.event = null;
     activeTargets.delete(this.editor);
-    activeDrags.delete(this.editor);
     this.chooser?.dispose();
     this.feedback?.dispose();
     this.chooser = null;

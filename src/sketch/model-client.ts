@@ -119,6 +119,7 @@ export class ModelClient extends ModelQueries {
         "read",
         "sketch-grid",
         "accept",
+        "complete-preview",
         "discard",
         "undo",
         "redo",

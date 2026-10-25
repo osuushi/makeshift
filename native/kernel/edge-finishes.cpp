@@ -1,11 +1,11 @@
 #include "kernel.h"
-#include "edge-finish-conditioning.h"
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <ShapeFix_Shape.hxx>
 #include <Standard_Failure.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
+#include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
 #include <algorithm>
 #include <cmath>
@@ -29,7 +29,7 @@ TopoDS_Shape repairEdgeFinish(const TopoDS_Shape& shape) {
 
 template<class Operation>
 void finishBody(const Operand& body, const std::vector<TopoDS_Edge>& edges,
-                double size, std::vector<Result>& results) {
+                double size, bool deferVolume, std::vector<Result>& results) {
     Operation operation(body.shape);
     // Keep generated blend boundaries precise enough for subsequent offsets.
     // This changes fitting accuracy, not the edge radius or topology tolerance.
@@ -56,7 +56,14 @@ void finishBody(const Operand& body, const std::vector<TopoDS_Edge>& edges,
                 if (i.Value().ShapeType() == origin.shape.ShapeType()) origins.push_back({origin.id, i.Value()});
     }
     const auto count = results.size();
-    solids(results, shape, origins, {body.id});
+    if (deferVolume) {
+        for (TopExp_Explorer it(shape, TopAbs_SOLID); it.More(); it.Next()) {
+            validate(it.Current());
+            Result result{it.Current(), origins, {body.id}};
+            result.volumeValidationPending = true;
+            results.push_back(std::move(result));
+        }
+    } else solids(results, shape, origins, {body.id});
     if (results.size() != count + 1) throw std::runtime_error("Edge finish is not feasible at this size");
 }
 }
@@ -79,16 +86,6 @@ std::map<std::string, std::vector<TopoDS_Edge>> selectedEdges(const Tree& input,
     if (selected.empty()) throw std::runtime_error("Select at least one body edge");
     return selected;
 }
-std::vector<Operand> finishOperands(const Tree& input, const std::vector<Operand>& bodies) {
-    std::set<std::string> involved;
-    for (const auto& item : input.get_child("edges"))
-        involved.insert(item.second.get<std::string>("body"));
-    std::vector<Operand> result;
-    for (const auto& body : bodies)
-        result.push_back(involved.count(body.id) ? conditionEdgeFinish(body) : body);
-    return result;
-}
-
 template<class Operation>
 void collectChain(const Operand& body, const std::vector<TopoDS_Edge>& edges,
                   std::vector<std::pair<std::string, std::string>>& selected) {
@@ -112,12 +109,11 @@ void collectChain(const Operand& body, const std::vector<TopoDS_Edge>& edges,
 void edgeFinishSelection(std::ostream& out, const Tree& input, const std::vector<Operand>& bodies) {
     const auto mode = input.get<std::string>("mode");
     if (mode != "fillet" && mode != "chamfer") throw std::runtime_error("Unknown edge finish");
-    const auto conditioned = finishOperands(input, bodies);
-    const auto grouped = selectedEdges(input, conditioned);
+    const auto grouped = selectedEdges(input, bodies);
     std::vector<std::pair<std::string, std::string>> selected;
     for (const auto& item : input.get_child("edges"))
         selected.emplace_back(item.second.get<std::string>("body"), item.second.get<std::string>("edge"));
-    for (const auto& body : conditioned) {
+    for (const auto& body : bodies) {
         const auto found = grouped.find(body.id);
         if (found == grouped.end()) continue;
         if (mode == "fillet") collectChain<BRepFilletAPI_MakeFillet>(body, found->second, selected);
@@ -137,15 +133,16 @@ std::vector<Result> finishEdges(const Tree& input, const std::vector<Operand>& b
     if (mode != "fillet" && mode != "chamfer") throw std::runtime_error("Unknown edge finish");
     if (!std::isfinite(size) || size <= 1e-8)
         throw std::runtime_error("Edge size must be greater than zero");
-    const auto conditioned = finishOperands(input, bodies);
-    const auto selected = selectedEdges(input, conditioned);
+    const auto selected = selectedEdges(input, bodies);
+    const bool deferVolume = input.get<std::string>("presentation", "") == "deferred" ||
+                             input.get<std::string>("kind", "") == "edge-finish-targets";
     std::vector<Result> results;
-    for (const auto& body : conditioned) {
+    for (const auto& body : bodies) {
         const auto found = selected.find(body.id);
         if (found == selected.end()) continue;
         const auto& edges = found->second;
-        if (mode == "fillet") finishBody<BRepFilletAPI_MakeFillet>(body, edges, size, results);
-        else finishBody<BRepFilletAPI_MakeChamfer>(body, edges, size, results);
+        if (mode == "fillet") finishBody<BRepFilletAPI_MakeFillet>(body, edges, size, deferVolume, results);
+        else finishBody<BRepFilletAPI_MakeChamfer>(body, edges, size, deferVolume, results);
         participants.push_back(body.id);
     }
     return results;

@@ -20,7 +20,11 @@ export class SurfaceEdits {
     document: SketchDocument,
     request: SurfaceEditRequest,
   ): Promise<VisualPreview | null> {
-    const bodies = document.bodies ?? [];
+    const bodies = (document.bodies ?? []).filter(
+      (body) =>
+        request.kind !== "finish-edges" ||
+        request.operation.edges.some((edge) => edge.body === body.id),
+    );
     const calculate = (value: number) =>
       this.kernel.probe(
         request.kind === "offset-faces"

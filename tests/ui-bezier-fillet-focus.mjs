@@ -38,11 +38,23 @@ export async function bezierFilletFocusRoute(page) {
   await page.keyboard.type("0.1");
   await previewActionReady(page, "Accept fillet");
   assert.ok(await input.evaluate((element) => document.activeElement === element));
-  const preview = (await inspect(page)).preview;
-  assert.ok(preview.bodies[0].volume < original.bodies[0].volume);
+  const provisional = await inspect(page);
+  assert.equal(provisional.preview, null, "Exact measurements wait for acceptance");
+  assert.deepEqual(provisional.document, original);
+  const faces = provisional.visualPreview.bodies[0].faces;
+  assert.ok(faces.length > 0);
+  assert.notDeepEqual(
+    faces,
+    original.bodies[0].faces.map((face) => face.vertices),
+  );
   await page.keyboard.press("Enter");
   await modalCompleted(page);
-  assert.equal((await inspect(page)).document.bodies[0].volume, preview.bodies[0].volume);
+  const accepted = (await inspect(page)).document.bodies[0];
+  assert.ok(accepted.volume < original.bodies[0].volume);
+  assert.deepEqual(
+    accepted.faces.map((face) => face.vertices),
+    faces,
+  );
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);
   await page.keyboard.press("Escape");

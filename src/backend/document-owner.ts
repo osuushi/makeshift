@@ -81,6 +81,10 @@ export class DocumentOwner {
     if (this.cancelling) throw new Error("Calculation cancelled");
   }
   async call(request: ModelRequest): Promise<ModelReply> {
+    if (request.kind === "cancel-edge-finish-targets") {
+      await this.queries.cancelEdgeTargets();
+      return { view: this.view };
+    }
     if (request.kind === "cancel-step-export") {
       await this.queries.cancelStep();
       return { view: this.view };

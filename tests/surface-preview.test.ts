@@ -7,6 +7,47 @@ import { SolidCalculator } from "../src/backend/solid-calculator.js";
 import type { SketchDocument } from "../src/sketch/document.js";
 import { surfaceFixture, withValue } from "./surface-preview-fixtures.js";
 
+test("failed edge-finish completion cannot accept a provisional mesh and allows a new size", async (context) => {
+  const owner = new DocumentOwner();
+  try {
+    const { request } = await surfaceFixture(owner, "fillet"),
+      original = owner.view.data;
+    const kernel = Reflect.get(owner, "kernel") as SolidCalculator;
+    const calculate = kernel.calculate.bind(kernel);
+    let fail = true;
+    context.mock.method(kernel, "calculate", (input: KernelRequest) => {
+      if (input.kind === "complete-preview" && fail) {
+        fail = false;
+        return Promise.reject(new Error("Solid volume integration failed"));
+      }
+      return calculate(input);
+    });
+    const preview = await owner.call({ ...request, presentation: "deferred" });
+    assert.equal(preview.error, undefined);
+    assert.ok(preview.view.visualPreview);
+    assert.equal(preview.view.candidate, null);
+    assert.match(
+      (await owner.call({ kind: "complete-preview" })).error ?? "",
+      /volume integration failed/,
+    );
+    assert.equal(owner.view.data, original);
+    assert.equal(owner.view.candidate, null);
+    assert.equal(owner.view.visualPreview, undefined);
+    assert.match((await owner.call({ kind: "accept" })).error ?? "", /No valid edit/);
+    assert.equal(
+      (await owner.call({ ...withValue(request, 1), presentation: "deferred" })).error,
+      undefined,
+    );
+    assert.equal((await owner.call({ kind: "complete-preview" })).error, undefined);
+    assert.equal((await owner.call({ kind: "accept" })).error, undefined);
+    assert.notEqual(owner.view.data, original);
+    await owner.call({ kind: "undo" });
+    assert.deepEqual(owner.view.data, original);
+  } finally {
+    owner.close();
+  }
+});
+
 for (const kind of ["offset", "fillet", "chamfer"] as const) {
   test(`${kind}: staged native mesh and completed exact metadata equal ordinary presentation`, async () => {
     const owner = new DocumentOwner(),

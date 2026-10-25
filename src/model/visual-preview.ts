@@ -1,6 +1,6 @@
 import type { Extrusion } from "./body.js";
 
-/** A validated drawing only: no exact shape, editable topology, or persistent IDs. */
+/** A topology/mesh-checked drawing; final volume validation may still be pending. */
 export interface VisualBody {
   /** Appearance references only; these do not make the drawing editable. */
   sourceBodies?: string[];

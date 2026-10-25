@@ -1,8 +1,10 @@
+import { EdgeFinishTargetClient } from "./edge-finish-target-client.js";
 import type { ModelView } from "./model-api.js";
 import { call } from "./model-transport.js";
 
 /** Read-only view access and backend queries, outside the document edit slot. */
 export class ModelQueries {
+  private edgeTargets = new EdgeFinishTargetClient(call);
   protected view: ModelView = {
     data: { units: "mm", sketches: [] },
     canUndo: false,
@@ -75,11 +77,9 @@ export class ModelQueries {
   async edgeFinishTargets(
     operation: Omit<import("../model/body.js").BodyEdgeFinish, "size">,
     points: import("./planes.js").Vector[],
+    signal?: AbortSignal,
   ) {
-    const reply = await call({ kind: "edge-finish-targets", operation, points });
-    if (reply.error || !reply.edgeFinishTargets)
-      throw new Error(reply.error ?? "Snap targets unavailable");
-    return reply.edgeFinishTargets;
+    return this.edgeTargets.query(operation, points, signal);
   }
   async sections(frame: import("./planes.js").PlaneFrame, bodies: string[]) {
     const reply = await call({ kind: "sections", frame, bodies });

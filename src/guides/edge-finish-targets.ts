@@ -6,14 +6,20 @@ import type { GuideMoveCandidate } from "./move-target.js";
 import { surfaceGuideTargets } from "./surface-targets.js";
 import type { GuideSurfacePlan } from "./tool-path.js";
 
-async function targets(editor: SketchEditor, operation: Omit<BodyEdgeFinish, "size">) {
+async function targets(
+  editor: SketchEditor,
+  operation: Omit<BodyEdgeFinish, "size">,
+  signal: AbortSignal,
+) {
   const candidates = surfaceGuideTargets(editor, () => 1);
   const unique = candidates.filter(
     (p, i) => candidates.findIndex((q) => near(p.point, q.point)) === i,
   );
+  if (!unique.length) return [];
   const sizes = await editor.store.edgeFinishTargets(
     operation,
     unique.map((p) => p.point),
+    signal,
   );
   return candidates.flatMap((candidate): GuideMoveCandidate[] => {
     const index = unique.findIndex((p) => near(p.point, candidate.point));
@@ -28,11 +34,12 @@ export function edgeFinishSurfacePlan(
   mode: BodyEdgeFinish["mode"],
   settled: GuideSurfacePlan["settled"],
 ): GuideSurfacePlan | null {
-  return frame
-    ? {
-        origin: frame.anchor,
-        targets: targets(editor, { edges: frame.edges, mode }),
-        settled,
-      }
-    : null;
+  if (!frame) return null;
+  const controller = new AbortController();
+  return {
+    origin: frame.anchor,
+    targets: targets(editor, { edges: frame.edges, mode }, controller.signal),
+    cancel: () => controller.abort(),
+    settled,
+  };
 }

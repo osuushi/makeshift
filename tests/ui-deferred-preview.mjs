@@ -35,3 +35,31 @@ export async function holdCompletion(page) {
     };
   }, "/deferred-preview.ts");
 }
+
+// Hold after real completion, before the tool may accept its candidate. This
+// catches late acceptance after cancellation without replacing native geometry.
+export async function holdEdgeCompletion(page) {
+  await page.evaluate(async () => {
+    const { ModelClient } = await import("/model-client.ts");
+    const original = ModelClient.prototype.request;
+    let release;
+    const held = new Promise((resolve) => {
+      release = resolve;
+    });
+    window.edgeCompletion = {
+      reached: false,
+      release,
+      restore: () => {
+        ModelClient.prototype.request = original;
+      },
+    };
+    ModelClient.prototype.request = async function (request, ...args) {
+      const reply = await original.call(this, request, ...args);
+      if (request.kind === "complete-preview") {
+        window.edgeCompletion.reached = true;
+        await held;
+      }
+      return reply;
+    };
+  });
+}

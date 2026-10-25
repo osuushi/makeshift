@@ -8,7 +8,7 @@ import { planes } from "../.cache/sketch-tests/src/sketch/planes.js";
 import { prism, square } from "../.cache/sketch-tests/tests/body-edge-fixtures.js";
 import { openDocument } from "./native-documents.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
-import { assertPreview, pointerTo } from "./ui-guide-tool-helpers.mjs";
+import { pointerTo } from "./ui-guide-tool-helpers.mjs";
 import { inspect, modalCompleted } from "./ui-helpers.mjs";
 import { startToolDrag, waitSurfaceLock } from "./ui-surface-snap.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -75,16 +75,43 @@ export async function filletSurfaceRoute(page, fixture) {
   await pointerTo(page, fixture.point);
   await waitSurfaceLock(page, fixture.point);
   const volume = 4000 - 10 * 9 * (1 - Math.PI / 4);
-  await assertPreview(page, before, fixture.body, volume);
+  const preview = async () => {
+    const state = await inspect(page);
+    assert.deepEqual(state.document, before);
+    assert.equal(state.preview, null);
+    assert.ok(state.visualPreview?.bodies[0].faces.length);
+    assert.equal(
+      await page.getByRole("textbox", { name: "Fillet radius", exact: true }).inputValue(),
+      "3",
+    );
+  };
+  await preview();
   await page.keyboard.down("Shift");
   await page.waitForFunction(() => !document.querySelector(".guide-destination-lock"));
   await page.keyboard.up("Shift");
   await waitSurfaceLock(page, fixture.point);
+  await page.keyboard.press("g");
+  await page.waitForFunction(() => !document.querySelector(".guide-destination-lock"));
+  await page.keyboard.press("g");
+  await waitSurfaceLock(page, fixture.point);
   await page.screenshot({ path: ".cache/sketch-review/fillet-surface-snap.png" });
   await page.mouse.up();
-  await assertPreview(page, before, fixture.body, volume);
+  await preview();
+  // A new gesture must survive cancellation from the previous one, and still
+  // acquire the same fitted target after the completed result becomes reusable.
+  await startToolDrag(page, "Fillet edges");
+  await pointerTo(page, fixture.point);
+  await waitSurfaceLock(page, fixture.point);
+  await page.mouse.up();
+  await preview();
   await page.getByRole("button", { name: "Accept fillet", exact: true }).click();
   await modalCompleted(page);
+  assert.ok(
+    Math.abs(
+      (await inspect(page)).document.bodies.find((body) => body.id === fixture.body).volume -
+        volume,
+    ) < 1e-5,
+  );
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before);
   console.log(

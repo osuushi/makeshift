@@ -98,12 +98,25 @@ void presentVisual(std::ostream& out, const Result& result, double deflection) {
     KernelTiming timing("visual-presentation");
     meshPresentation(result.shape, deflection);
     timing.phase("mesh");
-    Bnd_Box bounds;
-    BRepBndLib::AddOptimal(result.shape, bounds, false, false);
-    double values[6];
-    bounds.Get(values[0], values[1], values[2], values[3], values[4], values[5]);
+    auto bounds = result.exactBounds;
+    if (!bounds) {
+        Bnd_Box box;
+        if (result.volumeValidationPending) {
+            // Provisional drawing bounds only: exact surface extrema and volume
+            // are calculated together when this edge finish is completed.
+            for (TopExp_Explorer it(result.shape, TopAbs_FACE); it.More(); it.Next()) {
+                TopLoc_Location location;
+                const auto mesh = BRep_Tool::Triangulation(TopoDS::Face(it.Current()), location);
+                for (int i = 1; i <= mesh->NbNodes(); ++i)
+                    box.Add(mesh->Node(i).Transformed(location.Transformation()));
+            }
+        } else BRepBndLib::AddOptimal(result.shape, box, false, false);
+        std::array<double, 6> values;
+        box.Get(values[0], values[1], values[2], values[3], values[4], values[5]);
+        bounds = values;
+    }
     out << "{\"bounds\":[";
-    for (int i = 0; i < 6; ++i) { if (i) out << ','; out << values[i]; }
+    for (int i = 0; i < 6; ++i) { if (i) out << ','; out << (*bounds)[i]; }
     out << "],\"faces\":[";
     TopTools_IndexedMapOfShape faces, edges;
     TopExp::MapShapes(result.shape, TopAbs_FACE, faces);

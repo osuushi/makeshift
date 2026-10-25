@@ -4,11 +4,11 @@
 export const uiSuites = [
   {
     args: ["surface-preview-ui.mjs"],
-    // Hidden macOS Electron: 7.05s for Offset and Fillet in one app session.
+    // Hidden macOS Electron: 9.55s including acceptance-only Fillet cancellation.
     seconds: 15,
     browsers: ["electron"],
     reason:
-      "Offset and Fillet must display meshes before metadata through actual controls, retain the latest numeric target, and gate acceptance through the renderer/host boundary.",
+      "Offset must paint before metadata; Fillet must remain mesh-only until acceptance and reject late completion after Escape through the renderer/host boundary.",
     unit: "surface-preview.test.ts",
   },
   {

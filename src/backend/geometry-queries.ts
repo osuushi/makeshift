@@ -1,5 +1,6 @@
 import type { ModelReply, ModelRequest, ModelView } from "../sketch/model-api.js";
 import { validateFrame } from "../sketch/planes.js";
+import { EdgeFinishQueries } from "./edge-finish-queries.js";
 import { exportGeometry } from "./export-geometry.js";
 import { measurementInput } from "./measurement-input.js";
 import { SolidCalculator } from "./solid-calculator.js";
@@ -33,14 +34,17 @@ export function isGeometryQuery(request: ModelRequest): request is Query {
 export class GeometryQueries {
   private kernel: SolidCalculator;
   private step: StepExporter;
+  private edgeTargets: EdgeFinishQueries;
   private pending = Promise.resolve();
   private closed = false;
   constructor(executable?: string) {
     this.kernel = new SolidCalculator(executable);
+    this.edgeTargets = new EdgeFinishQueries(executable);
     this.step = new StepExporter(executable ?? SolidCalculator.executable, "STEP exporter");
   }
   call(view: ModelView, request: Query): Promise<ModelReply> {
-    if (request.kind === "export-step") return this.calculate(view, request);
+    if (request.kind === "export-step" || request.kind === "edge-finish-targets")
+      return this.calculate(view, request);
     const result = this.pending.then(() => this.calculate(view, request));
     this.pending = result.then(() => {});
     return result;
@@ -49,15 +53,7 @@ export class GeometryQueries {
     try {
       if (this.closed) throw new Error("Geometry query cancelled");
       if (request.kind === "edge-finish-targets") {
-        const reply = await this.kernel.calculate({
-          ...request.operation,
-          kind: request.kind,
-          points: request.points,
-          bodies: (view.data.bodies ?? []).filter((b) =>
-            request.operation.edges.some((e) => e.body === b.id),
-          ),
-        });
-        return { view, edgeFinishTargets: reply.edgeFinishTargets };
+        return { view, edgeFinishTargets: await this.edgeTargets.calculate(view.data, request) };
       }
       if (request.kind === "center-of-mass") {
         const body = view.data.bodies?.find((body) => body.id === request.body);
@@ -90,9 +86,13 @@ export class GeometryQueries {
   close(): void {
     this.closed = true;
     this.kernel.close();
+    this.edgeTargets.close();
     this.step.close();
   }
   async cancelStep(): Promise<void> {
     await this.step.cancel();
+  }
+  async cancelEdgeTargets(): Promise<void> {
+    await this.edgeTargets.cancel();
   }
 }

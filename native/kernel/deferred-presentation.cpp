@@ -1,5 +1,6 @@
 #include "deferred-presentation.h"
 #include "presentation-mesh.h"
+#include "geometry-policy.h"
 #include "timing.h"
 #include <iomanip>
 #include <optional>
@@ -42,7 +43,15 @@ void completePresentation(std::ostream& out) {
     header(out, *value);
     for (size_t i = 0; i < value->results.size(); ++i) {
         if (i) out << ',';
-        presentMeshed(out, value->results[i]);
+        auto& result = value->results[i];
+        if (result.volumeValidationPending) {
+            const double measured = volume(result.shape, -1, &result.exactBounds);
+            if (measured <= geometry_policy::minimumSolidVolumeMm3)
+                throw std::runtime_error("Edge finish has no measurable solid volume");
+            result.exactVolume = measured;
+            result.volumeValidationPending = false;
+        }
+        presentMeshed(out, result);
     }
     out << "]}";
 }

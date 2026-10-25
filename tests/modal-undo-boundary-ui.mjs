@@ -70,17 +70,28 @@ async function filletBoundary(page) {
   await start.click();
   const radius = page.getByRole("textbox", { name: "Fillet radius", exact: true });
   const first = await checkpoint(page, radius, 1);
-  assert.ok(first.preview.bodies[0].volume < 4000);
-  await checkpoint(page, radius, 2);
+  assert.equal(first.preview, null, "Exact measurements wait for acceptance");
+  const faces = first.visualPreview.bodies[0].faces;
+  assert.ok(faces.length > 0);
+  assert.notDeepEqual(
+    faces,
+    original.bodies[0].faces.map((face) => face.vertices),
+  );
+  const second = await checkpoint(page, radius, 2);
+  assert.notDeepEqual(second.visualPreview.bodies[0].faces, faces);
   let state = await history(page);
-  close(state.preview.bodies[0].volume, first.preview.bodies[0].volume);
+  assert.equal(await radius.inputValue(), "1");
+  assert.equal(state.preview, null);
+  assert.deepEqual(state.visualPreview.bodies[0].faces, faces);
   state = await history(page);
   assert.equal(state.interaction.kind, "body-edge-finish");
   assert.equal(await radius.inputValue(), "0");
   close(state.preview.bodies[0].volume, 4000, "Zero-radius preview restores the unmodified solid");
   assert.deepEqual(state.document, original);
   state = await history(page, true);
-  close(state.preview.bodies[0].volume, first.preview.bodies[0].volume);
+  assert.equal(await radius.inputValue(), "1");
+  assert.equal(state.preview, null);
+  assert.deepEqual(state.visualPreview.bodies[0].faces, faces);
   await history(page);
   await exitAtBaseline(page, original, true);
   // Starting an unchanged modal tool also exits on its first Undo press.

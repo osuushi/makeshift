@@ -61,7 +61,9 @@ The mesh-first movement and Offset/Fillet regressions cover real paint ordering,
 numeric supersession and acceptance while metadata is pending. They measured
 4.59 and 7.05 seconds in hidden macOS Electron, respectively; allocations of 10
 and 15 seconds include startup/software-rendering headroom. Offset and Fillet
-share one app session. These add 25 seconds to the previous 555-second budget;
+share one app session. The surface route now also checks Fillet's acceptance-only
+completion and Escape after validation; it measured 9.55 seconds in hidden macOS
+Electron and stays within its existing 15-second allocation. These add 25 seconds to the previous 555-second budget;
 they do not add shards or repeat a cross-browser matrix. Geometry and clamping
 combinations remain in lower-level tests. Linux timings are not yet measured.
 The transform entry regression includes escaped Tab focus and cross-layer acceptance

@@ -92,7 +92,9 @@ export class SolidEdits {
     const result = await this.kernel.calculate({
       ...operation,
       kind: "edge-finish-selection",
-      bodies: document.bodies ?? [],
+      bodies: (document.bodies ?? []).filter((body) =>
+        operation.edges.some((edge) => edge.body === body.id),
+      ),
     });
     if (!result.edgeSelection.length) throw new Error("No eligible edges in selection");
     this.edgeSelection = result.edgeSelection;
