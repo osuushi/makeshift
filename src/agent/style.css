@@ -8,6 +8,22 @@
   min-width: 0;
   min-height: 0;
 }
+.agent-dock::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: #fff;
+  opacity: 0.15;
+  pointer-events: none;
+}
+:root[data-theme="dark"] .agent-dock::before {
+  background: #000;
+}
+.agent-dock[data-focus="terminal"]::before,
+.agent-dock[data-focus="controls"]::before {
+  opacity: 0;
+}
 .agent-dock[data-side="right"] {
   right: var(--agent-viewport-right, 0px);
   top: var(--agent-viewport-top, 0px);

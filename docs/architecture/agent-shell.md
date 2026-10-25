@@ -49,7 +49,9 @@ terminal loading and harness launch wait until the first expansion. Expanding
 returns keyboard focus to terminal input; collapsing returns it to the drawing.
 The expanded header labels terminal, agent-control or drawing focus, with an
 accented header and pane border when terminal input owns the keyboard. The
-browser caret is hidden because Ghostty draws the terminal cursor itself.
+unfocused pane has a 15% white overlay in light mode or black overlay in dark
+mode. The overlay passes clicks through and clears for terminal or control focus.
+The browser caret is hidden because Ghostty draws the terminal cursor itself.
 PTY reads wait for output (bounded to one second), waking immediately on data
 or exit; the renderer yields one frame between reads instead of batching output
 on a fixed 100 ms polling interval. Idle reads do not hold the lifecycle lock.
