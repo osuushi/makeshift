@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import type { DisplayDocument } from "../model/display-document.js";
 import { normalChart } from "./normal-projection-charts.js";
+import { rasterNormalProjection } from "./normal-projection-raster.js";
 import { NormalProjectionRays } from "./normal-projection-rays.js";
 import type { PackedPreviewMesh } from "./preview-wire.js";
 import type { FaceReference } from "./types.js";
@@ -23,7 +24,7 @@ export function projectPreviewNormals(
   size = 512,
 ): PackedNormalProjection[] {
   if (mesh.indices.length < 3) return [];
-  const rays = new NormalProjectionRays(mesh);
+  let rays: NormalProjectionRays | undefined;
   const point = new THREE.Vector3(),
     normal = new THREE.Vector3();
   return mesh.faces.flatMap((reference) => {
@@ -36,17 +37,22 @@ export function projectPreviewNormals(
         "Texture projection supports up to 65,536 triangles per face. Use Geometry for this face.",
       );
     const chart = normalChart(face, size);
-    const normals = new Uint8Array(chart.size * chart.size * 4);
-    for (let y = 0; y < chart.size; y++)
-      for (let x = 0; x < chart.size; x++) {
-        chart.sample((x + 0.5) / chart.size, (y + 0.5) / chart.size, point, normal);
-        const projected = rays.normal(point, normal);
-        const offset = (y * chart.size + x) * 4;
-        normals[offset] = Math.round((projected.x * 0.5 + 0.5) * 255);
-        normals[offset + 1] = Math.round((projected.y * 0.5 + 0.5) * 255);
-        normals[offset + 2] = Math.round((projected.z * 0.5 + 0.5) * 255);
-        normals[offset + 3] = 255;
-      }
+    const normals = chart.bounds
+      ? rasterNormalProjection(mesh, chart)
+      : new Uint8Array(chart.size * chart.size * 4);
+    if (!chart.bounds) {
+      rays ??= new NormalProjectionRays(mesh);
+      for (let y = 0; y < chart.size; y++)
+        for (let x = 0; x < chart.size; x++) {
+          chart.sample((x + 0.5) / chart.size, (y + 0.5) / chart.size, point, normal);
+          const projected = rays.normal(point, normal);
+          const offset = (y * chart.size + x) * 4;
+          normals[offset] = Math.round((projected.x * 0.5 + 0.5) * 255);
+          normals[offset + 1] = Math.round((projected.y * 0.5 + 0.5) * 255);
+          normals[offset + 2] = Math.round((projected.z * 0.5 + 0.5) * 255);
+          normals[offset + 3] = 255;
+        }
+    }
     return [
       {
         ...reference,

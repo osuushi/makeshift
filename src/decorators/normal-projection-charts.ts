@@ -1,9 +1,11 @@
 import * as THREE from "three";
 import type { Face } from "../model/body.js";
+import { type ProjectionBounds, radialProjectionBounds } from "./normal-projection-bounds.js";
 
 export interface NormalChart {
   uv: Float32Array;
   size: number;
+  bounds?(points: readonly THREE.Vector3[]): ProjectionBounds;
   sample(x: number, y: number, point: THREE.Vector3, normal: THREE.Vector3): void;
 }
 const vector = (values: readonly number[]) => new THREE.Vector3(...values);
@@ -36,6 +38,24 @@ function planarChart(face: Face, size: number): NormalChart {
   extent.y = Math.max(extent.y, 1e-9);
   return {
     size,
+    bounds(points) {
+      const projected = new THREE.Box2();
+      for (const p of points) {
+        point.copy(p).sub(origin);
+        projected.expandByPoint(
+          new THREE.Vector2(
+            (point.dot(u) - bounds.min.x) / extent.x,
+            (point.dot(v) - bounds.min.y) / extent.y,
+          ),
+        );
+      }
+      return {
+        left: projected.min.x,
+        right: projected.max.x,
+        bottom: projected.min.y,
+        top: projected.max.y,
+      };
+    },
     uv: new Float32Array(
       coordinates.flatMap((p) => [
         (p.x - bounds.min.x) / extent.x,
@@ -85,6 +105,7 @@ function radialChart(face: Face, size: number): NormalChart {
   return {
     uv,
     size,
+    bounds: (points) => radialProjectionBounds(points, origin, axis, u, v, low, height, slope),
     sample(x, y, point, normal) {
       const angle = (x - 0.5) * Math.PI * 2;
       const z = low + y * height;
