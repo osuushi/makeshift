@@ -51,6 +51,8 @@ cannot intercept analytic face picking.
 Texture generates the same preview mesh, then bakes its facing triangle normals
 onto the original trimmed support tessellation in the preview worker. It changes
 lighting, not the support silhouette, depth, picking, accepted geometry or export.
+Texture uses a smoother material finish so specular highlights follow the projected
+relief as the view turns; Geometry and Color only retain their existing finish.
 Planes, cylinders and cones use continuous analytic charts (with wrapped radial
 seams). Their bake rasterizes conservative triangle footprints and intersects only
 the normal lines in those footprints; it avoids a mesh-tree traversal per texel.
