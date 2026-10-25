@@ -60,6 +60,12 @@ bool visible(const TopoDS_Face& face, const BRepAdaptor_Surface& surface,
                 point.Translate(radial * -delta);
                 BRepClass_FaceClassifier source(face, point, tolerance);
                 if (source.State() != TopAbs_IN) continue;
+            } else {
+                // A ray cannot witness this candidate unless its endpoint lies
+                // on the trimmed target. Reject misses before intersecting the
+                // entire body, especially for many coplanar cap partitions.
+                BRepClass_FaceClassifier endpoint(target, point.Translated(radial * delta), tolerance);
+                if (endpoint.State() == TopAbs_OUT) continue;
             }
             const gp_Dir direction(radial * (delta > 0 ? 1 : -1));
             ray.Perform(gp_Lin(point, direction), tolerance * 10, std::abs(delta) + tolerance);

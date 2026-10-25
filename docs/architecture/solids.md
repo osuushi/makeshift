@@ -81,6 +81,12 @@ recorded in Undo. Agent inspection labels the ordinary center as a bounding-box 
 Face eligibility uses its geometric surface, not how it was generated. Native operation
 history supplies immediate face/edge correspondence; one-to-one continuations
 retain IDs, while splits/merges receive new ones. Future label policy is deferred.
+Thickness-guide visibility rejects sampled rays whose projected endpoint is
+outside the trimmed candidate face before intersecting the whole body. Exact
+nearest-hit and occlusion checks still decide the guide, with the same sampling
+grid, reverse sampling for small patches, and geometric tolerances. This keeps
+partitioned coplanar caps from repeating whole-body intersections for unrelated
+regions; no cap edges or faces are merged to accelerate presentation.
 Use edge copies supported coplanar line/circular geometry into ordinary sketch
 curves, attaching unambiguous endpoints by the existing creation rule. Body snaps
 supply coordinates only; they create no body/sketch dependency. Hide bodies is a
