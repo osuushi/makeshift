@@ -2,13 +2,13 @@ import * as THREE from "three";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
-import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import { previewFaceKey } from "../decorators/preview-compositor.js";
 import { coplanar, type PlaneFrame } from "../sketch/planes.js";
 import { stableClipping } from "../sketch/stable-clipping.js";
 import { foregroundBodyLayer } from "../sketch/world-foreground.js";
 import type { BodyGeometry, Edge } from "./body.js";
 import { defaultBodyAppearance } from "./body-appearance.js";
+import { faceGeometry, faceMaterial } from "./body-mesh.js";
 import { decoratorErrorMaterial, setDecoratorError } from "./decorator-error-material.js";
 import { featureEdges } from "./feature-edges.js";
 
@@ -37,33 +37,6 @@ export function sameBodyDrawing(a: BodyGeometry, b: BodyGeometry): boolean {
   );
 }
 
-function faceGeometry(vertices: number[]): THREE.BufferGeometry {
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
-  // Weld inside each face before computing normals; retain sharp boundaries between faces.
-  const smooth = mergeVertices(geometry, 1e-5);
-  geometry.dispose();
-  smooth.computeVertexNormals();
-  return smooth;
-}
-function faceMaterial(): THREE.MeshStandardMaterial {
-  return stableClipping(
-    new THREE.MeshStandardMaterial({
-      color: "#cad4df",
-      roughness: 0.75,
-      metalness: 0,
-      side: THREE.DoubleSide,
-      stencilWrite: true,
-      stencilRef: 2,
-      stencilWriteMask: 6,
-      stencilFunc: THREE.AlwaysStencilFunc,
-      stencilZPass: THREE.ReplaceStencilOp,
-      polygonOffset: true,
-      polygonOffsetFactor: 1,
-      polygonOffsetUnits: 1,
-    }),
-  );
-}
 function edgeHighlight(edge: Edge): Line2 {
   const geometry = new LineGeometry();
   geometry.setPositions(edge.points);

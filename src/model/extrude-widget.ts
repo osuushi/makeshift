@@ -132,7 +132,12 @@ export class ExtrudeWidget {
     this.handle.title = direction.endOn
       ? "Extrude · looking along axis: drag up/down, or click to enter distance"
       : "Extrude · drag along arrow, or click to enter distance";
-    const invalid = active && distance !== 0 && !valid && !editor.blocked;
+    const invalid =
+      active &&
+      distance !== 0 &&
+      !valid &&
+      !editor.blocked &&
+      !editor.interactions.current?.visualPreview;
     updateAxialArrow(this.handle, editor.world.camera, axis.normal, "extrude", direction, invalid);
     this.input.setAttribute("aria-invalid", String(invalid));
     this.accept.disabled = !active || !valid || distance === 0 || editor.blocked;

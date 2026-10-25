@@ -56,8 +56,14 @@ lost pointer capture before completion discards the gesture. An in-flight call
 may finish, but a discarded gesture has no path to acceptance. This is ordinary
 gesture ownership, not a document-version or retry protocol.
 
+Straight sketch extrusion may display validated mesh-only results while dragging.
+These are separate from complete document candidates: release or explicit guide
+confirmation completes the latest target, and acceptance waits for that result.
+The last visual result stays on screen during completion. An older acceptable
+candidate cannot survive a newer visual target. See [materialized solids](solids.md).
+
 `ActiveInteraction` is the sole owner of the current edit's phase, displayed
-candidate and pointer-capture cleanup. Pointer, rectangle bow, fillet, offset,
+candidate/visual preview and pointer-capture cleanup. Pointer, rectangle bow, fillet, offset,
 trim and numeric controllers acquire it; a second interaction cannot acquire it
 until cleanup completes. Concrete controllers still own their geometry and
 completion rules. `GestureSolve` publishes only into its owning interaction.

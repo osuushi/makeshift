@@ -4,6 +4,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { foregroundBodyLayer } from "../sketch/world-foreground.js";
 import { BodyDrawable } from "./body-drawable.js";
 import { SectionStyleSeeds } from "./section-pattern.js";
+import { visualPreviewView } from "./visual-preview-view.js";
 
 function bodyLights(): THREE.Light[] {
   const ambient = new THREE.HemisphereLight(0xffffff, 0x778899, 2);
@@ -17,6 +18,7 @@ function bodyLights(): THREE.Light[] {
 }
 
 export function bodyView(editor: SketchEditor): () => void {
+  const disposeVisual = visualPreviewView(editor);
   const group = new THREE.Group();
   const stats = { created: 0, disposed: 0 };
   group.userData.bodyDrawableStats = stats;
@@ -96,6 +98,7 @@ export function bodyView(editor: SketchEditor): () => void {
   };
   editor.world.changed.add(update);
   return () => {
+    disposeVisual();
     editor.world.changed.delete(update);
     for (const drawing of drawings.values()) drawing.dispose();
     drawings.clear();

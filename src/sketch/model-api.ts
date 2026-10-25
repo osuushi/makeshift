@@ -84,7 +84,7 @@ export type ModelRequest =
   | { kind: "finish-edges"; operation: BodyEdgeFinish }
   | { kind: "loft"; operation: import("../model/loft.js").Loft }
   | { kind: "revolve"; revolution: Revolution }
-  | { kind: "extrude"; extrusion: Extrusion }
+  | { kind: "extrude"; extrusion: Extrusion; presentation?: "visual" }
   | {
       kind: "place-sketch";
       sketchId: string;
@@ -106,6 +106,7 @@ export type ModelRequest =
   | { kind: "preview" | "edit"; sketch: Sketch; intent?: EditIntent }
   | { kind: "remove" | "clear"; sketchId: string; ids?: string[] };
 export interface ModelView {
+  visualPreview?: import("../model/visual-preview.js").VisualPreview;
   canUndoView?: boolean;
   canRedoView?: boolean;
   erosionQuality?: import("../model/erosion-quality.js").ErosionQuality[];

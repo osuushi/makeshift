@@ -129,6 +129,28 @@ correspondence. Count changes rebuild the drawable; removed bodies and view
 disposal release its resources. Edge-finish previews
 continue highlighting the accepted source chain when the candidate consumes it.
 
+Straight sketch extrusion into independent new bodies uses a separate visual reply
+while its distance handle is captured. This applies to New and to Auto with no
+existing bodies; draft, twist, body-face extrusion and Boolean results retain
+complete previews. The kernel still validates exact geometry and meshes every
+face. The visual reply contains triangles, feature outlines, bounds and plane
+frames needed for section rendering, with no BRep, persistent topology IDs or
+editing metadata. Thickness counterparts, face chains, blend recognition and
+exact edge landmarks are built for the latest complete target instead.
+
+`ExtrudePreview` owns one serial calculation and one replaceable target. Pointer
+release or a request to confirm a guide target completes the latest extrusion;
+acceptance waits for that complete candidate. The visual mesh stays visible while
+completion runs. `DocumentOwner` clears any older acceptable candidate before a
+visual calculation and cannot accept visual data. Cancellation retires both forms.
+Visual drawing batches faces and outlines, separately retaining coplanar section
+stencil ownership, and does not expose its display slots as pickable topology.
+
+Renderer transport retains unchanged read-only source sketches and their ordered
+collection. Region-fill invalidation follows that collection, visibility and view
+scale, so changing only a solid preview does not reconstruct sketch regions or
+X-ray masks. Any changed sketch content replaces the retained reference.
+
 The founder's 2026-09-15 feedback opens planning of the first solid modeling loop
 while further sketch work remains. The [sketch → solid → sketch proposal](../sketch-solid-loop.md)
 develops these requirements into interactions, concrete model ownership and bounded
