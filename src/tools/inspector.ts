@@ -1,3 +1,5 @@
+import "../preferences/panel-placement.css";
+import { inspectorIcon } from "./inspector-icons.js";
 import {
   InspectorPlacement,
   readInspectorLayout,
@@ -24,17 +26,19 @@ export class Inspector {
     this.root.setAttribute("aria-label", "Inspector");
     const bar = document.createElement("div");
     bar.className = "inspector-bar";
-    const move = this.button("Move Inspector", "⠿ Inspector");
-    move.className = "inspector-move";
-    move.title = "Drag to move; arrow keys move the pane";
-    const collapse = this.button("Collapse Inspector", "−");
-    const reset = this.button("Reset Inspector layout", "↺");
-    const resize = this.button("Resize Inspector", "◢");
-    resize.className = "inspector-resize";
-    resize.title = "Drag to resize; arrow keys resize the pane";
+    const move = this.button("Move Inspector", "");
+    move.className = "parameter-panel-grip inspector-move";
+    move.title = "Drag to move; arrow keys move, Shift + arrows resize";
+    const collapse = this.button("Collapse Inspector", "");
+    collapse.className = "inspector-collapse";
+    collapse.append(inspectorIcon("chevron"));
+    const reset = this.button("Reset Inspector layout", "");
+    reset.append(inspectorIcon("reset"));
+    const title = document.createElement("strong");
+    title.textContent = "Inspector";
     this.body.className = "inspector-body";
-    bar.append(move, reset, collapse);
-    this.root.append(bar, this.body, resize);
+    bar.append(title, reset, collapse);
+    this.root.append(move, bar, this.body);
     app.append(this.root);
     const updateCollapse = () => {
       this.root.classList.toggle("collapsed", !!this.layout.collapsed);
@@ -44,9 +48,7 @@ export class Inspector {
         this.layout.collapsed ? "Expand Inspector" : "Collapse Inspector",
       );
       collapse.setAttribute("aria-expanded", String(!this.layout.collapsed));
-      collapse.textContent = this.layout.collapsed ? "+" : "−";
       this.body.hidden = !!this.layout.collapsed;
-      resize.hidden = !!this.layout.collapsed;
     };
     collapse.onclick = () => {
       this.layout.collapsed = !this.layout.collapsed;
@@ -56,7 +58,7 @@ export class Inspector {
     for (const title of titles) this.add(title);
     this.reorder();
     updateCollapse();
-    this.placement = new InspectorPlacement(this.root, app, this.layout, move, resize);
+    this.placement = new InspectorPlacement(this.root, app, this.layout, move);
     reset.onclick = () => {
       for (const key of Object.keys(this.layout))
         delete this.layout[key as keyof typeof this.layout];
@@ -97,6 +99,7 @@ export class Inspector {
     bar.className = "inspector-section-bar";
     const toggle = this.button(title, title);
     toggle.className = "inspector-section-toggle";
+    toggle.prepend(inspectorIcon("chevron"));
     const section = { root, content, toggle };
     this.sections.set(title, section);
     this.expand(section, !this.layout.closed?.includes(title));
@@ -108,11 +111,10 @@ export class Inspector {
       this.save();
     };
     bar.append(toggle);
-    for (const [direction, symbol] of [
-      [-1, "↑"],
-      [1, "↓"],
-    ] as const) {
-      const button = this.button(`Move ${title} ${direction === -1 ? "up" : "down"}`, symbol);
+    for (const direction of [-1, 1]) {
+      const name = direction === -1 ? "up" : "down";
+      const button = this.button(`Move ${title} ${name}`, "");
+      button.append(inspectorIcon(name));
       button.onclick = () => {
         const items = [...this.body.children] as HTMLElement[];
         const visible = items.filter((item) => !item.hidden);

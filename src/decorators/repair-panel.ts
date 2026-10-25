@@ -1,6 +1,7 @@
 import { entityRows } from "../model/entity-presentation.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "../tools/catalog.js";
+import { inspectorIcon } from "../tools/inspector-icons.js";
 import { gearDefinition } from "./gear-settings.js";
 import { selectDecoratorInputs } from "./selection-action.js";
 import { threadDefinition } from "./thread-settings.js";
@@ -94,6 +95,7 @@ function repairDetails(
   const owner = rows.find((row) => row.id === bodies[0])?.name ?? "Missing body";
   const summary = document.createElement("summary");
   summary.textContent = `${name} · ${owner}${bodies.length > 1 ? ` +${bodies.length - 1}` : ""} · needs attention`;
+  summary.prepend(inspectorIcon("chevron"));
   item.append(summary);
   item.ontoggle = () => {
     if (!item.isConnected) return;

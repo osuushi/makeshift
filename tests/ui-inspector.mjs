@@ -17,6 +17,19 @@ export async function inspectorRoute(page, name) {
   const pane = page.getByRole("complementary", { name: "Inspector", exact: true });
   await page.locator(".measurement-readout > div").first().waitFor();
   const original = (await inspect(page)).document;
+  const anchored = await pane.boundingBox();
+  await dragControl(page, page.locator('.inspector-edge[data-edge="nw"]'), -60, -50);
+  const grown = await pane.boundingBox();
+  assert.ok(Math.abs(grown.width - anchored.width - 60) < 2);
+  assert.ok(Math.abs(grown.height - anchored.height - 50) < 2);
+  assert.ok(Math.abs(grown.x + grown.width - anchored.x - anchored.width) < 2);
+  assert.ok(Math.abs(grown.y + grown.height - anchored.y - anchored.height) < 2);
+  await page.getByRole("button", { name: "Reset Inspector layout", exact: true }).click();
+  await page.waitForFunction(
+    (width) =>
+      Math.abs(document.querySelector(".inspector").getBoundingClientRect().width - width) < 2,
+    anchored.width,
+  );
   const before = await pane.boundingBox();
   await dragControl(
     page,
@@ -27,16 +40,12 @@ export async function inspectorRoute(page, name) {
   const moved = await pane.boundingBox();
   assert.ok(Math.abs(moved.x - before.x + 160) < 2);
   assert.ok(Math.abs(moved.y - before.y + 140) < 2);
-  await dragControl(
-    page,
-    page.getByRole("button", { name: "Resize Inspector", exact: true }),
-    80,
-    60,
-  );
+  await dragControl(page, page.locator('.inspector-edge[data-edge="se"]'), 80, 60);
   const resized = await pane.boundingBox();
   assert.ok(resized.width > moved.width + 70);
   assert.ok(resized.height > moved.height + 50);
-  await page.getByRole("button", { name: "Measurements", exact: true }).click();
+  await page.getByRole("button", { name: "Measurements", exact: true }).focus();
+  await page.keyboard.press("Space");
   assert.equal(await page.locator(".measurement-readout").isVisible(), false);
   await page.getByRole("button", { name: "Move Measurements up", exact: true }).click();
   assert.equal(
@@ -111,11 +120,16 @@ export async function inspectorRepairsRoute(page, name, document) {
   assert.equal(await repairs.count(), 2);
   assert.equal(await page.locator(".decorator-repair[open]").count(), 0);
   await page.screenshot({ path: `.cache/sketch-review/${name}-inspector-repairs.png` });
-  await repairs.first().locator("summary").click();
+  await page
+    .locator(".inspector")
+    .screenshot({ path: `.cache/sketch-review/${name}-inspector-styled-detail.png` });
+  await repairs.first().locator("summary").focus();
+  await page.keyboard.press("Enter");
   await repairs
     .first()
     .getByRole("button", { name: "Select affected geometry", exact: true })
     .click();
+  await page.screenshot({ path: `.cache/sketch-review/${name}-inspector-repair-expanded.png` });
   const selected = await inspect(page);
   assert.equal(selected.modelingSelection.length, 1);
   assert.equal(selected.modelingSelection[0].kind, "face");
