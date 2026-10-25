@@ -9,28 +9,18 @@ import "./style.css";
 export function installAgentDock(app: HTMLElement): () => void {
   const host = window.makeshiftAgent;
   if (!host) return () => {};
-  const toggle = document.createElement("button");
-  toggle.className = "agent-toggle";
-  toggle.textContent = "Agent";
-  toggle.setAttribute("aria-label", "Open agent terminal");
-  (app.querySelector("header") ?? app).append(toggle);
-  let dock: AgentDock | null = null;
-  toggle.onclick = () => {
-    dock ??= new AgentDock(app, host);
-    toggle.hidden = true;
-  };
-  return () => {
-    dock?.dispose();
-    toggle.remove();
-  };
+  const dock = new AgentDock(app, host);
+  return () => dock.dispose();
 }
 
 class AgentDock {
   private panel = document.createElement("section");
   private layout: ReturnType<typeof dockLayout>;
-  private terminal: AgentTerminal;
-  private attachments: ReturnType<typeof agentAttachments>;
-  private collapsed = false;
+  private terminal: AgentTerminal | null = null;
+  private attachments: ReturnType<typeof agentAttachments> | null = null;
+  private collapsed = true;
+  private disposed = false;
+  private hostFocused = false;
   private unread = false;
   private pending = false;
   private configuring = false;
@@ -43,16 +33,30 @@ class AgentDock {
   ) {
     this.panel.className = "agent-dock";
     this.panel.setAttribute("aria-label", "Agent terminal");
-    this.panel.innerHTML = `<div class="agent-header"><button data-collapse aria-label="Collapse agent terminal">−</button><strong>Agent</strong><span class="agent-status">Stopped</span><button data-attach>Attach file…</button><button data-position aria-label="Change agent dock position">Dock</button><button data-settings>Settings</button><button data-start>Start</button><button data-stop disabled>Stop</button></div>
+    this.panel.innerHTML = `<div class="agent-header"><button data-collapse aria-label="Open agent terminal" aria-expanded="false">+</button><strong>Agent</strong><span class="agent-status">Stopped</span><button data-attach>Attach file…</button><button data-position aria-label="Change agent dock position">Dock</button><button data-settings>Settings</button><button data-start>Start</button><button data-stop disabled>Stop</button></div>
       <div class="agent-body"><div class="agent-message" aria-live="polite"></div><div class="agent-screen"></div><p class="agent-workspace">Files and Codex conversations are included when you save.</p></div>`;
     document.body.append(this.panel);
     this.layout = dockLayout(this.panel, app);
+    this.button("collapse").onclick = this.collapse;
+    this.element(".agent-header").onclick = () => {
+      if (this.collapsed) this.collapse();
+    };
+    const stopKeys = (event: KeyboardEvent) => event.stopPropagation();
+    this.panel.addEventListener("keydown", stopKeys);
+    this.panel.addEventListener("keyup", stopKeys);
+    this.panel.addEventListener("focusin", this.focus);
+    this.panel.addEventListener("focusout", () => queueMicrotask(this.focus));
+    window.addEventListener("focus", this.focus);
+    window.addEventListener("blur", this.focus);
+  }
+  private initialize(): void {
+    const host = this.host;
     const settings = agentSettings(host, this.report, (value) => {
       this.configuring = value;
       this.update(this.status);
       if (!value && this.launchOnReady) {
         this.launchOnReady = false;
-        void this.action(() => this.terminal.start());
+        void this.action(async () => this.terminal?.start());
       }
     });
     this.element(".agent-body").prepend(settings);
@@ -66,10 +70,10 @@ class AgentDock {
       this.panel,
       host,
       (run) => this.action(run),
-      (value) => this.terminal.insert(value),
+      (value) => this.terminal?.insert(value),
       () => this.status.running,
     );
-    this.button("attach").onclick = () => this.attachments.choose();
+    this.button("attach").onclick = () => this.attachments?.choose();
     this.button("recover").onclick = () =>
       void this.action(async () => {
         const reply = await host.request({ kind: "recover" });
@@ -78,12 +82,16 @@ class AgentDock {
       });
     this.terminal = new AgentTerminal(
       this.element(".agent-screen"),
-      host,
+      this.host,
       this.update,
       this.report,
-      (files) => this.attachments.attach(files),
+      (files) => this.attachments?.attach(files),
     );
-    this.button("start").onclick = () => void this.action(() => this.terminal.start());
+    this.button("start").onclick = () => {
+      // Move focus before pending state disables the button and the browser blurs it.
+      this.terminal?.focus();
+      void this.action(async () => this.terminal?.start());
+    };
     this.button("stop").onclick = () =>
       void this.action(async () => {
         const reply = await host.request({ kind: "stop" });
@@ -94,12 +102,6 @@ class AgentDock {
       settings.hidden = !settings.hidden;
     };
     this.button("position").onclick = () => this.layout.toggleSide();
-    this.button("collapse").onclick = this.collapse;
-    const stopKeys = (event: KeyboardEvent) => event.stopPropagation();
-    this.panel.addEventListener("keydown", stopKeys);
-    this.panel.addEventListener("keyup", stopKeys);
-    this.panel.addEventListener("focusin", this.focus);
-    this.panel.addEventListener("focusout", () => queueMicrotask(this.focus));
   }
   private element(selector: string): HTMLElement {
     const result = this.panel.querySelector<HTMLElement>(selector);
@@ -124,12 +126,21 @@ class AgentDock {
     this.button("stop").disabled = this.pending || this.configuring || !reply.running;
     this.button("settings").disabled = this.pending || this.configuring;
     this.button("attach").disabled = this.pending || this.configuring || !reply.running;
-    this.element(".agent-status").textContent =
-      `${reply.running ? "Running" : reply.exitCode === undefined ? "Stopped" : `Exited ${reply.exitCode}`}${this.unread ? " · New output" : ""}`;
-    this.element(".agent-workspace").textContent = reply.workspace
-      ? `Files and Codex conversations are included when you save. Workspace: ${reply.workspace}`
-      : "Files and Codex conversations are included when you save.";
+    this.text(
+      ".agent-status",
+      `${reply.running ? "Running" : reply.exitCode === undefined ? "Stopped" : `Exited ${reply.exitCode}`}${this.unread ? " · New output" : ""}`,
+    );
+    this.text(
+      ".agent-workspace",
+      reply.workspace
+        ? `Files and Codex conversations are included when you save. Workspace: ${reply.workspace}`
+        : "Files and Codex conversations are included when you save.",
+    );
   };
+  private text(selector: string, value: string): void {
+    const element = this.element(selector);
+    if (element.textContent !== value) element.textContent = value;
+  }
   private async action(run: () => Promise<void>): Promise<void> {
     this.pending = true;
     this.update(this.status);
@@ -143,7 +154,8 @@ class AgentDock {
       this.update(this.status);
     }
   }
-  private collapse = (): void => {
+  private collapse = (event?: MouseEvent): void => {
+    event?.stopPropagation();
     this.collapsed = !this.collapsed;
     this.unread = false;
     this.layout.collapse(this.collapsed);
@@ -152,16 +164,31 @@ class AgentDock {
       "aria-label",
       `${this.collapsed ? "Expand" : "Collapse"} agent terminal`,
     );
+    this.button("collapse").setAttribute("aria-expanded", String(!this.collapsed));
+    if (!this.collapsed) {
+      if (!this.terminal) this.initialize();
+      else this.terminal.focus();
+    } else document.querySelector<HTMLElement>('canvas[aria-label="Modeling viewport"]')?.focus();
     this.update(this.status);
+    this.focus();
   };
   private focus = (): void => {
-    void this.host
-      .request({ kind: "focus", focused: this.panel.contains(document.activeElement) })
-      .catch(this.report);
+    if (this.disposed) return;
+    const focused =
+      !this.collapsed && document.hasFocus() && this.panel.contains(document.activeElement);
+    const terminal = focused && this.element(".agent-screen").contains(document.activeElement);
+    this.terminal?.setFocused(terminal);
+    this.panel.dataset.focus = terminal ? "terminal" : focused ? "controls" : "drawing";
+    if (focused === this.hostFocused) return;
+    this.hostFocused = focused;
+    void this.host.request({ kind: "focus", focused }).catch(this.report);
   };
   dispose(): void {
-    this.attachments.dispose();
-    this.terminal.dispose();
+    this.disposed = true;
+    window.removeEventListener("focus", this.focus);
+    window.removeEventListener("blur", this.focus);
+    this.attachments?.dispose();
+    this.terminal?.dispose();
     this.layout.dispose();
     this.panel.remove();
   }

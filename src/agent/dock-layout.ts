@@ -2,7 +2,7 @@ export function dockLayout(panel: HTMLElement, app: HTMLElement) {
   app.classList.add("agent-open");
   let side = localStorage.getItem("freac.agent.side") === "bottom" ? "bottom" : "right";
   let size = Number(localStorage.getItem("freac.agent.size")) || 440;
-  let collapsed = false;
+  let collapsed = true;
   const splitter = document.createElement("div");
   splitter.className = "agent-splitter";
   splitter.tabIndex = 0;

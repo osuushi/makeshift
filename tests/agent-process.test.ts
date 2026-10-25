@@ -67,3 +67,43 @@ test("PTY stop kills a child that ignores TERM and retains workspace files", {
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("waiting PTY reads wake on output and exit without holding up input", {
+  skip: process.platform === "win32",
+  timeout: 5000,
+}, async () => {
+  const root = await mkdtemp(join(tmpdir(), "makeshift-agent-read-"));
+  const pty = new AgentProcess();
+  try {
+    await pty.start(
+      "/bin/sh",
+      ["-c", "stty -echo; echo READY; read line; echo RESULT:$line; read line"],
+      root,
+      process.env,
+      80,
+      24,
+    );
+    let output = "";
+    while (!output.includes("READY")) {
+      await pty.waitForOutput();
+      output += pty.read();
+    }
+    let woke = false;
+    const pending = pty.waitForOutput().then(() => {
+      woke = true;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    assert.equal(woke, false, "idle read waits for data");
+    pty.write("hello\n");
+    await pending;
+    assert.match(pty.read(), /RESULT:hello/, "input progresses while a read is pending");
+    const exit = pty.waitForOutput();
+    await pty.stop();
+    await exit;
+    assert.equal(pty.status.running, false);
+    await pty.waitForOutput();
+  } finally {
+    await pty.stop();
+    await rm(root, { recursive: true, force: true });
+  }
+});

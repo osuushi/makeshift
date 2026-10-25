@@ -85,6 +85,7 @@ export class AgentSession {
   async request(request: AgentRequest): Promise<AgentReply> {
     if (!request || typeof request !== "object") throw new Error("Invalid agent request.");
     if (request.kind === "read") {
+      if (request.wait) await this.process.waitForOutput();
       if (!this.busy && !this.process.status.running) await this.disconnect();
       return { ...this.status, output: this.process.read() };
     }
