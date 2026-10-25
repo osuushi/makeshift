@@ -57,7 +57,16 @@ export async function delayedBackend(page, name) {
     await page.mouse.down();
     await page.mouse.move(middle.x, middle.y);
     await gated;
+    assert.equal(
+      Number(await page.getByRole("textbox", { name: "Width", exact: true }).inputValue()),
+      25,
+    );
     await page.mouse.move(end.x, end.y, { steps: 8 });
+    assert.equal(
+      Number(await page.getByRole("textbox", { name: "Width", exact: true }).inputValue()),
+      32,
+      "Requested dimensions follow the pointer while the first real solve is still held",
+    );
     await page.mouse.up();
     await page.mouse.move(end.x + 100, end.y + 100);
     assert.deepEqual(await page.evaluate(() => window.makeshiftInspect().document), original);

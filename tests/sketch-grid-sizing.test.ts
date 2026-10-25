@@ -24,7 +24,7 @@ test("visible grids meet the pixel minimum and major lines align with minor line
         );
         const ratio = shown.major / shown.minor;
         assert.ok(Math.abs(ratio - Math.round(ratio)) < 1e-10);
-        assert.equal(shown.snap, shown.minor);
+        assert.equal(shown.snap, grid.minor, "Zoom only thins visible lines, never drag steps");
         assert.equal(shown.hideMinor, shown.minor === shown.major);
       }
     }
@@ -42,18 +42,18 @@ test("zoom thins minor lines without moving the configured major lattice", () =>
     minor: 2,
     major: 10,
     hideMinor: false,
-    snap: 2,
+    snap: 0.5,
   });
   assert.deepEqual(visibleSketchGrid(defaultSketchGrid, 1, 10), {
     minor: 10,
     major: 10,
     hideMinor: true,
-    snap: 10,
+    snap: 0.5,
   });
   assert.deepEqual(visibleSketchGrid({ ...defaultSketchGrid, minor: 3 }, 0.4, 4), {
     minor: 10,
     major: 10,
     hideMinor: true,
-    snap: 10,
+    snap: 3,
   });
 });

@@ -3,6 +3,7 @@ import { toolCatalog } from "../tools/catalog.js";
 import type { InteractionLease } from "./active-interaction.js";
 import { completeInteraction } from "./complete-interaction.js";
 import { curveBounds } from "./curve-geometry.js";
+import { dragDimensions } from "./drag-dimensions.js";
 import { dragIntent } from "./drag-intent.js";
 import { beginDrag, type Drag, type Quantity, resolveDrag } from "./drag-state.js";
 import { updateDrag } from "./drag-update.js";
@@ -27,6 +28,7 @@ export class PointerGestures implements DragQuantityEdit {
     return !!this.interaction && this.interaction.phase !== "editing";
   }
   private failure = "";
+  values: Partial<Record<Quantity, number>> | null = null;
   private readonly abort = new AbortController();
   private get canvas() {
     return this.editor.world.canvas;
@@ -60,6 +62,7 @@ export class PointerGestures implements DragQuantityEdit {
   private finish(): void {
     const interaction = this.interaction;
     this.drag = null;
+    this.values = null;
     this.editor.rotationPreview = null;
     this.solve = null;
     this.interaction = null;
@@ -116,6 +119,7 @@ export class PointerGestures implements DragQuantityEdit {
   private submit(candidate: import("./document.js").Sketch): void {
     this.failure = "";
     if (!this.interaction) return;
+    this.values = this.drag ? dragDimensions(this.drag, candidate) : null;
     this.solve ??= new GestureSolve(this.editor, this.interaction);
     this.solve.update(candidate, this.drag ? dragIntent(this.drag, candidate) : { kind: "direct" });
   }
@@ -155,6 +159,7 @@ export class PointerGestures implements DragQuantityEdit {
         drag.valid = true;
         editor.message = "";
       } catch (error) {
+        this.values = null;
         this.solve?.invalidate();
         drag.valid = false;
         this.failure = editor.message = String(error);

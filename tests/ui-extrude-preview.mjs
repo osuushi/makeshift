@@ -38,6 +38,12 @@ export async function extrusionPreviewRoute(page) {
     await page.mouse.down();
     await page.mouse.move(x, y - 50);
     await reachedPreview(gates[0], "first drag");
+    close(
+      Number(
+        await page.getByRole("textbox", { name: "Extrusion distance", exact: true }).inputValue(),
+      ),
+      requests[0].distance,
+    );
     gates[0].release.resolve();
     await settled(page);
     close((await inspect(page)).preview.bodies[0].volume, requests[0].distance * 600);
@@ -70,10 +76,20 @@ async function queuedExtrusion(page, gates, requests, superseded, x, y) {
   assert.equal(requests.length, 2, "Unchanged snapped distance must not recompute");
   await page.mouse.move(x, y - 150);
   await page.mouse.move(x, y - 200);
+  const requested = Number(
+    await page.getByRole("textbox", { name: "Extrusion distance", exact: true }).inputValue(),
+  );
+  assert.ok(requested > requests[1].distance, "The field follows the latest queued drag target");
   assert.equal(requests.length, 2, "Waiting targets stay in the serial controller slot");
   assert.deepEqual(superseded, [], "Drag changes keep the initialized worker alive");
   gates[1].release.resolve();
   await reachedPreview(gates[2], "latest queued drag");
+  close(
+    Number(
+      await page.getByRole("textbox", { name: "Extrusion distance", exact: true }).inputValue(),
+    ),
+    requested,
+  );
   const intermediate = await page.evaluate(() => window.makeshiftInspect());
   close(intermediate.preview.bodies[0].volume, requests[1].distance * 600);
   assert.equal(intermediate.document.bodies?.length ?? 0, 0);

@@ -200,7 +200,7 @@ export class ModelClient extends ModelQueries {
     const timer = setTimeout(() => {
       this.slow = true;
       this.changed();
-    }, 150);
+    }, 500);
     try {
       await this.selectionSending;
       await this.flushSelection();
