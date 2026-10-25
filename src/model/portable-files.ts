@@ -1,6 +1,7 @@
 /** Portable data only; machine state never belongs in this map. */
 export type PortableFiles = Record<string, Uint8Array>;
-export const archiveLimits = { bytes: 64 * 1024 * 1024, files: 4096, path: 512 };
+// Keep total encoded bytes and entry counts within classic ZIP limits (no ZIP64 writer).
+export const archiveLimits = { bytes: 2 * 1024 * 1024 * 1024, files: 60_000, path: 512 };
 
 export function portablePath(path: string): void {
   const segments = path.split("/");
@@ -45,5 +46,5 @@ export function validatePortable(files: PortableFiles): void {
       if (names.has(segments.slice(0, i).join("/")))
         throw new Error("File/directory path conflict.");
   }
-  if (size > archiveLimits.bytes) throw new Error("Workspace exceeds the 64 MiB archive limit.");
+  if (size > archiveLimits.bytes) throw new Error("Workspace exceeds the 2 GiB archive limit.");
 }

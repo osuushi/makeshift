@@ -28,16 +28,20 @@ export function writePortableArchive(model: string, files: PortableFiles): Uint8
     data.length + Object.values(files).reduce((sum, file) => sum + file.length, 0) >
     archiveLimits.bytes
   )
-    throw new Error("Document exceeds the 64 MiB archive limit.");
+    throw new Error("Document exceeds the 2 GiB archive limit.");
   return portable ? zipSync({ "model.json": data, ...files }, { level: 0 }) : data;
 }
 
 export function readPortableArchive(data: Uint8Array): PortableArchive {
-  if (data.length > archiveLimits.bytes + 8 * 1024 * 1024)
+  // Both ZIP headers contain the UTF-8 path (at most 3 bytes per UTF-16 code unit).
+  if (
+    data.length >
+    archiveLimits.bytes + archiveLimits.files * (98 + 6 * archiveLimits.path) + 1024
+  )
     throw new Error("Document is too large.");
   if (data[0] !== 0x50 || data[1] !== 0x4b) {
     if (data.length > archiveLimits.bytes)
-      throw new Error("Document exceeds the 64 MiB archive limit.");
+      throw new Error("Document exceeds the 2 GiB archive limit.");
     return { ...readFileArchive(strFromU8(data)), files: {} };
   }
   const checks = checkZip(data);
@@ -94,7 +98,7 @@ function checkZip(data: Uint8Array): Map<string, { size: number; crc: number }> 
       crc: view.getUint32(offset + 16, true),
     });
     total += view.getUint32(offset + 24, true);
-    if (total > archiveLimits.bytes) throw new Error("Expanded archive exceeds 64 MiB.");
+    if (total > archiveLimits.bytes) throw new Error("Expanded archive exceeds 2 GiB.");
     offset = next;
   }
   if (offset !== end || view.getUint32(end + 12, true) + view.getUint32(end + 16, true) !== end)

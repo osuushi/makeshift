@@ -47,7 +47,7 @@ async function entries(root: string, legacy: boolean): Promise<Entry[]> {
       if (prefix.startsWith("conversations/") && !path.endsWith(".jsonl")) continue;
       bytes += info.size;
       if (bytes > archiveLimits.bytes || result.length >= archiveLimits.files)
-        throw new Error("Workspace exceeds archive limits (64 MiB / 4096 files).");
+        throw new Error("Workspace exceeds archive limits (2 GiB / 60000 files).");
       result.push({ path, source, stamp: stamp(info), size: info.size });
     }
   }

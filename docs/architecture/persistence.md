@@ -249,13 +249,14 @@ an isolated directory, then uses the normal model validation/materialization pat
 before adopting the prepared workspace. No archived file is executed during Open.
 Archives accept unique regular files, with portable paths, no links or special files,
 no absolute/traversal/Windows device paths and no case-folded or file/directory conflicts.
-Limits are 4096 portable files and 64 MiB expanded model plus portable bytes. Directories
+Limits are 60,000 portable files and 2 GiB expanded model plus portable bytes. Directories
 are implicit in file paths; empty directories and executable mode bits are not preserved.
 The writer uses uncompressed ZIP entries; the reader also supports compressed entries.
 The same expanded limit applies to model-only JSON on Save and Open. A failed size
 check happens before the destination write and preserves file identity and Edited
-state. ZIP headers have a separate 8 MiB encoded allowance; they do not raise the
-expanded-content limit.
+state. ZIP headers have a separate encoded allowance derived from the file count and maximum
+UTF-8 path length; they do not raise the expanded-content limit. The limits stay below
+classic ZIP size and entry-count boundaries; larger archives require ZIP64 support.
 
 Each document gets its own local Codex home beside (outside) its workspace. Base
 Makeshift configuration and auth are copied there at launch and synchronized locally on
