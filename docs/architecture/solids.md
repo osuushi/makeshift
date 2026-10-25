@@ -121,8 +121,12 @@ Body drawing owns face meshes and feature-edge resources separately from style.
 Hover, selection, section stencil ownership and visibility update existing objects.
 A retained body object is a fast reuse check; transport copies compare actual
 triangle/feature-edge inputs before reusing GPU geometry. IDs locate a drawable
-but do not establish geometric equality. Changed presentation replaces that body's
-resources; removed bodies and view disposal release them. Edge-finish previews
+but do not establish geometric equality. Changed presentation replaces geometry
+and picking metadata while retaining materials when face/feature-edge counts
+remain compatible. Newly created preview bodies use local display slots so fresh
+model IDs do not force repeated shader setup; those slots carry no topology
+correspondence. Count changes rebuild the drawable; removed bodies and view
+disposal release its resources. Edge-finish previews
 continue highlighting the accepted source chain when the candidate consumes it.
 
 The founder's 2026-09-15 feedback opens planning of the first solid modeling loop

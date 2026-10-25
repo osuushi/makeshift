@@ -91,6 +91,7 @@ function disposeDrawable(object: THREE.Object3D): void {
 export class BodyDrawable {
   readonly group = new THREE.Group();
   private faces: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>[] = [];
+  private edges: THREE.Line[] = [];
   private highlights = new Map<string, { edge: Edge; line: Line2 }>();
   constructor(
     private body: BodyGeometry,
@@ -109,9 +110,12 @@ export class BodyDrawable {
     for (const edge of featureEdges(source)) {
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute("position", new THREE.Float32BufferAttribute(edge.points, 3));
-      this.group.add(
-        new THREE.Line(geometry, stableClipping(new THREE.LineBasicMaterial({ color: "#344657" }))),
+      const line = new THREE.Line(
+        geometry,
+        stableClipping(new THREE.LineBasicMaterial({ color: "#344657" })),
       );
+      this.edges.push(line);
+      this.group.add(line);
     }
     this.group.traverse((object) => object.layers.enable(foregroundBodyLayer));
   }
@@ -119,7 +123,29 @@ export class BodyDrawable {
     return this.body;
   }
   reuse(body: BodyGeometry): boolean {
-    if (!sameBodyDrawing(this.body, body)) return false;
+    if (!sameBodyDrawing(this.body, body)) {
+      const edges = featureEdges(body);
+      if (body.faces.length !== this.faces.length || edges.length !== this.edges.length)
+        return false;
+      // These are presentation slots, not topology identities. Replace all
+      // geometric inputs and picking IDs while retaining compatible materials.
+      this.faces.forEach((mesh, i) => {
+        const face = body.faces[i];
+        const geometry = faceGeometry(face.vertices);
+        mesh.geometry.dispose();
+        mesh.geometry = geometry;
+        mesh.userData.bodyFace = { body: body.id, face: face.id };
+        mesh.userData.decoratorFace = previewFaceKey(body.id, face.id);
+        this.counts.created++;
+        this.counts.disposed++;
+      });
+      this.edges.forEach((line, i) => {
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute("position", new THREE.Float32BufferAttribute(edges[i].points, 3));
+        line.geometry.dispose();
+        line.geometry = geometry;
+      });
+    }
     this.body = body;
     return true;
   }
@@ -184,6 +210,7 @@ export class BodyDrawable {
     this.group.traverse(disposeDrawable);
     this.group.clear();
     this.faces = [];
+    this.edges = [];
     this.highlights.clear();
   }
 }

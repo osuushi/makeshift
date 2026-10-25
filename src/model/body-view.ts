@@ -5,10 +5,7 @@ import { foregroundBodyLayer } from "../sketch/world-foreground.js";
 import { BodyDrawable } from "./body-drawable.js";
 import { SectionStyleSeeds } from "./section-pattern.js";
 
-export function bodyView(editor: SketchEditor): () => void {
-  const group = new THREE.Group();
-  const stats = { created: 0, disposed: 0 };
-  group.userData.bodyDrawableStats = stats;
+function bodyLights(): THREE.Light[] {
   const ambient = new THREE.HemisphereLight(0xffffff, 0x778899, 2);
   const light = new THREE.DirectionalLight(0xffffff, 2);
   for (const source of [ambient, light]) {
@@ -16,12 +13,26 @@ export function bodyView(editor: SketchEditor): () => void {
     source.layers.enable(decoratorPreviewLayer);
   }
   light.position.set(40, -60, 90);
-  editor.world.scene.add(group, ambient, light);
-  const drawings = new Map<string, BodyDrawable>();
+  return [ambient, light];
+}
+
+export function bodyView(editor: SketchEditor): () => void {
+  const group = new THREE.Group();
+  const stats = { created: 0, disposed: 0 };
+  group.userData.bodyDrawableStats = stats;
+  const lights = bodyLights();
+  editor.world.scene.add(group, ...lights);
+  const drawings = new Map<string | number, BodyDrawable>();
   const sectionSeeds = new SectionStyleSeeds();
   const update = () => {
     const bodies = editor.display.bodies ?? [];
-    const current = new Set(bodies.map((body) => body.id));
+    const accepted = editor.store.data.bodies ?? [];
+    const kind = editor.candidate ? (editor.interactions.current?.kind ?? null) : null;
+    // New temporary bodies have fresh model IDs on every calculation. A local
+    // display slot can keep their materials without claiming model continuity.
+    const drawingKey = (body: (typeof bodies)[number], index: number) =>
+      kind && !accepted.some((source) => source.id === body.id) ? index : body.id;
+    const current = new Set(bodies.map(drawingKey));
     for (const [id, drawing] of drawings) {
       if (current.has(id)) continue;
       drawing.dispose();
@@ -37,20 +48,19 @@ export function bodyView(editor: SketchEditor): () => void {
     const selectedEdges = new Set(
       editor.modeling.targets.filter((t) => t.kind === "edge").map((t) => t.edge),
     );
-    const accepted = editor.store.data.bodies ?? [];
-    const kind = editor.candidate ? (editor.interactions.current?.kind ?? null) : null;
     const hover = editor.modeling.hover;
     for (const [index, body] of bodies.entries()) {
-      let drawing = drawings.get(body.id);
+      const key = drawingKey(body, index);
+      let drawing = drawings.get(key);
       if (drawing && !drawing.reuse(body)) {
         drawing.dispose();
         group.remove(drawing.group);
-        drawings.delete(body.id);
+        drawings.delete(key);
         drawing = undefined;
       }
       if (!drawing) {
         drawing = new BodyDrawable(body, stats);
-        drawings.set(body.id, drawing);
+        drawings.set(key, drawing);
         group.add(drawing.group);
       }
       // Newly created candidates get fresh model IDs on each computation. Hold
@@ -89,6 +99,6 @@ export function bodyView(editor: SketchEditor): () => void {
     editor.world.changed.delete(update);
     for (const drawing of drawings.values()) drawing.dispose();
     drawings.clear();
-    editor.world.scene.remove(group, ambient, light);
+    editor.world.scene.remove(group, ...lights);
   };
 }
