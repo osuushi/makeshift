@@ -27,8 +27,9 @@ The sidebar lists groups without requiring a selection. Clicking a group selects
 its members and reveals body names, face counts, target/fitted pitch diameters,
 tooth counts and **Preview color** (picker and hex entry). New groups receive
 distinct hues, then variations in lightness/saturation; color is saved in the
-drawing, shared by its members, editable, and included in Undo/Redo. Copies get
-independent group IDs and new colors. Detailed and Color only previews use the
+drawing, shared by its members, editable, and included in Undo/Redo. Copies retain
+their original group IDs and colors, with distinct decorator instance IDs.
+Later geometry edits preserve that membership. Detailed and Color only previews use the
 same group colors. Settings retains global gear opacity, but has no global gear
 color override. Legacy groups without a saved color get a deterministic fallback;
 ordinary group edits save the color.
