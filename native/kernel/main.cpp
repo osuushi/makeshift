@@ -166,8 +166,8 @@ void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
     timing.phase("calculate");
     if (input.get<std::string>("presentation", "") == "deferred") {
         const auto kind = input.get<std::string>("kind");
-        if (kind != "move-faces" && kind != "move-edges")
-            throw std::runtime_error("Deferred presentation requires boundary movement");
+        if (kind != "move-faces" && kind != "move-edges" && kind != "offset-faces" && kind != "edge-finish")
+            throw std::runtime_error("Deferred presentation requires a supported solid edit");
         deferPresentation(reply, results, mode, participants);
         return;
     }

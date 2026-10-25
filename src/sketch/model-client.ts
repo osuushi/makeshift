@@ -230,8 +230,7 @@ export class ModelClient extends ModelQueries {
   supersedePreview(interrupt = false): void {
     if (!this.working || this.superseding || this.cancelling) return;
     if (this.presentation) {
-      if (!this.presentation.supersede()) return;
-      interrupt = true;
+      interrupt = this.presentation.supersede();
     }
     this.interrupted = interrupt;
     this.superseding = call({ kind: "supersede-preview", interrupt }).catch(() => undefined);

@@ -4,9 +4,9 @@ A tool should draw useful geometry before computing data that only supports late
 editing or readouts. Its accepted document, validation requirements and Undo
 boundary remain unchanged. This is separate from making a kernel operation faster.
 
-## Face and edge movement
+## Staged solid previews
 
-Boundary movement has two serialized calculation stages. The first reconstructs
+Boundary movement, Face Offset and Fillet/Chamfer have two serialized calculation stages. The first reconstructs
 and validates the exact solid, checks boundary correspondence and produces its
 complete mesh and outline. It returns a `VisualPreview`, with source references
 used only for visibility, selection color and body appearance. It contains no
@@ -27,7 +27,7 @@ result becomes an acceptable candidate. Enter/tool completion waits for it; Undo
 still records one accepted operation. A failed completion cannot accept the early
 drawing.
 
-New movement input skips completion if it has not started, or interrupts its
+New input skips completion if it has not started, or interrupts its
 calculator if it is running. Geometry already being generated may supply an
 intermediate drawing; only the latest queued target can become acceptable. Escape
 also releases the pending paint wait, so cancellation does not depend on another
@@ -37,6 +37,29 @@ superseded candidate.
 Combined whole-body and boundary movement currently uses the complete path. Its
 separate exact transforms and result composition have not been staged. Reopened
 accepted previews retain their existing complete snapshot behavior.
+
+### Offset and Fillet/Chamfer search
+
+Each feasibility probe validates and meshes its exact result without full
+presentation metadata. The existing search still returns a verified distance or
+size, with the same limits and rejection rules. If another probe or completion
+has replaced the one retained native result, only the winning parameter is
+recalculated before publishing its mesh. Completion always consumes that exact
+displayed shape; cached feasibility results cannot accidentally complete a
+different probe. Zero-change results need no deferred completion.
+
+The early reply carries the verified distance/size so clamping feedback can update
+with the drawing. Offset selection continuation, generated topology IDs, guide/tag
+continuation and decorator continuation wait for the full result. Acceptance and
+history use the verified value, never the rejected overshoot. Ordinary script/API
+calls still return complete candidates, but also avoid full presentation inside
+their intermediate search probes.
+
+During a search, newer input stops subsequent probes while allowing an already
+running geometry calculation to finish. Once the mesh is published, newer input
+interrupts metadata calculation. Invalid numeric input and cancellation also
+release pending completion. Offset geometry still performs volume checks where
+they establish validity; this staging removes presentation-only volume work.
 
 ## Tool audit
 
@@ -50,14 +73,14 @@ remains. Deferring presentation does not authorize omitting geometric checks.
 | Cube and circular primitive creation | Temporary renderer geometry | Already uses local preview geometry; exact acceptance remains necessary. |
 | Straight sketch extrusion into a new body | Sweep and mesh; solid extraction still measures volume | Held dragging already omits full presentation metadata. Release requests a complete result. Extraction volume remains before the visual result. |
 | Drafted/twisted/Boolean extrusion, Revolve and Loft | Sweep/Boolean work, validation, result extraction and full presentation | Surface/volume annotations and serialization are candidates for staging. Overlap selection, cavity checks and other volume comparisons used by the operation must remain in its geometry stage. These paths are not yet mesh-first. |
-| Offset and Fillet/Chamfer | Feasibility search; each successful probe returns a fully presented result | New input stops subsequent probes. Full presentation of intermediate feasible probes is avoidable work; the verified winning geometry and actual clamped distance/size must survive any staged search. |
+| Offset and Fillet/Chamfer | Feasibility search using validated meshes; geometry-specific validity checks | Mesh and verified parameter first; full presentation and continuation after paint. New input stops later probes and interrupts deferred completion. |
 | Shell, solid Scale/Mirror, Boolean and plane cuts | Geometry checks followed by complete presentation | Presentation annotations can be deferred. Result counts, retained operands, cut feedback and topology changes need tool-specific early-view handling. These paths are not yet staged. |
 | Erode | Erosion/reconstruction, quality checks and complete presentation | New input already interrupts the calculator. Nonvisual presentation can be staged; quality/allowance checks used to judge geometry remain required. |
 | Cleanup | Topology removal and full presentation | Mesh could precede topology-count feedback. There is no continuously changing parameter stream. |
 | Sketch edits | Constraint solving and ordinary sketch geometry | Solver success is required to draw a valid edit. No solid volume presentation is involved. |
 | Selection measurements | Debounced/asynchronous queries of accepted geometry | Separate from the edit calculator; readouts are hidden during modal editing. Stale readouts are ignored, but an already-running measurement is not preempted when editing begins and can still consume CPU. |
 | Guide queries | Asynchronous queries used for tool snapping | Separate from the edit calculator. Current geometry and active-tool semantics are required for useful targets; these are interaction inputs, not merely deferred readouts. |
-| Decorators and attached metadata | Continuation before a full candidate reply; renderer decoration has its own path | Movement now draws before continuation. Other exact-preview tools still wait for backend continuation. Export-only decoration stays outside ordinary CAD geometry. |
+| Decorators and attached metadata | Continuation before a full candidate reply; renderer decoration has its own path | Movement, Offset and Fillet/Chamfer draw before continuation. Other exact-preview tools still wait for backend continuation. Export-only decoration stays outside ordinary CAD geometry. |
 
 The primary remaining shared bottleneck is `presentation.cpp`: volume,
 signatures, surface bounds, thickness, tangent chains and blend/chamfer metadata

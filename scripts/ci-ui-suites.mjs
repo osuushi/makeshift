@@ -3,6 +3,14 @@
 // Add combinatorial cases to the linked lower-level tests, not this inventory.
 export const uiSuites = [
   {
+    args: ["surface-preview-ui.mjs"],
+    seconds: 25,
+    browsers: ["electron"],
+    reason:
+      "Offset and Fillet must display meshes before metadata through actual controls, retain the latest numeric target, and gate acceptance through the renderer/host boundary.",
+    unit: "surface-preview.test.ts",
+  },
+  {
     args: ["movement-preview-ui.mjs"],
     seconds: 15,
     browsers: ["electron"],

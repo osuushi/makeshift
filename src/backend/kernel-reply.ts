@@ -17,6 +17,13 @@ interface QueryReplies {
   "edge-finish-targets": { edgeFinishTargets: (number | null)[] };
 }
 export type KernelModelRequest = Exclude<KernelRequest, { kind: keyof QueryReplies }>;
+export interface DeferredKernelReply {
+  presentation: "deferred";
+  mode: "new";
+  participants: string[];
+  tools: [];
+  results: import("../model/visual-preview.js").VisualBody[];
+}
 export type KernelReply<Input extends KernelRequest> = Input extends { presentation: "visual" }
   ? {
       presentation: "visual";
@@ -26,13 +33,7 @@ export type KernelReply<Input extends KernelRequest> = Input extends { presentat
       results: import("../model/visual-preview.js").VisualBody[];
     }
   : Input extends { presentation: "deferred" }
-    ? {
-        presentation: "deferred";
-        mode: "new";
-        participants: string[];
-        tools: [];
-        results: import("../model/visual-preview.js").VisualBody[];
-      }
+    ? DeferredKernelReply
     : Input extends {
           kind: infer Kind extends keyof QueryReplies;
         }

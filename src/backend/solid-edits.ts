@@ -14,12 +14,11 @@ import type { SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import type { HistoryOperation } from "../sketch/operation-history.js";
 import { continueBodyMetadata } from "./body-metadata.js";
-import { EdgeSizeLimit } from "./edge-size-limit.js";
-import { FaceOffsetEdit } from "./face-offset-edit.js";
 import { kernelInput, loftInput, revolveInput } from "./kernel-input.js";
 import { continuingBodies, materialize } from "./kernel-result.js";
 import type { SolidCalculator } from "./solid-calculator.js";
 import { importStep } from "./step-import.js";
+import { SurfaceEdits } from "./surface-edits.js";
 
 export type SolidRequest = Extract<
   ModelRequest,
@@ -61,16 +60,22 @@ export function isSolidRequest(request: ModelRequest): request is SolidRequest {
 
 /** Geometry calculations and their temporary measurements; no accepted document or history. */
 export class SolidEdits {
-  readonly offsetEdit = new FaceOffsetEdit();
-  private edgeLimit = new EdgeSizeLimit();
+  readonly surfaces: SurfaceEdits;
+  get offsetEdit() {
+    return this.surfaces.offset;
+  }
+  get edgeSize() {
+    return this.surfaces.edgeSize;
+  }
   erosionQuality: import("../model/erosion-quality.js").ErosionQuality[] | undefined;
   meshFit: import("../model/mesh-fit.js").MeshFitStatistics | undefined;
-  edgeSize: number | undefined;
   edgeSelection: BodyEdgeFinish["edges"] = [];
   booleanTargets: string[] = [];
   booleanMode: BooleanMode | undefined;
   booleanTools: BodyGeometry[] = [];
-  constructor(private kernel: SolidCalculator) {}
+  constructor(private kernel: SolidCalculator) {
+    this.surfaces = new SurfaceEdits(kernel);
+  }
   previewQuality(kind: HistoryOperation["kind"] | undefined) {
     return {
       booleanTools:
@@ -236,20 +241,9 @@ export class SolidEdits {
         throw new Error("Enter a finite shell thickness");
       const result = await this.kernel.calculate({ ...request.operation, kind: "shell", bodies });
       candidate = { ...document, bodies: continuingBodies(bodies, materialize(bodies, result)) };
-    } else if (request.kind === "offset-faces") {
-      candidate = await this.offsetEdit.calculate(document, request.operation, (distance) =>
-        this.kernel.probe({ ...request.operation, distance, kind: "offset-faces", bodies }),
-      );
-    } else if (request.kind === "finish-edges") {
-      const result = await this.edgeLimit.calculate(document, request.operation, (size) =>
-        this.kernel.probe({ ...request.operation, size, kind: "edge-finish", bodies }),
-      );
-      this.edgeSize = result.size;
-      candidate = result.result
-        ? {
-            ...document,
-            bodies: continuingBodies(bodies, materialize(bodies, result.result)),
-          }
+    } else if (request.kind === "offset-faces" || request.kind === "finish-edges") {
+      candidate = (await this.surfaces.prepare(document, request))
+        ? await this.surfaces.complete(document, request)
         : document;
     } else if (request.kind === "transform-bodies") {
       const result = await this.kernel.calculate({

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import type { DecoratorSession } from "../src/backend/decorator-session.js";
-import type { MovementRequest } from "../src/backend/deferred-movement.js";
+import type { MovementRequest } from "../src/backend/deferred-edit.js";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import type { SketchDocument } from "../src/sketch/document.js";
 import { prism, square } from "./body-edge-fixtures.js";

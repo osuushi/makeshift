@@ -1,7 +1,7 @@
 import type { SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import { describeOperation, type HistoryOperation } from "../sketch/operation-history.js";
-import type { MovementRequest } from "./deferred-movement.js";
+import type { DeferredEditRequest } from "./deferred-edit.js";
 import { DocumentStore } from "./document-store.js";
 import type { ReopenPreview } from "./reopen-preview.js";
 
@@ -13,7 +13,7 @@ export class DocumentSession {
   pendingOperation: HistoryOperation | null = null;
   candidate: SketchDocument | null = null;
   visualPreview: import("../model/visual-preview.js").VisualPreview | undefined;
-  deferredMovement: MovementRequest | null = null;
+  deferredEdit: DeferredEditRequest | null = null;
   reopenedPreview: ReopenPreview | null = null;
 
   preview(result: { count: number; ms: number; document: SketchDocument }): void {
@@ -33,7 +33,7 @@ export class DocumentSession {
   clearPreview(): void {
     this.candidate = null;
     this.visualPreview = undefined;
-    this.deferredMovement = null;
+    this.deferredEdit = null;
     this.pendingOperation = null;
     this.reopenedPreview = null;
   }
@@ -42,7 +42,7 @@ export class DocumentSession {
     this.pendingOperation = null;
     this.candidate = null;
     this.visualPreview = undefined;
-    this.deferredMovement = null;
+    this.deferredEdit = null;
   }
   accept(cleanup: boolean, preview: ReopenPreview): void {
     if (!this.candidate) throw new Error("No valid edit to accept");
@@ -62,7 +62,7 @@ export class DocumentSession {
     this.pendingOperation = null;
     this.candidate = null;
     this.visualPreview = undefined;
-    this.deferredMovement = null;
+    this.deferredEdit = null;
   }
   navigate(direction: "reopen" | "undo" | "redo"): void {
     if (direction === "reopen") {
@@ -75,7 +75,7 @@ export class DocumentSession {
       this.pendingOperation = null;
       this.candidate = null;
       this.visualPreview = undefined;
-      this.deferredMovement = null;
+      this.deferredEdit = null;
       this.store[direction]();
     }
   }

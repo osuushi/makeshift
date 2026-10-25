@@ -8,18 +8,22 @@ import { NativeCalculator } from "./native-calculator.js";
 export class SolidCalculator extends NativeCalculator<KernelRequest, unknown> {
   static readonly executable = ".build/kernel/bin/makeshift-kernel";
   private superseded = false;
-  private deferred = false;
+  private deferred: unknown = null;
   private massCenters = new Map<string, Promise<Vector>>();
   constructor(executable = SolidCalculator.executable) {
     super(executable, "Solid kernel");
   }
   override async calculate<Input extends KernelRequest>(input: Input): Promise<KernelReply<Input>> {
     // Enforce the wire envelope here even when callers hold a full accepted Body.
-    this.deferred = false;
+    this.deferred = null;
     const reply = await super.calculate({ ...input, bodies: exactBodies(input.bodies) });
     const result = readKernelReply(input, reply);
-    this.deferred = "presentation" in input && input.presentation === "deferred";
+    this.deferred = "presentation" in input && input.presentation === "deferred" ? result : null;
     return result;
+  }
+  /** The single retained native shape matches this exact in-memory reply. */
+  retains(result: unknown): boolean {
+    return result !== null && this.deferred === result;
   }
   /** Bounded derived-data cache: exact geometry, never body IDs, determines reuse. */
   async centerOfMass(body: ExactBody): Promise<Vector> {
@@ -39,7 +43,7 @@ export class SolidCalculator extends NativeCalculator<KernelRequest, unknown> {
     return [...(await pending)];
   }
   override close(): void {
-    this.deferred = false;
+    this.deferred = null;
     this.massCenters.clear();
     super.close();
   }

@@ -108,10 +108,12 @@ the latest successful target enables acceptance. This keeps the initialized WASM
 worker alive during dragging; invalid input and explicit cancellation still
 interrupt work and clear the candidate. Erode interrupts superseded parameter calculations
 and uses the shared cancellation path, with no late candidate publication after
-its lease closes. Offset retains its established noninterrupting policy,
-last verified distance and selection feedback. Fillet/Chamfer similarly retain verified
-size-limit feedback; their pending sizes use the expanded edge selection when
-calculation starts. Each controller checks its lease and the applicable target
+its lease closes. Offset and Fillet/Chamfer finish an in-flight geometry probe but
+stop later probes when superseded. Their mesh and verified distance/size draw
+before full presentation; new input skips or interrupts that deferred completion.
+Offset retains its last verified distance and selection feedback. Fillet/Chamfer
+retain verified size-limit feedback; their pending sizes use the expanded edge
+selection when calculation starts. Each controller checks its lease and the applicable target
 before changing presentation. Invalid input clears waiting
 targets; cancellation closes the lease before awaiting native cancellation. Modeling
 controls never schedule completion-cleanup probes. Standalone Clean up previews and

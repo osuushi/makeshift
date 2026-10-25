@@ -5,7 +5,7 @@ import { describeOperation, type HistoryOperation } from "../sketch/operation-hi
 import { acceptedParameters } from "./accepted-parameters.js";
 import { cutEdgeHighlights } from "./cut-edge-highlights.js";
 import { DecoratorSession } from "./decorator-session.js";
-import { movementPresentation } from "./deferred-movement.js";
+import { editPresentation } from "./deferred-edit.js";
 import { DocumentCommands } from "./document-commands.js";
 import { editDocument, isDirectDocumentEdit } from "./document-edits.js";
 import { documentFailure } from "./document-failure.js";
@@ -190,8 +190,9 @@ export class DocumentOwner {
       );
       this.session.store.record(operation, outcome, failure.error);
       if (request.kind !== "accept" && request.kind !== "check-cleanup") {
+        await this.kernel.cancel();
         this.session.visualPreview = undefined;
-        this.session.deferredMovement = null;
+        this.session.deferredEdit = null;
         this.session.candidate = null;
         this.session.pendingOperation = null;
       }
@@ -200,15 +201,15 @@ export class DocumentOwner {
   }
   private async dispatch(request: ModelRequest, operation: HistoryOperation): Promise<void> {
     this.commands.cleanupAvailable = false;
-    if (await movementPresentation(this.session, this.kernel, request, operation)) return;
+    if (await editPresentation(this.session, this.kernel, this.solids, request, operation)) return;
     if (!["read", "accept"].includes(request.kind)) {
       if (
-        this.session.deferredMovement &&
+        this.session.deferredEdit &&
         request.kind !== "move-faces" &&
         request.kind !== "move-edges"
       )
         await this.kernel.cancel();
-      this.session.deferredMovement = null;
+      this.session.deferredEdit = null;
     }
     if (request.kind === "sketch-grid") {
       this.session.store.setGrid(request.grid, request.initialize);

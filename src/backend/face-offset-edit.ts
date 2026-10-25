@@ -1,22 +1,26 @@
 import type { BodyFaceOffset } from "../model/body.js";
 import type { SketchDocument } from "../sketch/document.js";
+import type { DeferredKernelReply } from "./kernel-reply.js";
 import { continuingBodies, type KernelResult, materialize } from "./kernel-result.js";
 
 /** One gesture's verified candidates; failed geometry never enters the document. */
 export class FaceOffsetEdit {
   private document: SketchDocument | null = null;
   private key = "";
-  private last: { distance: number; result: KernelResult | null } = { distance: 0, result: null };
+  private last: { distance: number; result: DeferredKernelReply | null } = {
+    distance: 0,
+    result: null,
+  };
   private offsetDistance = 0;
   private offsetSelection: BodyFaceOffset["faces"] = [];
   get view() {
     return { offsetDistance: this.offsetDistance, offsetSelection: this.offsetSelection };
   }
-  async calculate(
+  async prepare(
     document: SketchDocument,
     operation: BodyFaceOffset,
-    calculate: (distance: number) => Promise<KernelResult>,
-  ): Promise<SketchDocument> {
+    calculate: (distance: number) => Promise<DeferredKernelReply>,
+  ) {
     const key = JSON.stringify([
       operation.faces,
       operation.radius !== undefined,
@@ -35,12 +39,18 @@ export class FaceOffsetEdit {
     this.last = verified;
     this.offsetDistance = verified.distance;
     this.offsetSelection = operation.faces;
-    if (!verified.result) return document;
+    return verified;
+  }
+  complete(
+    document: SketchDocument,
+    operation: BodyFaceOffset,
+    result: KernelResult,
+  ): SketchDocument {
     const bodies = continuingBodies(
       document.bodies ?? [],
-      materialize(document.bodies ?? [], verified.result),
+      materialize(document.bodies ?? [], result),
     );
-    const selection = verified.result.results.flatMap((result) => {
+    const selection = result.results.flatMap((result) => {
       const body = bodies.find((b) => b.id === result.predecessorBodies[0]);
       return body
         ? result.faces.flatMap((face, i) =>
@@ -57,7 +67,10 @@ export class FaceOffsetEdit {
         );
     return { ...document, bodies };
   }
-  private async limit(distance: number, calculate: (distance: number) => Promise<KernelResult>) {
+  private async limit(
+    distance: number,
+    calculate: (distance: number) => Promise<DeferredKernelReply>,
+  ) {
     if (Math.abs(distance) < 1e-8) return { distance: 0, result: null };
     try {
       return { distance, result: await calculate(distance) };

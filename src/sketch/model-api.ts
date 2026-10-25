@@ -81,8 +81,8 @@ export type ModelRequest =
   | { kind: "edge-finish-selection"; operation: Omit<BodyEdgeFinish, "size"> }
   | { kind: "shell"; operation: BodyShell }
   | { kind: "erode"; operation: BodyErosion }
-  | { kind: "offset-faces"; operation: BodyFaceOffset }
-  | { kind: "finish-edges"; operation: BodyEdgeFinish }
+  | { kind: "offset-faces"; operation: BodyFaceOffset; presentation?: "deferred" }
+  | { kind: "finish-edges"; operation: BodyEdgeFinish; presentation?: "deferred" }
   | { kind: "loft"; operation: import("../model/loft.js").Loft }
   | { kind: "revolve"; revolution: Revolution }
   | { kind: "extrude"; extrusion: Extrusion; presentation?: "visual" }
