@@ -25,6 +25,13 @@
 .gear-groups li + li {
   margin-top: 6px;
 }
+.gear-group-members {
+  margin: 8px 0;
+}
+.gear-group-members summary {
+  cursor: pointer;
+  color: var(--teal);
+}
 .decorator-library {
   right: 290px;
 }
