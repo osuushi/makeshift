@@ -1,9 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import * as THREE from "three";
+import type * as THREE from "three";
 import { projectPreviewNormals } from "../src/decorators/normal-projection.js";
-import { PreviewOverlaySurfaces } from "../src/decorators/preview-overlay-surfaces.js";
-import type { DisplayDocument } from "../src/model/display-document.js";
 import {
   decoratorAppearance,
   decoratorDisplay,
@@ -11,42 +9,8 @@ import {
   resetDecoratorDisplay,
   setDecoratorDisplay,
 } from "../src/preferences/decorator-display.js";
-import type { SketchEditor } from "../src/sketch/editor.js";
 import { hasForegroundContent } from "../src/sketch/world-foreground.js";
-
-const vertices = [0, 0, 0, 1, 0, 0, 0, 1, 0];
-function documentAt(x = 0): DisplayDocument {
-  return {
-    units: "mm",
-    sketches: [],
-    bodies: ["a", "b"].map((id) => ({
-      id,
-      faces: [
-        {
-          id: "face",
-          vertices: vertices.map((v, i) => (i % 3 === 0 ? v + x : v)),
-          edges: [],
-          signature: [],
-          plane: null,
-        },
-      ],
-      edges: [],
-      center: [x, 0, 0],
-      volume: 1,
-      bounds: [x, 0, 0, x + 1, 1, 0],
-    })),
-    decorators: [
-      {
-        id: "decorator",
-        definition: "example.custom",
-        version: 1,
-        faces: ["a", "b"].map((body) => ({ body, face: "face" })),
-        settings: {},
-        frame: { origin: [0, 0, 0], u: [1, 0, 0], v: [0, 1, 0] },
-      },
-    ],
-  };
-}
+import { documentAt, previewScene, signature, vertices } from "./decorator-display-fixtures.js";
 
 test("display preferences normalize invalid storage independently of document data", () => {
   resetDecoratorDisplay();
@@ -119,30 +83,6 @@ test("texture switches retain support silhouettes, ignore stale replies and disp
     resetDecoratorDisplay();
   }
 });
-
-function previewScene() {
-  const scene = new THREE.Scene();
-  const hidden = new Set<string>();
-  const editor = {
-    bodiesVisible: true,
-    visibility: { visible: (body: string) => !hidden.has(body) },
-    world: {
-      scene,
-      renderOverlays: new Set(),
-      renderForegroundOverlays: new Set(),
-      requestDraw() {},
-    },
-  } as unknown as SketchEditor;
-  const overlay = new PreviewOverlaySurfaces(editor);
-  return {
-    scene,
-    hidden,
-    overlay,
-    group: scene.children[0],
-    foreground: editor.world.renderForegroundOverlays,
-  };
-}
-const signature = (value: string) => new Map([["decorator", value]]);
 
 test("parameter drafts reuse trimmed faces and current decorator type controls their appearance", () => {
   const { overlay, group } = previewScene();

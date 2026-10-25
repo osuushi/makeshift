@@ -17,11 +17,11 @@ export function readKernelReply<Input extends KernelRequest>(
   value: unknown,
 ): KernelReply<Input> {
   const reply = object(value);
-  if ("presentation" in input && input.presentation === "visual") {
-    validateVisualReply(reply);
+  if ("presentation" in input && input.presentation) {
+    validateVisualReply(reply, input);
     return reply as KernelReply<Input>;
   }
-  requireKernel(reply.presentation !== "visual", "complete presentation required");
+  requireKernel(reply.presentation === undefined, "complete presentation required");
   switch (input.kind) {
     case "edge-finish-targets": {
       const sizes = array(reply.edgeFinishTargets);

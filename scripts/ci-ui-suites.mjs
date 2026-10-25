@@ -3,6 +3,14 @@
 // Add combinatorial cases to the linked lower-level tests, not this inventory.
 export const uiSuites = [
   {
+    args: ["movement-preview-ui.mjs"],
+    seconds: 15,
+    browsers: ["electron"],
+    reason:
+      "Face movement must draw the real mesh through IPC while metadata is pending, hide its accepted operand, and accept only the latest target; model tests cannot prove frame ordering or tool readiness.",
+    unit: "movement-preview.test.ts",
+  },
+  {
     args: ["xray-vision-ui.mjs"],
     // macOS hidden Electron including New/XY/circle freshness: 9.18s.
     seconds: 20,

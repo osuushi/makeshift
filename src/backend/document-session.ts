@@ -1,6 +1,7 @@
 import type { SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import { describeOperation, type HistoryOperation } from "../sketch/operation-history.js";
+import type { MovementRequest } from "./deferred-movement.js";
 import { DocumentStore } from "./document-store.js";
 import type { ReopenPreview } from "./reopen-preview.js";
 
@@ -12,6 +13,7 @@ export class DocumentSession {
   pendingOperation: HistoryOperation | null = null;
   candidate: SketchDocument | null = null;
   visualPreview: import("../model/visual-preview.js").VisualPreview | undefined;
+  deferredMovement: MovementRequest | null = null;
   reopenedPreview: ReopenPreview | null = null;
 
   preview(result: { count: number; ms: number; document: SketchDocument }): void {
@@ -21,7 +23,7 @@ export class DocumentSession {
   }
   operation(request: ModelRequest): HistoryOperation {
     const operation =
-      request.kind === "accept"
+      request.kind === "accept" || request.kind === "complete-preview"
         ? (this.pendingOperation ?? describeOperation(request))
         : describeOperation(request);
     return request.kind === "accept" && request.cleanup
@@ -31,6 +33,7 @@ export class DocumentSession {
   clearPreview(): void {
     this.candidate = null;
     this.visualPreview = undefined;
+    this.deferredMovement = null;
     this.pendingOperation = null;
     this.reopenedPreview = null;
   }
@@ -39,6 +42,7 @@ export class DocumentSession {
     this.pendingOperation = null;
     this.candidate = null;
     this.visualPreview = undefined;
+    this.deferredMovement = null;
   }
   accept(cleanup: boolean, preview: ReopenPreview): void {
     if (!this.candidate) throw new Error("No valid edit to accept");
@@ -58,6 +62,7 @@ export class DocumentSession {
     this.pendingOperation = null;
     this.candidate = null;
     this.visualPreview = undefined;
+    this.deferredMovement = null;
   }
   navigate(direction: "reopen" | "undo" | "redo"): void {
     if (direction === "reopen") {
@@ -70,6 +75,7 @@ export class DocumentSession {
       this.pendingOperation = null;
       this.candidate = null;
       this.visualPreview = undefined;
+      this.deferredMovement = null;
       this.store[direction]();
     }
   }

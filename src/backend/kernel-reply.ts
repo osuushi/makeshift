@@ -25,16 +25,24 @@ export type KernelReply<Input extends KernelRequest> = Input extends { presentat
       tools: [];
       results: import("../model/visual-preview.js").VisualBody[];
     }
-  : Input extends {
-        kind: infer Kind extends keyof QueryReplies;
+  : Input extends { presentation: "deferred" }
+    ? {
+        presentation: "deferred";
+        mode: "new";
+        participants: string[];
+        tools: [];
+        results: import("../model/visual-preview.js").VisualBody[];
       }
-    ? QueryReplies[Kind]
-    : Input extends { kind: "fit-mesh" }
-      ? KernelResult & { fit: import("../model/mesh-fit.js").MeshFitStatistics }
-      : Input extends { kind: "inspect" }
-        ? KernelResult<"inspect">
-        : Input extends { kind: "erode" }
-          ? KernelResult & {
-              erosionQuality?: import("../model/erosion-quality.js").ErosionQuality[];
-            }
-          : KernelResult;
+    : Input extends {
+          kind: infer Kind extends keyof QueryReplies;
+        }
+      ? QueryReplies[Kind]
+      : Input extends { kind: "fit-mesh" }
+        ? KernelResult & { fit: import("../model/mesh-fit.js").MeshFitStatistics }
+        : Input extends { kind: "inspect" }
+          ? KernelResult<"inspect">
+          : Input extends { kind: "erode" }
+            ? KernelResult & {
+                erosionQuality?: import("../model/erosion-quality.js").ErosionQuality[];
+              }
+            : KernelResult;

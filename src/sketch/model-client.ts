@@ -1,6 +1,8 @@
+import type { VisualPreview } from "../model/visual-preview.js";
 import { sketchGridPreferences } from "../preferences/sketch-grid.js";
 import { cancellableCalculation } from "./calculation-state.js";
-import type { ModelRequest, ModelView } from "./model-api.js";
+import { DeferredPreview } from "./deferred-preview.js";
+import type { ModelReply, ModelRequest, ModelView } from "./model-api.js";
 import { ModelQueries } from "./model-queries.js";
 import { call } from "./model-transport.js";
 import type { HistoryOperation, OperationHistoryEntry } from "./operation-history.js";
@@ -9,14 +11,6 @@ import type { SelectionHistory } from "./selection-history.js";
 
 // A read-only rendering copy. Accepted edits and all Undo snapshots live in the host.
 export class ModelClient extends ModelQueries {
-  private view: ModelView = {
-    data: { units: "mm", sketches: [] },
-    canUndo: false,
-    canRedo: false,
-    candidate: null,
-    solveCount: 0,
-    solveMs: 0,
-  };
   selectionHistory?: SelectionHistory;
   private selectionSending: Promise<void> | null = null;
   private selectionInFlight = false;
@@ -50,45 +44,13 @@ export class ModelClient extends ModelQueries {
   private superseding: Promise<unknown> | null = null;
   private interrupted = false;
   private waiting: Promise<boolean> = Promise.resolve(true);
+  private presentation: DeferredPreview | null = null;
   constructor(
     private changed: () => void,
     private error: (message: string) => void,
     private navigated?: (operation: HistoryOperation, direction: "undo" | "redo") => void,
   ) {
     super();
-  }
-  get planeCutAvailable() {
-    return this.view.planeCutAvailable ?? false;
-  }
-  get cleanupAvailable() {
-    return this.view.cleanupAvailable ?? false;
-  }
-  get edgeSelection() {
-    return this.view.edgeSelection ?? [];
-  }
-  get offsetDistance() {
-    return this.view.offsetDistance;
-  }
-  get offsetSelection() {
-    return this.view.offsetSelection;
-  }
-  get erosionQuality() {
-    return this.view.erosionQuality;
-  }
-  get meshFit() {
-    return this.view.meshFit;
-  }
-  get edgeSize() {
-    return this.view.edgeSize;
-  }
-  get data() {
-    return this.view.data;
-  }
-  get decoratorSources() {
-    return this.view.decoratorSources ?? [];
-  }
-  get reopenOperation() {
-    return this.view.reopenOperation;
   }
   get canUndo() {
     return (
@@ -105,33 +67,6 @@ export class ModelClient extends ModelQueries {
       !this.selectionHistory?.navigating &&
       this.view.canRedo
     );
-  }
-  get canUndoView(): boolean {
-    return !!this.view.canUndoView;
-  }
-  get canRedoView(): boolean {
-    return !!this.view.canRedoView;
-  }
-  get booleanTargets() {
-    return this.view.booleanTargets ?? [];
-  }
-  get booleanTools() {
-    return this.view.booleanTools ?? [];
-  }
-  get booleanMode() {
-    return this.view.booleanMode;
-  }
-  get cutEdges() {
-    return this.view.cutEdges ?? [];
-  }
-  get visualPreview() {
-    return this.view.visualPreview;
-  }
-  get candidate() {
-    return this.view.candidate;
-  }
-  get statistics() {
-    return { count: this.view.solveCount, milliseconds: this.view.solveMs };
   }
   syncSelection(): void {
     if (this.selectionSending || this.working || this.busy || this.scriptRunning) return;
@@ -169,7 +104,10 @@ export class ModelClient extends ModelQueries {
       this.restoringReopen = null;
     }
   }
-  async request(request: ModelRequest): Promise<boolean> {
+  async request(
+    request: ModelRequest,
+    showVisual?: (preview: VisualPreview) => void,
+  ): Promise<boolean> {
     // Controllers seed their ordinary local preview state from the accepted owner snapshot.
     if (this.restoringReopen) {
       if ([this.restoringReopen, "check-cleanup", "discard"].includes(request.kind)) return true;
@@ -195,12 +133,19 @@ export class ModelClient extends ModelQueries {
     this.erosionAllowance = undefined;
     this.calculation = request.kind;
     this.started = performance.now();
+    this.presentation =
+      "presentation" in request && request.presentation === "deferred"
+        ? new DeferredPreview()
+        : null;
     this.busy = true;
     this.changed();
-    this.waiting = this.send(request);
+    this.waiting = this.send(request, showVisual);
     return this.waiting;
   }
-  private async send(request: ModelRequest): Promise<boolean> {
+  private async send(
+    request: ModelRequest,
+    showVisual?: (preview: VisualPreview) => void,
+  ): Promise<boolean> {
     const timer = setTimeout(() => {
       this.slow = true;
       this.changed();
@@ -208,16 +153,14 @@ export class ModelClient extends ModelQueries {
     try {
       await this.selectionSending;
       await this.flushSelection();
-      const direction =
-        request.kind === "reopen"
-          ? "undo"
-          : request.kind === "navigation-history"
-            ? request.direction
-            : request.kind === "undo" || request.kind === "redo"
-              ? request.kind
-              : null;
       if (this.cancelling || this.interrupted) return false;
-      let reply = await call(request);
+      let reply = this.presentation
+        ? await this.presentation.run(request, call, (visual) => {
+            this.view = retainViewSketches(this.view, visual.view);
+            if (visual.view.visualPreview) showVisual?.(visual.view.visualPreview);
+            this.changed();
+          })
+        : await call(request);
       if (
         !reply.error &&
         !reply.view.data.sketchGrid &&
@@ -229,31 +172,11 @@ export class ModelClient extends ModelQueries {
           initialize: true,
         });
       if (this.interrupted) return false;
-      this.view = retainViewSketches(this.view, reply.view);
-      this.erosionAllowance = reply.erosionAllowance;
-      if (reply.error) throw new Error(reply.error);
-      if (direction && reply.view.historyOperation)
-        this.navigated?.(reply.view.historyOperation, direction);
-      const selection = reply.view.historySelection;
-      if (direction && reply.view.historyNavigation)
-        this.selectionHistory?.restoreNavigation(reply.view.historyNavigation);
-      else if (
-        selection &&
-        (direction || (!this.initialized && (selection.sketch.length || selection.modeling.length)))
-      )
-        this.selectionHistory?.restore(selection);
-      else if (
-        request.kind === "new" ||
-        request.kind === "open" ||
-        (reply.documentChanged && request.kind !== "sketch-grid")
-      )
-        this.selectionHistory?.accepted(request.kind === "new" || request.kind === "open");
-      this.initialized = true;
-      this.error("");
-      return true;
+      return this.receive(request, reply);
     } catch (error) {
       if (
         !this.cancelling &&
+        !this.presentation?.superseded &&
         !(this.superseding && error instanceof Error && error.message === "Preview superseded")
       )
         this.error(error instanceof Error ? error.message : String(error));
@@ -263,6 +186,7 @@ export class ModelClient extends ModelQueries {
       await this.superseding;
       this.superseding = null;
       this.interrupted = false;
+      this.presentation = null;
       clearTimeout(timer);
       this.slow = false;
       this.working = false;
@@ -271,14 +195,51 @@ export class ModelClient extends ModelQueries {
       this.changed();
     }
   }
+  private receive(request: ModelRequest, reply: ModelReply): boolean {
+    const direction =
+      request.kind === "reopen"
+        ? "undo"
+        : request.kind === "navigation-history"
+          ? request.direction
+          : request.kind === "undo" || request.kind === "redo"
+            ? request.kind
+            : null;
+    this.view = retainViewSketches(this.view, reply.view);
+    this.erosionAllowance = reply.erosionAllowance;
+    if (reply.error) throw new Error(reply.error);
+    if (direction && reply.view.historyOperation)
+      this.navigated?.(reply.view.historyOperation, direction);
+    const selection = reply.view.historySelection;
+    if (direction && reply.view.historyNavigation)
+      this.selectionHistory?.restoreNavigation(reply.view.historyNavigation);
+    else if (
+      selection &&
+      (direction || (!this.initialized && (selection.sketch.length || selection.modeling.length)))
+    )
+      this.selectionHistory?.restore(selection);
+    else if (
+      request.kind === "new" ||
+      request.kind === "open" ||
+      (reply.documentChanged && request.kind !== "sketch-grid")
+    )
+      this.selectionHistory?.accepted(request.kind === "new" || request.kind === "open");
+    this.initialized = true;
+    this.error("");
+    return true;
+  }
   supersedePreview(interrupt = false): void {
     if (!this.working || this.superseding || this.cancelling) return;
+    if (this.presentation) {
+      if (!this.presentation.supersede()) return;
+      interrupt = true;
+    }
     this.interrupted = interrupt;
     this.superseding = call({ kind: "supersede-preview", interrupt }).catch(() => undefined);
   }
   async cancelPreview(): Promise<void> {
     if (this.cancelling) return;
     this.cancelling = true;
+    this.presentation?.supersede();
     try {
       const reply = await call({ kind: "cancel-preview" });
       await this.waiting;

@@ -1,5 +1,8 @@
 # Edit lifecycle and Undo
 
+Mesh-first presentation and the current per-tool deferral audit are described in
+[Preview presentation](preview-presentation.md).
+
 Read for work in this area, not on every resume. [Architecture index](../architecture.md).
 Later founder decisions override earlier proposals.
 Cubic editing/projection (2026-09-16) supersedes any earlier spline exclusion.

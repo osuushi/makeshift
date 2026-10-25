@@ -18,6 +18,15 @@
 
 namespace {
 void xyz(std::ostream& out, const gp_XYZ& p) { out << '[' << p.X() << ',' << p.Y() << ',' << p.Z() << ']'; }
+void sources(std::ostream& out, const TopoDS_Shape& shape, const Result& result) {
+    std::set<std::string> ids;
+    for (const auto& source : result.predecessors)
+        if (source.shape.IsSame(shape)) ids.insert(source.id);
+    out << '[';
+    bool comma = false;
+    for (const auto& id : ids) { if (comma) out << ','; comma = true; out << quoted(id); }
+    out << ']';
+}
 }
 void presentPlane(std::ostream& out, const TopoDS_Face& shape) {
     BRepAdaptor_Surface surface(shape);
@@ -127,6 +136,24 @@ void presentVisual(std::ostream& out, const Result& result, double deflection) {
             out << p.X() << ',' << p.Y() << ',' << p.Z();
         }
         out << ']';
+    }
+    out << "],\"sourceBodies\":[";
+    for (size_t i = 0; i < result.bodies.size(); ++i) {
+        if (i) out << ',';
+        out << quoted(result.bodies[i]);
+    }
+    out << "],\"sourceFaces\":[";
+    for (int i = 1; i <= faces.Extent(); ++i) {
+        if (i > 1) out << ',';
+        sources(out, faces(i), result);
+    }
+    out << "],\"sourceEdges\":[";
+    comma = false;
+    for (size_t i = 0; i < samples.size(); ++i) {
+        if (seams.contains(int(i)) || samples[i].size() < 2) continue;
+        if (comma) out << ',';
+        comma = true;
+        sources(out, edges(int(i) + 1), result);
     }
     out << "]}";
     timing.phase("mesh-json");

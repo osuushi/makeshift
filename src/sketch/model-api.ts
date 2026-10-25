@@ -74,8 +74,9 @@ export type ModelRequest =
   | { kind: "project"; projection: Projection }
   | { kind: "open"; document: SketchDocument }
   | { kind: "transform-bodies"; transform: BodyTransform }
-  | { kind: "move-edges"; operation: EdgeMovement }
-  | { kind: "move-faces"; operation: FaceMovement }
+  | { kind: "complete-preview" }
+  | { kind: "move-edges"; operation: EdgeMovement; presentation?: "deferred" }
+  | { kind: "move-faces"; operation: FaceMovement; presentation?: "deferred" }
   | { kind: "boolean-bodies"; operation: BodyBoolean }
   | { kind: "edge-finish-selection"; operation: Omit<BodyEdgeFinish, "size"> }
   | { kind: "shell"; operation: BodyShell }

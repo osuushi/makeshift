@@ -77,8 +77,9 @@ type Request =
   | (BodyShell & { kind: "shell"; bodies: readonly ExactBody[] })
   | (BodyErosion & { kind: "erode"; bodies: readonly ExactBody[] })
   | (BodyFaceOffset & { kind: "offset-faces"; bodies: readonly ExactBody[] })
-  | (EdgeMovement & { kind: "move-edges"; bodies: readonly ExactBody[] })
-  | (FaceMovement & { kind: "move-faces"; bodies: readonly ExactBody[] })
+  | { kind: "complete-preview"; bodies: readonly ExactBody[] }
+  | (EdgeMovement & { kind: "move-edges"; bodies: readonly ExactBody[]; presentation?: "deferred" })
+  | (FaceMovement & { kind: "move-faces"; bodies: readonly ExactBody[]; presentation?: "deferred" })
   | (BodyEdgeFinish & { kind: "edge-finish"; bodies: readonly ExactBody[] })
   | (BodyBoolean & { kind: "boolean"; bodies: readonly ExactBody[] })
   | (BodyTransform & { kind: "transform"; bodies: readonly ExactBody[] });
