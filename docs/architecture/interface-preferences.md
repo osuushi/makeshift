@@ -46,6 +46,8 @@ APIs retain radius units. Sketch circle/arc dimensions and locks, bow and corner
 solid edge fillets, and radius modes of Offset/normal Extrude share the preference.
 Chamfer setbacks, thickness and relative distances keep their distance units. The X-ray
 radius slider also offers the toggle; its underlying screen-pixel radius is unchanged.
+Unit text and row padding focus the numeric control; only the R / Ø button changes
+the preference. Labels explicitly target their input even when the toggle precedes it.
 
 Floating tool parameter cards have a dimpled left grip. Dragging it (or focusing
 it and using arrow keys) stores a screen position per card type under

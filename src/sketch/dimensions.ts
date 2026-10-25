@@ -145,6 +145,8 @@ export class Dimensions implements NumericFields {
     const label = document.createElement("label");
     label.className = "dimension";
     const input = document.createElement("input");
+    input.id = `dimension-${crypto.randomUUID()}`;
+    label.htmlFor = input.id;
     input.type = "text";
     input.inputMode = "decimal";
     input.setAttribute("aria-label", name);

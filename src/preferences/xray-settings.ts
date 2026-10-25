@@ -22,6 +22,8 @@ export function xraySettings(): HTMLElement {
     const input = row.querySelector("input");
     const output = row.querySelector("output");
     if (!input || !output) throw new Error("Missing X-ray controls");
+    input.id = `view-display-${crypto.randomUUID()}`;
+    row.htmlFor = input.id;
     const radial = field === "xrayRadius" ? new RadialInput(input, () => update()) : null;
     if (radial) {
       const control = document.createElement("div");

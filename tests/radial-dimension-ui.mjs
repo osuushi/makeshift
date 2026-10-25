@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { click, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { radialLabelClicks } from "./ui-radial-label.mjs";
 import { radialSolids } from "./ui-radial-solids.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -15,6 +16,8 @@ await withUiRuntimes(async (page) => {
   const radius = page.getByRole("textbox", { name: "Radius", exact: true });
   await radius.waitFor({ state: "visible" });
   const before = (await inspect(page)).document;
+  await radialLabelClicks(page.locator(".dimension input"));
+  assert.deepEqual((await inspect(page)).document, before);
   await radius.focus();
   await page
     .getByRole("button", { name: "Switch to diameter", exact: false })
@@ -85,6 +88,7 @@ async function radialSettings(page, radius, diameter) {
   await radius.waitFor({ state: "visible" });
   assert.equal(await radius.inputValue(), "12");
   await settings.getByRole("tab", { name: "View", exact: true }).click();
+  await radialLabelClicks(settings.locator(".radial-slider input"));
   await settings.getByRole("button", { name: "Switch to diameter", exact: false }).click();
   assert.equal(
     await settings.getByRole("slider", { name: "Diameter", exact: true }).inputValue(),
