@@ -47,7 +47,7 @@ export class EdgeFinishDrag {
             return;
           }
           widget.input.blur();
-          this.snap.start(snapPlan);
+          this.snap.start(snapPlan, event.shiftKey);
           const direction = widget.direction;
           this.pointer = {
             direction,

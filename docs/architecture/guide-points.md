@@ -232,6 +232,17 @@ satisfy this check. Failed or unreachable fits are omitted. Target discovery can
 show a small “Finding targets…” indicator while native calculations run; ordinary
 dragging remains available throughout.
 
+Fillet/Chamfer guide fitting has its own cancellable calculator, independent of
+preview edits and measurement readouts. Shift bypass, disabling Edit Guide Points,
+release and cancellation abandon pending fitting; a replacement gesture waits for
+the cancellation acknowledgement. Completed solutions, including unreachable
+points, are reusable for identical exact geometry, topology identities, selected
+edges, mode and target points. The document window retains at most eight point
+sets for one source/selection/mode, with 32 MiB source and 128 KiB point-key limits.
+Cancelled or failed queries are never cached. Reenabling guides or releasing Shift
+can reuse completed results while target visibility and lock feedback are rebuilt
+for the current gesture.
+
 References stay at their accepted positions for the gesture. The ordinary tool
 owns free dragging, preview and Undo; snapping only supplies its parameter.
 Shift bypasses target snaps, and turning Edit Guide Points off disables generated

@@ -80,7 +80,18 @@ export async function filletSurfaceRoute(page, fixture) {
   await page.waitForFunction(() => !document.querySelector(".guide-destination-lock"));
   await page.keyboard.up("Shift");
   await waitSurfaceLock(page, fixture.point);
+  await page.keyboard.press("g");
+  await page.waitForFunction(() => !document.querySelector(".guide-destination-lock"));
+  await page.keyboard.press("g");
+  await waitSurfaceLock(page, fixture.point);
   await page.screenshot({ path: ".cache/sketch-review/fillet-surface-snap.png" });
+  await page.mouse.up();
+  await assertPreview(page, before, fixture.body, volume);
+  // A new gesture must survive cancellation from the previous one, and still
+  // acquire the same fitted target after the completed result becomes reusable.
+  await startToolDrag(page, "Fillet edges");
+  await pointerTo(page, fixture.point);
+  await waitSurfaceLock(page, fixture.point);
   await page.mouse.up();
   await assertPreview(page, before, fixture.body, volume);
   await page.getByRole("button", { name: "Accept fillet", exact: true }).click();

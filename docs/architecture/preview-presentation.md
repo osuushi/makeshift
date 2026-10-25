@@ -61,6 +61,17 @@ interrupts metadata calculation. Invalid numeric input and cancellation also
 release pending completion. Offset geometry still performs volume checks where
 they establish validity; this staging removes presentation-only volume work.
 
+Fillet/Chamfer send only involved bodies. Each calculator reuses decoded,
+validated and conditioned inputs when their exact BRep and ordered topology
+identities/signatures match. This disposable cache holds at most eight bodies and
+32 MiB of serialized keys (not a bound on OCCT heap size). Every operation gets a
+deep shape copy so builders and meshing cannot alter the cached source. Changed
+geometry or topology requires preparation again; calculator termination discards
+the cache. Construction, result validation, extraction volume and meshing still
+run for every size. This cache does not change feasibility search or its limits.
+The visual stage reuses exact bounds already calculated during solid extraction;
+it does not repeat surface-extrema work for the same result.
+
 ## Tool audit
 
 This table describes the current code paths, including synchronous work that

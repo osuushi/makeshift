@@ -1,6 +1,7 @@
 #include "kernel.h"
 #include "deferred-presentation.h"
 #include "presentation-mesh.h"
+#include "prepared-edge-inputs.h"
 #include "erosion.h"
 #include "measurement.h"
 #include "mesh-fit.h"
@@ -119,7 +120,11 @@ void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
         std::ostringstream output; exportStep(output, input);
         reply << output.str(); return;
     }
-    const auto bodies = operands(input); std::string mode;
+    const auto kind = input.get<std::string>("kind");
+    const bool edgeFinish = kind == "edge-finish" || kind == "edge-finish-selection" ||
+                            kind == "edge-finish-targets";
+    const auto bodies = edgeFinish ? preparedEdgeOperands(input) : operands(input);
+    std::string mode;
     timing.phase("operands");
     if (input.get<std::string>("kind") == "center-of-mass") {
         writeMassCenter(reply, bodies); return;

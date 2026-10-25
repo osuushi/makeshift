@@ -61,6 +61,7 @@ export type ModelRequest =
   | { kind: "mirror"; operation: import("../model/mirror.js").MirrorOperation }
   | { kind: "measure"; targets: import("../model/measurement.js").MeasurementTarget[] }
   | { kind: "center-of-mass"; body: string }
+  | { kind: "cancel-edge-finish-targets" }
   | {
       kind: "edge-finish-targets";
       operation: Omit<BodyEdgeFinish, "size">;

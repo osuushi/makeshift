@@ -17,6 +17,7 @@ export interface GuideSurfacePlan {
     | import("./move-target.js").GuideMoveCandidate[]
     | Promise<import("./move-target.js").GuideMoveCandidate[]>;
   settled(value: number): Promise<boolean>;
+  cancel?(): void;
 }
 export interface GuideToolSession {
   lease: InteractionLease;
