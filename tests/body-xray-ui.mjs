@@ -6,6 +6,7 @@ import { lift, prism } from "../.cache/sketch-tests/tests/body-edge-fixtures.js"
 import { openDocument } from "./native-documents.mjs";
 import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { orient, project } from "./ui-blend-edit.mjs";
+import { bodyMenuRoute, openBodyMenu } from "./ui-body-menu.mjs";
 import { continuousCameraRoute } from "./ui-camera-live.mjs";
 import { cameraPacingRoute } from "./ui-camera-pacing.mjs";
 import { inspect } from "./ui-helpers.mjs";
@@ -65,13 +66,17 @@ await withUiRuntimes(async (page, name) => {
   });
   await orient(page, [0, 0, 1]);
   const original = (await inspect(page)).document;
+  await bodyMenuRoute(page, name);
   const [front, middle, rear] = original.bodies;
   const click = async (point) => {
     const p = await project(page, point);
     await page.mouse.click(p.x, p.y);
     return (await inspect(page)).modelingSelection[0];
   };
-  const toggle = (n) => page.getByRole("button", { name: `X-ray Body ${n}`, exact: true }).click();
+  const toggle = async (n) =>
+    (await openBodyMenu(page, `Body ${n}`))
+      .getByRole("menuitemcheckbox", { name: "X-ray", exact: true })
+      .click();
   assert.equal((await click([0, 0, 0])).body, front.id);
   await toggle(1);
   assert.equal((await click([0, 0, 0])).body, middle.id);
@@ -83,11 +88,12 @@ await withUiRuntimes(async (page, name) => {
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   await chooseTool(page, "xray", "body-xray");
   assert.equal(
-    await page
-      .getByRole("button", { name: "X-ray Body 1", exact: true })
-      .getAttribute("aria-pressed"),
+    await (await openBodyMenu(page))
+      .getByRole("menuitemcheckbox", { name: "X-ray", exact: true })
+      .getAttribute("aria-checked"),
     "false",
   );
+  await page.keyboard.press("Escape");
   await toggle(1);
   await page.keyboard.press("Escape");
   await settings(page, { opacity: 0, bleed: 0, radius: 0 });

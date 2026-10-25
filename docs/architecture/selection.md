@@ -25,7 +25,10 @@ founder feedback update these contracts before further tools depend on them.
 - Hidden sketches and bodies remain selectable in the Entities panel, including
   when all bodies are hidden. Selection does not reveal them; Delete/Backspace
   removes them through ordinary document history. Viewport picking still skips them.
-- Each body's Entities row has an X-ray toggle; Tools offers Toggle body X-ray
+- Each body's Entities row has a rightmost actions menu: Color, a checked X-ray
+  toggle, then a separator and Isolate. Actions target that row without changing
+  selection; Isolate reveals that body alone using the existing isolation overlay.
+  The visibility eye remains directly accessible. Tools offers Toggle body X-ray
   for selected bodies or their faces/edges. A mixed selection enables all owners;
   toggling an entirely enabled selection disables them. This is per-window view
   state, retained through geometry edits and hiding, and reset on New/Open.

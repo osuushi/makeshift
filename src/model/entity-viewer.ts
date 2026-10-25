@@ -7,8 +7,7 @@ import type { TagControls } from "../tags/controls.js";
 import { TagRows } from "../tags/rows.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { selectionPickers } from "../tools/tool-selection.js";
-import { bodyAppearanceControl } from "./body-appearance-control.js";
-import { bodyXrayButton } from "./body-xray-controls.js";
+import { bodyMenu } from "./body-menu.js";
 import { EntityChildren } from "./entity-children.js";
 import { entityRows } from "./entity-presentation.js";
 import { renameEntity } from "./entity-rename.js";
@@ -52,6 +51,9 @@ export class EntityViewer {
     this.guides = new GuideRows(editor, guides);
     this.root.className = "entity-viewer";
     this.root.setAttribute("aria-label", "Entities");
+    this.root.addEventListener("scroll", () => {
+      for (const refresh of this.refreshRows) refresh();
+    });
     app.append(this.root);
     editor.world.changed.add(this.update);
     this.update();
@@ -206,12 +208,8 @@ export class EntityViewer {
       row.classList.toggle("entity-hidden", !visible);
     });
     row.append(select, ...(merge ? [merge] : []));
-    if (target.kind === "body")
-      row.append(
-        bodyAppearanceControl(this.editor, id, name, this.refreshRows),
-        bodyXrayButton(this.editor, id, name, this.refreshRows),
-      );
     row.append(eye);
+    if (target.kind === "body") row.append(bodyMenu(this.editor, id, name, this.refreshRows));
     return this.children.wrap(row, id, [
       ...(target.kind === "body" ? this.tags.rows(id, this.refreshRows) : []),
       ...this.guides.rows(id, this.refreshRows),

@@ -1,0 +1,39 @@
+.body-menu-control {
+  display: flex;
+  flex: none;
+}
+.entity-row .body-menu-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 5px;
+}
+.entity-row .body-menu-trigger[aria-expanded="true"] {
+  background: var(--selected);
+  color: var(--accent);
+}
+.entity-row .body-menu > button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 34px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+.body-menu-swatch {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.body-menu [role="menuitemcheckbox"]::after {
+  content: "";
+  width: 16px;
+  text-align: center;
+}
+.body-menu [aria-checked="true"]::after {
+  content: "✓";
+  color: var(--accent);
+}
