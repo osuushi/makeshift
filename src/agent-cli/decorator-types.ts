@@ -1,6 +1,7 @@
 /** Public decorator declarations used by the CLI compiler and makeshift types. */
 export const decoratorTypes = `
 export type DecoratorSettings = Record<string, string | number | boolean>;
+export type DecoratorDisplayMode = "detailed" | "texture" | "color-only";
 export interface DecoratorFace { body: string; face: string }
 export interface DecoratorEdge { body: string; edge: string }
 export interface DecoratorField {
@@ -12,6 +13,10 @@ export interface DecoratorField {
 export interface DecoratorDefinition {
   id: string; version: number; name: string; source: string;
   fields: readonly DecoratorField[]; preview?: boolean; livePreview?: boolean;
+  dependencies?: {
+    continuation?: "faces" | "adjacent-faces" | "bodies";
+    preview?: "faces" | "adjacent-faces" | "bodies";
+  };
 }
 export interface DecoratorPreviewSample<State = unknown> {
   durationMs: number; state: State | null;
@@ -32,6 +37,7 @@ export type DecoratorPreviewOutput<State = unknown> =
 export interface DecoratorInstance {
   readonly id: string; readonly definition: string; readonly version: number;
   readonly faces: readonly DecoratorFace[]; readonly settings: DecoratorSettings;
+  readonly display?: DecoratorDisplayMode;
   readonly frame: Plane; readonly axialReference?: [number, number];
   readonly problem?: string; readonly state?: unknown; readonly presetId?: string;
   readonly gearGroup?: string; readonly gearPitchRadius?: number;
@@ -48,6 +54,7 @@ export interface DecoratorCatalog {
 export type DecoratorEdit =
   | { action: "apply"; definition: string; version?: number; faces: DecoratorFace[]; settings?: DecoratorSettings; gearGroup?: string }
   | { action: "settings"; ids: string[]; patch: DecoratorSettings; replace?: boolean }
+  | { action: "display"; ids: string[]; mode: DecoratorDisplayMode | "default" }
   | { action: "preset"; ids: string[]; operation: "duplicate" | "rename" | "select"; presetId?: string; name?: string }
   | { action: "continue" | "reassign"; id: string; faces: DecoratorFace[] }
   | { action: "discard"; id: string }

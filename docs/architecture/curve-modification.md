@@ -66,6 +66,8 @@ hold are disclosed for removal. A new cutting endpoint automatically Fuses when
 exactly one other surviving curve endpoint meets it. This runs after overlapping
 span removal and belongs to the same Undo step. Untouched endpoints, ambiguous
 junctions and cuts meeting an edge interior do not acquire new links.
+When that new junction already implies a point-on-edge relationship, Trim removes
+the redundant incidence equation while retaining the stronger endpoint connection.
 
 Trimming a rectangle removes its convenience group and preserves the meaningful
 ordinary constraints. If an entire side disappears, its perpendicular relationship

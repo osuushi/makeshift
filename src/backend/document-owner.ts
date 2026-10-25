@@ -11,6 +11,7 @@ import { DocumentGeometry } from "./document-geometry.js";
 import { isPreviewRequest, type PreviewRequest, previewDocument } from "./document-preview.js";
 import { DocumentSession } from "./document-session.js";
 import { documentView } from "./document-view.js";
+import { extrudeVisual } from "./extrude-visual.js";
 import { GeometryQueries, isGeometryQuery } from "./geometry-queries.js";
 import { NativeSolver } from "./native-solver.js";
 import { planeCutAvailable } from "./plane-cut.js";
@@ -48,7 +49,7 @@ export class DocumentOwner {
     );
   }
   beginScript(name: string): void {
-    if (this.active || this.cancelling || this.session.candidate)
+    if (this.active || this.cancelling || this.session.candidate || this.session.visualPreview)
       throw new Error("Finish the current edit first");
     this.scripts.begin(name);
   }
@@ -147,7 +148,10 @@ export class DocumentOwner {
     }
     const feedback = this.view.cutEdges;
     if (!this.session.reopenedPreview)
-      this.session.candidate = await this.decorators.continue(this.session.candidate);
+      this.session.candidate = await this.decorators.continue(
+        this.session.candidate,
+        this.session.store.data,
+      );
     if (feedback) cutEdgeHighlights.set(this.session.candidate, feedback);
     this.checkCancellation();
     this.session.accept(cleanup, reopenPreview(this.view));
@@ -165,7 +169,7 @@ export class DocumentOwner {
         );
       else await this.dispatch(request, operation);
       if (this.session.candidate && !this.session.reopenedPreview)
-        this.session.candidate = await this.decorators.continue(this.session.candidate);
+        this.session.candidate = await this.decorators.continue(this.session.candidate, before);
       this.checkCancellation();
       return { view: this.view, documentChanged: before !== this.session.store.data };
     } catch (error) {
@@ -177,6 +181,7 @@ export class DocumentOwner {
       );
       this.session.store.record(operation, outcome, failure.error);
       if (request.kind !== "accept" && request.kind !== "check-cleanup") {
+        this.session.visualPreview = undefined;
         this.session.candidate = null;
         this.session.pendingOperation = null;
       }
@@ -196,6 +201,8 @@ export class DocumentOwner {
     if (!["read", "reopen", "accept", "check-cleanup", "navigation-history"].includes(request.kind))
       this.session.reopenedPreview = null;
     this.cleanupAvailable = false;
+    if (request.kind !== "read" && request.kind !== "reopen")
+      this.session.visualPreview = undefined;
     const decoratorEdit =
       request.kind === "decorator" || request.kind === "decorator-enable"
         ? await this.decorators.edit(this.session.store.data, request)
@@ -207,6 +214,16 @@ export class DocumentOwner {
       this.session.pendingOperation = null;
       this.session.candidate = null;
       this.session.store.accept(direct, operation);
+      return;
+    }
+    if (request.kind === "extrude" && request.presentation === "visual") {
+      this.session.pendingOperation = operation;
+      this.session.candidate = null;
+      const result = await extrudeVisual(this.kernel, this.session.store.data, request.extrusion);
+      this.checkCancellation();
+      this.session.visualPreview = { bodies: result.results };
+      this.solids.booleanMode = result.mode;
+      this.solids.booleanTargets = [];
       return;
     }
     if (isSolidRequest(request)) {

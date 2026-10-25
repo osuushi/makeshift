@@ -23,7 +23,7 @@ type Request =
       bodies: readonly ExactBody[];
     })
   | ReturnType<typeof import("./sketch-offset.js").sketchOffsetInput>
-  | ReturnType<typeof kernelInput>
+  | (ReturnType<typeof kernelInput> & { presentation?: "visual" })
   | ReturnType<typeof loftInput>
   | ReturnType<typeof revolveInput>
   | ReturnType<typeof pathSweepInput>

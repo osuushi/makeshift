@@ -29,6 +29,7 @@ import { StepImportControls } from "../model/step-import-controls.js";
 import { TopologyMoveControls } from "../model/topology-move-controls.js";
 import { installSettings } from "../preferences/settings.js";
 import { TagControls } from "../tags/controls.js";
+import { Inspector } from "../tools/inspector.js";
 import { installToolSurfaces } from "../tools/surfaces.js";
 import { installPlaneBounds } from "./plane-bounds.js";
 import { planeEntryTools } from "./plane-entry-tools.js";
@@ -86,10 +87,13 @@ const numeric = new NumericEdit(),
   world = new World(host, overlay),
   editor = new SketchEditor(world, numeric);
 installPlaneBounds(editor);
-const readouts = document.createElement("div");
-readouts.className = "selection-readouts";
-app.append(readouts);
-const decorators = new DecoratorPanel(editor, app);
+const inspector = new Inspector(app);
+const decorators = new DecoratorPanel(
+  editor,
+  app,
+  inspector.content("Decorators"),
+  inspector.content("Gear groups"),
+);
 const disposeDecorators = decoratorOverlay(editor);
 const disposeLabels = installWorldLabels(editor, overlay),
   disposeDrawing = drawSketches(editor),
@@ -141,7 +145,7 @@ const disposeModelHighlight = modelHighlight(editor);
 const disposeBodies = bodyView(editor);
 const selection = new SelectionOverlay(editor, overlay);
 const transforms = new TransformOverlay(editor, overlay, (axis) => numeric.activateTransform(axis));
-const constraints = new ConstraintDisplay(editor, readouts);
+const constraints = new ConstraintDisplay(editor, inspector.content("Constraints"));
 const pointEdge = new PointEdgeControls(editor, constraints.available);
 const pointTangent = new PointTangentControls(editor, constraints.available);
 const pointChooser = new PointChooser(editor, overlay);
@@ -201,7 +205,7 @@ const disposeVisibility = visibilityControls(editor, () => constructionPlanes.se
 const crossSection = new CrossSectionControls(editor, overlay, constructionPlanes.picker, () =>
   constructionPlanes.selectedFrame(),
 );
-const measurements = new MeasurementControls(editor, app, readouts);
+const measurements = new MeasurementControls(editor, app, inspector.content("Measurements"));
 const overlaps = new OverlapInput(editor, (plane) => constructionPlanes.select(plane));
 const planeCuts = new PlaneCutControls(editor, overlay, constructionPlanes.picker, entities);
 const disposeHost =
@@ -218,6 +222,7 @@ void editor.store.request({ kind: "read" });
 window.addEventListener("pagehide", (event) => {
   if (event.persisted) return;
   decorators.dispose();
+  inspector.dispose();
   disposeDecorators();
   disposeHost();
   disposeSettings();

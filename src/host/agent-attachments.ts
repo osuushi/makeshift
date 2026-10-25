@@ -12,11 +12,11 @@ export async function attachAgentFile(
   if (typeof name !== "string" || name.includes("/")) throw new Error("Choose a file to attach.");
   portablePath(name);
   if (typeof base64 !== "string" || base64.length > 4 * Math.ceil(archiveLimits.bytes / 3))
-    throw new Error("The file exceeds the 64 MiB workspace limit.");
+    throw new Error("The file exceeds the 2 GiB workspace limit.");
   const bytes = Buffer.from(base64, "base64");
   if (bytes.toString("base64") !== base64) throw new Error("Invalid attachment encoding.");
   if (bytes.length > archiveLimits.bytes)
-    throw new Error("The file exceeds the 64 MiB workspace limit.");
+    throw new Error("The file exceeds the 2 GiB workspace limit.");
   await workspace.ensure();
   const cwd = workspace.cwd;
   if (!cwd || (await realpath(cwd)) !== cwd) throw new Error("Workspace contains a linked path.");

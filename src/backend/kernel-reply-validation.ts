@@ -9,6 +9,7 @@ import {
 import type { KernelReply } from "./kernel-reply.js";
 import type { KernelRequest } from "./kernel-request.js";
 import { array, object, positive, requireKernel, text, vector } from "./kernel-values.js";
+import { validateVisualReply } from "./kernel-visual-validation.js";
 
 /** Validate the wire result before geometry, correspondence or measurements escape the adapter. */
 export function readKernelReply<Input extends KernelRequest>(
@@ -16,6 +17,11 @@ export function readKernelReply<Input extends KernelRequest>(
   value: unknown,
 ): KernelReply<Input> {
   const reply = object(value);
+  if ("presentation" in input && input.presentation === "visual") {
+    validateVisualReply(reply);
+    return reply as KernelReply<Input>;
+  }
+  requireKernel(reply.presentation !== "visual", "complete presentation required");
   switch (input.kind) {
     case "edge-finish-targets": {
       const sizes = array(reply.edgeFinishTargets);

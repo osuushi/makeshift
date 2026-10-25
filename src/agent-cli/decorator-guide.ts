@@ -31,6 +31,12 @@ A definition has id, version (positive integer), name, fields, source and option
 preview:true. IDs use letters, digits, dots, underscores and hyphens; the legacy
 freac. namespace remains reserved for stable built-in IDs. Source is one
 self-contained ES module with a default-exported object.
+Optional dependencies:{continuation,preview} declares geometry read by those hooks:
+"faces" means selected trimmed faces; "adjacent-faces" adds edge-sharing neighbors;
+"bodies" means full support-body geometry. Face scopes must not read body center,
+bounds, volume or other geometry. Instance/settings/state and source enablement
+still invalidate previews. Omitted continuation uses support bodies; omitted
+preview conservatively uses the whole document. Declare each scope independently.
 Its synchronous hooks are:
 
 - partition(context): return {groups:[{faces:[{body,face}],state?}]} or {reason:string}.

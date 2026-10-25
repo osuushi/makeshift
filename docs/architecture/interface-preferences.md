@@ -186,10 +186,12 @@ on the configured major lattice, using an integer multiple of its spacing when
 zoom requires thinning. Visible minor spacing is the smallest multiple of the
 configured minor spacing that meets the pixel minimum and divides visible major
 spacing exactly. Incommensurate settings show only the major grid rather than
-moving major lines. Equal grids also draw only major lines. Snapping follows the
-visible minor spacing (or major when minor lines are hidden). With 0.5/10 mm settings,
+moving major lines. Equal grids also draw only major lines. Distance snapping and
+drag increments always use the configured minor spacing, even when its lines
+are hidden. Shift bypasses geometry snaps without subdividing that grid step.
+With 0.5/10 mm settings,
 zoom can thin minor lines to 1, 2, 2.5, 5 or 10 mm; it never moves major lines to 10.5 mm.
-Canonical modeling grids use the same document spacing and visible snap step,
+Canonical modeling grids use the same document spacing and fixed minor snap step,
 while retaining their plane palette colors. The searchable Toggle
 grid snapping command remains available, including during a pen gesture.
 
@@ -225,3 +227,28 @@ Faint grids and occluded geometry are deliberately subordinate. Geometry control
 use opaque ink or light/dark double outlines; orientation face labels choose black
 or white against the configured face. Branding, QR images and color swatches keep
 their source colors. These exceptions do not justify low-contrast interface text.
+
+## Inspector pane
+
+Constraints, measurements, gear groups and decorator controls share the Inspector.
+It starts at the lower right above guidance. Move it using the same dotted left-hand
+grip as parameter panels. Drag any edge or corner to resize, keeping the opposite
+edge fixed; there is no resize button. The grip accepts arrow keys to move and
+Shift + arrows to resize. The pane is
+clamped beneath the header and above the footer when the window or interface scale
+changes. Its contents scroll when space is limited.
+
+The title-bar chevron collapses or expands the whole pane. Section titles collapse
+individual contents; up/down arrows reorder currently visible sections. Sections
+without relevant controls disappear without losing their order or collapsed state.
+Reset layout restores the initial position, size, order and expanded sections.
+Position, size, order and collapsed sections persist in device-local
+`makeshift.inspector` storage, outside document data and Undo. Unresolved decorator
+items start collapsed, identify their body, and retain individual disclosure state
+across selection/model refreshes in the current window. Their original repair
+actions remain inside each disclosure. Physical iPad touch usability requires device review.
+
+Inspector disclosures use drawn chevrons in visible 26px tiles, with full-row targets,
+hover/focus feedback and distinct expanded styling. Decorator notices retain native
+keyboard disclosure behavior but suppress browser markers. Reduced motion disables
+chevron transitions. Reorder and reset controls also use drawn icons.

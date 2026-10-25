@@ -33,13 +33,21 @@ async function entries(root: string, legacy: boolean): Promise<Entry[]> {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
       throw error;
     }
+    // Python environments are machine-local dependencies, not portable project data.
+    // Detect the marker rather than guessing names such as .dxf-venv.
+    if (
+      prefix.startsWith("workspace/") &&
+      children.some((child) => child.name === "pyvenv.cfg" && child.isFile())
+    )
+      return;
     for (const child of children) {
       const path = `${prefix}/${child.name}`;
-      portablePath(path);
       const source = join(directory, child.name);
       const info = await lstat(source);
-      if (info.isSymbolicLink() || (!info.isFile() && !info.isDirectory()))
-        throw new Error(`Workspace contains a link or special file: ${path}`);
+      // Never follow links or open sockets/devices/FIFOs. Keep these local without
+      // letting a tool's runtime files prevent saving the drawing.
+      if (info.isSymbolicLink() || (!info.isFile() && !info.isDirectory())) continue;
+      portablePath(path);
       if (info.isDirectory()) {
         await walk(source, path);
         continue;
@@ -47,7 +55,7 @@ async function entries(root: string, legacy: boolean): Promise<Entry[]> {
       if (prefix.startsWith("conversations/") && !path.endsWith(".jsonl")) continue;
       bytes += info.size;
       if (bytes > archiveLimits.bytes || result.length >= archiveLimits.files)
-        throw new Error("Workspace exceeds archive limits (64 MiB / 4096 files).");
+        throw new Error("Workspace exceeds archive limits (2 GiB / 60000 files).");
       result.push({ path, source, stamp: stamp(info), size: info.size });
     }
   }

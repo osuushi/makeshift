@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import type { DisplayDocument } from "../model/display-document.js";
 import { boundaryPoints, type CurveSpan } from "./curve-spans.js";
+import type { Sketch } from "./document.js";
 import type { SketchEditor } from "./editor.js";
 import { type PlaneFrame, worldPoint } from "./planes.js";
 import { closedBoundaries } from "./regions.js";
@@ -32,19 +32,19 @@ export function drawRegionFills(editor: SketchEditor): () => void {
   mesh.renderOrder = 5;
   editor.world.scene.add(mesh);
   const disposeFillPass = installRegionFillPass(editor.world, mesh);
-  let previous: DisplayDocument | null = null,
+  let previous: readonly Sketch[] | null = null,
     previousScale = 0,
     visibility = "";
   let regions: { plane: PlaneFrame; boundaries: CurveSpan[][] }[] = [];
   const update = () => {
     const scale = editor.world.height / editor.world.canvas.clientHeight;
     if (
-      previous === editor.display &&
+      previous === editor.display.sketches &&
       previousScale === scale &&
       visibility === editor.visibility.key
     )
       return;
-    if (previous !== editor.display || visibility !== editor.visibility.key)
+    if (previous !== editor.display.sketches || visibility !== editor.visibility.key)
       regions = editor.display.sketches
         .filter((s) => editor.visibility.visible(s.id))
         .map((sketch) => ({
@@ -52,7 +52,7 @@ export function drawRegionFills(editor: SketchEditor): () => void {
           boundaries: closedBoundaries(sketch.curves),
         }));
     visibility = editor.visibility.key;
-    previous = editor.display;
+    previous = editor.display.sketches;
     previousScale = scale;
     const positions: number[] = [];
     for (const { plane, boundaries } of regions) {

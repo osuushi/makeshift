@@ -40,6 +40,9 @@ export async function circleBody(page, radius, height, origin = [0, 0]) {
   await command(page, "return to modeling", "modeling");
   await page.mouse.click(center.x, center.y);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "profile");
+  // The new handle can cover the profile pick. Separate these deliberate clicks
+  // beyond the 500 ms double-click window that preserves sketch-entry intent.
+  await page.waitForTimeout(550);
   await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
   await page.getByRole("textbox", { name: "Extrusion distance", exact: true }).fill(String(height));
   await page

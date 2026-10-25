@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { deliveryGate, holdReply, waitForDelivery } from "./preview-delivery.mjs";
 import { plate } from "./ui-body-fillet.mjs";
+import { edgeLiveDrag } from "./ui-edge-live-drag.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -128,8 +129,9 @@ async function edgeScheduling(page) {
 await withUiRuntimes(
   async (page, name) => {
     await edgeScheduling(page);
+    await edgeLiveDrag(page);
     console.log(
-      `${name}: real edge expansion, size coalescing, invalidation, cancellation, mode/limits and no completion-cleanup probes pass`,
+      `${name}: real edge expansion, size coalescing, invalidation, cancellation, mode/limits, live pointer values and fixed minor-grid steps pass`,
     );
   },
   { allowed: ["chromium", "webkit"], timeout: 30000 },

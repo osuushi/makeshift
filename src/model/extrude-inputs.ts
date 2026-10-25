@@ -14,6 +14,7 @@ export interface ExtrudeActions {
   symmetric: () => boolean;
   queue: (value: number, symmetric?: boolean) => void;
   mode: (mode: Extrusion["mode"]) => void;
+  released: () => void;
   finish: () => void;
   cancel: () => void;
   guide: GuideToolInput;
@@ -39,6 +40,7 @@ export class ExtrudeInputs {
       axis: () => widget.axis,
       value: actions.distance,
       queue: actions.queue,
+      released: actions.released,
       symmetric: actions.symmetric,
       focus,
       modifySelection: true,

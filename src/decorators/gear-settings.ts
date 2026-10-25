@@ -9,6 +9,7 @@ export const gearManifest: DecoratorDefinition = {
   name: "Gear",
   source: "",
   preview: true,
+  dependencies: { continuation: "faces", preview: "adjacent-faces" },
   fields: [
     {
       key: "diameterTolerance",

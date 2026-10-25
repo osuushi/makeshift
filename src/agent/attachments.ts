@@ -44,7 +44,7 @@ export function agentAttachments(
       if (!running()) throw new Error("Start the agent before attaching files.");
       const size = files.reduce((sum, file) => sum + file.size, 0);
       if (size > archiveLimits.bytes)
-        throw new Error("These files exceed the drawing's 64 MiB workspace limit.");
+        throw new Error("These files exceed the drawing's 2 GiB workspace limit.");
       if (window.makeshiftRemote && files.some((file) => file.size > 23 * 1024 * 1024))
         throw new Error(
           "The iPad connection supports files up to 23 MiB each. Attach larger files on the computer.",

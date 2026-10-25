@@ -1,9 +1,11 @@
+import { onDecoratorDisplayChange } from "../preferences/decorator-display.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { isBuiltinDecorator, knurlDefinition } from "./builtins.js";
 import { appendCustomContinue } from "./custom-continue.js";
 import { appendCustomDecorators } from "./custom-panel.js";
 import { resolveFaces } from "./cylinder.js";
+import { appendDecoratorDisplay } from "./display-control.js";
 import { editDecorators, faceKey } from "./edits.js";
 import { appendKnurlSettings } from "./knurl-panel.js";
 import { decoratorLibrary } from "./library.js";
@@ -22,11 +24,12 @@ import { gearGroupPanel } from "./gear-group-panel.js";
 import { registerDecoratorTools } from "./tool-registration.js";
 
 export class DecoratorPanel {
-  private surface = document.createElement("div");
+  private repairOpen = new Set<string>();
   private root = document.createElement("section");
   private unregister: () => void;
   private disposeLibrary: () => void;
   private disposeGearGroups: () => void;
+  private disposeDisplay: () => void;
   private key = "";
   private shownDocument: SketchEditor["store"]["data"] | null = null;
   private last: string | null = null;
@@ -36,6 +39,8 @@ export class DecoratorPanel {
   constructor(
     private editor: SketchEditor,
     parent: HTMLElement,
+    content: HTMLElement,
+    gearContent: HTMLElement,
   ) {
     this.draft = new DecoratorSettingsDraft(editor, () => {
       this.key = "";
@@ -45,11 +50,13 @@ export class DecoratorPanel {
     });
     this.root.className = "decorator-panel";
     this.root.setAttribute("aria-label", "Decorators");
-    this.surface.className = "decorator-stack";
-    this.surface.append(this.root);
-    parent.append(this.surface);
+    content.append(this.root);
     this.disposeLibrary = decoratorLibrary(editor, parent);
-    this.disposeGearGroups = gearGroupPanel(editor, this.surface);
+    this.disposeGearGroups = gearGroupPanel(editor, gearContent);
+    this.disposeDisplay = onDecoratorDisplayChange(() => {
+      this.key = "";
+      this.update();
+    });
     this.unregister = registerDecoratorTools(
       editor,
       (definition) => this.apply(definition),
@@ -201,7 +208,7 @@ export class DecoratorPanel {
     const heading = document.createElement("h2");
     heading.textContent = "Decorators";
     this.root.append(heading);
-    appendDecoratorRepairs(this.root, this.editor, problems);
+    appendDecoratorRepairs(this.root, this.editor, problems, this.repairOpen);
     if (canContinue && last) {
       if (!isBuiltinDecorator(last.definition)) {
         appendCustomContinue(this.root, this.editor, last);
@@ -218,6 +225,8 @@ export class DecoratorPanel {
       return;
     }
     if (!instances.length) return;
+    const ungrouped = instances.filter((d) => !d.gearGroup);
+    if (ungrouped.length) appendDecoratorDisplay(this.root, this.editor, ungrouped);
     if (instances.length === 1) this.last = instances[0].id;
     const custom = instances.filter((d) => !isBuiltinDecorator(d.definition));
     if (custom.length) {
@@ -275,9 +284,10 @@ export class DecoratorPanel {
     this.editor.world.changed.delete(this.update);
     this.disposeLibrary();
     this.disposeGearGroups();
+    this.disposeDisplay();
     this.application.cancel();
     this.draft.cancel();
     this.unregister();
-    this.surface.remove();
+    this.root.remove();
   }
 }

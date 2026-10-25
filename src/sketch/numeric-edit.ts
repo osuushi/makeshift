@@ -9,6 +9,7 @@ export interface NumericFields {
 }
 
 export interface DragQuantityEdit {
+  readonly values?: Partial<Record<Quantity, number>> | null;
   editQuantity(quantity: Quantity, value: number): void;
 }
 
@@ -16,6 +17,10 @@ export interface DragQuantityEdit {
 export class NumericEdit {
   private owners: { fields: NumericFields; gesture: DragQuantityEdit } | null = null;
   private disposed = false;
+
+  get dragValues(): Partial<Record<Quantity, number>> | null {
+    return this.owners?.gesture.values ?? null;
+  }
 
   connect(fields: NumericFields, gesture: DragQuantityEdit): void {
     if (this.owners || this.disposed)

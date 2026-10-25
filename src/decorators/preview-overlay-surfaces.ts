@@ -2,7 +2,9 @@ import * as THREE from "three";
 import type { DisplayDocument } from "../model/display-document.js";
 import { decoratorAppearance, decoratorPreviewMode } from "../preferences/decorator-display.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import { type DecoratorDisplayMode, effectiveDecoratorDisplay } from "./display-mode.js";
 import { gearColor } from "./gear-colors.js";
+import { normalProjectionSurface } from "./normal-projection-surface.js";
 import {
   DecoratorPreviewCompositor,
   decoratorPreviewLayer,
@@ -27,6 +29,7 @@ export class PreviewOverlaySurfaces {
   private readonly fallback = new PreviewFallback(this.group, this.compositor);
   private readonly surfaces: GeneratedSurface[] = [];
   private definitions = new Map<string, string>();
+  private displayModes = new Map<string, DecoratorDisplayMode | undefined>();
   private colors = new Map<string, string>();
   private clipping = new Map<string, THREE.Plane[]>();
 
@@ -49,6 +52,9 @@ export class PreviewOverlaySurfaces {
         this.surfaces.splice(index, 1);
       }
     if (document) {
+      this.displayModes = new Map(
+        document.decorators?.map((instance) => [instance.id, instance.display]),
+      );
       this.colors = new Map(
         document.decorators?.map((d) => [d.id, gearColor(d, document.decorators ?? [])]),
       );
@@ -97,7 +103,7 @@ export class PreviewOverlaySurfaces {
         this.remove(this.surfaces[index]);
         this.surfaces.splice(index, 1);
       }
-    for (const { id, body, faces, positions, indices, occlusion } of meshes) {
+    for (const { id, body, faces, positions, indices, occlusion, projections } of meshes) {
       const signature = signatures.get(id);
       if (signature === undefined || signature !== current.get(id)) continue;
       const geometry = new THREE.BufferGeometry();
@@ -132,6 +138,17 @@ export class PreviewOverlaySurfaces {
         signature,
         definition: this.definitions.get(id) ?? "custom",
       });
+      for (const projection of projections ?? []) {
+        const mesh = normalProjectionSurface(projection, this.compositor.previewMaterial(), id);
+        this.group.add(mesh);
+        this.surfaces.push({
+          mesh,
+          faces: new Set([previewFaceKey(projection.body, projection.face)]),
+          id,
+          signature,
+          definition: this.definitions.get(id) ?? "custom",
+        });
+      }
     }
     this.style();
     this.editor.world.requestDraw();
@@ -154,6 +171,7 @@ export class PreviewOverlaySurfaces {
   private remove(surface: GeneratedSurface): void {
     this.group.remove(surface.mesh);
     surface.mesh.geometry.dispose();
+    (surface.mesh.material as THREE.MeshStandardMaterial).normalMap?.dispose();
     (surface.mesh.material as THREE.Material).dispose();
     if (surface.occluder) {
       this.group.remove(surface.occluder);
@@ -163,14 +181,19 @@ export class PreviewOverlaySurfaces {
   }
 
   private style(): PreviewSurface[] {
-    const detailed = decoratorPreviewMode() === "detailed";
     const ready = new Set<string>();
     for (const surface of this.surfaces) {
+      const mode = effectiveDecoratorDisplay(
+        { display: this.displayModes.get(surface.id) },
+        decoratorPreviewMode(),
+      );
       const drawable =
         surface.mesh.geometry.attributes.position.count >= 3 &&
-        (surface.mesh.geometry.index?.count ?? 0) >= 3;
+        (surface.mesh.userData.previewTexture || (surface.mesh.geometry.index?.count ?? 0) >= 3);
       surface.mesh.visible =
-        detailed && drawable && this.editor.visibility.visible(surface.mesh.userData.body);
+        (surface.mesh.userData.previewTexture ? mode === "texture" : mode === "detailed") &&
+        drawable &&
+        this.editor.visibility.visible(surface.mesh.userData.body);
       const appearance = decoratorAppearance(surface.definition, this.colors.get(surface.id));
       (surface.mesh.material as THREE.MeshStandardMaterial).color.set(appearance.color);
       surface.displayOpacity = appearance.opacity;

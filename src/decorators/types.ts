@@ -1,5 +1,6 @@
 import type { ExportMesh } from "../model/export-mesh.js";
 import type { PlaneFrame } from "../sketch/planes.js";
+import type { DecoratorDisplayMode } from "./display-mode.js";
 
 export type Settings = Record<string, string | number | boolean>;
 export interface FaceReference {
@@ -12,6 +13,8 @@ export interface DecoratorInstance {
   readonly version: number;
   readonly faces: readonly FaceReference[];
   readonly settings: Settings;
+  /** Omitted means follow the application's default decorator display. */
+  readonly display?: DecoratorDisplayMode;
   readonly presetId?: string;
   /** Persistent local coordinates keep a helix continuous across face changes. */
   readonly frame: PlaneFrame;
@@ -59,6 +62,7 @@ export type DecoratorEdit =
       newGearGroup?: boolean;
     }
   | { action: "gear-color"; id: string; color: string }
+  | { action: "display"; ids: string[]; mode: DecoratorDisplayMode | "default" }
   | { action: "settings"; ids: string[]; patch: Settings; replace?: boolean }
   | { action: "continue"; id: string; faces: FaceReference[] }
   | { action: "reassign"; id: string; faces: FaceReference[] }

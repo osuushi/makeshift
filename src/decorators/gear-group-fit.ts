@@ -1,4 +1,5 @@
 import type { DisplayDocument } from "../model/display-document.js";
+import { unchangedDecoratorGeometry } from "./dependencies.js";
 import { compatibleProfiles, ringRootLimit } from "./gear-fit-limits.js";
 import { gearCylinder, gearFitFailure, groupEligible } from "./gear-group-geometry.js";
 import { gearDimensions, gearSettings, involute, radians } from "./gear-settings.js";
@@ -161,13 +162,42 @@ export function fitGearGroup(
   }));
 }
 
-/** Geometry continuation refits the whole group in the same temporary candidate/Undo. */
-export function refitGearGroups<Document extends DisplayDocument>(document: Document): Document {
+/** All members participate: a remote member can alter this gear's fitted profile. */
+export function unchangedGearGroup(
+  source: DisplayDocument | undefined,
+  document: DisplayDocument,
+  members: readonly DecoratorInstance[],
+): boolean {
+  if (!source || !members.length) return false;
+  const previous = source.decorators?.filter((d) => d.gearGroup === members[0].gearGroup);
+  try {
+    return (
+      JSON.stringify(previous) === JSON.stringify(members) &&
+      members.every(
+        (member) =>
+          unchangedDecoratorGeometry(source, document, member, "faces") &&
+          (source.bodies?.find((body) => body.id === member.faces[0].body) ===
+            document.bodies?.find((body) => body.id === member.faces[0].body) ||
+            ringRootLimit(source, member) === ringRootLimit(document, member)),
+      )
+    );
+  } catch {
+    // Lost supports still go through the ordinary repair diagnostics.
+    return false;
+  }
+}
+
+/** Refit affected groups in the same temporary candidate/Undo. */
+export function refitGearGroups<Document extends DisplayDocument>(
+  document: Document,
+  source?: DisplayDocument,
+): Document {
   if (!document.decorators?.some((d) => d.gearGroup)) return document;
   let decorators = document.decorators ?? [];
   const ids = new Set(decorators.flatMap((d) => (d.gearGroup ? [d.gearGroup] : [])));
   for (const id of ids) {
     const members = decorators.filter((d) => d.gearGroup === id);
+    if (unchangedGearGroup(source, document, members)) continue;
     let fitted: DecoratorInstance[];
     try {
       fitted = fitGearGroup(document, members);

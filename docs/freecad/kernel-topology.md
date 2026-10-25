@@ -1033,6 +1033,15 @@ The captured flange regression uses the current exact BRep, without thread or
 flange feature history. It checks axial extension, fixed thread faces, independent
 cylindrical added volume, reversal after reopening and rigidly rotated placement.
 
+Axial-scale follow-up (2026-10-25): the same pinned OCCT
+[`BRep_Tool::CurveOnSurface`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRep/BRep_Tool.cxx#L289-L306)
+reverses the edge when reading a reversed face, selecting the opposite seam branch.
+Makeshift must read branches with the same forward face orientation used to build
+the replacement support. General affine conversion also changes circular rims to
+rational curves: projection onto the restored cylinder needs SameParameter before
+checking spatial/parameter correspondence. Retain the original acceptance tolerance;
+use a tighter approximation target to leave room for measured error.
+
 ## Tangential periodic subtraction (2026-09-20)
 
 Source observation at pinned OCCT `a016080bf6738d6aeae020badee4e888ad1540a5`:
@@ -1352,3 +1361,29 @@ retain their centers/radii, but their tip arcs are replaced with printable relie
 The R10/R5 example removes about 0.00813 mm² and opens a roughly 1.24 mm gap;
 the accepted body retains that same geometry. Mesh validity remains an independent
 requirement rather than being inferred from the repaired native shape.
+
+## Trimmed thickness visibility (2026-10-25)
+
+Source observation at OCCT `a016080bf6738d6aeae020badee4e888ad1540a5`:
+[`BRepClass_FaceClassifier::Perform` for a 3D point](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepClass/BRepClass_FaceClassifier.cxx#L76-L125)
+constructs bounded surface extrema and classifies the nearest returned stationary
+projection in UV. It does not establish that the original point lies on that
+trimmed surface. [`IntCurvesFace_ShapeIntersector::Perform`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/IntCurvesFace/IntCurvesFace_ShapeIntersector.cxx#L46-L56)
+intersects every loaded face and then sorts the results. These implementations
+were inspected locally; no upstream code was copied.
+
+Makeshift inference: analytic support coordinates plus a point-to-support check
+avoid generic extrema work and prevent a reverse witness from jumping to an
+opposite cylinder/sphere sector. Once a candidate endpoint is known, exact
+per-face intersection can reject on the first obstruction, after conservative
+bounds filtering. Cached hits can only reject farther candidates on identical
+rays. The calculator still computes and validates exact solids and uses the
+same trimming/ray tolerances and sample locations.
+
+Runtime verification: the captured perforated drain retains 142 faces, 420 edges,
+its openings and signed-extrusion volume. Curved references now stay in the same
+angular sector. Native cases cover spherical/cylindrical seams, located patches,
+tiny reverse-sampled patches and agreement with the previous all-face ray method
+for blockers, edge ties and repeated queries in both distance orders. Native
+performance and hidden Electron interaction were measured separately; neither
+establishes standalone WASM or physical iPad performance.

@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "presentation-mesh.h"
 #include "circular-rim.h"
 #include "timing.h"
 #include "blends.h"
@@ -8,19 +9,14 @@
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepGProp.hxx>
-#include <BRepMesh_IncrementalMesh.hxx>
 #include <BRep_Tool.hxx>
 #include <Bnd_Box.hxx>
 #include <GProp_GProps.hxx>
 #include <GCPnts_AbscissaPoint.hxx>
-#include <Poly_Triangulation.hxx>
-#include <Poly_PolygonOnTriangulation.hxx>
-#include <OSD_ThreadPool.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopoDS.hxx>
-#include <gp_Pln.hxx>
 #include <algorithm>
 #include <cmath>
 #include <set>
@@ -76,19 +72,8 @@ void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMap
         out << edges.FindIndex(e.Current()) - 1;
     }
     out << ']';
-    out << ",\"vertices\":[";
-    TopLoc_Location location; const auto mesh = BRep_Tool::Triangulation(shape, location);
-    bool comma = false;
-    if (!mesh.IsNull()) for (int i = 1; i <= mesh->NbTriangles(); ++i) {
-        int a, b, c; mesh->Triangle(i).Get(a, b, c);
-        if (shape.Orientation() == TopAbs_REVERSED) std::swap(b, c);
-        for (int index : {a, b, c}) {
-            if (comma) out << ','; comma = true;
-            const auto p = mesh->Node(index).Transformed(location.Transformation());
-            out << p.X() << ',' << p.Y() << ',' << p.Z();
-        }
-    }
-    out << ']';
+    out << ",\"vertices\":";
+    presentVertices(out, shape);
     BRepAdaptor_Surface surface(shape);
     analyticSurfaces(out, shape, surface);
     presentOffsetThickness(out, shape, faces, thickness);
@@ -128,16 +113,7 @@ void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMap
         out << "{\"center\":"; xyz(out, center.XYZ()); out << ",\"normal\":"; xyz(out, normal.XYZ()); out << '}';
     } else out << "null";
     out << ",\"plane\":";
-    if (surface.GetType() != GeomAbs_Plane) { out << "null"; return; }
-    const auto plane = surface.Plane();
-    auto normal = gp_Dir(gp_Vec(plane.Position().XDirection()).Crossed(gp_Vec(plane.Position().YDirection())));
-    if (shape.Orientation() == TopAbs_REVERSED) normal.Reverse();
-    const gp_Vec n(normal), origin = n * gp_Vec(plane.Location().XYZ()).Dot(n);
-    gp_Vec reference = std::abs(normal.X()) < 0.9 ? gp_Vec(1, 0, 0) : gp_Vec(0, 1, 0);
-    const auto u = (reference - n * reference.Dot(n)).Normalized();
-    const auto v = n.Crossed(u);
-    out << "{\"origin\":"; xyz(out, origin.XYZ()); out << ",\"u\":"; xyz(out, u.XYZ());
-    out << ",\"v\":"; xyz(out, v.XYZ()); out << '}';
+    presentPlane(out, shape);
 }
 void analyticEdge(std::ostream& out, const TopoDS_Edge& shape, const BRepAdaptor_Curve& curve) {
     const double a = curve.FirstParameter(), b = curve.LastParameter();
@@ -156,28 +132,6 @@ void analyticEdge(std::ostream& out, const TopoDS_Edge& shape, const BRepAdaptor
     xyz(out, curve.Value(a).XYZ()); out << ",\"b\":"; xyz(out, curve.Value(b).XYZ());
     if (curve.GetType() == GeomAbs_Circle) { out << ",\"mid\":"; xyz(out, curve.Value((a + b) / 2).XYZ()); }
     out << '}';
-}
-// Use the active face mesh, not an independently sampled curve: curved chords
-// with different endpoints can fall inside the triangles they should outline.
-std::vector<std::vector<gp_Pnt>> meshEdges(const TopTools_IndexedMapOfShape& faces,
-                                        const TopTools_IndexedMapOfShape& edges) {
-    std::vector<std::vector<gp_Pnt>> points(edges.Extent());
-    for (int i = 1; i <= faces.Extent(); ++i) {
-        const auto face = TopoDS::Face(faces(i));
-        TopLoc_Location location;
-        const auto mesh = BRep_Tool::Triangulation(face, location);
-        if (mesh.IsNull()) continue;
-        for (TopExp_Explorer e(face, TopAbs_EDGE); e.More(); e.Next()) {
-            const auto edge = TopoDS::Edge(e.Current());
-            auto& samples = points[edges.FindIndex(edge) - 1];
-            if (!samples.empty() || BRep_Tool::Degenerated(edge)) continue;
-            const auto polygon = BRep_Tool::PolygonOnTriangulation(edge, mesh, location);
-            if (polygon.IsNull()) continue;
-            for (int j = 1; j <= polygon->NbNodes(); ++j)
-                samples.push_back(mesh->Node(polygon->Node(j)).Transformed(location.Transformation()));
-        }
-    }
-    return points;
 }
 void edge(std::ostream& out, const TopoDS_Edge& shape, const std::vector<gp_Pnt>& samples) {
     BRepAdaptor_Curve curve(shape); const double a = curve.FirstParameter(), b = curve.LastParameter();
@@ -228,15 +182,7 @@ std::vector<double> signature(const TopoDS_Shape& shape) {
 }
 void present(std::ostream& out, const Result& result, double deflection) {
     KernelTiming timing("presentation");
-    if (!std::isfinite(deflection) || deflection < 1e-5 || deflection > 0.05)
-        throw std::runtime_error("Invalid mesh deflection");
-    BRepMesh_IncrementalMesh mesh(result.shape, deflection, false, 0.2, OSD_ThreadPool::DefaultPool()->HasThreads());
-    for (TopExp_Explorer faces(result.shape, TopAbs_FACE); faces.More(); faces.Next()) {
-        TopLoc_Location location;
-        const auto triangles = BRep_Tool::Triangulation(TopoDS::Face(faces.Current()), location);
-        if (triangles.IsNull() || triangles->NbTriangles() == 0)
-            throw std::runtime_error("Kernel could not mesh every face; the geometry result was rejected");
-    }
+    meshPresentation(result.shape, deflection);
     timing.phase("mesh");
     out << "{\"brep\":" << quoted(encode(result.shape)) << ",\"volume\":"
         << (result.exactVolume ? *result.exactVolume : volume(result.shape));

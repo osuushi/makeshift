@@ -9,6 +9,7 @@ export const pendingCustomContinuation = new WeakSet<DecoratorInstance>();
 export function resolveCustomContinuation(
   document: SketchDocument,
   hooks: JavaScriptDecorators,
+  source?: SketchDocument,
 ): SketchDocument {
   let changed = false;
   const decorators = (document.decorators ?? []).flatMap((instance) => {
@@ -36,5 +37,5 @@ export function resolveCustomContinuation(
       ];
     }
   });
-  return continueGearGroups(changed ? { ...document, decorators } : document);
+  return continueGearGroups(changed ? { ...document, decorators } : document, source);
 }

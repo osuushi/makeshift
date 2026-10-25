@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import * as THREE from "three";
+import { projectPreviewNormals } from "../src/decorators/normal-projection.js";
 import { PreviewOverlaySurfaces } from "../src/decorators/preview-overlay-surfaces.js";
 import type { DisplayDocument } from "../src/model/display-document.js";
 import {
@@ -61,6 +62,62 @@ test("display preferences normalize invalid storage independently of document da
   next.types.threads.color = "#000000";
   assert.equal(decoratorAppearance("freac.threads").color, "#123456");
   resetDecoratorDisplay();
+});
+
+test("texture switches retain support silhouettes, ignore stale replies and dispose normal maps", () => {
+  const { overlay, group } = previewScene();
+  try {
+    const document = documentAt();
+    const next = decoratorDisplay();
+    next.mode = "texture";
+    setDecoratorDisplay(next);
+    assert.equal(decoratorDisplay().mode, "texture");
+    overlay.sync(signature("current"), document);
+    const mesh = {
+      id: "decorator",
+      body: "a",
+      faces: [{ body: "a", face: "face" }],
+      positions: new Float32Array(vertices.map((v, i) => (i % 3 === 2 ? v + 0.2 : v))),
+      indices: new Uint32Array([0, 1, 2]),
+    };
+    const projections = projectPreviewNormals(document, mesh, 16);
+    overlay.replace(
+      [{ ...mesh, projections }],
+      ["decorator"],
+      signature("current"),
+      signature("current"),
+    );
+    const projected = group.children.find((child) => child.userData.previewTexture) as THREE.Mesh;
+    assert.ok(projected.visible);
+    assert.deepEqual([...projected.geometry.attributes.position.array], vertices);
+    const map = (projected.material as THREE.MeshStandardMaterial).normalMap;
+    assert.ok(map);
+    let disposed = false;
+    map.addEventListener("dispose", () => {
+      disposed = true;
+    });
+    for (const mode of ["color-only", "detailed", "texture"] as const) {
+      setDecoratorDisplay({ ...next, mode });
+      overlay.updateVisibility();
+      assert.equal(projected.visible, mode === "texture");
+      assert.equal(
+        group.children.filter((child) => child.visible && !child.userData.previewFallback).length,
+        mode === "color-only" ? 0 : 1,
+      );
+    }
+    overlay.sync(signature("moved"), documentAt(5));
+    assert.ok(disposed);
+    overlay.replace(
+      [{ ...mesh, projections }],
+      ["decorator"],
+      signature("current"),
+      signature("moved"),
+    );
+    assert.ok(group.children.every((child) => child.userData.previewFallback));
+  } finally {
+    overlay.dispose();
+    resetDecoratorDisplay();
+  }
 });
 
 function previewScene() {

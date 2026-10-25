@@ -31,7 +31,7 @@ export type AgentRequest =
   | { kind: "recover" }
   | { kind: "attach"; name: string; base64: string }
   | { kind: "start"; cols: number; rows: number }
-  | { kind: "read" }
+  | { kind: "read"; wait?: boolean }
   | { kind: "clipboard" }
   | { kind: "write"; data: string }
   | { kind: "resize"; cols: number; rows: number }

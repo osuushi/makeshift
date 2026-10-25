@@ -27,8 +27,9 @@ The sidebar lists groups without requiring a selection. Clicking a group selects
 its members and reveals body names, face counts, target/fitted pitch diameters,
 tooth counts and **Preview color** (picker and hex entry). New groups receive
 distinct hues, then variations in lightness/saturation; color is saved in the
-drawing, shared by its members, editable, and included in Undo/Redo. Copies get
-independent group IDs and new colors. Detailed and Color only previews use the
+drawing, shared by its members, editable, and included in Undo/Redo. Copies retain
+their original group IDs and colors, with distinct decorator instance IDs.
+Later geometry edits preserve that membership. Detailed and Color only previews use the
 same group colors. Settings retains global gear opacity, but has no global gear
 color override. Legacy groups without a saved color get a deterministic fallback;
 ordinary group edits save the color.
@@ -52,8 +53,13 @@ spacing. Rings do not mesh with one another; each is checked against the group's
 pinions. These calculations use radii and shared profiles, never current axes,
 relative location, orientation, axial overlap or partial-sector contact.
 
-Dimensional changes, printing limits and membership refit the whole group in the
-same candidate and Undo step. Rigid movement/rotation carries each gear's frame
+Dimensional changes, printing limits and membership refit only affected groups in
+the same candidate and Undo step. Sketch-only edits and unrelated body/face edits
+skip fitting; internal-ring fits also track the available wall behind their roots.
+Equal effective preview inputs preserve generated meshes even when a refit runs.
+Preview keys include fitted pitch radius, selected trimmed faces and immediate
+neighbors for clipping. Mesh coordinates use the saved gear frame origin,
+independent of unrelated body bounds. Rigid movement/rotation carries each gear's frame
 and preserves tooth parameters and phase. Fitting never moves axes or aligns
 phase. To assemble, place the fitted pitch surfaces at their reference spacing
 (sum of radii externally, difference internally) and rotate the parts so teeth

@@ -33,10 +33,12 @@ export class DecoratorSession {
       return { error: error instanceof Error ? error.message : String(error) };
     }
   }
-  async continue(document: SketchDocument): Promise<SketchDocument> {
+  async continue(document: SketchDocument, source?: SketchDocument): Promise<SketchDocument> {
+    if (source?.bodies === document.bodies && source?.decorators === document.decorators)
+      return document;
     if (!document.decorators?.some((d) => pendingCustomContinuation.has(d)))
-      return continueGearGroups(document);
-    return resolveCustomContinuation(document, await this.hooks());
+      return continueGearGroups(document, source);
+    return resolveCustomContinuation(document, await this.hooks(), source);
   }
   async inspect(document: SketchDocument, query: DecoratorInspectionRequest) {
     return isBuiltinDecorator(query.definition)

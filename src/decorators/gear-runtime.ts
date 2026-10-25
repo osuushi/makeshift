@@ -40,8 +40,7 @@ export function gearPreview(
   document: DisplayDocument,
   instance: DecoratorInstance,
 ) {
-  const body = document.bodies?.find((b) => b.id === instance.faces[0].body);
-  const scope = new MeshScope(runtime, body?.center);
+  const scope = new MeshScope(runtime, instance.frame.origin);
   try {
     return scope.mesh(gearOperands(scope, document, instance, "preview").preview());
   } finally {

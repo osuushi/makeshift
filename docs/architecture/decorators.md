@@ -31,14 +31,41 @@ settings, not the internal grouping noun.
 
 ## Preview display and pending work
 
-Application Settings offers shaded Detailed previews or Color only, plus separate
-thread/knurling/custom colors and per-kind opacity. Gear colors belong to saved, editable
-[gear groups](gears.md), including both detailed and color-only previews. Other display
-choices are device preferences outside
-accepted attachments, files and Undo; they never turn decorators into native BRep.
+Application Settings chooses the default display: Geometry, Texture (normal projection),
+or Color only. Each Display control offers Default (Geometry/Texture/Color only),
+showing the current inherited choice, plus those three
+explicit modes. An omitted override follows the device default, including existing
+documents. Explicit overrides are saved attachment metadata and use ordinary Undo/Redo;
+gear groups own one shared display choice, edited beside their group preview color.
+Editing any member applies the choice to its whole group in one Undo step; joining
+members inherit the destination group's mode. Ungrouped decorators remain independent.
+Mixed selections show Mixed. Overrides do not change geometry settings or presets,
+and custom decorators need no executable code enabled to change display.
+Settings also offers thread/knurling/custom colors and per-kind opacity. Gear colors
+belong to saved, editable [gear groups](gears.md), including all three display modes.
+The default and non-gear appearance choices are device preferences outside files and
+Undo; none of these display choices turns decorators into native BRep.
 The compositor excludes only a surface's own supports when resolving occlusion,
 then blends its configured opacity once. Generated previews and attachment markers
 cannot intercept analytic face picking.
+Texture generates the same preview mesh, then bakes its facing triangle normals
+onto the original trimmed support tessellation in the preview worker. It changes
+lighting, not the support silhouette, depth, picking, accepted geometry or export.
+Planes, cylinders and cones use continuous analytic charts (with wrapped radial
+seams). Their bake rasterizes conservative triangle footprints and intersects only
+the normal lines in those footprints; it avoids a mesh-tree traversal per texel.
+Other surfaces use a padded triangle atlas with accelerated ray queries. Missing intersections retain
+the support normal. Projection selects the closest facing intersection along either
+direction of the support normal; overhangs and multiple relief layers cannot all
+be represented. There is no parallax displacement or relief self-shadowing.
+Live maps target 256 pixels square and settled maps 512; generic atlases may grow
+to 1024 to retain padding. Supports above 65,536 triangles report an explicit preview
+error and retain attachment coloring. Small features can alias, especially on dense
+generic atlases; Geometry remains the full-profile alternative. Maps are cached per
+matching preview result, disposed with it, and never rebaked for camera movement.
+Resolved per-instance modes participate in preview signatures, so stale replies cannot
+restore an earlier display. Mode changes interrupt incompatible worker jobs; Color only
+skips generation for that instance while other instances may still generate geometry or textures.
 Thread previews omit the auxiliary cylindrical skin and volume-closing facets at
 axial ends and adjacent planar boundaries, so those helper surfaces do not color
 over rims or end faces. Clipping still uses closed volumes; threaded extent and
@@ -57,8 +84,9 @@ for bodies with a drawable generated mesh containing indexed triangles. Custom
 previews containing only vertices or no mesh keep the attachment marker. A valid
 attachment also keeps its current-face coloring after a preview worker error; the
 error notice is explicit and does not claim successful generation. Invalid or
-detached attachments use the repair/problem interface instead of a success marker. Color only retires pending workers and
-continues to follow current geometry without expensive preview jobs; export is
+detached attachments use the repair/problem interface instead of a success marker. If all
+instances resolve to Color only, pending workers retire; attachment coloring continues
+to follow current geometry without expensive preview jobs. Export is
 unchanged. Live worker replies include transient durations and sampling hints for
 local measurements, not persisted document state or a performance guarantee.
 
@@ -356,9 +384,11 @@ handedness setting or scaling those numeric settings. Do not retain a stale stan
 size designation after the diameter changes.
 
 General decorator hooks for transform-specific behavior are future work, not part
-of the V1 interface. Nonuniform scale that destroys cylindrical eligibility must
-visibly invalidate the affected threads. Geometry and decorator parameter edits
-remain distinct operations.
+of the V1 interface. Axial stretch and equal radial scale retain cylindrical supports
+and attached decorators, preserving thread pitch/clearance and knurl settings.
+Gear groups retain their ordinary diameter-dependent fitting behavior. Nonuniform
+scale that destroys cylindrical eligibility must visibly invalidate the affected
+threads. Geometry and decorator parameter edits remain distinct operations.
 
 ## Small extension contract
 
@@ -489,6 +519,28 @@ the same cylinder partition, settings resolution and highlighted local warnings.
 `makeshift docs/types` carries the authoring and typed command contracts.
 
 ## Mesh export and preview
+
+Manifests may declare `dependencies: { continuation, preview }` independently.
+Each value is `"faces"`, `"adjacent-faces"`, or `"bodies"`. `faces` covers the
+selected face descriptors and trimmed tessellation; `adjacent-faces` also includes
+every current face sharing an edge with a selected face; `bodies` covers the full
+geometry context (IDs, volume, center, bounds, faces and edges). These are author
+promises about hook reads, not restrictions on the supplied context. A face-scoped
+hook must not depend on body center, volume, bounds or nonselected edges/faces.
+Instance state/settings and bundled definition/source enablement still participate
+in preview keys. Missing continuation scope conservatively uses whole support
+bodies; missing custom preview scope retains whole-document/source invalidation.
+No arbitrary plugin code runs to decide whether a cached preview is still current.
+
+Continuation first checks immutable support identity, then declared geometry
+values when a body was rebuilt. Copies, splits and merged supports still consume
+topology correspondence. Gear uses selected faces for continuation, adjacent faces
+for previews, and independently checks group-wide fitting dependencies, including
+the available outer wall behind internal-ring roots. Preview
+invalidation compares effective inputs, not document identity or whether fitting
+ran. Unchanged meshes remain visible and pending matching results stay valid.
+These keys and continuation memoization are transient; no revision or cache data
+is added to the saved application document.
 
 The export path captures accepted geometry/settings; prepares geometry context
 and sufficiently accurate base tessellation; validates inputs; generates independent

@@ -85,7 +85,7 @@ export class GizmoInputs {
     pointer.moved ||=
       Math.hypot(event.clientX - pointer.x, event.clientY - pointer.y) > pointer.threshold;
     if (!pointer.moved) return;
-    const step = this.editor.world.spacing / (event.shiftKey ? 10 : 1);
+    const step = this.editor.world.spacing;
     let value = rotate
       ? snapRotation(pointer.frame.angle(event.clientX, event.clientY), event.shiftKey)
       : pointer.frame.translation(event.clientX, event.clientY);

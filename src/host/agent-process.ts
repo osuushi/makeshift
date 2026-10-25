@@ -15,6 +15,7 @@ export class AgentProcess {
   private scope: AgentProcessScope | null = null;
   private stopping: Promise<void> | null = null;
   private starting = false;
+  private readers = new Set<() => void>();
   get status(): Omit<AgentStatus, "workspace"> {
     return {
       running: this.starting || !!this.pty || !!this.scope,
@@ -57,6 +58,7 @@ export class AgentProcess {
       this.exited = new Promise((resolve) => {
         pty.onData((data) => {
           this.output += data;
+          this.wakeReaders();
           if (this.output.length > 128 * 1024 && !this.paused) {
             pty.pause();
             this.paused = true;
@@ -65,6 +67,7 @@ export class AgentProcess {
         pty.onExit(({ exitCode }) => {
           this.exitCode = exitCode;
           if (this.pty === pty) this.pty = null;
+          this.wakeReaders();
           resolve();
           void this.stop().catch((error: unknown) => {
             this.error = error instanceof Error ? error.message : String(error);
@@ -97,6 +100,22 @@ export class AgentProcess {
       this.paused = false;
     }
     return output;
+  }
+  /** Long-poll without delaying echoed keystrokes or spinning while the PTY is idle. */
+  waitForOutput(): Promise<void> {
+    if (this.output || !this.pty) return Promise.resolve();
+    return new Promise((resolve) => {
+      const done = () => {
+        clearTimeout(timer);
+        this.readers.delete(done);
+        resolve();
+      };
+      const timer = setTimeout(done, 1000);
+      this.readers.add(done);
+    });
+  }
+  private wakeReaders(): void {
+    for (const done of this.readers) done();
   }
   write(data: string): void {
     if (!this.pty) throw new Error("Start the agent first.");

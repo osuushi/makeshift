@@ -3,6 +3,7 @@ import { newId, type SketchDocument } from "../sketch/document.js";
 import { validateFrame } from "../sketch/planes.js";
 import { isBuiltinDecorator, knurlDefinition } from "./builtins.js";
 import { cylinderExtent, cylinderFrame, resolveFaces, sameCylinder } from "./cylinder.js";
+import { editDecoratorDisplay, validDecoratorDisplay } from "./display-mode.js";
 import { editGearColor } from "./gear-color-edit.js";
 import { refitGearGroups } from "./gear-group-fit.js";
 import { gearDefinition, gearSettings } from "./gear-settings.js";
@@ -102,6 +103,7 @@ export function validateDecorators(document: SketchDocument): void {
       !Number.isInteger(instance.version) ||
       !instance.settings ||
       typeof instance.settings !== "object" ||
+      (instance.display !== undefined && !validDecoratorDisplay(instance.display)) ||
       (instance.problem !== undefined && typeof instance.problem !== "string") ||
       (instance.gearGroup !== undefined &&
         (instance.definition !== gearDefinition ||
@@ -225,7 +227,9 @@ function continueBuiltin(
 export function editDecorators(document: SketchDocument, edit: DecoratorEdit): SketchDocument {
   const previous = document.decorators ?? [];
   let next: readonly DecoratorInstance[] = previous;
-  if (edit.action === "gear-color") {
+  if (edit.action === "display") {
+    next = editDecoratorDisplay(document, edit);
+  } else if (edit.action === "gear-color") {
     next = editGearColor(document, edit.id, edit.color);
   } else if (edit.action === "apply") {
     next = prepareBuiltinApplication(document, edit);

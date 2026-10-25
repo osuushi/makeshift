@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { click, drag, inspect, reset } from "./ui-helpers.mjs";
+import { inspectorRoute } from "./ui-inspector.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function constraintPanelRoute(page, name) {
@@ -57,6 +58,7 @@ export async function constraintPanelRoute(page, name) {
   await inspect(page);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before, "Panel actions preserve snapshot Undo");
+  await inspectorRoute(page, name);
   console.log(
     `${name}: stable lower-right constraint sections, add/remove transfer and Undo passed`,
   );

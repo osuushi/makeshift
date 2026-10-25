@@ -37,7 +37,10 @@ const server = await createServer({
               );
             if (request.kind === "write") pty.write(request.data);
             if (request.kind === "resize") pty.resize(request.cols, request.rows);
-            if (request.kind === "read") output = pty.read();
+            if (request.kind === "read") {
+              if (request.wait) await pty.waitForOutput();
+              output = pty.read();
+            }
             if (request.kind === "stop") await pty.stop();
             if (request.kind === "configure") preferences = request.preferences;
             res.end(

@@ -44,6 +44,18 @@ uses temporary injected downloads/processes only; no vendor installer runs on th
 machine. Windows/Linux runtime acceptance remains separate from platform plan tests.
 
 The terminal docks right or below, resizes and collapses to a visible header.
+It starts as that same collapsed sliver, with no separate header Agent button;
+terminal loading and harness launch wait until the first expansion. Expanding
+returns keyboard focus to terminal input; collapsing returns it to the drawing.
+The expanded header is accented when terminal input owns the keyboard. The
+unfocused pane has a 50% white overlay in light mode or black overlay in dark
+mode. The overlay passes clicks through and clears for terminal or control focus.
+The browser caret is hidden because Ghostty draws the terminal cursor itself.
+Ghostty cursor blinking follows terminal input focus explicitly: it stops when
+focus moves to the drawing, pane controls or another window, and resumes on return.
+PTY reads wait for output (bounded to one second), waking immediately on data
+or exit; the renderer yields one frame between reads instead of batching output
+on a fixed 100 ms polling interval. Idle reads do not hold the lifecycle lock.
 Collapsing preserves the process and output; stopping is a separate action.
 Founder accepted session continuity on 2026-09-20: collapse keeps the agent running,
 document close stops it. The 2026-09-20 review supersedes explicit initial Start:
@@ -201,7 +213,7 @@ it does not require a general remote hosting platform.
 
 Proposed interaction for review:
 
-- An Agent button reveals the dock. Default placement is right; its header offers
+- A collapsed Agent sliver reveals the dock. Default placement is right; its header offers
   Right/Bottom placement, settings and collapse. Remember placement and size locally.
   Use a draggable splitter and keep the CAD area usable at the minimum pane size.
 - Opening Agent immediately launches the configured harness (Codex by default). Preferences
@@ -623,7 +635,7 @@ terminal input. Each file is copied into `attachments/` in the drawing workspace
 numbered names for collisions. The resulting workspace-relative path is pasted
 at the terminal cursor so the agent can reference the portable copy. For a batch
 over 20 MiB, a confirmation explains that the files will enlarge the saved drawing.
-The combined 64 MiB workspace limit still applies. Attachments mark the drawing
+The combined 2 GiB workspace limit still applies. Attachments mark the drawing
 edited and travel with its portable save; attaching leaves geometry unchanged and
 never executes the file. They are workspace files, outside geometry Undo.
 The iPad transport retains its 32 MiB message cap, allowing files up to 23 MiB

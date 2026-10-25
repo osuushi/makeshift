@@ -13,6 +13,14 @@ workspaces. Sketch editing starts off; 3D editing starts on. Non-hidden saved gu
 their ordinary snapping remain available with editing off. This is per-window view
 state, separate from each guide's eye control and document Undo. There is no modal
 Guide points creation tool.
+Candidate discovery runs after paint at background priority, yielding between
+discovery/filtering and destination probes. Pointer, selection, geometry, camera
+or visibility changes supersede pending work; entering a tool or closing the window
+cancels it. Selection and tool controls do not wait for candidates. Saved guides
+and their snapping stay immediate. Entering an existing marker preserves its hit
+target while discovery is deferred. Endpoint incidence uses an immutable-body
+spatial index followed by the existing exact tolerance and ambiguity checks.
+
 With Select active, automatic discovery uses the ordinary click target. A guide
 is a candidate when its parent is hovered or directly neighbors the hovered entity
 in the geometry graph, and the pointer lies within 256 CSS pixels of the guide.

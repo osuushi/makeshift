@@ -42,6 +42,7 @@ export class AxialDrag {
       queue: (value: number, symmetric?: boolean) => void;
       symmetric?: () => boolean;
       focus: () => void;
+      released?: () => void;
       modifySelection?: boolean;
       guide?: GuideToolInput;
     },
@@ -112,6 +113,7 @@ export class AxialDrag {
         this.reset();
         state.lease()?.releaseCapture();
         if (!moved) state.focus();
+        else state.released?.();
         editor.refresh();
       },
       options,

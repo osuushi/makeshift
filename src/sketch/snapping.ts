@@ -15,10 +15,9 @@ export function snapped(
   exclude: ReadonlySet<string>,
   bypass: boolean,
   gridOrigin: Point = { x: 0, y: 0 },
-  gridFactor = 1,
 ): Point {
   editor.snap = null;
-  const step = editor.world.spacing * gridFactor;
+  const step = editor.world.spacing;
   const grid = editor.gridSnap
     ? {
         x: gridOrigin.x + Math.round((point.x - gridOrigin.x) / step) * step,

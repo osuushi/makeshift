@@ -3,15 +3,15 @@
 Founder request, 2026-09-20: selecting faces/edges reports separation and geometric
 relationships. Maximum means largest gap, not the farthest pair of points.
 
-A compact lower-right readout above the guidance text automatically measures one or
+The Measurements section of the movable, resizable Inspector automatically measures one or
 two selected solid faces, solid edges, filled sketch regions in 3D, or whole curves
 in a sketch workspace.
 Filled regions behave as bounded zero-thickness faces, preserving holes and world
 placement. They measure against regions, solid faces and edges using the same gap,
 angle and relationship rules. A single region shows its area. Hiding bodies does
 not disable visible-region measurement. Point/group-handle selections are not whole
-curves. Constraints and measurements share a vertical layout, constraints above
-measurements; the stack scrolls when viewport height is limited. The card is hidden
+curves. Constraints and measurements share the Inspector with gear groups and decorators.
+Sections can be reordered and collapsed; the pane scrolls when viewport height is limited. The card is hidden
 during editing; accepted geometry is measured again after
 acceptance or Undo. Camera changes only reproject witness lines. Results are transient,
 not dimensions, constraints, saved annotations or history entries.

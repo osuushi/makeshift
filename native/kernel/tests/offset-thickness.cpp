@@ -1,8 +1,14 @@
 #include "offset-thickness.h"
+#include "offset-thickness-ray.h"
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepPrimAPI_MakeCylinder.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <gp_Pln.hxx>
+#include <gp_Cylinder.hxx>
+#include <gp_Sphere.hxx>
+#include <gp_Lin.hxx>
+#include <IntCurvesFace_ShapeIntersector.hxx>
+#include <BRepPrimAPI_MakeBox.hxx>
 #include <BRep_Builder.hxx>
 #include <TopExp.hxx>
 #include <TopoDS.hxx>
@@ -14,6 +20,7 @@
 #include <iostream>
 #include <vector>
 #include <utility>
+#include <cmath>
 
 namespace {
 TopoDS_Face wall(double radius, double z = 0, double x = 0) {
@@ -53,8 +60,79 @@ void expectShared(const std::vector<TopoDS_Face>& walls,
         expect(output.str(), expected);
     }
 }
+void sectors() {
+    const gp_Ax3 frame(gp_Pnt(0, 0, 0), gp_Dir(0, 0, 1));
+    const double pi = std::acos(-1.0);
+    for (const bool spherical : {false, true}) {
+        const auto patch = [&](double radius, double first, double last) {
+            return spherical
+                ? BRepBuilderAPI_MakeFace(gp_Sphere(frame, radius), first, last, -0.3, 0.3).Face()
+                : BRepBuilderAPI_MakeFace(gp_Cylinder(frame, radius), first, last, -3, 3).Face();
+        };
+        const auto source = patch(40, -0.1, 0.1), opposite = patch(20, pi - 0.1, pi + 0.1);
+        const auto target = patch(20, -0.1, 0.1);
+        expect(measure({source, opposite}), "null");
+        expect(measure({source, opposite, target}), "{\"faceIndex\":2,\"distance\":20,\"slope\":1}");
+        OffsetThicknessContext context(source);
+        if (context.classify(source, gp_Pnt(40, 0, 0)) != TopAbs_IN ||
+            context.classify(source, gp_Pnt(-40, 0, 0)) != TopAbs_OUT ||
+            context.classify(source, gp_Pnt(41, 0, 0)) != TopAbs_OUT)
+            throw std::runtime_error("Analytic classification accepted a distant projected point");
+        const auto seam = patch(20, 2 * pi - 0.1, 2 * pi + 0.1);
+        expect(measure({source, seam}), "{\"faceIndex\":1,\"distance\":20,\"slope\":1}");
+        gp_Trsf move;
+        move.SetRotation(gp_Ax1(gp_Pnt(), gp_Dir(1, 2, 3)), 0.7);
+        move.SetTranslationPart(gp_Vec(17, -23, 31));
+        expect(measure({TopoDS::Face(source.Moved(TopLoc_Location(move))),
+                        TopoDS::Face(seam.Moved(TopLoc_Location(move)))}),
+               "{\"faceIndex\":1,\"distance\":20,\"slope\":1}");
+    }
+}
+bool referenceReach(IntCurvesFace_ShapeIntersector& ray, const gp_Pnt& point,
+                    const gp_Dir& direction, double distance, const TopoDS_Face& target) {
+    constexpr double tolerance = 1e-7;
+    ray.Perform(gp_Lin(point, direction), 10 * tolerance, distance + tolerance);
+    if (!ray.IsDone()) return false;
+    double first = distance + 2 * tolerance;
+    bool hit = false;
+    for (int i = 1; i <= ray.NbPnt(); ++i) {
+        const double position = ray.WParameter(i);
+        if (position < first - tolerance) {
+            first = position;
+            hit = ray.Face(i).IsSame(target);
+        } else if (std::abs(position - first) <= tolerance && !ray.Face(i).IsSame(target)) hit = false;
+    }
+    return hit && std::abs(first - distance) < tolerance;
+}
+void rayAgreement() {
+    BRep_Builder builder;
+    TopoDS_Compound body;
+    builder.MakeCompound(body);
+    builder.Add(body, BRepPrimAPI_MakeBox(10, 10, 10).Shape());
+    builder.Add(body, BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(5, 5, 2), gp_Dir(0, 0, 1)), 2, 6).Shape());
+    TopTools_IndexedMapOfShape faces;
+    TopExp::MapShapes(body, TopAbs_FACE, faces);
+    OffsetThicknessRay fast(body);
+    IntCurvesFace_ShapeIntersector reference;
+    reference.Load(body, 1e-7);
+    // Repeat queries in both distance orders so cached obstructions cannot hide
+    // a nearer valid target. Include edge ties, cylinder seams and inside starts.
+    for (const double z : {-2.0, 0.0, 3.0}) for (const double x : {0.0, 2.0, 3.0, 5.0, 7.0, 10.0})
+        for (const double y : {0.0, 3.0, 5.0, 7.0, 10.0})
+            for (const double distance : {12.0, 10.0, 8.0, 7.0, 5.0, 2.0, 8.0, 10.0, 12.0})
+                for (int i = 1; i <= faces.Extent(); ++i) {
+                    const auto target = TopoDS::Face(faces(i));
+                    const gp_Pnt point(x, y, z);
+                    const gp_Dir direction(0, 0, 1);
+                    if (fast.reaches(point, direction, distance, target) !=
+                        referenceReach(reference, point, direction, distance, target))
+                        throw std::runtime_error("Targeted visibility differs from all-face intersections");
+                }
+}
 }
 int main() {
+    sectors();
+    rayAgreement();
     expect(measure({wall(3), wall(8), wall(5)}), "{\"faceIndex\":2,\"distance\":2,\"slope\":-1}");
     expect(measure({wall(8), wall(3), wall(5)}), "{\"faceIndex\":2,\"distance\":3,\"slope\":1}");
     expect(measure({wall(3), wall(8, 20)}), "null");

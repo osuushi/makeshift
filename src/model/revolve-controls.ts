@@ -211,6 +211,7 @@ export class RevolveControls {
     this.valid = false;
     this.pending = this.latest = request;
     if (!this.running) this.running = this.drain();
+    this.editor.refresh();
   }
   private async drain(): Promise<void> {
     while (this.pending && this.lease?.phase === "editing") {

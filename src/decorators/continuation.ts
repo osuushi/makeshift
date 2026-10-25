@@ -6,8 +6,12 @@ import type { ModelRequest } from "../sketch/model-api.js";
 import { isBuiltinDecorator } from "./builtins.js";
 import { pendingCustomContinuation } from "./custom-continuation.js";
 import { cross, sameCylinder, subtract } from "./cylinder.js";
+import {
+  decoratorDefinition,
+  hasDecoratorDescendants,
+  unchangedDecoratorGeometry,
+} from "./dependencies.js";
 import { hasSettingsProblem, validateBuiltin } from "./edits.js";
-import { nextGearColor } from "./gear-colors.js";
 import { threadReference } from "./thread-extent.js";
 import { threadDefinition } from "./thread-settings.js";
 import { transformedAxialReference, transformedThreadFrame } from "./transform-frame.js";
@@ -77,8 +81,15 @@ export function continueDecorators<Document extends DisplayDocument>(
 ): Document {
   if (!source.decorators?.length || source.bodies === candidate.bodies) return candidate;
   const decorators: DecoratorInstance[] = [];
-  const copiedGearGroups = new Map<string, { id: string; color: string }>();
   for (const instance of source.decorators) {
+    const scope = decoratorDefinition(source, instance)?.dependencies?.continuation ?? "bodies";
+    if (
+      !hasDecoratorDescendants(source, candidate, instance) &&
+      unchangedDecoratorGeometry(source, candidate, instance, scope)
+    ) {
+      decorators.push(instance);
+      continue;
+    }
     const split =
       (candidate.bodies ?? []).filter((b) => {
         const origins = topologyOrigins.get(b);
@@ -97,17 +108,6 @@ export function continueDecorators<Document extends DisplayDocument>(
       const next = descendants(reference, source, body, request);
       if (!next) continue;
       let updated = { ...next, id: count++ === 0 ? instance.id : newId() };
-      if (instance.gearGroup && topologyOrigins.get(body)?.copy) {
-        let group = copiedGearGroups.get(instance.gearGroup);
-        if (!group) {
-          group = {
-            id: newId(),
-            color: nextGearColor([...(source.decorators ?? []), ...decorators]),
-          };
-          copiedGearGroups.set(instance.gearGroup, group);
-        }
-        updated = { ...updated, gearGroup: group.id, gearColor: group.color };
-      }
       if (
         !isBuiltinDecorator(instance.definition) &&
         !updated.problem &&

@@ -55,6 +55,7 @@ export function installViewInspection(editor: SketchEditor, sections: SectionCon
         solving: editor.store.working,
         solver: editor.store.statistics,
         preview: editor.candidate,
+        visualPreview: editor.interactions.current?.visualPreview ?? null,
         decoratorPreviewBounds: decoratorPreviewBounds(world),
         decoratorFallbackBounds: decoratorPreviewBounds(world, true),
         bodyRendering: inspectBodyRendering(world.scene),
