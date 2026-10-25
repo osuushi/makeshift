@@ -126,8 +126,8 @@ test("archives reject escapes, ambiguous names, private harness data, symlinks a
   view.setUint32(central + 38, 0xa000 << 16, true);
   assert.throws(() => readPortableArchive(zip), /regular files/);
   view.setUint32(central + 38, 0, true);
-  view.setUint32(central + 24, 100 * 1024 * 1024, true);
-  assert.throws(() => readPortableArchive(zip), /64 MiB/);
+  view.setUint32(central + 24, 2 * 1024 * 1024 * 1024 + 1, true);
+  assert.throws(() => readPortableArchive(zip), /2 GiB/);
 });
 
 test("workspace dirty state, extraction and conversation-only changes exclude machine data", async () => {
@@ -175,4 +175,13 @@ test("workspace dirty state, extraction and conversation-only changes exclude ma
     workspace.adopt(null, {});
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test("archives round-trip beyond the former byte and file-count limits", () => {
+  const files: Record<string, Uint8Array> = {};
+  for (let i = 0; i < 4100; i++) files[`workspace/file-${i}`] = new Uint8Array();
+  files["workspace/large.bin"] = new Uint8Array(65 * 1024 * 1024).fill(42);
+  const archive = readPortableArchive(writePortableArchive(model, files));
+  assert.deepEqual(archive.files, files);
+  assert.deepEqual(archive.document, document);
 });

@@ -635,7 +635,7 @@ terminal input. Each file is copied into `attachments/` in the drawing workspace
 numbered names for collisions. The resulting workspace-relative path is pasted
 at the terminal cursor so the agent can reference the portable copy. For a batch
 over 20 MiB, a confirmation explains that the files will enlarge the saved drawing.
-The combined 64 MiB workspace limit still applies. Attachments mark the drawing
+The combined 2 GiB workspace limit still applies. Attachments mark the drawing
 edited and travel with its portable save; attaching leaves geometry unchanged and
 never executes the file. They are workspace files, outside geometry Undo.
 The iPad transport retains its 32 MiB message cap, allowing files up to 23 MiB

@@ -20,7 +20,6 @@ try {
   await drag(page, [2, 2], [12, 8]);
   await page.keyboard.press("Escape");
   await saveDocument(page, original);
-  const before = await readFile(original);
   console.log("electron: saved ordinary pointer-created sketch");
   // Padding exercises the actual byte boundary without manufacturing millions of curves.
   await page.evaluate(async () => {
@@ -41,16 +40,15 @@ try {
     return { errors, status: await window.makeshiftDocument.status() };
   });
   assert.ok(
-    result.errors.every((error) => /64 MiB/.test(error)),
+    result.errors.every((error) => !error),
     JSON.stringify(result.errors),
   );
-  assert.equal(result.status.path, original, "failed Save As retains file identity");
-  assert.equal(result.status.edited, true, "failed Save retains the unsaved baseline");
-  assert.deepEqual(await readFile(original), before, "failed Save preserves destination bytes");
-  await assert.rejects(readFile(copy), { code: "ENOENT" });
-  console.log(
-    "electron: oversized model-only Save/Save As preserves destination, path and Edited state",
-  );
+  assert.equal(result.status.path, copy, "successful Save As adopts the new path");
+  assert.equal(result.status.edited, false, "successful Save clears the unsaved baseline");
+  const saved = await readFile(original);
+  assert.ok(saved.length > 64 * 1024 * 1024);
+  assert.deepEqual(await readFile(copy), saved);
+  console.log("electron: Save and Save As accept model content above the former 64 MiB limit");
 } finally {
   await app?.close();
   await rm(root, { recursive: true, force: true });
