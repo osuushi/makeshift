@@ -12,10 +12,12 @@ import {
   initializeMeshRuntime,
   PreviewRuntimeRequired,
 } from "./mesh-runtime.js";
+import { projectPreviewNormals } from "./normal-projection.js";
 import { type PreviewFeedback, PreviewHistories } from "./preview-feedback.js";
-import { packPreviewMesh } from "./preview-wire.js";
+import type { PackedPreviewMesh } from "./preview-wire.js";
+import { packPreviewMesh, previewMeshTransfers } from "./preview-wire.js";
 import { threadPreviewFaces } from "./thread-preview-surface.js";
-import type { DecoratorInstance } from "./types.js";
+import type { DecoratorInstance, FaceReference } from "./types.js";
 
 async function renderGear(document: DisplayDocument, instance: DecoratorInstance) {
   runtime ??= initializeMeshRuntime(wasmUrl);
@@ -139,6 +141,7 @@ self.onmessage = async (
     sources?: EnabledDefinition[];
     live: boolean;
     signatures: [string, string][];
+    projectNormals?: boolean;
   }>,
 ) => {
   try {
@@ -151,7 +154,7 @@ self.onmessage = async (
         needsRender(instance.id, nextRenderState(instance.id, signatures.get(instance.id), live)),
     );
     const javascript = hasJavaScript ? await javascriptDecorators(sources) : undefined;
-    const meshes = [],
+    const meshes: (PackedPreviewMesh & { id: string; body: string; faces: FaceReference[] })[] = [],
       processedIds: string[] = [],
       errors: string[] = [],
       samples: { id: string; live: boolean; durationMs: number; state: unknown }[] = [];
@@ -176,7 +179,12 @@ self.onmessage = async (
         if (next.live && result.record)
           histories.record(instance.id, signature, durationMs, result.state);
         samples.push({ id: instance.id, live: next.live, durationMs, state: result.state });
-        if (result.mesh) meshes.push(result.mesh);
+        if (result.mesh) {
+          const mesh: PackedPreviewMesh & typeof result.mesh = result.mesh;
+          if (event.data.projectNormals)
+            mesh.projections = projectPreviewNormals(document, mesh, next.live ? 256 : 512);
+          meshes.push(mesh);
+        }
         rendered.set(instance.id, next);
       } catch (error) {
         errors.push(error instanceof Error ? error.message : String(error));
@@ -190,13 +198,7 @@ self.onmessage = async (
         elapsedMs: performance.now() - messageStarted,
         samples,
       },
-      meshes.flatMap((mesh) => [
-        mesh.positions.buffer,
-        mesh.indices.buffer,
-        ...("occlusion" in mesh && mesh.occlusion
-          ? [mesh.occlusion.positions.buffer, mesh.occlusion.indices.buffer]
-          : []),
-      ]),
+      meshes.flatMap(previewMeshTransfers),
     );
   } catch (error) {
     self.postMessage({ error: error instanceof Error ? error.message : String(error) });

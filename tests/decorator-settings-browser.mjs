@@ -20,7 +20,19 @@ try {
         const { decoratorSettings } = await import("/src/preferences/decorator-settings.ts");
         document.body.append(decoratorSettings());
       });
-      const mode = page.getByRole("combobox", { name: "Decorator preview detail" });
+      const mode = page.getByRole("combobox", { name: "Decorator display" });
+      assert.deepEqual(await mode.locator("option").allTextContents(), [
+        "Geometry",
+        "Texture",
+        "Color only",
+      ]);
+      await mode.selectOption("texture");
+      assert.equal(
+        await page.evaluate(
+          () => JSON.parse(localStorage.getItem("makeshift.decorator-display")).mode,
+        ),
+        "texture",
+      );
       await mode.selectOption("color-only");
       const opacity = page.getByRole("slider", { name: "Threads preview opacity" });
       await opacity.press("Home");

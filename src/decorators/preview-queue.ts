@@ -1,4 +1,5 @@
 import type { DisplayDocument } from "../model/display-document.js";
+import { decoratorPreviewMode } from "../preferences/decorator-display.js";
 import type { EnabledDefinition } from "./javascript-hooks.js";
 import {
   PreviewSignatureCache,
@@ -14,6 +15,7 @@ export interface PreviewRequest {
   live: boolean;
   signatures: Map<string, string>;
   fingerprint: string;
+  projectNormals: boolean;
 }
 
 export interface PreviewResponse {
@@ -30,6 +32,7 @@ export class PreviewQueue {
   private pending: PreviewRequest | null = null;
   private sourcesKey = "";
   private completedFingerprint = "";
+  private projectNormals = false;
   private signatureCache = new PreviewSignatureCache();
 
   constructor(
@@ -46,7 +49,8 @@ export class PreviewQueue {
     signatures = previewSignatures(document, JSON.stringify(sources), this.signatureCache),
   ): void {
     const nextSources = JSON.stringify(sources);
-    const fingerprint = previewFingerprint(signatures, live);
+    const projectNormals = decoratorPreviewMode() === "texture";
+    const fingerprint = `${previewFingerprint(signatures, live)}/${projectNormals}`;
     if (
       !this.pending &&
       (this.active?.fingerprint === fingerprint ||
@@ -58,9 +62,11 @@ export class PreviewQueue {
     const enteringLive = live && this.active && !this.active.live;
     // A long settled hook must not hold up a newly started live gesture.
     // Disabling or replacing bundled code also stops its previous invocation.
-    if (sourceChanged || (enteringLive && preemptSettled)) this.interrupt();
+    if (sourceChanged || (enteringLive && preemptSettled) || projectNormals !== this.projectNormals)
+      this.interrupt();
+    this.projectNormals = projectNormals;
     this.sourcesKey = nextSources;
-    this.pending = { document, sources, live, signatures, fingerprint };
+    this.pending = { document, sources, live, signatures, fingerprint, projectNormals };
     this.pump();
     this.onBusy(this.active !== null || this.pending !== null);
   }
@@ -117,6 +123,7 @@ export class PreviewQueue {
       sources: this.active.sources,
       live: this.active.live,
       signatures: [...this.active.signatures],
+      projectNormals: this.active.projectNormals,
     });
   }
 }

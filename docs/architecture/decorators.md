@@ -31,14 +31,28 @@ settings, not the internal grouping noun.
 
 ## Preview display and pending work
 
-Application Settings offers shaded Detailed previews or Color only, plus separate
+Application Settings offers Geometry, Texture (normal projection), or Color only, plus separate
 thread/knurling/custom colors and per-kind opacity. Gear colors belong to saved, editable
-[gear groups](gears.md), including both detailed and color-only previews. Other display
+[gear groups](gears.md), including all three display modes. Other display
 choices are device preferences outside
 accepted attachments, files and Undo; they never turn decorators into native BRep.
 The compositor excludes only a surface's own supports when resolving occlusion,
 then blends its configured opacity once. Generated previews and attachment markers
 cannot intercept analytic face picking.
+Texture generates the same preview mesh, then bakes its facing triangle normals
+onto the original trimmed support tessellation in the preview worker. It changes
+lighting, not the support silhouette, depth, picking, accepted geometry or export.
+Planes, cylinders and cones use continuous analytic charts (with wrapped radial
+seams); other surfaces use a padded triangle atlas. Missing ray intersections retain
+the support normal. Projection selects the closest facing intersection along either
+direction of the support normal; overhangs and multiple relief layers cannot all
+be represented. There is no parallax displacement or relief self-shadowing.
+Live maps target 256 pixels square and settled maps 512; generic atlases may grow
+to 1024 to retain padding. Supports above 65,536 triangles report an explicit preview
+error and retain attachment coloring. Small features can alias, especially on dense
+generic atlases; Geometry remains the full-profile alternative. Maps are cached per
+matching preview result, disposed with it, and never rebaked for camera movement.
+Mode changes interrupt incompatible worker jobs; Color only cancels generation.
 Thread previews omit the auxiliary cylindrical skin and volume-closing facets at
 axial ends and adjacent planar boundaries, so those helper surfaces do not color
 over rims or end faces. Clipping still uses closed volumes; threaded extent and

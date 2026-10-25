@@ -9,8 +9,8 @@ export function decoratorSettings(): HTMLElement {
   const section = document.createElement("section");
   section.className = "decorator-display-settings";
   section.innerHTML = `<h3>Decorator previews</h3>
-    <label>Preview detail<select aria-label="Decorator preview detail"><option value="detailed">Detailed</option><option value="color-only">Color only</option></select></label>
-    <p>Color only skips preview meshes. Exports retain full decoration; select the original face to edit.</p>`;
+    <label>Display<select aria-label="Decorator display"><option value="detailed">Geometry</option><option value="texture">Texture</option><option value="color-only">Color only</option></select></label>
+    <p>Texture projects decoration normals onto the face without changing its silhouette. Color only skips preview generation. Exports retain full decoration.</p>`;
   const mode = section.querySelector<HTMLSelectElement>("select");
   if (!mode) throw new Error("Missing decorator preview mode");
   const rows = decoratorKinds.map((kind) => {
@@ -73,7 +73,7 @@ export function decoratorSettings(): HTMLElement {
   section.addEventListener("preferences-refresh", update);
   mode.onchange = () => {
     const next = decoratorDisplay();
-    next.mode = mode.value === "color-only" ? "color-only" : "detailed";
+    next.mode = mode.value === "color-only" || mode.value === "texture" ? mode.value : "detailed";
     setDecoratorDisplay(next);
   };
   reset.onclick = () => {
