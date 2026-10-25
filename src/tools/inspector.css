@@ -1,0 +1,117 @@
+.inspector {
+  position: absolute;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 3px 15px var(--shadow);
+  pointer-events: auto;
+  overflow: hidden;
+  font-size: 12px;
+}
+.inspector[hidden],
+.inspector [hidden] {
+  display: none;
+}
+.inspector-bar,
+.inspector-section-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 5px;
+  flex-shrink: 0;
+}
+.inspector button {
+  box-shadow: none;
+}
+.inspector-bar > button,
+.inspector-section-bar > button {
+  border: 0;
+  background: transparent;
+  padding: 5px;
+  min-width: 28px;
+  min-height: 28px;
+  font-size: 12px;
+}
+.inspector .inspector-move {
+  flex: 1;
+  text-align: left;
+  font-weight: 650;
+  cursor: grab;
+  touch-action: none;
+}
+.inspector .inspector-move:active {
+  cursor: grabbing;
+}
+.inspector-body {
+  overflow: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+  flex: 1;
+}
+.inspector:not(.sized) .inspector-body {
+  max-height: var(--inspector-content-max);
+}
+.inspector-section {
+  position: relative;
+  border-top: 1px solid var(--border);
+}
+.inspector .inspector-section-toggle {
+  flex: 1;
+  text-align: left;
+  font-weight: 600;
+}
+.inspector-section-toggle::before {
+  content: "▸";
+  margin-right: 6px;
+}
+.inspector-section-toggle[aria-expanded="true"]::before {
+  content: "▾";
+}
+.inspector .decorator-panel,
+.inspector .constraint-list,
+.inspector .measurement-readout {
+  position: static;
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 4px 10px 10px;
+  overflow: visible;
+}
+.inspector .decorator-panel > h2 {
+  display: none;
+}
+.inspector .inspector-resize {
+  align-self: flex-end;
+  flex-shrink: 0;
+  min-width: 28px;
+  height: 20px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  cursor: nwse-resize;
+  touch-action: none;
+}
+.decorator-repair {
+  border-top: 1px solid var(--border);
+  padding: 8px 0;
+}
+.decorator-repair summary {
+  cursor: pointer;
+  color: var(--danger);
+  overflow-wrap: anywhere;
+}
+
+.inspector .measurement-readout h2 {
+  position: absolute;
+  top: 8px;
+  right: 70px;
+  margin: 0;
+  font-size: 0;
+}

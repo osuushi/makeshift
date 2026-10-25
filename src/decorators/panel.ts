@@ -22,7 +22,7 @@ import { gearGroupPanel } from "./gear-group-panel.js";
 import { registerDecoratorTools } from "./tool-registration.js";
 
 export class DecoratorPanel {
-  private surface = document.createElement("div");
+  private repairOpen = new Set<string>();
   private root = document.createElement("section");
   private unregister: () => void;
   private disposeLibrary: () => void;
@@ -36,6 +36,8 @@ export class DecoratorPanel {
   constructor(
     private editor: SketchEditor,
     parent: HTMLElement,
+    content: HTMLElement,
+    gearContent: HTMLElement,
   ) {
     this.draft = new DecoratorSettingsDraft(editor, () => {
       this.key = "";
@@ -45,11 +47,9 @@ export class DecoratorPanel {
     });
     this.root.className = "decorator-panel";
     this.root.setAttribute("aria-label", "Decorators");
-    this.surface.className = "decorator-stack";
-    this.surface.append(this.root);
-    parent.append(this.surface);
+    content.append(this.root);
     this.disposeLibrary = decoratorLibrary(editor, parent);
-    this.disposeGearGroups = gearGroupPanel(editor, this.surface);
+    this.disposeGearGroups = gearGroupPanel(editor, gearContent);
     this.unregister = registerDecoratorTools(
       editor,
       (definition) => this.apply(definition),
@@ -201,7 +201,7 @@ export class DecoratorPanel {
     const heading = document.createElement("h2");
     heading.textContent = "Decorators";
     this.root.append(heading);
-    appendDecoratorRepairs(this.root, this.editor, problems);
+    appendDecoratorRepairs(this.root, this.editor, problems, this.repairOpen);
     if (canContinue && last) {
       if (!isBuiltinDecorator(last.definition)) {
         appendCustomContinue(this.root, this.editor, last);
@@ -278,6 +278,6 @@ export class DecoratorPanel {
     this.application.cancel();
     this.draft.cancel();
     this.unregister();
-    this.surface.remove();
+    this.root.remove();
   }
 }

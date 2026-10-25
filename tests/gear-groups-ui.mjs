@@ -7,6 +7,7 @@ import { gearGroupColors } from "./ui-gear-group-colors.mjs";
 import { resizeGroupedGear } from "./ui-gear-group-resize.mjs";
 import { capturedPrintControls } from "./ui-gear-printing.mjs";
 import { inspect, settled } from "./ui-helpers.mjs";
+import { inspectorRepairsRoute } from "./ui-inspector.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -93,6 +94,7 @@ await withUiRuntimes(
     await page.screenshot({ path: `.cache/sketch-review/${name}-gear-groups.png` });
     await gearGroupColors(page, name);
     await capturedPrintControls(page, name);
+    await inspectorRepairsRoute(page, name, fixture.document);
     console.log(
       `${name}: captured cylinders, membership disclosure, add, shared sizing, cancellation, removal and Undo passed`,
     );
