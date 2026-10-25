@@ -36,9 +36,17 @@ export function viewSettings(): HTMLElement {
   reset.type = "button";
   reset.textContent = "Reset grid display";
   reset.onclick = () => {
-    const { sectionFrontOpacity, xrayGlobal, xrayBleed, xrayRadius } = viewDisplay();
+    const { sectionFrontOpacity, bodyXrayOpacity, xrayGlobal, xrayBleed, xrayRadius } =
+      viewDisplay();
     resetViewDisplay();
-    setViewDisplay({ ...viewDisplay(), sectionFrontOpacity, xrayGlobal, xrayBleed, xrayRadius });
+    setViewDisplay({
+      ...viewDisplay(),
+      sectionFrontOpacity,
+      bodyXrayOpacity,
+      xrayGlobal,
+      xrayBleed,
+      xrayRadius,
+    });
     update();
   };
   section.querySelector("h3")?.append(reset);

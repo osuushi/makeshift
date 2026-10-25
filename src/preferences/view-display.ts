@@ -4,6 +4,7 @@ export interface ViewDisplay {
   gridFill: number;
   gridLineWidth: number;
   sectionFrontOpacity: number;
+  bodyXrayOpacity: number;
   xrayGlobal: boolean;
   xrayBleed: number;
   xrayRadius: number;
@@ -14,6 +15,7 @@ const defaults: ViewDisplay = {
   gridFill: 0.3,
   gridLineWidth: 1,
   sectionFrontOpacity: 0.8,
+  bodyXrayOpacity: 0.8,
   xrayGlobal: false,
   xrayBleed: 100,
   xrayRadius: 50,
@@ -36,7 +38,7 @@ function normalized(input: unknown): ViewDisplay {
     if (typeof pixels === "number" && Number.isFinite(pixels))
       result[field] = Math.max(0, Math.min(100, pixels));
   }
-  for (const field of ["grid", "gridFill", "sectionFrontOpacity"] as const) {
+  for (const field of ["grid", "gridFill", "sectionFrontOpacity", "bodyXrayOpacity"] as const) {
     const opacity = candidate[field];
     if (typeof opacity === "number" && Number.isFinite(opacity))
       result[field] = Math.max(0, Math.min(1, opacity));

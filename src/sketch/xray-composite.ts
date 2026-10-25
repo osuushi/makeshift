@@ -116,7 +116,7 @@ export class XrayComposite {
       cut();
       renderer.clippingPlanes = [];
       const global = bodyLayer && viewDisplay().xrayGlobal;
-      this.mix.uniforms.strength.value = bodyLayer ? 1 - viewDisplay().sectionFrontOpacity : 1;
+      this.mix.uniforms.strength.value = bodyLayer ? 1 - viewDisplay().bodyXrayOpacity : 1;
       this.mix.uniforms.globalMask.value = global;
       if (!global) this.updateMask(world);
       renderer.setRenderTarget(target);

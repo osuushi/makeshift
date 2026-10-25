@@ -1,4 +1,5 @@
 import type * as THREE from "three";
+import { viewDisplay } from "../preferences/view-display.js";
 import { BodyXrayMask } from "./body-xray-mask.js";
 import type { World } from "./world.js";
 import { XrayComposite } from "./xray-composite.js";
@@ -8,6 +9,11 @@ export class BodyXrayComposite {
   private readonly composite = new XrayComposite(new BodyXrayMask());
 
   render(world: World, render: () => void): void {
+    const { bodyXrayOpacity, xrayGlobal } = viewDisplay();
+    if (bodyXrayOpacity === 1) {
+      render();
+      return;
+    }
     const bodies: THREE.Object3D[] = [];
     world.scene.traverseVisible((object) => {
       if (object.userData.xrayBody) bodies.push(object);
@@ -16,24 +22,21 @@ export class BodyXrayComposite {
       render();
       return;
     }
-    this.composite.render(
-      world,
-      render,
-      () => {
-        const hidden = world.scene.userData.xrayHiddenBodies;
-        try {
-          world.scene.userData.xrayHiddenBodies = new Set(
-            bodies.map((body) => body.userData.xrayBody),
-          );
-          for (const body of bodies) body.visible = false;
-          render();
-        } finally {
-          world.scene.userData.xrayHiddenBodies = hidden;
-          for (const body of bodies) body.visible = true;
-        }
-      },
-      true,
-    );
+    const revealed = () => {
+      const hidden = world.scene.userData.xrayHiddenBodies;
+      try {
+        world.scene.userData.xrayHiddenBodies = new Set(
+          bodies.map((body) => body.userData.xrayBody),
+        );
+        for (const body of bodies) body.visible = false;
+        render();
+      } finally {
+        world.scene.userData.xrayHiddenBodies = hidden;
+        for (const body of bodies) body.visible = true;
+      }
+    };
+    if (bodyXrayOpacity === 0 && xrayGlobal) revealed();
+    else this.composite.render(world, render, revealed, true);
   }
 
   invalidate(): void {

@@ -90,6 +90,8 @@ await withUiRuntimes(async (page, name) => {
   await page.keyboard.press("Escape");
   await settings(page, { opacity: 0, bleed: 0, radius: 0 });
   const local = await sample(page);
+  await settings(page, { sketchOpacity: 15 });
+  assert.deepEqual(await sample(page), local, "Sketch opacity does not change body X-ray");
   await settings(page, { global: true });
   const global = await sample(page);
   assert.ok(delta(local[0], global[0]) < 3, "Whole rear body is revealed inside its silhouette");
@@ -131,7 +133,8 @@ async function settings(page, values) {
   if (values.global !== undefined)
     await pane.getByRole("checkbox", { name: "Global X-ray vision" }).setChecked(values.global);
   for (const [key, label] of [
-    ["opacity", "X-ray front opacity"],
+    ["opacity", "Body X-ray opacity"],
+    ["sketchOpacity", "X-ray front opacity"],
     ["bleed", "Bleed"],
     ["radius", "Radius"],
   ]) {
@@ -139,6 +142,24 @@ async function settings(page, values) {
     const slider = pane.getByRole("slider", { name: label, exact: true });
     await slider.press("Home");
     for (let i = 0; i < values[key]; i++) await slider.press("ArrowRight");
+  }
+  if (values.opacity === 35) {
+    await pane.getByRole("button", { name: "Reset grid display", exact: true }).click();
+    assert.equal(
+      await pane.getByRole("slider", { name: "Body X-ray opacity", exact: true }).inputValue(),
+      "35",
+    );
+    assert.equal(
+      await pane.getByRole("slider", { name: "X-ray front opacity", exact: true }).inputValue(),
+      "15",
+    );
+    assert.equal(
+      await pane
+        .page()
+        .evaluate(() => JSON.parse(localStorage.getItem("makeshift.view-display")).bodyXrayOpacity),
+      0.35,
+    );
+    await pane.screenshot({ path: ".cache/sketch-review/body-xray-settings.png" });
   }
   await closeSettings(pane);
 }
