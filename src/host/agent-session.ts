@@ -220,6 +220,8 @@ export class AgentSession {
         executable,
         [
           ...(preferences.preset === "codex" ? (resume.length ? resume : ["--cd", cwd]) : []),
+          // Ghostty turns alternate-screen wheel events into prompt-history Up/Down keys.
+          ...(preferences.preset === "codex" ? ["--no-alt-screen"] : []),
           ...(preferences.preset === "codex" ? codexPermissionOverrides() : []),
           ...preferences.args,
           ...overrides,

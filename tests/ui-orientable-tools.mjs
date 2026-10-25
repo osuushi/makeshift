@@ -3,20 +3,8 @@ import * as THREE from "three";
 import { orient } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
 
-const arrowContours = [
-  [
-    [0, 0],
-    [24, 0],
-  ],
-  [
-    [14, -8],
-    [24, 0],
-    [14, 8],
-  ],
-];
-
-/** Check a rigid frame against an independent camera projection during actual navigation. */
-export async function orientableArrowViews(page, handle, root, normal, name, section = null) {
+/** Verify readable arrows and geometric placement during actual navigation. */
+export async function orientableArrowViews(page, handle, root, normal, name, _section = null) {
   const original = (await inspect(page)).document;
   const canonical = [
     [1, 0, 0],
@@ -40,14 +28,6 @@ export async function orientableArrowViews(page, handle, root, normal, name, sec
     camera.lookAt(new THREE.Vector3(...state.target));
     const inverse = camera.quaternion.clone().invert();
     const u = n.clone().applyQuaternion(inverse);
-    const facing = section
-      ? new THREE.Vector3(...section)
-      : n.clone().cross(camera.getWorldDirection(new THREE.Vector3()));
-    if (facing.lengthSq() < 1e-12) {
-      facing.set(1, 0, 0).applyQuaternion(camera.quaternion);
-      facing.addScaledVector(n, -facing.dot(n));
-    }
-    const v = facing.normalize().applyQuaternion(inverse);
     const placementWidth = width.clone().applyQuaternion(inverse);
     const frame = await measuredWidgetFrame(handle, root);
     assert.ok(Math.abs(frame.width - 64) < 1e-3);
@@ -78,12 +58,18 @@ export async function orientableArrowViews(page, handle, root, normal, name, sec
       assert.equal(p.stroke, i < paths.length / 2 ? "#151515" : "#fff");
       assert.equal(p.width, i < paths.length / 2 ? "7" : "4");
     });
-    for (const [index, points] of arrowContours.entries()) {
-      const coords = paths[index].d.match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi).map(Number);
-      const expected = points.flatMap(([x, y]) => [u.x * x + v.x * y, -u.y * x - v.y * y]);
-      coords.forEach((value, i) => {
-        assert.ok(Math.abs(value - expected[i]) < 1e-8);
-      });
+    const coordinates = (path) => path.d.match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi).map(Number);
+    const shaft = coordinates(paths[0]);
+    const head = coordinates(paths[1]);
+    assert.ok(Math.hypot(shaft[2] - shaft[0], shaft[3] - shaft[1]) >= 12 - 1e-8);
+    assert.ok(Math.abs(Math.hypot(head[0] - head[4], head[1] - head[5]) - 16) < 1e-8);
+    assert.ok(Math.hypot(head[2], head[3]) >= 12 - 1e-8, "Tip stays at least 30 degrees off axis");
+    assert.ok(Math.hypot(head[2] - shaft[2], head[3] - shaft[3]) < 1e-8);
+    const projected = Math.hypot(u.x, u.y);
+    if (projected > 1e-8) {
+      const dx = shaft[2] - shaft[0],
+        dy = shaft[3] - shaft[1];
+      assert.ok((dx * u.x - dy * u.y) / (Math.hypot(dx, dy) * projected) > 1 - 1e-8);
     }
   }
   await check();

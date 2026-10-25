@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { AgentProcess } from "../.build/host/host/agent-process.js";
+import { agentLayoutRoute } from "./agent-layout.mjs";
 import { agentMenuRoute } from "./agent-menu.mjs";
 import { agentTouchRoute, observeAgentTerminal } from "./agent-touch.mjs";
 import { corners, drag, pointEquals } from "./ui-helpers.mjs";
@@ -62,7 +63,9 @@ const server = await createServer({
 });
 await server.listen();
 try {
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  for (const [name, engine] of Object.entries(
+    process.argv.includes("--layout-only") ? { chromium } : { chromium, webkit },
+  )) {
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({
@@ -83,6 +86,11 @@ try {
       await observeAgentTerminal(page);
       await page.getByRole("button", { name: "Open agent terminal" }).click();
       await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
+      if (process.argv.includes("--layout-only")) {
+        await agentLayoutRoute(page);
+        assert.deepEqual(errors, []);
+        continue;
+      }
       await agentTouchRoute(page, name);
       const input = page.locator(".agent-screen textarea");
       await input.focus();

@@ -20,6 +20,7 @@ export function gearGroupPanel(editor: SketchEditor, parent: HTMLElement): () =>
   let key = "",
     expanded: string | null = null;
   let shownDocument = editor.store.data;
+  const expandedMembers = new Set<string>();
   const update = () => {
     const gears = (editor.store.data.decorators ?? []).filter(
       (d) => d.definition === gearDefinition,
@@ -67,7 +68,7 @@ export function gearGroupPanel(editor: SketchEditor, parent: HTMLElement): () =>
       select.prepend(swatch);
       root.append(select);
       if (expanded === id) {
-        appendMembers(root, editor, members);
+        appendMembers(root, editor, members, id, expandedMembers);
         root.append(gearGroupColorControl(editor, gear, label));
         appendDecoratorDisplay(root, editor, members, `${label} display`);
       }
@@ -97,7 +98,24 @@ export function gearGroupPanel(editor: SketchEditor, parent: HTMLElement): () =>
   };
 }
 
-function appendMembers(root: HTMLElement, editor: SketchEditor, members: DecoratorInstance[]) {
+function appendMembers(
+  root: HTMLElement,
+  editor: SketchEditor,
+  members: DecoratorInstance[],
+  id: string,
+  expanded: Set<string>,
+) {
+  const details = document.createElement("details");
+  details.className = "gear-group-members";
+  details.open = expanded.has(id);
+  details.ontoggle = () => {
+    if (!details.isConnected) return;
+    if (details.open) expanded.add(id);
+    else expanded.delete(id);
+  };
+  const summary = document.createElement("summary");
+  summary.textContent = `Members · ${members.length} ${members.length === 1 ? "gear" : "gears"}`;
+  details.append(summary);
   const list = document.createElement("ul");
   list.setAttribute("aria-label", "Gear group members");
   for (const member of members) {
@@ -113,7 +131,8 @@ function appendMembers(root: HTMLElement, editor: SketchEditor, members: Decorat
     item.textContent = `${name} · ${member.faces.length} ${member.faces.length === 1 ? "face" : "faces"}${cylinder ? ` · target Ø${Number((2 * cylinder.radius).toFixed(3))} mm · fitted Ø${Number((2 * (member.gearPitchRadius ?? cylinder.radius)).toFixed(3))} mm · ${member.settings.teeth} teeth` : ""}`;
     list.append(item);
   }
-  root.append(list);
+  details.append(list);
+  root.append(details);
 }
 
 function appendGroupActions(

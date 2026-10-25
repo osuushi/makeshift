@@ -24,6 +24,22 @@ export async function agentTouchRoute(page, browserName) {
   await page.keyboard.type("i=0; while [ $i -lt 800 ]; do echo HISTORY-$i; i=$((i+1)); done");
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => window.testTerminal.buffer.active.length > 750);
+  // Actual wheel delivery through Ghostty must scroll output without sending
+  // Up/Down to the PTY (which cycles the harness's prompt history).
+  await page.evaluate(() => {
+    window.agentWheelInput = [];
+    window.agentWheelSubscription = window.testTerminal.onData((data) =>
+      window.agentWheelInput.push(data),
+    );
+  });
+  const canvasBounds = await page.locator(".agent-screen canvas").boundingBox();
+  await page.mouse.move(canvasBounds.x + 40, canvasBounds.y + 40);
+  await page.mouse.wheel(0, -240);
+  await page.waitForFunction(() => window.testTerminal.getViewportY() > 3);
+  await page.mouse.wheel(0, 240);
+  await page.waitForFunction(() => window.testTerminal.getViewportY() === 0);
+  assert.deepEqual(await page.evaluate(() => window.agentWheelInput), []);
+  await page.evaluate(() => window.agentWheelSubscription.dispose());
   await page.getByRole("button", { name: "Collapse agent terminal", exact: true }).focus();
   const documentBefore = await page.evaluate(() =>
     JSON.stringify(window.makeshiftInspect().document),
@@ -69,7 +85,7 @@ export async function agentTouchRoute(page, browserName) {
   await page.setViewportSize({ width: 1280, height: 850 });
   await cdp?.detach();
   console.log(
-    `PASS ${browserName}: long PTY history, touch scrolling both docks, retained reading position, reachable collapse and small viewport`,
+    `PASS ${browserName}: wheel scroll without PTY input, touch scrolling both docks, retained reading position, reachable collapse and small viewport`,
   );
 }
 

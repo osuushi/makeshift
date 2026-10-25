@@ -24,8 +24,11 @@ search joins groups. Groups can span bodies, separated parts, and partial gears.
 Different cylinders on the same compound body can belong to different groups.
 
 The sidebar lists groups without requiring a selection. Clicking a group selects
-its members and reveals body names, face counts, target/fitted pitch diameters,
-tooth counts and **Preview color** (picker and hex entry). New groups receive
+its members and reveals **Preview color** (picker and hex entry). Member details
+start collapsed under a one-line **Members · N gears** disclosure; expanding it
+shows body names, face counts, target/fitted pitch diameters and tooth counts.
+The disclosure state stays local to the panel and survives settings refreshes.
+New groups receive
 distinct hues, then variations in lightness/saturation; color is saved in the
 drawing, shared by its members, editable, and included in Undo/Redo. Copies retain
 their original group IDs and colors, with distinct decorator instance IDs.

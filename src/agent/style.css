@@ -72,7 +72,7 @@
   contain: size;
   touch-action: none;
   overflow: hidden;
-  margin: 4px;
+  margin: 4px 0 4px 4px;
   user-select: text;
   -webkit-user-select: text;
   /* Ghostty owns the drawn cursor; its editable host must not draw a second caret. */
@@ -81,6 +81,8 @@
 .agent-screen canvas {
   width: auto;
   height: auto;
+  /* Keep the canvas scrollbar at the pane edge despite whole-column rounding. */
+  margin-left: auto;
 }
 .agent-screen textarea {
   /* Prevent Safari's automatic zoom when focusing the hidden terminal input. */

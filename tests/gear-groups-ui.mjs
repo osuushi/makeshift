@@ -27,6 +27,14 @@ await withUiRuntimes(
     const groups = page.getByRole("region", { name: "Gear groups", exact: true });
     // <section aria-label> is exposed as a region in the accessibility tree.
     await groups.getByRole("button", { name: "Gears 1 · 1 gear", exact: true }).click();
+    const members = groups.getByRole("list", { name: "Gear group members" });
+    assert.equal(await members.isVisible(), false);
+    const summary = groups.locator("summary", { hasText: "Members · 1 gear" });
+    await summary.click();
+    assert.equal(await members.isVisible(), true);
+    await summary.press("Enter");
+    assert.equal(await members.isVisible(), false);
+    await summary.press("Enter");
     assert.equal(await groups.getByRole("listitem").count(), 1);
     await worldClick(page, [-10, -17, 2]);
     await groups.getByRole("button", { name: "Add selection to Gears 1", exact: true }).click();

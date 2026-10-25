@@ -1,4 +1,5 @@
-import * as THREE from "three";
+import type * as THREE from "three";
+import { arrowPoint, readableWidgetFrame } from "../../model/widget-projection.js";
 import type { Vector } from "../planes.js";
 
 type Point = readonly [number, number];
@@ -33,21 +34,26 @@ const head: Point[] = [
  * all outer silhouettes before their fills merges joins without internal seams.
  */
 export function markerMarkup(camera: THREE.Camera, u: Vector, v: Vector, rotate: boolean): string {
-  const inverse = camera.quaternion.clone().invert();
-  const a = new THREE.Vector3(...u).applyQuaternion(inverse),
-    b = new THREE.Vector3(...v).applyQuaternion(inverse);
+  const { u: a, v: b } = readableWidgetFrame(camera, u, v);
   const scale = rotate ? 0.65 : 1;
-  const path = (points: Point[], closed = false) =>
+  const path = (points: Point[], closed = false, arrowHead = false) =>
     points
       .map(([x, y], i) => {
-        const p = a
-          .clone()
-          .multiplyScalar(x * scale)
-          .addScaledVector(b, y * scale);
+        const p =
+          !rotate && arrowHead
+            ? arrowPoint(a, a.clone().multiplyScalar(14), x - 14, y)
+            : closed
+              ? arrowPoint(a, b.clone().multiplyScalar(14 * scale), x * scale, (y - 14) * scale)
+              : a
+                  .clone()
+                  .multiplyScalar(x * scale)
+                  .addScaledVector(b, y * scale);
         return `${i ? "L" : "M"}${p.x},${-p.y}`;
       })
       .join(" ") + (closed ? "Z" : "");
-  const strokes = (rotate ? [ring] : arrow).map((points) => path(points));
+  const strokes = (rotate ? [ring] : arrow).map((points, index) =>
+    path(points, false, index === 1),
+  );
   const triangle = rotate ? path(head, true) : null;
   const layer = (outline: boolean) => {
     const color = outline ? "#151515" : "#fff";

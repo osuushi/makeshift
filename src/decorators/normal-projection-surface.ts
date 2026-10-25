@@ -19,6 +19,8 @@ export function normalProjectionSurface(
   texture.needsUpdate = true;
   material.normalMap = texture;
   material.normalMapType = THREE.ObjectSpaceNormalMap;
+  // Let the projected relief catch a clear specular highlight as the view turns.
+  material.roughness = 0.28;
   const mesh = new THREE.Mesh(geometry, material);
   mesh.userData.body = projection.body;
   mesh.userData.decorator = id;
