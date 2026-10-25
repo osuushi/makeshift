@@ -3,6 +3,7 @@ import wasmUrl from "manifold-3d/manifold.wasm?url";
 import type { QuickJSWASMModule } from "quickjs-emscripten-core";
 import type { DisplayDocument } from "../model/display-document.js";
 import { isBuiltinDecorator } from "./builtins.js";
+import { type DecoratorDisplayMode, effectiveDecoratorDisplay } from "./display-mode.js";
 import { gearPreview } from "./gear-runtime.js";
 import { gearDefinition } from "./gear-settings.js";
 import type { EnabledDefinition } from "./javascript-hooks.js";
@@ -58,9 +59,14 @@ async function javascriptDecorators(sources?: EnabledDefinition[]) {
   return new JavaScriptDecorators(await javascriptRuntime, sources);
 }
 
-function liveGroupCount(document: DisplayDocument, sources?: EnabledDefinition[]): number {
+function liveGroupCount(
+  document: DisplayDocument,
+  defaultMode: DecoratorDisplayMode,
+  sources?: EnabledDefinition[],
+): number {
   return (document.decorators ?? []).filter((instance) => {
-    if (instance.problem) return false;
+    if (instance.problem || effectiveDecoratorDisplay(instance, defaultMode) === "color-only")
+      return false;
     if (isBuiltinDecorator(instance.definition)) return true;
     const definition = document.decoratorDefinitions?.find(
       (entry) => entry.id === instance.definition && entry.version === instance.version,
@@ -141,16 +147,17 @@ self.onmessage = async (
     sources?: EnabledDefinition[];
     live: boolean;
     signatures: [string, string][];
-    projectNormals?: boolean;
+    defaultMode?: DecoratorDisplayMode;
   }>,
 ) => {
   try {
     const messageStarted = performance.now();
-    const { document, sources, live } = event.data;
+    const { document, sources, live, defaultMode = "detailed" } = event.data;
     const signatures = new Map(event.data.signatures);
     const hasJavaScript = document.decorators?.some(
       (instance) =>
         !isBuiltinDecorator(instance.definition) &&
+        effectiveDecoratorDisplay(instance, defaultMode) !== "color-only" &&
         needsRender(instance.id, nextRenderState(instance.id, signatures.get(instance.id), live)),
     );
     const javascript = hasJavaScript ? await javascriptDecorators(sources) : undefined;
@@ -160,9 +167,13 @@ self.onmessage = async (
       samples: { id: string; live: boolean; durationMs: number; state: unknown }[] = [];
     histories.retain(new Set(document.decorators?.map((instance) => instance.id)));
     for (const id of rendered.keys()) if (!signatures.has(id)) rendered.delete(id);
-    const targetMs = Math.max(16, 100 / Math.max(1, liveGroupCount(document, sources)));
+    const targetMs = Math.max(
+      16,
+      100 / Math.max(1, liveGroupCount(document, defaultMode, sources)),
+    );
     for (const instance of document.decorators ?? []) {
-      if (instance.problem) continue;
+      if (instance.problem || effectiveDecoratorDisplay(instance, defaultMode) === "color-only")
+        continue;
       const next = nextRenderState(instance.id, signatures.get(instance.id), live);
       if (!needsRender(instance.id, next)) continue;
       processedIds.push(instance.id);
@@ -181,7 +192,7 @@ self.onmessage = async (
         samples.push({ id: instance.id, live: next.live, durationMs, state: result.state });
         if (result.mesh) {
           const mesh: PackedPreviewMesh & typeof result.mesh = result.mesh;
-          if (event.data.projectNormals)
+          if (effectiveDecoratorDisplay(instance, defaultMode) === "texture")
             mesh.projections = projectPreviewNormals(document, mesh, next.live ? 256 : 512);
           meshes.push(mesh);
         }

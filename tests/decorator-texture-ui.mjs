@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { orient } from "./ui-blend-edit.mjs";
 import { displaySettings } from "./ui-decorator-display.mjs";
+import { mixedDisplayRoute } from "./ui-decorator-display-mixed.mjs";
+import { displayOverrideRoute } from "./ui-decorator-display-override.mjs";
 import {
   installPreviewControl,
   previewReady,
@@ -24,7 +26,9 @@ await withUiRuntimes(
     const screenshots = [];
     for (const mode of ["detailed", "texture", "color-only", "texture"]) {
       await displaySettings(page, (dialog) =>
-        dialog.getByRole("combobox", { name: "Decorator display", exact: true }).selectOption(mode),
+        dialog
+          .getByRole("combobox", { name: "Default decorator display", exact: true })
+          .selectOption(mode),
       );
       if (mode !== "color-only") await previewReady(page);
       const state = await inspect(page);
@@ -63,6 +67,7 @@ await withUiRuntimes(
       screenshots[3],
       "Repeated mode changes restore the same projection",
     );
+    await displayOverrideRoute(page, original);
     await pickThreadFace(page, original);
     await clearSelection(page);
     for (const direction of [
@@ -74,6 +79,7 @@ await withUiRuntimes(
         path: `.cache/sketch-review/${name}-normal-projection-angle-${direction[0]}.png`,
       });
     }
+    await mixedDisplayRoute(page, original);
     console.log(
       `${name}: normal projection mode, support silhouette, picking, history and repeat switching passed`,
       await previewStats(page),

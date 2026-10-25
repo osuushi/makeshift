@@ -207,7 +207,9 @@ export async function colorOnlyRoute(page, name, app) {
   await page.keyboard.press("Escape");
   const history = await page.evaluate(() => window.makeshiftHistory());
   await displaySettings(page, async (dialog) => {
-    await dialog.getByRole("combobox", { name: "Decorator display" }).selectOption("color-only");
+    await dialog
+      .getByRole("combobox", { name: "Default decorator display" })
+      .selectOption("color-only");
     await dialog.getByLabel("Threads preview hex color").fill("#a43d71");
   });
   assert.deepEqual(await page.evaluate(() => window.makeshiftHistory()), history);
@@ -243,7 +245,7 @@ export async function colorOnlyRoute(page, name, app) {
   await inspect(page);
   await displaySettings(page, async (dialog) => {
     assert.equal(
-      await dialog.getByRole("combobox", { name: "Decorator display" }).inputValue(),
+      await dialog.getByRole("combobox", { name: "Default decorator display" }).inputValue(),
       "color-only",
     );
     assert.equal(await dialog.getByLabel("Threads preview color").inputValue(), "#a43d71");

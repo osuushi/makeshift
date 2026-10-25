@@ -34,12 +34,12 @@ export async function gearGroupColors(page, name) {
   await displaySettings(page, async (dialog) => {
     assert.equal(await dialog.getByLabel("Gears preview color", { exact: true }).count(), 0);
     await dialog
-      .getByRole("combobox", { name: "Decorator preview detail" })
+      .getByRole("combobox", { name: "Default decorator display" })
       .selectOption("color-only");
   });
   await page.screenshot({ path: `.cache/sketch-review/${name}-gear-group-colors-flat.png` });
   await displaySettings(page, (dialog) =>
-    dialog.getByRole("combobox", { name: "Decorator preview detail" }).selectOption("detailed"),
+    dialog.getByRole("combobox", { name: "Default decorator display" }).selectOption("detailed"),
   );
   await groups.getByRole("button", { name: "Add selection to Gears 1", exact: true }).click();
   state = await inspect(page);

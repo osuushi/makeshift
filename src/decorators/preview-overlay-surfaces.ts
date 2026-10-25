@@ -2,6 +2,7 @@ import * as THREE from "three";
 import type { DisplayDocument } from "../model/display-document.js";
 import { decoratorAppearance, decoratorPreviewMode } from "../preferences/decorator-display.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import { type DecoratorDisplayMode, effectiveDecoratorDisplay } from "./display-mode.js";
 import { gearColor } from "./gear-colors.js";
 import { normalProjectionSurface } from "./normal-projection-surface.js";
 import {
@@ -28,6 +29,7 @@ export class PreviewOverlaySurfaces {
   private readonly fallback = new PreviewFallback(this.group, this.compositor);
   private readonly surfaces: GeneratedSurface[] = [];
   private definitions = new Map<string, string>();
+  private displayModes = new Map<string, DecoratorDisplayMode | undefined>();
   private colors = new Map<string, string>();
   private clipping = new Map<string, THREE.Plane[]>();
 
@@ -50,6 +52,9 @@ export class PreviewOverlaySurfaces {
         this.surfaces.splice(index, 1);
       }
     if (document) {
+      this.displayModes = new Map(
+        document.decorators?.map((instance) => [instance.id, instance.display]),
+      );
       this.colors = new Map(
         document.decorators?.map((d) => [d.id, gearColor(d, document.decorators ?? [])]),
       );
@@ -176,9 +181,12 @@ export class PreviewOverlaySurfaces {
   }
 
   private style(): PreviewSurface[] {
-    const mode = decoratorPreviewMode();
     const ready = new Set<string>();
     for (const surface of this.surfaces) {
+      const mode = effectiveDecoratorDisplay(
+        { display: this.displayModes.get(surface.id) },
+        decoratorPreviewMode(),
+      );
       const drawable =
         surface.mesh.geometry.attributes.position.count >= 3 &&
         (surface.mesh.userData.previewTexture || (surface.mesh.geometry.index?.count ?? 0) >= 3);

@@ -1,10 +1,11 @@
 import type { DisplayDocument } from "../model/display-document.js";
 import { decoratorPreviewMode } from "../preferences/decorator-display.js";
+import { type DecoratorDisplayMode, effectiveDecoratorDisplay } from "./display-mode.js";
 import type { EnabledDefinition } from "./javascript-hooks.js";
 import {
   PreviewSignatureCache,
+  previewDisplaySignatures,
   previewFingerprint,
-  previewSignatures,
 } from "./preview-signatures.js";
 import type { PackedPreviewMesh } from "./preview-wire.js";
 import type { FaceReference } from "./types.js";
@@ -15,7 +16,7 @@ export interface PreviewRequest {
   live: boolean;
   signatures: Map<string, string>;
   fingerprint: string;
-  projectNormals: boolean;
+  defaultMode: DecoratorDisplayMode;
 }
 
 export interface PreviewResponse {
@@ -32,7 +33,7 @@ export class PreviewQueue {
   private pending: PreviewRequest | null = null;
   private sourcesKey = "";
   private completedFingerprint = "";
-  private projectNormals = false;
+  private displayKey = "";
   private signatureCache = new PreviewSignatureCache();
 
   constructor(
@@ -46,11 +47,22 @@ export class PreviewQueue {
     sources: readonly EnabledDefinition[],
     live: boolean,
     preemptSettled = false,
-    signatures = previewSignatures(document, JSON.stringify(sources), this.signatureCache),
+    signatures = previewDisplaySignatures(
+      document,
+      JSON.stringify(sources),
+      decoratorPreviewMode(),
+      this.signatureCache,
+    ),
   ): void {
     const nextSources = JSON.stringify(sources);
-    const projectNormals = decoratorPreviewMode() === "texture";
-    const fingerprint = `${previewFingerprint(signatures, live)}/${projectNormals}`;
+    const defaultMode = decoratorPreviewMode();
+    const displayKey = JSON.stringify(
+      document.decorators?.map((instance) => [
+        instance.id,
+        effectiveDecoratorDisplay(instance, defaultMode),
+      ]),
+    );
+    const fingerprint = previewFingerprint(signatures, live);
     if (
       !this.pending &&
       (this.active?.fingerprint === fingerprint ||
@@ -62,11 +74,11 @@ export class PreviewQueue {
     const enteringLive = live && this.active && !this.active.live;
     // A long settled hook must not hold up a newly started live gesture.
     // Disabling or replacing bundled code also stops its previous invocation.
-    if (sourceChanged || (enteringLive && preemptSettled) || projectNormals !== this.projectNormals)
+    if (sourceChanged || (enteringLive && preemptSettled) || displayKey !== this.displayKey)
       this.interrupt();
-    this.projectNormals = projectNormals;
+    this.displayKey = displayKey;
     this.sourcesKey = nextSources;
-    this.pending = { document, sources, live, signatures, fingerprint, projectNormals };
+    this.pending = { document, sources, live, signatures, fingerprint, defaultMode };
     this.pump();
     this.onBusy(this.active !== null || this.pending !== null);
   }
@@ -123,7 +135,7 @@ export class PreviewQueue {
       sources: this.active.sources,
       live: this.active.live,
       signatures: [...this.active.signatures],
-      projectNormals: this.active.projectNormals,
+      defaultMode: this.active.defaultMode,
     });
   }
 }

@@ -20,7 +20,7 @@ try {
         const { decoratorSettings } = await import("/src/preferences/decorator-settings.ts");
         document.body.append(decoratorSettings());
       });
-      const mode = page.getByRole("combobox", { name: "Decorator display" });
+      const mode = page.getByRole("combobox", { name: "Default decorator display" });
       assert.deepEqual(await mode.locator("option").allTextContents(), [
         "Geometry",
         "Texture",

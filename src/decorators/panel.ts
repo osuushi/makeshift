@@ -4,6 +4,7 @@ import { isBuiltinDecorator, knurlDefinition } from "./builtins.js";
 import { appendCustomContinue } from "./custom-continue.js";
 import { appendCustomDecorators } from "./custom-panel.js";
 import { resolveFaces } from "./cylinder.js";
+import { appendDecoratorDisplay } from "./display-control.js";
 import { editDecorators, faceKey } from "./edits.js";
 import { appendKnurlSettings } from "./knurl-panel.js";
 import { decoratorLibrary } from "./library.js";
@@ -218,6 +219,7 @@ export class DecoratorPanel {
       return;
     }
     if (!instances.length) return;
+    appendDecoratorDisplay(this.root, this.editor, instances);
     if (instances.length === 1) this.last = instances[0].id;
     const custom = instances.filter((d) => !isBuiltinDecorator(d.definition));
     if (custom.length) {

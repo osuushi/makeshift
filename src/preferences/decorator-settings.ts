@@ -9,7 +9,7 @@ export function decoratorSettings(): HTMLElement {
   const section = document.createElement("section");
   section.className = "decorator-display-settings";
   section.innerHTML = `<h3>Decorator previews</h3>
-    <label>Display<select aria-label="Decorator display"><option value="detailed">Geometry</option><option value="texture">Texture</option><option value="color-only">Color only</option></select></label>
+    <label>Default display<select aria-label="Default decorator display"><option value="detailed">Geometry</option><option value="texture">Texture</option><option value="color-only">Color only</option></select></label>
     <p>Texture projects decoration normals onto the face without changing its silhouette. Color only skips preview generation. Exports retain full decoration.</p>`;
   const mode = section.querySelector<HTMLSelectElement>("select");
   if (!mode) throw new Error("Missing decorator preview mode");
