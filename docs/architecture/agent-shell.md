@@ -48,6 +48,10 @@ Fresh and resumed Codex launches use `--no-alt-screen` so wheel/trackpad scrolli
 reads terminal output. Ghostty's alternate-screen wheel handling sends Up/Down
 keys, which would cycle Codex prompt history instead. Custom launches retain
 their configured screen behavior.
+The terminal grid refits on every observed size change, including the end of a
+splitter drag, window resize and reopening a collapsed dock. Its canvas aligns
+to the right edge; leftover space from whole-character sizing stays on the left,
+so the canvas scrollbar retains its small inset from the pane edge.
 It starts as that same collapsed sliver, with no separate header Agent button;
 terminal loading and harness launch wait until the first expansion. Expanding
 returns keyboard focus to terminal input; collapsing returns it to the drawing.
