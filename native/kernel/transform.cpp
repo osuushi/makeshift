@@ -44,15 +44,15 @@ std::vector<Result> transformBodies(const Tree& input, const std::vector<Operand
         if (scale && affine.Form() == gp_Other) {
             BRepBuilderAPI_GTransform operation(body.shape, affine, true);
             if (!operation.IsDone()) throw std::runtime_error("Body transform failed");
-            const auto planes = affinePlanes(body.shape, affine, operation);
-            const auto shape = planes->Apply(operation.Shape());
+            const auto supports = affineSupports(body.shape, affine, operation);
+            const auto shape = supports->Apply(operation.Shape());
             validate(shape);
             if (volume(shape) <= 0) throw std::runtime_error("Transform produced a non-positive solid");
             Result result{shape, {}, {}};
             result.bodies.push_back(body.id);
             participants.push_back(body.id);
             for (const auto& entity : body.entities)
-                result.predecessors.push_back({entity.id, planes->Apply(operation.ModifiedShape(entity.shape))});
+                result.predecessors.push_back({entity.id, supports->Apply(operation.ModifiedShape(entity.shape))});
             results.push_back(std::move(result));
             continue;
         }

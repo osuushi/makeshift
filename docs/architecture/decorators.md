@@ -384,9 +384,11 @@ handedness setting or scaling those numeric settings. Do not retain a stale stan
 size designation after the diameter changes.
 
 General decorator hooks for transform-specific behavior are future work, not part
-of the V1 interface. Nonuniform scale that destroys cylindrical eligibility must
-visibly invalidate the affected threads. Geometry and decorator parameter edits
-remain distinct operations.
+of the V1 interface. Axial stretch and equal radial scale retain cylindrical supports
+and attached decorators, preserving thread pitch/clearance and knurl settings.
+Gear groups retain their ordinary diameter-dependent fitting behavior. Nonuniform
+scale that destroys cylindrical eligibility must visibly invalidate the affected
+threads. Geometry and decorator parameter edits remain distinct operations.
 
 ## Small extension contract
 

@@ -1033,6 +1033,15 @@ The captured flange regression uses the current exact BRep, without thread or
 flange feature history. It checks axial extension, fixed thread faces, independent
 cylindrical added volume, reversal after reopening and rigidly rotated placement.
 
+Axial-scale follow-up (2026-10-25): the same pinned OCCT
+[`BRep_Tool::CurveOnSurface`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRep/BRep_Tool.cxx#L289-L306)
+reverses the edge when reading a reversed face, selecting the opposite seam branch.
+Makeshift must read branches with the same forward face orientation used to build
+the replacement support. General affine conversion also changes circular rims to
+rational curves: projection onto the restored cylinder needs SameParameter before
+checking spatial/parameter correspondence. Retain the original acceptance tolerance;
+use a tighter approximation target to leave room for measured error.
+
 ## Tangential periodic subtraction (2026-09-20)
 
 Source observation at pinned OCCT `a016080bf6738d6aeae020badee4e888ad1540a5`:

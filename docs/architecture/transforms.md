@@ -278,8 +278,13 @@ Construction status is retained. Constraints that require the old circular edge 
 center reject the conversion with an explanation. Undo restores primitives and links.
 
 Whole solids use the exact kernel affine transform; no sketch Bézier approximation
-is applied to their authoritative BRep. Faces/edges use boundary reconnection with
-unchanged validity, tolerance and topology correspondence checks. Rational rims use
+is applied to their authoritative BRep. Planes retain analytic supports. Cylinders
+also retain analytic supports when the transformed radial directions remain equal
+and perpendicular to each other and to the axis, including axial stretch and equal
+radial scale. Their transformed boundaries are reparameterized on the cylinder,
+preserving seams and topology correspondence. Elliptical or sheared cylinders remain
+freeform and cylindrical decorators require repair. Faces/edges use boundary
+reconnection with unchanged validity, tolerance and topology correspondence checks. Rational rims use
 matching parameterizations when rebuilding ruled walls. Curve-length matching and
 reported volume use accurate integration for rational geometry. Unsupported
 reconnections remain recoverable errors.

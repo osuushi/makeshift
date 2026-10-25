@@ -11,12 +11,16 @@
 // A nonsingular affine map preserves planes exactly. GTransform stores them
 // as spline surfaces; restore their analytic supports for subsequent face tools,
 // retaining its exact transformed wires and edge identities.
-Handle(BRepTools_ReShape) affinePlanes(const TopoDS_Shape& source, const gp_GTrsf& transform,
+Handle(BRepTools_ReShape) affineSupports(const TopoDS_Shape& source, const gp_GTrsf& transform,
                                      BRepBuilderAPI_GTransform& operation) {
     Handle(BRepTools_ReShape) replacements = new BRepTools_ReShape;
     for (TopExp_Explorer it(source, TopAbs_FACE); it.More(); it.Next()) {
         const auto original = TopoDS::Face(it.Current());
         BRepAdaptor_Surface support(original);
+        if (support.GetType() == GeomAbs_Cylinder) {
+            const auto cylinder = affineCylinder(original, transform, operation);
+            if (!cylinder.IsNull()) replacements->Replace(operation.ModifiedShape(original), cylinder);
+        }
         if (support.GetType() != GeomAbs_Plane) continue;
         const auto plane = support.Plane();
         auto origin = plane.Location().XYZ();

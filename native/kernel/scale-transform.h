@@ -30,12 +30,14 @@ inline gp_GTrsf scaleTransform(const Tree& input) {
     return result;
 }
 
-Handle(BRepTools_ReShape) affinePlanes(const TopoDS_Shape&, const gp_GTrsf&,
+TopoDS_Face affineCylinder(const TopoDS_Face&, const gp_GTrsf&, BRepBuilderAPI_GTransform&);
+
+Handle(BRepTools_ReShape) affineSupports(const TopoDS_Shape&, const gp_GTrsf&,
                                      BRepBuilderAPI_GTransform&);
 
 inline TopoDS_Shape affineShape(const TopoDS_Shape& shape, const gp_GTrsf& transform) {
     if (transform.Form() != gp_Other)
         return BRepBuilderAPI_Transform(shape, transform.Trsf(), true).Shape();
     BRepBuilderAPI_GTransform operation(shape, transform, true);
-    return affinePlanes(shape, transform, operation)->Apply(operation.Shape());
+    return affineSupports(shape, transform, operation)->Apply(operation.Shape());
 }
