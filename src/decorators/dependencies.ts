@@ -15,6 +15,8 @@ export function hasDecoratorDescendants(
   const faceIds = new Set(instance.faces.map((face) => face.face));
   return (candidate.bodies ?? []).some((body) => {
     if (source.bodies?.some((old) => old === body)) return false;
+    // Rigid display copies retain face IDs without native topology correspondence.
+    if (!bodyIds.has(body.id) && body.faces.some((face) => faceIds.has(face.id))) return true;
     const origins = topologyOrigins.get(body);
     if (!origins?.bodies.some((id) => bodyIds.has(id))) return false;
     if (origins.copy || !bodyIds.has(body.id)) return true;
