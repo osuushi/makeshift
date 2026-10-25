@@ -12,6 +12,7 @@ export class AgentTerminal {
   private observer: ResizeObserver;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private disposed = false;
+  private focused = false;
   private disposeTheme = onThemeChange(() => {
     if (this.terminal) this.terminal.options.theme = terminalTheme();
   });
@@ -43,7 +44,7 @@ export class AgentTerminal {
     const terminal = new Terminal({
       ghostty,
       fontSize: 13 * uiScale(),
-      cursorBlink: true,
+      cursorBlink: this.focused,
       scrollback: 5000,
       theme: terminalTheme(),
     });
@@ -128,6 +129,12 @@ export class AgentTerminal {
     if (this.disposed || this.element.clientHeight === 0) return;
     this.resize();
     this.element.querySelector("textarea")?.focus({ preventScroll: true });
+  }
+  setFocused(focused: boolean): void {
+    this.focused = focused;
+    // Ghostty's blur() only changes DOM focus; its renderer keeps blinking unless
+    // we explicitly update this option. Preserve DOM focus across native window blur.
+    if (this.terminal) this.terminal.options.cursorBlink = focused;
   }
   private async poll(): Promise<void> {
     if (this.disposed) return;

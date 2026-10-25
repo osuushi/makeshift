@@ -177,6 +177,7 @@ class AgentDock {
     const focused =
       !this.collapsed && document.hasFocus() && this.panel.contains(document.activeElement);
     const terminal = focused && this.element(".agent-screen").contains(document.activeElement);
+    this.terminal?.setFocused(terminal);
     this.panel.dataset.focus = terminal ? "terminal" : focused ? "controls" : "drawing";
     this.text(
       ".agent-focus",

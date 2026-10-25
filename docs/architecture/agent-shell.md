@@ -52,6 +52,8 @@ accented header and pane border when terminal input owns the keyboard. The
 unfocused pane has a 15% white overlay in light mode or black overlay in dark
 mode. The overlay passes clicks through and clears for terminal or control focus.
 The browser caret is hidden because Ghostty draws the terminal cursor itself.
+Ghostty cursor blinking follows terminal input focus explicitly: it stops when
+focus moves to the drawing, pane controls or another window, and resumes on return.
 PTY reads wait for output (bounded to one second), waking immediately on data
 or exit; the renderer yields one frame between reads instead of batching output
 on a fixed 100 ms polling interval. Idle reads do not hold the lifecycle lock.

@@ -17,6 +17,7 @@ export async function agentFocusRoute(page) {
   assert.equal(await screen.evaluate((element) => element.contains(document.activeElement)), true);
   assert.equal(await panel.getAttribute("data-focus"), "terminal");
   assert.equal(await page.locator(".agent-focus").textContent(), "Terminal focused");
+  assert((await cursorFrames(page)) > 1, "focused terminal cursor visibly blinks");
   assert.equal(
     await screen.evaluate((element) => getComputedStyle(element).caretColor),
     "rgba(0, 0, 0, 0)",
@@ -27,9 +28,19 @@ export async function agentFocusRoute(page) {
     .click({ position: { x: 400, y: 300 } });
   assert.equal(await panel.getAttribute("data-focus"), "drawing");
   assert.equal(await page.locator(".agent-focus").textContent(), "Drawing focused");
+  assert.equal(
+    await cursorFrames(page),
+    1,
+    "unfocused terminal pixels stay still across blink periods",
+  );
   await page.screenshot({ path: ".cache/sketch-review/agent-unfocused.png" });
+  await page.getByRole("button", { name: "Change agent dock position" }).click();
+  assert.equal(await panel.getAttribute("data-focus"), "controls");
+  assert.equal(await cursorFrames(page), 1, "pane control focus also stops the terminal cursor");
+  await page.getByRole("button", { name: "Change agent dock position" }).click();
   await page.getByRole("button", { name: "Collapse agent terminal" }).click();
   await page.getByRole("button", { name: "Expand agent terminal" }).click();
+  assert((await cursorFrames(page)) > 1, "reopening resumes cursor blinking");
   const before = await page.evaluate(() => JSON.stringify(window.makeshiftInspect().document));
   await page.evaluate(() => {
     const pending = new Map();
@@ -66,4 +77,15 @@ export async function agentFocusRoute(page) {
     await page.evaluate(() => JSON.stringify(window.makeshiftInspect().document)),
     before,
   );
+}
+
+async function cursorFrames(page) {
+  return page.locator(".agent-screen canvas").evaluate(async (canvas) => {
+    const frames = new Set();
+    for (let i = 0; i < 12; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 120));
+      frames.add(canvas.toDataURL());
+    }
+    return frames.size;
+  });
 }
