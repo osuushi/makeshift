@@ -11,6 +11,31 @@ export async function gearGroupColors(page, name) {
   const groups = page.getByRole("region", { name: "Gear groups", exact: true });
   const field = page.getByRole("textbox", { name: "Gears 1 preview hex color", exact: true });
   const original = (await inspect(page)).document;
+  const display = groups.getByRole("combobox", { name: "Gears 1 display", exact: true });
+  assert.equal(
+    await page.getByRole("combobox", { name: "Decorator display", exact: true }).count(),
+    0,
+  );
+  await worldClick(page, [-10, -17, 2]);
+  assert.equal((await inspect(page)).modelingSelection.length, 1);
+  await display.selectOption("color-only");
+  await page.waitForFunction(() =>
+    window.makeshiftInspect().document.decorators.every((d) => d.display === "color-only"),
+  );
+  assert.equal((await inspect(page)).modelingSelection.length, 2);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
+  for (const [mode, label] of [
+    ["texture", "Texture"],
+    ["detailed", "Geometry"],
+  ]) {
+    await displaySettings(page, (dialog) =>
+      dialog.getByRole("combobox", { name: "Default decorator display" }).selectOption(mode),
+    );
+    await display
+      .getByRole("option", { name: `Default (${label})`, exact: true })
+      .waitFor({ state: "attached" });
+  }
   await field.fill("#d53d70");
   await field.press("Enter");
   await settled(page);
@@ -34,12 +59,12 @@ export async function gearGroupColors(page, name) {
   await displaySettings(page, async (dialog) => {
     assert.equal(await dialog.getByLabel("Gears preview color", { exact: true }).count(), 0);
     await dialog
-      .getByRole("combobox", { name: "Decorator preview detail" })
+      .getByRole("combobox", { name: "Default decorator display" })
       .selectOption("color-only");
   });
   await page.screenshot({ path: `.cache/sketch-review/${name}-gear-group-colors-flat.png` });
   await displaySettings(page, (dialog) =>
-    dialog.getByRole("combobox", { name: "Decorator preview detail" }).selectOption("detailed"),
+    dialog.getByRole("combobox", { name: "Default decorator display" }).selectOption("detailed"),
   );
   await groups.getByRole("button", { name: "Add selection to Gears 1", exact: true }).click();
   state = await inspect(page);

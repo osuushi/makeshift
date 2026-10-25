@@ -5,12 +5,13 @@ import {
 } from "../preferences/decorator-display.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { isBuiltinDecorator } from "./builtins.js";
+import { effectiveDecoratorDisplay } from "./display-mode.js";
 import { PreviewOverlaySurfaces } from "./preview-overlay-surfaces.js";
 import { PreviewQueue } from "./preview-queue.js";
 import {
   PreviewSignatureCache,
+  previewDisplaySignatures,
   previewFingerprint,
-  previewSignatures,
 } from "./preview-signatures.js";
 import { PreviewStatus } from "./preview-status.js";
 
@@ -67,6 +68,7 @@ class DecoratorOverlay {
       (this.editor.display.decorators ?? []).some(
         (instance) =>
           !instance.problem &&
+          effectiveDecoratorDisplay(instance, decoratorPreviewMode()) !== "color-only" &&
           instance.faces.some((face) => this.editor.visibility.visible(face.body)),
       );
     this.status.update(this.busy, visible);
@@ -78,7 +80,12 @@ class DecoratorOverlay {
     const document = this.editor.display;
     const nextSources = JSON.stringify(this.editor.store.decoratorSources);
     if (document === this.previous && nextSources === this.sourcesKey) return;
-    const signatures = previewSignatures(document, nextSources, this.signatureCache);
+    const signatures = previewDisplaySignatures(
+      document,
+      nextSources,
+      decoratorPreviewMode(),
+      this.signatureCache,
+    );
     const nextSignatureKey = previewFingerprint(signatures, false);
     const live = this.editor.candidate !== null;
     const needsPreview =
@@ -93,7 +100,12 @@ class DecoratorOverlay {
     this.previousLive = live;
     if (!needsPreview) return;
     clearTimeout(this.settleTimer);
-    if (!signatures.size || decoratorPreviewMode() === "color-only") {
+    const generated = document.decorators?.some(
+      (instance) =>
+        !instance.problem &&
+        effectiveDecoratorDisplay(instance, decoratorPreviewMode()) !== "color-only",
+    );
+    if (!signatures.size || !generated) {
       this.queue.clear();
       if (!signatures.size) this.surfaces.clear();
       return;

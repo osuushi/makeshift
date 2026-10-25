@@ -12,7 +12,8 @@ import type { JavaScriptDecorators } from "./javascript-hooks.js";
 import type { DecoratorEdit, DecoratorInstance } from "./types.js";
 
 export function needsJavaScript(document: SketchDocument, edit: DecoratorEdit): boolean {
-  if (edit.action === "preset" || edit.action === "gear-color") return false;
+  if (edit.action === "preset" || edit.action === "gear-color" || edit.action === "display")
+    return false;
   if (edit.action === "apply") return !isBuiltinDecorator(edit.definition);
   if (edit.action === "remove" || edit.action === "discard") return false;
   const ids = edit.action === "settings" ? edit.ids : [edit.id];

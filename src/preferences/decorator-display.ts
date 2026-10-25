@@ -1,3 +1,5 @@
+import type { DecoratorDisplayMode } from "../decorators/display-mode.js";
+
 export const decoratorKinds = ["threads", "gear", "knurling", "custom"] as const;
 export type DecoratorKind = (typeof decoratorKinds)[number];
 export interface DecoratorAppearance {
@@ -5,7 +7,7 @@ export interface DecoratorAppearance {
   opacity: number;
 }
 export interface DecoratorDisplay {
-  mode: "detailed" | "color-only";
+  mode: DecoratorDisplayMode;
   types: Record<DecoratorKind, DecoratorAppearance>;
 }
 const defaults: DecoratorDisplay = {
@@ -30,7 +32,7 @@ function normalized(input: unknown): DecoratorDisplay {
   const result = structuredClone(defaults);
   if (!input || typeof input !== "object") return result;
   const candidate = input as Partial<DecoratorDisplay>;
-  if (candidate.mode === "color-only") result.mode = candidate.mode;
+  if (candidate.mode === "color-only" || candidate.mode === "texture") result.mode = candidate.mode;
   for (const kind of decoratorKinds) {
     const appearance = candidate.types?.[kind];
     if (!appearance) continue;

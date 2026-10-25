@@ -50,13 +50,13 @@ export function matchGearApplication(
   const color =
     decorators.find((d) => d.gearGroup === id)?.gearColor ??
     nextGearColor(decorators.filter((d) => d.gearGroup || !members.includes(d)));
-  const settings = gearSettings(
-    (decorators.find((d) => d.gearGroup === id) ?? members[0]).settings,
-  );
+  const reference = decorators.find((d) => d.gearGroup === id) ?? members[0];
+  const settings = gearSettings(reference.settings);
   const grouped = members.map((d) => ({
     ...d,
     gearGroup: id,
     gearColor: color,
+    display: reference.display,
     settings: {
       ...d.settings,
       pressure: settings.pressure,

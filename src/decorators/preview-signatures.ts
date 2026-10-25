@@ -1,6 +1,7 @@
 import type { BodyGeometry } from "../model/body.js";
 import type { DisplayDocument } from "../model/display-document.js";
 import { isBuiltinDecorator } from "./builtins.js";
+import { type DecoratorDisplayMode, effectiveDecoratorDisplay } from "./display-mode.js";
 
 /** View/queue-local serialization of immutable support inputs; no document authority. */
 export class PreviewSignatureCache {
@@ -61,4 +62,23 @@ export function previewSignatures(
 
 export function previewFingerprint(signatures: ReadonlyMap<string, string>, live: boolean): string {
   return JSON.stringify([live, [...signatures].sort(([a], [b]) => a.localeCompare(b))]);
+}
+
+/** Include resolved appearance so delayed work cannot revive a previous display mode. */
+export function previewDisplaySignatures(
+  document: DisplayDocument,
+  sourcesKey: string,
+  defaultMode: DecoratorDisplayMode,
+  cache = new PreviewSignatureCache(),
+): Map<string, string> {
+  const signatures = previewSignatures(document, sourcesKey, cache);
+  for (const instance of document.decorators ?? []) {
+    const signature = signatures.get(instance.id);
+    if (signature !== undefined)
+      signatures.set(
+        instance.id,
+        `${signature}/${effectiveDecoratorDisplay(instance, defaultMode)}`,
+      );
+  }
+  return signatures;
 }

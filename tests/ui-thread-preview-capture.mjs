@@ -27,12 +27,12 @@ export async function capturedThreadRim(page, name) {
     ].map((p) => project(page, p)),
   );
   await displaySettings(page, (dialog) =>
-    dialog.getByRole("combobox", { name: "Decorator preview detail" }).selectOption("color-only"),
+    dialog.getByRole("combobox", { name: "Default decorator display" }).selectOption("color-only"),
   );
   await page.mouse.move(100, 70);
   const baseline = await page.screenshot();
   await displaySettings(page, (dialog) =>
-    dialog.getByRole("combobox", { name: "Decorator preview detail" }).selectOption("detailed"),
+    dialog.getByRole("combobox", { name: "Default decorator display" }).selectOption("detailed"),
   );
   await previewReady(page);
   await page.mouse.move(100, 70);
