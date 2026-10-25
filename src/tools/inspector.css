@@ -1,0 +1,231 @@
+.inspector {
+  position: absolute;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  padding-left: 22px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 3px 15px var(--shadow);
+  pointer-events: auto;
+  font-size: 12px;
+}
+.inspector[hidden],
+.inspector [hidden] {
+  display: none;
+}
+.inspector-bar,
+.inspector-section-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 5px;
+  flex-shrink: 0;
+}
+.inspector-bar {
+  min-height: 40px;
+  border-radius: 0 9px 0 0;
+}
+.inspector-bar strong {
+  flex: 1;
+  padding-left: 5px;
+  font-size: 13px;
+}
+.inspector button {
+  box-shadow: none;
+}
+.inspector-bar > button,
+.inspector-section-bar > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  padding: 5px;
+  min-width: 30px;
+  min-height: 34px;
+  font-size: 13px;
+}
+.inspector-bar > button:hover,
+.inspector-section-bar > button:hover {
+  background: var(--surface);
+  color: var(--accent);
+}
+.inspector .inspector-move {
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+.inspector .inspector-move:hover {
+  background: var(--surface);
+}
+.inspector-body {
+  overflow: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+  flex: 1;
+  border-radius: 0 0 9px 0;
+}
+.inspector:not(.sized) .inspector-body {
+  max-height: var(--inspector-content-max);
+}
+.inspector-section {
+  position: relative;
+  border-top: 1px solid var(--border);
+}
+.inspector .inspector-section-toggle {
+  flex: 1;
+  justify-content: flex-start;
+  gap: 9px;
+  min-height: 38px;
+  text-align: left;
+  font-weight: 650;
+}
+.inspector-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+.inspector-chevron {
+  width: 26px;
+  height: 26px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  transition:
+    transform 120ms ease,
+    background 120ms ease;
+}
+[aria-expanded="true"] > .inspector-chevron,
+.decorator-repair[open] > summary > .inspector-chevron {
+  transform: rotate(90deg);
+  background: var(--selected);
+  color: var(--accent);
+}
+.inspector .decorator-panel,
+.inspector .constraint-list,
+.inspector .measurement-readout {
+  position: static;
+  width: 100%;
+  max-width: none;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 4px 10px 10px;
+  overflow: visible;
+}
+.inspector .decorator-panel > h2 {
+  display: none;
+}
+.decorator-repair {
+  border-top: 1px solid var(--border);
+  padding: 4px 0;
+}
+.decorator-repair summary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--danger);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  list-style: none;
+}
+.decorator-repair summary::marker {
+  content: "";
+}
+.decorator-repair summary::-webkit-details-marker {
+  display: none;
+}
+.decorator-repair summary:hover {
+  background: var(--surface);
+}
+.decorator-repair summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.inspector .measurement-readout h2 {
+  position: absolute;
+  top: 13px;
+  right: 76px;
+  margin: 0;
+  font-size: 0;
+}
+.inspector-edge {
+  position: absolute;
+  z-index: 2;
+  touch-action: none;
+}
+.inspector-edge[data-edge="n"],
+.inspector-edge[data-edge="s"] {
+  left: 12px;
+  right: 12px;
+  height: 8px;
+  cursor: ns-resize;
+}
+.inspector-edge[data-edge="n"] {
+  top: -4px;
+}
+.inspector-edge[data-edge="s"] {
+  bottom: -4px;
+}
+.inspector-edge[data-edge="e"],
+.inspector-edge[data-edge="w"] {
+  top: 12px;
+  bottom: 12px;
+  width: 8px;
+  cursor: ew-resize;
+}
+.inspector-edge[data-edge="e"] {
+  right: -4px;
+}
+.inspector-edge[data-edge="w"] {
+  left: -4px;
+}
+.inspector-edge[data-edge="nw"],
+.inspector-edge[data-edge="ne"],
+.inspector-edge[data-edge="sw"],
+.inspector-edge[data-edge="se"] {
+  width: 12px;
+  height: 12px;
+  z-index: 3;
+}
+.inspector-edge[data-edge="nw"] {
+  top: -5px;
+  left: -5px;
+  cursor: nwse-resize;
+}
+.inspector-edge[data-edge="ne"] {
+  top: -5px;
+  right: -5px;
+  cursor: nesw-resize;
+}
+.inspector-edge[data-edge="sw"] {
+  bottom: -5px;
+  left: -5px;
+  cursor: nesw-resize;
+}
+.inspector-edge[data-edge="se"] {
+  bottom: -5px;
+  right: -5px;
+  cursor: nwse-resize;
+}
+@media (prefers-reduced-motion: reduce) {
+  .inspector-chevron {
+    transition: none;
+  }
+}
+
+.inspector.collapsed .inspector-edge {
+  display: none;
+}

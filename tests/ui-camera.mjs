@@ -15,7 +15,8 @@ async function verifyScrollPan(page, before) {
       { capture: true },
     );
   });
-  await page.mouse.move(980, 620);
+  // The lower-right Inspector owns wheel/pointer input over its contents.
+  await page.mouse.move(860, 220);
   await page.mouse.wheel(80, 60);
   await page.waitForFunction(
     (x) => window.makeshiftInspect().projection.origin.x !== x,
@@ -58,9 +59,9 @@ export async function cameraRoute(page, name) {
   assert.deepEqual(rotated.document, before.document);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   const aligned = await inspect(page);
-  await page.mouse.move(980, 620);
+  await page.mouse.move(860, 220);
   await page.mouse.down({ button: "right" });
-  await page.mouse.move(900, 560, { steps: 6 });
+  await page.mouse.move(780, 160, { steps: 6 });
   await page.mouse.up({ button: "right" });
   await page.waitForFunction(
     (target) => window.makeshiftInspect().camera.target.some((v, i) => v !== target[i]),
@@ -75,7 +76,7 @@ export async function cameraRoute(page, name) {
   close(panned.projection.origin.x, aligned.projection.origin.x - 80);
   close(panned.projection.origin.y, aligned.projection.origin.y - 60);
   assert.equal(panned.activeSketch, panned.document.sketches[0].id);
-  const anchor = { x: 1000, y: 600 };
+  const anchor = { x: 860, y: 220 };
   await page.mouse.move(anchor.x, anchor.y);
   await page.keyboard.down("Control");
   await page.mouse.wheel(0, -25); // Same browser event path as Chromium trackpad pinch.

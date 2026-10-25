@@ -13,10 +13,8 @@ await withUiRuntimes(
     await plate(page);
     const accepted = (await completed(page)).document;
     // The setup's edge selection schedules a debounced measurement, separate from Reopen.
-    await page
-      .getByRole("region", { name: "Measurements" })
-      .getByRole("heading", { name: "Measurements", exact: true })
-      .waitFor();
+    // The Inspector owns the heading; result rows establish calculation completion.
+    await page.locator(".measurement-readout > div").first().waitFor();
     const trace = await traceRequests(page);
     try {
       const restored = await reopen(page);

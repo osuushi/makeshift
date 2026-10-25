@@ -18,27 +18,6 @@
 .decorator-panel[hidden] {
   display: none;
 }
-.decorator-stack {
-  position: absolute;
-  top: 145px;
-  right: 20px;
-  z-index: 12;
-  width: 250px;
-  max-width: calc(100% - 40px);
-  max-height: calc(100vh - 210px);
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  pointer-events: auto;
-}
-.decorator-stack > .decorator-panel {
-  position: static;
-  width: 100%;
-  max-width: 100%;
-  max-height: none;
-  flex: 0 0 auto;
-}
 .gear-groups ul {
   padding-left: 16px;
   line-height: 1.5;

@@ -106,7 +106,10 @@ async function customContinuationRoute(page) {
   await page.getByRole("button", { name: "Accept transform scale", exact: true }).click();
   assert.match((await inspect(page)).document.decorators[0].problem, /Enable bundled code/);
   await clearSelection(page);
+  assert.equal(await page.locator(".decorator-repair").getAttribute("open"), null);
+  await page.locator(".decorator-repair summary").click();
   await page.getByRole("button", { name: "Select affected geometry", exact: true }).click();
+  assert.equal(await page.locator(".decorator-repair").getAttribute("open"), "");
   await page.getByRole("button", { name: "Enable Raised pad code", exact: true }).click();
   await inspect(page);
   await page

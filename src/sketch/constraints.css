@@ -8,23 +8,6 @@
 .dimension-lock[hidden] {
   display: none;
 }
-.selection-readouts {
-  position: absolute;
-  right: 20px;
-  bottom: 62px;
-  z-index: 12;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 270px;
-  max-width: calc(100% - 40px);
-  max-height: calc(100% - 160px);
-  overflow-y: auto;
-  pointer-events: auto;
-}
-.selection-readouts > * {
-  flex-shrink: 0;
-}
 .constraint-list {
   display: grid;
   gap: 4px;
