@@ -22,8 +22,9 @@ skill; it does not belong in the application's installed agent-skills directory.
    next frame interval using `page.clock.runFor`, then take a screenshot. At
    30 fps, repeat 33, 33, 34 milliseconds to avoid accumulating clock drift.
    Use `runFor`, rather than `fastForward`, so intermediate animation callbacks
-   run. Before the screenshot, wait for pending kernel calculations on host time
-   so slow workers publish the preview before the next input supersedes it.
+   run. Before the screenshot, wait on host time for geometry delivery. A valid
+   staged mesh can be captured while metadata is pending: subsequent fixed frames
+   must release its paint wait. UI acceptance still waits for complete geometry.
    Keep application animation durations and opacity settings unchanged.
 5. Pump and capture frames while asynchronous UI actions are pending. Locator
    actionability, camera settling, and application timers may wait for animation
@@ -52,7 +53,8 @@ runner or the user's machine. Diagnose software rendering with WebGL's
 UI actions, and MP4 export. Its optional fourth constructor argument is an async
 `beforeCapture` callback, called after each clock step and before its screenshot.
 The feature-demo recorder supplies `scripts/demos/kernel-sync.mjs` to wait for
-kernel idle without waiting for camera animations or pumping the paused clock.
+kernel idle or a delivered staged mesh without waiting for camera animations or
+pumping the paused clock. The outer capture loop advances the next fixed frame.
 `scripts/canonical-planes.mjs` records two actual
 UI routes: primary/secondary grids during orbit, and secondary click gating
 followed by selecting that grid for a real split preview.
