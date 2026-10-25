@@ -169,7 +169,7 @@ test("workspace dirty state, extraction and conversation-only changes exclude ma
     assert.equal(await readFile(join(restored, "workspace", "note.txt"), "utf8"), "hello");
     if (process.platform !== "win32") {
       await symlink(join(root, "outside"), join(cwd, "link"));
-      await assert.rejects(workspaceSnapshot(workspace.root), /link or special/);
+      assert.equal((await workspaceSnapshot(workspace.root))["workspace/link"], undefined);
     }
   } finally {
     workspace.adopt(null, {});
@@ -184,4 +184,54 @@ test("archives round-trip beyond the former byte and file-count limits", () => {
   const archive = readPortableArchive(writePortableArchive(model, files));
   assert.deepEqual(archive.files, files);
   assert.deepEqual(archive.document, document);
+});
+
+test("local Python environments and links do not block saving or leave the workspace dirty", async () => {
+  const root = await mkdtemp(join(tmpdir(), "makeshift-local-runtime-"));
+  const workspace = new AgentWorkspace(root);
+  try {
+    await workspace.ensure();
+    const cwd = workspace.cwd;
+    assert(cwd);
+    await mkdir(join(cwd, ".dxf-venv", "bin"), { recursive: true });
+    await writeFile(join(cwd, ".dxf-venv", "pyvenv.cfg"), "home = /local/python\n");
+    await writeFile(join(cwd, ".dxf-venv", "bin", "activate"), "local runtime");
+    await writeFile(join(cwd, "drawing.dxf"), "project data");
+    await writeFile(join(cwd, "requirements.txt"), "ezdxf\n");
+    if (process.platform !== "win32") {
+      await symlink("/missing/python", join(cwd, ".dxf-venv", "bin", "python"));
+      await symlink(root, join(cwd, "outside"));
+      await symlink("/missing/target", join(cwd, "dangling"));
+    }
+    const files = await workspace.snapshot();
+    assert.deepEqual(Object.keys(files).sort(), [
+      "workspace/drawing.dxf",
+      "workspace/requirements.txt",
+    ]);
+    const archive = readPortableArchive(writePortableArchive(model, files));
+    assert.deepEqual(archive.document, document);
+    assert.deepEqual(
+      archive.files,
+      Object.fromEntries(
+        Object.entries(files).map(([path, bytes]) => [path, new Uint8Array(bytes)]),
+      ),
+    );
+    workspace.saved(files);
+    await workspace.refresh();
+    assert.equal(workspace.error, undefined);
+    assert.equal(workspace.dirty, false);
+    await writeFile(join(cwd, ".dxf-venv", "bin", "activate"), "changed local runtime");
+    await workspace.refresh();
+    assert.equal(workspace.dirty, false);
+    assert.equal(
+      await readFile(join(cwd, ".dxf-venv", "pyvenv.cfg"), "utf8"),
+      "home = /local/python\n",
+    );
+    await writeFile(join(cwd, "drawing.dxf"), "edited project data");
+    await workspace.refresh();
+    assert.equal(workspace.dirty, true);
+  } finally {
+    workspace.adopt(null, {});
+    await rm(root, { recursive: true, force: true });
+  }
 });
