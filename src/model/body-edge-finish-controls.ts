@@ -6,8 +6,8 @@ import { BodyEdgeFinishWidget } from "./body-edge-finish-widget.js";
 import { selectedEdgeFrame } from "./edge-finish-direction.js";
 import { EdgeFinishDrag } from "./edge-finish-drag.js";
 import { edgeFinishInputs } from "./edge-finish-inputs.js";
+import { EdgeFinishPreview } from "./edge-finish-preview.js";
 import { EdgeFinishSelection } from "./edge-finish-selection.js";
-import { PreviewRunner } from "./preview-runner.js";
 
 export class BodyEdgeFinishControls {
   private widget: BodyEdgeFinishWidget;
@@ -15,16 +15,8 @@ export class BodyEdgeFinishControls {
   private lease: InteractionLease | null = null;
   private selection: EdgeFinishSelection;
   private frame: ReturnType<typeof selectedEdgeFrame> = null;
-  private size = 0;
   private mode: BodyEdgeFinish["mode"] = "fillet";
-  private valid = false;
-  private invalid = false;
-  private previews = new PreviewRunner<BodyEdgeFinish>({
-    editing: () => this.lease?.phase === "editing",
-    calculate: (request) => this.calculate(request),
-    supersede: () => this.editor.store.supersedePreview(),
-    settled: () => this.editor.refresh(),
-  });
+  private preview: EdgeFinishPreview;
   private drag: EdgeFinishDrag;
   constructor(
     private editor: SketchEditor,
@@ -36,23 +28,31 @@ export class BodyEdgeFinishControls {
       () => void this.finish(),
       () => void this.cancel(),
     );
+    this.preview = new EdgeFinishPreview(
+      editor,
+      this.widget,
+      this.selection,
+      () => this.lease,
+      () => this.mode,
+      (size) => this.drag.rebase(size),
+    );
     this.drag = new EdgeFinishDrag(
       editor,
       this.widget,
       this.abort.signal,
       (mode) => this.begin(mode),
       () => this.lease,
-      () => this.size,
-      (size) => this.queue(size),
+      () => this.preview.size,
+      (size) => this.preview.queue(size),
       () => this.focus(),
       () =>
         edgeFinishSurfacePlan(editor, this.frame, this.mode, async (size) => {
-          await this.previews.settle();
+          await this.preview.runner.settle();
           return (
             this.lease?.phase === "editing" &&
-            this.valid &&
-            !this.invalid &&
-            Math.abs(this.size - size) < 1e-6
+            this.preview.valid &&
+            !this.preview.invalid &&
+            Math.abs(this.preview.size - size) < 1e-6
           );
         }),
     );
@@ -65,7 +65,7 @@ export class BodyEdgeFinishControls {
         if (mode !== this.mode) this.setMode(mode);
         else if (this.begin(mode)) this.focus();
       },
-      size: (value) => this.queue(value),
+      size: (value) => this.preview.queue(value),
       active: () => !!this.lease,
       finish: () => void this.finish(),
       cancel: () => void this.cancel(),
@@ -82,11 +82,11 @@ export class BodyEdgeFinishControls {
     this.mode = mode;
     this.widget.radial.update(mode !== "chamfer");
     if (this.lease) {
-      this.previews.clear();
-      this.valid = false;
+      this.preview.runner.clear();
+      this.preview.valid = false;
       this.lease.show(null);
-      this.previews.check(() => this.expandSelection());
-      this.queue(this.size);
+      this.preview.runner.check(() => this.expandSelection());
+      this.preview.queue(this.preview.size);
       this.lease.history?.checkpoint();
     } else if (faces && this.begin(mode)) this.focus();
     this.editor.refresh();
@@ -97,9 +97,9 @@ export class BodyEdgeFinishControls {
     this.update();
     if (!this.begin(operation.mode, operation))
       throw new Error("Cannot restore edge finish inputs");
-    this.queue(operation.size);
-    await this.previews.settle();
-    if (!this.valid) throw new Error("Cannot regenerate the accepted edge finish");
+    this.preview.queue(operation.size);
+    await this.preview.runner.settle();
+    if (!this.preview.valid) throw new Error("Cannot regenerate the accepted edge finish");
     this.focus();
   }
   private begin(mode: BodyEdgeFinish["mode"], restored?: BodyEdgeFinish): boolean {
@@ -113,31 +113,31 @@ export class BodyEdgeFinishControls {
       "body-edge-finish",
       () => this.cancel(),
       () => this.finish(),
-      { navigation: "when-released", settled: () => this.previews.settle() },
+      { navigation: "when-released", settled: () => this.preview.runner.settle() },
     );
     if (!this.lease) return false;
     this.selection.begin(this.frame.edges, !!restored);
     this.editor.modeling.setTool(mode);
-    this.size = restored?.size ?? 0;
-    this.widget.input.value = String(this.widget.radial.display(this.size));
-    this.valid = false;
-    this.invalid = false;
-    this.previews.clear();
+    this.preview.size = restored?.size ?? 0;
+    this.widget.input.value = String(this.widget.radial.display(this.preview.size));
+    this.preview.valid = false;
+    this.preview.invalid = false;
+    this.preview.runner.clear();
     this.editor.notice = `${mode === "fillet" ? "Fillet" : "Chamfer"} · Drag or enter a size`;
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
-    if (!restored) this.previews.check(() => this.expandSelection());
+    if (!restored) this.preview.runner.check(() => this.expandSelection());
     this.lease.trackHistory(
       this.widget.root,
       () => ({
-        size: this.size,
+        size: this.preview.size,
         mode: this.mode,
       }),
       async (state) => {
         this.setMode(state.mode);
         this.widget.input.value = String(this.widget.radial.display(state.size));
-        this.queue(state.size);
-        await this.previews.settle();
+        this.preview.queue(state.size);
+        await this.preview.runner.settle();
       },
     );
     this.editor.refresh();
@@ -149,9 +149,9 @@ export class BodyEdgeFinishControls {
     this.selection.show();
     this.editor.modeling.setTool(this.mode);
     if (!success) {
-      this.previews.clear();
-      this.valid = false;
-      this.invalid = true;
+      this.preview.runner.clear();
+      this.preview.valid = false;
+      this.preview.invalid = true;
       this.lease.show(null);
       this.editor.notice =
         "Selected edges cannot be finished · Try another mode or cancel to change selection";
@@ -166,80 +166,15 @@ export class BodyEdgeFinishControls {
     this.widget.input.focus();
     this.widget.input.select();
   }
-  private queue(size: number): void {
-    if (this.lease?.phase !== "editing") return;
-    if (size < 0) this.widget.input.value = "0";
-    if (this.previews.latest?.size === Math.max(0, size)) {
-      if (this.valid && this.size !== this.previews.latest.size) {
-        this.widget.input.value = String(this.widget.radial.display(this.size));
-        this.drag.rebase(this.size);
-      }
-      return;
-    }
-    this.size = Math.max(0, size);
-    this.valid = false;
-    if (!Number.isFinite(size)) {
-      this.previews.clear();
-      this.lease.show(null);
-      this.invalid = true;
-      this.editor.notice = "Enter a finite size";
-      this.editor.refresh();
-      return;
-    }
-    this.editor.notice = `${this.mode === "fillet" ? "Fillet" : "Chamfer"} · ${this.selection.edges.length} selected edge${this.selection.edges.length === 1 ? "" : "s"} · Enter to accept · Escape to cancel`;
-    this.previews.enqueue({
-      edges: this.selection.edges,
-      size: Math.max(0, size),
-      mode: this.mode,
-    });
-    this.editor.refresh();
-  }
-  private async calculate(request: BodyEdgeFinish): Promise<void> {
-    const success = await this.editor.store.request(
-      {
-        kind: "finish-edges",
-        operation: { ...request, edges: this.selection.edges },
-        presentation: "deferred",
-      },
-      (preview) => {
-        if (this.lease?.phase !== "editing" || !this.previews.latest) return;
-        this.lease.showVisual(preview);
-        if (request === this.previews.latest) this.measure(request);
-        this.editor.refresh();
-      },
-    );
-    const latest = this.previews.latest;
-    if (this.lease?.phase === "editing" && latest) {
-      this.valid = success && request === latest;
-      if (request === latest) {
-        this.invalid = !success || (this.editor.store.edgeSize ?? 0) !== request.size;
-        if (!success) this.lease.show(null);
-      }
-      if (success) {
-        this.lease.show(this.editor.store.candidate);
-        if (request === latest) this.measure(request);
-      }
-    }
-    this.editor.refresh();
-  }
-  private measure(request: BodyEdgeFinish): void {
-    this.size = this.editor.store.edgeSize ?? 0;
-    this.invalid = this.size !== request.size;
-    if (this.invalid) {
-      this.widget.input.value = String(this.widget.radial.display(this.size));
-      this.editor.notice = `Limited to ${this.widget.radial.display(this.size)} mm`;
-      this.drag.rebase(this.size);
-    }
-  }
   private async finish(): Promise<boolean> {
-    await this.previews.settle();
+    await this.preview.runner.settle();
     const lease = this.lease;
     if (this.drag.active || !lease) return false;
-    if (this.size === 0 && (!this.selection.restored || !this.previews.latest)) {
+    if (this.preview.size === 0 && (!this.selection.restored || !this.preview.runner.latest)) {
       await this.cancel();
       return true;
     }
-    if (!this.valid) return false;
+    if (!this.preview.valid || !(await this.preview.complete(lease))) return false;
     if (!lease.close()) return false;
     const success = await this.editor.accept();
     if (!success) {
@@ -254,12 +189,12 @@ export class BodyEdgeFinishControls {
   private async cancel(): Promise<void> {
     const lease = this.lease;
     if (!lease?.close()) return;
-    this.previews.clear();
+    this.preview.runner.clear();
     this.drag.clear();
     lease.releaseCapture();
     lease.show(null);
     await this.editor.store.cancelPreview();
-    await this.previews.settle();
+    await this.preview.runner.settle();
     this.selection.cancel();
     this.end(lease);
   }
@@ -284,14 +219,14 @@ export class BodyEdgeFinishControls {
       this.frame,
       this.mode,
       !!this.lease,
-      this.lease ? this.size : 0,
-      this.valid && (this.size > 0 || !!this.selection.restored),
+      this.lease ? this.preview.size : 0,
+      this.preview.valid && (this.preview.size > 0 || !!this.selection.restored),
       this.editor.blocked,
-      !!this.lease && this.invalid,
+      !!this.lease && this.preview.invalid,
     );
   };
   dispose(): void {
-    this.previews.clear();
+    this.preview.runner.clear();
     this.abort.abort();
     this.editor.world.changed.delete(this.update);
     this.widget.dispose();

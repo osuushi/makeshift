@@ -20,6 +20,32 @@ const request: ModelRequest = {
   operation: { edges: [], translation: [2, 0, 0] },
 };
 
+test("edge finishes publish a provisional mesh without requesting completion or a paint wait", async () => {
+  const clock = frames(),
+    preview = new DeferredPreview();
+  const events: string[] = [];
+  try {
+    const reply = await preview.run(
+      {
+        kind: "finish-edges",
+        presentation: "deferred",
+        operation: { edges: [], mode: "fillet", size: 2 },
+      },
+      async (request) => {
+        events.push(request.kind);
+        return visual;
+      },
+      () => events.push("mesh"),
+    );
+    assert.equal(reply, visual);
+    assert.deepEqual(events, ["finish-edges", "mesh"]);
+    assert.equal(clock.pending, 0);
+    assert.equal(preview.supersede(), false);
+  } finally {
+    clock.restore();
+  }
+});
+
 function frames() {
   const original = ["requestAnimationFrame", "cancelAnimationFrame"].map((name) =>
     Object.getOwnPropertyDescriptor(globalThis, name),

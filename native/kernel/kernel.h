@@ -26,6 +26,8 @@ struct Result {
     // derived triangulation, which the exact integration does not consume.
     std::optional<double> exactVolume;
     std::optional<std::array<double, 6>> exactBounds;
+    // Temporary edge finishes defer the positive-volume gate until completion.
+    bool volumeValidationPending = false;
 };
 gp_Pnt point(const Tree& tree);
 std::string quoted(const std::string& value);

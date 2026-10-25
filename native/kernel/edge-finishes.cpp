@@ -5,6 +5,7 @@
 #include <ShapeFix_Shape.hxx>
 #include <Standard_Failure.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
+#include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
 #include <algorithm>
 #include <cmath>
@@ -28,7 +29,7 @@ TopoDS_Shape repairEdgeFinish(const TopoDS_Shape& shape) {
 
 template<class Operation>
 void finishBody(const Operand& body, const std::vector<TopoDS_Edge>& edges,
-                double size, std::vector<Result>& results) {
+                double size, bool deferVolume, std::vector<Result>& results) {
     Operation operation(body.shape);
     // Keep generated blend boundaries precise enough for subsequent offsets.
     // This changes fitting accuracy, not the edge radius or topology tolerance.
@@ -55,7 +56,14 @@ void finishBody(const Operand& body, const std::vector<TopoDS_Edge>& edges,
                 if (i.Value().ShapeType() == origin.shape.ShapeType()) origins.push_back({origin.id, i.Value()});
     }
     const auto count = results.size();
-    solids(results, shape, origins, {body.id});
+    if (deferVolume) {
+        for (TopExp_Explorer it(shape, TopAbs_SOLID); it.More(); it.Next()) {
+            validate(it.Current());
+            Result result{it.Current(), origins, {body.id}};
+            result.volumeValidationPending = true;
+            results.push_back(std::move(result));
+        }
+    } else solids(results, shape, origins, {body.id});
     if (results.size() != count + 1) throw std::runtime_error("Edge finish is not feasible at this size");
 }
 }
@@ -126,13 +134,15 @@ std::vector<Result> finishEdges(const Tree& input, const std::vector<Operand>& b
     if (!std::isfinite(size) || size <= 1e-8)
         throw std::runtime_error("Edge size must be greater than zero");
     const auto selected = selectedEdges(input, bodies);
+    const bool deferVolume = input.get<std::string>("presentation", "") == "deferred" ||
+                             input.get<std::string>("kind", "") == "edge-finish-targets";
     std::vector<Result> results;
     for (const auto& body : bodies) {
         const auto found = selected.find(body.id);
         if (found == selected.end()) continue;
         const auto& edges = found->second;
-        if (mode == "fillet") finishBody<BRepFilletAPI_MakeFillet>(body, edges, size, results);
-        else finishBody<BRepFilletAPI_MakeChamfer>(body, edges, size, results);
+        if (mode == "fillet") finishBody<BRepFilletAPI_MakeFillet>(body, edges, size, deferVolume, results);
+        else finishBody<BRepFilletAPI_MakeChamfer>(body, edges, size, deferVolume, results);
         participants.push_back(body.id);
     }
     return results;

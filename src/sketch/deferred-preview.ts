@@ -22,6 +22,12 @@ export class DeferredPreview {
     const reply = await call(request);
     if (reply.error || !reply.view.visualPreview) return reply;
     show(reply);
+    // Edge finishes remain a drawing until the tool explicitly completes them.
+    // Volume and editing metadata must not occupy the drag calculator after paint.
+    if (request.kind === "finish-edges") {
+      if (this.superseded) throw new Error("Preview superseded");
+      return reply;
+    }
     if (!this.superseded) await this.painted();
     if (this.superseded) throw new Error("Preview superseded");
     this.completing = true;

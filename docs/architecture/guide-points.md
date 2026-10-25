@@ -242,6 +242,10 @@ sets for one source/selection/mode, with 32 MiB source and 128 KiB point-key lim
 Cancelled or failed queries are never cached. Reenabling guides or releasing Shift
 can reuse completed results while target visibility and lock feedback are rebuilt
 for the current gesture.
+Guide fitting checks the generated topology and point-to-face fit without exact
+volume integration. Fillet/Chamfer keep a provisional mesh throughout editing;
+the selected result must still pass exact-volume and minimum-volume checks when
+the tool is accepted.
 
 References stay at their accepted positions for the gesture. The ordinary tool
 owns free dragging, preview and Undo; snapping only supplies its parameter.

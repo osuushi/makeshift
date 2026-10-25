@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { historyMenu } from "./native-documents.mjs";
 import { plate } from "./ui-body-fillet.mjs";
-import { holdCompletion } from "./ui-deferred-preview.mjs";
+import { holdCompletion, holdEdgeCompletion } from "./ui-deferred-preview.mjs";
 import { makePlate, worldClick } from "./ui-face-offset.mjs";
 import { close, inspect, modalCompleted } from "./ui-helpers.mjs";
 import { relativeOffsetInput } from "./ui-offset-input.mjs";
@@ -66,10 +66,77 @@ async function route(page, runtime, kind) {
   }
 }
 
+// A completed mesh must remain editable until Accept. The native completion is
+// held after validation to catch renderer acceptance racing Escape/tool closure.
+async function edgeAcceptance(page) {
+  await plate(page);
+  await page.getByRole("button", { name: "Fillet edges", exact: true }).click();
+  const input = page.getByRole("textbox", { name: "Fillet radius", exact: true });
+  const accept = page.getByRole("button", { name: "Accept fillet", exact: true });
+  const original = (await inspect(page)).document;
+  await holdEdgeCompletion(page);
+  try {
+    for (const value of [2, 3]) {
+      await input.fill(String(value));
+      const state = await inspect(page);
+      assert.equal(state.preview, null);
+      assert.ok(state.visualPreview?.bodies[0].faces.length);
+      assert.deepEqual(state.document, original);
+      assert.equal(await page.evaluate(() => window.edgeCompletion.reached), false);
+      assert.equal(await accept.isEnabled(), true);
+    }
+    const visual = (await inspect(page)).visualPreview;
+    await input.press("Enter");
+    await page.waitForFunction(() => window.edgeCompletion.reached);
+    const completing = await page.evaluate(() => window.makeshiftInspect());
+    assert.deepEqual(completing.document, original);
+    assert.equal(completing.interaction.phase, "waiting");
+    await page.evaluate(() => window.edgeCompletion.release());
+    await modalCompleted(page);
+    const accepted = (await inspect(page)).document;
+    assert.deepEqual(
+      accepted.bodies[0].faces.map((face) => face.vertices),
+      visual.bodies[0].faces,
+    );
+    assert.ok(accepted.bodies[0].volume < original.bodies[0].volume);
+    await historyMenu(page, "undo");
+    assert.deepEqual((await inspect(page)).document.bodies, original.bodies);
+    await historyMenu(page, "redo");
+    assert.deepEqual((await inspect(page)).document.bodies, accepted.bodies);
+  } finally {
+    await page.evaluate(() => {
+      window.edgeCompletion.release();
+      window.edgeCompletion.restore();
+    });
+  }
+  await plate(page);
+  await page.getByRole("button", { name: "Fillet edges", exact: true }).click();
+  const cancelInput = page.getByRole("textbox", { name: "Fillet radius", exact: true });
+  await cancelInput.fill("2");
+  const before = (await inspect(page)).document;
+  await holdEdgeCompletion(page);
+  try {
+    await cancelInput.press("Enter");
+    await page.waitForFunction(() => window.edgeCompletion.reached);
+    await page.keyboard.press("Escape");
+    await modalCompleted(page);
+    await page.evaluate(() => window.edgeCompletion.release());
+    assert.deepEqual((await inspect(page)).document, before);
+  } finally {
+    await page.evaluate(() => {
+      window.edgeCompletion.release();
+      window.edgeCompletion.restore();
+    });
+  }
+  console.log(
+    "Fillet stays mesh-only until acceptance; Escape prevents late acceptance; Undo/Redo passed",
+  );
+}
+
 await withUiRuntimes(
   async (page, runtime) => {
     await route(page, runtime, "offset");
-    await route(page, runtime, "fillet");
+    await edgeAcceptance(page);
   },
   { defaults: ["electron"] },
 );

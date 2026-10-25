@@ -35,7 +35,8 @@ try {
       const client = new Client(executable, 1);
       try {
         const times = [],
-          preparation = [];
+          preparation = [],
+          completion = [];
         for (const size of [...sizes, ...sizes]) {
           const result = await client.request({
             kind: "edge-finish",
@@ -48,10 +49,9 @@ try {
           assert.equal(result.reply.error, undefined, `${name} ${mode} ${size}`);
           times.push(result.milliseconds);
           preparation.push(Number(/kernel edge-finish operands ([\d.]+)/.exec(result.phases)?.[1]));
-          assert.equal(
-            (await client.request({ kind: "complete-preview", bodies: [] })).reply.error,
-            undefined,
-          );
+          const completed = await client.request({ kind: "complete-preview", bodies: [] });
+          assert.equal(completed.reply.error, undefined);
+          completion.push(completed.milliseconds);
         }
         report.previews.push({
           name,
@@ -59,6 +59,7 @@ try {
           coldMs: times[0],
           warmMedianMs: median(times.slice(1)),
           preparationMedianMs: median(preparation.slice(1)),
+          completionMedianMs: median(completion.slice(1)),
         });
       } finally {
         await client.close();
