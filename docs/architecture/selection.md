@@ -242,3 +242,10 @@ points. A junction with any other number of incident edges offers no point Tange
 The chooser stays stable while addressing the same junction, so Shift-click does
 not replace a button during its click. Dimensions/rotation controls step aside
 while it is open. Actual geometry edits still use the existing backend/Undo path.
+
+Point-target resolution evaluates only the requested curve or rectangle owners.
+Empty point selections do not enumerate sketch handles. Selection bounds and
+rectangle context resolve their owner sets once per query, outside per-curve/group
+loops. Drawing/layout queries avoid constructing unrelated handles while retaining
+current coordinates and the distinction between point and whole-curve selection;
+there is no persistent coordinate cache.

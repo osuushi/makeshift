@@ -1,0 +1,2929 @@
+{
+  "document": {
+    "units": "mm",
+    "sketches": [
+      {
+        "id": "6c303a03-b9de-4999-bea1-a7a73422f148",
+        "plane": {
+          "origin": [0, 0, 0],
+          "u": [1, 0, 0],
+          "v": [0, 1, 0]
+        },
+        "curves": [
+          {
+            "id": "8f5d9dbd-86e7-4e41-8b03-a3603f9da3f9",
+            "kind": "arc",
+            "construction": false,
+            "a": {
+              "x": 8.363441030526326,
+              "y": 30.45515035707981
+            },
+            "b": {
+              "x": 20.349342697487828,
+              "y": -6.66248061157528
+            },
+            "bulge": 2.6752754923641566
+          },
+          {
+            "id": "0edf96c8-c96f-4589-b9b1-281a1f40e53a",
+            "kind": "arc",
+            "construction": false,
+            "a": {
+              "x": 20.349342697487838,
+              "y": -6.662480611575251
+            },
+            "b": {
+              "x": 8.36344103052631,
+              "y": 30.455150357079837
+            },
+            "bulge": 3.1852125049722755
+          },
+          {
+            "id": "52e8c24e-ef48-42a8-b6ce-6e3212faa669",
+            "kind": "segment",
+            "a": {
+              "x": -12,
+              "y": 7.5
+            },
+            "b": {
+              "x": -7.000000000000012,
+              "y": 7.5
+            },
+            "construction": false
+          },
+          {
+            "id": "31762e79-2341-4dd8-8955-7f9f741b2ab7",
+            "kind": "segment",
+            "a": {
+              "x": -7.000000000000012,
+              "y": 7.5
+            },
+            "b": {
+              "x": -7.000000000000012,
+              "y": 3.5
+            },
+            "construction": false
+          },
+          {
+            "id": "25f74d1c-80ba-459b-af6c-53855f15b9cf",
+            "kind": "segment",
+            "a": {
+              "x": -7.000000000000012,
+              "y": 3.5
+            },
+            "b": {
+              "x": -12,
+              "y": 3.5
+            },
+            "construction": false
+          },
+          {
+            "id": "89e6f343-3704-4737-9e23-9267603ebb04",
+            "kind": "segment",
+            "a": {
+              "x": -12,
+              "y": 3.5
+            },
+            "b": {
+              "x": -12,
+              "y": 7.5
+            },
+            "construction": false
+          },
+          {
+            "id": "d2a18967-dd90-4fa2-b259-eb56656a85c8",
+            "kind": "segment",
+            "a": {
+              "x": 35.5,
+              "y": 16
+            },
+            "b": {
+              "x": 41,
+              "y": 16.000000000000004
+            },
+            "construction": false
+          },
+          {
+            "id": "e6885c27-db61-4f19-83c9-c7c1625e80b1",
+            "kind": "segment",
+            "a": {
+              "x": 41,
+              "y": 10.000000000000021
+            },
+            "b": {
+              "x": 35.49999999999861,
+              "y": 10.000000000000018
+            },
+            "construction": false
+          },
+          {
+            "id": "0e8efc33-5c48-4dbd-b985-f78114018327",
+            "kind": "segment",
+            "a": {
+              "x": 35.49999999999861,
+              "y": 10.000000000000018
+            },
+            "b": {
+              "x": 35.5,
+              "y": 16
+            },
+            "construction": false
+          },
+          {
+            "id": "dd644630-ef45-4ecd-84a8-461cd90c71a8",
+            "kind": "segment",
+            "a": {
+              "x": 16,
+              "y": 24.5
+            },
+            "b": {
+              "x": 5,
+              "y": 24.5
+            },
+            "construction": false
+          },
+          {
+            "id": "40b2d205-391c-4911-bd46-b05dd04ed4aa",
+            "kind": "segment",
+            "a": {
+              "x": 5,
+              "y": 24.5
+            },
+            "b": {
+              "x": 5,
+              "y": 15.929530201342281
+            },
+            "construction": false
+          },
+          {
+            "id": "06eb4c4f-1a0a-476a-b14b-f9c917e99f98",
+            "kind": "segment",
+            "a": {
+              "x": 4.999999999999999,
+              "y": 13.196667880794333
+            },
+            "b": {
+              "x": 4.999999999999999,
+              "y": 9.5
+            },
+            "construction": false
+          },
+          {
+            "id": "13cad508-a997-48a8-8e6a-b9cd15bad788",
+            "kind": "segment",
+            "a": {
+              "x": 4.999999999999999,
+              "y": 9.5
+            },
+            "b": {
+              "x": 16,
+              "y": 9.5
+            },
+            "construction": false
+          },
+          {
+            "id": "9f9895ab-a3d7-4b14-a639-c9cebe757602",
+            "kind": "segment",
+            "a": {
+              "x": 16,
+              "y": 9.5
+            },
+            "b": {
+              "x": 16,
+              "y": 20.949664429530202
+            },
+            "construction": false
+          },
+          {
+            "id": "71ebec98-66f3-4232-88c4-70336da88e9d",
+            "kind": "segment",
+            "a": {
+              "x": 16,
+              "y": 23.732222626931446
+            },
+            "b": {
+              "x": 16,
+              "y": 24.5
+            },
+            "construction": false
+          },
+          {
+            "id": "dd1bffe1-eef4-4c04-9062-7c470c2feb45",
+            "kind": "segment",
+            "a": {
+              "x": 33,
+              "y": 36
+            },
+            "b": {
+              "x": 26.5,
+              "y": 36
+            },
+            "construction": false
+          },
+          {
+            "id": "22170575-2d28-4ed4-9500-9e446381c78c",
+            "kind": "segment",
+            "a": {
+              "x": 26.5,
+              "y": 36
+            },
+            "b": {
+              "x": 26.5,
+              "y": 25.741610738255034
+            },
+            "construction": false
+          },
+          {
+            "id": "af402adc-52bb-4700-8d0c-1c107a3d9460",
+            "kind": "segment",
+            "a": {
+              "x": 41,
+              "y": 22
+            },
+            "b": {
+              "x": 43,
+              "y": 22
+            },
+            "construction": false
+          },
+          {
+            "id": "a1a8a30d-3d56-44d4-b331-e46a1d4f3694",
+            "kind": "segment",
+            "a": {
+              "x": 43,
+              "y": 22
+            },
+            "b": {
+              "x": 43,
+              "y": 33.27181208053691
+            },
+            "construction": false
+          },
+          {
+            "id": "7658a976-cf87-481d-bb56-236bd1af0d46",
+            "kind": "segment",
+            "a": {
+              "x": -9.500000000000007,
+              "y": -13.621107836645635
+            },
+            "b": {
+              "x": -4,
+              "y": -13.621107836645585
+            },
+            "construction": false
+          },
+          {
+            "id": "9b785618-7803-4be9-a60d-41acdf461723",
+            "kind": "segment",
+            "a": {
+              "x": -4,
+              "y": -13.621107836645585
+            },
+            "b": {
+              "x": -4.000000000030592,
+              "y": -10.999999999988221
+            },
+            "construction": false
+          },
+          {
+            "id": "f6138df0-4c3d-44d1-8db5-eb16d4140ea3",
+            "kind": "segment",
+            "a": {
+              "x": -4.000000000030592,
+              "y": -10.999999999988221
+            },
+            "b": {
+              "x": -9.5000000000306,
+              "y": -10.99999999998827
+            },
+            "construction": false
+          },
+          {
+            "id": "5986748e-c43f-4d48-90cc-755fac02fe3e",
+            "kind": "segment",
+            "a": {
+              "x": -9.5000000000306,
+              "y": -10.99999999998827
+            },
+            "b": {
+              "x": -9.500000000000007,
+              "y": -13.621107836645635
+            },
+            "construction": false
+          },
+          {
+            "id": "ad83bb1c-c6bf-4f2b-a217-d7264585a653",
+            "kind": "segment",
+            "a": {
+              "x": -23,
+              "y": 2
+            },
+            "b": {
+              "x": -18.5,
+              "y": 2
+            },
+            "construction": false
+          },
+          {
+            "id": "b1d5a2d4-bbfe-47c8-9032-0b7c7b3e224a",
+            "kind": "segment",
+            "a": {
+              "x": -18.5,
+              "y": 2
+            },
+            "b": {
+              "x": -18.5,
+              "y": -1.5
+            },
+            "construction": false
+          },
+          {
+            "id": "14c91cd2-9bcd-448e-b719-ecde19da5a4e",
+            "kind": "segment",
+            "a": {
+              "x": -18.5,
+              "y": -1.5
+            },
+            "b": {
+              "x": -23,
+              "y": -1.5
+            },
+            "construction": false
+          },
+          {
+            "id": "c9752d75-74df-4732-80c0-79b5ba556a29",
+            "kind": "segment",
+            "a": {
+              "x": -23,
+              "y": -1.5
+            },
+            "b": {
+              "x": -23,
+              "y": 2
+            },
+            "construction": false
+          },
+          {
+            "id": "f933ea89-a6f2-42e0-845b-854415edc45e",
+            "kind": "segment",
+            "a": {
+              "x": 0,
+              "y": -1.5
+            },
+            "b": {
+              "x": 7,
+              "y": -1.5
+            },
+            "construction": false
+          },
+          {
+            "id": "5b99203b-f733-43f8-af65-565f696d219e",
+            "kind": "segment",
+            "a": {
+              "x": 7,
+              "y": -1.5
+            },
+            "b": {
+              "x": 7,
+              "y": -4.136459619002128
+            },
+            "construction": false
+          },
+          {
+            "id": "f7ceb437-9075-4b2a-8e7b-28487cc23eae",
+            "kind": "segment",
+            "a": {
+              "x": 7,
+              "y": -4.136459619002128
+            },
+            "b": {
+              "x": -9.314715441837134e-20,
+              "y": -4.136459619002128
+            },
+            "construction": false
+          },
+          {
+            "id": "9fbe8586-bfb7-4c59-92b3-d142d349bc2f",
+            "kind": "segment",
+            "a": {
+              "x": -9.314715441837134e-20,
+              "y": -4.136459619002128
+            },
+            "b": {
+              "x": 0,
+              "y": -1.5
+            },
+            "construction": false
+          },
+          {
+            "id": "7e9e557b-9241-4295-a2d2-5fecb5dba439",
+            "kind": "segment",
+            "a": {
+              "x": 33,
+              "y": 2
+            },
+            "b": {
+              "x": 37,
+              "y": 2
+            },
+            "construction": false
+          },
+          {
+            "id": "1d0ec669-59f6-478c-a7e4-5c8673a79085",
+            "kind": "segment",
+            "a": {
+              "x": 37,
+              "y": 2
+            },
+            "b": {
+              "x": 37,
+              "y": -1.5
+            },
+            "construction": false
+          },
+          {
+            "id": "241f5697-00a9-495a-80df-e34e0ee298c6",
+            "kind": "segment",
+            "a": {
+              "x": 37,
+              "y": -1.5
+            },
+            "b": {
+              "x": 33,
+              "y": -1.5
+            },
+            "construction": false
+          },
+          {
+            "id": "12956591-5936-4f16-a0d1-2013bc4e630c",
+            "kind": "segment",
+            "a": {
+              "x": 33,
+              "y": -1.5
+            },
+            "b": {
+              "x": 33,
+              "y": 2
+            },
+            "construction": false
+          },
+          {
+            "id": "9a7c78c4-13b2-4e00-ab23-afc3ed9f791c",
+            "kind": "segment",
+            "a": {
+              "x": 61,
+              "y": 9.999999999999996
+            },
+            "b": {
+              "x": 55.5,
+              "y": 9.999999999999996
+            },
+            "construction": false
+          },
+          {
+            "id": "f235e00c-759f-4fff-be36-f1cf86c370fb",
+            "kind": "segment",
+            "a": {
+              "x": 55.5,
+              "y": 9.999999999999996
+            },
+            "b": {
+              "x": 55.5,
+              "y": 6.5
+            },
+            "construction": false
+          },
+          {
+            "id": "4aba1044-fc77-4c8d-8a7b-a23f37036548",
+            "kind": "segment",
+            "a": {
+              "x": 55.5,
+              "y": 6.5
+            },
+            "b": {
+              "x": 61,
+              "y": 6.5
+            },
+            "construction": false
+          },
+          {
+            "id": "92ed9274-11ea-43e1-886b-ba5444c013f7",
+            "kind": "segment",
+            "a": {
+              "x": 61,
+              "y": 6.5
+            },
+            "b": {
+              "x": 61,
+              "y": 9.999999999999996
+            },
+            "construction": false
+          },
+          {
+            "id": "19a11630-f224-454e-b6e8-590bea5dd5d1",
+            "kind": "segment",
+            "a": {
+              "x": 55.5,
+              "y": 27
+            },
+            "b": {
+              "x": 51.5,
+              "y": 27
+            },
+            "construction": false
+          },
+          {
+            "id": "d58202fe-8e85-43f6-a951-b4e1c1b10a82",
+            "kind": "segment",
+            "a": {
+              "x": 51.5,
+              "y": 27
+            },
+            "b": {
+              "x": 51.5,
+              "y": 23.5
+            },
+            "construction": false
+          },
+          {
+            "id": "aeffd7dc-0746-479b-9eb2-d760414f355b",
+            "kind": "segment",
+            "a": {
+              "x": 51.5,
+              "y": 23.5
+            },
+            "b": {
+              "x": 55.5,
+              "y": 23.5
+            },
+            "construction": false
+          },
+          {
+            "id": "d3c3f2c3-0530-488a-95d4-473dc62c27b7",
+            "kind": "segment",
+            "a": {
+              "x": 55.5,
+              "y": 23.5
+            },
+            "b": {
+              "x": 55.5,
+              "y": 27
+            },
+            "construction": false
+          },
+          {
+            "id": "b33793dc-9f6c-49bc-a237-51da38c5a365",
+            "kind": "segment",
+            "a": {
+              "x": 65,
+              "y": 17
+            },
+            "b": {
+              "x": 61,
+              "y": 17
+            },
+            "construction": false
+          },
+          {
+            "id": "57b30a42-7432-4c37-9830-26fd3f5253d5",
+            "kind": "segment",
+            "a": {
+              "x": 61,
+              "y": 17
+            },
+            "b": {
+              "x": 61,
+              "y": 16
+            },
+            "construction": false
+          },
+          {
+            "id": "55261abd-31e1-4007-8c33-17ce11437bec",
+            "kind": "segment",
+            "a": {
+              "x": 61,
+              "y": 16
+            },
+            "b": {
+              "x": 65,
+              "y": 16
+            },
+            "construction": false
+          },
+          {
+            "id": "36a98727-7578-4e7f-b896-77b734c509be",
+            "kind": "segment",
+            "a": {
+              "x": 65,
+              "y": 16
+            },
+            "b": {
+              "x": 65,
+              "y": 17
+            },
+            "construction": false
+          },
+          {
+            "id": "8a46f215-946c-438d-8d66-1a2723dfd596",
+            "kind": "segment",
+            "a": {
+              "x": 41,
+              "y": 32.35906040268456
+            },
+            "b": {
+              "x": 41,
+              "y": 22
+            },
+            "construction": false
+          },
+          {
+            "id": "1ad197bf-30e7-43b8-9a3c-1529d2b05c82",
+            "kind": "segment",
+            "a": {
+              "x": 41,
+              "y": 16.000000000000004
+            },
+            "b": {
+              "x": 41,
+              "y": 10.000000000000021
+            },
+            "construction": false
+          },
+          {
+            "id": "f6c5c4d4-60be-47fb-aa8e-3b0920d209db",
+            "kind": "segment",
+            "a": {
+              "x": 37,
+              "y": 2.000000000000002
+            },
+            "b": {
+              "x": 33,
+              "y": 2.000000000000002
+            },
+            "construction": false
+          },
+          {
+            "id": "d0fd2542-1010-4612-b3c0-f5f2aad66120",
+            "kind": "segment",
+            "a": {
+              "x": 33,
+              "y": 28.70805369127517
+            },
+            "b": {
+              "x": 33,
+              "y": 36
+            },
+            "construction": false
+          },
+          {
+            "id": "9dd5417b-dff7-48a4-98cc-1f04d0398ca8",
+            "kind": "segment",
+            "a": {
+              "x": 10.450443067431827,
+              "y": 18.416980728760834
+            },
+            "b": {
+              "x": 16,
+              "y": 23.732222626931446
+            },
+            "construction": false
+          },
+          {
+            "id": "e5e58e36-7209-46fc-9c75-ab1154b7ef4a",
+            "kind": "segment",
+            "a": {
+              "x": 43,
+              "y": 33.27181208053691
+            },
+            "b": {
+              "x": 41,
+              "y": 32.35906040268456
+            },
+            "construction": false
+          },
+          {
+            "id": "21083cd0-4cd2-41cf-83cf-9df066555402",
+            "kind": "segment",
+            "a": {
+              "x": 33,
+              "y": 28.70805369127517
+            },
+            "b": {
+              "x": 26.5,
+              "y": 25.741610738255034
+            },
+            "construction": false
+          },
+          {
+            "id": "f5f051da-7fd1-4ad1-b16f-87480a024212",
+            "kind": "segment",
+            "a": {
+              "x": 16,
+              "y": 20.949664429530202
+            },
+            "b": {
+              "x": 10.450443067431827,
+              "y": 18.416980728760834
+            },
+            "construction": false
+          },
+          {
+            "id": "b325d537-49f3-4c7a-808e-0d197112e766",
+            "kind": "segment",
+            "a": {
+              "x": 14,
+              "y": 0.25
+            },
+            "b": {
+              "x": 20.349342697487828,
+              "y": 0.25
+            },
+            "construction": false
+          },
+          {
+            "id": "1d81b984-1dd9-4a4f-a829-641bbcad6620",
+            "kind": "segment",
+            "a": {
+              "x": 20.349342697487828,
+              "y": 0.25
+            },
+            "b": {
+              "x": 20.349342697487828,
+              "y": -2.818229809501064
+            },
+            "construction": false
+          },
+          {
+            "id": "c269d87a-7a5f-436d-8798-4be793d9ce0b",
+            "kind": "segment",
+            "a": {
+              "x": 20.349342697487828,
+              "y": -2.818229809501064
+            },
+            "b": {
+              "x": 14,
+              "y": -2.818229809501064
+            },
+            "construction": false
+          },
+          {
+            "id": "96b1c9b3-7f56-48c7-a375-d5469a210551",
+            "kind": "segment",
+            "a": {
+              "x": 14,
+              "y": -2.818229809501064
+            },
+            "b": {
+              "x": 14,
+              "y": 0.25
+            },
+            "construction": false
+          },
+          {
+            "id": "5e3a35b2-e765-4c90-a37f-dac051536af5",
+            "kind": "segment",
+            "a": {
+              "x": -20.75,
+              "y": 16.000000000000004
+            },
+            "b": {
+              "x": -14.5,
+              "y": 16.000000000000004
+            },
+            "construction": false
+          },
+          {
+            "id": "92de3bd6-571f-4342-ac56-8d07bc46e23f",
+            "kind": "segment",
+            "a": {
+              "x": -14.5,
+              "y": 16.000000000000004
+            },
+            "b": {
+              "x": -14.5,
+              "y": 11.348333940397167
+            },
+            "construction": false
+          },
+          {
+            "id": "c58734f3-4b67-4dd0-9085-30a751ab2d14",
+            "kind": "segment",
+            "a": {
+              "x": -14.5,
+              "y": 11.348333940397167
+            },
+            "b": {
+              "x": -20.75,
+              "y": 11.348333940397167
+            },
+            "construction": false
+          },
+          {
+            "id": "865419e4-1318-4de8-aed8-ce380ca8858a",
+            "kind": "segment",
+            "a": {
+              "x": -20.75,
+              "y": 11.348333940397167
+            },
+            "b": {
+              "x": -20.75,
+              "y": 16.000000000000004
+            },
+            "construction": false
+          },
+          {
+            "id": "2f4b117e-ff47-4b06-a6a0-e78eb3fdcbcc",
+            "kind": "segment",
+            "a": {
+              "x": -4,
+              "y": 20.21476510067114
+            },
+            "b": {
+              "x": -9.500000000000007,
+              "y": 20.21476510067114
+            },
+            "construction": false
+          },
+          {
+            "id": "2de4581e-d457-4081-888b-c918a301710b",
+            "kind": "segment",
+            "a": {
+              "x": -9.500000000000007,
+              "y": 20.21476510067114
+            },
+            "b": {
+              "x": -9.500000000000007,
+              "y": 13.674166970198584
+            },
+            "construction": false
+          },
+          {
+            "id": "fa100eb8-7257-4d64-ac61-9c539c74639f",
+            "kind": "segment",
+            "a": {
+              "x": -9.500000000000007,
+              "y": 13.674166970198584
+            },
+            "b": {
+              "x": -4.000000000000001,
+              "y": 13.674166970198584
+            },
+            "construction": false
+          },
+          {
+            "id": "999a85f6-5c76-456a-ae6d-09d700215702",
+            "kind": "segment",
+            "a": {
+              "x": -4.000000000000001,
+              "y": 13.674166970198584
+            },
+            "b": {
+              "x": -4,
+              "y": 20.21476510067114
+            },
+            "construction": false
+          },
+          {
+            "id": "070cd7b6-8864-4b7e-b21c-ffb66edc9e19",
+            "kind": "segment",
+            "a": {
+              "x": 41,
+              "y": 5.5
+            },
+            "b": {
+              "x": 45.5,
+              "y": 5.5
+            },
+            "construction": false
+          },
+          {
+            "id": "1e1b4e5e-e35c-4d98-9770-89641f29bb9d",
+            "kind": "segment",
+            "a": {
+              "x": 45.5,
+              "y": 5.5
+            },
+            "b": {
+              "x": 45.5,
+              "y": 2.000000000000002
+            },
+            "construction": false
+          },
+          {
+            "id": "95504bb9-c314-494e-9943-812fb9f57ff9",
+            "kind": "segment",
+            "a": {
+              "x": 45.5,
+              "y": 2.000000000000002
+            },
+            "b": {
+              "x": 41,
+              "y": 2.000000000000002
+            },
+            "construction": false
+          },
+          {
+            "id": "bc1e8592-370f-4f72-bcb0-7b8ae20c130e",
+            "kind": "segment",
+            "a": {
+              "x": 41,
+              "y": 2.000000000000002
+            },
+            "b": {
+              "x": 41,
+              "y": 5.5
+            },
+            "construction": false
+          },
+          {
+            "id": "64df8130-2272-4c75-a6e0-c6b481738d17",
+            "kind": "segment",
+            "a": {
+              "x": 50,
+              "y": 19.683322579145518
+            },
+            "b": {
+              "x": 45.5,
+              "y": 19.683322579145518
+            },
+            "construction": false
+          },
+          {
+            "id": "f1fab719-f867-4b58-a12a-6aa26d05a0a2",
+            "kind": "segment",
+            "a": {
+              "x": 45.5,
+              "y": 19.683322579145518
+            },
+            "b": {
+              "x": 45.5,
+              "y": 13.674166970198584
+            },
+            "construction": false
+          },
+          {
+            "id": "0e424b9e-d9b0-4a90-a7fe-20e56ab6a5ae",
+            "kind": "segment",
+            "a": {
+              "x": 45.5,
+              "y": 13.674166970198584
+            },
+            "b": {
+              "x": 50,
+              "y": 13.674166970198584
+            },
+            "construction": false
+          },
+          {
+            "id": "40028db6-f704-46aa-8b7d-0b6f8f55fa3a",
+            "kind": "segment",
+            "a": {
+              "x": 50,
+              "y": 13.674166970198584
+            },
+            "b": {
+              "x": 50,
+              "y": 19.683322579145518
+            },
+            "construction": false
+          },
+          {
+            "id": "6990af48-5449-457d-9f9a-b97f77b99d07",
+            "kind": "segment",
+            "a": {
+              "x": 44.5,
+              "y": 45
+            },
+            "b": {
+              "x": 49,
+              "y": 45
+            },
+            "construction": false
+          },
+          {
+            "id": "f0cfcc25-4ca8-4b9c-adf1-5b6033ea2f95",
+            "kind": "segment",
+            "a": {
+              "x": 49,
+              "y": 45
+            },
+            "b": {
+              "x": 49,
+              "y": 41.5
+            },
+            "construction": false
+          },
+          {
+            "id": "71b36c63-d189-4af2-8840-e726440fe2be",
+            "kind": "segment",
+            "a": {
+              "x": 49,
+              "y": 41.5
+            },
+            "b": {
+              "x": 44.5,
+              "y": 41.5
+            },
+            "construction": false
+          },
+          {
+            "id": "b4e29ca1-eb7d-422e-b522-9d1d560d6255",
+            "kind": "segment",
+            "a": {
+              "x": 44.5,
+              "y": 41.5
+            },
+            "b": {
+              "x": 44.5,
+              "y": 45
+            },
+            "construction": false
+          },
+          {
+            "id": "d33d61a6-a30c-4c85-a15c-461c5a402247",
+            "kind": "segment",
+            "a": {
+              "x": 59.5,
+              "y": 33.27181208053691
+            },
+            "b": {
+              "x": 65,
+              "y": 33.27181208053691
+            },
+            "construction": false
+          },
+          {
+            "id": "939b079e-93a7-4103-b32a-a2fc7ef1ce7d",
+            "kind": "segment",
+            "a": {
+              "x": 65,
+              "y": 33.27181208053691
+            },
+            "b": {
+              "x": 65,
+              "y": 27.2248322147651
+            },
+            "construction": false
+          },
+          {
+            "id": "fdb68597-fec6-4e6c-9479-f681098441a0",
+            "kind": "segment",
+            "a": {
+              "x": 65,
+              "y": 27.2248322147651
+            },
+            "b": {
+              "x": 59.5,
+              "y": 27.2248322147651
+            },
+            "construction": false
+          },
+          {
+            "id": "1871a98b-8050-48c6-bea6-0d101ce60a64",
+            "kind": "segment",
+            "a": {
+              "x": 59.5,
+              "y": 27.2248322147651
+            },
+            "b": {
+              "x": 59.5,
+              "y": 33.27181208053691
+            },
+            "construction": false
+          },
+          {
+            "id": "53f150f3-150d-4778-a016-7288f794b386",
+            "kind": "segment",
+            "a": {
+              "x": -17.625,
+              "y": 27.17953020134228
+            },
+            "b": {
+              "x": -22,
+              "y": 27.17953020134228
+            },
+            "construction": false
+          },
+          {
+            "id": "32d6971b-520d-466f-a7a8-aed1bb8f4ea1",
+            "kind": "segment",
+            "a": {
+              "x": -22,
+              "y": 27.17953020134228
+            },
+            "b": {
+              "x": -22,
+              "y": 23.5
+            },
+            "construction": false
+          },
+          {
+            "id": "c0a2973f-ecc1-400a-86e2-2a5b2c405d4c",
+            "kind": "segment",
+            "a": {
+              "x": -22,
+              "y": 23.5
+            },
+            "b": {
+              "x": -17.625,
+              "y": 23.5
+            },
+            "construction": false
+          },
+          {
+            "id": "af8bad60-3023-4ebe-85b5-6b9b7c3bcb40",
+            "kind": "segment",
+            "a": {
+              "x": -17.625,
+              "y": 23.5
+            },
+            "b": {
+              "x": -17.625,
+              "y": 27.17953020134228
+            },
+            "construction": false
+          },
+          {
+            "id": "c52508d7-f6d1-4950-9df4-961a4e6bada3",
+            "kind": "segment",
+            "a": {
+              "x": 5,
+              "y": 15.929530201342281
+            },
+            "b": {
+              "x": 4.999999999999999,
+              "y": 13.196667880794333
+            },
+            "construction": false
+          },
+          {
+            "id": "c692b18f-44c0-49fa-bf26-8dba4adcefd2",
+            "kind": "segment",
+            "a": {
+              "x": 7,
+              "y": 3.5
+            },
+            "b": {
+              "x": -7.000000000000012,
+              "y": -2.818229809501064
+            },
+            "construction": false
+          },
+          {
+            "id": "0c1206a9-884f-47d8-a80f-3f3eb0872939",
+            "kind": "segment",
+            "a": {
+              "x": -7.000000000000012,
+              "y": -2.818229809501064
+            },
+            "b": {
+              "x": -1,
+              "y": 7.5
+            },
+            "construction": false
+          },
+          {
+            "id": "696603cf-aa4a-4264-86d3-f8b2a563f6b7",
+            "kind": "segment",
+            "a": {
+              "x": -1,
+              "y": 7.5
+            },
+            "b": {
+              "x": 7,
+              "y": 3.5
+            },
+            "construction": false
+          },
+          {
+            "id": "18c37fab-a250-4fb9-ae84-09a41b147d7c",
+            "kind": "segment",
+            "a": {
+              "x": 23,
+              "y": 15.929530201342281
+            },
+            "b": {
+              "x": 30.5,
+              "y": 15.929530201342281
+            },
+            "construction": false
+          },
+          {
+            "id": "b3c0ada2-18fe-45d4-b6a8-52d061839577",
+            "kind": "segment",
+            "a": {
+              "x": 30.5,
+              "y": 15.929530201342281
+            },
+            "b": {
+              "x": 30.5,
+              "y": 7.500000000000001
+            },
+            "construction": false
+          },
+          {
+            "id": "e72e6144-eeb7-4dc4-9978-74afac1e466b",
+            "kind": "segment",
+            "a": {
+              "x": 30.5,
+              "y": 7.500000000000001
+            },
+            "b": {
+              "x": 23,
+              "y": 7.500000000000003
+            },
+            "construction": false
+          },
+          {
+            "id": "77899884-90fb-4ee0-9cd4-e337901b97c7",
+            "kind": "segment",
+            "a": {
+              "x": 23,
+              "y": 7.500000000000003
+            },
+            "b": {
+              "x": 23,
+              "y": 15.929530201342281
+            },
+            "construction": false
+          }
+        ],
+        "constraints": [
+          {
+            "id": "83b712a6-2703-48bf-aa46-1a9ab7d952bc",
+            "kind": "parallel",
+            "a": "52e8c24e-ef48-42a8-b6ce-6e3212faa669",
+            "b": "25f74d1c-80ba-459b-af6c-53855f15b9cf"
+          },
+          {
+            "id": "9eeb37f6-9510-41d6-a44b-907b8da2f80c",
+            "kind": "parallel",
+            "a": "31762e79-2341-4dd8-8955-7f9f741b2ab7",
+            "b": "89e6f343-3704-4737-9e23-9267603ebb04"
+          },
+          {
+            "id": "6a84901f-4a83-43a4-845c-95d8d2feeec8",
+            "kind": "perpendicular",
+            "a": "52e8c24e-ef48-42a8-b6ce-6e3212faa669",
+            "b": "31762e79-2341-4dd8-8955-7f9f741b2ab7"
+          },
+          {
+            "id": "79aafd89-54fb-4434-b668-fc6d8280cb42",
+            "kind": "parallel",
+            "a": "d2a18967-dd90-4fa2-b259-eb56656a85c8",
+            "b": "e6885c27-db61-4f19-83c9-c7c1625e80b1"
+          },
+          {
+            "id": "5b3ae3df-a3b3-4a50-a523-91a79c5ecb9e",
+            "kind": "parallel",
+            "a": "dd644630-ef45-4ecd-84a8-461cd90c71a8",
+            "b": "13cad508-a997-48a8-8e6a-b9cd15bad788"
+          },
+          {
+            "id": "56ec6c3f-2cce-4c99-b577-cf68b6b15931",
+            "kind": "parallel",
+            "a": "40b2d205-391c-4911-bd46-b05dd04ed4aa",
+            "b": "9f9895ab-a3d7-4b14-a639-c9cebe757602"
+          },
+          {
+            "id": "84b0dc96-0270-4ae3-a986-db9ce7912b3b",
+            "kind": "parallel",
+            "a": "9f9895ab-a3d7-4b14-a639-c9cebe757602",
+            "b": "71ebec98-66f3-4232-88c4-70336da88e9d"
+          },
+          {
+            "id": "096ff30e-b683-4ca4-bb76-3e0e8d39db91",
+            "kind": "parallel",
+            "a": "40b2d205-391c-4911-bd46-b05dd04ed4aa",
+            "b": "06eb4c4f-1a0a-476a-b14b-f9c917e99f98"
+          },
+          {
+            "id": "af7c7057-bccb-4e1b-adff-c71df3e73669",
+            "kind": "perpendicular",
+            "a": "dd644630-ef45-4ecd-84a8-461cd90c71a8",
+            "b": "40b2d205-391c-4911-bd46-b05dd04ed4aa"
+          },
+          {
+            "id": "7484f708-bf95-4fd9-95a0-e90778d22e3b",
+            "kind": "parallel",
+            "a": "22170575-2d28-4ed4-9500-9e446381c78c",
+            "b": "a1a8a30d-3d56-44d4-b331-e46a1d4f3694"
+          },
+          {
+            "id": "d1e95655-578b-4df5-85b4-67ad332bef12",
+            "kind": "parallel",
+            "a": "7658a976-cf87-481d-bb56-236bd1af0d46",
+            "b": "f6138df0-4c3d-44d1-8db5-eb16d4140ea3"
+          },
+          {
+            "id": "56e4ded1-3da4-46af-a442-6616284490d4",
+            "kind": "parallel",
+            "a": "9b785618-7803-4be9-a60d-41acdf461723",
+            "b": "5986748e-c43f-4d48-90cc-755fac02fe3e"
+          },
+          {
+            "id": "09a6fe44-d56e-4996-bd4a-d4afca985582",
+            "kind": "perpendicular",
+            "a": "7658a976-cf87-481d-bb56-236bd1af0d46",
+            "b": "9b785618-7803-4be9-a60d-41acdf461723"
+          },
+          {
+            "id": "c9004462-c8af-4938-984c-81ff09b463ce",
+            "kind": "parallel",
+            "a": "ad83bb1c-c6bf-4f2b-a217-d7264585a653",
+            "b": "14c91cd2-9bcd-448e-b719-ecde19da5a4e"
+          },
+          {
+            "id": "b115e7a3-e1b0-4ab0-93fb-693518ad2af7",
+            "kind": "parallel",
+            "a": "b1d5a2d4-bbfe-47c8-9032-0b7c7b3e224a",
+            "b": "c9752d75-74df-4732-80c0-79b5ba556a29"
+          },
+          {
+            "id": "63978cc9-4fe8-4757-aa05-9d1c6fadef93",
+            "kind": "perpendicular",
+            "a": "ad83bb1c-c6bf-4f2b-a217-d7264585a653",
+            "b": "b1d5a2d4-bbfe-47c8-9032-0b7c7b3e224a"
+          },
+          {
+            "id": "8362782a-04e8-4b05-8e61-f0b4b43a99d2",
+            "kind": "parallel",
+            "a": "f933ea89-a6f2-42e0-845b-854415edc45e",
+            "b": "f7ceb437-9075-4b2a-8e7b-28487cc23eae"
+          },
+          {
+            "id": "4975dd0c-6307-4b60-b7bd-ac6f13b5ddc5",
+            "kind": "parallel",
+            "a": "5b99203b-f733-43f8-af65-565f696d219e",
+            "b": "9fbe8586-bfb7-4c59-92b3-d142d349bc2f"
+          },
+          {
+            "id": "af0dd828-c630-4edb-97a1-3698de89fd4e",
+            "kind": "perpendicular",
+            "a": "f933ea89-a6f2-42e0-845b-854415edc45e",
+            "b": "5b99203b-f733-43f8-af65-565f696d219e"
+          },
+          {
+            "id": "f8582a01-0c4a-49af-b364-8f5694f6627c",
+            "kind": "parallel",
+            "a": "7e9e557b-9241-4295-a2d2-5fecb5dba439",
+            "b": "241f5697-00a9-495a-80df-e34e0ee298c6"
+          },
+          {
+            "id": "77e97650-c670-4292-8cd9-f4d632337014",
+            "kind": "parallel",
+            "a": "1d0ec669-59f6-478c-a7e4-5c8673a79085",
+            "b": "12956591-5936-4f16-a0d1-2013bc4e630c"
+          },
+          {
+            "id": "b1a822dc-e352-4ce9-9eec-f29021d57bcb",
+            "kind": "perpendicular",
+            "a": "7e9e557b-9241-4295-a2d2-5fecb5dba439",
+            "b": "1d0ec669-59f6-478c-a7e4-5c8673a79085"
+          },
+          {
+            "id": "fc50b68b-ea90-473f-9c5e-3432864d118d",
+            "kind": "parallel",
+            "a": "9a7c78c4-13b2-4e00-ab23-afc3ed9f791c",
+            "b": "4aba1044-fc77-4c8d-8a7b-a23f37036548"
+          },
+          {
+            "id": "c48d84cd-0523-4c13-872b-df29519ee4d6",
+            "kind": "parallel",
+            "a": "f235e00c-759f-4fff-be36-f1cf86c370fb",
+            "b": "92ed9274-11ea-43e1-886b-ba5444c013f7"
+          },
+          {
+            "id": "a673da24-7793-4be9-b6a1-cfc6da9b31a9",
+            "kind": "perpendicular",
+            "a": "9a7c78c4-13b2-4e00-ab23-afc3ed9f791c",
+            "b": "f235e00c-759f-4fff-be36-f1cf86c370fb"
+          },
+          {
+            "id": "19113258-e8c5-4e94-bafe-7bf73cc203b2",
+            "kind": "parallel",
+            "a": "19a11630-f224-454e-b6e8-590bea5dd5d1",
+            "b": "aeffd7dc-0746-479b-9eb2-d760414f355b"
+          },
+          {
+            "id": "8002779a-ed30-4102-b83e-3095301280b4",
+            "kind": "parallel",
+            "a": "d58202fe-8e85-43f6-a951-b4e1c1b10a82",
+            "b": "d3c3f2c3-0530-488a-95d4-473dc62c27b7"
+          },
+          {
+            "id": "74d14d11-4a8b-4f05-bca9-796ce45aa6a4",
+            "kind": "perpendicular",
+            "a": "19a11630-f224-454e-b6e8-590bea5dd5d1",
+            "b": "d58202fe-8e85-43f6-a951-b4e1c1b10a82"
+          },
+          {
+            "id": "d153a787-2345-4e63-96d8-4d7e06f02db1",
+            "kind": "parallel",
+            "a": "b33793dc-9f6c-49bc-a237-51da38c5a365",
+            "b": "55261abd-31e1-4007-8c33-17ce11437bec"
+          },
+          {
+            "id": "18f35f2e-70cf-45af-80f4-d1faa95c15ee",
+            "kind": "parallel",
+            "a": "57b30a42-7432-4c37-9830-26fd3f5253d5",
+            "b": "36a98727-7578-4e7f-b896-77b734c509be"
+          },
+          {
+            "id": "c1442c0e-2787-414b-a09e-102f0c9644c4",
+            "kind": "perpendicular",
+            "a": "b33793dc-9f6c-49bc-a237-51da38c5a365",
+            "b": "57b30a42-7432-4c37-9830-26fd3f5253d5"
+          },
+          {
+            "id": "bc20e136-9ea3-427b-b5ba-1375beb0d732",
+            "kind": "parallel",
+            "a": "8a46f215-946c-438d-8d66-1a2723dfd596",
+            "b": "d0fd2542-1010-4612-b3c0-f5f2aad66120"
+          },
+          {
+            "id": "b0359883-4f38-4aab-bfd3-e5c38d3fa491",
+            "kind": "parallel",
+            "a": "8a46f215-946c-438d-8d66-1a2723dfd596",
+            "b": "1ad197bf-30e7-43b8-9a3c-1529d2b05c82"
+          },
+          {
+            "id": "faf868df-ac0a-45e4-9e6b-748d6d12325c",
+            "kind": "coincident",
+            "a": {
+              "curve": "8f5d9dbd-86e7-4e41-8b03-a3603f9da3f9",
+              "end": "a"
+            },
+            "b": {
+              "curve": "0edf96c8-c96f-4589-b9b1-281a1f40e53a",
+              "end": "b"
+            }
+          },
+          {
+            "id": "456756fb-4091-4e32-b36f-1e4a0f314f2a",
+            "kind": "coincident",
+            "a": {
+              "curve": "8f5d9dbd-86e7-4e41-8b03-a3603f9da3f9",
+              "end": "b"
+            },
+            "b": {
+              "curve": "0edf96c8-c96f-4589-b9b1-281a1f40e53a",
+              "end": "a"
+            }
+          },
+          {
+            "id": "859a19c1-871a-464a-a2a0-a3b9b5b23ff4",
+            "kind": "coincident",
+            "a": {
+              "curve": "52e8c24e-ef48-42a8-b6ce-6e3212faa669",
+              "end": "b"
+            },
+            "b": {
+              "curve": "31762e79-2341-4dd8-8955-7f9f741b2ab7",
+              "end": "a"
+            }
+          },
+          {
+            "id": "00d4cf0a-6d74-4dc8-90ac-d2202a71b77e",
+            "kind": "coincident",
+            "a": {
+              "curve": "31762e79-2341-4dd8-8955-7f9f741b2ab7",
+              "end": "b"
+            },
+            "b": {
+              "curve": "25f74d1c-80ba-459b-af6c-53855f15b9cf",
+              "end": "a"
+            }
+          },
+          {
+            "id": "50c7491d-886e-49f4-85af-9479cc8dce8b",
+            "kind": "coincident",
+            "a": {
+              "curve": "25f74d1c-80ba-459b-af6c-53855f15b9cf",
+              "end": "b"
+            },
+            "b": {
+              "curve": "89e6f343-3704-4737-9e23-9267603ebb04",
+              "end": "a"
+            }
+          },
+          {
+            "id": "4b869fd4-95a5-42a9-b4b6-5f0f2606101c",
+            "kind": "coincident",
+            "a": {
+              "curve": "89e6f343-3704-4737-9e23-9267603ebb04",
+              "end": "b"
+            },
+            "b": {
+              "curve": "52e8c24e-ef48-42a8-b6ce-6e3212faa669",
+              "end": "a"
+            }
+          },
+          {
+            "id": "09aa1ee9-3608-46b3-aa02-a8d336383924",
+            "kind": "coincident",
+            "a": {
+              "curve": "e6885c27-db61-4f19-83c9-c7c1625e80b1",
+              "end": "b"
+            },
+            "b": {
+              "curve": "0e8efc33-5c48-4dbd-b985-f78114018327",
+              "end": "a"
+            }
+          },
+          {
+            "id": "6ce4698e-0dc8-476c-9f8c-9d6689460d5e",
+            "kind": "coincident",
+            "a": {
+              "curve": "0e8efc33-5c48-4dbd-b985-f78114018327",
+              "end": "b"
+            },
+            "b": {
+              "curve": "d2a18967-dd90-4fa2-b259-eb56656a85c8",
+              "end": "a"
+            }
+          },
+          {
+            "id": "6fb11fad-1b23-432b-9e01-42f76b8bc072",
+            "kind": "coincident",
+            "a": {
+              "curve": "dd644630-ef45-4ecd-84a8-461cd90c71a8",
+              "end": "b"
+            },
+            "b": {
+              "curve": "40b2d205-391c-4911-bd46-b05dd04ed4aa",
+              "end": "a"
+            }
+          },
+          {
+            "id": "5d4e4ad7-0902-4c3d-a0ca-d8eee8585d70",
+            "kind": "coincident",
+            "a": {
+              "curve": "06eb4c4f-1a0a-476a-b14b-f9c917e99f98",
+              "end": "b"
+            },
+            "b": {
+              "curve": "13cad508-a997-48a8-8e6a-b9cd15bad788",
+              "end": "a"
+            }
+          },
+          {
+            "id": "663d6a7e-d0ea-44a7-a3e1-334f1ba464d5",
+            "kind": "coincident",
+            "a": {
+              "curve": "13cad508-a997-48a8-8e6a-b9cd15bad788",
+              "end": "b"
+            },
+            "b": {
+              "curve": "9f9895ab-a3d7-4b14-a639-c9cebe757602",
+              "end": "a"
+            }
+          },
+          {
+            "id": "fe884b99-b15b-430e-bf04-eb3404bd5de1",
+            "kind": "coincident",
+            "a": {
+              "curve": "71ebec98-66f3-4232-88c4-70336da88e9d",
+              "end": "b"
+            },
+            "b": {
+              "curve": "dd644630-ef45-4ecd-84a8-461cd90c71a8",
+              "end": "a"
+            }
+          },
+          {
+            "id": "cc23a490-c8c6-490f-af54-b09a8c13e151",
+            "kind": "coincident",
+            "a": {
+              "curve": "dd1bffe1-eef4-4c04-9062-7c470c2feb45",
+              "end": "b"
+            },
+            "b": {
+              "curve": "22170575-2d28-4ed4-9500-9e446381c78c",
+              "end": "a"
+            }
+          },
+          {
+            "id": "60b94ca9-5136-48ee-9e5d-c44c759ea1ec",
+            "kind": "coincident",
+            "a": {
+              "curve": "af402adc-52bb-4700-8d0c-1c107a3d9460",
+              "end": "b"
+            },
+            "b": {
+              "curve": "a1a8a30d-3d56-44d4-b331-e46a1d4f3694",
+              "end": "a"
+            }
+          },
+          {
+            "id": "03390636-33fe-4afa-b080-ae6884b2006b",
+            "kind": "coincident",
+            "a": {
+              "curve": "7658a976-cf87-481d-bb56-236bd1af0d46",
+              "end": "b"
+            },
+            "b": {
+              "curve": "9b785618-7803-4be9-a60d-41acdf461723",
+              "end": "a"
+            }
+          },
+          {
+            "id": "307484b2-fa13-4936-9aff-0671a4b6b3a7",
+            "kind": "coincident",
+            "a": {
+              "curve": "9b785618-7803-4be9-a60d-41acdf461723",
+              "end": "b"
+            },
+            "b": {
+              "curve": "f6138df0-4c3d-44d1-8db5-eb16d4140ea3",
+              "end": "a"
+            }
+          },
+          {
+            "id": "ddf093f6-298c-4c31-a685-5d96134f841b",
+            "kind": "coincident",
+            "a": {
+              "curve": "f6138df0-4c3d-44d1-8db5-eb16d4140ea3",
+              "end": "b"
+            },
+            "b": {
+              "curve": "5986748e-c43f-4d48-90cc-755fac02fe3e",
+              "end": "a"
+            }
+          },
+          {
+            "id": "f2289f3d-1e26-4f5d-a450-6ac06fc01194",
+            "kind": "coincident",
+            "a": {
+              "curve": "5986748e-c43f-4d48-90cc-755fac02fe3e",
+              "end": "b"
+            },
+            "b": {
+              "curve": "7658a976-cf87-481d-bb56-236bd1af0d46",
+              "end": "a"
+            }
+          },
+          {
+            "id": "45952e97-8a9f-4221-9415-48c1374847eb",
+            "kind": "coincident",
+            "a": {
+              "curve": "ad83bb1c-c6bf-4f2b-a217-d7264585a653",
+              "end": "b"
+            },
+            "b": {
+              "curve": "b1d5a2d4-bbfe-47c8-9032-0b7c7b3e224a",
+              "end": "a"
+            }
+          },
+          {
+            "id": "d3d1ef1f-3ae0-40c9-b30a-5c34344edd02",
+            "kind": "coincident",
+            "a": {
+              "curve": "b1d5a2d4-bbfe-47c8-9032-0b7c7b3e224a",
+              "end": "b"
+            },
+            "b": {
+              "curve": "14c91cd2-9bcd-448e-b719-ecde19da5a4e",
+              "end": "a"
+            }
+          },
+          {
+            "id": "1c4966f3-0edf-4b6b-bc44-f93748539f0b",
+            "kind": "coincident",
+            "a": {
+              "curve": "14c91cd2-9bcd-448e-b719-ecde19da5a4e",
+              "end": "b"
+            },
+            "b": {
+              "curve": "c9752d75-74df-4732-80c0-79b5ba556a29",
+              "end": "a"
+            }
+          },
+          {
+            "id": "1e8c4681-e1ad-4af0-9197-e178a43f8b78",
+            "kind": "coincident",
+            "a": {
+              "curve": "c9752d75-74df-4732-80c0-79b5ba556a29",
+              "end": "b"
+            },
+            "b": {
+              "curve": "ad83bb1c-c6bf-4f2b-a217-d7264585a653",
+              "end": "a"
+            }
+          },
+          {
+            "id": "6f03062f-a627-41b2-9006-f861e591ac9c",
+            "kind": "coincident",
+            "a": {
+              "curve": "f933ea89-a6f2-42e0-845b-854415edc45e",
+              "end": "b"
+            },
+            "b": {
+              "curve": "5b99203b-f733-43f8-af65-565f696d219e",
+              "end": "a"
+            }
+          },
+          {
+            "id": "9c1a59e5-f6a9-4809-b890-918dbd62c261",
+            "kind": "coincident",
+            "a": {
+              "curve": "5b99203b-f733-43f8-af65-565f696d219e",
+              "end": "b"
+            },
+            "b": {
+              "curve": "f7ceb437-9075-4b2a-8e7b-28487cc23eae",
+              "end": "a"
+            }
+          },
+          {
+            "id": "e1e277fc-c037-4ea1-825e-2b16b3da9d10",
+            "kind": "coincident",
+            "a": {
+              "curve": "f7ceb437-9075-4b2a-8e7b-28487cc23eae",
+              "end": "b"
+            },
+            "b": {
+              "curve": "9fbe8586-bfb7-4c59-92b3-d142d349bc2f",
+              "end": "a"
+            }
+          },
+          {
+            "id": "d7b48539-68b0-48fc-970e-4176998d2108",
+            "kind": "coincident",
+            "a": {
+              "curve": "9fbe8586-bfb7-4c59-92b3-d142d349bc2f",
+              "end": "b"
+            },
+            "b": {
+              "curve": "f933ea89-a6f2-42e0-845b-854415edc45e",
+              "end": "a"
+            }
+          },
+          {
+            "id": "ea298180-cc82-4829-8548-b04c81ea6a6d",
+            "kind": "coincident",
+            "a": {
+              "curve": "7e9e557b-9241-4295-a2d2-5fecb5dba439",
+              "end": "b"
+            },
+            "b": {
+              "curve": "1d0ec669-59f6-478c-a7e4-5c8673a79085",
+              "end": "a"
+            }
+          },
+          {
+            "id": "752ff2d6-da43-4d11-ae8c-a0ca018c3775",
+            "kind": "coincident",
+            "a": {
+              "curve": "1d0ec669-59f6-478c-a7e4-5c8673a79085",
+              "end": "b"
+            },
+            "b": {
+              "curve": "241f5697-00a9-495a-80df-e34e0ee298c6",
+              "end": "a"
+            }
+          },
+          {
+            "id": "6d637cc0-4147-42ed-9a99-1a3d581056f5",
+            "kind": "coincident",
+            "a": {
+              "curve": "241f5697-00a9-495a-80df-e34e0ee298c6",
+              "end": "b"
+            },
+            "b": {
+              "curve": "12956591-5936-4f16-a0d1-2013bc4e630c",
+              "end": "a"
+            }
+          },
+          {
+            "id": "0cdd3944-3ed8-4289-be9d-8d763b4ddced",
+            "kind": "coincident",
+            "a": {
+              "curve": "12956591-5936-4f16-a0d1-2013bc4e630c",
+              "end": "b"
+            },
+            "b": {
+              "curve": "7e9e557b-9241-4295-a2d2-5fecb5dba439",
+              "end": "a"
+            }
+          },
+          {
+            "id": "eaa43ccd-bf64-4b2a-8659-ed9fe4396885",
+            "kind": "coincident",
+            "a": {
+              "curve": "9a7c78c4-13b2-4e00-ab23-afc3ed9f791c",
+              "end": "b"
+            },
+            "b": {
+              "curve": "f235e00c-759f-4fff-be36-f1cf86c370fb",
+              "end": "a"
+            }
+          },
+          {
+            "id": "c4c43fdd-4e18-4b35-a08b-a63cdd990ea7",
+            "kind": "coincident",
+            "a": {
+              "curve": "f235e00c-759f-4fff-be36-f1cf86c370fb",
+              "end": "b"
+            },
+            "b": {
+              "curve": "4aba1044-fc77-4c8d-8a7b-a23f37036548",
+              "end": "a"
+            }
+          },
+          {
+            "id": "bff0c7f2-c07a-45d3-bf85-8658622d9fd1",
+            "kind": "coincident",
+            "a": {
+              "curve": "4aba1044-fc77-4c8d-8a7b-a23f37036548",
+              "end": "b"
+            },
+            "b": {
+              "curve": "92ed9274-11ea-43e1-886b-ba5444c013f7",
+              "end": "a"
+            }
+          },
+          {
+            "id": "837baecb-5f87-48cb-a201-cdff1f68624b",
+            "kind": "coincident",
+            "a": {
+              "curve": "92ed9274-11ea-43e1-886b-ba5444c013f7",
+              "end": "b"
+            },
+            "b": {
+              "curve": "9a7c78c4-13b2-4e00-ab23-afc3ed9f791c",
+              "end": "a"
+            }
+          },
+          {
+            "id": "d0bf909c-dee4-46b8-a708-f078cf7b1a3e",
+            "kind": "coincident",
+            "a": {
+              "curve": "19a11630-f224-454e-b6e8-590bea5dd5d1",
+              "end": "b"
+            },
+            "b": {
+              "curve": "d58202fe-8e85-43f6-a951-b4e1c1b10a82",
+              "end": "a"
+            }
+          },
+          {
+            "id": "47fab959-b0f8-4b71-8d96-0349deb56f9e",
+            "kind": "coincident",
+            "a": {
+              "curve": "d58202fe-8e85-43f6-a951-b4e1c1b10a82",
+              "end": "b"
+            },
+            "b": {
+              "curve": "aeffd7dc-0746-479b-9eb2-d760414f355b",
+              "end": "a"
+            }
+          },
+          {
+            "id": "a0f70ebd-49ce-425c-894f-4933e45c3435",
+            "kind": "coincident",
+            "a": {
+              "curve": "aeffd7dc-0746-479b-9eb2-d760414f355b",
+              "end": "b"
+            },
+            "b": {
+              "curve": "d3c3f2c3-0530-488a-95d4-473dc62c27b7",
+              "end": "a"
+            }
+          },
+          {
+            "id": "d87b4157-4fdb-4c98-a3e9-a2590e252af1",
+            "kind": "coincident",
+            "a": {
+              "curve": "d3c3f2c3-0530-488a-95d4-473dc62c27b7",
+              "end": "b"
+            },
+            "b": {
+              "curve": "19a11630-f224-454e-b6e8-590bea5dd5d1",
+              "end": "a"
+            }
+          },
+          {
+            "id": "b73e2895-c016-4e5f-82ae-538c0efcba71",
+            "kind": "coincident",
+            "a": {
+              "curve": "b33793dc-9f6c-49bc-a237-51da38c5a365",
+              "end": "b"
+            },
+            "b": {
+              "curve": "57b30a42-7432-4c37-9830-26fd3f5253d5",
+              "end": "a"
+            }
+          },
+          {
+            "id": "8243f121-0968-4ecb-84a0-242491056db1",
+            "kind": "coincident",
+            "a": {
+              "curve": "57b30a42-7432-4c37-9830-26fd3f5253d5",
+              "end": "b"
+            },
+            "b": {
+              "curve": "55261abd-31e1-4007-8c33-17ce11437bec",
+              "end": "a"
+            }
+          },
+          {
+            "id": "8ccf0970-de04-4112-9b84-7c71326b5ffc",
+            "kind": "coincident",
+            "a": {
+              "curve": "55261abd-31e1-4007-8c33-17ce11437bec",
+              "end": "b"
+            },
+            "b": {
+              "curve": "36a98727-7578-4e7f-b896-77b734c509be",
+              "end": "a"
+            }
+          },
+          {
+            "id": "c9a21024-f230-44ad-ac08-545facfb69fd",
+            "kind": "coincident",
+            "a": {
+              "curve": "36a98727-7578-4e7f-b896-77b734c509be",
+              "end": "b"
+            },
+            "b": {
+              "curve": "b33793dc-9f6c-49bc-a237-51da38c5a365",
+              "end": "a"
+            }
+          },
+          {
+            "id": "9998bcc7-4327-4a11-b0e7-68b244d3c411",
+            "kind": "coincident",
+            "a": {
+              "curve": "1ad197bf-30e7-43b8-9a3c-1529d2b05c82",
+              "end": "b"
+            },
+            "b": {
+              "curve": "e6885c27-db61-4f19-83c9-c7c1625e80b1",
+              "end": "a"
+            }
+          },
+          {
+            "id": "86c9a582-2e1c-4aca-a4a9-f950b6ffb7de",
+            "kind": "coincident",
+            "a": {
+              "curve": "d0fd2542-1010-4612-b3c0-f5f2aad66120",
+              "end": "b"
+            },
+            "b": {
+              "curve": "dd1bffe1-eef4-4c04-9062-7c470c2feb45",
+              "end": "a"
+            }
+          },
+          {
+            "id": "21c9213e-49fd-4f3c-8ea4-61565ab79bc6",
+            "kind": "coincident",
+            "a": {
+              "curve": "9dd5417b-dff7-48a4-98cc-1f04d0398ca8",
+              "end": "b"
+            },
+            "b": {
+              "curve": "71ebec98-66f3-4232-88c4-70336da88e9d",
+              "end": "a"
+            }
+          },
+          {
+            "id": "5bbb633b-b9d6-4bbe-8acf-b5350030fbc1",
+            "kind": "coincident",
+            "a": {
+              "curve": "f5f051da-7fd1-4ad1-b16f-87480a024212",
+              "end": "a"
+            },
+            "b": {
+              "curve": "9f9895ab-a3d7-4b14-a639-c9cebe757602",
+              "end": "b"
+            }
+          },
+          {
+            "id": "eefb7fd5-bac9-4374-a85f-564eff5d1d7b",
+            "kind": "coincident",
+            "a": {
+              "curve": "22170575-2d28-4ed4-9500-9e446381c78c",
+              "end": "b"
+            },
+            "b": {
+              "curve": "21083cd0-4cd2-41cf-83cf-9df066555402",
+              "end": "b"
+            }
+          },
+          {
+            "id": "e80b4c6b-d597-4ee4-a73d-7b18e1809c92",
+            "kind": "coincident",
+            "a": {
+              "curve": "21083cd0-4cd2-41cf-83cf-9df066555402",
+              "end": "a"
+            },
+            "b": {
+              "curve": "d0fd2542-1010-4612-b3c0-f5f2aad66120",
+              "end": "a"
+            }
+          },
+          {
+            "id": "23effc53-68a1-4f8a-9da5-d30b7583be48",
+            "kind": "coincident",
+            "a": {
+              "curve": "8a46f215-946c-438d-8d66-1a2723dfd596",
+              "end": "a"
+            },
+            "b": {
+              "curve": "e5e58e36-7209-46fc-9c75-ab1154b7ef4a",
+              "end": "b"
+            }
+          },
+          {
+            "id": "e4b33379-772d-4536-bc6f-701c439f5039",
+            "kind": "coincident",
+            "a": {
+              "curve": "e5e58e36-7209-46fc-9c75-ab1154b7ef4a",
+              "end": "a"
+            },
+            "b": {
+              "curve": "a1a8a30d-3d56-44d4-b331-e46a1d4f3694",
+              "end": "b"
+            }
+          },
+          {
+            "id": "4efd71fa-6439-4c5e-a522-37187cc20811",
+            "kind": "coincident",
+            "a": {
+              "curve": "8a46f215-946c-438d-8d66-1a2723dfd596",
+              "end": "b"
+            },
+            "b": {
+              "curve": "af402adc-52bb-4700-8d0c-1c107a3d9460",
+              "end": "a"
+            }
+          },
+          {
+            "id": "f7f996c6-177a-4a2f-ad74-2b22bf4d1038",
+            "kind": "coincident",
+            "a": {
+              "curve": "1ad197bf-30e7-43b8-9a3c-1529d2b05c82",
+              "end": "a"
+            },
+            "b": {
+              "curve": "d2a18967-dd90-4fa2-b259-eb56656a85c8",
+              "end": "b"
+            }
+          },
+          {
+            "id": "2a801e43-50d5-4faf-ad59-4a4cc04d2db5",
+            "kind": "coincident",
+            "a": {
+              "curve": "9dd5417b-dff7-48a4-98cc-1f04d0398ca8",
+              "end": "a"
+            },
+            "b": {
+              "curve": "f5f051da-7fd1-4ad1-b16f-87480a024212",
+              "end": "b"
+            }
+          },
+          {
+            "id": "42987993-4ba9-4ac7-8dea-d77283a8d967",
+            "kind": "coincident",
+            "a": {
+              "curve": "b325d537-49f3-4c7a-808e-0d197112e766",
+              "end": "b"
+            },
+            "b": {
+              "curve": "1d81b984-1dd9-4a4f-a829-641bbcad6620",
+              "end": "a"
+            }
+          },
+          {
+            "id": "a592a005-7efe-4632-8bc8-0db797c1d59a",
+            "kind": "coincident",
+            "a": {
+              "curve": "1d81b984-1dd9-4a4f-a829-641bbcad6620",
+              "end": "b"
+            },
+            "b": {
+              "curve": "c269d87a-7a5f-436d-8798-4be793d9ce0b",
+              "end": "a"
+            }
+          },
+          {
+            "id": "2d9a18df-c04f-46a2-bcd5-5f1dcb9fbf6b",
+            "kind": "coincident",
+            "a": {
+              "curve": "c269d87a-7a5f-436d-8798-4be793d9ce0b",
+              "end": "b"
+            },
+            "b": {
+              "curve": "96b1c9b3-7f56-48c7-a375-d5469a210551",
+              "end": "a"
+            }
+          },
+          {
+            "id": "169bcbf2-83ea-4ca8-b61d-a51cc4845cc6",
+            "kind": "coincident",
+            "a": {
+              "curve": "96b1c9b3-7f56-48c7-a375-d5469a210551",
+              "end": "b"
+            },
+            "b": {
+              "curve": "b325d537-49f3-4c7a-808e-0d197112e766",
+              "end": "a"
+            }
+          },
+          {
+            "id": "dd204c1b-6fe6-441b-b286-24f17d575472",
+            "kind": "parallel",
+            "a": "b325d537-49f3-4c7a-808e-0d197112e766",
+            "b": "c269d87a-7a5f-436d-8798-4be793d9ce0b"
+          },
+          {
+            "id": "3dfcb6a7-0d2a-4d31-a9d8-f78950667ffa",
+            "kind": "parallel",
+            "a": "1d81b984-1dd9-4a4f-a829-641bbcad6620",
+            "b": "96b1c9b3-7f56-48c7-a375-d5469a210551"
+          },
+          {
+            "id": "7df8ede0-cb28-4ecb-8833-c60dce98636b",
+            "kind": "perpendicular",
+            "a": "b325d537-49f3-4c7a-808e-0d197112e766",
+            "b": "1d81b984-1dd9-4a4f-a829-641bbcad6620"
+          },
+          {
+            "id": "8ef67457-26eb-476d-9cb0-52fcd056ab27",
+            "kind": "coincident",
+            "a": {
+              "curve": "5e3a35b2-e765-4c90-a37f-dac051536af5",
+              "end": "b"
+            },
+            "b": {
+              "curve": "92de3bd6-571f-4342-ac56-8d07bc46e23f",
+              "end": "a"
+            }
+          },
+          {
+            "id": "8c0d673f-36a7-4bb9-ac02-b3ef8588c672",
+            "kind": "coincident",
+            "a": {
+              "curve": "92de3bd6-571f-4342-ac56-8d07bc46e23f",
+              "end": "b"
+            },
+            "b": {
+              "curve": "c58734f3-4b67-4dd0-9085-30a751ab2d14",
+              "end": "a"
+            }
+          },
+          {
+            "id": "e82b0acf-ff05-4a46-8329-537f1cbf7baf",
+            "kind": "coincident",
+            "a": {
+              "curve": "c58734f3-4b67-4dd0-9085-30a751ab2d14",
+              "end": "b"
+            },
+            "b": {
+              "curve": "865419e4-1318-4de8-aed8-ce380ca8858a",
+              "end": "a"
+            }
+          },
+          {
+            "id": "1298a48f-5483-4fc8-a746-f7ad0ac9fcaf",
+            "kind": "coincident",
+            "a": {
+              "curve": "865419e4-1318-4de8-aed8-ce380ca8858a",
+              "end": "b"
+            },
+            "b": {
+              "curve": "5e3a35b2-e765-4c90-a37f-dac051536af5",
+              "end": "a"
+            }
+          },
+          {
+            "id": "9895b25e-de62-4d2e-92b3-61bd8b1d1c43",
+            "kind": "parallel",
+            "a": "5e3a35b2-e765-4c90-a37f-dac051536af5",
+            "b": "c58734f3-4b67-4dd0-9085-30a751ab2d14"
+          },
+          {
+            "id": "ecb8ab7a-92b1-4429-b156-ab7fdb93c7a0",
+            "kind": "parallel",
+            "a": "92de3bd6-571f-4342-ac56-8d07bc46e23f",
+            "b": "865419e4-1318-4de8-aed8-ce380ca8858a"
+          },
+          {
+            "id": "cfa33e76-72d4-43ff-8262-0de9653db0af",
+            "kind": "perpendicular",
+            "a": "5e3a35b2-e765-4c90-a37f-dac051536af5",
+            "b": "92de3bd6-571f-4342-ac56-8d07bc46e23f"
+          },
+          {
+            "id": "d3430873-9bd6-4e80-a7f1-debdd2bbb711",
+            "kind": "coincident",
+            "a": {
+              "curve": "2f4b117e-ff47-4b06-a6a0-e78eb3fdcbcc",
+              "end": "b"
+            },
+            "b": {
+              "curve": "2de4581e-d457-4081-888b-c918a301710b",
+              "end": "a"
+            }
+          },
+          {
+            "id": "d4fb6c26-374e-4031-babd-56cc105a47f5",
+            "kind": "coincident",
+            "a": {
+              "curve": "2de4581e-d457-4081-888b-c918a301710b",
+              "end": "b"
+            },
+            "b": {
+              "curve": "fa100eb8-7257-4d64-ac61-9c539c74639f",
+              "end": "a"
+            }
+          },
+          {
+            "id": "fc378c2b-4478-4fd1-ad1f-625f08a38c59",
+            "kind": "coincident",
+            "a": {
+              "curve": "fa100eb8-7257-4d64-ac61-9c539c74639f",
+              "end": "b"
+            },
+            "b": {
+              "curve": "999a85f6-5c76-456a-ae6d-09d700215702",
+              "end": "a"
+            }
+          },
+          {
+            "id": "60344c2e-10ed-4103-be64-ba9aec6ba5b8",
+            "kind": "coincident",
+            "a": {
+              "curve": "999a85f6-5c76-456a-ae6d-09d700215702",
+              "end": "b"
+            },
+            "b": {
+              "curve": "2f4b117e-ff47-4b06-a6a0-e78eb3fdcbcc",
+              "end": "a"
+            }
+          },
+          {
+            "id": "e36241ff-3a78-4794-a93f-bc208d5334fd",
+            "kind": "parallel",
+            "a": "2f4b117e-ff47-4b06-a6a0-e78eb3fdcbcc",
+            "b": "fa100eb8-7257-4d64-ac61-9c539c74639f"
+          },
+          {
+            "id": "554d218f-b81c-4a51-b8fc-d59abc7e771e",
+            "kind": "parallel",
+            "a": "2de4581e-d457-4081-888b-c918a301710b",
+            "b": "999a85f6-5c76-456a-ae6d-09d700215702"
+          },
+          {
+            "id": "3f3ff5aa-e4d8-4833-aac8-94b14b553f1b",
+            "kind": "perpendicular",
+            "a": "2f4b117e-ff47-4b06-a6a0-e78eb3fdcbcc",
+            "b": "2de4581e-d457-4081-888b-c918a301710b"
+          },
+          {
+            "id": "87857c98-30ce-4bc7-8200-7b5820923e9e",
+            "kind": "coincident",
+            "a": {
+              "curve": "070cd7b6-8864-4b7e-b21c-ffb66edc9e19",
+              "end": "b"
+            },
+            "b": {
+              "curve": "1e1b4e5e-e35c-4d98-9770-89641f29bb9d",
+              "end": "a"
+            }
+          },
+          {
+            "id": "a36962f2-4427-4ca1-9254-193aa78de967",
+            "kind": "coincident",
+            "a": {
+              "curve": "1e1b4e5e-e35c-4d98-9770-89641f29bb9d",
+              "end": "b"
+            },
+            "b": {
+              "curve": "95504bb9-c314-494e-9943-812fb9f57ff9",
+              "end": "a"
+            }
+          },
+          {
+            "id": "869fd6d7-f90c-4867-a7f6-859628554b27",
+            "kind": "coincident",
+            "a": {
+              "curve": "95504bb9-c314-494e-9943-812fb9f57ff9",
+              "end": "b"
+            },
+            "b": {
+              "curve": "bc1e8592-370f-4f72-bcb0-7b8ae20c130e",
+              "end": "a"
+            }
+          },
+          {
+            "id": "dd37ed74-85bd-4c61-bf14-a97a0da2a7c4",
+            "kind": "coincident",
+            "a": {
+              "curve": "bc1e8592-370f-4f72-bcb0-7b8ae20c130e",
+              "end": "b"
+            },
+            "b": {
+              "curve": "070cd7b6-8864-4b7e-b21c-ffb66edc9e19",
+              "end": "a"
+            }
+          },
+          {
+            "id": "4ebbf2bd-a7ac-471a-84e1-ae51d028a6ed",
+            "kind": "parallel",
+            "a": "070cd7b6-8864-4b7e-b21c-ffb66edc9e19",
+            "b": "95504bb9-c314-494e-9943-812fb9f57ff9"
+          },
+          {
+            "id": "4e679f81-785b-4477-8663-df88461555a8",
+            "kind": "parallel",
+            "a": "1e1b4e5e-e35c-4d98-9770-89641f29bb9d",
+            "b": "bc1e8592-370f-4f72-bcb0-7b8ae20c130e"
+          },
+          {
+            "id": "a2382565-7080-4375-8bcb-98c3849add81",
+            "kind": "perpendicular",
+            "a": "070cd7b6-8864-4b7e-b21c-ffb66edc9e19",
+            "b": "1e1b4e5e-e35c-4d98-9770-89641f29bb9d"
+          },
+          {
+            "id": "e4bbb597-72b6-4e84-b4ef-dde569f8d175",
+            "kind": "coincident",
+            "a": {
+              "curve": "64df8130-2272-4c75-a6e0-c6b481738d17",
+              "end": "b"
+            },
+            "b": {
+              "curve": "f1fab719-f867-4b58-a12a-6aa26d05a0a2",
+              "end": "a"
+            }
+          },
+          {
+            "id": "bd58f5a9-7de9-4695-8ee2-12dc49be774b",
+            "kind": "coincident",
+            "a": {
+              "curve": "f1fab719-f867-4b58-a12a-6aa26d05a0a2",
+              "end": "b"
+            },
+            "b": {
+              "curve": "0e424b9e-d9b0-4a90-a7fe-20e56ab6a5ae",
+              "end": "a"
+            }
+          },
+          {
+            "id": "efc1a9de-a74b-4239-b210-c60ec8d045f4",
+            "kind": "coincident",
+            "a": {
+              "curve": "0e424b9e-d9b0-4a90-a7fe-20e56ab6a5ae",
+              "end": "b"
+            },
+            "b": {
+              "curve": "40028db6-f704-46aa-8b7d-0b6f8f55fa3a",
+              "end": "a"
+            }
+          },
+          {
+            "id": "718036a3-3969-4b2e-9a16-96adab5abb06",
+            "kind": "coincident",
+            "a": {
+              "curve": "40028db6-f704-46aa-8b7d-0b6f8f55fa3a",
+              "end": "b"
+            },
+            "b": {
+              "curve": "64df8130-2272-4c75-a6e0-c6b481738d17",
+              "end": "a"
+            }
+          },
+          {
+            "id": "9fcb182d-a9a0-4dc3-999f-4b7e8cb91581",
+            "kind": "parallel",
+            "a": "64df8130-2272-4c75-a6e0-c6b481738d17",
+            "b": "0e424b9e-d9b0-4a90-a7fe-20e56ab6a5ae"
+          },
+          {
+            "id": "9f7c209f-bdc8-4a10-a425-c51c78b96db5",
+            "kind": "parallel",
+            "a": "f1fab719-f867-4b58-a12a-6aa26d05a0a2",
+            "b": "40028db6-f704-46aa-8b7d-0b6f8f55fa3a"
+          },
+          {
+            "id": "d05b700b-84cf-4a03-aa4d-3a27f5f8ddd3",
+            "kind": "perpendicular",
+            "a": "64df8130-2272-4c75-a6e0-c6b481738d17",
+            "b": "f1fab719-f867-4b58-a12a-6aa26d05a0a2"
+          },
+          {
+            "id": "19e83e93-d7bb-4daf-a3a2-d5e9606a03a6",
+            "kind": "coincident",
+            "a": {
+              "curve": "6990af48-5449-457d-9f9a-b97f77b99d07",
+              "end": "b"
+            },
+            "b": {
+              "curve": "f0cfcc25-4ca8-4b9c-adf1-5b6033ea2f95",
+              "end": "a"
+            }
+          },
+          {
+            "id": "923df036-2bc1-41b5-9152-32846abc2986",
+            "kind": "coincident",
+            "a": {
+              "curve": "f0cfcc25-4ca8-4b9c-adf1-5b6033ea2f95",
+              "end": "b"
+            },
+            "b": {
+              "curve": "71b36c63-d189-4af2-8840-e726440fe2be",
+              "end": "a"
+            }
+          },
+          {
+            "id": "0f3cfb07-5365-4f5e-80b8-92770084907c",
+            "kind": "coincident",
+            "a": {
+              "curve": "71b36c63-d189-4af2-8840-e726440fe2be",
+              "end": "b"
+            },
+            "b": {
+              "curve": "b4e29ca1-eb7d-422e-b522-9d1d560d6255",
+              "end": "a"
+            }
+          },
+          {
+            "id": "84cb99a6-61b5-4311-9263-51c7c54c9849",
+            "kind": "coincident",
+            "a": {
+              "curve": "b4e29ca1-eb7d-422e-b522-9d1d560d6255",
+              "end": "b"
+            },
+            "b": {
+              "curve": "6990af48-5449-457d-9f9a-b97f77b99d07",
+              "end": "a"
+            }
+          },
+          {
+            "id": "94f048bf-e887-44ad-902d-82b4153770b0",
+            "kind": "parallel",
+            "a": "6990af48-5449-457d-9f9a-b97f77b99d07",
+            "b": "71b36c63-d189-4af2-8840-e726440fe2be"
+          },
+          {
+            "id": "985f759d-25b7-4032-8682-0f7fe7a3b58f",
+            "kind": "parallel",
+            "a": "f0cfcc25-4ca8-4b9c-adf1-5b6033ea2f95",
+            "b": "b4e29ca1-eb7d-422e-b522-9d1d560d6255"
+          },
+          {
+            "id": "62a2907e-4230-4508-8bb0-fe36e1372ee2",
+            "kind": "perpendicular",
+            "a": "6990af48-5449-457d-9f9a-b97f77b99d07",
+            "b": "f0cfcc25-4ca8-4b9c-adf1-5b6033ea2f95"
+          },
+          {
+            "id": "bd2ca6e5-a765-4158-a432-6fcbd49094dd",
+            "kind": "coincident",
+            "a": {
+              "curve": "d33d61a6-a30c-4c85-a15c-461c5a402247",
+              "end": "b"
+            },
+            "b": {
+              "curve": "939b079e-93a7-4103-b32a-a2fc7ef1ce7d",
+              "end": "a"
+            }
+          },
+          {
+            "id": "a9d253b2-175f-4959-87e1-250b7f8f4d37",
+            "kind": "coincident",
+            "a": {
+              "curve": "939b079e-93a7-4103-b32a-a2fc7ef1ce7d",
+              "end": "b"
+            },
+            "b": {
+              "curve": "fdb68597-fec6-4e6c-9479-f681098441a0",
+              "end": "a"
+            }
+          },
+          {
+            "id": "4a688885-7ef4-47f8-b18b-a70487b37cf3",
+            "kind": "coincident",
+            "a": {
+              "curve": "fdb68597-fec6-4e6c-9479-f681098441a0",
+              "end": "b"
+            },
+            "b": {
+              "curve": "1871a98b-8050-48c6-bea6-0d101ce60a64",
+              "end": "a"
+            }
+          },
+          {
+            "id": "b6094c23-0c48-4415-ba72-aa8e8a2bcccf",
+            "kind": "coincident",
+            "a": {
+              "curve": "1871a98b-8050-48c6-bea6-0d101ce60a64",
+              "end": "b"
+            },
+            "b": {
+              "curve": "d33d61a6-a30c-4c85-a15c-461c5a402247",
+              "end": "a"
+            }
+          },
+          {
+            "id": "47a3fb0b-df90-4290-99d2-177930661283",
+            "kind": "parallel",
+            "a": "d33d61a6-a30c-4c85-a15c-461c5a402247",
+            "b": "fdb68597-fec6-4e6c-9479-f681098441a0"
+          },
+          {
+            "id": "442b90d6-de53-4b3b-beb7-23b0fceab76b",
+            "kind": "parallel",
+            "a": "939b079e-93a7-4103-b32a-a2fc7ef1ce7d",
+            "b": "1871a98b-8050-48c6-bea6-0d101ce60a64"
+          },
+          {
+            "id": "f91a215e-7a98-4e2b-b28d-d481fb0fbcee",
+            "kind": "perpendicular",
+            "a": "d33d61a6-a30c-4c85-a15c-461c5a402247",
+            "b": "939b079e-93a7-4103-b32a-a2fc7ef1ce7d"
+          },
+          {
+            "id": "b2266a8d-cbfd-49d4-b348-5de7213f5117",
+            "kind": "coincident",
+            "a": {
+              "curve": "53f150f3-150d-4778-a016-7288f794b386",
+              "end": "b"
+            },
+            "b": {
+              "curve": "32d6971b-520d-466f-a7a8-aed1bb8f4ea1",
+              "end": "a"
+            }
+          },
+          {
+            "id": "17397531-2295-4f54-939f-7c72f045d3a6",
+            "kind": "coincident",
+            "a": {
+              "curve": "32d6971b-520d-466f-a7a8-aed1bb8f4ea1",
+              "end": "b"
+            },
+            "b": {
+              "curve": "c0a2973f-ecc1-400a-86e2-2a5b2c405d4c",
+              "end": "a"
+            }
+          },
+          {
+            "id": "14dc329c-f18b-453e-898f-4b55ac6c28b3",
+            "kind": "coincident",
+            "a": {
+              "curve": "c0a2973f-ecc1-400a-86e2-2a5b2c405d4c",
+              "end": "b"
+            },
+            "b": {
+              "curve": "af8bad60-3023-4ebe-85b5-6b9b7c3bcb40",
+              "end": "a"
+            }
+          },
+          {
+            "id": "3e1e8c05-59d5-4bd4-83f1-7b6c8b8925e2",
+            "kind": "coincident",
+            "a": {
+              "curve": "af8bad60-3023-4ebe-85b5-6b9b7c3bcb40",
+              "end": "b"
+            },
+            "b": {
+              "curve": "53f150f3-150d-4778-a016-7288f794b386",
+              "end": "a"
+            }
+          },
+          {
+            "id": "5735c034-6d7a-483d-88f7-bf1870b48d89",
+            "kind": "parallel",
+            "a": "53f150f3-150d-4778-a016-7288f794b386",
+            "b": "c0a2973f-ecc1-400a-86e2-2a5b2c405d4c"
+          },
+          {
+            "id": "9adb06d2-c0d8-472d-85d0-cc2c34465a71",
+            "kind": "parallel",
+            "a": "32d6971b-520d-466f-a7a8-aed1bb8f4ea1",
+            "b": "af8bad60-3023-4ebe-85b5-6b9b7c3bcb40"
+          },
+          {
+            "id": "d239013f-86f8-4141-b6ad-b133f95eeb18",
+            "kind": "perpendicular",
+            "a": "53f150f3-150d-4778-a016-7288f794b386",
+            "b": "32d6971b-520d-466f-a7a8-aed1bb8f4ea1"
+          },
+          {
+            "id": "e02bffaa-f9c6-42d6-9b3b-6ed07c9c7a38",
+            "kind": "coincident",
+            "a": {
+              "curve": "c52508d7-f6d1-4950-9df4-961a4e6bada3",
+              "end": "a"
+            },
+            "b": {
+              "curve": "40b2d205-391c-4911-bd46-b05dd04ed4aa",
+              "end": "b"
+            }
+          },
+          {
+            "id": "3a18bf00-0b27-4b95-9e52-19b4f72f1a35",
+            "kind": "coincident",
+            "a": {
+              "curve": "c52508d7-f6d1-4950-9df4-961a4e6bada3",
+              "end": "b"
+            },
+            "b": {
+              "curve": "06eb4c4f-1a0a-476a-b14b-f9c917e99f98",
+              "end": "a"
+            }
+          },
+          {
+            "id": "73a4f4fc-188f-4fb2-b00e-804379d3aae7",
+            "kind": "coincident",
+            "a": {
+              "curve": "0c1206a9-884f-47d8-a80f-3f3eb0872939",
+              "end": "a"
+            },
+            "b": {
+              "curve": "c692b18f-44c0-49fa-bf26-8dba4adcefd2",
+              "end": "b"
+            }
+          },
+          {
+            "id": "a37d6826-43f8-4d61-b3df-fea0540002c7",
+            "kind": "coincident",
+            "a": {
+              "curve": "696603cf-aa4a-4264-86d3-f8b2a563f6b7",
+              "end": "a"
+            },
+            "b": {
+              "curve": "0c1206a9-884f-47d8-a80f-3f3eb0872939",
+              "end": "b"
+            }
+          },
+          {
+            "id": "3339877e-fd3a-46f0-8360-767e907fcace",
+            "kind": "coincident",
+            "a": {
+              "curve": "696603cf-aa4a-4264-86d3-f8b2a563f6b7",
+              "end": "b"
+            },
+            "b": {
+              "curve": "c692b18f-44c0-49fa-bf26-8dba4adcefd2",
+              "end": "a"
+            }
+          },
+          {
+            "id": "fe86a207-0b13-4fd2-bfc0-cb4061a8a15c",
+            "kind": "coincident",
+            "a": {
+              "curve": "18c37fab-a250-4fb9-ae84-09a41b147d7c",
+              "end": "b"
+            },
+            "b": {
+              "curve": "b3c0ada2-18fe-45d4-b6a8-52d061839577",
+              "end": "a"
+            }
+          },
+          {
+            "id": "1a5bcb96-25e7-4c79-9271-7424cac58d57",
+            "kind": "coincident",
+            "a": {
+              "curve": "b3c0ada2-18fe-45d4-b6a8-52d061839577",
+              "end": "b"
+            },
+            "b": {
+              "curve": "e72e6144-eeb7-4dc4-9978-74afac1e466b",
+              "end": "a"
+            }
+          },
+          {
+            "id": "2fd963d0-f7b5-4499-a1c1-da045d0114c6",
+            "kind": "coincident",
+            "a": {
+              "curve": "e72e6144-eeb7-4dc4-9978-74afac1e466b",
+              "end": "b"
+            },
+            "b": {
+              "curve": "77899884-90fb-4ee0-9cd4-e337901b97c7",
+              "end": "a"
+            }
+          },
+          {
+            "id": "244580af-56b8-4a1b-8623-7ff3923761d6",
+            "kind": "coincident",
+            "a": {
+              "curve": "77899884-90fb-4ee0-9cd4-e337901b97c7",
+              "end": "b"
+            },
+            "b": {
+              "curve": "18c37fab-a250-4fb9-ae84-09a41b147d7c",
+              "end": "a"
+            }
+          },
+          {
+            "id": "9c0d7614-4a5c-45a3-afbb-27913970e6f4",
+            "kind": "parallel",
+            "a": "18c37fab-a250-4fb9-ae84-09a41b147d7c",
+            "b": "e72e6144-eeb7-4dc4-9978-74afac1e466b"
+          },
+          {
+            "id": "a8f76f7d-b2c3-497b-a7ca-7b8bdf0b0bda",
+            "kind": "parallel",
+            "a": "b3c0ada2-18fe-45d4-b6a8-52d061839577",
+            "b": "77899884-90fb-4ee0-9cd4-e337901b97c7"
+          },
+          {
+            "id": "82fcada6-8319-4d35-b7ed-a9653322d417",
+            "kind": "perpendicular",
+            "a": "18c37fab-a250-4fb9-ae84-09a41b147d7c",
+            "b": "b3c0ada2-18fe-45d4-b6a8-52d061839577"
+          }
+        ],
+        "groups": [
+          {
+            "id": "3d16891d-3065-42b2-a141-1813c424d303",
+            "kind": "rectangle",
+            "members": [
+              "52e8c24e-ef48-42a8-b6ce-6e3212faa669",
+              "31762e79-2341-4dd8-8955-7f9f741b2ab7",
+              "25f74d1c-80ba-459b-af6c-53855f15b9cf",
+              "89e6f343-3704-4737-9e23-9267603ebb04"
+            ]
+          },
+          {
+            "id": "c60df903-5625-4fce-be1c-9c807319d75c",
+            "kind": "rectangle",
+            "members": [
+              "7658a976-cf87-481d-bb56-236bd1af0d46",
+              "9b785618-7803-4be9-a60d-41acdf461723",
+              "f6138df0-4c3d-44d1-8db5-eb16d4140ea3",
+              "5986748e-c43f-4d48-90cc-755fac02fe3e"
+            ]
+          },
+          {
+            "id": "5d955837-d89e-4bee-b4ab-ca726ca93250",
+            "kind": "rectangle",
+            "members": [
+              "ad83bb1c-c6bf-4f2b-a217-d7264585a653",
+              "b1d5a2d4-bbfe-47c8-9032-0b7c7b3e224a",
+              "14c91cd2-9bcd-448e-b719-ecde19da5a4e",
+              "c9752d75-74df-4732-80c0-79b5ba556a29"
+            ]
+          },
+          {
+            "id": "13d349ba-0658-488f-ab9d-53a5320fb625",
+            "kind": "rectangle",
+            "members": [
+              "f933ea89-a6f2-42e0-845b-854415edc45e",
+              "5b99203b-f733-43f8-af65-565f696d219e",
+              "f7ceb437-9075-4b2a-8e7b-28487cc23eae",
+              "9fbe8586-bfb7-4c59-92b3-d142d349bc2f"
+            ]
+          },
+          {
+            "id": "a9385ff1-102a-428f-afd8-61f9fd426fe7",
+            "kind": "rectangle",
+            "members": [
+              "7e9e557b-9241-4295-a2d2-5fecb5dba439",
+              "1d0ec669-59f6-478c-a7e4-5c8673a79085",
+              "241f5697-00a9-495a-80df-e34e0ee298c6",
+              "12956591-5936-4f16-a0d1-2013bc4e630c"
+            ]
+          },
+          {
+            "id": "6b0392c8-dcec-4233-b8c7-6bef50191854",
+            "kind": "rectangle",
+            "members": [
+              "9a7c78c4-13b2-4e00-ab23-afc3ed9f791c",
+              "f235e00c-759f-4fff-be36-f1cf86c370fb",
+              "4aba1044-fc77-4c8d-8a7b-a23f37036548",
+              "92ed9274-11ea-43e1-886b-ba5444c013f7"
+            ]
+          },
+          {
+            "id": "596ea3fb-43cc-4278-bd25-2838227a5877",
+            "kind": "rectangle",
+            "members": [
+              "19a11630-f224-454e-b6e8-590bea5dd5d1",
+              "d58202fe-8e85-43f6-a951-b4e1c1b10a82",
+              "aeffd7dc-0746-479b-9eb2-d760414f355b",
+              "d3c3f2c3-0530-488a-95d4-473dc62c27b7"
+            ]
+          },
+          {
+            "id": "dc3e0ad4-6f19-4aa1-b0e3-59fdee1513ab",
+            "kind": "rectangle",
+            "members": [
+              "b33793dc-9f6c-49bc-a237-51da38c5a365",
+              "57b30a42-7432-4c37-9830-26fd3f5253d5",
+              "55261abd-31e1-4007-8c33-17ce11437bec",
+              "36a98727-7578-4e7f-b896-77b734c509be"
+            ]
+          },
+          {
+            "id": "19d5cbac-c3f5-4dc9-99c9-ffade0380911",
+            "kind": "rectangle",
+            "members": [
+              "b325d537-49f3-4c7a-808e-0d197112e766",
+              "1d81b984-1dd9-4a4f-a829-641bbcad6620",
+              "c269d87a-7a5f-436d-8798-4be793d9ce0b",
+              "96b1c9b3-7f56-48c7-a375-d5469a210551"
+            ]
+          },
+          {
+            "id": "832469a4-e781-429d-8d0c-1f94ea48d32c",
+            "kind": "rectangle",
+            "members": [
+              "5e3a35b2-e765-4c90-a37f-dac051536af5",
+              "92de3bd6-571f-4342-ac56-8d07bc46e23f",
+              "c58734f3-4b67-4dd0-9085-30a751ab2d14",
+              "865419e4-1318-4de8-aed8-ce380ca8858a"
+            ]
+          },
+          {
+            "id": "53a1a926-81e1-44b2-9657-dce144e38ada",
+            "kind": "rectangle",
+            "members": [
+              "2f4b117e-ff47-4b06-a6a0-e78eb3fdcbcc",
+              "2de4581e-d457-4081-888b-c918a301710b",
+              "fa100eb8-7257-4d64-ac61-9c539c74639f",
+              "999a85f6-5c76-456a-ae6d-09d700215702"
+            ]
+          },
+          {
+            "id": "2e299aa7-19ee-4f01-a663-0b3249991fca",
+            "kind": "rectangle",
+            "members": [
+              "070cd7b6-8864-4b7e-b21c-ffb66edc9e19",
+              "1e1b4e5e-e35c-4d98-9770-89641f29bb9d",
+              "95504bb9-c314-494e-9943-812fb9f57ff9",
+              "bc1e8592-370f-4f72-bcb0-7b8ae20c130e"
+            ]
+          },
+          {
+            "id": "b28b8ee6-3c7e-4578-ba6c-4eeb95eaabd4",
+            "kind": "rectangle",
+            "members": [
+              "64df8130-2272-4c75-a6e0-c6b481738d17",
+              "f1fab719-f867-4b58-a12a-6aa26d05a0a2",
+              "0e424b9e-d9b0-4a90-a7fe-20e56ab6a5ae",
+              "40028db6-f704-46aa-8b7d-0b6f8f55fa3a"
+            ]
+          },
+          {
+            "id": "9e6aa510-254d-4647-98f1-9ab3ff3739c5",
+            "kind": "rectangle",
+            "members": [
+              "6990af48-5449-457d-9f9a-b97f77b99d07",
+              "f0cfcc25-4ca8-4b9c-adf1-5b6033ea2f95",
+              "71b36c63-d189-4af2-8840-e726440fe2be",
+              "b4e29ca1-eb7d-422e-b522-9d1d560d6255"
+            ]
+          },
+          {
+            "id": "e5e39949-6a1a-4741-94af-8b0a976f0cba",
+            "kind": "rectangle",
+            "members": [
+              "d33d61a6-a30c-4c85-a15c-461c5a402247",
+              "939b079e-93a7-4103-b32a-a2fc7ef1ce7d",
+              "fdb68597-fec6-4e6c-9479-f681098441a0",
+              "1871a98b-8050-48c6-bea6-0d101ce60a64"
+            ]
+          },
+          {
+            "id": "df1381e3-4215-470c-887e-a4af81d6f2fd",
+            "kind": "rectangle",
+            "members": [
+              "53f150f3-150d-4778-a016-7288f794b386",
+              "32d6971b-520d-466f-a7a8-aed1bb8f4ea1",
+              "c0a2973f-ecc1-400a-86e2-2a5b2c405d4c",
+              "af8bad60-3023-4ebe-85b5-6b9b7c3bcb40"
+            ]
+          },
+          {
+            "id": "7e029a2b-20d8-4852-83ea-9cd2bf51215e",
+            "kind": "rectangle",
+            "members": [
+              "18c37fab-a250-4fb9-ae84-09a41b147d7c",
+              "b3c0ada2-18fe-45d4-b6a8-52d061839577",
+              "e72e6144-eeb7-4dc4-9978-74afac1e466b",
+              "77899884-90fb-4ee0-9cd4-e337901b97c7"
+            ]
+          }
+        ]
+      }
+    ],
+    "sketchGrid": {
+      "minor": 0.5,
+      "major": 10,
+      "minorColor": "#b8c2cf",
+      "majorColor": "#758296",
+      "snap": true
+    },
+    "bodies": [],
+    "decorators": [],
+    "decoratorDefinitions": [],
+    "bodyAppearances": [],
+    "taggedGroups": [],
+    "entityPresentation": []
+  }
+}
