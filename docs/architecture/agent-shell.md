@@ -44,6 +44,10 @@ uses temporary injected downloads/processes only; no vendor installer runs on th
 machine. Windows/Linux runtime acceptance remains separate from platform plan tests.
 
 The terminal docks right or below, resizes and collapses to a visible header.
+Fresh and resumed Codex launches use `--no-alt-screen` so wheel/trackpad scrolling
+reads terminal output. Ghostty's alternate-screen wheel handling sends Up/Down
+keys, which would cycle Codex prompt history instead. Custom launches retain
+their configured screen behavior.
 It starts as that same collapsed sliver, with no separate header Agent button;
 terminal loading and harness launch wait until the first expansion. Expanding
 returns keyboard focus to terminal input; collapsing returns it to the drawing.
