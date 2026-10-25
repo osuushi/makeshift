@@ -1,51 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import * as THREE from "three";
 import { captureCamera } from "../src/model/camera-state.js";
-import type { SketchEditor } from "../src/sketch/editor.js";
 import { emptySelection } from "../src/sketch/history-selection.js";
-import type { ModelingTarget } from "../src/sketch/model-selection-state.js";
-import { NavigationHistory } from "../src/sketch/navigation-history.js";
 import { planes } from "../src/sketch/planes.js";
-import { SelectionHistory } from "../src/sketch/selection-history.js";
-import type { SelectionTarget } from "../src/sketch/selection-target.js";
 import type { World } from "../src/sketch/world.js";
 
-function fixture() {
-  const camera = new THREE.OrthographicCamera(-40, 40, 40, -40);
-  camera.position.set(55, -70, 65);
-  camera.up.set(0, 0, 1);
-  const world = {
-    camera,
-    target: new THREE.Vector3(),
-    height: 80,
-    workspace: null as World["workspace"],
-    orbit: { active: false },
-    cameraTransitioning: false,
-    draw: () => {
-      history.observe();
-      navigation.settled();
-    },
-    cancelCameraMotion: () => {
-      world.cameraTransitioning = false;
-    },
-  };
-  const navigation = new NavigationHistory(world as unknown as World);
-  const modeling = { targets: [] as ModelingTarget[] };
-  const editor = {
-    world: { ...world, navigation },
-    modeling,
-    selected: { targets: [] as SelectionTarget[] },
-    store: { busy: false, scriptRunning: false, syncSelection: () => {} },
-    interactions: { current: null },
-  };
-  // Keep the collaborator and editor on the same mutable World for the test.
-  Object.assign(world, { navigation });
-  editor.world = world as typeof editor.world;
-  const history = new SelectionHistory(editor as unknown as SketchEditor);
-  history.connectNavigation();
-  return { world, navigation, history, modeling, selected: editor.selected };
-}
+import { navigationSelectionFixture as fixture } from "./navigation-selection-fixture.js";
+
 const tick = () => new Promise<void>((resolve) => queueMicrotask(resolve));
 
 test("immediate workspace completion waits for accepted result selection", async (t) => {
@@ -290,4 +251,26 @@ test("workspace entry freezes an accepted held gesture before controller target 
     modeling: [],
     sketch: selected.targets,
   });
+});
+
+test("momentum expires navigation once until another recorded view can exist", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  const { world, navigation, history } = fixture();
+  for (let event = 0; event < 40; event++) {
+    navigation.unrecorded();
+    await tick();
+    assert.deepEqual(history.take().steps, event === 0 ? [{ expireNavigation: true }] : []);
+  }
+  navigation.begin();
+  world.target.x = 10;
+  navigation.finish();
+  const recorded = history.take().steps;
+  assert.equal(recorded.length, 1);
+  assert.ok("navigation" in recorded[0]);
+  navigation.unrecorded();
+  assert.deepEqual(history.take().steps, [{ expireNavigation: true }]);
+  history.accepted(true);
+  t.mock.timers.tick(1);
+  navigation.unrecorded();
+  assert.deepEqual(history.take().steps, [{ expireNavigation: true }]);
 });

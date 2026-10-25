@@ -28,7 +28,12 @@ try {
       const result = await page.evaluate(async () => {
         const { bodyXrayRenderChecks } = await import("/tests/body-xray-render.ts");
         const { bodyXrayLayerChecks } = await import("/tests/body-xray-layer-render.ts");
-        return { mask: bodyXrayRenderChecks(), layers: bodyXrayLayerChecks() };
+        const { framePacerRenderChecks } = await import("/tests/frame-pacer-render.ts");
+        return {
+          mask: bodyXrayRenderChecks(),
+          layers: bodyXrayLayerChecks(),
+          pacing: await framePacerRenderChecks(),
+        };
       });
       assert.deepEqual(errors, []);
       console.log(`${name}: compositor GPU pixel checks passed`, JSON.stringify(result));

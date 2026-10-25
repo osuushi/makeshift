@@ -14,6 +14,8 @@ export class SelectionHistory {
   private settling = false;
   private settleNavigation: (() => void) | undefined;
   private restoring = false;
+  // Continuous unrecorded motion need not resend the same expiration to the owner.
+  private navigationExpired = false;
   private timer: ReturnType<typeof setTimeout> | undefined;
   constructor(private editor: SketchEditor) {}
   connectNavigation(): void {
@@ -23,6 +25,7 @@ export class SelectionHistory {
     navigation.discarded = () => this.expireNavigation();
     navigation.completed = (change: NavigationChange) => {
       if (this.settling) return;
+      this.navigationExpired = false;
       this.steps.push(change);
       this.latest = structuredClone(change.navigation.after.selection);
       queueMicrotask(() => this.editor.store.syncSelection());
@@ -37,6 +40,8 @@ export class SelectionHistory {
     this.editor.world.navigation.withoutRecording(() => this.editor.world.cancelCameraMotion());
   }
   expireNavigation(): void {
+    if (this.navigationExpired) return;
+    this.navigationExpired = true;
     this.steps.push({ expireNavigation: true });
     queueMicrotask(() => this.editor.store.syncSelection());
   }
@@ -87,6 +92,7 @@ export class SelectionHistory {
     return structuredClone(changes);
   }
   accepted(replaced = false): void {
+    this.navigationExpired = false;
     if (replaced) this.editor.world.navigation.clear();
     this.settleNavigation = replaced ? undefined : this.editor.world.navigation.rebase();
     this.steps = [];
@@ -113,6 +119,7 @@ export class SelectionHistory {
     this.editor.world.navigation.withoutRecording(() => this.restoreSelection(selection));
   }
   private restoreSelection(selection: HistorySelection): void {
+    this.navigationExpired = false;
     this.restoring = true;
     try {
       const editor = this.editor;

@@ -6,6 +6,7 @@ import { lift, prism } from "../.cache/sketch-tests/tests/body-edge-fixtures.js"
 import { openDocument } from "./native-documents.mjs";
 import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { orient, project } from "./ui-blend-edit.mjs";
+import { cameraPacingRoute } from "./ui-camera-pacing.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -125,6 +126,7 @@ await withUiRuntimes(async (page, name) => {
   console.log(
     `${name}: body X-ray controls, layer picking, silhouette, halo, bleed and opacity passed`,
   );
+  await cameraPacingRoute(page, name);
 });
 
 async function settings(page, values) {

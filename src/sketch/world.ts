@@ -87,7 +87,11 @@ export class World {
     this.requestDraw();
   });
   private pendingDraw: number | null = null;
-  private readonly frame = new WorldFrame(this, () => this.present(true));
+  private readonly frame = new WorldFrame(
+    this,
+    () => this.present(true),
+    () => this.pendingDraw === null,
+  );
   private readonly sketchClip = new THREE.Plane();
   readonly rollAnimation = new CameraRoll(this);
   readonly orbit = new SmoothedTurntable();
@@ -110,7 +114,7 @@ export class World {
     return this.motion.active || this.rollAnimation.active;
   }
   get cameraMoving(): boolean {
-    return this.cameraTransitioning || this.pendingDraw !== null;
+    return this.cameraTransitioning || this.pendingDraw !== null || this.frame.pending;
   }
 
   constructor(
