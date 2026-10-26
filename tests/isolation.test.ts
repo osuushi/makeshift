@@ -56,3 +56,15 @@ test("new owners join isolation while existing and deliberately hidden owners st
   assert.equal(visibility.visible("new-plane"), true);
   assert.equal(visibility.visible("new-body"), false);
 });
+
+test("body x-ray survives hide/isolate but resets with the document window", () => {
+  const visibility = new EntityVisibility();
+  visibility.xray.add("body-a");
+  visibility.hide("body-a");
+  visibility.isolate(["body-b"]);
+  visibility.endIsolation();
+  visibility.show("body-a");
+  assert.equal(visibility.xray.has("body-a"), true);
+  visibility.reset();
+  assert.equal(visibility.xray.size, 0);
+});

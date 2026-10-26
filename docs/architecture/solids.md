@@ -250,7 +250,7 @@ transient view geometry and creates neither a saved object nor an Undo entry.
 ## Body appearance
 
 Each body has an optional document-owned RGB color and alpha (0–1). Its Entities
-swatch opens Color and Opacity (%) fields; Apply accepts both in one Undo step,
+actions menu's Color item opens Color and Opacity (%) fields; Apply accepts both in one Undo step,
 while Cancel/Escape leaves the document unchanged. Save/Open preserves appearance.
 Geometry edits retain appearance by body identity or immediate operation origins;
 copies and split pieces inherit it, and merged results use their first source.

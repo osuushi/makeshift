@@ -58,6 +58,7 @@ export function previewRenderChecks() {
       throw new Error(`Occluder behind own support lost: ${hiddenBlocker}`);
     blocker.visible = false;
     const results = checkLayers(renderer, camera, support, red, green, pixel);
+    checkXrayLayer(scene, red, green, pixel);
     target.setSize(96, 80);
     renderer.setSize(96, 80);
     const resized = pixel([red], 48, 40);
@@ -193,4 +194,27 @@ function checkLayers(
   renderer.clippingPlanes = [];
   camera.layers.set(0);
   return { single, forward, reverse, clipped, retained };
+}
+
+function checkXrayLayer(
+  scene: THREE.Scene,
+  red: PreviewSurface,
+  green: PreviewSurface,
+  pixel: (surfaces: PreviewSurface[]) => number[],
+): void {
+  red.mesh.userData.body = "xray";
+  green.mesh.userData.body = "normal";
+  red.mesh.position.z = 0.8;
+  green.mesh.visible = red.mesh.visible = true;
+  scene.userData.xrayHiddenBodies = new Set(["xray"]);
+  try {
+    const revealed = pixel([red, green]);
+    if (revealed[1] < revealed[0] + 50)
+      throw new Error(`X-ray decorator leaked into the revealed layer: ${revealed}`);
+    if (!red.mesh.visible || !green.mesh.visible)
+      throw new Error("Decorator visibility was not restored");
+  } finally {
+    delete scene.userData.xrayHiddenBodies;
+    green.mesh.visible = false;
+  }
 }

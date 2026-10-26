@@ -81,7 +81,9 @@ if (gl_FragCoord.z > texture2D(decoratorOcclusion, gl_FragCoord.xy / decoratorRe
     surfaces: readonly PreviewSurface[],
     occludeSections?: () => void,
   ): void {
-    const visible = surfaces.filter(({ mesh }) => mesh.visible);
+    const hidden: ReadonlySet<string> | undefined = scene.userData.xrayHiddenBodies;
+    const shown = surfaces.filter(({ mesh }) => mesh.visible);
+    const visible = shown.filter(({ mesh }) => !hidden?.has(mesh.userData.body));
     if (!visible.length) return;
     renderer.getDrawingBufferSize(this.size);
     this.occlusion.setSize(this.size.x, this.size.y);
@@ -102,7 +104,7 @@ if (gl_FragCoord.z > texture2D(decoratorOcclusion, gl_FragCoord.xy / decoratorRe
       renderer.setClearColor(0, 0);
       renderer.setRenderTarget(this.previews);
       renderer.clear();
-      for (const { mesh } of visible) mesh.visible = false;
+      for (const { mesh } of shown) mesh.visible = false;
       for (const surface of visible) {
         (surface.mesh.material as THREE.Material).opacity =
           (surface.opacity ?? 1) * (surface.displayOpacity ?? 0.78);
@@ -113,7 +115,7 @@ if (gl_FragCoord.z > texture2D(decoratorOcclusion, gl_FragCoord.xy / decoratorRe
       renderer.autoClear = false;
       renderer.render(this.scene, this.camera);
     } finally {
-      for (const { mesh } of visible) mesh.visible = true;
+      for (const { mesh } of shown) mesh.visible = true;
       scene.background = background;
       camera.layers.mask = layers;
       renderer.clippingPlanes = clipping;

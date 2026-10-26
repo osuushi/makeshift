@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { openDocument, saveDocument } from "./native-documents.mjs";
 import { plate } from "./ui-body-fillet.mjs";
+import { openBodyMenu } from "./ui-body-menu.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { clearSelection } from "./ui-reconnection-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
@@ -13,8 +14,9 @@ await withUiRuntimes(async (page, name) => {
   await plate(page);
   await clearSelection(page);
   const before = (await inspect(page)).document;
-  const swatch = page.getByRole("button", { name: "Color for Body 1", exact: true });
-  await swatch.click();
+  const openColor = async () =>
+    (await openBodyMenu(page)).getByRole("menuitem", { name: "Color", exact: true }).click();
+  await openColor();
   await page.getByLabel("Color", { exact: true }).fill("#dd4422");
   await page.getByLabel("Opacity (%)").fill("35");
   await page.getByRole("button", { name: "Apply", exact: true }).click();
@@ -30,7 +32,7 @@ await withUiRuntimes(async (page, name) => {
     ),
   );
   await page.screenshot({ path: `.cache/sketch-review/${name}-body-color.png` });
-  await swatch.click();
+  await openColor();
   await page.getByLabel("Opacity (%)").fill("0");
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document.bodyAppearances, appearance);
@@ -39,7 +41,7 @@ await withUiRuntimes(async (page, name) => {
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document.bodyAppearances, appearance);
   for (const opacity of [0, 100, 35]) {
-    await swatch.click();
+    await openColor();
     await page.getByLabel("Opacity (%)").fill(String(opacity));
     await page.keyboard.press("Enter");
     state = await inspect(page);

@@ -40,8 +40,12 @@ export function overlapCandidates(editor: SketchEditor, screen: Point): OverlapC
       key: hit.edge,
       label: "Edge",
     });
+  const layer = (candidate: OverlapCandidate) =>
+    "body" in candidate.target ? probe.layer(candidate.target.body) : 0;
+  const depthOrder = (a: OverlapCandidate, b: OverlapCandidate) =>
+    layer(a) - layer(b) || a.depth - b.depth;
   if (editor.world.active)
-    return [...sketchHoldChoices(editor, screen), ...result.sort((a, b) => a.depth - b.depth)];
+    return [...sketchHoldChoices(editor, screen), ...result.sort(depthOrder)];
   const sections = sectionBodyHits(
     bodies,
     ray,
@@ -90,7 +94,7 @@ export function overlapCandidates(editor: SketchEditor, screen: Point): OverlapC
           c.target.kind !== "sketch-hit" &&
           editor.modeling.allows(c.target)),
     )
-    .sort((a, b) => a.depth - b.depth || rank(a) - rank(b) || a.key.localeCompare(b.key));
+    .sort((a, b) => depthOrder(a, b) || rank(a) - rank(b) || a.key.localeCompare(b.key));
 }
 
 function planeCandidates(

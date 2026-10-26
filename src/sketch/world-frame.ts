@@ -1,6 +1,8 @@
 import type * as THREE from "three";
 import { SectionCaps } from "../model/section-caps.js";
 import { viewDisplay } from "../preferences/view-display.js";
+import { BodyXrayComposite } from "./body-xray-composite.js";
+import { FramePacer } from "./frame-pacer.js";
 import { GridOcclusion } from "./grid-occlusion.js";
 import type { Point } from "./planes.js";
 import type { World } from "./world.js";
@@ -21,18 +23,28 @@ export class WorldFrame {
   private readonly foreground = new SketchForeground();
   private readonly primitives = new PrimitiveOverlay();
   private readonly xray = new XrayComposite();
+  private readonly bodyXray = new BodyXrayComposite();
+  private readonly pacer: FramePacer;
   private width = -1;
   private height = -1;
 
   constructor(
     private readonly world: World,
     private readonly capture: () => void,
+    ready: () => boolean,
   ) {
+    // Three's renderer requires WebGL2; its context return type still includes WebGL1.
+    this.pacer = new FramePacer(world.renderer.getContext() as WebGL2RenderingContext, ready);
     window.addEventListener("makeshift-test-frame", this.captureFrame);
     world.canvas.addEventListener("webglcontextrestored", this.restoreXray);
   }
 
-  private readonly restoreXray = (): void => this.xray.invalidate();
+  private readonly restoreXray = (): void => {
+    this.pacer.reset();
+    this.xray.invalidate();
+    this.bodyXray.invalidate();
+    this.world.requestDraw();
+  };
 
   private readonly captureFrame = (): void => {
     if (window.makeshiftTestFrameMode === "on-demand") this.capture();
@@ -47,7 +59,19 @@ export class WorldFrame {
 
   render(clip: THREE.Plane, force: boolean): void {
     if (window.makeshiftTestFrameMode === "on-demand" && !force) return;
-    this.gridOcclusion.update(this.world);
+    this.pacer.request(() => {
+      this.gridOcclusion.update(this.world);
+      this.bodyXray.render(this.world, () => this.renderSections(clip));
+      const { renderer, scene, camera } = this.world;
+      this.primitives.render(renderer, scene, camera);
+    }, force);
+  }
+
+  get pending(): boolean {
+    return this.pacer.pending;
+  }
+
+  private renderSections(clip: THREE.Plane): void {
     if (this.xray.enabled(this.world))
       this.xray.render(
         this.world,
@@ -55,8 +79,6 @@ export class WorldFrame {
         () => this.section(clip),
       );
     else this.section(clip);
-    const { renderer, scene, camera } = this.world;
-    this.primitives.render(renderer, scene, camera);
   }
 
   sectionEnabled(point: Point): boolean {
@@ -88,11 +110,13 @@ export class WorldFrame {
   }
 
   dispose(): void {
+    this.pacer.reset();
     window.removeEventListener("makeshift-test-frame", this.captureFrame);
     this.world.canvas.removeEventListener("webglcontextrestored", this.restoreXray);
     this.foreground.dispose();
     this.sections.dispose();
     this.primitives.dispose();
     this.xray.dispose();
+    this.bodyXray.dispose();
   }
 }

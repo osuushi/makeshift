@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { electronSession } from "./native-documents.mjs";
 import { plate } from "./ui-body-fillet.mjs";
+import { openBodyMenu } from "./ui-body-menu.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { button, completed } from "./ui-reopen-cycle.mjs";
 import { chooseTool, toolEnabled } from "./ui-tools.mjs";
@@ -38,7 +39,7 @@ export async function reopenFocusGuards(page, name) {
   assert.ok(await page.getByRole("dialog", { name: "Find a tool", exact: true }).isVisible());
   await page.keyboard.press("Escape");
   await unchanged(page, document, history);
-  await button(page, "Color for Body 1").click();
+  await (await openBodyMenu(page)).getByRole("menuitem", { name: "Color", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Appearance of Body 1", exact: true });
   await dialog.getByRole("button", { name: "Cancel", exact: true }).focus();
   await page.keyboard.press("Meta+r");

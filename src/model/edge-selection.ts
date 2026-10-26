@@ -64,12 +64,26 @@ export function pickBodyEdge(
 ): EdgeHit | null {
   let best: EdgeHit | null = null;
   for (const { source, screen: nearest, hit } of edgeCandidates(editor, screen, probe.bodies)) {
-    if (best && hit.distance > best.distance + distanceTiePx) continue;
+    const layer = probe.layer(hit.body);
+    if (
+      best &&
+      (layer > probe.layer(best.body) ||
+        (layer === probe.layer(best.body) && hit.distance > best.distance + distanceTiePx))
+    )
+      continue;
     if (!edgeFacesCamera(source, hit.edge, hit.point, probe.ray.direction)) continue;
-    const covering = probe.faces(nearest)[0];
+    const covering = probe.faces(nearest).find((face) => probe.layer(face.body) === layer);
     if (covering && hit.depth > covering.depth + occlusionSlackMm) continue;
-    if (!best || hit.distance < best.distance - distanceTiePx || hit.depth < best.depth) best = hit;
+    if (
+      !best ||
+      layer < probe.layer(best.body) ||
+      hit.distance < best.distance - distanceTiePx ||
+      hit.depth < best.depth
+    )
+      best = hit;
   }
+  if (best && probe.layer(best.body) && probe.faces().some((face) => !probe.layer(face.body)))
+    return null;
   return best;
 }
 

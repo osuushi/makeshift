@@ -27,6 +27,7 @@ export function configurePreferences(json: string): void {
       "gridFill",
       "gridLineWidth",
       "sectionFrontOpacity",
+      "bodyXrayOpacity",
       "xrayGlobal",
       "xrayBleed",
       "xrayRadius",

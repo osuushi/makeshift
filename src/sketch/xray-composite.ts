@@ -4,8 +4,15 @@ import type { Point } from "./planes.js";
 import { coplanar } from "./planes.js";
 import type { World } from "./world.js";
 import { hasForegroundContent } from "./world-foreground.js";
-import type { XrayContents } from "./xray-contents.js";
 import { XrayMask } from "./xray-mask.js";
+
+/** A stable token identifies unchanged aperture inputs, independent of their geometry. */
+export interface XrayAperture {
+  read(world: World): object;
+  render(world: World, target: THREE.WebGLRenderTarget, bleed: number): void;
+  contains(world: World, point: Point, bleed: number): boolean;
+  dispose(): void;
+}
 
 const vertexShader = `varying vec2 vUv;
 void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
@@ -24,13 +31,13 @@ void main() {
 /** Mix complete normal/cut presentations, so both caps and front translucency
  * disappear outside the same softened content mask. */
 export class XrayComposite {
-  private readonly mask = new XrayMask();
+  private readonly mask: XrayAperture;
   private normal = new THREE.FramebufferTexture(1, 1);
   private readonly aperture = new THREE.WebGLRenderTarget(1, 1, { depthBuffer: false });
   private readonly horizontal = new THREE.WebGLRenderTarget(1, 1, { depthBuffer: false });
   private readonly soft = new THREE.WebGLRenderTarget(1, 1, { depthBuffer: false });
   private readonly size = new THREE.Vector2();
-  private maskContents: XrayContents | null = null;
+  private maskContents: object | null = null;
   private maskBleed = -1;
   private maskRadius = -1;
   private readonly scene = new THREE.Scene();
@@ -54,17 +61,21 @@ export class XrayComposite {
     uniforms: {
       normalImage: { value: this.normal },
       maskImage: { value: this.soft.texture },
+      strength: { value: 1 },
+      globalMask: { value: false },
     },
-    fragmentShader: `uniform sampler2D normalImage; uniform sampler2D maskImage; varying vec2 vUv;
+    fragmentShader: `uniform sampler2D normalImage; uniform sampler2D maskImage;
+      uniform float strength; uniform bool globalMask; varying vec2 vUv;
       void main() {
         // Blend normal over the cut framebuffer: normal * (1-mask) + cut * mask.
-        gl_FragColor = vec4(texture2D(normalImage, vUv).rgb, 1.0 - texture2D(maskImage, vUv).r);
+        gl_FragColor = vec4(texture2D(normalImage, vUv).rgb, 1.0 - strength * (globalMask ? 1.0 : texture2D(maskImage, vUv).r));
         // Framebuffer captures already use the display transfer function.
       }`,
   });
   private readonly quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mix);
 
-  constructor() {
+  constructor(mask: XrayAperture = new XrayMask()) {
+    this.mask = mask;
     this.scene.add(this.quad);
   }
 
@@ -76,12 +87,12 @@ export class XrayComposite {
     return !this.enabled(world) || this.mask.contains(world, point, viewDisplay().xrayBleed);
   }
 
-  render(world: World, normal: () => void, cut: () => void): void {
+  render(world: World, normal: () => void, cut: () => void, bodyLayer = false): void {
     // In an active planar-only workspace both images are identical. Avoid the extra
     // scene presentation, framebuffer copy and mask work, especially on
     // Retina tablets. Keep enabled()/contains() independent: picking still uses
     // the same aperture when sectionable content is subsequently shown.
-    if (planarOnlyWorkspace(world)) {
+    if (!bodyLayer && planarOnlyWorkspace(world)) {
       cut();
       return;
     }
@@ -93,7 +104,7 @@ export class XrayComposite {
     this.resizeCaptures();
     try {
       renderer.autoClear = true;
-      renderer.clippingPlanes = [];
+      if (!bodyLayer) renderer.clippingPlanes = [];
       renderer.setRenderTarget(target);
       normal();
       // The capture API binds unit 0 only when its cached texture changes.
@@ -104,7 +115,10 @@ export class XrayComposite {
       renderer.setRenderTarget(target);
       cut();
       renderer.clippingPlanes = [];
-      this.updateMask(world);
+      const global = bodyLayer && viewDisplay().xrayGlobal;
+      this.mix.uniforms.strength.value = bodyLayer ? 1 - viewDisplay().bodyXrayOpacity : 1;
+      this.mix.uniforms.globalMask.value = global;
+      if (!global) this.updateMask(world);
       renderer.setRenderTarget(target);
       // Match the old fullscreen presentation without clearing its cut color.
       renderer.clear(false, true, true);

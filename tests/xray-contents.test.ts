@@ -77,12 +77,18 @@ test("X-ray settings validate atomically and retain mask values independently of
   const original = applicationPreferences();
   try {
     configurePreferences('{"viewDisplay":{"xrayGlobal":false,"xrayBleed":25,"xrayRadius":8}}');
-    configurePreferences('{"viewDisplay":{"xrayGlobal":true}}');
+    configurePreferences('{"viewDisplay":{"xrayGlobal":true,"bodyXrayOpacity":0.25}}');
+    configurePreferences('{"viewDisplay":{"sectionFrontOpacity":0.9}}');
+    assert.equal(applicationPreferences().viewDisplay.bodyXrayOpacity, 0.25);
+    assert.equal(applicationPreferences().viewDisplay.sectionFrontOpacity, 0.9);
     assert.equal(applicationPreferences().viewDisplay.xrayBleed, 25);
     assert.equal(applicationPreferences().viewDisplay.xrayRadius, 8);
     const before = applicationPreferences();
     for (const patch of [
       { xrayGlobal: 1 },
+      { bodyXrayOpacity: -0.1 },
+      { bodyXrayOpacity: 1.1 },
+      { bodyXrayOpacity: "0.5" },
       { xrayRadius: -1 },
       { xrayBleed: 101 },
       { xrayRadius: "4" },

@@ -100,6 +100,7 @@ class BodyView {
           ? (accepted.find((source) => source.id === body.id) ?? body)
           : body;
       drawing.highlight(source, selectedEdges, hover?.kind === "edge" ? hover.edge : undefined);
+      drawing.group.userData.xrayBody = editor.visibility.xray.has(body.id) ? body.id : null;
     }
   };
   dispose(): void {
