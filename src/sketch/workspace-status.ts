@@ -43,7 +43,8 @@ export function installWorkspaceStatus(
   editor.world.changed.add(() => {
     const error = Boolean(editor.message);
     status.classList.toggle("error-feedback", error);
-    text.setAttribute("role", error ? "alert" : "status");
+    if (error) text.setAttribute("role", "alert");
+    else text.removeAttribute("role");
     dismiss.hidden = !error;
     const mode = app.querySelector(".mode-label");
     if (mode) mode.textContent = editor.world.active ? "Sketching" : "Modeling";
