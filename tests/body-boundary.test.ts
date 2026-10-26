@@ -22,6 +22,7 @@ test("BRep face boundaries retain hole loops, exclude shared edges/seams, and su
     const walls = body.faces.filter((f) => !f.plane);
     assert.equal(planar.length, 2);
     assert.equal(walls.length, 2);
+    assertWallNormals(walls);
     assert.equal(featureEdges(body).length, 4);
     const top = planar.find((f) => f.plane?.origin[2] === 5);
     assert.ok(top);
@@ -152,3 +153,19 @@ test("native periodic cylinder seam appears twice and is excluded from the face 
     owner.close();
   }
 });
+
+function assertWallNormals(walls: Body["faces"]): void {
+  for (const face of walls) {
+    assert.ok(face.cylinder);
+    const normals = face.normals;
+    assert.ok(normals);
+    assert.equal(normals.length, face.vertices.length);
+    for (let i = 0; i < face.vertices.length; i += 3) {
+      const radius = Math.hypot(face.vertices[i], face.vertices[i + 1]);
+      const orientation = radius < 5 ? -1 : 1;
+      assert.ok(Math.abs(normals[i] - (orientation * face.vertices[i]) / radius) < 1e-5);
+      assert.ok(Math.abs(normals[i + 1] - (orientation * face.vertices[i + 1]) / radius) < 1e-5);
+      assert.ok(Math.abs(normals[i + 2]) < 1e-5);
+    }
+  }
+}

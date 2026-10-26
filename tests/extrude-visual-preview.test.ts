@@ -44,6 +44,10 @@ test("captured perforated extrusion draws complete mesh before editing metadata,
       complete.faces.map((face) => face.vertices),
     );
     assert.deepEqual(
+      visual.normals,
+      complete.faces.map((face) => face.normals),
+    );
+    assert.deepEqual(
       visual.edges,
       featureEdges(complete)
         .filter((edge) => edge.points.length >= 6)

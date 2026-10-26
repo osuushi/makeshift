@@ -62,6 +62,17 @@ test("ordinary circle and diameter produce one exact sphere from either half-reg
               near(body.center[i], value);
             });
             assert.ok(body.faces.some((face) => face.sphere));
+            for (const face of body.faces) {
+              if (!face.sphere) continue;
+              const normals = face.normals;
+              assert.ok(normals);
+              assert.equal(normals.length, face.vertices.length);
+              for (let i = 0; i < face.vertices.length; i += 3) {
+                const radial = face.vertices.slice(i, i + 3).map((v, j) => v - center[j]);
+                const length = Math.hypot(...radial);
+                for (const [j, v] of radial.entries()) near(normals[i + j], v / length);
+              }
+            }
           }
           assert.deepEqual(owner.view.data, before);
         }

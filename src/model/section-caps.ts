@@ -44,6 +44,16 @@ export class SectionCaps {
     new THREE.MeshBasicMaterial(),
   );
   private readonly styles = new Map<string, THREE.MeshBasicMaterial>();
+  private readonly depth = new THREE.MeshBasicMaterial({
+    side: THREE.DoubleSide,
+    colorWrite: false,
+    depthWrite: true,
+    stencilWrite: true,
+    stencilRef: capBit,
+    stencilFuncMask: capBit,
+    stencilWriteMask: 0,
+    stencilFunc: THREE.EqualStencilFunc,
+  });
   private readonly palettes = new SectionPalettes();
 
   constructor() {
@@ -52,7 +62,7 @@ export class SectionCaps {
     this.plane.material.dispose();
   }
 
-  render(world: World): void {
+  render(world: World, depthOnly = false): void {
     const frame = world.partialSection ?? world.crossSection;
     if (!frame) return;
     const { bodies, seeds, hovered } = this.surfaces(world);
@@ -89,33 +99,16 @@ export class SectionCaps {
         }
         renderer.clippingPlanes = [clip];
         renderer.render(this.scene, camera);
-        let material = this.styles.get(body);
-        const seed = seeds.get(body) ?? body;
-        if (material && material.userData.sectionStyleKey !== seed) {
-          material.dispose();
-          material = undefined;
+        if (depthOnly) {
+          this.plane.material = this.depth;
+          this.position(frame, faces);
+          this.scene.clear();
+          this.scene.add(this.plane);
+          renderer.clippingPlanes = [];
+          renderer.render(this.scene, camera);
+          continue;
         }
-        if (!material) {
-          material = sectionMaterial(seed, palettes.get(seed));
-          material.userData.sectionStyleKey = seed;
-          this.styles.set(body, material);
-        }
-        material.color.set(hovered.has(body) ? "#ffe5b7" : "#ffffff");
-        this.plane.material = material;
-        this.position(frame, faces);
-        this.scene.clear();
-        this.scene.add(this.plane);
-        renderer.clippingPlanes = [];
-        // Blend only samples already filled by another body. No cap writes depth,
-        // so differently triangulated coplanar cuts cannot compete for it.
-        material.opacity = 0.5;
-        material.stencilRef = capBit | 32;
-        material.stencilWriteMask = 0;
-        renderer.render(this.scene, camera);
-        material.opacity = 1;
-        material.stencilRef = capBit;
-        material.stencilWriteMask = 32;
-        renderer.render(this.scene, camera);
+        this.renderPattern(body, seeds.get(body) ?? body, palettes, hovered, frame, faces, world);
       }
       renderer.render(this.resetScene, this.resetCamera);
     } finally {
@@ -124,6 +117,43 @@ export class SectionCaps {
       this.scene.clear();
       this.reset.material.stencilWriteMask = capBit;
     }
+  }
+
+  private renderPattern(
+    body: string,
+    seed: string,
+    palettes: ReadonlyMap<string, number>,
+    hovered: ReadonlySet<string>,
+    frame: PlaneFrame,
+    faces: THREE.Mesh[],
+    { renderer, camera }: World,
+  ): void {
+    let material = this.styles.get(body);
+    if (material && material.userData.sectionStyleKey !== seed) {
+      material.dispose();
+      material = undefined;
+    }
+    if (!material) {
+      material = sectionMaterial(seed, palettes.get(seed));
+      material.userData.sectionStyleKey = seed;
+      this.styles.set(body, material);
+    }
+    material.color.set(hovered.has(body) ? "#ffe5b7" : "#ffffff");
+    this.plane.material = material;
+    this.position(frame, faces);
+    this.scene.clear();
+    this.scene.add(this.plane);
+    renderer.clippingPlanes = [];
+    // Blend only samples already filled by another body. No cap writes depth,
+    // so differently triangulated coplanar cuts cannot compete for it.
+    material.opacity = 0.5;
+    material.stencilRef = capBit | 32;
+    material.stencilWriteMask = 0;
+    renderer.render(this.scene, camera);
+    material.opacity = 1;
+    material.stencilRef = capBit;
+    material.stencilWriteMask = 32;
+    renderer.render(this.scene, camera);
   }
 
   private surfaces(world: World) {
@@ -175,6 +205,7 @@ export class SectionCaps {
     this.reset.geometry.dispose();
     this.reset.material.dispose();
     this.parity.dispose();
+    this.depth.dispose();
     this.plane.geometry.dispose();
     for (const material of this.styles.values()) material.dispose();
     this.styles.clear();

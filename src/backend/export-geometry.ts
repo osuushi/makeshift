@@ -45,7 +45,7 @@ export async function exportGeometry(
         faces: body.faces.map((face) => {
           const mesh = faces.get(face.id);
           if (!mesh) throw new Error("Export geometry lost a face");
-          return { ...face, vertices: mesh.vertices };
+          return { ...face, vertices: mesh.vertices, normals: mesh.normals };
         }),
       };
     }),

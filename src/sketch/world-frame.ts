@@ -96,7 +96,7 @@ export class WorldFrame {
       this.world;
     renderer.render(scene, camera);
     this.sections.render(this.world);
-    for (const render of renderOverlays) render();
+    for (const render of renderOverlays) render(() => this.sections.render(this.world, true));
     if (partialSection) {
       this.foreground.render(
         renderer,

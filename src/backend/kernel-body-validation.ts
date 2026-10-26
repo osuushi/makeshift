@@ -6,6 +6,7 @@ import {
   flag,
   frame,
   indexes,
+  meshNormals,
   number,
   numbers,
   object,
@@ -46,6 +47,7 @@ function face(value: unknown, faces: number, edges: number, known: ReadonlySet<s
   references(f.predecessors, known);
   numbers(f.signature, 6);
   requireKernel(numbers(f.vertices).length % 9 === 0, "triangle coordinates");
+  meshNormals(f.normals, numbers(f.vertices).length);
   indexes(f.edgeIndexes, edges); // A seam can repeat an edge occurrence.
   if (f.offsetFaceIndexes !== undefined) indexes(f.offsetFaceIndexes, faces);
   if (f.offsetSelected !== undefined) flag(f.offsetSelected);

@@ -46,7 +46,10 @@ belong to saved, editable [gear groups](gears.md), including all three display m
 The default and non-gear appearance choices are device preferences outside files and
 Undo; none of these display choices turns decorators into native BRep.
 The compositor excludes only a surface's own supports when resolving occlusion,
-then blends its configured opacity once. In body X-ray mode, every decorator follows
+then blends its configured opacity once. Section caps contribute depth from the
+complete body shell, so cut material hides previews while cavities remain open.
+This depth pass does not change the visible cap patterns or their overlap blending.
+In body X-ray mode, every decorator follows
 its owning body into the normal or X-ray layer, including fallback color and texture
 previews. The body layer opacity then fades the body and its decorations together;
 normal-body decorations remain visible through X-ray bodies. Generated previews and
