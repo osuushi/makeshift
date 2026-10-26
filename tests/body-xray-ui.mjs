@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { DocumentOwner } from "../.cache/sketch-tests/src/backend/document-owner.js";
+import { bodyEllipsoid } from "../.cache/sketch-tests/src/sketch/body-ellipsoid.js";
 import { emptySketch } from "../.cache/sketch-tests/src/sketch/document.js";
 import { planes } from "../.cache/sketch-tests/src/sketch/planes.js";
 import { lift, prism } from "../.cache/sketch-tests/tests/body-edge-fixtures.js";
@@ -15,6 +16,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 const owner = new DocumentOwner();
 let document;
+let edgeProbe;
 try {
   await prism(owner, [
     [-25, -25],
@@ -53,6 +55,13 @@ try {
       alpha: 1,
     })),
   };
+  // Probe just beyond the fitted ellipse's +X support, rather than the old
+  // tessellated box edge. The same halo/bleed assertions still straddle the aperture.
+  const fit = bodyEllipsoid(document.bodies[2].faces.map((face) => face.vertices));
+  assert.ok(fit);
+  const extent = Math.hypot(...fit.axes.map((axis) => axis.x));
+  const cross = fit.axes.reduce((sum, axis) => sum + axis.x * axis.y, 0);
+  edgeProbe = [fit.center.x + extent + 0.7, fit.center.y + cross / extent, 0];
 } finally {
   owner.close();
 }
@@ -102,7 +111,7 @@ await withUiRuntimes(async (page, name) => {
   assert.deepEqual(await sample(page), local, "Sketch opacity does not change body X-ray");
   await settings(page, { global: true });
   const global = await sample(page);
-  assert.ok(delta(local[0], global[0]) < 3, "Whole rear body is revealed inside its silhouette");
+  assert.ok(delta(local[0], global[0]) < 3, "Whole rear body is revealed inside its ellipsoid");
   assert.ok(delta(local[1], global[1]) > 10, "Outside body mask retains enclosing body");
   await settings(page, { global: false, bleed: 0, radius: 40 });
   const soft = await sample(page);
@@ -131,7 +140,7 @@ await withUiRuntimes(async (page, name) => {
     "X-ray does not mutate accepted geometry",
   );
   console.log(
-    `${name}: body X-ray controls, layer picking, silhouette, halo, bleed and opacity passed`,
+    `${name}: body X-ray controls, layer picking, ellipsoid, halo, bleed and opacity passed`,
   );
   await cameraPacingRoute(page, name);
   await continuousCameraRoute(page, name);
@@ -176,12 +185,7 @@ async function settings(page, values) {
 async function sample(page) {
   await page.mouse.move(1100, 80);
   // Stay opposite the origin label and away from the coordinate axes at both sizes.
-  const points = await Promise.all(
-    [
-      [-2.35, -3.37, 0],
-      [8.7, -3.37, 0],
-    ].map((p) => project(page, p)),
-  );
+  const points = await Promise.all([[-2.35, -3.37, 0], edgeProbe].map((p) => project(page, p)));
   const png = await page.screenshot();
   return page.evaluate(
     async ({ data, points }) => {

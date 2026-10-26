@@ -39,7 +39,6 @@ export class VisualBodyDrawable {
     this.group.add(this.mesh, this.onSection, this.outline, this.highlight);
     this.highlight.renderOrder = 20;
     for (const mesh of [this.mesh, this.onSection]) {
-      mesh.userData.bodyMask = true;
       mesh.material.vertexColors = true;
       mesh.material.color.set("white");
     }
@@ -50,6 +49,7 @@ export class VisualBodyDrawable {
   update(body: VisualBody, section: PlaneFrame | null = null, style = defaultStyle): void {
     const sectionKey = JSON.stringify([section, style]);
     if (this.source === body && this.sectionKey === sectionKey) return;
+    this.group.userData.bodyMaskGeometry = body.faces;
     const onSection = body.planes.map((plane) => !!(section && plane && coplanar(section, plane)));
     const selectedBody = body.sourceBodies?.some((id) => style.selected.includes(id));
     const colors = body.faces.map((_, index) =>

@@ -17,6 +17,7 @@ test("fresh extrusion candidates retain materials while replacing geometry and p
     const drawing = new BodyDrawable(body, counts);
     const meshes = drawing.group.children.filter((object) => object instanceof THREE.Mesh);
     const materials = meshes.map((mesh) => mesh.material);
+    const maskGeometry = drawing.group.userData.bodyMaskGeometry;
     let geometryDisposals = 0,
       materialDisposals = 0;
     for (const mesh of meshes) {
@@ -37,6 +38,7 @@ test("fresh extrusion candidates retain materials while replacing geometry and p
     const candidate = reply.view.candidate?.bodies?.find((next) => next.id !== body.id);
     assert.ok(candidate);
     assert.equal(drawing.reuse(candidate), true);
+    assert.notEqual(drawing.group.userData.bodyMaskGeometry, maskGeometry);
     assert.equal(geometryDisposals, 6);
     assert.equal(materialDisposals, 0);
     assert.deepEqual(
@@ -101,7 +103,9 @@ test("face styling and source-chain highlighting preserve resources and dispose 
     const original = inspectBodyRendering(scene),
       cap = body.faces.find((face) => face.plane?.origin[2] === 10);
     assert.ok(cap);
+    const maskGeometry = drawing.group.userData.bodyMaskGeometry;
     assert.equal(drawing.reuse(structuredClone(body)), true);
+    assert.equal(drawing.group.userData.bodyMaskGeometry, maskGeometry);
     drawing.style(new Set(), new Set([cap.id]), undefined, { ...planes.XY, origin: [0, 0, 10] });
     const styled = inspectBodyRendering(scene);
     assert.equal(styled.faces.find((face) => face.face === cap.id)?.color, "82b5e0");

@@ -36,6 +36,7 @@ export function bodyXrayLayerChecks() {
     );
     body.position.z = z;
     body.userData.bodyFace = { body: id, face: "face" };
+    body.userData.bodyMaskGeometry = [Array.from(body.geometry.getAttribute("position").array)];
     body.userData.decoratorFace = `${id}/face`;
     group.add(body);
     scene.add(group);

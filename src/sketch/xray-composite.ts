@@ -8,8 +8,9 @@ import { XrayMask } from "./xray-mask.js";
 
 /** A stable token identifies unchanged aperture inputs, independent of their geometry. */
 export interface XrayAperture {
+  readonly feathered?: boolean;
   read(world: World): object;
-  render(world: World, target: THREE.WebGLRenderTarget, bleed: number): void;
+  render(world: World, target: THREE.WebGLRenderTarget, bleed: number, feather?: number): void;
   contains(world: World, point: Point, bleed: number): boolean;
   dispose(): void;
 }
@@ -162,11 +163,18 @@ export class XrayComposite {
     )
       return;
     for (const buffer of [this.aperture, this.horizontal, this.soft]) buffer.setSize(width, height);
-    // Radius-only changes can reuse the sharp aperture too.
-    if (resized || contents !== this.maskContents || bleed !== this.maskBleed)
-      this.mask.render(world, this.aperture, bleed);
-    if (radius > 0) this.soften(world.renderer, radius);
-    this.mix.uniforms.maskImage.value = radius > 0 ? this.soft.texture : this.aperture.texture;
+    // Analytic body masks include their feather in the same draw. Sketch masks
+    // still reuse their sharp aperture on radius-only changes and blur it separately.
+    if (
+      resized ||
+      contents !== this.maskContents ||
+      bleed !== this.maskBleed ||
+      this.mask.feathered
+    )
+      this.mask.render(world, this.aperture, bleed, xrayRadius);
+    if (radius > 0 && !this.mask.feathered) this.soften(world.renderer, radius);
+    this.mix.uniforms.maskImage.value =
+      radius > 0 && !this.mask.feathered ? this.soft.texture : this.aperture.texture;
     this.maskContents = contents;
     this.maskBleed = bleed;
     this.maskRadius = radius;

@@ -74,6 +74,7 @@ export class BodyDrawable {
     private counts: Counts,
   ) {
     const source = body;
+    this.group.userData.bodyMaskGeometry = source.faces.map((face) => face.vertices);
     for (const face of source.faces) {
       const mesh = new THREE.Mesh(faceGeometry(face.vertices, face.normals), faceMaterial());
       decoratorErrorMaterial(mesh.material);
@@ -103,6 +104,7 @@ export class BodyDrawable {
       const edges = featureEdges(body);
       if (body.faces.length !== this.faces.length || edges.length !== this.edges.length)
         return false;
+      this.group.userData.bodyMaskGeometry = body.faces.map((face) => face.vertices);
       // These are presentation slots, not topology identities. Replace all
       // geometric inputs and picking IDs while retaining compatible materials.
       this.faces.forEach((mesh, i) => {
