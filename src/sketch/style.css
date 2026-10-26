@@ -166,3 +166,24 @@ button:focus-visible {
     right: 26px;
   }
 }
+
+.status.error-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: min(440px, 100%);
+  padding: 8px 10px;
+  color: var(--danger);
+  background: var(--surface);
+  border: 1px solid var(--danger);
+  border-radius: 7px;
+  pointer-events: auto;
+}
+.dismiss-feedback {
+  flex: none;
+  padding: 0 3px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  line-height: 1.2;
+}

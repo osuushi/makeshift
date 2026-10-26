@@ -14,7 +14,9 @@ The entire mutation lifecycle is:
 1. While idle, resolve the current selection and start an edit from accepted data.
 2. Change a temporary candidate, solve when necessary and validate it.
 3. On success, replace accepted data and add one Undo entry. On failure, retain
-   the accepted document and display the relevant error locally.
+   the accepted document and display the relevant error in the lower-left status
+   box. Errors have a dismiss button and clear on the next pointer, keyboard or
+   field-edit action; pointer movement alone preserves them. No error follows the cursor.
 4. Refresh derived geometry and controls, then accept the next edit.
 
 A deliberate mode/action switch resolves the released modal first: valid latest

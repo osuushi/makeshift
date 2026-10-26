@@ -14,6 +14,7 @@ import { chooseTool } from "./ui-tools.mjs";
 const fixture = JSON.parse(await readFile("tests/fixtures/projection-tilted-plane.json", "utf8"));
 await withUiRuntimes(async (page, name) => {
   await tiltedPlaneRoute(page, name);
+  if (process.env.MAKESHIFT_FEEDBACK_ONLY) return;
   await projectionSourcesRoute(page, name);
   // Existing routes use odd millimeter grid positions.
   await page.setViewportSize({ width: 1280, height: 2000 });
@@ -38,25 +39,36 @@ async function tiltedPlaneRoute(page, name) {
   await chooseTool(page, "Project", "project");
   assert.equal(await page.locator('[data-project="sources"], [data-project="target"]').count(), 0);
   // Empty space produces readable feedback, with acceptance still disabled.
-  await page.mouse.click(1100, 100);
+  await page.mouse.click(1100, 700);
   await inspect(page);
   assert.equal(
     await page.getByRole("button", { name: "Accept projection", exact: true }).isEnabled(),
     false,
   );
-  const feedback = await page.locator(".local-feedback").boundingBox();
-  const actions = await page.locator(".projection-actions").boundingBox();
-  assert.ok(feedback && actions);
-  assert.ok(feedback.y + feedback.height < actions.y || feedback.x > actions.x + actions.width);
+  const feedback = await page.locator(".status.error-feedback").boundingBox();
+  assert.ok(feedback);
+  assert.ok(feedback.x < 40 && feedback.y > 650, "Failure stays in the lower-left footer");
+  await page.mouse.move(700, 200);
+  assert.deepEqual(await page.locator(".status.error-feedback").boundingBox(), feedback);
+  assert.equal(await page.locator(".local-feedback").count(), 0);
+  await page.getByRole("button", { name: "Dismiss error" }).click();
+  assert.equal(await page.locator(".status.error-feedback").count(), 0);
+  await page.mouse.click(1100, 700);
+  await inspect(page);
+  assert.equal(await page.locator(".status.error-feedback").count(), 1);
   await page.screenshot({ path: `.cache/sketch-review/${name}-projection-feedback.png` });
+  await page.keyboard.press("g");
+  assert.equal(await page.locator(".status.error-feedback").count(), 0);
+  await page.keyboard.press("g");
+  await page.mouse.click(1100, 700);
+  await inspect(page);
+  assert.equal(await page.locator(".status.error-feedback").count(), 1);
   // A different target can be replaced directly, without mode buttons.
   await pickPlane(page, "XZ");
   assert.ok((await inspect(page)).preview);
-  const target = await project(page, [0, 0, 26]);
-  await page.mouse.move(target.x, target.y);
-  await page.mouse.click(target.x, target.y);
+  await page.getByRole("button", { name: "Use Plane 1", exact: true }).click();
   let state = await inspect(page);
-  assert.equal(await page.locator(".local-feedback").isHidden(), true);
+  assert.equal(await page.locator(".status.error-feedback").isHidden(), true);
   assert.deepEqual(state.document, before);
   const projected = state.preview.sketches.find((s) => s.id !== before.sketches[0].id);
   assert.ok(projected);
@@ -66,6 +78,13 @@ async function tiltedPlaneRoute(page, name) {
   await page.getByRole("button", { name: "Cancel projection", exact: true }).click();
   assert.deepEqual((await inspect(page)).document, before);
   assert.ok((await inspect(page)).modelingSelection.length);
+  if (process.env.MAKESHIFT_FEEDBACK_ONLY) {
+    console.log(
+      `${name}: fixed error box, hover persistence, dismiss, keyboard and next-action clearing passed`,
+    );
+    return;
+  }
+  const target = await project(page, [0, 0, 26]);
   await emptySelectionRoute(page, source, target, before);
   await page.mouse.click(source.x, source.y);
   await chooseTool(page, "Project", "project");

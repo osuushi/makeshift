@@ -16,7 +16,6 @@ import { selectHit } from "./selection-input.js";
 export class SelectionOverlay {
   private readonly svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   private readonly chooser = document.createElement("div");
-  private readonly feedback = document.createElement("div");
   private rect: DOMRect;
   private markers = new Set<string>();
   private previousChoices: SketchEditor["overlaps"] = null;
@@ -28,9 +27,7 @@ export class SelectionOverlay {
     this.svg.classList.add("handles");
     this.svg.setAttribute("aria-hidden", "true");
     this.chooser.className = "overlap-chooser";
-    this.feedback.className = "local-feedback";
-    this.feedback.setAttribute("role", "alert");
-    overlay.append(this.svg, this.chooser, this.feedback);
+    overlay.append(this.svg, this.chooser);
     editor.world.changed.add(this.update);
     this.update();
   }
@@ -229,24 +226,10 @@ export class SelectionOverlay {
       }
     this.drawHints();
     this.showChoices();
-    // Erode displays failure feedback beside its allowance retry action.
-    this.feedback.hidden =
-      !this.editor.message || this.editor.interactions.current?.kind === "erode";
-    this.feedback.textContent = this.editor.message;
-    const projection = this.editor.interactions.current?.kind === "projection";
-    this.feedback.classList.toggle("projection-feedback", projection);
-    const point = this.editor.pointer ?? { x: this.rect.width / 2, y: this.rect.height / 2 };
-    this.feedback.style.left = projection
-      ? ""
-      : `${Math.max(10, Math.min(this.rect.width - 260, point.x - this.rect.left + 16))}px`;
-    this.feedback.style.top = projection
-      ? ""
-      : `${Math.max(60, Math.min(this.rect.height - 55, point.y - this.rect.top + 26))}px`;
   };
   dispose(): void {
     this.editor.world.changed.delete(this.update);
     this.svg.remove();
     this.chooser.remove();
-    this.feedback.remove();
   }
 }
