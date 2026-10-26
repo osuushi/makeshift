@@ -8,6 +8,7 @@ export interface VisualBody {
   sourceEdges?: string[][];
   bounds: [number, number, number, number, number, number];
   faces: number[][];
+  normals?: number[][];
   planes: (import("../sketch/planes.js").PlaneFrame | null)[];
   edges: number[][];
 }

@@ -44,6 +44,15 @@ export function vector(value: unknown, unit = false): Vector {
   requireKernel(!unit || Math.abs(Math.hypot(...result) - 1) <= 1e-7, "unit direction");
   return result;
 }
+export function meshNormals(value: unknown, coordinateCount: number): void {
+  if (value === undefined) return; // Older kernels and mesh-only fixtures.
+  const normals = numbers(value, coordinateCount);
+  for (let i = 0; i < normals.length; i += 3)
+    requireKernel(
+      Math.abs(Math.hypot(normals[i], normals[i + 1], normals[i + 2]) - 1) <= 1e-5,
+      "unit mesh normal",
+    );
+}
 export function bounds(value: unknown): void {
   const result = numbers(value, 6);
   requireKernel(

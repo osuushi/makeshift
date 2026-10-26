@@ -52,6 +52,9 @@ export function placedBodies(bodies: readonly Body[], edit: BodyTransform): Body
       signature: [...face.signature.slice(0, 3), ...point(face.signature.slice(3, 6) as Vector)],
       ...(face.bounds ? { bounds: bounds(face.bounds) } : {}),
       vertices: points(face.vertices),
+      normals: face.normals?.flatMap((_, i, values) =>
+        i % 3 ? [] : direction(values.slice(i, i + 3) as Vector),
+      ),
       plane: face.plane
         ? {
             origin: point(face.plane.origin),

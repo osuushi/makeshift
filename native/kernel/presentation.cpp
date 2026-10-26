@@ -74,6 +74,8 @@ void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMap
     out << ']';
     out << ",\"vertices\":";
     presentVertices(out, shape);
+    out << ",\"normals\":";
+    presentNormals(out, shape);
     BRepAdaptor_Surface surface(shape);
     analyticSurfaces(out, shape, surface);
     presentOffsetThickness(out, shape, faces, thickness);

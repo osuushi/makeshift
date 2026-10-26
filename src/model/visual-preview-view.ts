@@ -64,6 +64,7 @@ export class VisualBodyDrawable {
         mesh,
         body.faces.filter((_, i) => onSection[i] === clipped),
         colors.filter((_, i) => onSection[i] === clipped),
+        body.normals?.filter((_, i) => onSection[i] === clipped),
       );
       const transparent = style.alpha < 1;
       if (mesh.material.transparent !== transparent) mesh.material.needsUpdate = true;
@@ -100,9 +101,14 @@ export class VisualBodyDrawable {
   }
 }
 
-function replaceFaces(mesh: THREE.Mesh, vertices: number[][], colors: string[]): void {
+function replaceFaces(
+  mesh: THREE.Mesh,
+  vertices: number[][],
+  colors: string[],
+  normals?: number[][],
+): void {
   const faces = vertices.map((points, i) => {
-    const face = faceGeometry(points),
+    const face = faceGeometry(points, normals?.[i]),
       color = new THREE.Color(colors[i]);
     const attribute = new THREE.Float32BufferAttribute(
       new Float32Array(face.getAttribute("position").count * 3),
