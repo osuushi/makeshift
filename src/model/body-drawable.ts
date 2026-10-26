@@ -107,7 +107,7 @@ export class BodyDrawable {
       // geometric inputs and picking IDs while retaining compatible materials.
       this.faces.forEach((mesh, i) => {
         const face = body.faces[i];
-        const geometry = faceGeometry(face.vertices);
+        const geometry = faceGeometry(face.vertices, face.normals);
         mesh.geometry.dispose();
         mesh.geometry = geometry;
         mesh.userData.bodyFace = { body: body.id, face: face.id };

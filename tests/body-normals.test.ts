@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import * as THREE from "three";
 import { meshNormals } from "../src/backend/kernel-values.js";
 import type { Body } from "../src/model/body.js";
-import { sameBodyDrawing } from "../src/model/body-drawable.js";
+import { BodyDrawable, sameBodyDrawing } from "../src/model/body-drawable.js";
 import { faceGeometry } from "../src/model/body-mesh.js";
 import { placedBodies } from "../src/model/body-placement.js";
 
@@ -47,6 +48,22 @@ test("display rotation rotates normals without translating them and invalidates 
     sameBodyDrawing(body, { ...body, faces: [{ ...body.faces[0], normals: expected }] }),
     false,
   );
+  const reused = new BodyDrawable(body, { created: 0, disposed: 0 });
+  const fresh = new BodyDrawable(placed, { created: 0, disposed: 0 });
+  try {
+    assert.equal(reused.reuse(placed), true);
+    const updatedMesh = reused.group.children[0];
+    const freshMesh = fresh.group.children[0];
+    assert.ok(updatedMesh instanceof THREE.Mesh && freshMesh instanceof THREE.Mesh);
+    assert.deepEqual(
+      Array.from(updatedMesh.geometry.getAttribute("normal").array),
+      Array.from(freshMesh.geometry.getAttribute("normal").array),
+      "Updating an existing drawable must shade identically to recreating it after paste",
+    );
+  } finally {
+    reused.dispose();
+    fresh.dispose();
+  }
 });
 
 test("kernel rejects malformed normals rather than passing corrupt shading to WebGL", () => {
