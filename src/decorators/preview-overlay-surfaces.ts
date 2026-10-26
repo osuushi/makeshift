@@ -206,7 +206,7 @@ export class PreviewOverlaySurfaces {
     return this.fallback.visible(this.editor, ready);
   }
 
-  private readonly render = () => {
+  private readonly render = (occludeSections?: () => void) => {
     const attached = this.style();
     if (this.group.visible)
       this.compositor.render(
@@ -214,6 +214,7 @@ export class PreviewOverlaySurfaces {
         this.editor.world.scene,
         this.editor.world.camera,
         [...this.surfaces, ...attached],
+        occludeSections,
       );
   };
 

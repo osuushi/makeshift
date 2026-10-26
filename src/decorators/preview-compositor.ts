@@ -79,6 +79,7 @@ if (gl_FragCoord.z > texture2D(decoratorOcclusion, gl_FragCoord.xy / decoratorRe
     scene: THREE.Scene,
     camera: THREE.Camera,
     surfaces: readonly PreviewSurface[],
+    occludeSections?: () => void,
   ): void {
     const visible = surfaces.filter(({ mesh }) => mesh.visible);
     if (!visible.length) return;
@@ -105,7 +106,7 @@ if (gl_FragCoord.z > texture2D(decoratorOcclusion, gl_FragCoord.xy / decoratorRe
       for (const surface of visible) {
         (surface.mesh.material as THREE.Material).opacity =
           (surface.opacity ?? 1) * (surface.displayOpacity ?? 0.78);
-        this.renderSurface(renderer, scene, camera, surface, supports, layers);
+        this.renderSurface(renderer, scene, camera, surface, supports, layers, occludeSections);
       }
       renderer.setRenderTarget(target);
       renderer.clippingPlanes = [];
@@ -129,6 +130,7 @@ if (gl_FragCoord.z > texture2D(decoratorOcclusion, gl_FragCoord.xy / decoratorRe
     surface: PreviewSurface,
     supports: THREE.Object3D[],
     layers: number,
+    occludeSections?: () => void,
   ): void {
     const hidden = supports.filter((object) => surface.faces.has(object.userData.decoratorFace));
     const offsets = supports.flatMap((object) =>
@@ -152,6 +154,8 @@ if (gl_FragCoord.z > texture2D(decoratorOcclusion, gl_FragCoord.xy / decoratorRe
       for (const object of hidden) object.visible = true;
       for (const material of offsets) material.polygonOffset = true;
     }
+    // Caps need the complete closed shell, including this preview's own supports.
+    occludeSections?.();
     try {
       surface.mesh.visible = true;
       camera.layers.set(decoratorPreviewLayer);

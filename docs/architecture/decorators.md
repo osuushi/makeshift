@@ -46,8 +46,10 @@ belong to saved, editable [gear groups](gears.md), including all three display m
 The default and non-gear appearance choices are device preferences outside files and
 Undo; none of these display choices turns decorators into native BRep.
 The compositor excludes only a surface's own supports when resolving occlusion,
-then blends its configured opacity once. Generated previews and attachment markers
-cannot intercept analytic face picking.
+then blends its configured opacity once. Section caps contribute depth from the
+complete body shell, so cut material hides previews while cavities remain open.
+This depth pass does not change the visible cap patterns or their overlap blending.
+Generated previews and attachment markers cannot intercept analytic face picking.
 Texture generates the same preview mesh, then bakes its facing triangle normals
 onto the original trimmed support tessellation in the preview worker. It changes
 lighting, not the support silhouette, depth, picking, accepted geometry or export.
