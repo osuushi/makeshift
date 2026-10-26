@@ -120,18 +120,6 @@
   box-shadow: none;
 }
 
-.local-feedback {
-  position: absolute;
-  max-width: 250px;
-  padding: 7px 10px;
-  color: var(--warning);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  font-size: 12px;
-  pointer-events: none;
-}
-
 .selected-point {
   fill: var(--accent);
   stroke: var(--panel);

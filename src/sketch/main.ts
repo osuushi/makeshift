@@ -87,6 +87,7 @@ if (!host || !overlay || !status) throw new Error("Missing viewport elements");
 const numeric = new NumericEdit(),
   world = new World(host, overlay),
   editor = new SketchEditor(world, numeric);
+installWorkspaceStatus(editor, app, status);
 installPlaneBounds(editor);
 const inspector = new Inspector(app);
 const decorators = new DecoratorPanel(
@@ -217,7 +218,6 @@ const disposeHost =
 const disposePlaneEntry = planeEntryTools(editor);
 const disposeSettings = installSettings(editor, app);
 const disposeTools = installToolSurfaces(editor, app, entities.element);
-installWorkspaceStatus(editor, app, status);
 installViewInspection(editor, sections);
 world.draw();
 void editor.store.request({ kind: "read" });

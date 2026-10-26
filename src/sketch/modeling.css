@@ -24,11 +24,6 @@
 .projection-actions button:disabled {
   opacity: 0.45;
 }
-.projection-feedback {
-  left: 50%;
-  bottom: 108px;
-  transform: translateX(-50%);
-}
 .extrude-targets {
   position: absolute;
   top: calc(100% + 6px);
