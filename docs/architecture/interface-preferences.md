@@ -95,8 +95,12 @@ Global disables the two mask controls. Local mode dilates and blurs visible sket
 contents on the current plane; the cut and front translucency appear only through
 that mask. Sketch/profile selection or an active sketch workspace starts automatic
 sketch X-ray vision. The Entities body X-ray toggle uses the same settings: whole
-visible non-X-ray body silhouettes form the aperture, including their actual holes
-and curved outlines. All X-ray bodies keep ordinary internal depth order and are
+visible non-X-ray bodies form an approximate aperture. Each drawable geometry has
+a cached oriented enclosing ellipsoid, projected to a screen ellipse; holes and
+concavities intentionally fill. Camera movement reprojects the fit without rescanning
+vertices. Geometry replacement invalidates it; style and section changes retain it.
+The ellipse union draws bleed and feather directly in CSS pixels, without the
+body silhouette/dilation/blur passes. All X-ray bodies keep ordinary internal depth order and are
 composited once at the independent body opacity, revealing enclosed normal bodies.
 Decorators follow their owning body and fade with that same layer; their own
 configured preview opacity still applies within the layer.
