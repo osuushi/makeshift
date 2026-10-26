@@ -25,7 +25,10 @@ export function sameBodyDrawing(a: BodyGeometry, b: BodyGeometry): boolean {
   if (a.id !== b.id || a.faces.length !== b.faces.length) return false;
   if (
     !a.faces.every(
-      (face, i) => face.id === b.faces[i].id && sameValues(face.vertices, b.faces[i].vertices),
+      (face, i) =>
+        face.id === b.faces[i].id &&
+        sameValues(face.vertices, b.faces[i].vertices) &&
+        sameValues(face.normals ?? [], b.faces[i].normals ?? []),
     )
   )
     return false;
@@ -72,7 +75,7 @@ export class BodyDrawable {
   ) {
     const source = body;
     for (const face of source.faces) {
-      const mesh = new THREE.Mesh(faceGeometry(face.vertices), faceMaterial());
+      const mesh = new THREE.Mesh(faceGeometry(face.vertices, face.normals), faceMaterial());
       decoratorErrorMaterial(mesh.material);
       mesh.userData.bodyFace = { body: source.id, face: face.id };
       mesh.userData.decoratorFace = previewFaceKey(source.id, face.id);

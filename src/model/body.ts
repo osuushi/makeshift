@@ -8,6 +8,8 @@ export interface Face {
   readonly id: string;
   readonly signature: number[];
   readonly vertices: number[];
+  /** Oriented CAD surface normals, in the same corner order as vertices. */
+  readonly normals?: number[];
   readonly plane: PlaneFrame | null;
   /** Nearest directly reachable parallel planar or concentric wall in this body. */
   readonly thickness?: { face: string; distance: number; slope: 1 | -1 } | null;

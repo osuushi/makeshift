@@ -1,6 +1,7 @@
 #include "presentation-mesh.h"
 #include "timing.h"
 #include <BRepBndLib.hxx>
+#include <BRepLib_ToolTriangulatedShape.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <gp_Pln.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
@@ -70,6 +71,29 @@ void presentVertices(std::ostream& out, const TopoDS_Face& shape) {
     out << ']';
 }
 
+void presentNormals(std::ostream& out, const TopoDS_Face& shape) {
+    out << '[';
+    TopLoc_Location location;
+    const auto mesh = BRep_Tool::Triangulation(shape, location);
+    bool comma = false;
+    if (!mesh.IsNull()) {
+        BRepLib_ToolTriangulatedShape::ComputeNormals(shape, mesh);
+        for (int i = 1; i <= mesh->NbTriangles(); ++i) {
+            int a, b, c;
+            mesh->Triangle(i).Get(a, b, c);
+            if (shape.Orientation() == TopAbs_REVERSED) std::swap(b, c);
+            for (int index : {a, b, c}) {
+                auto normal = mesh->Normal(index).Transformed(location.Transformation());
+                if (shape.Orientation() == TopAbs_REVERSED) normal.Reverse();
+                if (comma) out << ',';
+                comma = true;
+                out << normal.X() << ',' << normal.Y() << ',' << normal.Z();
+            }
+        }
+    }
+    out << ']';
+}
+
 // Use the active face mesh, not an independently sampled curve: curved chords
 // with different endpoints can fall inside the triangles they should outline.
 std::vector<std::vector<gp_Pnt>> meshEdges(const TopTools_IndexedMapOfShape& faces,
@@ -116,6 +140,11 @@ void presentVisual(std::ostream& out, const Result& result, double deflection) {
         for (TopExp_Explorer e(face, TopAbs_EDGE); e.More(); e.Next())
             if (BRep_Tool::IsClosed(TopoDS::Edge(e.Current()), face))
                 seams.insert(edges.FindIndex(e.Current()) - 1);
+    }
+    out << "],\"normals\":[";
+    for (int i = 1; i <= faces.Extent(); ++i) {
+        if (i > 1) out << ',';
+        presentNormals(out, TopoDS::Face(faces(i)));
     }
     out << "],\"planes\":[";
     for (int i = 1; i <= faces.Extent(); ++i) {

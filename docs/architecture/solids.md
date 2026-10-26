@@ -6,6 +6,15 @@ Cubic editing/projection (2026-09-16) supersedes any earlier spline exclusion.
 
 ## Solid tools and materialized bodies
 
+Accepted and temporary solid meshes carry oriented normals evaluated from their
+CAD surfaces at tessellation UV coordinates. Positions and normals share triangle
+corner order; location and face orientation apply to both. Surface normals preserve
+smooth shading independently of triangle layout and retain genuine sharp edges.
+OCCT falls back to mesh normals where a surface normal cannot be evaluated;
+legacy display data without normals retains renderer-side averaging. Rigid display
+previews rotate normals without translating them. Normals are derived presentation
+data and are regenerated from the exact body when opening a drawing.
+
 The first B1 increment separates the active workspace's sketch ID and plane frame
 from the XY/XZ/YZ entry presets. Sketching owns point/curve/group selection;
 Modeling owns typed whole-sketch or derived-profile selection. Plane equality is
