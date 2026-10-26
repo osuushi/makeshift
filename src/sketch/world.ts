@@ -45,7 +45,7 @@ export class World {
   readonly target = new THREE.Vector3();
   depthBounds = (): THREE.Box3 => new THREE.Box3();
   readonly changed = new Set<() => void>();
-  readonly renderOverlays = new Set<() => void>();
+  readonly renderOverlays = new Set<(occludeSections?: () => void) => void>();
   readonly renderForegroundOverlays = new Set<ForegroundOverlay>();
   readonly canonicalVisibility = new CanonicalPlaneVisibility();
   readonly grids = createGrids(this.scene);
