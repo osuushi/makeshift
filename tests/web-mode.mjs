@@ -62,10 +62,13 @@ try {
       await settled(page);
       console.log(`${name}: editor ready`);
       assert.equal(await page.getByRole("button", { name: "Open agent terminal" }).count(), 0);
-      assert.equal(
-        requests.some((url) => /makeshift-(occt|kernel|solver)-.*\.wasm/.test(url)),
-        false,
-      );
+      // Startup prepares both calculators before releasing editor input.
+      for (const asset of ["solver", "occt", "kernel"]) {
+        assert.ok(
+          requests.some((url) => new RegExp(`makeshift-${asset}-.*\\.wasm`).test(url)),
+          `${name}: ${asset} prepared before editor readiness`,
+        );
+      }
       try {
         await route(page, name);
         for (const asset of ["occt", "kernel"]) {
