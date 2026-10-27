@@ -89,7 +89,7 @@ line thickness (0.5–3 pixels, default 1), plane switch angle (0–90°, defaul
 colors and saved palettes. A 0° switch angle retains until edge-on; 90° always
 chooses the most face-on plane.
 **X-ray vision** has **Global** (off by default), **X-ray front opacity** for sketches and
-**Body X-ray opacity** for the body layer (each 0–100%, default 80%), and
+**Body X-ray opacity** for the body layer (each 0–100%, default 80% for front and 25% for body), and
 **Bleed**/**Radius** (0–100 screen pixels, defaults 100/50).
 Global disables the two mask controls. Local mode dilates and blurs visible sketch
 contents on the current plane; the cut and front translucency appear only through

@@ -15,7 +15,7 @@ const defaults: ViewDisplay = {
   gridFill: 0.3,
   gridLineWidth: 1,
   sectionFrontOpacity: 0.8,
-  bodyXrayOpacity: 0.8,
+  bodyXrayOpacity: 0.25,
   xrayGlobal: false,
   xrayBleed: 100,
   xrayRadius: 50,
