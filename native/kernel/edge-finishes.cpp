@@ -1,5 +1,6 @@
 #include "kernel.h"
 #include "edge-finish-conditioning.h"
+#include "prismatic-fillet.h"
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
 #include <BRepCheck_Analyzer.hxx>
@@ -30,6 +31,12 @@ TopoDS_Shape repairEdgeFinish(const TopoDS_Shape& shape) {
 template<class Operation>
 void finishBody(const Operand& body, const std::vector<TopoDS_Edge>& edges,
                 double size, std::vector<Result>& results) {
+    if constexpr (std::is_same_v<Operation, BRepFilletAPI_MakeFillet>) {
+        if (const auto result = prismaticFillet(body, edges, size)) {
+            results.push_back(*result);
+            return;
+        }
+    }
     Operation operation(body.shape);
     // Keep generated blend boundaries precise enough for subsequent offsets.
     // This changes fitting accuracy, not the edge radius or topology tolerance.

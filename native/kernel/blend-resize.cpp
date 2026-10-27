@@ -1,8 +1,10 @@
 #include "blends.h"
+#include "prismatic-fillet.h"
 #include <BRepAlgoAPI_Defeaturing.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
 #include <TopExp.hxx>
+#include <TopExp_Explorer.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
@@ -97,6 +99,18 @@ Result resize(const Operand& body, const std::vector<TopoDS_Face>& seeds, double
     auto origins = trace(remove, body.entities);
     if (radius == 0) return finishResult(body, selected, remove.Shape(), origins);
     const auto replacementSeeds = recoveredEdges(body, remove, pairs);
+    if (!chamfer && replacementSeeds.size() == 1) {
+        const auto& seed = replacementSeeds.front();
+        if (auto rounded = prismaticFillet({body.id, remove.Shape(), origins},
+                                           {TopoDS::Edge(seed.shape)}, radius)) {
+            for (TopExp_Explorer it(rounded->shape, TopAbs_FACE); it.More(); it.Next()) {
+                const bool inherited = std::any_of(rounded->predecessors.begin(), rounded->predecessors.end(),
+                    [&](const auto& source) { return source.shape.IsSame(it.Current()); });
+                if (!inherited) rounded->predecessors.push_back({seed.id, it.Current()});
+            }
+            return finishResult(body, selected, rounded->shape, rounded->predecessors);
+        }
+    }
     BRepFilletAPI_MakeFillet fillet(remove.Shape());
     BRepFilletAPI_MakeChamfer bevel(remove.Shape());
     TopTools_MapOfShape added;

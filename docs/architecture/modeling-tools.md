@@ -137,6 +137,19 @@ If OCCT builds an edge finish with invalid topology, the kernel makes one shape
 repair pass and validates the repaired solid before offering a preview. A repair
 that remains invalid still rejects the edit.
 
+A single straight convex edge between planar walls, with perpendicular planar
+end caps and straight cap boundaries, rounds by subtracting a swept circular
+corner section. Its radius and tangency come from the two supporting planes;
+interior holes trim the resulting cylindrical face directly. Crossing a hole
+does not introduce a rolling-ball transition patch or limit the radius at that
+hole. Tangency remains within both end caps' adjacent boundary lengths; complete
+support consumption retains ordinary feasibility clamping. Unsupported corners,
+curved edges and multiple-edge blends use the ordinary fillet builder. The same
+construction applies when resizing a recognized cylindrical blend after recovering
+its supporting edge from current geometry. Boolean correspondence preserves
+continuing walls and holes; the new round receives a new face identity on creation.
+Preview, Cancel, acceptance and Undo retain their existing ownership.
+
 Failed edge-chain validation keeps the Fillet/Chamfer control open with its error,
 numeric focus and disabled acceptance; Escape/Cancel explicitly releases it.
 For a linear extrusion of a nonrational cubic Bézier with an endpoint handle
