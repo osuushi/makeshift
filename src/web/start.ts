@@ -1,9 +1,10 @@
 import { DocumentOwner } from "../backend/document-owner.js";
+import { modelWireReply } from "../sketch/model-wire.js";
 
 export function installWebModel(): void {
   const owner = new DocumentOwner();
   window.makeshiftModel = async (request) =>
-    structuredClone(await owner.call(structuredClone(request)));
+    structuredClone(modelWireReply(request, await owner.call(structuredClone(request))));
   window.makeshiftFixture = async (snapshot) => {
     const capturedAt = new Date().toISOString();
     return {

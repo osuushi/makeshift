@@ -168,6 +168,16 @@ copies so mesh-query caches survive preview replies. Reuse compares complete bod
 content, including presentation and topology metadata; an equal BRep alone is
 insufficient. Changed bodies always replace the retained reference.
 
+Held visual extrusion requests reuse the renderer's accepted snapshot. Successful
+transport replies omit that unchanged document, returning the visual result and
+current feedback; the backend's own view remains complete. Errors, full candidates,
+completion, acceptance and ordinary API reads still return complete data. This is
+an operation-specific transport optimization, with no document revisions or second
+owner. Repeated empty selection-history writes are skipped only while their entire
+baseline is unchanged; edits, navigation and document replacement invalidate that
+reuse. Captured solid drags share sketch dragging's once-per-frame refresh so busy
+notifications and preview publication do not each rebuild the same viewport.
+
 The founder's 2026-09-15 feedback opens planning of the first solid modeling loop
 while further sketch work remains. The [sketch → solid → sketch proposal](../sketch-solid-loop.md)
 develops these requirements into interactions, concrete model ownership and bounded

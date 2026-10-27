@@ -89,6 +89,7 @@ export class GuideMarkers {
     this.clearance.schedule();
   }
   private hideOverlaps(): void {
+    if (!this.buttons.length) return;
     const bounds = this.clearance.bounds();
     for (const button of this.buttons) {
       const point = this.editor.world.project(button.items[0].point);

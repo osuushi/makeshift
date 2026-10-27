@@ -156,7 +156,7 @@ export class SketchEditor {
     if (sketch) this.world.syncWorkspaceFrame(sketch.plane);
     // Pointer input and calculator notifications can arrive several times per paint.
     // Keep model updates immediate, but present a captured gesture only once per frame.
-    if (this.world.active && this.isDragging) this.world.requestDraw();
+    if (this.isDragging) this.world.requestDraw();
     else this.world.draw();
   }
   async setTool(tool: Tool): Promise<void> {

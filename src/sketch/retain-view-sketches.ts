@@ -13,6 +13,7 @@ function content(sketch: object): string {
 
 /** Transport copies must not invalidate geometry caches for unchanged read-only inputs. */
 function retain(previous: SketchDocument, next: SketchDocument): SketchDocument {
+  if (previous === next) return next;
   const sketches = next.sketches.map((sketch) => {
     const source = previous.sketches.find((source) => source.id === sketch.id);
     return source && (source === sketch || content(source) === content(sketch)) ? source : sketch;

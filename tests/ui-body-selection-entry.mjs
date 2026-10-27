@@ -23,7 +23,7 @@ export async function bodySelectionEntryRoute(page, name) {
   let state = await inspect(page);
   assert.equal(state.modelingSelection[0].kind, "face");
   const face = body.faces.find((face) => face.id === state.modelingSelection[0].face);
-  await page.keyboard.press("Enter");
+  await page.keyboard.press("Meta+Enter");
   state = await inspect(page);
   assert.ok(state.activePlane);
   assert.deepEqual(state.document, original, "Workspace entry creates no empty sketch");
@@ -42,5 +42,5 @@ export async function bodySelectionEntryRoute(page, name) {
   await page.getByRole("button", { name: "Show Sketch 1", exact: true }).click();
   await page.mouse.dblclick(top.x, top.y);
   assert.equal((await inspect(page)).activeSketch, original.sketches[0].id);
-  console.log(`${name}: body double-click, face Enter/drawing/history and sketch entry passed`);
+  console.log(`${name}: body double-click, face Cmd-Enter/drawing/history and sketch entry passed`);
 }
