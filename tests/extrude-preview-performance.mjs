@@ -16,7 +16,7 @@ const replacements = {
     ["if (!changes.steps.length && encoded === this.sentSelection) return;", ""],
     ["await call(request, this.view.data)", "await call(request)"],
   ],
-  "editor.ts": [["if (this.isDragging)", "if (this.world.active && this.isDragging)"]],
+  "editor.ts": [["if (coalesce && this.isDragging)", "if (this.world.active && this.isDragging)"]],
   "move-destinations.ts": [
     ['if (this.root.style.display === "none") return;', ""],
     ["if (!circles.length) return;", ""],

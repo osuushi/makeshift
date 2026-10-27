@@ -175,8 +175,10 @@ completion, acceptance and ordinary API reads still return complete data. This i
 an operation-specific transport optimization, with no document revisions or second
 owner. Repeated empty selection-history writes are skipped only while their entire
 baseline is unchanged; edits, navigation and document replacement invalidate that
-reuse. Captured solid drags share sketch dragging's once-per-frame refresh so busy
+reuse. Captured extrusion drags share sketch dragging's once-per-frame refresh so busy
 notifications and preview publication do not each rebuild the same viewport.
+Other solid controls retain synchronous refresh when revealing numeric fields
+before transferring keyboard focus.
 
 The founder's 2026-09-15 feedback opens planning of the first solid modeling loop
 while further sketch work remains. The [sketch → solid → sketch proposal](../sketch-solid-loop.md)
