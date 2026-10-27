@@ -9,7 +9,10 @@ class Element extends EventTarget {
   textContent = "";
   className = "";
   classes = new Set<string>();
-  classList = { add: (name: string) => this.classes.add(name) };
+  classList = {
+    add: (name: string) => this.classes.add(name),
+    remove: (name: string) => this.classes.delete(name),
+  };
   children: Element[] = [];
   querySelector(selector: string): Element | undefined {
     return selector === "video" ? video : status;
@@ -89,13 +92,21 @@ function startup(
   return { screen, app, window, video, advance, status };
 }
 
-test("fast startup finishes the animation before releasing editor input", () => {
+test("fast startup fades for 500ms after the wordmark before releasing editor input", () => {
   const run = startup();
   run.window.dispatchEvent(new Event("makeshift-ready"));
   assert.equal(run.app.inert, true);
   run.video.dispatchEvent(new Event("ended"));
   run.advance(649);
   assert.equal(run.screen.removed, false);
+  run.advance(1);
+  assert.equal(run.screen.classes.has("is-dismissing"), true);
+  assert.equal(run.screen.classes.has("is-waiting"), false);
+  run.advance(499);
+  assert.equal(run.screen.removed, false);
+  assert.equal(run.app.inert, true);
+  // Repeated readiness signals must not restart the exit fade.
+  run.window.dispatchEvent(new Event("makeshift-ready"));
   run.advance(1);
   assert.equal(run.screen.removed, true);
   assert.equal(run.app.inert, false);
@@ -108,6 +119,9 @@ test("slow startup holds the completed wordmark and spinner until the model is r
   assert.equal(run.screen.removed, false);
   assert.equal(run.screen.classes.has("is-waiting"), true);
   run.window.dispatchEvent(new Event("makeshift-ready"));
+  assert.equal(run.screen.removed, false);
+  assert.equal(run.screen.classes.has("is-dismissing"), true);
+  run.advance(500);
   assert.equal(run.screen.removed, true);
 });
 
@@ -116,7 +130,7 @@ test("failed media and stalled media both release a ready editor", () => {
     const run = startup();
     run.window.dispatchEvent(new Event("makeshift-ready"));
     if (failure === "error") run.video.dispatchEvent(new Event("error"));
-    run.advance(5650);
+    run.advance(6150);
     assert.equal(run.screen.removed, true);
   }
 });
@@ -125,7 +139,7 @@ test("blocked autoplay falls back to the wordmark", async () => {
   const run = startup(false, true);
   run.window.dispatchEvent(new Event("makeshift-ready"));
   await Promise.resolve();
-  run.advance(650);
+  run.advance(1150);
   assert.equal(run.screen.removed, true);
 });
 
@@ -175,4 +189,17 @@ test("startup failure presents an actionable error and cannot be dismissed by re
     "Makeshift could not start: Kernel unavailable",
   );
   assert.equal(run.status.children[0]?.children[1]?.textContent, "Reload");
+});
+
+test("a startup error during the exit fade restores the screen and keeps input blocked", () => {
+  const run = startup();
+  run.window.dispatchEvent(new Event("makeshift-ready"));
+  run.video.dispatchEvent(new Event("ended"));
+  run.advance(900);
+  assert.equal(run.screen.classes.has("is-dismissing"), true);
+  run.window.dispatchEvent(new Event("makeshift-startup-error"));
+  run.advance(1000);
+  assert.equal(run.screen.classes.has("is-dismissing"), false);
+  assert.equal(run.screen.removed, false);
+  assert.equal(run.app.inert, true);
 });

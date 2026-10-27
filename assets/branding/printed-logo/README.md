@@ -184,7 +184,10 @@ print was made.
 ## Startup animation
 
 The loading screen uses a 60 fps, 3-second Cycles render of `icon.gcode`, followed
-by a 650 ms UI wordmark wipe. The opening frame is an empty plate seen at macro scale.
+by a 650 ms UI wordmark wipe. Once the runtime is ready, the entire loading screen
+fades into the live editor over 500 ms. Input stays blocked until that fade ends;
+reduced motion and subsequent static windows dismiss immediately.
+The opening frame is an empty plate seen at macro scale.
 The first bead grows for a full second, using the first volume quota of the existing
 layer sequence. The close-up drifts gently sideways with a subtle widening. The camera then
 starts its 0.9-second pullback a quarter-second before the layer sequence accelerates,

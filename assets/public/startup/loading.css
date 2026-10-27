@@ -28,6 +28,14 @@ body {
   background: #f8f9fb;
   color: var(--startup-ink);
   font-family: "Makeshift DM Sans", sans-serif;
+  opacity: 1;
+  transition: opacity 500ms ease;
+}
+#startup.is-dismissing {
+  opacity: 0;
+}
+#startup.is-static {
+  transition: none;
 }
 html[data-theme="dark"] #startup {
   --startup-ink: #d6c6e3;

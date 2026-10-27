@@ -60,18 +60,25 @@ const showStartupError = (screen, detail) => {
   let failed = false;
   let deadline;
   let revealTimer;
+  let dismissTimer;
   let stopMedia;
   app.inert = true;
   const dismiss = () => {
-    if (!ready || !finished || failed) return;
+    if (!ready || !finished || failed || dismissTimer !== undefined) return;
     clearTimeout(deadline);
     clearTimeout(revealTimer);
     stopMedia?.();
     video.pause();
-    screen.remove();
-    app.inert = false;
-    window.removeEventListener("makeshift-ready", onReady);
-    window.removeEventListener("makeshift-startup-error", onError);
+    screen.classList.add("is-dismissing");
+    dismissTimer = setTimeout(
+      () => {
+        screen.remove();
+        app.inert = false;
+        window.removeEventListener("makeshift-ready", onReady);
+        window.removeEventListener("makeshift-startup-error", onError);
+      },
+      animate ? 500 : 0,
+    );
   };
   const reveal = () => {
     if (revealed) return;
@@ -83,7 +90,7 @@ const showStartupError = (screen, detail) => {
     revealTimer = setTimeout(
       () => {
         finished = true;
-        screen.classList.add("is-waiting");
+        if (!ready) screen.classList.add("is-waiting");
         dismiss();
       },
       animate ? 650 : 0,
@@ -95,6 +102,8 @@ const showStartupError = (screen, detail) => {
   }
   function onError(event) {
     failed = true;
+    clearTimeout(dismissTimer);
+    screen.classList.remove("is-dismissing");
     reveal();
     clearTimeout(revealTimer);
     showStartupError(screen, event.detail);

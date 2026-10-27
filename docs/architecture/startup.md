@@ -7,7 +7,10 @@ editor module graph. Further desktop windows show the static loading lockup.
 Standalone browser page loads use the animation; reduced motion uses the static
 lockup without imposing an animation delay.
 
-The editor remains inert until both the animation and actual startup finish.
+Once both the animation and actual startup finish, the loading screen fades out
+over 500 ms to reveal the live editor beneath it. The editor remains inert until
+that fade completes. Reduced motion and subsequent static desktop windows dismiss
+immediately. A startup error during the fade restores the loading screen.
 `DocumentOwner.initialize()` warms the existing solver and solid kernel using
 empty, read-only calculations. It changes no accepted geometry, selection or
 history. Desktop model IPC waits for document restoration and this preparation;
