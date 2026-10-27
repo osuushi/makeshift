@@ -1,4 +1,5 @@
 #include "edge-finish-construction.h"
+#include "edge-finish-validation.h"
 #include "timing.h"
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
@@ -54,7 +55,9 @@ void refineCurves(const TopoDS_Shape& shape, double tolerance) {
     ShapeFix_ShapeTolerance().LimitTolerance(shape, 0, tolerance);
     validate(shape);
 }
-TopoDS_Shape partition(const TopoDS_Shape& source, std::vector<SourceEntity>& origins) {
+}
+
+TopoDS_Shape partitionClosedFinishFaces(const TopoDS_Shape& source, std::vector<SourceEntity>& origins, int cuts) {
     TopTools_MapOfShape selected, original;
     double tolerance = 1e-7;
     TopExp::MapShapes(source, original);
@@ -74,7 +77,7 @@ TopoDS_Shape partition(const TopoDS_Shape& source, std::vector<SourceEntity>& or
         tolerance = std::max(tolerance, BRep_Tool::Tolerance(TopoDS::Vertex(v.Current())));
     BRepBuilderAPI_Copy copy(source, true, false);
     ShapeUpgrade_ShapeDivideClosed split(copy.Shape());
-    split.SetNbSplitPoints(1);
+    split.SetNbSplitPoints(cuts);
     split.SetPrecision(1e-7);
     split.SetMinTolerance(1e-7);
     split.SetMaxTolerance(tolerance);
@@ -94,22 +97,19 @@ TopoDS_Shape partition(const TopoDS_Shape& source, std::vector<SourceEntity>& or
     origins = std::move(mapped);
     return shape;
 }
-}
 
-TopoDS_Shape trimEdgeFinish(const TopoDS_Shape& finished, const TopoDS_Shape& interruptions,
-                           std::vector<SourceEntity>& origins) {
+namespace {
+TopoDS_Shape trimAttempt(const TopoDS_Shape& finished, const TopoDS_Shape& interruptions,
+                           std::vector<SourceEntity>& origins, int cuts, const std::set<std::string>& sourceSeams) {
     KernelTiming timing("edge-finish-trim");
-    TopTools_MapOfShape originalSeams;
-    for (const auto& source : {finished, interruptions})
-        for (TopExp_Explorer f(source, TopAbs_FACE); f.More(); f.Next())
-            for (TopExp_Explorer e(f.Current(), TopAbs_EDGE); e.More(); e.Next())
-                if (BRep_Tool::IsClosed(TopoDS::Edge(e.Current()), TopoDS::Face(f.Current()))) originalSeams.Add(e.Current());
-    std::set<std::string> seamIds;
-    for (const auto& origin : origins)
-        if (originalSeams.Contains(origin.shape)) seamIds.insert(origin.id);
-    const auto a = partition(finished, origins);
+    auto seamIds = sourceSeams;
+    for (const auto& source : {finished, interruptions}) {
+        const auto ids = finishSeamIds(source, origins);
+        seamIds.insert(ids.begin(), ids.end());
+    }
+    const auto a = partitionClosedFinishFaces(finished, origins, cuts);
     timing.phase("finish-partition");
-    const auto b = partition(interruptions, origins);
+    const auto b = partitionClosedFinishFaces(interruptions, origins, cuts);
     timing.phase("cavity-partition");
     const auto trimmed = booleanShape(a, b, "subtract", origins);
     timing.phase("cut");
@@ -126,6 +126,9 @@ TopoDS_Shape trimEdgeFinish(const TopoDS_Shape& finished, const TopoDS_Shape& in
     unify.Build();
     validate(unify.Shape());
     timing.phase("unify");
+    validateFinishManifold(unify.Shape());
+    validateFinishBoundary(unify.Shape(), finished, interruptions);
+    timing.phase("material-check");
     const auto history = unify.History();
     std::vector<SourceEntity> mapped;
     for (const auto& origin : origins) {
@@ -135,4 +138,34 @@ TopoDS_Shape trimEdgeFinish(const TopoDS_Shape& finished, const TopoDS_Shape& in
     }
     origins = std::move(mapped);
     return unify.Shape();
+}
+
+}
+TopoDS_Shape trimEdgeFinish(const TopoDS_Shape& finished, const TopoDS_Shape& interruptions,
+                           std::vector<SourceEntity>& origins, const std::set<std::string>& sourceSeams) {
+    // Closed support intersections can remain ambiguous across a coarse patch.
+    // Refine that same exact support decomposition once; both attempts must
+    // pass the same manifold and material checks before any result is exposed.
+    auto mapped = origins;
+    try {
+        const auto result = trimAttempt(finished, interruptions, mapped, 3, sourceSeams);
+        origins = std::move(mapped);
+        return result;
+    } catch (const std::runtime_error&) {
+        mapped = origins;
+        const auto result = trimAttempt(finished, interruptions, mapped, 7, sourceSeams);
+        origins = std::move(mapped);
+        return result;
+    }
+}
+
+std::set<std::string> finishSeamIds(const TopoDS_Shape& shape, const std::vector<SourceEntity>& origins) {
+    TopTools_MapOfShape seams;
+    for (TopExp_Explorer f(shape, TopAbs_FACE); f.More(); f.Next())
+        for (TopExp_Explorer e(f.Current(), TopAbs_EDGE); e.More(); e.Next())
+            if (BRep_Tool::IsClosed(TopoDS::Edge(e.Current()), TopoDS::Face(f.Current()))) seams.Add(e.Current());
+    std::set<std::string> ids;
+    for (const auto& origin : origins)
+        if (seams.Contains(origin.shape)) ids.insert(origin.id);
+    return ids;
 }

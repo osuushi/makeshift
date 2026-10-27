@@ -1,4 +1,5 @@
 #include "edge-finish-construction.h"
+#include "edge-finish-validation.h"
 #include "timing.h"
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
@@ -71,7 +72,7 @@ Result construct(const Operand& body, const std::vector<TopoDS_Edge>& edges, dou
         if (TopExp_Explorer(added, TopAbs_SOLID).More()) return build(body, edges, radius, chamfer, continuingBlends);
         auto origins = rounded.predecessors;
         origins.insert(origins.end(), supports->interruptionOrigins.begin(), supports->interruptionOrigins.end());
-        const auto shape = trimEdgeFinish(rounded.shape, supports->interruptions, origins);
+        const auto shape = trimEdgeFinish(rounded.shape, supports->interruptions, origins, supports->seamIds);
         timing.phase("trim");
         return {shape, std::move(origins), {body.id}};
     }
@@ -83,13 +84,15 @@ Result constructEdgeFinish(const Operand& body, const std::vector<TopoDS_Edge>& 
                            const std::vector<SourceEntity>& continuingBlends) {
     try {
         const auto rounded = construct(body, edges, radius, chamfer, continuingBlends);
+        validateFinishManifold(rounded.shape);
         std::vector<Result> results;
         solids(results, rounded.shape, rounded.predecessors, {body.id});
         if (results.size() != 1) throw std::runtime_error("Edge finish is not feasible at this size");
         return results.front();
     } catch (const Standard_Failure&) {
         throw std::runtime_error("Edge finish is not feasible at this size");
-    } catch (const std::runtime_error&) {
+    } catch (const std::runtime_error& error) {
+        if (std::getenv("MAKESHIFT_KERNEL_TIMING")) std::cerr << "edge-finish rejected: " << error.what() << "\n";
         throw std::runtime_error("Edge finish is not feasible at this size");
     }
 }

@@ -1,5 +1,6 @@
 #include "blends.h"
 #include "edge-finish-construction.h"
+#include "edge-finish-validation.h"
 #include <BRepAlgoAPI_Defeaturing.hxx>
 #include <TopExp.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
@@ -29,12 +30,15 @@ std::vector<SourceEntity> trace(Operation& operation, const std::vector<SourceEn
 struct Pair { TopoDS_Face a, b; std::string origin; };
 Result finishResult(const Operand& body, const std::vector<TopoDS_Face>& selected,
                     const TopoDS_Shape& shape, const std::vector<SourceEntity>& origins) {
+    TopTools_IndexedMapOfShape currentFaces;
+    TopExp::MapShapes(shape, TopAbs_FACE, currentFaces);
     for (const auto& original : body.entities) {
         if (original.shape.ShapeType() != TopAbs_FACE || contains(selected, original.shape)) continue;
         for (const auto& current : origins)
-            if (current.id == original.id && current.shape.ShapeType() == TopAbs_FACE)
+            if (current.id == original.id && current.shape.ShapeType() == TopAbs_FACE && currentFaces.Contains(current.shape))
                 checkUnselectedSupport(TopoDS::Face(original.shape), TopoDS::Face(current.shape));
     }
+    validateFinishManifold(shape);
     std::vector<Result> results;
     solids(results, shape, origins, {body.id});
     if (results.size() != 1) throw std::runtime_error("Edge finish edit must leave one valid solid");

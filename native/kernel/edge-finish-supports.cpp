@@ -119,10 +119,11 @@ std::optional<EdgeFinishSupports> edgeFinishSupports(const Operand& body, const 
         // Only filled cavities are transparent to blend construction. Removing
         // a boss must not turn it into an unrequested cut in the final result.
         std::vector<SourceEntity> unused;
-        const auto lost = booleanShape(body.shape, heal.Shape(), "subtract", unused);
-        if (TopExp_Explorer(lost, TopAbs_SOLID).More()) return std::nullopt;
         auto interruptionOrigins = body.entities;
-        const auto interruptions = booleanShape(heal.Shape(), body.shape, "subtract", interruptionOrigins);
+        const auto boundary = partitionClosedFinishFaces(body.shape, interruptionOrigins, 3);
+        const auto lost = booleanShape(boundary, heal.Shape(), "subtract", unused);
+        if (TopExp_Explorer(lost, TopAbs_SOLID).More()) return std::nullopt;
+        const auto interruptions = booleanShape(heal.Shape(), boundary, "subtract", interruptionOrigins);
         if (!TopExp_Explorer(interruptions, TopAbs_SOLID).More()) return std::nullopt;
         timing.phase("isolate-interruptions");
         TopTools_IndexedMapOfShape current;
@@ -145,7 +146,7 @@ std::optional<EdgeFinishSupports> edgeFinishSupports(const Operand& body, const 
             mapped.push_back(TopoDS::Edge(images(1)));
         }
         return EdgeFinishSupports{{body.id, carriers.front().shape, std::move(origins)}, std::move(mapped),
-                              interruptions, std::move(interruptionOrigins)};
+                              interruptions, std::move(interruptionOrigins), finishSeamIds(body.shape, body.entities)};
     } catch (const Standard_Failure&) { return std::nullopt; }
       catch (const std::runtime_error&) { return std::nullopt; }
 }

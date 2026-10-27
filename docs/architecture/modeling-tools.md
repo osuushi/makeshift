@@ -149,13 +149,29 @@ premature radius limits. Straight and curved edges, multi-edge rims, notched
 supports and blind pockets use this same path; there is no shape-specific cutter.
 It also applies to current-geometry fillet and chamfer resizing. Source data and unambiguous
 hole/wall identities continue through ordinary history mapping.
-Operands with closed toroidal supports have their closed faces partitioned before
-trimming and recombined afterward,
-with source precision checked against every resulting pcurve. This avoids
-misclassified overlapping rounds and reversed caps over an already rounded hole.
-Original non-seam boundaries remain protected during recombination. Chamfer
+Operands with closed toroidal supports have their closed faces partitioned into
+quarters before cavity extraction and trimming, then recombined afterward, with source precision checked
+against every resulting pcurve. A failed trim gets one finer partition into eighths;
+both attempts must pass identical validity checks. Original geometry and accepted
+data stay unchanged during either attempt.
+Original seam identities survive the intermediate partitions; original non-seam
+boundaries remain protected during recombination. When resizing, support checks
+compare the underlying surface rather than a temporary partition’s UV bounds. Chamfer
 recognition resolves the underlying support pair when other bevels meet a strip
 at its ends; equally plausible support pairs remain unrecognized.
+
+Every finish result also requires exactly two uses per non-degenerate boundary
+edge (including both uses of a periodic seam), with connected face neighborhoods
+at vertices. OCCT's ordinary/exact validity and self-intersection analyzers can
+accept a three-face edge, so they do not replace these manifold checks. For a
+cavity-trimmed finish, sampled boundary curves and trimmed surface interiors must
+remain within the finished envelope and outside the cavity interior. A suspicious
+point classification is checked against boundary-face distance at the same geometry
+tolerance, since periodic seams and tangencies can be misclassified. This is a
+bounded material sanity check, not a proof for arbitrary BReps. Failed checks
+reject that candidate and retain the existing feasibility/preview behavior. Some
+near-tangent combinations still reject; this construction does not guarantee every
+mathematically valid fillet or chamfer can be built.
 
 Selected opening rims are protected. Open boundary interruptions, unsupported
 healing or spine correspondence, and feature groups whose removal also removes
