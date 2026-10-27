@@ -183,11 +183,11 @@ print was made.
 
 ## Startup animation
 
-The loading screen uses a 60 fps, 3-second Cycles render of `icon.gcode`. The whole
-sequence plays at 1.5×: two seconds of media, a roughly 433 ms UI wordmark wipe,
-then a roughly 333 ms fade into the live editor once the runtime is ready.
-The master assets retain their original timing; the runtime scales playback and
-UI transitions together. Input stays blocked until that fade ends;
+The loading screen uses a 60 fps, 3-second Cycles render of `icon.gcode`, played at
+1.5× for two seconds of media. The closing mark keeps its original pace: a 650 ms
+wordmark wipe, at least 300 ms on the fully settled logo and wordmark, then a
+500 ms fade into the live editor once the runtime is ready. The master assets
+retain their original timing. Input stays blocked until that fade ends;
 reduced motion and subsequent static windows dismiss immediately.
 The opening frame is an empty plate seen at macro scale.
 The first bead grows for a full second, using the first volume quota of the existing

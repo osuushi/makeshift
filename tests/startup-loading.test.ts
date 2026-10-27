@@ -9,7 +9,6 @@ class Element extends EventTarget {
   textContent = "";
   className = "";
   classes = new Set<string>();
-  style = { setProperty: (_name: string, _value: number) => {} };
   classList = {
     add: (name: string) => this.classes.add(name),
     remove: (name: string) => this.classes.delete(name),
@@ -97,19 +96,22 @@ function startup(
   return { screen, app, window, video, advance, status };
 }
 
-test("1.5x startup completes the wordmark and 333ms fade before releasing editor input", () => {
+test("fast media keeps a 650ms reveal, 300ms settled hold and 500ms exit fade", () => {
   const run = startup();
   assert.equal(run.video.playbackRate, 1.5);
   assert.equal(run.video.defaultPlaybackRate, 1.5);
   run.window.dispatchEvent(new Event("makeshift-ready"));
   assert.equal(run.app.inert, true);
   run.video.dispatchEvent(new Event("ended"));
-  run.advance(433);
+  run.advance(650);
+  assert.equal(run.screen.classes.has("is-dismissing"), false);
+  run.advance(299);
   assert.equal(run.screen.removed, false);
+  assert.equal(run.screen.classes.has("is-dismissing"), false);
   run.advance(1);
   assert.equal(run.screen.classes.has("is-dismissing"), true);
   assert.equal(run.screen.classes.has("is-waiting"), false);
-  run.advance(332);
+  run.advance(499);
   assert.equal(run.screen.removed, false);
   assert.equal(run.app.inert, true);
   // Repeated readiness signals must not restart the exit fade.
@@ -122,13 +124,13 @@ test("1.5x startup completes the wordmark and 333ms fade before releasing editor
 test("slow startup holds the completed wordmark and spinner until the model is ready", () => {
   const run = startup();
   run.video.dispatchEvent(new Event("ended"));
-  run.advance(434);
+  run.advance(950);
   assert.equal(run.screen.removed, false);
   assert.equal(run.screen.classes.has("is-waiting"), true);
   run.window.dispatchEvent(new Event("makeshift-ready"));
   assert.equal(run.screen.removed, false);
   assert.equal(run.screen.classes.has("is-dismissing"), true);
-  run.advance(334);
+  run.advance(500);
   assert.equal(run.screen.removed, true);
 });
 
@@ -137,7 +139,7 @@ test("failed media and stalled media both release a ready editor", () => {
     const run = startup();
     run.window.dispatchEvent(new Event("makeshift-ready"));
     if (failure === "error") run.video.dispatchEvent(new Event("error"));
-    run.advance(5767);
+    run.advance(6450);
     assert.equal(run.screen.removed, true);
   }
 });
@@ -146,7 +148,7 @@ test("blocked autoplay falls back to the wordmark", async () => {
   const run = startup(false, true);
   run.window.dispatchEvent(new Event("makeshift-ready"));
   await Promise.resolve();
-  run.advance(767);
+  run.advance(1450);
   assert.equal(run.screen.removed, true);
 });
 
@@ -203,11 +205,23 @@ test("a startup error during the exit fade restores the screen and keeps input b
   const run = startup();
   run.window.dispatchEvent(new Event("makeshift-ready"));
   run.video.dispatchEvent(new Event("ended"));
-  run.advance(600);
+  run.advance(1200);
   assert.equal(run.screen.classes.has("is-dismissing"), true);
   run.window.dispatchEvent(new Event("makeshift-startup-error"));
   run.advance(1000);
   assert.equal(run.screen.classes.has("is-dismissing"), false);
   assert.equal(run.screen.removed, false);
   assert.equal(run.app.inert, true);
+});
+
+test("readiness during the settled hold cannot shorten its minimum 300ms beat", () => {
+  const run = startup();
+  run.video.dispatchEvent(new Event("ended"));
+  run.advance(800);
+  run.window.dispatchEvent(new Event("makeshift-ready"));
+  run.advance(149);
+  assert.equal(run.screen.classes.has("is-dismissing"), false);
+  assert.equal(run.app.inert, true);
+  run.advance(1);
+  assert.equal(run.screen.classes.has("is-dismissing"), true);
 });

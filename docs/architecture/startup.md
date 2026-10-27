@@ -8,7 +8,7 @@ Standalone browser page loads use the animation; reduced motion uses the static
 lockup without imposing an animation delay.
 
 Once both the animation and actual startup finish, the loading screen fades out
-over about 333 ms to reveal the live editor beneath it. The editor remains inert until
+over 500 ms to reveal the live editor beneath it. The editor remains inert until
 that fade completes. Reduced motion and subsequent static desktop windows dismiss
 immediately. A startup error during the fade restores the loading screen.
 `DocumentOwner.initialize()` warms the existing solver and solid kernel using
@@ -19,10 +19,11 @@ can be retried by reloading. The renderer signals readiness after its first
 successful model read and draw. A slow startup keeps the wordmark and spinner;
 an error keeps the screen with a Reload action.
 
-The sequence plays at 1.5×: the three-second movie takes two seconds, the wordmark
-wipe about 433 ms, and the exit fade about 333 ms (about 2.77 seconds total when ready).
-One runtime speed value controls media playback and UI transitions; readiness waits
-and the media-failure deadline retain their real durations.
+The three-second movie plays at 1.5×, taking two seconds. The closing lockup keeps
+its original pace: a 650 ms wordmark reveal, at least 300 ms fully settled, then
+a 500 ms exit fade (3.45 seconds total when ready). Readiness arriving during the
+hold cannot shorten it; readiness arriving later starts the fade immediately.
+Reduced motion and static windows impose no reveal, hold or fade delay.
 The 60 fps movie uses the actual logo toolpaths. Its 2160-pixel master is encoded
 as H.264 MP4, with a 1200-pixel H.264 variant for lower display densities. Mac
 Electron can prefer the full-resolution HEVC/hvc1 variant. Decoder errors fall
