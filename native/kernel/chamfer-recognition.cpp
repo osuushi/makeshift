@@ -30,6 +30,37 @@ gp_Vec supportNormal(const TopoDS_Face& face, const BRepAdaptor_Surface& surface
     if ((face.Orientation() == TopAbs_REVERSED) != !cylinder.Direct()) n.Reverse();
     return n;
 }
+void planarSupports(const gp_Vec& n, std::vector<TopoDS_Face>& supports,
+                    std::vector<gp_Pnt>& boundary) {
+    double alignment = 0;
+    bool ambiguous = false;
+    std::optional<std::pair<size_t, size_t>> best;
+    for (size_t i = 0; i < supports.size(); ++i) {
+        const BRepAdaptor_Surface a(supports[i]);
+        if (a.GetType() != GeomAbs_Plane) continue;
+        const auto na = normal(supports[i], a);
+        const double cosine = n.Dot(na);
+        for (size_t j = i + 1; j < supports.size(); ++j) {
+            const BRepAdaptor_Surface b(supports[j]);
+            if (b.GetType() != GeomAbs_Plane) continue;
+            const auto nb = normal(supports[j], b);
+            const double sine = na.Crossed(nb).Magnitude();
+            if (sine < 1e-6 || std::abs(cosine - n.Dot(nb)) > 1e-6) continue;
+            const double size = b.Plane().Distance(boundary[i]) / sine;
+            if (size <= 1e-7 || std::abs(a.Plane().Distance(boundary[j]) / sine - size) > 1e-6) continue;
+            // A mitered strip also borders its neighboring bevels. Prefer the
+            // nearest support normals that its plane actually bisects.
+            if (std::abs(cosine) > alignment + 1e-6) {
+                alignment = std::abs(cosine); best = {{i, j}}; ambiguous = false;
+            } else if (std::abs(std::abs(cosine) - alignment) < 1e-6) ambiguous = true;
+        }
+    }
+    if (!best || ambiguous) { supports.clear(); boundary.clear(); return; }
+    const auto [a, b] = *best;
+    supports = {supports[a], supports[b]};
+    boundary = {boundary[a], boundary[b]};
+}
+
 }
 // Recognize equal-setback chamfers between planar supports, or a
 // coaxial cylinder and its planar cap. This is current geometry, not ancestry.
@@ -65,6 +96,7 @@ std::vector<BlendFace> recognizeChamfers(const TopoDS_Shape& shape) {
                 boundary.push_back(curve.Value((curve.FirstParameter()+curve.LastParameter())/2));
             }
         }
+        if (surface.GetType() == GeomAbs_Plane) planarSupports(n, supports, boundary);
         if (supports.size() != 2) continue;
         BRepAdaptor_Surface a(supports[0]), b(supports[1]);
         double size = 0;

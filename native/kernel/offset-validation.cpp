@@ -5,6 +5,7 @@
 #include <BRepGProp.hxx>
 #include <GProp_GProps.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
+#include <Geom_RectangularTrimmedSurface.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Vertex.hxx>
@@ -33,7 +34,11 @@ void checkOffsetFace(const TopoDS_Face& face, double distance) {
 // A valid BRep alone is insufficient: OCCT can propagate an offset into unselected
 // tangent faces. Check their continuing supports, rather than accepting that edit.
 void checkUnselectedSupport(const TopoDS_Face& source, const TopoDS_Face& result) {
-    const auto original = BRep_Tool::Surface(source);
+    auto original = BRep_Tool::Surface(source);
+    // A partition changes the UV domain, not the supporting geometry. Resizing
+    // may extend a surviving face beyond that temporary domain.
+    while (const auto trimmed = Handle(Geom_RectangularTrimmedSurface)::DownCast(original))
+        original = trimmed->BasisSurface();
     BRepAdaptor_Surface target(result);
     for (const double u : {0.2, 0.5, 0.8}) for (const double v : {0.2, 0.5, 0.8}) {
         const auto p = target.Value(target.FirstUParameter() * (1-u) + target.LastUParameter() * u,

@@ -1,7 +1,7 @@
 #include "blends.h"
+#include "edge-finish-construction.h"
+#include "edge-finish-validation.h"
 #include <BRepAlgoAPI_Defeaturing.hxx>
-#include <BRepFilletAPI_MakeFillet.hxx>
-#include <BRepFilletAPI_MakeChamfer.hxx>
 #include <TopExp.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopTools_MapOfShape.hxx>
@@ -30,12 +30,15 @@ std::vector<SourceEntity> trace(Operation& operation, const std::vector<SourceEn
 struct Pair { TopoDS_Face a, b; std::string origin; };
 Result finishResult(const Operand& body, const std::vector<TopoDS_Face>& selected,
                     const TopoDS_Shape& shape, const std::vector<SourceEntity>& origins) {
+    TopTools_IndexedMapOfShape currentFaces;
+    TopExp::MapShapes(shape, TopAbs_FACE, currentFaces);
     for (const auto& original : body.entities) {
         if (original.shape.ShapeType() != TopAbs_FACE || contains(selected, original.shape)) continue;
         for (const auto& current : origins)
-            if (current.id == original.id && current.shape.ShapeType() == TopAbs_FACE)
+            if (current.id == original.id && current.shape.ShapeType() == TopAbs_FACE && currentFaces.Contains(current.shape))
                 checkUnselectedSupport(TopoDS::Face(original.shape), TopoDS::Face(current.shape));
     }
+    validateFinishManifold(shape);
     std::vector<Result> results;
     solids(results, shape, origins, {body.id});
     if (results.size() != 1) throw std::runtime_error("Edge finish edit must leave one valid solid");
@@ -97,23 +100,13 @@ Result resize(const Operand& body, const std::vector<TopoDS_Face>& seeds, double
     auto origins = trace(remove, body.entities);
     if (radius == 0) return finishResult(body, selected, remove.Shape(), origins);
     const auto replacementSeeds = recoveredEdges(body, remove, pairs);
-    BRepFilletAPI_MakeFillet fillet(remove.Shape());
-    BRepFilletAPI_MakeChamfer bevel(remove.Shape());
+    std::vector<TopoDS_Edge> edges;
     TopTools_MapOfShape added;
-    for (const auto& seed : replacementSeeds) {
-        if (!added.Add(seed.shape)) continue;
-        if (chamfer) bevel.Add(radius, TopoDS::Edge(seed.shape));
-        else fillet.Add(radius, TopoDS::Edge(seed.shape));
-    }
-    BRepBuilderAPI_MakeShape& finish = chamfer ? static_cast<BRepBuilderAPI_MakeShape&>(bevel) : fillet;
-    if (chamfer) bevel.Build(); else fillet.Build();
-    if (!finish.IsDone()) throw std::runtime_error("Edge finish cannot use that size with its current neighbors");
-    validate(finish.Shape());
-    origins = chamfer ? trace(bevel, origins) : trace(fillet, origins);
     for (const auto& seed : replacementSeeds)
-        for (TopTools_ListIteratorOfListOfShape i(finish.Generated(seed.shape)); i.More(); i.Next())
-            if (i.Value().ShapeType() == TopAbs_FACE) origins.push_back({seed.id, i.Value()});
-    return finishResult(body, selected, finish.Shape(), origins);
+        if (added.Add(seed.shape)) edges.push_back(TopoDS::Edge(seed.shape));
+    const auto finished = constructEdgeFinish({body.id, remove.Shape(), origins}, edges, radius,
+                                              chamfer, replacementSeeds);
+    return finishResult(body, selected, finished.shape, finished.predecessors);
 }
 }
 std::optional<Result> collapseOffsetFinish(const Operand& body,
