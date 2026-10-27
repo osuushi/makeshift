@@ -261,8 +261,9 @@ for restoration and runtime readiness.
 
 The public classic script and CSS run before the application module graph loads.
 The first desktop window animates; later windows use the static lockup. The video
-covers ordinary viewports up to 1080 CSS pixels, with a fit limit protecting the
-final logo. A soft circular mask blends any remaining border into the page. The
+covers ordinary viewports at any pixel size. Only aspect ratios beyond 4:1 or 1:4
+limit scale to protect the final logo; only there, a CSS circular mask softens the
+outermost 4% of its radius. The movie files contain no border fade. The
 wordmark also fits short and narrow windows. These assets own no document state. `tests/startup-loading.test.ts` covers fast,
 slow, failed/stalled/blocked media, reduced motion and startup errors; the existing
 Electron smoke checks that startup releases editor input. The HTTP test covers

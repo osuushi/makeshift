@@ -16,9 +16,9 @@ body {
 }
 #startup {
   --startup-ink: #59436a;
-  /* Cover ordinary windows; cap scale so the final logo fits even extreme aspects.
-     The 2160px master stays at native 2x density at the maximum display size. */
-  --startup-media-size: min(max(100vw, 100vh), 1080px, 400vw, 400vh);
+  /* Cover the window at every display size. Only extreme proportions limit scale
+     to keep the final logo within 80% of the shorter window dimension. */
+  --startup-media-size: min(max(100vw, 100vh), 400vw, 400vh);
   position: fixed;
   inset: 0;
   z-index: 100000;
@@ -151,17 +151,14 @@ html[data-theme="dark"] #startup {
     transform: rotate(360deg);
   }
 }
-/* When the fit limit leaves room around the video, blend into the page rather
-   than exposing the square movie boundary. The final centered logo is opaque. */
-@media (min-width: 1081px), (min-height: 1081px), (min-aspect-ratio: 4 / 1),
-  (max-aspect-ratio: 1 / 4) {
+/* Only proportions beyond 4:1 force letterboxing to protect the final logo.
+   Soften just the outer edge there; ordinary windows have no mask at all. */
+@media (aspect-ratio > 4 / 1), (aspect-ratio < 1 / 4) {
   #startup video {
     --startup-edge-fade: radial-gradient(
       circle closest-side at center,
-      #000 64%,
-      rgb(0 0 0 / 96%) 72%,
-      rgb(0 0 0 / 65%) 83%,
-      rgb(0 0 0 / 25%) 93%,
+      #000 96%,
+      rgb(0 0 0 / 50%) 98%,
       transparent 100%
     );
     -webkit-mask-image: var(--startup-edge-fade);

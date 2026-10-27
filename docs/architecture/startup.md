@@ -24,10 +24,11 @@ fallback show the static mark. A five-second media deadline bounds stalled
 playback, but never bypasses runtime readiness. All MP4s use fast-start metadata,
 4:2:0 pixels and no audio. The iPad HTTP server supports byte-range media requests.
 
-The square video covers ordinary windows up to its 1080 CSS-pixel display limit.
-An additional aspect-ratio limit keeps the final logo within the viewport, even
-in very short or narrow windows. When either limit leaves space, a soft circular
-CSS mask blends the video into the theme background. The centered final logo
+The square video covers ordinary windows regardless of their pixel dimensions.
+Only proportions wider than 4:1 or taller than 1:4 limit its scale to keep the
+final logo within the viewport. Only those letterboxed layouts use a circular
+CSS mask, fading the outermost 4% of its radius into the theme background.
+The shipped movies contain no border fade. The centered final logo
 stays inside the opaque portion, then hands off to the canonical PNG and DM Sans
 wordmark. The layout does not own document state or Undo.
 
