@@ -6,7 +6,7 @@ import type { IPadStatus } from "./ipad/protocol.js";
 import type { ModelView } from "./sketch/model-api.js";
 
 contextBridge.exposeInMainWorld("makeshiftStartup", {
-  animate: process.argv.includes("--makeshift-startup-animation"),
+  animate: ipcRenderer.sendSync("startup-animation") === true,
   platform: process.platform,
 });
 

@@ -23,7 +23,7 @@ export interface WindowHost {
   directory: () => string;
   bounds?: Electron.Rectangle;
   name: string;
-  startupAnimation: boolean;
+  startupAnimation: () => boolean;
   remember(path?: string | null): Promise<void>;
   write(path: string, action: () => Promise<void>): Promise<void>;
 }
@@ -71,10 +71,19 @@ export class DocumentWindow {
         sandbox: true,
         contextIsolation: true,
         nodeIntegration: false,
-        additionalArguments: host.startupAnimation ? ["--makeshift-startup-animation"] : [],
         backgroundThrottling: !hidden,
         offscreen: hidden && process.platform === "linux",
       },
+    });
+    // Preload needs this tiny in-memory decision before the loading script runs.
+    // Consume it in the host so reloads and closing every window cannot reset it.
+    window.webContents.ipc.on("startup-animation", (event) => {
+      const frame = event.senderFrame;
+      event.returnValue =
+        frame === window.webContents.mainFrame &&
+        !!frame.url &&
+        frame.url !== "about:blank" &&
+        host.startupAnimation();
     });
     this.window = window;
     exportDestination(window, () => this.documents.status.path);

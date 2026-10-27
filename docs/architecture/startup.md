@@ -3,7 +3,10 @@
 The first desktop document window shows the loading screen as soon as its HTML
 loads, while saved-document restoration and renderer setup continue. The small
 classic script and stylesheet in `assets/public/startup/` do not depend on the
-editor module graph. Further desktop windows show the static loading lockup.
+editor module graph. The application process grants the full animation once,
+consumed synchronously by the first document preload. Reloading that window,
+opening into a blank window, and creating/opening windows after closing every
+window use the quick static lockup. Only quitting and relaunching resets the grant.
 Standalone browser page loads use the animation; reduced motion uses the static
 lockup without imposing an animation delay.
 Opening into an existing blank window validates/restores the file before reloading

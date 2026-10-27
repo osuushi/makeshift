@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { blankDocumentOpen } from "./document-blank-open.mjs";
 import { closeDocuments, launchDocuments } from "./document-lifecycle-host.mjs";
+import { startupWindows } from "./document-startup.mjs";
 import { hostModelBoundary } from "./host-model-boundary.mjs";
 import { drag, inspect, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -82,7 +83,7 @@ async function openFile(path) {
 try {
   const initial = await launchDocuments(profile);
   app = initial.app;
-  const first = initial.page;
+  const first = await startupWindows(app, initial.page, root);
   await draw(first);
   const firstDocument = (await inspect(first)).document;
   await hostModelBoundary(first);
@@ -218,6 +219,15 @@ try {
     "Relaunch restores each window's own placement and size",
   );
   const restored = app.windows();
+  assert.equal(
+    (
+      await Promise.all(
+        restored.map((page) => page.evaluate(() => window.makeshiftStartup.animate)),
+      )
+    ).filter(Boolean).length,
+    1,
+    "Relaunch grants the full animation to exactly one restored document",
+  );
   for (const page of restored) await settled(page);
   assert.deepEqual(
     (await Promise.all(restored.map(status))).map((s) => s.path).sort(),
