@@ -15,7 +15,9 @@ export function documentView(
     data: store.data,
     canUndoView: store.canNavigateView("undo"),
     canRedoView: store.canNavigateView("redo"),
-    ...solids.previewQuality(candidate ? pendingOperation?.kind : undefined),
+    ...solids.previewQuality(
+      candidate || session.visualPreview ? pendingOperation?.kind : undefined,
+    ),
     decoratorSources: decorators.sources,
     historySelection: store.selection,
     historyNavigation: store.restoredNavigation,

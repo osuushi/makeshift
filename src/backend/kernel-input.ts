@@ -57,6 +57,14 @@ export function kernelInput(
   extrusion: Extrusion,
   bodies: readonly Body[],
 ) {
+  // New-body sweeps need only bodies supplying selected faces. Unrelated
+  // accepted geometry must not be serialized, decoded or validated per target.
+  if (extrusion.mode === "new") {
+    const sourceFaces = new Set(
+      extrusion.sources.flatMap((source) => ("face" in source ? [source.face] : [])),
+    );
+    bodies = bodies.filter((body) => body.faces.some((face) => sourceFaces.has(face.id)));
+  }
   const faces = extrusion.sources.flatMap((source) =>
     "face" in source
       ? bodies.flatMap((body) => body.faces).filter((face) => face.id === source.face)

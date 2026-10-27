@@ -172,8 +172,8 @@ void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
         return;
     }
     const bool visual = input.get<std::string>("presentation", "") == "visual";
-    if (visual && (input.get<std::string>("kind") != "extrude" || (mode != "new" && mode != "union") || !participants.empty()))
-        throw std::runtime_error("Visual presentation currently requires a new extrusion");
+    if (visual && input.get<std::string>("kind") != "extrude")
+        throw std::runtime_error("Visual presentation requires an extrusion");
     const auto presentation = visual ? presentVisual : present;
     std::ostringstream output; output << std::setprecision(17) << "{\"mode\":" << quoted(mode) << ",\"participants\":[";
     for (size_t i = 0; i < participants.size(); i++) { if (i) output << ','; output << quoted(participants[i]); }
@@ -182,7 +182,7 @@ void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
         ? input.get<double>("deflection", 0.05) : 0.05;
     for (size_t i = 0; i < results.size(); i++) { if (i) output << ','; presentation(output, results[i], deflection); }
     output << "],\"tools\":[";
-    for (size_t i = 0; i < tools.size(); i++) { if (i) output << ','; presentation(output, tools[i], deflection); }
+    for (size_t i = 0; i < tools.size(); i++) { if (i) output << ','; present(output, tools[i], deflection); }
     timing.phase("presentation");
     output << ']';
     if (visual) output << ",\"presentation\":\"visual\"";
