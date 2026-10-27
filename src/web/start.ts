@@ -1,4 +1,5 @@
 import { DocumentOwner } from "../backend/document-owner.js";
+import type {} from "../model/fixture-host.js";
 import { modelWireReply } from "../sketch/model-wire.js";
 
 export function installWebModel(): void {
