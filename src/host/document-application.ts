@@ -28,6 +28,7 @@ export class DocumentApplication {
   private restoring = false;
   private startup: Promise<void> = Promise.resolve();
   private untitled = 0;
+  private startupAnimation = true;
   private lastFocused: DocumentWindow | undefined;
   updates?: { check(): void; install(): void };
   constructor(
@@ -148,6 +149,11 @@ export class DocumentApplication {
     let document: DocumentWindow;
     const number = path ? 0 : ++this.untitled;
     document = new DocumentWindow(this.directory, this.icon, {
+      startupAnimation: () => {
+        const animate = this.startupAnimation;
+        this.startupAnimation = false;
+        return animate;
+      },
       name: number > 1 ? `Untitled ${number}` : "Untitled",
       settings: this.settings,
       setup: this.setup,

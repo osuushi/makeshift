@@ -135,7 +135,7 @@ class CubeInput {
   private align(face: Face, canonical = false): void {
     const world = this.world;
     if (!world.canNavigate() || world.orbit.active) return;
-    world.exit();
+    world.exit({ selectSketch: true });
     const quaternion = cubeAlignment(face, world.camera.quaternion, canonical);
     world.animateOrientation(quaternion);
   }

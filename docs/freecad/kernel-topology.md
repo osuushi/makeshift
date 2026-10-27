@@ -429,6 +429,20 @@ Validity is a separate OCCT check. `TopoShape::isValid()` constructs `BRepCheck_
 
 ## Boolean, fillet, and history behavior
 
+OCCT 7.9.3 source observation: periodic face division delegates reconstruction to
+[`ShapeFix_ComposeShell`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/ShapeUpgrade/ShapeUpgrade_ClosedFaceDivide.cxx#L225-L260),
+whose edge reconstruction uses
+[`ShapeFix_Edge::FixAddCurve3d`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/ShapeFix/ShapeFix_ComposeShell.cxx#L3144-L3165).
+That reaches a
+[`ShapeBuild_Edge::BuildCurve3d` tolerance floor of 1e-5 mm](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/ShapeBuild/ShapeBuild_Edge.cxx#L634-L643),
+even if the divider is configured more tightly. Makeshift inference and implementation:
+rebuild those temporary 3D partition curves from their pcurves at source precision,
+then check curve/surface agreement before lowering their tolerance metadata.
+The captured overlapping rim/hole-mouth finish reproduced a topologically valid
+but incorrect reversed lid; partitioning toroidal supports before Boolean trimming
+removed it. The focused finish tests compare both fillet and chamfer volumes with
+independent section integration. No upstream implementation was copied.
+
 OCCT 7.9.3 source observation: face/face processing computes support intersection
 curves, then checks their achieved 3D tolerance against pcurves/surfaces in
 [`IntTools_FaceFace::ComputeTolReached3d`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/IntTools/IntTools_FaceFace.cxx#L523-L543)

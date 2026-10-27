@@ -16,6 +16,7 @@ export async function webNotices(metadata) {
       text: (await Promise.all(files.map((file) => readFile(file, "utf8")))).join("\n\n"),
     });
   await add("Makeshift · LGPL-2.1-or-later", ["LICENSE", "COPYING.md"]);
+  await add("DM Sans · SIL Open Font License 1.1", ["assets/public/startup/DM-Sans-OFL.txt"]);
   await add("Open CASCADE Technology 7.9.3 · LGPL-2.1 with OCCT exception", [
     `${cache}/occt/LICENSE_LGPL_21.txt`,
     `${cache}/occt/OCCT_LGPL_EXCEPTION.txt`,

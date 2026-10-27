@@ -1,65 +1,15 @@
 #include "kernel.h"
 #include "edge-finish-conditioning.h"
+#include "edge-finish-construction.h"
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
-#include <BRepCheck_Analyzer.hxx>
-#include <ShapeFix_Shape.hxx>
-#include <Standard_Failure.hxx>
-#include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopoDS.hxx>
 #include <algorithm>
 #include <cmath>
 #include <map>
 #include <set>
 #include <stdexcept>
-#include <type_traits>
 
-namespace {
-TopoDS_Shape repairEdgeFinish(const TopoDS_Shape& shape) {
-    if (shape.IsNull()) throw std::runtime_error("Kernel produced invalid geometry");
-    if (BRepCheck_Analyzer(shape).IsValid()) return shape;
-    // OCCT can build a fillet with an invalid contextual wire orientation.
-    // Repair the generated shape once and accept only a validated result.
-    ShapeFix_Shape repair(shape);
-    repair.Perform();
-    const auto fixed = repair.Shape();
-    validate(fixed);
-    return fixed;
-}
-
-template<class Operation>
-void finishBody(const Operand& body, const std::vector<TopoDS_Edge>& edges,
-                double size, std::vector<Result>& results) {
-    Operation operation(body.shape);
-    // Keep generated blend boundaries precise enough for subsequent offsets.
-    // This changes fitting accuracy, not the edge radius or topology tolerance.
-    if constexpr (std::is_same_v<Operation, BRepFilletAPI_MakeFillet>)
-        operation.SetParams(1e-2, 1e-7, 1e-7, 1e-7, 1e-7, 1e-3);
-    for (const auto& edge : edges) operation.Add(size, edge);
-    for (const auto& edge : edges)
-        if (!operation.Contour(edge)) throw std::runtime_error("A selected edge cannot be rounded or chamfered");
-    TopoDS_Shape shape;
-    try {
-        operation.Build();
-        if (!operation.IsDone()) throw std::runtime_error("Edge finish is not feasible at this size");
-        shape = repairEdgeFinish(operation.Shape());
-    } catch (const Standard_Failure&) {
-        throw std::runtime_error("Edge finish is not feasible at this size");
-    } catch (const std::runtime_error&) {
-        throw std::runtime_error("Edge finish is not feasible at this size");
-    }
-    std::vector<SourceEntity> origins;
-    for (const auto& origin : body.entities) {
-        if (!operation.IsDeleted(origin.shape)) origins.push_back(origin);
-        for (const auto* list : {&operation.Modified(origin.shape), &operation.Generated(origin.shape)})
-            for (TopTools_ListIteratorOfListOfShape i(*list); i.More(); i.Next())
-                if (i.Value().ShapeType() == origin.shape.ShapeType()) origins.push_back({origin.id, i.Value()});
-    }
-    const auto count = results.size();
-    solids(results, shape, origins, {body.id});
-    if (results.size() != count + 1) throw std::runtime_error("Edge finish is not feasible at this size");
-}
-}
 namespace {
 std::map<std::string, std::vector<TopoDS_Edge>> selectedEdges(const Tree& input, const std::vector<Operand>& bodies) {
     std::map<std::string, std::vector<TopoDS_Edge>> selected;
@@ -144,8 +94,7 @@ std::vector<Result> finishEdges(const Tree& input, const std::vector<Operand>& b
         const auto found = selected.find(body.id);
         if (found == selected.end()) continue;
         const auto& edges = found->second;
-        if (mode == "fillet") finishBody<BRepFilletAPI_MakeFillet>(body, edges, size, results);
-        else finishBody<BRepFilletAPI_MakeChamfer>(body, edges, size, results);
+        results.push_back(constructEdgeFinish(body, edges, size, mode == "chamfer"));
         participants.push_back(body.id);
     }
     return results;

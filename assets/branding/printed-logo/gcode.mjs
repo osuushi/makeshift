@@ -34,7 +34,9 @@ function comment(state, raw) {
 
 // Parse motion only: printer commands are never executed. Orca object markers
 // exclude startup purges, calibration moves, timelapse and printer shutdown.
-export function parseGcode(text, diameter = 1.75) {
+export function parseGcode(text, diameter = 1.75, arcTolerance = 0.005) {
+  if (!(Number.isFinite(arcTolerance) && arcTolerance > 0))
+    throw new Error("Invalid arc tolerance");
   const scoped = /^;\s*start printing object/m.test(text);
   const state = {
     xyz: [0, 0, 0],
@@ -50,6 +52,7 @@ export function parseGcode(text, diameter = 1.75) {
     active: !scoped,
     plane: "G17",
     absoluteArcCenter: false,
+    arcTolerance,
   };
   for (const raw of text.split(/\r?\n/)) {
     comment(state, raw);

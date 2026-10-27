@@ -1,3 +1,13 @@
+# Detailed body extrusion
+
+`extrude-detailed-body.json` retains the circle, exact body and topology identity
+from the founder's `2026-10-27T12:27:33.491Z` capture. The 154-face body sits below
+the circle's plane; the case exposed repeated unused operand validation in New
+and full-body editing metadata generation during Union drags. Derived display
+data and UI/history are omitted. This is user-created Makeshift geometry.
+`tests/extrude-populated-performance.mjs` compares warmed native preview targets
+with empty-document and distant-circle controls; it has no machine timing gate.
+
 # Tangent nested circles
 
 `tangent-circles.json` and `tangent-circles-post.json` retain the sketches, exact

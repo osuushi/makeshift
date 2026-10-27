@@ -1,6 +1,5 @@
 import { pathPalette } from "./palette.mjs";
 
-const ringSize = 32;
 const ellipseHeightRatio = 0.4;
 
 function sectionHeight(width, path, profile) {
@@ -11,7 +10,7 @@ function sectionHeight(width, path, profile) {
     : path.height;
 }
 
-function section(width, height, crownRatio, profile) {
+function section(width, height, crownRatio, profile, ringSize) {
   // Artistic thin strands can be narrower than a layer. An ellipse keeps their
   // section convex; the usual rounded rectangle would fold inside out.
   if (width < height || profile === "ellipse")
@@ -24,39 +23,50 @@ function section(width, height, crownRatio, profile) {
     crown = height * crownRatio,
     ring = [];
   for (const side of [1, -1]) {
-    for (let i = 0; i <= 8; i++) {
-      const angle = -Math.PI / 2 + (i * Math.PI) / 8 + (side === -1 ? Math.PI : 0);
+    for (let i = 0; i <= ringSize / 4; i++) {
+      const angle = -Math.PI / 2 + (i * Math.PI) / (ringSize / 4) + (side === -1 ? Math.PI : 0);
       ring.push([side * flat + radius * Math.cos(angle), (radius - crown) * Math.sin(angle)]);
     }
     // Crowned deposited surfaces avoid overlapping coplanar roofs
     // at joins. Width uses slicer metadata or volume; footprint is a render approximation.
-    for (let i = 1; i < 8; i++) {
-      const t = 1 - i / 4;
+    for (let i = 1; i < ringSize / 4; i++) {
+      const t = 1 - (i * 8) / ringSize;
       ring.push([side * flat * t, side * (radius - crown * t * t)]);
     }
   }
   return ring;
 }
 
-function appendCaps(mesh, path, offset, material, crownRatio, profile) {
+function appendCaps(mesh, path, offset, material, crownRatio, profile, ringSize, capSteps) {
   const { vertices, faces, materials } = mesh;
   for (const end of [0, path.points.length - 1]) {
     const p = path.points[end],
       neighbor = path.points[end === 0 ? 1 : end - 1];
     const angle = Math.atan2(p[1] - neighbor[1], p[0] - neighbor[0]);
-    const start = offset + end * ringSize,
-      cap = vertices.length;
+    let start = offset + end * ringSize;
     const width = path.widths[Math.min(end, path.widths.length - 1)];
     const height = sectionHeight(width, path, profile);
     const direction = end === 0 ? -1 : 1;
     // Rounded endpoint footprint approximates deposition, without pressure/thermal physics.
-    for (const [lateral, vertical] of section(width, height, crownRatio, profile)) {
-      const step = (width * Math.SQRT1_2) / 2;
-      vertices.push([
-        p[0] + Math.cos(angle) * step - direction * Math.sin(angle) * lateral * Math.SQRT1_2,
-        p[1] + Math.sin(angle) * step + direction * Math.cos(angle) * lateral * Math.SQRT1_2,
-        p[2] - height / 2 + vertical * Math.SQRT1_2,
-      ]);
+    const ring = section(width, height, crownRatio, profile, ringSize);
+    for (let i = 1; i < capSteps; i++) {
+      const cap = vertices.length;
+      const theta = (i * Math.PI) / (2 * capSteps);
+      const step = (width * Math.sin(theta)) / 2;
+      const scale = Math.cos(theta);
+      for (const [lateral, vertical] of ring)
+        vertices.push([
+          p[0] + Math.cos(angle) * step - direction * Math.sin(angle) * lateral * scale,
+          p[1] + Math.sin(angle) * step + direction * Math.cos(angle) * lateral * scale,
+          p[2] - height / 2 + vertical * scale,
+        ]);
+      for (let j = 0; j < ringSize; j++) {
+        const k = (j + 1) % ringSize;
+        const quad = [start + j, start + k, cap + k, cap + j];
+        faces.push(end === 0 ? quad.toReversed() : quad);
+        materials.push(material);
+      }
+      start = cap;
     }
     const tip = vertices.length;
     vertices.push([
@@ -66,18 +76,14 @@ function appendCaps(mesh, path, offset, material, crownRatio, profile) {
     ]);
     for (let j = 0; j < ringSize; j++) {
       const k = (j + 1) % ringSize;
-      const quad = [start + j, start + k, cap + k, cap + j];
-      const triangle = [cap + j, cap + k, tip];
-      faces.push(
-        end === 0 ? quad.toReversed() : quad,
-        end === 0 ? triangle.toReversed() : triangle,
-      );
-      materials.push(material, material);
+      const triangle = [start + j, start + k, tip];
+      faces.push(end === 0 ? triangle.toReversed() : triangle);
+      materials.push(material);
     }
   }
 }
 
-function sweep(mesh, path, material, crownRatio, profile) {
+function sweep(mesh, path, material, crownRatio, profile, ringSize, capSteps) {
   const { vertices, faces, materials } = mesh,
     offset = vertices.length;
   for (let i = 0; i < path.points.length; i++) {
@@ -95,7 +101,7 @@ function sweep(mesh, path, material, crownRatio, profile) {
     const miter = i === 0 || i === path.points.length - 1 ? 1 : 1 / Math.cos(angle - before);
     const width = path.widths[Math.min(i, path.widths.length - 1)];
     const height = sectionHeight(width, path, profile);
-    for (const [lateral, vertical] of section(width, height, crownRatio, profile))
+    for (const [lateral, vertical] of section(width, height, crownRatio, profile, ringSize))
       vertices.push([
         p[0] - Math.sin(angle) * lateral * miter,
         p[1] + Math.cos(angle) * lateral * miter,
@@ -110,7 +116,7 @@ function sweep(mesh, path, material, crownRatio, profile) {
       materials.push(material);
     }
   }
-  appendCaps(mesh, path, offset, material, crownRatio, profile);
+  appendCaps(mesh, path, offset, material, crownRatio, profile, ringSize, capSteps);
 }
 
 // Split acute turns and bends tighter than the bead radius. Offset rings inside
@@ -149,9 +155,13 @@ export function beadMesh(
   crownRatio = 0.04,
   regions = [],
   profile = "stadium",
+  { ringSize = 32, capSteps = 2 } = {},
 ) {
   if (!(crownRatio >= 0 && crownRatio < 0.5)) throw new Error("Invalid bead crown ratio");
   if (!["stadium", "ellipse"].includes(profile)) throw new Error("Invalid bead profile");
+  if (!Number.isInteger(ringSize) || ringSize < 8 || ringSize % 8 !== 0)
+    throw new Error("Invalid bead ring resolution");
+  if (!Number.isInteger(capSteps) || capSteps < 2) throw new Error("Invalid bead cap resolution");
   const mesh = {
     vertices: [],
     faces: [],
@@ -160,6 +170,7 @@ export function beadMesh(
   };
   const palette = pathPalette(paths, baseHeight, regions);
   for (const [i, path] of paths.entries())
-    for (const piece of smoothPieces(path)) sweep(mesh, piece, palette[i], crownRatio, profile);
+    for (const piece of smoothPieces(path))
+      sweep(mesh, piece, palette[i], crownRatio, profile, ringSize, capSteps);
   return mesh;
 }

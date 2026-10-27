@@ -29,10 +29,7 @@ export class ExtrudePreview {
     this.valid = false;
   }
   enqueue(extrusion: Extrusion): void {
-    const visual = !!(
-      this.lease()?.captured &&
-      visualExtrusion(extrusion, this.editor.store.data.bodies?.length ?? 0)
-    );
+    const visual = !!(this.lease()?.captured && visualExtrusion(extrusion));
     this.valid = false;
     this.runner.enqueue({ extrusion, visual });
   }
@@ -60,7 +57,7 @@ export class ExtrudePreview {
     if (success && target.visual && this.editor.store.visualPreview)
       lease.showVisual(this.editor.store.visualPreview);
     else if (success || target === latest) lease.show(success ? this.editor.store.candidate : null);
-    if (success && !target.visual) this.showOperands();
+    if (success) this.showOperands();
     this.editor.refresh();
   }
 }

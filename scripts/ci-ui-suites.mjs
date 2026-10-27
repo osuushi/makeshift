@@ -69,7 +69,7 @@ export const uiSuites = [
     seconds: 20,
     browsers: ["electron"],
     reason:
-      "Per-window IPC, focused menus, independent agents and canceled application Quit must preserve every document; model tests cannot exercise Electron lifecycle routing.",
+      "Per-window IPC, focused menus, once-per-launch startup, independent agents and canceled application Quit must preserve every document; model tests cannot exercise Electron lifecycle routing.",
     unit: "host-model-request.test.ts",
   },
   {

@@ -1,5 +1,6 @@
 import type { Plugin } from "vite";
 import type { ModelRequest } from "../sketch/model-api.js";
+import { modelWireReply } from "../sketch/model-wire.js";
 import { DocumentOwner } from "./document-owner.js";
 
 // Browser development/testing uses the same owner/calculator as Electron.
@@ -26,7 +27,8 @@ export function sketchBackend(): Plugin {
             body += chunk;
             if (body.length > 32 * 1024 * 1024) throw new Error("Sketch request too large");
           }
-          const result = await owner?.call(JSON.parse(body) as ModelRequest);
+          const input = JSON.parse(body) as ModelRequest;
+          const result = owner && modelWireReply(input, await owner.call(input));
           response.setHeader("Content-Type", "application/json");
           response.end(JSON.stringify(result));
         } catch {

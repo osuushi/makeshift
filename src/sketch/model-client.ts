@@ -15,12 +15,14 @@ export class ModelClient extends ModelQueries {
   private selectionSending: Promise<void> | null = null;
   private selectionInFlight = false;
   private initialized = false;
+  private sentSelection: string | undefined;
   lastEdit: ModelRequest | null = null;
   erosionAllowance: number | undefined;
   scriptRunning = false;
   scriptState(running: boolean, view?: ModelView): void {
     this.scriptRunning = running;
     if (view) {
+      this.sentSelection = undefined;
       const changed = JSON.stringify(this.view.data) !== JSON.stringify(view.data);
       this.view = retainViewSketches(this.view, view);
       if (changed) this.selectionHistory?.accepted();
@@ -82,8 +84,12 @@ export class ModelClient extends ModelQueries {
   }
   private async flushSelection(): Promise<void> {
     if (!this.selectionHistory || !this.initialized) return;
-    const reply = await call({ kind: "selection", changes: this.selectionHistory.take() });
+    const changes = this.selectionHistory.take();
+    const encoded = JSON.stringify(changes);
+    if (!changes.steps.length && encoded === this.sentSelection) return;
+    const reply = await call({ kind: "selection", changes });
     if (reply.error) throw new Error(reply.error);
+    this.sentSelection = encoded;
     this.view = retainViewSketches(this.view, reply.view);
   }
   async history(): Promise<OperationHistoryEntry[]> {
@@ -160,7 +166,7 @@ export class ModelClient extends ModelQueries {
             if (visual.view.visualPreview) showVisual?.(visual.view.visualPreview);
             this.changed();
           })
-        : await call(request);
+        : await call(request, this.view.data);
       if (
         !reply.error &&
         !reply.view.data.sketchGrid &&
@@ -207,6 +213,7 @@ export class ModelClient extends ModelQueries {
     this.view = retainViewSketches(this.view, reply.view);
     this.erosionAllowance = reply.erosionAllowance;
     if (reply.error) throw new Error(reply.error);
+    if (direction || reply.documentChanged) this.sentSelection = undefined;
     if (direction && reply.view.historyOperation)
       this.navigated?.(reply.view.historyOperation, direction);
     const selection = reply.view.historySelection;
@@ -254,6 +261,7 @@ export class ModelClient extends ModelQueries {
   }
   async documentReplaced(): Promise<void> {
     await this.selectionSending;
+    this.sentSelection = undefined;
     this.initialized = false;
     this.selectionHistory?.accepted(true);
     await this.request({ kind: "read" });

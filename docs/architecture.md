@@ -35,6 +35,7 @@ is a later operation on current geometry, through ordinary Undo.
 | Standalone web build | [Local WASM, browser files and independent Pages releases](architecture/web.md) |
 | iPad document handoff | [LAN transport, single editor, input and files](architecture/ipad.md) |
 | Ownership, model, code entry points | [Document model](architecture/model.md), [implementation map](architecture/implementation.md) |
+| Startup, loading animation and runtime readiness | [Startup](architecture/startup.md) |
 | Async edits, cancellation, history, files | [Edit lifecycle](architecture/edit-lifecycle.md), [persistence](architecture/persistence.md) |
 | Camera, plane entry, picking, point chooser | [Navigation](architecture/navigation.md), [selection](architecture/selection.md) |
 | Interface scale and local settings | [Interface preferences](architecture/interface-preferences.md) |

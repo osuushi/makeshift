@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { launchElectron } from "./native-documents.mjs";
-import { drag } from "./ui-helpers.mjs";
+import { drag, settled } from "./ui-helpers.mjs";
 import { navigationIdle, navigationRoundTrip } from "./ui-navigation-history.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -13,7 +13,7 @@ const app = await launchElectron({
 try {
   const page = await app.firstWindow();
   await page.setViewportSize({ width: 1280, height: 850 });
-  await page.waitForFunction(() => Boolean(window.makeshiftInspect));
+  await settled(page);
   assert.equal(
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()),
     false,

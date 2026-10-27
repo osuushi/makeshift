@@ -5,6 +5,7 @@ import { ScriptSession } from "../backend/script-session.js";
 import type { RemoteDocumentEditor } from "../ipad/protocol.js";
 import { type CameraState, validateCameraState } from "../model/camera-state.js";
 import type { DocumentCommand } from "../model/document-host.js";
+import { modelWireReply } from "../sketch/model-wire.js";
 import { inspectDrawing } from "./agent-inspection.js";
 import type { AgentSession } from "./agent-session.js";
 import { DocumentFiles } from "./document-files.js";
@@ -182,7 +183,7 @@ export class DocumentSession {
     if (request.kind === "sketch-grid" && request.initialize && !reply.error)
       this.files.adoptGridDefaults(previous);
     this.update();
-    return reply;
+    return modelWireReply(request, reply);
   }
   attach(window: BrowserWindow): void {
     this.ipc.attach(window);

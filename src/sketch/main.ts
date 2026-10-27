@@ -220,7 +220,10 @@ const disposeSettings = installSettings(editor, app);
 const disposeTools = installToolSurfaces(editor, app, entities.element);
 installViewInspection(editor, sections);
 world.draw();
-void editor.store.request({ kind: "read" });
+export const ready = editor.store.request({ kind: "read" }).then((success) => {
+  if (!success) throw new Error(editor.message || "The document could not be loaded.");
+  world.draw();
+});
 window.addEventListener("pagehide", (event) => {
   if (event.persisted) return;
   decorators.dispose();

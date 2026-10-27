@@ -13,9 +13,15 @@ export async function injectHost(app, root, executable) {
       const request = AgentSetup.prototype.request,
         sessionRequest = AgentSession.prototype.request;
       const calculate = NativeCalculator.prototype.calculate;
-      const state = { attempts: 0, calculations: 0, installer: null, session: null, restore: null };
+      const state = {
+        attempts: 0,
+        calculations: [],
+        installer: null,
+        session: null,
+        restore: null,
+      };
       NativeCalculator.prototype.calculate = function (...args) {
-        state.calculations++;
+        state.calculations.push(args[0]);
         return calculate.apply(this, args);
       };
       AgentSession.prototype.request = function (...args) {

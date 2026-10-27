@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { injectHost } from "./agent-setup-host-fixture.mjs";
 import { launchElectron } from "./native-documents.mjs";
+import { settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function readChild(root, attempt) {
@@ -44,7 +45,9 @@ async function setupRoute(page, app, root) {
     window.makeshiftAgent.request({ kind: "start", cols: 80, rows: 24 }),
   );
   assert.match(blocked.error, /Wait for or cancel Codex installation/);
+  const opened = app.waitForEvent("window");
   await chooseTool(page, "new document", "new");
+  await settled(await opened);
   await page.waitForFunction(
     () =>
       !window
@@ -104,7 +107,14 @@ async function setupRoute(page, app, root) {
     (await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }))).running,
     false,
   );
-  assert.equal(await app.evaluate(() => globalThis.agentSetupFixture.calculations), 0);
+  assert.deepEqual(
+    await app.evaluate(() => globalThis.agentSetupFixture.calculations),
+    [
+      { points: [], radii: [], constraints: [] },
+      { kind: "inspect", bodies: [] },
+    ],
+    "Only the new window's empty startup preparations may calculate",
+  );
 }
 async function hostGuards(app, page) {
   const rejected = await app.evaluate(async ({ BrowserWindow, app }) => {
@@ -160,6 +170,7 @@ try {
     false,
   );
   await page.waitForFunction(() => Boolean(window.makeshiftInspect));
+  await settled(page);
   await injectHost(app, root, executable);
   await page.evaluate(() =>
     window.makeshiftAgent.request({
@@ -196,7 +207,7 @@ try {
   app = null;
   assertDead(quitChild);
   console.log(
-    "hidden Electron: actual preload/IPC guards, fake installer failure/retry/New/cancel and app quit with drained owned children, verified temp CLI and separate Codex launch passed; zero geometry calculations, no vendor installer/auth",
+    "hidden Electron: actual preload/IPC guards, fake installer failure/retry/New/cancel and app quit with drained owned children, verified temp CLI and separate Codex launch passed; only empty New-window warm-up calculations, no vendor installer/auth",
   );
 } catch (error) {
   console.error("Host fixture failure", error);

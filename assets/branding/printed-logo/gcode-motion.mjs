@@ -38,7 +38,7 @@ export function motion(state, values, diameter, command) {
   if (active && deposited > 0 && isArc) {
     if (state.plane !== "G17" || state.absoluteArcCenter)
       throw new Error("Only XY arcs with relative centers are supported");
-    move = arcMove(state.xyz, next, values, command === "G2");
+    move = arcMove(state.xyz, next, values, command === "G2", state.arcTolerance);
   }
   if (active && deposited > 0 && move.length > 1e-6) {
     if (next[2] !== state.xyz[2]) throw new Error("Non-planar extrusion is unsupported");

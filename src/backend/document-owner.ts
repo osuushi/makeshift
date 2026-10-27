@@ -14,6 +14,7 @@ import { DocumentSession } from "./document-session.js";
 import { documentView } from "./document-view.js";
 import { extrudeVisual } from "./extrude-visual.js";
 import { GeometryQueries, isGeometryQuery } from "./geometry-queries.js";
+import { materialize } from "./kernel-result.js";
 import { NativeSolver } from "./native-solver.js";
 import { planeCutAvailable } from "./plane-cut.js";
 import { reopenPreview } from "./reopen-preview.js";
@@ -31,6 +32,7 @@ export class DocumentOwner {
   private session = new DocumentSession();
   private active: { kind: ModelRequest["kind"]; promise: Promise<ModelReply> } | null = null;
   private cancelling = false;
+  private initialization: Promise<void> | undefined;
   readonly scripts: ScriptEdits;
   constructor(
     private solver = new NativeSolver(),
@@ -54,6 +56,21 @@ export class DocumentOwner {
       solver,
       this.decorators,
     );
+  }
+  /** Load the existing calculators without creating geometry or changing history. */
+  initialize(): Promise<void> {
+    this.initialization ??= Promise.all([
+      this.solver.solve({ points: [], radii: [], constraints: [] }),
+      this.kernel.calculate({ kind: "inspect", bodies: [] }),
+    ])
+      .then(() => {})
+      .catch((error: unknown) => {
+        this.solver.close();
+        this.kernel.close();
+        this.initialization = undefined;
+        throw error;
+      });
+    return this.initialization;
   }
   beginScript(name: string): void {
     if (this.active || this.cancelling || this.session.candidate || this.session.visualPreview)
@@ -242,9 +259,14 @@ export class DocumentOwner {
       this.session.candidate = null;
       const result = await extrudeVisual(this.kernel, this.session.store.data, request.extrusion);
       this.checkCancellation();
-      this.session.visualPreview = { bodies: result.results };
+      this.session.visualPreview = { bodies: result.results, replaces: result.participants };
       this.solids.booleanMode = result.mode;
-      this.solids.booleanTargets = [];
+      this.solids.booleanTargets = result.participants;
+      this.solids.booleanTools = materialize([], {
+        ...result,
+        participants: [],
+        results: result.tools,
+      }).map(({ brep: _brep, ...geometry }) => geometry);
       return;
     }
     if (isSolidRequest(request)) {

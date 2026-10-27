@@ -32,6 +32,8 @@ export async function blankDocumentOpen(app, source, root, originalPath, drawing
     .getByRole("status")
     .filter({ hasText: /JSON|archive/ })
     .waitFor();
+  assert.equal(await blank.locator("#startup").count(), 0, "Failed Open keeps the editor ready");
+  assert.equal(await blank.locator("#app").evaluate((element) => element.inert), false);
   assert.equal(app.windows().length, initialCount + 1);
   assert.equal((await blank.evaluate(() => window.makeshiftDocument.status())).path, null);
   const loaded = blank.waitForEvent("domcontentloaded");
@@ -47,7 +49,8 @@ export async function blankDocumentOpen(app, source, root, originalPath, drawing
   const restored = (await inspect(blank)).document;
   const normalized = (data) => JSON.parse(JSON.stringify({ ...data, bodies: data.bodies ?? [] }));
   assert.deepEqual(normalized(restored), normalized(drawing));
-  assert.equal((await blank.evaluate(() => window.makeshiftDocument.status())).edited, false);
+  // Restored workspace file events settle independently of renderer/model readiness.
+  await blank.waitForFunction(async () => !(await window.makeshiftDocument.status()).edited);
   const history = await blank.evaluate(() => window.makeshiftHistory());
   assert.equal(
     history.filter((entry) => !["navigation", "selection"].includes(entry.operation.kind)).length,

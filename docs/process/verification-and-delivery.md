@@ -2,6 +2,19 @@
 
 Read when this procedure is needed. [Process overview](../development-process.md).
 
+## Bounded edge-finish fuzzing
+
+After activating the repository's `.nvmrc` Node version and building the native
+kernel, run `npx tsc -p tsconfig.test.json && node scripts/fuzz-edge-finishes.mjs`.
+Optional arguments are case count (1–1000, default 160) and integer seed. Each
+native call has a five-second deadline. The sweep varies hole sizes/positions,
+near-tangent clearances, fillet/chamfer combinations and direct versus resized
+finishes; accepted material is checked with independent cross-section integration.
+It reports rejected candidates separately from incorrect accepted results and
+writes reproducible parameters to `.cache/edge-finish-fuzz-results.json`.
+The compact fixed seed regression runs in the normal model tests; the larger
+sweep is an explicit investigation tool, not additional UI or CI matrix coverage.
+
 ## Test placement and cost
 
 Founder decision, 2026-10-09: optimize test scope before buying CI capacity.
