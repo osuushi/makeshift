@@ -163,6 +163,10 @@ Renderer transport retains unchanged read-only source sketches and their ordered
 collection. Region-fill invalidation follows that collection, visibility and view
 scale, so changing only a solid preview does not reconstruct sketch regions or
 X-ray masks. Any changed sketch content replaces the retained reference.
+Unchanged read-only bodies and their collection are also retained across transport
+copies so mesh-query caches survive preview replies. Reuse compares complete body
+content, including presentation and topology metadata; an equal BRep alone is
+insufficient. Changed bodies always replace the retained reference.
 
 The founder's 2026-09-15 feedback opens planning of the first solid modeling loop
 while further sketch work remains. The [sketch → solid → sketch proposal](../sketch-solid-loop.md)

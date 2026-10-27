@@ -1,8 +1,8 @@
-import type { Sketch, SketchDocument } from "./document.js";
+import type { SketchDocument } from "./document.js";
 import type { ModelView } from "./model-api.js";
 
-const encoded = new WeakMap<Sketch, string>();
-function content(sketch: Sketch): string {
+const encoded = new WeakMap<object, string>();
+function content(sketch: object): string {
   let value = encoded.get(sketch);
   if (value === undefined) {
     value = JSON.stringify(sketch);
@@ -11,7 +11,7 @@ function content(sketch: Sketch): string {
   return value;
 }
 
-/** Transport copies must not invalidate profile caches for unchanged, read-only source sketches. */
+/** Transport copies must not invalidate geometry caches for unchanged read-only inputs. */
 function retain(previous: SketchDocument, next: SketchDocument): SketchDocument {
   const sketches = next.sketches.map((sketch) => {
     const source = previous.sketches.find((source) => source.id === sketch.id);
@@ -22,7 +22,16 @@ function retain(previous: SketchDocument, next: SketchDocument): SketchDocument 
     sketches.every((sketch, i) => sketch === previous.sketches[i])
       ? previous.sketches
       : sketches;
-  return retained === next.sketches ? next : { ...next, sketches: retained };
+  const bodies = next.bodies?.map((body) => {
+    const source = previous.bodies?.find((source) => source.id === body.id);
+    return source && (source === body || content(source) === content(body)) ? source : body;
+  });
+  const retainedBodies =
+    bodies?.length === previous.bodies?.length &&
+    bodies?.every((body, i) => body === previous.bodies?.[i])
+      ? previous.bodies
+      : bodies;
+  return { ...next, sketches: retained, ...(next.bodies ? { bodies: retainedBodies } : {}) };
 }
 
 export function retainViewSketches(previous: ModelView, next: ModelView): ModelView {

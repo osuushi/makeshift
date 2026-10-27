@@ -121,3 +121,96 @@ test("panel and solid occlusion immediately mask ghosts still inside their minim
     owner.close();
   }
 });
+
+test("guide rays reject distant face meshes and refresh bounds when geometry changes", async (t) => {
+  const owner = new DocumentOwner();
+  try {
+    const body = await prism(owner, square);
+    const distant = {
+      ...body,
+      id: "distant",
+      faces: Array.from({ length: 80 }, (_, n) =>
+        body.faces.map((face) => ({
+          ...face,
+          id: `${n}-${face.id}`,
+          vertices: face.vertices.map((value, i) => value + (i % 3 === 0 ? 100 + n * 30 : 0)),
+        })),
+      ).flat(),
+    };
+    const editor = pickingEditor([distant, body]);
+    let intersections = 0;
+    const intersect = THREE.Ray.prototype.intersectTriangle;
+    t.mock.method(
+      THREE.Ray.prototype,
+      "intersectTriangle",
+      function (this: THREE.Ray, ...args: Parameters<typeof intersect>) {
+        intersections++;
+        return intersect.apply(this, args);
+      },
+    );
+    assert.equal(guideVisibleThroughSolids(editor, [10, 10, 10]), true);
+    assert.equal(guideVisibleThroughSolids(editor, [10, 10, 5]), false);
+    assert.equal(
+      guideVisibleThroughSolids(editor, [20, 10, 5]),
+      false,
+      "Boundary rays remain eligible",
+    );
+    const localTriangles = body.faces.reduce((sum, face) => sum + face.vertices.length / 9, 0);
+    assert.ok(
+      intersections <= 3 * localTriangles,
+      "Distant faces never reach triangle intersection",
+    );
+    Object.assign(editor.display, { bodies: [distant] });
+    assert.equal(guideVisibleThroughSolids(editor, [10, 10, 5]), true);
+    Object.assign(editor.display, {
+      bodies: [
+        {
+          ...distant,
+          faces: body.faces.map((face, i) => ({ ...face, id: distant.faces[i].id })),
+        },
+      ],
+    });
+    assert.equal(
+      guideVisibleThroughSolids(editor, [10, 10, 5]),
+      false,
+      "Same IDs with new geometry cannot reuse old bounds",
+    );
+  } finally {
+    owner.close();
+  }
+});
+
+test("guide occlusion reuses identical rays but responds to camera, depth and clipping changes", async (t) => {
+  const owner = new DocumentOwner();
+  try {
+    const body = await prism(owner, square);
+    const editor = pickingEditor([body]);
+    let intersections = 0;
+    const intersect = THREE.Ray.prototype.intersectTriangle;
+    t.mock.method(
+      THREE.Ray.prototype,
+      "intersectTriangle",
+      function (this: THREE.Ray, ...args: Parameters<typeof intersect>) {
+        intersections++;
+        return intersect.apply(this, args);
+      },
+    );
+    assert.equal(guideVisibleThroughSolids(editor, [10, 10, 5]), false);
+    const count = intersections;
+    assert.ok(count > 0);
+    assert.equal(guideVisibleThroughSolids(editor, [10, 10, 5]), false);
+    assert.equal(intersections, count, "Repeated widget refresh does no new triangle work");
+    assert.equal(guideVisibleThroughSolids(editor, [10, 10, 10]), true);
+    const below = pickingEditor([body], [0, 0, -100]);
+    assert.equal(guideVisibleThroughSolids(below, [10, 10, 10]), false);
+    const clipping = [new THREE.Plane(new THREE.Vector3(0, 0, -1), 5)];
+    const clipped = pickingEditor([body], [0, 0, 100], clipping);
+    assert.equal(guideVisibleThroughSolids(clipped, [10, 10, 5]), true);
+    clipping[0].constant = 7;
+    assert.equal(guideVisibleThroughSolids(clipped, [10, 10, 5]), false);
+    clipping[0].constant = 5;
+    assert.equal(guideVisibleThroughSolids(clipped, [10, 10, 5]), true);
+  } finally {
+    owner.close();
+  }
+});
