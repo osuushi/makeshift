@@ -6,6 +6,8 @@ classic script and stylesheet in `assets/public/startup/` do not depend on the
 editor module graph. Further desktop windows show the static loading lockup.
 Standalone browser page loads use the animation; reduced motion uses the static
 lockup without imposing an animation delay.
+Opening into an existing blank window validates/restores the file before reloading
+that editor; failed Open leaves its current UI usable for recovery.
 
 Once both the animation and actual startup finish, the loading screen fades out
 over 500 ms to reveal the live editor beneath it. The editor remains inert until

@@ -122,8 +122,10 @@ export class DocumentWindow {
     });
   }
   async load(path?: string): Promise<void> {
-    // Paint the loading screen while a saved workspace is being restored.
-    this.opening = path ? this.documents.openPath(path).then(() => {}) : Promise.resolve();
+    const opening = path ? this.documents.openPath(path) : Promise.resolve();
+    // Keep an existing editor usable if Open fails; only a new window loads in parallel.
+    if (this.window.webContents.getURL()) await opening;
+    this.opening = opening;
     const url = process.env.MAKESHIFT_DEV_URL;
     const loaded = url
       ? this.window.loadURL(url)
