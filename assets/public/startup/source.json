@@ -1,0 +1,86 @@
+{
+  "sha256": "9c5ce1da692c91d90b0d27f92ad9c799adbfa6bf5eacc8d326de30d61c8a594b",
+  "offset": [128.00056504865418, 125.99943495134582],
+  "paths": 153,
+  "layers": 25,
+  "fps": 60,
+  "frames": 180,
+  "depositionFrames": 156,
+  "firstLayerSeconds": 0.75,
+  "laterLayerSeconds": 0.03541666666666665,
+  "macroFrames": 60,
+  "tessellation": {
+    "ringSize": 64,
+    "capSteps": 16,
+    "arcTolerance": 0.0005
+  },
+  "macroTarget": [-12.813580002000702, 7.326576841343678, 0.12],
+  "macroOrthoScale": 26,
+  "macroDriftPerSecond": [1.1, 0.35],
+  "macroZoomRate": 0.06,
+  "pullbackFrames": 54,
+  "pullbackStartFrame": 46,
+  "cameraMoveFrames": [61, 156],
+  "plateFadeFrames": [156, 180],
+  "cameraInterpolation": "Gently drifting macro opening; 0.9s quintic logarithmic pullback starts 0.25s before extrusion accelerates at 1s",
+  "wordmarkMilliseconds": 650,
+  "lighting": "spot-soft",
+  "appearance": "icon",
+  "resolution": 2160,
+  "samples": 64,
+  "plateMillimeters": [165, 179.25, 2.4],
+  "plateDetails": "Single flat plate with reference-matched stepped outline: broad shallow top rise and angled lower-left step; no raised center, seam or holes",
+  "cameraOrthoScale": [408.3333333333333, 220],
+  "mediaToCanonicalIconScale": 5,
+  "timing": "Empty opening frame, then 1s on the first stroke. Original 0.75s first-layer and equal-time later-layer sequence resumes without redrawing material; constant extrusion volume within each layer.",
+  "encodings": [
+    {
+      "file": "print-light.mp4",
+      "codec": "H.264/avc1",
+      "width": 2160,
+      "height": 2160,
+      "crf": 20,
+      "bytes": 956973
+    },
+    {
+      "file": "print-light-small.mp4",
+      "codec": "H.264/avc1",
+      "width": 1200,
+      "height": 1200,
+      "crf": 21,
+      "bytes": 375063
+    },
+    {
+      "file": "print-light-hevc.mp4",
+      "codec": "HEVC/hvc1",
+      "width": 2160,
+      "height": 2160,
+      "crf": 24,
+      "bytes": 507947
+    },
+    {
+      "file": "print-dark.mp4",
+      "codec": "H.264/avc1",
+      "width": 2160,
+      "height": 2160,
+      "crf": 20,
+      "bytes": 900055
+    },
+    {
+      "file": "print-dark-small.mp4",
+      "codec": "H.264/avc1",
+      "width": 1200,
+      "height": 1200,
+      "crf": 21,
+      "bytes": 336372
+    },
+    {
+      "file": "print-dark-hevc.mp4",
+      "codec": "HEVC/hvc1",
+      "width": 2160,
+      "height": 2160,
+      "crf": 24,
+      "bytes": 396330
+    }
+  ]
+}

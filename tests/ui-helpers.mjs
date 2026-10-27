@@ -5,7 +5,7 @@ import { chooseTool } from "./ui-tools.mjs";
 export async function settled(page) {
   await page.waitForFunction(() => {
     const state = window.makeshiftInspect?.();
-    return state && !state.busy && !state.camera.moving;
+    return state && !state.busy && !state.camera.moving && !document.querySelector("#startup");
   });
 }
 // Native busy can end before an ordinary modal acceptance continuation finishes.

@@ -180,3 +180,90 @@ actual infill paths were also checked for finite, closed, consistently oriented 
 The current native export, top/oblique renders and small
 previews were inspected, including orange/blue/white pixel checks. No physical
 print was made.
+
+## Startup animation
+
+The loading screen uses a 60 fps, 3-second Cycles render of `icon.gcode`, followed
+by a 650 ms UI wordmark wipe. The opening frame is an empty plate seen at macro scale.
+The first bead grows for a full second, using the first volume quota of the existing
+layer sequence. The close-up drifts gently sideways with a subtle widening. The camera then
+starts its 0.9-second pullback a quarter-second before the layer sequence accelerates,
+without redrawing the opening material. A quintic ease blends logarithmic camera
+scale, controlling apparent magnification and joining the later move with smooth
+velocity and acceleration. After the pullback, the existing camera
+eases from a diagonal to the canonical overhead orientation and zooms in. The full
+camera orientation uses quaternion interpolation, avoiding the look-at singularity
+at the overhead pole. The matte gray plate follows the founder’s supplied outline: a
+165 mm-wide bed with a broad shallow upper rise and an angled lower-left step,
+without projecting ears or holes. Its full outline is 165 × 179.25 mm. The top is
+one flat printing surface, with no raised center panel or perimeter seam.
+Once the camera settles, the plate fades away over frames 156–180. The 2160 px, 64-sample render includes extra room around
+the plate so the zoom never crops it at the media boundary. The final render matches
+the canonical icon at one fifth of the video bounds; the UI substitutes the
+approved PNG before shifting left into the lockup.
+The fixed-camera fade is composited inside Blender from the opaque-plate and
+transparent-background endpoint renders, in premultiplied linear RGB. This keeps
+the fade smooth without Cycles transparency noise. `--composite-only` regenerates
+frames 157–179 from existing frame 156 and 180 PNGs without rerendering the print.
+
+Paths retain slice order, bead widths, palette and the approved soft spotlight.
+Startup geometry uses 64-point cross-sections, 16 steps around each rounded cap,
+and 0.0005 mm arc chord tolerance so the macro silhouette stays smooth. These
+settings refine the surface without changing the original standalone icon preset.
+The layer sequence retains its 0.75-second first layer (45 frames), with the macro
+opening adding 60 frames; the other 24 layers equally divide
+the remaining 0.85 seconds (about 35.4 ms per layer). Each layer progresses at a
+constant extrusion-volume rate, inferred from the parser's volume-derived widths,
+layer height and centerline segment lengths. Every frame after the empty opening adds material.
+Completed paths remain visible; an active partial path is cut at its volume quota
+with a rounded tip and rendered as real bead geometry. No mesh-face-count reveal
+or travel-time pauses remain. `deposition.json` records every frame's layer, fraction
+and cumulative volume; the timing tests verify these against actual cut-path volume.
+This is a toolpath timelapse, not printer-speed or thermal
+simulation. Gray/orange/blue are the existing art direction, not encoded material
+changes in the single-extruder G-code.
+
+Reproduce from the repository root with Node 24, Blender and ffmpeg:
+
+```sh
+source /Users/adacohen/.nvm/nvm.sh && nvm use
+node assets/branding/printed-logo/prepare-startup.mjs .cache/printed-logo/startup-full
+/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python assets/branding/printed-logo/startup.py -- .cache/printed-logo/startup-full
+node assets/branding/printed-logo/encode-startup.mjs
+node assets/branding/printed-logo/preview-startup.mjs
+```
+
+Use the installed Blender executable for your platform. Append frame numbers to
+the Blender command for individual preview frames; add `--metal` to use an available
+Metal GPU (verified on M2 Max). Without that flag, rendering uses the CPU.
+The editable scene and RGBA
+frames stay in `.cache/printed-logo/startup-full/`. Each theme ships a 2160 px
+H.264 movie (CRF 20), a 1200 px H.264 movie (CRF 21), and a 2160 px HEVC/hvc1 movie
+(CRF 24). Software encoders use the slow preset, fast-start MP4, 4:2:0 pixels,
+BT.709 tags and no audio. Browsers use H.264; Mac Electron may prefer HEVC at higher
+display densities, with decoder-error fallback through the H.264 variants. The
+recorded encoding metadata includes actual file sizes. iPad HTTP serving supports
+byte-range probes. `FFMPEG` overrides the encoder executable.
+The preview recorder uses the repository's fixed-step capture helper and installed
+Playwright Chromium. Its review clip includes an extra 1.5 seconds for the wordmark and spinner;
+fixed-step capture preserves design timing, not a measurement of live performance.
+
+The local DM Sans variable font is from Google Fonts' `ofl/dmsans` directory,
+used unmodified under the adjacent SIL OFL license. The wordmark matches the landing
+page's weight 650, optical sizing, −0.05em tracking and purple accent. The loading
+screen has light/dark assets, a static reduced-motion path, bounded media failure
+fallback, and a reload action on startup error. It remains until the first model
+read/draw succeeds and the animation finishes. The existing solver and kernel warm
+up behind this screen, including their WASM workers in the standalone browser.
+Empty calculations leave the accepted model and history unchanged. Initial
+saved-document restoration runs alongside the loading page; model requests wait
+for restoration and runtime readiness.
+
+The public classic script and CSS run before the application module graph loads.
+The first desktop window animates; later windows use the static lockup. The video
+covers ordinary viewports up to 1080 CSS pixels, with a fit limit protecting the
+final logo. A soft circular mask blends any remaining border into the page. The
+wordmark also fits short and narrow windows. These assets own no document state. `tests/startup-loading.test.ts` covers fast,
+slow, failed/stalled/blocked media, reduced motion and startup errors; the existing
+Electron smoke checks that startup releases editor input. The HTTP test covers
+WebKit's media byte-range requirements. Physical iPad playback still needs review.

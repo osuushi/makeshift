@@ -1,5 +1,5 @@
 {
   "typeCheckingMode": "strict",
-  "include": ["render.py"],
+  "include": ["render.py", "startup.py", "startup_deposition.py", "startup_plate.py"],
   "pythonVersion": "3.10"
 }

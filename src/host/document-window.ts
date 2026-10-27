@@ -23,6 +23,7 @@ export interface WindowHost {
   directory: () => string;
   bounds?: Electron.Rectangle;
   name: string;
+  startupAnimation: boolean;
   remember(path?: string | null): Promise<void>;
   write(path: string, action: () => Promise<void>): Promise<void>;
 }
@@ -39,6 +40,7 @@ export class DocumentWindow {
   private mesh = new MeshCalculator(nativeExecutable("mesh"));
   private ipad: IPadSession;
   private disposed = false;
+  private opening: Promise<void> = Promise.resolve();
   readonly closed: Promise<void>;
   constructor(
     private directory: string,
@@ -69,6 +71,7 @@ export class DocumentWindow {
         sandbox: true,
         contextIsolation: true,
         nodeIntegration: false,
+        additionalArguments: host.startupAnimation ? ["--makeshift-startup-animation"] : [],
         backgroundThrottling: !hidden,
         offscreen: hidden && process.platform === "linux",
       },
@@ -81,7 +84,9 @@ export class DocumentWindow {
     this.agent.attach(window);
     this.ipad.attach(window);
     const ipc = new DocumentIPC();
-    ipc.handle("sketch", (_event, request: unknown) => {
+    ipc.handle("sketch", async (_event, request: unknown) => {
+      await this.opening;
+      await this.owner.initialize();
       this.documents.checkDesktop();
       return this.documents.model(request);
     });
@@ -95,6 +100,16 @@ export class DocumentWindow {
     });
     ipc.handle("settings-open", (_event, tools: unknown) => openSettingsWindow(directory, tools));
     ipc.attach(window);
+    this.installNavigation(window);
+    window.webContents.on("did-start-loading", () => this.mesh.close());
+    window.webContents.on("render-process-gone", () => this.mesh.close());
+    this.closed = new Promise((resolve) =>
+      window.once("closed", () => {
+        void this.dispose().catch(console.error).finally(resolve);
+      }),
+    );
+  }
+  private installNavigation(window: BrowserWindow): void {
     window.on("rotate-gesture", (_event, rotation) => {
       if (this.documents.remote?.active() || !Number.isFinite(rotation)) return;
       const cursor = screen.getCursorScreenPoint(),
@@ -105,19 +120,15 @@ export class DocumentWindow {
         y: (cursor.y - content.y) / zoom,
       });
     });
-    window.webContents.on("did-start-loading", () => this.mesh.close());
-    window.webContents.on("render-process-gone", () => this.mesh.close());
-    this.closed = new Promise((resolve) =>
-      window.once("closed", () => {
-        void this.dispose().catch(console.error).finally(resolve);
-      }),
-    );
   }
   async load(path?: string): Promise<void> {
-    if (path) await this.documents.openPath(path);
+    // Paint the loading screen while a saved workspace is being restored.
+    this.opening = path ? this.documents.openPath(path).then(() => {}) : Promise.resolve();
     const url = process.env.MAKESHIFT_DEV_URL;
-    if (url) await this.window.loadURL(url);
-    else await this.window.loadFile(join(this.directory, "../renderer/index.html"));
+    const loaded = url
+      ? this.window.loadURL(url)
+      : this.window.loadFile(join(this.directory, "../renderer/index.html"));
+    await Promise.all([loaded, this.opening]);
   }
   dispatch(command: DocumentCommand): void {
     this.documents.dispatch(command);

@@ -38,8 +38,10 @@ paths for decorated mesh export and custom decorators.
 ## Loading and deployment
 
 `build:web` produces only static files in `.build/web`. Relative URLs support a
-GitHub Pages project subpath. The solver loads when a constrained edit needs it;
-OCCT loads when an operation needs exact solid geometry. Mesh/JavaScript decorator
+GitHub Pages project subpath. The [startup screen](startup.md) remains visible while
+the existing solver and OCCT workers load and answer empty, read-only warm-up
+calculations. The first successful document read and draw completes readiness.
+Mesh/JavaScript decorator
 runtimes retain their own worker paths. WASM and generated glue have content hashes,
 independent of editor code. OCCT/runtime and Makeshift geometry also have separate
 content hashes: implementation changes that preserve the imported OCCT/runtime

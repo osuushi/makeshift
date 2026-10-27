@@ -8,5 +8,14 @@
   document.documentElement.style.colorScheme = dark ? "dark" : "light";
   document.querySelector('meta[name="theme-color"]').content = dark ? "#161e29" : "#f8f9fb";
 })();
-</script></head>
-<body><main id="app" aria-label="Makeshift sketch editor"></main><script type="module" src="/entry.ts"></script></body></html>
+</script><link rel="stylesheet" href="./startup/loading.css"/></head>
+<body><main id="app" aria-label="Makeshift sketch editor" inert></main>
+<div id="startup" role="status" aria-label="Loading Makeshift">
+  <div class="startup-lockup" aria-hidden="true">
+    <video muted playsinline preload="auto"></video>
+    <div class="startup-icon"><img src="./makeshift.png" alt=""/></div>
+    <div class="startup-word">Makeshift</div>
+  </div>
+  <div class="startup-status"><span class="startup-spinner" aria-hidden="true"></span><span class="startup-sr">Loading Makeshift…</span></div>
+</div>
+<script src="./startup/loading.js"></script><script type="module" src="/entry.ts"></script></body></html>

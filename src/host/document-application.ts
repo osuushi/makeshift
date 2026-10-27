@@ -148,6 +148,7 @@ export class DocumentApplication {
     let document: DocumentWindow;
     const number = path ? 0 : ++this.untitled;
     document = new DocumentWindow(this.directory, this.icon, {
+      startupAnimation: this.documents.size === 0,
       name: number > 1 ? `Untitled ${number}` : "Untitled",
       settings: this.settings,
       setup: this.setup,
