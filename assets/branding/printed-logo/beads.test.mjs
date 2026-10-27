@@ -102,6 +102,37 @@ test("coarse icon domes deepen into earlier layers without raising the model top
   assert.ok(Math.max(...zs) - Math.min(...zs) > 0.6, "wide beads need visible rounded depth");
 });
 
+test("macro bead caps are closed and keep curved edge error below half a percent", () => {
+  const paths = parseGcode("M83\n; WIDTH: 2\nG1 Z.2\nG1 X10 E.34");
+  const mesh = beadMesh(paths, 6, 0, [], "ellipse", { ringSize: 64, capSteps: 16 });
+  const edges = new Map();
+  for (const face of mesh.faces) {
+    for (let i = 0; i < face.length; i++) {
+      const a = face[i],
+        b = face[(i + 1) % face.length];
+      const key = `${Math.min(a, b)},${Math.max(a, b)}`;
+      const edge = edges.get(key) ?? { count: 0, direction: 0 };
+      edge.count++;
+      edge.direction += a < b ? 1 : -1;
+      edges.set(key, edge);
+      const p = mesh.vertices[a],
+        q = mesh.vertices[b];
+      for (const end of [0, 10]) {
+        if (!(end === 0 ? p[0] <= 0 && q[0] <= 0 : p[0] >= 10 && q[0] >= 10)) continue;
+        const midpoint = p.map((value, axis) => (value + q[axis]) / 2);
+        const radius = Math.hypot(midpoint[0] - end, midpoint[1], (midpoint[2] - 0.1) / 0.1);
+        assert.ok(radius >= 0.995 && radius <= 1 + 1e-12, "cap chords stay near the ellipsoid");
+      }
+    }
+  }
+  assert.ok([...edges.values()].every((edge) => edge.count === 2 && edge.direction === 0));
+  assert.ok(
+    mesh.vertices.every(
+      ([x, y, z]) => x >= -1 && x <= 11 && Math.abs(y) <= 1 && z >= 0 && z <= 0.2,
+    ),
+  );
+});
+
 test("a bend tighter than the bead radius never turns roof faces inside out", () => {
   const paths = parseGcode("M83\n; WIDTH: 2\nG1 Z1\nG3 X.6 Y-.6 I.6 J0 E.34");
   const mesh = beadMesh(paths, 6, 0, [], "ellipse");

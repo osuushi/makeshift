@@ -16,6 +16,9 @@ try {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.waitForFunction(() => Boolean(window.makeshiftInspect));
+  // Only the real host/renderer boundary proves the startup overlay releases input.
+  await page.locator("#startup").waitFor({ state: "detached" });
+  assert.equal(await page.locator("#app").evaluate((app) => app.inert), false);
   assert.equal(
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()),
     false,

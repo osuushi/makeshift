@@ -16,5 +16,5 @@ for (const name of await readdir(directory)) {
 rows.sort((a, b) => b.bytes - a.bytes);
 console.table(rows);
 console.log(
-  "Compression estimates; actual transfer encoding depends on the static host. WASM calculators load on demand.",
+  "Compression estimates; actual transfer encoding depends on the static host. Solver and OCCT load behind the startup screen.",
 );

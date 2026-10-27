@@ -87,6 +87,9 @@ async function upstreamNotices(add, metadata) {
     );
   }
   await add("Makeshift", metadata.timestamp, "LGPL-2.1-or-later", ["LICENSE", "COPYING.md"]);
+  await add("DM Sans", "Variable optical size/weight", "OFL-1.1", [
+    "assets/public/startup/DM-Sans-OFL.txt",
+  ]);
   await add(
     "Open CASCADE Technology (Makeshift offset-join precision adaptation, 2026-09-23)",
     "7.9.3",

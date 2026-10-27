@@ -15,6 +15,20 @@ test("clockwise and counterclockwise quarters preserve endpoints and circular sh
   }
 });
 
+test("macro parsing refines arc chords while preserving endpoints and bead width", () => {
+  const text = "M83\n; WIDTH: 2\nG1 X4 Z.2\nG3 X0 Y4 I-4 J0 E1";
+  const [coarse] = parseGcode(text);
+  const [fine] = parseGcode(text, 1.75, 0.0005);
+  assert.ok(fine.points.length > coarse.points.length * 2);
+  assert.deepEqual(fine.points[0], coarse.points[0]);
+  assert.deepEqual(fine.points.at(-1), coarse.points.at(-1));
+  assert.ok(fine.widths.every((width) => width === 2));
+  for (let i = 1; i < fine.points.length; i++) {
+    const midpoint = fine.points[i].map((value, axis) => (value + fine.points[i - 1][axis]) / 2);
+    assert.ok(4 - Math.hypot(midpoint[0], midpoint[1]) <= 0.0005 + 1e-12);
+  }
+});
+
 test("Orca scope excludes machine priming and helical travel, preserves declared widths", () => {
   const text = `M83
 G1 X50 Y70 Z.2 E10

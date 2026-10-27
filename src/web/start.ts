@@ -3,8 +3,10 @@ import { modelWireReply } from "../sketch/model-wire.js";
 
 export function installWebModel(): void {
   const owner = new DocumentOwner();
-  window.makeshiftModel = async (request) =>
-    structuredClone(modelWireReply(request, await owner.call(structuredClone(request))));
+  window.makeshiftModel = async (request) => {
+    await owner.initialize();
+    return structuredClone(modelWireReply(request, await owner.call(structuredClone(request))));
+  };
   window.makeshiftFixture = async (snapshot) => {
     const capturedAt = new Date().toISOString();
     return {

@@ -5,6 +5,11 @@ import type { HostModelRequest } from "./host/model-request.js";
 import type { IPadStatus } from "./ipad/protocol.js";
 import type { ModelView } from "./sketch/model-api.js";
 
+contextBridge.exposeInMainWorld("makeshiftStartup", {
+  animate: process.argv.includes("--makeshift-startup-animation"),
+  platform: process.platform,
+});
+
 contextBridge.exposeInMainWorld("makeshiftMesh", {
   integrate: (input: ArrayBuffer) => ipcRenderer.invoke("mesh-export", input),
   cancel: () => ipcRenderer.invoke("mesh-export-cancel"),

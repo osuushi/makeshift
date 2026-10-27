@@ -109,6 +109,7 @@ try {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.waitForFunction(() => !!window.makeshiftInspect);
+  await page.locator("#startup").waitFor({ state: "detached" });
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.getByRole("status").filter({ hasText: "XY sketch" }).waitFor();
   assert.equal(

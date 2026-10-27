@@ -203,7 +203,7 @@ def lighting(scene: Any, icon: bool, base_height: float, preset: str) -> None:
 
 
 def setup(mesh_file: Path, output: Path, resolution: int, samples: int,
-          detail: bool, icon: bool, lighting_preset: str) -> None:
+          detail: bool, icon: bool, lighting_preset: str, render_still: bool = True) -> None:
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
     data = cast(dict[str, Any], json.loads(mesh_file.read_text()))
@@ -259,12 +259,14 @@ def setup(mesh_file: Path, output: Path, resolution: int, samples: int,
     scene.camera = camera_obj
     lighting(scene, icon, base_height, lighting_preset)
     scene.render.filepath = str(output)
-    bpy.ops.wm.save_as_mainfile(filepath=str(output.with_suffix(".blend")))
-    bpy.ops.render.render(write_still=True)
+    if render_still:
+        bpy.ops.wm.save_as_mainfile(filepath=str(output.with_suffix(".blend")))
+        bpy.ops.render.render(write_still=True)
 
 
-args = sys.argv[sys.argv.index("--") + 1:]
-lighting_preset = next((arg.split("=", 1)[1] for arg in args[4:] if arg.startswith("lighting=")),
-                      "spot-soft" if "icon" in args[4:] else "current")
-setup(Path(args[0]), Path(args[1]), int(args[2]) if len(args) > 2 else 1024,
-      int(args[3]) if len(args) > 3 else 64, "detail" in args[4:], "icon" in args[4:], lighting_preset)
+if __name__ == "__main__":
+    args = sys.argv[sys.argv.index("--") + 1:]
+    lighting_preset = next((arg.split("=", 1)[1] for arg in args[4:] if arg.startswith("lighting=")),
+                          "spot-soft" if "icon" in args[4:] else "current")
+    setup(Path(args[0]), Path(args[1]), int(args[2]) if len(args) > 2 else 1024,
+          int(args[3]) if len(args) > 3 else 64, "detail" in args[4:], "icon" in args[4:], lighting_preset)

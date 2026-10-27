@@ -10,10 +10,20 @@ async function start(): Promise<void> {
   const status = await window.makeshiftIPad?.status();
   if (status?.active) {
     showDesktopConnection(status);
+    window.dispatchEvent(new Event("makeshift-ready"));
     return;
   }
   if (!window.makeshiftModel && (location.hash || sessionStorage.getItem("freac-pairing")))
     await connectBrowser();
-  await import("./main.js");
+  const main = await import("./main.js");
+  await main.ready;
+  window.dispatchEvent(new Event("makeshift-ready"));
 }
-void start().catch(console.error);
+void start().catch((error: unknown) => {
+  console.error(error);
+  window.dispatchEvent(
+    new CustomEvent("makeshift-startup-error", {
+      detail: error instanceof Error ? error.message : String(error),
+    }),
+  );
+});
