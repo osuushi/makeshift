@@ -12,7 +12,62 @@ export async function navigationInputRoute(page, name) {
   );
   await page.keyboard.press("r");
   await drag(page, [-15, -10], [15, 10]);
+  const drawn = await navigationIdle(page);
+  const sketchSelection = [{ kind: "sketch", sketch: drawn.document.sketches[0].id }];
+  await planarNavigation(page);
+  // Real input verifies the camera-to-editor handoff and its navigation history boundary.
+  const exited = await navigationRoundTrip(
+    page,
+    () => orbit(page),
+    "Command orbit with workspace/selection",
+  );
+  assert.equal(exited.after.activePlane, null);
+  assert.deepEqual(exited.after.modelingSelection, sketchSelection);
+  assert.deepEqual(exited.after.selectionTargets, []);
+  await ordinaryNavigation(page, () => orbit(page), "Same-mode orbit");
+  await ordinaryNavigation(page, () => orbit(page, true), "Same-mode Option roll");
+  assert.deepEqual((await navigationIdle(page)).modelingSelection, sketchSelection);
+  await navigationRoundTrip(
+    page,
+    () => chooseTool(page, "Sketch on XZ", "sketch-xz"),
+    "Tool-menu canonical view",
+  );
+  await navigationRoundTrip(
+    page,
+    () => chooseTool(page, "Return to Modeling", "modeling"),
+    "Sketch exit",
+  );
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await navigationIdle(page);
+  await navigationRoundTrip(
+    page,
+    () => page.locator('.orientation-cube [data-kind="face"]:visible').first().click(),
+    "Cube single click",
+  );
+  assert.deepEqual((await navigationIdle(page)).modelingSelection, sketchSelection);
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
+  await navigationIdle(page);
+  await navigationRoundTrip(page, () => cubeDrag(page), "Cube drag");
+  assert.deepEqual((await navigationIdle(page)).modelingSelection, sketchSelection);
+  await navigationRoundTrip(
+    page,
+    async () => {
+      await page.locator('.orientation-cube [role="button"]:visible').first().focus();
+      await page.keyboard.press("Space");
+    },
+    "Cube keyboard alignment",
+  );
+  await noOpNavigation(page);
+  await ordinaryNavigation(page, () => orbit(page, true, true), "Canceled same-mode orbit");
+  await chooseTool(page, "Sketch on XZ", "sketch-xz");
+  await navigationIdle(page);
+  const emptyExit = await navigationRoundTrip(page, () => orbit(page), "Empty workspace orbit");
+  assert.deepEqual(emptyExit.after.modelingSelection, []);
+  console.log(
+    `${name}: entry/exit, scroll/secondary pan, browser/WebKit pinch, orbit/roll, cube click/drag/keyboard Undo/Redo passed`,
+  );
+}
+async function planarNavigation(page) {
   await ordinaryNavigation(page, () => wheel(page, 30, 20), "Scroll pan");
   await ordinaryNavigation(
     page,
@@ -42,43 +97,8 @@ export async function navigationInputRoute(page, name) {
     },
     "WebKit gesture-scale pinch",
   );
-  await navigationRoundTrip(page, () => orbit(page), "Command orbit with workspace/selection");
-  await ordinaryNavigation(page, () => orbit(page), "Same-mode orbit");
-  await ordinaryNavigation(page, () => orbit(page, true), "Same-mode Option roll");
-  await navigationRoundTrip(
-    page,
-    () => chooseTool(page, "Sketch on XZ", "sketch-xz"),
-    "Tool-menu canonical view",
-  );
-  await navigationRoundTrip(
-    page,
-    () => chooseTool(page, "Return to Modeling", "modeling"),
-    "Sketch exit",
-  );
-  await chooseTool(page, "Sketch on XY", "sketch-xy");
-  await navigationIdle(page);
-  await orbit(page);
-  await navigationIdle(page);
-  await navigationRoundTrip(
-    page,
-    () => page.locator('.orientation-cube [data-kind="face"]:visible').first().click(),
-    "Cube single click",
-  );
-  await navigationRoundTrip(page, () => cubeDrag(page), "Cube drag");
-  await navigationRoundTrip(
-    page,
-    async () => {
-      await page.locator('.orientation-cube [role="button"]:visible').first().focus();
-      await page.keyboard.press("Space");
-    },
-    "Cube keyboard alignment",
-  );
-  await noOpNavigation(page);
-  await ordinaryNavigation(page, () => orbit(page, true, true), "Canceled same-mode orbit");
-  console.log(
-    `${name}: entry/exit, scroll/secondary pan, browser/WebKit pinch, orbit/roll, cube click/drag/keyboard Undo/Redo passed`,
-  );
 }
+
 export async function wheel(page, x, y) {
   await page.mouse.move(1000, 600);
   await page.mouse.wheel(x, y);

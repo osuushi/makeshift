@@ -110,6 +110,13 @@ export function installWorkspaceSync(editor: SketchEditor): void {
   installCameraDepth(editor);
   world.orbitPivot = (press) => orbitPivot(editor, press);
   world.rollPivot = () => rollSelectionPivot(editor);
+  world.selectWorkspaceSketch = () => {
+    const sketch = editor.sketch;
+    if (!sketch) return;
+    editor.modeling.targets = [{ kind: "sketch", sketch: sketch.id }];
+    editor.modeling.alternatives = [];
+    editor.modeling.hover = null;
+  };
   world.canNavigate = () => !editor.isDragging;
   world.canEnterSketch = () =>
     !editor.interactions.current?.selectsLocally() &&
