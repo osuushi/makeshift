@@ -38,6 +38,7 @@ export class DeleteTopologyAction {
           event.target instanceof HTMLTextAreaElement ||
           event.target instanceof HTMLSelectElement ||
           (event.target instanceof HTMLElement && event.target.isContentEditable) ||
+          (!editor.world.active && !this.selected()) ||
           toolCatalog(editor).reason({ reason: () => null })
         )
           return;

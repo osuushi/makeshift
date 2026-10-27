@@ -6,6 +6,7 @@ import { entityRows } from "./entity-presentation.js";
 import { renameEntity } from "./entity-rename.js";
 import { EntityReorder } from "./entity-reorder.js";
 import { SavedPlaneView } from "./saved-plane-view.js";
+import { visibilityIcon } from "./visibility-icon.js";
 
 export class ConstructionPlaneView {
   private patches: SavedPlaneView;
@@ -92,7 +93,7 @@ export class ConstructionPlaneView {
     const row = document.createElement("div"),
       eye = document.createElement("button");
     row.className = "entity-row";
-    eye.textContent = visible ? "◉" : "○";
+    eye.innerHTML = visibilityIcon(visible);
     eye.setAttribute("aria-label", `${visible ? "Hide" : "Show"} ${name}`);
     eye.disabled = !!toolCatalog(e).reason({ reason: () => null });
     eye.onclick = () => {

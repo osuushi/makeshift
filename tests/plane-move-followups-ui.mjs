@@ -38,6 +38,22 @@ await withUiRuntimes(async (page) => {
   await page.getByRole("button", { name: "Select Plane 1", exact: true }).click();
   await page.keyboard.press("Meta+Enter");
   assert.ok((await inspect(page)).activePlane, "Cmd-Enter enters selected saved plane");
+  await chooseTool(page, "return to modeling", "modeling");
+  const hide = page.getByRole("button", { name: "Hide Plane 1", exact: true });
+  assert.equal(await hide.locator("svg").count(), 1);
+  await hide.click();
+  const show = page.getByRole("button", { name: "Show Plane 1", exact: true });
+  assert.equal(await show.locator("svg path").count(), 2, "Hidden plane uses crossed eye");
+  await show.click();
+  // General Delete capture must defer to the saved-plane controller. Model tests
+  // cannot catch listener registration order swallowing this keyboard event.
+  for (const key of ["Backspace", "Delete"]) {
+    await page.getByRole("button", { name: "Select Plane 1", exact: true }).click();
+    await page.keyboard.press(key);
+    assert.equal((await inspect(page)).document.constructionPlanes.length, 1);
+    await chooseTool(page, "undo", "undo");
+    assert.equal((await inspect(page)).document.constructionPlanes.length, 2);
+  }
   console.log(
     "Construction plane immediate placement, default Move, selection acceptance and Escape passed",
   );
