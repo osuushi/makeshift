@@ -138,14 +138,18 @@ correspondence. Count changes rebuild the drawable; removed bodies and view
 disposal release its resources. Edge-finish previews
 continue highlighting the accepted source chain when the candidate consumes it.
 
-Straight sketch extrusion into independent new bodies uses a separate visual reply
-while its distance handle is captured. This applies to New and to Auto with no
-existing bodies; draft, twist, body-face extrusion and Boolean results retain
-complete previews. The kernel still validates exact geometry and meshes every
-face. The visual reply contains triangles, feature outlines, bounds and plane
-frames needed for section rendering, with no BRep, persistent topology IDs or
-editing metadata. Thickness counterparts, face chains, blend recognition and
-exact edge landmarks are built for the latest complete target instead.
+Straight sketch extrusion uses a separate visual reply while its distance handle
+is captured, including Auto, Union, Subtract and Intersect. Draft, twist and
+body-face extrusion retain complete previews. Each target still computes and
+validates its exact Boolean geometry and meshes every face. The visual result
+contains triangles, feature outlines, bounds, section plane frames and appearance
+references, with no BRep, persistent topology IDs or editing metadata. Participants
+hide the accepted bodies replaced by that visual result; cutting tools retain their
+ordinary translucent display. Empty subtraction/intersection results are valid.
+Thickness counterparts, face chains, blend recognition and exact edge landmarks
+are built for the latest complete target instead. New-body extrusion sends only
+bodies supplying selected faces to the calculator; sketch-only New sends no
+existing BReps, regardless of document size or placement.
 
 `ExtrudePreview` owns one serial calculation and one replaceable target. Pointer
 release or a request to confirm a guide target completes the latest extrusion;
@@ -159,6 +163,22 @@ Renderer transport retains unchanged read-only source sketches and their ordered
 collection. Region-fill invalidation follows that collection, visibility and view
 scale, so changing only a solid preview does not reconstruct sketch regions or
 X-ray masks. Any changed sketch content replaces the retained reference.
+Unchanged read-only bodies and their collection are also retained across transport
+copies so mesh-query caches survive preview replies. Reuse compares complete body
+content, including presentation and topology metadata; an equal BRep alone is
+insufficient. Changed bodies always replace the retained reference.
+
+Held visual extrusion requests reuse the renderer's accepted snapshot. Successful
+transport replies omit that unchanged document, returning the visual result and
+current feedback; the backend's own view remains complete. Errors, full candidates,
+completion, acceptance and ordinary API reads still return complete data. This is
+an operation-specific transport optimization, with no document revisions or second
+owner. Repeated empty selection-history writes are skipped only while their entire
+baseline is unchanged; edits, navigation and document replacement invalidate that
+reuse. Captured extrusion drags share sketch dragging's once-per-frame refresh so busy
+notifications and preview publication do not each rebuild the same viewport.
+Other solid controls retain synchronous refresh when revealing numeric fields
+before transferring keyboard focus.
 
 The founder's 2026-09-15 feedback opens planning of the first solid modeling loop
 while further sketch work remains. The [sketch → solid → sketch proposal](../sketch-solid-loop.md)

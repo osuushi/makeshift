@@ -19,11 +19,10 @@ export interface VisualPreview {
 }
 
 /** Other tools keep their complete previews until their live metadata needs are reviewed. */
-export function visualExtrusion(extrusion: Extrusion, bodyCount: number): boolean {
+export function visualExtrusion(extrusion: Extrusion): boolean {
   return (
     extrusion.sources.length > 0 &&
     extrusion.sources.every((source) => "sketch" in source) &&
-    (extrusion.mode === "new" || (extrusion.mode === "auto" && bodyCount === 0)) &&
     !extrusion.draft?.value &&
     !extrusion.twist?.angle
   );

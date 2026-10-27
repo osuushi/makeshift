@@ -45,3 +45,40 @@ test("solid preview transport preserves unchanged source profile caches but reta
     "A sketch edit must not reuse accepted source geometry",
   );
 });
+
+test("transport retains identical bodies but never hides mesh or topology metadata changes", async () => {
+  const { DocumentOwner } = await import("../src/backend/document-owner.js");
+  const { prism, square } = await import("./body-edge-fixtures.js");
+  const owner = new DocumentOwner();
+  try {
+    const body = await prism(owner, square);
+    const previous = owner.view;
+    const kept = retainViewSketches(previous, structuredClone(previous));
+    assert.equal(kept.data.bodies, previous.data.bodies);
+    assert.equal(kept.data.bodies?.[0], body);
+    for (const edit of [
+      (copy: typeof body) => {
+        copy.faces[0].vertices[0] += 0.01;
+      },
+      (copy: typeof body) => {
+        copy.faces[0].signature[0] += 1;
+      },
+    ]) {
+      const next = structuredClone(previous);
+      const copy = next.data.bodies?.[0];
+      assert.ok(copy);
+      edit(copy);
+      const changed = retainViewSketches(kept, next);
+      assert.notEqual(changed.data.bodies?.[0], body);
+      assert.deepEqual(changed.data, next.data);
+      assert.equal(copy.brep, body.brep, "BRep equality alone cannot justify reuse");
+    }
+    const removed = retainViewSketches(kept, {
+      ...previous,
+      data: { ...previous.data, bodies: [] },
+    });
+    assert.deepEqual(removed.data.bodies, []);
+  } finally {
+    owner.close();
+  }
+});

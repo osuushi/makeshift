@@ -6,7 +6,7 @@ import type { BodyGeometry, Face } from "./body.js";
 const bounds = new WeakMap<Face, THREE.Box3>();
 // Conservative millimeter padding avoids rejecting boundary rays after projection roundoff.
 const boundsPadding = 1e-7;
-function faceBounds(face: Face): THREE.Box3 {
+export function faceBounds(face: Face): THREE.Box3 {
   let box = bounds.get(face);
   if (!box) {
     box = new THREE.Box3();

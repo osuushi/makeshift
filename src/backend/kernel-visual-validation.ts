@@ -1,3 +1,4 @@
+import { validateKernelBodies } from "./kernel-body-validation.js";
 import type { KernelRequest } from "./kernel-request.js";
 import {
   array,
@@ -13,12 +14,20 @@ import {
 export function validateVisualReply(reply: Record<string, unknown>, input?: KernelRequest): void {
   const deferred = input && "presentation" in input && input.presentation === "deferred";
   requireKernel(reply.presentation === (deferred ? "deferred" : "visual"), "visual presentation");
-  requireKernel(reply.mode === "new" || reply.mode === "union", "visual operation");
-  if (deferred) references(reply.participants, new Set(input.bodies.map((body) => body.id)));
+  if (input && !deferred) {
+    requireKernel(input.kind === "extrude", "visual extrusion");
+    // Generated cutting tools retain their normal display contract; only the
+    // potentially large Boolean result omits editing metadata during the drag.
+    validateKernelBodies({ ...reply, results: reply.tools }, input);
+  } else requireKernel(reply.mode === "new" || reply.mode === "union", "visual operation");
+  if (input) references(reply.participants, new Set(input.bodies.map((body) => body.id)));
   else requireKernel(array(reply.participants).length === 0, "visual participants");
-  requireKernel(array(reply.tools).length === 0, "visual tools");
+  if (deferred || !input) requireKernel(array(reply.tools).length === 0, "visual tools");
   const bodies = array(reply.results);
-  requireKernel(bodies.length > 0, "visual bodies");
+  requireKernel(
+    bodies.length > 0 || reply.mode === "subtract" || reply.mode === "intersect",
+    "visual bodies",
+  );
   for (const value of bodies) {
     const body = object(value);
     requireKernel(body.brep === undefined, "visual data cannot contain an exact body");

@@ -27,9 +27,9 @@ export interface DeferredKernelReply {
 export type KernelReply<Input extends KernelRequest> = Input extends { presentation: "visual" }
   ? {
       presentation: "visual";
-      mode: "new" | "union";
-      participants: [];
-      tools: [];
+      mode: "new" | "union" | "subtract" | "intersect";
+      participants: string[];
+      tools: KernelResult["results"];
       results: import("../model/visual-preview.js").VisualBody[];
     }
   : Input extends { presentation: "deferred" }

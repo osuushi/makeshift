@@ -56,6 +56,10 @@ Saved, candidate and destination markers are hidden immediately behind opaque vi
 solid surfaces or section caps. The visibility probe follows the current display geometry,
 per-screen clipping and body transparency; translucent bodies and sketch X-ray foreground
 passes do not occlude markers. Occluded candidates are excluded before the three-marker cap.
+Solid visibility rejects rays outside conservative face-mesh bounds before testing
+triangles. Repeated ray/depth/clipping queries reuse a bounded per-body result cache;
+camera or clipping changes miss, and changed geometry replaces the body identity.
+Visibility and opacity are checked outside that cache on every query.
 
 Definitions at the same 3D location share one marker and the existing definition
 chooser, so a circular rim center and its cap centers do not suppress one another.

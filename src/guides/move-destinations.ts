@@ -110,8 +110,11 @@ export class GuideMoveDestinations {
     this.root.prepend(this.facePatches);
   }
   private hideOverlaps(): void {
+    if (this.root.style.display === "none") return;
+    const circles = this.root.querySelectorAll("circle");
+    if (!circles.length) return;
     const bounds = this.clearance.bounds();
-    for (const circle of this.root.querySelectorAll("circle")) {
+    for (const circle of circles) {
       const point = {
         x: Number(circle.getAttribute("cx")),
         y: Number(circle.getAttribute("cy")),
