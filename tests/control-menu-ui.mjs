@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { chromium, webkit } from "playwright";
+import { Vector3 } from "three";
 import { createServer, preview } from "vite";
 import { cameraRoute } from "./ui-camera.mjs";
 import { drag, inspect, reset } from "./ui-helpers.mjs";
@@ -125,8 +126,27 @@ function assertRollFraming(before, after) {
   const startDepth = Math.hypot(...start),
     endDepth = Math.hypot(...end);
   assert.equal(after.height, before.height, "Roll preserves orthographic zoom");
+  // The selected 20 × 10 rectangle owns the roll pivot, not the view target.
+  const screenPoint = (camera) => {
+    const direction = new Vector3(...camera.target)
+      .sub(new Vector3(...camera.position))
+      .normalize();
+    const right = direction
+      .clone()
+      .cross(new Vector3(...camera.up))
+      .normalize();
+    const up = right.clone().cross(direction).normalize();
+    const offset = new Vector3(10, 5, 0).sub(new Vector3(...camera.target));
+    return [offset.dot(right), offset.dot(up)];
+  };
+  const startPoint = screenPoint(before),
+    endPoint = screenPoint(after);
+  for (let i = 0; i < 2; i++)
+    assert.ok(
+      Math.abs(startPoint[i] - endPoint[i]) < 1e-8,
+      "Roll preserves selected center on screen",
+    );
   for (let i = 0; i < 3; i++) {
-    assert.ok(Math.abs(after.target[i] - before.target[i]) < 1e-8, "Roll preserves view target");
     assert.ok(
       Math.abs(end[i] / endDepth - start[i] / startDepth) < 1e-8,
       "Roll preserves viewing direction",
