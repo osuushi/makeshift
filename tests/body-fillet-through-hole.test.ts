@@ -105,7 +105,7 @@ test("captured straight fillet stays cylindrical while crossing and passing a bo
   }
 });
 
-test("swept straight fillets respect acute and obtuse planar support angles", async () => {
+test("straight fillets respect acute and obtuse planar support angles", async () => {
   const owner = new DocumentOwner();
   try {
     for (const degrees of [60, 120]) {

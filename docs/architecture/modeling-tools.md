@@ -137,18 +137,33 @@ If OCCT builds an edge finish with invalid topology, the kernel makes one shape
 repair pass and validates the repaired solid before offering a preview. A repair
 that remains invalid still rejects the edit.
 
-A single straight convex edge between planar walls, with perpendicular planar
-end caps and straight cap boundaries, rounds by subtracting a swept circular
-corner section. Its radius and tangency come from the two supporting planes;
-interior holes trim the resulting cylindrical face directly. Crossing a hole
-does not introduce a rolling-ball transition patch or limit the radius at that
-hole. Tangency remains within both end caps' adjacent boundary lengths; complete
-support consumption retains ordinary feasibility clamping. Unsupported corners,
-curved edges and multiple-edge blends use the ordinary fillet builder. The same
-construction applies when resizing a recognized cylindrical blend after recovering
-its supporting edge from current geometry. Boolean correspondence preserves
-continuing walls and holes; the new round receives a new face identity on creation.
-Preview, Cancel, acceptance and Undo retain their existing ownership.
+Fillet and Chamfer separate finish construction from trimming at enclosed cavities. Inner
+loops on the selected edges' supporting faces identify connected cavity walls
+and floors topologically, independent of their curve/surface types. The kernel
+temporarily heals these interruptions, maps every selected spine through the
+healing history, and builds all selected blends together on that carrier. Exact
+Boolean differences verify that healing only filled cavities, isolate the original
+voids, and trim them back out of the finished carrier. Thus holes intersect the
+natural planar/conical/cylindrical/toroidal finish instead of producing transition patches or
+premature radius limits. Straight and curved edges, multi-edge rims, notched
+supports and blind pockets use this same path; there is no shape-specific cutter.
+It also applies to current-geometry fillet and chamfer resizing. Source data and unambiguous
+hole/wall identities continue through ordinary history mapping.
+Operands with closed toroidal supports have their closed faces partitioned before
+trimming and recombined afterward,
+with source precision checked against every resulting pcurve. This avoids
+misclassified overlapping rounds and reversed caps over an already rounded hole.
+Original non-seam boundaries remain protected during recombination. Chamfer
+recognition resolves the underlying support pair when other bevels meet a strip
+at its ends; equally plausible support pairs remain unrecognized.
+
+Selected opening rims are protected. Open boundary interruptions, unsupported
+healing or spine correspondence, and feature groups whose removal also removes
+material retain ordinary edge-finish construction. Material-adding finishes also retain
+that path: finite recovered voids cannot establish how a bore should extend into
+new material. All results must remain one validated solid; genuine support
+consumption keeps existing feasibility clamping. Preview, Cancel, acceptance and
+Undo retain their existing ownership.
 
 Failed edge-chain validation keeps the Fillet/Chamfer control open with its error,
 numeric focus and disabled acceptance; Escape/Cancel explicitly releases it.
