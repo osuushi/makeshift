@@ -58,7 +58,10 @@ it is an application picking tolerance, not a claim that CAD curves meet the UI 
 ### Sketch tool lifetime
 
 Leaving a sketch workspace resets its tool to Select and clears armed creation
-intent. Reentering a sketch or choosing another plane therefore starts in Select,
+intent. Rotating out through viewport orbit/roll or orientation-cube navigation
+selects the sketch being edited as a whole sketch in Modeling. Empty workspaces
+leave no sketch selected. The navigation Undo/Redo restores workspace, camera and
+selection together. Reentering a sketch or choosing another plane therefore starts in Select,
 without inheriting Circle, Line, Rectangle, Curve or Trim from the previous session.
 Drawing tools continue to take precedence while that session is active. Explicitly
 choosing Line, Rectangle, Circle, Curve, Pen or Trim in Modeling immediately enters

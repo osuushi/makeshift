@@ -76,6 +76,7 @@ export class World {
   longPress: ((event: PointerEvent) => void) | null = null;
   planePickerLabel = "Project onto";
   sketchEntry: ((id: PlaneId) => void) | null = null;
+  selectWorkspaceSketch: () => void = () => {};
   planeSelection: ((id: PlaneId, entering?: () => boolean) => void | Promise<void>) | null = null;
   selectedPlane: PlaneId | null = null;
   private readonly observer: ResizeObserver;
@@ -107,7 +108,7 @@ export class World {
     this.cancelCameraMotion();
     this.rotationPivot.copy(this.orbitPivot(press));
     const rollPivot = this.rollPivot();
-    if (this.active) this.exit();
+    if (this.active) this.exit({ selectSketch: true });
     this.orbit.begin(this, pointer, this.rotationPivot, roll, rollPivot);
   }
   get cameraTransitioning(): boolean {
@@ -260,9 +261,10 @@ export class World {
     const key = this.active;
     return key && key in planes ? key[axis === "x" ? 0 : 1] : axis.toUpperCase();
   }
-  exit(): void {
+  exit({ selectSketch = false } = {}): void {
     if (this.workspace) this.navigation.beginWorkspace();
     this.cancelCameraMotion();
+    if (this.workspace && selectSketch) this.selectWorkspaceSketch();
     this.workspace = null;
     this.draw();
   }
