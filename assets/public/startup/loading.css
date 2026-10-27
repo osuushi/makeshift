@@ -29,7 +29,7 @@ body {
   color: var(--startup-ink);
   font-family: "Makeshift DM Sans", sans-serif;
   opacity: 1;
-  transition: opacity 500ms ease;
+  transition: opacity calc(500ms / var(--startup-speed, 1)) ease;
 }
 #startup.is-dismissing {
   opacity: 0;
@@ -54,8 +54,8 @@ html[data-theme="dark"] #startup {
   flex: 0 0 calc(var(--startup-media-size) / 5);
   height: calc(var(--startup-media-size) / 5);
   transition:
-    flex-basis 650ms cubic-bezier(0.22, 1, 0.36, 1),
-    height 650ms cubic-bezier(0.22, 1, 0.36, 1);
+    flex-basis calc(650ms / var(--startup-speed, 1)) cubic-bezier(0.22, 1, 0.36, 1),
+    height calc(650ms / var(--startup-speed, 1)) cubic-bezier(0.22, 1, 0.36, 1);
 }
 #startup img,
 #startup video {
@@ -90,8 +90,8 @@ html[data-theme="dark"] #startup {
   letter-spacing: -0.05em;
   line-height: 1.2;
   transition:
-    width 650ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 150ms;
+    width calc(650ms / var(--startup-speed, 1)) cubic-bezier(0.22, 1, 0.36, 1),
+    opacity calc(150ms / var(--startup-speed, 1));
 }
 #startup.is-wordmark .startup-word {
   width: min(380px, 53.8vw, 76vh);

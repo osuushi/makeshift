@@ -31,22 +31,24 @@ try {
       await new Promise((resolve) => video.addEventListener("loadeddata", resolve, { once: true }));
     await document.fonts.ready;
   });
+  const speed = await page.locator("video").evaluate((video) => video.playbackRate);
+  const playbackFrames = Math.ceil(timing.frames / speed);
   let frame = 0;
   const capture = new FixedStepCapture(page, `${directory}/frames`, timing.fps, async () => {
-    if (frame < timing.frames) {
+    if (frame < playbackFrames) {
       await page.evaluate(
-        async ({ frame, fps }) => {
+        async ({ frame, fps, speed }) => {
           const video = document.querySelector("video");
           video.pause();
           const seek = new Promise((resolve) =>
             video.addEventListener("seeked", resolve, { once: true }),
           );
-          video.currentTime = (frame + 0.1) / fps;
+          video.currentTime = ((frame + 0.1) * speed) / fps;
           await seek;
         },
-        { frame, fps: timing.fps },
+        { frame, fps: timing.fps, speed },
       );
-    } else if (frame === timing.frames) {
+    } else if (frame === playbackFrames) {
       await page.evaluate(() => document.querySelector("video").dispatchEvent(new Event("ended")));
     }
     frame++;
@@ -55,7 +57,7 @@ try {
   capture.started = Date.now();
   await rm(`${directory}/frames`, { recursive: true, force: true });
   await mkdir(`${directory}/frames`, { recursive: true });
-  await capture.hold(timing.frames / timing.fps + 1.5);
+  await capture.hold(playbackFrames / timing.fps + 1.5);
   const metadata = await capture.export(`${directory}/makeshift-loading-preview.mp4`);
   await writeFile(`${directory}/manifest.json`, JSON.stringify(metadata, null, 2));
   await page.screenshot({ path: `${directory}/wordmark.png` });

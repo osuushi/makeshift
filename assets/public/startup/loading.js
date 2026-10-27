@@ -1,6 +1,9 @@
+const startupSpeed = 1.5;
+
 // H.264 remains the browser baseline. macOS Electron may use the smaller HEVC
 // asset, but a failed hardware decoder must fall back to the same H.264 movie.
 const playStartupMedia = (video, failed) => {
+  video.defaultPlaybackRate = startupSpeed;
   const theme = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
   const root = `./startup/print-${theme}`;
   const full = video.clientWidth * (window.devicePixelRatio || 1) > 1200;
@@ -17,6 +20,7 @@ const playStartupMedia = (video, failed) => {
       return;
     }
     video.src = source;
+    video.playbackRate = startupSpeed;
     const active = video.src;
     video.play().catch((error) => {
       if (stopped || video.src !== active) return;
@@ -51,6 +55,7 @@ const showStartupError = (screen, detail) => {
   const app = document.querySelector("#app");
   const video = screen?.querySelector("video");
   if (!(screen instanceof HTMLElement) || !(app instanceof HTMLElement) || !video) return;
+  screen.style.setProperty("--startup-speed", startupSpeed);
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const animate = !reduced && window.makeshiftStartup?.animate !== false;
   if (!animate) screen.classList.add("is-static");
@@ -77,7 +82,7 @@ const showStartupError = (screen, detail) => {
         window.removeEventListener("makeshift-ready", onReady);
         window.removeEventListener("makeshift-startup-error", onError);
       },
-      animate ? 500 : 0,
+      animate ? 500 / startupSpeed : 0,
     );
   };
   const reveal = () => {
@@ -93,7 +98,7 @@ const showStartupError = (screen, detail) => {
         if (!ready) screen.classList.add("is-waiting");
         dismiss();
       },
-      animate ? 650 : 0,
+      animate ? 650 / startupSpeed : 0,
     );
   };
   function onReady() {
