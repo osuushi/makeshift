@@ -52,7 +52,9 @@ Result build(const Operand& body, const std::vector<TopoDS_Edge>& edges, double 
     operation.SetParams(1e-2, 1e-7, 1e-7, 1e-7, 1e-7, 1e-3);
     return buildWith(operation, body, edges, size, continuingBlends);
 }
-Result construct(const Operand& body, const std::vector<TopoDS_Edge>& edges, double radius, bool chamfer,
+}
+
+Result constructEdgeFinishOnSupports(const Operand& body, const std::vector<TopoDS_Edge>& edges, double radius, bool chamfer,
                  const std::vector<SourceEntity>& continuingBlends) {
     KernelTiming timing("edge-finish-construction");
     if (const auto supports = edgeFinishSupports(body, edges)) {
@@ -78,12 +80,19 @@ Result construct(const Operand& body, const std::vector<TopoDS_Edge>& edges, dou
     }
     return build(body, edges, radius, chamfer, continuingBlends);
 }
-}
 
 Result constructEdgeFinish(const Operand& body, const std::vector<TopoDS_Edge>& edges, double radius, bool chamfer,
                            const std::vector<SourceEntity>& continuingBlends) {
     try {
-        const auto rounded = construct(body, edges, radius, chamfer, continuingBlends);
+        Result rounded;
+        try {
+            rounded = constructEdgeFinishOnSupports(body, edges, radius, chamfer, continuingBlends);
+            validateFinishManifold(rounded.shape);
+        } catch (const Standard_Failure&) {
+            rounded = constructLocalEdgeFinish(body, edges, radius, chamfer, continuingBlends);
+        } catch (const std::runtime_error&) {
+            rounded = constructLocalEdgeFinish(body, edges, radius, chamfer, continuingBlends);
+        }
         validateFinishManifold(rounded.shape);
         std::vector<Result> results;
         solids(results, rounded.shape, rounded.predecessors, {body.id});

@@ -21,3 +21,9 @@ TopoDS_Shape trimEdgeFinish(const TopoDS_Shape&, const TopoDS_Shape&, std::vecto
 TopoDS_Shape partitionClosedFinishFaces(const TopoDS_Shape&, std::vector<SourceEntity>&, int cuts);
 
 std::set<std::string> finishSeamIds(const TopoDS_Shape&, const std::vector<SourceEntity>&);
+
+// Internal construction paths return unmeasured temporary geometry.
+Result constructEdgeFinishOnSupports(const Operand&, const std::vector<TopoDS_Edge>&, double, bool,
+                                     const std::vector<SourceEntity>&);
+Result constructLocalEdgeFinish(const Operand&, const std::vector<TopoDS_Edge>&, double, bool,
+                                const std::vector<SourceEntity>&);

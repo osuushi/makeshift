@@ -160,6 +160,17 @@ compare the underlying surface rather than a temporary partition’s UV bounds. 
 recognition resolves the underlying support pair when other bevels meet a strip
 at its ends; equally plausible support pairs remain unrecognized.
 
+If joint construction fails, an exterior rim with one unambiguous planar support
+can be calculated on a temporary end section. Only the material removed by that
+local finish is transferred back to the original solid. This preserves an existing
+opposite-end finish and through holes even when their openings already cross a
+round. The section is computed in the support's coordinate frame, so rotated
+bodies follow the same path. Removed material must stay clear of the temporary
+section plane; separate rim cuts must not overlap. The final solid must remain
+manifold and conserve the original volume minus those disjoint cuts. Interacting
+finishes still require joint construction, and ambiguous/non-exterior supports
+retain the normal feasibility failure. No section faces become document geometry.
+
 Every finish result also requires exactly two uses per non-degenerate boundary
 edge (including both uses of a periodic seam), with connected face neighborhoods
 at vertices. OCCT's ordinary/exact validity and self-intersection analyzers can
