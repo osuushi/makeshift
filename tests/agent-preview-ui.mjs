@@ -50,13 +50,15 @@ try {
   assert.deepEqual(JSON.parse(await readFile(join(root, "app/data.json"), "utf8")), {
     profile: "curved",
   });
+  const scale = await preview.evaluate(() => devicePixelRatio);
+  assert.deepEqual(await preview.evaluate(() => [innerWidth, innerHeight]), [640, 480]);
   const before = await command({ action: "screenshot" });
-  assert.equal(before.width, 640);
-  assert.equal(before.height, 480);
+  assert.equal(before.width, 640 * scale);
+  assert.equal(before.height, 480 * scale);
   await page.getByRole("button", { name: "Collapse preview", exact: true }).click();
   const collapsed = await command({ action: "screenshot" });
-  assert.equal(collapsed.width, 640);
-  assert.equal(collapsed.height, 480);
+  assert.equal(collapsed.width, before.width);
+  assert.equal(collapsed.height, before.height);
   assert.ok((await readFile(collapsed.path)).length > 1000);
   assert.equal(
     (await command({ action: "eval", code: 'document.querySelector("input").value' })).result,
@@ -95,8 +97,8 @@ try {
     () => document.querySelector(".preview-pane").getBoundingClientRect().width > 660,
   );
   const resized = await command({ action: "screenshot" });
-  assert.ok(resized.width > 640);
-  assert.ok(resized.height > 480);
+  assert.ok(resized.width > before.width);
+  assert.ok(resized.height > before.height);
   await command({ action: "reload" });
   await page.getByRole("button", { name: "Close preview", exact: true }).click();
   await assert.rejects(command({ action: "read" }), /Open a preview/);
