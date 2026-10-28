@@ -91,14 +91,7 @@ class SelectionStep {
       window.addEventListener(
         type,
         (event) => {
-          if (
-            event.target !== this.editor.world.canvas ||
-            event.button ||
-            event.metaKey ||
-            event.ctrlKey ||
-            event.altKey
-          )
-            return;
+          if (event.target !== this.editor.world.canvas || event.button || event.altKey) return;
           event.preventDefault();
           event.stopImmediatePropagation();
           if (type !== "click" || this.editor.blocked) return;
@@ -107,7 +100,7 @@ class SelectionStep {
             y: event.clientY,
           });
           if (!target) return;
-          this.choose(target);
+          this.choose(target, event.shiftKey && !event.ctrlKey && !event.metaKey);
         },
         options,
       );
@@ -128,14 +121,16 @@ class SelectionStep {
       options,
     );
   }
-  private choose(target: import("./tool-selection.js").ToolTarget): void {
+  private choose(target: import("./tool-selection.js").ToolTarget, addOnly = false): void {
     if (!this.selection.accepts(target) || this.editor.blocked) return;
     const key = this.selection.key(target);
     const current = this.selection.targets;
     this.selection.targets = this.selection.policy.single
       ? [target]
       : current.some((t) => this.selection.key(t) === key)
-        ? current.filter((t) => this.selection.key(t) !== key)
+        ? addOnly
+          ? current
+          : current.filter((t) => this.selection.key(t) !== key)
         : [...current, target];
     this.editor.refresh();
     if (this.selection.policy.single && this.selection.valid()) void this.finish();

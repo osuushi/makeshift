@@ -49,6 +49,9 @@ export class ModelSelection {
   private get key(): string {
     return this.targets.map((target) => `${target.kind}:${modelingKey(target)}`).join("|");
   }
+  get explicitTool(): ModelingTool | null {
+    return this.chosenTool?.key === this.key ? this.chosenTool.tool : null;
+  }
   get tool(): ModelingTool | null {
     if (this.chosenTool?.key === this.key) return this.chosenTool.tool;
     return this.document ? defaultModelingTool(this.targets, this.document) : null;

@@ -93,6 +93,23 @@ selected body removes that face and leaves the others selected; adding the missi
 face restores complete-body behavior. The raw ordered selection remains inspectable.
 Marquee release consumes its synthetic click before sketch-plane entry can run.
 
+## Modifier refinement
+
+Selection collection accepts Ctrl/Command-click toggling and Shift-click addition.
+Before preview, modifier selection preserves the chosen modeling tool and filters
+picks through its selection policy. Fillet and Chamfer additionally support
+refinement during an active preview: Shift-click adds edges, Ctrl/Command-click
+toggles them, and Alt with either modifier translates a face to its non-seam
+boundary edges. A translated group is removed only when every edge is selected;
+otherwise its missing edges are added in order. Empty selection remains in the
+tool so inputs can be added again.
+
+The active interaction exposes an optional refinement callback. Edge finishing
+implements it using accepted topology, retaining size and mode, recalculating the
+preview and including edge selection in local Undo. Command-drag still orbits.
+Other preview controllers must implement this callback before they can refine
+their inputs without completing the current edit; this is currently a limitation.
+
 ## Selection-driven modeling tools (founder decision, 2026-09-16)
 
 In 3D, filled sketch regions default to Extrude, partial face-only selections to

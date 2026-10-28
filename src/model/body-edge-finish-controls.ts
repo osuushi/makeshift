@@ -6,6 +6,7 @@ import { BodyEdgeFinishWidget } from "./body-edge-finish-widget.js";
 import { selectedEdgeFrame } from "./edge-finish-direction.js";
 import { EdgeFinishDrag } from "./edge-finish-drag.js";
 import { edgeFinishInputs } from "./edge-finish-inputs.js";
+import { pickFinishTarget, refineFinishEdges } from "./edge-finish-refinement.js";
 import { EdgeFinishSelection } from "./edge-finish-selection.js";
 import { PreviewRunner } from "./preview-runner.js";
 
@@ -113,7 +114,11 @@ export class BodyEdgeFinishControls {
       "body-edge-finish",
       () => this.cancel(),
       () => this.finish(),
-      { navigation: "when-released", settled: () => this.previews.settle() },
+      {
+        navigation: "when-released",
+        settled: () => this.previews.settle(),
+        refineSelection: (event) => this.refine(event),
+      },
     );
     if (!this.lease) return false;
     this.selection.begin(this.frame.edges, !!restored);
@@ -123,7 +128,7 @@ export class BodyEdgeFinishControls {
     this.valid = false;
     this.invalid = false;
     this.previews.clear();
-    this.editor.notice = `${mode === "fillet" ? "Fillet" : "Chamfer"} · Drag or enter a size`;
+    this.editor.notice = `${mode === "fillet" ? "Fillet" : "Chamfer"} · Drag or enter a size · Shift-click adds · Ctrl/Command-click toggles · Alt includes face boundaries`;
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
     if (!restored) this.previews.check(() => this.expandSelection());
@@ -132,9 +137,12 @@ export class BodyEdgeFinishControls {
       () => ({
         size: this.size,
         mode: this.mode,
+        edges: structuredClone(this.selection.edges),
       }),
       async (state) => {
-        this.setMode(state.mode);
+        this.mode = state.mode;
+        this.size = state.size;
+        this.replaceEdges(state.edges);
         this.widget.input.value = String(this.widget.radial.display(state.size));
         this.queue(state.size);
         await this.previews.settle();
@@ -142,6 +150,47 @@ export class BodyEdgeFinishControls {
     );
     this.editor.refresh();
     return true;
+  }
+  private refine(event: MouseEvent): void {
+    const target = pickFinishTarget(this.editor, event);
+    if (!target) return;
+    const edges = refineFinishEdges(
+      this.editor.store.data,
+      this.selection.edges,
+      target,
+      event.altKey,
+      event.ctrlKey || event.metaKey,
+    );
+    if (!edges) {
+      this.editor.notice = "Alt + selection modifier + click selects a face's boundary edges";
+      this.editor.refresh();
+      return;
+    }
+    this.lease?.history?.checkpoint();
+    if (target.kind === "edge" && target.point)
+      this.editor.modeling.lastEdgeClick = {
+        body: target.body,
+        edge: target.edge,
+        point: target.point,
+      };
+    this.replaceEdges(edges);
+    this.lease?.history?.checkpoint();
+  }
+  private replaceEdges(edges: BodyEdgeFinish["edges"]): void {
+    this.previews.clear();
+    this.valid = false;
+    this.invalid = false;
+    this.lease?.show(null);
+    this.selection.edges = structuredClone(edges);
+    this.selection.show();
+    this.editor.modeling.setTool(this.mode);
+    this.frame = selectedEdgeFrame(this.editor, this.mode, edges) ?? this.frame;
+    if (edges.length) this.queue(this.size);
+    else {
+      this.editor.notice =
+        "Select edges · Shift-click adds · Ctrl/Command-click toggles · Alt includes face boundaries";
+      this.editor.refresh();
+    }
   }
   private async expandSelection(): Promise<void> {
     const success = await this.selection.expand(this.mode);
@@ -158,7 +207,7 @@ export class BodyEdgeFinishControls {
       this.editor.refresh();
       return;
     }
-    this.editor.notice = `${this.mode === "fillet" ? "Fillet" : "Chamfer"} · ${this.selection.edges.length} selected edges · Drag or enter a size`;
+    this.editor.notice = `${this.mode === "fillet" ? "Fillet" : "Chamfer"} · ${this.selection.edges.length} selected edges · Drag or enter a size · Shift-click adds · Ctrl/Command-click toggles · Alt includes face boundaries`;
     this.editor.refresh();
   }
   private focus(): void {
@@ -167,7 +216,7 @@ export class BodyEdgeFinishControls {
     this.widget.input.select();
   }
   private queue(size: number): void {
-    if (this.lease?.phase !== "editing") return;
+    if (this.lease?.phase !== "editing" || !this.selection.edges.length) return;
     if (size < 0) this.widget.input.value = "0";
     if (this.previews.latest?.size === Math.max(0, size)) {
       if (this.valid && this.size !== this.previews.latest.size) {

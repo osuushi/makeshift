@@ -5,6 +5,7 @@ import { ModelSelectionDrag } from "../model/model-selection-drag.js";
 import { primitiveTools } from "../model/primitive-tools.js";
 import { RevolveControls } from "../model/revolve-controls.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
+import { installSelectionRefinement } from "../tools/selection-refinement-input.js";
 import type { SketchEditor } from "./editor.js";
 import { modelDoubleClick } from "./model-double-click.js";
 import { onModelKeydown } from "./model-keys.js";
@@ -46,6 +47,7 @@ export class ModelControls {
     const options = { signal: this.abort.signal },
       canvas = editor.world.canvas;
     this.bindCanvas(canvas, options);
+    installSelectionRefinement(editor, this.abort.signal);
     modelDoubleClick(editor, overlay, this.abort.signal, (event, before) =>
       this.doubleClick(event, before),
     );
