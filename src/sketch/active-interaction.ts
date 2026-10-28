@@ -47,6 +47,8 @@ type Kind =
   | "trim"
   | "numeric";
 interface InteractionCapabilities {
+  /** Refine tool inputs without accepting the current preview. */
+  refineSelection?: (event: MouseEvent) => void;
   /** Picks currently belong to source/reference collection inside this tool. */
   selectsLocally?: () => boolean;
   /** Drain the controller's latest calculation before testing completion validity. */
@@ -124,6 +126,7 @@ export class ActiveInteraction {
 export class InteractionLease {
   settled: (() => Promise<unknown>) | undefined;
   readonly selectsLocally: () => boolean;
+  readonly refineSelection?: (event: MouseEvent) => void;
   history: Pick<
     InteractionHistory<unknown>,
     "canUndo" | "canRedo" | "checkpoint" | "navigate"
@@ -166,6 +169,7 @@ export class InteractionLease {
     readonly toolId: string = kind,
   ) {
     this.settled = capabilities.settled;
+    this.refineSelection = capabilities.refineSelection;
     this.selectsLocally = capabilities.selectsLocally ?? (() => false);
     this.navigationAllowed = capabilities.navigation === "when-released";
     this.cancelBeforeHistory = capabilities.documentHistory === "cancel-preview";
