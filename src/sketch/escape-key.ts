@@ -15,7 +15,7 @@ export function installEscapeAlias(): void {
       if (
         target instanceof Element &&
         target.closest(
-          ".agent-dock, textarea, [contenteditable='true'], input:not([type='number']):not([inputmode='decimal']):not([inputmode='numeric'])",
+          ".agent-dock, .preview-pane, textarea, [contenteditable='true'], input:not([type='number']):not([inputmode='decimal']):not([inputmode='numeric'])",
         )
       )
         return;

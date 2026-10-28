@@ -20,9 +20,14 @@ export async function prepareOrientation(
     directory: string,
   ) => Promise<unknown>,
   script: (request: ScriptRequest, channel: string) => Promise<unknown>,
+  preview?: (input: string | undefined, output: string) => Promise<unknown>,
 ): Promise<AgentConnection> {
   const connection = await AgentConnection.create((request, directory) => {
     const current = status();
+    if (request.command === "preview") {
+      if (!preview) throw new Error("Preview is unavailable.");
+      return preview(request.entity, directory);
+    }
     if (request.command === "script") {
       if (!request.script) throw new Error("Invalid script request");
       return script(request.script, directory);
@@ -45,6 +50,7 @@ export async function prepareOrientation(
         "faces",
         "context",
         "settings",
+        "preview",
       ],
     };
   });

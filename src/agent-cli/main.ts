@@ -1,4 +1,5 @@
 import { guide, help, types } from "./guide.js";
+import { runPreview } from "./preview.js";
 import { request } from "./request.js";
 import { runScript } from "./run-script.js";
 import { runView } from "./run-view.js";
@@ -7,7 +8,7 @@ try {
   const args = process.argv.slice(2);
   if (
     args[0] !== "select" &&
-    args.length > (["inspect", "run", "view", "settings"].includes(args[0]) ? 2 : 1)
+    args.length > (["inspect", "run", "view", "settings", "preview"].includes(args[0]) ? 2 : 1)
   )
     throw new Error("Unexpected arguments; run makeshift help.");
   switch (args[0] ?? "help") {
@@ -32,6 +33,9 @@ try {
       break;
     case "select":
       console.log(JSON.stringify(await request("select", JSON.stringify(args.slice(1))), null, 2));
+      break;
+    case "preview":
+      console.log(JSON.stringify(await runPreview(args[1]), null, 2));
       break;
     case "settings":
     case "status":

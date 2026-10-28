@@ -129,3 +129,12 @@ contextBridge.exposeInMainWorld("makeshiftNavigation", {
 contextBridge.exposeInMainWorld("makeshiftSettings", {
   open: (tools: unknown) => ipcRenderer.invoke("settings-open", tools),
 });
+
+contextBridge.exposeInMainWorld("makeshiftPreview", {
+  layout: (value: unknown) => ipcRenderer.invoke("preview-layout", value),
+  subscribe: (callback: (title: string | null) => void) => {
+    const listener = (_event: unknown, title: string | null) => callback(title);
+    ipcRenderer.on("preview-open", listener);
+    return () => ipcRenderer.removeListener("preview-open", listener);
+  },
+});

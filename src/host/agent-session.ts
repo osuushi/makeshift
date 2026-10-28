@@ -8,6 +8,7 @@ import { attachAgentFile } from "./agent-attachments.js";
 import type { AgentConnection } from "./agent-connection.js";
 import { agentExecutable } from "./agent-executable.js";
 import { orientationOverrides, prepareOrientation } from "./agent-orientation.js";
+import { AgentPreview } from "./agent-preview.js";
 import { AgentProcess } from "./agent-process.js";
 import { recoverAgentFiles } from "./agent-recovery.js";
 import {
@@ -26,6 +27,7 @@ import { sessionDialogs as dialog } from "./session-dialogs.js";
 
 export class AgentSession {
   private ipc = new DocumentIPC();
+  private preview: AgentPreview | null = null;
   canUseDesktop = () => true;
   private process = new AgentProcess(nativeExecutable("agent-scope"));
 
@@ -73,6 +75,7 @@ export class AgentSession {
   attach(window: BrowserWindow): void {
     this.ipc.attach(window);
     this.window = window;
+    this.preview = new AgentPreview(window, () => this.workspace.cwd);
     window.webContents.on("did-finish-load", () =>
       window.webContents.setIgnoreMenuShortcuts(false),
     );
@@ -203,6 +206,11 @@ export class AgentSession {
         },
         (command, entity, directory) => this.inspect(command, entity, directory),
         (request, channel) => this.script(request, channel),
+        (input, output) => {
+          if (!this.preview || !this.canUseDesktop())
+            throw new Error("Preview requires the desktop document.");
+          return this.preview.request(input, output);
+        },
       );
       const overrides =
         preferences.preset === "codex"
@@ -246,6 +254,7 @@ export class AgentSession {
   async stop(): Promise<void> {
     if (this.busy) throw new Error("Wait for the agent lifecycle operation to finish.");
     this.replacing = true;
+    this.preview?.close();
     this.busy = true;
     try {
       await this.stopProcess();
