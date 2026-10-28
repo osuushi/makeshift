@@ -26,7 +26,7 @@ export async function runPreview(json: string | undefined): Promise<unknown> {
 export function imagePage(extension: string, annotate: boolean): string {
   return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width">
 <style>
-body{margin:0;font:14px system-ui;background:#fafafa;color:#222} main{position:relative;display:inline-block;max-width:100%}img{display:block;max-width:100%;max-height:75vh}svg{position:absolute;inset:0;width:100%;height:100%;touch-action:none}footer{padding:12px}textarea{width:95%;min-height:50px}
+html,body{height:100%}body{margin:0;font:14px system-ui;background:#fafafa;color:#222;display:flex;flex-direction:column;align-items:center;justify-content:center}main{${annotate ? "" : "width:100%;height:100%;"}position:relative;min-height:0;max-width:100%;display:flex;align-items:center;justify-content:center}img{display:block;max-width:100vw;max-height:${annotate ? "calc(100vh - 140px)" : "100vh"};${annotate ? "width:auto;height:auto" : "width:100%;height:100%;object-fit:contain"}}footer{box-sizing:border-box;width:100%;flex:none}svg{position:absolute;inset:0;width:100%;height:100%;touch-action:none}footer{padding:12px}textarea{width:95%;min-height:50px}
 </style><main><img src="image${extension}" alt="Preview image">${annotate ? '<svg viewBox="0 0 1 1" preserveAspectRatio="none" aria-label="Draw annotations"></svg>' : ""}</main>
 ${
   annotate

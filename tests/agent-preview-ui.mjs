@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { build } from "vite";
+import { imagePage } from "../.build/host/agent-cli/preview.js";
 import { launchElectron } from "./native-documents.mjs";
 
 // Native child-view composition, preload IPC and hidden capture require Electron.
@@ -102,6 +103,33 @@ try {
   await command({ action: "reload" });
   await page.getByRole("button", { name: "Close preview", exact: true }).click();
   await assert.rejects(command({ action: "read" }), /Open a preview/);
+  await writeFile(
+    join(root, "app/image.svg"),
+    '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100"><rect width="200" height="100" fill="red"/></svg>',
+  );
+  await writeFile(join(root, "app/index.html"), imagePage(".svg", false));
+  await command({ action: "open", directory: "app", title: "Fit image" });
+  const imageView = app
+    .context()
+    .pages()
+    .find((p) => p.url().startsWith("https://preview.local/"));
+  await imageView.waitForFunction(() => document.querySelector("img")?.complete);
+  const imageFit = await imageView.evaluate(() => {
+    const image = document.querySelector("img"),
+      rect = image.getBoundingClientRect();
+    return {
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+      fit: getComputedStyle(image).objectFit,
+      viewport: [innerWidth, innerHeight],
+    };
+  });
+  assert.equal(imageFit.fit, "contain");
+  assert.equal(imageFit.x, 0);
+  assert.equal(imageFit.y, 0);
+  assert.deepEqual([imageFit.width, imageFit.height], imageFit.viewport);
   console.log(
     "Preview input, JSON, triggers, reload, isolation, dragging, resizing, close and collapsed screenshot passed",
   );
