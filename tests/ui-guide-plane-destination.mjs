@@ -51,7 +51,7 @@ export async function planeDestinationRoute(page, before, source, guide) {
   await page.mouse.move(canonical.x, canonical.y, { steps: 5 });
   const patch = destinations.locator('.guide-plane-patch[data-plane="XY"]');
   assert.match(await patch.getAttribute("class"), /highlighted/);
-  assert.equal(await patch.evaluate((el) => getComputedStyle(el).color), "rgb(139, 92, 246)");
+  assert.equal(await patch.evaluate((el) => getComputedStyle(el).color), "rgb(112, 65, 158)");
   await page.screenshot({ path: ".cache/sketch-review/guide-plane-parent-highlight.png" });
   await page.mouse.move(surface.x, surface.y, { steps: 5 });
   assert.equal(await destinations.locator(".guide-plane-patch.highlighted").count(), 0);
