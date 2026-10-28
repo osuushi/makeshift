@@ -10,6 +10,9 @@ declare global {
   }
 }
 
+const icon = (path: string) =>
+  `<svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="${path}"/></svg>`;
+
 export function installPreviewPane(): () => void {
   const host = window.makeshiftPreview;
   if (!host) return () => {};
@@ -17,7 +20,7 @@ export function installPreviewPane(): () => void {
   pane.className = "preview-pane";
   pane.hidden = true;
   pane.setAttribute("aria-label", "Interactive preview");
-  pane.innerHTML = `<div class="preview-header"><strong></strong><button aria-label="Collapse preview">−</button><button aria-label="Close preview">×</button></div><div class="preview-content"></div>`;
+  pane.innerHTML = `<div class="preview-header"><strong></strong><button aria-label="Collapse preview">${icon("M5 12h14")}</button><button aria-label="Close preview">${icon("m6 6 12 12M6 18 18 6")}</button></div><div class="preview-content"></div>`;
   document.body.append(pane);
   const header = pane.querySelector<HTMLElement>(".preview-header");
   const content = pane.querySelector<HTMLElement>(".preview-content");
@@ -42,7 +45,7 @@ export function installPreviewPane(): () => void {
     pane.classList.remove("collapsed");
     pane.style.width = "640px";
     pane.style.height = "524px";
-    collapse.textContent = "−";
+    collapse.innerHTML = icon("M5 12h14");
     collapse.setAttribute("aria-label", "Collapse preview");
     sync();
   });
@@ -50,7 +53,7 @@ export function installPreviewPane(): () => void {
     collapsed = !collapsed;
     pane.classList.toggle("collapsed", collapsed);
     pane.style.height = collapsed ? "36px" : `${size.height + 44}px`;
-    collapse.textContent = collapsed ? "+" : "−";
+    collapse.innerHTML = icon(collapsed ? "M5 12h14M12 5v14" : "M5 12h14");
     collapse.setAttribute("aria-label", collapsed ? "Expand preview" : "Collapse preview");
     sync();
   };

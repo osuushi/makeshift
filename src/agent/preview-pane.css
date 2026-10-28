@@ -37,6 +37,11 @@
   white-space: nowrap;
 }
 .preview-pane button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
   cursor: pointer;
 }
 .preview-content {
