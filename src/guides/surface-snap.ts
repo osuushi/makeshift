@@ -84,6 +84,7 @@ export class GuideSurfaceSnap {
   }
   move(event: PointerEvent, fallback: number, scale = 1): void {
     this.event = event;
+    this.feedback?.destinations.move({ x: event.clientX, y: event.clientY });
     this.fallback = fallback;
     this.scale = scale;
     if (!this.plan || !editingGuides(this.editor)) {

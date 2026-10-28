@@ -17,6 +17,10 @@ export async function planeDestinationRoute(page, before, source, guide) {
   await page.mouse.move(surface.x, surface.y, { steps: 5 });
   assert.equal(await vector.getAttribute("data-end"), "");
   const destinations = page.locator(".guide-move-destinations");
+  assert.ok(
+    (await destinations.locator("circle[data-projection]:visible").count()) <= 3,
+    "automatic destination feedback shows at most three locations",
+  );
   assert.equal(
     await destinations.locator(".guide-face-plane-patch").count(),
     0,

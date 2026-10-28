@@ -27,6 +27,7 @@ export class GuideDragFeedback {
     potential: readonly GuideMoveTarget[],
     cursor?: Point,
   ): void {
+    if (cursor) this.destinations.move(cursor);
     const points = target ? [target] : potential;
     const parents = targets.filter((p) => points.some((q) => near(p.point, q.point)));
     const anchors = parents.flatMap((p) =>
