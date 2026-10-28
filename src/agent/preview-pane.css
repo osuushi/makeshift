@@ -15,7 +15,7 @@
   color: CanvasText;
   border: 1px solid GrayText;
   border-radius: 8px;
-  box-shadow: 0 8px 32px #0004;
+  box-shadow: 0 8px 32px var(--shadow);
   box-sizing: content-box;
 }
 .preview-pane[hidden] {

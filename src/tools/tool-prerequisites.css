@@ -1,6 +1,6 @@
 .tool-requirement {
   flex-basis: 100%;
-  color: var(--danger, #c23737);
+  color: var(--danger);
   font-size: 13px;
   max-width: 360px;
   white-space: normal;

@@ -15,11 +15,11 @@
   border-radius: 50%;
   background: var(--panel);
   box-shadow: 0 2px 5px var(--shadow);
-  color: #287cbd;
+  color: var(--accent);
   pointer-events: auto;
 }
 .boolean-role-widget[data-role="tool"] {
-  color: #a66a16;
+  color: var(--warning);
 }
 .boolean-role-widget:disabled {
   opacity: 0.5;
