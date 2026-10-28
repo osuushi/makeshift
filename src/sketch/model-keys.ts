@@ -21,7 +21,10 @@ export function onModelKeydown(
         ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)
       )
         return;
-      if (event.target instanceof Element && event.target.closest(".agent-dock, dialog[open]"))
+      if (
+        event.target instanceof Element &&
+        event.target.closest(".agent-dock, .preview-pane, dialog[open]")
+      )
         return;
       if (
         toolMenuOpen() ||

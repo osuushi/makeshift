@@ -14,6 +14,7 @@ Common commands (already on PATH):
 - makeshift selection — selected geometry and available measurements.
 - makeshift faces — all faces with typed analytic support and body visibility.
 - makeshift inspect [ID] — inventory or details of a specific entity.
+- makeshift preview JSON — show images, documents or interactive HTML input in an embedded pane. Use the makeshift-previews skill; prefer this for showing images to the user.
 - makeshift render — viewport PNG path; open with your image viewer when visual evidence is needed.
 - makeshift settings — read device-local plane display preferences; optional JSON patch changes them.
 - makeshift view script.ts — typed face queries and selection, without geometry edits.
