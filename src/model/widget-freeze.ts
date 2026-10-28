@@ -1,3 +1,4 @@
+import { placeFloatingPanel } from "../preferences/panel-placement.js";
 import { measuredControlRect, type WidgetRect, widgetRectClear } from "./widget-viewport.js";
 
 /** Only DOM gesture ownership and displayed corrections live here. */
@@ -73,6 +74,7 @@ export class WidgetFreeze {
     this.immediate = immediate;
     if (this.active) return;
     for (const [element, point] of this.targets) {
+      if (placeFloatingPanel(element)) continue;
       element.style.transition =
         immediate || window.matchMedia("(prefers-reduced-motion: reduce)").matches
           ? "none"

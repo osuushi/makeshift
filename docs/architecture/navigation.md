@@ -354,6 +354,8 @@ canonical-plane entry shortcuts. Canonical side and diagonal views keep Z uprigh
 canonical Top uses +Y up and Bottom uses −Y up. Bevel views retain canonical roll.
 Cube surfaces are excluded from sequential Tab navigation; Tab is reserved for
 editing controls. Direct accessibility activation retains Enter/Space support.
+Cube alignment clears an earlier canonical-plane selection so subsequent plane tools
+use the newly aligned view.
 Alignment animates over 280 ms
 with cubic ease-out, using the shared camera transition. Reduced motion applies
 the orientation immediately; subsequent navigation interrupts the animation.

@@ -79,3 +79,19 @@ test("unchanged regions survive previews; changed sketch geometry invalidates de
   assert.deepEqual(selection.targets, []);
   assert.equal(selection.tool, null);
 });
+
+test("subtraction removes face coverage and never adds an absent target", () => {
+  const selection = new ModelSelection();
+  selection.sync(document);
+  const first = { kind: "face", body: body.id, face: "a" } as const;
+  const second = { kind: "face", body: body.id, face: "b" } as const;
+  selection.targets = [{ kind: "body", body: body.id }];
+  selection.choose(first, false, false, true);
+  assert.deepEqual(selection.targets, [second]);
+  selection.choose(first, false, false, true);
+  assert.deepEqual(selection.targets, [second]);
+  selection.choose(null, false, false, true);
+  assert.deepEqual(selection.targets, [second]);
+  selection.choose({ kind: "body", body: body.id }, false, false, true);
+  assert.deepEqual(selection.targets, []);
+});

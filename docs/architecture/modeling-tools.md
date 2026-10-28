@@ -95,14 +95,11 @@ Marquee release consumes its synthetic click before sketch-plane entry can run.
 
 ## Modifier refinement
 
-Selection collection accepts Ctrl/Command-click toggling and Shift-click addition.
-Before preview, modifier selection preserves the chosen modeling tool and filters
-picks through its selection policy. Fillet and Chamfer additionally support
-refinement during an active preview: Shift-click adds edges, Ctrl/Command-click
-toggles them, and Alt with either modifier translates a face to its non-seam
-boundary edges. A translated group is removed only when every edge is selected;
-otherwise its missing edges are added in order. Empty selection remains in the
-tool so inputs can be added again.
+Modeling viewport refinement uses Shift/Command/Ctrl-click addition and Option/Alt-click
+subtraction. Fillet and Chamfer translate faces to their non-seam boundary edges
+without requiring a second modifier. Removal subtracts even a partially selected
+boundary; it never adds missing edges. Empty selection remains in the tool.
+An unmodified background click accepts the current valid Fillet/Chamfer preview.
 
 The active interaction exposes an optional refinement callback. Edge finishing
 implements it using accepted topology, retaining size and mode, recalculating the

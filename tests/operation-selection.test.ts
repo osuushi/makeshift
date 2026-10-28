@@ -255,18 +255,18 @@ test("face-based edge finishes exclude periodic seams while preserving explicit 
   }
 });
 
-test("edge finish refinement translates only explicitly and toggles groups without dropping other edges", () => {
+test("edge finish refinement adds and removes boundaries without dropping unrelated edges", () => {
   const first = { body: a.id, edge: a.edges[0].id };
   const other = { body: b.id, edge: b.edges[0].id };
   assert.equal(refineFinishEdges(document, [other], faces(a)[0], false, true), null);
-  assert.deepEqual(refineFinishEdges(document, [other], faces(a)[0], true, true), [other, first]);
+  assert.deepEqual(refineFinishEdges(document, [other], faces(a)[0], true, false), [other, first]);
   assert.deepEqual(refineFinishEdges(document, [other, first], faces(a)[0], true, true), [other]);
   assert.deepEqual(refineFinishEdges(document, [first], edge(a), false, false), [first]);
   assert.deepEqual(refineFinishEdges(document, [first], edge(a), false, true), []);
   assert.equal(refineFinishEdges(document, [first], whole(b), true, true), null);
 });
 
-test("translated boundary toggles fill a partial group and exclude periodic seams", () => {
+test("translated boundary addition and subtraction handle partial groups and exclude seams", () => {
   const data = {
     ...document,
     bodies: [
@@ -287,6 +287,7 @@ test("translated boundary toggles fill a partial group and exclude periodic seam
   };
   const first = { body: a.id, edge: a.edges[0].id };
   const extra = { body: a.id, edge: "extra" };
-  assert.deepEqual(refineFinishEdges(data, [first], faces(a)[0], true, true), [first, extra]);
+  assert.deepEqual(refineFinishEdges(data, [first], faces(a)[0], true, false), [first, extra]);
+  assert.deepEqual(refineFinishEdges(data, [first], faces(a)[0], true, true), []);
   assert.deepEqual(refineFinishEdges(data, [first, extra], faces(a)[0], true, true), []);
 });

@@ -125,11 +125,11 @@ export class ModelSelection {
           : targets;
     for (const notify of this.selectionChosen) notify();
   }
-  choose(target: ModelingTarget | null, add: boolean, toggle: boolean): void {
+  choose(target: ModelingTarget | null, add: boolean, toggle: boolean, remove = false): void {
     if (target && !this.allows(target)) return;
     this.chosenTool = null;
     if (!target) {
-      if (!add && !toggle) {
+      if (!add && !toggle && !remove) {
         this.targets = [];
         for (const notify of this.selectionChosen) notify();
       }
@@ -138,7 +138,7 @@ export class ModelSelection {
     if (target.kind === "edge" && target.point)
       this.lastEdgeClick = { body: target.body, edge: target.edge, point: target.point };
     if (
-      toggle &&
+      (toggle || remove) &&
       target.kind === "face" &&
       this.document &&
       this.targets.some((t) => t.kind === "body" && t.body === target.body)
@@ -147,8 +147,12 @@ export class ModelSelection {
     }
     const exists = this.targets.some((t) => modelingKey(t) === modelingKey(target));
     this.targets =
-      toggle && exists
-        ? this.targets.filter((t) => modelingKey(t) !== modelingKey(target))
+      remove || (toggle && exists)
+        ? this.targets.filter((t) =>
+            remove && target.kind === "body"
+              ? !("body" in t && t.body === target.body)
+              : modelingKey(t) !== modelingKey(target),
+          )
         : add || toggle
           ? exists
             ? this.targets

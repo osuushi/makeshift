@@ -6,13 +6,13 @@ import { BodyPickProbe } from "./body-picking.js";
 import { pickBodyEdge } from "./edge-selection.js";
 import { resolveOperation } from "./operation-selection.js";
 
-/** A translated group toggles off only when every member is already selected. */
+/** Removal subtracts every incoming boundary, including partially selected groups. */
 export function refineFinishEdges(
   document: SketchDocument,
   edges: BodyEdgeFinish["edges"],
   target: ModelingTarget,
   translate: boolean,
-  toggle: boolean,
+  remove: boolean,
 ): BodyEdgeFinish["edges"] | null {
   if (target.kind !== "edge" && !(translate && target.kind === "face")) return null;
   const resolved = resolveOperation("fillet", [target], document);
@@ -21,7 +21,7 @@ export function refineFinishEdges(
   const key = (edge: BodyEdgeFinish["edges"][number]) => `${edge.body}:${edge.edge}`;
   const selected = new Set(edges.map(key));
   const keys = new Set(incoming.map(key));
-  return toggle && incoming.every((edge) => selected.has(key(edge)))
+  return remove
     ? edges.filter((edge) => !keys.has(key(edge)))
     : [...edges, ...incoming.filter((edge) => !selected.has(key(edge)))];
 }

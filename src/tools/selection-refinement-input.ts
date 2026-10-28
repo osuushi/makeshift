@@ -13,7 +13,13 @@ export function installSelectionRefinement(editor: SketchEditor, signal: AbortSi
         if (
           event.target !== editor.world.canvas ||
           event.button ||
-          !(event.shiftKey || event.ctrlKey || event.metaKey || lease?.selectsLocally()) ||
+          !(
+            event.shiftKey ||
+            event.ctrlKey ||
+            event.metaKey ||
+            event.altKey ||
+            lease?.selectsLocally()
+          ) ||
           (lease
             ? !lease.refineSelection || lease.captured
             : !editor.modeling.explicitTool || !!editor.world.active)
@@ -40,8 +46,8 @@ function refineIdleSelection(editor: SketchEditor, event: MouseEvent): void {
       editor.store.data,
       resolved.available ? resolved.inputs : [],
       target,
+      true,
       event.altKey,
-      event.ctrlKey || event.metaKey,
     );
     if (!edges) return;
     editor.modeling.targets = edges.map((edge) => ({ kind: "edge", ...edge }));
@@ -49,7 +55,12 @@ function refineIdleSelection(editor: SketchEditor, event: MouseEvent): void {
     const target = pickModel(editor, { x: event.clientX, y: event.clientY });
     const selection = new ToolSelection(editor, mode, () => null);
     if (!target || !selection.accepts(target)) return;
-    editor.modeling.choose(target, event.shiftKey, event.ctrlKey || event.metaKey);
+    editor.modeling.choose(
+      target,
+      event.shiftKey || event.ctrlKey || event.metaKey,
+      false,
+      event.altKey,
+    );
   }
   editor.modeling.setTool(mode);
   editor.refresh();

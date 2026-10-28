@@ -128,7 +128,7 @@ export class BodyEdgeFinishControls {
     this.valid = false;
     this.invalid = false;
     this.previews.clear();
-    this.editor.notice = `${mode === "fillet" ? "Fillet" : "Chamfer"} · Drag or enter a size · Shift-click adds · Ctrl/Command-click toggles · Alt includes face boundaries`;
+    this.editor.notice = `${mode === "fillet" ? "Fillet" : "Chamfer"} · Drag or enter a size · Shift/Command-click adds edges or face boundaries · Option-click removes`;
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
     if (!restored && this.selection.edges.length) this.previews.check(() => this.expandSelection());
@@ -153,16 +153,19 @@ export class BodyEdgeFinishControls {
   }
   private refine(event: MouseEvent): void {
     const target = pickFinishTarget(this.editor, event);
-    if (!target) return;
+    if (!target) {
+      if (!(event.shiftKey || event.ctrlKey || event.metaKey || event.altKey)) void this.finish();
+      return;
+    }
     const edges = refineFinishEdges(
       this.editor.store.data,
       this.selection.edges,
       target,
-      event.altKey || !(event.shiftKey || event.ctrlKey || event.metaKey),
-      !event.shiftKey,
+      true,
+      event.altKey,
     );
     if (!edges) {
-      this.editor.notice = "Alt + selection modifier + click selects a face's boundary edges";
+      this.editor.notice = "Select a solid edge or face boundary";
       this.editor.refresh();
       return;
     }
@@ -188,7 +191,7 @@ export class BodyEdgeFinishControls {
     if (edges.length) this.queue(this.size);
     else {
       this.editor.notice =
-        "Select edges · Shift-click adds · Ctrl/Command-click toggles · Alt includes face boundaries";
+        "Select edges · Shift/Command-click adds edges or face boundaries · Option-click removes";
       this.editor.refresh();
     }
   }
@@ -207,7 +210,7 @@ export class BodyEdgeFinishControls {
       this.editor.refresh();
       return;
     }
-    this.editor.notice = `${this.mode === "fillet" ? "Fillet" : "Chamfer"} · ${this.selection.edges.length} selected edges · Drag or enter a size · Shift-click adds · Ctrl/Command-click toggles · Alt includes face boundaries`;
+    this.editor.notice = `${this.mode === "fillet" ? "Fillet" : "Chamfer"} · ${this.selection.edges.length} selected edges · Drag or enter a size · Shift/Command-click adds edges or face boundaries · Option-click removes`;
     this.editor.refresh();
   }
   private focus(): void {
