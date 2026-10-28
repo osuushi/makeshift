@@ -17,9 +17,9 @@ export function installPreviewPane(): () => void {
   pane.className = "preview-pane";
   pane.hidden = true;
   pane.setAttribute("aria-label", "Interactive preview");
-  pane.innerHTML = `<header><strong></strong><button aria-label="Collapse preview">−</button><button aria-label="Close preview">×</button></header><div class="preview-content"></div>`;
+  pane.innerHTML = `<div class="preview-header"><strong></strong><button aria-label="Collapse preview">−</button><button aria-label="Close preview">×</button></div><div class="preview-content"></div>`;
   document.body.append(pane);
-  const header = pane.querySelector("header");
+  const header = pane.querySelector<HTMLElement>(".preview-header");
   const content = pane.querySelector<HTMLElement>(".preview-content");
   const titleElement = pane.querySelector("strong");
   if (!header || !content || !titleElement) throw new Error("Missing preview controls.");

@@ -21,7 +21,7 @@
 .preview-pane[hidden] {
   display: none;
 }
-.preview-pane header {
+.preview-pane .preview-header {
   height: 36px;
   display: flex;
   align-items: center;

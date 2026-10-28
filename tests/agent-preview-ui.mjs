@@ -81,7 +81,7 @@ try {
     false,
   );
   await page.getByRole("button", { name: "Expand preview", exact: true }).click();
-  const header = page.locator(".preview-pane header");
+  const header = page.locator(".preview-pane .preview-header");
   const box = await header.boundingBox();
   await page.mouse.move(box.x + 80, box.y + 15);
   await page.mouse.down();
