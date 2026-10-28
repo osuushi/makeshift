@@ -16,8 +16,6 @@
   background: var(--panel);
   box-shadow: 0 2px 5px var(--shadow);
   color: #287cbd;
-  font-size: 24px;
-  line-height: 1;
   pointer-events: auto;
 }
 .boolean-role-widget[data-role="tool"] {
@@ -25,4 +23,8 @@
 }
 .boolean-role-widget:disabled {
   opacity: 0.5;
+}
+
+.boolean-role-widget svg {
+  display: block;
 }

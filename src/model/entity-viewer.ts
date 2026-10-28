@@ -8,6 +8,7 @@ import { TagRows } from "../tags/rows.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { selectionPickers } from "../tools/tool-selection.js";
 import { bodyMenu } from "./body-menu.js";
+import { booleanRoleIcon } from "./boolean-role-icon.js";
 import { EntityChildren } from "./entity-children.js";
 import { entityRows } from "./entity-presentation.js";
 import { renameEntity } from "./entity-rename.js";
@@ -177,7 +178,7 @@ export class EntityViewer {
       const role = this.sourcePicker?.role?.(target);
       row.dataset.booleanRole = role ?? "";
       roleButton.hidden = !this.sourcePicker?.flipRole || (role !== "target" && role !== "tool");
-      roleButton.textContent = role === "target" ? "+" : "−";
+      roleButton.innerHTML = booleanRoleIcon(role === "target");
       roleButton.title =
         role === "target"
           ? "Target (+) · change to cutting tool (−)"

@@ -1,6 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Point } from "../sketch/planes.js";
 import type { Body, BodyBoolean } from "./body.js";
+import { booleanRoleIcon } from "./boolean-role-icon.js";
 import { placeBooleanRole, roleBounds } from "./boolean-role-placement.js";
 import { booleanRole } from "./boolean-selection.js";
 import { entityRows } from "./entity-presentation.js";
@@ -58,7 +59,7 @@ export class BooleanRoleWidgets {
       }
       const target = booleanRole(operation, body.id) === "target";
       const name = names.find((entry) => entry.id === body.id)?.name ?? "Body";
-      button.textContent = target ? "+" : "−";
+      button.innerHTML = booleanRoleIcon(target);
       button.dataset.role = target ? "target" : "tool";
       button.setAttribute("aria-label", `Change subtraction role of ${name} in viewport`);
       button.setAttribute("aria-pressed", String(target));

@@ -47,3 +47,13 @@
 .entity-boolean-role[hidden] {
   display: none;
 }
+
+.entity-boolean-role {
+  display: grid;
+  place-items: center;
+}
+.entity-boolean-role svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
