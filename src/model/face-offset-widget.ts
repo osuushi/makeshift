@@ -3,6 +3,7 @@ import { RadialInput } from "../preferences/radial-input.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
 import { numericFocus } from "../tools/menu-focus.js";
+import { ToolPrerequisitePanel } from "../tools/tool-prerequisites.js";
 import { distanceField, positionAxialPanel, updateAxialArrow } from "./axial-widget.js";
 import { projectedAxis } from "./extrude-axis.js";
 import type { FaceFinish } from "./face-offset-targets.js";
@@ -19,11 +20,13 @@ export class FaceOffsetWidget {
   readonly options = document.createElement("div");
   private dismiss = document.createElement("button");
   private accept = document.createElement("button");
+  readonly prerequisites = new ToolPrerequisitePanel(this.root, this.options);
   constructor(overlay: HTMLElement, accept: () => void, cancel: () => void) {
     this.root.className = "face-offset-widget axial-widget";
     this.handle.setAttribute("aria-label", "Offset faces");
     this.handle.className = "face-offset-handle axial-arrow";
     this.input.type = "text";
+    this.input.value = "0";
     this.input.inputMode = "decimal";
     this.quantity.title = "Choose the value to edit";
     this.quantity.className = "offset-quantity";
@@ -130,6 +133,7 @@ export class FaceOffsetWidget {
     this.placement.fit([this.handle, this.options]);
   }
   dispose() {
+    this.prerequisites.dispose();
     this.radial.dispose();
     this.placement.dispose();
     this.root.remove();

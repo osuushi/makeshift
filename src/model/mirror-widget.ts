@@ -1,9 +1,11 @@
 import type { SketchEditor } from "../sketch/editor.js";
+import { ToolPrerequisitePanel } from "../tools/tool-prerequisites.js";
 import { selectionAnchor } from "./selection-anchor.js";
 import { WidgetClearance } from "./widget-clearance.js";
 
 export class MirrorWidget {
   readonly root = document.createElement("div");
+  readonly prerequisites = new ToolPrerequisitePanel(this.root, this.root);
   private placement = new WidgetClearance(this.root);
   readonly offset = document.createElement("input");
   readonly keep = document.createElement("input");
@@ -51,6 +53,7 @@ export class MirrorWidget {
     this.placement.fit([this.root]);
   }
   dispose(): void {
+    this.prerequisites.dispose();
     this.placement.dispose();
     this.root.remove();
   }

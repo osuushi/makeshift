@@ -8,6 +8,7 @@ import type { Loft } from "./loft.js";
 import { LoftGuides } from "./loft-guides.js";
 import { pickLoftSection } from "./loft-selection.js";
 import { type LoftSectionAction, LoftWidget } from "./loft-widget.js";
+import { resolveOperation } from "./operation-selection.js";
 
 export class LoftControls {
   private operands: BooleanOperands;
@@ -68,12 +69,14 @@ export class LoftControls {
     const editor = this.editor;
     if (editor.blocked || editor.world.active || editor.interactions.current) return;
     const resolution = editor.modeling.resolve("loft");
-    if (editor.modeling.targets.length && !resolution.available) return;
     this.sources = restored
       ? structuredClone(restored.sources)
       : resolution.available
         ? [...resolution.inputs]
-        : [];
+        : editor.modeling.targets.flatMap((target) => {
+            const section = resolveOperation("extrude", [target], editor.store.data);
+            return section.available ? section.inputs : [];
+          });
     this.lease = editor.interactions.acquire(
       "loft",
       () => this.cancel(),
@@ -123,7 +126,7 @@ export class LoftControls {
   }
   private notice(): void {
     this.editor.notice = this.collecting
-      ? "Loft · click filled regions or planar faces in order · Done adding to accept"
+      ? "Loft · click filled regions or planar faces in order · Enter accepts when ready"
       : "Loft · reorder sections or adjust seams · Enter accepts · Escape cancels";
   }
   private installPicking(): void {
@@ -160,12 +163,7 @@ export class LoftControls {
         } else if (event.key === "Enter" && !(event.target instanceof HTMLSelectElement)) {
           event.preventDefault();
           event.stopImmediatePropagation();
-          if (this.collecting) {
-            this.collecting = false;
-            this.notice();
-            this.lease.history?.checkpoint();
-            this.editor.refresh();
-          } else void this.finish();
+          if (this.sources.length >= 2) void this.finish();
         } else if (!(event.target instanceof HTMLSelectElement)) {
           const mode = ({ u: "union", s: "subtract", i: "intersect", n: "new" } as const)[
             event.key.toLowerCase() as "u"
@@ -205,6 +203,8 @@ export class LoftControls {
     if (this.lease?.phase !== "editing") return;
     this.valid = false;
     if (this.sources.length < 2) {
+      this.collecting = true;
+      this.notice();
       this.pending = this.latest = null;
       this.lease.show(null);
       this.editor.message = "Choose at least two loft sections";
@@ -245,7 +245,7 @@ export class LoftControls {
       await this.cancel();
       return true;
     }
-    if (!this.valid || this.collecting || !this.lease?.close()) return false;
+    if (!this.valid || !this.lease?.close()) return false;
     if (!(await this.editor.accept())) {
       this.lease.phase = "editing";
       this.editor.refresh();

@@ -1,5 +1,6 @@
 import { RadialInput } from "../preferences/radial-input.js";
 import { numericFocus } from "../tools/menu-focus.js";
+import { ToolPrerequisitePanel } from "../tools/tool-prerequisites.js";
 import { distanceField, positionAxialPanel, toolAction, updateAxialArrow } from "./axial-widget.js";
 import { ExtrudeDraft } from "./extrude-draft.js";
 import { ExtrudeQuantity } from "./extrude-quantity.js";
@@ -31,6 +32,7 @@ export class ExtrudeWidget {
   addQuantity(row: HTMLElement): void {
     this.draft.root.before(row);
   }
+  readonly prerequisites = new ToolPrerequisitePanel(this.root, this.options);
   constructor(
     setMode: (mode: Extrusion["mode"]) => void,
     draftChanged: () => void,
@@ -44,6 +46,7 @@ export class ExtrudeWidget {
     this.handle.className = "extrude-arrow axial-arrow";
     this.handle.setAttribute("aria-label", "Drag extrusion");
     this.input.type = "text";
+    this.input.value = "0";
     this.input.inputMode = "decimal";
     this.input.setAttribute("aria-label", "Extrusion distance");
     this.input.title = "Extrusion distance (mm)";
@@ -157,6 +160,7 @@ export class ExtrudeWidget {
     );
   }
   dispose(): void {
+    this.prerequisites.dispose();
     this.radial.dispose();
     this.placement.dispose();
     this.root.remove();

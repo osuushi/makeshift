@@ -76,9 +76,6 @@ export class BodyEdgeFinishControls {
   }
   setMode(mode: BodyEdgeFinish["mode"]): void {
     if (this.editor.blocked || this.drag.active) return;
-    const faces =
-      !this.lease && this.editor.modeling.targets.some((target) => target.kind === "face");
-    if (this.mode === mode && !faces) return;
     this.editor.modeling.setTool(mode);
     this.mode = mode;
     this.widget.radial.update(mode !== "chamfer");
@@ -86,10 +83,12 @@ export class BodyEdgeFinishControls {
       this.previews.clear();
       this.valid = false;
       this.lease.show(null);
-      this.previews.check(() => this.expandSelection());
-      this.queue(this.size);
+      if (this.selection.edges.length) {
+        this.previews.check(() => this.expandSelection());
+        this.queue(this.size);
+      }
       this.lease.history?.checkpoint();
-    } else if (faces && this.begin(mode)) this.focus();
+    } else this.begin(mode);
     this.editor.refresh();
   }
   async reopen(operation: BodyEdgeFinish): Promise<void> {
@@ -109,19 +108,20 @@ export class BodyEdgeFinishControls {
     this.mode = mode;
     this.widget.radial.update(mode !== "chamfer");
     this.frame = selectedEdgeFrame(this.editor, mode, restored?.edges);
-    if (!this.frame) return false;
+    if (restored && !this.frame) return false;
     this.lease = this.editor.interactions.acquire(
       "body-edge-finish",
       () => this.cancel(),
-      () => this.finish(),
+      () => this.finish(true),
       {
         navigation: "when-released",
+        selectsLocally: () => true,
         settled: () => this.previews.settle(),
         refineSelection: (event) => this.refine(event),
       },
     );
     if (!this.lease) return false;
-    this.selection.begin(this.frame.edges, !!restored);
+    this.selection.begin(this.frame?.edges ?? [], !!restored);
     this.editor.modeling.setTool(mode);
     this.size = restored?.size ?? 0;
     this.widget.input.value = String(this.widget.radial.display(this.size));
@@ -131,7 +131,7 @@ export class BodyEdgeFinishControls {
     this.editor.notice = `${mode === "fillet" ? "Fillet" : "Chamfer"} · Drag or enter a size · Shift-click adds · Ctrl/Command-click toggles · Alt includes face boundaries`;
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
-    if (!restored) this.previews.check(() => this.expandSelection());
+    if (!restored && this.selection.edges.length) this.previews.check(() => this.expandSelection());
     this.lease.trackHistory(
       this.widget.root,
       () => ({
@@ -158,8 +158,8 @@ export class BodyEdgeFinishControls {
       this.editor.store.data,
       this.selection.edges,
       target,
-      event.altKey,
-      event.ctrlKey || event.metaKey,
+      event.altKey || !(event.shiftKey || event.ctrlKey || event.metaKey),
+      !event.shiftKey,
     );
     if (!edges) {
       this.editor.notice = "Alt + selection modifier + click selects a face's boundary edges";
@@ -184,7 +184,7 @@ export class BodyEdgeFinishControls {
     this.selection.edges = structuredClone(edges);
     this.selection.show();
     this.editor.modeling.setTool(this.mode);
-    this.frame = selectedEdgeFrame(this.editor, this.mode, edges) ?? this.frame;
+    this.frame = selectedEdgeFrame(this.editor, this.mode, edges);
     if (edges.length) this.queue(this.size);
     else {
       this.editor.notice =
@@ -216,7 +216,12 @@ export class BodyEdgeFinishControls {
     this.widget.input.select();
   }
   private queue(size: number): void {
-    if (this.lease?.phase !== "editing" || !this.selection.edges.length) return;
+    if (this.lease?.phase !== "editing") return;
+    if (!this.selection.edges.length) {
+      this.size = Math.max(0, size);
+      this.editor.refresh();
+      return;
+    }
     if (size < 0) this.widget.input.value = "0";
     if (this.previews.latest?.size === Math.max(0, size)) {
       if (this.valid && this.size !== this.previews.latest.size) {
@@ -280,10 +285,15 @@ export class BodyEdgeFinishControls {
       this.drag.rebase(this.size);
     }
   }
-  private async finish(): Promise<boolean> {
+  private async finish(discardIncomplete = false): Promise<boolean> {
     await this.previews.settle();
     const lease = this.lease;
     if (this.drag.active || !lease) return false;
+    if (!this.selection.edges.length) {
+      if (!discardIncomplete) return false;
+      await this.cancel();
+      return true;
+    }
     if (this.size === 0 && (!this.selection.restored || !this.previews.latest)) {
       await this.cancel();
       return true;
@@ -322,7 +332,7 @@ export class BodyEdgeFinishControls {
   }
   private update = (): void => {
     const selection = this.lease ? { mode: this.mode, frame: this.frame } : this.selection.idle();
-    if (!selection?.frame) {
+    if (!selection || (!selection.frame && !this.lease)) {
       this.widget.root.hidden = true;
       return;
     }
@@ -337,6 +347,7 @@ export class BodyEdgeFinishControls {
       this.valid && (this.size > 0 || !!this.selection.restored),
       this.editor.blocked,
       !!this.lease && this.invalid,
+      this.lease && !this.selection.edges.length ? "Select at least one solid face or edge." : "",
     );
   };
   dispose(): void {

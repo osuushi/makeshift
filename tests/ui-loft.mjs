@@ -12,6 +12,8 @@ async function createSections(page) {
   assert.equal((await inspect(page)).gridSnap, false);
   for (let index = 0; index < 3; index++) {
     if (index) {
+      // Continuing-plane entry reuses visible sketches; hide the preceding section first.
+      await page.getByRole("button", { name: `Hide Sketch ${index}`, exact: true }).click();
       await page.getByRole("button", { name: `Select Sketch ${index}`, exact: true }).click();
       await chooseTool(page, "New sketch on this plane", "new-sketch-on-plane");
     }
@@ -29,6 +31,8 @@ async function createSections(page) {
     await drag(page, [center - half, -half], [center + half, half]);
     await chooseTool(page, "return to modeling", "modeling");
   }
+  for (let index = 1; index < 3; index++)
+    await page.getByRole("button", { name: `Show Sketch ${index}`, exact: true }).click();
   // Draw all fixed sections before orbit can change the in-plane camera target.
   await orient(page, [1, 1, 1]);
   for (const [sketch, distance] of [
@@ -115,7 +119,11 @@ export async function loftRoute(page, name, start = (page) => chooseTool(page, "
     assert.ok(state.preview?.bodies?.length);
     assert.deepEqual(state.document, original);
     assert.equal(await page.locator(".loft-controls li").count(), 3);
-    await page.getByRole("button", { name: "Add loft sections", exact: true }).click();
+    assert.equal(
+      await page.getByRole("button", { name: "Accept loft", exact: true }).isEnabled(),
+      true,
+      "Valid lofts can be accepted without ending section picking",
+    );
     await page.getByRole("combobox", { name: "Loft shape", exact: true }).selectOption("ruled");
     state = await inspect(page);
     const ruledVolume = (10 / 3) * (100 + 40 + 16 + 16 + 32 + 64);
@@ -234,21 +242,33 @@ async function deleteAndClear(page) {
 }
 
 async function modeRecovery(page, original) {
-  await page.getByRole("button", { name: "New body", exact: true }).click();
+  await page
+    .locator(".loft-controls")
+    .getByRole("button", { name: "New body", exact: true })
+    .click();
   const valid = (await inspect(page)).preview;
   assert.ok(valid);
-  await page.getByRole("button", { name: "Subtract", exact: true }).click();
+  await page
+    .locator(".loft-controls")
+    .getByRole("button", { name: "Subtract", exact: true })
+    .click();
   const failed = await inspect(page);
   assert.deepEqual(failed.document, original);
   assert.deepEqual(failed.preview, valid, "Failed mode retains the last valid presentation");
   assert.equal(
-    await page.getByRole("button", { name: "Accept loft", exact: true }).isEnabled(),
+    await page
+      .locator(".loft-controls")
+      .getByRole("button", { name: "Accept loft", exact: true })
+      .isEnabled(),
     false,
   );
-  await page.getByRole("button", { name: "Union", exact: true }).click();
+  await page.locator(".loft-controls").getByRole("button", { name: "Union", exact: true }).click();
   await inspect(page);
   assert.equal(
-    await page.getByRole("button", { name: "Accept loft", exact: true }).isEnabled(),
+    await page
+      .locator(".loft-controls")
+      .getByRole("button", { name: "Accept loft", exact: true })
+      .isEnabled(),
     true,
   );
 }

@@ -166,7 +166,7 @@ export class InteractionLease {
     readonly cancel: () => Promise<void> | void,
     readonly finish?: () => Promise<boolean>,
     capabilities: InteractionCapabilities = { navigation: "blocked" },
-    readonly toolId: string = kind,
+    public toolId: string = kind,
   ) {
     this.settled = capabilities.settled;
     this.refineSelection = capabilities.refineSelection;

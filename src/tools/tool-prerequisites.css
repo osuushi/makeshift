@@ -1,0 +1,23 @@
+.tool-requirement {
+  flex-basis: 100%;
+  color: var(--danger, #c23737);
+  font-size: 13px;
+  max-width: 360px;
+  white-space: normal;
+}
+.tool-awaiting-inputs:not(.tool-input-panel) > :not(.tool-input-panel) {
+  display: none;
+}
+.tool-awaiting-inputs > .tool-input-panel,
+.tool-awaiting-inputs.tool-input-panel {
+  transform: translateX(-50%);
+  min-width: 200px;
+  max-width: min(360px, calc(100vw - 32px));
+}
+.tool-input-panel > .tool-requirement {
+  display: block;
+  padding: 5px;
+}
+.tool-awaiting-inputs.tool-input-panel {
+  flex-wrap: wrap;
+}

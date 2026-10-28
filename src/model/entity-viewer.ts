@@ -8,6 +8,7 @@ import { TagRows } from "../tags/rows.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { selectionPickers } from "../tools/tool-selection.js";
 import { bodyMenu } from "./body-menu.js";
+import { booleanRoleIcon } from "./boolean-role-icon.js";
 import { EntityChildren } from "./entity-children.js";
 import { entityRows } from "./entity-presentation.js";
 import { renameEntity } from "./entity-rename.js";
@@ -21,6 +22,7 @@ export class EntityViewer {
     selected: (target: ModelingTarget) => boolean;
     available?: (target: ModelingTarget) => boolean;
     role?: (target: ModelingTarget) => "target" | "tool" | "input" | undefined;
+    flipRole?: (target: ModelingTarget) => void;
   } | null = null;
   get sourcePicker(): EntityViewer["localSourcePicker"] {
     return this.localSourcePicker ?? selectionPickers.get(this.editor) ?? null;
@@ -153,6 +155,10 @@ export class EntityViewer {
     row.className = "entity-row";
     const select = this.label(id, name, target),
       eye = document.createElement("button");
+    const roleButton = document.createElement("button");
+    roleButton.className = "entity-boolean-role";
+    roleButton.setAttribute("aria-label", `Change subtraction role of ${name}`);
+    roleButton.onclick = () => this.sourcePicker?.flipRole?.(target);
     new EntityReorder(this.editor, row, select, id, target.kind, () => !!this.sourcePicker);
 
     eye.onclick = () => this.toggleVisibility(id, target);
@@ -171,6 +177,13 @@ export class EntityViewer {
     this.refreshRows.push(() => {
       const role = this.sourcePicker?.role?.(target);
       row.dataset.booleanRole = role ?? "";
+      roleButton.hidden = !this.sourcePicker?.flipRole || (role !== "target" && role !== "tool");
+      roleButton.innerHTML = booleanRoleIcon(role === "target");
+      roleButton.title =
+        role === "target"
+          ? "Target (+) · change to cutting tool (−)"
+          : "Cutting tool (−) · change to target (+)";
+      roleButton.disabled = this.editor.blocked;
       select.title = role
         ? `${name} · ${role === "input" ? "Selected" : role === "target" ? "Target" : "Cutting tool"}`
         : name;
@@ -208,7 +221,7 @@ export class EntityViewer {
       row.classList.toggle("entity-hidden", !visible);
     });
     row.append(select, ...(merge ? [merge] : []));
-    row.append(eye);
+    row.append(roleButton, eye);
     if (target.kind === "body") row.append(bodyMenu(this.editor, id, name, this.refreshRows));
     return this.children.wrap(row, id, [
       ...(target.kind === "body" ? this.tags.rows(id, this.refreshRows) : []),

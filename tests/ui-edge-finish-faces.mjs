@@ -52,26 +52,7 @@ export async function edgeFinishFacesRoute(page, name) {
   for (const mode of ["fillet", "chamfer"]) {
     const original = await edgeFinishPrism(page);
     await invokeFaces(page, mode, original, [[0, 0, 10]], false);
-    // Modifier input must stay inside the live preview instead of accepting it.
-    const facePoint = await project(page, [0, 0, 10]);
-    await page.keyboard.down("Alt");
-    await page.keyboard.down("Control");
-    await page.mouse.click(facePoint.x, facePoint.y);
-    await page.keyboard.up("Control");
-    await page.keyboard.up("Alt");
-    let refined = await inspect(page);
-    assert.equal(refined.interaction.kind, "body-edge-finish");
-    assert.deepEqual(refined.modelingSelection, []);
-    assert.deepEqual(refined.document, original);
-    await page.keyboard.down("Alt");
-    await page.keyboard.down("Shift");
-    await page.mouse.click(facePoint.x, facePoint.y);
-    await page.keyboard.up("Shift");
-    await page.keyboard.up("Alt");
-    refined = await inspect(page);
-    assert.equal(refined.modelingSelection.length, 4);
-    assert.equal(await sizeInput(page, mode).inputValue(), "1");
-    assert.deepEqual(refined.document, original);
+    await refineLiveFinish(page, mode, original);
     await page.screenshot({ path: `.cache/sketch-review/${name}-${mode}-face-boundaries.png` });
     await finishHistory(page, mode, original);
     // The result remains an ordinary body: move it, Undo, then reselect a face.
@@ -121,11 +102,42 @@ export async function edgeFinishFacesRoute(page, name) {
     await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
     assert.equal(
       await toolEnabled(page, mode, mode),
-      false,
+      true,
+      "The tool remains invokable with incompatible inputs",
+    );
+    await chooseTool(page, mode, mode);
+    assert.deepEqual(
+      (await inspect(page)).modelingSelection,
+      [],
       "Body tokens do not implicitly select all edges",
     );
+    assert.equal(await sizeInput(page, mode).isVisible(), true);
+    await page.keyboard.press("Escape");
   }
   console.log(
     `${name}: face/menu/keyboard boundary conversion, adjacent/mixed dedup, Cancel, move/reselect and one Undo/Redo passed`,
   );
+}
+
+async function refineLiveFinish(page, mode, original) {
+  // Modifier input must stay inside the live preview instead of accepting it.
+  const facePoint = await project(page, [0, 0, 10]);
+  await page.keyboard.down("Alt");
+  await page.keyboard.down(process.platform === "darwin" ? "Meta" : "Control");
+  await page.mouse.click(facePoint.x, facePoint.y);
+  await page.keyboard.up(process.platform === "darwin" ? "Meta" : "Control");
+  await page.keyboard.up("Alt");
+  let refined = await inspect(page);
+  assert.equal(refined.interaction.kind, "body-edge-finish");
+  assert.deepEqual(refined.modelingSelection, []);
+  assert.deepEqual(refined.document, original);
+  await page.keyboard.down("Alt");
+  await page.keyboard.down("Shift");
+  await page.mouse.click(facePoint.x, facePoint.y);
+  await page.keyboard.up("Shift");
+  await page.keyboard.up("Alt");
+  refined = await inspect(page);
+  assert.equal(refined.modelingSelection.length, 4);
+  assert.equal(await sizeInput(page, mode).inputValue(), "1");
+  assert.deepEqual(refined.document, original);
 }

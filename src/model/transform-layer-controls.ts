@@ -1,5 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "../tools/catalog.js";
+import { pendingToolInputs, ToolPrerequisitePanel } from "../tools/tool-prerequisites.js";
 import { toolboxIcon } from "../tools/toolbox-icons.js";
 import { repaintTransformControls } from "./transform-clearance.js";
 import { transformLayerState, transformLayers } from "./transform-layers.js";
@@ -9,6 +10,7 @@ import "./transform-layer-controls.css";
 /** Local additive layer choices share Transform's existing edit completion route. */
 export class TransformLayerControls {
   private root = document.createElement("div");
+  private prerequisites = new ToolPrerequisitePanel(this.root, this.root);
   private placement = new WidgetClearance(this.root);
   constructor(
     private editor: SketchEditor,
@@ -40,6 +42,10 @@ export class TransformLayerControls {
     overlay.append(this.root);
   }
   update(): void {
+    const pending = pendingToolInputs.get(this.editor)?.id;
+    const tool =
+      pending && ["transform", "move", "rotate", "scale"].includes(pending) ? pending : "transform";
+    if (this.prerequisites.update(this.editor, tool)) return;
     const e = this.editor,
       anchor = e.transformAnchor;
     this.root.hidden = !anchor?.active;
@@ -62,6 +68,7 @@ export class TransformLayerControls {
     repaintTransformControls(e);
   }
   dispose(): void {
+    this.prerequisites.dispose();
     this.placement.dispose();
     this.root.remove();
   }

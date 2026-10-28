@@ -233,6 +233,7 @@ export class ErosionControls {
     this.editor.refresh();
   }
   private update = (): void => {
+    if (this.widget.prerequisites.update(this.editor, "erode")) return;
     if (!this.lease) {
       const resolved = this.editor.modeling.resolve("erode");
       if (

@@ -15,9 +15,12 @@
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--panel);
-  color: var(--text);
+  color: var(--danger);
   box-shadow: 0 4px 20px var(--shadow);
   pointer-events: auto;
+}
+.tool-selection-step[hidden] {
+  display: none;
 }
 .tool-selection-step span {
   min-width: 0;
@@ -30,17 +33,6 @@
   min-height: 40px;
   padding: 8px 18px;
 }
-.tool-selection-step button:last-child {
+.tool-selection-step button {
   grid-column: 2;
-  background: var(--accent);
-  color: var(--on-accent);
-  border-radius: 7px;
-}
-.tool-selection-step button:disabled {
-  opacity: 0.45;
-}
-
-.tool-selection-step button:nth-child(2) {
-  grid-column: 1;
-  justify-self: end;
 }
