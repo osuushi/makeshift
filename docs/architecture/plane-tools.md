@@ -121,7 +121,9 @@ The movable Cross section tool remains an explicit global hard cut, overriding
 the automatic selection view in Modeling.
 
 **Cross section** in Cmd-F → View uses one selected planar face, canonical or saved plane;
-otherwise it picks a world plane, saved plane or planar face in the viewport.
+otherwise a face-on canonical view (including an orientation-cube face click) supplies
+its world plane through the origin. An oblique view still picks a world plane,
+saved plane or planar face in the viewport.
 The initial cut removes the camera-facing half. Its direction then stays fixed
 while orbiting. Existing XYZ plane handles translate/rotate it by dragging or
 numeric entry. **Flip side** reverses the normal 180° at the same origin, keeping
