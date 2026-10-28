@@ -120,6 +120,10 @@ async function adjustmentRoute(page, retained, original) {
     retained,
     "Adjust preserves the placed plane",
   );
+  // Fresh selection exposes Move alone. A layer change completes placement,
+  // so resume adjustment with Rotate enabled before exercising its handle.
+  await button(page, "Rotate layer").click();
+  await button(page, "Adjust section").click();
   await dragHandle(page, "Rotate plane X");
   assert.notDeepEqual((await inspect(page)).crossSection.v, retained.v);
   await page.keyboard.press("Escape");
@@ -169,9 +173,16 @@ async function referenceRoutes(page, name, source) {
     await chooseTool(page, "clear selection", "selection-clear");
   await chooseTool(page, "cross section", "cross-section");
   await orient(page, [1, -1, 1]);
+  // Returning from Sketch left a face-on view, so entry already chose its plane.
+  await button(page, "Choose section plane").click();
   await pickPlane(page, "XZ");
   await orient(page, [1, -1, 1]); // Keep the X rotation marker away from edge-on hiding.
   assert.ok((await inspect(page)).crossSection);
+  // Layer state can survive sketch entry when its modeling selection is retained.
+  if ((await button(page, "Rotate layer").getAttribute("aria-pressed")) === "false") {
+    await button(page, "Rotate layer").click();
+    await button(page, "Adjust section").click();
+  }
   await placement(page, true, "X", 30);
   const oblique = (await inspect(page)).crossSection;
   await button(page, "Flip side").click();

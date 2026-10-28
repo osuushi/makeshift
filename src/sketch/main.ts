@@ -182,6 +182,10 @@ const mirror = new MirrorControls(editor, overlay);
 const constructionPlanes = new ConstructionPlaneControls(editor, overlay, entities.referenceRows);
 editor.workspaceEntry.selectedConstructionPlane = () => constructionPlanes.selected();
 const disposeSketchEntryTool = sketchEntryTool(editor);
+// Section placement publishes its gizmo anchor before the Transform layer controls refresh.
+const crossSection = new CrossSectionControls(editor, overlay, constructionPlanes.picker, () =>
+  constructionPlanes.selectedFrame(),
+);
 const scaling = new ScaleControls(
   editor,
   overlay,
@@ -206,9 +210,6 @@ const sections = new SectionControls(editor);
 const disposeSelectionSection = installSelectionSection(editor);
 const bodyEdges = new BodyEdgeControls(editor);
 const disposeVisibility = visibilityControls(editor, () => constructionPlanes.selected()?.id);
-const crossSection = new CrossSectionControls(editor, overlay, constructionPlanes.picker, () =>
-  constructionPlanes.selectedFrame(),
-);
 const measurements = new MeasurementControls(editor, app, inspector.content("Measurements"));
 const overlaps = new OverlapInput(editor, (plane) => constructionPlanes.select(plane));
 const planeCuts = new PlaneCutControls(editor, overlay, constructionPlanes.picker, entities);
