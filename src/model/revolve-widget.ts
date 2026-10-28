@@ -1,4 +1,5 @@
 import { numericFocus } from "../tools/menu-focus.js";
+import { ToolPrerequisitePanel } from "../tools/tool-prerequisites.js";
 import { WidgetClearance } from "./widget-clearance.js";
 import "./revolve.css";
 import * as THREE from "three";
@@ -30,6 +31,8 @@ export class RevolveWidget {
   readonly axis = this.button("Change revolution axis", '<path d="m4 20 16-16m-7 0h7v7"/>');
   readonly accept = this.button("Accept revolution", '<path d="m4 12 5 5 11-11"/>');
   readonly options = document.createElement("div");
+  private panel = document.createElement("div");
+  readonly prerequisites = new ToolPrerequisitePanel(this.root, this.panel);
   private drawing = document.createElementNS(svgNS, "svg");
   constructor(setMode: (mode: Revolution["mode"]) => void) {
     this.root.className = "revolve-controls";
@@ -48,15 +51,13 @@ export class RevolveWidget {
       this.options.append(button);
     }
     this.options.append(this.axis, this.accept);
-    this.root.append(
-      this.drawing,
-      this.entry,
-      this.angleHandle,
-      this.heightHandle,
+    this.panel.className = "revolve-parameter-panel";
+    this.panel.append(
       this.angle.parentElement as HTMLElement,
       this.height.parentElement as HTMLElement,
       this.options,
     );
+    this.root.append(this.drawing, this.entry, this.angleHandle, this.heightHandle, this.panel);
   }
   bindQuantities(
     signal: AbortSignal,
@@ -229,6 +230,7 @@ export class RevolveWidget {
     this.drawing.append(line);
   }
   dispose(): void {
+    this.prerequisites.dispose();
     this.placement.dispose();
     this.root.remove();
   }

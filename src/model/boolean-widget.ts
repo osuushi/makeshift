@@ -9,6 +9,8 @@ export class BooleanWidget {
   private placement = new WidgetClearance(this.root);
   private keep = document.createElement("button");
   private apply = document.createElement("button");
+  private actions = document.createElement("div");
+  private requirement = document.createElement("div");
   constructor(
     overlay: HTMLElement,
     mode: (value: BodyBoolean["mode"]) => void,
@@ -17,6 +19,7 @@ export class BooleanWidget {
     cancel: () => void,
   ) {
     this.root.className = "boolean-widget";
+    this.actions.className = "boolean-actions";
     this.root.hidden = true;
     for (const value of ["union", "subtract", "intersect"] as const) {
       const button = document.createElement("button");
@@ -25,7 +28,7 @@ export class BooleanWidget {
       button.setAttribute("aria-label", button.title);
       button.innerHTML = `<svg viewBox="0 0 24 24">${modeIcons[value]}</svg>`;
       button.onclick = () => mode(value);
-      this.root.append(button);
+      this.actions.append(button);
     }
     this.keep.setAttribute("aria-label", "Keep originals");
     this.keep.onclick = keep;
@@ -36,11 +39,23 @@ export class BooleanWidget {
     dismiss.textContent = "Cancel";
     dismiss.title = "Cancel (Escape)";
     dismiss.onclick = cancel;
-    this.root.append(this.keep, this.apply, dismiss);
+    this.requirement.className = "tool-requirement";
+    this.requirement.setAttribute("role", "status");
+    this.actions.append(this.keep, this.apply, dismiss);
+    this.root.append(this.actions, this.requirement);
     overlay.append(this.root);
   }
-  update(operation: BodyBoolean, busy: boolean, valid: boolean, count: number, point: Point): void {
+  update(
+    operation: BodyBoolean,
+    busy: boolean,
+    valid: boolean,
+    count: number,
+    point: Point,
+    requirement: string,
+  ): void {
     this.root.hidden = false;
+    this.requirement.textContent = requirement;
+    this.requirement.hidden = !requirement;
     this.root.setAttribute("aria-busy", String(busy));
     this.keep.setAttribute("aria-pressed", String(operation.keepOriginals));
     this.keep.title =

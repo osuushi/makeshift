@@ -30,10 +30,12 @@ export interface ToolDefinition {
   allowBusy?: boolean;
   showInTools?: boolean;
   selection?: SelectionPolicy;
+  /** The actual controller accepts incomplete inputs and displays its prerequisites. */
+  selectionInTool?: boolean;
 }
 export type ToolAction = Pick<
   ToolDefinition,
-  "reason" | "run" | "finishEdit" | "allowBusy" | "selection"
+  "reason" | "run" | "finishEdit" | "allowBusy" | "selection" | "selectionInTool"
 > &
   Partial<Pick<ToolDefinition, "id" | "label">>;
 export interface ToolResult extends ToolDefinition {
@@ -94,7 +96,7 @@ export class ToolCatalog {
     )
       return null;
     if (this.editor.blocked && !tool.allowBusy) return "Wait for the current calculation";
-    if (current && !this.switches(tool)) return tool.reason();
+    if (current && !this.switches(tool)) return tool.selectionInTool ? null : tool.reason();
     return toolSelection(this.editor, tool) ? null : tool.reason();
   }
   results(): ToolResult[] {
@@ -145,7 +147,14 @@ export class ToolCatalog {
       ) {
         const narrowed = selection.narrow();
         if (narrowed) selection.targets = narrowed;
-        else {
+        else if (tool.selectionInTool) {
+          const previous = selection.targets;
+          selection.targets = previous.filter((target) =>
+            previous
+              .filter((other) => selection.category(other) === selection.category(target))
+              .every((other) => selection.accepts(other)),
+          );
+        } else {
           const { collectToolSelection } = await import("./selection-step.js");
           collectToolSelection(this.editor, tool, selection, () => this.activate(tool));
           this.rememberChoice(tool);

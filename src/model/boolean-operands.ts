@@ -9,10 +9,14 @@ export class BooleanOperands {
   constructor(private editor: SketchEditor) {
     editor.world.scene.add(this.group);
   }
-  show(bodies: readonly BodyGeometry[], mode: BodyBoolean["mode"], target: string | null): void {
+  show(
+    bodies: readonly BodyGeometry[],
+    mode: BodyBoolean["mode"],
+    targets: readonly string[],
+  ): void {
     this.clear();
     bodies.forEach((body) => {
-      const color = mode === "subtract" && body.id !== target ? "#a66a16" : "#287cbd";
+      const color = mode === "subtract" && !targets.includes(body.id) ? "#a66a16" : "#287cbd";
       for (const face of body.faces) {
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute("position", new THREE.Float32BufferAttribute(face.vertices, 3));
@@ -26,7 +30,7 @@ export class BooleanOperands {
         const mesh = new THREE.Mesh(geometry, material);
         mesh.userData.booleanOperand = {
           body: body.id,
-          role: mode === "subtract" ? (body.id !== target ? "tool" : "target") : "input",
+          role: mode === "subtract" ? (!targets.includes(body.id) ? "tool" : "target") : "input",
         };
         mesh.renderOrder = 8;
         this.group.add(mesh);
@@ -51,7 +55,7 @@ export class BooleanOperands {
   showTool(): void {
     const mode = this.editor.store.booleanMode;
     if (mode === "subtract" || mode === "intersect")
-      this.show(this.editor.store.booleanTools, mode, null);
+      this.show(this.editor.store.booleanTools, mode, []);
     else this.clear();
   }
   clear(): void {

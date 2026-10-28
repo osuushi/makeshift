@@ -1,6 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
 import { numericFocus } from "../tools/menu-focus.js";
+import { ToolPrerequisitePanel } from "../tools/tool-prerequisites.js";
 import { distanceField, positionAxialPanel, toolAction, updateAxialArrow } from "./axial-widget.js";
 import type { Body } from "./body.js";
 import type { ErosionParameters } from "./erosion-parameters.js";
@@ -37,6 +38,7 @@ export class ErosionWidget {
   private cancel: HTMLButtonElement;
   private keep: HTMLButtonElement;
   private suggestion = document.createElement("button");
+  readonly prerequisites = new ToolPrerequisitePanel(this.root, this.panel);
   constructor(
     overlay: HTMLElement,
     finish: () => void,
@@ -197,6 +199,7 @@ export class ErosionWidget {
     this.placement.fit([this.handle, this.panel]);
   }
   dispose(): void {
+    this.prerequisites.dispose();
     this.placement.dispose();
     this.root.remove();
   }

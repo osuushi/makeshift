@@ -13,7 +13,7 @@ export function installSelectionRefinement(editor: SketchEditor, signal: AbortSi
         if (
           event.target !== editor.world.canvas ||
           event.button ||
-          !(event.shiftKey || event.ctrlKey || event.metaKey) ||
+          !(event.shiftKey || event.ctrlKey || event.metaKey || lease?.selectsLocally()) ||
           (lease
             ? !lease.refineSelection || lease.captured
             : !editor.modeling.explicitTool || !!editor.world.active)

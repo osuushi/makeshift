@@ -49,6 +49,7 @@ is provided yet. Invalid/self-intersecting swept solids reject the whole script.
 The path is temporary input, not a selectable or saved document object. Mathematical
 functions can generate Bézier control points in ordinary TypeScript before the call.
 booleanBodies takes ordered distinct body IDs, union/subtract/intersect and keepOriginals.
+For subtract, optional targetIds selects every body to cut; all other ids are cutting tools. Without targetIds the first body is the target.
 Subtract uses the first body as base and later bodies as cutters. With keepOriginals,
 subtract retains the cutters; union/intersect retain all input bodies alongside results.
 finishEdges takes explicit body/edge IDs, fillet/chamfer and size in mm. Tangent contours

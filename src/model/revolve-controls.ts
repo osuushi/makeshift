@@ -269,6 +269,7 @@ export class RevolveControls {
     this.editor.refresh();
   }
   private update = (): void => {
+    if (this.widget.prerequisites.update(this.editor, "revolve")) return;
     if (!this.lease?.candidate) this.operands.clear();
     const frame = this.active ? this.frame : extrusionAxis(this.editor);
     const mode = this.mode === "auto" ? this.editor.store.booleanMode : this.mode;

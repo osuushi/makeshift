@@ -60,6 +60,7 @@ export function updateExtrudeView(
 ): void {
   const { widget, twist, targets } = view;
   const { active } = interaction;
+  if (widget.prerequisites.update(editor, "extrude")) return;
   widget.update(
     editor,
     active,

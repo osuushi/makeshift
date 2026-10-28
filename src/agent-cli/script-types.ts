@@ -44,7 +44,7 @@ export interface MakeshiftScript extends DecoratorScriptApi, TagScriptApi {
     { kind: "solids"; ids: string[]; faces: { body: string; face: string }[]; edges: { body: string; edge: string }[] }) &
     { pivot: Vector; factor: number }): Promise<ScaleResult>;
   /** Subtract uses the first body as base; keepOriginals retains its tools. */
-  booleanBodies(input: { ids: string[]; mode: "union" | "subtract" | "intersect"; keepOriginals: boolean }): Promise<SolidResult>;
+  booleanBodies(input: { ids: string[]; targetIds?: string[]; mode: "union" | "subtract" | "intersect"; keepOriginals: boolean }): Promise<SolidResult>;
   /** size is mm; zero does nothing. Unachievable sizes reject instead of clamping. */
   finishEdges(input: { edges: { body: string; edge: string }[]; mode: "fillet" | "chamfer"; size: number }): Promise<SolidResult>;
   /** Negative thickness inward, positive outward. Empty faces means no opening. */

@@ -1,3 +1,4 @@
+import "../tools/tool-prerequisites.css";
 import "../tools/selection-step.css";
 import { DecoratorPanel } from "../decorators/panel.js";
 import { decoratorOverlay } from "../decorators/preview.js";

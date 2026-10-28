@@ -253,6 +253,7 @@ export class FaceOffsetControls {
     this.editor.refresh();
   }
   private update = (): void => {
+    if (this.widget.prerequisites.update(this.editor, "offset")) return;
     if (!this.lease) {
       const selected = offsetTargets(this.editor);
       if (

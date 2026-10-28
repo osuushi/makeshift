@@ -32,6 +32,7 @@ export class ModelingTools {
       this.disposers.push(
         catalog.register({
           id: tool,
+          selectionInTool: tool === "fillet" || tool === "chamfer" || tool === "loft",
           finishEdit: () =>
             !(
               editor.interactions.current?.kind === "body-edge-finish" &&
@@ -95,7 +96,8 @@ export class ModelingTools {
   }
   private async choose(tool: ModelingTool): Promise<boolean> {
     const editor = this.editor;
-    if (editor.blocked || editor.isDragging || this.reason(tool)) return false;
+    const collecting = tool === "fillet" || tool === "chamfer" || tool === "loft";
+    if (editor.blocked || editor.isDragging || (this.reason(tool) && !collecting)) return false;
     if (
       editor.interactions.current?.kind === "body-edge-finish" &&
       (tool === "fillet" || tool === "chamfer")
@@ -104,7 +106,7 @@ export class ModelingTools {
       return true;
     }
     if (editor.modeling.tool === tool && editor.interactions.current) return true;
-    if (this.reason(tool)) return false;
+    if (editor.world.active) return false;
     if (tool === "erode") {
       const result = editor.modeling.resolve("erode");
       if (!result.available) return false;
@@ -114,11 +116,7 @@ export class ModelingTools {
     editor.notice = "";
     if (tool === "revolve") this.revolve();
     if (tool === "loft") this.loft();
-    if (
-      (tool === "fillet" || tool === "chamfer") &&
-      editor.modeling.targets.some((target) => target.kind === "face")
-    )
-      this.edgeMode(tool);
+    if (tool === "fillet" || tool === "chamfer") this.edgeMode(tool);
     editor.refresh();
     return true;
   }
