@@ -37,6 +37,7 @@ await withUiRuntimes(async (page, name) => {
   const delta = Math.max(...blended.map((v, i) => Math.abs(v - (first[i] + second[i]) / 2)));
   assert.ok(delta < 4, `Overlap blends both patterns uniformly: maximum RGB error ${delta}`);
   await chooseTool(page, "cross section", "cross-section");
+  await page.getByRole("button", { name: "Choose section plane", exact: true }).click();
   await chooseWidget(page, "XZ");
   await page.getByRole("button", { name: "Done", exact: true }).click();
   await chooseTool(page, "clear selection", "selection-clear");

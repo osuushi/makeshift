@@ -11,9 +11,10 @@ export class BodyPickProbe {
   constructor(
     private editor: SketchEditor,
     readonly screen: Point,
+    bodies = editor.display.bodies,
   ) {
     this.bodies = editor.bodiesVisible
-      ? (editor.display.bodies ?? []).filter((body) => editor.visibility.visible(body.id))
+      ? (bodies ?? []).filter((body) => editor.visibility.visible(body.id))
       : [];
     this.ray = screenRay(editor, screen);
   }

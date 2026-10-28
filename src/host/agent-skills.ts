@@ -7,6 +7,7 @@ export async function prepareAgentSkills(home: string, application: string): Pro
   const skills = {
     "mesh-recovery": ["SKILL.md", "references/recovery.md", "scripts/inspect_3mf.py"],
     settings: ["SKILL.md"],
+    previews: ["SKILL.md"],
   };
   for (const [skill, files] of Object.entries(skills)) {
     for (const relative of files) {

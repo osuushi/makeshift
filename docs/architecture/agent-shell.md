@@ -656,3 +656,26 @@ The packaged skill and standard-library
 3MF inspector capture reconstruction and comparison lessons from the pump holder.
 They guide supported modeling operations, including reporting missing operations;
 they do not introduce a general native mesh importer or recover feature history.
+
+## Interactive previews
+
+`makeshift preview JSON` owns one desktop static app pane per drawing. `open`
+loads a workspace directory's `index.html`; `image` and `annotate` are CLI presets
+that copy images with the caller's filesystem permissions. The pane defaults to
+640×480 content pixels, with a draggable header, resize grip, collapse and close.
+Its source/assets/data are portable workspace files outside geometry Undo; pane
+placement and live DOM are transient. Document replacement/close closes the pane.
+
+A sandboxed WebContentsView runs separately from the CAD renderer with no Node
+or CAD bridge. Its isolated session serves only files beneath the real app root,
+blocks network/navigation/downloads and denies device permissions. The tiny
+`preview.read/write/onTrigger` preload reads and atomically replaces `data.json`
+(maximum 1 MiB). Writes are serialized; external script edits require coordination
+with user input because complete values are last-writer-wins. `read`, `reload`,
+`trigger`, `eval`, `screenshot` and `close` use the document-bound CLI transport.
+Eval targets only preview contents. Capture uses the live web contents with
+stayHidden/stayAwake, including collapsed panes; it does not reload a second app.
+Screenshots are temporary launch PNGs. Images/documents can be rendered with HTML,
+SVG or raster assets; native PDF, camera capture and iPad hosting are not provided.
+The installed `makeshift-previews` skill gives the complete small contract and
+recommends this route for displaying images and collecting detailed user input.

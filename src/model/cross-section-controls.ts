@@ -2,7 +2,7 @@ import * as THREE from "three";
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
-import type { PlaneFrame } from "../sketch/planes.js";
+import { type PlaneFrame, planeNormal, planes } from "../sketch/planes.js";
 import { flipSectionFrame, sectionClip } from "../sketch/view-clipping.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { CrossSectionPlaneView } from "./cross-section-plane-view.js";
@@ -114,6 +114,10 @@ export class CrossSectionControls {
             ?.find((b) => b.id === target.body)
             ?.faces.find((f) => f.id === target.face)?.plane
         : null) ??
+      Object.values(planes).find((frame) => {
+        const direction = e.world.camera.getWorldDirection(new THREE.Vector3());
+        return Math.abs(direction.dot(new THREE.Vector3(...planeNormal(frame)))) >= 1 - 1e-8;
+      }) ??
       null
     );
   }

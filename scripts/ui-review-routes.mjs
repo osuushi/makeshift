@@ -1,6 +1,11 @@
 // Independent ordinary-control, widget and edge families. Preserve fixture sequences.
 export const uiRoutes = [
   {
+    args: ["modeling-interaction-regressions-ui.mjs"],
+    seconds: 60,
+    browsers: ["electron"],
+  },
+  {
     args: ["current-tools-ui.mjs", "--route=rectangleRoute"],
     seconds: 35,
     browsers: ["chromium", "webkit", "electron"],

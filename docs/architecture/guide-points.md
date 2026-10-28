@@ -136,7 +136,11 @@ planes. Canonical destinations are available independently of the primary
 grid or global grid visibility. Each canonical destination has a small soft patch
 of its colored grid, aligned to that plane's world grid spacing. Sketch-only moves
 still restrict projections to those remaining in the active sketch plane. Unsaved drag
-destinations appear as small yellow circles without crosses. Projection destinations
+destinations appear as small yellow circles without crosses. At most three automatic
+destination locations are shown, prioritized by screen distance to the current pointer
+after visibility and widget clearance. Nearby locations are not rejected for clustering;
+coincident meanings share a marker, and the full target pool remains available to the
+disambiguation chooser. Saved guide markers do not count toward this limit. Projection destinations
 also have a faint dotted gray line to the starting guide; covered destinations are dimmed
 and remain available in the hold-to-choose panel.
 Dragging over a destination highlights all of its potential parent curves, edges,

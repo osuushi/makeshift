@@ -1,6 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
 import { numericFocus } from "../tools/menu-focus.js";
+import { ToolPrerequisitePanel } from "../tools/tool-prerequisites.js";
 import { distanceField, positionAxialPanel, toolAction, updateAxialArrow } from "./axial-widget.js";
 import { projectedAxis } from "./extrude-axis.js";
 import { WidgetClearance } from "./widget-clearance.js";
@@ -14,12 +15,14 @@ export class ShellWidget {
   private description = document.createElement("small");
   private accept: HTMLButtonElement;
   private cancel: HTMLButtonElement;
+  readonly prerequisites = new ToolPrerequisitePanel(this.root, this.panel);
   constructor(overlay: HTMLElement, finish: () => void, cancel: () => void) {
     this.root.className = "shell-widget axial-widget";
     this.handle.className = "axial-arrow";
     this.handle.setAttribute("aria-label", "Shell thickness handle");
     this.handle.title = "Shell · drag outward or inward, or click to type";
     this.input.type = "text";
+    this.input.value = "0";
     this.input.inputMode = "decimal";
     this.input.setAttribute("aria-label", "Shell thickness");
     this.input.title = "Signed thickness in mm: negative inward, positive outward";
@@ -63,6 +66,7 @@ export class ShellWidget {
     this.placement.fit([this.handle, this.panel]);
   }
   dispose(): void {
+    this.prerequisites.dispose();
     this.placement.dispose();
     this.root.remove();
   }

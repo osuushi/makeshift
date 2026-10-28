@@ -99,6 +99,8 @@ export interface EdgeMovement {
 
 export interface BodyBoolean {
   ids: string[];
+  /** Subtract targets; omitted by older callers to use the first ordered body. */
+  targetIds?: string[];
   mode: Exclude<BooleanMode, "new">;
   keepOriginals: boolean;
   experimentalTrimFiltering?: boolean;

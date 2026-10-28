@@ -7,7 +7,7 @@ import type { InspectionCommand } from "../agent/inspection-protocol.js";
 import type { ScriptRequest } from "../agent-script/api.js";
 
 export interface ConnectionRequest {
-  command: "status" | "script" | InspectionCommand;
+  command: "status" | "script" | "preview" | InspectionCommand;
   entity?: string;
   script?: ScriptRequest;
 }
@@ -79,6 +79,7 @@ export class AgentConnection {
         typeof request.command !== "string" ||
         ![
           "status",
+          "preview",
           "selection",
           "inspect",
           "render",
@@ -92,10 +93,14 @@ export class AgentConnection {
         throw new Error("Unknown Makeshift command; run makeshift help.");
       if (
         request.entity !== undefined &&
-        (!["inspect", "select", "settings"].includes(request.command as string) ||
+        (!["inspect", "select", "settings", "preview"].includes(request.command as string) ||
           typeof request.entity !== "string" ||
           request.entity.length >
-            (request.command === "select" || request.command === "settings" ? 65536 : 256))
+            (request.command === "select" ||
+            request.command === "settings" ||
+            request.command === "preview"
+              ? 65536
+              : 256))
       )
         throw new Error("Invalid inspection ID.");
       if (!this.active) return;

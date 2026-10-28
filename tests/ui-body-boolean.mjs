@@ -66,8 +66,12 @@ export async function bodyBooleanRoute(page, name, electron) {
     await page.getByRole("button", { name: "Select Body 2", exact: true }).getAttribute("title"),
     "Body 2 · Target",
   );
-  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
-  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Change subtraction role of Body 2", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Change subtraction role of Body 1", exact: true })
+    .click();
   let state = await inspect(page);
   assert.equal(state.preview.bodies.length, 3); // two plate pieces plus unselected cutter
   const ghosts = state.bodyRendering.booleanOperands;

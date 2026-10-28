@@ -39,6 +39,7 @@ export class BodyActions {
       this.disposers.push(
         catalog.register({
           id: mode,
+          selectionInTool: true,
           finishEdit: true,
           label: `${mode[0].toUpperCase()}${mode.slice(1)}`,
           category: "Solid",

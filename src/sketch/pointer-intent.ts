@@ -19,3 +19,7 @@ export function penSelectionClick(start: PointerEvent): PointerEvent {
     altKey: start.altKey,
   });
 }
+/** Geometry handoffs have already passed navigation arbitration. */
+export const replayedGeometryPointers = new WeakSet<Event>();
+/** Command clicks are delivered after physical release resolves click versus orbit. */
+export const releasedPointerPresses = new WeakSet<Event>();

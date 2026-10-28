@@ -254,6 +254,7 @@ export class MirrorControls {
     this.editor.refresh();
   }
   private update = (): void => {
+    if (this.widget.prerequisites.update(this.editor, "mirror")) return;
     const e = this.editor;
     this.widget.update(
       !!this.lease,

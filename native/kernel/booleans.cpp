@@ -17,6 +17,7 @@
 #include <OSD_ThreadPool.hxx>
 #include <algorithm>
 #include <memory>
+#include <iterator>
 #include <set>
 #include <stdexcept>
 
@@ -118,6 +119,41 @@ void solids(std::vector<Result>& results, const TopoDS_Shape& shape,
     }
 }
 
+namespace {
+std::vector<Result> subtractTargets(const Tree& input, const std::vector<Operand>& bodies,
+                                   const std::vector<const Operand*>& selected,
+                                   std::vector<std::string>& participants) {
+    std::set<std::string> targets;
+    for (const auto& item : input.get_child("targetIds")) {
+        const auto id = item.second.get_value<std::string>();
+        if (!targets.insert(id).second ||
+            std::none_of(selected.begin(), selected.end(), [&](const Operand* body) { return body->id == id; }))
+            throw std::runtime_error("Select each target from the Boolean bodies only once");
+    }
+    if (targets.empty() || targets.size() == selected.size())
+        throw std::runtime_error("Select at least one target and one cutting tool");
+    std::vector<Result> results;
+    for (const auto* target : selected) {
+        if (!targets.count(target->id)) continue;
+        Tree operation = input, ids, entry;
+        operation.erase("targetIds");
+        entry.put_value(target->id); ids.push_back({"", entry});
+        for (const auto* tool : selected) {
+            if (targets.count(tool->id)) continue;
+            entry.put_value(tool->id); ids.push_back({"", entry});
+        }
+        operation.put_child("ids", ids);
+        std::vector<std::string> ignored;
+        auto cut = booleanBodies(operation, bodies, ignored);
+        results.insert(results.end(), std::make_move_iterator(cut.begin()), std::make_move_iterator(cut.end()));
+    }
+    for (const auto* body : selected)
+        if (!input.get<bool>("keepOriginals", false) || targets.count(body->id))
+            participants.push_back(body->id);
+    return results;
+}
+}
+
 std::vector<Result> booleanBodies(const Tree& input, const std::vector<Operand>& bodies,
                                   std::vector<std::string>& participants) {
     const auto mode = input.get<std::string>("mode");
@@ -135,6 +171,8 @@ std::vector<Result> booleanBodies(const Tree& input, const std::vector<Operand>&
         selected.push_back(&*found);
     }
     if (selected.size() < 2) throw std::runtime_error("Select at least two bodies");
+    if (mode == "subtract" && input.get_child_optional("targetIds"))
+        return subtractTargets(input, bodies, selected, participants);
     // Keep correspondence for attachments even when originals survive. Materialization
     // gives descendants of retained originals new document-local identities.
     for (std::size_t i = 0; i < selected.size(); ++i)

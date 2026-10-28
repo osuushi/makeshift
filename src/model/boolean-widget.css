@@ -1,10 +1,10 @@
 .boolean-widget {
   position: absolute;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   width: max-content;
   max-width: calc(100vw - 32px);
-  align-items: center;
+  align-items: stretch;
   gap: 8px;
   padding: 7px;
   transform: translateX(-50%);
@@ -12,6 +12,12 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   pointer-events: auto;
+}
+.boolean-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 .boolean-widget[hidden],
 .boolean-widget [hidden] {
@@ -37,4 +43,17 @@
   fill: none;
   stroke: currentColor;
   stroke-width: 1.7;
+}
+.entity-boolean-role[hidden] {
+  display: none;
+}
+
+.entity-boolean-role {
+  display: grid;
+  place-items: center;
+}
+.entity-boolean-role svg {
+  display: block;
+  width: 16px;
+  height: 16px;
 }

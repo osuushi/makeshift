@@ -61,23 +61,23 @@ async function booleanRoute(page, original) {
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, accepted);
   await chooseTool(page, "undo", "undo");
-  // Edge-only preselection waits for a second owning body and explicit Next.
+  // Edge-only preselection expands to its owner in the inline Boolean panel.
   await selectEdges(page, [1, 11, 5]);
-  const edges = (await inspect(page)).modelingSelection;
   await chooseTool(page, "subtract", "subtract");
-  const step = page.getByRole("group", { name: "Select tool inputs", exact: true });
-  const next = step.getByRole("button", { name: "Next", exact: true });
-  await step.waitFor();
-  assert.equal((await inspect(page)).interaction.kind, "tool-selection");
-  assert.deepEqual((await inspect(page)).modelingSelection, edges);
-  assert.equal(await next.isDisabled(), true);
+  const apply = page.getByRole("button", { name: "Accept Boolean", exact: true });
+  await apply.waitFor();
+  assert.equal((await inspect(page)).interaction.kind, "body-boolean");
+  assert.deepEqual((await inspect(page)).modelingSelection, [
+    { kind: "body", body: original.bodies[1].id },
+  ]);
+  assert.equal(await page.getByRole("button", { name: "Next", exact: true }).count(), 0);
+  assert.equal(await apply.isDisabled(), true);
   assert.equal((await inspect(page)).preview, null);
   const p = await project(page, [-10, 0, 5]);
   await page.mouse.click(p.x, p.y);
-  assert.equal(await next.isEnabled(), true);
-  assert.equal((await inspect(page)).preview, null);
+  await inspect(page);
+  assert.equal(await apply.isEnabled(), true);
   assert.deepEqual((await inspect(page)).document, original);
-  await next.click();
   assert.equal((await inspect(page)).interaction.kind, "body-boolean");
   assert.ok((await inspect(page)).preview);
   assert.match(

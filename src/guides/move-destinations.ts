@@ -1,5 +1,5 @@
 import type { SketchEditor } from "../sketch/editor.js";
-import type { PlaneId, Vector } from "../sketch/planes.js";
+import type { PlaneId, Point, Vector } from "../sketch/planes.js";
 import { guideCylinderPatches } from "./cylinder-patches.js";
 import { near } from "./geometry.js";
 import { guideMarkerOccluded } from "./marker-visibility.js";
@@ -13,6 +13,7 @@ export class GuideMoveDestinations {
   private root = document.createElementNS(ns, "svg");
   private facePatches: SVGGElement | null = null;
   private lockedKey = "";
+  private cursor: Point | null = null;
   private clearance: GuideWidgetClearance;
   constructor(
     private editor: SketchEditor,
@@ -26,6 +27,7 @@ export class GuideMoveDestinations {
     this.hide();
   }
   show(origin: Vector, candidates: GuideMoveCandidate[]): void {
+    this.cursor ??= this.editor.world.project(origin);
     this.root.replaceChildren(guidePlanePatches(this.editor, candidates));
     this.root.style.display = "block";
     this.suppress(false);
@@ -62,6 +64,10 @@ export class GuideMoveDestinations {
     }
     this.hideOverlaps();
     this.clearance.schedule();
+  }
+  move(cursor: Point): void {
+    this.cursor = cursor;
+    this.hideOverlaps();
   }
   pending(origin: Vector): void {
     this.show(origin, []);
@@ -114,6 +120,7 @@ export class GuideMoveDestinations {
     const circles = this.root.querySelectorAll("circle");
     if (!circles.length) return;
     const bounds = this.clearance.bounds();
+    const automatic: { circle: SVGCircleElement; distance: number }[] = [];
     for (const circle of circles) {
       const point = {
         x: Number(circle.getAttribute("cx")),
@@ -125,7 +132,23 @@ export class GuideMoveDestinations {
         ? guideMarkerOccluded(this.editor, worldPoint, bounds, radius)
         : guideOverlapsWidget(point, bounds, radius);
       circle.style.display = occluded ? "none" : "";
+      if (!occluded && !circle.classList.contains("guide-destination-lock"))
+        automatic.push({
+          circle,
+          distance: this.cursor ? Math.hypot(point.x - this.cursor.x, point.y - this.cursor.y) : 0,
+        });
     }
+    automatic.sort((a, b) => a.distance - b.distance);
+    for (const { circle } of automatic.slice(3)) circle.style.display = "none";
+    const shown = new Set(
+      [...circles]
+        .filter((circle) => circle.style.display !== "none")
+        .map((circle) => circle.dataset.point),
+    );
+    for (const element of this.root.querySelectorAll<SVGElement>(
+      "line[data-point], .guide-plane-patch[data-point]",
+    ))
+      element.style.display = shown.has(element.dataset.point) ? "" : "none";
   }
   hide(): void {
     this.root.style.display = "none";

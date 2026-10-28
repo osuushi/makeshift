@@ -3,6 +3,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import type { ToolAction } from "./catalog.js";
 import { pickSelectionCandidate, selectionCandidates } from "./selection-candidates.js";
 import { SelectionEmphasis } from "./selection-emphasis.js";
+import { pendingToolInputs } from "./tool-prerequisites.js";
 import type { ToolSelection } from "./tool-selection.js";
 import { selectionPickers } from "./tool-selection.js";
 
@@ -17,7 +18,6 @@ export function collectToolSelection(
 class SelectionStep {
   private root = document.createElement("div");
   private prompt = document.createElement("span");
-  private next = document.createElement("button");
   private abort = new AbortController();
   private lease: InteractionLease | null = null;
   private emphasis: SelectionEmphasis;
@@ -56,6 +56,7 @@ class SelectionStep {
       navigation: "when-released",
       selectsLocally: () => true,
     });
+    if (this.lease) this.lease.toolId = selection.id;
     this.root.className = "tool-selection-step";
     this.root.setAttribute("role", "group");
     this.root.setAttribute("aria-label", "Select tool inputs");
@@ -63,12 +64,15 @@ class SelectionStep {
     const cancel = document.createElement("button");
     cancel.textContent = "Cancel";
     cancel.onclick = () => this.cancel();
-    this.next.textContent = "Next";
-    this.next.onclick = () => void this.finish();
-    this.root.append(this.prompt, cancel, this.next);
+    this.root.append(this.prompt, cancel);
     editor.world.host.append(this.root);
     this.root.dataset.tool = selection.id;
     this.root.dataset.label = "label" in tool ? String(tool.label) : selection.id;
+    pendingToolInputs.set(editor, {
+      id: selection.id,
+      message: this.instruction,
+      cancel: () => this.cancel(),
+    });
     selectionPickers.set(editor, {
       choose: (target) => this.choose(target),
       hover: () => {},
@@ -91,14 +95,7 @@ class SelectionStep {
       window.addEventListener(
         type,
         (event) => {
-          if (
-            event.target !== this.editor.world.canvas ||
-            event.button ||
-            event.metaKey ||
-            event.ctrlKey ||
-            event.altKey
-          )
-            return;
+          if (event.target !== this.editor.world.canvas || event.button || event.altKey) return;
           event.preventDefault();
           event.stopImmediatePropagation();
           if (type !== "click" || this.editor.blocked) return;
@@ -107,7 +104,7 @@ class SelectionStep {
             y: event.clientY,
           });
           if (!target) return;
-          this.choose(target);
+          this.choose(target, event.shiftKey && !event.ctrlKey && !event.metaKey);
         },
         options,
       );
@@ -128,17 +125,19 @@ class SelectionStep {
       options,
     );
   }
-  private choose(target: import("./tool-selection.js").ToolTarget): void {
+  private choose(target: import("./tool-selection.js").ToolTarget, addOnly = false): void {
     if (!this.selection.accepts(target) || this.editor.blocked) return;
     const key = this.selection.key(target);
     const current = this.selection.targets;
     this.selection.targets = this.selection.policy.single
       ? [target]
       : current.some((t) => this.selection.key(t) === key)
-        ? current.filter((t) => this.selection.key(t) !== key)
+        ? addOnly
+          ? current
+          : current.filter((t) => this.selection.key(t) !== key)
         : [...current, target];
     this.editor.refresh();
-    if (this.selection.policy.single && this.selection.valid()) void this.finish();
+    if (this.selection.valid()) void this.finish();
   }
   private update = (): void => {
     const data = this.editor.store.data;
@@ -153,12 +152,15 @@ class SelectionStep {
     // Selection/navigation replies republish the same accepted document.
     this.accepted = data;
     this.emphasis.update();
-    this.next.disabled = this.editor.blocked || !this.selection.valid();
+    const pending = pendingToolInputs.get(this.editor);
+    this.root.hidden = !!pending?.panel;
+    const missing = !this.selection.valid();
     const count = this.selection.targets.length;
-    this.prompt.textContent = `${this.root.dataset.label}: ${this.candidates.length ? `${this.instruction} (highlighted)` : "No eligible geometry is visible"} · ${count} selected${this.next.disabled && count ? ` · ${this.selection.reason() ?? "Choose compatible inputs"}` : ""}`;
+    this.prompt.textContent = `${this.root.dataset.label}: ${this.candidates.length ? `${this.instruction} (highlighted)` : "No eligible geometry is visible"} · ${count} selected${missing && count ? ` · ${this.selection.reason() ?? "Choose compatible inputs"}` : ""}`;
+    if (!missing && !this.editor.blocked) queueMicrotask(() => void this.finish());
   };
   private async finish(): Promise<void> {
-    if (this.editor.blocked || !this.selection.valid()) return;
+    if (!this.lease || this.editor.blocked || !this.selection.valid()) return;
     this.end();
     await this.proceed();
   }
@@ -170,6 +172,7 @@ class SelectionStep {
     this.editor.refresh();
   }
   private end(): void {
+    pendingToolInputs.delete(this.editor);
     selectionPickers.delete(this.editor);
     this.abort.abort();
     this.editor.world.changed.delete(this.update);

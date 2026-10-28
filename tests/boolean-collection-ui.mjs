@@ -178,13 +178,21 @@ async function enclosed(page, name) {
   const [target, tool] = original.bodies;
   await start(page, "subtract");
   await setKeep(page, false);
-  await body(page, 2).click();
-  await body(page, 1).press("Space");
+  await body(page, 1).click();
+  await body(page, 2).press("Space");
   let state = await inspect(page);
   close(state.preview.bodies[0].volume, target.volume - tool.volume);
   ghosts(state, target.id, tool.id);
-  await body(page, 2).click();
-  await body(page, 2).click();
+  await page
+    .getByRole("button", { name: "Change subtraction role of Body 1 in viewport", exact: true })
+    .click();
+  assert.match(
+    await page.locator(".boolean-widget .tool-requirement").textContent(),
+    /target body/,
+  );
+  await page
+    .getByRole("button", { name: "Change subtraction role of Body 2 in viewport", exact: true })
+    .click();
   state = await inspect(page);
   assert.equal(state.preview.bodies.length, 0);
   assert.match(
@@ -200,8 +208,6 @@ async function enclosed(page, name) {
   await start(page, "subtract");
   await body(page, 2).click();
   await body(page, 1).click();
-  await body(page, 2).click();
-  await body(page, 2).click();
   await inspect(page);
   await page.screenshot({ path: `.cache/sketch-review/${name}-boolean-enclosed-empty.png` });
   await body(page, 1).click();
@@ -212,42 +218,20 @@ async function enclosed(page, name) {
   await chooseTool(page, "redo", "redo");
   await inspect(page);
   assert.equal(await keep(page).getAttribute("aria-pressed"), "true");
-  await page.getByRole("button", { name: "Union", exact: true }).click();
+  await page.locator(".boolean-widget").getByRole("button", { name: "Union", exact: true }).click();
   await inspect(page);
+  assert.equal(await page.locator(".boolean-role-widget").count(), 0);
   assert.equal(await keep(page).getAttribute("aria-pressed"), "false");
-  await page.getByRole("button", { name: "Subtract", exact: true }).click();
+  await page
+    .locator(".boolean-widget")
+    .getByRole("button", { name: "Subtract", exact: true })
+    .click();
   await inspect(page);
   assert.equal(await keep(page).getAttribute("aria-pressed"), "true");
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, original);
   assert.deepEqual((await inspect(page)).bodyRendering.booleanOperands, []);
-  await page.reload();
-  await inspect(page);
-  await start(page, "subtract");
-  assert.equal(await keep(page).getAttribute("aria-pressed"), "true");
-  await body(page, 2).click();
-  await body(page, 1).click();
-  await accept(page);
-  const kept = (await inspect(page)).document;
-  assert.equal(kept.bodies.length, 2);
-  assert.ok(kept.bodies.some((b) => b.id === tool.id));
-  await chooseTool(page, "undo", "undo");
-  assert.deepEqual((await inspect(page)).document, original);
-  await chooseTool(page, "redo", "redo");
-  assert.deepEqual((await inspect(page)).document, kept);
-  await chooseTool(page, "undo", "undo");
-  await start(page, "subtract");
-  assert.equal(await keep(page).getAttribute("aria-pressed"), "true");
-  await setKeep(page, false);
-  await body(page, 2).click();
-  await body(page, 1).click();
-  await accept(page);
-  assert.equal((await inspect(page)).document.bodies.length, 1);
-  await chooseTool(page, "undo", "undo");
-  await page.reload();
-  await start(page, "subtract");
-  assert.equal(await keep(page).getAttribute("aria-pressed"), "false");
-  await page.keyboard.press("Escape");
+  await retainedTools(page, original, tool);
   console.log(
     `${name}: enclosed surface ghosts, role flip, explicit empty result, keep/remove preference through Cancel/history/reload passed`,
   );
@@ -264,3 +248,33 @@ await withUiRuntimes(
   },
   { timeout: 30000 },
 );
+
+async function retainedTools(page, original, tool) {
+  await page.reload();
+  await inspect(page);
+  await start(page, "subtract");
+  assert.equal(await keep(page).getAttribute("aria-pressed"), "true");
+  await body(page, 1).click();
+  await body(page, 2).click();
+  await accept(page);
+  const kept = (await inspect(page)).document;
+  assert.equal(kept.bodies.length, 2);
+  assert.ok(kept.bodies.some((b) => b.id === tool.id));
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
+  await chooseTool(page, "redo", "redo");
+  assert.deepEqual((await inspect(page)).document, kept);
+  await chooseTool(page, "undo", "undo");
+  await start(page, "subtract");
+  assert.equal(await keep(page).getAttribute("aria-pressed"), "true");
+  await setKeep(page, false);
+  await body(page, 1).click();
+  await body(page, 2).click();
+  await accept(page);
+  assert.equal((await inspect(page)).document.bodies.length, 1);
+  await chooseTool(page, "undo", "undo");
+  await page.reload();
+  await start(page, "subtract");
+  assert.equal(await keep(page).getAttribute("aria-pressed"), "false");
+  await page.keyboard.press("Escape");
+}

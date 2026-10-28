@@ -5,6 +5,7 @@ import { ModelSelectionDrag } from "../model/model-selection-drag.js";
 import { primitiveTools } from "../model/primitive-tools.js";
 import { RevolveControls } from "../model/revolve-controls.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
+import { installSelectionRefinement } from "../tools/selection-refinement-input.js";
 import type { SketchEditor } from "./editor.js";
 import { modelDoubleClick } from "./model-double-click.js";
 import { onModelKeydown } from "./model-keys.js";
@@ -46,6 +47,7 @@ export class ModelControls {
     const options = { signal: this.abort.signal },
       canvas = editor.world.canvas;
     this.bindCanvas(canvas, options);
+    installSelectionRefinement(editor, this.abort.signal);
     modelDoubleClick(editor, overlay, this.abort.signal, (event, before) =>
       this.doubleClick(event, before),
     );
@@ -155,7 +157,12 @@ export class ModelControls {
           run: () => {
             const hits = pickModels(editor, { x: event.clientX, y: event.clientY });
             editor.modeling.alternatives = hits.slice(1);
-            editor.modeling.choose(hits[0] ?? null, event.shiftKey, event.metaKey || event.ctrlKey);
+            editor.modeling.choose(
+              hits[0] ?? null,
+              event.shiftKey || event.metaKey || event.ctrlKey,
+              false,
+              event.altKey,
+            );
             this.placement.enabled = false;
             editor.refresh();
           },
@@ -198,8 +205,9 @@ export class ModelControls {
       editor.modeling.targets = before;
       editor.modeling.choose(
         { kind: "body", body: target.body },
-        event.shiftKey,
-        event.metaKey || event.ctrlKey,
+        event.shiftKey || event.metaKey || event.ctrlKey,
+        false,
+        event.altKey,
       );
       editor.modeling.alternatives = [];
       this.placement.enabled = false;

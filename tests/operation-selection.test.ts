@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { Body } from "../src/model/body.js";
+import { refineFinishEdges } from "../src/model/edge-finish-refinement.js";
 import { type Operation, resolveOperation } from "../src/model/operation-selection.js";
 import { selectionContext } from "../src/model/selection-context.js";
 import { refineSelection } from "../src/model/selection-refinement.js";
@@ -252,4 +253,41 @@ test("face-based edge finishes exclude periodic seams while preserving explicit 
     const noBoundary = { ...periodic, faces: [{ ...periodic.faces[0], edges: ["seam", "seam"] }] };
     assert.equal(resolveOperation(mode, [side], { ...doc, bodies: [noBoundary] }).available, false);
   }
+});
+
+test("edge finish refinement adds and removes boundaries without dropping unrelated edges", () => {
+  const first = { body: a.id, edge: a.edges[0].id };
+  const other = { body: b.id, edge: b.edges[0].id };
+  assert.equal(refineFinishEdges(document, [other], faces(a)[0], false, true), null);
+  assert.deepEqual(refineFinishEdges(document, [other], faces(a)[0], true, false), [other, first]);
+  assert.deepEqual(refineFinishEdges(document, [other, first], faces(a)[0], true, true), [other]);
+  assert.deepEqual(refineFinishEdges(document, [first], edge(a), false, false), [first]);
+  assert.deepEqual(refineFinishEdges(document, [first], edge(a), false, true), []);
+  assert.equal(refineFinishEdges(document, [first], whole(b), true, true), null);
+});
+
+test("translated boundary addition and subtraction handle partial groups and exclude seams", () => {
+  const data = {
+    ...document,
+    bodies: [
+      {
+        ...a,
+        edges: [...a.edges, { ...a.edges[0], id: "extra" }, { ...a.edges[0], id: "seam" }],
+        faces: a.faces.map((face, index) =>
+          index
+            ? face
+            : {
+                ...face,
+                edges: [...face.edges, "extra", "seam", "seam"],
+              },
+        ),
+      },
+      b,
+    ],
+  };
+  const first = { body: a.id, edge: a.edges[0].id };
+  const extra = { body: a.id, edge: "extra" };
+  assert.deepEqual(refineFinishEdges(data, [first], faces(a)[0], true, false), [first, extra]);
+  assert.deepEqual(refineFinishEdges(data, [first], faces(a)[0], true, true), []);
+  assert.deepEqual(refineFinishEdges(data, [first, extra], faces(a)[0], true, true), []);
 });

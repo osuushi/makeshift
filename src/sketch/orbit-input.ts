@@ -1,6 +1,10 @@
 import { controlMode } from "./control-preference.js";
 import { onModelKeydown } from "./model-keys.js";
-import { pointerDragThreshold } from "./pointer-intent.js";
+import {
+  pointerDragThreshold,
+  releasedPointerPresses,
+  replayedGeometryPointers,
+} from "./pointer-intent.js";
 import type { World } from "./world.js";
 
 /** Capture navigation before drawing/selection, including release outside the canvas. */
@@ -39,7 +43,7 @@ class OrbitDrag {
     );
   }
   start = (event: PointerEvent): void => {
-    if (this.replaying) return;
+    if (this.replaying || replayedGeometryPointers.has(event)) return;
     this.suppressClick = false;
     if (
       event.target instanceof Element &&
@@ -57,6 +61,10 @@ class OrbitDrag {
     this.pending = event;
   };
   move = (event: PointerEvent): void => {
+    if (this.active && event.buttons === 0) {
+      this.stop();
+      return;
+    }
     const start = this.pending;
     if (start && event.pointerId === start.pointerId) {
       consume(event);
@@ -103,21 +111,22 @@ class OrbitDrag {
       if (event.type === "pointerup" && start.button === 0) {
         this.replaying = true;
         try {
-          start.target?.dispatchEvent(
-            new PointerEvent("pointerdown", {
-              bubbles: true,
-              cancelable: true,
-              pointerId: start.pointerId,
-              pointerType: start.pointerType,
-              button: 0,
-              buttons: 1,
-              clientX: start.clientX,
-              clientY: start.clientY,
-              metaKey: start.metaKey,
-              ctrlKey: start.ctrlKey,
-              shiftKey: start.shiftKey,
-            }),
-          );
+          const press = new PointerEvent("pointerdown", {
+            bubbles: true,
+            cancelable: true,
+            pointerId: start.pointerId,
+            pointerType: start.pointerType,
+            button: 0,
+            buttons: 1,
+            clientX: start.clientX,
+            clientY: start.clientY,
+            metaKey: start.metaKey,
+            ctrlKey: start.ctrlKey,
+            shiftKey: start.shiftKey,
+            altKey: start.altKey,
+          });
+          releasedPointerPresses.add(press);
+          start.target?.dispatchEvent(press);
         } finally {
           this.replaying = false;
         }

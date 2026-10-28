@@ -17,7 +17,7 @@ export class ModelSelectionDrag {
   private pointerId: number | null = null;
   private interaction: InteractionLease | null = null;
   private additive = false;
-  private toggle = false;
+  private remove = false;
   private ignoreClick = false;
   constructor(
     private editor: SketchEditor,
@@ -74,8 +74,8 @@ export class ModelSelectionDrag {
     this.start = event;
     this.pointerId = event.pointerId;
     this.interaction = interaction;
-    this.toggle = event.metaKey || event.ctrlKey;
-    this.additive = event.shiftKey || event.metaKey || event.ctrlKey;
+    this.remove = event.altKey;
+    this.additive = event.shiftKey || event.metaKey || event.ctrlKey || event.altKey;
     interaction.capture(this.editor.world.canvas, event.pointerId);
   };
   private move = (event: PointerEvent): void => {
@@ -106,7 +106,7 @@ export class ModelSelectionDrag {
         y: event.clientY,
       });
       if (!this.additive) this.editor.modeling.targets = [];
-      for (const target of selected) this.editor.modeling.choose(target, true, this.toggle);
+      for (const target of selected) this.editor.modeling.choose(target, true, false, this.remove);
       this.editor.modeling.alternatives = [];
       this.editor.refresh();
       this.ignoreClick = true;

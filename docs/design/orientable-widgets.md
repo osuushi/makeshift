@@ -7,6 +7,12 @@ design. The reference implementation is commit `07fa2d1`.
 
 ![Move widget with a sphere anchor, capsule arrows and curved rotation glyphs](images/orientable-move-widget.png)
 
+## Icons
+
+Never use text characters or font glyphs as icons. Draw icons with SVG paths or
+explicit geometry, with symmetric bounds and deliberate alignment inside their
+controls. This applies to all interface icons, including plus/minus role buttons.
+
 ## The visual idea
 
 A widget is a small, readable object attached to geometry. Its shape and orientation

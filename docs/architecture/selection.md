@@ -183,13 +183,14 @@ founder feedback update these contracts before further tools depend on them.
   rectangle also has a center handle/interior group target for moving the whole
   rectangle. Double-click connected linework selects its connected component.
 - Shift adds without removing or reordering existing targets; Command/Ctrl toggles
-  (also when Shift is held). This applies to sketch/model canvas picks,
+  (also when Shift is held). This applies to sketch canvas picks,
   overlap choices and the point chooser. Modified double-clicks retain these
   selection rules rather than entering a sketch or selecting a connected component.
-  Body face/edge double-clicks promote to whole-body selection: Shift adds and
-  Command/Ctrl toggles against the selection before the first click, preserving
+  Model canvas picks and body face/edge double-clicks use Shift/Command/Ctrl to add
+  and Option/Alt to subtract. Double-clicks promote to whole-body selection against
+  the selection before the first click, preserving
   unrelated targets and order without retaining intermediate face/edge clicks.
-  Command-click toggles; Command-drag still orbits after the pointer drag threshold.
+  Command-drag still orbits after the pointer drag threshold.
   Shift-box adds and Ctrl-box toggles, preserving unrelated selected points.
   Dragging a selection box from empty space
   selects contained geometry. A local overlap chooser resolves coincident targets;

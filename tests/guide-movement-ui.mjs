@@ -221,7 +221,7 @@ async function savedMarkerRoute(page, name, before) {
   assert.equal(await marker("Source anchor").locator("svg path").count(), 1);
   assert.equal(
     await marker("Source anchor").evaluate((el) => getComputedStyle(el).color),
-    "rgb(22, 118, 210)",
+    "rgb(21, 92, 158)",
   );
   await page.screenshot({ path: `.cache/sketch-review/${name}-guide-selected.png` });
   await marker("Source anchor").dblclick();

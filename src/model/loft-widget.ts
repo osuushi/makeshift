@@ -19,6 +19,7 @@ export class LoftWidget {
   readonly modes = document.createElement("div");
   readonly accept = this.button("Accept loft", "✓");
   readonly cancel = this.button("Cancel loft", "×");
+  private requirement = document.createElement("div");
   private key = "";
   constructor(
     private sectionAction: (index: number, action: LoftSectionAction) => void,
@@ -52,7 +53,9 @@ export class LoftWidget {
     const options = document.createElement("div");
     options.className = "loft-options";
     options.append(this.add, this.shape, this.automatic);
-    this.root.append(heading, this.sections, options, this.modes);
+    this.requirement.className = "tool-requirement";
+    this.requirement.setAttribute("role", "status");
+    this.root.append(heading, this.sections, options, this.modes, this.requirement);
   }
   private button(label: string, text: string): HTMLButtonElement {
     const button = document.createElement("button");
@@ -69,6 +72,9 @@ export class LoftWidget {
     valid: boolean,
     mode: Loft["mode"],
   ): void {
+    this.requirement.textContent =
+      sources.length < 2 ? "Select at least two ordered sections." : "";
+    this.requirement.hidden = sources.length >= 2;
     const key = JSON.stringify([sources, alignment]);
     if (this.key !== key) {
       this.key = key;
@@ -124,9 +130,9 @@ export class LoftWidget {
           (button.dataset.action === "up" && index === 0) ||
           (button.dataset.action === "down" && index === sources.length - 1);
     });
-    this.add.textContent = collecting ? "Done adding" : "+ Sections";
+    this.add.textContent = collecting ? "Picking sections" : "+ Sections";
     this.add.setAttribute("aria-pressed", String(collecting));
-    this.accept.disabled = !valid || editor.blocked || collecting;
+    this.accept.disabled = !valid || editor.blocked;
     for (const button of this.modes.querySelectorAll<HTMLButtonElement>("[data-mode]"))
       button.setAttribute("aria-pressed", String(button.dataset.mode === mode));
     for (const control of this.root.querySelectorAll<HTMLButtonElement | HTMLSelectElement>(

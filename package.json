@@ -57,6 +57,7 @@
     "test:ipad-numeric": "node tests/ipad-numeric-ui.mjs && node tests/ipad-numeric-drift-ui.mjs",
     "test:thread-presets": "node tests/thread-presets-ui.mjs",
     "test:preview-fallback": "node tests/preview-fallback-ui.mjs",
+    "test:agent-preview": "node tests/agent-preview-ui.mjs",
     "test:smoke": "node tests/electron-smoke.mjs",
     "test:regressions": "node scripts/ci-ui-tests.mjs electron 1/1",
     "test:electron:extended": "node tests/electron.mjs",

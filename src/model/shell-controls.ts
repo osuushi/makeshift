@@ -186,6 +186,7 @@ export class ShellControls {
     this.editor.refresh();
   }
   private update = (): void => {
+    if (this.widget.prerequisites.update(this.editor, "shell")) return;
     if (!this.lease) {
       const resolved = this.editor.modeling.resolve("shell");
       if (

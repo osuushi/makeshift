@@ -142,26 +142,30 @@ order. Never select fewer members of a retained category, or guess between two
 incomparable valid combinations. For example, Union keeps all selected bodies and
 deselects a sketch; three faces for a one-face operation require explicit picking.
 
-Otherwise enter a transient selection step: emphasize eligible visible geometry
-in amber, selected inputs in blue, and show the tool's input prompt and count.
-Clicks toggle inputs without modifier keys; Entities rows also participate. A
-single-input tool proceeds after a valid pick. Multi-input tools require the
-bottom-center **Next** button (or Enter), enabled only when existing validation
-passes. Cancel/Escape restores the previous selection. Switching tools cancels
-collection. A refinement already satisfied by the picked selection completes as
-a no-op. Collecting inputs neither previews geometry nor edits the document;
-the destination tool retains its normal preview, acceptance, cancellation and Undo.
+Tools may be entered before their input requirements are satisfied. Show their
+normal parameter panel and a red requirement beneath it; geometry handles appear
+only when usable geometry exists. There is no Next button. Boolean, Fillet/Chamfer
+and Loft own incomplete input selection directly. Fillet/Chamfer retain their
+parameter panel and entered size when all inputs are removed, and ordinary clicks
+select/toggle edges or face boundaries; modifier refinement remains available.
+Loft can accept a valid preview while section picking is still enabled.
 
-`selection-policy.ts` inventories the affected commands: solid operations,
-transforms, decorators, tag membership, sketch entry from selected geometry,
-sketch offset/fillet, constraints and dimension locks, selection refinements,
-isolation, copy and delete. Custom decorator Apply, Continue and Reassign use
-the same picker, with Next waiting for asynchronous geometry inspection. Booleans
-require two owning bodies before Next; Loft requires two ordered sections. Existing reference/axis pickers continue after
-this source-selection step. Workspace, busy/calculation, missing-document,
-history, visibility-state and no-export-in-progress guards remain independent;
-they are not selection failures. Creation and reference tools that already start
-without preselection keep their existing pickers.
+The existing Extrude, Revolve, Shell, Offset, Erode, Mirror and transform panels are also
+shown during input collection. Geometry-dependent controls are disabled until
+compatible inputs are ready; their Cancel controls remain active. Their ordinary
+controller takes over automatically on a valid selection. Commands without a
+parameter panel show a red input requirement with Cancel. Eligible geometry is
+emphasized, clicks toggle inputs, and Entities rows participate. Cancel/Escape
+restores the prior selection. Asynchronous custom-decorator inspection also
+continues automatically once its selected inputs pass validation.
+
+`selection-policy.ts` inventories selection-dependent commands: solid operations,
+transforms, decorators, tag membership, sketch entry, sketch offset/fillet,
+constraints, dimension locks, selection refinements, isolation, copy and delete.
+Workspace, busy/calculation, missing-document, history, visibility and export guards
+remain independent from input requirements. Existing reference/axis picking is
+part of the entered tool. Temporary inputs do not change the accepted document;
+the destination controller retains its preview, acceptance and Undo lifecycle.
 
 ## Implementation and ownership
 

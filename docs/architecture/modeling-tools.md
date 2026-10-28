@@ -93,6 +93,20 @@ selected body removes that face and leaves the others selected; adding the missi
 face restores complete-body behavior. The raw ordered selection remains inspectable.
 Marquee release consumes its synthetic click before sketch-plane entry can run.
 
+## Modifier refinement
+
+Modeling viewport refinement uses Shift/Command/Ctrl-click addition and Option/Alt-click
+subtraction. Fillet and Chamfer translate faces to their non-seam boundary edges
+without requiring a second modifier. Removal subtracts even a partially selected
+boundary; it never adds missing edges. Empty selection remains in the tool.
+An unmodified background click accepts the current valid Fillet/Chamfer preview.
+
+The active interaction exposes an optional refinement callback. Edge finishing
+implements it using accepted topology, retaining size and mode, recalculating the
+preview and including edge selection in local Undo. Command-drag still orbits.
+Other preview controllers must implement this callback before they can refine
+their inputs without completing the current edit; this is currently a limitation.
+
 ## Selection-driven modeling tools (founder decision, 2026-09-16)
 
 In 3D, filled sketch regions default to Extrude, partial face-only selections to
@@ -440,41 +454,48 @@ Boolean targets and temporary acceptance lifecycle.
 
 ## Boolean operands
 
-Union, Subtract and Intersect can start with no selection or geometry from one body.
-Two or more owning bodies retain their ordered preview route. Selected solid
-faces/edges expand to those bodies; mixed sketch/profile targets are removed by
-category on explicit tool entry when that produces valid inputs. Empty or one-body
-selection enters the guided first step, with Next enabled for two owning bodies.
-The operation itself requires at least two complete accepted bodies. While choosing
-operands, viewport clicks and existing Entities rows operate on whole bodies, including enclosed
-ones. After Next, Subtract clicks cycle unselected → target → cutting tool →
-unselected; the first collected body starts as the target.
-Choosing a new target demotes the previous target to cutting tool. Preselected
-bodies start with their first body as target and the others as tools.
-Union/Intersect clicks toggle membership.
-Operand editing remains available throughout. Apply or Enter directly accepts
-the current valid preview; there is no separate collection-completion step.
-Reference planes do not intercept viewport clicks or double-clicks during operand
-collection; empty-space clicks leave the Boolean tool open.
-Empty/incomplete operands can exit without an edit.
+Union, Subtract and Intersect enter their actual controller with any selection,
+including no selection. Their normal panel remains visible; a red requirement
+under its controls names the next missing input. There is no separate selection
+screen or Next action. Apply is disabled until a valid preview exists. Enter
+with incomplete inputs leaves the tool open; Cancel or switching tools can leave
+without an edit. Successful empty results remain explicitly labeled on Apply.
 
-Translucent blue input/target surfaces and orange cutting-tool surfaces, with
-visible outlines, reveal operands through the solid result. Flipping the target
-updates their roles. Entities rows use the same blue/orange colors, without
-duplicating body choices or numbered input labels in the Boolean widget. The
-widget contains only Boolean type, Keep/Remove, Apply and Cancel. Instruction
-text, target-cycling controls, result counts and inline cleanup are absent.
-A successful empty result is labeled on Apply and can be
-accepted; it does not mean calculation failed. Accepted body geometry and IDs
-remain authoritative; overlays and collection belong to the interaction lease.
+Faces/edges expand to their owning bodies, preserving selection order. Subtract
+starts with the first preselected body as target and remaining bodies as cutters.
+With no operands, the first click selects a target; the next selects a cutting
+tool. New clicks fill a missing target role first, otherwise add cutters. Selected
+body clicks cycle target → cutting tool → unselected. Each selected body has a
++/− widget anchored to it in the 3D viewport and a matching Entities-row button.
+Either flips only that body's role without removing it. The viewport widgets
+follow the original operands through previews and camera changes; overlapping
+anchors are separated so enclosed bodies retain reachable controls. These buttons are absent outside Subtract. Changing one body never
+reassigns any other body; zero targets, zero cutters and multiple targets are
+representable. Red requirements explain incomplete combinations.
 
-The inline keep-originals choice displays Keep/Remove tools for Subtract and
-Keep/Remove originals for Union/Intersect. Each mode remembers its last explicit
-choice in local window preferences, including after Cancel; unavailable storage
-falls back to that window's in-memory choice. Preference changes are outside
-both document and temporary interaction Undo. Subtract always consumes its target
-and optionally retains cutting tools; the other modes optionally retain all
-inputs. Acceptance/cancel and document Undo/Redo retain their ordinary semantics.
+Each target is cut by all cutting tools independently in one temporary operation.
+`BodyBoolean.targetIds` specifies the targets; older requests omitting it retain
+the first-ID target convention. Accepted geometry, correspondence and document
+Undo remain owned by DocumentOwner. Input roles and parameter edits use local
+interaction history. Acceptance is atomic across targets.
+
+Subtract viewport role controls use conservative projected operand bounds. Within
+the viewport, placement minimizes overlap with other selected bodies first, keeps
+role controls separate, then minimizes distance to the owning bounds center.
+Only visible selected operands contribute obstacles; the accepted bodies remain
+the placement reference while a Boolean preview is active.
+
+Union/Intersect clicks toggle membership. Viewport picks and Entities rows remain
+available throughout, including enclosed bodies. Reference planes do not intercept
+operand picking, and empty-space clicks leave the tool open. Translucent blue
+target/input surfaces and orange cutting tools with outlines reveal operands
+through the preview; Entities use matching role colors.
+
+The keep-originals choice displays Keep/Remove tools for Subtract and Keep/Remove
+originals for Union/Intersect. Each mode remembers its last explicit choice in
+local window preferences, including after Cancel. Preferences stay outside both
+document and temporary interaction Undo. Subtract consumes every target and
+optionally retains cutters; the other modes optionally retain all inputs.
 
 Extrude, Revolve and Loft also show their generated tool with these translucent
 surfaces and outlines during Subtract and Intersect, including automatic Subtract.

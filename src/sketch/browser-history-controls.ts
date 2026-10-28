@@ -16,7 +16,7 @@ export function browserHistoryControls(editor: SketchEditor, signal: AbortSignal
           (focused instanceof HTMLInputElement ||
             focused instanceof HTMLTextAreaElement ||
             focused.isContentEditable ||
-            focused.closest(".agent-dock, dialog[open]"))) ||
+            focused.closest(".agent-dock, .preview-pane, dialog[open]"))) ||
         toolMenuOpen() ||
         document.querySelector("dialog[open], .control-menu:popover-open")
       )

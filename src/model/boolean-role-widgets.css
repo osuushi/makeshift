@@ -1,0 +1,30 @@
+.boolean-role-widgets {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.boolean-role-widget {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: var(--panel);
+  box-shadow: 0 2px 5px var(--shadow);
+  color: var(--accent);
+  pointer-events: auto;
+}
+.boolean-role-widget[data-role="tool"] {
+  color: var(--warning);
+}
+.boolean-role-widget:disabled {
+  opacity: 0.5;
+}
+
+.boolean-role-widget svg {
+  display: block;
+}

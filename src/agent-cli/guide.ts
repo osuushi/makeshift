@@ -4,6 +4,21 @@ import { startupGuide } from "./startup-guide.js";
 export { types } from "./api-types.js";
 
 export const guide = `${startupGuide}
+## Interactive previews
+
+Use makeshift preview with one JSON argument to show local static apps and images.
+Open: {"action":"open","directory":"preview","title":"Profile editor"}.
+Create preview/index.html and assets in this drawing workspace first. Default content
+size is 640×480; users move, resize, collapse or close the pane. Presets:
+{"action":"image","path":"render.png"} or {"action":"annotate","path":"diagram.png"}.
+In page JavaScript, await preview.read() and preview.write(value) read/replace
+preview/data.json (1 MiB maximum), which scripts can also read directly. Register
+preview.onTrigger((name, detail) => ...) to reread on a data trigger.
+Other actions: read, reload, trigger (name/detail), eval (code), screenshot, close.
+Screenshot returns a PNG path even while collapsed. Apps have local assets and
+JavaScript, without Node/CAD access, network or device permissions. See the
+makeshift-previews skill for examples and persistence details.
+
 ## Inspection reference
 
 makeshift selection returns ordered explicit targets, selected point coordinates, geometry summaries,
@@ -54,6 +69,7 @@ ${scriptGuide}`;
 export const help = `Makeshift — document-bound CAD assistant interface
 Usage: makeshift [help | docs | types | status | selection | select [OPTIONS] [ID...] | inspect [ID] | render | run script.ts | view script.ts | faces | context | settings [JSON]]
 
+  preview JSON  Open/control an interactive preview; see the makeshift-previews skill
   help     Show available commands
   docs     Print the current interface and workspace guide
   types    Print TypeScript declarations for CLI JSON results

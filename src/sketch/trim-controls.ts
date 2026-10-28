@@ -118,7 +118,9 @@ export class TrimControls {
     this.option = event.altKey;
     const input =
       event.target instanceof Element &&
-      event.target.closest("input, textarea, [contenteditable], .agent-dock, dialog[open]");
+      event.target.closest(
+        "input, textarea, [contenteditable], .agent-dock, .preview-pane, dialog[open]",
+      );
     const resized =
       event.type === "keydown" &&
       !input &&

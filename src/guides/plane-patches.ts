@@ -25,6 +25,7 @@ export function guidePlanePatches(
       colors[world],
     );
     patch.dataset.plane = world;
+    patch.dataset.point = JSON.stringify(candidate.point);
     root.append(patch);
   }
   return root;

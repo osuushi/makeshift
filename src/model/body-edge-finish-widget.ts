@@ -17,6 +17,7 @@ interface EdgeFinishInput {
 
 export class BodyEdgeFinishWidget {
   direction: Point | null = null;
+  private requirement = document.createElement("div");
   private panel = document.createElement("div");
   readonly root = document.createElement("div");
   private placement = new WidgetClearance(this.root);
@@ -69,7 +70,9 @@ export class BodyEdgeFinishWidget {
     }
     this.options.append(this.modeButtons.fillet, this.modeButtons.chamfer, this.accept, dismiss);
     this.panel.className = "edge-finish-panel";
-    this.panel.append(field, this.options);
+    this.requirement.className = "tool-requirement";
+    this.requirement.setAttribute("role", "status");
+    this.panel.append(field, this.options, this.requirement);
     this.root.append(this.handles.fillet, this.handles.chamfer, this.panel);
     overlay.append(this.root);
     this.root.hidden = true;
@@ -91,30 +94,33 @@ export class BodyEdgeFinishWidget {
   }
   update(
     world: World,
-    frame: EdgeFinishFrame,
+    frame: EdgeFinishFrame | null,
     mode: BodyEdgeFinish["mode"],
     active: boolean,
     size: number,
     valid: boolean,
     busy: boolean,
     invalid: boolean,
+    requirement = "",
   ) {
     const { camera } = world;
-    const { outward, width } = frame;
-    const point = world.project(frame.anchor);
-    const direction = frame.motion
+    const point = frame ? world.project(frame.anchor) : { x: innerWidth / 2, y: 100 };
+    const direction = frame?.motion
       ? edgeViewportDirection(frame.anchor, frame.motion, (point) => world.project(point))
       : null;
+    this.requirement.textContent = requirement;
+    this.requirement.hidden = !requirement;
     const name = mode === "chamfer" ? "Chamfer" : "Fillet";
     const quantity = mode === "chamfer" ? "distance" : "radius";
-    for (const kind of ["fillet", "chamfer"] as const) this.handles[kind].hidden = kind !== mode;
+    for (const kind of ["fillet", "chamfer"] as const)
+      this.handles[kind].hidden = !frame || kind !== mode;
     this.direction = direction;
     const handle = this.handles[mode];
     handle.title = direction
       ? `${name} edges · drag with the surface to increase size, or click to type`
       : `${name} edges · click to type, or orbit to reveal the drag direction`;
-    handle.innerHTML = directionalWidget(camera, outward, mode ?? "fillet", width);
-    const offset = directionalOffset(camera, outward);
+    handle.innerHTML = frame ? directionalWidget(camera, frame.outward, mode, frame.width) : "";
+    const offset = frame ? directionalOffset(camera, frame.outward) : { x: 0, y: 0 };
     handle.style.left = `${offset.x}px`;
     handle.style.top = `${offset.y}px`;
     handle.dataset.directionX = String(direction?.x ?? 0);

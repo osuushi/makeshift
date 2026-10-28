@@ -1,0 +1,58 @@
+.preview-pane {
+  position: fixed;
+  left: 24px;
+  top: 44px;
+  width: 640px;
+  height: 524px;
+  min-width: 240px;
+  min-height: 136px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 44px);
+  resize: both;
+  overflow: hidden;
+  z-index: 100;
+  background: Canvas;
+  color: CanvasText;
+  border: 1px solid GrayText;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px var(--shadow);
+  box-sizing: content-box;
+}
+.preview-pane[hidden] {
+  display: none;
+}
+.preview-pane .preview-header {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  cursor: move;
+  touch-action: none;
+}
+.preview-pane strong {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.preview-pane button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  cursor: pointer;
+}
+.preview-content {
+  height: calc(100% - 44px);
+  margin-bottom: 8px;
+}
+.preview-pane.collapsed {
+  height: 36px;
+  min-height: 36px;
+  resize: none;
+}
+.preview-pane.collapsed .preview-content {
+  visibility: hidden;
+}

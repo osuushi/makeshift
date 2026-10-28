@@ -107,3 +107,25 @@
 .revolve-quantity input[aria-invalid="true"] {
   border-color: var(--warning);
 }
+
+.revolve-parameter-panel {
+  display: contents;
+}
+.tool-awaiting-inputs > .revolve-parameter-panel {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  pointer-events: auto;
+}
+.tool-awaiting-inputs .revolve-parameter-panel > * {
+  position: static;
+  transform: none;
+}
+.tool-awaiting-inputs .revolve-parameter-panel > [hidden] {
+  display: flex;
+}

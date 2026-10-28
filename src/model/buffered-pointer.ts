@@ -1,3 +1,5 @@
+import { releasedPointerPresses, replayedGeometryPointers } from "../sketch/pointer-intent.js";
+
 /** The physical gesture can end while a previous transform is completing. */
 export class BufferedPointer {
   private listeners = new AbortController();
@@ -11,6 +13,7 @@ export class BufferedPointer {
     private press: PointerEvent,
     private parent: AbortSignal,
   ) {
+    this.released = releasedPointerPresses.has(press);
     this.position = { x: press.clientX, y: press.clientY };
     this.modifiers = {
       metaKey: press.metaKey,
@@ -42,7 +45,7 @@ export class BufferedPointer {
   }
 
   event(type: string, position = this.position): PointerEvent {
-    return new PointerEvent(type, {
+    const event = new PointerEvent(type, {
       bubbles: true,
       cancelable: true,
       pointerId: this.press.pointerId,
@@ -54,6 +57,8 @@ export class BufferedPointer {
       clientY: position.y,
       ...this.modifiers,
     });
+    replayedGeometryPointers.add(event);
+    return event;
   }
 
   private track = (event: PointerEvent): void => {
