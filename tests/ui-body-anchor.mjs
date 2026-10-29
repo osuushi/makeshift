@@ -55,8 +55,10 @@ export async function bodyAnchorRoute(page, name) {
   await page.keyboard.press("Enter");
   const rotated = (await inspect(page)).document.bodies[0];
   const body = before.document.bodies[0];
-  const pivotX = before.camera.target[0] + (moved.x - canvas.x - canvas.width / 2) / scale;
-  const pivotY = before.camera.target[1] - (moved.y - canvas.y - canvas.height / 2) / scale;
+  // The displayed anchor can be offset from its model location after face framing.
+  // Its drag moves the body-centered pivot by the measured screen displacement.
+  const pivotX = body.center[0] + (moved.x - original.x) / scale;
+  const pivotY = body.center[1] - (moved.y - original.y) / scale;
   assert.ok(Math.abs(rotated.center[0] - (pivotX - (body.center[1] - pivotY))) < 1e-3);
   assert.ok(Math.abs(rotated.center[1] - (pivotY + body.center[0] - pivotX)) < 1e-3);
   // One Undo restores the rotation: moving the anchor added no history entry.
