@@ -1,4 +1,5 @@
 import { arcCircle } from "./arc-geometry.js";
+import { recoverCubicCorner } from "./cubic-fillet-support.js";
 import { supportIntersections } from "./curve-intersections.js";
 import type { Arc, Curve } from "./document.js";
 import type { Point } from "./planes.js";
@@ -25,6 +26,17 @@ export function filletCorner(
   aEnd: "a" | "b",
   bEnd: "a" | "b",
 ): FilletCorner {
+  if (a.kind === "bezier" && b.kind === "bezier")
+    throw new Error("Cubic fillets need a line or circular arc as the other support");
+  if (distance(a[aEnd], b[bEnd]) >= 1e-7) {
+    if (a.kind === "bezier" && b.kind !== "bezier") {
+      a = recoverCubicCorner(a, aEnd, b);
+      b = trimRoundingCurve(b, bEnd, a[aEnd]) ?? b;
+    } else if (b.kind === "bezier" && a.kind !== "bezier") {
+      b = recoverCubicCorner(b, bEnd, a);
+      a = trimRoundingCurve(a, aEnd, b[bEnd]) ?? a;
+    }
+  }
   const point =
     distance(a[aEnd], b[bEnd]) < 1e-7
       ? a[aEnd]
@@ -65,7 +77,7 @@ export function filletCorner(
 export function filletShape(c: FilletCorner, radius: number, id: string): Arc {
   if (!Number.isFinite(radius) || radius <= 1e-7)
     throw new Error("Fillet radius must be greater than zero");
-  if (c.a.kind === "arc" || c.b.kind === "arc" || radius > c.limit + 1e-7)
+  if (c.a.kind !== "segment" || c.b.kind !== "segment" || radius > c.limit + 1e-7)
     return roundingShape(c, radius, id);
   const offset = Math.min(radius, c.limit) / Math.tan(c.half);
   return {

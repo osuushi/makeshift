@@ -156,6 +156,13 @@ snaps to the active radius grid instead of accepting the arbitrary hint radius.
 Explicit numeric radii still validate exactly, and
 acceptance remains one ordinary sketch edit.
 
+The corner guide also rounds a cubic Bézier joined to a line or circular arc.
+Contacts are refined on the cubic's normal offset, and subdivision preserves the
+remaining cubic exactly. The result uses ordinary endpoint coincidence and tangent
+constraints. Later radius edits recover the corner from the current polynomial
+and analytic support; no source history is stored. Unsupported radii reject
+without accepting a partial rewrite. Cubic/cubic corner rounding remains unavailable.
+
 Clicking or dragging the sketch fillet guide accepts on pointer release and selects
 the new arc for ordinary editing. Clicking away or pressing Escape afterward leaves
 the accepted arc intact; Undo restores the corner. Held gestures remain cancellable.

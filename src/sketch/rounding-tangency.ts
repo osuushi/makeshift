@@ -3,6 +3,7 @@ import type { Arc, TangentConstraint } from "./document.js";
 import { distance, dot, scale, subtract } from "./point-math.js";
 import type { RoundingCurve } from "./rounding-curves.js";
 export function roundingTangentSide(curve: RoundingCurve, arc: Arc): TangentConstraint["side"] {
+  if (curve.kind === "bezier") return 1;
   const circle = arcCircle(arc);
   if (curve.kind === "segment") {
     const u = scale(subtract(curve.b, curve.a), 1 / distance(curve.a, curve.b));
