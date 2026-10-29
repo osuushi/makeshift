@@ -7,7 +7,7 @@ export const toolboxIconPaths: Record<string, string> = {
   line: '<path d="m5 19 14-14"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/>',
   rectangle: '<rect x="4" y="4" width="16" height="16" rx="1"/>',
   circle: '<circle cx="12" cy="12" r="8"/>',
-  pen: '<path d="m4 20 4-1 10-10-3-3L5 16l-1 4Z"/><path d="m13 7 3 3"/>',
+  pen: '<path d="m3 21 4-13 8-3 4 4-3 8-13 4Zm0 0 7-7M14 4l2-2 6 6-2 2Z"/><circle cx="11.5" cy="12.5" r="2"/>',
   trim: '<circle cx="5" cy="18" r="3"/><circle cx="19" cy="18" r="3"/><path d="m7 16 13-13M17 16 4 3"/>',
   "start-sketch": '<path d="M4 4h12v12H4z"/><path d="m13 13 6-6 2 2-6 6-3 1 1-3Z"/>',
   cube: '<path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="M3 8v9l9 5 9-5V8M12 13v9"/>',

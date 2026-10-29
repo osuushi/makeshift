@@ -1,19 +1,25 @@
 import { defaultToolbox } from "../tools/toolbox-defaults.js";
 import { normalizeToolbox } from "../tools/toolbox-layout.js";
-import { addTransformTools, migrateToolbox } from "../tools/toolbox-migration.js";
+import {
+  addTransformTools,
+  migrateToolbox,
+  updateSketchTools,
+} from "../tools/toolbox-migration.js";
 import { regroupToolbox } from "../tools/toolbox-regroup.js";
 import { type ToolboxGroup, validToolboxTree } from "../tools/toolbox-tree.js";
 
-const key = "makeshift.toolbox.v7";
+const key = "makeshift.toolbox.v8";
 const listeners = new Set<() => void>();
 let tree = defaultToolbox();
 try {
   const current = localStorage.getItem(key);
+  const v7 = localStorage.getItem("makeshift.toolbox.v7");
   const v6 = localStorage.getItem("makeshift.toolbox.v6");
   const v5 = localStorage.getItem("makeshift.toolbox.v5");
   const previous = localStorage.getItem("makeshift.toolbox.v4");
   const saved: unknown = JSON.parse(
     current ??
+      v7 ??
       v6 ??
       v5 ??
       previous ??
@@ -24,8 +30,12 @@ try {
   if (validToolboxTree(saved))
     tree = current
       ? normalizeToolbox(saved)
-      : addTransformTools(
-          v6 || v5 ? saved : regroupToolbox(previous ? saved : migrateToolbox(saved)),
+      : updateSketchTools(
+          v7
+            ? normalizeToolbox(saved)
+            : addTransformTools(
+                v6 || v5 ? saved : regroupToolbox(previous ? saved : migrateToolbox(saved)),
+              ),
         );
 } catch {
   /* Keep defaults if storage is unavailable or invalid. */
