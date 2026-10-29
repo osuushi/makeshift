@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { openDocument, saveDocument } from "./native-documents.mjs";
-import { orient } from "./ui-blend-edit.mjs";
+import { orient, project } from "./ui-blend-edit.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -57,12 +57,13 @@ export async function extrudeRoute(page, name) {
   await page.keyboard.press("Enter");
   await inspect(page);
   await page.screenshot({ path: `.cache/sketch-review/${name}-plate-hole.png` });
-  const splitBodies = await splitPlate(page, pick);
+  const splitBodies = await splitPlate(page);
   await chooseTool(page, "undo", "undo");
   assert.equal((await inspect(page)).document.bodies.length, 1);
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document.bodies, splitBodies);
-  await page.mouse.click(pick.x, pick.y);
+  const splitFace = await project(page, [-10, 3, 5]);
+  await page.mouse.click(splitFace.x, splitFace.y);
   await chooseTool(page, "sketch on face", "sketch-on-face");
   await page.keyboard.press("l");
   await drag(page, [-10, 3], [-5, 3]);
@@ -73,13 +74,20 @@ export async function extrudeRoute(page, name) {
   await reopen(page, name, splitBodies);
 }
 
-async function splitPlate(page, pick) {
+async function splitPlate(page) {
+  // Face entry reframes the camera; the original plate's screen pick now lies
+  // inside the hole. Project a fresh point on the remaining top face.
+  const pick = await project(page, [5, 3, 5]);
   await page.mouse.click(pick.x, pick.y);
+  assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   await chooseTool(page, "sketch on face", "sketch-on-face");
   await page.keyboard.press("r");
   const grid = String((await inspect(page)).gridSnap) === "true";
   if (grid) await chooseTool(page, "grid snap", "grid");
   await drag(page, [7, -12], [9, 12]);
+  const drawn = await inspect(page);
+  const sketch = drawn.document.sketches.find((entry) => entry.id === drawn.activeSketch);
+  assert.equal(sketch.plane.origin[2], 5, "The split profile must lie on the plate's top face");
   if (grid) await chooseTool(page, "grid snap", "grid");
   const cut = await at(page, 8, 0);
   await chooseTool(page, "return to modeling", "modeling");
