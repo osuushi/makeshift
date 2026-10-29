@@ -89,6 +89,19 @@ export async function orientableSketchOffsetRoute(page, name) {
     assert.deepEqual((await inspect(page)).document, original);
     await chooseTool(page, "redo", "redo");
     assert.deepEqual((await inspect(page)).document, accepted);
+    // CSS hit areas and the released numeric session must both allow a new drag.
+    // Model-only coverage cannot catch a field intercepting the handle's pointer.
+    await handle.click();
+    await input.fill("1");
+    await inspect(page);
+    const fieldBox = await input.boundingBox(),
+      handleBox = await handle.boundingBox();
+    assert.ok(fieldBox.x >= handleBox.x + handleBox.width + 4);
+    await dragHandle(page, handle, b.x - a.x, b.y - a.y);
+    const resumed = (await inspect(page)).document;
+    close(resumed.sketches[0].curves.at(-1).a.y, 5);
+    await chooseTool(page, "undo", "undo");
+    assert.deepEqual((await inspect(page)).document, accepted);
     await page.keyboard.press("v");
     const reselect = await at(page, 4, 2);
     await page.mouse.click(reselect.x, reselect.y);

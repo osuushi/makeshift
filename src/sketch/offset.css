@@ -12,7 +12,7 @@
 }
 .offset-control input {
   position: absolute;
-  left: 54px;
+  left: calc(100% + 8px);
   width: 82px;
   border: 1px solid var(--border);
   border-radius: 6px;
