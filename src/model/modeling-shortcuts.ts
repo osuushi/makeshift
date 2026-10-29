@@ -10,12 +10,11 @@ const bindings = [
   ["union", "u", true],
   ["subtract", "s", true],
   ["intersect", "i", true],
-  ["loft", "l", false],
 ] as const;
 type ModelingShortcut = (typeof bindings)[number][0];
-const switches = new Set<ModelingShortcut>(["union", "subtract", "intersect", "loft"]);
+const switches = new Set<ModelingShortcut>(["union", "subtract", "intersect"]);
 
-export function modelingShortcutLabel(id: ModelingShortcut | "erode"): string {
+export function modelingShortcutLabel(id: ModelingShortcut | "erode" | "loft"): string {
   const binding = bindings.find(([tool]) => tool === id);
   return binding ? `${binding[2] ? "⇧" : ""}${binding[1].toUpperCase()}` : "";
 }
