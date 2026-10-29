@@ -117,6 +117,11 @@ clears the guide selection so Delete keeps its ordinary selection meaning.
 Visible saved guides are sketch snap targets, projected along the current camera
 ray onto the active plane even when the source lies off that plane. Snapping
 positions geometry; it does not create a persistent relationship to the guide.
+Dragging a 3D translation arrow over a visible saved guide aligns its starting
+anchor with the guide along the arrow direction, preserving the perpendicular
+coordinates. This applies to body, topology and construction-plane arrows; it
+uses the guide’s accepted position and does not include the arrow’s visual offset.
+Shift bypasses this guide snap. Rotation and numeric entry retain their existing behavior.
 Existing sketch and transform snapping remains available. Owner visibility also
 controls guide visibility; hidden guides do not contribute targets.
 

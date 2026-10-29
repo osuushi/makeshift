@@ -90,6 +90,9 @@ export class GizmoInputs {
       ? snapRotation(pointer.frame.angle(event.clientX, event.clientY), event.shiftKey)
       : pointer.frame.translation(event.clientX, event.clientY);
     if (!rotate && this.editor.gridSnap) value = Math.round(value / step) * step;
-    this.actions.queue(this.actions.snap?.(event, value) ?? value);
+    value = this.actions.snap?.(event, value) ?? value;
+    if (!rotate && !event.shiftKey)
+      value = pointer.frame.guideTranslation(event.clientX, event.clientY) ?? value;
+    this.actions.queue(value);
   };
 }
