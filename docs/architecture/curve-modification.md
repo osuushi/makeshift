@@ -151,7 +151,9 @@ Dragging targets the closest point on the finite rounding arc, including its
 endpoints, rather than projecting the cursor onto the corner bisector. Curved and
 consumed supports use a sampled radius search with local refinement; grid snapping
 compares nearby permitted radii by arc distance. Creation and existing-fillet radius
-drags share this calculation. Explicit numeric radii still validate exactly, and
+drags share this calculation. Pointer-down also uses it, so a click without dragging
+snaps to the active radius grid instead of accepting the arbitrary hint radius.
+Explicit numeric radii still validate exactly, and
 acceptance remains one ordinary sketch edit.
 
 Clicking or dragging the sketch fillet guide accepts on pointer release and selects

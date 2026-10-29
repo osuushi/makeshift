@@ -39,6 +39,12 @@ export async function filletGuideRoute(page, name) {
       assert.equal(accepted.sketches[0].curves.length, 5);
       assert.equal(await page.locator(".fillet-control").isVisible(), false);
       assert.ok(await page.getByRole("textbox", { name: "Radius", exact: true }).isVisible());
+      // Pointer-down must use the radius grid even without crossing the drag threshold.
+      const radius = Number(
+        await page.getByRole("textbox", { name: "Radius", exact: true }).inputValue(),
+      );
+      const step = accepted.sketchGrid?.minor ?? 0.5;
+      close(radius / step, Math.round(radius / step));
       await click(page, 30, 20);
       assert.deepEqual((await inspect(page)).document, accepted);
       await page.keyboard.press("Escape");
