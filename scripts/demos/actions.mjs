@@ -3,15 +3,15 @@ import { project } from "../../tests/ui-blend-edit.mjs";
 import { inspect, settled } from "../../tests/ui-helpers.mjs";
 import { chooseTool } from "../../tests/ui-tools.mjs";
 import { motions } from "./motions.mjs";
+import { chooseDemoToolboxTool } from "./toolbox.mjs";
 
 export function actions(page, capture, pause = 0.35) {
   const run = (operation) => capture.action(operation, 30);
   const state = () => run(() => inspect(page));
   const tool = async (id, query = id) => {
-    const button = page.locator(`.toolbox [data-tool="${id}"]`);
-    if (await button.count()) await run(() => button.click());
-    else if (id === "undo") await run(() => chooseTool(page, query, id));
-    else {
+    const chosen = await chooseDemoToolboxTool(page, id, run, () => capture.hold(pause));
+    if (!chosen && id === "undo") await run(() => chooseTool(page, query, id));
+    else if (!chosen) {
       await page.keyboard.press("Meta+f");
       await run(() => page.getByRole("combobox", { name: "Find a tool" }).fill(query));
       await capture.hold(pause);

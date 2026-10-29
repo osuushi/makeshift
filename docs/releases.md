@@ -44,6 +44,8 @@ acceptance remain publication gates.
 Only the web release records and packages landing-page demos, from its tested
 WASM build. macOS publishes the app, native sources and runtime-source links;
 it does not regenerate or bundle a second copy of the website demos.
+Demo tool selection uses the left toolbox, including its alternative groups and
+Other Tools drawer. Find is reserved for commands absent from the toolbox.
 
 ## Local package and verification
 
