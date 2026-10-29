@@ -26,7 +26,7 @@ export function cameraSectionClip(frame: PlaneFrame, cameraPosition: THREE.Vecto
 /** Explicit cuts remain global; automatic X-ray planes follow the selected sketch. */
 export function updateViewClipping(world: World, sketchClip: THREE.Plane): void {
   const selected = world.selectionSection();
-  const frame = world.activeFrame ?? (world.crossSection ? null : selected);
+  const frame = world.crossSection ? null : (world.activeFrame ?? selected);
   world.partialSection = frame;
   if (!frame) {
     world.renderer.clippingPlanes = world.crossSection ? [sectionClip(world.crossSection)] : [];

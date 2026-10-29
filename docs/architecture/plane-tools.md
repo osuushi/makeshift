@@ -150,8 +150,9 @@ of immediate visual fills. Faces, edges, reference patches and sketches on the r
 side do not participate in point picking or snapping. Geometry operations still
 operate on whole accepted entities, not visually trimmed fragments.
 
-Sketch mode temporarily uses its own camera-facing clipping and section capture;
-returning to Modeling restores the cross-section view. New/Open resets the view.
+An explicit cross section retains priority in Sketch mode, including its fixed
+clipping direction and hidden geometry. Automatic camera-facing sketch cutaways
+resume when the explicit section is turned off. New/Open resets the view.
 The section is not saved in the document or included in exported geometry.
 
 Coplanar rendering gives existing body faces priority over generated section fills.
