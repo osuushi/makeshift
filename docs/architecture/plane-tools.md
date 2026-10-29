@@ -17,6 +17,7 @@ is available in both Modeling and sketch workspaces; creation returns to Modelin
 and copies the frame in one Undo step. Later guide edits/deletion do not affect it.
 
 Plane Move shares body Move's gizmo input, translation release and numeric routes.
+The numeric field follows the live drag value; focused numeric entry preserves typed text.
 Translation drags accept on release; numeric edits and rotation accept with Enter
 or an ordinary selection/tool change. Clicking off accepts a valid edit, and
 Escape cancels. Move handles are idle until used, so sketch entry and deletion

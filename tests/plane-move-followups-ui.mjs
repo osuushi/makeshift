@@ -16,6 +16,7 @@ await withUiRuntimes(async (page) => {
   assert.equal(state.interaction, null, "Placement leaves idle Move handles");
   assert.equal(state.modelingTool, "move");
   await orient(page, [1, 1, 1]);
+  await rotationFeedback(page);
   await page.getByRole("button", { name: "Move plane Z", exact: true }).click();
   await page.getByRole("textbox", { name: "Plane translation Z", exact: true }).fill("12");
   assert.deepEqual((await inspect(page)).document.constructionPlanes[0].frame.origin, [0, 0, 0]);
@@ -58,3 +59,42 @@ await withUiRuntimes(async (page) => {
     "Construction plane immediate placement, default Move, selection acceptance and Escape passed",
   );
 });
+
+async function rotationFeedback(page) {
+  // Model tests cannot catch a stale DOM field while the placement frame rotates.
+  const original = (await inspect(page)).document;
+  await chooseTool(page, "transform", "transform");
+  const handle = await page
+    .getByRole("button", { name: "Rotate plane X", exact: true })
+    .boundingBox();
+  assert.ok(handle);
+  const angle = page.getByRole("textbox", { name: "Plane rotation X", exact: true });
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+  await page.mouse.down();
+  for (const distance of [30, 60]) {
+    await page.mouse.move(
+      handle.x + handle.width / 2 + distance,
+      handle.y + handle.height / 2 + 20,
+    );
+    const frame = (await inspect(page)).preview.constructionPlanes[0].frame;
+    const degrees = (Math.atan2(frame.v[2], frame.v[1]) * 180) / Math.PI;
+    assert.ok(Math.abs(degrees) > 1, "Pointer drag rotates the plane");
+    assert.ok(Math.abs(Number(await angle.inputValue()) - degrees) < 0.0001);
+  }
+  await page.mouse.up();
+  const released = await angle.inputValue();
+  await page.keyboard.press("Enter");
+  const accepted = (await inspect(page)).document.constructionPlanes[0].frame;
+  assert.ok(
+    Math.abs((Math.atan2(accepted.v[2], accepted.v[1]) * 180) / Math.PI - Number(released)) <
+      0.0001,
+  );
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
+  await page.getByRole("button", { name: "Select Plane 1", exact: true }).click();
+  await chooseTool(page, "transform", "transform");
+  await page.getByRole("button", { name: "Rotate plane X", exact: true }).click();
+  await angle.fill("12.3400");
+  assert.equal(await angle.inputValue(), "12.3400", "Numeric entry preserves the typed text");
+  await page.keyboard.press("Escape");
+}

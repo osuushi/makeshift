@@ -2,6 +2,7 @@ import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { PlaneFrame, Vector } from "../sketch/planes.js";
 import { type PlacementAxis, placedFrame } from "../sketch/sketch-placement.js";
+import { numericFocus } from "../tools/menu-focus.js";
 import { gizmoPointer } from "./body-drag.js";
 import { BodyGizmo } from "./body-gizmo.js";
 import { BodyPivotDrag } from "./body-pivot-drag.js";
@@ -111,6 +112,7 @@ export class PlanePlacement {
       return;
     }
     const sketch = { id: "", plane: d.frame, curves: [], constraints: [], groups: [] };
+    if (!numericFocus(this.gizmo.input)) this.gizmo.input.value = String(Number(value.toFixed(4)));
     this.change(placedFrame(sketch, d.axis, d.rotate, value, d.pivot));
   }
   reset(): void {
