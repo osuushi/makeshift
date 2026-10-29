@@ -128,9 +128,20 @@ async function groupDragAndSketch(page) {
   // Choose a transformed face through the viewport and enter sketching.
   const facePoint = projection.at(0, 15);
   await page.mouse.click(facePoint.x, facePoint.y);
+  const selected = await inspect(page);
+  const target = selected.modelingSelection[0];
+  assert.equal(target.kind, "face");
+  const face = selected.document.bodies
+    .find((body) => body.id === target.body)
+    .faces.find((face) => face.id === target.face);
   await chooseTool(page, "sketch on face", "sketch-on-face");
+  // Draw at the fitted center: a trimmed face's plane origin can be offscreen.
+  const { camera } = await inspect(page);
+  const local = [face.plane.u, face.plane.v].map((axis) =>
+    axis.reduce((sum, value, i) => sum + value * (camera.target[i] - face.plane.origin[i]), 0),
+  );
   await page.keyboard.press("c");
-  await drag(page, [0, 0], [1, 0]);
+  await drag(page, local, [local[0] + 1, local[1]]);
   assert.equal((await inspect(page)).document.sketches.length, 2);
 }
 

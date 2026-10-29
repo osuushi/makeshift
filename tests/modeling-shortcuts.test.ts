@@ -19,7 +19,6 @@ test("common shortcuts distinguish shifted Boolean from existing keys", () => {
     ["S", true, "subtract", "⇧S"],
     ["U", true, "union", "⇧U"],
     ["I", true, "intersect", "⇧I"],
-    ["l", false, "loft", "L"],
     ["f", false, "fillet", "F"],
     ["F", true, "chamfer", "⇧F"],
     ["R", true, "revolve", "⇧R"],
@@ -31,6 +30,10 @@ test("common shortcuts distinguish shifted Boolean from existing keys", () => {
   }
   assert.equal(modelingShortcut(event("E", true), null), null);
   assert.equal(modelingShortcutLabel("erode"), "");
+  assert.equal(modelingShortcutLabel("loft"), "");
+  for (const key of ["l", "L", "b", "p", "c", "t", "v"])
+    for (const shift of [false, true])
+      assert.equal(modelingShortcut(event(key, shift), null), null);
   assert.equal(modelingShortcut(event("O", true), null), "offset");
   assert.equal(modelingShortcut(event("M", true), null), "move");
   for (const key of ["u", "i", "n", "r"]) assert.equal(modelingShortcut(event(key), null), null);
@@ -67,7 +70,6 @@ test("released finish-capable edits offer global switches, retaining Extrude loc
     ["U", true, "union"],
     ["S", true, "subtract"],
     ["I", true, "intersect"],
-    ["l", false, "loft"],
   ] as const) {
     assert.equal(modelingShortcut(event(key, shift), { kind: "face-offset", canFinish: true }), id);
     assert.equal(

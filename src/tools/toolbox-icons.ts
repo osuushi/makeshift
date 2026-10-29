@@ -7,7 +7,7 @@ export const toolboxIconPaths: Record<string, string> = {
   line: '<path d="m5 19 14-14"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/>',
   rectangle: '<rect x="4" y="4" width="16" height="16" rx="1"/>',
   circle: '<circle cx="12" cy="12" r="8"/>',
-  pen: '<path d="m4 20 4-1 10-10-3-3L5 16l-1 4Z"/><path d="m13 7 3 3"/>',
+  pen: '<path d="m3 21 4-13 8-3 4 4-3 8-13 4Zm0 0 7-7M14 4l2-2 6 6-2 2Z"/><circle cx="11.5" cy="12.5" r="2"/>',
   trim: '<circle cx="5" cy="18" r="3"/><circle cx="19" cy="18" r="3"/><path d="m7 16 13-13M17 16 4 3"/>',
   "start-sketch": '<path d="M4 4h12v12H4z"/><path d="m13 13 6-6 2 2-6 6-3 1 1-3Z"/>',
   cube: '<path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="M3 8v9l9 5 9-5V8M12 13v9"/>',
@@ -16,7 +16,6 @@ export const toolboxIconPaths: Record<string, string> = {
   sphere:
     '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 2.5 3 13.5 0 18M12 3c-3 2.5-3 13.5 0 18"/>',
   cone: '<path d="m12 3 9 17H3L12 3Z"/><ellipse cx="12" cy="20" rx="9" ry="3"/>',
-  drill: '<path d="M9 2h6v16l-3 4-3-4V2ZM9 6l6-3M9 11l6-3M9 16l6-3M4 13H2v9h5m10 0h5v-9h-2"/>',
   extrude:
     '<path d="m3 16 7-4 7 4-7 4-7-4ZM3 16v-6l7-4 7 4v6M3 10l7 4 7-4M10 14v6M21 14V2m-3 3 3-3 2 3"/>',
   offset: '<path d="M5 5h12v12H5z"/><path d="M8 8h12v12H8zM2 2h12v12"/>',

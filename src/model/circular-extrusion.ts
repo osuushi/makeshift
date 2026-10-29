@@ -17,7 +17,6 @@ export async function circularExtrusion(
     symmetric: boolean;
     mode: Extrusion["mode"];
     draft?: Extrusion["draft"];
-    sourceDistance?: boolean;
   },
 ): Promise<void> {
   const sketch = emptySketch(placement.plane);
@@ -45,13 +44,7 @@ export async function circularExtrusion(
   editor.modeling.targets = [{ kind: "profile", sketch: sketch.id, profile }];
   if (
     !editor.interactions.continueTool(lease, () =>
-      extrude.start(
-        options.distance,
-        options.symmetric,
-        options.mode,
-        options.draft,
-        options.sourceDistance,
-      ),
+      extrude.start(options.distance, options.symmetric, options.mode, options.draft),
     )
   )
     editor.message = "Select the circle region to extrude";

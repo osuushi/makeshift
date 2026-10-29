@@ -57,14 +57,7 @@ export function existingFillet(sketch: Sketch, arc: Arc): FilletCorner | null {
     const linked = coincidentPoints(sketch, { curve: arc.id, end });
     const matches = linked.flatMap((p) => {
       const line = sketch.curves.find((c) => c.id === p.curve);
-      if (
-        !line ||
-        line.kind === "circle" ||
-        line.kind === "bezier" ||
-        line.id === arc.id ||
-        p.end === "center"
-      )
-        return [];
+      if (!line || line.kind === "circle" || line.id === arc.id || p.end === "center") return [];
       return sketch.constraints.some(
         (c) =>
           c.kind === "tangent" &&

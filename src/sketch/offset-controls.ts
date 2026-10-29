@@ -26,6 +26,7 @@ type Session = {
   moved: boolean;
   valid: boolean;
   amount: number;
+  dragAmount: number;
 };
 export class OffsetControls {
   private disposeTool: () => void;
@@ -122,6 +123,20 @@ export class OffsetControls {
   private start = (event: PointerEvent): void => {
     if (event.button !== 0) return;
     event.preventDefault();
+    const s = this.session;
+    if (s) {
+      if (this.closing || this.interaction?.captured) return;
+      const point = this.editor.world.pointAt(s.sketch.plane, event.clientX, event.clientY);
+      if (!point) return;
+      this.input.blur();
+      s.start = point;
+      s.screen = { x: event.clientX, y: event.clientY };
+      s.pointer = event.pointerId;
+      s.moved = false;
+      s.dragAmount = s.amount;
+      this.interaction?.capture(this.handle, event.pointerId);
+      return;
+    }
     this.begin({ x: event.clientX, y: event.clientY }, event.pointerId);
   };
   private begin(point: Point, pointer?: number): void {
@@ -160,6 +175,7 @@ export class OffsetControls {
       moved: false,
       valid: false,
       amount: this.editor.world.spacing,
+      dragAmount: 0,
     };
     this.editor.select([]);
     if (pointer !== undefined) interaction.capture(this.handle, pointer);
@@ -205,12 +221,14 @@ export class OffsetControls {
     const point = this.editor.world.pointAt(s.sketch.plane, event.clientX, event.clientY);
     if (s.moved && point)
       this.preview(
-        offsetDistance(
-          s.target.curve,
-          s.start,
-          point,
-          this.editor.gridSnap ? this.editor.world.spacing : 0,
-        ) * s.target.direction,
+        s.dragAmount +
+          offsetDistance(
+            s.target.curve,
+            s.start,
+            point,
+            this.editor.gridSnap ? this.editor.world.spacing : 0,
+          ) *
+            s.target.direction,
       );
   };
   private release = (event: PointerEvent): void => {

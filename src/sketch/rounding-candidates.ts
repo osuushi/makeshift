@@ -1,4 +1,5 @@
 import { arcCircle, positiveAngle } from "./arc-geometry.js";
+import { type CubicOffset, cubicOffsetContacts } from "./cubic-rounding.js";
 import { closestOnCurve } from "./curve-geometry.js";
 import { supportIntersections } from "./curve-intersections.js";
 import type { Arc, Circle, Segment } from "./document.js";
@@ -7,12 +8,19 @@ import type { Point } from "./planes.js";
 import { add, distance, dot, scale, subtract } from "./point-math.js";
 import { type CurveEnd, farEnd, inwardTangent, type RoundingCurve } from "./rounding-curves.js";
 
-type Support = { locus: Circle | Segment; pinned: boolean };
+type Support = { locus: Circle | Segment | CubicOffset; pinned: boolean };
 function supports(curve: RoundingCurve, end: CurveEnd, radius: number): Support[] {
   const pinned: Support = {
     locus: { id: "pin", kind: "circle", center: curve[farEnd(end)], radius, construction: false },
     pinned: true,
   };
+  if (curve.kind === "bezier")
+    return [-1, 1]
+      .map<Support>((sign) => ({
+        locus: { kind: "cubic-offset", curve, offset: sign * radius },
+        pinned: false,
+      }))
+      .concat([pinned]);
   if (curve.kind === "arc") {
     const circle = arcCircle(curve);
     return [circle.radius + radius, Math.abs(circle.radius - radius)]
@@ -41,6 +49,7 @@ function contacts(
   pinned: boolean,
 ): Point[] {
   if (pinned) return [curve[farEnd(end)]];
+  if (curve.kind === "bezier") return [];
   if (curve.kind === "segment") {
     const u = inwardTangent(curve, "a");
     return [add(curve.a, scale(u, dot(subtract(center, curve.a), u)))];
@@ -84,9 +93,9 @@ export function roundingShape(c: FilletCorner, radius: number, id: string): Arc 
   const choices: { arc: Arc; pins: number; score: number }[] = [];
   for (const a of supports(c.a, c.aEnd, radius))
     for (const b of supports(c.b, c.bEnd, radius)) {
-      for (const center of supportIntersections(a.locus, b.locus)) {
-        for (const p of contacts(c.a, c.aEnd, center, radius, a.pinned))
-          for (const q of contacts(c.b, c.bEnd, center, radius, b.pinned)) {
+      for (const { center, first, second } of centers(a, b)) {
+        for (const p of first ? [first] : contacts(c.a, c.aEnd, center, radius, a.pinned))
+          for (const q of second ? [second] : contacts(c.b, c.bEnd, center, radius, b.pinned)) {
             if (
               distance(closestOnCurve(c.a, p), p) > 1e-6 ||
               distance(closestOnCurve(c.b, q), q) > 1e-6
@@ -105,4 +114,20 @@ export function roundingShape(c: FilletCorner, radius: number, id: string): Arc 
   choices.sort((a, b) => a.pins - b.pins || a.score - b.score);
   if (!choices[0]) throw new Error("No rounding arc fits this radius on the selected curves");
   return choices[0].arc;
+}
+
+function centers(a: Support, b: Support): { center: Point; first?: Point; second?: Point }[] {
+  if (a.locus.kind === "cubic-offset") {
+    if (b.locus.kind === "cubic-offset") return [];
+    return cubicOffsetContacts(a.locus, b.locus).map(({ center, contact }) => ({
+      center,
+      first: contact,
+    }));
+  }
+  if (b.locus.kind === "cubic-offset")
+    return cubicOffsetContacts(b.locus, a.locus).map(({ center, contact }) => ({
+      center,
+      second: contact,
+    }));
+  return supportIntersections(a.locus, b.locus).map((center) => ({ center }));
 }

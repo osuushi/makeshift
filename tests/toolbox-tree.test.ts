@@ -79,7 +79,7 @@ test("compact defaults keep Select standalone and omit immediate commands", () =
   assert.equal(tree.items[0], "select");
   assert.deepEqual(tree.items[5], group("union", "subtract", "intersect", "split", "imprint"));
   assert.deepEqual(tree.items[1], transforms());
-  assert.deepEqual(tree.items[3], group("cube", "cylinder", "sphere", "cone", "drill"));
+  assert.deepEqual(tree.items[3], group("cube", "cylinder", "sphere", "cone"));
   assert.deepEqual(tree.items[4], group("extrude", "revolve", "loft"));
   const leaves = toolboxLeaves(tree);
   for (const id of [
@@ -191,6 +191,6 @@ test("v2 migration retains the earlier top-level Boolean promotion", () => {
   booleans.selected = 1;
   const old = group("select", group("fillet", booleans, "shell"));
   const upgraded = migrateToolbox(old);
-  assert.deepEqual(upgraded.items[2], booleans);
+  assert.deepEqual(upgraded.items[2], { ...booleans, items: booleans.items.slice(0, -1) });
   assert.deepEqual(upgraded.items[3], group("fillet", "shell"));
 });

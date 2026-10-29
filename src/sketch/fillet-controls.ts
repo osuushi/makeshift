@@ -126,13 +126,17 @@ export class FilletControls {
       { navigation: "when-released", documentHistory: "cancel-preview" },
     );
     if (!interaction) return;
+    const target =
+      pointer === undefined ? null : this.editor.world.pointAt(sketch.plane, point.x, point.y);
     this.interaction = interaction;
     this.session = {
       sketch,
       corner,
       id: newId(),
       selection: this.editor.selected.targets,
-      radius: this.guide.radius,
+      radius: target
+        ? filletRadiusAt(corner, target, this.editor.gridSnap ? this.editor.world.spacing : 0)
+        : this.guide.radius,
       solve: new GestureSolve(this.editor, interaction),
       start: { x: point.x, y: point.y },
       pointer: pointer ?? -1,

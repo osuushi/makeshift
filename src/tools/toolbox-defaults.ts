@@ -12,14 +12,14 @@ export function defaultToolbox(): ToolboxGroup {
   return group(
     "select",
     transformToolGroup(),
-    group("line", "rectangle", "circle", "bezier", "pen"),
-    group("cube", "cylinder", "sphere", "cone", "drill"),
+    group("line", "rectangle", "circle", "pen", "trim"),
+    group("cube", "cylinder", "sphere", "cone"),
     group("extrude", "revolve", "loft"),
     group("union", "subtract", "intersect", "split", "imprint"),
     group("fillet", "chamfer", "shell", "offset"),
     toolboxMenu(
       drawerTitle,
-      toolboxMenu("Sketch editing", "trim", "sketch-offset", "sketch-fillet"),
+      toolboxMenu("Sketch editing", "bezier", "sketch-offset", "sketch-fillet"),
       toolboxMenu("Surface details", "erode", "threads", "gear", "knurling"),
       toolboxMenu(
         "Planes & references",
@@ -43,8 +43,8 @@ export function toolboxMenuTitle(item: ToolboxGroup): string {
   if (typeof match === "object") return match.title ?? "Tools";
   for (const [title, ids] of [
     ["Transform", transformTools],
-    ["Drawing", ["line", "rectangle", "circle", "bezier", "pen"]],
-    ["Primitives", ["cube", "cylinder", "sphere", "cone", "drill"]],
+    ["Drawing", ["line", "rectangle", "circle", "pen", "trim"]],
+    ["Primitives", ["cube", "cylinder", "sphere", "cone"]],
     ["Extrude & revolve", ["extrude", "revolve", "loft"]],
     ["Booleans", ["union", "subtract", "intersect", "split", "imprint"]],
     ["Shape editing", ["fillet", "chamfer", "shell", "offset"]],

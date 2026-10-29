@@ -8,7 +8,7 @@ import { chooseTool } from "./ui-tools.mjs";
 // Real pointer routes cover flyout crossings, click suppression after moves and shared settings.
 await withUiRuntimes(
   async (page, name) => {
-    await page.evaluate(() => localStorage.removeItem("makeshift.toolbox.v7"));
+    await page.evaluate(() => localStorage.removeItem("makeshift.toolbox.v8"));
     await page.waitForLoadState("networkidle");
     await page.reload();
     await page.waitForFunction(() => !!window.makeshiftInspect);
@@ -106,18 +106,18 @@ async function drawerRoute(page) {
     await page.locator('.toolbox-flyout [data-menu="Sketch editing"] .toolbox-item').hover();
   };
   await open();
-  await page.locator('.toolbox-flyout [data-tool="trim"]').click();
+  await page.locator('.toolbox-flyout [data-tool="bezier"]').click();
   assert.deepEqual(await root.locator(".toolbox-item").allTextContents(), labels);
   await page.keyboard.press("Escape");
   await open();
   await movePointer(
     page,
-    page.locator('.toolbox-flyout [data-tool="trim"]'),
+    page.locator('.toolbox-flyout [data-tool="bezier"]'),
     root.locator('[data-tool="line"]'),
   );
-  assert.ok((await stored(page)).items[2].items.includes("trim"));
+  assert.ok((await stored(page)).items[2].items.includes("bezier"));
   await root.locator('[data-tool="line"]').hover();
-  const source = await page.locator('.toolbox-flyout [data-tool="trim"]').boundingBox();
+  const source = await page.locator('.toolbox-flyout [data-tool="bezier"]').boundingBox();
   const target = await root.locator('[data-menu="Other Tools"]').boundingBox();
   assert.ok(source && target);
   await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2);
@@ -130,8 +130,8 @@ async function drawerRoute(page) {
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 4 });
   await page.mouse.up();
   const tree = await stored(page);
-  assert.equal(tree.items[2].items.includes("trim"), false);
-  assert.ok(tree.items[7].items[0].items.includes("trim"));
+  assert.equal(tree.items[2].items.includes("bezier"), false);
+  assert.ok(tree.items[7].items[0].items.includes("bezier"));
   assert.equal(tree.items[7].title, "Other Tools");
   assert.deepEqual(await root.locator(".toolbox-item").allTextContents(), labels);
 }
@@ -169,14 +169,14 @@ async function settingsRoute(page) {
   await movePointer(settingsPage, row([2, 0]), row([2, 1]));
   await page.waitForFunction(
     () =>
-      JSON.parse(localStorage.getItem("makeshift.toolbox.v7"))?.items[2].items[0] === "rectangle",
+      JSON.parse(localStorage.getItem("makeshift.toolbox.v8"))?.items[2].items[0] === "rectangle",
   );
   assert.deepEqual((await stored(page)).items[2].items.slice(0, 2), ["rectangle", "line"]);
 
   await movePointer(settingsPage, row([2]), row([3]), 0.95);
   await page.waitForFunction(
     () =>
-      JSON.parse(localStorage.getItem("makeshift.toolbox.v7"))?.items[3].items[0] === "rectangle",
+      JSON.parse(localStorage.getItem("makeshift.toolbox.v8"))?.items[3].items[0] === "rectangle",
   );
   assert.deepEqual((await stored(page)).items[3].items.slice(0, 2), ["rectangle", "line"]);
   assert.deepEqual((await inspect(page)).document, before);
@@ -186,7 +186,7 @@ async function settingsRoute(page) {
   await closeSettings(dialog);
 }
 async function stored(page) {
-  return page.evaluate(() => JSON.parse(localStorage.getItem("makeshift.toolbox.v7")));
+  return page.evaluate(() => JSON.parse(localStorage.getItem("makeshift.toolbox.v8")));
 }
 async function movePointer(page, from, to, fraction = 0.5) {
   await from.scrollIntoViewIfNeeded();

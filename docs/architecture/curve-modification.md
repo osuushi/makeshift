@@ -151,8 +151,17 @@ Dragging targets the closest point on the finite rounding arc, including its
 endpoints, rather than projecting the cursor onto the corner bisector. Curved and
 consumed supports use a sampled radius search with local refinement; grid snapping
 compares nearby permitted radii by arc distance. Creation and existing-fillet radius
-drags share this calculation. Explicit numeric radii still validate exactly, and
+drags share this calculation. Pointer-down also uses it, so a click without dragging
+snaps to the active radius grid instead of accepting the arbitrary hint radius.
+Explicit numeric radii still validate exactly, and
 acceptance remains one ordinary sketch edit.
+
+The corner guide also rounds a cubic Bézier joined to a line or circular arc.
+Contacts are refined on the cubic's normal offset, and subdivision preserves the
+remaining cubic exactly. The result uses ordinary endpoint coincidence and tangent
+constraints. Later radius edits recover the corner from the current polynomial
+and analytic support; no source history is stored. Unsupported radii reject
+without accepting a partial rewrite. Cubic/cubic corner rounding remains unavailable.
 
 Clicking or dragging the sketch fillet guide accepts on pointer release and selects
 the new arc for ordinary editing. Clicking away or pressing Escape afterward leaves
@@ -166,7 +175,10 @@ The result returns independent ordinary curves through the existing 0.001 mm
 bounded cubic conversion and shared-vertex endpoint correction. Source geometry
 and constraints remain unchanged; new joined endpoints receive coincidence links.
 Preview remains temporary, Enter/drag release accepts one Undo step, and Escape
-cancels. Closed analytic loops also use this native route when their direct offset
+cancels. The numeric field stays beside the full offset handle and panel grip.
+After clicking or typing, dragging the handle resumes the same preview from its
+current amount; release accepts the combined edit in one Undo step.
+Closed analytic loops also use this native route when their direct offset
 cannot join. A narrow neck may disappear, leaving several independent closed
 sections, including complete circles. An omitted circular closing span may be
 reconstructed only from a unique exact offset source support through both ends.

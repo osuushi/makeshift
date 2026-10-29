@@ -4,6 +4,7 @@ import { prism } from "../.cache/sketch-tests/tests/body-edge-fixtures.js";
 import { openDocument } from "./native-documents.mjs";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
+import { navigationIdle } from "./ui-navigation-history.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { startScale } from "./ui-scale.mjs";
 import { chooseTool, toolEnabled } from "./ui-tools.mjs";
@@ -145,8 +146,12 @@ async function faceEntry(page) {
   const p = await project(page, [0, 0, 10]);
   await page.mouse.click(p.x, p.y);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
-  await page.keyboard.press("Enter");
-  assert.equal((await inspect(page)).activePlane, "Face sketch");
+  await chooseTool(page, "Sketch", "start-sketch");
+  const entered = await navigationIdle(page);
+  assert.equal(entered.activePlane, "Face sketch");
+  assert.ok(Math.abs(entered.camera.height - 30) < 1e-6, "Face entry fits with profile margin");
+  assert.ok(Math.hypot(...entered.camera.target.map((v, i) => v - [0, 0, 10][i])) < 1e-6);
+
   assert.equal((await inspect(page)).document.sketches.length, 0, "entry alone saves no sketch");
   await page.keyboard.press("l");
   await drag(page, [-3, 0], [3, 0]);

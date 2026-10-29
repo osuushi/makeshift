@@ -15,6 +15,7 @@ import {
 export function migrateToolbox(root: ToolboxGroup): ToolboxGroup {
   const path = findToolboxPath(root, "union")?.slice(0, -1);
   const booleans = path && toolboxItem(root, path);
+  // Recognize the historical group before normalization drops retired tools.
   const ids = ["union", "subtract", "intersect", "split", "imprint", "drill"];
   if (
     path &&
@@ -26,6 +27,8 @@ export function migrateToolbox(root: ToolboxGroup): ToolboxGroup {
     root = moveToolboxItem(root, path, [path[0]], "before");
   }
   const defaults = defaultToolbox().items.at(-1) as ToolboxGroup;
+  // Keep the legacy migration's drawer stable; the sketch upgrade runs afterward.
+  defaults.items[0] = toolboxMenu("Sketch editing", "trim", "sketch-offset", "sketch-fillet");
   const rare = new Set(toolboxLeaves(defaults));
   const moved = new Set<string>();
   const items: ToolboxItem[] = [];
@@ -63,4 +66,31 @@ export function addTransformTools(root: ToolboxGroup): ToolboxGroup {
     });
   }
   return normalizeToolbox(upgraded);
+}
+
+/** Update the authored sketch groups without rearranging customized alternatives. */
+export function updateSketchTools(root: ToolboxGroup): ToolboxGroup {
+  const next = structuredClone(root);
+  const drawing = next.items.find(
+    (item) =>
+      typeof item !== "string" &&
+      !item.title &&
+      JSON.stringify(item.items) ===
+        JSON.stringify(["line", "rectangle", "circle", "bezier", "pen"]),
+  );
+  const drawer = next.items.find((item) => typeof item !== "string" && item.title === drawerTitle);
+  const editing =
+    typeof drawer === "object" &&
+    drawer.items.find(
+      (item) =>
+        typeof item !== "string" &&
+        item.title === "Sketch editing" &&
+        JSON.stringify(item.items) === JSON.stringify(["trim", "sketch-offset", "sketch-fillet"]),
+    );
+  if (typeof drawing !== "object" || typeof editing !== "object") return next;
+  const selected = toolboxLeaf(drawing);
+  drawing.items = ["line", "rectangle", "circle", "pen", "trim"];
+  drawing.selected = drawing.items.indexOf(selected === "bezier" ? "pen" : selected);
+  editing.items[0] = "bezier";
+  return next;
 }

@@ -9,7 +9,6 @@ type Kind =
   | "cylinder"
   | "sphere"
   | "cone"
-  | "drill"
   | "dxf-import"
   | "step-import"
   | "mesh-import"
