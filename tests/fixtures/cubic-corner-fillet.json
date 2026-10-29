@@ -1,0 +1,106 @@
+{
+  "document": {
+    "units": "mm",
+    "sketches": [
+      {
+        "id": "76e7106a-c96d-4944-9eef-d9d84aff6d91",
+        "plane": {
+          "origin": [0, 0, 0],
+          "u": [1, 0, 0],
+          "v": [0, 0, 1]
+        },
+        "curves": [
+          {
+            "id": "63b07577-349e-44f8-8b9b-2e227870f0f0",
+            "kind": "bezier",
+            "a": {
+              "x": 0.5,
+              "y": -10
+            },
+            "b": {
+              "x": -10,
+              "y": 0
+            },
+            "c1": {
+              "x": -8,
+              "y": -3
+            },
+            "c2": {
+              "x": -10,
+              "y": 0
+            },
+            "construction": false
+          },
+          {
+            "id": "f584f18f-3d68-4a0b-89a8-e6b02c41d5e4",
+            "kind": "bezier",
+            "a": {
+              "x": -10,
+              "y": 0
+            },
+            "b": {
+              "x": 0.5,
+              "y": 10
+            },
+            "c1": {
+              "x": -10,
+              "y": 0
+            },
+            "c2": {
+              "x": -11.5,
+              "y": 8
+            },
+            "construction": false
+          },
+          {
+            "id": "bf1bc343-8bd5-4b39-9e9c-335031f551fe",
+            "kind": "segment",
+            "a": {
+              "x": 0.5,
+              "y": 10
+            },
+            "b": {
+              "x": 9.5,
+              "y": 2
+            },
+            "construction": false
+          }
+        ],
+        "constraints": [
+          {
+            "id": "f584f18f-3d68-4a0b-89a8-e6b02c41d5e4-a-join",
+            "kind": "coincident",
+            "a": {
+              "curve": "f584f18f-3d68-4a0b-89a8-e6b02c41d5e4",
+              "end": "a"
+            },
+            "b": {
+              "curve": "63b07577-349e-44f8-8b9b-2e227870f0f0",
+              "end": "b"
+            }
+          },
+          {
+            "id": "36c4d2b7-17a9-44ba-9c79-e99529811556",
+            "kind": "coincident",
+            "a": {
+              "curve": "bf1bc343-8bd5-4b39-9e9c-335031f551fe",
+              "end": "a"
+            },
+            "b": {
+              "curve": "f584f18f-3d68-4a0b-89a8-e6b02c41d5e4",
+              "end": "b"
+            }
+          }
+        ],
+        "groups": []
+      }
+    ],
+    "sketchGrid": {
+      "minor": 0.5,
+      "major": 10,
+      "minorColor": "#b8c2cf",
+      "majorColor": "#758296",
+      "snap": true
+    }
+  }
+}

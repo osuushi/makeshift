@@ -5,6 +5,7 @@ import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
 import { tangentBowRoute } from "./ui-bow-tangent.mjs";
 import { cornerFilletRoute } from "./ui-corner-fillet.mjs";
+import { cubicCornerFilletRoute } from "./ui-cubic-corner-fillet.mjs";
 import { curvedRoundingRoute } from "./ui-curved-rounding.mjs";
 import { filletLossRoute, filletRoute } from "./ui-fillet.mjs";
 import { filletConsumptionRoute } from "./ui-fillet-consumption.mjs";
@@ -45,6 +46,7 @@ try {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   for (const route of [
+    cubicCornerFilletRoute,
     secondCornerFilletRoute,
     filletGuideRoute,
     filletCursorRoute,
