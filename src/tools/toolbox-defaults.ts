@@ -13,7 +13,7 @@ export function defaultToolbox(): ToolboxGroup {
     "select",
     transformToolGroup(),
     group("line", "rectangle", "circle", "bezier", "pen"),
-    group("cube", "cylinder", "sphere", "cone", "drill"),
+    group("cube", "cylinder", "sphere", "cone"),
     group("extrude", "revolve", "loft"),
     group("union", "subtract", "intersect", "split", "imprint"),
     group("fillet", "chamfer", "shell", "offset"),
@@ -44,7 +44,7 @@ export function toolboxMenuTitle(item: ToolboxGroup): string {
   for (const [title, ids] of [
     ["Transform", transformTools],
     ["Drawing", ["line", "rectangle", "circle", "bezier", "pen"]],
-    ["Primitives", ["cube", "cylinder", "sphere", "cone", "drill"]],
+    ["Primitives", ["cube", "cylinder", "sphere", "cone"]],
     ["Extrude & revolve", ["extrude", "revolve", "loft"]],
     ["Booleans", ["union", "subtract", "intersect", "split", "imprint"]],
     ["Shape editing", ["fillet", "chamfer", "shell", "offset"]],

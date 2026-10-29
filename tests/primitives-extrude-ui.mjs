@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { project } from "./ui-blend-edit.mjs";
 import { inspect, modalCompleted, reset, settled } from "./ui-helpers.mjs";
-import { orientWithTurntable } from "./ui-orbit-orient.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -70,61 +69,10 @@ async function coneRoute(page, name) {
   await modalCompleted(page);
   assert.equal((await inspect(page)).document.bodies?.length ?? 0, 0);
 }
-async function drillRoute(page, name) {
-  await reset(page);
-  await top(page);
-  await chooseTool(page, "drill", "drill");
-  const empty = await project(page, [0, 0, 0]);
-  await page.mouse.click(empty.x, empty.y);
-  assert.equal((await inspect(page)).document.sketches.length, 0);
-  assert.equal((await inspect(page)).interaction.kind, "drill");
-  await page.keyboard.press("Escape");
-  await draw(page, "cube", [0, 0, 0], [40, 40, 0]);
-  await accept(page);
-  let state = await draw(page, "drill", [20, 20, 40], [26, 20, 40]);
-  const distance = Number(
-    await page.getByLabel("Extrusion distance", { exact: true }).inputValue(),
-  );
-  close(distance, -40); // Unfocused fields display four significant digits.
-  assert.equal(await page.getByLabel("Symmetric extrusion").isChecked(), false);
-  assert.equal(
-    await page.getByRole("button", { name: "Subtract", exact: true }).getAttribute("aria-pressed"),
-    "true",
-  );
-  close(state.preview.bodies[0].volume, 64000 - Math.PI * 36 * 40);
-  await page.getByLabel("Extrusion distance", { exact: true }).fill("-20");
-  state = await preview(page);
-  close(state.preview.bodies[0].volume, 64000 - Math.PI * 36 * 20);
-  await page.getByLabel("Extrusion distance", { exact: true }).fill("-40.00001");
-  await preview(page);
-  state = await accept(page);
-  close(state.document.bodies[0].volume, 64000 - Math.PI * 36 * 40);
-  await page.screenshot({ path: `.cache/sketch-review/${name}-drill.png` });
-  await chooseTool(page, "undo", "undo");
-  close((await inspect(page)).document.bodies[0].volume, 64000);
-  await chooseTool(page, "redo", "redo");
-  close((await inspect(page)).document.bodies[0].volume, state.document.bodies[0].volume);
-  // Drill a second hole inward from the opposite face to verify the face-normal sign.
-  await orientWithTurntable(page, [0.1, -0.1, -1]);
-  await page
-    .getByRole("button", { name: "Bottom view", exact: true })
-    .locator("polygon")
-    .dblclick();
-  await settled(page);
-  state = await draw(page, "drill", [10, 10, 0], [14, 10, 0]);
-  close(state.preview.bodies[0].volume, 64000 - Math.PI * (36 + 16) * 40);
-  await page.keyboard.press("Escape");
-  await modalCompleted(page);
-  close((await inspect(page)).document.bodies[0].volume, 64000 - Math.PI * 36 * 40);
-}
-
 await withUiRuntimes(
   async (page, name) => {
     await coneRoute(page, name);
-    await drillRoute(page, name);
-    console.log(
-      `${name}: Cone exact apex and Drill through-body editable handoff, Enter, cancel and history passed`,
-    );
+    console.log(`${name}: Cone exact apex editable handoff, Enter, cancel and history passed`);
   },
   { allowed: ["chromium", "webkit", "electron"], timeout: 30000 },
 );

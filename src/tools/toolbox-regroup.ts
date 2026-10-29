@@ -10,7 +10,7 @@ import {
 
 /** Upgrade the authored solid families while preserving unrelated custom groups and choices. */
 export function regroupToolbox(root: ToolboxGroup): ToolboxGroup {
-  const primitives = ["cube", "cylinder", "sphere", "cone", "drill"];
+  const primitives = ["cube", "cylinder", "sphere", "cone"];
   const sweeps = ["extrude", "revolve", "loft"];
   const moved = new Set([...primitives, ...sweeps, "transform", "duplicate", "mirror"]);
   const representatives = root.items

@@ -5,17 +5,14 @@ import { pointerDragThreshold } from "../sketch/pointer-intent.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { CircularPrimitivePreview } from "./circular-primitive-preview.js";
 import { cubeDefaultSize, cubeHoverPlane } from "./cube-rectangle.js";
-import type { PlaneReferenceSource } from "./plane-interior-pick.js";
 
-export type CircularPrimitiveShape = "cylinder" | "sphere" | "cone" | "drill";
+export type CircularPrimitiveShape = "cylinder" | "sphere" | "cone";
 export type CircularPlacement = {
   plane: PlaneFrame;
   center: Point;
   radius: number;
-  source?: PlaneReferenceSource;
-  depth?: number;
 };
-type Support = { frame: PlaneFrame; source?: PlaneReferenceSource; depth?: number };
+type Support = { frame: PlaneFrame };
 export type CircularPrimitiveConfig = {
   id: CircularPrimitiveShape;
   label: string;
@@ -23,7 +20,6 @@ export type CircularPrimitiveConfig = {
   description: string;
   aliases?: string[];
   shape: CircularPrimitiveShape;
-  plane?: (screen: Point) => Support | null;
   create: (placement: CircularPlacement, lease: InteractionLease) => Promise<void>;
 };
 
@@ -119,9 +115,7 @@ export class CircularPrimitiveControls {
     return true;
   }
   private support(screen: Point): Support | null {
-    return this.config.plane
-      ? this.config.plane(screen)
-      : { frame: cubeHoverPlane(this.editor, screen) };
+    return { frame: cubeHoverPlane(this.editor, screen) };
   }
   private snap(point: Point): Point {
     const spacing = this.editor.gridSnap ? this.editor.world.spacing : 0;
@@ -143,8 +137,6 @@ export class CircularPrimitiveControls {
       radius: this.gesture?.moved
         ? Math.hypot(tip.x - center.x, tip.y - center.y)
         : (this.gesture?.radius ?? cubeDefaultSize(this.editor.world, support.frame) / 2),
-      source: support.source,
-      depth: support.depth,
     };
   }
   private update = (): void => {

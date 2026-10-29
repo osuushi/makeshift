@@ -219,7 +219,7 @@ The toolbox has three behaviors:
 The owned tree uses tool IDs or `{items, selected, title?}` groups. A title denotes
 an ordinary menu rather than swapping alternatives; titles only occur in the
 Other Tools subtree. Each tool occurs once, without aliases. Default frequent
-alternatives cover drawing; basic primitives plus Drill; Extrude, Revolve and Loft;
+alternatives cover drawing; basic primitives; Extrude, Revolve and Loft;
 Booleans; and shape editing (Fillet, Chamfer, Shell and Offset). Other Tools contains
 Sketch editing, Surface details, Planes & references, and Mirror. Duplicate bodies
 stays available through Search but is excluded from the toolbox. Every toolbox tool

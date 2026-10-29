@@ -49,13 +49,13 @@ reopened, moved and dimensionally edited as an ordinary rectangle sketch.
 
 ## Circular tools (founder decision, 2026-10-09)
 
-**Cylinder**, **Sphere**, **Cone** and **Drill** use a circle centered on the initial
+**Cylinder**, **Sphere** and **Cone** use a circle centered on the initial
 click. Drag from that center to set its radius, or click to use the displayed default
 diameter. The footprint is always centered; Option has no placement behavior.
 Opaque shaded placement meshes have darker green silhouettes and visible edges
-to distinguish their front and back; Drill retains its subtractive pink fill.
-The support and default size follow Cube's rules, except Drill requires a visible
-planar body face. Hover previews and diameter labels create no document geometry.
+to distinguish their front and back.
+The support and default size follow Cube's rules. Hover previews and diameter labels
+create no document geometry.
 A held gesture keeps its initial support. Each completed placement accepts a fresh
 ordinary sketch, then hands off to the existing editable modeling tool. Canceling
 that tool retains the sketch; solid acceptance is a separate Undo step.
@@ -73,21 +73,12 @@ guide selects one region and enters **Revolve** with the diameter's axis, 360°,
 zero height and **Union**. Enter accepts a ball; angle, height, axis and Boolean
 controls remain available. Both source curves remain ordinary editable geometry.
 
-Drill has a drill icon and accepts a circle only on a planar body face. It enters
-**Extrude**, with **Subtract**, Symmetric off and a negative distance along the
-face's outward normal, regardless of the interactive viewer-side convention.
-Depth conservatively projects the selected body's exact
-axis-aligned bounds onto that normal, plus a small clearance, so it clears the
-whole body rather than stopping at the first cavity. Oblique bounds can give
-extra travel. Other visible bodies intersected within that travel can also be cut
-through the ordinary Boolean target rules; hidden bodies are excluded. Depth and
-targets remain editable in Extrude. No persistent drill recipe or body dependency
-is added.
+The dedicated Drill tool is retired now that guide target points support the ordinary
+Extrude workflow. Create circular holes with a circle and Subtract extrusion.
 
 Placement previews render opaque into a separate depth buffer, then blend over the
 viewport at 50% opacity. Their front surfaces occlude their own back surfaces, while
-the underlying model remains visible. Drill retains a pink fill; its coplanar entry
-cap never competes with the body face for depth. Preview geometry stays exact.
+the underlying model remains visible. Preview geometry stays exact.
 The temporary footprint and Sphere axis render in a final depth-independent pass,
 so the placement sketch stays visible through its own solid preview. Existing
 sketch visibility settings remain independent.

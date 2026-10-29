@@ -32,7 +32,7 @@ test("v4 upgrade separates solid families and preserves other customization and 
   const next = regroupToolbox(old);
   assert.ok(validToolboxTree(next));
   assert.deepEqual(next.items.slice(0, 3), ["select", transforms(), drawing]);
-  assert.deepEqual(next.items[3], group("cube", "cylinder", "sphere", "cone", "drill"));
+  assert.deepEqual(next.items[3], group("cube", "cylinder", "sphere", "cone"));
   assert.equal(toolboxLeaf(next.items[4]), "revolve");
   assert.deepEqual(next.items[5], group("union", "subtract"));
   assert.deepEqual(
@@ -43,9 +43,20 @@ test("v4 upgrade separates solid families and preserves other customization and 
   assert.deepEqual(regroupToolbox(next), next);
 });
 
-test("Transform stays directly below Select and Duplicate cannot be restored by saved preferences", () => {
-  const next = normalizeToolbox(group(group("line", "transform", "duplicate"), "select"));
-  assert.deepEqual(next.items, ["select", transforms(), "line", menu(drawerTitle)]);
+test("Transform stays below Select and retired tools cannot be restored by saved preferences", () => {
+  const next = normalizeToolbox(
+    group(
+      group("line", "transform", "duplicate", "drill"),
+      "select",
+      menu(drawerTitle, menu("Old tools", "drill")),
+    ),
+  );
+  assert.deepEqual(next.items, [
+    "select",
+    transforms(),
+    "line",
+    menu(drawerTitle, menu("Old tools")),
+  ]);
   assert.equal(moveToolbox(next, [1], [2], "inside"), next);
   assert.equal(moveToolbox(next, [2], [1], "inside"), next);
 });

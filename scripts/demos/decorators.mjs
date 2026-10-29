@@ -25,8 +25,10 @@ export async function threads(page, c, a) {
   await placed(a, 2);
   await page.keyboard.press("Escape");
   const beforeDrill = (await a.state()).document.bodies[1].volume;
-  await a.tool("drill");
+  await a.tool("cylinder");
   await a.dragWorld([8, 0, 16], [12, 0, 16], 1);
+  await a.button("Subtract");
+  await a.fill("Extrusion distance", -16, "textbox", false);
   await placed(a, 2);
   const drilled = (await a.state()).document.bodies;
   assert.ok(drilled[1].volume < beforeDrill);
