@@ -4,10 +4,50 @@ import * as THREE from "three";
 import { applyCameraPose, planeCameraPose } from "../src/sketch/camera-motion.js";
 import { emptySketch } from "../src/sketch/document.js";
 import type { SketchEditor } from "../src/sketch/editor.js";
+import { selectedFaceWorkspace } from "../src/sketch/face-workspace.js";
 import { rectangle } from "../src/sketch/geometry.js";
-import { planes, worldPoint } from "../src/sketch/planes.js";
+import { type PlaneFrame, planes, worldPoint } from "../src/sketch/planes.js";
 import { profileFraming } from "../src/sketch/profile-framing.js";
 import { profilesFor } from "../src/sketch/profiles.js";
+
+function faceFixture(world: unknown, frame: PlaneFrame): SketchEditor {
+  return {
+    world,
+    modeling: {
+      targets: [
+        { kind: "face", body: "body", face: "a" },
+        { kind: "face", body: "body", face: "b" },
+      ],
+    },
+    display: {
+      bodies: [
+        {
+          id: "body",
+          faces: [
+            {
+              id: "a",
+              plane: frame,
+              vertices: [
+                [24, 18],
+                [28, 18],
+                [28, 26],
+              ].flatMap(([x, y]) => worldPoint(frame, { x, y })),
+            },
+            {
+              id: "b",
+              plane: frame,
+              vertices: [
+                [28, 18],
+                [36, 18],
+                [36, 26],
+              ].flatMap(([x, y]) => worldPoint(frame, { x, y })),
+            },
+          ],
+        },
+      ],
+    },
+  } as unknown as SketchEditor;
+}
 
 test("profile framing fits all plane sides and quarter turns without cropping or changing center", () => {
   const aspect = 1280 / 850;
@@ -34,6 +74,10 @@ test("profile framing fits all plane sides and quarter turns without cropping or
           canvas: { clientWidth: 1280, clientHeight: 850 },
         };
         const framing = profileFraming({ world } as unknown as SketchEditor, sketch, profile);
+        const faceEditor = faceFixture(world, frame);
+        const faceFraming = selectedFaceWorkspace(faceEditor)?.framing;
+        assert.deepEqual(faceFraming?.target, framing.target);
+        assert.ok(Math.abs((faceFraming?.height ?? 0) - (framing.height ?? 0)) < 1e-10);
         const expectedHeight = turn % 2 ? 18 : 12;
         assert.ok(Math.abs((framing.height ?? 0) - expectedHeight) < 1e-10);
         assert.deepEqual(framing.target, worldPoint(frame, { x: 30, y: 22 }));

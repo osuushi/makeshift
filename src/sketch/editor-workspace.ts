@@ -4,6 +4,7 @@ import type { CameraFraming } from "./camera-motion.js";
 import { newId, samePlane } from "./document.js";
 import type { SketchEditor } from "./editor.js";
 import { installCameraDepth } from "./editor-camera-depth.js";
+import { selectedFaceWorkspace } from "./face-workspace.js";
 import { modelingSketch } from "./model-selection.js";
 import { orbitPivot } from "./orbit-pivot.js";
 import { type PlaneId, planeIds, planes } from "./planes.js";
@@ -50,13 +51,7 @@ export class WorkspaceEntry {
     const editor = this.editor;
     if (editor.world.active) return true;
     if (modelingSketch(editor)) return this.selected();
-    const target = editor.modeling.targets.length === 1 ? editor.modeling.targets[0] : null;
-    if (target?.kind === "face") {
-      const face = editor.display.bodies
-        ?.find((body) => body.id === target.body)
-        ?.faces.find((item) => item.id === target.face);
-      if (face?.plane) return this.selected();
-    }
+    if (selectedFaceWorkspace(editor)) return this.selected();
     const constructionPlane = this.selectedConstructionPlane();
     if (constructionPlane)
       return this.enter({
@@ -79,11 +74,13 @@ export class WorkspaceEntry {
       sketch = modelingSketch(editor),
       target = editor.modeling.targets[0];
     if (!sketch && target?.kind === "face") {
-      const face = editor.display.bodies
-        ?.find((body) => body.id === target.body)
-        ?.faces.find((face) => face.id === target.face);
+      const selected = selectedFaceWorkspace(editor);
       return (
-        !!face?.plane && this.enter({ key: "Face sketch", frame: face.plane, sketchId: newId() })
+        !!selected &&
+        this.enter(
+          { key: "Face sketch", frame: selected.frame, sketchId: newId() },
+          selected.framing,
+        )
       );
     }
     if (!sketch) return false;

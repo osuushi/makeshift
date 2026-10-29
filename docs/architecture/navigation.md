@@ -376,3 +376,7 @@ picking, geometry and DOM overlays keep updating. Only GPU presentation is defer
 Page captures and canvas pixel checks present the current scene at full resolution
 before reading pixels, without rerunning interaction refresh callbacks that invalidate
 temporary hover highlights. Hover presentation uses the same GPU scheduling path. Ordinary app use and the Mac visual/navigation gate render normally.
+
+Selected coplanar planar faces enter Sketch using their combined displayed extent
+with the same center, 1.5× margin and orientation-aware fit as a sketch profile.
+Face entry still reuses a visible coplanar sketch and creates no geometry.
