@@ -2,14 +2,14 @@
 // in a group so earlier tool choices do not change the route to the next tool.
 const groups = [
   ["move", "rotate", "scale", "transform"],
-  ["line", "rectangle", "circle", "bezier", "pen"],
-  ["cube", "cylinder", "sphere", "cone", "drill"],
+  ["line", "rectangle", "circle", "pen", "trim"],
+  ["cube", "cylinder", "sphere", "cone"],
   ["extrude", "revolve", "loft"],
   ["union", "subtract", "intersect", "split", "imprint"],
   ["fillet", "chamfer", "shell", "offset"],
 ];
 const drawers = [
-  ["Sketch editing", ["trim", "sketch-offset", "sketch-fillet"]],
+  ["Sketch editing", ["bezier", "sketch-offset", "sketch-fillet"]],
   ["Surface details", ["erode", "threads", "gear", "knurling"]],
   ["Planes & references", ["construction-plane", "project", "use-edge", "cross-section"]],
 ];

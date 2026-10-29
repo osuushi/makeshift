@@ -39,11 +39,12 @@ A sketch begun on a plane copies its evaluated frame and is created on the first
 completed drawing gesture. Subsequent plane movement or deletion does not move or
 delete sketches or solids. There is no dependency on the original reference face.
 
-The **Sketch** tool enters a selected planar face when one face is selected;
+The **Sketch** tool enters one or more selected coplanar planar faces;
 otherwise it enters the selected saved construction plane, selected canonical
-plane, or the current primary canonical plane. A planar face starts a fresh sketch
-on its copied frame. ⌘Enter (Ctrl+Enter on Windows/Linux) invokes this explicit
-tool, keeping it distinct from plain Enter used to accept local edits.
+plane, or the current primary canonical plane. Face entry fits their combined
+extent and reuses a visible coplanar sketch, or starts a new workspace on the copied
+frame. ⌘Enter (Ctrl+Enter on Windows/Linux) invokes this explicit tool, keeping it
+distinct from plain Enter used to accept local edits.
 
 Imprint is enabled only for one or more selected faces. Split Body uses the bodies
 identified by selected faces, edges or whole-body selections. Both pick a world/saved

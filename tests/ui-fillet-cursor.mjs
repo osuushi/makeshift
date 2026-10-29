@@ -86,7 +86,11 @@ export async function filletCursorRoute(page, name) {
     (id) => window.makeshiftInspect().document.sketches[0]?.id === id,
     rounded.sketches[0].id,
   );
-  assert.deepEqual((await inspect(page)).document, { ...rounded, bodies: rounded.bodies ?? [] });
+  assert.deepEqual((await inspect(page)).document, {
+    ...rounded,
+    bodies: rounded.bodies ?? [],
+    decorators: rounded.decorators,
+  });
   await page.screenshot({ path: `.cache/sketch-review/${name}-fillet-cursor.png` });
   console.log(
     `${name}: acute hint zoom/click, off-bisector arc drag and Undo/Redo and Save/Open passed`,
