@@ -10,9 +10,43 @@ import { ActiveInteraction } from "../src/sketch/active-interaction.js";
 import type { SketchEditor } from "../src/sketch/editor.js";
 import type { ModelingTarget } from "../src/sketch/model-selection-state.js";
 import { type PlaneFrame, planes } from "../src/sketch/planes.js";
-import { cameraSectionClip } from "../src/sketch/view-clipping.js";
+import { cameraSectionClip, updateViewClipping } from "../src/sketch/view-clipping.js";
+import type { World } from "../src/sketch/world.js";
 
 const offset: PlaneFrame = { ...planes.XY, origin: [0, 0, 5] };
+
+test("Explicit cross sections preserve hidden geometry through sketch entry and orbit", () => {
+  const world = {
+    crossSection: offset,
+    activeFrame: null as PlaneFrame | null,
+    partialSection: null,
+    selectionSection: () => planes.YZ,
+    camera: { position: new THREE.Vector3(10, 10, 20) },
+    renderer: { clippingPlanes: [] as THREE.Plane[] },
+  } as unknown as World;
+  const sketchClip = new THREE.Plane();
+  updateViewClipping(world, sketchClip);
+  const explicit = world.renderer.clippingPlanes[0].clone();
+  for (const frame of [planes.XY, planes.YZ, null]) {
+    Object.assign(world, { activeFrame: frame });
+    for (const side of [-1, 1]) {
+      world.camera.position.set(10, 10, side * 20);
+      updateViewClipping(world, sketchClip);
+      assert.equal(world.partialSection, null, "No translucent sketch foreground pass");
+      assert.ok(world.renderer.clippingPlanes[0].equals(explicit));
+      assert.ok(explicit.distanceToPoint(new THREE.Vector3(0, 0, 4)) < 0);
+      assert.ok(explicit.distanceToPoint(new THREE.Vector3(0, 0, 6)) > 0);
+    }
+  }
+  world.crossSection = null;
+  Object.assign(world, { activeFrame: planes.XY });
+  updateViewClipping(world, sketchClip);
+  assert.equal(world.partialSection, planes.XY);
+  assert.ok(sketchClip.equals(cameraSectionClip(planes.XY, world.camera.position)));
+  Object.assign(world, { activeFrame: null });
+  updateViewClipping(world, sketchClip);
+  assert.equal(world.partialSection, planes.YZ);
+});
 
 function editor(targets: ModelingTarget[]): SketchEditor {
   return {

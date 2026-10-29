@@ -154,6 +154,11 @@ async function adjustmentRoute(page, retained, original) {
     "Re-adjustment and cancellation create no Undo entries",
   );
   await chooseTool(page, "Sketch on XY", "sketch-xy");
+  assert.deepEqual(
+    (await inspect(page)).clipping,
+    fixedEquation,
+    "Entering a sketch preserves the explicit cut and keeps removed geometry hidden",
+  );
   await settled(page);
   assert.deepEqual((await inspect(page)).crossSection, retained);
   await chooseTool(page, "return to modeling", "modeling");
