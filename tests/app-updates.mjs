@@ -96,8 +96,96 @@ try {
   await waitForPrompts(count + 1);
   assert.equal(page.isClosed(), false);
   assert.equal(await app.evaluate(() => globalThis.installs), 1);
+  // Exercise actual status windows with deterministic updater events.
+  const opened = app.waitForEvent("window", { timeout: 10000 });
+  void opened.catch(() => {});
+  await app.evaluate(
+    ({ autoUpdater }, file) => {
+      for (const event of [
+        "error",
+        "update-available",
+        "update-not-available",
+        "update-downloaded",
+      ])
+        autoUpdater.removeAllListeners(event);
+      const require = process.getBuiltinModule("module").createRequire(file);
+      const { AppUpdates } = require(file);
+      globalThis.feedbackUpdates = new AppUpdates(
+        () => {},
+        () => {},
+      );
+      globalThis.feedbackUpdates.enabled = true;
+      globalThis.checks = 0;
+      autoUpdater.checkForUpdates = () => {
+        globalThis.checks++;
+      };
+      globalThis.feedbackUpdates.check();
+    },
+    join(process.cwd(), ".build/host/host/app-updates.js"),
+  );
+  const status = await opened;
+  assert(status);
+  await status.waitForLoadState();
+  await status
+    .locator("h1")
+    .filter({ hasText: "Checking for updates…" })
+    .waitFor({ timeout: 10000 });
+  assert.equal(await status.locator("progress").getAttribute("value"), null);
+  await app.evaluate(({ autoUpdater }) => autoUpdater.emit("update-available"));
+  await status.locator("h1").filter({ hasText: "Downloading update…" }).waitFor({ timeout: 10000 });
+  await app.evaluate(() => globalThis.feedbackUpdates.check());
+  assert.equal(await app.evaluate(() => globalThis.checks), 1);
+  await app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()
+      .find((window) => window.getTitle() === "Software Update — Makeshift")
+      .close();
+  });
+  const reopened = app.waitForEvent("window", { timeout: 10000 });
+  await app.evaluate(() => globalThis.feedbackUpdates.check());
+  const downloading = await reopened;
+  await downloading
+    .locator("h1")
+    .filter({ hasText: "Downloading update…" })
+    .waitFor({ timeout: 10000 });
+  const noUpdateClosed = downloading.waitForEvent("close", { timeout: 10000 });
+  await app.evaluate(({ autoUpdater }) => autoUpdater.emit("update-not-available"));
+  await noUpdateClosed;
+  assert.equal(downloading.isClosed(), true);
+  assert.equal((await prompts()).at(-1), "Makeshift is up to date.");
+  const retry = app.waitForEvent("window", { timeout: 10000 });
+  await app.evaluate(() => globalThis.feedbackUpdates.check());
+  const checking = await retry;
+  await checking
+    .locator("h1")
+    .filter({ hasText: "Checking for updates…" })
+    .waitFor({ timeout: 10000 });
+  const failedClosed = checking.waitForEvent("close", { timeout: 10000 });
+  await app.evaluate(({ autoUpdater }) => autoUpdater.emit("error", new Error("Offline")));
+  await failedClosed;
+  assert.equal(checking.isClosed(), true);
+  assert.equal((await prompts()).at(-1), "Could not check for updates.");
+  await app.evaluate(({ autoUpdater }) => {
+    globalThis.feedbackUpdates.check(false);
+    autoUpdater.emit("update-available");
+  });
+  assert.equal(app.windows().length, 1);
+  const background = app.waitForEvent("window", { timeout: 10000 });
+  await app.evaluate(() => globalThis.feedbackUpdates.check());
+  const adopted = await background;
+  await adopted
+    .locator("h1")
+    .filter({ hasText: "Downloading update…" })
+    .waitFor({ timeout: 10000 });
+  const readyClosed = adopted.waitForEvent("close", { timeout: 10000 });
+  await app.evaluate(({ autoUpdater }) => {
+    globalThis.updateResponse = 1;
+    autoUpdater.emit("update-downloaded", {}, "", "Test release");
+  });
+  await readyClosed;
+  assert.equal(adopted.isClosed(), true);
+  assert.equal((await prompts()).at(-1), "A Makeshift update is ready.");
   console.log(
-    "PASS hidden Electron: update menu, Later, unsaved-work Cancel, canceled Save As, save before install, installer failure restores close guard; OS transport stubbed",
+    "PASS hidden Electron: checking/downloading feedback, reopen, background adoption, completion/error cleanup, update menu, Later, unsaved-work Cancel, canceled Save As, save before install, installer failure restores close guard; OS transport stubbed",
   );
 } finally {
   await app.evaluate(({ app }) => app.exit(0)).catch(() => {});

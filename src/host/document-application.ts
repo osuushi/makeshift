@@ -13,6 +13,7 @@ import {
 } from "./document-windows.js";
 import { sessionDialogs, showDocumentError } from "./session-dialogs.js";
 import { routeSettingsCommand } from "./settings-window.js";
+import { routeUpdateStatusCommand } from "./update-status.js";
 
 /** Application menus, open-file deduplication and coordinated shutdown. */
 export class DocumentApplication {
@@ -64,7 +65,7 @@ export class DocumentApplication {
   }
   dispatch(command: DocumentCommand): void {
     if (this.shuttingDown) return;
-    if (routeSettingsCommand(command)) return;
+    if (routeSettingsCommand(command) || routeUpdateStatusCommand(command)) return;
     if (command === "quit" || command === "restart-update")
       void this.quit(command === "restart-update");
     else if (command === "new") void this.open().catch((error) => this.error(error));

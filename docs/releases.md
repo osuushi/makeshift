@@ -165,7 +165,10 @@ onto an appropriate feed. The generator rejects builds outside macOS 14 arm64.
 
 Only signed packages contain `updates.json`; development and unsigned packages
 do not make update requests. Makeshift checks 30 seconds after launch and every six
-hours, or through **Makeshift → Check for Updates…**. A downloaded update offers
+hours, or through **Makeshift → Check for Updates…**. Manual checks immediately
+open a nonmodal status window, showing checking and then downloading with an
+indeterminate progress indicator. Closing it leaves the update running; checking
+again reopens the current status. Background checks remain quiet. A downloaded update offers
 **Restart to update** or **Later**. Restart passes through the normal tool guard,
 agent shutdown and unsaved-document Save/Cancel/Discard flow. Later keeps working;
 Electron applies the staged update after a normal quit. Background network errors
@@ -183,7 +186,9 @@ We rely on Electron/Squirrel for download, signature validation and installation
 
 Run `npm run test:release` and, after `npm run build`, `node tests/app-updates.mjs`.
 The hidden Electron test draws real geometry and exercises the menu, Later,
-Cancel and save-before-install with the OS update transport stubbed. It does not
+Cancel and save-before-install with the OS update transport stubbed. It also
+checks the checking/downloading window, reopening an in-flight check, adopting a
+background download, and cleanup on completion or failure. It does not
 prove signed installation. It also checks that an installer error restores the
 normal save-on-close guard. Release acceptance requires installing signed build A
 in a writable Applications folder, publishing newer signed build B, checking for
