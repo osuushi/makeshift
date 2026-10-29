@@ -1,7 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { circularExtrusion } from "./circular-extrusion.js";
 import { CircularPrimitiveControls } from "./circular-primitive-controls.js";
-import { createDrill, drillPlane } from "./drill-primitive.js";
 import type { ExtrudeControls } from "./extrude-controls.js";
 import type { RevolveControls } from "./revolve-controls.js";
 import { createSphere } from "./sphere-primitive.js";
@@ -53,16 +52,6 @@ export function primitiveTools(
           mode: "union",
           draft: { mode: "offset", value: -placement.radius },
         }),
-    }),
-    new CircularPrimitiveControls(editor, overlay, {
-      id: "drill",
-      label: "Drill",
-      shape: "drill",
-      aliases: ["hole", "bore", "through hole"],
-      hint: "Drill · Choose a planar body face · Click or drag a circle · Subtract through the body",
-      description: "Cut a circular hole inward through the selected face's entire body",
-      plane: (screen) => drillPlane(editor, screen),
-      create: (placement, lease) => createDrill(editor, extrude, placement, lease),
     }),
   ];
   return () => {

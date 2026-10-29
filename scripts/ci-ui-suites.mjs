@@ -78,7 +78,7 @@ export const uiSuites = [
     seconds: 35,
     browsers: ["electron"],
     reason:
-      "Real placement/drag must hand off to native geometry with viewer-facing depth, a frozen active axis, opposite-view reopen and material-inward drill direction.",
+      "Real placement/drag must hand off to native geometry with viewer-facing depth, a frozen active axis and opposite-view reopen.",
     unit: "viewer-extrusion.test.ts",
   },
   {

@@ -57,27 +57,6 @@ await withUiRuntimes(
       assert.equal(await page.locator(`.toolbox-grid [data-tool="${tool}"]`).count(), 1);
     }
     await backSidePrimitives(page);
-    await reset(page);
-    await page.getByRole("button", { name: "Top view", exact: true }).locator("polygon").dblclick();
-    await settled(page);
-    const cube = await clickTool(page, "cube", [0, 0, 0]);
-    const size = cube.preview.bodies[0].bounds[5];
-    await accept(page);
-    const cut = await clickTool(page, "drill", [size / 2, size / 2, size]);
-    assert.equal(cut.interaction.kind, "extrude");
-    assert.ok(
-      Number(await page.getByLabel("Extrusion distance", { exact: true }).inputValue()) < 0,
-    );
-    assert.equal(
-      await page
-        .locator(".axial-panel")
-        .getByRole("button", { name: "Subtract", exact: true })
-        .getAttribute("aria-pressed"),
-      "true",
-    );
-    assert.ok(cut.preview.bodies[0].volume < cube.preview.bodies[0].volume);
-    await accept(page);
-    assert.ok((await inspect(page)).document.bodies[0].volume > 0);
     console.log(
       `${name}: Primitive sketch, pointer release and editable Extrude/Revolve handoffs passed`,
     );

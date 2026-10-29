@@ -15,6 +15,7 @@ import {
 export function migrateToolbox(root: ToolboxGroup): ToolboxGroup {
   const path = findToolboxPath(root, "union")?.slice(0, -1);
   const booleans = path && toolboxItem(root, path);
+  // Recognize the historical group before normalization drops retired tools.
   const ids = ["union", "subtract", "intersect", "split", "imprint", "drill"];
   if (
     path &&

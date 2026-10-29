@@ -36,7 +36,7 @@ export class CircularPrimitivePreview {
       shape === "sphere"
         ? new THREE.SphereGeometry(1, 32, 16)
         : new THREE.CylinderGeometry(shape === "cone" ? 0 : 1, 1, 2, 48);
-    this.mesh = primitivePreviewMesh(geometry, shape === "drill" ? "#e8a6a6" : "#a6e8ae");
+    this.mesh = primitivePreviewMesh(geometry, "#a6e8ae");
     this.solid = this.mesh.solid;
     this.circle.layers.set(primitiveFootprintLayer);
     this.axis.layers.set(primitiveFootprintLayer);
@@ -52,18 +52,15 @@ export class CircularPrimitivePreview {
     const u = new THREE.Vector3(...plane.u);
     const v = new THREE.Vector3(...plane.v);
     const normal = u.clone().cross(v);
-    const side =
-      this.shape === "drill" ? 1 : viewerSide(normal.toArray() as Vector, this.world.camera);
+    const side = viewerSide(normal.toArray() as Vector, this.world.camera);
     normal.multiplyScalar(side);
     // Three's cylinders point along Y; align that axis with the support normal.
     this.solid.quaternion.setFromRotationMatrix(
       new THREE.Matrix4().makeBasis(u, normal, v.clone().multiplyScalar(-side)),
     );
     this.solid.position.set(...worldPoint(plane, center));
-    const drillDepth = placement.depth ?? radius * 2;
-    const offset = this.shape === "drill" ? -drillDepth / 2 : radius;
-    if (this.shape !== "sphere") this.solid.position.addScaledVector(normal, offset);
-    this.solid.scale.set(radius, this.shape === "drill" ? drillDepth / 2 : radius, radius);
+    if (this.shape !== "sphere") this.solid.position.addScaledVector(normal, radius);
+    this.solid.scale.set(radius, radius, radius);
     this.solid.visible = radius > 0;
     this.showAxis(placement);
     const points = Array.from({ length: 64 }, (_, i) => {

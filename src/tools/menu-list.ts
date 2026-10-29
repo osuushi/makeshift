@@ -1,5 +1,3 @@
-import { drillIcon } from "./drill-icon.js";
-
 /** Rendering and keyboard highlight for one flat, accessible menu list. */
 export class ToolMenuList {
   rows: { id: string; element: HTMLButtonElement; activate: () => void }[] = [];
@@ -38,7 +36,6 @@ export class ToolMenuList {
       description = document.createElement("small"),
       shortcut = document.createElement("kbd");
     title.textContent = label;
-    if (id === "drill") title.prepend(drillIcon());
     description.textContent = detail;
     shortcut.textContent = toolShortcut(key);
     element.append(title, shortcut, description);
