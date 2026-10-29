@@ -223,9 +223,9 @@ The toolbox has three behaviors:
 The owned tree uses tool IDs or `{items, selected, title?}` groups. A title denotes
 an ordinary menu rather than swapping alternatives; titles only occur in the
 Other Tools subtree. Each tool occurs once, without aliases. Default frequent
-alternatives cover drawing; basic primitives; Extrude, Revolve and Loft;
+alternatives cover drawing (Line, Rectangle, Circle, Pen and Trim); basic primitives; Extrude, Revolve and Loft;
 Booleans; and shape editing (Fillet, Chamfer, Shell and Offset). Other Tools contains
-Sketch editing, Surface details, Planes & references, and Mirror. Duplicate bodies
+Sketch editing (Curve, Offset and Fillet), Surface details, Planes & references, and Mirror. Duplicate bodies
 stays available through Search but is excluded from the toolbox. Every toolbox tool
 has a dedicated icon; named menus use a folder.
 Only ongoing tools belong here. Immediate commands and constraints retain their
@@ -257,8 +257,10 @@ Settings has General and Toolbox tabs. The Toolbox tab shows the entire expanded
 tree, supports the same dragging, and provides a top-level drop area. Selecting a
 tool inside a flat group chooses its displayed alternative without invoking it.
 Reset toolbox to defaults restores the authored grouping. Preferences use
-`makeshift.toolbox.v7`, outside documents and Undo, with storage-event sync between
-windows. Migration from v4 separates the primitive and profile-based solid families,
+`makeshift.toolbox.v8`, outside documents and Undo, with storage-event sync between
+windows. The v8 migration moves Curve into Sketch editing and Trim into the drawing
+group when both groups still have their authored layout; customized groups remain intact.
+Pen uses a conventional vector pen-nib icon. Migration from v4 separates the primitive and profile-based solid families,
 pins the Move/Rotate/Scale/Transform group below Select, removes Duplicate and keeps
 Mirror in Other Tools while preserving
 unrelated customization and remembered alternatives. v5/v6 preferences upgrade the

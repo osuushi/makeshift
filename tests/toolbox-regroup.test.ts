@@ -8,6 +8,7 @@ import {
 } from "../src/tools/toolbox-defaults.js";
 import { toolboxIconPaths } from "../src/tools/toolbox-icons.js";
 import { moveToolbox, normalizeToolbox } from "../src/tools/toolbox-layout.js";
+import { updateSketchTools } from "../src/tools/toolbox-migration.js";
 import { regroupToolbox } from "../src/tools/toolbox-regroup.js";
 import {
   toolboxGroup as group,
@@ -65,4 +66,24 @@ test("every eligible tool has its own explicit icon, with no placeholder fallbac
   const ids = toolboxLeaves(defaultToolbox());
   for (const id of ids) assert.ok(toolboxIconPaths[id], `Missing icon for ${id}`);
   assert.equal(new Set(ids.map((id) => toolboxIconPaths[id])).size, ids.length);
+});
+
+test("sketch layout upgrade preserves choices and custom groups", () => {
+  const old = defaultToolbox();
+  old.items[2] = { ...group("line", "rectangle", "circle", "bezier", "pen"), selected: 4 };
+  const drawer = old.items.at(-1);
+  assert.ok(typeof drawer === "object");
+  drawer.items[0] = menu("Sketch editing", "trim", "sketch-offset", "sketch-fillet");
+  const next = updateSketchTools(old);
+  assert.equal(toolboxLeaf(next.items[2]), "pen");
+  assert.deepEqual(toolboxLeaves(next).sort(), toolboxLeaves(old).sort());
+  assert.deepEqual(next, {
+    ...defaultToolbox(),
+    items: defaultToolbox().items.map((item, index) =>
+      index === 2 ? { ...group("line", "rectangle", "circle", "pen", "trim"), selected: 3 } : item,
+    ),
+  });
+  assert.deepEqual(updateSketchTools(next), next);
+  old.items[2] = group("pen", "line", "bezier", "rectangle", "circle");
+  assert.deepEqual(updateSketchTools(old), old);
 });
