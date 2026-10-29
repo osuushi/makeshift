@@ -1,9 +1,12 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { app, autoUpdater, dialog } from "electron";
+import { UpdateStatus } from "./update-status.js";
 
 /** Only signed release packages carry the feed configuration. */
 export class AppUpdates {
+  private readonly status = new UpdateStatus();
+  private downloading = false;
   private enabled = false;
   private checking = false;
   private manual = false;
@@ -17,12 +20,18 @@ export class AppUpdates {
     private installFailed: () => void,
   ) {
     autoUpdater.on("error", (error) => this.failed(error));
+    autoUpdater.on("update-available", () => {
+      this.downloading = true;
+      if (this.manual) this.status.update(true);
+    });
     autoUpdater.on("update-not-available", () => {
+      this.status.close();
       this.checking = false;
       if (this.manual) void this.message("Makeshift is up to date.");
       this.manual = false;
     });
     autoUpdater.on("update-downloaded", (_event, _notes, name) => {
+      this.status.close();
       this.checking = false;
       this.manual = false;
       this.downloaded = true;
@@ -67,11 +76,16 @@ export class AppUpdates {
       return;
     }
     if (this.checking) {
-      if (manual) void this.message("Makeshift is checking for or downloading an update.");
+      if (manual) {
+        this.manual = true;
+        this.status.show(this.downloading);
+      }
       return;
     }
     this.manual = manual;
     this.checking = true;
+    this.downloading = false;
+    if (manual) this.status.show(false);
     try {
       autoUpdater.checkForUpdates();
     } catch (error) {
@@ -91,6 +105,7 @@ export class AppUpdates {
   }
 
   private failed(error: unknown): void {
+    this.status.close();
     this.checking = false;
     console.error("Makeshift update failed:", error);
     if (this.installing) {

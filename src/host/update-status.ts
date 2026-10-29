@@ -1,0 +1,91 @@
+import { BrowserWindow } from "electron";
+import type { DocumentCommand } from "../model/document-host.js";
+
+const statusWindows = new Set<BrowserWindow>();
+
+export function routeUpdateStatusCommand(command: DocumentCommand): boolean {
+  const focused = BrowserWindow.getFocusedWindow();
+  if (!focused || !statusWindows.has(focused)) return false;
+  if (["quit", "restart-update", "new", "open"].includes(command)) return false;
+  if (command === "close") focused.close();
+  return true;
+}
+
+/** Nonmodal feedback for an explicitly requested update check. */
+export class UpdateStatus {
+  private window: BrowserWindow | undefined;
+  private downloading = false;
+
+  show(downloading: boolean): void {
+    this.downloading = downloading;
+    if (this.window) {
+      this.render(this.window);
+      if (process.env.MAKESHIFT_TEST_HIDDEN !== "1") {
+        this.window.show();
+        this.window.focus();
+      }
+      return;
+    }
+    const window = new BrowserWindow({
+      title: "Software Update — Makeshift",
+      width: 420,
+      height: 210,
+      resizable: false,
+      minimizable: false,
+      maximizable: false,
+      show: false,
+      webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false },
+    });
+    this.window = window;
+    statusWindows.add(window);
+    window.setMenu(null);
+    window.on("close", () => {
+      if (this.window === window) this.window = undefined;
+    });
+    window.on("closed", () => {
+      statusWindows.delete(window);
+      if (this.window === window) this.window = undefined;
+    });
+    window.webContents.on("did-finish-load", () => {
+      this.render(window);
+      if (process.env.MAKESHIFT_TEST_HIDDEN !== "1") window.show();
+    });
+    void window.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(page)}`).catch(() => {
+      if (!window.isDestroyed()) window.destroy();
+    });
+  }
+
+  update(downloading: boolean): void {
+    this.downloading = downloading;
+    if (this.window) this.render(this.window);
+  }
+
+  close(): void {
+    this.window?.destroy();
+    this.window = undefined;
+  }
+
+  private render(window: BrowserWindow): void {
+    if (window.isDestroyed()) return;
+    const message = this.downloading ? "Downloading update…" : "Checking for updates…";
+    void window.webContents
+      .executeJavaScript(`document.querySelector('h1').textContent = ${JSON.stringify(message)}`)
+      .catch(() => {});
+  }
+}
+
+const page = `<!doctype html>
+<html><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
+<title>Software Update — Makeshift</title>
+<style>
+:root { color-scheme: light dark; font: 13px system-ui; }
+body { margin: 28px; }
+h1 { font-size: 17px; font-weight: 600; margin: 0 0 18px; }
+progress { width: 100%; height: 8px; }
+p { opacity: .7; line-height: 1.5; }
+</style></head><body>
+<h1 role="status" aria-live="polite">Checking for updates…</h1>
+<progress aria-label="Update in progress"></progress>
+<p>You can close this window and keep working.<br>We’ll let you know when the update is ready.</p>
+</body></html>`;
