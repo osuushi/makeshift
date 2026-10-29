@@ -1,4 +1,4 @@
-import { planeThroughGuides, selectedGuides } from "../guides/selection.js";
+import { selectedGuidePlane, selectedGuides } from "../guides/selection.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { PlaneFrame } from "../sketch/planes.js";
 
@@ -8,7 +8,7 @@ export function constructionPlaneReference(
   reference?: PlaneFrame,
 ): PlaneFrame | null {
   const guides = [...selectedGuides(editor)];
-  if (guides.length) return planeThroughGuides(editor.display, guides);
+  if (guides.length) return selectedGuidePlane(editor);
   if (reference) return structuredClone(reference);
   const selected = editor.modeling.targets;
   const target = selected.length === 1 ? selected[0] : undefined;

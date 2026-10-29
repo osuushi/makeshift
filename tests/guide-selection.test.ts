@@ -5,7 +5,7 @@ import { editGuides } from "../src/guides/model.js";
 import { planeThroughGuides } from "../src/guides/selection.js";
 import { withConstructionPlane } from "../src/model/construction-plane.js";
 import { emptySketch, type SketchDocument } from "../src/sketch/document.js";
-import { planes, validateFrame } from "../src/sketch/planes.js";
+import { planeNormal, planes, validateFrame } from "../src/sketch/planes.js";
 
 function fixture(): SketchDocument {
   const sketch = {
@@ -58,4 +58,28 @@ test("three guide points create an orthonormal independent plane in selection or
   assert.deepEqual(store.data, withPlane);
   store.undo();
   assert.deepEqual(store.data, document);
+});
+
+test("one guide centers the most camera-facing signed canonical plane", () => {
+  const document = fixture();
+  const id = document.guidePoints?.[1].id;
+  assert.ok(id);
+  for (const direction of [
+    [1, 0.2, 0.3],
+    [-1, 0.2, 0.3],
+    [0.2, 1, 0.3],
+    [0.2, -1, 0.3],
+    [0.2, 0.3, 1],
+    [0.2, 0.3, -1],
+  ] as [number, number, number][]) {
+    const frame = planeThroughGuides(document, [id], direction);
+    validateFrame(frame);
+    assert.deepEqual(frame.origin, [20, 0, 0]);
+    const normal = planeNormal(frame);
+    assert.equal(
+      normal.reduce((sum, value, i) => sum + value * direction[i], 0),
+      1,
+    );
+  }
+  assert.throws(() => planeThroughGuides(document, ["missing"], [0, 0, 1]), /no longer/);
 });
