@@ -149,21 +149,21 @@ export class TransformOverlay {
         this.marker(
           p.x,
           p.y,
-          markerMarkup(e.world.camera, sketch.plane.u, sketch.plane.v, true),
+          markerMarkup(e.world.camera, sketch.plane.u, sketch.plane.v, true, true),
           "rotation",
         );
       for (const h of widget.axes) {
         const tip = project(h.point);
         const u = h.axis === "x" ? sketch.plane.u : sketch.plane.v;
         const v = cameraFacingWidth(e.world.camera, u);
-        this.marker(tip.x, tip.y, markerMarkup(e.world.camera, u, v, false), h.axis);
+        this.marker(tip.x, tip.y, markerMarkup(e.world.camera, u, v, false, true), h.axis);
       }
     } else if (sketchRotationVisible(e)) {
       this.node("line", { x1: c.x, y1: c.y, x2: p.x, y2: p.y, class: "rotation-guide" });
       this.marker(
         p.x,
         p.y,
-        markerMarkup(e.world.camera, sketch.plane.u, sketch.plane.v, true),
+        markerMarkup(e.world.camera, sketch.plane.u, sketch.plane.v, true, true),
         "rotation",
       );
     }

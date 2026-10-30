@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
+import { coneVisible } from "../sketch/move-widget/cone.js";
 import {
   alignedAxis,
   markerMarkup,
@@ -107,14 +108,15 @@ export class BodyGizmo {
     const entries: { element: HTMLElement; nominal: WidgetTarget }[] = [];
     for (const handle of this.handles) {
       const index = names.indexOf(handle.axis);
+      const direction = handle.axis === "N" && normal ? normal : axes[handle.axis];
       handle.button.hidden =
         !transformLayerEnabled(editor, handle.rotate ? "rotate" : "move") ||
         (handle.axis === "N" && !normal) ||
+        (!handle.rotate && !coneVisible(world.camera, direction)) ||
         (handle.rotate &&
           (movingPivot || translationOnly || !rotationVisible(world.camera, axes[handle.axis]))) ||
         (aligned !== null && (handle.rotate ? index !== aligned : index === aligned));
       if (handle.button.hidden) continue;
-      const direction = handle.axis === "N" && normal ? normal : axes[handle.axis];
       const boundary = handle.axis === "N" ? projectedAxis(editor, pivot, direction) : null;
       let u: Vector, v: Vector, offset: THREE.Vector3;
       if (handle.rotate) {
@@ -144,7 +146,7 @@ export class BodyGizmo {
       const ratio = clearTransformControl(editor, pivot, local);
       local.x *= ratio;
       local.y *= ratio;
-      handle.button.innerHTML = markerMarkup(world.camera, u, v, handle.rotate);
+      handle.button.innerHTML = markerMarkup(world.camera, u, v, handle.rotate, true);
       const hit = handle.button.getBoundingClientRect();
       entries.push({
         element: handle.button,
