@@ -76,7 +76,15 @@ export class BodyMoveControls {
       (event) => {
         const s = this.session;
         const handle = event.target instanceof Element && event.target.closest(".body-axis-handle");
-        return !!(s?.valid && !this.pointer && handle && this.gizmo.root.contains(handle));
+        // Duplicate opens a preview before any axis is active; its first handle
+        // starts that edit rather than accepting an overlapping copy.
+        return !!(
+          s?.valid &&
+          this.gizmo.input.hasAttribute("aria-label") &&
+          !this.pointer &&
+          handle &&
+          this.gizmo.root.contains(handle)
+        );
       },
       this.abort.signal,
     );
