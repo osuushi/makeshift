@@ -14,6 +14,18 @@ export interface DecoratorPreset extends DecoratorChoice {
   definition: string;
   version: number;
 }
+/** Built-in thread taper defaults belong to the new support, not the last rod/hole. */
+export function recalledChoiceSettings(
+  definition: string,
+  choice?: DecoratorChoice,
+): Settings | undefined {
+  if (!choice) return undefined;
+  if (definition !== threadDefinition || choice.presetId || choice.settings.preset === "custom")
+    return choice.settings;
+  return Object.fromEntries(
+    Object.entries(choice.settings).filter(([key]) => key !== "startTaper" && key !== "endTaper"),
+  );
+}
 export const choiceKey = (definition: string, version = 1) => `${definition}/${version}`;
 export function sameSettings(a: Settings, b: Settings): boolean {
   return (

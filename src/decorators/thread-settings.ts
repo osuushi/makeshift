@@ -160,6 +160,7 @@ export function threadDepth(settings: ThreadSettings): number {
 export function threadDefaults(
   diameter: number,
   preset: ThreadSettings["preset"] = "fdm-fine",
+  outward: 1 | -1 = 1,
 ): ThreadSettings {
   const fdm = preset === "fdm-fine" || preset === "fdm-coarse";
   const pitch = fdm ? (preset === "fdm-fine" ? 1 : 1.5) : coarseMetric(diameter).pitch;
@@ -173,8 +174,8 @@ export function threadDefaults(
     tipTruncation: fdm ? 0.1 : 0,
     start: 0,
     end: 0,
-    startTaper: pitch / 2,
-    endTaper: pitch / 2,
+    startTaper: outward > 0 ? pitch / 2 : 0,
+    endTaper: outward > 0 ? pitch / 2 : 0,
   };
 }
 
@@ -210,23 +211,26 @@ export function patchThreadSettings(
   diameter: number,
   settings: Settings,
   patch: Settings,
+  outward: 1 | -1 = 1,
 ): ThreadSettings {
   if (legacyPreset(patch.preset)) throw new Error("This thread preset is no longer available");
   const merged = threadSettings({ ...threadSettings(settings), ...patch });
   let resolved = merged;
   if (patch.preset && patch.preset !== "custom") {
-    const { pitch, profile, clearance, tipTruncation, startTaper, endTaper } = threadDefaults(
+    const { pitch, profile, clearance, tipTruncation } = threadDefaults(
       diameter,
       merged.preset,
+      outward,
     );
+    const taper = outward > 0 ? Number(patch.pitch ?? pitch) / 2 : 0;
     resolved = threadSettings({
       ...merged,
       pitch,
       profile,
       clearance,
       tipTruncation,
-      startTaper,
-      endTaper,
+      startTaper: taper,
+      endTaper: taper,
       ...patch,
     });
   }

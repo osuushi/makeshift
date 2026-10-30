@@ -44,8 +44,9 @@ export function inspectThreads(
             ? patchKnurlSettings(existing?.settings ?? {}, request.settings ?? {})
             : patchThreadSettings(
                 diameter,
-                existing?.settings ?? threadDefaults(diameter),
+                existing?.settings ?? threadDefaults(diameter, "fdm-fine", cylinder.outward),
                 request.settings ?? {},
+                cylinder.outward,
               ),
       };
       validateBuiltin(document, instance);

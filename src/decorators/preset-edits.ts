@@ -8,6 +8,7 @@ import {
   copyPreset,
   localPreset,
   presetName,
+  recalledChoiceSettings,
   sameSettings,
 } from "./presets.js";
 import type { DecoratorEdit, DecoratorInstance } from "./types.js";
@@ -36,7 +37,9 @@ export async function editWithPresets(document: SketchDocument, edit: DecoratorE
     edit.action === "apply" && edit.settings === undefined && edit.gearGroup
       ? document.decorators?.find((d) => d.gearGroup === edit.gearGroup)?.settings
       : undefined;
-  const recalled = groupSettings ?? choice?.settings;
+  const recalled =
+    groupSettings ??
+    (edit.action === "apply" ? recalledChoiceSettings(edit.definition, choice) : undefined);
   const resolved =
     edit.action === "apply" && recalled
       ? { ...edit, settings: recalledSettings(document, edit, recalled) }

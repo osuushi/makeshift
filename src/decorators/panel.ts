@@ -11,7 +11,7 @@ import { appendKnurlSettings } from "./knurl-panel.js";
 import { decoratorLibrary } from "./library.js";
 import { appendThreadInformation, appendThreadProblem } from "./panel-information.js";
 import { appendPresetControls } from "./preset-panel.js";
-import { choiceKey } from "./presets.js";
+import { choiceKey, recalledChoiceSettings } from "./presets.js";
 import { appendDecoratorRepairs } from "./repair-panel.js";
 import { DecoratorSettingsDraft } from "./settings-draft.js";
 import { ThreadApplication } from "./thread-application.js";
@@ -99,7 +99,10 @@ export class DecoratorPanel {
   }
   private async apply(definition = threadDefinition): Promise<void> {
     const faces = this.selected();
-    const settings = this.editor.store.data.lastDecoratorChoices?.[choiceKey(definition)]?.settings;
+    const settings = recalledChoiceSettings(
+      definition,
+      this.editor.store.data.lastDecoratorChoices?.[choiceKey(definition)],
+    );
     const edit = { action: "apply" as const, definition, faces };
     if (definition === threadDefinition) {
       try {

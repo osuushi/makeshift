@@ -267,7 +267,9 @@ as well as the groove envelope. An external Cut-into-rod thread uses its radial
 groove cutter, including buried material within that envelope. Other bodies are
 untouched. Added thread material still follows the selected trimmed face domains.
 Start/end taper lengths are configurable; built-in presets set both to half their
-resolved pitch. Tapers clip the unchanged thread profile against a linear cone:
+resolved pitch on rods and zero on holes, independent of Cut into mode. Recalling a
+built-in choice resolves taper defaults for the new support. Explicit taper edits,
+local preset snapshots and saved documents retain their values. Tapers clip the unchanged thread profile against a linear cone:
 rod radii are capped with min(profile, cone), hole radii with max(profile, cone).
 The end cone reaches the rod root or hole groove envelope, always removing
 material in either Cut into mode. Mesh facets follow the cone/profile intersection
