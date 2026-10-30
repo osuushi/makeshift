@@ -141,7 +141,6 @@ export class BodyGizmo {
         end.y = origin.y + boundary.y * 144;
       }
       const local = { x: end.x - origin.x, y: end.y - origin.y };
-      const projectedDistance = handle.rotate ? undefined : Math.hypot(local.x, local.y);
       const ratio = clearTransformControl(editor, pivot, local);
       local.x *= ratio;
       local.y *= ratio;
@@ -149,7 +148,7 @@ export class BodyGizmo {
       const hit = handle.button.getBoundingClientRect();
       entries.push({
         element: handle.button,
-        nominal: { ...local, size: Math.max(hit.width, hit.height), projectedDistance },
+        nominal: { ...local, size: Math.max(hit.width, hit.height) },
       });
     }
     this.fit(editor, pivot, entries);

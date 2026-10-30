@@ -1,0 +1,69 @@
+import * as THREE from "three";
+import type { Vector } from "../planes.js";
+
+type Point = { x: number; y: number };
+const path = (points: Point[]) =>
+  `${points.map((p, i) => `${i ? "L" : "M"}${p.x},${-p.y}`).join(" ")}Z`;
+
+/** A true-axis cone: no camera-facing head or minimum-angle display correction. */
+export function coneMarkup(camera: THREE.Camera, axis: Vector): string {
+  const n = new THREE.Vector3(...axis)
+    .normalize()
+    .applyQuaternion(camera.quaternion.clone().invert());
+  const reference = Math.abs(n.x) < 0.8 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
+  const u = reference.addScaledVector(n, -reference.dot(n)).normalize();
+  const v = n.clone().cross(u);
+  const base = n.clone().multiplyScalar(-12),
+    tip = n.clone().multiplyScalar(18);
+  const ring = Array.from({ length: 64 }, (_, i) => {
+    const angle = (i * Math.PI * 2) / 64;
+    return base
+      .clone()
+      .addScaledVector(u, 10 * Math.cos(angle))
+      .addScaledVector(v, 10 * Math.sin(angle));
+  });
+  const light = new THREE.Vector3(-0.4, 0.6, 0.7).normalize();
+  const sides = ring.map((a, i) => {
+    const b = ring[(i + 1) % ring.length];
+    const normal = a
+      .clone()
+      .add(b)
+      .multiplyScalar(0.5)
+      .sub(base)
+      .normalize()
+      .multiplyScalar(30)
+      .addScaledVector(n, 10)
+      .normalize();
+    const shade = Math.round(178 + 77 * Math.max(0, normal.dot(light)));
+    return {
+      depth: (a.z + b.z + tip.z) / 3,
+      markup: `<path d="${path([a, b, tip])}" fill="var(--widget-selection-fill, rgb(${shade} ${shade} ${shade}))" stroke="var(--widget-selection-fill, rgb(${shade} ${shade} ${shade}))" stroke-width="0.3"/>`,
+    };
+  });
+  sides.sort((a, b) => a.depth - b.depth);
+  const cap =
+    n.z < 0
+      ? `<path d="${path(ring)}" fill="var(--widget-selection-fill, var(--handle-shade))" stroke="var(--handle-dark)" stroke-width="1.2"/>`
+      : "";
+  return `<svg viewBox="-24 -24 48 48" aria-hidden="true" stroke-linejoin="round">${sides.map((s) => s.markup).join("")}${cap}<path d="${path(hull([...ring, tip]))}" fill="none" stroke="var(--handle-dark)" stroke-width="1.5"/></svg>`;
+}
+
+/** Outline only the convex silhouette, never the tessellation. */
+function hull(points: Point[]): Point[] {
+  const sorted = [...points].sort((a, b) => a.x - b.x || a.y - b.y);
+  const cross = (a: Point, b: Point, c: Point) =>
+    (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+  const half = (sequence: Point[]) => {
+    const result: Point[] = [];
+    for (const point of sequence) {
+      while (
+        result.length > 1 &&
+        cross(result[result.length - 2], result[result.length - 1], point) <= 0
+      )
+        result.pop();
+      result.push(point);
+    }
+    return result.slice(0, -1);
+  };
+  return [...half(sorted), ...half(sorted.reverse())];
+}
