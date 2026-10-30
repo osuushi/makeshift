@@ -140,3 +140,10 @@ Do not use computer use to extract the live model. Ask for a fixture path if one
 Keep TICKETS.md local and untracked. Commit small reviewed units after relevant
 checks. Preserve user work and the old prototype in Git. Setup must be reproducible
 without an agent runtime or personal cache; document only actual working commands.
+
+After creating a pull request, always call Codex's `attach_artifact` tool with
+`artifact_type: "pull_request"` and the PR URL to attach it to the current chat,
+regardless of which tool or command created it. Attach every PR if several are
+created. A link in the final response is not a substitute; do not leave attachment
+for the founder to trigger by clicking. Also attach an existing PR when asked to
+review, update or continue it, but not PRs used only as background references.
