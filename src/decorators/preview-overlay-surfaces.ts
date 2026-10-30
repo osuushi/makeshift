@@ -13,6 +13,7 @@ import {
 } from "./preview-compositor.js";
 import { PreviewFallback } from "./preview-fallback.js";
 import type { PackedPreviewMesh } from "./preview-wire.js";
+import { threadNormalSurface } from "./thread-normal-surface.js";
 import { threadPreviewPlanes } from "./thread-preview-surface.js";
 import { threadDefinition } from "./thread-settings.js";
 import type { FaceReference } from "./types.js";
@@ -104,7 +105,16 @@ export class PreviewOverlaySurfaces {
         this.remove(this.surfaces[index]);
         this.surfaces.splice(index, 1);
       }
-    for (const { id, body, faces, positions, indices, occlusion, projections } of meshes) {
+    for (const {
+      id,
+      body,
+      faces,
+      positions,
+      indices,
+      occlusion,
+      projections,
+      textures,
+    } of meshes) {
       const signature = signatures.get(id);
       if (signature === undefined || signature !== current.get(id)) continue;
       const geometry = new THREE.BufferGeometry();
@@ -139,6 +149,17 @@ export class PreviewOverlaySurfaces {
         signature,
         definition: this.definitions.get(id) ?? "custom",
       });
+      for (const texture of textures ?? []) {
+        const mesh = threadNormalSurface(texture, this.compositor.previewMaterial(), id);
+        this.group.add(mesh);
+        this.surfaces.push({
+          mesh,
+          faces: new Set([previewFaceKey(texture.body, texture.face)]),
+          id,
+          signature,
+          definition: this.definitions.get(id) ?? "custom",
+        });
+      }
       for (const projection of projections ?? []) {
         const mesh = normalProjectionSurface(projection, this.compositor.previewMaterial(), id);
         this.group.add(mesh);

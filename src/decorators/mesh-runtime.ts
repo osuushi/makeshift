@@ -9,9 +9,8 @@ import { knurlPreview } from "./knurl-runtime.js";
 import { MeshScope } from "./mesh-scope.js";
 import { exportTolerance } from "./precision.js";
 import type { PreviewFeedback } from "./preview-feedback.js";
-import { threadDomain } from "./thread-domain.js";
 import { nextThreadResolution } from "./thread-preview.js";
-import { threadFlatOcclusion } from "./thread-preview-occlusion.js";
+import { threadBodyPreview } from "./thread-preview-body.js";
 import { threadPreviewSurface } from "./thread-preview-surface.js";
 import type { ThreadPreviewResolution } from "./thread-sampling.js";
 import type { DecoratorInstance } from "./types.js";
@@ -85,16 +84,14 @@ export function decoratorPreviewOutput(
       radius: geometry.previewAuxiliaryRadius,
       segments: geometry.resolution.segments,
     });
-  if (!geometry.masks) return { mesh: surface(geometry.fill), state: geometry.resolution };
   if (!runtime) throw new PreviewRuntimeRequired();
   const scope = new MeshScope(runtime, body.center);
   try {
-    const mask = threadDomain(scope, body, faces, geometry);
-    const generated = scope.from(geometry.fill);
+    const preview = threadBodyPreview(scope, body, faces, geometry);
     return {
-      mesh: surface(scope.mesh(scope.keep(generated.intersect(mask)))),
+      mesh: surface(preview.mesh),
       state: geometry.resolution,
-      occlusion: threadFlatOcclusion(scope, body, faces, geometry),
+      occlusion: preview.occlusion,
     };
   } finally {
     scope.close();

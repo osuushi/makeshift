@@ -6,6 +6,7 @@ import { decoratorPresetRoute } from "./ui-decorator-presets.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { close, inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
+import { mixedThreadPresetRoute } from "./ui-thread-preset-mixed.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 await withUiRuntimes(
@@ -32,6 +33,7 @@ await withUiRuntimes(
     );
     close(roundtrip.bodies[0].volume, original.bodies[0].volume);
     for (let i = 0; i < 6; i++) close(roundtrip.bodies[0].bounds[i], original.bodies[0].bounds[i]);
+    await mixedThreadPresetRoute(page, name);
     console.log(
       `${name}: unchanged-file BRep serialization ${roundtrip.bodies[0].brep === original.bodies[0].brep ? "identical" : "canonicalized"}; stable topology/volume/bounds verified`,
     );

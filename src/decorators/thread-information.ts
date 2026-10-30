@@ -1,5 +1,5 @@
 import type { BodyGeometry } from "../model/body.js";
-import { cross, cylinderExtent, dot, resolveFaces, subtract } from "./cylinder.js";
+import { cross, cylinderExtent, resolveFaces, subtract } from "./cylinder.js";
 import { threadReference } from "./thread-extent.js";
 import { coarseMetric, threadDepth, threadSettings } from "./thread-settings.js";
 import type { DecoratorInstance, FaceReference } from "./types.js";
@@ -45,21 +45,6 @@ export function threadInformation(bodies: readonly BodyGeometry[], instance: Dec
           faces: [...instance.faces, { body: body.id, face: adjacent.id }],
         });
     }
-    if (
-      cylinder.outward !== -1 ||
-      !adjacent.plane ||
-      !adjacent.edges.some((edge) => faces.some((f) => f.edges.includes(edge)))
-    )
-      continue;
-    const normal = cross(adjacent.plane.u, adjacent.plane.v);
-    const distance = Math.abs(dot(normal, subtract(adjacent.plane.origin, cylinder.origin)));
-    const envelope = cylinder.radius + (settings.cut === "hole" ? depth : 0);
-    if (Math.abs(dot(normal, cylinder.axis)) < 1e-7 && distance < envelope - 1e-7)
-      warnings.push({
-        message:
-          "This flat interrupts the circular passage; a round mating thread may not turn here.",
-        faces: [...instance.faces, { body: body.id, face: adjacent.id }],
-      });
   }
   return { description, warnings };
 }

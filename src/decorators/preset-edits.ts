@@ -6,10 +6,13 @@ import {
   checkedPresetName,
   choiceKey,
   copyPreset,
+  lastDecoratorChoice,
   localPreset,
   presetName,
+  recalledChoiceSettings,
   sameSettings,
 } from "./presets.js";
+import { threadDefinition } from "./thread-settings.js";
 import type { DecoratorEdit, DecoratorInstance } from "./types.js";
 
 type Run = (document: SketchDocument, edit: DecoratorEdit) => Promise<SketchDocument>;
@@ -19,24 +22,25 @@ export async function editWithPresets(document: SketchDocument, edit: DecoratorE
   if (edit.action === "preset") return editPreset(document, edit, run);
   const choice =
     edit.action === "apply" && edit.settings === undefined
-      ? document.lastDecoratorChoices?.[
-          choiceKey(
-            edit.definition,
-            edit.version ??
-              Math.max(
-                1,
-                ...(document.decoratorDefinitions ?? [])
-                  .filter((d) => d.id === edit.definition)
-                  .map((d) => d.version),
-              ),
-          )
-        ]
+      ? lastDecoratorChoice(
+          document,
+          edit.definition,
+          edit.version ??
+            Math.max(
+              1,
+              ...(document.decoratorDefinitions ?? [])
+                .filter((d) => d.id === edit.definition)
+                .map((d) => d.version),
+            ),
+        )
       : undefined;
   const groupSettings =
     edit.action === "apply" && edit.settings === undefined && edit.gearGroup
       ? document.decorators?.find((d) => d.gearGroup === edit.gearGroup)?.settings
       : undefined;
-  const recalled = groupSettings ?? choice?.settings;
+  const recalled =
+    groupSettings ??
+    (edit.action === "apply" ? recalledChoiceSettings(edit.definition, choice) : undefined);
   const resolved =
     edit.action === "apply" && recalled
       ? { ...edit, settings: recalledSettings(document, edit, recalled) }
@@ -51,7 +55,11 @@ export async function editWithPresets(document: SketchDocument, edit: DecoratorE
     let presetId = instance.presetId;
     if (edit.action === "apply") {
       presetId = choice?.presetId;
-      if (edit.settings && Object.keys(edit.settings).some((key) => key !== "preset")) {
+      if (
+        instance.definition !== threadDefinition &&
+        edit.settings &&
+        Object.keys(edit.settings).some((key) => key !== "preset")
+      ) {
         const preset =
           presets.find(
             (p) =>
@@ -68,6 +76,8 @@ export async function editWithPresets(document: SketchDocument, edit: DecoratorE
       edit.patch.preset !== undefined
     ) {
       presetId = undefined;
+    } else if (instance.definition === threadDefinition) {
+      if (previous && !sameSettings(previous.settings, instance.settings)) presetId = undefined;
     } else if (previous && !sameSettings(previous.settings, instance.settings)) {
       const existing = localPreset(document, previous);
       const shared =

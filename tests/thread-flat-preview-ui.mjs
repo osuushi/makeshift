@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { exportDocument, launchElectron, openDocument } from "./native-documents.mjs";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { previewReady } from "./ui-decorator-worker-control.mjs";
+import { worldClick } from "./ui-face-offset.mjs";
 import { inspect } from "./ui-helpers.mjs";
 
 // CPU geometry checks cannot catch worker/compositor occlusion: the old flat can
@@ -74,6 +75,47 @@ try {
   const path = resolve(".cache/sketch-review/thread-flat-fixed.3mf");
   await exportDocument(page, "3mf", path);
   assert.ok((await stat(path)).size > 10000);
+  const hole = JSON.parse(await readFile("tests/fixtures/thread-open-hole.json", "utf8")).document;
+  await openDocument(page, {
+    name: "thread-open-hole.makeshift",
+    buffer: Buffer.from(JSON.stringify({ format: "makeshift", version: 1, document: hole })),
+  });
+  await previewReady(page);
+  for (let index = 1; index <= 3; index++)
+    await page.getByRole("button", { name: `Hide Sketch ${index}`, exact: true }).click();
+  await orient(page, [0, -0.15, -1]);
+  await worldClick(page, [0, -4, 3.5]);
+  assert.equal(
+    (await inspect(page)).modelingSelection[0]?.face,
+    "c4483f26-d217-41bd-ab44-b86dce55fd07",
+  );
+  const cut = page.getByRole("combobox", { name: "Cut into", exact: true });
+  await cut.selectOption("hole");
+  await inspect(page);
+  await previewReady(page);
+  assert.equal(
+    await page.getByRole("button", { name: "Show affected faces", exact: true }).count(),
+    0,
+  );
+  await page.mouse.move(100, 70);
+  await page.screenshot({ path: ".cache/sketch-review/thread-hole-body-cut.png" });
+  const holeGroove = await tealAt(page, [4.3, -4.75, 0]);
+  const holeFlat = await tealAt(page, [6, -4.75, 0]);
+  assert.ok(holeGroove > 0, `Hole groove visible through original flat: ${holeGroove}`);
+  assert.equal(holeFlat, 0, "Remaining flat material hides the far side of the hole");
+  await page.screenshot({ path: ".cache/sketch-review/thread-hole-body-cut.png" });
+  await worldClick(page, [4.3, -4.75, 0]);
+  assert.equal(
+    (await inspect(page)).modelingSelection[0]?.face,
+    "51f05e36-1b23-43fc-b7e5-4129376daf51",
+  );
+  const holePath = resolve(".cache/sketch-review/thread-hole-body-cut.3mf");
+  await exportDocument(page, "3mf", holePath);
+  assert.ok((await stat(holePath)).size > 10000);
+  console.log(
+    "Captured hole: body-wide groove/flat occlusion, no warning, original picking and native export passed",
+    { holeGroove, holeFlat },
+  );
   assert.deepEqual(errors, []);
   console.log(
     "Captured rod: groove/flat occlusion, original flat picking and native 3MF export passed.",

@@ -67,14 +67,14 @@ export const threadFields: readonly DecoratorField[] = [
     default: 0,
     visibleWhen: { key: "profile", values: ["triangle"] },
   },
-  { key: "start", label: "Start inset", type: "number", unit: "mm", min: 0 },
-  { key: "end", label: "End inset", type: "number", unit: "mm", min: 0 },
   { key: "startTaper", label: "Start taper", type: "number", unit: "mm", min: 0 },
   { key: "endTaper", label: "End taper", type: "number", unit: "mm", min: 0 },
 ];
 
 // Optional compatibility metadata; neither required nor exposed as current controls.
-const legacyPrinterFields: readonly DecoratorField[] = [
+const legacyFields: readonly DecoratorField[] = [
+  { key: "start", label: "Start inset", type: "number", unit: "mm", min: 0 },
+  { key: "end", label: "End inset", type: "number", unit: "mm", min: 0 },
   {
     key: "layerHeight",
     label: "Layer height",
@@ -160,11 +160,13 @@ export function threadDepth(settings: ThreadSettings): number {
 export function threadDefaults(
   diameter: number,
   preset: ThreadSettings["preset"] = "fdm-fine",
+  outward: 1 | -1 = 1,
 ): ThreadSettings {
   const fdm = preset === "fdm-fine" || preset === "fdm-coarse";
+  const pitch = fdm ? (preset === "fdm-fine" ? 1 : 1.5) : coarseMetric(diameter).pitch;
   return {
     preset,
-    pitch: fdm ? (preset === "fdm-fine" ? 1 : 1.5) : coarseMetric(diameter).pitch,
+    pitch,
     profile: fdm ? "triangle" : "metric",
     hand: "right",
     cut: "rod",
@@ -172,20 +174,22 @@ export function threadDefaults(
     tipTruncation: fdm ? 0.1 : 0,
     start: 0,
     end: 0,
-    startTaper: 0,
-    endTaper: 0,
+    startTaper: outward > 0 ? pitch : 0,
+    endTaper: outward > 0 ? pitch : 0,
   };
 }
 
 export function threadSettings(settings: Settings): ThreadSettings {
   const normalized: Settings = {
     tipTruncation: 0,
+    start: 0,
+    end: 0,
     ...normalizeThreadPreset(settings),
   };
-  const fields = [...threadFields, ...legacyPrinterFields];
+  const fields = [...threadFields, ...legacyFields];
   for (const field of fields) {
     const value = normalized[field.key];
-    if (legacyPrinterFields.includes(field) && value === undefined) continue;
+    if (legacyFields.includes(field) && value === undefined) continue;
     if (field.type === "number") {
       if (
         typeof value !== "number" ||
@@ -207,14 +211,36 @@ export function patchThreadSettings(
   diameter: number,
   settings: Settings,
   patch: Settings,
+  outward: 1 | -1 = 1,
 ): ThreadSettings {
   if (legacyPreset(patch.preset)) throw new Error("This thread preset is no longer available");
   const merged = threadSettings({ ...threadSettings(settings), ...patch });
   let resolved = merged;
   if (patch.preset && patch.preset !== "custom") {
-    const { pitch, profile, clearance, tipTruncation } = threadDefaults(diameter, merged.preset);
-    resolved = threadSettings({ ...merged, pitch, profile, clearance, tipTruncation, ...patch });
+    const { pitch, profile, clearance, tipTruncation } = threadDefaults(
+      diameter,
+      merged.preset,
+      outward,
+    );
+    const taper = outward > 0 ? Number(patch.pitch ?? pitch) : 0;
+    resolved = threadSettings({
+      ...merged,
+      pitch,
+      profile,
+      clearance,
+      tipTruncation,
+      startTaper: taper,
+      endTaper: taper,
+      ...patch,
+    });
   }
+  if (
+    !patch.preset &&
+    ["pitch", "profile", "clearance", "tipTruncation", "startTaper", "endTaper"].some(
+      (key) => patch[key] !== undefined && resolved[key] !== settings[key],
+    )
+  )
+    return threadSettings({ ...resolved, preset: "custom" });
   if (resolved.preset === "fdm-fine" || resolved.preset === "fdm-coarse") {
     const defaults = threadDefaults(diameter, resolved.preset);
     if (

@@ -53,7 +53,13 @@ test("threads apply atomically to rod/hole, patch only the requested setting, Un
     );
     const instances = owner.view.data.decorators ?? [];
     assert.equal(instances.length, 2);
-    assert.deepEqual(instances[0].settings, instances[1].settings);
+    assert.deepEqual(instances[1].settings, {
+      ...instances[0].settings,
+      startTaper: 0,
+      endTaper: 0,
+    });
+    assert.equal(instances[0].settings.startTaper, instances[0].settings.pitch);
+    assert.equal(instances[0].settings.endTaper, instances[0].settings.pitch);
     assert.equal(instances[0].settings.pitch, 1);
     assert.equal(
       (
@@ -120,7 +126,7 @@ test("threads apply atomically to rod/hole, patch only the requested setting, Un
 
 test("same nonstandard diameter resolves consistently and hand reverses the helix", () => {
   assert.equal(threadDefaults(10.3, "metric").pitch, 1.5);
-  const settings = threadDefaults(10.3, "metric");
+  const settings = { ...threadDefaults(10.3, "metric"), startTaper: 0, endTaper: 0 };
   const flankRise =
     threadRadius(5.15, 0, settings.pitch * 0.2, settings, 1, [0, 10]) -
     threadRadius(5.15, 0, settings.pitch * 0.25, settings, 1, [0, 10]);

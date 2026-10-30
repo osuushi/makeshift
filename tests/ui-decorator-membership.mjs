@@ -22,16 +22,10 @@ async function imprintThreadedCylinder(page) {
   await worldClick(page, [0, -8, 2]);
   await chooseTool(page, "threads", "threads");
   await openThreadAdvanced(page);
-  for (const [name, value] of [
-    ["Start inset", "1"],
-    ["End inset", "2"],
-    ["Start taper", "2"],
-  ]) {
-    const input = page.getByRole("spinbutton", { name, exact: true });
-    await input.fill(value);
-    await input.press("Enter");
-    await inspect(page);
-  }
+  const taper = page.getByRole("spinbutton", { name: "Start taper", exact: true });
+  await taper.fill("2");
+  await taper.press("Enter");
+  await inspect(page);
   const before = (await inspect(page)).document.decorators[0];
   await chooseTool(page, "imprint", "imprint");
   await page.getByRole("button", { name: "Use Plane 1", exact: true }).first().click();
@@ -60,7 +54,7 @@ export async function decoratorMembershipRoute(page) {
   assert.equal(split.document.decorators.length, 2);
   assert.ok(
     split.document.decorators.every(
-      (d) => !d.problem && d.settings.start === 1 && d.settings.startTaper === 2,
+      (d) => !d.problem && d.settings.start === 0 && d.settings.startTaper === 2,
     ),
   );
   assert.ok(
@@ -105,6 +99,9 @@ export async function decoratorMembershipRoute(page) {
     .click();
   await inspect(page);
   await chooseTool(page, "threads", "threads");
+  // Application recalls the last preset; explicitly make this instance different.
+  await page.getByRole("combobox", { name: "Preset", exact: true }).selectOption("fdm-fine");
+  await inspect(page);
   await worldClick(page, [0, -8, 8], true);
   state = await inspect(page);
   assert.equal(state.modelingSelection.length, 2);

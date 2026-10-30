@@ -2,9 +2,11 @@ import type { Face } from "../model/body.js";
 import type { PlaneFrame } from "../sketch/planes.js";
 import { type Cylinder, cylinderExtent } from "./cylinder.js";
 import { cylinderGrid, faceMask, radialShell } from "./radial-mesh.js";
+import { radialVolume } from "./radial-volume.js";
 import { threadGrid } from "./thread-grid.js";
 import { type ThreadPreviewResolution, threadSampling } from "./thread-sampling.js";
 import { type ThreadSettings, threadDepth } from "./thread-settings.js";
+import { threadTaperRadius } from "./thread-taper.js";
 
 /** Clip the rod crest and open the matching hole groove without adding material. */
 export function threadRadius(
@@ -31,19 +33,12 @@ export function threadRadius(
           ? 1 - relievedCrest
           : relievedCrest
         : Math.min(1, Math.max(0, (triangle - 0.125) / 0.625));
-  const taper = Math.max(
-    0,
-    Math.min(
-      1,
-      settings.startTaper ? (z - bounds[0]) / settings.startTaper : 1,
-      settings.endTaper ? (bounds[1] - z) / settings.endTaper : 1,
-    ),
-  );
-  return (
+  const profileRadius =
     radius +
-    (settings.cut === "rod" ? -1 : 1) * depth * profile * taper +
-    (outward < 0 ? settings.clearance : 0)
-  );
+    (settings.cut === "rod" ? -1 : 1) * depth * profile +
+    (outward < 0 ? settings.clearance : 0);
+  const taperRadius = threadTaperRadius(radius, z, settings, outward, bounds);
+  return outward > 0 ? Math.min(profileRadius, taperRadius) : Math.max(profileRadius, taperRadius);
 }
 
 function threadToolMeshes(
@@ -75,59 +70,13 @@ function threadToolMeshes(
     ring(outward > 0 ? low : radius - offset, outward > 0 ? radius + offset : high);
   return {
     hasAdd: outward > 0 ? maximum > radius : minimum < radius,
-    hasRemove: outward > 0 ? minimum < radius : maximum > radius,
     band: ring(low, high),
-    // The generated operand owns the axial ends. Keep this auxiliary domain's
-    // caps clear of them to avoid coincident Boolean facets on tilted rods.
-    get planarCutBand() {
-      const start = grid.coords[0].z;
-      const coords = grid.coords.map(({ angle, z }) => ({
-        angle,
-        z: z + (z === start ? -1 : 1) * 4 * tolerance,
-      }));
-      return radialShell(
-        frame,
-        coords,
-        grid.triangles,
-        () => low,
-        () => high,
-      );
-    },
-    // Reference overlap compensates base tessellation, without changing the target profile.
-    referenceRemove: reference(overlap),
     referenceAdd: reference(-overlap),
     // The physical envelope excludes numerical slivers on the auxiliary radial skins.
-    removeBand:
-      outward > 0
-        ? ring(Math.min(radius, minimum) - overlap, radius + overlap)
-        : ring(radius - overlap, Math.max(radius, maximum) + overlap),
     addBand:
       outward > 0
         ? ring(radius - overlap, Math.max(radius, maximum) + overlap)
         : ring(Math.min(radius, minimum) - overlap, radius + overlap),
-  };
-}
-
-/** Pure addition/removal modes can emit their differential shell directly. */
-function directOperand(
-  frame: PlaneFrame,
-  grid: ReturnType<typeof cylinderGrid>,
-  cylinder: Cylinder,
-  settings: ThreadSettings,
-  overlap: number,
-  target: (angle: number, z: number) => number,
-) {
-  if (cylinder.outward < 0 && settings.cut === "rod") return null;
-  const remove = settings.cut === "rod" || cylinder.outward < 0;
-  return {
-    operation: remove ? ("subtract" as const) : ("add" as const),
-    mesh: radialShell(
-      frame,
-      grid.coords,
-      grid.triangles,
-      settings.cut === "rod" ? target : () => cylinder.radius - overlap,
-      settings.cut === "rod" ? () => cylinder.radius + overlap : target,
-    ),
   };
 }
 
@@ -164,7 +113,14 @@ export function threadMeshes(
   const steps = Math.max(1, Math.ceil(((bounds[1] - bounds[0]) / settings.pitch) * samples));
   if (steps * segments > 1_000_000)
     throw new Error("Threads exceed the mesh budget; increase pitch or reduce length");
-  const { coords, triangles } = threadGrid(segments, steps, bounds, settings, taperBounds);
+  const untapered = { ...settings, startTaper: 0, endTaper: 0 };
+  const crease =
+    settings.startTaper || settings.endTaper
+      ? (angle: number, z: number) =>
+          threadRadius(cylinder.radius, angle, z, untapered, cylinder.outward, taperBounds) -
+          threadTaperRadius(cylinder.radius, z, settings, cylinder.outward, taperBounds)
+      : undefined;
+  const { coords, triangles } = threadGrid(segments, steps, bounds, settings, taperBounds, crease);
   const bandGrid = cylinderGrid(segments, 1, bounds);
   const area = faces.reduce((sum, face) => sum + face.signature[2], 0);
   const complete = Math.abs(area - 2 * Math.PI * cylinder.radius * (extent[1] - extent[0])) < 1e-6;
@@ -182,16 +138,16 @@ export function threadMeshes(
     previewAuxiliaryRadius: cylinder.outward > 0 ? low : high,
     ...threadToolMeshes(frame, bandGrid, cylinder, settings, low, high, tolerance),
     tolerance,
-    extendPlanarCuts: cylinder.outward === 1 && settings.cut === "rod",
     masks: complete ? null : faces.map((face) => faceMask(frame, [face], low, high)),
-    get direct() {
-      return directOperand(
+    get cut() {
+      if (cylinder.outward < 0) return radialVolume(frame, coords, triangles, target);
+      if (settings.cut !== "rod") return null;
+      return radialShell(
         frame,
-        { coords, triangles },
-        cylinder,
-        settings,
-        Math.min(2 * tolerance, low / 2),
+        coords,
+        triangles,
         target,
+        () => cylinder.radius + Math.min(2 * tolerance, low / 2),
       );
     },
     get fill() {

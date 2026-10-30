@@ -5,7 +5,7 @@ import type { DecoratorDisplayMode } from "../src/decorators/display-mode.js";
 import { effectiveDecoratorDisplay } from "../src/decorators/display-mode.js";
 import { editDecorators, validateDecorators } from "../src/decorators/edits.js";
 import { needsJavaScript } from "../src/decorators/javascript-edits.js";
-import { decoratorPreview } from "../src/decorators/mesh-runtime.js";
+import { decoratorPreview, initializeMeshRuntime } from "../src/decorators/mesh-runtime.js";
 import { previewDisplaySignatures } from "../src/decorators/preview-signatures.js";
 import type { DecoratorInstance } from "../src/decorators/types.js";
 import { documentArchive, readArchive } from "../src/model/document-archive.js";
@@ -32,7 +32,8 @@ test("saved display edits isolate instances, preserve geometry, and support Undo
     const first = before.decorators?.[0],
       second = before.decorators?.[1];
     assert.ok(first && second);
-    const preview = decoratorPreview(undefined, before, first);
+    const runtime = await initializeMeshRuntime();
+    const preview = decoratorPreview(runtime, before, first);
     assert.equal(
       (
         await owner.call({
@@ -49,7 +50,7 @@ test("saved display edits isolate instances, preserve geometry, and support Undo
     assert.deepEqual(after.decoratorPresets, before.decoratorPresets);
     assert.deepEqual(after.lastDecoratorChoices, before.lastDecoratorChoices);
     assert.deepEqual(
-      decoratorPreview(undefined, after, after.decorators?.[0] as DecoratorInstance),
+      decoratorPreview(runtime, after, after.decorators?.[0] as DecoratorInstance),
       preview,
     );
     await owner.call({ kind: "undo" });

@@ -27,7 +27,8 @@ try {
       await page.goto(`${server.resolvedUrls.local[0]}tests/preview-empty.html`);
       const result = await page.evaluate(async () => {
         const { previewRenderChecks } = await import("/tests/decorator-preview-render.ts");
-        return previewRenderChecks();
+        const { threadNormalChecks } = await import("/tests/thread-normal-render.ts");
+        return { compositor: previewRenderChecks(), threads: threadNormalChecks() };
       });
       assert.deepEqual(errors, []);
       console.log(`${name}: compositor GPU pixel checks passed`, result);

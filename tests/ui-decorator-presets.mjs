@@ -23,6 +23,8 @@ export async function decoratorPresetRoute(page, name) {
     await page.getByRole("region", { name: "Decorators", exact: true }).innerText(),
     /Reference Ø/,
   );
+  assert.equal(await page.getByRole("spinbutton", { name: "Start inset", exact: true }).count(), 0);
+  assert.equal(await page.getByRole("spinbutton", { name: "End inset", exact: true }).count(), 0);
   assert.equal(await nozzle.count(), 0);
   assert.equal(await layer.count(), 0);
   const advanced = page.locator("details.thread-advanced");
@@ -38,6 +40,8 @@ export async function decoratorPresetRoute(page, name) {
   await preset.selectOption("fdm-coarse");
   let settings = (await inspect(page)).document.decorators[0].settings;
   assert.equal(settings.pitch, 1.5);
+  assert.equal(settings.startTaper, 1.5);
+  assert.equal(settings.endTaper, 1.5);
   assert.equal(settings.profile, "triangle");
   assert.equal(settings.clearance, 0.25);
   assert.equal(settings.tipTruncation, 0.1);
@@ -95,13 +99,15 @@ async function documentPresetRoute(page, preset, pitch) {
   await pitch.fill("2.2");
   await pitch.press("Enter");
   saved = (await inspect(page)).document;
-  assert.equal(saved.decoratorPresets.find((entry) => entry.id === local.id).settings.pitch, 2.2);
+  assert.notEqual(
+    saved.decoratorPresets.find((entry) => entry.id === local.id).settings.pitch,
+    2.2,
+  );
+  assert.equal(saved.decorators[0].presetId, undefined);
+  assert.equal(await preset.inputValue(), "custom");
   await preset.selectOption("::save");
   const copyDialog = page.getByRole("dialog", { name: "Save preset", exact: true });
-  assert.equal(
-    await copyDialog.getByLabel("Name", { exact: true }).inputValue(),
-    "Compatible pair copy",
-  );
+  assert.equal(await copyDialog.getByLabel("Name", { exact: true }).inputValue(), "Custom copy");
   await copyDialog.getByRole("button", { name: "Save", exact: true }).click();
   const selector = page.getByRole("combobox", { name: "Preset", exact: true });
   await selector.selectOption(local.id);
@@ -112,8 +118,9 @@ async function documentPresetRoute(page, preset, pitch) {
   await inspect(page);
   await chooseTool(page, "threads", "threads");
   saved = (await inspect(page)).document;
-  assert.equal(saved.decorators[0].settings.pitch, 2.2);
-  assert.equal(await selector.inputValue(), local.id);
+  assert.equal(saved.decorators[0].settings.pitch, 1);
+  assert.equal(saved.decorators[0].settings.startTaper, 1);
+  assert.equal(await selector.inputValue(), "fdm-fine");
 }
 
 async function renamePresetRoute(page, preset) {

@@ -171,8 +171,9 @@ export function prepareBuiltinApplication(
           ? patchKnurlSettings({}, edit.settings ?? {})
           : patchThreadSettings(
               cylinder.radius * 2,
-              threadDefaults(cylinder.radius * 2),
+              threadDefaults(cylinder.radius * 2, "fdm-fine", cylinder.outward),
               edit.settings ?? {},
+              cylinder.outward,
             ),
     };
   });
@@ -243,7 +244,7 @@ export function editDecorators(document: SketchDocument, edit: DecoratorEdit): S
       if (!edit.ids.includes(instance.id)) return instance;
       if (!isBuiltinDecorator(instance.definition))
         throw new Error("Decorator definition is unavailable");
-      const radius = resolveFaces(document.bodies ?? [], instance.faces)[0].cylinder.radius;
+      const { radius, outward } = resolveFaces(document.bodies ?? [], instance.faces)[0].cylinder;
       const updated = {
         ...instance,
         problem: hasSettingsProblem(instance) ? undefined : instance.problem,
@@ -252,8 +253,9 @@ export function editDecorators(document: SketchDocument, edit: DecoratorEdit): S
             ? patchKnurlSettings(edit.replace ? {} : instance.settings, edit.patch)
             : patchThreadSettings(
                 radius * 2,
-                edit.replace ? threadDefaults(radius * 2) : instance.settings,
+                edit.replace ? threadDefaults(radius * 2, "fdm-fine", outward) : instance.settings,
                 edit.patch,
+                outward,
               ),
       };
       validateBuiltin(document, updated);

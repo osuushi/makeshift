@@ -31,7 +31,7 @@ settings, not the internal grouping noun.
 
 ## Preview display and pending work
 
-Application Settings chooses the default display: Geometry, Texture (normal projection),
+Application Settings chooses the default display: Geometry, Texture (normal shading),
 or Color only. Each Display control offers Default (Geometry/Texture/Color only),
 showing the current inherited choice, plus those three
 explicit modes. An omitted override follows the device default, including existing
@@ -59,8 +59,12 @@ preview's HSL lightness by ±5 percentage points on a one-second sine cycle,
 clamped at black and white. Geometry, Texture and Color only share this feedback;
 deselection restores the configured color. This is display-only and does not
 regenerate previews or change saved appearance or Undo.
-Texture generates the same preview mesh, then bakes its facing triangle normals
-onto the original trimmed support tessellation in the preview worker. It changes
+Texture supports decorator-owned normal evaluation. Threads evaluate analytic helix,
+profile and cone-envelope derivatives per display pixel on the original trimmed
+support tessellation, with pixel-footprint sampling and distant-detail filtering.
+This path requires neither a thread preview mesh nor a fixed-resolution normal map.
+Other decorators fall back to generating their preview mesh and baking facing triangle
+normals onto the support tessellation in the preview worker. Texture changes
 lighting, not the support silhouette, depth, picking, accepted geometry or export.
 Texture uses a smoother material finish so specular highlights follow the projected
 relief as the view turns; Geometry and Color only retain their existing finish.
@@ -71,7 +75,7 @@ Other surfaces use a padded triangle atlas with accelerated ray queries. Missing
 the support normal. Projection selects the closest facing intersection along either
 direction of the support normal; overhangs and multiple relief layers cannot all
 be represented. There is no parallax displacement or relief self-shadowing.
-Live maps target 256 pixels square and settled maps 512; generic atlases may grow
+Fallback live maps target 256 pixels square and settled maps 512; generic atlases may grow
 to 1024 to retain padding. Supports above 65,536 triangles report an explicit preview
 error and retain attachment coloring. Small features can alias, especially on dense
 generic atlases; Geometry remains the full-profile alternative. Maps are cached per
@@ -185,8 +189,9 @@ receives no second allowance. The control displays millimeters.
 The shared Cut into control has only Rod and Hole options. Selecting the same
 option for equal-diameter mating faces uses the same reference construction;
 the label does not switch by face type.
-Thread-form compatibility does not promise assembly through shoulders, flats,
-unthreaded portions or blind-hole bottoms.
+Thread cuts clear intersecting material in their owning body within the thread
+volume and axial extent. Compatibility does not promise assembly through other
+bodies, unthreaded portions or blind-hole bottoms outside that extent.
 
 Confirmed: Metric is the preset family; cylinder diameter determines thread size,
 rather than a preset such as M10 overriding the modeled cylinder. An off-table
@@ -221,7 +226,7 @@ explicitly restores its default clearance and the 0.1 mm truncation.
 Saved explicit clearance values remain unchanged. The simple panel shows preset,
 handedness, Cut into and a Clearance field for this relief. Its hint asks users
 to adjust clearance for their printer and orientation.
-Pitch, profile, tip truncation, insets and tapers are in collapsed Advanced controls. Changing an FDM preset's pitch,
+Pitch, profile, tip truncation and tapers are in collapsed Advanced controls. Changing an FDM preset's pitch,
 profile or tip truncation marks it Custom; clearance, handedness, cut and
 extent edits keep the chosen preset. Older documents without tip truncation
 retain their sharp profile until a preset is explicitly reapplied. Edits use
@@ -231,12 +236,19 @@ Decorator panels use one Preset menu, grouping built-in choices under Global and
 named document-local presets under Document. Save as document preset creates a
 copy through a focused name dialog. Rename… in the same menu edits a document
 preset name in that dialog; no permanent duplicate name field is shown. Automatic
-copies use “copy”, “copy 2”, “copy 3”, including copies of copies. The thread
+copies for other decorators use “copy”, “copy 2”, “copy 3”, including copies of copies. The thread
 reference-diameter paragraph is omitted; actionable geometry warnings and their face-selection controls remain.
 A preset stores resolved settings for one definition/version, so
 reusing it preserves explicit dimensions rather than re-inferring them. The last
 accepted choice per definition/version is saved with the document and reused on
-application. Editing a built-in creates a local copy. Editing an unshared local
+application. Thread choices are recalled only while threads remain. With no threads remaining, applying
+threads starts at FDM fine instead of recalling a hidden old choice. Thread presets
+are saved only through Save as; editing detaches a saved preset and leaves its
+snapshot unchanged. Modified thread profile/clearance/taper values show Custom.
+The thread Preset menu comes first and shows a shared built-in identity even when
+rod/hole taper defaults or metric dimensions differ; individual fields still show
+Mixed as needed. Existing saved presets remain available. For other decorators,
+editing a built-in creates a local copy. Editing an unshared local
 preset updates that copy; editing one used by other parts forks it so their settings
 remain unchanged. Preset selection, copies, names, and last choices participate in
 ordinary Undo and archives. Numeric preview/cancellation does not save a preset.
@@ -260,22 +272,32 @@ current preset's dimensions through the ordinary owner/Undo path.
 
 ## Thread extent and ends
 
-Confirmed: default to full selected-face coverage. Exterior Cut-into-rod threads
-on a cylinder bounded by one longitudinal flat and two axial end planes continue
-to the flat's actual intersection with the profile, including groove notches in
-that neighboring flat. Other trimmed boundaries retain face-domain coverage.
-Start/end taper lengths are configurable, initially zero. Tapers reduce
-thread depth near axial ends; they do not chamfer the underlying BRep. They do not
-restart at face seams or angular interruptions such as flattened sides.
+Confirmed: thread cuts apply to the whole owning body within the thread's axial
+extent, without clipping to selected face domains or neighboring surfaces. An
+internal thread uses a filled bore cutter, clearing inward shelves and crossbars
+as well as the groove envelope. An external Cut-into-rod thread uses its radial
+groove cutter, including buried material within that envelope. Other bodies are
+untouched. Added thread material still follows the selected trimmed face domains.
+Start/end taper lengths are configurable; built-in presets set both to their full
+resolved pitch on rods and zero on holes, independent of Cut into mode. Recalling a
+built-in choice resolves taper defaults for the new support. Explicit taper edits,
+local preset snapshots and saved documents retain their values. Tapers clip the unchanged thread profile against a linear cone:
+rod radii are capped with min(profile, cone), hole radii with max(profile, cone).
+The end cone reaches the rod root or hole groove envelope, always removing
+material in either Cut into mode. Mesh facets follow the cone/profile intersection
+and the meeting point of overlapping end tapers. This changes preview/export
+meshes only, not the underlying BRep. Tapers do not restart at face seams or
+angular interruptions such as flattened sides.
 
 Middle-of-rod threads remain a V1 case; a thread need not reach the rod end.
 This does not guarantee that mating parts can be assembled in every surrounding
 geometry configuration.
 
-The controls for an unsplit cylindrical face are start/end
-insets along the saved thread axis, initially zero, bounding the threaded band
-within the selected geometry. Intersect that band with actual selected face domains,
-with the planar cutting exception above; do not fill flats or gaps. Apply optional
+New threads cover the full selected face; inset controls are no longer exposed.
+Saved start/end insets remain supported along the saved thread axis so existing
+documents retain their threaded band. Cuts cover the full axial band, including
+intervening material; additions intersect selected face domains and do not fill
+flats or gaps. Apply optional
 tapers at its axial ends and preserve helix phase when changing extent. Exact
 behavior at separated axial patches must remain consistent with one continuous
 helix and the requested face coverage.
@@ -305,10 +327,9 @@ Save a thread reference frame and phase when first applied. Do not derive phase
 again from the first remaining face or its parameter seam. Transport this frame
 through rigid movement; copying creates independent instances with copied settings.
 
-Use the actual trimmed face domains, including holes and sloping ends. A full
-cylinder or min/max axial bounds alone is insufficient: it could fill flats, bridge gaps,
-cut a neighboring wall, or extend threads beyond selected geometry. Construct
-bounded, closed modifier volumes from the selected domain and chosen radial range.
+Use actual trimmed face domains, including holes and sloping ends, for additions.
+A full cylinder would fill flats and bridge gaps. Cuts deliberately use the full
+thread volume across the owning body, bounded by the saved thread extent.
 Thread-specific diagnostics can inspect adjacent original geometry and report
 implicated face IDs. This is distinct from cross-decorator overlap handling below;
 V1 does not require detecting or diagnosing overlaps between decorator outputs.
@@ -316,41 +337,26 @@ V1 does not require detecting or diagnosing overlaps between decorator outputs.
 The panel reports the exact reference diameter and its rod-major/rod-minor meaning
 for the selected cut mode, identifying diameters absent from the coarse table as
 nonstandard. Current nonblocking geometry warnings check opposite coaxial walls
-with overlapping axial coverage against maximum removal depth, and adjacent flats
-parallel to an internal thread axis against the circular mating envelope. These
-are conservative local checks, not collision or assembly certification. Each
-warning selects both decorated and implicated faces through ordinary selection.
+with overlapping axial coverage against maximum removal depth. These are
+conservative local checks, not collision or assembly certification. Each warning
+selects both decorated and implicated faces through ordinary selection. The flat
+obstruction warning is removed: the cutter clears that material directly.
 
-The built-in constructs separate radial masks for selected trimmed patches and
-unions them after clipping each against its adjacent planar boundaries. A plane
-clips only when the selected patch lies on one side; a nonconvex patch crossing
-that plane keeps its trimmed mask. Disconnected axial patches therefore cannot
-clip each other or bridge their unselected gap. Export adds/removes the difference
-from the nominal cylinder, bounded to the thread's radial envelope; it does not
-replace a whole radial band that might contain an opposite wall. Small auxiliary
-reference overlap covers base tessellation error without changing the requested
-profile or hole allowance. Pure addition/removal cases emit their closed differential shell directly, avoiding
-intermediate reference-volume Booleans. The internal Cut-into-rod case can require
-both addition and removal after hole relief and retains the general difference
-path. Both use the same analytic target and trimmed domains. Thread cuts can still pierce a wall when the requested
-depth exceeds its thickness; that needs an explicit diagnostic, not a silent
-change to thread dimensions.
-
-For exterior Cut-into-rod threads, a patch whose complete boundary is one
-longitudinal plane and two axial planes uses those planes in place of its radial
-footprint. The analytic cylindrical area must match that complete patch;
-unselected cylindrical neighbors, holes, multiple flats and oblique ends do not
-qualify. Coplanar support faces on either side of a ridge count as one plane.
-Threading a flattened rod therefore agrees with flattening the threaded rod;
-a ridge's grooves stop at its supporting plane. Axial insets still bound the
-operand. Auxiliary domain caps avoid coincident operand caps, and removal covers
-the planar boundary's actual Float32 coordinates to avoid residual numerical skins.
-Preview uses the same domain rule and replaces affected flats' occlusion with
-their remaining triangulated surface: groove openings reveal the profile, while
-solid flat areas still hide the far side. This changes no decorator membership,
-picking, accepted BRep or Undo. `tests/thread-flat-preview-ui.mjs` checks this
-worker/compositor boundary, ordinary flat picking and native 3MF export in hidden
-Electron; geometric equivalence and support preservation live in model tests.
+The built-in constructs one body-wide removal volume and separate radial masks
+for additions to selected trimmed patches. Additions retain adjacent planar and
+cylindrical clipping; cuts are never clipped back to the original face footprint.
+The same operands drive preview and export. Preview computes the resulting body
+and uses transient Boolean mesh provenance to separate newly generated thread
+surfaces from remaining original surfaces. The latter replace the owning body's
+occlusion mesh, so openings reveal the thread while untouched material continues
+to hide its far side. These temporary mesh IDs are not document identities.
+Only axial end planes clip antialiased preview fragments; longitudinal or oblique
+planes must not clip away body-wide cuts. Decorator membership, analytic picking,
+accepted BRep and Undo are unchanged. `tests/thread-flat-preview-ui.mjs` covers
+rod and hole openings, remaining-flat occlusion, original face picking and native
+3MF export in hidden Electron. Model tests cover off-center open holes, body-wide
+crossbar removal, separate-body preservation and complementary watertight exports.
+Thread cuts can still pierce thin walls; their diagnostic is retained.
 
 Confirmed topology policy: follow compatible split
 descendants, preserve phase and exclude newly generated unrelated faces. For
@@ -618,12 +624,12 @@ are checked against the analytic envelope with a separate allowance of twice the
 sampling target. This is measured numerical accuracy, not a general certification
 of arbitrary curved neighboring surfaces or physical fit.
 
-Trimmed thread domains also respect directly adjacent analytic cylindrical
+Thread addition domains also respect directly adjacent analytic cylindrical
 boundaries when the entire selected patch lies on their material side. Hole
 boundaries use a circumscribed polygon and exterior limits an inscribed polygon,
 with radial deviation below half the sampling target. Coincident supporting
-cylinders do not constrain each other's threads. This preserves transverse bores
-in both external and internal threaded faces. Nonconvex patches straddling an
+cylinders do not constrain each other's threads. This prevents additions from filling transverse bores
+in either external or internal threaded faces; cuts may extend into those bores. Nonconvex patches straddling an
 adjacent boundary retain their tessellated domain mask; this is not a general
 extension/intersection treatment for arbitrary BRep surface classes.
 
