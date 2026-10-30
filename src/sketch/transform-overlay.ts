@@ -6,7 +6,6 @@ import { uiScale } from "../preferences/ui-scale.js";
 import { toolCatalog } from "../tools/catalog.js";
 import type { SketchEditor } from "./editor.js";
 import { markerMarkup } from "./move-widget/geometry.js";
-import { planeCue } from "./move-widget/plane-cue.js";
 import { type Point, worldPoint } from "./planes.js";
 import { selectionFrame } from "./selection-frame.js";
 import { sketchIcon } from "./sketch-icons.js";
@@ -145,23 +144,6 @@ export class TransformOverlay {
     if (widget?.rotationVisible || (!widget && sketchRotationVisible(e)))
       entries.push({ key: "rotation", point: widget?.rotation ?? frame.handle });
     if (widget) {
-      const cue = this.node("g", { "pointer-events": "none", "aria-hidden": "true" });
-      const unit = e.world.height / e.world.canvas.clientHeight;
-      cue.innerHTML = planeCue(
-        (point) => {
-          const origin = worldPoint(sketch.plane, frame.pivot);
-          const p = e.world.project([
-            origin[0] + point[0] * unit,
-            origin[1] + point[1] * unit,
-            origin[2] + point[2] * unit,
-          ]);
-          return { x: p.x - r.left, y: p.y - r.top };
-        },
-        sketch.plane.u,
-        sketch.plane.v,
-        0,
-        64,
-      );
       e.transformAnchor = { point: worldPoint(sketch.plane, frame.pivot), active: e.moveMode };
       if (widget.rotationVisible)
         this.marker(
@@ -174,7 +156,7 @@ export class TransformOverlay {
         const tip = project(h.point);
         const u = h.axis === "x" ? sketch.plane.u : sketch.plane.v;
         const v = cameraFacingWidth(e.world.camera, u);
-        this.marker(tip.x, tip.y, markerMarkup(e.world.camera, u, v, false), h.axis);
+        this.marker(tip.x, tip.y, markerMarkup(e.world.camera, u, v, false, true), h.axis);
       }
     } else if (sketchRotationVisible(e)) {
       this.node("line", { x1: c.x, y1: c.y, x2: p.x, y2: p.y, class: "rotation-guide" });

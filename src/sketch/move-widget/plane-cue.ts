@@ -2,11 +2,6 @@ import * as THREE from "three";
 import type { Vector } from "../planes.js";
 
 type Projection = (point: Vector) => { x: number; y: number };
-const axes: Vector[] = [
-  [1, 0, 0],
-  [0, 1, 0],
-  [0, 0, 1],
-];
 
 /** Two cells in each direction, projected without the glyph readability correction. */
 export function planeCue(
@@ -44,21 +39,5 @@ export function rotationPlaneCue(camera: THREE.Camera, u: Vector, v: Vector): st
     v,
     -19,
     19,
-  );
-}
-
-/** Shared spatial frame at the real anchor; never follows displaced hit targets. */
-export function moveFrameCue(project: Projection, aligned: number | null): string {
-  const planes = axes.map((_, i) => i).filter((i) => aligned === null || i === aligned);
-  return (
-    planes.map((i) => planeCue(project, axes[(i + 1) % 3], axes[(i + 2) % 3], 0, 64)).join("") +
-    axes
-      .filter((_, i) => i !== aligned)
-      .map((axis) => {
-        const a = project([0, 0, 0]);
-        const b = project(axis.map((value) => value * 96) as Vector);
-        return `<path d="M${a.x},${a.y} L${b.x},${b.y}" fill="none" stroke="var(--handle-dark)" stroke-opacity="0.35" stroke-width="1"/>`;
-      })
-      .join("")
   );
 }
