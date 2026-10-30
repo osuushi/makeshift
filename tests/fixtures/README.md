@@ -179,3 +179,10 @@ transient edits and camera are omitted. Point-query tests preserve ordered curre
 handles and guard against evaluating unrelated geometry. The opt-in
 `populated-sketch-ui.mjs` route measures drawing and point editing through real
 controls on this document; it adds no automatic UI suite.
+
+`cylindrical-face-split.json` preserves exact accepted geometry, topology IDs and
+camera from the founder's `2026-10-30T11-18-29-407Z-8f050800` capture. Display
+meshes and history are omitted. Its radius-40 cylinder must split the plate/collar
+at an existing circular rim; an unbounded cylindrical cutter silently returned no
+split. The model regression checks both pieces, collar bounds, volume conservation,
+unchanged cutter, preview cancellation and Undo/Redo.

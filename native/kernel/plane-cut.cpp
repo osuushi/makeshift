@@ -15,6 +15,7 @@
 #include <gp_Pln.hxx>
 #include <Precision.hxx>
 #include <Geom_RectangularTrimmedSurface.hxx>
+#include <Geom_CylindricalSurface.hxx>
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -164,6 +165,26 @@ TopoDS_Face cuttingSurface(const Tree& input, const std::vector<Operand>& bodies
     // Remove face-level rectangular trims; bounded basis surfaces keep their native domain.
     while (const auto trimmed = Handle(Geom_RectangularTrimmedSurface)::DownCast(surfaceSupport))
         surfaceSupport = trimmed->BasisSurface();
+    if (const auto cylinder = Handle(Geom_CylindricalSurface)::DownCast(surfaceSupport)) {
+        // Keep the full periodic support, but bound its axial domain outside all
+        // targets. Infinite cylindrical faces can miss splits at existing rims.
+        Bnd_Box bounds;
+        for (const auto& target : input.get_child("targets"))
+            for (const auto& operand : bodies)
+                if (operand.id == target.second.get<std::string>("body"))
+                    BRepBndLib::AddOptimal(operand.shape, bounds, false, false);
+        if (bounds.IsVoid()) throw std::runtime_error("Select geometry to cut");
+        double x0, y0, z0, x1, y1, z1; bounds.Get(x0, y0, z0, x1, y1, z1);
+        double low = std::numeric_limits<double>::infinity(), high = -low;
+        const auto axis = cylinder->Axis();
+        for (double x : {x0, x1}) for (double y : {y0, y1}) for (double z : {z0, z1}) {
+            const double v = gp_Vec(axis.Location(), gp_Pnt(x,y,z)).Dot(gp_Vec(axis.Direction()));
+            low = std::min(low, v); high = std::max(high, v);
+        }
+        const double margin = std::max(1.0, high-low);
+        return BRepBuilderAPI_MakeFace(cylinder, 0, 2*M_PI, low-margin, high+margin,
+                                      Precision::Confusion()).Face();
+    }
     BRepBuilderAPI_MakeFace support(surfaceSupport, Precision::Confusion());
     if (!support.IsDone()) throw std::runtime_error("Cannot construct cutting support surface");
     return support.Face();
