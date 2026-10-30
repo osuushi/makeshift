@@ -76,7 +76,7 @@ export class BodyMoveControls {
       (event) => {
         const s = this.session;
         const handle = event.target instanceof Element && event.target.closest(".body-axis-handle");
-        return !!(s && s.valid && !this.pointer && handle && this.gizmo.root.contains(handle));
+        return !!(s?.valid && !this.pointer && handle && this.gizmo.root.contains(handle));
       },
       this.abort.signal,
     );

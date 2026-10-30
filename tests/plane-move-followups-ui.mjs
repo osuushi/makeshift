@@ -56,6 +56,7 @@ await withUiRuntimes(async (page) => {
     assert.equal((await inspect(page)).document.constructionPlanes.length, 2);
   }
   await behindCanonicalRoute(page);
+  await sectionNumericRoute(page);
   console.log("Construction plane lifecycle and behind-canonical picking passed");
 });
 
@@ -135,4 +136,39 @@ async function behindCanonicalRoute(page) {
   await chooseTool(page, "rectangle", "rectangle");
   await drag(page, [0, 0], [10, 10]);
   assert.deepEqual((await inspect(page)).document.sketches[0].plane.origin, [0, 0, -12]);
+}
+
+async function sectionNumericRoute(page) {
+  await chooseTool(page, "return to modeling", "modeling");
+  const before = (await inspect(page)).document;
+  await chooseTool(page, "cross section", "cross-section");
+  await orient(page, [1, 1, 1]);
+  const handle = await page
+    .getByRole("button", { name: "Move plane X", exact: true })
+    .boundingBox();
+  assert.ok(handle);
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(handle.x + handle.width / 2 + 30, handle.y + handle.height / 2);
+  await page.mouse.up();
+  const field = page.getByRole("textbox", { name: "Plane translation X", exact: true });
+  const value = await field.inputValue();
+  await page.keyboard.press("Tab");
+  assert.equal(await field.evaluate((input) => input === document.activeElement), true);
+  assert.equal(await field.inputValue(), value);
+  await page.keyboard.press("Tab");
+  await page.waitForFunction(
+    () => document.activeElement?.getAttribute("aria-label") === "Plane translation Y",
+  );
+  assert.equal(
+    (await inspect(page)).interaction.kind,
+    "cross-section",
+    "Field cycling retains the view edit",
+  );
+  await page.keyboard.press("Enter");
+  assert.deepEqual(
+    (await inspect(page)).document,
+    before,
+    "Section widgets never edit document geometry",
+  );
 }

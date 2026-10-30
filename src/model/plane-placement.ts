@@ -39,6 +39,8 @@ export class PlanePlacement {
       overlay,
       (event, axis, rotate) => this.start(event, axis as PlacementAxis, rotate),
       "plane",
+      // View-only sections keep their existing lease while cycling placement axes.
+      !!finish,
     );
     this.anchor = new BodyPivotDrag(
       editor,
@@ -53,7 +55,7 @@ export class PlanePlacement {
     );
     installTransformHandoff(
       editor,
-      () => !!this.drag && !this.pointer && !!this.current()?.lease,
+      () => !!this.finish && !!this.drag && !this.pointer && !!this.current()?.lease,
       this.abort.signal,
     );
     this.gizmo.pivot.disabled = !draggableAnchor;

@@ -39,6 +39,7 @@ export class BodyGizmo {
     overlay: HTMLElement,
     start: (event: PointerEvent, axis: string, rotate: boolean) => void,
     target = "body",
+    completeBeforeNumeric = true,
   ) {
     this.root.className = "body-gizmo";
     this.clearance = new WidgetClearance(this.root);
@@ -60,7 +61,7 @@ export class BodyGizmo {
         );
         button.addEventListener("click", (event) => {
           if (event.detail !== 0 || !this.boxEditor) return;
-          if (!this.boxEditor.interactions.current) {
+          if (!completeBeforeNumeric || !this.boxEditor.interactions.current) {
             button.dispatchEvent(new Event("transform-numeric-tap"));
             return;
           }
