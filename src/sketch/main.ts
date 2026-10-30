@@ -190,7 +190,8 @@ const scaling = new ScaleControls(
   editor,
   overlay,
   () => {
-    if (constructionPlanes.selected()) return constructionPlanes.transform();
+    if (constructionPlanes.selected() && !editor.modeling.targets.length)
+      return constructionPlanes.transform();
     if (editor.world.active) return editor.activateMove();
     else if (
       editor.modeling.targets.every(

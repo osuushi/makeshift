@@ -46,9 +46,11 @@ export class MeasurementControls {
       return curves.map((curve) => ({ kind: "curve", sketch, curve }));
     }
     const targets = e.modeling.targets;
+    const plane = e.modeling.referencePlane;
     if (
       targets.length < 1 ||
-      targets.length > 2 ||
+      targets.length + Number(!!plane) > 2 ||
+      (!!plane && !e.visibility.visible(plane)) ||
       targets.some((t) => t.kind !== "face" && t.kind !== "edge" && t.kind !== "profile") ||
       targets.some((t) =>
         t.kind === "profile"
@@ -58,7 +60,7 @@ export class MeasurementControls {
       )
     )
       return [];
-    return targets.flatMap<MeasurementTarget>((t) =>
+    const result = targets.flatMap<MeasurementTarget>((t) =>
       t.kind === "profile"
         ? [{ kind: "profile", sketch: t.sketch, profile: t.profile.key }]
         : t.kind === "face"
@@ -67,6 +69,8 @@ export class MeasurementControls {
             ? [{ kind: "edge" as const, body: t.body, edge: t.edge }]
             : [],
     );
+    if (plane) result.push({ kind: "plane", plane });
+    return result;
   }
   private update = (): void => {
     const targets = this.targets();
@@ -84,7 +88,9 @@ export class MeasurementControls {
           targets.map((t) =>
             t.kind === "curve" || t.kind === "profile"
               ? this.editor.store.data.sketches.find((s) => s.id === t.sketch)
-              : this.editor.store.data.bodies?.find((b) => b.id === t.body)?.brep,
+              : t.kind === "plane"
+                ? this.editor.store.data.constructionPlanes?.find((p) => p.id === t.plane)
+                : this.editor.store.data.bodies?.find((b) => b.id === t.body)?.brep,
           ),
         ])
       : "";

@@ -29,6 +29,7 @@ export const modelingKey = (target: ModelingTarget): string =>
           : target.profile.key;
 export class ModelSelection {
   readonly selectionChosen = new Set<() => void>();
+  referencePlane: string | null = null;
   memberBody: string | null = null;
   allows(target: ModelingTarget): boolean {
     return (
@@ -113,6 +114,7 @@ export class ModelSelection {
       profile,
     }));
     if (targets.some((target) => !this.allows(target))) return;
+    if (!add && !toggle) this.referencePlane = null;
     this.chosenTool = null;
     const keys = new Set(targets.map(modelingKey));
     const selected = new Set(this.targets.map(modelingKey));
@@ -127,6 +129,7 @@ export class ModelSelection {
   }
   choose(target: ModelingTarget | null, add: boolean, toggle: boolean, remove = false): void {
     if (target && !this.allows(target)) return;
+    if (!add && !toggle && !remove) this.referencePlane = null;
     this.chosenTool = null;
     if (!target) {
       if (!add && !toggle && !remove) {

@@ -46,7 +46,7 @@ export function pickSavedPlane(editor: SketchEditor, screen: Point, maxDepth = I
 export function savedPlaneInteraction(
   editor: SketchEditor,
   signal: AbortSignal,
-  choose: (plane: ConstructionPlane) => void,
+  choose: (plane: ConstructionPlane, add: boolean) => void,
   hover: (id: string | null) => void,
   enter: (plane: ConstructionPlane) => void,
 ): void {
@@ -77,7 +77,7 @@ export function savedPlaneInteraction(
         if (!hit) return;
         event.stopImmediatePropagation();
         editor.modeling.hover = null;
-        if (type === "click") choose(hit.plane);
+        if (type === "click") choose(hit.plane, event.shiftKey);
         if (type === "dblclick") enter(hit.plane);
         editor.refresh();
       },

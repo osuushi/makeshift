@@ -4,6 +4,7 @@ import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
 import { measurementRoute } from "./ui-measurement.mjs";
+import { planeMeasurementRoute } from "./ui-measurement-planes.mjs";
 import { regionMeasurementRoute } from "./ui-measurement-regions.mjs";
 import { runtimeNames } from "./ui-runtime.mjs";
 
@@ -32,6 +33,7 @@ try {
   page.on("pageerror", (error) => {
     throw error;
   });
+  await planeMeasurementRoute(page);
   await regionMeasurementRoute(page, name);
   await measurementRoute(page, name);
 } catch (error) {

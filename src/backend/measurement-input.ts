@@ -39,6 +39,12 @@ export function measurementInput(document: SketchDocument, selection: Measuremen
     targets,
     curves,
     profiles,
+    planes: selection.flatMap((t) => {
+      if (t.kind !== "plane") return [];
+      const plane = document.constructionPlanes?.find((p) => p.id === t.plane);
+      if (!plane) throw new Error("Measurement plane no longer exists");
+      return [plane.frame];
+    }),
     bodies: (document.bodies ?? []).filter((b) => ids.has(b.id)),
   };
 }

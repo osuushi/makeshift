@@ -168,7 +168,7 @@ export function inspectionOverview(document: SketchDocument, view: InspectionVie
 }
 export function measurable(targets: InspectionTarget[]): MeasurementTarget[] {
   if (targets.length < 1 || targets.length > 2) return [];
-  return targets.every((t) => ["face", "edge", "profile", "curve"].includes(t.kind))
+  return targets.every((t) => ["face", "edge", "profile", "curve", "plane"].includes(t.kind))
     ? (targets as MeasurementTarget[])
     : [];
 }

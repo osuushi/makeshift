@@ -34,6 +34,11 @@ std::optional<gp_Pnt> foot(const gp_Pnt& p, const TopoDS_Shape& target) {
         if (std::abs(gp_Vec(q, p).Dot(tangent.Normalized())) > tolerance) return {};
         return q;
     }
+    if (infiniteMeasurementPlane(target)) {
+        const auto plane = BRepAdaptor_Surface(TopoDS::Face(target)).Plane();
+        const gp_Vec n(plane.Axis().Direction());
+        return p.Translated(n * -gp_Vec(plane.Location(), p).Dot(n));
+    }
     const auto face = TopoDS::Face(target);
     const auto surface = BRep_Tool::Surface(face);
     GeomAPI_ProjectPointOnSurf projection(p, surface);
@@ -79,6 +84,7 @@ bool unobstructed(const TopoDS_Shape& source, const gp_Pnt& p, const gp_Pnt& q) 
 }
 std::vector<gp_Pnt> samples(const TopoDS_Shape& shape) {
     std::vector<gp_Pnt> result;
+    if (infiniteMeasurementPlane(shape)) return result;
     if (shape.ShapeType() == TopAbs_EDGE) edgeSamples(TopoDS::Edge(shape), result);
     else {
         const auto face = TopoDS::Face(shape);
@@ -124,8 +130,20 @@ void include(GapRange& range, const gp_Pnt& a, const gp_Pnt& b) {
     if (!range.maximum || candidate.value > range.maximum->value) range.maximum = candidate;
 }
 }
+bool infiniteMeasurementPlane(const TopoDS_Shape& shape) {
+    if (shape.ShapeType() != TopAbs_FACE || BRepAdaptor_Surface(TopoDS::Face(shape)).GetType() != GeomAbs_Plane) return false;
+    return !TopExp_Explorer(shape, TopAbs_WIRE).More();
+}
 GapRange facingGaps(const TopoDS_Shape& a, const TopoDS_Shape& b) {
     GapRange range;
+    if (infiniteMeasurementPlane(a) && infiniteMeasurementPlane(b)) {
+        if (constantGap(a, b)) {
+            const auto p = BRepAdaptor_Surface(TopoDS::Face(a)).Plane().Location();
+            include(range, p, *foot(p, b));
+            range.approximate = false;
+        }
+        return range;
+    }
     std::vector<gp_Pnt> fromA, fromB;
     const bool exactA = planarGapSamples(a, b, fromA), exactB = planarGapSamples(b, a, fromB);
     if (!exactA) fromA = samples(a);
@@ -135,7 +153,7 @@ GapRange facingGaps(const TopoDS_Shape& a, const TopoDS_Shape& b) {
         for (const auto& p : fromA) if (auto q = foot(p, b); q && unobstructed(a,p,*q)) include(range, p, *q);
     if (!(b.ShapeType() == TopAbs_FACE && a.ShapeType() == TopAbs_EDGE))
         for (const auto& p : fromB) if (auto q = foot(p, a); q && unobstructed(b,p,*q)) include(range, *q, p);
-    BRepExtrema_DistShapeShape shortest(a, b);
+    BRepExtrema_DistShapeShape shortest(boundedMeasurementPlane(a, b), boundedMeasurementPlane(b, a));
     if (shortest.IsDone()) for (int i = 1; i <= shortest.NbSolution(); ++i) {
         const auto p = shortest.PointOnShape1(i), q = shortest.PointOnShape2(i);
         const auto toB = foot(p, b), toA = foot(q, a);
@@ -144,7 +162,8 @@ GapRange facingGaps(const TopoDS_Shape& a, const TopoDS_Shape& b) {
         else if ((b.ShapeType() != TopAbs_FACE || a.ShapeType() != TopAbs_EDGE) && toA && toA->Distance(p) < tolerance)
             include(range, p, q);
     }
-    const bool planarExact = a.ShapeType() == b.ShapeType() ? exactA && exactB
+    const bool planarExact = infiniteMeasurementPlane(a) ? exactB : infiniteMeasurementPlane(b) ? exactA
+        : a.ShapeType() == b.ShapeType() ? exactA && exactB
         : a.ShapeType() == TopAbs_EDGE ? exactA : exactB;
     range.approximate = !planarExact && !constantGap(a, b);
     return range;

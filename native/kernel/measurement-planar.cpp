@@ -2,6 +2,10 @@
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRep_Tool.hxx>
+#include <BRepBndLib.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
+#include <Bnd_Box.hxx>
+#include <limits>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
 #include <gp_Pln.hxx>
@@ -40,7 +44,7 @@ void crossing(const Segment& source, const Segment& target, const gp_Pln& plane,
 // plane separation reaches its extrema here (or at an interior zero crossing).
 bool planarGapSamples(const TopoDS_Shape& source, const TopoDS_Shape& target, std::vector<gp_Pnt>& points) {
     std::vector<Segment> from, to;
-    if (!segments(source, from) || !segments(target, to)) return false;
+    if (!segments(source, from) || (!infiniteMeasurementPlane(target) && !segments(target, to))) return false;
     if (target.ShapeType() == TopAbs_FACE) {
         const auto plane = BRepAdaptor_Surface(TopoDS::Face(target)).Plane();
         for (const auto& edge : from) {
@@ -65,4 +69,27 @@ bool planarGapSamples(const TopoDS_Shape& source, const TopoDS_Shape& target, st
         if (t >= 0 && t <= 1) points.push_back(lerp(edge, t));
     }
     return true;
+}
+
+// This finite query face contains the orthogonal projection of the entire finite
+// operand's exact bounding box. Its boundary cannot alter plane distance results.
+TopoDS_Shape boundedMeasurementPlane(const TopoDS_Shape& plane, const TopoDS_Shape& shape) {
+    if (!infiniteMeasurementPlane(plane)) return plane;
+    Bnd_Box box;
+    BRepBndLib::AddOptimal(shape, box, false, true);
+    double x0, y0, z0, x1, y1, z1;
+    box.Get(x0, y0, z0, x1, y1, z1);
+    const auto support = BRepAdaptor_Surface(TopoDS::Face(plane)).Plane();
+    // Recenter the support at the operand to avoid cancellation from a distant
+    // construction-plane origin; the infinite geometric plane stays unchanged.
+    const gp_Pln local(project(gp_Pnt((x0+x1)/2, (y0+y1)/2, (z0+z1)/2), support), support.Axis().Direction());
+    double u0 = std::numeric_limits<double>::infinity(), v0 = u0, u1 = -u0, v1 = -u0;
+    for (double x : {x0, x1}) for (double y : {y0, y1}) for (double z : {z0, z1}) {
+        const gp_Vec delta(local.Location(), gp_Pnt(x,y,z));
+        const double u = delta.Dot(gp_Vec(local.Position().XDirection()));
+        const double v = delta.Dot(gp_Vec(local.Position().YDirection()));
+        u0 = std::min(u0, u); u1 = std::max(u1, u);
+        v0 = std::min(v0, v); v1 = std::max(v1, v);
+    }
+    return BRepBuilderAPI_MakeFace(local, u0-1, u1+1, v0-1, v1+1).Face();
 }
