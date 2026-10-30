@@ -3,6 +3,7 @@ import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { arrowWidthAxis, markerMarkup, rotationVisible } from "../sketch/move-widget/geometry.js";
 import type { Vector } from "../sketch/planes.js";
+import { bindWidgetField } from "../sketch/widget-numeric-field.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { installTwistDrag } from "./extrude-twist-drag.js";
 import { revolutionPoint } from "./revolve-axis.js";
@@ -41,6 +42,7 @@ export class ExtrudeTwist {
     this.sphere.className = "extrude-axis-sphere";
     this.sphere.setAttribute("aria-label", "Position extrusion axis");
     this.sphere.title = "Drag axis in the source plane · Command bypasses snapping";
+    bindWidgetField(this.handle, this.input);
     this.handle.className = "extrude-twist-handle orientable-handle";
     this.handle.setAttribute("aria-label", "Drag extrusion twist");
     this.handle.title = "Drag twist · Shift bypasses whole-degree snapping · click to type";

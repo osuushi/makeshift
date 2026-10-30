@@ -19,10 +19,11 @@ the normal orientation. The points must be distinct and non-collinear. This rout
 is available in both Modeling and sketch workspaces; creation returns to Modeling
 and copies the frame in one Undo step. Later guide edits/deletion do not affect it.
 
-Plane Move shares body Move's gizmo input, translation release and numeric routes.
+Plane Move shares body Move's gizmo input and numeric routes.
 The numeric field follows the live drag value; focused numeric entry preserves typed text.
-Translation drags accept on release; numeric edits and rotation accept with Enter
-or an ordinary selection/tool change. Clicking off accepts a valid edit, and
+Translation and rotation retain their preview and value field on release, accepting
+with Enter or an ordinary selection/tool change. First Tab focuses the retained
+value; another Tab accepts it and focuses the next widget's field. Clicking off accepts a valid edit, and
 Escape cancels. Move handles are idle until used, so sketch entry and deletion
 remain available immediately after selection. Reselection supports movement,
 deletion, visibility and sketch entry; Transform/M restores the movement controls.

@@ -7,6 +7,8 @@ import { pickModels } from "../sketch/model-selection.js";
 import { replayPointerModifiers } from "../sketch/modifier-pointer.js";
 import type { Vector } from "../sketch/planes.js";
 import { pointerDragThreshold } from "../sketch/pointer-intent.js";
+import { widgetField } from "../sketch/widget-numeric-field.js";
+import { numericFocus } from "../tools/menu-focus.js";
 import { projectedAxis } from "./extrude-axis.js";
 
 /** Shared signed-distance gesture for extrusion and face offset. */
@@ -90,6 +92,8 @@ export class AxialDrag {
       options,
     );
     const move = (e: PointerEvent) => {
+      const field = widgetField(handle);
+      if (field && numericFocus(field)) return;
       const p = this.pointer;
       if (!p || p.id !== e.pointerId) return;
       if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > p.threshold) p.moved = true;

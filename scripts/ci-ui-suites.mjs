@@ -156,11 +156,11 @@ export const uiSuites = [
   },
   {
     args: ["transform-enter-ui.mjs"],
-    // macOS hidden Electron: 12.2s including escaped Tab focus and cross-layer handoff.
-    seconds: 14,
+    // macOS hidden Electron: 18.2s including released widget refinement and axis handoff.
+    seconds: 20,
     browsers: ["electron"],
     reason:
-      "Enter accepts once; real Tab dispatch must focus sketch dimensions without starting Offset, retain single-field editing, open and highlight transform widgets, preserve invalid drafts, and accept Scale-to-Move edits separately across numeric focus handoffs.",
+      "Released widget values remain editable; first Tab focuses them and the next Tab accepts into the next axis. Enter accepts once; real Tab dispatch must focus sketch dimensions without starting Offset, retain single-field editing, open and highlight transform widgets, preserve invalid drafts, and accept Scale-to-Move edits separately across numeric focus handoffs.",
     unit: "body-transform-enter.test.ts",
   },
   {

@@ -1,3 +1,4 @@
+import { bindWidgetField } from "../sketch/widget-numeric-field.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { ToolPrerequisitePanel } from "../tools/tool-prerequisites.js";
 import { WidgetClearance } from "./widget-clearance.js";
@@ -35,6 +36,8 @@ export class RevolveWidget {
   readonly prerequisites = new ToolPrerequisitePanel(this.root, this.panel);
   private drawing = document.createElementNS(svgNS, "svg");
   constructor(setMode: (mode: Revolution["mode"]) => void) {
+    bindWidgetField(this.angleHandle, this.angle);
+    bindWidgetField(this.heightHandle, this.height);
     this.root.className = "revolve-controls";
     this.angleHandle.className = "revolve-spatial orientable-handle";
     this.heightHandle.className = "revolve-spatial orientable-handle";

@@ -2,6 +2,7 @@ import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { replayPointerModifiers } from "../sketch/modifier-pointer.js";
 import type { Vector } from "../sketch/planes.js";
+import { numericFocus } from "../tools/menu-focus.js";
 import { anchorSnap } from "./anchor-snapping.js";
 import type { ScaleWidget } from "./scale-widget.js";
 import { type BoxHandle, boxLocal, boxWorld, type TransformBox } from "./transform-box.js";
@@ -69,6 +70,7 @@ export class ScaleGestures {
     if (event.button || this.editor.blocked) return;
     const state = this.state();
     if (state?.lease.phase !== "editing") return;
+    for (const input of this.widget.factors) input.blur();
     event.preventDefault();
     event.stopPropagation();
     const pivot = boxLocal(state.box, state.operationPivot);
@@ -97,6 +99,7 @@ export class ScaleGestures {
     state.lease.capture(event.currentTarget as Element, event.pointerId);
   }
   private move = (event: PointerEvent): void => {
+    if (this.widget.factors.some(numericFocus)) return;
     const d = this.drag;
     if (!d || event.pointerId !== d.id || d.lease.phase !== "editing") return;
     let dx = event.clientX - d.x,

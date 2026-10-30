@@ -8,6 +8,7 @@ import {
   widgetRadius,
 } from "../sketch/move-widget/geometry.js";
 import type { Vector } from "../sketch/planes.js";
+import { bindWidgetField } from "../sketch/widget-numeric-field.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { axes } from "./body-placement.js";
 import { projectedAxis } from "./extrude-axis.js";
@@ -47,6 +48,7 @@ export class BodyGizmo {
         const button = document.createElement("button");
         button.className = `body-axis-handle ${rotate ? "body-rotate-handle" : "body-translate-handle"}`;
         button.dataset.axis = axis;
+        bindWidgetField(button, this.input);
         button.setAttribute(
           "aria-label",
           `${rotate ? "Rotate" : "Move"} ${target} ${axis === "N" ? "normal" : axis}`,
@@ -58,7 +60,7 @@ export class BodyGizmo {
         );
         button.addEventListener("click", (event) => {
           if (event.detail !== 0 || !this.boxEditor) return;
-          if (target === "plane" || !this.boxEditor.interactions.current) {
+          if (!this.boxEditor.interactions.current) {
             button.dispatchEvent(new Event("transform-numeric-tap"));
             return;
           }

@@ -12,6 +12,7 @@ import { placeOffsetWidget } from "./offset-widget.js";
 import type { Point } from "./planes.js";
 import { distance } from "./point-math.js";
 import type { SelectionTarget } from "./selection-target.js";
+import { bindWidgetField } from "./widget-numeric-field.js";
 
 type Session = {
   sketch: Sketch;
@@ -61,6 +62,7 @@ export class OffsetControls {
       run: () => this.activate(),
     });
     this.root.className = "offset-control";
+    bindWidgetField(this.handle, this.input);
     this.handle.type = "button";
     this.handle.className = "sketch-offset-handle orientable-handle";
     this.handle.setAttribute("aria-label", "Offset edge");
@@ -214,6 +216,7 @@ export class OffsetControls {
     this.editor.refresh();
   }
   private move = (event: PointerEvent): void => {
+    if (numericFocus(this.input)) return;
     const s = this.session;
     if (!s || s.pointer !== event.pointerId || !this.handle.hasPointerCapture(event.pointerId))
       return;
@@ -236,8 +239,7 @@ export class OffsetControls {
     if (!s || s.pointer !== event.pointerId) return;
     this.move(event);
     this.interaction?.releaseCapture();
-    if (s.moved) void this.commit();
-    else {
+    if (!s.moved) {
       this.input.focus();
       this.input.select();
     }

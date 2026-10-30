@@ -181,7 +181,22 @@ async function placementKeyboard(page, name) {
   await layers(page, ["move", "rotate"]);
   await chooseTool(page, "move", "move");
   const before = (await inspect(page)).document;
-  await tabToField(page, "Translation X");
+  const handle = await page
+    .getByRole("button", { name: "Move sketch X", exact: true })
+    .boundingBox();
+  assert.ok(handle);
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(handle.x + handle.width / 2 + 40, handle.y + handle.height / 2);
+  await page.mouse.up();
+  const released = page.getByRole("textbox", { name: "Translation X", exact: true });
+  const dragged = await released.inputValue();
+  assert.ok(Math.abs(Number(dragged)) > 0);
+  await page.keyboard.press("Tab");
+  assert.equal(await released.evaluate((input) => input === document.activeElement), true);
+  assert.equal(await released.inputValue(), dragged);
+  assert.deepEqual((await inspect(page)).document, before);
+
   const x = page.getByRole("textbox", { name: "Translation X", exact: true });
   await x.fill("4");
   await page.keyboard.press("Tab");

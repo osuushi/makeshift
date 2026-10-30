@@ -7,6 +7,7 @@ import { gizmoPointer } from "./body-drag.js";
 import { BodyGizmo } from "./body-gizmo.js";
 import { BodyPivotDrag } from "./body-pivot-drag.js";
 import { GizmoInputs, type GizmoPointer } from "./gizmo-inputs.js";
+import { installTransformHandoff } from "./transform-handoff.js";
 
 /** Plane geometry uses the same press, release and numeric input route as body Move. */
 export class PlanePlacement {
@@ -50,6 +51,11 @@ export class PlanePlacement {
       },
       () => {},
     );
+    installTransformHandoff(
+      editor,
+      () => !!this.drag && !this.pointer && !!this.current()?.lease,
+      this.abort.signal,
+    );
     this.gizmo.pivot.disabled = !draggableAnchor;
     if (!draggableAnchor) this.gizmo.pivot.title = "Plane origin";
     new GizmoInputs(editor, this.gizmo.input, this.abort.signal, {
@@ -60,8 +66,7 @@ export class PlanePlacement {
       release: (moved) => {
         this.pointer = null;
         this.current()?.lease?.releaseCapture();
-        if (moved && !this.drag?.rotate && this.finish) void this.finish();
-        else if (!moved) {
+        if (!moved) {
           this.gizmo.input.focus();
           this.gizmo.input.select();
         } else editor.refresh();

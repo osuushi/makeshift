@@ -1,6 +1,7 @@
 import { Vector3 } from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
+import { bindWidgetField } from "../sketch/widget-numeric-field.js";
 import {
   type BoxHandle,
   boxEdges,
@@ -193,6 +194,7 @@ export class ScaleWidget {
         button = document.createElement("button");
         button.className = "transform-box-handle";
         button.dataset.handle = handle.key;
+        bindWidgetField(button, () => this.factors[this.geometry.get(handle.key)?.axes[0] ?? 0]);
         const key = handle.key;
         button.addEventListener("pointerdown", (event) => {
           const current = this.geometry.get(key);

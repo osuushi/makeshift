@@ -1,5 +1,6 @@
 import { replayPointerModifiers } from "../sketch/modifier-pointer.js";
 import type { Point } from "../sketch/planes.js";
+import { numericFocus } from "../tools/menu-focus.js";
 import { projectedAxis } from "./extrude-axis.js";
 import { angleAt, revolutionPoint } from "./revolve-axis.js";
 import type { RevolveControls } from "./revolve-controls.js";
@@ -74,6 +75,7 @@ export function installRevolveDrag(tool: RevolveControls, signal: AbortSignal): 
     );
   }
   const move = (event: PointerEvent) => {
+    if (drag && numericFocus(tool.widget[drag.key])) return;
     if (
       !drag ||
       drag.id !== event.pointerId ||

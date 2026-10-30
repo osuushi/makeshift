@@ -9,6 +9,10 @@ import {
   bodyKeyboardRoute,
   transformLayersKeyboardRoute,
 } from "./ui-transform-layers-keyboard.mjs";
+import {
+  bodyNumericContinuation,
+  sketchNumericContinuation,
+} from "./ui-widget-numeric-continuation.mjs";
 
 const viewport = (page) => page.getByLabel("Modeling viewport", { exact: true });
 async function commandIdle(page) {
@@ -277,11 +281,13 @@ async function workspaceEnter(page, name) {
 const started = Date.now();
 await withUiRuntimes(async (page, name) => {
   await singleAndMultiple(page, name);
+  await bodyNumericContinuation(page);
   await bodyKeyboardRoute(page, name);
   await nativeFocusAndModal(page, name);
   await workspaceEnter(page, name);
   await transformLayersKeyboardRoute(page, name);
   await sketchDimensionTabRoute(page, name);
+  await sketchNumericContinuation(page);
 });
 
 console.log(`Transform Enter and keyboard suite: ${((Date.now() - started) / 1000).toFixed(1)}s`);

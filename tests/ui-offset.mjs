@@ -41,6 +41,12 @@ async function offsetDrag(page, dx, dy) {
     steps: 8,
   });
   await page.mouse.up();
+  const input = page.getByRole("textbox", { name: "Offset distance", exact: true });
+  const value = await input.inputValue();
+  await page.keyboard.press("Tab");
+  assert.equal(await input.evaluate((field) => field === document.activeElement), true);
+  assert.equal(await input.inputValue(), value);
+  await page.keyboard.press("Enter");
   await inspect(page);
 }
 /**

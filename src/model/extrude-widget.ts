@@ -1,4 +1,5 @@
 import { RadialInput } from "../preferences/radial-input.js";
+import { bindWidgetField } from "../sketch/widget-numeric-field.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { ToolPrerequisitePanel } from "../tools/tool-prerequisites.js";
 import { distanceField, positionAxialPanel, toolAction, updateAxialArrow } from "./axial-widget.js";
@@ -43,6 +44,7 @@ export class ExtrudeWidget {
     this.draft = new ExtrudeDraft(draftChanged);
     this.quantity = new ExtrudeQuantity(draftChanged);
     this.root.className = "extrude-controls axial-widget";
+    bindWidgetField(this.handle, this.input);
     this.handle.className = "extrude-arrow axial-arrow";
     this.handle.setAttribute("aria-label", "Drag extrusion");
     this.input.type = "text";

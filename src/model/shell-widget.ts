@@ -1,5 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
+import { bindWidgetField } from "../sketch/widget-numeric-field.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { ToolPrerequisitePanel } from "../tools/tool-prerequisites.js";
 import { distanceField, positionAxialPanel, toolAction, updateAxialArrow } from "./axial-widget.js";
@@ -18,6 +19,7 @@ export class ShellWidget {
   readonly prerequisites = new ToolPrerequisitePanel(this.root, this.panel);
   constructor(overlay: HTMLElement, finish: () => void, cancel: () => void) {
     this.root.className = "shell-widget axial-widget";
+    bindWidgetField(this.handle, this.input);
     this.handle.className = "axial-arrow";
     this.handle.setAttribute("aria-label", "Shell thickness handle");
     this.handle.title = "Shell · drag outward or inward, or click to type";

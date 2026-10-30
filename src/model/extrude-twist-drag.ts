@@ -3,6 +3,7 @@ import { onModelKeydown } from "../sketch/model-keys.js";
 import { replayPointerModifiers } from "../sketch/modifier-pointer.js";
 import { arrowWidthAxis } from "../sketch/move-widget/geometry.js";
 import type { Vector } from "../sketch/planes.js";
+import { numericFocus } from "../tools/menu-focus.js";
 import { anchorSnap } from "./anchor-snapping.js";
 import type { ExtrudeTwist, TwistFrame } from "./extrude-twist.js";
 import { widgetPointerOffset } from "./widget-viewport.js";
@@ -120,6 +121,7 @@ class TwistDrag {
     tool.lease()?.capture(button, event.pointerId);
   }
   private move(event: PointerEvent): void {
+    if (this.drag?.kind === "angle" && numericFocus(this.tool.input)) return;
     const tool = this.tool,
       drag = this.drag;
     if (!drag || event.pointerId !== drag.id || tool.lease()?.phase !== "editing") return;

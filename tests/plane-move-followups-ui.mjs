@@ -83,6 +83,9 @@ async function rotationFeedback(page) {
   }
   await page.mouse.up();
   const released = await angle.inputValue();
+  await page.keyboard.press("Tab");
+  assert.equal(await angle.evaluate((input) => input === document.activeElement), true);
+  assert.equal(await angle.inputValue(), released);
   await page.keyboard.press("Enter");
   const accepted = (await inspect(page)).document.constructionPlanes[0].frame;
   assert.ok(

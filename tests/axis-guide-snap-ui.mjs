@@ -59,6 +59,17 @@ await withUiRuntimes(async (page) => {
     await pointerTo(page, [30, 25, 0]);
     await page.mouse.up();
     if (shift) await page.keyboard.up("Shift");
+    const field = page.getByRole("textbox", { name: "Plane translation X", exact: true });
+    assert.equal(await field.isVisible(), true, "Released arrow retains its editable value");
+    const value = await field.inputValue();
+    await page.keyboard.press("Tab");
+    assert.equal(await field.evaluate((input) => input === document.activeElement), true);
+    assert.equal(await field.inputValue(), value, "First Tab does not reset or advance the value");
+    await page.keyboard.press("Tab");
+    await page.waitForFunction(
+      () => document.activeElement?.getAttribute("aria-label") === "Plane translation Y",
+    );
+    await page.keyboard.press("Escape");
     const origin = (await inspect(page)).document.constructionPlanes[0].frame.origin;
     if (shift) assert.ok(Math.abs(origin[0] - 30) > 0.1);
     else assert.ok(Math.abs(origin[0] - 30) < 1e-8);

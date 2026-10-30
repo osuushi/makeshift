@@ -174,10 +174,11 @@ use native planar intersection-join offsets; positive distances expand the loop.
 The result returns independent ordinary curves through the existing 0.001 mm
 bounded cubic conversion and shared-vertex endpoint correction. Source geometry
 and constraints remain unchanged; new joined endpoints receive coincidence links.
-Preview remains temporary, Enter/drag release accepts one Undo step, and Escape
-cancels. The numeric field stays beside the full offset handle and panel grip.
+Preview remains temporary after drag release; Enter or tool completion accepts one
+Undo step, and Escape cancels. The numeric field stays beside the full offset handle and panel grip.
 After clicking or typing, dragging the handle resumes the same preview from its
-current amount; release accepts the combined edit in one Undo step.
+current amount; release retains the value for refinement. First Tab focuses that
+field without restarting the offset.
 Closed analytic loops also use this native route when their direct offset
 cannot join. A narrow neck may disappear, leaving several independent closed
 sections, including complete circles. An omitted circular closing span may be
