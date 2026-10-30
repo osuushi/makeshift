@@ -1,6 +1,7 @@
 #include "measurement.h"
 #include "sketch-curve.h"
 #include <BRepBuilderAPI_MakeEdge.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
@@ -93,6 +94,23 @@ void relations(const Support& a, const Support& b, std::vector<Property>& values
         values.push_back({"Parallel distance", gp_Pln(plane.origin, plane.direction).Distance(line.origin), "mm"});
     }
 }
+GapWitness shortestDistance(const TopoDS_Shape& a, const TopoDS_Shape& b) {
+    if (infiniteMeasurementPlane(a) && infiniteMeasurementPlane(b)) {
+        const auto x = support(a), y = support(b);
+        const gp_Vec nx(x.direction), ny(y.direction);
+        const double offset = gp_Vec(y.origin, x.origin).Dot(ny);
+        const auto across = ny - nx * nx.Dot(ny);
+        if (across.SquareMagnitude() < 1e-20) {
+            const auto q = x.origin.Translated(ny * -offset);
+            return {x.origin.Distance(q), x.origin, q};
+        }
+        const auto intersection = x.origin.Translated(across * (-offset / across.SquareMagnitude()));
+        return {0, intersection, intersection};
+    }
+    BRepExtrema_DistShapeShape distance(boundedMeasurementPlane(a, b), boundedMeasurementPlane(b, a));
+    if (!distance.IsDone() || !distance.NbSolution()) throw std::runtime_error("Distance calculation failed");
+    return {distance.Value(), distance.PointOnShape1(1), distance.PointOnShape2(1)};
+}
 TopoDS_Shape selected(const Tree& target, const std::vector<Operand>& bodies) {
     const auto kind = target.get<std::string>("kind");
     if (kind != "face" && kind != "edge") throw std::runtime_error("Select faces or edges to measure");
@@ -111,11 +129,18 @@ void measureSelection(std::ostream& out, const Tree& input, const std::vector<Op
         for (const auto& curve : *curves) shapes.push_back(BRepBuilderAPI_MakeEdge(sketchCurve(curve.second)).Edge());
     if (auto profiles = input.get_child_optional("profiles"))
         for (const auto& profile : *profiles) shapes.push_back(profileFace(profile.second, bodies));
+    const size_t boundedCount = shapes.size();
+    if (auto planes = input.get_child_optional("planes"))
+        for (const auto& item : *planes) {
+            const auto& frame = item.second;
+            const gp_Vec u(gp_Pnt(0,0,0), point(frame.get_child("u"))), v(gp_Pnt(0,0,0), point(frame.get_child("v")));
+            shapes.push_back(BRepBuilderAPI_MakeFace(gp_Pln(point(frame.get_child("origin")), gp_Dir(u.Crossed(v)))).Face());
+        }
     if (shapes.empty() || shapes.size() > 2) throw std::runtime_error("Select one or two faces or edges");
     std::vector<Property> properties;
     std::vector<std::string> flags;
     const auto a = support(shapes[0]);
-    if (shapes.size() == 1) {
+    if (shapes.size() == 1 && boundedCount) {
         GProp_GProps props;
         const bool face = shapes[0].ShapeType() == TopAbs_FACE;
         if (face) BRepGProp::SurfaceProperties(shapes[0], props);
@@ -125,7 +150,7 @@ void measureSelection(std::ostream& out, const Tree& input, const std::vector<Op
             properties.push_back({"Radius", a.radius, "mm"});
             properties.push_back({"Diameter", 2 * a.radius, "mm"});
         }
-    } else relations(a, support(shapes[1]), properties, flags);
+    } else if (shapes.size() == 2) relations(a, support(shapes[1]), properties, flags);
     out << std::setprecision(17) << "{\"measurement\":{\"properties\":[";
     for (size_t i = 0; i < properties.size(); ++i) {
         if (i) out << ',';
@@ -136,9 +161,7 @@ void measureSelection(std::ostream& out, const Tree& input, const std::vector<Op
     for (size_t i = 0; i < flags.size(); ++i) { if (i) out << ','; out << quoted(flags[i]); }
     out << ']';
     if (shapes.size() == 2) {
-        BRepExtrema_DistShapeShape distance(shapes[0], shapes[1]);
-        if (!distance.IsDone() || !distance.NbSolution()) throw std::runtime_error("Distance calculation failed");
-        witness(out, "distance", {distance.Value(), distance.PointOnShape1(1), distance.PointOnShape2(1)});
+        witness(out, "distance", shortestDistance(shapes[0], shapes[1]));
         const auto gap = facingGaps(shapes[0], shapes[1]);
         if (gap.minimum && gap.maximum) {
             witness(out, "minimumGap", *gap.minimum); witness(out, "maximumGap", *gap.maximum);

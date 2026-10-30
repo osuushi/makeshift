@@ -9,6 +9,10 @@ one selected planar face, canonical plane or saved plane, copying that frame in
 one Undo step. Without a selected reference, it picks a world plane, planar face
 or saved plane once, then creates it. Creation selects the new plane and switches
 to idle Move controls. Reselecting a saved plane in 3D also defaults to Move.
+Shift-clicking a saved plane adds/toggles it alongside the current face, edge or
+region selection for [infinite-plane measurements](measurements.md). Shift-selecting
+geometry also retains the selected saved plane. Mixed selections hide plane Move
+controls; ordinary plane selection restores them.
 Reference picking ends at creation; later selection never relocates that plane
 onto another reference. One selected guide point creates a plane centered at its evaluated position, parallel
 to the canonical plane whose normal is most aligned with the viewing direction.
@@ -60,6 +64,9 @@ support surface rather than the visible trimmed boundary: cylinders extend along
 their axes, cones retain their conical support, and spheres/tori retain their
 complete curved support. Bounded spline surfaces retain their native parameter domain; no planar
 approximation or speculative spline extrapolation is introduced.
+Cylindrical cutter faces cover the full circumference and an axial interval beyond
+all target bounds. This preserves the natural support while avoiding missed kernel
+splits from infinite axial domains at existing circular rims.
 A compact local preview card shows picking/calculating/preview state, section-edge
 count and Apply/Cancel; Split also shows the result body count. It stays above the
 target's projected bounds, with the shared viewport clearance rules. There is no
@@ -83,7 +90,9 @@ plane and face candidate outlines remain visible. Hover adds a blue fill to exac
 click picker would choose, including a face's actual visible surface. Entities rows highlight their own saved
 reference. Hover clears on leaving, navigation or tool exit and never changes geometry. Discovery does not create previews or alter history.
 Canonical references cover the viewport; saved plane patches can be picked throughout their displayed interiors,
-using the nearest eligible reference when patches and planar faces overlap.
+using the nearest eligible saved patch or face when they overlap. Primary canonical
+planes are always the lowest-priority valid reference, regardless of hit depth,
+including when a curved face is eligible for Split Body or Imprint.
 Picking stays on the canvas so camera gestures remain available. Canonical references use viewport bounds and saved patches retain adaptive geometry
 bounds. Neither has floating labels; saved references remain available
 in Entities. At coincident hit depths, an eligible face wins the tie against a patch.

@@ -25,7 +25,7 @@ export function pickCutReference(
       ?.find((body) => body.id === hit.body)
       ?.faces.find((face) => face.id === hit.face);
   if (!hit || !face || face.plane || !faces.accepts(hit)) return plane;
-  return !plane || hit.depth <= plane.depth + 1e-5
+  return !plane || plane.source.kind === "world-plane" || hit.depth <= plane.depth + 1e-5
     ? { surface: { body: hit.body, face: hit.face }, vertices: face.vertices, depth: hit.depth }
     : plane;
 }

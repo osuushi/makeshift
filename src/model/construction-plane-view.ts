@@ -11,7 +11,12 @@ import { visibilityIcon } from "./visibility-icon.js";
 export class ConstructionPlaneView {
   private patches: SavedPlaneView;
   private key = "";
-  selected: string | null = null;
+  get selected(): string | null {
+    return this.editor.modeling.referencePlane;
+  }
+  set selected(id: string | null) {
+    this.editor.modeling.referencePlane = id;
+  }
   private hovered: string | null = null;
   choosing = false;
   accepts: ((frame: PlaneFrame) => boolean) | undefined;
@@ -19,7 +24,7 @@ export class ConstructionPlaneView {
     private editor: SketchEditor,
     _overlay: HTMLElement,
     private rows: HTMLElement,
-    private choose: (plane: ConstructionPlane) => void,
+    private choose: (plane: ConstructionPlane, add: boolean) => void,
     private sketch: (plane: ConstructionPlane) => void,
   ) {
     this.patches = new SavedPlaneView(editor);
@@ -84,7 +89,7 @@ export class ConstructionPlaneView {
         (this.choosing ? e.blocked : !!toolCatalog(e).reason({ reason: () => null })) ||
         !visible ||
         !allowed;
-      item.onclick = () => this.choose(plane);
+      item.onclick = (event) => this.choose(plane, event.shiftKey);
       item.ondblclick = () => {
         if (!this.choosing) this.sketch(plane);
       };
