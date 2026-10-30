@@ -13,7 +13,7 @@ export function coneMarkup(camera: THREE.Camera, axis: Vector): string {
   const reference = Math.abs(n.x) < 0.8 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
   const u = reference.addScaledVector(n, -reference.dot(n)).normalize();
   const v = n.clone().cross(u);
-  const base = n.clone().multiplyScalar(-12),
+  const base = n.clone().multiplyScalar(-8),
     tip = n.clone().multiplyScalar(18);
   const ring = Array.from({ length: 64 }, (_, i) => {
     const angle = (i * Math.PI * 2) / 64;
@@ -22,30 +22,16 @@ export function coneMarkup(camera: THREE.Camera, axis: Vector): string {
       .addScaledVector(u, 10 * Math.cos(angle))
       .addScaledVector(v, 10 * Math.sin(angle));
   });
-  const light = new THREE.Vector3(-0.4, 0.6, 0.7).normalize();
-  const sides = ring.map((a, i) => {
-    const b = ring[(i + 1) % ring.length];
-    const normal = a
-      .clone()
-      .add(b)
-      .multiplyScalar(0.5)
-      .sub(base)
-      .normalize()
-      .multiplyScalar(30)
-      .addScaledVector(n, 10)
-      .normalize();
-    const shade = Math.round(178 + 77 * Math.max(0, normal.dot(light)));
-    return {
-      depth: (a.z + b.z + tip.z) / 3,
-      markup: `<path d="${path([a, b, tip])}" fill="var(--widget-selection-fill, rgb(${shade} ${shade} ${shade}))" stroke="var(--widget-selection-fill, rgb(${shade} ${shade} ${shade}))" stroke-width="0.3"/>`,
-    };
-  });
-  sides.sort((a, b) => a.depth - b.depth);
+  const tail = n.clone().multiplyScalar(-20);
+  const shaftPath = `M${tail.x},${-tail.y} L${base.x},${-base.y}`;
+  const stem = `<g fill="none" stroke-linecap="round"><path d="${shaftPath}" stroke="var(--handle-dark)" stroke-width="7"/><path d="${shaftPath}" stroke="var(--widget-selection-fill, var(--handle-light))" stroke-width="4"/></g>`;
   const cap =
     n.z < 0
       ? `<path d="${path(ring)}" fill="var(--widget-selection-fill, var(--handle-shade))" stroke="var(--handle-dark)" stroke-width="1.2"/>`
       : "";
-  return `<svg viewBox="-24 -24 48 48" aria-hidden="true" stroke-linejoin="round">${sides.map((s) => s.markup).join("")}${cap}<path d="${path(hull([...ring, tip]))}" fill="none" stroke="var(--handle-dark)" stroke-width="1.5"/></svg>`;
+  const cone = `<path d="${path(hull([...ring, tip]))}" fill="var(--widget-selection-fill, var(--handle-light))" stroke="var(--handle-dark)" stroke-width="1.5"/>${cap}`;
+  // A rear-facing base exposes the stem in front; otherwise the cone hides its join.
+  return `<svg viewBox="-24 -24 48 48" aria-hidden="true" stroke-linejoin="round">${n.z < 0 ? cone + stem : stem + cone}</svg>`;
 }
 
 /** Outline only the convex silhouette, never the tessellation. */

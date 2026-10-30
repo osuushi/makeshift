@@ -34,9 +34,10 @@ around each glyph. Ordinary value inputs and accept/cancel controls can stay nea
   hover or snapping; invalid geometry may use red. Color supplements shape and state.
 
 **Move refinement, 2026-10-30:** translation controls use shaded cones aligned to
-their actual movement axes. They have no minimum-angle display tilt, camera-facing
-arrowhead or plane patch. Neutral surface shading, a visible base cap when facing
-the camera, and a clean silhouette convey depth. Rotation retains its corrected
+their actual movement axes, with short capsule stems behind their bases. They have
+no minimum-angle display tilt, camera-facing arrowhead or plane patch. Use flat
+white fill and a light-gray base cap when facing the camera, with the same dark
+silhouette as the other widgets; no gradient across the cone. Rotation retains its corrected
 curved arrow and true-plane grid cue. Hit targets and gesture semantics are unchanged.
 
 ## Orientation, scale and visibility
@@ -116,7 +117,7 @@ Keep the hierarchy and visual weight consistent when adapting them.
 | Fill / outline | `#fff` / `#151515` |
 | Visible outline thickness | About 1.5 CSS px |
 | Glyph viewport | 48 × 48 CSS px |
-| Translation cone | 30 px axial length; 10 px base radius before projection |
+| Translation cone | 26 px axial length; 10 px base radius; 12 px capsule stem before projection |
 | Translation marker position | 96 px along the positive axis before projection |
 | Rotation marker position | 72 px along each of its two plane axes; a fixed 45° diagonal |
 | Rotation shape scale | 0.65 of its source profile |
