@@ -9,6 +9,10 @@ one selected planar face, canonical plane or saved plane, copying that frame in
 one Undo step. Without a selected reference, it picks a world plane, planar face
 or saved plane once, then creates it. Creation selects the new plane and switches
 to idle Move controls. Reselecting a saved plane in 3D also defaults to Move.
+Shift-clicking a saved plane adds/toggles it alongside the current face, edge or
+region selection for [infinite-plane measurements](measurements.md). Shift-selecting
+geometry also retains the selected saved plane. Mixed selections hide plane Move
+controls; ordinary plane selection restores them.
 Reference picking ends at creation; later selection never relocates that plane
 onto another reference. One selected guide point creates a plane centered at its evaluated position, parallel
 to the canonical plane whose normal is most aligned with the viewing direction.

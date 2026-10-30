@@ -34,7 +34,7 @@ export class ConstructionPlaneControls {
       editor,
       overlay,
       rows,
-      (plane) => this.select(plane),
+      (plane, add) => this.select(plane, undefined, add),
       (plane) => this.sketch(plane),
     );
     this.disposeTool = toolCatalog(editor).register({
@@ -54,7 +54,9 @@ export class ConstructionPlaneControls {
       overlay,
       () => {
         const plane = this.plane ?? this.selected();
-        return plane ? { frame: plane.frame, lease: this.lease, id: plane.id } : null;
+        return plane && (!editor.modeling.targets.length || this.lease)
+          ? { frame: plane.frame, lease: this.lease, id: plane.id }
+          : null;
       },
       (frame) => {
         if (!frame) {
@@ -75,7 +77,7 @@ export class ConstructionPlaneControls {
     savedPlaneInteraction(
       editor,
       this.abort.signal,
-      (plane) => this.select(plane),
+      (plane, add) => this.select(plane, undefined, add),
       (id) => this.view.hover(id),
       (plane) => this.sketch(plane),
     );
@@ -111,7 +113,7 @@ export class ConstructionPlaneControls {
     this.editor.refresh();
   }
   private selectedKey(event: KeyboardEvent): void {
-    if (this.editor.interactions.current) return;
+    if (this.editor.interactions.current || this.editor.modeling.targets.length) return;
     const plane = this.selected();
     const world = this.editor.world,
       id = world.selectedPlane;
@@ -126,12 +128,12 @@ export class ConstructionPlaneControls {
       },
     });
   }
-  async select(plane: ConstructionPlane | PlaneId, entering?: () => boolean): Promise<void> {
-    await selectReferencePlane(this.editor, this.picker, this.view, plane, entering);
-    if (typeof plane !== "string" && this.selected()) {
-      this.editor.modeling.setTool("move");
-      this.editor.refresh();
-    }
+  async select(
+    plane: ConstructionPlane | PlaneId,
+    entering?: () => boolean,
+    add = false,
+  ): Promise<void> {
+    await selectReferencePlane(this.editor, this.picker, this.view, plane, entering, add);
   }
   private sketch(plane: ConstructionPlane): void {
     if (this.editor.workspaceEntry.reason()) return;
@@ -276,7 +278,7 @@ export class ConstructionPlaneControls {
 
   private update = (): void => {
     const e = this.editor;
-    if ((e.modeling.targets.length || e.world.active) && !this.lease) this.view.selected = null;
+    if (e.world.active && !this.lease) this.view.selected = null;
     if (!e.display.constructionPlanes?.some((p) => p.id === this.view.selected))
       this.view.selected = null;
     this.view.choosing = !!this.picker.choose;

@@ -5,7 +5,11 @@ relationships. Maximum means largest gap, not the farthest pair of points.
 
 The Measurements section of the movable, resizable Inspector automatically measures one or
 two selected solid faces, solid edges, filled sketch regions in 3D, or whole curves
-in a sketch workspace.
+in a sketch workspace. A saved construction plane can be Shift-selected with a
+face, edge or filled region, in either selection order (canvas or Entities).
+Its displayed patch has no measurement boundary: the support is infinite. A plane
+alone has no finite area readout. Plane Move controls appear only when it is selected
+alone; ordinary selection replaces the mixed selection.
 Filled regions behave as bounded zero-thickness faces, preserving holes and world
 placement. They measure against regions, solid faces and edges using the same gap,
 angle and relationship rules. A single region shows its area. Hiding bodies does
@@ -22,6 +26,15 @@ not dimensions, constraints, saved annotations or history entries.
   curves and cylindrical faces.
 - Two entities: shortest distance between the actual trimmed shapes, independently
   of facing-region gap. Intersecting shapes have zero shortest distance.
+- Construction-plane pairs with finite geometry use the finite entity's normal
+  projections onto the infinite plane for their gap range. Polygonal/straight
+  extrema are exact, including crossings; curved extrema retain the sampled-gap
+  convention below. Shortest distance uses exact geometry and includes intersections.
+  The query face used for native distance contains the projection of the finite
+  operand's full exact bounds, independent of the displayed plane patch or origin.
+  Script queries also support two saved planes: parallel planes report constant
+  separation; intersecting planes report zero shortest distance and their angle,
+  with no finite maximum gap.
 - Parallel distance: exact perpendicular separation between supporting straight
   lines, planar faces/regions, or a parallel line and plane. It is available even
   without trimmed overlap; coplanar/collinear supports report zero. Angled or curved
@@ -57,7 +70,7 @@ not dimensions, constraints, saved annotations or history entries.
 ## Ownership and implementation
 
 `measurement-input.ts` resolves stable IDs and current profile keys in the accepted
-document. Region boundaries reuse extrusion's exact trimmed-face construction, solely
+document, including saved-plane frames. Region boundaries reuse extrusion's exact trimmed-face construction, solely
 within the measurement query; no body or extrusion is stored. Shared sketch
 curve construction feeds both projection and measurement. OCCT computes all results;
 display triangles/polylines never determine the values. Queries use a separate owned

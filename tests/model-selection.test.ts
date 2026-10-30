@@ -95,3 +95,15 @@ test("subtraction removes face coverage and never adds an absent target", () => 
   selection.choose({ kind: "body", body: body.id }, false, false, true);
   assert.deepEqual(selection.targets, []);
 });
+
+test("additive geometry selection retains the construction-plane measurement reference", () => {
+  const selection = new ModelSelection();
+  selection.referencePlane = "reference";
+  selection.choose({ kind: "face", body: "body", face: "top" }, true, false);
+  assert.equal(selection.referencePlane, "reference");
+  selection.choose({ kind: "edge", body: "body", edge: "edge" }, false, false);
+  assert.equal(selection.referencePlane, null);
+  selection.referencePlane = "reference";
+  selection.choose(null, false, false);
+  assert.equal(selection.referencePlane, null);
+});

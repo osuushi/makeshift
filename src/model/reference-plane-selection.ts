@@ -12,6 +12,7 @@ export async function selectReferencePlane(
   view: ConstructionPlaneView,
   plane: ConstructionPlane | PlaneId,
   entering?: () => boolean,
+  add = false,
 ): Promise<void> {
   if (picker.choose) {
     picker.choose(
@@ -29,9 +30,11 @@ export async function selectReferencePlane(
       // selection for navigation Undo while the first click finishes its preview.
       if (entering?.()) return;
       editor.world.exit();
-      editor.modeling.targets = [];
-      view.selected = typeof plane === "string" ? null : plane.id;
+      if (!add) editor.modeling.targets = [];
+      view.selected =
+        typeof plane === "string" || (add && view.selected === plane.id) ? null : plane.id;
       editor.world.selectedPlane = typeof plane === "string" ? plane : null;
+      if (view.selected && !editor.modeling.targets.length) editor.modeling.setTool("move");
       editor.modeling.alternatives = [];
       editor.refresh();
     },

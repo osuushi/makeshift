@@ -32,7 +32,14 @@ export function installConstructionPlaneEvents(
   editor.world.canvas.addEventListener(
     "pointerdown",
     (event) => {
-      if (!active() && !picking() && !event.button && !event.metaKey && !event.ctrlKey) {
+      if (
+        !active() &&
+        !picking() &&
+        !event.button &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.shiftKey
+      ) {
         actions.clear();
       }
     },

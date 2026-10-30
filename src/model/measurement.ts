@@ -1,6 +1,7 @@
 import type { Vector } from "../sketch/planes.js";
 
 export type MeasurementTarget =
+  | { kind: "plane"; plane: string }
   | { kind: "profile"; sketch: string; profile: string }
   | { kind: "curve"; sketch: string; curve: string }
   | { kind: "face"; body: string; face: string }

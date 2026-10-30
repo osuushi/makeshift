@@ -22,6 +22,7 @@ async function verifyQueries(kernel: SolidCalculator, body: Body, face: Face) {
     bodies,
     curves: [],
     profiles: [],
+    planes: [],
     targets: [{ kind: "face", body: body.id, face: face.id }],
   });
   assert.ok(Math.abs(measured.measurement.properties[0].value - 400) < 1e-6);
@@ -244,6 +245,7 @@ test("real query replies validate witnesses, topology references and required ou
       bodies,
       curves: [],
       profiles: [],
+      planes: [],
       targets: caps.map((face) => ({ kind: "face" as const, body: body.id, face: face.id })),
     };
     const measured = await kernel.calculate(measureInput);
