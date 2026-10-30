@@ -99,7 +99,11 @@ class PlaneTargetInteraction {
   };
   private click = (event: MouseEvent): void => {
     if (event.button || event.metaKey || event.ctrlKey || this.world.planePickerAccept) return;
-    const pending = this.selecting;
+    const target = this.hit({ x: event.clientX, y: event.clientY });
+    const pending =
+      this.selecting && (!this.selecting.settled || this.selecting.target === target)
+        ? this.selecting
+        : null;
     if (
       event.type === "click" &&
       event.detail > 1 &&
@@ -137,7 +141,6 @@ class PlaneTargetInteraction {
       return;
     }
     if (this.world.planePicker && event.type !== "click") return;
-    const target = this.hit({ x: event.clientX, y: event.clientY });
     if (!target) return;
     event.preventDefault();
     event.stopImmediatePropagation();

@@ -2,10 +2,12 @@ import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { PlaneFrame, Vector } from "../sketch/planes.js";
 import { type PlacementAxis, placedFrame } from "../sketch/sketch-placement.js";
+import { numericFocus } from "../tools/menu-focus.js";
 import { gizmoPointer } from "./body-drag.js";
 import { BodyGizmo } from "./body-gizmo.js";
 import { BodyPivotDrag } from "./body-pivot-drag.js";
 import { GizmoInputs, type GizmoPointer } from "./gizmo-inputs.js";
+import { installTransformHandoff } from "./transform-handoff.js";
 
 /** Plane geometry uses the same press, release and numeric input route as body Move. */
 export class PlanePlacement {
@@ -37,6 +39,8 @@ export class PlanePlacement {
       overlay,
       (event, axis, rotate) => this.start(event, axis as PlacementAxis, rotate),
       "plane",
+      // View-only sections keep their existing lease while cycling placement axes.
+      !!finish,
     );
     this.anchor = new BodyPivotDrag(
       editor,
@@ -49,6 +53,11 @@ export class PlanePlacement {
       },
       () => {},
     );
+    installTransformHandoff(
+      editor,
+      () => !!this.finish && !!this.drag && !this.pointer && !!this.current()?.lease,
+      this.abort.signal,
+    );
     this.gizmo.pivot.disabled = !draggableAnchor;
     if (!draggableAnchor) this.gizmo.pivot.title = "Plane origin";
     new GizmoInputs(editor, this.gizmo.input, this.abort.signal, {
@@ -59,8 +68,7 @@ export class PlanePlacement {
       release: (moved) => {
         this.pointer = null;
         this.current()?.lease?.releaseCapture();
-        if (moved && !this.drag?.rotate && this.finish) void this.finish();
-        else if (!moved) {
+        if (!moved) {
           this.gizmo.input.focus();
           this.gizmo.input.select();
         } else editor.refresh();
@@ -111,6 +119,7 @@ export class PlanePlacement {
       return;
     }
     const sketch = { id: "", plane: d.frame, curves: [], constraints: [], groups: [] };
+    if (!numericFocus(this.gizmo.input)) this.gizmo.input.value = String(Number(value.toFixed(4)));
     this.change(placedFrame(sketch, d.axis, d.rotate, value, d.pivot));
   }
   reset(): void {

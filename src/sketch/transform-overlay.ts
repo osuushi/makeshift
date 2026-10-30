@@ -15,6 +15,7 @@ import {
   updateSketchWidgets,
 } from "./sketch-widget-layout.js";
 import { sketchRotationVisible, transformHandles } from "./transform-handles.js";
+import { bindWidgetField } from "./widget-numeric-field.js";
 
 export class TransformOverlay {
   private root = document.createElement("div");
@@ -178,6 +179,11 @@ export class TransformOverlay {
       role: "button",
       "aria-label": axis === "rotation" ? "Rotate sketch" : `Move sketch ${axis.toUpperCase()}`,
     });
+    bindWidgetField(group, () =>
+      document.querySelector<HTMLInputElement>(
+        `input[data-quantity="${axis === "rotation" ? "angle" : axis === "x" ? "translateX" : "translateY"}"]`,
+      ),
+    );
     group.addEventListener("widget-numeric-activate", () => {
       if (axis === "x" || axis === "y" || axis === "rotation") void this.activateNumeric(axis);
     });

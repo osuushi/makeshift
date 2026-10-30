@@ -12,7 +12,13 @@ export async function extrusionWidgetRoute(page, name) {
   const box = await handle.boundingBox();
   assert.ok(Math.abs(box.x + box.width / 2 - centroid.x - 32) < 0.1);
   assert.ok(Math.abs(box.y + box.height / 2 - centroid.y) < 0.1);
-  assert.equal(await page.getByRole("button", { name: "Union", exact: true }).isVisible(), true);
+  assert.equal(
+    await page
+      .locator(".extrude-controls")
+      .getByRole("button", { name: "Union", exact: true })
+      .isVisible(),
+    true,
+  );
   assert.equal(await page.getByRole("textbox", { name: "Extrusion distance" }).isVisible(), true);
   await orient(page, [1, -1, 2]);
   const { camera, unit, project } = await extrusionProjection(page, centerX, centerY);
@@ -40,7 +46,7 @@ export async function extrusionWidgetRoute(page, name) {
   await page.mouse.move(hx, hy);
   await page.mouse.down();
   await page.mouse.move(hx + end.x - start.x, hy + end.y - start.y, { steps: 5 });
-  await page.mouse.up();
+  await refineHeldExtrusion(page, hx + end.x - start.x + 20, hy + end.y - start.y);
   const preview = await inspect(page);
   close(
     preview.preview.bodies.reduce((sum, body) => sum + body.volume, 0),
@@ -61,7 +67,9 @@ export async function extrusionWidgetRoute(page, name) {
     (300 - 4 * Math.PI) * 8,
   );
   for (const label of ["Union", "Subtract", "Intersect", "New body"]) {
-    const button = page.getByRole("button", { name: label, exact: true });
+    const button = page
+      .locator(".extrude-controls")
+      .getByRole("button", { name: label, exact: true });
     assert.equal(await button.textContent(), "");
     assert.ok((await button.getAttribute("title")).startsWith(label));
   }
@@ -125,4 +133,18 @@ async function selectProfiles(page) {
   await page.mouse.click(b.x, b.y);
   await page.keyboard.up("Shift");
   return { centroid, centerX, centerY };
+}
+
+async function refineHeldExtrusion(page, x, y) {
+  await page.keyboard.press("Tab");
+  const distance = page.getByRole("textbox", { name: "Extrusion distance", exact: true });
+  assert.equal(await distance.evaluate((input) => input === document.activeElement), true);
+  await distance.fill("4");
+  await page.mouse.move(x, y);
+  await page.mouse.up();
+  assert.equal(
+    await distance.inputValue(),
+    "4",
+    "Numeric focus owns the held drag through release",
+  );
 }

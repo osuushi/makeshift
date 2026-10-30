@@ -56,15 +56,22 @@ handles snap their gesture angle. Numeric entry remains exact, and Option retain
 its Move duplication behavior. Move arrows snap displacement to the current grid
 spacing; Shift uses one tenth of that spacing while bypassing geometry attraction.
 The grid toggle still controls translation grid snapping.
-Tabbing to a body or topology Move field during a held gesture gives numeric entry
-ownership: typing updates the preview, and pointer travel or modifier changes cannot
-replace that value. A fresh handle press returns control to dragging.
-Whole-body rotation retains its preview and angle field after
-pointer release so the angle can be refined before Enter/tool exit accepts it in
-one Undo step; Escape cancels it. Pressing a different body translation or rotation
-handle accepts the released rotation first, then starts that handle from the accepted
-geometry. Each accepted gesture has its own Undo step. Whole-body translation still accepts on release.
-Topology movement retains its combined preview.
+Numeric widgets retain the value field after a drag. The first Tab focuses and
+selects that widget's current value without resetting it or activating a different
+handle. Once its field is focused, Tab/Shift-Tab visits the next/previous widget's
+field. A handle and its field are one keyboard stop. This applies to sketch,
+body/topology/plane placement, scale and the modeling quantity widgets.
+During a held gesture, focused numeric entry owns the value: pointer travel and
+modifier changes cannot replace it. A fresh handle press returns to dragging.
+
+Body and whole-sketch placement, and saved-plane movement, retain their preview
+and field after translation or rotation release. Enter or tool exit accepts one
+Undo step; Escape cancels. Starting another handle accepts the previous released
+edit before starting from the accepted geometry. Topology movement retains its
+combined preview as before. Sketch-curve gestures still accept on release; their
+translation field retains the last displacement, and numeric refinement replaces
+that displacement rather than adding it again. Starting another axis resets its
+relative displacement to zero. Sketch rotations retain their current orientation.
 
 ### Option-Move duplication (founder-directed, 2026-09-21)
 
@@ -74,9 +81,9 @@ sketch), whole-sketch placement and complete bodies, including the Move widget's
 rotation controls. Partial solid faces/edges retain ordinary Move behavior:
 Option has no duplication effect there. Detached topology and reattachment are deferred.
 
-The held preview responds immediately to pressing/releasing Option. Pointer release
-accepts translation in one Undo step; body rotation remains editable until Enter or
-tool exit accepts it. Escape cancels without creating a copy. Option-click a Move
+The held preview responds immediately to pressing/releasing Option. Sketch-curve pointer release
+accepts in one Undo step; body and whole-sketch placement remain editable until Enter or
+tool exit accepts them. Escape cancels without creating a copy. Option-click a Move
 handle to type a numeric copy transform; that click captures the copying choice.
 The resulting copies become selected, retain selection order, and remain ordinary
 editable geometry. Pivot-only movement never duplicates geometry. Drawing and resize

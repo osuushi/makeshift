@@ -149,7 +149,7 @@ export async function changeDimension(
   let changed = sketch;
   if (quantity === "translateX" || quantity === "translateY")
     changed = transformSelected(editor, sketch, (p) =>
-      translatedPoint(p, quantity === "translateX" ? "x" : "y", value),
+      translatedPoint(p, quantity === "translateX" ? "x" : "y", value - editor.transformDistance),
     );
   else if (editor.moveMode && quantity === "angle" && selection)
     changed = transformSelected(editor, sketch, (p) =>
@@ -177,6 +177,10 @@ export async function changeDimension(
   if (!(await editor.editSketch(changed, { kind: "dimension" }, interaction)))
     throw new Error(editor.message);
   if (copy) editor.select(copy.curves.map((curve) => curve.id));
+  if (quantity === "translateX" || quantity === "translateY") {
+    editor.transformDistance = value;
+    editor.refresh();
+  }
   if (quantity === "angle" && (!line || editor.moveMode)) {
     editor.selectionAngle = value;
     editor.refresh();
@@ -213,7 +217,7 @@ function translationDimensions(editor: SketchEditor): DimensionValue[] {
       quantity: axisQuantity(axis),
       label: `Move ${editor.world.axisName(axis)}`,
       unit: "mm",
-      value: editor.isDragging ? editor.transformDistance : 0,
+      value: editor.transformDistance,
       screen: { x: p.x + (axis === "x" ? 65 : 0), y: p.y + (axis === "y" ? -30 : 0) },
     });
   }

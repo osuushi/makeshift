@@ -1,4 +1,5 @@
 import { RadialInput } from "../preferences/radial-input.js";
+import { bindWidgetField } from "../sketch/widget-numeric-field.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { directionalOffset, directionalWidget } from "./directional-widget.js";
 import { WidgetClearance } from "./widget-clearance.js";
@@ -40,6 +41,7 @@ export class BodyEdgeFinishWidget {
     for (const mode of ["fillet", "chamfer"] as const) {
       const handle = this.handles[mode],
         name = mode === "fillet" ? "Fillet" : "Chamfer";
+      bindWidgetField(handle, this.input);
       handle.title = `${name} edges · drag with the surface to increase size, or click to type`;
       handle.setAttribute("aria-label", `${name} edges`);
       handle.className = "edge-size-handle orientable-handle";

@@ -2,6 +2,7 @@ import { radialName } from "../preferences/radial-dimension.js";
 import { RadialInput } from "../preferences/radial-input.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
+import { bindWidgetField } from "../sketch/widget-numeric-field.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { ToolPrerequisitePanel } from "../tools/tool-prerequisites.js";
 import { distanceField, positionAxialPanel, updateAxialArrow } from "./axial-widget.js";
@@ -24,6 +25,7 @@ export class FaceOffsetWidget {
   constructor(overlay: HTMLElement, accept: () => void, cancel: () => void) {
     this.root.className = "face-offset-widget axial-widget";
     this.handle.setAttribute("aria-label", "Offset faces");
+    bindWidgetField(this.handle, this.input);
     this.handle.className = "face-offset-handle axial-arrow";
     this.input.type = "text";
     this.input.value = "0";

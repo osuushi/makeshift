@@ -63,8 +63,7 @@ export class BodyMoveControls {
       release: (moved) => {
         this.pointer = null;
         this.session?.lease.releaseCapture();
-        if (moved && !this.session?.rotate) void this.commit();
-        else if (!moved) {
+        if (!moved) {
           this.gizmo.input.focus();
           this.gizmo.input.select();
         } else this.editor.refresh();
@@ -77,14 +76,14 @@ export class BodyMoveControls {
       (event) => {
         const s = this.session;
         const handle = event.target instanceof Element && event.target.closest(".body-axis-handle");
+        // Duplicate opens a preview before any axis is active; its first handle
+        // starts that edit rather than accepting an overlapping copy.
         return !!(
-          s?.rotate &&
-          s.valid &&
+          s?.valid &&
+          this.gizmo.input.hasAttribute("aria-label") &&
           !this.pointer &&
           handle &&
-          this.gizmo.root.contains(handle) &&
-          (handle.getAttribute("data-axis") !== s.axis ||
-            !handle.classList.contains("body-rotate-handle"))
+          this.gizmo.root.contains(handle)
         );
       },
       this.abort.signal,

@@ -14,8 +14,8 @@ import { GestureSolve } from "./gesture-solve.js";
 import { onModelKeydown } from "./model-keys.js";
 import type { Point } from "./planes.js";
 import { distance } from "./point-math.js";
-
 import type { SelectionTarget } from "./selection-target.js";
+import { bindWidgetField } from "./widget-numeric-field.js";
 
 type Session = {
   sketch: Sketch;
@@ -63,6 +63,10 @@ export class FilletControls {
           this.input.select();
         }
       },
+    });
+    bindWidgetField(this.handle, this.input);
+    this.handle.addEventListener("click", (event) => {
+      if (event.detail === 0) void toolCatalog(editor).invoke("sketch-fillet");
     });
     this.root.className = "fillet-control";
     this.input.type = "text";
@@ -171,6 +175,7 @@ export class FilletControls {
     this.editor.refresh();
   }
   private move = (event: PointerEvent): void => {
+    if (numericFocus(this.input)) return;
     const s = this.session;
     if (!s || s.pointer !== event.pointerId || !this.handle.hasPointerCapture(event.pointerId))
       return;

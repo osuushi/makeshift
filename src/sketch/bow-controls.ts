@@ -66,8 +66,8 @@ export class BowControls {
     );
     onModelKeydown((event) => {
       if (!this.session) return;
-      event.stopImmediatePropagation();
       if (event.key === "Escape" || event.key === "Enter") {
+        event.stopImmediatePropagation();
         event.preventDefault();
         if (event.key === "Escape") void this.cancel();
         else void this.commit();
@@ -144,6 +144,7 @@ export class BowControls {
     this.editor.refresh();
   }
   private move = (event: PointerEvent): void => {
+    if (numericFocus(this.input)) return;
     const s = this.session,
       canvas = this.editor.world.canvas;
     if (!s || s.pointer !== event.pointerId || !canvas.hasPointerCapture(event.pointerId)) return;

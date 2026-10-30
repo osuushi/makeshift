@@ -145,6 +145,7 @@ export class Dimensions implements NumericFields {
     const label = document.createElement("label");
     label.className = "dimension";
     const input = document.createElement("input");
+    input.dataset.quantity = quantity;
     input.id = `dimension-${crypto.randomUUID()}`;
     label.htmlFor = input.id;
     input.type = "text";
@@ -196,6 +197,7 @@ export class Dimensions implements NumericFields {
         : !widget?.axes.some((handle) => handle.axis === axis))
     )
       return false;
+    e.transformDistance = 0;
     e.transformAxis = axis === "rotation" ? null : axis;
     e.transformRotation = axis === "rotation";
     e.refresh();

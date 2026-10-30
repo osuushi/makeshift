@@ -3,6 +3,7 @@ import { BodyGizmo } from "../model/body-gizmo.js";
 import { BodyPivotDrag } from "../model/body-pivot-drag.js";
 import { axes } from "../model/body-placement.js";
 import { selectionAnchor } from "../model/selection-anchor.js";
+import { installTransformHandoff } from "../model/transform-handoff.js";
 import { widgetPointerOffset } from "../model/widget-viewport.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import type { InteractionLease } from "./active-interaction.js";
@@ -70,6 +71,7 @@ export class PlacementControls {
         editor.refresh();
       },
     );
+    installTransformHandoff(editor, () => !!this.session && !this.session.held, this.abort.signal);
     this.bindInput();
     editor.world.changed.add(this.update);
     this.update();
@@ -86,8 +88,7 @@ export class PlacementControls {
         this.move(e);
         s.held = false;
         s.lease.releaseCapture();
-        if (s.moved) void this.commit();
-        else {
+        if (!s.moved) {
           this.input.focus();
           this.input.select();
         }
@@ -130,6 +131,7 @@ export class PlacementControls {
     const sketches = this.selectedSketches(),
       sketch = sketches[0];
     if (event.button || !sketch || this.session || this.editor.blocked) return;
+    this.input.blur();
     event.preventDefault();
     const lease = this.editor.interactions.acquire(
       "placement",
@@ -160,7 +162,7 @@ export class PlacementControls {
         widgetPointerOffset(event.currentTarget),
       ),
       pointer: event.pointerId,
-      held: true,
+      held: event.pointerId !== -1,
       moved: false,
       threshold: pointerDragThreshold(event),
       value: 0,

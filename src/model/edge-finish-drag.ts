@@ -4,6 +4,7 @@ import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { replayPointerModifiers } from "../sketch/modifier-pointer.js";
 import type { Point } from "../sketch/planes.js";
+import { numericFocus } from "../tools/menu-focus.js";
 import type { BodyEdgeFinish } from "./body.js";
 import type { BodyEdgeFinishWidget } from "./body-edge-finish-widget.js";
 
@@ -64,6 +65,7 @@ export class EdgeFinishDrag {
         options,
       );
     const move = (event: PointerEvent) => {
+      if (numericFocus(widget.input)) return;
       const p = this.pointer;
       if (!p || p.id !== event.pointerId) return;
       p.lastY = event.clientX * p.direction.x + event.clientY * p.direction.y;

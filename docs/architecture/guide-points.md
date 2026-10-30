@@ -105,8 +105,10 @@ Hovering or selecting the row highlights the referenced geometry. Hide excludes
 the guide from display and snapping. Shift-click markers or rows to toggle guides
 in an ordered multiselection; ordinary click selects one. All selected markers and
 rows are blue. Delete/Backspace removes the selected guides together in one Undo.
-Escape clears guide selection. Three distinct non-collinear selected guides expose
-Construction plane in the toolbox, also while sketching. The first point defines
+Escape clears guide selection. One selected guide exposes Construction plane in
+the toolbox, also while sketching: its position becomes the plane origin, with
+the most camera-facing signed canonical normal chosen from the viewing direction.
+Three distinct non-collinear selected guides also expose Construction plane. The first point defines
 the origin, the second the positive U direction, and the third the plane orientation.
 Creation copies their current positions into an independent saved plane, selects
 that plane in Modeling, and adds one Undo step. Invalid point counts or collinear
@@ -117,6 +119,11 @@ clears the guide selection so Delete keeps its ordinary selection meaning.
 Visible saved guides are sketch snap targets, projected along the current camera
 ray onto the active plane even when the source lies off that plane. Snapping
 positions geometry; it does not create a persistent relationship to the guide.
+Dragging a 3D translation arrow over a visible saved guide aligns its starting
+anchor with the guide along the arrow direction, preserving the perpendicular
+coordinates. This applies to body, topology and construction-plane arrows; it
+uses the guide’s accepted position and does not include the arrow’s visual offset.
+Shift bypasses this guide snap. Rotation and numeric entry retain their existing behavior.
 Existing sketch and transform snapping remains available. Owner visibility also
 controls guide visibility; hidden guides do not contribute targets.
 

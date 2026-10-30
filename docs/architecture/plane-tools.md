@@ -10,21 +10,28 @@ one Undo step. Without a selected reference, it picks a world plane, planar face
 or saved plane once, then creates it. Creation selects the new plane and switches
 to idle Move controls. Reselecting a saved plane in 3D also defaults to Move.
 Reference picking ends at creation; later selection never relocates that plane
-onto another reference. Three selected guide points also define a construction
+onto another reference. One selected guide point creates a plane centered at its evaluated position, parallel
+to the canonical plane whose normal is most aligned with the viewing direction.
+The normal faces toward the camera; panning does not change this choice.
+Three selected guide points also define a construction
 plane: first point is the origin, first-to-second defines U, and the third fixes
 the normal orientation. The points must be distinct and non-collinear. This route
 is available in both Modeling and sketch workspaces; creation returns to Modeling
 and copies the frame in one Undo step. Later guide edits/deletion do not affect it.
 
-Plane Move shares body Move's gizmo input, translation release and numeric routes.
-Translation drags accept on release; numeric edits and rotation accept with Enter
-or an ordinary selection/tool change. Clicking off accepts a valid edit, and
+Plane Move shares body Move's gizmo input and numeric routes.
+The numeric field follows the live drag value; focused numeric entry preserves typed text.
+Translation and rotation retain their preview and value field on release, accepting
+with Enter or an ordinary selection/tool change. First Tab focuses the retained
+value; another Tab accepts it and focuses the next widget's field. Clicking off accepts a valid edit, and
 Escape cancels. Move handles are idle until used, so sketch entry and deletion
 remain available immediately after selection. Reselection supports movement,
 deletion, visibility and sketch entry; Transform/M restores the movement controls.
 Enter or viewport double-click enters sketching, and Delete/Backspace deletes.
 These use existing selection affordances; there is no floating plane action bar.
-Visibility remains view state.
+Visibility remains view state. In ordinary canvas selection, visible saved construction
+planes take hover and click priority over the primary canonical plane even when
+the canonical plane is nearer the camera. Geometry retains its selection priority.
 
 Dragging a saved plane's Move anchor repositions only the temporary rotation
 pivot, without editing geometry or adding Undo history. Escape restores an anchor
