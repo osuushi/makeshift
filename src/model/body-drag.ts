@@ -2,6 +2,7 @@ import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Point, Vector } from "../sketch/planes.js";
 import { pointerDragThreshold } from "../sketch/pointer-intent.js";
+import { axisGuideSnap } from "./axis-guide-snap.js";
 import { axes } from "./body-placement.js";
 import { projectedAxis } from "./extrude-axis.js";
 import { featureEdges } from "./feature-edges.js";
@@ -41,6 +42,7 @@ export function dragFrame(
   let previous = 0,
     accumulated = 0;
   return {
+    guideTranslation: (X: number, Y: number) => axisGuideSnap(editor, pivot, vector, X, Y),
     translation: (X: number, Y: number) =>
       ((X - x) * direction.x + (Y - y) * direction.y) / direction.scale,
     angle: (X: number, Y: number) => {
