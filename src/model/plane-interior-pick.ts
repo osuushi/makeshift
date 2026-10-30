@@ -31,7 +31,7 @@ export function pickPlaneInterior(
   return planeInteriors(editor, screen, accepts, faceHit)[0] ?? null;
 }
 
-/** Depth-ordered plane references for explicit disambiguation as well as ordinary picking. */
+/** Depth-ordered references, with canonical planes reserved as the fallback. */
 export function planeInteriors(
   editor: SketchEditor,
   screen: Point,
@@ -104,7 +104,11 @@ export function planeInteriors(
     const depth = hit.distanceTo(editor.world.camera.position);
     choices.push({ frame, depth, vertices: planePatchVertices(frame, bounds), source });
   }
-  return choices.sort((a, b) => (Math.abs(a.depth - b.depth) <= 1e-5 ? 0 : a.depth - b.depth));
+  return choices.sort((a, b) => {
+    const priority =
+      Number(a.source.kind === "world-plane") - Number(b.source.kind === "world-plane");
+    return priority || (Math.abs(a.depth - b.depth) <= 1e-5 ? 0 : a.depth - b.depth);
+  });
 }
 
 export function planePatchVertices(
