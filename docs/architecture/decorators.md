@@ -263,10 +263,13 @@ as well as the groove envelope. An external Cut-into-rod thread uses its radial
 groove cutter, including buried material within that envelope. Other bodies are
 untouched. Added thread material still follows the selected trimmed face domains.
 Start/end taper lengths are configurable; built-in presets set both to half their
-resolved pitch. Tapers fade toward the rod root or hole groove envelope, always
-removing material near axial ends for either Cut into mode. They do not chamfer
-the underlying BRep. They do not
-restart at face seams or angular interruptions such as flattened sides.
+resolved pitch. Tapers clip the unchanged thread profile against a linear cone:
+rod radii are capped with min(profile, cone), hole radii with max(profile, cone).
+The end cone reaches the rod root or hole groove envelope, always removing
+material in either Cut into mode. Mesh facets follow the cone/profile intersection
+and the meeting point of overlapping end tapers. This changes preview/export
+meshes only, not the underlying BRep. Tapers do not restart at face seams or
+angular interruptions such as flattened sides.
 
 Middle-of-rod threads remain a V1 case; a thread need not reach the rod end.
 This does not guarantee that mating parts can be assembled in every surrounding

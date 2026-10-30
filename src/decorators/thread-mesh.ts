@@ -6,6 +6,7 @@ import { radialVolume } from "./radial-volume.js";
 import { threadGrid } from "./thread-grid.js";
 import { type ThreadPreviewResolution, threadSampling } from "./thread-sampling.js";
 import { type ThreadSettings, threadDepth } from "./thread-settings.js";
+import { threadTaperRadius } from "./thread-taper.js";
 
 /** Clip the rod crest and open the matching hole groove without adding material. */
 export function threadRadius(
@@ -32,21 +33,12 @@ export function threadRadius(
           ? 1 - relievedCrest
           : relievedCrest
         : Math.min(1, Math.max(0, (triangle - 0.125) / 0.625));
-  const taper = Math.max(
-    0,
-    Math.min(
-      1,
-      settings.startTaper ? (z - bounds[0]) / settings.startTaper : 1,
-      settings.endTaper ? (bounds[1] - z) / settings.endTaper : 1,
-    ),
-  );
-  const displacement = (settings.cut === "rod" ? -1 : 1) * depth * profile;
-  // Fade toward the material-free envelope, never back toward an obstructing cylinder.
-  const endRelief =
-    outward > 0 ? (settings.cut === "rod" ? -depth : 0) : settings.cut === "hole" ? depth : 0;
-  return (
-    radius + endRelief + (displacement - endRelief) * taper + (outward < 0 ? settings.clearance : 0)
-  );
+  const profileRadius =
+    radius +
+    (settings.cut === "rod" ? -1 : 1) * depth * profile +
+    (outward < 0 ? settings.clearance : 0);
+  const taperRadius = threadTaperRadius(radius, z, settings, outward, bounds);
+  return outward > 0 ? Math.min(profileRadius, taperRadius) : Math.max(profileRadius, taperRadius);
 }
 
 function threadToolMeshes(
@@ -121,7 +113,14 @@ export function threadMeshes(
   const steps = Math.max(1, Math.ceil(((bounds[1] - bounds[0]) / settings.pitch) * samples));
   if (steps * segments > 1_000_000)
     throw new Error("Threads exceed the mesh budget; increase pitch or reduce length");
-  const { coords, triangles } = threadGrid(segments, steps, bounds, settings, taperBounds);
+  const untapered = { ...settings, startTaper: 0, endTaper: 0 };
+  const crease =
+    settings.startTaper || settings.endTaper
+      ? (angle: number, z: number) =>
+          threadRadius(cylinder.radius, angle, z, untapered, cylinder.outward, taperBounds) -
+          threadTaperRadius(cylinder.radius, z, settings, cylinder.outward, taperBounds)
+      : undefined;
+  const { coords, triangles } = threadGrid(segments, steps, bounds, settings, taperBounds, crease);
   const bandGrid = cylinderGrid(segments, 1, bounds);
   const area = faces.reduce((sum, face) => sum + face.signature[2], 0);
   const complete = Math.abs(area - 2 * Math.PI * cylinder.radius * (extent[1] - extent[0])) < 1e-6;

@@ -27,6 +27,13 @@ test("both thread ends remove material for every profile and cut mode", () => {
             const actual = threadRadius(5, angle, z, settings, outward, [0, 10]);
             const original = threadRadius(5, angle, z, untapered, outward, [0, 10]);
             assert.ok(outward * (actual - original) <= 1e-12);
+            const fraction = Math.min(1, z, 10 - z);
+            const limit = end + outward * depth * fraction;
+            const expected = outward > 0 ? Math.min(original, limit) : Math.max(original, limit);
+            assert.ok(
+              Math.abs(actual - expected) < 1e-12,
+              "Cone clips protruding material without moving the remaining profile",
+            );
             if (z === 0 || z === 10) assert.ok(Math.abs(actual - end) < 1e-12);
             if (z >= 1 && z <= 9) assert.ok(Math.abs(actual - original) < 1e-12);
           }
