@@ -59,6 +59,8 @@ preview's HSL lightness by ±5 percentage points on a one-second sine cycle,
 clamped at black and white. Geometry, Texture and Color only share this feedback;
 deselection restores the configured color. This is display-only and does not
 regenerate previews or change saved appearance or Undo.
+Pulse selection follows the decorator's accepted supporting faces, independently
+of the larger face set used for remaining-body occlusion.
 Texture supports decorator-owned normal evaluation. Threads evaluate analytic helix,
 profile and cone-envelope derivatives per display pixel on the original trimmed
 support tessellation, with pixel-footprint sampling and distant-detail filtering.

@@ -12,11 +12,12 @@ import {
   previewFaceKey,
 } from "./preview-compositor.js";
 import { PreviewFallback } from "./preview-fallback.js";
+import { selectedPreviewSupports } from "./preview-selection.js";
 import type { PackedPreviewMesh } from "./preview-wire.js";
 import { threadNormalSurface } from "./thread-normal-surface.js";
 import { threadPreviewPlanes } from "./thread-preview-surface.js";
 import { threadDefinition } from "./thread-settings.js";
-import type { FaceReference } from "./types.js";
+import type { DecoratorInstance, FaceReference } from "./types.js";
 
 interface GeneratedSurface extends PreviewSurface {
   id: string;
@@ -34,6 +35,7 @@ export class PreviewOverlaySurfaces {
   private colors = new Map<string, string>();
   private clipping = new Map<string, THREE.Plane[]>();
   private pulseFrame: number | null = null;
+  private supports: readonly DecoratorInstance[] = [];
 
   constructor(private readonly editor: SketchEditor) {
     editor.world.renderOverlays.add(this.render);
@@ -54,6 +56,7 @@ export class PreviewOverlaySurfaces {
         this.surfaces.splice(index, 1);
       }
     if (document) {
+      this.supports = document.decorators ?? [];
       this.displayModes = new Map(
         document.decorators?.map((instance) => [instance.id, instance.display]),
       );
@@ -246,25 +249,12 @@ export class PreviewOverlaySurfaces {
   };
 
   private pulseSelection(surfaces: readonly PreviewSurface[]): void {
-    const targets = this.editor.modeling.targets;
-    const faces = new Set(
-      targets
-        .filter((target) => target.kind === "face")
-        .map((target) => previewFaceKey(target.body, target.face)),
-    );
-    const bodies = new Set(
-      targets.filter((target) => target.kind === "body").map((target) => target.body),
-    );
+    const selected = selectedPreviewSupports(this.supports, this.editor.modeling.targets);
     const offset = 0.05 * Math.sin((performance.now() / 1000) * Math.PI * 2);
     const hsl = { h: 0, s: 0, l: 0 };
     let pulsing = false;
     for (const surface of surfaces) {
-      if (
-        !surface.mesh.visible ||
-        (!bodies.has(surface.mesh.userData.body) &&
-          ![...surface.faces].some((face) => faces.has(face)))
-      )
-        continue;
+      if (!surface.mesh.visible || !selected.has(surface.mesh.userData.decorator)) continue;
       // style() restores the configured color each frame, avoiding cumulative drift.
       const color = (surface.mesh.material as THREE.MeshStandardMaterial).color;
       color.getHSL(hsl, THREE.SRGBColorSpace);

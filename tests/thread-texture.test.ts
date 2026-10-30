@@ -9,10 +9,13 @@ test("captured fine-pitch thread transports only the support and analytic parame
   const { document } = JSON.parse(
     readFileSync("tests/fixtures/thread-texture-aliasing.json", "utf8"),
   ) as { document: DisplayDocument };
-  const instance = document.decorators![0];
-  const textures = decoratorTexture(document, instance)!;
+  const instance = document.decorators?.[0];
+  assert.ok(instance);
+  const textures = decoratorTexture(document, instance);
+  assert.ok(textures);
   assert.equal(textures.length, 1);
-  const face = document.bodies![0].faces.find((face) => face.id === instance.faces[0].face)!;
+  const face = document.bodies?.[0].faces.find((face) => face.id === instance.faces[0].face);
+  assert.ok(face);
   assert.equal(textures[0].positions.length, face.vertices.length);
   assert.equal(textures[0].parameters.settings.pitch, 1);
   assert.deepEqual(textures[0].parameters.bounds, [0, 41.5]);
@@ -21,7 +24,8 @@ test("captured fine-pitch thread transports only the support and analytic parame
   const edited = decoratorTexture(document, {
     ...instance,
     settings: { ...instance.settings, pitch: 1.5 },
-  })!;
+  });
+  assert.ok(edited);
   assert.equal(edited[0].parameters.settings.pitch, 1.5);
   assert.equal(decoratorTexture(document, { ...instance, definition: "custom" }), undefined);
 });
