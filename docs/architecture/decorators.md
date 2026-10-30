@@ -54,6 +54,11 @@ its owning body into the normal or X-ray layer, including fallback color and tex
 previews. The body layer opacity then fades the body and its decorations together;
 normal-body decorations remain visible through X-ray bodies. Generated previews and
 attachment markers cannot intercept analytic face picking.
+Selected supporting faces (including whole-body selection) pulse their decorator
+preview's HSL lightness by ±10 percentage points on a one-second sine cycle,
+clamped at black and white. Geometry, Texture and Color only share this feedback;
+deselection restores the configured color. This is display-only and does not
+regenerate previews or change saved appearance or Undo.
 Texture generates the same preview mesh, then bakes its facing triangle normals
 onto the original trimmed support tessellation in the preview worker. It changes
 lighting, not the support silhouette, depth, picking, accepted geometry or export.

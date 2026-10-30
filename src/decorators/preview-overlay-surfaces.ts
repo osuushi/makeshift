@@ -32,6 +32,7 @@ export class PreviewOverlaySurfaces {
   private displayModes = new Map<string, DecoratorDisplayMode | undefined>();
   private colors = new Map<string, string>();
   private clipping = new Map<string, THREE.Plane[]>();
+  private pulseFrame: number | null = null;
 
   constructor(private readonly editor: SketchEditor) {
     editor.world.renderOverlays.add(this.render);
@@ -155,6 +156,8 @@ export class PreviewOverlaySurfaces {
   }
 
   clear(): void {
+    if (this.pulseFrame !== null) cancelAnimationFrame(this.pulseFrame);
+    this.pulseFrame = null;
     for (const surface of this.surfaces) this.remove(surface);
     this.surfaces.length = 0;
     this.fallback.clear();
@@ -208,15 +211,52 @@ export class PreviewOverlaySurfaces {
 
   private readonly render = (occludeSections?: () => void) => {
     const attached = this.style();
-    if (this.group.visible)
+    if (this.group.visible) {
+      const surfaces = [...this.surfaces, ...attached];
+      this.pulseSelection(surfaces);
       this.compositor.render(
         this.editor.world.renderer,
         this.editor.world.scene,
         this.editor.world.camera,
-        [...this.surfaces, ...attached],
+        surfaces,
         occludeSections,
       );
+    }
   };
+
+  private pulseSelection(surfaces: readonly PreviewSurface[]): void {
+    const targets = this.editor.modeling.targets;
+    const faces = new Set(
+      targets
+        .filter((target) => target.kind === "face")
+        .map((target) => previewFaceKey(target.body, target.face)),
+    );
+    const bodies = new Set(
+      targets.filter((target) => target.kind === "body").map((target) => target.body),
+    );
+    const offset = 0.1 * Math.sin((performance.now() / 1000) * Math.PI * 2);
+    const hsl = { h: 0, s: 0, l: 0 };
+    let pulsing = false;
+    for (const surface of surfaces) {
+      if (
+        !surface.mesh.visible ||
+        (!bodies.has(surface.mesh.userData.body) &&
+          ![...surface.faces].some((face) => faces.has(face)))
+      )
+        continue;
+      // style() restores the configured color each frame, avoiding cumulative drift.
+      const color = (surface.mesh.material as THREE.MeshStandardMaterial).color;
+      color.getHSL(hsl, THREE.SRGBColorSpace);
+      color.setHSL(hsl.h, hsl.s, THREE.MathUtils.clamp(hsl.l + offset, 0, 1), THREE.SRGBColorSpace);
+      pulsing = true;
+    }
+    if (pulsing && this.pulseFrame === null)
+      this.pulseFrame = requestAnimationFrame(() => {
+        this.pulseFrame = null;
+        // Color animation needs presentation only, not camera/geometry updates.
+        this.editor.world.present();
+      });
+  }
 
   private readonly foreground = {
     render: this.render,
