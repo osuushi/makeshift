@@ -31,7 +31,7 @@ settings, not the internal grouping noun.
 
 ## Preview display and pending work
 
-Application Settings chooses the default display: Geometry, Texture (normal projection),
+Application Settings chooses the default display: Geometry, Texture (normal shading),
 or Color only. Each Display control offers Default (Geometry/Texture/Color only),
 showing the current inherited choice, plus those three
 explicit modes. An omitted override follows the device default, including existing
@@ -54,8 +54,12 @@ its owning body into the normal or X-ray layer, including fallback color and tex
 previews. The body layer opacity then fades the body and its decorations together;
 normal-body decorations remain visible through X-ray bodies. Generated previews and
 attachment markers cannot intercept analytic face picking.
-Texture generates the same preview mesh, then bakes its facing triangle normals
-onto the original trimmed support tessellation in the preview worker. It changes
+Texture supports decorator-owned normal evaluation. Threads evaluate analytic helix,
+profile and cone-envelope derivatives per display pixel on the original trimmed
+support tessellation, with pixel-footprint sampling and distant-detail filtering.
+This path requires neither a thread preview mesh nor a fixed-resolution normal map.
+Other decorators fall back to generating their preview mesh and baking facing triangle
+normals onto the support tessellation in the preview worker. Texture changes
 lighting, not the support silhouette, depth, picking, accepted geometry or export.
 Texture uses a smoother material finish so specular highlights follow the projected
 relief as the view turns; Geometry and Color only retain their existing finish.
@@ -66,7 +70,7 @@ Other surfaces use a padded triangle atlas with accelerated ray queries. Missing
 the support normal. Projection selects the closest facing intersection along either
 direction of the support normal; overhangs and multiple relief layers cannot all
 be represented. There is no parallax displacement or relief self-shadowing.
-Live maps target 256 pixels square and settled maps 512; generic atlases may grow
+Fallback live maps target 256 pixels square and settled maps 512; generic atlases may grow
 to 1024 to retain padding. Supports above 65,536 triangles report an explicit preview
 error and retain attachment coloring. Small features can alias, especially on dense
 generic atlases; Geometry remains the full-profile alternative. Maps are cached per

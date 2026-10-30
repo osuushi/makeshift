@@ -3,6 +3,7 @@ import wasmUrl from "manifold-3d/manifold.wasm?url";
 import type { QuickJSWASMModule } from "quickjs-emscripten-core";
 import type { DisplayDocument } from "../model/display-document.js";
 import { isBuiltinDecorator } from "./builtins.js";
+import { decoratorTexture } from "./decorator-texture.js";
 import { type DecoratorDisplayMode, effectiveDecoratorDisplay } from "./display-mode.js";
 import { gearPreview } from "./gear-runtime.js";
 import { gearDefinition } from "./gear-settings.js";
@@ -90,8 +91,24 @@ async function renderInstance(
   live: boolean,
   feedback: PreviewFeedback,
   javascript: Awaited<ReturnType<typeof javascriptDecorators>> | undefined,
+  textureMode: boolean,
 ) {
   const started = performance.now();
+  const textures = textureMode ? decoratorTexture(document, instance) : undefined;
+  if (textures)
+    return {
+      durationMs: performance.now() - started,
+      record: false,
+      state: null,
+      mesh: {
+        id: instance.id,
+        body: instance.faces[0].body,
+        faces: instance.faces,
+        positions: new Float32Array(),
+        indices: new Uint32Array(),
+        textures,
+      },
+    };
   if (instance.definition === gearDefinition)
     return {
       mesh: await renderGear(document, instance),
@@ -185,14 +202,21 @@ self.onmessage = async (
           instance.settings,
         ]);
         const feedback = histories.feedback(instance.id, signature, targetMs);
-        const result = await renderInstance(document, instance, next.live, feedback, javascript);
+        const result = await renderInstance(
+          document,
+          instance,
+          next.live,
+          feedback,
+          javascript,
+          effectiveDecoratorDisplay(instance, defaultMode) === "texture",
+        );
         const durationMs = result.durationMs;
         if (next.live && result.record)
           histories.record(instance.id, signature, durationMs, result.state);
         samples.push({ id: instance.id, live: next.live, durationMs, state: result.state });
         if (result.mesh) {
           const mesh: PackedPreviewMesh & typeof result.mesh = result.mesh;
-          if (effectiveDecoratorDisplay(instance, defaultMode) === "texture")
+          if (effectiveDecoratorDisplay(instance, defaultMode) === "texture" && !mesh.textures)
             mesh.projections = projectPreviewNormals(document, mesh, next.live ? 256 : 512);
           meshes.push(mesh);
         }
