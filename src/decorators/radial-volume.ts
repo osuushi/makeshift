@@ -26,10 +26,14 @@ export function radialVolume(
       if (edge) edge.count++;
       else edges.set(key, { a: x, b: y, count: 1 });
     }
+  const low = coordinates.reduce((value, point) => Math.min(value, point.z), Infinity);
+  const high = coordinates.reduce((value, point) => Math.max(value, point.z), -Infinity);
   const centers = new Map<number, number>();
   for (const { a, b, count } of edges.values()) {
     if (count !== 1) continue;
-    const z = coordinates[a].z;
+    // Profile intersections can differ by a few ulps along the same end ring.
+    // Each end must share one axis vertex, independent of that rounding.
+    const z = coordinates[a].z - low < high - coordinates[a].z ? low : high;
     let center = centers.get(z);
     if (center === undefined) {
       center = vertices.length;
