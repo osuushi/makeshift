@@ -234,7 +234,7 @@ export class PreviewOverlaySurfaces {
     const bodies = new Set(
       targets.filter((target) => target.kind === "body").map((target) => target.body),
     );
-    const offset = 0.1 * Math.sin((performance.now() / 1000) * Math.PI * 2);
+    const offset = 0.05 * Math.sin((performance.now() / 1000) * Math.PI * 2);
     const hsl = { h: 0, s: 0, l: 0 };
     let pulsing = false;
     for (const surface of surfaces) {

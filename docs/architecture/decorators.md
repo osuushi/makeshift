@@ -55,7 +55,7 @@ previews. The body layer opacity then fades the body and its decorations togethe
 normal-body decorations remain visible through X-ray bodies. Generated previews and
 attachment markers cannot intercept analytic face picking.
 Selected supporting faces (including whole-body selection) pulse their decorator
-preview's HSL lightness by ±10 percentage points on a one-second sine cycle,
+preview's HSL lightness by ±5 percentage points on a one-second sine cycle,
 clamped at black and white. Geometry, Texture and Color only share this feedback;
 deselection restores the configured color. This is display-only and does not
 regenerate previews or change saved appearance or Undo.
