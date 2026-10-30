@@ -83,7 +83,9 @@ plane and face candidate outlines remain visible. Hover adds a blue fill to exac
 click picker would choose, including a face's actual visible surface. Entities rows highlight their own saved
 reference. Hover clears on leaving, navigation or tool exit and never changes geometry. Discovery does not create previews or alter history.
 Canonical references cover the viewport; saved plane patches can be picked throughout their displayed interiors,
-using the nearest eligible reference when patches and planar faces overlap.
+using the nearest eligible saved patch or face when they overlap. Primary canonical
+planes are always the lowest-priority valid reference, regardless of hit depth,
+including when a curved face is eligible for Split Body or Imprint.
 Picking stays on the canvas so camera gestures remain available. Canonical references use viewport bounds and saved patches retain adaptive geometry
 bounds. Neither has floating labels; saved references remain available
 in Entities. At coincident hit depths, an eligible face wins the tie against a patch.
