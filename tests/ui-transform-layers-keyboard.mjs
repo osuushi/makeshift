@@ -75,7 +75,8 @@ async function sketchActive(page, marker, label) {
       return (
         document.documentElement.dataset.keyboardSketchWidget === marker &&
         !!node &&
-        getComputedStyle(node.querySelector('[stroke="#fff"]')).stroke === "rgb(130, 181, 224)" &&
+        getComputedStyle(node.querySelector('path[fill]:not([fill="none"])')).fill ===
+          "rgb(130, 181, 224)" &&
         document.activeElement?.getAttribute("aria-label") === label
       );
     },
@@ -149,7 +150,8 @@ export async function bodyKeyboardRoute(page, name) {
         (node) =>
           node.classList.contains("keyboard-widget-active") &&
           getComputedStyle(node).outlineStyle === "none" &&
-          getComputedStyle(node.querySelector('[stroke="#fff"]')).stroke === "rgb(130, 181, 224)",
+          getComputedStyle(node.querySelector('path[fill]:not([fill="none"])')).fill ===
+            "rgb(130, 181, 224)",
       ),
     true,
   );
