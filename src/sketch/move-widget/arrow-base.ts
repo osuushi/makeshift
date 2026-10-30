@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { canonicalPlanes } from "../../preferences/canonical-planes.js";
+import { smallPlanePatch } from "../plane-patch-style.js";
 import type { Vector } from "../planes.js";
 
 /** A circular foot perpendicular to the real axis, attached to the readable arrow's tail. */
@@ -14,15 +16,16 @@ export function arrowBase(
   const v = normal.clone().cross(u);
   const inverse = camera.quaternion.clone().invert();
   const foot = displayedAxis.clone().multiplyScalar(-14);
-  const outline = Array.from({ length: 49 }, (_, i) => {
-    const angle = (i * Math.PI * 2) / 48;
-    const p = u
-      .clone()
-      .multiplyScalar(11 * Math.cos(angle))
-      .addScaledVector(v, 11 * Math.sin(angle))
-      .applyQuaternion(inverse)
-      .add(foot);
-    return `${i ? "L" : "M"}${p.x},${-p.y}`;
-  }).join(" ");
-  return `<path class="move-arrow-base" d="${outline} Z" fill="var(--handle-shade)" fill-opacity="0.75" stroke="var(--handle-dark)" stroke-width="1" pointer-events="none" aria-hidden="true"/>`;
+  const colors = canonicalPlanes().colors;
+  const color =
+    Math.abs(normal.x) > 0.999
+      ? colors.YZ
+      : Math.abs(normal.y) > 0.999
+        ? colors.XZ
+        : Math.abs(normal.z) > 0.999
+          ? colors.XY
+          : "#8b5cf6";
+  u.applyQuaternion(inverse);
+  v.applyQuaternion(inverse);
+  return `<g class="move-arrow-base" transform="matrix(${u.x} ${-u.y} ${v.x} ${-v.y} ${foot.x} ${-foot.y})" pointer-events="none" aria-hidden="true">${smallPlanePatch(color, 19)}</g>`;
 }

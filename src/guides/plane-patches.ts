@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { canonicalPlanes } from "../preferences/canonical-planes.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import { planePatchFillOpacity, planePatchMask } from "../sketch/plane-patch-style.js";
 import type { PlaneFrame, Vector } from "../sketch/planes.js";
 import { gridSpacing } from "../sketch/world-grid.js";
 import type { GuideMoveCandidate } from "./move-target.js";
@@ -125,7 +126,7 @@ function gridPatch(
   fill.setAttribute("width", String(bounds.right - bounds.left));
   fill.setAttribute("height", String(bounds.bottom - bounds.top));
   fill.setAttribute("fill", "currentColor");
-  fill.setAttribute("opacity", "0.13");
+  fill.setAttribute("opacity", String(planePatchFillOpacity));
   grid.append(fill);
   const local = [frame.u, frame.v].map((axis) =>
     point.reduce((sum, p, i) => sum + (p - frame.origin[i]) * axis[i], 0),
@@ -173,6 +174,6 @@ function strokeMask(
 
 function patchMask(id: string, radius: number): SVGDefsElement {
   const defs = document.createElementNS(ns, "defs");
-  defs.innerHTML = `<radialGradient id="${id}-fade"><stop offset="0" stop-color="white"/><stop offset="0.35" stop-color="white" stop-opacity="0.9"/><stop offset="1" stop-color="white" stop-opacity="0"/></radialGradient><mask id="${id}" maskUnits="userSpaceOnUse" x="${-radius}" y="${-radius}" width="${2 * radius}" height="${2 * radius}"><circle r="${radius}" style="fill:url(#${id}-fade);stroke:none"/></mask>`;
+  defs.innerHTML = planePatchMask(id, radius);
   return defs;
 }

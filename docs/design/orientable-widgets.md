@@ -33,6 +33,13 @@ around each glyph. Ordinary value inputs and accept/cancel controls can stay nea
 - Preserve the white/black base treatment across axes. Subtle blue feedback identifies
   hover or snapping; invalid geometry may use red. Color supplements shape and state.
 
+**Move refinement, 2026-10-30:** translation arrows have a small circular plane patch
+at the shaft's base, perpendicular to the actual movement axis. Use the guide-leveling
+patch's ghostly radial fade, translucent fill and sparse grid, with the configured
+canonical plane color (the guide face-plane tint for noncanonical normals). Project
+the patch's true plane while retaining the arrow's minimum-angle correction. The
+patch follows its handle through layout correction and does not add a hit target.
+
 ## Orientation, scale and visibility
 
 **Founder refinement, 2026-10-25:** keep the geometry-defined frame as the starting
