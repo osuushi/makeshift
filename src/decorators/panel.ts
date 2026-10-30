@@ -11,7 +11,7 @@ import { appendKnurlSettings } from "./knurl-panel.js";
 import { decoratorLibrary } from "./library.js";
 import { appendThreadInformation, appendThreadProblem } from "./panel-information.js";
 import { appendPresetControls } from "./preset-panel.js";
-import { choiceKey, recalledChoiceSettings } from "./presets.js";
+import { lastDecoratorChoice, recalledChoiceSettings } from "./presets.js";
 import { appendDecoratorRepairs } from "./repair-panel.js";
 import { DecoratorSettingsDraft } from "./settings-draft.js";
 import { ThreadApplication } from "./thread-application.js";
@@ -101,7 +101,7 @@ export class DecoratorPanel {
     const faces = this.selected();
     const settings = recalledChoiceSettings(
       definition,
-      this.editor.store.data.lastDecoratorChoices?.[choiceKey(definition)],
+      lastDecoratorChoice(this.editor.store.data, definition),
     );
     const edit = { action: "apply" as const, definition, faces };
     if (definition === threadDefinition) {
@@ -229,7 +229,6 @@ export class DecoratorPanel {
     }
     if (!instances.length) return;
     const ungrouped = instances.filter((d) => !d.gearGroup);
-    if (ungrouped.length) appendDecoratorDisplay(this.root, this.editor, ungrouped);
     if (instances.length === 1) this.last = instances[0].id;
     const custom = instances.filter((d) => !isBuiltinDecorator(d.definition));
     if (custom.length) {
@@ -241,13 +240,14 @@ export class DecoratorPanel {
     if (knurls.length) this.appendKnurls(knurls);
     const threads = instances.filter((d) => d.definition === threadDefinition);
     if (threads.length) this.appendThreads(threads);
+    if (ungrouped.length) appendDecoratorDisplay(this.root, this.editor, ungrouped);
   };
   private appendThreads(instances: DecoratorInstance[]): void {
+    appendPresetControls(this.root, this.editor, instances);
     this.button(`Threads · ${instances.reduce((n, d) => n + d.faces.length, 0)} faces`, () => {
       this.expand(instances);
       this.editor.refresh();
     });
-    appendPresetControls(this.root, this.editor, instances);
     appendThreadInformation(this.root, this.editor, instances);
     const problem = appendThreadProblem(this.root, instances);
     appendThreadSettings(

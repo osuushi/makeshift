@@ -231,12 +231,19 @@ Decorator panels use one Preset menu, grouping built-in choices under Global and
 named document-local presets under Document. Save as document preset creates a
 copy through a focused name dialog. Rename… in the same menu edits a document
 preset name in that dialog; no permanent duplicate name field is shown. Automatic
-copies use “copy”, “copy 2”, “copy 3”, including copies of copies. The thread
+copies for other decorators use “copy”, “copy 2”, “copy 3”, including copies of copies. The thread
 reference-diameter paragraph is omitted; actionable geometry warnings and their face-selection controls remain.
 A preset stores resolved settings for one definition/version, so
 reusing it preserves explicit dimensions rather than re-inferring them. The last
 accepted choice per definition/version is saved with the document and reused on
-application. Editing a built-in creates a local copy. Editing an unshared local
+application. Thread choices are recalled only while threads remain. With no threads remaining, applying
+threads starts at FDM fine instead of recalling a hidden old choice. Thread presets
+are saved only through Save as; editing detaches a saved preset and leaves its
+snapshot unchanged. Modified thread profile/clearance/taper values show Custom.
+The thread Preset menu comes first and shows a shared built-in identity even when
+rod/hole taper defaults or metric dimensions differ; individual fields still show
+Mixed as needed. Existing saved presets remain available. For other decorators,
+editing a built-in creates a local copy. Editing an unshared local
 preset updates that copy; editing one used by other parts forks it so their settings
 remain unchanged. Preset selection, copies, names, and last choices participate in
 ordinary Undo and archives. Numeric preview/cancellation does not save a preset.
@@ -266,7 +273,7 @@ internal thread uses a filled bore cutter, clearing inward shelves and crossbars
 as well as the groove envelope. An external Cut-into-rod thread uses its radial
 groove cutter, including buried material within that envelope. Other bodies are
 untouched. Added thread material still follows the selected trimmed face domains.
-Start/end taper lengths are configurable; built-in presets set both to half their
+Start/end taper lengths are configurable; built-in presets set both to their full
 resolved pitch on rods and zero on holes, independent of Cut into mode. Recalling a
 built-in choice resolves taper defaults for the new support. Explicit taper edits,
 local preset snapshots and saved documents retain their values. Tapers clip the unchanged thread profile against a linear cone:

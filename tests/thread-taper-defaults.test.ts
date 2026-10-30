@@ -23,7 +23,7 @@ test("built-in tapers follow rod/hole supports through recall, reselection and U
       definition: threadDefinition,
       faces: [{ body: body.id, face: outer.id }],
     });
-    assert.equal(rod.settings.startTaper, Number(rod.settings.pitch) / 2);
+    assert.equal(rod.settings.startTaper, Number(rod.settings.pitch));
     const [, hole] = await edit({
       action: "apply",
       definition: threadDefinition,
@@ -39,8 +39,8 @@ test("built-in tapers follow rod/hole supports through recall, reselection and U
           ids: [rod.id, hole.id],
           patch: { preset },
         });
-        assert.equal(instances[0].settings.startTaper, Number(instances[0].settings.pitch) / 2);
-        assert.equal(instances[0].settings.endTaper, Number(instances[0].settings.pitch) / 2);
+        assert.equal(instances[0].settings.startTaper, Number(instances[0].settings.pitch));
+        assert.equal(instances[0].settings.endTaper, Number(instances[0].settings.pitch));
         assert.equal(instances[1].settings.startTaper, 0);
         assert.equal(instances[1].settings.endTaper, 0);
       }
@@ -57,7 +57,7 @@ test("built-in tapers follow rod/hole supports through recall, reselection and U
       definition: threadDefinition,
       faces: [{ body: next.id, face: face.id }],
     });
-    assert.equal(instances[2].settings.startTaper, Number(instances[2].settings.pitch) / 2);
+    assert.equal(instances[2].settings.startTaper, Number(instances[2].settings.pitch));
   } finally {
     owner.close();
   }

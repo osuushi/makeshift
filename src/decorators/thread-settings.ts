@@ -174,8 +174,8 @@ export function threadDefaults(
     tipTruncation: fdm ? 0.1 : 0,
     start: 0,
     end: 0,
-    startTaper: outward > 0 ? pitch / 2 : 0,
-    endTaper: outward > 0 ? pitch / 2 : 0,
+    startTaper: outward > 0 ? pitch : 0,
+    endTaper: outward > 0 ? pitch : 0,
   };
 }
 
@@ -222,7 +222,7 @@ export function patchThreadSettings(
       merged.preset,
       outward,
     );
-    const taper = outward > 0 ? Number(patch.pitch ?? pitch) / 2 : 0;
+    const taper = outward > 0 ? Number(patch.pitch ?? pitch) : 0;
     resolved = threadSettings({
       ...merged,
       pitch,
@@ -234,6 +234,13 @@ export function patchThreadSettings(
       ...patch,
     });
   }
+  if (
+    !patch.preset &&
+    ["pitch", "profile", "clearance", "tipTruncation", "startTaper", "endTaper"].some(
+      (key) => patch[key] !== undefined && resolved[key] !== settings[key],
+    )
+  )
+    return threadSettings({ ...resolved, preset: "custom" });
   if (resolved.preset === "fdm-fine" || resolved.preset === "fdm-coarse") {
     const defaults = threadDefaults(diameter, resolved.preset);
     if (

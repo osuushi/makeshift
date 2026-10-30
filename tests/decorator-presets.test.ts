@@ -61,7 +61,7 @@ test("FDM presets flatten the rod crest and hole groove without filling the hole
   assert.equal(fine.clearance, 0.25);
   assert.equal(patchThreadSettings(10.3, fine, { clearance: 0.05 }).clearance, 0.05);
   assert.equal(patchThreadSettings(10.3, coarse, { pitch: 2 }).preset, "custom");
-  assert.equal(patchThreadSettings(10.3, coarse, { clearance: 0 }).preset, "fdm-coarse");
+  assert.equal(patchThreadSettings(10.3, coarse, { clearance: 0 }).preset, "custom");
   assert.equal(patchThreadSettings(10.3, coarse, { tipTruncation: 0 }).preset, "custom");
 });
 

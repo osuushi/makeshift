@@ -40,7 +40,7 @@ test("both thread ends remove material for every profile and cut mode", () => {
       }
 });
 
-test("creating and choosing built-in presets applies half-pitch tapers at both ends", () => {
+test("creating and choosing built-in presets applies full-pitch tapers at both ends", () => {
   for (const preset of ["fdm-fine", "fdm-coarse", "metric"] as const) {
     const defaults = threadDefaults(13, preset);
     const selected = patchThreadSettings(
@@ -49,8 +49,8 @@ test("creating and choosing built-in presets applies half-pitch tapers at both e
       { preset },
     );
     for (const settings of [defaults, selected]) {
-      assert.equal(settings.startTaper, settings.pitch / 2);
-      assert.equal(settings.endTaper, settings.pitch / 2);
+      assert.equal(settings.startTaper, settings.pitch);
+      assert.equal(settings.endTaper, settings.pitch);
     }
   }
 });

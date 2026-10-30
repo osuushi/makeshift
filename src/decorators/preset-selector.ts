@@ -14,9 +14,15 @@ export function presetSelector(
   const first = instances[0];
   const ids = instances.map((d) => d.id);
   const matching = instances.every((d) => sameSettings(d.settings, first.settings));
-  const local = instances.every((d) => d.presetId === first.presetId)
-    ? localPreset(source, first)
-    : undefined;
+  const sharedBuiltin =
+    first.definition === threadDefinition &&
+    first.settings.preset !== "custom" &&
+    instances.every((d) => !d.presetId && d.settings.preset === first.settings.preset);
+  const sharedPreset = matching || sharedBuiltin;
+  const local =
+    matching && instances.every((d) => d.presetId === first.presetId)
+      ? localPreset(source, first)
+      : undefined;
   const fields =
     first.definition === threadDefinition
       ? threadFields
@@ -30,8 +36,8 @@ export function presetSelector(
   label.textContent = "Preset";
   const select = document.createElement("select");
   select.setAttribute("aria-label", "Preset");
-  if (!matching || !global)
-    select.append(new Option(matching ? "Current settings" : "Mixed settings", ""));
+  if (!sharedPreset || !global)
+    select.append(new Option(sharedPreset ? "Current settings" : "Mixed settings", ""));
   if (global) {
     const group = document.createElement("optgroup");
     group.label = "Global";
@@ -52,7 +58,7 @@ export function presetSelector(
   actions.append(save);
   if (local && matching) actions.append(new Option("Rename…", "::rename"));
   select.append(actions);
-  const original = matching
+  const original = sharedPreset
     ? (local?.id ?? (global ? String(first.settings.preset ?? global.default ?? "") : ""))
     : "";
   select.value = original;

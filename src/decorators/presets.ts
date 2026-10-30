@@ -14,6 +14,15 @@ export interface DecoratorPreset extends DecoratorChoice {
   definition: string;
   version: number;
 }
+/** No hidden thread preselection after removing the last threaded feature. */
+export function lastDecoratorChoice(document: SketchDocument, definition: string, version = 1) {
+  if (
+    definition === threadDefinition &&
+    !document.decorators?.some((d) => d.definition === definition)
+  )
+    return undefined;
+  return document.lastDecoratorChoices?.[choiceKey(definition, version)];
+}
 /** Built-in thread taper defaults belong to the new support, not the last rod/hole. */
 export function recalledChoiceSettings(
   definition: string,
