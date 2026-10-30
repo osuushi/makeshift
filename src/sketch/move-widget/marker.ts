@@ -76,5 +76,5 @@ export function markerMarkup(
     );
   };
   const cue = plane ? (rotate ? rotationPlaneCue(camera, u, v) : arrowBase(camera, u, a)) : "";
-  return `<svg viewBox="-24 -24 48 48" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round">${cue}${layer(true)}${layer(false)}</svg>`;
+  return `<svg viewBox="-24 -24 48 48" ${plane && !rotate ? 'style="overflow:visible"' : ""} aria-hidden="true" stroke-linecap="round" stroke-linejoin="round">${cue}${layer(true)}${layer(false)}</svg>`;
 }

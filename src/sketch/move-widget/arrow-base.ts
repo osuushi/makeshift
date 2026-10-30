@@ -27,5 +27,5 @@ export function arrowBase(
           : "#8b5cf6";
   u.applyQuaternion(inverse);
   v.applyQuaternion(inverse);
-  return `<g class="move-arrow-base" transform="matrix(${u.x} ${-u.y} ${v.x} ${-v.y} ${foot.x} ${-foot.y})" pointer-events="none" aria-hidden="true">${smallPlanePatch(color, 19)}</g>`;
+  return `<g class="move-arrow-base" transform="matrix(${u.x} ${-u.y} ${v.x} ${-v.y} ${foot.x} ${-foot.y})" pointer-events="none" aria-hidden="true">${smallPlanePatch(color, 38)}</g>`;
 }
