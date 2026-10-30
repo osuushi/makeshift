@@ -137,6 +137,13 @@ For founder-reported model bugs, use the **Capture fixture** action
 and read the resulting temporary JSON file directly (use the displayed capture path).
 Do not use computer use to extract the live model. Ask for a fixture path if one is missing.
 
+When pushing a coherent change that appears complete and ready for founder QA,
+open a pull request automatically unless the founder explicitly asks otherwise.
+Do not wait for a separate "PR it" request. Reuse an existing PR for that branch
+instead of creating a duplicate. Describe the resulting behavior, checks run,
+known gaps and a short QA route, then attach the PR to the current Codex chat
+using `attach_artifact` with `artifact_type: "pull_request"` and its URL.
+
 Keep TICKETS.md local and untracked. Commit small reviewed units after relevant
 checks. Preserve user work and the old prototype in Git. Setup must be reproducible
 without an agent runtime or personal cache; document only actual working commands.
