@@ -36,19 +36,7 @@ await withUiRuntimes(async (page, name) => {
     ),
   });
   const planeTool = page.locator('.toolbox [data-tool="construction-plane"]');
-  for (const [i, point] of points.entries()) {
-    const screen = await project(page, point);
-    await page.mouse.move(screen.x, screen.y);
-    if (i) await page.keyboard.down("Shift");
-    await page.mouse.click(screen.x, screen.y);
-    if (i) await page.keyboard.up("Shift");
-    await page.waitForFunction(
-      (count) => window.makeshiftInspect().document.guidePoints?.length === count,
-      i + 1,
-    );
-    assert.equal(await page.locator('.guide-marker.saved[aria-pressed="true"]').count(), i + 1);
-    assert.equal(await planeTool.isEnabled(), i === 2);
-  }
+  await selectGuideMarkers(page, points, planeTool);
   const before = (await inspect(page)).document;
   await page.screenshot({ path: `.cache/sketch-review/${name}-guide-multiselect-plane.png` });
   await planeTool.click();
@@ -60,6 +48,7 @@ await withUiRuntimes(async (page, name) => {
   assert.equal(await page.locator('.guide-marker.saved[aria-pressed="true"]').count(), 0);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before);
+  await singleGuidePlane(page, planeTool, before);
   for (const [i, guide] of before.guidePoints.entries()) {
     const row = page
       .locator(".entity-viewer")
@@ -97,3 +86,39 @@ await withUiRuntimes(async (page, name) => {
     `${name}: single-click creation, Shift multiselect/toggle, three-point plane and grouped Delete/Undo passed`,
   );
 });
+
+async function singleGuidePlane(page, planeTool, before) {
+  const singleRow = page
+    .locator(".entity-viewer")
+    .getByRole("button", { name: "Select Guide point 2", exact: true });
+  await singleRow.click();
+  assert.equal(await planeTool.isEnabled(), true);
+  await planeTool.click();
+  await modalCompleted(page);
+  assert.deepEqual((await inspect(page)).document.constructionPlanes[0].frame, {
+    ...planes.XY,
+    origin: [30, 0, 0],
+  });
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, before);
+}
+
+async function selectGuideMarkers(page, points, planeTool) {
+  for (const [i, point] of points.entries()) {
+    const screen = await project(page, point);
+    await page.mouse.move(screen.x, screen.y);
+    await page.waitForFunction(
+      ({ x, y }) => document.elementFromPoint(x, y)?.closest(".guide-marker.ghost"),
+      screen,
+    );
+    if (i) await page.keyboard.down("Shift");
+    await page.mouse.click(screen.x, screen.y);
+    if (i) await page.keyboard.up("Shift");
+    await page.waitForFunction(
+      (count) => window.makeshiftInspect().document.guidePoints?.length === count,
+      i + 1,
+    );
+    assert.equal(await page.locator('.guide-marker.saved[aria-pressed="true"]').count(), i + 1);
+    assert.equal(await planeTool.isEnabled(), i !== 1);
+  }
+}

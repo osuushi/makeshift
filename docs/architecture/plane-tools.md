@@ -10,7 +10,10 @@ one Undo step. Without a selected reference, it picks a world plane, planar face
 or saved plane once, then creates it. Creation selects the new plane and switches
 to idle Move controls. Reselecting a saved plane in 3D also defaults to Move.
 Reference picking ends at creation; later selection never relocates that plane
-onto another reference. Three selected guide points also define a construction
+onto another reference. One selected guide point creates a plane centered at its evaluated position, parallel
+to the canonical plane whose normal is most aligned with the viewing direction.
+The normal faces toward the camera; panning does not change this choice.
+Three selected guide points also define a construction
 plane: first point is the origin, first-to-second defines U, and the third fixes
 the normal orientation. The points must be distinct and non-collinear. This route
 is available in both Modeling and sketch workspaces; creation returns to Modeling
