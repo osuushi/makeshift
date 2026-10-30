@@ -23,7 +23,7 @@ test("FDM presets flatten the rod crest and hole groove without filling the hole
     assert.equal(settings.clearance, 0.25);
     assert.equal(settings.tipTruncation, 0.1);
     for (const cut of ["rod", "hole"] as const) {
-      const profile = { ...settings, cut };
+      const profile = { ...settings, cut, startTaper: 0, endTaper: 0 };
       const sharp = { ...profile, tipTruncation: 0 };
       const crestPhase = cut === "rod" ? 0 : 0.5;
       const oppositePhase = cut === "rod" ? 0.5 : 0;
@@ -70,7 +70,11 @@ test("only current presets are offered and legacy orientation dimensions remain 
     threadFields.find((field) => field.key === "preset")?.options?.map((option) => option.value),
     ["fdm-fine", "fdm-coarse", "metric", "custom"],
   );
-  assert.ok(threadFields.every((field) => !["layerHeight", "nozzleDiameter"].includes(field.key)));
+  assert.ok(
+    threadFields.every(
+      (field) => !["layerHeight", "nozzleDiameter", "start", "end"].includes(field.key),
+    ),
+  );
   for (const preset of ["print-upright", "print-sideways"]) {
     const legacy = {
       ...threadDefaults(10.3, "metric"),

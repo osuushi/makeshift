@@ -120,7 +120,7 @@ test("threads apply atomically to rod/hole, patch only the requested setting, Un
 
 test("same nonstandard diameter resolves consistently and hand reverses the helix", () => {
   assert.equal(threadDefaults(10.3, "metric").pitch, 1.5);
-  const settings = threadDefaults(10.3, "metric");
+  const settings = { ...threadDefaults(10.3, "metric"), startTaper: 0, endTaper: 0 };
   const flankRise =
     threadRadius(5.15, 0, settings.pitch * 0.2, settings, 1, [0, 10]) -
     threadRadius(5.15, 0, settings.pitch * 0.25, settings, 1, [0, 10]);

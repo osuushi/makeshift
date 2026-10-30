@@ -39,10 +39,12 @@ export function threadRadius(
       settings.endTaper ? (bounds[1] - z) / settings.endTaper : 1,
     ),
   );
+  const displacement = (settings.cut === "rod" ? -1 : 1) * depth * profile;
+  // Fade toward the material-free envelope, never back toward an obstructing cylinder.
+  const endRelief =
+    outward > 0 ? (settings.cut === "rod" ? -depth : 0) : settings.cut === "hole" ? depth : 0;
   return (
-    radius +
-    (settings.cut === "rod" ? -1 : 1) * depth * profile * taper +
-    (outward < 0 ? settings.clearance : 0)
+    radius + endRelief + (displacement - endRelief) * taper + (outward < 0 ? settings.clearance : 0)
   );
 }
 

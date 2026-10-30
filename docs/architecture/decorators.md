@@ -216,7 +216,7 @@ explicitly restores its default clearance and the 0.1 mm truncation.
 Saved explicit clearance values remain unchanged. The simple panel shows preset,
 handedness, Cut into and a Clearance field for this relief. Its hint asks users
 to adjust clearance for their printer and orientation.
-Pitch, profile, tip truncation, insets and tapers are in collapsed Advanced controls. Changing an FDM preset's pitch,
+Pitch, profile, tip truncation and tapers are in collapsed Advanced controls. Changing an FDM preset's pitch,
 profile or tip truncation marks it Custom; clearance, handedness, cut and
 extent edits keep the chosen preset. Older documents without tip truncation
 retain their sharp profile until a preset is explicitly reapplied. Edits use
@@ -259,17 +259,19 @@ Confirmed: default to full selected-face coverage. Exterior Cut-into-rod threads
 on a cylinder bounded by one longitudinal flat and two axial end planes continue
 to the flat's actual intersection with the profile, including groove notches in
 that neighboring flat. Other trimmed boundaries retain face-domain coverage.
-Start/end taper lengths are configurable, initially zero. Tapers reduce
-thread depth near axial ends; they do not chamfer the underlying BRep. They do not
+Start/end taper lengths are configurable; built-in presets set both to half their
+resolved pitch. Tapers fade toward the rod root or hole groove envelope, always
+removing material near axial ends for either Cut into mode. They do not chamfer
+the underlying BRep. They do not
 restart at face seams or angular interruptions such as flattened sides.
 
 Middle-of-rod threads remain a V1 case; a thread need not reach the rod end.
 This does not guarantee that mating parts can be assembled in every surrounding
 geometry configuration.
 
-The controls for an unsplit cylindrical face are start/end
-insets along the saved thread axis, initially zero, bounding the threaded band
-within the selected geometry. Intersect that band with actual selected face domains,
+New threads cover the full selected face; inset controls are no longer exposed.
+Saved start/end insets remain supported along the saved thread axis so existing
+documents retain their threaded band. Intersect that band with actual selected face domains,
 with the planar cutting exception above; do not fill flats or gaps. Apply optional
 tapers at its axial ends and preserve helix phase when changing extent. Exact
 behavior at separated axial patches must remain consistent with one continuous
@@ -312,7 +314,10 @@ The panel reports the exact reference diameter and its rod-major/rod-minor meani
 for the selected cut mode, identifying diameters absent from the coarse table as
 nonstandard. Current nonblocking geometry warnings check opposite coaxial walls
 with overlapping axial coverage against maximum removal depth, and adjacent flats
-parallel to an internal thread axis against the circular mating envelope. These
+parallel to an internal thread axis against the circular mating envelope. Flat
+checks use trimmed triangles clipped to the axial band, not infinite support
+planes; open half-holes therefore warn only when their flat material actually
+enters the mating envelope. Implicated flats share one warning. These
 are conservative local checks, not collision or assembly certification. Each
 warning selects both decorated and implicated faces through ordinary selection.
 

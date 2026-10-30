@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import { threadInformation } from "../src/decorators/thread-information.js";
 import { threadDefinition } from "../src/decorators/thread-settings.js";
 import type { Body } from "../src/model/body.js";
+import type { SketchDocument } from "../src/sketch/document.js";
 import { planes } from "../src/sketch/planes.js";
 import { retainHalf, roundBody } from "./decorator-domain-fixtures.js";
 
@@ -65,14 +67,29 @@ test("flat interrupted internal threads highlight the flat and keep the exact no
       { ...planes.YZ, origin: [3, 0, 0] },
       (b) => b.center[0] < 3,
     );
-    const result = await information(owner, body, 5.15, "rod");
+    const result = await information(owner, body, 5.15, "hole");
     assert.match(result.description, /Ø10.3 mm/);
     assert.match(result.description, /nonstandard diameter/);
-    assert.match(result.description, /rod major/);
+    assert.match(result.description, /rod minor/);
     const flat = result.warnings.find((w) => w.message.includes("flat"));
     assert.ok(flat);
     assert.ok(flat.faces.some((ref) => body.faces.find((f) => f.id === ref.face)?.plane));
   } finally {
     owner.close();
+  }
+});
+
+test("captured open half-hole warns once only when the mating envelope enters its flats", () => {
+  const fixture = JSON.parse(readFileSync("tests/fixtures/thread-open-hole.json", "utf8"));
+  const document = fixture.document as SketchDocument;
+  const instance = document.decorators?.[0];
+  assert.ok(instance);
+  for (const cut of ["rod", "hole"]) {
+    const result = threadInformation(document.bodies ?? [], {
+      ...instance,
+      settings: { ...instance.settings, cut },
+    });
+    assert.equal(result.warnings.length, cut === "rod" ? 0 : 1);
+    if (cut === "hole") assert.equal(result.warnings[0].faces.length, 3);
   }
 });

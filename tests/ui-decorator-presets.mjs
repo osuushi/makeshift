@@ -23,6 +23,8 @@ export async function decoratorPresetRoute(page, name) {
     await page.getByRole("region", { name: "Decorators", exact: true }).innerText(),
     /Reference Ø/,
   );
+  assert.equal(await page.getByRole("spinbutton", { name: "Start inset", exact: true }).count(), 0);
+  assert.equal(await page.getByRole("spinbutton", { name: "End inset", exact: true }).count(), 0);
   assert.equal(await nozzle.count(), 0);
   assert.equal(await layer.count(), 0);
   const advanced = page.locator("details.thread-advanced");
@@ -38,6 +40,8 @@ export async function decoratorPresetRoute(page, name) {
   await preset.selectOption("fdm-coarse");
   let settings = (await inspect(page)).document.decorators[0].settings;
   assert.equal(settings.pitch, 1.5);
+  assert.equal(settings.startTaper, 0.75);
+  assert.equal(settings.endTaper, 0.75);
   assert.equal(settings.profile, "triangle");
   assert.equal(settings.clearance, 0.25);
   assert.equal(settings.tipTruncation, 0.1);
