@@ -2,8 +2,24 @@ import * as THREE from "three";
 import type { Vector } from "../planes.js";
 
 type Point = { x: number; y: number };
+const basePosition = -8,
+  tipPosition = 18,
+  tailPosition = -20,
+  baseRadius = 10;
 const path = (points: Point[]) =>
   `${points.map((p, i) => `${i ? "L" : "M"}${p.x},${-p.y}`).join(" ")}Z`;
+
+/** Hide the entire control when neither end extends beyond the projected base disk. */
+export function coneVisible(camera: THREE.Camera, axis: Vector): boolean {
+  const n = new THREE.Vector3(...axis)
+    .normalize()
+    .applyQuaternion(camera.quaternion.clone().invert());
+  const along = Math.hypot(n.x, n.y);
+  const rim = baseRadius * Math.abs(n.z);
+  return (
+    (tipPosition - basePosition) * along > rim || (basePosition - tailPosition) * along + 3.5 > rim
+  );
+}
 
 /** A true-axis cone: no camera-facing head or minimum-angle display correction. */
 export function coneMarkup(camera: THREE.Camera, axis: Vector): string {
@@ -13,16 +29,16 @@ export function coneMarkup(camera: THREE.Camera, axis: Vector): string {
   const reference = Math.abs(n.x) < 0.8 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
   const u = reference.addScaledVector(n, -reference.dot(n)).normalize();
   const v = n.clone().cross(u);
-  const base = n.clone().multiplyScalar(-8),
-    tip = n.clone().multiplyScalar(18);
+  const base = n.clone().multiplyScalar(basePosition),
+    tip = n.clone().multiplyScalar(tipPosition);
   const ring = Array.from({ length: 64 }, (_, i) => {
     const angle = (i * Math.PI * 2) / 64;
     return base
       .clone()
-      .addScaledVector(u, 10 * Math.cos(angle))
-      .addScaledVector(v, 10 * Math.sin(angle));
+      .addScaledVector(u, baseRadius * Math.cos(angle))
+      .addScaledVector(v, baseRadius * Math.sin(angle));
   });
-  const tail = n.clone().multiplyScalar(-20);
+  const tail = n.clone().multiplyScalar(tailPosition);
   const shaftPath = `M${tail.x},${-tail.y} L${base.x},${-base.y}`;
   const stem = `<g fill="none" stroke-linecap="round"><path d="${shaftPath}" stroke="var(--handle-dark)" stroke-width="7"/><path d="${shaftPath}" stroke="var(--widget-selection-fill, var(--handle-light))" stroke-width="4"/></g>`;
   const cap =

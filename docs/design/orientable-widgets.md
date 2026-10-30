@@ -39,6 +39,9 @@ no minimum-angle display tilt, camera-facing arrowhead or plane patch. Use flat
 white fill and a light-gray base cap when facing the camera, with the same dark
 silhouette as the other widgets; no gradient across the cone. Rotation retains its corrected
 curved arrow and true-plane grid cue. Hit targets and gesture semantics are unchanged.
+Hide a translation control, including its hit target, when neither its tip nor its
+stem extends beyond the projected base disk. This is derived from the cone dimensions
+(approximately 21° from end-on), on either camera side, and also applies to planar Move.
 
 ## Orientation, scale and visibility
 

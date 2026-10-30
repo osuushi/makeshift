@@ -3,6 +3,7 @@ import { clearTransformArrow } from "../model/transform-clearance.js";
 import { transformLayerEnabled } from "../model/transform-layers.js";
 import { bowGuides } from "./arc-edit.js";
 import type { SketchEditor } from "./editor.js";
+import { coneVisible } from "./move-widget/cone.js";
 import { rotationOffset, rotationVisible, widgetRadius } from "./move-widget/geometry.js";
 import { type Point, worldPoint } from "./planes.js";
 import { hasTransformWidget, selectionFrame } from "./selection-frame.js";
@@ -47,6 +48,7 @@ export function transformHandles(editor: SketchEditor) {
     center,
     axes: axes.filter(
       (axis) =>
+        coneVisible(editor.world.camera, axis.axis === "x" ? sketch.plane.u : sketch.plane.v) &&
         (!editor.moveMode || transformLayerEnabled(editor, "move")) &&
         !guides.some(
           (guide) =>
