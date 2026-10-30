@@ -60,6 +60,9 @@ support surface rather than the visible trimmed boundary: cylinders extend along
 their axes, cones retain their conical support, and spheres/tori retain their
 complete curved support. Bounded spline surfaces retain their native parameter domain; no planar
 approximation or speculative spline extrapolation is introduced.
+Cylindrical cutter faces cover the full circumference and an axial interval beyond
+all target bounds. This preserves the natural support while avoiding missed kernel
+splits from infinite axial domains at existing circular rims.
 A compact local preview card shows picking/calculating/preview state, section-edge
 count and Apply/Cancel; Split also shows the result body count. It stays above the
 target's projected bounds, with the shared viewport clearance rules. There is no
