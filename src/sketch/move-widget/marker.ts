@@ -1,6 +1,7 @@
 import type * as THREE from "three";
 import { arrowPoint, readableWidgetFrame } from "../../model/widget-projection.js";
 import type { Vector } from "../planes.js";
+import { rotationPlaneCue } from "./plane-cue.js";
 
 type Point = readonly [number, number];
 
@@ -33,7 +34,13 @@ const head: Point[] = [
  * Projecting a capsule yields a round stroke of unchanged radius. Rendering
  * all outer silhouettes before their fills merges joins without internal seams.
  */
-export function markerMarkup(camera: THREE.Camera, u: Vector, v: Vector, rotate: boolean): string {
+export function markerMarkup(
+  camera: THREE.Camera,
+  u: Vector,
+  v: Vector,
+  rotate: boolean,
+  plane = false,
+): string {
   const { u: a, v: b } = readableWidgetFrame(camera, u, v);
   const scale = rotate ? 0.65 : 1;
   const path = (points: Point[], closed = false, arrowHead = false) =>
@@ -67,5 +74,5 @@ export function markerMarkup(camera: THREE.Camera, u: Vector, v: Vector, rotate:
         : "")
     );
   };
-  return `<svg viewBox="-24 -24 48 48" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round">${layer(true)}${layer(false)}</svg>`;
+  return `<svg viewBox="-24 -24 48 48" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round">${plane && rotate ? rotationPlaneCue(camera, u, v) : ""}${layer(true)}${layer(false)}</svg>`;
 }

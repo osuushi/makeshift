@@ -7,6 +7,7 @@ import {
   rotationVisible,
   widgetRadius,
 } from "../sketch/move-widget/geometry.js";
+import { moveFrameCue } from "../sketch/move-widget/plane-cue.js";
 import type { Vector } from "../sketch/planes.js";
 import { bindWidgetField } from "../sketch/widget-numeric-field.js";
 import { toolCatalog } from "../tools/catalog.js";
@@ -29,6 +30,7 @@ export class BodyGizmo {
   readonly root = document.createElement("div");
   readonly input = document.createElement("input");
   readonly pivot = document.createElement("button");
+  private frame = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   private clearance: WidgetClearance;
   private anchorClearance: WidgetClearance;
   private boxEditor: SketchEditor | null = null;
@@ -42,6 +44,10 @@ export class BodyGizmo {
     completeBeforeNumeric = true,
   ) {
     this.root.className = "body-gizmo";
+    this.frame.setAttribute("aria-hidden", "true");
+    this.frame.style.cssText =
+      "position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none";
+    this.root.append(this.frame);
     this.clearance = new WidgetClearance(this.root);
     this.anchorClearance = new WidgetClearance(this.root);
     for (const rotate of [false, true])
@@ -104,6 +110,12 @@ export class BodyGizmo {
       names = ["X", "Y", "Z"];
     this.root.dataset.mode = aligned === null ? "3d" : "2d";
     const unit = world.height / world.canvas.clientHeight;
+    this.frame.innerHTML = transformLayerEnabled(editor, "move")
+      ? moveFrameCue((point) => {
+          const p = world.project(pivot.map((value, i) => value + point[i] * unit) as Vector);
+          return { x: p.x - origin.x, y: p.y - origin.y };
+        }, aligned)
+      : "";
     const entries: { element: HTMLElement; nominal: WidgetTarget }[] = [];
     for (const handle of this.handles) {
       const index = names.indexOf(handle.axis);
@@ -144,7 +156,7 @@ export class BodyGizmo {
       const ratio = clearTransformControl(editor, pivot, local);
       local.x *= ratio;
       local.y *= ratio;
-      handle.button.innerHTML = markerMarkup(world.camera, u, v, handle.rotate);
+      handle.button.innerHTML = markerMarkup(world.camera, u, v, handle.rotate, true);
       const hit = handle.button.getBoundingClientRect();
       entries.push({
         element: handle.button,
