@@ -25,7 +25,7 @@ export function installWorldLabels(editor: SketchEditor, overlay: HTMLElement) {
       return (
         (!world.planePicker && pickModels(editor, point).length > 0) ||
         (!!face?.plane && !!hit && hit.depth <= depth + 1e-5) ||
-        !!pickSavedPlane(editor, point, depth)
+        !!pickSavedPlane(editor, point)
       );
     },
     () => {
