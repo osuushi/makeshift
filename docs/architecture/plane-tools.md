@@ -24,7 +24,9 @@ remain available immediately after selection. Reselection supports movement,
 deletion, visibility and sketch entry; Transform/M restores the movement controls.
 Enter or viewport double-click enters sketching, and Delete/Backspace deletes.
 These use existing selection affordances; there is no floating plane action bar.
-Visibility remains view state.
+Visibility remains view state. In ordinary canvas selection, visible saved construction
+planes take hover and click priority over the primary canonical plane even when
+the canonical plane is nearer the camera. Geometry retains its selection priority.
 
 Dragging a saved plane's Move anchor repositions only the temporary rotation
 pivot, without editing geometry or adding Undo history. Escape restores an anchor
