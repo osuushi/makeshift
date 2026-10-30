@@ -2,6 +2,7 @@ import type { Face } from "../model/body.js";
 import type { PlaneFrame } from "../sketch/planes.js";
 import { type Cylinder, cylinderExtent } from "./cylinder.js";
 import { cylinderGrid, faceMask, radialShell } from "./radial-mesh.js";
+import { radialVolume } from "./radial-volume.js";
 import { threadGrid } from "./thread-grid.js";
 import { type ThreadPreviewResolution, threadSampling } from "./thread-sampling.js";
 import { type ThreadSettings, threadDepth } from "./thread-settings.js";
@@ -77,59 +78,13 @@ function threadToolMeshes(
     ring(outward > 0 ? low : radius - offset, outward > 0 ? radius + offset : high);
   return {
     hasAdd: outward > 0 ? maximum > radius : minimum < radius,
-    hasRemove: outward > 0 ? minimum < radius : maximum > radius,
     band: ring(low, high),
-    // The generated operand owns the axial ends. Keep this auxiliary domain's
-    // caps clear of them to avoid coincident Boolean facets on tilted rods.
-    get planarCutBand() {
-      const start = grid.coords[0].z;
-      const coords = grid.coords.map(({ angle, z }) => ({
-        angle,
-        z: z + (z === start ? -1 : 1) * 4 * tolerance,
-      }));
-      return radialShell(
-        frame,
-        coords,
-        grid.triangles,
-        () => low,
-        () => high,
-      );
-    },
-    // Reference overlap compensates base tessellation, without changing the target profile.
-    referenceRemove: reference(overlap),
     referenceAdd: reference(-overlap),
     // The physical envelope excludes numerical slivers on the auxiliary radial skins.
-    removeBand:
-      outward > 0
-        ? ring(Math.min(radius, minimum) - overlap, radius + overlap)
-        : ring(radius - overlap, Math.max(radius, maximum) + overlap),
     addBand:
       outward > 0
         ? ring(radius - overlap, Math.max(radius, maximum) + overlap)
         : ring(Math.min(radius, minimum) - overlap, radius + overlap),
-  };
-}
-
-/** Pure addition/removal modes can emit their differential shell directly. */
-function directOperand(
-  frame: PlaneFrame,
-  grid: ReturnType<typeof cylinderGrid>,
-  cylinder: Cylinder,
-  settings: ThreadSettings,
-  overlap: number,
-  target: (angle: number, z: number) => number,
-) {
-  if (cylinder.outward < 0 && settings.cut === "rod") return null;
-  const remove = settings.cut === "rod" || cylinder.outward < 0;
-  return {
-    operation: remove ? ("subtract" as const) : ("add" as const),
-    mesh: radialShell(
-      frame,
-      grid.coords,
-      grid.triangles,
-      settings.cut === "rod" ? target : () => cylinder.radius - overlap,
-      settings.cut === "rod" ? () => cylinder.radius + overlap : target,
-    ),
   };
 }
 
@@ -184,16 +139,16 @@ export function threadMeshes(
     previewAuxiliaryRadius: cylinder.outward > 0 ? low : high,
     ...threadToolMeshes(frame, bandGrid, cylinder, settings, low, high, tolerance),
     tolerance,
-    extendPlanarCuts: cylinder.outward === 1 && settings.cut === "rod",
     masks: complete ? null : faces.map((face) => faceMask(frame, [face], low, high)),
-    get direct() {
-      return directOperand(
+    get cut() {
+      if (cylinder.outward < 0) return radialVolume(frame, coords, triangles, target);
+      if (settings.cut !== "rod") return null;
+      return radialShell(
         frame,
-        { coords, triangles },
-        cylinder,
-        settings,
-        Math.min(2 * tolerance, low / 2),
+        coords,
+        triangles,
         target,
+        () => cylinder.radius + Math.min(2 * tolerance, low / 2),
       );
     },
     get fill() {

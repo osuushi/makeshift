@@ -58,7 +58,7 @@ test("thread warnings identify opposite thin walls without warning on additions 
   }
 });
 
-test("flat interrupted internal threads highlight the flat and keep the exact nonstandard reference", async () => {
+test("open internal threads need no flat warning and keep the exact nonstandard reference", async () => {
   const owner = new DocumentOwner();
   try {
     const body = await retainHalf(
@@ -71,15 +71,13 @@ test("flat interrupted internal threads highlight the flat and keep the exact no
     assert.match(result.description, /Ø10.3 mm/);
     assert.match(result.description, /nonstandard diameter/);
     assert.match(result.description, /rod minor/);
-    const flat = result.warnings.find((w) => w.message.includes("flat"));
-    assert.ok(flat);
-    assert.ok(flat.faces.some((ref) => body.faces.find((f) => f.id === ref.face)?.plane));
+    assert.deepEqual(result.warnings, []);
   } finally {
     owner.close();
   }
 });
 
-test("captured open half-hole warns once only when the mating envelope enters its flats", () => {
+test("captured open half-hole needs no flat warning in either cut mode", () => {
   const fixture = JSON.parse(readFileSync("tests/fixtures/thread-open-hole.json", "utf8"));
   const document = fixture.document as SketchDocument;
   const instance = document.decorators?.[0];
@@ -89,7 +87,6 @@ test("captured open half-hole warns once only when the mating envelope enters it
       ...instance,
       settings: { ...instance.settings, cut },
     });
-    assert.equal(result.warnings.length, cut === "rod" ? 0 : 1);
-    if (cut === "hole") assert.equal(result.warnings[0].faces.length, 3);
+    assert.deepEqual(result.warnings, []);
   }
 });

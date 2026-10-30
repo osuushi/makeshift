@@ -180,8 +180,9 @@ receives no second allowance. The control displays millimeters.
 The shared Cut into control has only Rod and Hole options. Selecting the same
 option for equal-diameter mating faces uses the same reference construction;
 the label does not switch by face type.
-Thread-form compatibility does not promise assembly through shoulders, flats,
-unthreaded portions or blind-hole bottoms.
+Thread cuts clear intersecting material in their owning body within the thread
+volume and axial extent. Compatibility does not promise assembly through other
+bodies, unthreaded portions or blind-hole bottoms outside that extent.
 
 Confirmed: Metric is the preset family; cylinder diameter determines thread size,
 rather than a preset such as M10 overriding the modeled cylinder. An off-table
@@ -255,10 +256,12 @@ current preset's dimensions through the ordinary owner/Undo path.
 
 ## Thread extent and ends
 
-Confirmed: default to full selected-face coverage. Exterior Cut-into-rod threads
-on a cylinder bounded by one longitudinal flat and two axial end planes continue
-to the flat's actual intersection with the profile, including groove notches in
-that neighboring flat. Other trimmed boundaries retain face-domain coverage.
+Confirmed: thread cuts apply to the whole owning body within the thread's axial
+extent, without clipping to selected face domains or neighboring surfaces. An
+internal thread uses a filled bore cutter, clearing inward shelves and crossbars
+as well as the groove envelope. An external Cut-into-rod thread uses its radial
+groove cutter, including buried material within that envelope. Other bodies are
+untouched. Added thread material still follows the selected trimmed face domains.
 Start/end taper lengths are configurable; built-in presets set both to half their
 resolved pitch. Tapers fade toward the rod root or hole groove envelope, always
 removing material near axial ends for either Cut into mode. They do not chamfer
@@ -271,8 +274,9 @@ geometry configuration.
 
 New threads cover the full selected face; inset controls are no longer exposed.
 Saved start/end insets remain supported along the saved thread axis so existing
-documents retain their threaded band. Intersect that band with actual selected face domains,
-with the planar cutting exception above; do not fill flats or gaps. Apply optional
+documents retain their threaded band. Cuts cover the full axial band, including
+intervening material; additions intersect selected face domains and do not fill
+flats or gaps. Apply optional
 tapers at its axial ends and preserve helix phase when changing extent. Exact
 behavior at separated axial patches must remain consistent with one continuous
 helix and the requested face coverage.
@@ -302,10 +306,9 @@ Save a thread reference frame and phase when first applied. Do not derive phase
 again from the first remaining face or its parameter seam. Transport this frame
 through rigid movement; copying creates independent instances with copied settings.
 
-Use the actual trimmed face domains, including holes and sloping ends. A full
-cylinder or min/max axial bounds alone is insufficient: it could fill flats, bridge gaps,
-cut a neighboring wall, or extend threads beyond selected geometry. Construct
-bounded, closed modifier volumes from the selected domain and chosen radial range.
+Use actual trimmed face domains, including holes and sloping ends, for additions.
+A full cylinder would fill flats and bridge gaps. Cuts deliberately use the full
+thread volume across the owning body, bounded by the saved thread extent.
 Thread-specific diagnostics can inspect adjacent original geometry and report
 implicated face IDs. This is distinct from cross-decorator overlap handling below;
 V1 does not require detecting or diagnosing overlaps between decorator outputs.
@@ -313,44 +316,26 @@ V1 does not require detecting or diagnosing overlaps between decorator outputs.
 The panel reports the exact reference diameter and its rod-major/rod-minor meaning
 for the selected cut mode, identifying diameters absent from the coarse table as
 nonstandard. Current nonblocking geometry warnings check opposite coaxial walls
-with overlapping axial coverage against maximum removal depth, and adjacent flats
-parallel to an internal thread axis against the circular mating envelope. Flat
-checks use trimmed triangles clipped to the axial band, not infinite support
-planes; open half-holes therefore warn only when their flat material actually
-enters the mating envelope. Implicated flats share one warning. These
-are conservative local checks, not collision or assembly certification. Each
-warning selects both decorated and implicated faces through ordinary selection.
+with overlapping axial coverage against maximum removal depth. These are
+conservative local checks, not collision or assembly certification. Each warning
+selects both decorated and implicated faces through ordinary selection. The flat
+obstruction warning is removed: the cutter clears that material directly.
 
-The built-in constructs separate radial masks for selected trimmed patches and
-unions them after clipping each against its adjacent planar boundaries. A plane
-clips only when the selected patch lies on one side; a nonconvex patch crossing
-that plane keeps its trimmed mask. Disconnected axial patches therefore cannot
-clip each other or bridge their unselected gap. Export adds/removes the difference
-from the nominal cylinder, bounded to the thread's radial envelope; it does not
-replace a whole radial band that might contain an opposite wall. Small auxiliary
-reference overlap covers base tessellation error without changing the requested
-profile or hole allowance. Pure addition/removal cases emit their closed differential shell directly, avoiding
-intermediate reference-volume Booleans. The internal Cut-into-rod case can require
-both addition and removal after hole relief and retains the general difference
-path. Both use the same analytic target and trimmed domains. Thread cuts can still pierce a wall when the requested
-depth exceeds its thickness; that needs an explicit diagnostic, not a silent
-change to thread dimensions.
-
-For exterior Cut-into-rod threads, a patch whose complete boundary is one
-longitudinal plane and two axial planes uses those planes in place of its radial
-footprint. The analytic cylindrical area must match that complete patch;
-unselected cylindrical neighbors, holes, multiple flats and oblique ends do not
-qualify. Coplanar support faces on either side of a ridge count as one plane.
-Threading a flattened rod therefore agrees with flattening the threaded rod;
-a ridge's grooves stop at its supporting plane. Axial insets still bound the
-operand. Auxiliary domain caps avoid coincident operand caps, and removal covers
-the planar boundary's actual Float32 coordinates to avoid residual numerical skins.
-Preview uses the same domain rule and replaces affected flats' occlusion with
-their remaining triangulated surface: groove openings reveal the profile, while
-solid flat areas still hide the far side. This changes no decorator membership,
-picking, accepted BRep or Undo. `tests/thread-flat-preview-ui.mjs` checks this
-worker/compositor boundary, ordinary flat picking and native 3MF export in hidden
-Electron; geometric equivalence and support preservation live in model tests.
+The built-in constructs one body-wide removal volume and separate radial masks
+for additions to selected trimmed patches. Additions retain adjacent planar and
+cylindrical clipping; cuts are never clipped back to the original face footprint.
+The same operands drive preview and export. Preview computes the resulting body
+and uses transient Boolean mesh provenance to separate newly generated thread
+surfaces from remaining original surfaces. The latter replace the owning body's
+occlusion mesh, so openings reveal the thread while untouched material continues
+to hide its far side. These temporary mesh IDs are not document identities.
+Only axial end planes clip antialiased preview fragments; longitudinal or oblique
+planes must not clip away body-wide cuts. Decorator membership, analytic picking,
+accepted BRep and Undo are unchanged. `tests/thread-flat-preview-ui.mjs` covers
+rod and hole openings, remaining-flat occlusion, original face picking and native
+3MF export in hidden Electron. Model tests cover off-center open holes, body-wide
+crossbar removal, separate-body preservation and complementary watertight exports.
+Thread cuts can still pierce thin walls; their diagnostic is retained.
 
 Confirmed topology policy: follow compatible split
 descendants, preserve phase and exclude newly generated unrelated faces. For
@@ -618,12 +603,12 @@ are checked against the analytic envelope with a separate allowance of twice the
 sampling target. This is measured numerical accuracy, not a general certification
 of arbitrary curved neighboring surfaces or physical fit.
 
-Trimmed thread domains also respect directly adjacent analytic cylindrical
+Thread addition domains also respect directly adjacent analytic cylindrical
 boundaries when the entire selected patch lies on their material side. Hole
 boundaries use a circumscribed polygon and exterior limits an inscribed polygon,
 with radial deviation below half the sampling target. Coincident supporting
-cylinders do not constrain each other's threads. This preserves transverse bores
-in both external and internal threaded faces. Nonconvex patches straddling an
+cylinders do not constrain each other's threads. This prevents additions from filling transverse bores
+in either external or internal threaded faces; cuts may extend into those bores. Nonconvex patches straddling an
 adjacent boundary retain their tessellated domain mask; this is not a general
 extension/intersection treatment for arbitrary BRep surface classes.
 

@@ -45,7 +45,7 @@ for (const offset of [4, 5.2])
     }
   });
 
-test("a threaded cylindrical ridge leaves its supporting block intact", async () => {
+test("a threaded cylindrical ridge cuts intersecting material throughout its owning block", async () => {
   const owner = new DocumentOwner();
   const scope = new MeshScope(await initializeMeshRuntime());
   try {
@@ -75,13 +75,17 @@ test("a threaded cylindrical ridge leaves its supporting block intact", async ()
     const actual = scope.from(await threadedExport(owner, body, 5.5, "rod"));
     const support = scope.from(exportMesh(block));
     assert.ok(
-      scope.keep(support.subtract(actual)).volume() < 0.00001,
-      "No buried grooves in the block",
+      scope.keep(support.subtract(actual)).volume() > 10,
+      "The same cutter reaches buried material in the owning block",
     );
     const before = scope.from(exportMesh(body));
     const removed = scope.keep(before.subtract(actual));
     assert.ok(removed.volume() > 10, "The exposed ridge really is threaded");
-    assert.ok(removed.boundingBox().min[1] > -0.00001, "Removal stops at the support plane");
+    assert.ok(
+      removed.boundingBox().min[1] < -5,
+      "Removal reaches the opposite side of the cylinder",
+    );
+    assert.ok(removed.boundingBox().min[1] > -5.51, "Material beyond the cutter stays intact");
   } finally {
     scope.close();
     owner.close();
