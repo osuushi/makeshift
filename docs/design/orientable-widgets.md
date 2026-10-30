@@ -79,8 +79,11 @@ camera-facing plane at their projected tip.
 screen projection. The shared Move assembly separates actual hit rectangles with
 6 CSS pixels of clearance, extending outward along each marker’s projected ray
 from the anchor. Clearance leaves the glyph display correction, geometric edit axes and rotation
-planes unchanged. The anchor and scale-box handles are obstacles. Stable handle priority
-makes the result deterministic, including coincident projections. Collision corrections
+planes unchanged. The anchor and scale-box handles are obstacles. Translation handles
+are placed from shortest to longest unadjusted axis projection, preserving their
+near/far order when projections overlap; measure before scale-box clearance changes
+their distances. Equal projections retain stable handle order, followed by rotation
+handles. This makes separation deterministic, including coincident projections. Collision corrections
 settle with a 100 ms ease-out transition; ordinary camera/model tracking is immediate.
 A press freezes the displayed correction, including the hit region, through pointer
 leave until the gesture ends. Idle hover keeps that correction while the current

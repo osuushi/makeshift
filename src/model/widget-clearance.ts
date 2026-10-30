@@ -13,6 +13,8 @@ export interface WidgetTarget {
   x: number;
   y: number;
   size: number;
+  /** Unadjusted axis projection: shorter translations keep the inner position. */
+  projectedDistance?: number;
 }
 
 function overlaps(a: WidgetTarget, b: WidgetTarget, gap: number): boolean {
@@ -20,13 +22,21 @@ function overlaps(a: WidgetTarget, b: WidgetTarget, gap: number): boolean {
   return Math.abs(a.x - b.x) < clearance && Math.abs(a.y - b.y) < clearance;
 }
 
-/** Stable priority, actual hit rectangles, and outward movement along the projected ray. */
+/** Projected translation order, stable ties, and outward movement along each ray. */
 export function separateWidgets(
   targets: readonly WidgetTarget[],
   obstacles: readonly WidgetTarget[],
 ): WidgetTarget[] {
   const placed = [...obstacles];
-  return targets.map((target, index) => {
+  const result: WidgetTarget[] = new Array(targets.length);
+  const ordered = targets
+    .map((target, index) => ({ target, index }))
+    .sort(
+      (a, b) =>
+        (a.target.projectedDistance ?? Infinity) - (b.target.projectedDistance ?? Infinity) ||
+        a.index - b.index,
+    );
+  for (const { target, index } of ordered) {
     const length = Math.hypot(target.x, target.y);
     const angle = (index * Math.PI * 2) / targets.length;
     const dx = length > 1 ? target.x / length : Math.cos(angle);
@@ -39,7 +49,8 @@ export function separateWidgets(
       const collision = placed.find((other) => overlaps(candidate, other, 6));
       if (!collision) {
         placed.push(candidate);
-        return candidate;
+        result[index] = candidate;
+        break;
       }
       const radius = (target.size + collision.size) / 2 + 7;
       const exitX =
@@ -48,8 +59,9 @@ export function separateWidgets(
         Math.abs(dy) < 1e-8 ? Infinity : (collision.y + Math.sign(dy) * radius - target.y) / dy;
       distance = Math.max(distance, Math.min(exitX, exitY));
     }
-    throw new Error("Widget clearance did not converge");
-  });
+    if (!result[index]) throw new Error("Widget clearance did not converge");
+  }
+  return result;
 }
 
 /** Animate only collision corrections: normal camera/model tracking remains immediate. */
