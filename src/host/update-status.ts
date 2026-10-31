@@ -82,10 +82,32 @@ const page = `<!doctype html>
 :root { color-scheme: light dark; font: 13px system-ui; }
 body { margin: 28px; }
 h1 { font-size: 17px; font-weight: 600; margin: 0 0 18px; }
-progress { width: 100%; height: 8px; }
+.update-track { height: 8px; overflow: hidden; border-radius: 4px; background: light-dark(#e0e3e7, #383c42); }
+.update-travel { width: 100%; height: 100%; animation: update-travel 2.4s infinite; }
+.update-bar { width: 24%; height: 100%; border-radius: 4px; background: light-dark(#287bc1, #68b7f5); animation: update-stretch 2.4s infinite; }
+/* Wind up at each end, accelerate through the middle, then cushion the landing. */
+@keyframes update-travel {
+  0%, 50%, 100% { animation-timing-function: cubic-bezier(.4, 0, .8, 1); }
+  0%, 100% { transform: translateX(3%); }
+  8% { transform: translateX(1%); animation-timing-function: cubic-bezier(.65, 0, .25, 1); }
+  42% { transform: translateX(75%); animation-timing-function: ease-out; }
+  50% { transform: translateX(73%); }
+  58% { transform: translateX(75%); animation-timing-function: cubic-bezier(.65, 0, .25, 1); }
+  92% { transform: translateX(1%); animation-timing-function: ease-out; }
+}
+@keyframes update-stretch {
+  0%, 50%, 100% { transform: scale(.9, 1); animation-timing-function: ease-in-out; }
+  8%, 58% { transform: scale(.8, 1.15); animation-timing-function: ease-in; }
+  25%, 75% { transform: scale(1.5, .72); animation-timing-function: ease-out; }
+  42%, 92% { transform: scale(.8, 1.15); animation-timing-function: ease-out; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .update-travel { animation: none; transform: translateX(38%); }
+  .update-bar { animation: none; }
+}
 p { opacity: .7; line-height: 1.5; }
 </style></head><body>
 <h1 role="status" aria-live="polite">Checking for updates…</h1>
-<progress aria-label="Update in progress"></progress>
+<div class="update-track" role="progressbar" aria-label="Update in progress"><div class="update-travel"><div class="update-bar"></div></div></div>
 <p>You can close this window and keep working.<br>We’ll let you know when the update is ready.</p>
 </body></html>`;
