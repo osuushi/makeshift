@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { previewFaceKey } from "../decorators/preview-compositor.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Point, Vector } from "../sketch/planes.js";
 import type { BodyGeometry } from "./body.js";
@@ -72,7 +73,11 @@ export function pickBodyEdge(
         (layer === probe.layer(best.body) && hit.distance > best.distance + distanceTiePx))
     )
       continue;
-    if (!edgeFacesCamera(source, hit.edge, hit.point, probe.ray.direction)) continue;
+    if (
+      !probe.revealAt(nearest) &&
+      !edgeFacesCamera(source, hit.edge, hit.point, probe.ray.direction)
+    )
+      continue;
     const covering = probe.faces(nearest).find((face) => probe.layer(face.body) === layer);
     if (covering && hit.depth > covering.depth + occlusionSlackMm) continue;
     if (
@@ -88,7 +93,7 @@ export function pickBodyEdge(
   return best;
 }
 
-/** The overlap chooser keeps covered front-facing edges, testing the best segment per edge. */
+/** Keep covered front-facing edges and both sides of the visible X-ray neighborhood. */
 export function edgeRayHits(
   editor: SketchEditor,
   screen: Point,
@@ -96,6 +101,7 @@ export function edgeRayHits(
   ray = screenRay(editor, screen),
 ): EdgeHit[] {
   const best = new Map<string, { source: BodyGeometry; hit: EdgeHit }>();
+  const reveal = editor.world.selectionRevealed?.(screen) ? editor.world.selectionXray() : null;
   for (const { source, hit } of edgeCandidates(editor, screen, bodies)) {
     const key = JSON.stringify([hit.body, hit.edge]),
       previous = best.get(key)?.hit;
@@ -107,7 +113,11 @@ export function edgeRayHits(
       best.set(key, { source, hit });
   }
   return [...best.values()]
-    .filter(({ source, hit }) => edgeFacesCamera(source, hit.edge, hit.point, ray.direction))
+    .filter(
+      ({ source, hit }) =>
+        edgeFacesCamera(source, hit.edge, hit.point, ray.direction) ||
+        (!!reveal && !reveal.edges.has(previewFaceKey(hit.body, hit.edge))),
+    )
     .map(({ hit }) => hit)
     .sort((a, b) => a.depth - b.depth);
 }

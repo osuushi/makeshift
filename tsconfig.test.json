@@ -11,6 +11,7 @@
   },
   "include": [
     "tests/*.test.ts",
+    "tests/selection-xray-render.ts",
     "src/agent-cli/script-worker.ts",
     "src/sketch/move-widget/marker.ts",
     "src/sketch/sketch-widget-layout.ts"

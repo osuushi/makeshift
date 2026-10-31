@@ -22,11 +22,11 @@ export const uiSuites = [
   },
   {
     args: ["xray-vision-ui.mjs"],
-    // macOS hidden Electron including the captured internal-hole preview: 18.30s.
+    // macOS hidden Electron including cavity caps and the orbit threshold: 18.22s.
     seconds: 30,
     browsers: ["electron"],
     reason:
-      "GPU captures must stay fresh across New/plane entry and local apertures. The captured internal hole must remain shaded and clickable through its shell, including the batched mesh-first radius preview; CPU mask/occlusion tests cannot observe capture, shader or pointer integration failures.",
+      "GPU captures must stay fresh across New/plane entry and local apertures. Captured cavities must retain both end caps and a continuously faded shell through orbit, selection and mesh-first radius edits; CPU topology/mask tests cannot observe capture, shader or pointer integration failures.",
     unit: "xray-contents.test.ts",
   },
   {

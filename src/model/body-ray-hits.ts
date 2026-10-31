@@ -36,6 +36,7 @@ export function faceRayHits(
   ray: THREE.Ray,
   camera: THREE.Vector3,
   clipping: readonly THREE.Plane[] = [],
+  twoSided?: (body: string, face: string) => boolean,
 ) {
   const hits: { body: string; face: string; depth: number }[] = [];
   const a = new THREE.Vector3(),
@@ -46,12 +47,13 @@ export function faceRayHits(
     for (const face of body.faces) {
       if (!ray.intersectsBox(faceBounds(face))) continue;
       let depth = Infinity;
+      const cullBack = !twoSided?.(body.id, face.id);
       for (let i = 0; i < face.vertices.length; i += 9) {
         a.fromArray(face.vertices, i);
         b.fromArray(face.vertices, i + 3);
         c.fromArray(face.vertices, i + 6);
         if (
-          ray.intersectTriangle(a, b, c, true, hit) &&
+          ray.intersectTriangle(a, b, c, cullBack, hit) &&
           clipping.every((p) => p.distanceToPoint(hit) >= 0)
         )
           depth = Math.min(depth, hit.distanceTo(camera));

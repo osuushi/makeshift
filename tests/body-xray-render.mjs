@@ -29,10 +29,15 @@ try {
         const { bodyXrayRenderChecks } = await import("/tests/body-xray-render.ts");
         const { bodyXrayLayerChecks } = await import("/tests/body-xray-layer-render.ts");
         const { framePacerRenderChecks } = await import("/tests/frame-pacer-render.ts");
+        const { selectionXrayRenderChecks } = await import("/tests/selection-xray-render.ts");
+        const fixture = await fetch("/tests/fixtures/enclosed-selection-xray.json").then((r) =>
+          r.json(),
+        );
         return {
           mask: bodyXrayRenderChecks(),
           layers: bodyXrayLayerChecks(),
           pacing: await framePacerRenderChecks(),
+          selection: selectionXrayRenderChecks(fixture),
         };
       });
       assert.deepEqual(errors, []);

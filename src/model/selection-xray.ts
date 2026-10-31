@@ -3,11 +3,10 @@ import { viewDisplay } from "../preferences/view-display.js";
 import type { BodyMaskGeometry } from "../sketch/body-ellipsoid.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { BodyGeometry } from "./body.js";
-import { selectionOccluders } from "./selection-occlusion.js";
 import {
   includePreviewSupports,
+  revealNeighborhood,
   type SelectionBody,
-  selectedRevealFaces,
   selectedRevealGeometry,
   selectionPreviewGeometry,
 } from "./selection-preview-geometry.js";
@@ -29,7 +28,7 @@ function aperture(vertices: number[]): BodyMaskGeometry {
   return geometry;
 }
 
-/** Cache view-dependent occluders, never an alternate copy of the document. */
+/** A stable topology neighborhood supplies the interior layer; only its aperture follows the camera. */
 export class SelectionXray {
   private bodies: readonly BodyGeometry[] | undefined;
   private key = "";
@@ -48,7 +47,7 @@ export class SelectionXray {
       return null;
     const bodies = editor.display.bodies;
     const preview = editor.interactions.current?.visualPreview ?? null;
-    const key = `${JSON.stringify(modeling.targets)}:${world.camera.matrixWorld.elements}:${world.camera.projectionMatrix.elements}:${bodies?.map((b) => `${b.id}:${visibility.visible(b.id)}:${visibility.xray.has(b.id)}`)}`;
+    const key = `${JSON.stringify(modeling.targets)}:${bodies?.map((b) => `${b.id}:${visibility.visible(b.id)}:${visibility.xray.has(b.id)}`)}`;
     if (bodies === this.bodies && preview === this.preview && key === this.key) return this.reveal;
     this.bodies = bodies;
     this.preview = preview;
@@ -67,12 +66,21 @@ export class SelectionXray {
         .map((body) => selectionPreviewGeometry(body, editor.store.data.bodies ?? [])),
     ];
     const targets = visible.flatMap((body) => {
-      const faces = selectedRevealFaces(body, modeling.targets);
+      const faces = revealNeighborhood(body, modeling.targets);
       return faces.length ? [{ body, faces }] : [];
     });
-    const hidden = targets.length
-      ? selectionOccluders(visible, targets, world.camera)
-      : new Set<string>();
+    const retained = new Set(
+      targets.flatMap(({ body, faces }) => faces.map((face) => previewFaceKey(body.id, face.id))),
+    );
+    const hidden = new Set(
+      targets.length
+        ? visible.flatMap((body) =>
+            body.faces
+              .map((face) => previewFaceKey(body.id, face.id))
+              .filter((face) => !retained.has(face)),
+          )
+        : [],
+    );
     includePreviewSupports(visible, hidden);
     this.reveal = hidden.size
       ? {

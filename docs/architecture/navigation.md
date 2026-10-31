@@ -141,17 +141,21 @@ The solid aperture uses cut picking and pseudoface body ownership; the softened
 fringe uses normal depth picking. Zoom and resize rebuild projected contents.
 The explicit Cross section tool always remains global, independent of these settings.
 
-Selected solid faces and edges automatically receive a local X-ray reveal when
-other faces cover them, including occluders in the same body. Projected triangle
-overlap identifies blocking faces; only those faces and edges wholly bounded by
-them are removed from the revealed presentation. Selected geometry and remaining
-nearby surfaces retain ordinary shading and depth. Each selected face/edge supplies
-its own ellipsoid aperture, expanded by Bleed and softened by Radius. Whole-body
+Selected solid faces and edges receive a local X-ray focus. A selected face and
+the faces directly bordering it form one normally shaded, depth-tested neighborhood;
+selected edges retain their incident faces. Adjacency extends once from the actual
+selection, never recursively through the body. This keeps a cavity's end caps
+together with its selected wall. Remaining visible solid faces form one faded
+surrounding layer, including geometry in the same body. The neighborhood stays
+fixed during orbit: only the aperture projection moves, so a whole shell face
+cannot abruptly switch between opaque and translucent at an overlap threshold.
+Each selected face/edge supplies its own ellipsoid aperture, expanded by Bleed and
+softened by Radius. Whole-body
 selection alone does not trigger this view. Body X-ray opacity controls the faded
 foreground; 100% disables the reveal. This automatic focus remains local even with
 Global enabled. Explicit Cross section and planar sketch X-ray take precedence.
-Orbit, selection, visibility and geometry changes refresh the reveal; ordinary
-hover reuses it. The native mesh-first preview follows source correspondence using
+Selection, visibility and geometry changes refresh the neighborhood; orbit and
+hover reuse it. The native mesh-first preview follows source correspondence using
 render-local slots, without inventing editable topology before metadata arrives.
 Clearing selection restores the ordinary view. Fading operates on complete faces
 inside the aperture, so portions of one continuous face fade together.

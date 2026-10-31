@@ -72,6 +72,25 @@ export function selectedRevealFaces(
   );
 }
 
+/** Keep the selected patch's immediate boundary surfaces, including cavity end caps.
+ * Use the original selection once: adjacency must not spread through the whole body. */
+export function revealNeighborhood(
+  body: SelectionBody,
+  targets: readonly ModelingTarget[],
+): SelectionBody["faces"] {
+  const selected = selectedRevealFaces(body, targets);
+  const faceEdges = new Set(
+    selectedRevealFaces(
+      body,
+      targets.filter((t) => t.kind === "face"),
+    ).flatMap((face) => face.edges),
+  );
+  const ids = new Set(selected.map((face) => face.id));
+  return body.faces.filter(
+    (face) => ids.has(face.id) || face.edges.some((edge) => faceEdges.has(edge)),
+  );
+}
+
 /** Render-local slots let the reveal follow the mesh-first preview before metadata arrives. */
 export function selectionPreviewGeometry(
   visual: VisualBody,

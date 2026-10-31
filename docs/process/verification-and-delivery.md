@@ -89,9 +89,10 @@ gallery and uploads the combined artifact. A failed recipe does not cancel other
 The three additional section cases were measured in hidden Electron on macOS:
 X-ray mask/settings/resize/pinch 7.05s, distant-camera ink/fill 6.72s, and cap
 overlap/selection/extrusion/chooser 8.75s. The X-ray route including New/XY/circle
-frame freshness and the captured internal-hole selection/mesh-first radius edit
-measures 18.30s locally. Its allocation is 30 seconds, adding 10 seconds to the
-previous aggregate budget of 586 without adding a suite or shard. Occlusion,
+frame freshness, internal-hole selection/mesh-first radius edit, and captured
+enclosed-cavity caps/orbit pixels measures 18.22s locally. Its allocation is 30 seconds,
+adding 10 seconds to the previous aggregate budget of 586 without adding a suite
+or shard. Neighborhood,
 selection and native-preview correspondence remain in model tests; GPU capture,
 shader batching and pointer delivery require the focused Electron case. The
 section allocations are 30/15/20 seconds, including startup and software-rendering

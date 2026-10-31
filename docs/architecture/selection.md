@@ -37,9 +37,12 @@ founder feedback update these contracts before further tools depend on them.
   non-X-ray body face/edge wins over X-ray body geometry. Hidden bodies never
   participate. The overlap chooser retains explicit X-ray choices after normal
   choices. X-ray membership does not itself select or reveal a hidden body.
-- Covered solid face/edge selections get an automatic local reveal through their
-  blocking faces, including within one body. In its aperture, ordinary face/edge
-  picking skips the faded blockers and uses the depth-sorted revealed geometry.
+- Solid face/edge selections get an automatic local reveal. Selected faces and
+  their immediate neighbors stay shaded; selected edges retain incident faces.
+  Surrounding solid faces fade consistently, including within one body. In its
+  aperture, ordinary face/edge picking skips faded surfaces and uses the depth-sorted
+  neighborhood. Revealed surfaces accept clicks on either side, matching their
+  rendering, so cavity caps can be selected from outside the enclosing material.
   The outer feather and exterior keep ordinary picking; the overlap chooser still
   offers faded foreground geometry. Whole-body selection does not start a reveal.
   This is presentation state only, following selection and temporary geometry

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { openDocument } from "./native-documents.mjs";
 import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { orient, project } from "./ui-blend-edit.mjs";
@@ -89,6 +90,24 @@ export async function internalSelectionXrayRoute(page, runtime) {
   console.log(
     `${runtime}: captured internal selection, local shell fade, picking, mesh-first radius edit and Undo passed`,
   );
+  await enclosedCavityPixels(page, runtime);
+}
+
+async function enclosedCavityPixels(page, runtime) {
+  const enclosed = JSON.parse(
+    await readFile(new URL("./fixtures/enclosed-selection-xray.json", import.meta.url), "utf8"),
+  );
+  const module = `/@fs/${fileURLToPath(new URL("./selection-xray-render.ts", import.meta.url))
+    .replaceAll("\\", "/")
+    .replace(/^\/+/, "")}`;
+  const caps = await page.evaluate(
+    async ({ module, enclosed }) => {
+      const { selectionXrayRenderChecks } = await import(module);
+      return selectionXrayRenderChecks(enclosed);
+    },
+    { module, enclosed },
+  );
+  console.log(`${runtime}: enclosed cavity caps and continuous shell GPU pixels passed`, caps);
 }
 
 async function prepare(page) {
