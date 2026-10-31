@@ -153,6 +153,31 @@ test("plane framing carries a region target and orthographic height into one pos
   );
 });
 
+test("plane entry only zooms in while retaining centering and plane alignment", () => {
+  for (const [height, fittedHeight, expected] of [
+    [80, 10, 10],
+    [5, 10, 5],
+    [10, 10, 10],
+    [0.5, 80, 0.5],
+    [5, undefined, 5],
+  ] as const) {
+    const camera = new THREE.OrthographicCamera();
+    camera.position.set(55, -70, 65);
+    camera.up.set(0, 0, 1);
+    const view = { camera, target: new THREE.Vector3(8, 9, 10), height };
+    const pose = planeCameraPose(view, planes.XY, {
+      target: [30, 22, 0],
+      height: fittedHeight,
+    });
+    applyCameraPose(view, pose);
+    assert.equal(view.height, expected);
+    assert.deepEqual(view.target.toArray(), [30, 22, 0]);
+    const direction = camera.position.clone().sub(view.target).normalize();
+    assert.ok(Math.abs(direction.z - 1) < 1e-10);
+    assert.ok(camera.up.dot(new THREE.Vector3(...planes.XY.v)) > 0.999999);
+  }
+});
+
 test("pan translates camera and target equally; pointer-centered zoom respects limits", () => {
   const camera = new THREE.OrthographicCamera();
   camera.position.set(0, 0, 120);

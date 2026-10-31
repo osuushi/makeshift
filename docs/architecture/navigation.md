@@ -27,6 +27,9 @@ Equal-angle ties prefer the plane's positive V axis as screen up, including entr
 from the default isometric view; numerical roundoff must not select another quarter turn.
 Profile entry fits the boundary along the chosen screen axes, keeping its center
 and margin when a quarter turn swaps the horizontal and vertical extents.
+Sketch entry may zoom in to frame a profile or face, but never zooms out. If the
+current view is already closer than the fitted view, retain its orthographic
+height while centering and rotating onto the sketch plane.
 Double-click sketch entry consumes the event before sketch selection handles it,
 so the same click cannot select curves and interrupt the camera alignment.
 Canonical references remain fixed, while construction planes support placement edits.
