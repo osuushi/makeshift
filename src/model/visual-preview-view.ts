@@ -9,7 +9,13 @@ import { stableClipping } from "../sketch/stable-clipping.js";
 import { foregroundBodyLayer } from "../sketch/world-foreground.js";
 import { defaultBodyAppearance } from "./body-appearance.js";
 import { faceGeometry, faceMaterial } from "./body-mesh.js";
+import { selectionPreviewGeometry } from "./selection-preview-geometry.js";
 import type { VisualBody } from "./visual-preview.js";
+import {
+  installVisualSelectionXray,
+  visualPartKey,
+  visualSelectionXray,
+} from "./visual-selection-xray.js";
 
 interface VisualStyle {
   color: string;
@@ -39,9 +45,11 @@ export class VisualBodyDrawable {
     this.group.add(this.mesh, this.onSection, this.outline, this.highlight);
     this.highlight.renderOrder = 20;
     for (const mesh of [this.mesh, this.onSection]) {
+      installVisualSelectionXray(mesh.material);
       mesh.material.vertexColors = true;
       mesh.material.color.set("white");
     }
+    installVisualSelectionXray(this.outline.material);
     this.onSection.material.stencilRef = 6;
     this.group.traverse((object) => object.layers.enable(foregroundBodyLayer));
     this.onSection.layers.disable(foregroundBodyLayer);
@@ -50,6 +58,7 @@ export class VisualBodyDrawable {
     const sectionKey = JSON.stringify([section, style]);
     if (this.source === body && this.sectionKey === sectionKey) return;
     this.group.userData.bodyMaskGeometry = body.faces;
+    const bodyId = this.group.userData.bodyMaskId as string;
     const onSection = body.planes.map((plane) => !!(section && plane && coplanar(section, plane)));
     const selectedBody = body.sourceBodies?.some((id) => style.selected.includes(id));
     const colors = body.faces.map((_, index) =>
@@ -66,6 +75,7 @@ export class VisualBodyDrawable {
         body.faces.filter((_, i) => onSection[i] === clipped),
         colors.filter((_, i) => onSection[i] === clipped),
         body.normals?.filter((_, i) => onSection[i] === clipped),
+        body.faces.flatMap((_, i) => (onSection[i] === clipped ? [visualPartKey(bodyId, i)] : [])),
       );
       const transparent = style.alpha < 1;
       if (mesh.material.transparent !== transparent) mesh.material.needsUpdate = true;
@@ -87,6 +97,19 @@ export class VisualBodyDrawable {
     lines.setAttribute("position", new THREE.Float32BufferAttribute(segments, 3));
     this.outline.geometry.dispose();
     this.outline.geometry = lines;
+    lines.setAttribute(
+      "selectionXrayHidden",
+      new THREE.Float32BufferAttribute(new Float32Array(segments.length / 3), 1),
+    );
+    visualSelectionXray(
+      this.outline,
+      body.edges.map((points, i) => ({
+        key: visualPartKey(bodyId, i),
+        count: Math.max(0, (points.length / 3 - 1) * 2),
+      })),
+      "edges",
+    );
+    delete this.outline.userData.selectionXrayHidden;
     this.highlight.geometry.dispose();
     this.highlight.geometry = new LineSegmentsGeometry().setPositions(highlighted);
     this.highlight.visible = highlighted.length > 0;
@@ -107,6 +130,7 @@ function replaceFaces(
   vertices: number[][],
   colors: string[],
   normals?: number[][],
+  keys: string[] = [],
 ): void {
   const faces = vertices.map((points, i) => {
     const face = faceGeometry(points, normals?.[i]),
@@ -122,6 +146,19 @@ function replaceFaces(
   const geometry = faces.length ? mergeGeometries(faces) : new THREE.BufferGeometry();
   for (const face of faces) face.dispose();
   if (!geometry) throw new Error("Could not combine visual preview faces");
+  geometry.setAttribute(
+    "selectionXrayHidden",
+    new THREE.Float32BufferAttribute(
+      new Float32Array(geometry.getAttribute("position")?.count ?? 0),
+      1,
+    ),
+  );
+  visualSelectionXray(
+    mesh,
+    faces.map((face, i) => ({ key: keys[i], count: face.getAttribute("position").count })),
+    "faces",
+  );
+  delete mesh.userData.selectionXrayHidden;
   mesh.visible = vertices.length > 0;
   mesh.geometry.dispose();
   mesh.geometry = geometry;
@@ -164,6 +201,10 @@ export function visualPreviewView(editor: SketchEditor): () => void {
         body.sourceBodies?.length && body.sourceBodies.every((id) => editor.visibility.xray.has(id))
           ? body.sourceBodies[0]
           : null;
+      drawing.group.userData.bodyMaskId = selectionPreviewGeometry(
+        body,
+        editor.store.data.bodies ?? [],
+      ).id;
       drawing.update(body, editor.world.partialSection ?? editor.world.crossSection, {
         ...appearance,
         selected,

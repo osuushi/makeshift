@@ -22,11 +22,11 @@ export const uiSuites = [
   },
   {
     args: ["xray-vision-ui.mjs"],
-    // macOS hidden Electron including New/XY/circle freshness: 9.18s.
-    seconds: 20,
+    // macOS hidden Electron including the captured internal-hole preview: 18.30s.
+    seconds: 30,
     browsers: ["electron"],
     reason:
-      "A real GPU frame must keep both captures fresh after New and plane entry, and preserve normal/cut colors across the aperture, bleed, blur and resize; texture-unit state, Settings input and outside-aperture picking cannot be proven by mask math alone.",
+      "GPU captures must stay fresh across New/plane entry and local apertures. The captured internal hole must remain shaded and clickable through its shell, including the batched mesh-first radius preview; CPU mask/occlusion tests cannot observe capture, shader or pointer integration failures.",
     unit: "xray-contents.test.ts",
   },
   {

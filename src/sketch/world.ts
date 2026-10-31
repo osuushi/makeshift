@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { type CameraState, defaultCameraPosition, restoreCamera } from "../model/camera-state.js";
+import type { SelectionReveal } from "../model/selection-xray.js";
 import { canonicalPlanes } from "../preferences/canonical-planes.js";
 import { onThemeChange } from "../preferences/theme.js";
 import { viewportPalette } from "../preferences/viewport-theme.js";
@@ -58,6 +59,8 @@ export class World {
   }
   crossSection: PlaneFrame | null = null;
   selectionSection: () => PlaneFrame | null = () => null;
+  selectionXray: () => SelectionReveal | null = () => null;
+  selectionRevealed = (point: Point): boolean => this.frame.selectionRevealed(point);
   partialSection: PlaneFrame | null = null;
   xraySource: () => {
     sketches: readonly Sketch[];

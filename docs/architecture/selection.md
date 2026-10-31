@@ -37,6 +37,13 @@ founder feedback update these contracts before further tools depend on them.
   non-X-ray body face/edge wins over X-ray body geometry. Hidden bodies never
   participate. The overlap chooser retains explicit X-ray choices after normal
   choices. X-ray membership does not itself select or reveal a hidden body.
+- Covered solid face/edge selections get an automatic local reveal through their
+  blocking faces, including within one body. In its aperture, ordinary face/edge
+  picking skips the faded blockers and uses the depth-sorted revealed geometry.
+  The outer feather and exterior keep ordinary picking; the overlap chooser still
+  offers faded foreground geometry. Whole-body selection does not start a reveal.
+  This is presentation state only, following selection and temporary geometry
+  through edits without changing accepted topology, visibility membership or Undo.
 - Isolate selection is a per-window view overlay. Selected curves/points resolve to
   their sketch; selected faces/edges resolve to their body. All owning top-level
   entities are shown and other entities are hidden. Entities eye controls can

@@ -88,7 +88,13 @@ export class XrayComposite {
     return !this.enabled(world) || this.mask.contains(world, point, viewDisplay().xrayBleed);
   }
 
-  render(world: World, normal: () => void, cut: () => void, bodyLayer = false): void {
+  render(
+    world: World,
+    normal: () => void,
+    cut: () => void,
+    layer: "sketch" | "body" | "selection" = "sketch",
+  ): void {
+    const bodyLayer = layer !== "sketch";
     // In an active planar-only workspace both images are identical. Avoid the extra
     // scene presentation, framebuffer copy and mask work, especially on
     // Retina tablets. Keep enabled()/contains() independent: picking still uses
@@ -116,7 +122,7 @@ export class XrayComposite {
       renderer.setRenderTarget(target);
       cut();
       renderer.clippingPlanes = [];
-      const global = bodyLayer && viewDisplay().xrayGlobal;
+      const global = layer === "body" && viewDisplay().xrayGlobal;
       this.mix.uniforms.strength.value = bodyLayer ? 1 - viewDisplay().bodyXrayOpacity : 1;
       this.mix.uniforms.globalMask.value = global;
       if (!global) this.updateMask(world);

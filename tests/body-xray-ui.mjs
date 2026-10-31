@@ -86,11 +86,13 @@ await withUiRuntimes(async (page, name) => {
     (await openBodyMenu(page, `Body ${n}`))
       .getByRole("menuitemcheckbox", { name: "X-ray", exact: true })
       .click();
-  assert.equal((await click([0, 0, 0])).body, front.id);
+  // Keep layer probes clear of the selected face's edit handle at the origin.
+  const surfaceProbe = [-3, 4, 0];
+  assert.equal((await click(surfaceProbe)).body, front.id);
   await toggle(1);
-  assert.equal((await click([0, 0, 0])).body, middle.id);
+  assert.equal((await click(surfaceProbe)).body, middle.id);
   await toggle(2);
-  assert.equal((await click([0, 0, 0])).body, rear.id);
+  assert.equal((await click(surfaceProbe)).body, rear.id);
   assert.equal((await click([-8, 0, 0])).kind, "edge");
   assert.equal((await inspect(page)).modelingSelection[0].body, rear.id);
   assert.equal((await click([18, 0, 0])).body, front.id, "X-ray layer retains depth picking");
