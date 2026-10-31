@@ -93,8 +93,10 @@ h1 { font-size: 17px; font-weight: 600; margin: 0 0 18px; }
   8%, 58% { animation-timing-function: cubic-bezier(.65, 0, .25, 1); }
 }
 @keyframes update-stretch {
-  0%, 8%, 38%, 50%, 58%, 88%, 100% { transform: scale(1); animation-timing-function: ease-in-out; }
-  23%, 73% { transform: scale(1.5, .72); animation-timing-function: ease-in-out; }
+  0%, 38%, 50%, 88%, 100% { transform: translateX(0) scale(1); animation-timing-function: ease-in-out; }
+  8% { transform: translateX(-14%) scale(.72, 1.2); animation-timing-function: ease-in; }
+  58% { transform: translateX(14%) scale(.72, 1.2); animation-timing-function: ease-in; }
+  23%, 73% { transform: translateX(0) scale(1.5, .72); animation-timing-function: ease-in-out; }
 }
 @media (prefers-reduced-motion: reduce) {
   .update-travel { animation: none; transform: translateX(50%); }
