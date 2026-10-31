@@ -159,7 +159,10 @@ selection; an existing section resumes at its last placement.
 
 Clipping and solid section faces update during drag and body-edit previews. A
 shared GPU pass computes per-body parity of the clipped closed display shell on
-the plane, filling solid material while retaining real cavities. Each body has a
+the plane, filling solid material while retaining real cavities. A
+lightweight preview uses a presentation key when editable topology is unavailable;
+both batched preview face sets contribute to the same closed shell. Preview
+fills use the source body's pattern when available. Each body has a
 stable pseudo-random color pair and antialiased procedural hatch, crosshatch, dot
 or brick pattern. These fills are visual, not new selectable topology. Exact
 accepted-body section queries remain available for sketch capture, independently
