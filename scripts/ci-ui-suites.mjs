@@ -49,10 +49,11 @@ export const uiSuites = [
   },
   {
     args: ["section-fill-ui.mjs"],
+    // macOS hidden Electron: 13.75s, including the captured circular-cut drag.
     seconds: 20,
     browsers: ["electron"],
     reason:
-      "GPU section caps must fill solid material without filling real holes or changing accepted geometry; section-profile unit tests cannot catch scene stencil integration errors.",
+      "GPU section caps must fill solid material, retain the captured circular-cut fill through mesh-only extrusion drags, and preserve real holes and accepted geometry; model tests cannot observe scene stencil integration errors.",
     unit: "section-pattern.test.ts",
   },
   {

@@ -163,7 +163,8 @@ export class SectionCaps {
     world.scene.traverseVisible((object) => {
       if (!(object instanceof THREE.Mesh)) return;
       if (object.userData.sectionBody) hovered.add(object.userData.sectionBody);
-      const body: string | undefined = object.userData.bodyFace?.body;
+      const body: string | undefined =
+        object.userData.sectionCapBody ?? object.userData.bodyFace?.body;
       if (!body) return;
       for (let owner: THREE.Object3D | null = object; owner; owner = owner.parent)
         if (owner.userData.sectionStyleKey) seeds.set(body, owner.userData.sectionStyleKey);

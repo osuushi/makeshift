@@ -4,6 +4,7 @@ import { orient, project } from "./ui-blend-edit.mjs";
 import { makePlate, worldClick } from "./ui-face-offset.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
+import { sectionExtrusion } from "./ui-section-extrusion.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 // The shared GPU stencil pass must fill solid material without filling actual holes.
@@ -38,7 +39,10 @@ await withUiRuntimes(async (page, name) => {
   await orient(page, [1, -1, 1]);
   await page.screenshot({ path: `.cache/section-fill/${name}-hollow.png` });
   assert.deepEqual((await inspect(page)).document, original, "Section fill never edits solids");
-  console.log(`${name}: patterned section material and open through-hole passed`);
+  await sectionExtrusion(page, sample);
+  console.log(
+    `${name}: patterned section material, open through-hole and captured extrusion drag passed`,
+  );
 });
 
 async function sample(page, point) {
