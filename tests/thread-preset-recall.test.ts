@@ -57,7 +57,7 @@ test("captured thread edits compute active presets without storing clutter or re
     });
     assert.equal(data.decorators?.[0].settings.preset, "fdm-fine");
     assert.equal(data.decorators?.[0].settings.pitch, 1);
-    assert.equal(data.decorators?.[0].settings.clearance, 0.25);
+    assert.equal(data.decorators?.[0].settings.clearance, 0.3);
     assert.equal(data.decorators?.[0].presetId, undefined);
     assert.deepEqual(data.decoratorPresets, saved);
     await owner.call({ kind: "undo" });

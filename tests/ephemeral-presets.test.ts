@@ -65,7 +65,7 @@ test("computed presets follow face-tag names, body names, live membership and ar
     await edit({ action: "remove", faces });
     assert.equal(documentPresets(owner.view.data).length, 0);
     await edit({ action: "apply", definition: threadDefinition, faces: [faces[0]] });
-    assert.equal(owner.view.data.decorators?.[0].settings.clearance, 0.25);
+    assert.equal(owner.view.data.decorators?.[0].settings.clearance, 0.3);
   } finally {
     owner.close();
   }

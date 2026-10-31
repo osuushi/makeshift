@@ -223,7 +223,7 @@ The opposite tips retain the original sharp profile. Relative to the unmodified
 triangle, tip truncation removes material from both parts and increases their
 local gap; it does not replace the separate radial hole clearance. Neither
 preset changes the modeled diameter or depends on layer/nozzle
-dimensions. Both FDM presets begin with 0.25 mm hole-side radial relief. Choosing a preset
+dimensions. FDM fine begins with 0.3 mm hole-side radial relief and FDM coarse with 0.25 mm. Choosing a preset
 explicitly restores its default clearance and the 0.1 mm truncation.
 Saved explicit clearance values remain unchanged. The simple panel shows preset,
 handedness, Cut into and a Clearance field for this relief. Its hint asks users

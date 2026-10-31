@@ -41,7 +41,7 @@ export async function mixedThreadPresetRoute(page, name) {
   assert.equal(await first.getAttribute("aria-label"), "Preset");
   const before = state.document.decoratorPresets;
   const clearance = page.getByRole("spinbutton", { name: "Clearance", exact: true });
-  await clearance.fill("0.3");
+  await clearance.fill("0.35");
   await clearance.press("Enter");
   state = await inspect(page);
   assert.deepEqual(
