@@ -5,6 +5,7 @@ import { BodyXrayComposite } from "./body-xray-composite.js";
 import { FramePacer } from "./frame-pacer.js";
 import { GridOcclusion } from "./grid-occlusion.js";
 import type { Point } from "./planes.js";
+import { SelectionXrayComposite } from "./selection-xray-composite.js";
 import type { World } from "./world.js";
 import { SketchForeground } from "./world-foreground.js";
 import { PrimitiveOverlay } from "./world-primitive-overlay.js";
@@ -24,6 +25,7 @@ export class WorldFrame {
   private readonly primitives = new PrimitiveOverlay();
   private readonly xray = new XrayComposite();
   private readonly bodyXray = new BodyXrayComposite();
+  private readonly selectionXray = new SelectionXrayComposite();
   private readonly pacer: FramePacer;
   private width = -1;
   private height = -1;
@@ -43,6 +45,7 @@ export class WorldFrame {
     this.pacer.reset();
     this.xray.invalidate();
     this.bodyXray.invalidate();
+    this.selectionXray.invalidate();
     this.world.requestDraw();
   };
 
@@ -61,7 +64,9 @@ export class WorldFrame {
     if (window.makeshiftTestFrameMode === "on-demand" && !force) return;
     this.pacer.request(() => {
       this.gridOcclusion.update(this.world);
-      this.bodyXray.render(this.world, () => this.renderSections(clip));
+      this.selectionXray.render(this.world, () =>
+        this.bodyXray.render(this.world, () => this.renderSections(clip)),
+      );
       const { renderer, scene, camera } = this.world;
       this.primitives.render(renderer, scene, camera);
     }, force);
@@ -83,6 +88,10 @@ export class WorldFrame {
 
   sectionEnabled(point: Point): boolean {
     return this.xray.contains(this.world, point);
+  }
+
+  selectionRevealed(point: Point): boolean {
+    return this.selectionXray.contains(this.world, point);
   }
 
   private normal(): void {
@@ -118,5 +127,6 @@ export class WorldFrame {
     this.primitives.dispose();
     this.xray.dispose();
     this.bodyXray.dispose();
+    this.selectionXray.dispose();
   }
 }

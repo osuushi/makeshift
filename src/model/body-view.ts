@@ -4,6 +4,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { foregroundBodyLayer } from "../sketch/world-foreground.js";
 import { BodyDrawable } from "./body-drawable.js";
 import { SectionStyleSeeds } from "./section-pattern.js";
+import { SelectionXray } from "./selection-xray.js";
 import { visualPreviewView } from "./visual-preview-view.js";
 
 function bodyLights(): THREE.Light[] {
@@ -25,6 +26,8 @@ class BodyView {
   private sectionSeeds = new SectionStyleSeeds();
   private disposeVisual: () => void;
   constructor(private editor: SketchEditor) {
+    const selectionXray = new SelectionXray();
+    editor.world.selectionXray = () => selectionXray.read(editor);
     this.disposeVisual = visualPreviewView(editor);
     this.group.userData.bodyDrawableStats = this.stats;
     editor.world.scene.add(this.group, ...this.lights);
@@ -104,6 +107,7 @@ class BodyView {
     }
   };
   dispose(): void {
+    this.editor.world.selectionXray = () => null;
     this.disposeVisual();
     this.editor.world.changed.delete(this.update);
     for (const drawing of this.drawings.values()) drawing.dispose();

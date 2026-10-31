@@ -1,8 +1,19 @@
 import * as THREE from "three";
 import { bodyEllipseMaterial } from "./body-ellipse-material.js";
-import { type BodyMaskGeometry, bodyEllipsoid, projectBodyEllipsoid } from "./body-ellipsoid.js";
+import {
+  type BodyEllipse,
+  type BodyMaskGeometry,
+  bodyEllipsoid,
+  projectBodyEllipsoid,
+} from "./body-ellipsoid.js";
+import type { Point } from "./planes.js";
 import type { World } from "./world.js";
 import type { XrayAperture } from "./xray-composite.js";
+
+export interface BodyMaskSource {
+  object: THREE.Object3D;
+  geometry: BodyMaskGeometry;
+}
 
 /** Geometry fits are cached; each moving frame projects only three axes per body. */
 export class BodyXrayMask implements XrayAperture {
@@ -15,8 +26,9 @@ export class BodyXrayMask implements XrayAperture {
   private sources: { object: THREE.Object3D; geometry: BodyMaskGeometry }[] = [];
   private key = "";
   private contents: object = {};
+  private ellipses: BodyEllipse[] = [];
 
-  constructor() {
+  constructor(private readonly sourcesFor: (world: World) => BodyMaskSource[] = bodyMaskSources) {
     this.scene.background = new THREE.Color("black");
     this.geometry.setAttribute(
       "position",
@@ -29,11 +41,7 @@ export class BodyXrayMask implements XrayAperture {
   }
 
   read(world: World): object {
-    const sources: typeof this.sources = [];
-    world.scene.traverseVisible((object) => {
-      const geometry = object.userData.bodyMaskGeometry as BodyMaskGeometry | undefined;
-      if (geometry && !xrayOwner(object)) sources.push({ object, geometry });
-    });
+    const sources = this.sourcesFor(world);
     const key = `${sources.map(({ object }) => `${object.uuid}:${object.matrixWorld.elements}`).join("|")}:${world.camera.matrixWorld.elements}:${world.camera.projectionMatrix.elements}:${world.canvas.clientWidth}:${world.canvas.clientHeight}`;
     if (
       key === this.key &&
@@ -44,6 +52,7 @@ export class BodyXrayMask implements XrayAperture {
     this.key = key;
     this.sources = sources;
     this.contents = {};
+    this.ellipses = [];
     const centers: number[] = [],
       radii: number[] = [],
       directions: number[] = [];
@@ -60,6 +69,7 @@ export class BodyXrayMask implements XrayAperture {
         world.canvas.clientWidth,
         world.canvas.clientHeight,
       );
+      this.ellipses.push(ellipse);
       centers.push(ellipse.center.x, ellipse.center.y);
       radii.push(ellipse.radii.x, ellipse.radii.y);
       directions.push(ellipse.direction.x, ellipse.direction.y);
@@ -96,8 +106,32 @@ export class BodyXrayMask implements XrayAperture {
     world.renderer.render(this.scene, this.camera);
   }
 
-  contains(): boolean {
-    return true;
+  contains(world: World, point: Point, bleed: number): boolean {
+    this.read(world);
+    const rect = world.canvas.getBoundingClientRect();
+    const x = point.x - rect.left,
+      y = rect.height - (point.y - rect.top);
+    return this.ellipses.some((ellipse) => {
+      const dx = x - ellipse.center.x,
+        dy = y - ellipse.center.y;
+      const px = Math.abs(dx * ellipse.direction.x + dy * ellipse.direction.y);
+      const py = Math.abs(-dx * ellipse.direction.y + dy * ellipse.direction.x);
+      const rx = Math.max(ellipse.radii.x, 0.001),
+        ry = Math.max(ellipse.radii.y, 0.001);
+      if (Math.hypot(px / rx, py / ry) <= 1) return true;
+      let low = 0,
+        high = Math.max(rx, ry) * Math.hypot(px, py);
+      for (let i = 0; i < 14; i++) {
+        const t = (low + high) / 2;
+        if (Math.hypot((rx * px) / (rx * rx + t), (ry * py) / (ry * ry + t)) > 1) low = t;
+        else high = t;
+      }
+      const t = (low + high) / 2;
+      return (
+        Math.hypot(px - (rx * rx * px) / (rx * rx + t), py - (ry * ry * py) / (ry * ry + t)) <=
+        bleed
+      );
+    });
   }
 
   dispose(): void {
@@ -106,6 +140,15 @@ export class BodyXrayMask implements XrayAperture {
     this.geometry.dispose();
     this.material.dispose();
   }
+}
+
+function bodyMaskSources(world: World): BodyMaskSource[] {
+  const sources: BodyMaskSource[] = [];
+  world.scene.traverseVisible((object) => {
+    const geometry = object.userData.bodyMaskGeometry as BodyMaskGeometry | undefined;
+    if (geometry && !xrayOwner(object)) sources.push({ object, geometry });
+  });
+  return sources;
 }
 
 function xrayOwner(object: THREE.Object3D): boolean {

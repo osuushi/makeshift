@@ -64,6 +64,7 @@ export function pickBodyEdge(
 ): EdgeHit | null {
   let best: EdgeHit | null = null;
   for (const { source, screen: nearest, hit } of edgeCandidates(editor, screen, probe.bodies)) {
+    if (!probe.edgeRevealed(hit.body, hit.edge, nearest)) continue;
     const layer = probe.layer(hit.body);
     if (
       best &&

@@ -26,7 +26,7 @@ export function overlapCandidates(editor: SketchEditor, screen: Point): OverlapC
   const ray = probe.ray;
   const bodies = probe.bodies;
   const result: OverlapCandidate[] = [];
-  for (const hit of probe.faces())
+  for (const hit of probe.faces(screen, true))
     result.push({
       target: { kind: "face", body: hit.body, face: hit.face },
       depth: hit.depth,

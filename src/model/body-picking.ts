@@ -1,3 +1,4 @@
+import { previewFaceKey } from "../decorators/preview-compositor.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Point } from "../sketch/planes.js";
 import { faceRayHits, screenRay } from "./body-ray-hits.js";
@@ -23,8 +24,22 @@ export class BodyPickProbe {
     return Number(this.editor.visibility.xray.has(body));
   }
 
-  faces(screen = this.screen): ReturnType<typeof faceRayHits> {
-    const key = `${screen.x},${screen.y}`;
+  faceRevealed(body: string, face: string, screen = this.screen): boolean {
+    return (
+      !this.editor.world.selectionRevealed?.(screen) ||
+      !this.editor.world.selectionXray?.()?.faces.has(previewFaceKey(body, face))
+    );
+  }
+
+  edgeRevealed(body: string, edge: string, screen = this.screen): boolean {
+    return (
+      !this.editor.world.selectionRevealed?.(screen) ||
+      !this.editor.world.selectionXray?.()?.edges.has(previewFaceKey(body, edge))
+    );
+  }
+
+  faces(screen = this.screen, includeFaded = false): ReturnType<typeof faceRayHits> {
+    const key = `${screen.x},${screen.y},${includeFaded}`;
     let hits = this.hits.get(key);
     if (!hits) {
       hits = faceRayHits(
@@ -32,7 +47,7 @@ export class BodyPickProbe {
         screen === this.screen ? this.ray : screenRay(this.editor, screen),
         this.editor.world.camera.position,
         this.editor.world.clippingAt(screen),
-      );
+      ).filter((hit) => includeFaded || this.faceRevealed(hit.body, hit.face, screen));
       hits.sort((a, b) => this.layer(a.body) - this.layer(b.body) || a.depth - b.depth);
       this.hits.set(key, hits);
     }

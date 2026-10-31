@@ -74,6 +74,7 @@ export class BodyDrawable {
     private counts: Counts,
   ) {
     const source = body;
+    this.group.userData.bodyMaskId = source.id;
     this.group.userData.bodyMaskGeometry = source.faces.map((face) => face.vertices);
     for (const face of source.faces) {
       const mesh = new THREE.Mesh(faceGeometry(face.vertices, face.normals), faceMaterial());
@@ -92,6 +93,7 @@ export class BodyDrawable {
         stableClipping(new THREE.LineBasicMaterial({ color: "#344657" })),
       );
       this.edges.push(line);
+      line.userData.bodyEdge = { body: source.id, edge: edge.id };
       this.group.add(line);
     }
     this.group.traverse((object) => object.layers.enable(foregroundBodyLayer));
@@ -100,6 +102,7 @@ export class BodyDrawable {
     return this.body;
   }
   reuse(body: BodyGeometry): boolean {
+    this.group.userData.bodyMaskId = body.id;
     if (!sameBodyDrawing(this.body, body)) {
       const edges = featureEdges(body);
       if (body.faces.length !== this.faces.length || edges.length !== this.edges.length)
@@ -118,6 +121,7 @@ export class BodyDrawable {
         this.counts.disposed++;
       });
       this.edges.forEach((line, i) => {
+        line.userData.bodyEdge = { body: body.id, edge: edges[i].id };
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute("position", new THREE.Float32BufferAttribute(edges[i].points, 3));
         line.geometry.dispose();

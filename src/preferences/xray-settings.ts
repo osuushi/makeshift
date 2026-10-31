@@ -47,7 +47,7 @@ export function xraySettings(): HTMLElement {
   );
   const hint = document.createElement("p");
   hint.textContent =
-    "Body opacity controls X-ray bodies and their decorators independently of sketch X-ray. Bleed expands around contents; Radius softens the edge. Cross section always cuts globally.";
+    "Body opacity controls X-ray bodies and material covering selected solid features. Bleed expands around contents; Radius softens the edge. Cross section always cuts globally.";
   section.append(hint);
   const update = () => {
     const value = viewDisplay();

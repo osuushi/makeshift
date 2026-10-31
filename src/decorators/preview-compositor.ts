@@ -82,8 +82,12 @@ if (gl_FragCoord.z > texture2D(decoratorOcclusion, gl_FragCoord.xy / decoratorRe
     occludeSections?: () => void,
   ): void {
     const hidden: ReadonlySet<string> | undefined = scene.userData.xrayHiddenBodies;
+    const hiddenFaces: ReadonlySet<string> | undefined = scene.userData.xrayHiddenFaces;
     const shown = surfaces.filter(({ mesh }) => mesh.visible);
-    const visible = shown.filter(({ mesh }) => !hidden?.has(mesh.userData.body));
+    const visible = shown.filter(
+      ({ mesh, faces }) =>
+        !hidden?.has(mesh.userData.body) && ![...faces].some((face) => hiddenFaces?.has(face)),
+    );
     if (!visible.length) return;
     renderer.getDrawingBufferSize(this.size);
     this.occlusion.setSize(this.size.x, this.size.y);

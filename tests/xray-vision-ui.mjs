@@ -6,6 +6,7 @@ import { project } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { chooseWidget } from "./ui-modal-plane-widgets.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
+import { internalSelectionXrayRoute } from "./ui-selection-xray.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 import { emptyXrayRoute } from "./ui-xray-empty.mjs";
 import { assertCachedXrayWork } from "./ui-xray-work.mjs";
@@ -80,6 +81,7 @@ await withUiRuntimes(async (page, name) => {
   console.log(
     `${name}: X-ray content aperture, bleed, blur, resize/pinch, exterior picking and explicit global cut passed`,
   );
+  await internalSelectionXrayRoute(page, name);
 });
 
 async function resizeAndPinch(page, normal, name) {

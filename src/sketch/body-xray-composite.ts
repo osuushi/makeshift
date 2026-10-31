@@ -36,7 +36,7 @@ export class BodyXrayComposite {
       }
     };
     if (bodyXrayOpacity === 0 && xrayGlobal) revealed();
-    else this.composite.render(world, render, revealed, true);
+    else this.composite.render(world, render, revealed, "body");
   }
 
   invalidate(): void {

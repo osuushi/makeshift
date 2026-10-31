@@ -141,6 +141,21 @@ The solid aperture uses cut picking and pseudoface body ownership; the softened
 fringe uses normal depth picking. Zoom and resize rebuild projected contents.
 The explicit Cross section tool always remains global, independent of these settings.
 
+Selected solid faces and edges automatically receive a local X-ray reveal when
+other faces cover them, including occluders in the same body. Projected triangle
+overlap identifies blocking faces; only those faces and edges wholly bounded by
+them are removed from the revealed presentation. Selected geometry and remaining
+nearby surfaces retain ordinary shading and depth. Each selected face/edge supplies
+its own ellipsoid aperture, expanded by Bleed and softened by Radius. Whole-body
+selection alone does not trigger this view. Body X-ray opacity controls the faded
+foreground; 100% disables the reveal. This automatic focus remains local even with
+Global enabled. Explicit Cross section and planar sketch X-ray take precedence.
+Orbit, selection, visibility and geometry changes refresh the reveal; ordinary
+hover reuses it. The native mesh-first preview follows source correspondence using
+render-local slots, without inventing editable topology before metadata arrives.
+Clearing selection restores the ordinary view. Fading operates on complete faces
+inside the aperture, so portions of one continuous face fade together.
+
 A shared
 section-face pass closes exposed solid material on the plane, preserving real
 cavities. Its two-color procedural pattern is seeded by body identity and anchored
