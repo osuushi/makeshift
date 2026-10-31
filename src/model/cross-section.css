@@ -23,3 +23,8 @@
   font-size: 12px;
   margin-right: 5px;
 }
+.cross-section-sketch-notice {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  font-size: 12px;
+}

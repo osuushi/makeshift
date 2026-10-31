@@ -46,6 +46,9 @@ export class VisualBodyDrawable {
     this.highlight.renderOrder = 20;
     for (const mesh of [this.mesh, this.onSection]) {
       installVisualSelectionXray(mesh.material);
+      // Presentation identity only: caps need the complete closed shell, but
+      // temporary meshes must not advertise editable body/face topology.
+      mesh.userData.sectionCapBody = this.group.uuid;
       mesh.material.vertexColors = true;
       mesh.material.color.set("white");
     }
@@ -205,6 +208,7 @@ export function visualPreviewView(editor: SketchEditor): () => void {
         body,
         editor.store.data.bodies ?? [],
       ).id;
+      drawing.group.userData.sectionStyleKey = body.sourceBodies?.[0] ?? drawing.group.uuid;
       drawing.update(body, editor.world.partialSection ?? editor.world.crossSection, {
         ...appearance,
         selected,

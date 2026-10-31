@@ -178,7 +178,7 @@ export class TrimControls {
     this.pointer = null;
     for (const input of this.brush.root.querySelectorAll("input"))
       input.disabled = this.editor.blocked;
-    this.editor.world.canvas.style.cursor = "crosshair";
+    if (this.editor.tool === "trim") this.editor.world.canvas.style.cursor = "crosshair";
     this.render();
   };
   private blur = (): void => {

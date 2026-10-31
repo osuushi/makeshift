@@ -30,6 +30,9 @@ export function fixtureControls(editor: SketchEditor, toolbar: HTMLElement): () 
       modelingSelection: editor.modeling.targets,
       sketchSelection: editor.selected.targets,
       activePlane: editor.world.activeFrame,
+      crossSection: editor.world.crossSection,
+      partialSection: editor.world.partialSection,
+      bodiesVisible: editor.bodiesVisible,
       tool: editor.tool,
       hiddenEntities: editor.visibility.hiddenIds(editor.store.data),
       camera: {

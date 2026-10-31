@@ -159,7 +159,10 @@ selection; an existing section resumes at its last placement.
 
 Clipping and solid section faces update during drag and body-edit previews. A
 shared GPU pass computes per-body parity of the clipped closed display shell on
-the plane, filling solid material while retaining real cavities. Each body has a
+the plane, filling solid material while retaining real cavities. A
+lightweight preview uses a presentation key when editable topology is unavailable;
+both batched preview face sets contribute to the same closed shell. Preview
+fills use the source body's pattern when available. Each body has a
 stable pseudo-random color pair and antialiased procedural hatch, crosshatch, dot
 or brick pattern. These fills are visual, not new selectable topology. Exact
 accepted-body section queries remain available for sketch capture, independently
@@ -168,8 +171,13 @@ side do not participate in point picking or snapping. Geometry operations still
 operate on whole accepted entities, not visually trimmed fragments.
 
 An explicit cross section retains priority in Sketch mode, including its fixed
-clipping direction and hidden geometry. Automatic camera-facing sketch cutaways
-resume when the explicit section is turned off. New/Open resets the view.
+clipping direction and hidden geometry. Its Manual cross section controls remain
+visible: Flip side and Turn off work in Sketch, while Adjust requires Modeling.
+A notice distinguishes a cut on the sketch plane from a different manual cut.
+Only a coplanar visible cut supports sketch-section capture; a different manual
+cut never captures an invisible slice at the sketch plane. Automatic camera-facing
+sketch cutaways and capture resume when the explicit section is turned off.
+New/Open resets the view.
 The section is not saved in the document or included in exported geometry.
 
 Coplanar rendering gives existing body faces priority over generated section fills.
