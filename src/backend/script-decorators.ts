@@ -2,6 +2,7 @@ import type { DecoratorCatalog, DecoratorScriptOperation } from "../agent-script
 import { knurlDefinition } from "../decorators/builtins.js";
 import { editDefinitions } from "../decorators/definition-edits.js";
 import { editDecorators } from "../decorators/edits.js";
+import { documentPresets } from "../decorators/ephemeral-presets.js";
 import { gearManifest } from "../decorators/gear-settings.js";
 import { knurlFields } from "../decorators/knurl-settings.js";
 import { threadDefinition, threadFields } from "../decorators/thread-settings.js";
@@ -14,7 +15,7 @@ export function decoratorCatalog(
 ): DecoratorCatalog {
   return {
     instances: document.decorators ?? [],
-    presets: document.decoratorPresets ?? [],
+    presets: documentPresets(document),
     definitions: (document.decoratorDefinitions ?? []).map((d) => ({
       ...d,
       enabled: session.sources.some(

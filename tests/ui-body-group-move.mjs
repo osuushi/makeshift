@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { close, drag, inspect } from "./ui-helpers.mjs";
+import { close, drag, inspect, modalCompleted } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function groupDragAndSketch(page) {
@@ -91,6 +91,7 @@ async function ringDrag(page, bodies) {
   await page.mouse.up();
   assert.deepEqual((await inspect(page)).document.bodies, bodies);
   await page.keyboard.press("Enter");
+  await modalCompleted(page);
   const rotated = (await inspect(page)).document.bodies;
   const samples = await page.evaluate(() => {
     window.removeEventListener("pointerdown", window.bodyPointerDown, { capture: true });

@@ -33,6 +33,16 @@ around each glyph. Ordinary value inputs and accept/cancel controls can stay nea
 - Preserve the white/black base treatment across axes. Subtle blue feedback identifies
   hover or snapping; invalid geometry may use red. Color supplements shape and state.
 
+**Move refinement, 2026-10-30:** translation controls use shaded cones aligned to
+their actual movement axes, with short capsule stems behind their bases. They have
+no minimum-angle display tilt, camera-facing arrowhead or plane patch. Use flat
+white fill and a light-gray base cap when facing the camera, with the same dark
+silhouette as the other widgets; no gradient across the cone. Rotation retains its corrected
+curved arrow and true-plane grid cue. Hit targets and gesture semantics are unchanged.
+Hide a translation control, including its hit target, when neither its tip nor its
+stem extends beyond the projected base disk. This is derived from the cone dimensions
+(approximately 21° from end-on), on either camera side, and also applies to planar Move.
+
 ## Orientation, scale and visibility
 
 **Founder refinement, 2026-10-25:** keep the geometry-defined frame as the starting
@@ -42,7 +52,7 @@ toward or away from the camera. Preserve projected direction where defined; exac
 end-on uses camera up. Correct only the glyph: anchors, clearance, operation axes,
 drag mapping, accepted geometry and Undo retain their existing semantics.
 
-Arrow portions face the camera independently of the tool contour, including Move,
+Arrow portions face the camera independently of the tool contour, excluding Move cones but including
 height, modeling-tool arrows and curved rotation arrowheads. Their screen-facing
 heads retain their recognizable proportions. Existing Move assembly selection and
 rotation-handle hiding rules still determine which controls are available.
@@ -73,7 +83,9 @@ screen projection. The shared Move assembly separates actual hit rectangles with
 6 CSS pixels of clearance, extending outward along each marker’s projected ray
 from the anchor. Clearance leaves the glyph display correction, geometric edit axes and rotation
 planes unchanged. The anchor and scale-box handles are obstacles. Stable handle priority
-makes the result deterministic, including coincident projections. Collision corrections
+makes the result deterministic, including coincident projections. Do not sort handles
+by projected axis length: that introduces swaps as the camera crosses equal lengths.
+Collision corrections
 settle with a 100 ms ease-out transition; ordinary camera/model tracking is immediate.
 A press freezes the displayed correction, including the hit region, through pointer
 leave until the gesture ends. Idle hover keeps that correction while the current
@@ -108,7 +120,7 @@ Keep the hierarchy and visual weight consistent when adapting them.
 | Fill / outline | `#fff` / `#151515` |
 | Visible outline thickness | About 1.5 CSS px |
 | Glyph viewport | 48 × 48 CSS px |
-| Translation shaft | 4 px diameter; 28 px centerline length |
+| Translation cone | 26 px axial length; 10 px base radius; 12 px capsule stem before projection |
 | Translation marker position | 96 px along the positive axis before projection |
 | Rotation marker position | 72 px along each of its two plane axes; a fixed 45° diagonal |
 | Rotation shape scale | 0.65 of its source profile |

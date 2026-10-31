@@ -1,11 +1,13 @@
 import type { ExportMesh } from "../model/export-mesh.js";
 import type { PackedNormalProjection } from "./normal-projection.js";
+import type { PackedThreadTexture } from "./thread-texture.js";
 
 export interface PackedPreviewMesh {
   positions: Float32Array;
   indices: Uint32Array;
   occlusion?: { positions: Float32Array; indices: Uint32Array };
   projections?: PackedNormalProjection[];
+  textures?: PackedThreadTexture[];
 }
 
 /** Transfer compact buffers instead of cloning nested triangle arrays. */
@@ -21,6 +23,7 @@ export function previewMeshTransfers(mesh: PackedPreviewMesh): ArrayBufferLike[]
   return [
     mesh.positions.buffer,
     mesh.indices.buffer,
+    ...(mesh.textures ?? []).map((texture) => texture.positions.buffer),
     ...(mesh.projections ?? []).flatMap((projection) => [
       projection.positions.buffer,
       projection.uv.buffer,

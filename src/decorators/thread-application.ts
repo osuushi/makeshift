@@ -73,7 +73,15 @@ export class ThreadApplication {
     if (current?.lease.phase !== "editing") return;
     const settings = { ...current.settings };
     if (patch.preset && patch.preset !== "custom") {
-      for (const key of ["pitch", "profile", "clearance", "tipTruncation"]) delete settings[key];
+      for (const key of [
+        "pitch",
+        "profile",
+        "clearance",
+        "tipTruncation",
+        "startTaper",
+        "endTaper",
+      ])
+        delete settings[key];
     }
     current.settings = { ...settings, ...patch };
     this.compute();

@@ -11,8 +11,8 @@ import { gearDefinition } from "./gear-settings.js";
 import type { JavaScriptDecorators } from "./javascript-hooks.js";
 import { knurlOperand } from "./knurl-runtime.js";
 import type { MeshOperations, MeshSolid } from "./mesh-operations.js";
-import { threadDomain } from "./thread-domain.js";
 import { threadMeshes } from "./thread-mesh.js";
+import { threadOperands } from "./thread-operands.js";
 import type { ThreadPreviewResolution } from "./thread-sampling.js";
 import { threadDefinition, threadSettings } from "./thread-settings.js";
 import type { DecoratorInstance } from "./types.js";
@@ -39,19 +39,6 @@ export function prepareThreadGeometry(
   );
   if (!geometry) return null;
   return { body, faces, geometry };
-}
-
-function threadOperands<S extends MeshSolid<S>>(
-  scope: MeshOperations<S>,
-  document: SketchDocument,
-  instance: DecoratorInstance,
-  quality: "preview" | "export",
-) {
-  const prepared = prepareThreadGeometry(document, instance, quality);
-  if (!prepared) return null;
-  const { body, faces, geometry } = prepared;
-  const mask = geometry.masks ? threadDomain(scope, body, faces, geometry, true) : null;
-  return { mask, geometry };
 }
 
 export function decoratedBody<S extends MeshSolid<S>>(
@@ -88,29 +75,11 @@ export function decoratedBody<S extends MeshSolid<S>>(
       }
       continue;
     }
-    const operands = threadOperands(scope, document, instance, "export");
-    if (!operands) continue;
-    const { mask, geometry } = operands;
-    const direct = geometry.direct;
-    if (direct) {
-      let tool = scope.from(direct.mesh);
-      if (mask) tool = scope.keep(tool.intersect(mask));
-      solid = scope.keep(direct.operation === "add" ? solid.add(tool) : solid.subtract(tool));
-      continue;
-    }
-    const generated = scope.from(geometry.fill);
-    if (geometry.hasRemove) {
-      let remove = scope.keep(scope.from(geometry.referenceRemove).subtract(generated));
-      remove = scope.keep(remove.intersect(scope.from(geometry.removeBand)));
-      if (mask) remove = scope.keep(remove.intersect(mask));
-      solid = scope.keep(solid.subtract(remove));
-    }
-    if (geometry.hasAdd) {
-      let add = scope.keep(generated.subtract(scope.from(geometry.referenceAdd)));
-      add = scope.keep(add.intersect(scope.from(geometry.addBand)));
-      if (mask) add = scope.keep(add.intersect(mask));
-      solid = scope.keep(solid.add(add));
-    }
+    const prepared = prepareThreadGeometry(document, instance, "export");
+    if (!prepared) continue;
+    const { remove, add } = threadOperands(scope, body, prepared.faces, prepared.geometry);
+    if (remove) solid = scope.keep(solid.subtract(remove));
+    if (add) solid = scope.keep(solid.add(add));
   }
   return solid;
 }

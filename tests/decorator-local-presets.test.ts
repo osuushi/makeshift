@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
+import { documentPresets } from "../src/decorators/ephemeral-presets.js";
 import { gearDefinition } from "../src/decorators/gear-settings.js";
 import { validatePresets } from "../src/decorators/presets.js";
 import { threadDefinition } from "../src/decorators/thread-settings.js";
@@ -16,18 +17,7 @@ test("local presets preserve mating settings, last choice, rename, Undo and arch
   try {
     const faces = [];
     for (const radius of [8, 10]) {
-      const body = await lift(owner, {
-        ...emptySketch(planes.XY),
-        curves: [
-          {
-            id: "circle",
-            kind: "circle",
-            radius,
-            center: { x: 0, y: 0 },
-            construction: false,
-          },
-        ],
-      });
+      const body = await roundBody(owner, [radius]);
       const face = body.faces.find((f) => f.cylinder);
       assert.ok(face);
       faces.push({ body: body.id, face: face.id });
@@ -44,6 +34,13 @@ test("local presets preserve mating settings, last choice, rename, Undo and arch
     assert.equal(data.decorators?.[0].settings.clearance, 0.25);
     assert.equal(data.decoratorPresets?.length, 0);
     data = await edit({ action: "settings", ids: [id], patch: { pitch: 2.3, clearance: 0.32 } });
+    assert.equal(
+      data.decoratorPresets?.length,
+      0,
+      "Ordinary edits do not store permanent snapshots",
+    );
+    assert.equal(documentPresets(data)[0].name, "FDM coarse [Body 1]");
+    data = await edit({ action: "preset", operation: "duplicate", ids: [id], name: "Initial fit" });
     const preset = data.decoratorPresets?.[0];
     assert.ok(preset);
     assert.equal(preset.settings.pitch, 2.3);
@@ -63,7 +60,9 @@ test("local presets preserve mating settings, last choice, rename, Undo and arch
     data = await edit({ action: "settings", ids: [id], patch: { clearance: 0.4 } });
     assert.equal(data.decorators?.[1].settings.clearance, 0.32);
     assert.equal(data.decoratorPresets?.[0].settings.clearance, 0.32);
-    assert.equal(data.decoratorPresets?.length, 2);
+    assert.equal(data.decoratorPresets?.length, 1);
+    assert.equal(data.decorators?.[0].presetId, undefined);
+    assert.equal(documentPresets(data).at(-1)?.name, "Mating pair [Body 1]");
     await owner.call({ kind: "undo" });
     assert.equal(owner.view.data.decoratorPresets?.length, 1);
     data = await edit({ action: "preset", operation: "duplicate", ids: [id] });
@@ -72,14 +71,20 @@ test("local presets preserve mating settings, last choice, rename, Undo and arch
     assert.notEqual(duplicate.id, preset.id);
     assert.deepEqual(duplicate.settings, preset.settings);
     data = await edit({ action: "settings", ids: [id], patch: { hand: "left" } });
-    assert.equal(data.decoratorPresets?.length, 2, "unshared local copy updates in place");
+    assert.equal(
+      data.decoratorPresets?.length,
+      2,
+      "Editing a named snapshot creates a computed preset, leaving stored snapshots unchanged",
+    );
+    assert.deepEqual(data.decoratorPresets?.[1].settings, duplicate.settings);
+    assert.equal(data.decorators?.[0].presetId, undefined);
     data = await edit({
       action: "preset",
       operation: "select",
       ids: [mate.id],
       presetId: duplicate.id,
     });
-    assert.deepEqual(data.decorators?.[1].settings, data.decorators?.[0].settings);
+    assert.deepEqual(data.decorators?.[1].settings, duplicate.settings);
     const before = documentArchive(data);
     const failure = await owner.call({
       kind: "decorator",
@@ -146,13 +151,21 @@ for (const automatic of [true, false]) {
         ? { minimumTooth: 0.6, rootClearance: 0.2 }
         : { pressure: 25, teeth: 32 };
       data = await edit({ action: "settings", ids: [id], patch });
-      const preset = data.decoratorPresets?.[0];
+      const preset = documentPresets(data)[0];
       assert.ok(preset);
       for (const [key, value] of Object.entries(patch)) assert.equal(preset.settings[key], value);
+      data = await edit({
+        action: "preset",
+        operation: "rename",
+        ids: [id],
+        name: "Reusable gear",
+      });
+      assert.equal(data.decoratorPresets?.[0].name, "Reusable gear");
+      const savedId = data.decoratorPresets?.[0].id;
       await edit({ action: "remove", faces });
       data = await edit({ action: "apply", definition: gearDefinition, faces });
       assert.deepEqual(data.decorators?.[0].settings, preset.settings);
-      assert.equal(data.decorators?.[0].presetId, preset.id);
+      assert.equal(data.decorators?.[0].presetId, savedId);
       await edit({ action: "remove", faces });
       data = await edit({ action: "apply", definition: threadDefinition, faces });
       assert.equal(data.decorators?.[0].settings.preset, "fdm-fine");

@@ -1,5 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "../tools/catalog.js";
+import { documentPresets } from "./ephemeral-presets.js";
 import { presetNameDialog } from "./preset-name-dialog.js";
 import { presetSelector } from "./preset-selector.js";
 import { localPreset, presetCopyName, presetName } from "./presets.js";
@@ -31,7 +32,7 @@ function namePreset(editor: SketchEditor, edit: Extract<DecoratorEdit, { action:
   const first = source.decorators?.find((d) => edit.ids.includes(d.id));
   if (!first) return false;
   const local = localPreset(source, first);
-  const presets = source.decoratorPresets ?? [];
+  const presets = documentPresets(source);
   const rename = edit.operation === "rename";
   if (rename && !local) return false;
   const name =

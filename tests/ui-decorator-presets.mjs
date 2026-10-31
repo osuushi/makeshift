@@ -23,21 +23,25 @@ export async function decoratorPresetRoute(page, name) {
     await page.getByRole("region", { name: "Decorators", exact: true }).innerText(),
     /Reference Ø/,
   );
+  assert.equal(await page.getByRole("spinbutton", { name: "Start inset", exact: true }).count(), 0);
+  assert.equal(await page.getByRole("spinbutton", { name: "End inset", exact: true }).count(), 0);
   assert.equal(await nozzle.count(), 0);
   assert.equal(await layer.count(), 0);
   const advanced = page.locator("details.thread-advanced");
   assert.equal(await preset.inputValue(), "fdm-fine");
-  assert.equal(await clearance.inputValue(), "0.25");
+  assert.equal(await clearance.inputValue(), "0.3");
   assert.equal(await pitch.isVisible(), false);
   assert.equal(await advanced.evaluate((element) => element.open), false);
   assert.match(
     await page.getByRole("region", { name: "Decorators", exact: true }).innerText(),
-    /FDM fine and coarse start at 0\.25 mm.*adjust for your printer and orientation/,
+    /FDM fine starts at 0\.3 mm and FDM coarse at 0\.25 mm.*adjust for your printer and orientation/,
   );
   await page.screenshot({ path: `.cache/sketch-review/${name}-fdm-fine-controls.png` });
   await preset.selectOption("fdm-coarse");
   let settings = (await inspect(page)).document.decorators[0].settings;
   assert.equal(settings.pitch, 1.5);
+  assert.equal(settings.startTaper, 1.5);
+  assert.equal(settings.endTaper, 1.5);
   assert.equal(settings.profile, "triangle");
   assert.equal(settings.clearance, 0.25);
   assert.equal(settings.tipTruncation, 0.1);
@@ -47,7 +51,7 @@ export async function decoratorPresetRoute(page, name) {
   await preset.selectOption("fdm-fine");
   settings = (await inspect(page)).document.decorators[0].settings;
   assert.equal(settings.pitch, 1);
-  assert.equal(settings.clearance, 0.25);
+  assert.equal(settings.clearance, 0.3);
   assert.equal(settings.tipTruncation, 0.1);
   await advanced.locator("summary").click();
   const tip = page.getByRole("spinbutton", { name: "Tip truncation", exact: true });
@@ -95,12 +99,17 @@ async function documentPresetRoute(page, preset, pitch) {
   await pitch.fill("2.2");
   await pitch.press("Enter");
   saved = (await inspect(page)).document;
-  assert.equal(saved.decoratorPresets.find((entry) => entry.id === local.id).settings.pitch, 2.2);
+  assert.notEqual(
+    saved.decoratorPresets.find((entry) => entry.id === local.id).settings.pitch,
+    2.2,
+  );
+  assert.equal(saved.decorators[0].presetId, undefined);
+  assert.equal(await preset.locator("option:checked").textContent(), "Compatible pair [Body 1]");
   await preset.selectOption("::save");
   const copyDialog = page.getByRole("dialog", { name: "Save preset", exact: true });
   assert.equal(
     await copyDialog.getByLabel("Name", { exact: true }).inputValue(),
-    "Compatible pair copy",
+    "Compatible pair [Body 1] copy",
   );
   await copyDialog.getByRole("button", { name: "Save", exact: true }).click();
   const selector = page.getByRole("combobox", { name: "Preset", exact: true });
@@ -112,8 +121,12 @@ async function documentPresetRoute(page, preset, pitch) {
   await inspect(page);
   await chooseTool(page, "threads", "threads");
   saved = (await inspect(page)).document;
-  assert.equal(saved.decorators[0].settings.pitch, 2.2);
-  assert.equal(await selector.inputValue(), local.id);
+  assert.deepEqual(saved.decorators[0].settings, local.settings);
+  assert.equal(
+    await selector.inputValue(),
+    local.id,
+    "A named preset survives removal and is recalled",
+  );
 }
 
 async function renamePresetRoute(page, preset) {

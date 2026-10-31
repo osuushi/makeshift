@@ -16,6 +16,8 @@ export interface DecoratorInstance {
   /** Omitted means follow the application's default decorator display. */
   readonly display?: DecoratorDisplayMode;
   readonly presetId?: string;
+  /** Original preset label for a computed preset shared by matching current settings. */
+  readonly presetOrigin?: string;
   /** Persistent local coordinates keep a helix continuous across face changes. */
   readonly frame: PlaneFrame;
   /** Original axial reference retained when coverage is split or partially removed. */

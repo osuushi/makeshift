@@ -8,6 +8,7 @@ import {
 } from "../src/decorators/mesh-runtime.js";
 import { threadDefinition } from "../src/decorators/thread-settings.js";
 import { placedDocument } from "../src/model/body-placement.js";
+import type { ExportMesh } from "../src/model/export-mesh.js";
 import { roundBody } from "./decorator-domain-fixtures.js";
 
 test("rigid operation previews move, rotate and copy their thread geometry", async () => {
@@ -55,15 +56,7 @@ test("rigid operation previews move, rotate and copy their thread geometry", asy
     const movedInstance = moved.decorators?.[0];
     assert.ok(movedInstance);
     const movedMesh = decoratorPreview(runtime, moved, movedInstance);
-    assert.equal(movedMesh.vertices.length, originalMesh.vertices.length);
-    for (const index of [0, Math.floor(movedMesh.vertices.length / 2)]) {
-      assert.ok(
-        Math.abs(movedMesh.vertices[index][0] - originalMesh.vertices[index][0] - 12) < 1e-4,
-      );
-      assert.ok(
-        Math.abs(movedMesh.vertices[index][1] - originalMesh.vertices[index][1] - 3) < 1e-4,
-      );
-    }
+    assertTranslatedSurface(movedMesh, originalMesh, edit.translation);
     const rotated = placedDocument(original, {
       ...edit,
       axis: [1, 0, 0],
@@ -125,4 +118,30 @@ function assertAdaptiveResolution(
   assert.ok(adaptive.state.samples < higher.state.samples);
   assert.ok(adaptive.mesh.triangles.length < higher.mesh.triangles.length);
   assert.equal(decoratorPreview(runtime, document, instance).triangles.length, originalTriangles);
+}
+
+/** Boolean output may reorder vertices; compare geometry rather than renderer indexes. */
+function assertTranslatedSurface(actual: ExportMesh, expected: ExportMesh, translation: number[]) {
+  const tolerance = 1e-4;
+  const cells = new Map<string, number[][]>();
+  for (const point of expected.vertices) {
+    const key = point.map((value) => Math.round(value / tolerance)).join(",");
+    const points = cells.get(key) ?? [];
+    points.push(point);
+    cells.set(key, points);
+  }
+  assert.equal(actual.vertices.length, expected.vertices.length);
+  for (const point of actual.vertices) {
+    const local = point.map((value, axis) => value - translation[axis]);
+    const cell = local.map((value) => Math.round(value / tolerance));
+    let matched = false;
+    for (let x = -1; x <= 1 && !matched; x++)
+      for (let y = -1; y <= 1 && !matched; y++)
+        for (let z = -1; z <= 1 && !matched; z++)
+          matched = (cells.get(`${cell[0] + x},${cell[1] + y},${cell[2] + z}`) ?? []).some(
+            (candidate) =>
+              Math.hypot(...candidate.map((value, axis) => value - local[axis])) < tolerance,
+          );
+    assert.ok(matched, `Translated preview vertex has no source counterpart: ${point}`);
+  }
 }
