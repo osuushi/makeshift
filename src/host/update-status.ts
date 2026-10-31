@@ -83,24 +83,24 @@ const page = `<!doctype html>
 body { margin: 28px; }
 h1 { font-size: 17px; font-weight: 600; margin: 0 0 18px; }
 .update-track { height: 8px; overflow: hidden; border-radius: 4px; background: light-dark(#e0e3e7, #383c42); }
-.update-travel { width: 100%; height: 100%; animation: update-travel 1s infinite; }
-.update-bar { position: relative; top: 2px; margin-left: -10%; width: 20%; height: 4px; border-radius: 4px; background: light-dark(#287bc1, #68b7f5); animation: update-stretch 1s infinite; }
+.update-travel { width: 100%; height: 100%; animation: update-travel 1.4s infinite; }
+.update-bar { position: relative; top: 2px; margin-left: -10%; width: 20%; height: 4px; border-radius: 4px; background: light-dark(#287bc1, #68b7f5); animation: update-stretch 1.4s infinite; }
 /* Fast travel retains velocity up to contact. Only the impact absorbs it:
    the leading tip stays against the wall as the tail catches up and compresses.
-   The compressed shape gathers briefly, then stretches into the next launch. */
+   The compressed shape rests, gathers briefly, then stretches into the next launch. */
 @keyframes update-travel {
-  0%, 100% { transform: translateX(6%); animation-timing-function: ease-in-out; }
-  12% { transform: translateX(4.5%); animation-timing-function: cubic-bezier(.333333, 0, .666667, .333333); }
-  40% { transform: translateX(85%); animation-timing-function: cubic-bezier(.12, .65, .3, 1); }
-  50% { transform: translateX(94%); animation-timing-function: ease-in-out; }
-  62% { transform: translateX(95.5%); animation-timing-function: cubic-bezier(.333333, 0, .666667, .333333); }
-  90% { transform: translateX(15%); animation-timing-function: cubic-bezier(.12, .65, .3, 1); }
+  0%, 14%, 100% { transform: translateX(6%); animation-timing-function: ease-in-out; }
+  23% { transform: translateX(4.5%); animation-timing-function: cubic-bezier(.333333, 0, .666667, .333333); }
+  43% { transform: translateX(85%); animation-timing-function: cubic-bezier(.12, .65, .3, 1); }
+  50%, 64% { transform: translateX(94%); animation-timing-function: ease-in-out; }
+  73% { transform: translateX(95.5%); animation-timing-function: cubic-bezier(.333333, 0, .666667, .333333); }
+  93% { transform: translateX(15%); animation-timing-function: cubic-bezier(.12, .65, .3, 1); }
 }
 @keyframes update-stretch {
-  0%, 50%, 100% { transform: scale(.6, 1.65); animation-timing-function: ease-in-out; }
-  12%, 62% { transform: scale(.45, 1.8); animation-timing-function: cubic-bezier(.333333, 0, .666667, .333333); }
-  23%, 73% { transform: scale(1.5, .65); animation-timing-function: linear; }
-  40%, 90% { transform: scale(1.5, .65); animation-timing-function: cubic-bezier(.12, .65, .3, 1); }
+  0%, 14%, 50%, 64%, 100% { transform: scale(.6, 1.65); animation-timing-function: ease-in-out; }
+  23%, 73% { transform: scale(.45, 1.8); animation-timing-function: cubic-bezier(.333333, 0, .666667, .333333); }
+  31%, 81% { transform: scale(1.5, .65); animation-timing-function: linear; }
+  43%, 93% { transform: scale(1.5, .65); animation-timing-function: cubic-bezier(.12, .65, .3, 1); }
 }
 @media (prefers-reduced-motion: reduce) {
   .update-travel { animation: none; transform: translateX(50%); }
