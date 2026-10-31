@@ -85,18 +85,21 @@ h1 { font-size: 17px; font-weight: 600; margin: 0 0 18px; }
 .update-track { height: 8px; overflow: hidden; border-radius: 4px; background: light-dark(#e0e3e7, #383c42); }
 .update-travel { width: 100%; height: 100%; animation: update-travel 2.4s infinite; }
 .update-bar { margin-left: -12%; width: 24%; height: 100%; border-radius: 4px; background: light-dark(#287bc1, #68b7f5); animation: update-stretch 2.4s infinite; }
-/* Gather at each edge, stretch through the dash, and arrive without a rebound.
-   Travel positions track the bar's center so its resting ends meet the track. */
+/* Accelerate into the edge while stretched, then compress against it.
+   During impact the center follows the shrinking half-width, pinning the tip. */
 @keyframes update-travel {
-  0%, 8%, 100% { transform: translateX(12%); }
-  50%, 58% { transform: translateX(88%); }
-  8%, 58% { animation-timing-function: cubic-bezier(.65, 0, .25, 1); }
+  0%, 8%, 100% { transform: translateX(8.64%); }
+  50%, 58% { transform: translateX(91.36%); }
+  8%, 58% { animation-timing-function: cubic-bezier(.45, 0, 1, 1); }
+  44% { transform: translateX(82%); animation-timing-function: ease-out; }
+  94% { transform: translateX(18%); animation-timing-function: ease-out; }
 }
 @keyframes update-stretch {
-  0%, 38%, 50%, 88%, 100% { transform: translateX(0) scale(1); animation-timing-function: ease-in-out; }
-  8% { transform: translateX(-14%) scale(.72, 1.2); animation-timing-function: ease-in; }
-  58% { transform: translateX(14%) scale(.72, 1.2); animation-timing-function: ease-in; }
-  23%, 73% { transform: translateX(0) scale(1.5, .72); animation-timing-function: ease-in-out; }
+  0%, 8% { transform: scale(.72, 1.2); animation-timing-function: ease-in; }
+  50%, 58% { transform: scale(.72, 1.2); animation-timing-function: ease-in; }
+  100% { transform: scale(.72, 1.2); }
+  23%, 73% { transform: scale(1.5, .72); animation-timing-function: linear; }
+  44%, 94% { transform: scale(1.5, .72); animation-timing-function: ease-out; }
 }
 @media (prefers-reduced-motion: reduce) {
   .update-travel { animation: none; transform: translateX(50%); }
