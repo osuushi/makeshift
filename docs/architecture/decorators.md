@@ -237,23 +237,36 @@ the same owner/Undo path.
 Decorator panels use one Preset menu, grouping built-in choices under Global and
 named document-local presets under Document. Save as document preset creates a
 copy through a focused name dialog. Rename… in the same menu edits a document
-preset name in that dialog; no permanent duplicate name field is shown. Automatic
-copies for other decorators use “copy”, “copy 2”, “copy 3”, including copies of copies. The thread
+preset name in that dialog; no permanent duplicate name field is shown. Explicit
+copies use “copy”, “copy 2”, “copy 3”, including copies of copies. The thread
 reference-diameter paragraph is omitted; actionable geometry warnings and their face-selection controls remain.
 A preset stores resolved settings for one definition/version, so
 reusing it preserves explicit dimensions rather than re-inferring them. The last
 accepted choice per definition/version is saved with the document and reused on
-application. Thread choices are recalled only while threads remain. With no threads remaining, applying
-threads starts at FDM fine instead of recalling a hidden old choice. Thread presets
-are saved only through Save as; editing detaches a saved preset and leaves its
-snapshot unchanged. Modified thread profile/clearance/taper values show Custom.
+application while that preset exists, including computed ephemeral presets. Named
+presets remain available and recallable even without instances. An expired ephemeral
+choice is not recalled; ordinary defaults apply instead. Built-in thread recall
+still resolves default tapers for the new rod/hole support; document presets retain
+their explicit dimensions.
+Editing settings creates a computed ephemeral preset. Its name is the original
+preset name followed by the most frequent supporting face-tag name in square
+brackets, or the most frequent body name if no support has a face tag. Names use
+current valid supporting faces, follow tag/body renames, and may break ties arbitrarily.
+The original preset label stays on the accepted instances; matching settings within
+that family share one computed preset. Subsequent edits do not accumulate stored
+copies. Editing a subset creates a separate variant without changing its peers;
+returning to matching settings rejoins the existing variant. A computed preset
+disappears when its last supporting entity disappears, including body deletion.
+Rename promotes the entire computed preset to a persistent settings snapshot,
+including other instances sharing it. Editing a named snapshot derives a new
+ephemeral variant and leaves the named settings unchanged. Save as also stores a
+named snapshot explicitly. Computed presets are exposed consistently in the menu
+and scripting catalog, and are reconstructed from accepted instances after opening.
 The thread Preset menu comes first and shows a shared built-in identity even when
 rod/hole taper defaults or metric dimensions differ; individual fields still show
-Mixed as needed. Existing saved presets remain available. For other decorators,
-editing a built-in creates a local copy. Editing an unshared local
-preset updates that copy; editing one used by other parts forks it so their settings
-remain unchanged. Preset selection, copies, names, and last choices participate in
-ordinary Undo and archives. Numeric preview/cancellation does not save a preset.
+Mixed as needed. Existing saved presets remain available. Preset selection, copies,
+names, origins and last choices participate in ordinary Undo and archives.
+Numeric preview/cancellation does not accept a preset.
 These settings snapshots do not link geometry or automatically resize mating parts.
 Automatic [spur-gear groups](gears.md) recall shared fitting limits and pressure,
 then refit integer counts and profiles to the group dimensions independently of placement.

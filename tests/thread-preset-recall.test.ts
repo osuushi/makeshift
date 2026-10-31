@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
+import { documentPresets } from "../src/decorators/ephemeral-presets.js";
 import { threadDefinition } from "../src/decorators/thread-settings.js";
 import type { DecoratorEdit } from "../src/decorators/types.js";
 import { documentArchive, readArchive } from "../src/model/document-archive.js";
@@ -11,7 +12,7 @@ const fixture = JSON.parse(readFileSync("tests/fixtures/thread-preset-mixed.json
   document: SketchDocument;
 };
 
-test("captured thread preset clutter does not grow and cannot preselect after all threads are removed", async () => {
+test("captured thread edits compute active presets without storing clutter or recalling expired choices", async () => {
   const owner = new DocumentOwner();
   const edit = async (edit: DecoratorEdit) => {
     assert.equal((await owner.call({ kind: "decorator", edit })).error, undefined);
@@ -28,6 +29,9 @@ test("captured thread preset clutter does not grow and cannot preselect after al
       data = await edit({ action: "settings", ids, patch: { clearance } });
       assert.deepEqual(data.decoratorPresets, original.decoratorPresets);
       assert.ok(data.decorators?.every((d) => !d.presetId && d.settings.preset === "custom"));
+      const computed = documentPresets(data).filter((p) => p.origin !== undefined);
+      assert.ok(computed.length > 0 && computed.length <= instances.length);
+      assert.ok(computed.every((p) => p.settings.clearance === clearance));
     }
     data = await edit({
       action: "preset",
@@ -41,6 +45,7 @@ test("captured thread preset clutter does not grow and cannot preselect after al
     assert.deepEqual(data.decoratorPresets, saved, "Edits leave named snapshots unchanged");
     data = await edit({ action: "remove", faces: instances.flatMap((d) => d.faces) });
     assert.equal(data.decorators?.length, 0);
+    assert.deepEqual(documentPresets(data), saved, "Unused computed presets disappear");
     assert.equal(
       (await owner.call({ kind: "open", document: readArchive(documentArchive(data)) })).error,
       undefined,

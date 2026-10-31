@@ -104,10 +104,13 @@ async function documentPresetRoute(page, preset, pitch) {
     2.2,
   );
   assert.equal(saved.decorators[0].presetId, undefined);
-  assert.equal(await preset.inputValue(), "custom");
+  assert.equal(await preset.locator("option:checked").textContent(), "Compatible pair [Body 1]");
   await preset.selectOption("::save");
   const copyDialog = page.getByRole("dialog", { name: "Save preset", exact: true });
-  assert.equal(await copyDialog.getByLabel("Name", { exact: true }).inputValue(), "Custom copy");
+  assert.equal(
+    await copyDialog.getByLabel("Name", { exact: true }).inputValue(),
+    "Compatible pair [Body 1] copy",
+  );
   await copyDialog.getByRole("button", { name: "Save", exact: true }).click();
   const selector = page.getByRole("combobox", { name: "Preset", exact: true });
   await selector.selectOption(local.id);
@@ -118,9 +121,12 @@ async function documentPresetRoute(page, preset, pitch) {
   await inspect(page);
   await chooseTool(page, "threads", "threads");
   saved = (await inspect(page)).document;
-  assert.equal(saved.decorators[0].settings.pitch, 1);
-  assert.equal(saved.decorators[0].settings.startTaper, 1);
-  assert.equal(await selector.inputValue(), "fdm-fine");
+  assert.deepEqual(saved.decorators[0].settings, local.settings);
+  assert.equal(
+    await selector.inputValue(),
+    local.id,
+    "A named preset survives removal and is recalled",
+  );
 }
 
 async function renamePresetRoute(page, preset) {

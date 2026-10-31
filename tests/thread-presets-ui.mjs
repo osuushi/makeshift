@@ -3,6 +3,7 @@ import { openDocument } from "./native-documents.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { decoratorCylinder } from "./ui-decorator-cylinder.mjs";
 import { decoratorPresetRoute } from "./ui-decorator-presets.mjs";
+import { ephemeralPresetRoute } from "./ui-ephemeral-presets.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { close, inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
@@ -34,6 +35,7 @@ await withUiRuntimes(
     close(roundtrip.bodies[0].volume, original.bodies[0].volume);
     for (let i = 0; i < 6; i++) close(roundtrip.bodies[0].bounds[i], original.bodies[0].bounds[i]);
     await mixedThreadPresetRoute(page, name);
+    await ephemeralPresetRoute(page);
     console.log(
       `${name}: unchanged-file BRep serialization ${roundtrip.bodies[0].brep === original.bodies[0].brep ? "identical" : "canonicalized"}; stable topology/volume/bounds verified`,
     );

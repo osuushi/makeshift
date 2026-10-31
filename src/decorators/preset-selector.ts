@@ -1,5 +1,6 @@
 import type { SketchDocument } from "../sketch/document.js";
 import { knurlDefinition } from "./builtins.js";
+import { documentPresets } from "./ephemeral-presets.js";
 import { knurlFields } from "./knurl-settings.js";
 import { localPreset, sameSettings } from "./presets.js";
 import { threadDefinition, threadFields } from "./thread-settings.js";
@@ -17,11 +18,14 @@ export function presetSelector(
   const sharedBuiltin =
     first.definition === threadDefinition &&
     first.settings.preset !== "custom" &&
-    instances.every((d) => !d.presetId && d.settings.preset === first.settings.preset);
+    instances.every(
+      (d) => !d.presetId && !d.presetOrigin && d.settings.preset === first.settings.preset,
+    );
   const sharedPreset = matching || sharedBuiltin;
+  const firstPreset = localPreset(source, first);
   const local =
-    matching && instances.every((d) => d.presetId === first.presetId)
-      ? localPreset(source, first)
+    matching && instances.every((d) => localPreset(source, d)?.id === firstPreset?.id)
+      ? firstPreset
       : undefined;
   const fields =
     first.definition === threadDefinition
@@ -46,7 +50,7 @@ export function presetSelector(
   }
   const saved = document.createElement("optgroup");
   saved.label = "Document";
-  for (const preset of source.decoratorPresets ?? []) {
+  for (const preset of documentPresets(source)) {
     if (preset.definition === first.definition && preset.version === first.version)
       saved.append(new Option(preset.name, preset.id));
   }

@@ -1,5 +1,6 @@
 import { newId, type SketchDocument } from "../sketch/document.js";
 import { knurlDefinition } from "./builtins.js";
+import { documentPresets, ephemeralPresetId } from "./ephemeral-presets.js";
 import { gearDefinition } from "./gear-settings.js";
 import { threadDefinition, threadFields } from "./thread-settings.js";
 import type { DecoratorInstance, Settings } from "./types.js";
@@ -13,15 +14,30 @@ export interface DecoratorPreset extends DecoratorChoice {
   name: string;
   definition: string;
   version: number;
+  /** Present only on computed, unnamed presets; Rename promotes them to stored snapshots. */
+  origin?: string;
 }
-/** No hidden thread preselection after removing the last threaded feature. */
+/** Recall live computed presets and saved snapshots, never an expired computed choice. */
 export function lastDecoratorChoice(document: SketchDocument, definition: string, version = 1) {
+  const choice = document.lastDecoratorChoices?.[choiceKey(definition, version)];
+  if (!choice) return undefined;
+  if (choice.presetId) {
+    const preset = documentPresets(document).find(
+      (p) => p.id === choice.presetId && p.definition === definition && p.version === version,
+    );
+    return preset ? { settings: preset.settings, presetId: preset.id } : undefined;
+  }
   if (
-    definition === threadDefinition &&
-    !document.decorators?.some((d) => d.definition === definition)
+    choice.settings.preset === "custom" &&
+    !document.decorators?.some(
+      (d) =>
+        d.definition === definition &&
+        d.version === version &&
+        sameSettings(d.settings, choice.settings),
+    )
   )
     return undefined;
-  return document.lastDecoratorChoices?.[choiceKey(definition, version)];
+  return choice;
 }
 /** Built-in thread taper defaults belong to the new support, not the last rod/hole. */
 export function recalledChoiceSettings(
@@ -52,9 +68,10 @@ export function presetName(instance: DecoratorInstance): string {
   return instance.definition === gearDefinition ? "Gear" : "Decorator";
 }
 export function localPreset(document: SketchDocument, instance: DecoratorInstance) {
-  return document.decoratorPresets?.find(
+  const id = ephemeralPresetId(instance) ?? instance.presetId;
+  return documentPresets(document).find(
     (p) =>
-      p.id === instance.presetId &&
+      p.id === id &&
       p.definition === instance.definition &&
       p.version === instance.version &&
       sameSettings(p.settings, instance.settings),
@@ -92,6 +109,15 @@ export function checkedPresetName(
   return name;
 }
 export function validatePresets(document: SketchDocument): void {
+  for (const instance of document.decorators ?? [])
+    if (
+      instance.presetOrigin !== undefined &&
+      (typeof instance.presetOrigin !== "string" ||
+        !instance.presetOrigin.trim() ||
+        instance.presetOrigin.length > 200 ||
+        instance.presetId !== undefined)
+    )
+      throw new Error("Invalid decorator preset origin");
   const presets = document.decoratorPresets ?? [];
   if (!Array.isArray(presets)) throw new Error("Invalid decorator presets");
   const ids = new Set<string>();

@@ -44,7 +44,13 @@ export async function mixedThreadPresetRoute(page, name) {
   await clearance.fill("0.3");
   await clearance.press("Enter");
   state = await inspect(page);
-  assert.deepEqual(state.document.decoratorPresets, before, "Editing never adds hidden copies");
+  assert.deepEqual(
+    state.document.decoratorPresets,
+    before,
+    "Computed presets do not store hidden snapshots",
+  );
+  const computed = await preset.locator('optgroup[label="Document"] option').allTextContents();
+  assert.ok(computed.some((label) => /^FDM fine \[.+\]$/.test(label)));
   assert.equal(await preset.inputValue(), ""); // Different custom taper values remain mixed.
   await chooseTool(page, "undo", "undo");
   assert.equal(await preset.inputValue(), "fdm-fine");
