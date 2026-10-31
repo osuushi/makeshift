@@ -2,7 +2,7 @@ import * as THREE from "three";
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
-import { type PlaneFrame, planeNormal, planes } from "../sketch/planes.js";
+import { coplanar, type PlaneFrame, planeNormal, planes } from "../sketch/planes.js";
 import { flipSectionFrame, sectionClip } from "../sketch/view-clipping.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { CrossSectionPlaneView } from "./cross-section-plane-view.js";
@@ -18,6 +18,7 @@ export class CrossSectionControls {
   private placement: PlanePlacement;
   private view: CrossSectionPlaneView;
   private root = document.createElement("div");
+  private sketchNotice = document.createElement("p");
   private buttons = new Map<string, HTMLButtonElement>();
   private abort = new AbortController();
   private disposeTool: () => void;
@@ -41,7 +42,7 @@ export class CrossSectionControls {
     this.root.className = "cross-section-actions";
     this.root.setAttribute("aria-label", "Cross section controls");
     const label = document.createElement("span");
-    label.textContent = "Cross section";
+    label.textContent = "Manual cross section";
     this.root.append(label);
     this.addButton("Adjust section", () => this.begin());
     this.addButton("Choose section plane", () => this.choose());
@@ -49,6 +50,8 @@ export class CrossSectionControls {
     this.addButton("Done", () => void this.finish());
     this.addButton("Cancel", () => this.cancel());
     this.addButton("Turn off section", () => this.off());
+    this.sketchNotice.className = "cross-section-sketch-notice";
+    this.root.append(this.sketchNotice);
     const flip = this.buttons.get("Flip side");
     if (flip) flip.title = "Reverse the cut 180° without moving the plane";
     overlay.append(this.root);
@@ -207,12 +210,22 @@ export class CrossSectionControls {
     const e = this.editor,
       editing = !!this.lease,
       frame = e.world.crossSection;
-    this.root.hidden = !!e.world.active || (!editing && !frame);
+    this.root.hidden = !editing && !frame;
+    const sketchFrame = e.world.activeFrame;
+    this.sketchNotice.hidden = !sketchFrame || !frame;
+    this.sketchNotice.textContent =
+      sketchFrame && frame && !coplanar(sketchFrame, frame)
+        ? "This cut is not on the sketch plane. Turn it off to capture the sketch section."
+        : "This cut lies on the sketch plane. Click its filled area to copy the section.";
     const blocked = editing
       ? e.blocked || e.interactions.dragging
       : !!toolCatalog(e).reason({ reason: () => null });
     for (const [name, button] of this.buttons) {
       button.disabled = blocked;
+      if (name === "Adjust section") {
+        button.disabled ||= !!sketchFrame;
+        button.title = sketchFrame ? "Return to Modeling to adjust this cut" : "";
+      }
       button.hidden = ["Done", "Cancel", "Choose section plane"].includes(name)
         ? !editing
         : name === "Adjust section"

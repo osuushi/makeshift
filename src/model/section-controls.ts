@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { emptySketch } from "../sketch/document.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { pick } from "../sketch/picking.js";
-import type { PlaneFrame, Point } from "../sketch/planes.js";
+import { coplanar, type PlaneFrame, type Point } from "../sketch/planes.js";
 import { insideBoundary } from "../sketch/profiles.js";
 import { projectedSketch, sameProjectedCurve } from "../sketch/projected-sketch.js";
 import { sectionMesh } from "./section-view.js";
@@ -58,7 +58,9 @@ export class SectionControls {
   }
   private update = (): void => {
     const e = this.editor;
-    if (!this.eligible() || e.world.cameraMoving) this.highlight(undefined);
+    // Eligibility excludes camera transitions. A queued paint (including the
+    // hover's own redraw) must not erase input state while the GPU catches up.
+    if (!this.eligible()) this.highlight(undefined);
     const frame = e.world.activeFrame
       ? (e.sketch?.plane ?? e.world.activeFrame)
       : e.interactions.dragging || e.candidate
@@ -122,6 +124,7 @@ export class SectionControls {
     const e = this.editor;
     return (
       !!e.world.activeFrame &&
+      (!e.world.crossSection || coplanar(e.world.activeFrame, e.world.crossSection)) &&
       e.tool === "select" &&
       !e.blocked &&
       !e.interactions.current &&
