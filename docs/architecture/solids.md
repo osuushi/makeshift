@@ -258,6 +258,10 @@ copies its entire boundary, including holes, into the current sketch (or creates
 one on that workspace), in one Undo step. Separate regions remain independently
 clickable. Existing sketch handles/curves take picking priority; drawing tools and
 navigation retain their gestures. Fully copied regions no longer intercept clicks.
+With a manual cut active, capture is available only when that cut is coplanar with
+the sketch. The visible manual-cut controls explain the mismatch and let the user
+turn it off. Queued presentation frames do not clear section hover; camera
+transitions and navigation still do.
 The copied curves are independent, editable ordinary sketch curves with joined
 endpoints. Lines/circles/arcs remain analytic; other curves use the existing
 0.001 mm bounded cubic approximation. Section endpoints use shared native vertices
