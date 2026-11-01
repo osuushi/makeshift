@@ -4,6 +4,19 @@ import { at, close, drag, reset } from "./ui-helpers.mjs";
 import { assertNavigation, navigationHistory, navigationIdle } from "./ui-navigation-history.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
+async function profileEntryPoint(page, box, throughOverlay) {
+  const point = { x: box.x + box.width / 2 + 20, y: box.y + box.height / 2 + 20 };
+  if (!throughOverlay) return point;
+  // The first click reveals controls. Make the second hit their actual location
+  // across font/platform layouts, then let real pointer capture complete entry.
+  await page.mouse.click(point.x, point.y);
+  const label = await page.locator(".extrude-symmetry:visible").boundingBox();
+  assert.ok(label);
+  await page.keyboard.press("Escape");
+  await navigationIdle(page);
+  return { x: label.x + label.width / 2, y: label.y + label.height / 2 };
+}
+
 async function doubleClickEntry(page, reducedMotion, zoomedIn) {
   await page.emulateMedia({ reducedMotion });
   await reset(page);
@@ -25,9 +38,10 @@ async function doubleClickEntry(page, reducedMotion, zoomedIn) {
     await page.keyboard.up("Control");
     await page.waitForFunction(() => window.makeshiftInspect().camera.height < 20);
   }
+  const entry = await profileEntryPoint(page, box, zoomedIn);
   const oblique = await navigationIdle(page);
   // The close case looks at an off-center part of the profile.
-  await page.mouse.dblclick(box.x + box.width / 2 + 20, box.y + box.height / 2 + 20);
+  await page.mouse.dblclick(entry.x, entry.y);
   const entered = await navigationIdle(page);
   assert.equal(entered.activeSketch, drawn.document.sketches[0].id);
   if (zoomedIn) close(entered.camera.height, oblique.camera.height, "Entry retains close zoom");

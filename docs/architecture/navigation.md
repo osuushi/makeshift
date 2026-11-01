@@ -34,6 +34,8 @@ keeps a close-up of a face edge or corner in view. An edge-on view uses the curr
 view target projected normally onto the plane as a finite fallback.
 Double-click sketch entry consumes the event before sketch selection handles it,
 so the same click cannot select curves and interrupt the camera alignment.
+If the second press lands on newly displayed modeling controls, its forwarded tap
+and the following native double-click remain one entry intent.
 Canonical references remain fixed, while construction planes support placement edits.
 Explicit plane-selection modes continue to accept a plane on a single click.
 In Mirror and Projection, a nearer planar solid face takes precedence over a
