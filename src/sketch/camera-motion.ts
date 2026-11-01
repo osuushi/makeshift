@@ -57,7 +57,7 @@ export function planeCameraPose(
     target,
     quaternion: best.quaternion,
     distance,
-    height: framing.height ?? view.height,
+    height: Math.min(view.height, framing.height ?? view.height),
   };
 }
 

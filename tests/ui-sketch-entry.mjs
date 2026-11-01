@@ -3,7 +3,7 @@ import { at, close, drag, reset } from "./ui-helpers.mjs";
 import { assertNavigation, navigationHistory, navigationIdle } from "./ui-navigation-history.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-async function doubleClickEntry(page, reducedMotion) {
+async function doubleClickEntry(page, reducedMotion, zoomedIn) {
   await page.emulateMedia({ reducedMotion });
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
@@ -14,13 +14,24 @@ async function doubleClickEntry(page, reducedMotion) {
   assert.equal(drawn.document.sketches[0].curves[0].kind, "circle");
   await chooseTool(page, "Return to Modeling", "modeling");
   await page.locator('.orientation-cube [data-kind="corner"]:visible').first().click();
-  const oblique = await navigationIdle(page);
+  await navigationIdle(page);
   const box = await page.locator("canvas").boundingBox();
   assert.ok(box);
+  if (zoomedIn) {
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.keyboard.down("Control");
+    await page.mouse.wheel(0, -150);
+    await page.keyboard.up("Control");
+    await page.waitForFunction(() => window.makeshiftInspect().camera.height < 20);
+  }
+  const oblique = await navigationIdle(page);
   // The circle's center is the world origin, retained as the camera target.
   await page.mouse.dblclick(box.x + box.width / 2 + 20, box.y + box.height / 2 + 20);
   const entered = await navigationIdle(page);
   assert.equal(entered.activeSketch, drawn.document.sketches[0].id);
+  if (zoomedIn) close(entered.camera.height, oblique.camera.height, "Entry retains close zoom");
+  else assert.ok(entered.camera.height < oblique.camera.height, "Entry still zooms in to fit");
+  for (const n of entered.camera.target) close(n, 0, "Entry centers the profile");
   const [x, y, z] = entered.camera.position.map((n, i) => n - entered.camera.target[i]);
   assert.ok(Math.hypot(x, y) < 1e-6, `Camera aligns with XY normal: ${x}, ${y}, ${z}`);
   assert.deepEqual(entered.modelingSelection, []);
@@ -32,6 +43,7 @@ async function doubleClickEntry(page, reducedMotion) {
     undone.camera[key].forEach((n, i) => {
       close(n, oblique.camera[key][i], `Undo camera ${key}`);
     });
+  close(undone.camera.height, oblique.camera.height, "Undo restores zoom");
   assert.deepEqual(undone.document, drawn.document);
   assertNavigation(await navigationHistory(page, true), entered, "Redo sketch entry");
 
@@ -48,11 +60,12 @@ async function doubleClickEntry(page, reducedMotion) {
 
 export async function sketchEntryRoute(page, name) {
   try {
-    for (const motion of ["no-preference", "reduce"]) await doubleClickEntry(page, motion);
+    for (const motion of ["no-preference", "reduce"])
+      for (const zoomedIn of [false, true]) await doubleClickEntry(page, motion, zoomedIn);
   } finally {
     await page.emulateMedia({ reducedMotion: "no-preference" });
   }
   console.log(
-    `${name}: circle double-click camera entry, reduced motion, selection, radius edit and Undo/Redo passed`,
+    `${name}: circle entry zoom-in/zoom retention, reduced motion, radius edit and Undo/Redo passed`,
   );
 }
