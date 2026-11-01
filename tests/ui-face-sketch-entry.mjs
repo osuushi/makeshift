@@ -5,7 +5,7 @@ import { assertNavigation, navigationHistory, navigationIdle } from "./ui-naviga
 import { chooseTool } from "./ui-tools.mjs";
 
 /** Escaped integration: Sketch on face must retain a zoomed-in edge, through navigation history. */
-export async function faceSketchEntryRoute(page) {
+export async function faceSketchEntryRoute(page, wheelDelta = -150) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
@@ -25,7 +25,17 @@ export async function faceSketchEntryRoute(page) {
   const edge = await project(page, [8, 0, 10]);
   await page.mouse.move(edge.x, edge.y);
   await page.keyboard.down("Control");
-  await page.mouse.wheel(0, -150);
+  // Native wheel scaling differs by platform. Reach the same close-up through
+  // ordinary input before asserting view retention, rather than assuming one tick.
+  for (let zoom = 0; zoom < 2; zoom++) {
+    const height = (await navigationIdle(page)).camera.height;
+    if (height < 5) break;
+    await page.mouse.wheel(0, wheelDelta);
+    await page.waitForFunction(
+      (previous) => window.makeshiftInspect().camera.height < previous,
+      height,
+    );
+  }
   await page.keyboard.up("Control");
   await page.waitForFunction(() => window.makeshiftInspect().camera.height < 5);
   const box = await page.locator("canvas").boundingBox();
