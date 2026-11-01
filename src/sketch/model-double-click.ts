@@ -17,6 +17,7 @@ class ModelDoubleClick {
   private first: MouseEvent | null = null;
   private second: { down: PointerEvent; pick: MouseEvent } | null = null;
   private consumeClick = false;
+  private consumeDoubleClick = false;
   private penClickUntil = 0;
   constructor(
     private editor: SketchEditor,
@@ -35,6 +36,11 @@ class ModelDoubleClick {
     window.addEventListener(
       "dblclick",
       (event) => {
+        if (this.consumeDoubleClick) {
+          this.consumeDoubleClick = false;
+          consume(event);
+          return;
+        }
         if (
           event.target === editor.world.canvas &&
           event instanceof PointerEvent &&
@@ -79,6 +85,7 @@ class ModelDoubleClick {
     this.first = event.target === this.editor.world.canvas && event.detail === 1 ? event : null;
   };
   private down = (event: PointerEvent): void => {
+    this.consumeDoubleClick = false;
     if (event.pointerType !== "pen") this.penClickUntil = 0;
     const previous = this.first;
     this.first = null;
@@ -119,13 +126,18 @@ class ModelDoubleClick {
     if (
       Math.hypot(event.clientX - down.clientX, event.clientY - down.clientY) <=
       pointerDragThreshold(down)
-    )
+    ) {
+      // The forwarded tap owns the native double-click that follows pointerup.
+      // Letting it reach sketch selection would interrupt the entry animation.
+      this.consumeDoubleClick = true;
       this.select(pick, this.before);
+    }
   };
   private reset = (): void => {
     this.first = null;
     this.second = null;
     this.consumeClick = false;
+    this.consumeDoubleClick = false;
   };
 }
 function nearby(first: MouseEvent, next: PointerEvent): boolean {

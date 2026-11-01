@@ -29,11 +29,20 @@ export function planeCameraPose(
   view.camera.lookAt(view.target);
   view.camera.updateMatrixWorld();
   const previous = view.camera.quaternion.clone();
-  const target = framing.target
-    ? new THREE.Vector3(...framing.target)
-    : view.target
-        .clone()
-        .addScaledVector(normal, new THREE.Vector3(...frame.origin).sub(view.target).dot(normal));
+  const retainView = framing.height !== undefined && framing.height >= view.height;
+  const planeOffset = new THREE.Vector3(...frame.origin).sub(view.target).dot(normal);
+  const target =
+    framing.target && !retainView
+      ? new THREE.Vector3(...framing.target)
+      : view.target.clone().addScaledVector(normal, planeOffset);
+  if (retainView) {
+    // Align about the point currently under the viewport center, including faces
+    // offset from the orbit target. Edge-on views use the finite plane projection.
+    const direction = view.camera.getWorldDirection(new THREE.Vector3());
+    const incidence = direction.dot(normal);
+    if (Math.abs(incidence) > 1e-6)
+      target.copy(view.target).addScaledVector(direction, planeOffset / incidence);
+  }
   const ups = [frame.v, frame.u].flatMap((axis) => [
     new THREE.Vector3(...axis),
     new THREE.Vector3(...axis).negate(),
@@ -57,7 +66,7 @@ export function planeCameraPose(
     target,
     quaternion: best.quaternion,
     distance,
-    height: framing.height ?? view.height,
+    height: Math.min(view.height, framing.height ?? view.height),
   };
 }
 

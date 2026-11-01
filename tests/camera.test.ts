@@ -153,6 +153,46 @@ test("plane framing carries a region target and orthographic height into one pos
   );
 });
 
+test("plane entry fits farther views and retains closer views while aligning", () => {
+  for (const [height, fittedHeight, expected] of [
+    [80, 10, 10],
+    [5, 10, 5],
+    [10, 10, 10],
+    [0.5, 80, 0.5],
+    [5, undefined, 5],
+  ] as const) {
+    const camera = new THREE.OrthographicCamera();
+    camera.position.set(55, -70, 65);
+    camera.up.set(0, 0, 1);
+    const view = { camera, target: new THREE.Vector3(8, 9, 10), height };
+    const pose = planeCameraPose(view, planes.XY, {
+      target: [30, 22, 0],
+      height: fittedHeight,
+    });
+    applyCameraPose(view, pose);
+    assert.equal(view.height, expected);
+    const target =
+      fittedHeight !== undefined && fittedHeight >= height
+        ? [8 - (47 * 10) / 55, 9 + (79 * 10) / 55, 0]
+        : [30, 22, 0];
+    for (const [i, n] of view.target.toArray().entries())
+      assert.ok(Math.abs(n - target[i]) < 1e-10);
+    const direction = camera.position.clone().sub(view.target).normalize();
+    assert.ok(Math.abs(direction.z - 1) < 1e-10);
+    assert.ok(camera.up.dot(new THREE.Vector3(...planes.XY.v)) > 0.999999);
+  }
+});
+
+test("close plane entry remains finite when the current view is edge-on", () => {
+  const camera = new THREE.OrthographicCamera();
+  camera.position.set(50, 9, 10);
+  camera.up.set(0, 0, 1);
+  const view = { camera, target: new THREE.Vector3(8, 9, 10), height: 5 };
+  const pose = planeCameraPose(view, planes.XY, { target: [30, 22, 0], height: 20 });
+  assert.deepEqual(pose.target.toArray(), [8, 9, 0]);
+  assert.equal(pose.height, 5);
+});
+
 test("pan translates camera and target equally; pointer-centered zoom respects limits", () => {
   const camera = new THREE.OrthographicCamera();
   camera.position.set(0, 0, 120);

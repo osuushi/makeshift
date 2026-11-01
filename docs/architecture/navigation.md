@@ -25,10 +25,17 @@ Plane entry chooses the nearest quaternion orientation among all four in-plane
 quarter turns on either side, preserving the accepted plane frame and grid axes.
 Equal-angle ties prefer the plane's positive V axis as screen up, including entry
 from the default isometric view; numerical roundoff must not select another quarter turn.
-Profile entry fits the boundary along the chosen screen axes, keeping its center
+Profile fitting uses the chosen screen axes, keeping its center
 and margin when a quarter turn swaps the horizontal and vertical extents.
+Sketch entry may zoom in and center a profile or face, but never zooms out. If the
+current view is at least as close as the fitted view, retain its orthographic
+height and align about the point on the plane under the viewport center. This
+keeps a close-up of a face edge or corner in view. An edge-on view uses the current
+view target projected normally onto the plane as a finite fallback.
 Double-click sketch entry consumes the event before sketch selection handles it,
 so the same click cannot select curves and interrupt the camera alignment.
+If the second press lands on newly displayed modeling controls, its forwarded tap
+and the following native double-click remain one entry intent.
 Canonical references remain fixed, while construction planes support placement edits.
 Explicit plane-selection modes continue to accept a plane on a single click.
 In Mirror and Projection, a nearer planar solid face takes precedence over a

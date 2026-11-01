@@ -1,9 +1,23 @@
 import assert from "node:assert/strict";
+import { faceSketchEntryRoute } from "./ui-face-sketch-entry.mjs";
 import { at, close, drag, reset } from "./ui-helpers.mjs";
 import { assertNavigation, navigationHistory, navigationIdle } from "./ui-navigation-history.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-async function doubleClickEntry(page, reducedMotion) {
+async function profileEntryPoint(page, box, throughOverlay) {
+  const point = { x: box.x + box.width / 2 + 20, y: box.y + box.height / 2 + 20 };
+  if (!throughOverlay) return point;
+  // The first click reveals controls. Make the second hit their actual location
+  // across font/platform layouts, then let real pointer capture complete entry.
+  await page.mouse.click(point.x, point.y);
+  const label = await page.locator(".extrude-symmetry:visible").boundingBox();
+  assert.ok(label);
+  await page.keyboard.press("Escape");
+  await navigationIdle(page);
+  return { x: label.x + label.width / 2, y: label.y + label.height / 2 };
+}
+
+async function doubleClickEntry(page, reducedMotion, zoomedIn) {
   await page.emulateMedia({ reducedMotion });
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
@@ -14,13 +28,37 @@ async function doubleClickEntry(page, reducedMotion) {
   assert.equal(drawn.document.sketches[0].curves[0].kind, "circle");
   await chooseTool(page, "Return to Modeling", "modeling");
   await page.locator('.orientation-cube [data-kind="corner"]:visible').first().click();
-  const oblique = await navigationIdle(page);
+  await navigationIdle(page);
   const box = await page.locator("canvas").boundingBox();
   assert.ok(box);
-  // The circle's center is the world origin, retained as the camera target.
-  await page.mouse.dblclick(box.x + box.width / 2 + 20, box.y + box.height / 2 + 20);
+  if (zoomedIn) {
+    await page.mouse.move(box.x + box.width / 2 + 30, box.y + box.height / 2 + 20);
+    await page.keyboard.down("Control");
+    await page.mouse.wheel(0, -150);
+    await page.keyboard.up("Control");
+    await page.waitForFunction(() => window.makeshiftInspect().camera.height < 20);
+  }
+  const entry = await profileEntryPoint(page, box, zoomedIn);
+  const oblique = await navigationIdle(page);
+  // The close case looks at an off-center part of the profile.
+  await page.mouse.dblclick(entry.x, entry.y);
   const entered = await navigationIdle(page);
   assert.equal(entered.activeSketch, drawn.document.sketches[0].id);
+  if (zoomedIn) close(entered.camera.height, oblique.camera.height, "Entry retains close zoom");
+  else assert.ok(entered.camera.height < oblique.camera.height, "Entry still zooms in to fit");
+  const planeDistance = oblique.camera.position[2] - oblique.camera.target[2];
+  for (let i = 0; i < 3; i++) {
+    const expected = zoomedIn
+      ? oblique.camera.target[i] -
+        (oblique.camera.target[2] * (oblique.camera.position[i] - oblique.camera.target[i])) /
+          planeDistance
+      : 0;
+    close(
+      entered.camera.target[i],
+      expected,
+      zoomedIn ? "Entry keeps viewed area" : "Entry fits profile",
+    );
+  }
   const [x, y, z] = entered.camera.position.map((n, i) => n - entered.camera.target[i]);
   assert.ok(Math.hypot(x, y) < 1e-6, `Camera aligns with XY normal: ${x}, ${y}, ${z}`);
   assert.deepEqual(entered.modelingSelection, []);
@@ -32,10 +70,16 @@ async function doubleClickEntry(page, reducedMotion) {
     undone.camera[key].forEach((n, i) => {
       close(n, oblique.camera[key][i], `Undo camera ${key}`);
     });
+  close(undone.camera.height, oblique.camera.height, "Undo restores zoom");
   assert.deepEqual(undone.document, drawn.document);
   assertNavigation(await navigationHistory(page, true), entered, "Redo sketch entry");
 
-  const point = await at(page, 4, 3);
+  // Retained close zoom can crop the circle; keep the subsequent interior pick visible.
+  const point = await at(
+    page,
+    entered.camera.target[0] + Math.min(4, entered.camera.height / 4),
+    entered.camera.target[1] + Math.min(3, entered.camera.height / 4),
+  );
   await page.mouse.dblclick(point.x, point.y);
   const selected = await navigationIdle(page);
   assert.deepEqual(selected.selectedCurves, [drawn.document.sketches[0].curves[0].id]);
@@ -48,11 +92,13 @@ async function doubleClickEntry(page, reducedMotion) {
 
 export async function sketchEntryRoute(page, name) {
   try {
-    for (const motion of ["no-preference", "reduce"]) await doubleClickEntry(page, motion);
+    for (const motion of ["no-preference", "reduce"])
+      for (const zoomedIn of [false, true]) await doubleClickEntry(page, motion, zoomedIn);
+    await faceSketchEntryRoute(page);
   } finally {
     await page.emulateMedia({ reducedMotion: "no-preference" });
   }
   console.log(
-    `${name}: circle double-click camera entry, reduced motion, selection, radius edit and Undo/Redo passed`,
+    `${name}: profile/face entry retains viewed area at close zoom; far fitting, reduced motion, radius edit and Undo/Redo passed`,
   );
 }
