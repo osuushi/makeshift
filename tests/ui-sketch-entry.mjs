@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { faceSketchEntryRoute } from "./ui-face-sketch-entry.mjs";
 import { at, close, drag, reset } from "./ui-helpers.mjs";
 import { assertNavigation, navigationHistory, navigationIdle } from "./ui-navigation-history.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -18,20 +19,32 @@ async function doubleClickEntry(page, reducedMotion, zoomedIn) {
   const box = await page.locator("canvas").boundingBox();
   assert.ok(box);
   if (zoomedIn) {
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.move(box.x + box.width / 2 + 30, box.y + box.height / 2 + 20);
     await page.keyboard.down("Control");
     await page.mouse.wheel(0, -150);
     await page.keyboard.up("Control");
     await page.waitForFunction(() => window.makeshiftInspect().camera.height < 20);
   }
   const oblique = await navigationIdle(page);
-  // The circle's center is the world origin, retained as the camera target.
+  // The close case looks at an off-center part of the profile.
   await page.mouse.dblclick(box.x + box.width / 2 + 20, box.y + box.height / 2 + 20);
   const entered = await navigationIdle(page);
   assert.equal(entered.activeSketch, drawn.document.sketches[0].id);
   if (zoomedIn) close(entered.camera.height, oblique.camera.height, "Entry retains close zoom");
   else assert.ok(entered.camera.height < oblique.camera.height, "Entry still zooms in to fit");
-  for (const n of entered.camera.target) close(n, 0, "Entry centers the profile");
+  const planeDistance = oblique.camera.position[2] - oblique.camera.target[2];
+  for (let i = 0; i < 3; i++) {
+    const expected = zoomedIn
+      ? oblique.camera.target[i] -
+        (oblique.camera.target[2] * (oblique.camera.position[i] - oblique.camera.target[i])) /
+          planeDistance
+      : 0;
+    close(
+      entered.camera.target[i],
+      expected,
+      zoomedIn ? "Entry keeps viewed area" : "Entry fits profile",
+    );
+  }
   const [x, y, z] = entered.camera.position.map((n, i) => n - entered.camera.target[i]);
   assert.ok(Math.hypot(x, y) < 1e-6, `Camera aligns with XY normal: ${x}, ${y}, ${z}`);
   assert.deepEqual(entered.modelingSelection, []);
@@ -50,8 +63,8 @@ async function doubleClickEntry(page, reducedMotion, zoomedIn) {
   // Retained close zoom can crop the circle; keep the subsequent interior pick visible.
   const point = await at(
     page,
-    Math.min(4, entered.camera.height / 4),
-    Math.min(3, entered.camera.height / 4),
+    entered.camera.target[0] + Math.min(4, entered.camera.height / 4),
+    entered.camera.target[1] + Math.min(3, entered.camera.height / 4),
   );
   await page.mouse.dblclick(point.x, point.y);
   const selected = await navigationIdle(page);
@@ -67,10 +80,11 @@ export async function sketchEntryRoute(page, name) {
   try {
     for (const motion of ["no-preference", "reduce"])
       for (const zoomedIn of [false, true]) await doubleClickEntry(page, motion, zoomedIn);
+    await faceSketchEntryRoute(page);
   } finally {
     await page.emulateMedia({ reducedMotion: "no-preference" });
   }
   console.log(
-    `${name}: circle entry zoom-in/zoom retention, reduced motion, radius edit and Undo/Redo passed`,
+    `${name}: profile/face entry retains viewed area at close zoom; far fitting, reduced motion, radius edit and Undo/Redo passed`,
   );
 }

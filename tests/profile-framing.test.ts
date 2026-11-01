@@ -99,3 +99,48 @@ test("profile framing fits all plane sides and quarter turns without cropping or
       }
   }
 });
+
+test("close profile and face entry keeps the point under the viewport center on offset planes", () => {
+  for (const basis of Object.values(planes)) {
+    const frame = { ...basis, origin: [7, -4, 12] as [number, number, number] };
+    const normal = new THREE.Vector3(...frame.u).cross(new THREE.Vector3(...frame.v));
+    const anchor = new THREE.Vector3(...worldPoint(frame, { x: 25, y: 19 }));
+    const sketch = rectangle(emptySketch(frame), { x: 24, y: 18 }, { x: 36, y: 26 }).sketch;
+    for (const side of [-1, 1]) {
+      const direction = normal
+        .clone()
+        .multiplyScalar(side * 100)
+        .addScaledVector(new THREE.Vector3(...frame.u), 25)
+        .addScaledVector(new THREE.Vector3(...frame.v), -15);
+      const camera = new THREE.OrthographicCamera(-5, 5, 2.5, -2.5);
+      camera.position.copy(anchor).add(direction);
+      camera.up.fromArray(frame.v);
+      const world = {
+        camera,
+        target: anchor.clone().addScaledVector(direction, 0.1),
+        height: 5,
+        canvas: { clientWidth: 1280, clientHeight: 850 },
+      };
+      camera.lookAt(world.target);
+      camera.updateMatrixWorld();
+      const before = anchor.clone().project(camera);
+      const profile = profileFraming(
+        { world } as unknown as SketchEditor,
+        sketch,
+        profilesFor(sketch)[0],
+      );
+      const face = selectedFaceWorkspace(faceFixture(world, frame))?.framing;
+      for (const framing of [profile, face]) {
+        const pose = planeCameraPose(world, frame, framing);
+        assert.ok(
+          pose.target.distanceTo(anchor) < 1e-10,
+          "The viewed face corner remains the pivot",
+        );
+        assert.equal(pose.height, 5);
+      }
+      applyCameraPose(world, planeCameraPose(world, frame, face));
+      const after = anchor.clone().project(camera);
+      assert.ok(Math.hypot(before.x, before.y, after.x, after.y) < 1e-10);
+    }
+  }
+});
