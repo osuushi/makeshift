@@ -1,5 +1,6 @@
 import { knurlDefinition } from "../decorators/builtins.js";
 import type { SketchDocument } from "../sketch/document.js";
+import { continueBodyMetadata } from "./body-metadata.js";
 import { validateDocument } from "./document-validation.js";
 import { materialize } from "./kernel-result.js";
 import type { SolidCalculator } from "./solid-calculator.js";
@@ -28,7 +29,7 @@ export async function openDocument(
   const migrated = { ...source, decorators };
   validateDocument(migrated);
   const result = await kernel.calculate({ kind: "inspect", bodies: migrated.bodies ?? [] });
-  const document = { ...migrated, bodies: materialize([], result) };
+  const document = continueBodyMetadata(migrated, { ...migrated, bodies: materialize([], result) });
   validateDocument(document);
   return document;
 }

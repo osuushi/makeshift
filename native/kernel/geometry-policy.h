@@ -3,6 +3,8 @@
 // Numerical budgets have different dimensions and responsibilities. These are
 // application checks, not replacements for OCCT's per-entity tolerances.
 namespace geometry_policy {
+// Modeling resolution for recoverable rounds/bevels, independent of BRep validity.
+constexpr double minimumFinishMm = 0.001;
 constexpr double minimumSolidVolumeMm3 = 1e-12;
 constexpr double boundaryDistanceMm = 1e-6;
 constexpr double offsetTopologyToleranceMm = 2e-6;

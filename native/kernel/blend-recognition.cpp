@@ -29,7 +29,7 @@ bool capsuleSide(const BRepAdaptor_Surface& surface, const BlendFace& blend) {
 }
 }
 
-std::vector<BlendFace> recognizeBlends(const TopoDS_Shape& shape) {
+std::vector<BlendFace> recognizeBlends(const TopoDS_Shape& shape, const TopTools_MapOfShape* candidates) {
     TopTools_IndexedMapOfShape faces;
     TopExp::MapShapes(shape, TopAbs_FACE, faces);
     TopTools_IndexedDataMapOfShapeListOfShape adjacency;
@@ -37,6 +37,7 @@ std::vector<BlendFace> recognizeBlends(const TopoDS_Shape& shape) {
     std::vector<BlendFace> result;
     for (int f = 1; f <= faces.Extent(); ++f) {
         const auto face = TopoDS::Face(faces(f));
+        if (candidates && !candidates->Contains(face)) continue;
         BRepAdaptor_Surface surface(face);
         double radius; bool direct;
         if (surface.GetType() == GeomAbs_Cylinder) { radius = surface.Cylinder().Radius(); direct = surface.Cylinder().Direct(); }

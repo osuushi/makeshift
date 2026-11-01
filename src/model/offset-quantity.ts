@@ -1,6 +1,7 @@
 import { radialDisplay, radialName, radialRadius } from "../preferences/radial-dimension.js";
 import type { BodyFaceOffset, Face } from "./body.js";
 import { type FaceFinish, sharedThickness } from "./face-offset-targets.js";
+import { minimumFinishMm } from "./geometry-policy.js";
 
 export type OffsetMode = "thickness" | "radius" | "offset";
 /** Display units for one fixed offset baseline; changing modes never changes geometry. */
@@ -70,6 +71,8 @@ export class OffsetQuantity {
   }
   clamp(distance: number): number {
     if (!this.blend || !Number.isFinite(distance)) return distance;
+    if (this.blend.radius - distance * this.blend.outward * this.scale < minimumFinishMm)
+      return (this.blend.outward * this.blend.radius) / this.scale;
     return (
       this.blend.outward * Math.min(this.blend.outward * distance, this.blend.radius / this.scale)
     );
