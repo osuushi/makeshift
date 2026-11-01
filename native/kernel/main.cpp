@@ -6,6 +6,7 @@
 #include "mesh-fit.h"
 #include "timing.h"
 #include "geometry-policy.h"
+#include "small-finishes.h"
 #include <boost/property_tree/json_parser.hpp>
 #include <BRepTools.hxx>
 #include <OSD_Parallel.hxx>
@@ -160,10 +161,13 @@ void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
     std::vector<Result> tools;
     const bool erode = input.get<std::string>("kind") == "erode";
     if (erode) mode = "new";
-    const auto results = erode ? erodeBodies(input,bodies,participants,&erosionQuality)
+    auto results = erode ? erodeBodies(input,bodies,participants,&erosionQuality)
         : calculate(input,bodies,mode,participants,&tools);
 
     timing.phase("calculate");
+    for (auto& result : results) simplifySmallFinishes(result);
+    for (auto& tool : tools) simplifySmallFinishes(tool);
+    timing.phase("simplify");
     if (input.get<std::string>("presentation", "") == "deferred") {
         const auto kind = input.get<std::string>("kind");
         if (kind != "move-faces" && kind != "move-edges" && kind != "offset-faces" && kind != "edge-finish")

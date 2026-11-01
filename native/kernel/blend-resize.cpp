@@ -1,6 +1,7 @@
 #include "blends.h"
 #include "edge-finish-construction.h"
 #include "edge-finish-validation.h"
+#include "geometry-policy.h"
 #include <BRepAlgoAPI_Defeaturing.hxx>
 #include <TopExp.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
@@ -133,8 +134,9 @@ std::optional<Result> collapseOffsetFinish(const Operand& body,
 }
 std::vector<Result> resizeBlends(const Tree& input, const std::vector<Operand>& bodies,
                                std::vector<std::string>& participants) {
-    const double radius = input.get<double>("radius");
-    if (!std::isfinite(radius) || radius < 0 || (radius > 0 && radius <= 1e-7)) throw std::runtime_error("Fillet radius must be zero or greater than the geometry tolerance");
+    const double requested = input.get<double>("radius");
+    if (!std::isfinite(requested) || requested < 0) throw std::runtime_error("Fillet radius must be nonnegative");
+    const double radius = requested < geometry_policy::minimumFinishMm ? 0 : requested;
     std::vector<Result> results;
     size_t count = 0;
     for (const auto& body : bodies) {

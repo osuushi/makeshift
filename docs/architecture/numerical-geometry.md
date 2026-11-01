@@ -7,6 +7,7 @@ not one global precision setting or a replacement for OCCT entity tolerances.
 
 | Policy | Value | Purpose |
 | --- | --- | --- |
+| Minimum recoverable finish | 0.001 mm | Rounds below this radius and recognized bevels below this setback recover their sharp supporting intersection. This is modeling resolution, not a looser BRep validity tolerance. |
 | Minimum solid volume | 1e-12 mm³ | Solid extraction and reconstructed/offset material must exceed the same floor. Reconnection and offset also require positive signed volume, retaining the orientation check. |
 | Boundary distance | 1e-6 mm | Reconnection fitting, offset boundary/surface agreement and minimum Shell/Offset separation. |
 | Offset topology tolerance | 2e-6 mm | Bounds recorded on generated faces, edges and vertices; conservative rounded-join bounds do not enlarge the geometric distance budget. |
@@ -84,6 +85,42 @@ possible at sphere/plane and sphere/cylinder junctions without relaxing their
 1e-6 mm boundary budget. These are construction targets, not a claim that every
 fillet meets the offset budget; offset operations still measure their input and
 reject coarse older or imported geometry.
+
+## Microscopic finishes
+
+Ordinary solid results, including inspected/reopened and STEP-imported bodies,
+simplify recognized sub-0.001 mm rounds and equal-setback chamfers before either
+full or deferred presentation. A cheap face/edge scan filters possible small
+analytic radii and short bevel cross edges. Recognition examines only candidate
+faces; ordinary results skip adjacency construction and healing entirely. All
+recognized small finishes are removed in one joint defeaturing pass, without an
+iterative model-wide repair loop or another frontend/kernel round trip.
+Tiny straight-edged planar caps entirely bounded by those removed finishes join
+the same pass, covering corners where several bevel strips meet.
+
+The recovered result must be a valid manifold solid, retain the unselected
+supporting surfaces, and actually remove the selected finish faces. Failed
+healing rejects the result. Topology history and selected faces continue through
+the removal; cached mass/bounds are invalidated only when geometry changes.
+Opening also continues tags, guides, appearances and decorators so a removed
+face does not leave an invalid saved reference. Only repaired bodies undergo
+continuation; unchanged bodies retain their saved metadata. Surviving topology
+identities supply the display derivatives omitted by archives before continuing
+attachments on repaired bodies. The saved file changes on Save.
+
+New sub-resolution edge sizes resolve to zero without native probes. Resizing an
+existing round/bevel below the floor heals it to zero; dragging snaps to that
+endpoint. Standalone cylinders, ordinary holes/walls and unrecognized surfaces
+are not deleted merely for being small. Larger supported finishes retain their
+geometry. This is intentionally bounded finish simplification, not arbitrary
+small-face removal.
+
+The normal-offset feasibility search can otherwise retain a microscopic round
+when shrinking its tangent supporting faces toward the zero-radius limit:
+the exact endpoint rejects, and fourteen bisections return the last valid
+positive radius. This was reproduced on a simple rounded block. The reported
+capture's 0.0006103515625 mm rounds have the same binary residue pattern, but its
+history starts after their creation, so the exact earlier edit is unknown.
 
 ## Stationary Bézier endpoints and solid presentation
 
