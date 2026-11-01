@@ -103,7 +103,10 @@ supporting surfaces, and actually remove the selected finish faces. Failed
 healing rejects the result. Topology history and selected faces continue through
 the removal; cached mass/bounds are invalidated only when geometry changes.
 Opening also continues tags, guides, appearances and decorators so a removed
-face does not leave an invalid saved reference. The saved file changes on Save.
+face does not leave an invalid saved reference. Only repaired bodies undergo
+continuation; unchanged bodies retain their saved metadata. Surviving topology
+identities supply the display derivatives omitted by archives before continuing
+attachments on repaired bodies. The saved file changes on Save.
 
 New sub-resolution edge sizes resolve to zero without native probes. Resizing an
 existing round/bevel below the floor heals it to zero; dragging snaps to that
