@@ -47,7 +47,12 @@ async function doubleClickEntry(page, reducedMotion, zoomedIn) {
   assert.deepEqual(undone.document, drawn.document);
   assertNavigation(await navigationHistory(page, true), entered, "Redo sketch entry");
 
-  const point = await at(page, 4, 3);
+  // Retained close zoom can crop the circle; keep the subsequent interior pick visible.
+  const point = await at(
+    page,
+    Math.min(4, entered.camera.height / 4),
+    Math.min(3, entered.camera.height / 4),
+  );
   await page.mouse.dblclick(point.x, point.y);
   const selected = await navigationIdle(page);
   assert.deepEqual(selected.selectedCurves, [drawn.document.sketches[0].curves[0].id]);

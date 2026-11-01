@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { launchElectron } from "./native-documents.mjs";
 import { drag, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
+import { updateProgressRoute } from "./ui-update-progress.mjs";
 
 const root = await mkdtemp(join(tmpdir(), "makeshift-updates-"));
 const app = await launchElectron({
@@ -130,7 +131,7 @@ try {
     .locator("h1")
     .filter({ hasText: "Checking for updates…" })
     .waitFor({ timeout: 10000 });
-  assert.equal(await status.locator("progress").getAttribute("value"), null);
+  await updateProgressRoute(status);
   await app.evaluate(({ autoUpdater }) => autoUpdater.emit("update-available"));
   await status.locator("h1").filter({ hasText: "Downloading update…" }).waitFor({ timeout: 10000 });
   await app.evaluate(() => globalThis.feedbackUpdates.check());
