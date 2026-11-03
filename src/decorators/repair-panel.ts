@@ -1,11 +1,28 @@
+import type { DisplayDocument } from "../model/display-document.js";
 import { entityRows } from "../model/entity-presentation.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { inspectorIcon } from "../tools/inspector-icons.js";
+import { gearFitFailure } from "./gear-group-geometry.js";
 import { gearDefinition } from "./gear-settings.js";
 import { selectDecoratorInputs } from "./selection-action.js";
 import { threadDefinition } from "./thread-settings.js";
-import type { DecoratorEdit, DecoratorInstance } from "./types.js";
+import type { DecoratorEdit, DecoratorInstance, FaceReference } from "./types.js";
+
+function faceSurvives(document: DisplayDocument, ref: FaceReference): boolean {
+  return !!document.bodies
+    ?.find((body) => body.id === ref.body)
+    ?.faces.some((face) => face.id === ref.face);
+}
+
+export function needsDecoratorRepair(document: DisplayDocument, instance: DecoratorInstance) {
+  return (
+    !!instance.problem &&
+    !instance.problem.startsWith(gearFitFailure) &&
+    (instance.definition !== threadDefinition ||
+      !instance.faces.some((ref) => faceSurvives(document, ref)))
+  );
+}
 
 export function appendDecoratorRepairs(
   root: HTMLElement,
@@ -32,20 +49,16 @@ export function appendDecoratorRepairs(
     button(item, "Select affected geometry", () => {
       const current = editor.store.data.decorators?.find((d) => d.id === instance.id);
       if (!current) throw new Error("The decorator is no longer present");
-      const faces = current.faces.filter((f) =>
-        editor.store.data.bodies?.some(
-          (b) => b.id === f.body && b.faces.some((face) => face.id === f.face),
-        ),
-      );
+      const faces = current.faces.filter((ref) => faceSurvives(editor.store.data, ref));
       editor.modeling.targets = faces.length
         ? faces.map((f) => ({ kind: "face", ...f }))
         : [...new Set(current.faces.map((f) => f.body))].map((body) => ({ kind: "body", body }));
       editor.refresh();
     });
-    const custom = instance.definition !== threadDefinition;
-    const label = custom
-      ? "Use selected faces for this decorator"
-      : "Use selected faces for these threads";
+    const thread = instance.definition === threadDefinition;
+    const label = thread
+      ? "Use selected faces for these threads"
+      : "Use selected faces for this decorator";
     const reassign = button(item, label, () => {});
     reassign.disabled = editor.store.busy;
     reassign.onclick = () =>
@@ -66,7 +79,7 @@ export function appendDecoratorRepairs(
       );
     button(
       item,
-      custom ? "Remove unresolved decorator" : "Remove unresolved thread decorator",
+      thread ? "Remove unresolved thread decorator" : "Remove unresolved decorator",
       () => {
         return edit({ action: "discard", id: instance.id });
       },
@@ -85,7 +98,12 @@ function repairDetails(
   const definition = editor.store.data.decoratorDefinitions?.find(
     (d) => d.id === instance.definition,
   );
-  const name = instance.definition === gearDefinition ? "Gear" : (definition?.name ?? "Decorator");
+  const name =
+    instance.definition === threadDefinition
+      ? "Threads"
+      : instance.definition === gearDefinition
+        ? "Gear"
+        : (definition?.name ?? "Decorator");
   const rows = entityRows(
     editor.store.data,
     (editor.store.data.bodies ?? []).map((b) => b.id),

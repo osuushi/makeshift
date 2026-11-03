@@ -90,3 +90,38 @@ test("packing cancels the opposing faces of a collapsed zero-thickness sheet", (
   assert.deepEqual(result.vertices, mesh.vertices);
   assert.equal(result.triangles.length, 4);
 });
+
+test("packing closes an opposing collinear seam without moving the surface", () => {
+  // Two different middle vertices at the same position, as in the captured
+  // feather/thread Boolean. Every edge of the collapsed facets is long.
+  const mesh: ExportMesh = {
+    vertices: [
+      [0, 0, 0],
+      [2, 0, 0],
+      [0, 2, 0],
+      [0, 0, 2],
+      [1, 0, 0],
+      [1, 0, 0],
+    ],
+    triangles: [
+      [0, 2, 4],
+      [4, 2, 1],
+      [0, 5, 3],
+      [5, 1, 3],
+      [1, 2, 3],
+      [2, 0, 3],
+      [0, 4, 1],
+      [0, 1, 5],
+    ],
+  };
+  const result = packedMesh(mesh, 1e-7);
+  validateMesh(result);
+  assert.deepEqual(result.vertices, mesh.vertices);
+  assert.deepEqual(
+    result.triangles.map((t) => t.map((v) => mesh.vertices[v])),
+    mesh.triangles.slice(0, 6).map((t) => t.map((v) => mesh.vertices[v])),
+  );
+  const unequal = structuredClone(mesh);
+  unequal.vertices[5][0] += 1e-8;
+  assert.throws(() => packedMesh(unequal, 1e-7), /collapsed/);
+});

@@ -123,7 +123,8 @@ export const uiSuites = [
     args: ["thread-correction-ui.mjs"],
     seconds: 10,
     browsers: ["electron"],
-    reason: "Correcting a rejected thread field must recover focus and ordinary acceptance.",
+    reason:
+      "Correcting a rejected thread field must recover focus, and a lost thread needs Inspector repair without a selectable face.",
     unit: "decorator-settings-draft.test.ts",
   },
   {

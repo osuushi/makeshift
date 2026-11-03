@@ -390,23 +390,24 @@ face deletion also removes a decoration when all its assigned faces were selecte
 for deletion and none survive; other lost supports retain the repair diagnostic.
 
 Invalid decorators show red warning stripes on surviving affected faces, including
-when deselected; selection lightens the red while retaining the pattern. Geometry
-Threads never open the automatic repair panel or its select/reassign/discard controls.
-Selecting the face opens the normal thread fields with the validation message and
-advanced controls expanded. A valid settings edit clears that validation failure
-in the same Undo step. Settings edits do not clear topology ambiguity or lost supports.
+when deselected; selection lightens the red while retaining the pattern. Selecting
+a surviving threaded face opens the normal thread fields with the validation
+message and advanced controls expanded. A valid settings edit clears that
+validation failure in the same Undo step. Settings edits do not clear topology
+ambiguity or lost supports.
 Geometry edits revalidate stored settings failures: restoring a valid radius or
 length clears the error in the temporary candidate and accepted result without
 changing thread parameters. Undo/Redo restores validity with the geometry.
 
-Unresolved topology attachments remain in the document with their repair reason, even when
-their original faces no longer exist. For non-thread decorators the panel can select surviving affected
-geometry, reassign an attachment to selected compatible faces, or remove that
-individual attachment. Unresolved attachments reserve no active face assignment.
-Threads with surviving faces use their ordinary selection editor and removal action;
-there is currently no thread reassignment UI for lost or ambiguous supports.
-They block export until repaired or removed, but do not hide valid previews on
-other faces. Kept Boolean originals retain their own attachments; resulting bodies
+Unresolved topology attachments remain in the document with their repair reason.
+The Decorators Inspector lists non-thread repairs and threads with no surviving
+faces without requiring a selection. Expand the repair to locate affected
+geometry (the owning body if the faces are gone), reassign the decoration to
+compatible selected faces, or remove the individual attachment. Threads with
+surviving faces use their ordinary selection editor and removal action.
+Unresolved attachments reserve no active face assignment, block decorated export
+until repaired or removed, and leave valid previews visible on other faces.
+Kept Boolean originals retain their own attachments; resulting bodies
 receive independent identities through the same correspondence rules.
 
 Confirmed V1 transform behavior: reflection preserves the configured handedness;
@@ -624,7 +625,9 @@ User-selected clearance is a radial hole-side allowance, not an ISO fit class.
 Separate numerical Boolean precision, mesh approximation error and intentional
 print clearance. A finer thread mesh cannot recover a coarse base cylinder. Define
 an export error budget in millimeters relative to thread depth/fit, and retessellate
-the export copy when needed. Avoid silently increasing weld tolerance to fix errors.
+the export copy when needed. Packed Boolean output can reconnect a seam where
+two opposing collinear facets join identical coordinates. The output retains the
+original vertex coordinates and must pass the same closure and orientation checks.
 
 The built-in export prepares an accepted read-only snapshot through the geometry
 query worker. Only decorated bodies are retessellated; the original BRep, IDs,
