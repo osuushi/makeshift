@@ -1,7 +1,7 @@
 import type { SketchDocument } from "../sketch/document.js";
 import { knurlDefinition } from "./builtins.js";
 import { cylinderFrame, resolveFaces } from "./cylinder.js";
-import { editDecorators, partitionThreads, validateBuiltin } from "./edits.js";
+import { partitionThreads, validateBuiltin } from "./edits.js";
 import type { DecoratorInspection, DecoratorInspectionRequest } from "./inspection.js";
 import { patchKnurlSettings } from "./knurl-settings.js";
 import { threadInformation } from "./thread-information.js";
@@ -16,10 +16,7 @@ export function inspectThreads(
     const existing = request.instanceId
       ? document.decorators?.find((d) => d.id === request.instanceId)
       : undefined;
-    if (
-      (request.instanceId || request.reassign) &&
-      (!existing || existing.definition !== request.definition)
-    )
+    if (request.instanceId && (!existing || existing.definition !== request.definition))
       throw new Error("Select an existing decorator");
     if (
       document.decorators?.some(
@@ -31,21 +28,11 @@ export function inspectThreads(
       )
     )
       throw new Error("Remove the existing decorator before applying another");
-    const reassigned =
-      request.reassign && existing
-        ? editDecorators(document, {
-            action: "reassign",
-            id: existing.id,
-            faces: [...request.faces],
-          }).decorators?.find((instance) => instance.id === existing.id)
-        : undefined;
-    const groups = reassigned
-      ? [{ faces: [...reassigned.faces] }]
-      : partitionThreads(document, request.faces).map((faces) => ({ faces }));
+    const groups = partitionThreads(document, request.faces).map((faces) => ({ faces }));
     const diagnostics = groups.flatMap(({ faces }) => {
       const cylinder = resolveFaces(document.bodies ?? [], faces)[0].cylinder;
       const diameter = cylinder.radius * 2;
-      const instance = reassigned ?? {
+      const instance = {
         id: "inspection",
         definition: request.definition,
         version: 1,

@@ -12,7 +12,7 @@ import { decoratorLibrary } from "./library.js";
 import { appendThreadInformation, appendThreadProblem } from "./panel-information.js";
 import { appendPresetControls } from "./preset-panel.js";
 import { lastDecoratorChoice, recalledChoiceSettings } from "./presets.js";
-import { appendDecoratorRepairs, needsDecoratorRepair } from "./repair-panel.js";
+import { appendDecoratorRepairs } from "./repair-panel.js";
 import { DecoratorSettingsDraft } from "./settings-draft.js";
 import { ThreadApplication } from "./thread-application.js";
 import { appendThreadSettings } from "./thread-panel.js";
@@ -176,8 +176,9 @@ export class DecoratorPanel {
       return;
     }
     const instances = this.instances();
-    const problems = (this.editor.store.data.decorators ?? []).filter((instance) =>
-      needsDecoratorRepair(this.editor.store.data, instance),
+    const problems = (this.editor.store.data.decorators ?? []).filter(
+      (d) =>
+        d.problem && !d.problem.startsWith(gearFitFailure) && d.definition !== threadDefinition,
     );
     const last = this.editor.store.data.decorators?.find((d) => d.id === this.last);
     const canContinue =

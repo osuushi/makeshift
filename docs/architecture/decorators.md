@@ -383,28 +383,26 @@ instances and between decorated and undecorated faces, while it may merge faces
 belonging to the same instance. Other modeling operations still use the unresolved
 repair policy when their topology merges incompatible regions.
 
-Consume immediate operation correspondence when accepting the geometry edit;
-do not add a persistent operation-history graph. Undo restores geometry and
-decorator assignments together. Body deletion removes its decorations. Explicit
-face deletion also removes a decoration when all its assigned faces were selected
-for deletion and none survive; other lost supports retain the repair diagnostic.
+Consume immediate operation correspondence when accepting a geometry edit. Keep
+decorations on surviving face descendants and drop a decoration when no assigned
+faces survive. Undo restores geometry and decorator assignments together. Opening
+a saved document drops legacy decorations with dangling face references before
+continuing attachments through any kernel repairs.
 
 Invalid decorators show red warning stripes on surviving affected faces, including
 when deselected; selection lightens the red while retaining the pattern. Selecting
 a surviving threaded face opens the normal thread fields with the validation
 message and advanced controls expanded. A valid settings edit clears that
-validation failure in the same Undo step. Settings edits do not clear topology
-ambiguity or lost supports.
+validation failure in the same Undo step. Topology ambiguity still needs a
+geometry or attachment edit.
 Geometry edits revalidate stored settings failures: restoring a valid radius or
 length clears the error in the temporary candidate and accepted result without
 changing thread parameters. Undo/Redo restores validity with the geometry.
 
-Unresolved topology attachments remain in the document with their repair reason.
-The Decorators Inspector lists non-thread repairs and threads with no surviving
-faces without requiring a selection. Expand the repair to locate affected
-geometry (the owning body if the faces are gone), reassign the decoration to
-compatible selected faces, or remove the individual attachment. Threads with
-surviving faces use their ordinary selection editor and removal action.
+Attachments with surviving faces and unresolved topology remain in the document
+with their repair reason. The Decorators Inspector can locate affected geometry,
+reassign non-thread decorations to compatible selected faces, or remove the
+individual attachment. Threads use their ordinary selection editor and removal action.
 Unresolved attachments reserve no active face assignment, block decorated export
 until repaired or removed, and leave valid previews visible on other faces.
 Kept Boolean originals retain their own attachments; resulting bodies

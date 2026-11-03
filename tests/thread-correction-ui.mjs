@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { openDocument } from "./native-documents.mjs";
 import { decoratorCylinder } from "./ui-decorator-cylinder.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { inspect } from "./ui-helpers.mjs";
@@ -46,7 +45,7 @@ await withUiRuntimes(
     await previewActionReady(page, "Accept face offset");
     assert.equal((await inspect(page)).preview.decorators[0].problem, undefined);
     await page.getByRole("button", { name: "Accept face offset", exact: true }).click();
-    const { camera, document: restored } = await inspect(page);
+    const restored = (await inspect(page)).document;
     assert.equal(restored.decorators[0].problem, undefined);
     assert.deepEqual(restored.decorators[0].settings, before.settings);
     assert.equal(
@@ -80,59 +79,6 @@ await withUiRuntimes(
     console.log(
       `${name}: invalid thread fields, radius recovery in preview/acceptance, no thread repair controls, settings correction and Undo/Redo passed`,
     );
-    await orphanedThreadRepair(page, restored, camera);
   },
   { timeout: 30000 },
 );
-
-async function orphanedThreadRepair(page, document, camera) {
-  // A saved orphan has no selectable face to bring up the ordinary thread editor.
-  const original = document.decorators[0];
-  const orphan = {
-    ...original,
-    faces: [{ body: original.faces[0].body, face: "removed-thread-face" }],
-    frame: { ...original.frame, origin: [20, 0, 0] },
-    problem: "The decorated faces were removed. Reassign or remove the decoration.",
-  };
-  await openDocument(page, {
-    name: "orphaned-thread.makeshift",
-    mimeType: "application/json",
-    buffer: Buffer.from(
-      JSON.stringify({
-        format: "makeshift",
-        version: 1,
-        camera,
-        document: { ...document, decorators: [orphan] },
-      }),
-    ),
-  });
-  const repair = page.locator(".decorator-repair");
-  const opened = await inspect(page);
-  assert.deepEqual(opened.modelingSelection, []);
-  await repair.getByText(/Threads · Body 1 · needs attention/).click();
-  await repair.getByRole("button", { name: "Select affected geometry", exact: true }).click();
-  assert.deepEqual((await inspect(page)).modelingSelection, [
-    { kind: "body", body: original.faces[0].body },
-  ]);
-  await repair
-    .getByRole("button", { name: "Use selected faces for these threads", exact: true })
-    .click();
-  await page.getByRole("group", { name: "Select tool inputs", exact: true }).waitFor();
-  await worldClick(page, [0, -5.5, 5]);
-  await page.waitForFunction(() => !window.makeshiftInspect().document.decorators[0].problem);
-  const reassigned = (await inspect(page)).document.decorators[0];
-  assert.equal(reassigned.id, original.id);
-  assert.deepEqual(reassigned.faces, original.faces);
-  assert.deepEqual(reassigned.settings, original.settings);
-  assert.equal(reassigned.problem, undefined);
-  await chooseTool(page, "undo", "undo");
-  assert.deepEqual((await inspect(page)).document.decorators, opened.document.decorators);
-  const remove = repair.getByRole("button", { name: "Remove unresolved thread decorator" });
-  if (!(await remove.isVisible())) await repair.locator("summary").click();
-  await remove.click();
-  assert.deepEqual((await inspect(page)).document.decorators, []);
-  await chooseTool(page, "undo", "undo");
-  assert.deepEqual((await inspect(page)).document.decorators, opened.document.decorators);
-  await chooseTool(page, "redo", "redo");
-  assert.deepEqual((await inspect(page)).document.decorators, []);
-}
