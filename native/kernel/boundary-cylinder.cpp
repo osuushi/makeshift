@@ -43,7 +43,9 @@ Handle(Geom2d_Curve) projected(const TopoDS_Edge& original, const TopoDS_Edge& m
 TopoDS_Face cylinderFace(const TopoDS_Face& source, const Edit& edit) {
     const BRepAdaptor_Surface original(source);
     if (original.GetType() != GeomAbs_Cylinder) return {};
-    const auto cylinder = original.Cylinder();
+    return cylinderFace(source, edit, original.Cylinder());
+}
+TopoDS_Face cylinderFace(const TopoDS_Face& source, const Edit& edit, const gp_Cylinder& cylinder) {
     TopTools_IndexedMapOfShape edges;
     TopExp::MapShapes(source, TopAbs_EDGE, edges);
     for (int e = 1; e <= edges.Extent(); ++e) {

@@ -8,6 +8,7 @@
 #include "planar-face-offset.h"
 #include "planar-offset-prisms.h"
 #include "spherical-face-offset.h"
+#include "cylindrical-face-offset.h"
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <BRepOffset_MakeOffset.hxx>
 #include <BRepAdaptor_Surface.hxx>
@@ -142,6 +143,10 @@ std::vector<Result> offsetFaces(const Tree& input, const std::vector<Operand>& b
         } catch (const std::runtime_error&) {
             if (auto spherical = sphericalFaceOffset(originalBody, requestedFaces, distance)) {
                 results.push_back(std::move(*spherical));
+                continue;
+            }
+            if (auto cylindrical = cylindricalFaceOffset(originalBody, requestedFaces, distance)) {
+                results.push_back(std::move(*cylindrical));
                 continue;
             }
             auto planar = planarFaceOffset(originalBody, requestedFaces, distance);
