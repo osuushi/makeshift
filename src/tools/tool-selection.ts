@@ -1,6 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { ModelingTarget } from "../sketch/model-selection-state.js";
 import { modelingKey } from "../sketch/model-selection-state.js";
+import { profilesFor } from "../sketch/profiles.js";
 import type { SelectionTarget } from "../sketch/selection-target.js";
 import { targetKey } from "../sketch/selection-target.js";
 import type { ToolAction } from "./catalog.js";
@@ -49,6 +50,30 @@ export class ToolSelection {
     if (this.planar) this.editor.selected.replace(targets as SelectionTarget[]);
     else this.editor.modeling.targets = targets as ModelingTarget[];
   }
+  /** Whole sketches contribute every region before ordinary category refinement.
+   * The sketch token retains the curves (including open edges) in Modeling.
+   * Tools accepting whole sketches keep that authoritative entity selection.
+   */
+  get refinementTargets(): ToolTarget[] {
+    if (this.planar || this.policy.model?.includes("sketch")) return this.targets;
+    const expanded = this.targets.flatMap((target): ToolTarget[] => {
+      if (target.kind !== "sketch") return [target];
+      const sketch = this.editor.store.data.sketches.find((s) => s.id === target.sketch);
+      return [
+        target,
+        ...(sketch
+          ? profilesFor(sketch).map(
+              (profile): ModelingTarget => ({
+                kind: "profile",
+                sketch: sketch.id,
+                profile,
+              }),
+            )
+          : []),
+      ];
+    });
+    return [...new Map(expanded.map((target) => [this.key(target), target])).values()];
+  }
   accepts(target: ToolTarget): boolean {
     const categories = this.planar ? this.policy.sketch : this.policy.model;
     if (!categories?.includes(this.category(target))) return false;
@@ -81,7 +106,7 @@ export class ToolSelection {
   }
   narrow(): ToolTarget[] | null {
     return narrowCategories(
-      this.targets,
+      this.refinementTargets,
       (target) => this.category(target),
       (targets) => this.valid(targets),
     );

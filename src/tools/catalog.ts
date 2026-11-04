@@ -148,7 +148,7 @@ export class ToolCatalog {
         const narrowed = selection.narrow();
         if (narrowed) selection.targets = narrowed;
         else if (tool.selectionInTool) {
-          const previous = selection.targets;
+          const previous = selection.refinementTargets;
           selection.targets = previous.filter((target) =>
             previous
               .filter((other) => selection.category(other) === selection.category(target))

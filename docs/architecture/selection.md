@@ -11,6 +11,14 @@ founder feedback update these contracts before further tools depend on them.
 
 ### Plane, tool and selection
 
+- A whole-sketch entity selection contributes all derived regions to tool input
+  refinement. Its sketch token represents the curves, including open edges;
+  ordinary category narrowing drops that token for region tools such as Extrude,
+  Revolve and Loft. Explicitly selected regions are deduplicated, preserving first
+  selection order. Incomplete inputs retain the expanded eligible categories in
+  the normal tool selection flow. Tools accepting whole sketches (including Move,
+  Copy and Delete) retain the entity token and its existing ownership semantics.
+
 - Command/Ctrl-A selects all visible whole bodies and sketches in Modeling; in a
   planar workspace it selects all curves in the active sketch and switches to Select.
   Command/Ctrl-Shift-A selects all visible bodies; Command/Ctrl-Alt-A selects all
