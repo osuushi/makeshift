@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "microscopic-topology.h"
 #include "deferred-presentation.h"
 #include "presentation-mesh.h"
 #include "erosion.h"
@@ -105,6 +106,49 @@ void writeMassCenter(std::ostream& reply, const std::vector<Operand>& bodies) {
     reply << std::setprecision(17) << "{\"centerOfMass\":[" << center.X() << ','
           << center.Y() << ',' << center.Z() << "]}";
 }
+void calculateAndPresent(std::ostream& reply, const Tree& input,
+                         const std::vector<Operand>& bodies, KernelTiming& timing) {
+    std::string mode;
+    std::vector<std::string> participants;
+    Tree erosionQuality;
+    std::vector<Result> tools;
+    const bool erode = input.get<std::string>("kind") == "erode";
+    if (erode) mode = "new";
+    auto results = erode ? erodeBodies(input,bodies,participants,&erosionQuality)
+        : calculate(input,bodies,mode,participants,&tools);
+
+    if (input.get<std::string>("kind") != "inspect") {
+        for (auto& result : results) resolveMicroscopicTopology(result);
+        for (auto& tool : tools) resolveMicroscopicTopology(tool);
+    }
+
+    timing.phase("calculate");
+    if (input.get<std::string>("presentation", "") == "deferred") {
+        const auto kind = input.get<std::string>("kind");
+        if (kind != "move-faces" && kind != "move-edges" && kind != "offset-faces" && kind != "edge-finish")
+            throw std::runtime_error("Deferred presentation requires a supported solid edit");
+        deferPresentation(reply, results, mode, participants);
+        return;
+    }
+    const bool visual = input.get<std::string>("presentation", "") == "visual";
+    if (visual && input.get<std::string>("kind") != "extrude")
+        throw std::runtime_error("Visual presentation requires an extrusion");
+    const auto presentation = visual ? presentVisual : present;
+    std::ostringstream output; output << std::setprecision(17) << "{\"mode\":" << quoted(mode) << ",\"participants\":[";
+    for (size_t i = 0; i < participants.size(); i++) { if (i) output << ','; output << quoted(participants[i]); }
+    output << "],\"results\":[";
+    const double deflection = input.get<std::string>("kind") == "inspect"
+        ? input.get<double>("deflection", 0.05) : 0.05;
+    for (size_t i = 0; i < results.size(); i++) { if (i) output << ','; presentation(output, results[i], deflection); }
+    output << "],\"tools\":[";
+    for (size_t i = 0; i < tools.size(); i++) { if (i) output << ','; present(output, tools[i], deflection); }
+    timing.phase("presentation");
+    output << ']';
+    if (visual) output << ",\"presentation\":\"visual\"";
+    if (erode && input.get<std::string>("method","fast") == "fast") writeErosionQuality(output,erosionQuality);
+    reply << output.str() << '}';
+    timing.phase("write");
+}
 void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
     if (input.get<std::string>("kind") == "complete-preview") {
         completePresentation(reply);
@@ -119,7 +163,7 @@ void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
         std::ostringstream output; exportStep(output, input);
         reply << output.str(); return;
     }
-    const auto bodies = operands(input); std::string mode;
+    const auto bodies = operands(input);
     timing.phase("operands");
     if (input.get<std::string>("kind") == "center-of-mass") {
         writeMassCenter(reply, bodies); return;
@@ -155,40 +199,7 @@ void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
         std::ostringstream output; projectCurves(output, input, bodies);
         reply << output.str(); return;
     }
-    std::vector<std::string> participants;
-    Tree erosionQuality;
-    std::vector<Result> tools;
-    const bool erode = input.get<std::string>("kind") == "erode";
-    if (erode) mode = "new";
-    const auto results = erode ? erodeBodies(input,bodies,participants,&erosionQuality)
-        : calculate(input,bodies,mode,participants,&tools);
-
-    timing.phase("calculate");
-    if (input.get<std::string>("presentation", "") == "deferred") {
-        const auto kind = input.get<std::string>("kind");
-        if (kind != "move-faces" && kind != "move-edges" && kind != "offset-faces" && kind != "edge-finish")
-            throw std::runtime_error("Deferred presentation requires a supported solid edit");
-        deferPresentation(reply, results, mode, participants);
-        return;
-    }
-    const bool visual = input.get<std::string>("presentation", "") == "visual";
-    if (visual && input.get<std::string>("kind") != "extrude")
-        throw std::runtime_error("Visual presentation requires an extrusion");
-    const auto presentation = visual ? presentVisual : present;
-    std::ostringstream output; output << std::setprecision(17) << "{\"mode\":" << quoted(mode) << ",\"participants\":[";
-    for (size_t i = 0; i < participants.size(); i++) { if (i) output << ','; output << quoted(participants[i]); }
-    output << "],\"results\":[";
-    const double deflection = input.get<std::string>("kind") == "inspect"
-        ? input.get<double>("deflection", 0.05) : 0.05;
-    for (size_t i = 0; i < results.size(); i++) { if (i) output << ','; presentation(output, results[i], deflection); }
-    output << "],\"tools\":[";
-    for (size_t i = 0; i < tools.size(); i++) { if (i) output << ','; present(output, tools[i], deflection); }
-    timing.phase("presentation");
-    output << ']';
-    if (visual) output << ",\"presentation\":\"visual\"";
-    if (erode && input.get<std::string>("method","fast") == "fast") writeErosionQuality(output,erosionQuality);
-    reply << output.str() << '}';
-    timing.phase("write");
+    calculateAndPresent(reply, input, bodies, timing);
 }
 }
 int main() {

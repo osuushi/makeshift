@@ -8,6 +8,7 @@ not one global precision setting or a replacement for OCCT entity tolerances.
 | Policy | Value | Purpose |
 | --- | --- | --- |
 | Minimum solid volume | 1e-12 mm³ | Solid extraction and reconstructed/offset material must exceed the same floor. Reconnection and offset also require positive signed volume, retaining the orientation check. |
+| Minimum topology extent | 0.001 mm | New solid results repair microscopic strip/spot faces and short edges before publication; unrepairable candidates reject. Degenerate surface-pole edges are exempt. |
 | Boundary distance | 1e-6 mm | Reconnection fitting, offset boundary/surface agreement and minimum Shell/Offset separation. |
 | Offset topology tolerance | 2e-6 mm | Bounds recorded on generated faces, edges and vertices; conservative rounded-join bounds do not enlarge the geometric distance budget. |
 | Generated vertex adjustment | 0.001 mm | Maximum correction of a generated vertex onto its incident curves. Retained source vertices cannot move; the corrected geometry must still satisfy the boundary-distance budget. |
@@ -19,7 +20,9 @@ not one global precision setting or a replacement for OCCT entity tolerances.
 | Full circle angle | 1e-9 radians | Distinguish a complete circle from a trimmed arc. |
 | Tangent crescent fillet | 0.01 mm radius | Intentional printable relief during extrusion, capped at 1% of inner radius and wall thickness; this is not a validation tolerance. |
 
-The volume floor does not establish a minimum supported feature size. Operations
+The volume floor alone does not establish a minimum supported feature size.
+[Automatic microscopic repair](solid-cleanup.md#automatic-microscopic-topology-repair-2026-11-06)
+enforces a separate topology extent on newly calculated solid results. Operations
 also enforce valid BReps, closed shells, noncollapsed boundaries and their own
 feasibility checks. A valid small solid must not fail reconnection merely because
 that path applies an unrelated, larger volume floor. Large coordinate magnitudes

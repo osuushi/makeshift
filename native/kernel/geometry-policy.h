@@ -4,6 +4,7 @@
 // application checks, not replacements for OCCT's per-entity tolerances.
 namespace geometry_policy {
 constexpr double minimumSolidVolumeMm3 = 1e-12;
+constexpr double minimumTopologyExtentMm = 0.001;
 constexpr double boundaryDistanceMm = 1e-6;
 constexpr double offsetTopologyToleranceMm = 2e-6;
 constexpr double generatedVertexAdjustmentMm = 0.001;
