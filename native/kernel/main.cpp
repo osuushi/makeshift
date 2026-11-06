@@ -7,6 +7,7 @@
 #include "mesh-fit.h"
 #include "timing.h"
 #include "geometry-policy.h"
+#include "small-finishes.h"
 #include <boost/property_tree/json_parser.hpp>
 #include <BRepTools.hxx>
 #include <OSD_Parallel.hxx>
@@ -117,6 +118,8 @@ void calculateAndPresent(std::ostream& reply, const Tree& input,
     auto results = erode ? erodeBodies(input,bodies,participants,&erosionQuality)
         : calculate(input,bodies,mode,participants,&tools);
 
+    for (auto& result : results) simplifySmallFinishes(result);
+    for (auto& tool : tools) simplifySmallFinishes(tool);
     if (input.get<std::string>("kind") != "inspect") {
         for (auto& result : results) resolveMicroscopicTopology(result);
         for (auto& tool : tools) resolveMicroscopicTopology(tool);

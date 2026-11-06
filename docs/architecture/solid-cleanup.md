@@ -23,9 +23,10 @@ curve/surface agreement and bounded added/removed material. Convex polyhedra use
 exact vertex distances to bound the entire solid; other shapes require mutually
 containing 0.001 mm outward envelopes. Unverifiable envelopes reject. This is a
 conservative repair, not a guarantee that every curved sliver can be healed.
-Read-only inspection and reopening existing BReps do not silently rewrite them;
-their next solid edit passes through the check. Existing microscopic geometry
-can therefore remain in an untouched legacy body.
+The general strip/spot/short-edge pass does not run on read-only inspection or
+Open; those bodies pass through it on their next solid edit. Existing recognized
+microscopic finishes still heal on Open under the separate finish-simplification
+contract. Other microscopic geometry can remain in an untouched legacy body.
 Mesh reconstruction retains its separate fitting/accuracy validation and is not
 rewritten by this pass.
 

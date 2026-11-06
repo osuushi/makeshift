@@ -1,4 +1,5 @@
 import type { BodyEdgeFinish } from "../model/body.js";
+import { minimumFinishMm } from "../model/geometry-policy.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { KernelResult } from "./kernel-result.js";
 
@@ -24,7 +25,7 @@ export class EdgeSizeLimit<Result = KernelResult> {
       this.upper = Infinity;
     }
     if (!Number.isFinite(operation.size)) throw new Error("Enter a finite edge size");
-    if (operation.size <= 1e-8) return { size: 0, result: null };
+    if (operation.size < minimumFinishMm) return { size: 0, result: null };
     if (this.best && operation.size >= this.upper) return this.best;
     const requested = await this.probe(operation.size, calculate);
     if (requested) {
@@ -42,7 +43,7 @@ export class EdgeSizeLimit<Result = KernelResult> {
     let low = this.best && this.best.size < operation.size ? this.best : null;
     if (!low) {
       let seed = Math.min(operation.size / 2, scale * 1e-3);
-      for (let i = 0; i < 8 && seed > 1e-8 && !low; i++, seed /= 2)
+      for (let i = 0; i < 8 && seed >= minimumFinishMm && !low; i++, seed /= 2)
         low = await this.probe(seed, calculate);
     }
     if (!low) throw new Error("Could not find a feasible size for all selected edges");

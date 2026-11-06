@@ -14,13 +14,13 @@ function noShortEdges(body: Body) {
 }
 
 for (const size of [0.0005, 19.9995]) {
-  test(`chamfer ${size} collapses microscopic faces before preview and preserves atomic Undo`, async () => {
+  test(`chamfer ${size} leaves usable topology and preserves atomic Undo`, async () => {
     const owner = new DocumentOwner();
     try {
       const box = await prism(owner, square);
       const original = owner.view.data;
       const body = await finish(owner, box, [vertical(box, 0, 0)], size, "chamfer");
-      assert.equal(owner.view.edgeSize, size);
+      assert.equal(owner.view.edgeSize, size < 0.001 ? 0 : size);
       assert.equal(body.faces.length, size < 1 ? 6 : 5);
       noShortEdges(body);
       const expected = size < 1 ? 4000 : ((40 - size) ** 2 / 2) * 10;
@@ -28,6 +28,10 @@ for (const size of [0.0005, 19.9995]) {
       assert.deepEqual(owner.view.data, original, "Preview cannot mutate accepted geometry");
       await owner.call({ kind: "accept" });
       const accepted = owner.view.data;
+      if (size < 0.001) {
+        assert.equal(accepted, original, "Sub-resolution entry remains a no-op");
+        return;
+      }
       await owner.call({ kind: "undo" });
       assert.deepEqual(owner.view.data, original);
       await owner.call({ kind: "redo" });
