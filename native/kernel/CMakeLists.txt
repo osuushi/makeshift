@@ -26,7 +26,7 @@ target_include_directories(makeshift-kernel SYSTEM PRIVATE ${OpenCASCADE_INCLUDE
 target_sources(makeshift-kernel PRIVATE volume.cpp deferred-presentation.cpp)
 target_sources(makeshift-kernel PRIVATE small-finishes.cpp)
 target_sources(makeshift-kernel PRIVATE edge-finish-construction.cpp edge-finish-supports.cpp edge-finish-trim.cpp edge-finish-validation.cpp edge-finish-local.cpp)
-target_sources(makeshift-kernel PRIVATE boundary-move.cpp boundary-selection.cpp boundary-edges.cpp boundary-faces.cpp boundary-cylinder.cpp boundary-filling.cpp boundary-polynomial.cpp)
+target_sources(makeshift-kernel PRIVATE boundary-move.cpp boundary-selection.cpp boundary-edges.cpp boundary-faces.cpp boundary-band.cpp boundary-cylinder.cpp boundary-filling.cpp boundary-polynomial.cpp)
 target_sources(makeshift-kernel PRIVATE offset-collapse.cpp)
 target_sources(makeshift-kernel PRIVATE chamfer-recognition.cpp)
 target_sources(makeshift-kernel PRIVATE offset-thickness.cpp offset-thickness-ray.cpp)

@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { historyMenu, openDocument } from "./native-documents.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { holdCompletion } from "./ui-deferred-preview.mjs";
+import { edgeLiftRoute } from "./ui-edge-lift.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { inspect, modalCompleted } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
@@ -75,4 +76,10 @@ async function route(page, name) {
   }
 }
 
-await withUiRuntimes(route, { defaults: ["electron"] });
+await withUiRuntimes(
+  async (page, name) => {
+    await route(page, name);
+    await edgeLiftRoute(page, name);
+  },
+  { defaults: ["electron"] },
+);

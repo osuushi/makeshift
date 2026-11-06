@@ -25,6 +25,7 @@ void buildEdges(Edit&);
 TopoDS_Face rebuildFace(const TopoDS_Face&, const Edit&);
 TopoDS_Face polynomialQuad(const TopoDS_Face&, const std::vector<TopoDS_Edge>&);
 TopoDS_Face cylinderFace(const TopoDS_Face&, const Edit&);
+TopoDS_Face periodicBand(const TopoDS_Face&, const Edit&);
 TopoDS_Face fillFace(const TopoDS_Face&, const std::vector<TopoDS_Edge>&,
                      const std::vector<TopoDS_Wire>&);
 Result reconstruct(const Edit&, const std::vector<SourceEntity>& replacements = {});

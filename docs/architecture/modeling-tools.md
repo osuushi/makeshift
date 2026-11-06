@@ -376,6 +376,9 @@ Each gesture or typed quantity is one axis operation. Release retains a temporar
 preview. Enter/check accepts one Undo step; Escape/cross cancels. Tool switching
 finishes only a valid request. Invalid requests show a red gizmo, retain the last
 valid image and disable acceptance; typed values are never silently clamped.
+An explanatory refusal stays beside the movement controls until the value changes
+or the edit ends. Dismissing workspace feedback or reading/capturing the document
+does not clear this tool-local refusal, and rejected input never offers acceptance.
 Camera navigation and pivot repositioning remain available.
 
 There is one selection/neighborhood rule:
@@ -397,7 +400,11 @@ trim loops; projected boundary parameters preserve the original periodic branche
 and both seam occurrences. This allows a neck with a threaded lower boundary to
 lengthen when its cap moves axially. Projection correspondence and resulting edge/
 vertex tolerances must remain within 1e-6 mm. A periodic band with two closed
-boundary edges otherwise uses a ruled connection. A nonplanar single loop uses a
+boundary edges otherwise uses a ruled connection. The rims retain their directions
+relative to the source wire, including opposite natural analytic/spline parameter
+directions. Segmented seams retain every requested edge and stationary junction;
+both periodic branches are trimmed and checked against their spatial curves.
+A nonplanar single loop uses a
 fitted surface. This changes accepted BRep surfaces, not just the mesh.
 The kernel checks fitting error against 1e-6 mm, sews within that tolerance and
 requires one valid, positive, non-self-intersecting solid. Sewing history continues

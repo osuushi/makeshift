@@ -69,7 +69,7 @@ canceled application Quit, which document-owner tests cannot exercise. Section
 regressions cover GPU composition, cavities, captured cap overlap/hover/selection,
 distant-camera clipping, and localized X-ray masks. CPU geometry tests cannot
 observe these escaped rendering failures.
-The inventory permits 28 suites, totaling 586 seconds with the existing shard count.
+The inventory permits 28 suites, totaling 591 seconds with the existing shard count.
 The mesh-first movement and Offset/Fillet regressions cover real paint ordering,
 numeric supersession and acceptance while metadata is pending. They measured
 4.59 and 7.05 seconds in hidden macOS Electron, respectively; allocations of 10
@@ -80,8 +80,12 @@ combinations remain in lower-level tests. Linux timings are not yet measured.
 The transform entry regression includes escaped Tab focus, released body/sketch
 widget refinement and cross-layer acceptance in the same app session. Its measured
 18.2-second hidden macOS Electron run has a 20-second allocation (previously 14).
-The six-second increase raises the aggregate budget to 586 seconds without adding
-a suite or shard. Geometry calculations remain covered below the UI.
+The six-second increase raised the aggregate budget to 586 seconds without adding
+a suite or shard. The movement preview session now includes the escaped captured
+edge-drag refusal/recovery case and measures 10.26 seconds in hidden macOS Electron.
+Its allocation increases from 10 to 15 seconds, raising the aggregate to 591 seconds
+with no additional suite or shard. Linux timing remains unmeasured. Geometry
+calculations remain covered below the UI.
 Feature-demo recording runs separately as one Linux job per recipe. Each uploads
 its own media and manifest; the final `feature-demos` job requires all recordings,
 checks their source/configuration and completeness, then validates the assembled

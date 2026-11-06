@@ -1215,6 +1215,15 @@ bound; reversing the edit then merged endpoints around a 0.0006 mm span. The rul
 construction and measured boundary precision checks allow that move and its
 reverse after reopening, without increasing tolerances or relying on edit history.
 
+The same pinned [`BRepFill::Face`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepFill/BRepFill.cxx#L266-L296)
+reverses each spatial curve according to its input edge orientation before generating
+the support. Makeshift inference: a periodic band's opposite wire traversals must
+be aligned explicitly; forcing both edges forward loses that information when
+analytic and spline rims have opposite natural directions. Its segmented seam must
+also be retained as requested trimming edges, rather than replaced by one generator.
+Direct native replay of the 2026-11-06 capture verifies axial movement with both seam
+segments and all topology IDs retained. No upstream implementation was copied.
+
 ## Shared bicubic mesh reconstruction (2026-10-02)
 
 Source observation at configured OCCT commit

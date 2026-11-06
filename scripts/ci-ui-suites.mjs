@@ -13,11 +13,11 @@ export const uiSuites = [
   },
   {
     args: ["movement-preview-ui.mjs"],
-    // Hidden macOS Electron: 4.59s with the captured face-movement fixture.
-    seconds: 10,
+    // Hidden macOS Electron: 10.26s including captured edge refusal/recovery.
+    seconds: 15,
     browsers: ["electron"],
     reason:
-      "Face movement must draw the real mesh through IPC while metadata is pending, hide its accepted operand, and accept only the latest target; model tests cannot prove frame ordering or tool readiness.",
+      "Face movement must draw the real mesh through IPC while metadata is pending and accept only the latest target. Captured edge movement must retain its local refusal across keyboard error dismissal and recover through real controls; model tests cannot prove paint/event ordering.",
     unit: "movement-preview.test.ts",
   },
   {
