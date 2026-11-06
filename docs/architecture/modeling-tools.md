@@ -146,8 +146,14 @@ directly along the movement axis also offers typed size entry until orbit reveal
 a direction. The click anchor is UI state and clears when accepted body geometry changes.
 A white capsule fill and near-black outline follow the
 [orientable widget guide](../design/orientable-widgets.md). Blue hover and red
-geometry-limit/rejection feedback supplement the contours. Legal-size clamping
-retains its valid preview and existing acceptance behavior.
+geometry-limit/rejection feedback supplement the contours. Dragging limits sizes
+to verified geometry and retains its valid preview and acceptance behavior.
+Typed Offset, Fillet and Chamfer values request exact previews. An infeasible value
+keeps its text and focus, clears the candidate, disables acceptance, and shows the
+error inline in the local panel. Normal face offsets and edge finishes offer
+**Find Nearest** to explicitly search toward the requested value from verified
+geometry. Only that action or a drag can replace the field with a searched value.
+Correcting the text always requests the new exact value, even after a prior search.
 If OCCT builds an edge finish with invalid topology, the kernel makes one shape
 repair pass and validates the repaired solid before offering a preview. A repair
 that remains invalid still rejects the edit.
@@ -315,8 +321,8 @@ signed normal offset across C2 spans, unselected supports remain fixed, and cont
 face orientations agree. Exact BRep validity, positive volume/orientation, closed
 boundaries, self-interference and minimum separation supplement the sampled checks.
 This conservatively rejects unaccounted topology changes; it does not guarantee all
-freeform offsets. Existing verified-limit clamping remains, and can be slow because
-each trial repeats native construction and validation.
+freeform offsets. Verified-limit search during drags or explicit Find Nearest can
+be slow because each trial repeats native construction and validation.
 
 An explicit tool choice survives geometry preview replies. A fresh selection
 restores its default. Switching tools completes a valid operation through its

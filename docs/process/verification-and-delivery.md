@@ -71,8 +71,10 @@ distant-camera clipping, and localized X-ray masks. CPU geometry tests cannot
 observe these escaped rendering failures.
 The inventory permits 28 suites, totaling 586 seconds with the existing shard count.
 The mesh-first movement and Offset/Fillet regressions cover real paint ordering,
-numeric supersession and acceptance while metadata is pending. They measured
-4.59 and 7.05 seconds in hidden macOS Electron, respectively; allocations of 10
+numeric supersession and acceptance while metadata is pending. The surface case
+also covers captured diameter typing through rejection, explicit nearest search,
+and continued drag limiting. They measured
+4.59 and 12.41 seconds in hidden macOS Electron, respectively; allocations of 10
 and 15 seconds include startup/software-rendering headroom. Offset and Fillet
 share one app session. These add 25 seconds to the previous 555-second budget;
 they do not add shards or repeat a cross-browser matrix. Geometry and clamping

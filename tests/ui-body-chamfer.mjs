@@ -18,10 +18,12 @@ export async function bodyChamferRoute(page, name, electron) {
   assert.ok(state.preview.bodies[0].volume < original.bodies[0].volume);
   assert.ok(state.preview.bodies[0].faces.every((f) => f.plane));
   await input.fill("100");
+  await page.getByRole("button", { name: "Find Nearest", exact: true }).click();
   await inspect(page);
   const limited = Number(await input.inputValue());
   assert.ok(limited > 2 && limited < 100);
   await input.fill("100");
+  await page.getByRole("button", { name: "Find Nearest", exact: true }).click();
   await inspect(page);
   assert.equal(
     Number(await input.inputValue()),
@@ -37,6 +39,10 @@ export async function bodyChamferRoute(page, name, electron) {
   assert.ok(await accept.isEnabled());
   await page.screenshot({ path: `.cache/sketch-review/${name}-chamfer-limit.png` });
   await input.fill("-5");
+  state = await inspect(page);
+  assert.equal(await input.inputValue(), "-5");
+  assert.equal(state.preview, null);
+  await input.fill("0");
   state = await inspect(page);
   assert.equal(Number(await input.inputValue()), 0);
   assert.deepEqual(state.preview, original);

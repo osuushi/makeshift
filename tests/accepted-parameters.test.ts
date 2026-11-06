@@ -11,6 +11,7 @@ test("accepted edge size records the verified clamp without changing mode, input
         edges: [{ body: "input", edge: "source-edge" }],
         size: 99,
         mode: "chamfer",
+        limit: true,
       },
     }),
   };
@@ -33,6 +34,7 @@ test("accepted offset preserves original face IDs and exact radius while recordi
       operation: {
         faces: [{ body: "input", face: "source-face" }],
         distance: 99,
+        limit: false,
         ...(radius === undefined ? {} : { radius }),
       },
     });

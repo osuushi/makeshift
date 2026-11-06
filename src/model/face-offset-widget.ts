@@ -9,6 +9,7 @@ import { distanceField, positionAxialPanel, updateAxialArrow } from "./axial-wid
 import { projectedAxis } from "./extrude-axis.js";
 import type { FaceFinish } from "./face-offset-targets.js";
 import type { OffsetQuantity } from "./offset-quantity.js";
+import { PreviewError } from "./preview-error.js";
 import { WidgetClearance } from "./widget-clearance.js";
 
 export class FaceOffsetWidget {
@@ -19,6 +20,7 @@ export class FaceOffsetWidget {
   private radial = new RadialInput(this.input);
   readonly quantity = document.createElement("select");
   readonly options = document.createElement("div");
+  readonly error = new PreviewError();
   private dismiss = document.createElement("button");
   private accept = document.createElement("button");
   readonly prerequisites = new ToolPrerequisitePanel(this.root, this.options);
@@ -30,6 +32,7 @@ export class FaceOffsetWidget {
     this.input.type = "text";
     this.input.value = "0";
     this.input.inputMode = "decimal";
+    this.input.setAttribute("aria-describedby", this.error.root.id);
     this.quantity.title = "Choose the value to edit";
     this.quantity.className = "offset-quantity";
     this.quantity.setAttribute("aria-label", "Offset mode");
@@ -48,7 +51,7 @@ export class FaceOffsetWidget {
     actions.append(this.quantity, this.accept, dismiss);
     const field = distanceField(this.input);
     field.prepend(this.radial.button);
-    this.options.append(field, actions);
+    this.options.append(field, actions, this.error.root);
     this.root.append(this.handle, this.options);
     overlay.append(this.root);
     this.root.hidden = true;
@@ -62,6 +65,7 @@ export class FaceOffsetWidget {
     valid: boolean,
     blend: FaceFinish | null,
     invalid: boolean,
+    canFind: boolean,
   ) {
     const center = axis.center.map(
       (value, i) => value + axis.normal[i] * (active && Number.isFinite(distance) ? distance : 0),
@@ -126,10 +130,15 @@ export class FaceOffsetWidget {
           ? "Absolute face radius (mm)"
           : "Signed material-outward offset (mm)";
     this.radial.update(quantity.radial);
-    if (!numericFocus(this.input)) {
+    if (!numericFocus(this.input) && !(active && invalid && !valid)) {
       this.input.value = quantity.text(distance);
     }
     this.input.setAttribute("aria-invalid", String(active && invalid && !valid && !editor.blocked));
+    this.error.update(
+      active && invalid && !valid ? editor.message || "Enter a valid face offset" : "",
+      canFind,
+      editor.blocked,
+    );
     this.accept.disabled = !active || !valid || distance === 0 || editor.blocked;
     this.dismiss.disabled = !active || editor.blocked;
     this.placement.fit([this.handle, this.options]);

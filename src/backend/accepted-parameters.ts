@@ -10,11 +10,14 @@ export function acceptedParameters(
   if (operation.kind !== "finish-edges" && operation.kind !== "offset-faces") return operation;
   if (value === undefined || !Number.isFinite(value))
     throw new Error("No verified measurement for the accepted edit");
+  const input = { ...(operation.parameters.operation as Record<string, unknown>), [key]: value };
+  // Search policy belongs to temporary calculation intent, not the accepted edit.
+  delete input.limit;
   return {
     ...operation,
     parameters: {
       ...operation.parameters,
-      operation: { ...(operation.parameters.operation as object), [key]: value },
+      operation: input,
     },
   };
 }

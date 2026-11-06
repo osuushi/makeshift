@@ -58,6 +58,7 @@ async function clampedOffset(page, cleanupChecks, original) {
   const clamped = await relativeOffsetInput(page);
   const count = cleanupChecks();
   await clamped.fill("-10");
+  await page.getByRole("button", { name: "Find Nearest", exact: true }).click();
   await page.waitForFunction(
     () =>
       !window.makeshiftInspect().busy &&

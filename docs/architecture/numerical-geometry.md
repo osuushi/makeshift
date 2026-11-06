@@ -88,6 +88,10 @@ reject coarse older or imported geometry.
 
 ## Microscopic finishes
 
+Exact typed finish sizes between zero and 0.001 mm reject inline rather than
+silently becoming zero. Dragging and explicit Find Nearest retain sharp recovery
+below the modeling resolution.
+
 Ordinary solid results, including inspected/reopened and STEP-imported bodies,
 simplify recognized sub-0.001 mm rounds and equal-setback chamfers before either
 full or deferred presentation. A cheap face/edge scan filters possible small

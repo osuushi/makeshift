@@ -1,4 +1,5 @@
 import type { BodyFaceOffset } from "../model/body.js";
+import { minimumFinishMm } from "../model/geometry-policy.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { DeferredKernelReply } from "./kernel-reply.js";
 import { continuingBodies, type KernelResult, materialize } from "./kernel-result.js";
@@ -32,9 +33,22 @@ export class FaceOffsetEdit {
       this.last = { distance: 0, result: null };
     }
     if (!Number.isFinite(operation.distance)) throw new Error("Enter a finite face offset");
+    if (
+      operation.limit === false &&
+      operation.radius !== undefined &&
+      operation.radius !== 0 &&
+      operation.radius < minimumFinishMm
+    )
+      throw new Error(`Size must be zero or at least ${minimumFinishMm} mm`);
     const verified =
-      operation.radius !== undefined
-        ? { distance: operation.distance, result: await calculate(operation.distance) }
+      operation.radius !== undefined || operation.limit === false
+        ? {
+            distance: operation.distance,
+            result:
+              operation.radius === undefined && Math.abs(operation.distance) < 1e-8
+                ? null
+                : await calculate(operation.distance),
+          }
         : await this.limit(operation.distance, calculate);
     this.last = verified;
     this.offsetDistance = verified.distance;
