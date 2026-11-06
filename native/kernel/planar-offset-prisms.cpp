@@ -5,6 +5,7 @@
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepPrimAPI_MakePrism.hxx>
+#include <BRep_Tool.hxx>
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <Standard_Failure.hxx>
 #include <TopExp_Explorer.hxx>
@@ -15,6 +16,8 @@
 
 namespace {
 bool sameSupport(const TopoDS_Face& a, const TopoDS_Face& b) {
+    // Unchanged freeform faces retain their exact support through the Boolean.
+    if (BRep_Tool::Surface(a) == BRep_Tool::Surface(b)) return true;
     BRepAdaptor_Surface x(a), y(b);
     if (x.GetType() != y.GetType()) return false;
     if (x.GetType() == GeomAbs_Plane)
@@ -55,6 +58,11 @@ Result build(const Operand& body, const std::vector<FaceOffset>& offsets, double
         targets.push_back(TopoDS::Face(BRepBuilderAPI_Transform(offset.face, move, true).Shape()));
         if (offset.distance <= 1e-8) continue;
         BRepPrimAPI_MakePrism prism(offset.face, travel, true);
+        // A normal extension can require new walls at the selected rim, e.g. a
+        // straight tube above a spline bend. Only this exact sweep supplies them.
+        for (TopExp_Explorer it(offset.face, TopAbs_EDGE); it.More(); it.Next())
+            for (const auto& generated : prism.Generated(it.Current()))
+                if (generated.ShapeType() == TopAbs_FACE) fixed.push_back(TopoDS::Face(generated));
         for (const auto& source : body.entities)
             if (source.shape.IsSame(offset.face)) origins.push_back({source.id, prism.LastShape()});
         BRepAlgoAPI_Fuse fuse;

@@ -1,3 +1,13 @@
+# Normal extension of a bent tube
+
+`offset-bent-tube-cap.json` retains the affected exact body, topology IDs, requested
+17.3 mm face offset and camera from the founder's 2026-11-06T23:28:11.598Z capture.
+Unrelated geometry, sketches, decorators, history and transient candidates are
+omitted. The annular cap must extend normally with new straight tube walls while
+both spline bend supports stay fixed. Model tests cover small/large requests,
+preview reversal, cancellation, history, reopening, later editing and rotation.
+This is user-created Makeshift geometry.
+
 # Detailed body extrusion
 
 `extrude-detailed-body.json` retains the circle, exact body and topology identity
