@@ -159,6 +159,10 @@ thresholds are reference defaults that may be tuned through visual review.
 Whole-sketch **Move sketch** uses this same assembly to transform the sketch plane
 without changing its local curves; a relocated anchor supplies its rotation center.
 Existing edge movement remains translation-only, including its boundary-normal control.
+The boundary-normal control is hidden when its world-space direction is parallel
+to X, Y or Z within numerical tolerance; the matching world-axis control provides
+that movement. Tilted boundary normals retain their additional control. Screen
+projection alone never merges distinct movement directions.
 Partial-face and edge Move retain one temporary candidate across handle gestures.
 Each new gesture composes with the last valid preview; numeric changes replace only
 the active gesture. Translations retain rotation and preceding translation axes,

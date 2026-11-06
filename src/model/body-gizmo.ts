@@ -3,6 +3,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { coneVisible } from "../sketch/move-widget/cone.js";
 import {
   alignedAxis,
+  boundaryNormalVisible,
   markerMarkup,
   rotationOffset,
   rotationVisible,
@@ -111,7 +112,7 @@ export class BodyGizmo {
       const direction = handle.axis === "N" && normal ? normal : axes[handle.axis];
       handle.button.hidden =
         !transformLayerEnabled(editor, handle.rotate ? "rotate" : "move") ||
-        (handle.axis === "N" && !normal) ||
+        (handle.axis === "N" && !boundaryNormalVisible(normal)) ||
         (!handle.rotate && !coneVisible(world.camera, direction)) ||
         (handle.rotate &&
           (movingPivot || translationOnly || !rotationVisible(world.camera, axes[handle.axis]))) ||
