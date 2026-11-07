@@ -194,3 +194,11 @@ meshes and history are omitted. Its radius-40 cylinder must split the plate/coll
 at an existing circular rim; an unbounded cylindrical cutter silently returned no
 split. The model regression checks both pieces, collar bounds, volume conservation,
 unchanged cutter, preview cancellation and Undo/Redo.
+
+`offset-segmented-seam.json` is a synthetic radius-5 bore through a radius-10,
+12 mm tube. Its periodic seam has two axial lines joined by a 0.4-radian circular
+arc at z=4. It reproduces the cylindrical Offset failure from the founder's
+2026-11-06 capture without retaining captured geometry. The generator is
+`offset-segmented-seam.cpp`; compile it against the configured OCCT SDK and run
+it to emit the exact body JSON. Tests verify signed offsets, shared seam topology,
+stationary caps/exterior, independent volume, closed STL/3MF exports and history.

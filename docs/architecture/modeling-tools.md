@@ -272,7 +272,9 @@ When ordinary offset construction rejects a complete internal cylindrical wall
 with circular rims on perpendicular planar faces, a local reconnection can
 resize the bore. It keeps the depth and planar supports fixed, preserves the
 existing face and edge topology, and verifies that the volume change matches
-only the resized cylindrical region.
+only the resized cylindrical region. Periodic seams may contain axial lines
+and coaxial circular arcs left by Boolean edits. Reconnection preserves shared
+seam endpoints and uses the final solid's face orientations for offset validation.
 Draft display rounding does not change the driving value. Ordinary completion
 preserves subdivisions; neither tool probes cleanup availability. Rejected extrusion
 and rejected/clamped offset requests turn their arrows red. Sketch-entry actions sit
