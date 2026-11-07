@@ -123,8 +123,11 @@ founder feedback update these contracts before further tools depend on them.
   Both choices show filled thumbnails and hover previews with holes preserved.
   Text identifies the type;
   canonical planes additionally name XY/XZ/YZ. Hover/focus highlights that exact
-  viewport entity, including occluded targets. Keep the pointer held, drag over a
-  thumbnail, and release to choose; releasing outside cancels. Captured touch uses
+  viewport entity, including occluded targets. Disambiguation highlights draw after
+  section patterns and X-ray composition, retaining their full tint and outline over
+  cut material; dismissing the chooser removes only that transient overlay.
+  Keep the pointer held, drag over a thumbnail, and release to choose; releasing
+  outside cancels. Captured touch uses
   screen-coordinate hit testing, so the thumbnail and viewport highlight follow
   the finger. No second click/tap is needed. Shift adds and
   Command/Ctrl toggles geometry. Canonical and saved planes become selected references;

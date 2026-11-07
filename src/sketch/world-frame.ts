@@ -66,6 +66,8 @@ export class WorldFrame {
       const { renderer, scene, camera } = this.world;
       renderSketchGrid(renderer, scene, camera);
       this.primitives.render(renderer, scene, camera);
+      // Chooser targets must remain legible over section caps and X-ray composites.
+      for (const render of this.world.renderInteractionOverlays) render();
     }, force);
   }
 

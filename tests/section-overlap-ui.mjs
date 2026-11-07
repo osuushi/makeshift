@@ -106,6 +106,7 @@ async function pseudofaceChoice(page) {
   const before = await inspect(page);
   await page.getByRole("button", { name: "Hide Sketch 1", exact: true }).click();
   await page.getByRole("button", { name: "Hide Sketch 2", exact: true }).click();
+  const bare = await samples(page);
   await hold(page, await project(page, [15.3, 0, 27.2]));
   const panel = page.getByRole("dialog", { name: "Choose overlapping geometry" });
   await panel.waitFor({ state: "visible" });
@@ -117,6 +118,20 @@ async function pseudofaceChoice(page) {
     new Set(before.document.bodies.slice(0, 2).map((b) => b.id)),
     "Every overlapping pseudoface offers its owning body",
   );
+  await panel.locator(`button[data-kind="body"][data-key="${bodies[0]}"]`).hover();
+  const highlighted = await samples(page, undefined, 1, true);
+  assert.ok(
+    highlighted[0] - highlighted[2] > bare[0] - bare[2] + 20,
+    `Disambiguation amber overlays section patterns: ${highlighted} / ${bare}`,
+  );
+  await page.keyboard.press("Escape");
+  await page.mouse.up();
+  assert.deepEqual(
+    await samples(page),
+    bare,
+    "Dismissing disambiguation restores section patterns",
+  );
+  await hold(page, await project(page, [15.3, 0, 27.2]));
   await panel.locator(`button[data-kind="body"][data-key="${bodies[0]}"]`).hover();
   await page.mouse.up();
   assert.deepEqual((await inspect(page)).modelingSelection, [{ kind: "body", body: bodies[0] }]);
