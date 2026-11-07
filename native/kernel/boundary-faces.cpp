@@ -5,7 +5,6 @@
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
-#include <BRepBuilderAPI_NurbsConvert.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepFill.hxx>
 #include <BRepTools.hxx>
@@ -31,29 +30,6 @@ TopoDS_Wire wire(const std::vector<TopoDS_Edge>& edges) {
     for (const auto& edge : edges) builder.Add(edge);
     require(builder.IsDone(), "Moved boundary does not form a connected wire");
     return builder.Wire();
-}
-TopoDS_Face band(const TopoDS_Face& face, const Edit& edit) {
-    std::vector<TopoDS_Edge> boundaries;
-    TopTools_IndexedMapOfShape edges;
-    TopExp::MapShapes(face, TopAbs_EDGE, edges);
-    bool seam = false;
-    for (int i = 1; i <= edges.Extent(); ++i) {
-        auto edge = TopoDS::Edge(edges(i));
-        if (BRep_Tool::IsClosed(edge, face)) { seam = true; continue; }
-        if (!BRep_Tool::IsClosed(edge)) return {};
-        edge.Orientation(TopAbs_FORWARD);
-        boundaries.push_back(edit.edge(edge));
-    }
-    if (!seam || boundaries.size() != 2) return {};
-    if (edit.transform.Form() == gp_Other) {
-        // Match GTransform's rational conic parameterization on both rims.
-        // Mixing analytic and rational parameters twists the intermediate sections.
-        for (auto& edge : boundaries)
-            edge = TopoDS::Edge(BRepBuilderAPI_NurbsConvert(edge, true).Shape());
-    }
-    // The original parameter directions define correspondence, not nearest points
-    // after movement. This also works when either closed boundary is no longer circular.
-    return BRepFill::Face(boundaries[0], boundaries[1]);
 }
 TopoDS_Face trimRuled(const TopoDS_Face& face, const std::vector<TopoDS_Edge>& edges) {
     const auto surface = BRep_Tool::Surface(face);
@@ -121,7 +97,7 @@ TopoDS_Face rebuildFace(const TopoDS_Face& source, const Edit& edit) {
     face.Orientation(TopAbs_FORWARD);
     const auto cylindrical = cylinderFace(face, edit);
     if (!cylindrical.IsNull()) return cylindrical;
-    const auto ruled = band(face, edit);
+    const auto ruled = periodicBand(face, edit);
     if (!ruled.IsNull()) return ruled;
     const auto outer = BRepTools::OuterWire(face);
     const auto edges = boundary(outer, face, edit);

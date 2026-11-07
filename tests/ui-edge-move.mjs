@@ -144,7 +144,7 @@ export async function edgeMoveRoute(page, name, electron, round) {
 
 async function rotatedRound(page, name, edgeId) {
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
-  await page.keyboard.press("m");
+  await chooseTool(page, "rotate", "rotate");
   await page.getByRole("button", { name: "Rotate body X", exact: true }).click();
   await page.locator(".body-transform-value").fill("37");
   await page.keyboard.press("Enter");

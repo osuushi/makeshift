@@ -13,12 +13,12 @@ import {
   createTopologyMoveActions,
   updateTopologyMovePresentation,
 } from "./topology-move-presentation.js";
+import { TopologyMovePreview } from "./topology-move-preview.js";
 import { createMovementTransform, trackMovementHistory } from "./topology-move-transform.js";
 import {
   composeMovement,
   movementIsIdentity,
   movementNormal,
-  movementRequest,
   movementTargets,
   restoredMovement,
   type TopologyMovement,
@@ -35,12 +35,7 @@ export class TopologyMoveControls {
   private edit: TopologyMovement | null = null;
   private direction: Vector = [1, 0, 0];
   private rotate = false;
-  private verified: TopologyMovement | null = null;
-  private valid = false;
-  private invalid = false;
-  private pending: TopologyMovement | null = null;
-  private latest: TopologyMovement | null = null;
-  private running: Promise<void> | null = null;
+  private preview: TopologyMovePreview;
   private pointer: GizmoPointer | null = null;
   constructor(
     private editor: SketchEditor,
@@ -48,19 +43,20 @@ export class TopologyMoveControls {
     private kind: "faces" | "edges" = "faces",
   ) {
     this.gizmo = new BodyGizmo(overlay, this.start, kind);
+    this.preview = new TopologyMovePreview(editor, kind, () => this.lease);
+    this.gizmo.root.append(this.preview.feedback);
     this.currentTransform = createMovementTransform(
       editor,
       kind,
-      () => (this.lease?.phase === "editing" ? (this.latest ?? this.verified ?? this.edit) : null),
+      () =>
+        this.lease?.phase === "editing"
+          ? (this.preview.latest ?? this.preview.verified ?? this.edit)
+          : null,
       (movement, invalid) => {
-        this.invalid = invalid;
-        this.valid = false;
-        this.pending = this.latest = movement;
-        if (this.running) this.editor.store.supersedePreview();
+        this.preview.queue(movement, invalid);
         if (movement) {
           this.edit = movement;
           this.gizmo.input.value = "0";
-          if (!this.running) this.running = this.drain();
         }
       },
     );
@@ -101,12 +97,11 @@ export class TopologyMoveControls {
     if (!this.open(edit)) throw new Error("Cannot restore topology movement inputs");
     this.currentTransform.show(edit);
     this.editor.modeling.setTool("move");
-    this.pending = this.latest = edit;
+    this.preview.queue(edit);
     this.gizmo.input.value = "0";
     this.gizmo.input.setAttribute("aria-label", "Additional movement");
-    this.running = this.drain();
-    await this.running;
-    if (!this.valid) throw new Error("Cannot regenerate the accepted topology movement");
+    await this.preview.running;
+    if (!this.preview.valid) throw new Error("Cannot regenerate the accepted topology movement");
     this.currentTransform.translation[0].focus();
     this.currentTransform.translation[0].select();
   }
@@ -118,7 +113,7 @@ export class TopologyMoveControls {
       {
         navigation: "when-released",
         settled: async () => {
-          await this.running;
+          await this.preview.running;
         },
       },
     );
@@ -130,13 +125,11 @@ export class TopologyMoveControls {
       this.currentTransform,
       this.editor,
       this.kind,
-      () => this.latest ?? this.edit,
+      () => this.preview.latest ?? this.edit,
       async (state) => {
-        this.edit = this.latest = this.pending = state;
-        this.valid = false;
-        if (this.running) this.editor.store.supersedePreview();
-        if (!this.running) this.running = this.drain();
-        await this.running;
+        this.edit = state;
+        this.preview.queue(state);
+        await this.preview.running;
       },
     );
     return true;
@@ -163,7 +156,7 @@ export class TopologyMoveControls {
         return;
     }
     if (this.lease?.phase !== "editing") return;
-    this.edit = this.verified ?? this.edit;
+    this.edit = this.preview.verified ?? this.edit;
     this.rotate = rotate;
     this.pointer = gizmoPointer(this.editor, this.pivot.point, axis, event, this.direction);
     this.gizmo.input.setAttribute(
@@ -180,57 +173,21 @@ export class TopologyMoveControls {
   };
   private queue(value: number): void {
     if (!this.edit || this.lease?.phase !== "editing") return;
-    this.valid = false;
-    if (this.running) this.editor.store.supersedePreview();
-    this.invalid = !Number.isFinite(value);
-    this.editor.notice = this.invalid
-      ? "Enter a finite movement"
-      : `Move ${this.kind} · Enter to accept · Escape to cancel`;
-    if (this.invalid) this.latest = this.pending = null;
-    else {
-      this.latest = this.pending = composeMovement(
-        this.edit,
-        this.pivot.point,
-        this.direction,
-        this.rotate,
-        value,
-      );
-      if (!this.running) this.running = this.drain();
-    }
+    const invalid = !Number.isFinite(value);
+    this.preview.queue(
+      invalid
+        ? null
+        : composeMovement(this.edit, this.pivot.point, this.direction, this.rotate, value),
+      invalid,
+    );
     if (!numericFocus(this.gizmo.input)) this.gizmo.input.value = String(Number(value.toFixed(4)));
     this.editor.refresh();
   }
-  private async drain(): Promise<void> {
-    while (this.pending && this.lease?.phase === "editing") {
-      const request = this.pending;
-      this.pending = null;
-      const operation = movementRequest(request);
-      const success = await this.editor.store.request(
-        request.bodyIds?.length ? operation : { ...operation, presentation: "deferred" },
-        (preview) => {
-          this.lease?.showVisual(preview);
-          this.editor.refresh();
-        },
-      );
-      if (this.lease?.phase !== "editing" || request !== this.latest) continue;
-      this.valid = success;
-      this.invalid = !success;
-      if (success) {
-        this.verified = request;
-        this.lease.show(this.editor.store.candidate);
-      }
-      // Keep the last valid image for a rejected request, but never accept it as
-      // though it were the requested value. The backend clears rejected candidates.
-      this.editor.refresh();
-    }
-    this.running = null;
-    this.editor.refresh();
-  }
   private async finish(): Promise<boolean> {
-    await this.running;
+    await this.preview.running;
     const lease = this.lease;
-    if (!lease || this.pointer || !this.valid || this.pending) return false;
-    if (!this.latest || movementIsIdentity(this.latest)) {
+    if (!lease || this.pointer || !this.preview.valid) return false;
+    if (!this.preview.latest || movementIsIdentity(this.preview.latest)) {
       await this.cancel();
       return true;
     }
@@ -241,7 +198,7 @@ export class TopologyMoveControls {
       this.editor.refresh();
       return false;
     }
-    const latest = this.latest;
+    const latest = this.preview.latest;
     if (this.pivot.custom && latest)
       this.pivot.point = latest.pivot.map((n, i) => n + latest.translation[i]) as Vector;
     this.end(lease);
@@ -250,19 +207,19 @@ export class TopologyMoveControls {
   private async cancel(): Promise<void> {
     const lease = this.lease;
     if (!lease?.close()) return;
-    this.pending = this.latest = null;
+    this.preview.reset();
     this.pointer = null;
     lease.releaseCapture();
     lease.show(null);
     await this.editor.store.cancelPreview();
-    await this.running;
+    await this.preview.running;
     this.end(lease);
   }
   private end(lease: InteractionLease): void {
     this.currentTransform.reset();
     this.lease = null;
-    this.edit = this.latest = this.pending = this.verified = null;
-    this.invalid = false;
+    this.edit = null;
+    this.preview.reset();
     this.gizmo.input.blur();
     this.gizmo.input.removeAttribute("aria-label");
     this.editor.notice = "";
@@ -271,7 +228,7 @@ export class TopologyMoveControls {
   }
   private update = (): void => {
     this.currentTransform.update(
-      this.latest ?? this.verified ?? this.edit,
+      this.preview.latest ?? this.preview.verified ?? this.edit,
       this.lease?.phase !== "editing",
     );
     const targets = movementTargets(this.editor, this.kind);
@@ -283,10 +240,10 @@ export class TopologyMoveControls {
       targets,
       this.pivot.point,
       this.lease,
-      this.valid,
-      !!this.running,
-      !!this.latest && !movementIsIdentity(this.latest),
-      this.invalid,
+      this.preview.valid,
+      !!this.preview.running,
+      !!this.preview.latest && !movementIsIdentity(this.preview.latest),
+      this.preview.invalid,
       this.accept,
       this.cancelButton,
     );
