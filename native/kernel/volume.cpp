@@ -1,6 +1,9 @@
 #include "kernel.h"
 #include "timing.h"
 #include <BRepAdaptor_Surface.hxx>
+#include <BRepBuilderAPI_Copy.hxx>
+#include <ShapeUpgrade_ShapeDivideClosed.hxx>
+#include <Geom_BSplineSurface.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepGProp.hxx>
 #include <Bnd_Box.hxx>
@@ -13,6 +16,31 @@
 #include <cmath>
 
 namespace {
+// A full closed ruled wall can have a nearly zero inner flux integral even
+// when its solid has ample volume. Quarter patches avoid that cancellation.
+// Split a private measurement copy only: accepted topology and presentation
+// bounds are unchanged, and GK retains its span integration and 1e-10 tolerance.
+TopoDS_Shape integrationPatches(const TopoDS_Shape& shape) {
+    bool closedWall = false;
+    for (TopExp_Explorer it(shape, TopAbs_FACE); it.More(); it.Next()) {
+        BRepAdaptor_Surface surface(TopoDS::Face(it.Current()));
+        if (surface.GetType() != GeomAbs_BSplineSurface ||
+            (surface.UDegree() != 1 && surface.VDegree() != 1)) continue;
+        double u0, u1, v0, v1;
+        surface.BSpline()->Bounds(u0, u1, v0, v1);
+        closedWall |= (surface.IsUClosed() &&
+            std::abs(surface.LastUParameter() - surface.FirstUParameter() - (u1-u0)) < 1e-10) ||
+            (surface.IsVClosed() &&
+            std::abs(surface.LastVParameter() - surface.FirstVParameter() - (v1-v0)) < 1e-10);
+    }
+    if (!closedWall) return shape;
+    ShapeUpgrade_ShapeDivideClosed split(BRepBuilderAPI_Copy(shape).Shape());
+    split.SetNbSplitPoints(3);
+    split.Perform();
+    if (split.Status(ShapeExtend_FAIL) || split.Result().IsNull())
+        return shape; // Optional conditioning must not reject an otherwise integrable solid.
+    return split.Result();
+}
 // Directional normal energy is only an integration-order hint. Near-tangent
 // spline flux can make relative quadrature spend seconds resolving roundoff.
 // Geometry, the requested integration tolerance and failure checks are unchanged.
@@ -57,11 +85,13 @@ std::array<int, 3> integrationAxes(const TopoDS_Shape& shape, const double* lo, 
     return axes;
 }
 }
-double volume(const TopoDS_Shape& shape, int referenceAxis,
+double volume(const TopoDS_Shape& input, int referenceAxis,
               std::optional<std::array<double, 6>>* exactBounds) {
     KernelTiming timing("volume");
     if (exactBounds) exactBounds->reset();
-    if (shape.IsNull()) return 0;
+    if (input.IsNull()) return 0;
+    const auto shape = integrationPatches(input);
+    timing.phase("partition");
     GProp_GProps props;
     bool planar = true;
     for (TopExp_Explorer e(shape, TopAbs_FACE); e.More(); e.Next())
@@ -69,7 +99,7 @@ double volume(const TopoDS_Shape& shape, int referenceAxis,
     double error;
     if (planar) error = BRepGProp::VolumeProperties(shape, props, 1e-10);
     else {
-        Bnd_Box bounds; BRepBndLib::AddOptimal(shape, bounds, false, false);
+        Bnd_Box bounds; BRepBndLib::AddOptimal(input, bounds, false, false);
         timing.phase("bounds");
         if (bounds.IsVoid()) return 0;
         double lo[3], hi[3]; bounds.Get(lo[0], lo[1], lo[2], hi[0], hi[1], hi[2]);

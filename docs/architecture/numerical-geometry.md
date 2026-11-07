@@ -51,6 +51,13 @@ them, the optimal surface bounds for that final shape. Presentation reuses those
 measurements; no geometry mutation may follow them. Both bounds paths use
 `BRepBndLib::AddOptimal` with triangulation and shape-tolerance expansion disabled.
 Planar volume integration does not need bounds, so presentation computes them once.
+Closed ruled spline walls are partitioned into quarter patches on a private
+measurement copy before Gauss–Kronrod integration. This prevents nearly cancelling
+inner flux integrals from stalling simple tube edits; the span integration and
+1e-10 relative tolerance remain unchanged. Already trimmed partial walls skip this
+step. Accepted faces/edges and presentation bounds come from the original shape,
+so these integration patches do not create visible or selectable seams. Linear cap
+offsets reuse the result volume computed by their material validation.
 
 Temporary profile wires also collapse sub-0.0001 mm remnants at cubic junctions
 (a cubic edge or an adjoining edge). Tangent trimming can otherwise leave sliver

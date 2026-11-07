@@ -62,8 +62,8 @@ void checkUnselectedSupport(const TopoDS_Face&, const TopoDS_Face&);
 
 std::vector<TopoDS_Face> tangentFaceChain(const TopoDS_Shape&, const std::vector<TopoDS_Face>&);
 
-void checkOffsetVolume(const TopoDS_Shape&, const TopoDS_Shape&, double,
-                       const std::vector<TopoDS_Shape>& preservedVertices = {});
+double checkOffsetVolume(const TopoDS_Shape&, const TopoDS_Shape&, double,
+                       const std::vector<TopoDS_Shape>& preservedVertices = {}, int referenceAxis = -1);
 
 TopoDS_Face profileFace(const Tree&, const std::vector<Operand>&);
 TopoDS_Shape pathSweep(const Tree&, const std::vector<Operand>&);

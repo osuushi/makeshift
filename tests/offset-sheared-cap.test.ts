@@ -22,11 +22,17 @@ for (const name of ["shear-extension", "split-extension"]) {
       const source = before.bodies?.[0];
       assert.ok(source);
       for (const distance of [fixture.operation.distance, -1, 0.5]) {
+        const started = performance.now();
         const reply = await owner.call({
           kind: "offset-faces",
           operation: { ...fixture.operation, distance },
         });
         assert.equal(reply.error, undefined);
+        // Generous native-call ceiling catches the former 7–16 second quadrature stall.
+        assert.ok(
+          performance.now() - started < 5000,
+          "Tube extension stalled in volume integration",
+        );
         const body = reply.view.candidate?.bodies?.[0];
         assert.ok(body);
         assert.equal(body.faces.length, source.faces.length);

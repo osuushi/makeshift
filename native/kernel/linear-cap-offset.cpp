@@ -75,6 +75,20 @@ double fixedLevel(const Operand& body, const TopTools_IndexedMapOfShape& selecte
     require(level.has_value(), "Continuation has no stationary rim");
     return *level;
 }
+int capVolumeAxis(const TopTools_IndexedMapOfShape& faces, const gp_Vec& normal) {
+    bool highDegree = false;
+    for (int i = 1; i <= faces.Extent(); ++i) {
+        const BRepAdaptor_Surface surface(TopoDS::Face(faces(i)));
+        highDegree |= surface.GetType() == GeomAbs_BSplineSurface &&
+            (surface.UDegree() > 2 || surface.VDegree() > 2);
+    }
+    // Keep the ordinary direction choice for rational conics. High-degree
+    // approximated rims retain their cap-direction integration reference.
+    if (!highDegree) return -1;
+    int axis = 1;
+    for (int i = 2; i <= 3; ++i) if (std::abs(normal.Coord(i)) > std::abs(normal.Coord(axis))) axis = i;
+    return axis - 1;
+}
 Result extend(const Operand& body, const TopoDS_Face& cap, double distance) {
     TopTools_IndexedMapOfShape capEdges; TopExp::MapShapes(cap, TopAbs_EDGE, capEdges);
     bool freeformRim = false;
@@ -141,13 +155,7 @@ Result extend(const Operand& body, const TopoDS_Face& cap, double distance) {
     }
     offset_geometry::tightenGeneratedBoundaries(result.shape, body.shape, false);
     offset_geometry::validSolid(result.shape, "Linear cap offset");
-    checkOffsetVolume(body.shape, result.shape, distance);
-    // Use flux through the cap direction: a transverse reference amplifies
-    // cancellation on the high-degree ruled walls. This is the same exact
-    // integrator/tolerance, with a geometric integration-order hint.
-    int axis = 1;
-    for (int i = 2; i <= 3; ++i) if (std::abs(normal.Coord(i)) > std::abs(normal.Coord(axis))) axis = i;
-    result.exactVolume = volume(result.shape, axis - 1);
+    result.exactVolume = checkOffsetVolume(body.shape, result.shape, distance, {}, capVolumeAxis(selected, normal));
     return result;
 }
 }

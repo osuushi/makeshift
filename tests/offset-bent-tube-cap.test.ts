@@ -59,11 +59,14 @@ test("captured bent tube cap continues its oblique walls with fixed original sup
     const body = before.bodies?.[0];
     assert.ok(body);
     for (const distance of [0.001, 17.3, 1]) {
+      const started = performance.now();
       const reply = await owner.call({
         kind: "offset-faces",
         operation: { ...fixture.operation, distance },
       });
       assert.equal(reply.error, undefined);
+      // Generous native-call ceiling catches the former 7–16 second quadrature stall.
+      assert.ok(performance.now() - started < 5000, "Tube extension stalled in volume integration");
       near(reply.view.offsetDistance ?? NaN, distance);
       assert.deepEqual(reply.view.offsetSelection, fixture.operation.faces);
       const result = reply.view.candidate?.bodies?.[0];
