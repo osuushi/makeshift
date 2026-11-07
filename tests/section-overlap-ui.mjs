@@ -106,6 +106,8 @@ async function pseudofaceChoice(page) {
   const before = await inspect(page);
   await orient(page, [1, -1, 0.5]);
   const bare = await samples(page);
+  const removedPoint = [12, 13, 31];
+  const removedBare = await samples(page, removedPoint);
   await hold(page, await project(page, [15.3, 0, 27.2]));
   const panel = page.getByRole("dialog", { name: "Choose overlapping geometry" });
   await panel.waitFor({ state: "visible" });
@@ -117,14 +119,23 @@ async function pseudofaceChoice(page) {
     new Set(before.document.bodies.slice(0, 2).map((b) => b.id)),
     "Every overlapping pseudoface offers its owning body",
   );
-  await panel.locator(`button[data-kind="body"][data-key="${bodies[0]}"]`).hover();
+  await panel
+    .locator(`button[data-kind="body"][data-key="${before.document.bodies[0].id}"]`)
+    .hover();
   const highlighted = await samples(page, undefined, 1, true);
   assert.ok(
     highlighted[0] - highlighted[2] > bare[0] - bare[2] + 20,
     `Disambiguation amber overlays section patterns: ${highlighted} / ${bare}`,
   );
+  await page.screenshot({ path: ".cache/sketch-review/section-unclipped-choice.png" });
+  const removedHighlight = await samples(page, removedPoint, 1, true);
+  assert.ok(
+    removedHighlight[0] - removedHighlight[2] > removedBare[0] - removedBare[2] + 20,
+    `Whole orange body survives on removed side: ${removedHighlight} / ${removedBare}`,
+  );
   await page.keyboard.press("Escape");
   await page.mouse.up();
+  assert.deepEqual(await samples(page, removedPoint), removedBare);
   assert.deepEqual(
     await samples(page),
     bare,

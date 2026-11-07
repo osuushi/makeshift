@@ -6,11 +6,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import type { OverlapTarget } from "./overlap-candidates.js";
 import { overlapGeometry } from "./overlap-geometry.js";
 
-import { SectionCaps } from "./section-caps.js";
-
 export class OverlapHighlight {
-  private readonly caps = new SectionCaps();
-  private body: string | undefined;
   private readonly scene = new THREE.Scene();
   constructor(private editor: SketchEditor) {
     editor.world.renderInteractionOverlays.add(this.render);
@@ -19,17 +15,18 @@ export class OverlapHighlight {
     if (!this.scene.children.length) return;
     const { renderer, camera } = this.editor.world;
     const autoClear = renderer.autoClear;
+    const clippingPlanes = renderer.clippingPlanes;
     try {
       renderer.autoClear = false;
+      renderer.clippingPlanes = [];
       renderer.render(this.scene, camera);
-      if (this.body) this.caps.render(this.editor.world, false, this.body);
     } finally {
       renderer.autoClear = autoClear;
+      renderer.clippingPlanes = clippingPlanes;
     }
   };
   show(target: OverlapTarget | null): void {
     this.clear();
-    this.body = target?.kind === "body" ? target.body : undefined;
     if (target) {
       const geometry = overlapGeometry(this.editor, target);
       const vertices = geometry.surfaces.flatMap((p) =>
@@ -74,7 +71,6 @@ export class OverlapHighlight {
   }
   dispose(): void {
     this.clear();
-    this.caps.dispose();
     this.editor.world.renderInteractionOverlays.delete(this.render);
   }
 }

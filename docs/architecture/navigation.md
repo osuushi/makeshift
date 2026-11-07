@@ -156,8 +156,8 @@ palette is exhausted, retaining their assigned colors through view changes. Caps
 preserve visible sketch ink, and coplanar body faces stay solely in the main pass.
 A hard cut hides coplanar exterior faces whose inward side contains no retained
 material, including ledges on partially retained bodies. Rendering and picking use
-that same classification. Chooser body emphasis includes the actual cut material,
-so it remains visible over patterned caps in oblique views.
+that same classification. The orange chooser preview shows the complete original 3D target, with cross-section
+clipping disabled for that overlay alone. Ordinary bodies remain sectioned.
 Sketch-region tint draws after the pseudofaces, preserving the single translucent
 union fill and visible sketch strokes, before the foreground body composite.
 Overlapping caps blend at half opacity over earlier caps without writing competing
