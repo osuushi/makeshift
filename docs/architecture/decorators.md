@@ -123,6 +123,14 @@ mesh operations to native Manifold; clients without that capability retain WASM.
 
 ## Interaction
 
+Decorated face and whole-body selections show a compact viewport widget beside
+the selection. Its drawn layer icon selects the decorated supports in that selection
+and reveals, expands, scrolls to and focuses the Inspector's Decorators section.
+The adjacent red X removes only the selected decorated face membership (all
+decorated faces for whole-body selection) through the ordinary decorator edit and
+Undo/Redo path. Unselected members and underlying solids remain intact. The widget
+stays hidden in Sketch and during active tool interactions or gestures.
+
 1. Select faces and invoke Threads; show eligibility reasons in tool discovery.
 2. Create all inferred instances atomically with resolved settings and a preview.
    If default thread settings fail geometry validation, open a provisional settings
