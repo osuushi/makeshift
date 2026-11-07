@@ -1,6 +1,9 @@
 #include "kernel.h"
 #include "edge-finish-conditioning.h"
 #include "edge-finish-construction.h"
+#include "microscopic-topology.h"
+#include <TopExp.hxx>
+#include <TopTools_IndexedMapOfShape.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
 #include <TopoDS.hxx>
@@ -24,10 +27,23 @@ std::map<std::string, std::vector<TopoDS_Edge>> selectedEdges(const Tree& input,
             return e.id == edgeId && e.shape.ShapeType() == TopAbs_EDGE;
         });
         if (edge == body->entities.end()) throw std::runtime_error("Selected edge does not belong to this body");
-        selected[bodyId].push_back(TopoDS::Edge(edge->shape));
+        auto& edges = selected[bodyId];
+        if (std::none_of(edges.begin(), edges.end(), [&](const auto& existing) { return existing.IsSame(edge->shape); }))
+            edges.push_back(TopoDS::Edge(edge->shape));
     }
     if (selected.empty()) throw std::runtime_error("Select at least one body edge");
     return selected;
+}
+Operand preparedFinish(const Operand& body) {
+    Result repaired{body.shape, body.entities, {body.id}};
+    resolveMicroscopicTopology(repaired);
+    if (repaired.shape.IsSame(body.shape)) return conditionEdgeFinish(body);
+    TopTools_IndexedMapOfShape current;
+    TopExp::MapShapes(repaired.shape, current);
+    std::vector<SourceEntity> entities;
+    for (const auto& source : repaired.predecessors)
+        if (current.Contains(source.shape)) entities.push_back(source);
+    return conditionEdgeFinish({body.id, repaired.shape, std::move(entities)});
 }
 std::vector<Operand> finishOperands(const Tree& input, const std::vector<Operand>& bodies) {
     std::set<std::string> involved;
@@ -35,7 +51,7 @@ std::vector<Operand> finishOperands(const Tree& input, const std::vector<Operand
         involved.insert(item.second.get<std::string>("body"));
     std::vector<Operand> result;
     for (const auto& body : bodies)
-        result.push_back(involved.count(body.id) ? conditionEdgeFinish(body) : body);
+        result.push_back(involved.count(body.id) ? preparedFinish(body) : body);
     return result;
 }
 
@@ -49,6 +65,11 @@ void collectChain(const Operand& body, const std::vector<TopoDS_Edge>& edges,
     for (int c = 1; c <= operation.NbContours(); ++c) {
         for (int e = 1; e <= operation.NbEdges(c); ++e) {
             const auto edge = operation.Edge(c, e);
+            const bool alreadySelected = std::any_of(body.entities.begin(), body.entities.end(), [&](const auto& entity) {
+                return entity.shape.IsSame(edge) && std::find(selected.begin(), selected.end(),
+                    std::make_pair(body.id, entity.id)) != selected.end();
+            });
+            if (alreadySelected) continue;
             const auto found = std::find_if(body.entities.begin(), body.entities.end(), [&](const SourceEntity& entity) {
                 return entity.shape.ShapeType() == TopAbs_EDGE && entity.shape.IsSame(edge);
             });

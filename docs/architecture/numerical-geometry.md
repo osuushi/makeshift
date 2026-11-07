@@ -9,7 +9,7 @@ not one global precision setting or a replacement for OCCT entity tolerances.
 | --- | --- | --- |
 | Minimum recoverable finish | 0.001 mm | Rounds below this radius and recognized bevels below this setback recover their sharp supporting intersection. This is modeling resolution, not a looser BRep validity tolerance. |
 | Minimum solid volume | 1e-12 mm³ | Solid extraction and reconstructed/offset material must exceed the same floor. Reconnection and offset also require positive signed volume, retaining the orientation check. |
-| Minimum topology extent | 0.001 mm | New solid results repair microscopic strip/spot faces and short edges before publication; unrepairable candidates reject. Degenerate surface-pole edges are exempt. |
+| Minimum topology extent | 0.001 mm | Shared certified-safe/inspect screen; detailed checks repair microscopic strip/spot faces and short edges. Near-threshold candidates require the same one-micron material bound; unrepairable sub-threshold results reject. Degenerate surface-pole edges are exempt. |
 | Boundary distance | 1e-6 mm | Reconnection fitting, offset boundary/surface agreement and minimum Shell/Offset separation. |
 | Offset topology tolerance | 2e-6 mm | Bounds recorded on generated faces, edges and vertices; conservative rounded-join bounds do not enlarge the geometric distance budget. |
 | Generated vertex adjustment | 0.001 mm | Maximum correction of a generated vertex onto its incident curves. Retained source vertices cannot move; the corrected geometry must still satisfy the boundary-distance budget. |

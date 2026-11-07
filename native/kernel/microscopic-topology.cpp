@@ -1,6 +1,10 @@
 #include "microscopic-topology.h"
 #include "geometry-policy.h"
 #include "microscopic-validation.h"
+#include "microscopic-correspondence.h"
+#include "microscopic-face-size.h"
+#include <BRepAdaptor_Surface.hxx>
+#include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <BRepAlgoAPI_Defeaturing.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepGProp.hxx>
@@ -25,15 +29,48 @@ constexpr double detectionLimit = limit - 1e-9;
 struct SmallTopology {
     std::vector<TopoDS_Face> faces;
     bool edges = false;
+    std::vector<TopoDS_Face> candidates;
 };
+bool planarSubdivision(const TopoDS_Face& face,
+                       const TopTools_IndexedDataMapOfShapeListOfShape& adjacency) {
+    const BRepAdaptor_Surface support(face);
+    if (support.GetType() != GeomAbs_Plane) return false;
+    const auto plane = support.Plane();
+    int continuations = 0;
+    for (TopExp_Explorer edge(face, TopAbs_EDGE); edge.More(); edge.Next()) {
+        bool continuing = false;
+        for (TopTools_ListIteratorOfListOfShape f(adjacency.FindFromKey(edge.Current())); f.More(); f.Next()) {
+            if (f.Value().IsSame(face)) continue;
+            const BRepAdaptor_Surface next(TopoDS::Face(f.Value()));
+            continuing |= next.GetType() == GeomAbs_Plane &&
+                next.Plane().Axis().IsParallel(plane.Axis(), 1e-12) &&
+                plane.Distance(next.Plane().Location()) < 1e-12;
+        }
+        if (continuing) ++continuations;
+    }
+    return continuations > 0;
+}
 SmallTopology findSmall(const TopoDS_Shape& shape) {
     SmallTopology found;
     ShapeAnalysis_CheckSmallFace check;
+    TopTools_IndexedDataMapOfShapeListOfShape adjacency;
     for (TopExp_Explorer f(shape, TopAbs_FACE); f.More(); f.Next()) {
         const auto face = TopoDS::Face(f.Current());
+        // The broad phase may skip the kernel inspection only with a complete
+        // boundary certificate. Unsupported geometry always takes the slow path.
+        if (faceSizeGate(face, 2*limit) == FaceSizeGate::safe) continue;
         TopoDS_Edge a, b;
-        if (check.CheckSpotFace(face, detectionLimit) || check.CheckStripFace(face, a, b, detectionLimit))
+        if (check.CheckSpotFace(face, detectionLimit) || check.CheckStripFace(face, a, b, detectionLimit)) {
             found.faces.push_back(face);
+            continue;
+        }
+        const bool spot = check.CheckSpotFace(face, 2*detectionLimit);
+        if (!spot && !check.CheckStripFace(face, a, b, 2*detectionLimit)) continue;
+        if (adjacency.IsEmpty()) TopExp::MapShapesAndAncestors(shape, TopAbs_EDGE, TopAbs_FACE, adjacency);
+        // Exact above-threshold coplanar subdivisions remain intentional. A
+        // material ledge is instead eligible for a bounded removal attempt.
+        if (!spot && planarSubdivision(face, adjacency)) continue;
+        found.candidates.push_back(face);
     }
     TopTools_IndexedMapOfShape edges;
     TopExp::MapShapes(shape, TopAbs_EDGE, edges);
@@ -59,6 +96,8 @@ void healFaces(Result& result, const std::vector<TopoDS_Face>& faces) {
     heal.Build();
     if (!heal.IsDone() || heal.HasErrors() || heal.HasWarnings())
         throw std::runtime_error("Microscopic faces could not be reconnected into a solid");
+    for (const auto& face : faces)
+        if (!heal.IsDeleted(face)) throw std::runtime_error("Microscopic face was not removed");
     std::vector<SourceEntity> mapped;
     for (const auto& origin : result.predecessors) {
         if (!heal.IsDeleted(origin.shape)) mapped.push_back(origin);
@@ -66,6 +105,7 @@ void healFaces(Result& result, const std::vector<TopoDS_Face>& faces) {
             for (TopTools_ListIteratorOfListOfShape i(*list); i.More(); i.Next())
                 if (i.Value().ShapeType() == origin.shape.ShapeType()) mapped.push_back({origin.id, i.Value()});
     }
+    continueRemovedFaceEdges(result, faces, heal, mapped);
     std::vector<TopoDS_Face> selected;
     for (const auto& face : result.selectedFaces) {
         if (!heal.IsDeleted(face)) selected.push_back(face);
@@ -104,8 +144,7 @@ void healEdges(Result& result) {
     }
     result.shape = repair.Shape();
 }
-void repairMicroscopicTopology(Result& result) {
-    auto small = findSmall(result.shape);
+void repair(Result& result, SmallTopology small) {
     if (small.faces.empty() && !small.edges) return;
     // OCCT healing can modify shared tolerances. Never expose those mutations
     // to an operand or to an earlier preview if the repair subsequently fails.
@@ -120,7 +159,7 @@ void repairMicroscopicTopology(Result& result) {
         if (current.Contains(origin.shape))
             repaired.predecessors.push_back({origin.id, copy.ModifiedShape(origin.shape)});
     for (auto& face : repaired.selectedFaces) face = TopoDS::Face(copy.ModifiedShape(face));
-    small = findSmall(repaired.shape);
+    for (auto& face : small.faces) face = TopoDS::Face(copy.ModifiedShape(face));
     if (!small.faces.empty()) healFaces(repaired, small.faces);
     if (findSmall(repaired.shape).edges) healEdges(repaired);
     validate(repaired.shape);
@@ -137,6 +176,25 @@ void repairMicroscopicTopology(Result& result) {
     repaired.exactBounds.reset();
     result = std::move(repaired);
 }
+void repairMicroscopicTopology(Result& result) {
+    repair(result, findSmall(result.shape));
+    // Near-threshold spots and strips are candidates, not defects: removal
+    // must still satisfy the same complete-solid one-micron material budget.
+    for (;;) {
+        bool changed = false;
+        for (const auto& face : findSmall(result.shape).candidates) {
+            try {
+                repair(result, {{face}, false});
+                changed = true;
+                break;
+            } catch (const Standard_Failure&) {
+            } catch (const std::runtime_error&) {
+            }
+        }
+        if (!changed) break;
+    }
+}
+
 }
 void resolveMicroscopicTopology(Result& result) {
     try {

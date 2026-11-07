@@ -5,35 +5,54 @@ Later founder decisions override earlier proposals.
 
 ## Automatic microscopic topology repair (2026-11-06)
 
-Solid modeling and STEP-import results pass a shared microscopic-topology check before
-ordinary or deferred presentation. Faces classified as spots or narrow strips
-below 0.001 mm are removed with boundary reconstruction. Exact threshold spans
-remain explicit, allowing floating-point roundoff when classifying positioned supports.
-Remaining edges shorter than 0.001 mm can merge along continuous curves; arbitrary short corners are not
-dropped. Legitimate degenerate pole edges remain kernel bookkeeping. Ordinary
-larger subdivisions still require the explicit Clean up tool below.
+Solid modeling and STEP-import results pass one shared microscopic-topology gate
+before ordinary or deferred presentation. Its broad phase has only two outcomes:
+**certified safe** or **inspect**. No bounding-box size, area/perimeter ratio, or
+sampled width can clear a face. Complete analytic boundaries can certify convex
+straight-sided polygons, disks, nested circular loops and complete cylindrical
+bands. The lower bounds include entity tolerances and placement-dependent floating
+point error. An additional conservative margin covers the detailed spot check's
+half-box convention in every orientation. Unsupported surfaces/trims, concavity,
+unresolved holes, and near-threshold values always reach detailed inspection.
+This is a no-false-negative bypass for the shared size screen; it does not claim
+that OCCT's detailed diagnostics prove all possible local defects of arbitrary
+freeform geometry. General BRep/operation validation remains separate and mandatory.
+
+Detailed kernel spot/strip checks identify faces below 0.001 mm for boundary
+reconstruction. Short nondegenerate edges still receive their independent length
+check; only continuous curves may merge. Surface-pole edges remain bookkeeping.
+Faces within twice the detection threshold are also considered for **bounded
+repair**, regardless of whether they are planar, circular or freeform. They are
+not automatically defective: a successful repair must still keep the complete
+solid's added and removed material within 0.001 mm. Failed optional repairs retain
+above-threshold geometry; mandatory sub-threshold failures reject the edit.
+Above-threshold coplanar subdivisions remain explicit. The wider candidate range
+is not an increase to the material-change budget or kernel tolerance.
 
 Repair operates on a private copy, carries face/edge correspondence, clears stale
-measurements and belongs to the originating edit's Undo step. Fillet/Chamfer
-feasibility includes repair: when reconnection fails, the size search can back off
-to a feasible result without microscopic topology. Other unrepairable candidates
-reject without changing accepted geometry. Sketch curves remain unchanged.
-Microscopic repair failures use the ordinary invalid-geometry result, so Offset's
-drag and explicit Find Nearest can back off; exact typed input still rejects.
-This also replaces the former preservation of intentionally sub-micron contact
-shelves: an unrepairable shelf rejects, while larger shelves remain explicit.
+measurements and belongs to the originating edit's Undo step. When two boundaries
+of a removed face become the unique intersection of the same surviving supports,
+both old selections can designate that intersection during input preparation.
+The accepted merged edge receives identity through the ordinary correspondence
+rules. Fillet/Chamfer also prepare captured/legacy operands through this gate, so a
+previously accepted sliver cannot prevent construction before result repair runs.
+Feasibility includes repair: an unrepairable result cannot be accepted through
+Find Nearest or dragging. Exact typed input is not silently changed. Sketch curves
+remain unchanged.
 
 Validation requires valid closed solids, unchanged solid/shell counts, tight
 curve/surface agreement and bounded added/removed material. Convex polyhedra use
-exact vertex distances to bound the entire solid; other shapes require mutually
-containing 0.001 mm outward envelopes. Unverifiable envelopes reject. This is a
-conservative repair, not a guarantee that every curved sliver can be healed.
-The general strip/spot/short-edge pass does not run on read-only inspection or
-Open; those bodies pass through it on their next solid edit. Existing recognized
+exact vertex distances to bound the entire solid. Other shapes first check exact
+Boolean containment: a contained candidate needs no outward envelope. Only a
+non-contained side needs the fixed 0.001 mm outward envelope and its independent
+validity/containment checks. This avoids offsetting a disappearing sliver merely
+to prove that removing it cannot add material. Unverifiable repairs still reject;
+this does not guarantee that every curved sliver can be healed.
+
+The general pass does not mutate read-only inspection or Open. Existing recognized
 microscopic finishes still heal on Open under the separate finish-simplification
-contract. Other microscopic geometry can remain in an untouched legacy body.
-Mesh reconstruction retains its separate fitting/accuracy validation and is not
-rewritten by this pass.
+contract; other legacy geometry reaches the shared gate on a subsequent solid edit.
+Mesh reconstruction retains its separate fitting/accuracy validation.
 
 ## Standalone cleanup only (founder decision, 2026-10-04)
 

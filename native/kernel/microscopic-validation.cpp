@@ -25,7 +25,28 @@ void verticesInside(const TopoDS_Shape& source, const TopoDS_Shape& candidate) {
             throw std::runtime_error("Microscopic topology repair exceeds one micron");
     }
 }
+bool contained(const TopoDS_Shape& candidate, const TopoDS_Shape& source) {
+    BRepAlgoAPI_Cut outside;
+    TopTools_ListOfShape arguments, tools;
+    arguments.Append(candidate);
+    tools.Append(source);
+    outside.SetArguments(arguments);
+    outside.SetTools(tools);
+    outside.SetNonDestructive(true);
+    outside.Build();
+    if (!outside.IsDone() || outside.HasErrors() || outside.HasWarnings())
+        throw std::runtime_error("Could not verify microscopic topology repair");
+    validate(outside.Shape());
+    for (TopExp_Explorer s(outside.Shape(), TopAbs_SOLID); s.More(); s.Next())
+        if (std::abs(volume(s.Current())) > geometry_policy::minimumSolidVolumeMm3)
+            return false;
+    return true;
+}
 void insideEnvelope(const TopoDS_Shape& source, const TopoDS_Shape& candidate) {
+    // A material-removing repair is already contained in its source. Avoid an
+    // unnecessary offset of the very sliver being removed: its rounded joins
+    // can self-intersect even though no containment envelope is needed.
+    if (contained(candidate, source)) return;
     BRepOffsetAPI_MakeOffsetShape offset;
     offset.PerformByJoin(source, geometry_policy::minimumTopologyExtentMm,
                          geometry_policy::boundaryDistanceMm);
@@ -38,20 +59,8 @@ void insideEnvelope(const TopoDS_Shape& source, const TopoDS_Shape& candidate) {
         solid = true;
     }
     if (!solid) throw std::runtime_error("Microscopic repair envelope is empty");
-    BRepAlgoAPI_Cut outside;
-    TopTools_ListOfShape arguments, tools;
-    arguments.Append(candidate);
-    tools.Append(offset.Shape());
-    outside.SetArguments(arguments);
-    outside.SetTools(tools);
-    outside.SetNonDestructive(true);
-    outside.Build();
-    if (!outside.IsDone() || outside.HasErrors() || outside.HasWarnings())
-        throw std::runtime_error("Could not verify microscopic topology repair");
-    validate(outside.Shape());
-    for (TopExp_Explorer s(outside.Shape(), TopAbs_SOLID); s.More(); s.Next())
-        if (std::abs(volume(s.Current())) > geometry_policy::minimumSolidVolumeMm3)
-            throw std::runtime_error("Microscopic topology repair exceeds one micron");
+    if (!contained(candidate, offset.Shape()))
+        throw std::runtime_error("Microscopic topology repair exceeds one micron");
 }
 }
 void validateMicroscopicRepair(const TopoDS_Shape& before, const TopoDS_Shape& after) {
