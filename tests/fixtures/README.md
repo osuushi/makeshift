@@ -5,6 +5,15 @@ from the founder's 2026-11-03T19:51:08.197Z capture. A cylinder has blind bores 
 both ends, with a relief cut at one end. The test resizes the other bore to a
 2 mm wall and checks that the opposite end survives. Unrelated bodies, display
 meshes, sketches and history are omitted. This is user-created Makeshift geometry.
+# Normal extension of a bent tube
+
+`offset-bent-tube-cap.json` retains the affected exact body, topology IDs, requested
+17.3 mm face offset and camera from the founder's 2026-11-06T23:28:11.598Z capture.
+Unrelated geometry, sketches, decorators, history and transient candidates are
+omitted. The annular cap must extend normally with new straight tube walls while
+both spline bend supports stay fixed. Model tests cover small/large requests,
+preview reversal, cancellation, history, reopening, later editing and rotation.
+This is user-created Makeshift geometry.
 
 # Detailed body extrusion
 
