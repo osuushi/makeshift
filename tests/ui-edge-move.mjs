@@ -31,7 +31,7 @@ async function selectBoundary(page, round, height, partial = false) {
     assert.ok(selection.every((t) => t.kind === "edge"));
   }
 }
-async function quantity(page, value, axis = "normal") {
+async function quantity(page, value, axis = "Z") {
   const handle = page.getByRole("button", { name: `Move edges ${axis}`, exact: true });
   if (!(await handle.isVisible())) {
     // An end-on canonical axis is intentionally absent from the 2D widget.
@@ -82,6 +82,10 @@ export async function edgeMoveRoute(page, name, electron, round) {
   const original = await prepareShoulder(page, name, round);
   await selectBoundary(page, round, 8);
   await chooseTool(page, "transform", "transform");
+  assert.equal(
+    await page.getByRole("button", { name: "Move edges normal", exact: true }).isVisible(),
+    false,
+  );
   const selected = (await inspect(page)).modelingSelection;
   let state = await quantity(page, 1);
   assert.ok(state.preview, await page.getByRole("status").textContent());
@@ -90,7 +94,7 @@ export async function edgeMoveRoute(page, name, electron, round) {
     ? Math.PI * (64 * 9 + (64 + 48 + 36) / 3)
     : 400 * 9 + (400 + 320 + 256) / 3;
   volumeClose(state.preview.bodies[0].volume, expected);
-  const input = page.getByRole("textbox", { name: "Edge translation normal", exact: true });
+  const input = page.getByRole("textbox", { name: "Edge translation Z", exact: true });
   await input.fill("-8");
   await inspect(page);
   assert.equal(await input.getAttribute("aria-invalid"), "true");
@@ -110,9 +114,7 @@ export async function edgeMoveRoute(page, name, electron, round) {
   assert.deepEqual((await inspect(page)).document, original);
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, accepted);
-  const box = await page
-    .getByRole("button", { name: "Move edges normal", exact: true })
-    .boundingBox();
+  const box = await page.getByRole("button", { name: "Move edges Z", exact: true }).boundingBox();
   const a = await project(page, [0, 0, 9]),
     b = await project(page, [0, 0, 8]);
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -162,7 +164,7 @@ async function rotatedRound(page, name, edgeId) {
   await page.mouse.click(p.x, p.y);
   assert.equal((await inspect(page)).modelingSelection[0]?.edge, edgeId);
   await page.keyboard.press("m");
-  const state = await quantity(page, 1);
+  const state = await quantity(page, 1, "normal");
   assert.ok(state.preview, await page.getByRole("status").textContent());
   const moved = state.preview.bodies[0].edges.find((e) => e.id === edgeId);
   for (let i = 0; i < 3; i++) close(moved.curve.center[i], center[i] + normal[i]);

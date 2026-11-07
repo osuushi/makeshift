@@ -5,6 +5,7 @@ import { movementNormal } from "../src/model/transform-plane.js";
 import {
   alignedAxis,
   arrowWidthAxis,
+  boundaryNormalVisible,
   rotationVisible,
   uprightAxis,
 } from "../src/sketch/move-widget/geometry.js";
@@ -17,6 +18,24 @@ function camera(position: number[], up = [0, 0, 1]) {
   result.updateMatrixWorld();
   return result;
 }
+
+test("Boundary Move hides redundant world-axis normals and retains distinct tilted directions", () => {
+  assert.equal(boundaryNormalVisible(null), false);
+  for (let axis = 0; axis < 3; axis++)
+    for (const sign of [-1, 1]) {
+      const normal: [number, number, number] = [0, 0, 0];
+      normal[axis] = sign;
+      assert.equal(boundaryNormalVisible(normal), false);
+      // Kernel/transformed normals can contain insignificant off-axis components.
+      normal[(axis + 1) % 3] = 1e-8;
+      assert.equal(boundaryNormalVisible(normal), false);
+      const angle = Math.PI / 180;
+      normal[axis] = sign * Math.cos(angle);
+      normal[(axis + 1) % 3] = Math.sin(angle);
+      assert.equal(boundaryNormalVisible(normal), true);
+    }
+  assert.equal(boundaryNormalVisible([0, -Math.sin(0.6), Math.cos(0.6)]), true);
+});
 
 test("Move suppresses an end-on axis on either camera side, with a bounded 12 degree tolerance", () => {
   for (let axis = 0; axis < 3; axis++)
