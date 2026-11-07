@@ -44,7 +44,7 @@ export class BodyEdgeFinishControls {
       (mode) => this.begin(mode),
       () => this.lease,
       () => this.size,
-      (size) => this.queue(size),
+      (size) => this.queue(size, true),
       () => this.focus(),
       () =>
         edgeFinishSurfacePlan(editor, this.frame, this.mode, async (size) => {
@@ -67,6 +67,7 @@ export class BodyEdgeFinishControls {
         else if (this.begin(mode)) this.focus();
       },
       size: (value) => this.queue(value),
+      findNearest: () => this.queue(this.size, true),
       active: () => !!this.lease,
       finish: () => void this.finish(),
       cancel: () => void this.cancel(),
@@ -218,35 +219,38 @@ export class BodyEdgeFinishControls {
     this.widget.input.focus();
     this.widget.input.select();
   }
-  private queue(size: number): void {
+  private queue(size: number, limit = false): void {
     if (this.lease?.phase !== "editing") return;
     if (!this.selection.edges.length) {
       this.size = Math.max(0, size);
       this.editor.refresh();
       return;
     }
-    if (size < 0) this.widget.input.value = "0";
-    if (this.previews.latest?.size === Math.max(0, size)) {
+    if (limit) size = Math.max(0, size);
+    if (this.previews.latest?.size === size && this.previews.latest.limit === limit) {
       if (this.valid && this.size !== this.previews.latest.size) {
         this.widget.input.value = String(this.widget.radial.display(this.size));
         this.drag.rebase(this.size);
       }
       return;
     }
-    this.size = Math.max(0, size);
+    this.size = size;
     this.valid = false;
-    if (!Number.isFinite(size)) {
+    this.invalid = false;
+    if (!Number.isFinite(size) || size < 0) {
+      this.editor.message = "";
       this.previews.clear();
       this.lease.show(null);
       this.invalid = true;
-      this.editor.notice = "Enter a finite size";
+      this.editor.notice = "Enter a finite, nonnegative size";
       this.editor.refresh();
       return;
     }
     this.editor.notice = `${this.mode === "fillet" ? "Fillet" : "Chamfer"} · ${this.selection.edges.length} selected edge${this.selection.edges.length === 1 ? "" : "s"} · Enter to accept · Escape to cancel`;
     this.previews.enqueue({
       edges: this.selection.edges,
-      size: Math.max(0, size),
+      size,
+      limit,
       mode: this.mode,
     });
     this.editor.refresh();
@@ -351,6 +355,10 @@ export class BodyEdgeFinishControls {
       this.editor.blocked,
       !!this.lease && this.invalid,
       this.lease && !this.selection.edges.length ? "Select at least one solid face or edge." : "",
+      this.lease && this.invalid && !this.valid
+        ? this.editor.message || "Enter a finite, nonnegative size"
+        : "",
+      !!this.previews.latest && this.previews.latest.limit === false && Number.isFinite(this.size),
     );
   };
   dispose(): void {

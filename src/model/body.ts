@@ -107,12 +107,16 @@ export interface BodyBoolean {
 }
 
 export interface BodyEdgeFinish {
+  /** False requests the exact typed size; omitted preserves interactive limiting. */
+  limit?: boolean;
   edges: { body: string; edge: string }[];
   size: number;
   mode: "fillet" | "chamfer";
 }
 
 export interface BodyFaceOffset {
+  /** False requests the exact typed distance; omitted preserves interactive limiting. */
+  limit?: boolean;
   /** When present, rebuild a recognized blend at this radius instead of normal offset. */
   radius?: number;
   /** Radius represents equal setback distance when rebuilding a chamfer. */

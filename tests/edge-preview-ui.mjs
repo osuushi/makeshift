@@ -64,6 +64,7 @@ async function modeAndClamp(page, cleanupChecks, original, timeline) {
   await inspect(page);
   const count = cleanupChecks();
   await input.fill("100");
+  await page.getByRole("button", { name: "Find Nearest", exact: true }).click();
   await inspect(page);
   const maximum = Number(await input.inputValue());
   assert.ok(maximum > 2 && maximum < 100);
@@ -75,9 +76,13 @@ async function modeAndClamp(page, cleanupChecks, original, timeline) {
     `Geometry does not schedule cleanup: ${JSON.stringify(timeline)}`,
   );
   await input.fill("100");
+  await page.getByRole("button", { name: "Find Nearest", exact: true }).click();
   await inspect(page);
   assert.equal(Number(await input.inputValue()), maximum);
   await input.fill("-5");
+  assert.equal((await inspect(page)).preview, null);
+  assert.equal(await input.inputValue(), "-5");
+  await input.fill("0");
   assert.deepEqual((await inspect(page)).preview, original);
   await page.keyboard.press("Enter");
   assert.equal((await inspect(page)).interaction, null);

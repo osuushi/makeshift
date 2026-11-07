@@ -49,6 +49,8 @@ export async function bodyFilletRoute(page, name, electron, cleanup = false) {
   assert.ok(state.preview.bodies[0].volume < original.bodies[0].volume);
   await page.screenshot({ path: `.cache/sketch-review/${name}-fillet-preview.png` });
   await radius(page, 100);
+  assert.equal((await inspect(page)).preview, null);
+  await page.getByRole("button", { name: "Find Nearest", exact: true }).click();
   state = await inspect(page);
   assert.ok(state.preview);
   assert.deepEqual(state.document, original);

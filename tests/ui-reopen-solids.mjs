@@ -112,6 +112,7 @@ export async function reopenFinish(page, name, mode) {
   await chooseTool(page, mode, mode);
   const quantity = mode === "fillet" ? "Fillet radius" : "Chamfer distance";
   await field(page, quantity).fill("100");
+  await page.getByRole("button", { name: "Find Nearest", exact: true }).click();
   await ready(page, `Accept ${mode}`);
   const verified = Number(await field(page, quantity).inputValue());
   assert.ok(verified > 0 && verified < 100, "accepted size is a verified clamp");

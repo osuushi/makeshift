@@ -15,6 +15,7 @@ export function faceOffsetInputs(
     lease(): InteractionLease | null;
     focus(): void;
     queue(value: number): void;
+    findNearest(): void;
     finish(): void;
     cancel(): void;
   },
@@ -28,6 +29,7 @@ export function faceOffsetInputs(
     options,
   );
   widget.input.addEventListener("focus", actions.begin, options);
+  widget.error.findNearest.addEventListener("click", actions.findNearest, options);
   widget.input.addEventListener(
     "input",
     () => {
@@ -54,6 +56,10 @@ export function faceOffsetInputs(
       if (!actions.lease() || !["Enter", "Escape"].includes(event.key)) return;
       event.preventDefault();
       event.stopImmediatePropagation();
+      if (event.key === "Enter" && event.target === widget.error.findNearest) {
+        actions.findNearest();
+        return;
+      }
       if (event.key === "Escape") actions.cancel();
       else actions.finish();
     },

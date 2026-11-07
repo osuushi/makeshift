@@ -4,11 +4,11 @@
 export const uiSuites = [
   {
     args: ["surface-preview-ui.mjs"],
-    // Hidden macOS Electron: 7.05s for Offset and Fillet in one app session.
+    // Hidden macOS Electron: 12.41s including captured typed-diameter focus/search.
     seconds: 15,
     browsers: ["electron"],
     reason:
-      "Offset and Fillet must display meshes before metadata through actual controls, retain the latest numeric target, and gate acceptance through the renderer/host boundary.",
+      "Offset and Fillet must display meshes before metadata, retain numeric focus through rejected intermediate text, search only on Find Nearest or drag, and gate acceptance through the renderer/host boundary.",
     unit: "surface-preview.test.ts",
   },
   {

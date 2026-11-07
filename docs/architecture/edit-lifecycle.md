@@ -88,8 +88,10 @@ During pointer dragging, fields display the latest requested quantity immediatel
 including while an earlier calculation is pending. An older result can update
 the geometry preview but must not roll the field back. Sketch dimension readouts
 retain only requested numbers, independently of solver-owned geometry. Verified
-size limits apply when the latest target finishes; explicit typed text keeps its
-ordinary focus ownership.
+size limits apply when the latest drag target finishes. Typed surface-edit values
+are exact requests (`limit: false`), keep focus through rejection, and show an inline
+error with acceptance disabled. Find Nearest explicitly opts into verified search;
+omitted `limit` preserves the existing backend search behavior for other callers.
 
 The composition root passes a named NumericEdit collaborator to the editor and
 connects Dimensions and PointerGestures as its field and gesture owners before
@@ -114,8 +116,8 @@ and uses the shared cancellation path, with no late candidate publication after
 its lease closes. Offset and Fillet/Chamfer finish an in-flight geometry probe but
 stop later probes when superseded. Their mesh and verified distance/size draw
 before full presentation; new input skips or interrupts that deferred completion.
-Offset retains its last verified distance and selection feedback. Fillet/Chamfer
-retain verified size-limit feedback; their pending sizes use the expanded edge
+Offset retains verified distance and selection feedback during drags and explicit
+search. Fillet/Chamfer retain the same verified size-limit feedback; their pending sizes use the expanded edge
 selection when calculation starts. Each controller checks its lease and the applicable target
 before changing presentation. Invalid input clears waiting
 targets; cancellation closes the lease before awaiting native cancellation. Modeling

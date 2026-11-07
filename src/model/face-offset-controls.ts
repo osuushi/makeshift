@@ -52,7 +52,7 @@ export class FaceOffsetControls {
       lease: () => this.lease,
       axis: () => this.axis,
       value: () => this.distance,
-      queue: (value) => this.queue(value),
+      queue: (value) => this.queue(value, true),
       focus: () => {
         this.widget.input.focus();
         this.widget.input.select();
@@ -65,6 +65,7 @@ export class FaceOffsetControls {
       lease: () => this.lease,
       focus: () => this.focus(),
       queue: (value) => this.queue(value),
+      findNearest: () => this.queue(this.distance, true),
       finish: () => void this.finish(),
       cancel: () => void this.cancel(),
     });
@@ -94,7 +95,7 @@ export class FaceOffsetControls {
           lease: this.lease,
           initial: this.distance,
           existing,
-          queue: (distance) => this.queue(distance),
+          queue: (distance) => this.queue(distance, true),
           settle: () => this.previews.settle(),
           valid: () => this.valid && !this.invalid,
           distance: () => this.distance,
@@ -126,6 +127,7 @@ export class FaceOffsetControls {
       this.quantity.setMode(restored.radius !== undefined ? "radius" : "offset");
     this.widget.input.value = this.quantity.text(this.distance);
     this.valid = true;
+    this.invalid = false;
     this.previews.clear();
     this.lease.trackHistory(
       this.widget.root,
@@ -151,12 +153,18 @@ export class FaceOffsetControls {
     this.widget.input.focus();
     this.widget.input.select();
   }
-  private queue(distance: number): void {
-    distance = this.quantity.clamp(distance);
-    if (this.lease?.phase !== "editing" || this.previews.latest?.distance === distance) return;
+  private queue(distance: number, limit = false): void {
+    if (limit) distance = this.quantity.clamp(distance);
+    const latest = this.previews.latest;
+    if (
+      this.lease?.phase !== "editing" ||
+      (latest?.distance === distance && latest.limit === limit)
+    )
+      return;
     this.invalid = !Number.isFinite(distance);
     this.distance = distance;
     this.valid = false;
+    this.editor.message = "";
     if (!Number.isFinite(distance)) {
       this.previews.clear();
       this.lease.show(null);
@@ -168,6 +176,7 @@ export class FaceOffsetControls {
     this.previews.enqueue({
       faces: this.faces,
       distance,
+      limit,
       ...this.quantity.finishInput(distance),
     });
     this.editor.refresh();
@@ -201,7 +210,7 @@ export class FaceOffsetControls {
     this.distance = this.editor.store.offsetDistance ?? request.distance;
     this.invalid = this.distance !== request.distance;
     if (this.invalid) {
-      this.widget.input.blur();
+      this.widget.input.value = this.quantity.text(this.distance);
       this.editor.notice = "Offset stopped at the last verified position";
     }
   }
@@ -285,6 +294,10 @@ export class FaceOffsetControls {
         this.valid,
         this.blend,
         this.invalid,
+        !!this.previews.latest &&
+          !this.blend &&
+          this.previews.latest.limit === false &&
+          Number.isFinite(this.distance),
       );
   };
   dispose(): void {

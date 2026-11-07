@@ -32,14 +32,14 @@ export async function selectSurface(page, face) {
   await page.mouse.click(p.x, p.y);
   assert.equal((await inspect(page)).modelingSelection[0]?.face, face.id);
 }
-export async function outwardDrag(page, action, face, amount = 1) {
+export async function outwardDrag(page, action, face, amount = 1, scope = page) {
   const { center, normal } = face.offsetHandle;
   const a = await project(page, center),
     b = await project(
       page,
       center.map((v, i) => v + normal[i] * amount),
     );
-  const box = await page.getByRole("button", { name: action, exact: true }).boundingBox();
+  const box = await scope.getByRole("button", { name: action, exact: true }).boundingBox();
   const x = box.x + box.width / 2,
     y = box.y + box.height / 2;
   await page.mouse.move(x, y);
