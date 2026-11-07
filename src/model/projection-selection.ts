@@ -39,8 +39,11 @@ export function projectionSelection(e: SketchEditor): ProjectionSource[] {
       sketch: e.sketch?.id ?? "",
       curve,
     }));
-  const sources = coverageTargets(selectionContext(e.modeling.targets, e.store.data)).map(
-    projectionSource,
+  const sources = coverageTargets(selectionContext(e.modeling.targets, e.store.data)).flatMap(
+    (target): ProjectionSource[] =>
+      target.kind === "sketch" && target.curves
+        ? target.curves.map((curve) => ({ kind: "curve", sketch: target.sketch, curve }))
+        : [projectionSource(target)],
   );
   return sources.filter(
     (s, i) => sources.findIndex((p) => projectionKey(p) === projectionKey(s)) === i,

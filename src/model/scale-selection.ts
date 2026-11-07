@@ -13,8 +13,11 @@ export function scaleSelection(editor: SketchEditor): ScaleSource | null {
       : null;
   }
   const targets = editor.modeling.targets;
-  if (targets.length && targets.every((t) => t.kind === "sketch"))
-    return { kind: "sketches", ids: [...new Set(targets.map((t) => t.sketch))] };
+  if (targets.length && targets.every((t) => t.kind === "sketch" && !t.curves))
+    return {
+      kind: "sketches",
+      ids: [...new Set(targets.flatMap((t) => (t.sketch ? [t.sketch] : [])))],
+    };
   const result = editor.modeling.resolve("scale");
   return result.available
     ? {

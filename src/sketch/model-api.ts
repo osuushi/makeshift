@@ -100,6 +100,7 @@ export type ModelRequest =
       sketchIds: string[];
       topology?: CleanupSelection[];
       profiles?: { sketch: string; profile: string }[];
+      curves?: { sketch: string; ids: string[] }[];
     }
   | { kind: "delete-sketch"; sketchId: string }
   | { kind: "navigation-history"; direction: "undo" | "redo" }

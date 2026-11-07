@@ -56,25 +56,26 @@ export class NativeCalculator<Input, Output> {
     child.once("exit", failed);
     child.stdin.on("error", failed);
   }
-  calculate(input: Input): Promise<Output> {
+  calculate(input: Input, deadlineMs = this.deadlineMs): Promise<Output> {
     if (this.pending) return Promise.reject(new Error("Native calculator is busy"));
     return new Promise((resolve, reject) => {
       const pending = { resolve, reject };
       this.pending = pending;
-      void this.launch(input, pending);
+      void this.launch(input, pending, deadlineMs);
     });
   }
   private async launch(
     input: Input,
     pending: NonNullable<NativeCalculator<Input, Output>["pending"]>,
+    deadlineMs: number,
   ): Promise<void> {
     try {
       if (this.stopping) await this.stopping;
       if (this.pending !== pending) return;
       if (!this.child) this.start();
       this.timer = setTimeout(
-        () => this.stop(`${this.name} timed out after ${this.deadlineMs / 1000} seconds`),
-        this.deadlineMs,
+        () => this.stop(`${this.name} timed out after ${deadlineMs / 1000} seconds`),
+        deadlineMs,
       );
       this.child?.stdin.write(`${JSON.stringify(input)}\n`);
     } catch (error) {

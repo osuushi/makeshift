@@ -74,9 +74,9 @@ test("native cancellation kills an uncooperative process, drains it and restarts
 test("native deadline is distinct from cancellation and a subsequent calculation waits for termination", {
   skip: process.platform === "win32",
 }, async () => {
-  const { native, ready, dir } = await calculator(600);
+  const { native, ready, dir } = await calculator(3000);
   try {
-    const pending = native.calculate({ stall: true });
+    const pending = native.calculate({ stall: true }, 600);
     const rejected = assert.rejects(pending, /Test kernel timed out after 0.6 seconds/);
     const pid = await started(ready);
     await rejected;

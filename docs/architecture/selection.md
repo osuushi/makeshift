@@ -18,6 +18,12 @@ founder feedback update these contracts before further tools depend on them.
   selection order. Incomplete inputs retain the expanded eligible categories in
   the normal tool selection flow. Tools accepting whole sketches (including Move,
   Copy and Delete) retain the entity token and its existing ownership semantics.
+  Option-clicking a region first expands that whole selection to ordinary region
+  targets, then removes the clicked region. Open curves remain positively selected
+  as a curve subset; no hidden exclusion mask substitutes for actual selection.
+  Chooser subtraction follows the same route. Copy, Delete and projection consume
+  the selected regions and open curves. Transforming a proper curve subset enters
+  its sketch workspace so unselected curves stay put.
 
 - Command/Ctrl-A selects all visible whole bodies and sketches in Modeling; in a
   planar workspace it selects all curves in the active sketch and switches to Select.

@@ -36,10 +36,13 @@ export function drawSketches(editor: SketchEditor, obscured = false): () => void
     selection = "";
   const update = () => {
     const selected = editor.selectionOwners;
+    if (!editor.world.active)
+      for (const target of editor.modeling.targets)
+        if (target.kind === "sketch") for (const id of target.curves ?? []) selected.add(id);
     const hover = new Set(editor.hover?.kind === "curve" ? [editor.hover.curve] : []);
     const rect = editor.world.canvas.getBoundingClientRect();
     const modeling = !editor.world.active
-      ? editor.modeling.targets.filter((t) => t.kind === "sketch").map((t) => t.sketch)
+      ? editor.modeling.targets.flatMap((t) => (t.kind === "sketch" && !t.curves ? [t.sketch] : []))
       : [];
     const mergeable = !editor.world.active
       ? editor.mergeableSketches.map((sketch) => sketch.id)

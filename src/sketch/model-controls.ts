@@ -277,8 +277,25 @@ export class ModelControls {
   activateRevolve(): void {
     this.revolve.begin();
   }
-  move(): void {
+  async move(): Promise<void> {
     const sketch = modelingSketch(this.editor);
+    if (sketch && this.editor.modeling.targets.some((t) => t.kind === "sketch" && t.curves)) {
+      const ids = new Set(
+        this.editor.modeling.targets.flatMap((target) =>
+          target.kind === "sketch"
+            ? (target.curves ?? sketch.curves.map((c) => c.id))
+            : target.kind === "profile"
+              ? [target.profile.outer, ...target.profile.holes].flat().map((s) => s.curve.id)
+              : [],
+        ),
+      );
+      if (ids.size < sketch.curves.length) {
+        if (!this.editor.workspaceEntry.selected()) return;
+        this.editor.select([...ids]);
+        await this.editor.activateMove();
+        return;
+      }
+    }
     if (sketch) this.editor.modeling.targets = [{ kind: "sketch", sketch: sketch.id }];
     else if (
       !this.editor.modeling.targets.length ||

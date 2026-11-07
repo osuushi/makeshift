@@ -247,9 +247,10 @@ export class PlacementControls {
   }
   private selectedSketches(): Sketch[] {
     const single = modelingSketch(this.editor);
-    if (single) return [single];
+    if (single && !this.editor.modeling.targets.some((t) => t.kind === "sketch" && t.curves))
+      return [single];
     const targets = this.editor.modeling.targets;
-    if (!targets.length || targets.some((t) => t.kind !== "sketch")) return [];
+    if (!targets.length || targets.some((t) => t.kind !== "sketch" || t.curves)) return [];
     return targets
       .map((target) => this.editor.store.data.sketches.find((s) => s.id === target.sketch))
       .filter((sketch) => sketch !== undefined);

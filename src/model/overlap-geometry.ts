@@ -37,7 +37,12 @@ export function overlapGeometry(editor: SketchEditor, target?: OverlapTarget): P
   if (target?.kind === "sketch") {
     const sketch = editor.display.sketches.find((s) => s.id === target.sketch);
     if (sketch && editor.visibility.visible(sketch.id))
-      result.lines = sketchPreviewLines(editor, sketch);
+      result.lines = sketchPreviewLines(
+        editor,
+        target.curves
+          ? { ...sketch, curves: sketch.curves.filter((c) => target.curves?.includes(c.id)) }
+          : sketch,
+      );
     return result;
   }
   if (target?.kind === "plane") {

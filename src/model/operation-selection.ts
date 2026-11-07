@@ -14,6 +14,7 @@ export interface MovementSelection {
 export interface DeletionSelection {
   bodyIds: string[];
   sketchIds: string[];
+  curves: { sketch: string; ids: string[] }[];
   topology: CleanupSelection[];
   profiles: { sketch: string; profile: string }[];
 }
@@ -152,11 +153,16 @@ function offsetSelection(
 function deletionSelection(c: SelectionContext): Resolution<DeletionSelection> {
   return available({
     bodyIds: c.complete.map((b) => b.id),
-    sketchIds: c.ordered.flatMap((t) => (t.kind === "sketch" ? [t.sketch] : [])),
+    sketchIds: c.ordered.flatMap((t) => (t.kind === "sketch" && !t.curves ? [t.sketch] : [])),
+    curves: c.ordered.flatMap((t) =>
+      t.kind === "sketch" && t.curves ? [{ sketch: t.sketch, ids: t.curves }] : [],
+    ),
     topology: cleanupSelection([...c.partialFaces, ...uncoveredEdges(c)]),
     profiles: c.ordered.flatMap((t) =>
       t.kind === "profile" &&
-      !c.ordered.some((other) => other.kind === "sketch" && other.sketch === t.sketch)
+      !c.ordered.some(
+        (other) => other.kind === "sketch" && !other.curves && other.sketch === t.sketch,
+      )
         ? [{ sketch: t.sketch, profile: t.profile.key }]
         : [],
     ),

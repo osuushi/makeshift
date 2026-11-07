@@ -29,7 +29,7 @@ export function modelHighlight(editor: SketchEditor): () => void {
     )
       return;
     const sketch = editor.display.sketches.find((s) => s.id === target.sketch);
-    if (!sketch) return;
+    if (!sketch || (target.kind === "sketch" && target.curves)) return;
     const profiles = target.kind === "profile" ? [target.profile] : profilesFor(sketch);
     const scale = editor.world.height / editor.world.canvas.clientHeight;
     const geometry = profileGeometry(profiles, sketch.plane, scale);

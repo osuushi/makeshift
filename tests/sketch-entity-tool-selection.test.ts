@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { deleteEntities } from "../src/backend/delete-entities.js";
+import { clipboardSelection } from "../src/clipboard/selection.js";
 import type { Operation } from "../src/model/operation-selection.js";
 import type { SketchDocument } from "../src/sketch/document.js";
 import type { SketchEditor } from "../src/sketch/editor.js";
@@ -85,4 +87,38 @@ test("open sketches need input collection; whole-entity tools preserve the sketc
     assert.deepEqual(tool.narrow(), modeling.targets);
   }
   assert.equal(fixture(true).selection("extrude").narrow(), null);
+});
+
+test("Option-subtracting an inner region expands whole-sketch coverage before subtraction", () => {
+  const { data, modeling, selection } = fixture();
+  const profiles = profilesFor(data.sketches[0]);
+  const inner = profiles.find((profile) => profile.holes.length === 0);
+  assert.ok(inner);
+  modeling.choose({ kind: "profile", sketch: "s", profile: inner }, false, false, true);
+  assert.deepEqual(
+    selection("extrude").narrow(),
+    profiles
+      .filter((p) => p !== inner)
+      .map((profile) => ({ kind: "profile", sketch: "s", profile })),
+  );
+});
+
+test("refining a sketch preserves its open curves for copy and delete", () => {
+  const { data, modeling, editor } = fixture();
+  const inner = profilesFor(data.sketches[0]).find((p) => !p.holes.length);
+  assert.ok(inner);
+  modeling.choose({ kind: "profile", sketch: "s", profile: inner }, false, false, true);
+  assert.ok(modeling.targets.some((t) => t.kind === "sketch" && t.curves?.includes("open")));
+  const copied = clipboardSelection(editor).sketches[0];
+  assert.equal(copied.curves.filter((c) => c.kind === "segment").length, 1);
+  assert.equal(profilesFor(copied).length, 2, "Copied annulus retains both boundaries");
+  const deletion = modeling.resolve("delete");
+  assert.ok(deletion.available);
+  if (!deletion.available) return;
+  const next = deleteEntities(data, { kind: "delete-entities", ...deletion.inputs });
+  assert.ok(next.sketches.every((s) => s.curves.every((c) => c.id !== "open")));
+  modeling.chooseProfiles("s", [inner], false, true);
+  assert.equal(modeling.targets.filter((t) => t.kind === "profile").length, 2);
+  modeling.chooseProfiles("s", [inner], false, false, true);
+  assert.equal(modeling.targets.filter((t) => t.kind === "profile").length, 1);
 });

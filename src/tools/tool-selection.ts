@@ -57,7 +57,7 @@ export class ToolSelection {
   get refinementTargets(): ToolTarget[] {
     if (this.planar || this.policy.model?.includes("sketch")) return this.targets;
     const expanded = this.targets.flatMap((target): ToolTarget[] => {
-      if (target.kind !== "sketch") return [target];
+      if (target.kind !== "sketch" || target.curves) return [target];
       const sketch = this.editor.store.data.sketches.find((s) => s.id === target.sketch);
       return [
         target,

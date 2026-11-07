@@ -83,3 +83,7 @@ whose selection/geometry no longer matches. It never installs the reply's model 
 Unchanged camera/hover updates do not serialize the BRep or rerun the kernel. The
 readout and witness overlays dispose with the editor; the native process closes with
 the document owner. Native calculation keeps its existing ten-second deadline.
+
+Measurement queries have a ten-second native/WASM watchdog rather than the longer
+modeling-operation budget. A stalled query reports its timeout and terminates the
+calculator; the next query starts a fresh worker. It never changes geometry.

@@ -54,11 +54,12 @@ export class DeleteTopologyAction {
     const editor = this.editor;
     const resolution = editor.modeling.resolve("delete");
     if (!resolution.available) return;
-    const { bodyIds, sketchIds, topology, profiles } = resolution.inputs;
-    if (bodyIds.length || sketchIds.length || profiles.length) {
+    const { bodyIds, sketchIds, topology, profiles, curves } = resolution.inputs;
+    if (bodyIds.length || sketchIds.length || profiles.length || curves.length) {
       const entities = {
         bodyIds,
         sketchIds,
+        ...(curves.length ? { curves } : {}),
         ...(profiles.length ? { profiles } : {}),
         ...(topology.length ? { topology } : {}),
       };
