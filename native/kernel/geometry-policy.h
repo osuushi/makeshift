@@ -6,6 +6,7 @@ namespace geometry_policy {
 // Modeling resolution for recoverable rounds/bevels, independent of BRep validity.
 constexpr double minimumFinishMm = 0.001;
 constexpr double minimumSolidVolumeMm3 = 1e-12;
+constexpr double minimumTopologyExtentMm = 0.001;
 constexpr double boundaryDistanceMm = 1e-6;
 constexpr double offsetTopologyToleranceMm = 2e-6;
 constexpr double generatedVertexAdjustmentMm = 0.001;
