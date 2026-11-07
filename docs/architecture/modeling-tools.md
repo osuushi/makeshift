@@ -311,6 +311,9 @@ The cap plane moves by its signed normal distance while adjoining wall supports
 continue unchanged. Straight oblique tubes continue along their existing generator,
 not along the cap normal. Linear extrusion surfaces and degree-one B-spline control
 rows certify that generator; unsupported curved supports reject this fallback.
+Connected walls sharing that generator extend their existing trims from a common
+stationary rim plane. This preserves wall topology through sheared or split tubes
+and creates no join ring between the old wall and its continuation.
 Complete conical walls perpendicular to the cap rebuild their circular intersection
 at the new plane, changing its radius and area. Their cone supports remain fixed.
 The resulting solid still passes interference, topology and tolerance checks.

@@ -10,8 +10,7 @@
 #include <optional>
 #include <stdexcept>
 
-namespace {
-std::optional<gp_Vec> generator(const TopoDS_Face& face) {
+std::optional<gp_Vec> offsetGenerator(const TopoDS_Face& face) {
     const BRepAdaptor_Surface surface(face);
     if (surface.GetType() == GeomAbs_Cylinder) return gp_Vec(surface.Cylinder().Axis().Direction());
     if (surface.GetType() == GeomAbs_SurfaceOfExtrusion) return gp_Vec(surface.Direction());
@@ -39,7 +38,6 @@ std::optional<gp_Vec> generator(const TopoDS_Face& face) {
     }
     return std::nullopt;
 }
-}
 gp_Vec offsetContinuation(const TopoDS_Shape& body, const TopoDS_Face& cap, double distance) {
     const auto plane = BRepAdaptor_Surface(cap).Plane();
     auto normal = gp_Vec(plane.Position().XDirection()).Crossed(gp_Vec(plane.Position().YDirection()));
@@ -56,7 +54,7 @@ gp_Vec offsetContinuation(const TopoDS_Shape& body, const TopoDS_Face& cap, doub
         if (!adjacent) continue;
         neighbors.push_back(face);
         if (BRepAdaptor_Surface(face).GetType() == GeomAbs_Plane) continue;
-        auto axis = generator(face);
+        auto axis = offsetGenerator(face);
         if (!axis || (direction && !axis->IsParallel(*direction, 1e-10)))
             throw std::runtime_error("Cap neighbors have no common straight continuation");
         direction = axis;

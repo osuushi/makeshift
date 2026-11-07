@@ -235,3 +235,9 @@ exercised through the UI rather than fabricated into the captured document.
 2026-11-07T19:36:05.273Z. Offsetting the planar face between the fillets to the
 captured verified distance must collapse sub-micron finishes into shared box edges.
 Tests measure every resulting edge pair and preserve ordinary Undo/Redo.
+
+`offset-shear-extension.json` and `offset-split-extension.json` retain exact geometry
+and the attempted cap offsets from the founder’s 2026-11-07T20:33:05.666Z and
+20:33:43.453Z captures. A sideways-moved tube and its split half must extend along
+their current straight supports without adding join edges. Display meshes and
+history are omitted; topology identity, volume, repeated offsets and Undo/Redo are checked.

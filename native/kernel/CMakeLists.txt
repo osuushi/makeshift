@@ -123,7 +123,7 @@ if(MAKESHIFT_KERNEL_TESTS OR FREAC_KERNEL_TESTS)
 endif()
 
 target_sources(makeshift-kernel PRIVATE sketch-offset.cpp)
-target_sources(makeshift-kernel PRIVATE planar-face-offset.cpp conical-cap-offset.cpp planar-offset-prisms.cpp offset-continuation.cpp)
+target_sources(makeshift-kernel PRIVATE planar-face-offset.cpp conical-cap-offset.cpp linear-cap-offset.cpp planar-offset-prisms.cpp offset-continuation.cpp)
 target_sources(makeshift-kernel PRIVATE sketch-offset-sections.cpp)
 target_sources(makeshift-kernel PRIVATE offset-repair.cpp)
 

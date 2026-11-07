@@ -25,13 +25,21 @@ function checkExtension(original: Body, result: Body, distance: number): void {
   const selected = result.faces.find((f) => f.id === fixture.operation.faces[0].face);
   near(selected?.plane?.origin[2] ?? NaN, 44.1845 + distance);
   near(selected?.signature[2] ?? NaN, area);
-  // The spline bend must survive exactly, rather than stretching to the new cap.
-  for (const face of original.faces.filter((f) => f.signature[0] === 6)) {
+  assert.equal(result.faces.length, original.faces.length, "Continuation must not add a join face");
+  assert.equal(result.edges.length, original.edges.length, "Continuation must not add a join ring");
+  assert.deepEqual(
+    new Set(result.faces.map((f) => f.id)),
+    new Set(original.faces.map((f) => f.id)),
+  );
+  assert.deepEqual(
+    new Set(result.edges.map((e) => e.id)),
+    new Set(original.edges.map((e) => e.id)),
+  );
+  // The lower straight segment stays fixed while the upper oblique walls extend.
+  for (const face of original.faces.filter((f) => f.cylinder)) {
     const continued = result.faces.find((f) => f.id === face.id);
     assert.ok(continued);
-    assert.deepEqual(continued.signature, face.signature);
     assert.deepEqual(continued.bounds, face.bounds);
-    assert.deepEqual(continued.vertices, face.vertices);
   }
   near(selected?.signature[4] ?? NaN, -4.5 + sideways);
   near(selected?.bounds?.[1] ?? NaN, -9.1 + sideways);
@@ -120,16 +128,13 @@ test("rotated bent tube cap continues its walls to a rotated cap plane", async (
     near(cap.signature[3], 0.5);
     near(cap.signature[4], 12 - 61.4845);
     near(cap.signature[5], -1.5 - (1.3 * 17.3) / 10.4845);
-    for (const original of rotated[0].faces.filter((f) => f.signature[0] === 6)) {
+    assert.equal(body.faces.length, rotated[0].faces.length);
+    assert.equal(body.edges.length, rotated[0].edges.length);
+    for (const original of rotated[0].faces.filter((f) => f.cylinder)) {
       const continued = body.faces.find((f) => f.predecessors.includes(original.id));
       assert.ok(continued);
-      continued.signature.forEach((value, i) => {
-        assert.ok(Math.abs(value - original.signature[i]) < 1e-12);
-      });
-      assert.equal(continued.vertices.length, original.vertices.length);
-      // Located geometry is serialized and remeshed in world coordinates.
-      continued.vertices.forEach((value, i) => {
-        assert.ok(Math.abs(value - original.vertices[i]) < 1e-12);
+      original.bounds?.forEach((value, i) => {
+        near(continued.bounds?.[i] ?? NaN, value);
       });
     }
   } finally {

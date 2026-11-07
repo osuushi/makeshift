@@ -52,8 +52,10 @@ void checkUnselectedSupport(const TopoDS_Face& source, const TopoDS_Face& result
 void checkOffsetVolume(const TopoDS_Shape& before, const TopoDS_Shape& after, double distance,
                        const std::vector<TopoDS_Shape>& preservedVertices) {
     GProp_GProps props; BRepGProp::VolumeProperties(after, props);
-    const double oldVolume = volume(before), next = props.Mass();
-    if (next <= 1e-9 || (next - oldVolume) * (distance > 0 ? 1 : -1) < -1e-6)
+    // Compare like integrations; coarse quadrature on a ruled spline can
+    // incorrectly report material loss after a valid small extension.
+    const double oldVolume = volume(before), next = volume(after);
+    if (props.Mass() <= 1e-9 || next <= 1e-9 || (next - oldVolume) * (distance > 0 ? 1 : -1) < -1e-6)
         throw std::runtime_error("Kernel produced invalid geometry: offset inverted material");
     for (TopExp_Explorer v(after, TopAbs_VERTEX); v.More(); v.Next()) {
         const auto vertex = TopoDS::Vertex(v.Current());

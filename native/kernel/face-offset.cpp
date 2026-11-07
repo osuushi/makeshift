@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "linear-cap-offset.h"
 #include "blends.h"
 #include "offset-contacts.h"
 #include "offset-collapse.h"
@@ -110,6 +111,10 @@ std::vector<Result> offsetFaces(const Tree& input, const std::vector<Operand>& b
         if (std::abs(distance) < 1e-8) { solids(results, body.shape, body.entities, {body.id}); continue; }
         const auto originalBody = body;
         const auto requestedFaces = found->second;
+        if (auto linear = linearCapOffset(body, requestedFaces, distance)) {
+            results.push_back(std::move(*linear));
+            continue;
+        }
         try {
             const bool freeform = offset_geometry::freeform(body.shape);
             const auto original = body.shape;
