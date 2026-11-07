@@ -5,6 +5,7 @@ import { BodyXrayComposite } from "./body-xray-composite.js";
 import { FramePacer } from "./frame-pacer.js";
 import { GridOcclusion } from "./grid-occlusion.js";
 import type { Point } from "./planes.js";
+import { renderSketchGrid } from "./sketch-grid-overlay.js";
 import type { World } from "./world.js";
 import { SketchForeground } from "./world-foreground.js";
 import { PrimitiveOverlay } from "./world-primitive-overlay.js";
@@ -63,6 +64,7 @@ export class WorldFrame {
       this.gridOcclusion.update(this.world);
       this.bodyXray.render(this.world, () => this.renderSections(clip));
       const { renderer, scene, camera } = this.world;
+      renderSketchGrid(renderer, scene, camera);
       this.primitives.render(renderer, scene, camera);
     }, force);
   }

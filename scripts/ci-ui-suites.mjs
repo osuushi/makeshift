@@ -40,11 +40,11 @@ export const uiSuites = [
   },
   {
     args: ["section-overlap-ui.mjs"],
-    // macOS hidden Electron: 8.75s, including source-profile extrusion and chooser.
+    // macOS hidden Electron: 11.40s, including extrusion, chooser and sketch grid.
     seconds: 20,
     browsers: ["electron"],
     reason:
-      "Captured caps must blend body patterns, preserve sketch ink and region hover/selection through extrusion, and offer owning bodies on a real hold; CPU geometry/style tests cannot prove GPU composition or chooser routing.",
+      "Captured caps must blend body patterns, preserve sketch ink, grid and region hover/selection through extrusion, and offer owning bodies on a real hold; CPU geometry/style tests cannot prove GPU composition or chooser routing.",
     unit: "section-pattern.test.ts",
   },
   {
