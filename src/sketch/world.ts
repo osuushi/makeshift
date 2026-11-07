@@ -47,6 +47,7 @@ export class World {
   readonly changed = new Set<() => void>();
   readonly renderOverlays = new Set<(occludeSections?: () => void) => void>();
   readonly renderForegroundOverlays = new Set<ForegroundOverlay>();
+  readonly renderInteractionOverlays = new Set<() => void>();
   readonly canonicalVisibility = new CanonicalPlaneVisibility();
   readonly grids = createGrids(this.scene);
   workspace: { key: string; frame: PlaneFrame; sketchId?: string } | null = null;

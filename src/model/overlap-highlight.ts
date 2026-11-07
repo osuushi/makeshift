@@ -7,10 +7,21 @@ import type { OverlapTarget } from "./overlap-candidates.js";
 import { overlapGeometry } from "./overlap-geometry.js";
 
 export class OverlapHighlight {
-  private group = new THREE.Group();
+  private readonly scene = new THREE.Scene();
   constructor(private editor: SketchEditor) {
-    editor.world.scene.add(this.group);
+    editor.world.renderInteractionOverlays.add(this.render);
   }
+  private render = (): void => {
+    if (!this.scene.children.length) return;
+    const { renderer, camera } = this.editor.world;
+    const autoClear = renderer.autoClear;
+    try {
+      renderer.autoClear = false;
+      renderer.render(this.scene, camera);
+    } finally {
+      renderer.autoClear = autoClear;
+    }
+  };
   show(target: OverlapTarget | null): void {
     this.clear();
     if (target) {
@@ -34,7 +45,7 @@ export class OverlapHighlight {
           }),
         );
         mesh.renderOrder = 90;
-        this.group.add(mesh);
+        this.scene.add(mesh);
       }
       for (const points of geometry.lines) {
         const line = new Line2(
@@ -42,21 +53,21 @@ export class OverlapHighlight {
           new LineMaterial({ color: "#d17c12", linewidth: 4, depthTest: false, depthWrite: false }),
         );
         line.renderOrder = 91;
-        this.group.add(line);
+        this.scene.add(line);
       }
     }
     this.editor.world.requestDraw();
   }
   private clear(): void {
-    for (const object of [...this.group.children]) {
+    for (const object of [...this.scene.children]) {
       const mesh = object as THREE.Mesh<THREE.BufferGeometry, THREE.Material>;
       mesh.geometry.dispose();
       mesh.material.dispose();
-      this.group.remove(mesh);
+      this.scene.remove(mesh);
     }
   }
   dispose(): void {
     this.clear();
-    this.editor.world.scene.remove(this.group);
+    this.editor.world.renderInteractionOverlays.delete(this.render);
   }
 }
