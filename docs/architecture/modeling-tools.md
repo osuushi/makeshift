@@ -268,6 +268,11 @@ A complete one-face spherical shell can change radius through an exact centered
 scale when the ordinary offset builder cannot process its closed shells. Only the
 selected shell changes; stable topology correspondence, signed parallel-surface
 checks, strict solid/interference validation and the existing volume checks apply.
+When ordinary offset construction rejects a complete internal cylindrical wall
+with circular rims on perpendicular planar faces, a local reconnection can
+resize the bore. It keeps the depth and planar supports fixed, preserves the
+existing face and edge topology, and verifies that the volume change matches
+only the resized cylindrical region.
 Draft display rounding does not change the driving value. Ordinary completion
 preserves subdivisions; neither tool probes cleanup availability. Rejected extrusion
 and rejected/clamped offset requests turn their arrows red. Sketch-entry actions sit

@@ -30,7 +30,7 @@ target_sources(makeshift-kernel PRIVATE boundary-move.cpp boundary-selection.cpp
 target_sources(makeshift-kernel PRIVATE offset-collapse.cpp)
 target_sources(makeshift-kernel PRIVATE chamfer-recognition.cpp)
 target_sources(makeshift-kernel PRIVATE offset-thickness.cpp offset-thickness-ray.cpp)
-target_sources(makeshift-kernel PRIVATE spherical-face-offset.cpp)
+target_sources(makeshift-kernel PRIVATE spherical-face-offset.cpp cylindrical-face-offset.cpp)
 target_sources(makeshift-kernel PRIVATE offset-geometry.cpp offset-boundaries.cpp offset-result.cpp)
 target_sources(makeshift-kernel PRIVATE measurement.cpp measurement-gaps.cpp measurement-planar.cpp)
 target_sources(makeshift-kernel PRIVATE sketch-curve.cpp)

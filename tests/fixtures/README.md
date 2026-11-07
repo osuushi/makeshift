@@ -1,3 +1,11 @@
+# Opposed blind bores
+
+`offset-opposed-bores.json` retains the exact selected body and topology identities
+from the founder's 2026-11-03T19:51:08.197Z capture. A cylinder has blind bores at
+both ends, with a relief cut at one end. The test resizes the other bore to a
+2 mm wall and checks that the opposite end survives. Unrelated bodies, display
+meshes, sketches and history are omitted. This is user-created Makeshift geometry.
+
 # Detailed body extrusion
 
 `extrude-detailed-body.json` retains the circle, exact body and topology identity
