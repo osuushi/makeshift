@@ -64,12 +64,13 @@ void planarSupports(const gp_Vec& n, std::vector<TopoDS_Face>& supports,
 }
 // Recognize equal-setback chamfers between planar supports, or a
 // coaxial cylinder and its planar cap. This is current geometry, not ancestry.
-std::vector<BlendFace> recognizeChamfers(const TopoDS_Shape& shape) {
+std::vector<BlendFace> recognizeChamfers(const TopoDS_Shape& shape, const TopTools_MapOfShape* candidates) {
     TopTools_IndexedDataMapOfShapeListOfShape adjacency;
     TopExp::MapShapesAndAncestors(shape, TopAbs_EDGE, TopAbs_FACE, adjacency);
     std::vector<BlendFace> result;
     for (TopExp_Explorer f(shape, TopAbs_FACE); f.More(); f.Next()) {
         const auto face = TopoDS::Face(f.Current());
+        if (candidates && !candidates->Contains(face)) continue;
         BRepAdaptor_Surface surface(face);
         if (surface.GetType() != GeomAbs_Plane && surface.GetType() != GeomAbs_Cone) continue;
         const auto n = normal(face, surface);
