@@ -186,3 +186,11 @@ meshes and history are omitted. Its radius-40 cylinder must split the plate/coll
 at an existing circular rim; an unbounded cylindrical cutter silently returned no
 split. The model regression checks both pieces, collar bounds, volume conservation,
 unchanged cutter, preview cancellation and Undo/Redo.
+
+`section-tangent-body.json` preserves exact BReps and topology IDs/signatures from
+the founder's 2026-11-07T16:53:42.316Z capture. A radius-30 flange joined to a
+radius-12.5 sphere was split at z=-1. A hard section retaining the lower half
+incorrectly kept the removed upper body's coplanar bottom face. Cached meshes,
+sketches and history are omitted; ordinary Open regenerates presentation.
+Tests cover tangent shell visibility, retained material, Flip/Off, picking and
+actual hidden Electron pixels. This is user-created Makeshift geometry.
