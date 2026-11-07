@@ -20,7 +20,8 @@ async function latestOffset(page, input, held, requests, flags, original, area) 
   held.get(2).release.resolve();
   await waitForDelivery(held.get(4));
   const pending = await page.evaluate(() => window.makeshiftInspect());
-  close(pending.preview.bodies[0].volume, area * 7, "superseded verified image remains visible");
+  close(pending.visualPreview.bodies[0].bounds[5], 7, "superseded verified mesh remains visible");
+  assert.equal(await page.getByRole("button", { name: "Accept face offset" }).isDisabled(), true);
   assert.deepEqual(pending.document, original);
   assert.deepEqual(requests, [1, 2, 4], "only the latest waiting target reaches the kernel");
   assert.ok(

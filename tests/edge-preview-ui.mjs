@@ -17,7 +17,9 @@ async function latestSize(page, selection, held, requests, flags, original) {
   held.get(3).release.resolve();
   await waitForDelivery(held.get(4));
   const pending = await page.evaluate(() => window.makeshiftInspect());
-  assert.equal(pending.preview.bodies[0].volume, reply.view.candidate.bodies[0].volume);
+  assert.ok(reply.view.visualPreview, "Native edge edits deliver meshes before metadata");
+  assert.deepEqual(pending.visualPreview, reply.view.visualPreview);
+  assert.equal(await page.getByRole("button", { name: "Accept fillet" }).isDisabled(), true);
   assert.deepEqual(pending.document, original);
   assert.deepEqual(
     requests.map((request) => request.size),
@@ -29,6 +31,7 @@ async function latestSize(page, selection, held, requests, flags, original) {
   held.get(4).release.resolve();
   const invalid = await inspect(page);
   assert.equal(invalid.preview === null, true, "Late success must not restore invalid size input");
+  assert.equal(invalid.visualPreview, null);
   assert.ok(await page.getByRole("button", { name: "Accept fillet", exact: true }).isDisabled());
   await input.fill("2");
   const recovery = await inspect(page);

@@ -7,8 +7,9 @@ Later founder decisions override earlier proposals.
 
 Solid modeling and STEP-import results pass a shared microscopic-topology check before
 ordinary or deferred presentation. Faces classified as spots or narrow strips
-within 0.001 mm are removed with boundary reconstruction. Remaining edges shorter
-than 0.001 mm can merge along continuous curves; arbitrary short corners are not
+below 0.001 mm are removed with boundary reconstruction. Exact threshold spans
+remain explicit, allowing floating-point roundoff when classifying positioned supports.
+Remaining edges shorter than 0.001 mm can merge along continuous curves; arbitrary short corners are not
 dropped. Legitimate degenerate pole edges remain kernel bookkeeping. Ordinary
 larger subdivisions still require the explicit Clean up tool below.
 
@@ -17,6 +18,10 @@ measurements and belongs to the originating edit's Undo step. Fillet/Chamfer
 feasibility includes repair: when reconnection fails, the size search can back off
 to a feasible result without microscopic topology. Other unrepairable candidates
 reject without changing accepted geometry. Sketch curves remain unchanged.
+Microscopic repair failures use the ordinary invalid-geometry result, so Offset's
+drag and explicit Find Nearest can back off; exact typed input still rejects.
+This also replaces the former preservation of intentionally sub-micron contact
+shelves: an unrepairable shelf rejects, while larger shelves remain explicit.
 
 Validation requires valid closed solids, unchanged solid/shell counts, tight
 curve/surface agreement and bounded added/removed material. Convex polyhedra use

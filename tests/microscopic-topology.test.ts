@@ -57,24 +57,56 @@ for (const size of [0.0005, 19.9995]) {
   });
 }
 
-test("extrusion removes a sub-micron collinear boundary span without changing accepted sketch curves", async () => {
+test("exact near-limit chamfers retain convex repair validation at every box corner", async () => {
   const owner = new DocumentOwner();
   try {
-    const body = await prism(owner, [
-      [0, 0],
-      [0.0005, 0],
-      [20, 0],
-      [20, 20],
-      [0, 20],
-    ]);
-    assert.equal(body.faces.length, 6);
-    assert.ok(Math.abs(body.volume - 4000) < 1e-6);
-    noShortEdges(body);
-    assert.equal(owner.view.data.sketches[0].curves.length, 5);
+    const box = await prism(owner, square);
+    const before = owner.view.data;
+    const size = 19.9995;
+    for (const [x, y] of square) {
+      const reply = await owner.call({
+        kind: "finish-edges",
+        operation: {
+          edges: [{ body: box.id, edge: vertical(box, x, y).id }],
+          mode: "chamfer",
+          size,
+          limit: false,
+        },
+      });
+      assert.equal(reply.error, undefined, `Corner ${x}, ${y}: ${reply.error}`);
+      assert.equal(reply.view.edgeSize, size);
+      const body = reply.view.candidate?.bodies?.[0];
+      assert.ok(body);
+      assert.equal(body.faces.length, 5);
+      assert.ok(Math.abs(body.volume - ((40 - size) ** 2 / 2) * 10) < 1e-6);
+      noShortEdges(body);
+      assert.equal(owner.view.data, before);
+      await owner.call({ kind: "discard" });
+    }
   } finally {
     owner.close();
   }
 });
+
+for (const span of [0.0005, 0.001])
+  test(`extrusion classifies a ${span} mm collinear span without changing accepted sketch curves`, async () => {
+    const owner = new DocumentOwner();
+    try {
+      const body = await prism(owner, [
+        [0, 0],
+        [span, 0],
+        [20, 0],
+        [20, 20],
+        [0, 20],
+      ]);
+      assert.equal(body.faces.length, span < 0.001 ? 6 : 7);
+      assert.ok(Math.abs(body.volume - 4000) < 1e-6);
+      noShortEdges(body);
+      assert.equal(owner.view.data.sketches[0].curves.length, 5);
+    } finally {
+      owner.close();
+    }
+  });
 
 test("ordinary above-threshold chamfer subdivisions survive automatic repair", async () => {
   const owner = new DocumentOwner();

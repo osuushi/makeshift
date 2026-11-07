@@ -77,23 +77,28 @@ test("captured near-coplanar floor merges exactly and continues past its rim", a
   }
 });
 
-test("captured contact is independent of placement and preserves intentional small steps", async () => {
+test("captured contact rejects unrepairable microscopic shelves and preserves larger rotated steps", async () => {
   const owner = new DocumentOwner();
   try {
     await owner.call({ kind: "open", document: fixture.document });
-    const smaller = await offset(owner, fixture.floor, gap / 2);
-    assert.equal(
-      smaller.result.faces.length,
-      13,
-      "A requested sub-contact step must not snap away",
-    );
+    const before = owner.view.data;
+    const id = before.bodies?.[0].id;
+    assert.ok(id);
+    const rejected = await owner.call({
+      kind: "offset-faces",
+      operation: { faces: [{ body: id, face: fixture.floor }], distance: gap / 2, limit: false },
+    });
+    assert.match(rejected.error ?? "", /microscopic topology repair/);
+    assert.equal(rejected.view.candidate, null);
+    assert.equal(owner.view.data, before);
+    assert.match((await owner.call({ kind: "accept" })).error ?? "", /No valid edit/);
+    const smaller = await offset(owner, fixture.floor, -0.002);
+    assert.equal(smaller.result.faces.length, 13, "Above-resolution shelves remain explicit");
     close(
       smaller.result.faces.find((f) => f.id === fixture.floor)?.plane?.origin[2] ?? NaN,
-      24 - gap / 2,
+      24 - gap - 0.002,
     );
-    await owner.call({ kind: "discard" });
-    const id = owner.view.data.bodies?.[0].id;
-    assert.ok(id);
+    assert.equal((await owner.call({ kind: "accept" })).error, undefined);
     const moved = await owner.call({
       kind: "transform-bodies",
       transform: {
@@ -106,7 +111,7 @@ test("captured contact is independent of placement and preserves intentional sma
       },
     });
     assert.equal(moved.error, undefined);
-    const merged = await offset(owner, fixture.floor, gap);
+    const merged = await offset(owner, fixture.floor, gap + 0.002);
     assert.equal(merged.result.faces.length, 7);
     close(merged.result.volume, area * 24);
     for (const format of ["stl", "3mf"] as const)

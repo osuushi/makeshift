@@ -9,6 +9,7 @@
 #include <ShapeAnalysis_CheckSmallFace.hxx>
 #include <ShapeBuild_ReShape.hxx>
 #include <ShapeFix_Wireframe.hxx>
+#include <Standard_Failure.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
@@ -18,6 +19,9 @@
 
 namespace {
 constexpr double limit = geometry_policy::minimumTopologyExtentMm;
+// Subtracting positioned supports must not classify an exact 0.001 mm span
+// as microscopic solely because of floating-point roundoff.
+constexpr double detectionLimit = limit - 1e-9;
 struct SmallTopology {
     std::vector<TopoDS_Face> faces;
     bool edges = false;
@@ -28,7 +32,7 @@ SmallTopology findSmall(const TopoDS_Shape& shape) {
     for (TopExp_Explorer f(shape, TopAbs_FACE); f.More(); f.Next()) {
         const auto face = TopoDS::Face(f.Current());
         TopoDS_Edge a, b;
-        if (check.CheckSpotFace(face, limit) || check.CheckStripFace(face, a, b, limit))
+        if (check.CheckSpotFace(face, detectionLimit) || check.CheckStripFace(face, a, b, detectionLimit))
             found.faces.push_back(face);
     }
     TopTools_IndexedMapOfShape edges;
@@ -38,7 +42,7 @@ SmallTopology findSmall(const TopoDS_Shape& shape) {
         if (BRep_Tool::Degenerated(edge)) continue;
         GProp_GProps length;
         BRepGProp::LinearProperties(edge, length);
-        if (length.Mass() < limit) found.edges = true;
+        if (length.Mass() < detectionLimit) found.edges = true;
     }
     return found;
 }
@@ -100,8 +104,7 @@ void healEdges(Result& result) {
     }
     result.shape = repair.Shape();
 }
-}
-void resolveMicroscopicTopology(Result& result) {
+void repairMicroscopicTopology(Result& result) {
     auto small = findSmall(result.shape);
     if (small.faces.empty() && !small.edges) return;
     // OCCT healing can modify shared tolerances. Never expose those mutations
@@ -133,4 +136,16 @@ void resolveMicroscopicTopology(Result& result) {
     repaired.exactVolume.reset();
     repaired.exactBounds.reset();
     result = std::move(repaired);
+}
+}
+void resolveMicroscopicTopology(Result& result) {
+    try {
+        repairMicroscopicTopology(result);
+    } catch (const Standard_Failure& error) {
+        throw std::runtime_error(std::string("Kernel produced invalid geometry: microscopic topology repair: ") +
+            (error.GetMessageString() ? error.GetMessageString() : "reconnection failed"));
+    } catch (const std::runtime_error& error) {
+        throw std::runtime_error(std::string("Kernel produced invalid geometry: microscopic topology repair: ") +
+            error.what());
+    }
 }

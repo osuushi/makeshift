@@ -5,6 +5,7 @@ from the founder's 2026-11-03T19:51:08.197Z capture. A cylinder has blind bores 
 both ends, with a relief cut at one end. The test resizes the other bore to a
 2 mm wall and checks that the opposite end survives. Unrelated bodies, display
 meshes, sketches and history are omitted. This is user-created Makeshift geometry.
+
 # Normal extension of a bent tube
 
 `offset-bent-tube-cap.json` retains the affected exact body, topology IDs, requested
@@ -211,6 +212,7 @@ arc at z=4. It reproduces the cylindrical Offset failure from the founder's
 `offset-segmented-seam.cpp`; compile it against the configured OCCT SDK and run
 it to emit the exact body JSON. Tests verify signed offsets, shared seam topology,
 stationary caps/exterior, independent volume, closed STL/3MF exports and history.
+
 `section-tangent-body.json` preserves exact BReps and topology IDs/signatures from
 the founder's 2026-11-07T16:53:42.316Z capture. A radius-30 flange joined to a
 radius-12.5 sphere was split at z=-1. A hard section retaining the lower half
