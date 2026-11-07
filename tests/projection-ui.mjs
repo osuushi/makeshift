@@ -51,6 +51,7 @@ async function tiltedPlaneRoute(page, name) {
   await page.mouse.move(700, 200);
   assert.deepEqual(await page.locator(".status.error-feedback").boundingBox(), feedback);
   assert.equal(await page.locator(".local-feedback").count(), 0);
+  await feedbackAboveToolbox(page);
   await page.getByRole("button", { name: "Dismiss error" }).click();
   assert.equal(await page.locator(".status.error-feedback").count(), 0);
   await page.mouse.click(1100, 700);
@@ -103,6 +104,35 @@ async function tiltedPlaneRoute(page, name) {
   console.log(
     `${name}: captured tilted plane, target replacement, readable feedback, cancel, Enter, Undo/Redo, cubic edit and archive passed`,
   );
+}
+
+// A bounding box can be visible while the toolbox paints over the actual message.
+// Exercise real CSS hit testing at short/narrow sizes without dismissing the error.
+async function feedbackAboveToolbox(page) {
+  for (const [width, height] of [
+    [1280, 850],
+    [768, 600],
+    [600, 400],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.locator('.toolbox-grid > [data-group="true"]').first().hover();
+    await page.locator(".toolbox-flyout").waitFor();
+    await page.locator(".status.error-feedback").evaluate((status) => {
+      const text = status.querySelector('[role="alert"]');
+      const range = document.createRange();
+      range.selectNodeContents(text);
+      const targets = [...range.getClientRects()].map((rect) => ({ element: text, rect }));
+      const dismiss = status.querySelector(".dismiss-feedback");
+      targets.push({ element: dismiss, rect: dismiss.getBoundingClientRect() });
+      for (const { element, rect } of targets) {
+        const x = rect.x + rect.width / 2,
+          y = rect.y + rect.height / 2;
+        if (!element.contains(document.elementFromPoint(x, y)))
+          throw new Error(`Error feedback is covered at ${innerWidth}x${innerHeight} (${x}, ${y})`);
+      }
+    });
+  }
+  await page.setViewportSize({ width: 1280, height: 850 });
 }
 
 async function emptySelectionRoute(page, source, target, before) {

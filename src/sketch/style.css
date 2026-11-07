@@ -168,6 +168,8 @@ button:focus-visible {
 }
 
 .status.error-feedback {
+  /* Keep failures and their dismiss button above the toolbox and its flyouts. */
+  z-index: 21;
   display: flex;
   align-items: flex-start;
   gap: 10px;
