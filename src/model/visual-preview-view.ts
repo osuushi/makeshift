@@ -9,6 +9,7 @@ import { stableClipping } from "../sketch/stable-clipping.js";
 import { foregroundBodyLayer } from "../sketch/world-foreground.js";
 import { defaultBodyAppearance } from "./body-appearance.js";
 import { faceGeometry, faceMaterial } from "./body-mesh.js";
+import { sectionKeepsBody } from "./section-visibility.js";
 import type { VisualBody } from "./visual-preview.js";
 
 interface VisualStyle {
@@ -161,8 +162,9 @@ export function visualPreviewView(editor: SketchEditor): () => void {
               : [],
       );
       drawing.group.visible =
-        !body.sourceBodies?.length ||
-        (editor.bodiesVisible && body.sourceBodies.some((id) => editor.visibility.visible(id)));
+        sectionKeepsBody(body, editor.world.crossSection) &&
+        (!body.sourceBodies?.length ||
+          (editor.bodiesVisible && body.sourceBodies.some((id) => editor.visibility.visible(id))));
       drawing.group.userData.xrayBody =
         body.sourceBodies?.length && body.sourceBodies.every((id) => editor.visibility.xray.has(id))
           ? body.sourceBodies[0]

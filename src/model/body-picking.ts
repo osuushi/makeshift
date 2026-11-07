@@ -1,6 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Point } from "../sketch/planes.js";
 import { faceRayHits, screenRay } from "./body-ray-hits.js";
+import { sectionKeepsBody } from "./section-visibility.js";
 
 /** One synchronous pointer probe; never reuse across camera, clipping or document changes. */
 export class BodyPickProbe {
@@ -14,7 +15,10 @@ export class BodyPickProbe {
     bodies = editor.display.bodies,
   ) {
     this.bodies = editor.bodiesVisible
-      ? (bodies ?? []).filter((body) => editor.visibility.visible(body.id))
+      ? (bodies ?? []).filter(
+          (body) =>
+            editor.visibility.visible(body.id) && sectionKeepsBody(body, editor.world.crossSection),
+        )
       : [];
     this.ray = screenRay(editor, screen);
   }

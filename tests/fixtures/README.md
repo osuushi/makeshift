@@ -211,3 +211,10 @@ arc at z=4. It reproduces the cylindrical Offset failure from the founder's
 `offset-segmented-seam.cpp`; compile it against the configured OCCT SDK and run
 it to emit the exact body JSON. Tests verify signed offsets, shared seam topology,
 stationary caps/exterior, independent volume, closed STL/3MF exports and history.
+`section-tangent-body.json` preserves exact BReps and topology IDs/signatures from
+the founder's 2026-11-07T16:53:42.316Z capture. A radius-30 flange joined to a
+radius-12.5 sphere was split at z=-1. A hard section retaining the lower half
+incorrectly kept the removed upper body's coplanar bottom face. Cached meshes,
+sketches and history are omitted; ordinary Open regenerates presentation.
+Tests cover tangent shell visibility, retained material, Flip/Off, picking and
+actual hidden Electron pixels. This is user-created Makeshift geometry.
