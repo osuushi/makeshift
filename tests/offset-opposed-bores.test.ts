@@ -60,3 +60,35 @@ test("offset resizes the captured blind bore while preserving the opposite end",
     kernel.close();
   }
 });
+
+test("captured outer wall expands without changing either cavity", async () => {
+  const captured: ExactBody = JSON.parse(
+    readFileSync("tests/fixtures/offset-outer-wall.json", "utf8"),
+  );
+  const kernel = new SolidCalculator();
+  try {
+    const {
+      results: [original],
+    } = await kernel.calculate({ kind: "inspect", bodies: [captured] });
+    for (const distance of [0.5, 2, -0.25]) {
+      const {
+        results: [result],
+      } = await kernel.calculate({
+        kind: "offset-faces",
+        bodies: [captured],
+        faces: [{ body: captured.id, face: reference }],
+        distance,
+      });
+      const outer = result.faces.find((f) => f.offsetSelected);
+      near(outer?.cylinder?.radius ?? NaN, 5 + distance);
+      near(result.volume - original.volume, Math.PI * ((5 + distance) ** 2 - 25) * 300);
+      for (const face of original.faces.filter((f) => f.cylinder?.outward === -1)) {
+        const next = result.faces.find((f) => f.predecessors.includes(face.predecessors[0]));
+        assert.deepEqual(next?.cylinder, face.cylinder);
+        assert.deepEqual(next?.bounds, face.bounds);
+      }
+    }
+  } finally {
+    kernel.close();
+  }
+});

@@ -82,6 +82,10 @@ std::vector<Result> reconnectBoundaries(const Tree& input, const std::vector<Ope
         participants.push_back(edit.body->id);
         return {{edit.body->shape, edit.body->entities, {edit.body->id}, {}}};
     }
+    if (auto prism = boundary_move::translatedPrism(edit)) {
+        participants.push_back(edit.body->id);
+        return {std::move(*prism)};
+    }
     boundary_move::buildEdges(edit);
     auto result = boundary_move::reconstruct(edit);
     participants.push_back(edit.body->id);

@@ -143,7 +143,8 @@ void measureSelection(std::ostream& out, const Tree& input, const std::vector<Op
     if (shapes.size() == 1 && boundedCount) {
         GProp_GProps props;
         const bool face = shapes[0].ShapeType() == TopAbs_FACE;
-        if (face) BRepGProp::SurfaceProperties(shapes[0], props);
+        // Adaptive integration keeps exact rational rims accurate after affine moves.
+        if (face) BRepGProp::SurfaceProperties(shapes[0], props, 1e-9);
         else BRepGProp::LinearProperties(shapes[0], props);
         properties.push_back({face ? "Area" : "Length", props.Mass(), face ? "mm²" : "mm"});
         if (a.radius > 0) {

@@ -100,7 +100,9 @@ boundary_move::Edit boreBoundaries(const Operand& body, const TopoDS_Face& face,
 
 Result rebuildBore(const Operand& body, const TopoDS_Face& bore,
                    gp_Cylinder cylinder, double distance) {
-    const double radius = cylinder.Radius() - distance;
+    const double direction = (bore.Orientation() == TopAbs_FORWARD) == cylinder.Direct() ? 1 : -1;
+    const double radius = cylinder.Radius() + direction * distance;
+    if (radius <= tolerance) throw std::runtime_error("Offset would collapse the cylindrical face");
     const auto edit = boreBoundaries(body, bore, cylinder, radius);
     std::string boreId;
     std::vector<const SourceEntity*> adjacentPlanes;
@@ -159,9 +161,8 @@ std::optional<Result> cylindricalFaceOffset(const Operand& body,
         const BRepAdaptor_Surface surface(bore);
         if (surface.GetType() != GeomAbs_Cylinder) return std::nullopt;
         const auto cylinder = surface.Cylinder();
-        if ((bore.Orientation() == TopAbs_FORWARD) == cylinder.Direct() ||
-            !roundBore(bore, cylinder)) return std::nullopt;
-        // Reconnect only the rims of this inward-facing bore. Whole-body offset
+        if (!roundBore(bore, cylinder)) return std::nullopt;
+        // Reconnect only the rims of this cylindrical wall. Whole-body offset
         // construction can discard unrelated cavities on the same cylinder axis.
         return rebuildBore(body, bore, cylinder, distance);
     } catch (const Standard_Failure&) {

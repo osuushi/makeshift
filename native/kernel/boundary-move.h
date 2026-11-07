@@ -24,6 +24,7 @@ struct Edit {
 };
 Edit selection(const Tree&, const std::vector<Operand>&);
 void buildEdges(Edit&);
+std::optional<Result> translatedPrism(const Edit&);
 TopoDS_Face rebuildFace(const TopoDS_Face&, const Edit&);
 TopoDS_Face polynomialQuad(const TopoDS_Face&, const std::vector<TopoDS_Edge>&);
 TopoDS_Face cylinderFace(const TopoDS_Face&, const Edit&);

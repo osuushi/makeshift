@@ -102,3 +102,62 @@ test("cylindrical offset preserves a stepped periodic seam and both stationary c
     kernel.close();
   }
 });
+
+test("moving a cap carries internal periodic seams with the wall and preserves history", async () => {
+  const owner = new DocumentOwner();
+  const kernel = new SolidCalculator();
+  try {
+    const bodies = materialize([], await kernel.calculate({ kind: "inspect", bodies: [body] }));
+    assert.equal(
+      (await owner.call({ kind: "open", document: { units: "mm", sketches: [], bodies } })).error,
+      undefined,
+    );
+    const before = owner.view.data;
+    const moved = await owner.call({
+      kind: "move-faces",
+      operation: {
+        faces: [{ body: body.id, face: "f4" }],
+        pivot: [0, 0, 12],
+        axis: [1, 0, 0],
+        angle: 0,
+        translation: [-11.5, 0, 0],
+      },
+    });
+    assert.equal(moved.error, undefined);
+    const result = moved.view.candidate?.bodies?.[0];
+    assert.ok(result);
+    near(result.volume, bodies[0].volume);
+    const cap = result.faces.find((face) => face.id === "f4");
+    assert.ok(cap?.plane);
+    near(cap.plane.origin[2], 12);
+    near(cap.bounds?.[0] ?? NaN, -21.5);
+    near(result.faces.find((face) => face.id === "f2")?.plane?.origin[2] ?? NaN, 0);
+    assert.deepEqual(
+      new Set(result.edges.map((e) => e.id)),
+      new Set(bodies[0].edges.map((e) => e.id)),
+    );
+    assert.equal(owner.view.data, before);
+    assert.equal((await owner.call({ kind: "accept" })).error, undefined);
+    const accepted = owner.view.data;
+    const measured = await owner.call({
+      kind: "measure",
+      targets: [{ kind: "face", body: body.id, face: "f4" }],
+    });
+    assert.equal(measured.error, undefined);
+    near(
+      measured.measurement?.properties.find((p) => p.label === "Area")?.value ?? NaN,
+      75 * Math.PI,
+    );
+    assert.deepEqual((await owner.call({ kind: "undo" })).view.data, before);
+    assert.deepEqual((await owner.call({ kind: "redo" })).view.data, accepted);
+    const extended = await owner.call({
+      kind: "offset-faces",
+      operation: { faces: [{ body: body.id, face: "f4" }], distance: 1 },
+    });
+    assert.equal(extended.error, undefined);
+    near(extended.view.candidate?.bodies?.[0].bounds[5] ?? NaN, 13);
+  } finally {
+    owner.close();
+    kernel.close();
+  }
+});

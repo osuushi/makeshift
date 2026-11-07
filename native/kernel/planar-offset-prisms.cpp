@@ -1,6 +1,7 @@
 #include "planar-offset-prisms.h"
 #include "offset-contacts.h"
 #include "offset-geometry.h"
+#include "offset-continuation.h"
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
@@ -50,16 +51,13 @@ Result build(const Operand& body, const std::vector<FaceOffset>& offsets, double
                 return offset.face.IsSame(source.shape);
             })) fixed.push_back(TopoDS::Face(source.shape));
     for (const auto& offset : offsets) {
-        const auto plane = BRepAdaptor_Surface(offset.face).Plane();
-        auto normal = gp_Vec(plane.Position().XDirection()).Crossed(gp_Vec(plane.Position().YDirection()));
-        if (offset.face.Orientation() == TopAbs_REVERSED) normal.Reverse();
-        const auto travel = normal * offset.distance;
+        const auto travel = offsetContinuation(body.shape, offset.face, offset.distance);
         gp_Trsf move; move.SetTranslation(travel);
         targets.push_back(TopoDS::Face(BRepBuilderAPI_Transform(offset.face, move, true).Shape()));
         if (offset.distance <= 1e-8) continue;
         BRepPrimAPI_MakePrism prism(offset.face, travel, true);
-        // A normal extension can require new walls at the selected rim, e.g. a
-        // straight tube above a spline bend. Only this exact sweep supplies them.
+        // Each generator was certified against the adjacent support. This is
+        // continuation to a parallel cap plane, including oblique tube walls.
         for (TopExp_Explorer it(offset.face, TopAbs_EDGE); it.More(); it.Next())
             for (const auto& generated : prism.Generated(it.Current()))
                 if (generated.ShapeType() == TopAbs_FACE) fixed.push_back(TopoDS::Face(generated));
