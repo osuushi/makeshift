@@ -7,6 +7,7 @@ import { drag, inspect } from "./ui-helpers.mjs";
 import { chooseWidget } from "./ui-modal-plane-widgets.mjs";
 import { hold } from "./ui-overlap-gesture.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
+import { sectionGrid } from "./ui-section-grid.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 // Founder capture: four bodies hashed to blue and their coplanar caps fought for depth.
@@ -45,6 +46,7 @@ await withUiRuntimes(async (page, name) => {
   await profileTint(page);
   await pseudofaceChoice(page);
   await chooseTool(page, "Sketch on XZ", "sketch-xz");
+  await sectionGrid(page);
   await page.keyboard.press("l");
   await drag(page, [-5, 8], [17, 8], ["Shift"]);
   await page.keyboard.press("Escape");
@@ -60,7 +62,7 @@ await withUiRuntimes(async (page, name) => {
   await orient(page, [1, -1, 1]);
   await page.screenshot({ path: `.cache/sketch-review/${name}-section-overlap.png` });
   console.log(
-    `${name}: captured cap blending, sketch ink/tint and owning-body long-press selection passed`,
+    `${name}: captured cap blending, sketch grid/ink/tint and owning-body long-press selection passed`,
   );
 });
 

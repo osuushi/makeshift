@@ -179,6 +179,9 @@ cut never captures an invisible slice at the sketch plane. Automatic camera-faci
 sketch cutaways and capture resume when the explicit section is turned off.
 New/Open resets the view.
 The section is not saved in the document or included in exported geometry.
+In Sketch mode the active sketch grid draws once after section fills and X-ray
+composition, keeping grid lines visible across patterned caps. Canonical grids in
+Modeling retain their normal depth behavior.
 
 Coplanar rendering gives existing body faces priority over generated section fills.
 Body faces on the active section support mark stencil bit 4; caps exclude those

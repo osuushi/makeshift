@@ -88,8 +88,8 @@ checks their source/configuration and completeness, then validates the assembled
 gallery and uploads the combined artifact. A failed recipe does not cancel others.
 The three additional section cases were measured in hidden Electron on macOS:
 X-ray mask/settings/resize/pinch 7.05s, distant-camera ink/fill 6.72s, and cap
-overlap/selection/extrusion/chooser 8.75s. The X-ray route including New/XY/circle
-frame freshness now measures 9.18s locally. Their allocations are 20/15/20 seconds,
+overlap/selection/extrusion/chooser plus sketch-grid priority 11.40s. The X-ray route
+including New/XY/circle frame freshness now measures 9.18s locally. Their allocations are 20/15/20 seconds,
 adding 55 seconds to the earlier 498-second inventory, with startup and software
 rendering headroom. These are local timings, not Linux runner measurements.
 Linux run 38146139847 measured partial sections at 23 seconds, section fills at
