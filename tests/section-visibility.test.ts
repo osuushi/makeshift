@@ -5,7 +5,11 @@ import { DocumentOwner } from "../src/backend/document-owner.js";
 import { BodyPickProbe } from "../src/model/body-picking.js";
 import { readArchive } from "../src/model/document-archive.js";
 import { pickBodyEdge } from "../src/model/edge-selection.js";
-import { sectionKeepsBody } from "../src/model/section-visibility.js";
+import {
+  sectionKeepsBody,
+  sectionKeepsEdge,
+  sectionKeepsFace,
+} from "../src/model/section-visibility.js";
 import type { PlaneFrame } from "../src/sketch/planes.js";
 import { flipSectionFrame, sectionClip } from "../src/sketch/view-clipping.js";
 import { pickingEditor } from "./body-picking-fixtures.js";
@@ -74,4 +78,21 @@ test("oblique tangent shells disappear even when their axis-aligned box crosses 
     true,
     "Material thinner than the raster clipping padding must remain visible",
   );
+});
+
+test("top-plane cut removes a ledge on a partially retained body", () => {
+  const body = JSON.parse(readFileSync("tests/fixtures/section-top-ledge.json", "utf8")).document
+    .bodies[0];
+  const top: PlaneFrame = { origin: [0, 0, 1], u: [1, 0, 0], v: [0, 1, 0] };
+  assert.equal(sectionKeepsBody(body, top), true, "The dome survives");
+  const ledge = body.faces.find((face: { plane?: PlaneFrame }) => face.plane?.origin[2] === 1);
+  assert.ok(ledge);
+  assert.equal(sectionKeepsFace(ledge.vertices, top), false);
+  assert.equal(sectionKeepsFace(ledge.vertices, flipSectionFrame(top)), true);
+  const outer = body.edges.find(
+    (edge: { points: number[] }) =>
+      edge.points.some((v, i) => i % 3 === 0 && v > 29) && edge.points[2] === 1,
+  );
+  assert.ok(outer);
+  assert.equal(sectionKeepsEdge(body, outer.id, top), false);
 });

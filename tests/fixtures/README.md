@@ -220,3 +220,18 @@ incorrectly kept the removed upper body's coplanar bottom face. Cached meshes,
 sketches and history are omitted; ordinary Open regenerates presentation.
 Tests cover tangent shell visibility, retained material, Flip/Off, picking and
 actual hidden Electron pixels. This is user-created Makeshift geometry.
+
+`offset-outer-wall.json` retains exact body geometry and topology IDs/signatures
+from the founder's 2026-11-07T19:21:37.073Z capture. It covers outward and inward
+outer-wall offsets while preserving the opposed cavities.
+
+`section-top-ledge.json` retains the accepted document and section frame from the
+founder's 2026-11-07T19:40:08.350Z capture. It covers a removed top ledge on a body
+whose dome remains above the cut, complementing the whole-body tangent case.
+The supplied capture has no committed sketch; temporary drawing on that face is
+exercised through the UI rather than fabricated into the captured document.
+
+`offset-near-fillet-limit.json` retains exact body geometry and topology IDs from
+2026-11-07T19:36:05.273Z. Offsetting the planar face between the fillets to the
+captured verified distance must collapse sub-micron finishes into shared box edges.
+Tests measure every resulting edge pair and preserve ordinary Undo/Redo.

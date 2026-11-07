@@ -54,15 +54,29 @@ export class SectionCaps {
     stencilWriteMask: 0,
     stencilFunc: THREE.EqualStencilFunc,
   });
+  private readonly emphasis = new THREE.MeshBasicMaterial({
+    color: "#e9a134",
+    opacity: 0.6,
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthTest: false,
+    depthWrite: false,
+    stencilWrite: true,
+    stencilRef: capBit,
+    stencilFuncMask: capBit,
+    stencilWriteMask: 0,
+    stencilFunc: THREE.EqualStencilFunc,
+  });
   private readonly palettes = new SectionPalettes();
 
   constructor() {
+    this.emphasis.forceSinglePass = true;
     this.resetScene.add(this.reset);
     this.plane.frustumCulled = false;
     this.plane.material.dispose();
   }
 
-  render(world: World, depthOnly = false): void {
+  render(world: World, depthOnly = false, highlightBody?: string): void {
     const frame = world.partialSection ?? world.crossSection;
     if (!frame) return;
     const { bodies, seeds, hovered } = this.surfaces(world);
@@ -87,6 +101,7 @@ export class SectionCaps {
       renderer.render(this.resetScene, this.resetCamera);
       this.reset.material.stencilWriteMask = capBit;
       for (const [body, faces] of bodies) {
+        if (highlightBody && body !== highlightBody) continue;
         renderer.clippingPlanes = [];
         renderer.render(this.resetScene, this.resetCamera);
         this.scene.clear();
@@ -99,8 +114,8 @@ export class SectionCaps {
         }
         renderer.clippingPlanes = [clip];
         renderer.render(this.scene, camera);
-        if (depthOnly) {
-          this.plane.material = this.depth;
+        if (depthOnly || highlightBody) {
+          this.plane.material = highlightBody ? this.emphasis : this.depth;
           this.position(frame, faces);
           this.scene.clear();
           this.scene.add(this.plane);
@@ -207,6 +222,7 @@ export class SectionCaps {
     this.reset.material.dispose();
     this.parity.dispose();
     this.depth.dispose();
+    this.emphasis.dispose();
     this.plane.geometry.dispose();
     for (const material of this.styles.values()) material.dispose();
     this.styles.clear();

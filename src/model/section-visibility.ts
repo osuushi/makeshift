@@ -30,3 +30,60 @@ export function sectionKeepsBody(body: SectionShell, frame: PlaneFrame | null): 
   }
   return false;
 }
+
+/** A coplanar exterior face survives only when its inward side retains material. */
+export function sectionKeepsFace(vertices: readonly number[], frame: PlaneFrame | null): boolean {
+  if (!frame) return true;
+  const clip = sectionClip(frame);
+  const a = new THREE.Vector3(),
+    b = new THREE.Vector3(),
+    c = new THREE.Vector3();
+  for (let i = 0; i < vertices.length; i += 9) {
+    a.fromArray(vertices, i);
+    b.fromArray(vertices, i + 3);
+    c.fromArray(vertices, i + 6);
+    const distances = [a, b, c].map((p) => clip.distanceToPoint(p));
+    if (distances.some((d) => d > 1e-7)) return true;
+    if (
+      distances.every((d) => Math.abs(d) <= 1e-7) &&
+      b.sub(a).cross(c.sub(a)).dot(clip.normal) < 0
+    )
+      return true;
+  }
+  return false;
+}
+
+const visibility = new WeakMap<
+  import("./body.js").BodyGeometry,
+  {
+    key: string;
+    faces: Set<string>;
+    edges: Set<string>;
+  }
+>();
+
+/** Reuse one shell classification across rendering and pointer queries. */
+export function sectionVisibility(
+  body: import("./body.js").BodyGeometry,
+  frame: PlaneFrame | null,
+) {
+  const key = JSON.stringify(frame);
+  const previous = visibility.get(body);
+  if (previous?.key === key) return previous;
+  const kept = body.faces.filter((face) => sectionKeepsFace(face.vertices, frame));
+  const result = {
+    key,
+    faces: new Set(kept.map((face) => face.id)),
+    edges: new Set(kept.flatMap((face) => face.edges)),
+  };
+  visibility.set(body, result);
+  return result;
+}
+
+export function sectionKeepsEdge(
+  body: import("./body.js").BodyGeometry,
+  edge: string,
+  frame: PlaneFrame | null,
+): boolean {
+  return !frame || sectionVisibility(body, frame).edges.has(edge);
+}

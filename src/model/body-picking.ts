@@ -1,7 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Point } from "../sketch/planes.js";
 import { faceRayHits, screenRay } from "./body-ray-hits.js";
-import { sectionKeepsBody } from "./section-visibility.js";
+import { sectionKeepsBody, sectionKeepsFace } from "./section-visibility.js";
 
 /** One synchronous pointer probe; never reuse across camera, clipping or document changes. */
 export class BodyPickProbe {
@@ -37,6 +37,12 @@ export class BodyPickProbe {
         this.editor.world.camera.position,
         this.editor.world.clippingAt(screen),
       );
+      hits = hits.filter((hit) => {
+        const face = this.bodies
+          .find((body) => body.id === hit.body)
+          ?.faces.find((face) => face.id === hit.face);
+        return !!face && sectionKeepsFace(face.vertices, this.editor.world.crossSection);
+      });
       hits.sort((a, b) => this.layer(a.body) - this.layer(b.body) || a.depth - b.depth);
       this.hits.set(key, hits);
     }

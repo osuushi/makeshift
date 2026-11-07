@@ -154,6 +154,10 @@ cavities. Its two-color procedural pattern is seeded by body identity and anchor
 in plane coordinates. Visible bodies use distinct palette colors until the six-color
 palette is exhausted, retaining their assigned colors through view changes. Caps
 preserve visible sketch ink, and coplanar body faces stay solely in the main pass.
+A hard cut hides coplanar exterior faces whose inward side contains no retained
+material, including ledges on partially retained bodies. Rendering and picking use
+that same classification. Chooser body emphasis includes the actual cut material,
+so it remains visible over patterned caps in oblique views.
 Sketch-region tint draws after the pseudofaces, preserving the single translucent
 union fill and visible sketch strokes, before the foreground body composite.
 Overlapping caps blend at half opacity over earlier caps without writing competing

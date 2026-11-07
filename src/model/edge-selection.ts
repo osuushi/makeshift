@@ -6,6 +6,8 @@ import { BodyPickProbe } from "./body-picking.js";
 import { edgeFacesCamera, screenRay } from "./body-ray-hits.js";
 import { featureEdges } from "./feature-edges.js";
 
+import { sectionKeepsEdge } from "./section-visibility.js";
+
 interface EdgeHit {
   body: string;
   edge: string;
@@ -24,6 +26,7 @@ function* edgeCandidates(editor: SketchEditor, screen: Point, bodies: readonly B
   const camera = editor.world.camera.position;
   for (const body of bodies)
     for (const edge of featureEdges(body)) {
+      if (!sectionKeepsEdge(body, edge.id, editor.world.crossSection)) continue;
       const a = new THREE.Vector3(),
         b = new THREE.Vector3();
       for (let i = 0; i + 3 < edge.points.length; i += 3) {

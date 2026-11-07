@@ -23,6 +23,8 @@ export async function edgeLiftRoute(page, name) {
   const point = await project(page, fixture.selection[0].point);
   await page.mouse.click(point.x, point.y);
   assert.equal((await inspect(page)).modelingSelection[0]?.edge, fixture.operation.edges[0].edge);
+  await page.mouse.move(1100, 80);
+  await page.screenshot({ path: ".cache/sketch-review/edge-lift-selected-rim.png" });
   await page.keyboard.press("m");
   const handle = page.getByRole("button", { name: "Move edges Z", exact: true });
   const box = await handle.boundingBox();
@@ -61,5 +63,7 @@ export async function edgeLiftRoute(page, name) {
   assert.deepEqual(accepted.bodies, state.preview.bodies);
   await historyMenu(page, "undo");
   assert.deepEqual((await inspect(page)).document, original);
-  console.log(`${name}: captured edge lift, persistent refusal, recovery and Undo passed`);
+  await historyMenu(page, "redo");
+  assert.deepEqual((await inspect(page)).document, accepted);
+  console.log(`${name}: captured edge lift, persistent refusal, recovery and Undo/Redo passed`);
 }

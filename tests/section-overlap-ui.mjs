@@ -104,8 +104,7 @@ async function regionTint(page, filled) {
 
 async function pseudofaceChoice(page) {
   const before = await inspect(page);
-  await page.getByRole("button", { name: "Hide Sketch 1", exact: true }).click();
-  await page.getByRole("button", { name: "Hide Sketch 2", exact: true }).click();
+  await orient(page, [1, -1, 0.5]);
   const bare = await samples(page);
   await hold(page, await project(page, [15.3, 0, 27.2]));
   const panel = page.getByRole("dialog", { name: "Choose overlapping geometry" });
@@ -140,8 +139,7 @@ async function pseudofaceChoice(page) {
     before.document,
     "Pseudoface selection does not edit geometry",
   );
-  await page.getByRole("button", { name: "Show Sketch 1", exact: true }).click();
-  await page.getByRole("button", { name: "Show Sketch 2", exact: true }).click();
+  await orient(page, [0, -1, 0]);
 }
 
 async function profileTint(page) {
