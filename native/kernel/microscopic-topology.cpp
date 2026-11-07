@@ -3,6 +3,7 @@
 #include "microscopic-validation.h"
 #include "microscopic-correspondence.h"
 #include "microscopic-face-size.h"
+#include "microscopic-clearance.h"
 #include <BRepAdaptor_Surface.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <BRepAlgoAPI_Defeaturing.hxx>
@@ -60,7 +61,8 @@ SmallTopology findSmall(const TopoDS_Shape& shape) {
         // boundary certificate. Unsupported geometry always takes the slow path.
         if (faceSizeGate(face, 2*limit) == FaceSizeGate::safe) continue;
         TopoDS_Edge a, b;
-        if (check.CheckSpotFace(face, detectionLimit) || check.CheckStripFace(face, a, b, detectionLimit)) {
+        if (check.CheckSpotFace(face, detectionLimit) || check.CheckStripFace(face, a, b, detectionLimit) ||
+            hasMicroscopicClearance(face, detectionLimit)) {
             found.faces.push_back(face);
             continue;
         }

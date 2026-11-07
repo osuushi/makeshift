@@ -8,6 +8,24 @@ evidence, not a change to the pinned upstream findings below.
 
 Scope: `/Users/adacohen/projects/makeshift/.reference/FreeCAD`, revision `78e4038a564e4c8bfebb40119b41d67531232223`. Links are immutable GitHub links to that revision. No source/build/install changes were made.
 
+## OCCT small-face diagnostic limit (2026-11-07)
+
+In the pinned OCCT 7.9.3 source, [`CheckStripFace` / `FindStripEdges`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/ShapeAnalysis/ShapeAnalysis_CheckSmallFace.cxx)
+recognize particular strip configurations; the long-boundary path looks for two
+edges and `CheckStripEdges` projects sampled points. A false return is not proof
+that an arbitrary trimmed face has no microscopic clearance. This is source
+observation, not a completeness claim about other OCCT diagnostics.
+
+Makeshift's segmented-shoulder capture contains a 0.0005 mm planar shelf bounded
+by multiple arcs. Runtime reproduction showed the existing spot/strip pass
+missed it. Independent inter-loop edge distances now catch that clearance before
+publication. Native regressions cover segmented circular loops under rotation
+and large translations; the model regression verifies rejection, correction and
+Undo/Redo. Whole-face deletion based only on a close pair in one loop incorrectly
+nominated larger neighboring faces in existing tests; it is not adopted. No
+upstream code was copied. General single-curve self-proximity and automatic
+healing of every curved strip remain unverified.
+
 ## Makeshift face-edit helper follow-up
 
 The helper built after Makeshift `a4dac00` resolves six faces from a validated

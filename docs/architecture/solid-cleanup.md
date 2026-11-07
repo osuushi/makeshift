@@ -19,7 +19,17 @@ that OCCT's detailed diagnostics prove all possible local defects of arbitrary
 freeform geometry. General BRep/operation validation remains separate and mandatory.
 
 Detailed kernel spot/strip checks identify faces below 0.001 mm for boundary
-reconstruction. Short nondegenerate edges still receive their independent length
+reconstruction. A separate shared clearance check compares edges belonging to
+different boundary loops, without a surface-type or edge-count restriction.
+Tolerance-inclusive exact-curve bounding boxes exclude distant pairs; remaining
+pairs require the kernel's curve-distance calculation. A sub-threshold gap is a
+mandatory repair/rejection condition, including loops assembled from many arcs.
+This checks inter-loop clearance, not arbitrary self-proximity within one curve
+or every local neck of a single loop. It must not be presented as a complete
+minimum-feature-size algorithm. Minimum distance within a single loop alone is
+not grounds for deleting the entire face: short corner subdivisions can give
+that result on an otherwise large face. Existing spot/strip/short-edge checks
+continue to handle those cases. Short nondegenerate edges still receive their independent length
 check; only continuous curves may merge. Surface-pole edges remain bookkeeping.
 Faces within twice the detection threshold are also considered for **bounded
 repair**, regardless of whether they are planar, circular or freeform. They are
@@ -47,7 +57,13 @@ Boolean containment: a contained candidate needs no outward envelope. Only a
 non-contained side needs the fixed 0.001 mm outward envelope and its independent
 validity/containment checks. This avoids offsetting a disappearing sliver merely
 to prove that removing it cannot add material. Unverifiable repairs still reject;
-this does not guarantee that every curved sliver can be healed.
+this does not guarantee that every curved sliver can be healed. In particular,
+the segmented conical-shoulder capture is now refused at the edit that creates
+its 0.0005 mm shelf. Automatic recovery of that previously accepted capture is
+not established: trial reconnection can lead to unrepairable microscopic
+transition faces in a subsequent fillet. Keep the accepted document unchanged
+on refusal; changing the originating chamfer to leave a meaningful ledge remains
+available.
 
 The general pass does not mutate read-only inspection or Open. Existing recognized
 microscopic finishes still heal on Open under the separate finish-simplification

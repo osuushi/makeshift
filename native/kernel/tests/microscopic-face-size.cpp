@@ -1,4 +1,6 @@
 #include "microscopic-face-size.h"
+#include "microscopic-clearance.h"
+#include <numbers>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
@@ -115,6 +117,25 @@ void screenAgreement() {
     require(certified > 0 && deferred > 0, "Screen corpus must exercise both paths");
     inspect(BRepBuilderAPI_MakeFace(circle(.0015)).Face());
 }
+void segmentedClearance() {
+    const auto segmented = [](double radius) {
+        BRepBuilderAPI_MakeWire wire;
+        const gp_Circ curve(gp_Ax2({},gp::DZ()),radius);
+        for (int i=0;i<4;++i) wire.Add(BRepBuilderAPI_MakeEdge(curve,i*std::numbers::pi/2,(i+1)*std::numbers::pi/2));
+        return wire.Wire();
+    };
+    for (double width : {.0005,.0011,.1}) {
+        BRepBuilderAPI_MakeFace builder(segmented(4));
+        builder.Add(TopoDS::Wire(segmented(4-width).Reversed()));
+        for (int position=0;position<3;++position) {
+            const auto face=placed(builder.Face(),position);
+            require(BRepCheck_Analyzer(face).IsValid(),"Segmented annulus must be valid");
+            require(hasMicroscopicClearance(face,.001-1e-9) == (width<.001),"Segmented boundary clearance mismatch");
+        }
+    }
+    require(!hasMicroscopicClearance(polygon({{0,0,0},{10,0,0},{10,5,0},{0,5,0}}),.001),
+            "Shared corner vertices are not microscopic clearances");
+}
 void timings() {
     const std::vector<TopoDS_Face> faces{
         polygon({{0,0,0},{10,0,0},{10,5,0},{0,5,0}}),
@@ -135,4 +156,4 @@ void timings() {
     std::cout << "30000 ordinary faces: broad phase " << fast << " ms; detailed " << detailed << " ms\n";
 }
 }
-int main() { analyticWidths(); uncertainBoundaries(); screenAgreement(); timings(); }
+int main() { analyticWidths(); uncertainBoundaries(); screenAgreement(); segmentedClearance(); timings(); }
