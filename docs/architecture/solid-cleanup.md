@@ -150,3 +150,18 @@ or changed faces/edges plus surviving edges of consumed faces, without spreading
 through older subdivisions. Decorator boundaries remain protected. These compatible
 requests do not expose a modeling completion control or trigger an automatic UI
 probe; standalone cleanup is the ordinary application interaction.
+
+## Deferred boundary consumption (2026-11-08)
+
+Founder-approved post-omnibus direction: consume a disappearing chamfer shelf at
+its exact limiting boundary. A typed 3.4999 mm request may resolve to exact 3.5 mm
+because the difference is 0.0001 mm (0.1 micron), subject to the existing complete
+solid material-change budget and validity checks. This sub-micron normalization
+is permitted; it is not the general nearest-feasible-value behavior.
+
+This is not implemented. The segmented-shelf fixture accepts 3.4995 mm but refuses
+3.4999 mm: reconstructed curve/surface disagreement was about 3.07692e-5 mm,
+above the 1e-6 mm boundary budget. Rebuilding spatial curves removed that mismatch
+but left incompatible boundary endpoints. Those experiments were reverted.
+Follow up through boundary consumption, preserving preview, acceptance, selection
+correspondence and Undo, rather than enlarging entity tolerances.
