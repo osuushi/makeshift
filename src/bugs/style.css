@@ -8,11 +8,11 @@
   gap: 8px;
   max-width: min(520px, calc(100% - 40px));
   padding: 12px;
-  border: 1px solid #738196;
+  border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--text);
   background: var(--panel);
-  box-shadow: 0 4px 20px #0003;
+  box-shadow: 0 4px 20px var(--shadow);
   pointer-events: auto;
 }
 .bug-report-panel[hidden] {
