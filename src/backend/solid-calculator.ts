@@ -1,3 +1,4 @@
+import { CalculationFailure } from "../model/calculation-failure.js";
 import { type ExactBody, exactBodies } from "../model/exact-body.js";
 import type { Vector } from "../sketch/planes.js";
 import type { KernelModelRequest, KernelReply } from "./kernel-reply.js";
@@ -64,7 +65,7 @@ export class SolidCalculator extends NativeCalculator<KernelRequest, unknown> {
     return this.superseded;
   }
   async probe<Input extends KernelModelRequest>(input: Input): Promise<KernelReply<Input>> {
-    if (this.superseded) throw new Error("Preview superseded");
+    if (this.superseded) throw new CalculationFailure("superseded", "Preview superseded");
     // Finish the current probe so useful geometry can still reach the viewport.
     // Supersession prevents subsequent probes, rather than starving every frame.
     return this.calculate(input);

@@ -5,8 +5,15 @@ import { offsetCurve } from "./offset-geometry.js";
 import type { Point } from "./planes.js";
 import { distance, dot, midpoint, subtract } from "./point-math.js";
 
+const endpointJoinToleranceMm = 1e-7;
+const ambiguousJoinDistanceMm = 1e-7;
+const minimumEdgeLengthMm = 1e-7;
+const minimumArcSweepRadians = 1e-7;
+const semicircleToleranceRadians = 1e-10;
+const minimumLoopAreaMm2 = 1e-7;
+
 function join(a: LoopEdge, b: LoopEdge, corner: Point): Point {
-  if (distance(a.b, b.a) < 1e-7) return midpoint(a.b, b.a);
+  if (distance(a.b, b.a) < endpointJoinToleranceMm) return midpoint(a.b, b.a);
   const options = supportIntersections(a, b).sort(
     (p, q) => distance(p, corner) - distance(q, corner),
   );
@@ -14,13 +21,13 @@ function join(a: LoopEdge, b: LoopEdge, corner: Point): Point {
     throw new Error("Offset edges have no sharp intersection; try a smaller distance");
   if (
     options.length > 1 &&
-    Math.abs(distance(options[0], corner) - distance(options[1], corner)) < 1e-7
+    Math.abs(distance(options[0], corner) - distance(options[1], corner)) < ambiguousJoinDistanceMm
   )
     throw new Error("Offset corner has two ambiguous joins");
   return options[0];
 }
 function joinedEdge(curve: LoopEdge, a: Point, b: Point): LoopEdge {
-  if (distance(a, b) < 1e-7) throw new Error("Offset collapses an edge");
+  if (distance(a, b) < minimumEdgeLengthMm) throw new Error("Offset collapses an edge");
   if (curve.kind === "segment") {
     if (dot(subtract(b, a), subtract(curve.b, curve.a)) <= 0)
       throw new Error("Offset would reverse an edge");
@@ -30,9 +37,12 @@ function joinedEdge(curve: LoopEdge, a: Point, b: Point): LoopEdge {
     sign = Math.sign(curve.bulge);
   const angle = (p: Point) => Math.atan2(p.y - circle.center.y, p.x - circle.center.x);
   const sweep = sign * positiveAngle(sign * (angle(b) - angle(a)));
-  if (Math.abs(sweep) < 1e-7 || Math.abs(sweep - arcDomain(curve).sweep) > Math.PI)
+  if (
+    Math.abs(sweep) < minimumArcSweepRadians ||
+    Math.abs(sweep - arcDomain(curve).sweep) > Math.PI
+  )
     throw new Error("Offset would collapse or wrap an arc");
-  const semicircle = Math.abs(Math.abs(sweep) - Math.PI) < 1e-10;
+  const semicircle = Math.abs(Math.abs(sweep) - Math.PI) < semicircleToleranceRadians;
   return {
     id: curve.id,
     kind: "arc",
@@ -66,7 +76,7 @@ export function offsetLoop(
   );
   simpleBoundary(result);
   if (
-    loopArea(result) <= 1e-7 ||
+    loopArea(result) <= minimumLoopAreaMm2 ||
     Math.sign(loopArea(result) - loopArea(loop)) !== Math.sign(amount)
   )
     throw new Error("Offset collapses or inverts the loop");

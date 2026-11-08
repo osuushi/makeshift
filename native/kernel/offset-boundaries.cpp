@@ -1,3 +1,4 @@
+#include "calculation-failure.h"
 #include "offset-geometry.h"
 #include <BRepLib.hxx>
 #include <BRepLib_CheckCurveOnSurface.hxx>
@@ -15,7 +16,7 @@
 namespace offset_geometry {
 namespace {
 void require(bool condition, const char* message) {
-    if (!condition) throw std::runtime_error(std::string("Kernel produced invalid geometry: ") + message);
+    if (!condition) throw InvalidGeometryFailure(std::string("Kernel produced invalid geometry: ") + message);
 }
 void checkBoundaries(const TopoDS_Shape& shape) {
     for (TopExp_Explorer f(shape, TopAbs_FACE); f.More(); f.Next())

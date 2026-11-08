@@ -59,11 +59,8 @@ export async function editPresentation(
   operation: HistoryOperation,
 ): Promise<boolean> {
   if (request.kind === "complete-preview") {
-    const edit = session.deferredEdit;
-    session.deferredEdit = null;
-    if (!edit) throw new Error("No preview presentation to complete");
-    session.candidate = await completeEdit(kernel, solids, session.store.data, edit);
-    session.visualPreview = undefined;
+    const edit = session.beginCompletion();
+    session.complete(await completeEdit(kernel, solids, session.store.data, edit));
     return true;
   }
   if (
@@ -74,21 +71,16 @@ export async function editPresentation(
     request.presentation !== "deferred"
   )
     return false;
-  session.reopenedPreview = null;
-  session.pendingOperation = operation;
-  session.candidate = null;
-  session.visualPreview = undefined;
-  session.deferredEdit = null;
+  session.begin(operation);
   const visual =
     request.kind === "offset-faces" || request.kind === "finish-edges"
       ? await solids.surfaces.prepare(session.store.data, request)
       : await prepareMovement(kernel, session.store.data, request);
-  session.pendingOperation = acceptedParameters(operation, {
+  const verifiedOperation = acceptedParameters(operation, {
     edgeSize: solids.edgeSize,
     offsetDistance: solids.offsetEdit.view.offsetDistance,
   });
-  session.visualPreview = visual ?? undefined;
-  if (visual) session.deferredEdit = request;
-  else session.candidate = session.store.data;
+  if (visual) session.drawable(visual, request, verifiedOperation);
+  else session.complete(session.store.data, verifiedOperation);
   return true;
 }

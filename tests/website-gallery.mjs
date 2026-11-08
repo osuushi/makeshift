@@ -20,7 +20,9 @@ try {
   await page.goto(server.resolvedUrls.local[0]);
   const gallery = page.getByRole("region", { name: "Makeshift feature demos" });
   await gallery.scrollIntoViewIfNeeded();
-  assert.equal(await page.locator(".demo-slide").count(), 7);
+  const slides = await page.locator(".demo-slide").count();
+  assert.ok(slides > 1, "Gallery navigation requires multiple demos");
+  assert.equal(await gallery.locator("video").count(), slides);
   assert.equal(
     await page.locator("video").evaluateAll((videos) => videos.every((v) => v.paused)),
     true,
@@ -69,7 +71,7 @@ try {
     "true",
   );
   // Every generated clip must decode, including those initially lazy-loaded.
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < slides; i++) {
     await page.locator("[data-slide]").nth(i).click();
     await page.getByRole("button", { name: "Play demos", exact: true }).click();
     await page.waitForFunction((index) => {
@@ -88,7 +90,7 @@ try {
   }
   assert.deepEqual(errors, []);
   console.log(
-    "Gallery: reduced motion, navigation, keyboard, playback, seven decoded clips and responsive layout passed",
+    "Gallery: reduced motion, navigation, keyboard, playback, all decoded clips and responsive layout passed",
   );
 } finally {
   await browser?.close();

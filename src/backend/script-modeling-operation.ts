@@ -96,7 +96,9 @@ function validateCut(
     new Set(targets.map((t) => t?.body)).size !== targets.length
   )
     throw new Error("Select each cut body once");
-  for (const target of targets) {
+  for (const value of targets) {
+    // Validate the runtime envelope even when a caller bypasses script typechecking.
+    const target: { body: string; faces?: string[] } = value;
     const body = document.bodies?.find((b) => b.id === target?.body);
     if (!body) throw new Error("Unknown plane-cut body");
     if (operation.kind === "imprint" && (!Array.isArray(target.faces) || !target.faces.length))

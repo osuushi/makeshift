@@ -1,6 +1,7 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
+import { parseNumericDraft } from "../sketch/numeric-draft.js";
 import type { FaceOffsetWidget } from "./face-offset-widget.js";
 import type { OffsetQuantity } from "./offset-quantity.js";
 
@@ -33,7 +34,7 @@ export function faceOffsetInputs(
   widget.input.addEventListener(
     "input",
     () => {
-      const value = widget.input.value.trim() ? Number(widget.input.value) : NaN;
+      const value = parseNumericDraft(widget.input.value).value ?? NaN;
       actions.queue(quantity.distance(value));
     },
     options,

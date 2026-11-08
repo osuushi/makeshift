@@ -1,3 +1,4 @@
+#include "calculation-failure.h"
 #include "microscopic-topology.h"
 #include "timing.h"
 #include "geometry-policy.h"
@@ -232,10 +233,10 @@ void resolveMicroscopicTopology(Result& result) {
     try {
         repairMicroscopicTopology(result);
     } catch (const Standard_Failure& error) {
-        throw std::runtime_error(std::string("Kernel produced invalid geometry: microscopic topology repair: ") +
+        throw InvalidGeometryFailure(std::string("Kernel produced invalid geometry: microscopic topology repair: ") +
             (error.GetMessageString() ? error.GetMessageString() : "reconnection failed"));
     } catch (const std::runtime_error& error) {
-        throw std::runtime_error(std::string("Kernel produced invalid geometry: microscopic topology repair: ") +
+        throw InvalidGeometryFailure(std::string("Kernel produced invalid geometry: microscopic topology repair: ") +
             error.what());
     }
 }

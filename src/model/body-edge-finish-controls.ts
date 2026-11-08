@@ -9,6 +9,12 @@ import { edgeFinishInputs } from "./edge-finish-inputs.js";
 import { pickFinishTarget, refineFinishEdges } from "./edge-finish-refinement.js";
 import { EdgeFinishSelection } from "./edge-finish-selection.js";
 import { PreviewRunner } from "./preview-runner.js";
+import {
+  acceptsSurfaceResult,
+  measuredSurfaceResult,
+  type SurfacePreviewResult,
+  surfaceResultFeedback,
+} from "./surface-preview-result.js";
 
 export class BodyEdgeFinishControls {
   private widget: BodyEdgeFinishWidget;
@@ -18,8 +24,13 @@ export class BodyEdgeFinishControls {
   private frame: ReturnType<typeof selectedEdgeFrame> = null;
   private size = 0;
   private mode: BodyEdgeFinish["mode"] = "fillet";
-  private valid = false;
-  private invalid = false;
+  private result: SurfacePreviewResult = { kind: "idle" };
+  private get canAccept(): boolean {
+    return acceptsSurfaceResult(this.result);
+  }
+  private get hasFeedback(): boolean {
+    return surfaceResultFeedback(this.result);
+  }
   private previews = new PreviewRunner<BodyEdgeFinish>({
     editing: () => this.lease?.phase === "editing",
     calculate: (request) => this.calculate(request),
@@ -51,8 +62,8 @@ export class BodyEdgeFinishControls {
           await this.previews.settle();
           return (
             this.lease?.phase === "editing" &&
-            this.valid &&
-            !this.invalid &&
+            this.canAccept &&
+            !this.hasFeedback &&
             Math.abs(this.size - size) < 1e-6
           );
         }),
@@ -82,7 +93,7 @@ export class BodyEdgeFinishControls {
     this.widget.radial.update(mode !== "chamfer");
     if (this.lease) {
       this.previews.clear();
-      this.valid = false;
+      this.result = { kind: "idle" };
       this.lease.show(null);
       if (this.selection.edges.length) {
         this.previews.check(() => this.expandSelection());
@@ -100,7 +111,7 @@ export class BodyEdgeFinishControls {
       throw new Error("Cannot restore edge finish inputs");
     this.queue(operation.size);
     await this.previews.settle();
-    if (!this.valid) throw new Error("Cannot regenerate the accepted edge finish");
+    if (!this.canAccept) throw new Error("Cannot regenerate the accepted edge finish");
     this.focus();
   }
   private begin(mode: BodyEdgeFinish["mode"], restored?: BodyEdgeFinish): boolean {
@@ -126,8 +137,7 @@ export class BodyEdgeFinishControls {
     this.editor.modeling.setTool(mode);
     this.size = restored?.size ?? 0;
     this.widget.input.value = String(this.widget.radial.display(this.size));
-    this.valid = false;
-    this.invalid = false;
+    this.result = { kind: "idle" };
     this.previews.clear();
     this.editor.notice = `${mode === "fillet" ? "Fillet" : "Chamfer"} · Drag or enter a size · Shift/Command-click adds edges or face boundaries · Option-click removes`;
     this.editor.modeling.hover = null;
@@ -182,8 +192,7 @@ export class BodyEdgeFinishControls {
   }
   private replaceEdges(edges: BodyEdgeFinish["edges"]): void {
     this.previews.clear();
-    this.valid = false;
-    this.invalid = false;
+    this.result = { kind: "idle" };
     this.lease?.show(null);
     this.selection.edges = structuredClone(edges);
     this.selection.show();
@@ -203,8 +212,7 @@ export class BodyEdgeFinishControls {
     this.editor.modeling.setTool(this.mode);
     if (!success) {
       this.previews.clear();
-      this.valid = false;
-      this.invalid = true;
+      this.result = { kind: "rejected", requested: this.size };
       this.lease.show(null);
       this.editor.notice =
         "Selected edges cannot be finished · Try another mode or cancel to change selection";
@@ -228,20 +236,19 @@ export class BodyEdgeFinishControls {
     }
     if (limit) size = Math.max(0, size);
     if (this.previews.latest?.size === size && this.previews.latest.limit === limit) {
-      if (this.valid && this.size !== this.previews.latest.size) {
+      if (this.canAccept && this.size !== this.previews.latest.size) {
         this.widget.input.value = String(this.widget.radial.display(this.size));
         this.drag.rebase(this.size);
       }
       return;
     }
     this.size = size;
-    this.valid = false;
-    this.invalid = false;
+    this.result = { kind: "pending", requested: size };
     if (!Number.isFinite(size) || size < 0) {
       this.editor.message = "";
       this.previews.clear();
       this.lease.show(null);
-      this.invalid = true;
+      this.result = { kind: "rejected", requested: this.size };
       this.editor.notice = "Enter a finite, nonnegative size";
       this.editor.refresh();
       return;
@@ -265,28 +272,27 @@ export class BodyEdgeFinishControls {
       (preview) => {
         if (this.lease?.phase !== "editing" || !this.previews.latest) return;
         this.lease.showVisual(preview);
-        if (request === this.previews.latest) this.measure(request);
+        if (request === this.previews.latest) this.measure(request, false);
         this.editor.refresh();
       },
     );
     const latest = this.previews.latest;
     if (this.lease?.phase === "editing" && latest) {
-      this.valid = success && request === latest;
       if (request === latest) {
-        this.invalid = !success || (this.editor.store.edgeSize ?? 0) !== request.size;
+        if (!success) this.result = { kind: "rejected", requested: request.size };
         if (!success) this.lease.show(null);
       }
       if (success) {
         this.lease.show(this.editor.store.candidate);
-        if (request === latest) this.measure(request);
+        if (request === latest) this.measure(request, true);
       }
     }
     this.editor.refresh();
   }
-  private measure(request: BodyEdgeFinish): void {
+  private measure(request: BodyEdgeFinish, complete: boolean): void {
     this.size = this.editor.store.edgeSize ?? 0;
-    this.invalid = this.size !== request.size;
-    if (this.invalid) {
+    this.result = measuredSurfaceResult(request.size, this.size, complete);
+    if (this.hasFeedback) {
       this.widget.input.value = String(this.widget.radial.display(this.size));
       this.editor.notice = `Limited to ${this.widget.radial.display(this.size)} mm`;
       this.drag.rebase(this.size);
@@ -305,7 +311,7 @@ export class BodyEdgeFinishControls {
       await this.cancel();
       return true;
     }
-    if (!this.valid) return false;
+    if (!this.canAccept) return false;
     if (!lease.close()) return false;
     const success = await this.editor.accept();
     if (!success) {
@@ -351,11 +357,11 @@ export class BodyEdgeFinishControls {
       this.mode,
       !!this.lease,
       this.lease ? this.size : 0,
-      this.valid && (this.size > 0 || !!this.selection.restored),
+      this.canAccept && (this.size > 0 || !!this.selection.restored),
       this.editor.blocked,
-      !!this.lease && this.invalid,
+      !!this.lease && this.hasFeedback,
       this.lease && !this.selection.edges.length ? "Select at least one solid face or edge." : "",
-      this.lease && this.invalid && !this.valid
+      this.lease && this.hasFeedback && !this.canAccept
         ? this.editor.message || "Enter a finite, nonnegative size"
         : "",
       !!this.previews.latest && this.previews.latest.limit === false && Number.isFinite(this.size),

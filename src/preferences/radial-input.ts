@@ -1,3 +1,4 @@
+import { parseNumericDraft } from "../sketch/numeric-draft.js";
 import {
   onRadialDimensionChange,
   radialDimension,
@@ -46,8 +47,8 @@ export class RadialInput {
     this.update();
   }
   private convertText(text: string, factor: number): string {
-    const value = Number(text);
-    return text.trim() && Number.isFinite(value) ? String(value * factor) : text;
+    const draft = parseNumericDraft(text);
+    return draft.kind === "value" ? String(draft.value * factor) : text;
   }
   update(active = true): void {
     if (active !== this.active && radialDimension() === "diameter") {
@@ -78,7 +79,7 @@ export class RadialInput {
     return this.active ? radialDisplay(value) : value;
   }
   read(): number {
-    const value = this.input.value.trim() ? Number(this.input.value) : NaN;
+    const value = parseNumericDraft(this.input.value).value ?? NaN;
     return this.active ? radialRadius(value) : value;
   }
   dispose(): void {

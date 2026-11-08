@@ -1,5 +1,6 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import { parseNumericDraft } from "../sketch/numeric-draft.js";
 import { type PlaneId, planes } from "../sketch/planes.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import type { MirrorOperation } from "./mirror.js";
@@ -156,8 +157,7 @@ export class MirrorControls {
       reference = this.reference;
     if (this.lease?.phase !== "editing" || !source) return;
     this.valid = false;
-    const value = this.widget.offset.value.trim();
-    const offset = value ? Number(value) : NaN;
+    const offset = parseNumericDraft(this.widget.offset.value).value ?? NaN;
     this.widget.offset.setAttribute("aria-invalid", String(!Number.isFinite(offset)));
     this.pending = this.latest = null;
     this.lease.show(null);
@@ -262,7 +262,7 @@ export class MirrorControls {
       e.blocked || !!this.running,
       this.lease?.phase !== "editing",
     );
-    const offset = Number(this.widget.offset.value);
+    const offset = parseNumericDraft(this.widget.offset.value).value ?? NaN;
     this.referenceView.show(
       this.lease && this.reference && Number.isFinite(offset)
         ? offsetReference(this.reference, offset)

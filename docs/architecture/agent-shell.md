@@ -381,6 +381,15 @@ accept/cancel an active model operation. Native Command-Q still belongs to the a
 
 ## Delivered first scripting contract
 
+`src/agent-script/public/` is the deliberate importable modeling-script contract.
+The worker API and serial command types derive from it. `npm run generate:script-types`
+packages its type-only declarations into the standalone CLI text; `typecheck`
+checks that the generated text is current. Build and dev regenerate it. Public
+types expose supported per-axis `scale.factors`, while interactive limiting and
+experimental Boolean options remain outside the checked script surface. Both
+modeling/view modes and the `freac` alias remain supported. Exact script requests
+use the same exact-input policy as typed UI values and keep atomic rollback/Undo.
+
 `makeshift run script.ts` snapshots one source file, checks it using the bundled pinned
 TypeScript compiler and the same declarations printed by `makeshift types`, then runs
 the emitted module in a CLI child. That process inherits the harness's sandbox;

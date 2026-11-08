@@ -113,7 +113,10 @@ async function calculateScriptSolid(
     next = await solids.calculate(document, { kind: "revolve", revolution: operation.input });
   } else if (operation.kind === "offsetFaces") {
     const o = operation.input;
-    next = await solids.calculate(document, { kind: "offset-faces", operation: o });
+    next = await solids.calculate(document, {
+      kind: "offset-faces",
+      operation: { ...o, limit: false },
+    });
     if (solids.offsetEdit.view.offsetDistance !== o.distance)
       throw new Error("Requested offset could not be achieved exactly");
   } else if (operation.kind === "moveFaces") {

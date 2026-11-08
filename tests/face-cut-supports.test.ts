@@ -68,13 +68,12 @@ for (const kind of ["cone", "spline"] as const) {
       const before = owner.view.data;
       for (const mode of ["splitBody", "imprint"] as const) {
         owner.beginScript(mode);
-        await owner.scripts.step({
-          kind: mode,
-          input: {
-            targets: [{ body: target.id, ...(mode === "imprint" ? { faces: [cap.id] } : {}) }],
-            surface: { body: source.id, face: face.id },
-          },
-        });
+        const surface = { body: source.id, face: face.id };
+        await owner.scripts.step(
+          mode === "imprint"
+            ? { kind: mode, input: { targets: [{ body: target.id, faces: [cap.id] }], surface } }
+            : { kind: mode, input: { targets: [{ body: target.id }], surface } },
+        );
         owner.scripts.finish();
         const result = owner.view.data.bodies?.filter((body) => body.id !== source.id);
         assert.ok(result);

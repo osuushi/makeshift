@@ -31,19 +31,20 @@ export class DocumentCommands {
         break;
       case "cleanup":
       case "delete-topology":
-        this.session.pendingOperation = operation;
-        this.session.candidate = await this.solids.removeTopology(
-          this.session.store.data,
-          request.selection,
-          request.kind,
+        this.session.begin(operation);
+        this.session.complete(
+          await this.solids.removeTopology(
+            this.session.store.data,
+            request.selection,
+            request.kind,
+          ),
         );
         if (request.kind === "delete-topology") await this.accept();
         break;
       case "paste-geometry": {
         const document = await this.geometry.paste(this.session.store.data, request);
         this.checkCancellation();
-        this.session.pendingOperation = null;
-        this.session.candidate = null;
+        this.session.clearPreview();
         this.session.store.accept(document, operation);
         break;
       }
@@ -76,8 +77,7 @@ export class DocumentCommands {
         this.decorators.clear();
         break;
       case "delete-entities": {
-        this.session.pendingOperation = null;
-        this.session.candidate = null;
+        this.session.clearPreview();
         const document = await this.geometry.delete(this.session.store.data, request);
         this.checkCancellation();
         this.session.store.accept(document, operation);

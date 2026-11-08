@@ -1,3 +1,4 @@
+#include "calculation-failure.h"
 #include "kernel.h"
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepOffset_MakeOffset.hxx>
@@ -23,12 +24,12 @@ void checkOffsetFace(const TopoDS_Face& face, double distance) {
         const double sign = (face.Orientation() == TopAbs_REVERSED ? -1 : 1) * (direct ? 1 : -1);
         const double next = radius + sign * distance;
         if (next <= 1e-7 || (!sphere && next >= surface.Torus().MajorRadius() - 1e-7))
-            throw std::runtime_error("Offset would collapse or self-intersect the curved face");
+            throw GeometricFailure("Offset would collapse or self-intersect the curved face");
     }
     if (surface.GetType() == GeomAbs_Cylinder) {
         const double sign = (face.Orientation() == TopAbs_REVERSED ? -1 : 1) * (surface.Cylinder().Direct() ? 1 : -1);
         if (surface.Cylinder().Radius() + sign * distance <= 1e-7)
-            throw std::runtime_error("Offset would collapse the cylindrical face");
+            throw GeometricFailure("Offset would collapse the cylindrical face");
     }
 }
 // A valid BRep alone is insufficient: OCCT can propagate an offset into unselected
@@ -45,7 +46,7 @@ void checkUnselectedSupport(const TopoDS_Face& source, const TopoDS_Face& result
                                     target.FirstVParameter() * (1-v) + target.LastVParameter() * v);
         GeomAPI_ProjectPointOnSurf projection(p, original);
         if (!projection.IsDone() || !projection.NbPoints() || projection.LowerDistance() > 1e-6)
-            throw std::runtime_error("Offset would move an unselected neighboring face; include its tangent neighbors");
+            throw GeometricFailure("Offset would move an unselected neighboring face; include its tangent neighbors");
     }
 }
 
@@ -56,7 +57,7 @@ double checkOffsetVolume(const TopoDS_Shape& before, const TopoDS_Shape& after, 
     // incorrectly report material loss after a valid small extension.
     const double oldVolume = volume(before), next = volume(after, referenceAxis);
     if (props.Mass() <= 1e-9 || next <= 1e-9 || (next - oldVolume) * (distance > 0 ? 1 : -1) < -1e-6)
-        throw std::runtime_error("Kernel produced invalid geometry: offset inverted material");
+        throw InvalidGeometryFailure("Kernel produced invalid geometry: offset inverted material");
     for (TopExp_Explorer v(after, TopAbs_VERTEX); v.More(); v.Next()) {
         const auto vertex = TopoDS::Vertex(v.Current());
         const double precision = BRep_Tool::Tolerance(vertex);
@@ -70,7 +71,7 @@ double checkOffsetVolume(const TopoDS_Shape& before, const TopoDS_Shape& after, 
                        precision <= BRep_Tool::Tolerance(old);
             });
         if (!inherited)
-            throw std::runtime_error("Kernel produced invalid geometry: offset merged distinct vertices");
+            throw InvalidGeometryFailure("Kernel produced invalid geometry: offset merged distinct vertices");
     }
     return next;
 }

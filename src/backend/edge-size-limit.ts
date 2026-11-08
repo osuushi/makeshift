@@ -1,4 +1,5 @@
 import type { BodyEdgeFinish } from "../model/body.js";
+import { CalculationFailure, hasFailureCode } from "../model/calculation-failure.js";
 import { minimumFinishMm } from "../model/geometry-policy.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { KernelResult } from "./kernel-result.js";
@@ -24,9 +25,13 @@ export class EdgeSizeLimit<Result = KernelResult> {
       this.best = null;
       this.upper = Infinity;
     }
-    if (!Number.isFinite(operation.size)) throw new Error("Enter a finite edge size");
+    if (!Number.isFinite(operation.size))
+      throw new CalculationFailure("invalid-request", "Enter a finite edge size");
     if (operation.limit === false && operation.size !== 0 && operation.size < minimumFinishMm)
-      throw new Error(`Size must be zero or at least ${minimumFinishMm} mm`);
+      throw new CalculationFailure(
+        "invalid-request",
+        `Size must be zero or at least ${minimumFinishMm} mm`,
+      );
     if (operation.size < minimumFinishMm) return { size: 0, result: null };
     if (operation.limit === false) {
       const requested = { size: operation.size, result: await calculate(operation.size) };
@@ -53,7 +58,11 @@ export class EdgeSizeLimit<Result = KernelResult> {
       for (let i = 0; i < 8 && seed >= minimumFinishMm && !low; i++, seed /= 2)
         low = await this.probe(seed, calculate);
     }
-    if (!low) throw new Error("Could not find a feasible size for all selected edges");
+    if (!low)
+      throw new CalculationFailure(
+        "geometric-infeasibility",
+        "Could not find a feasible size for all selected edges",
+      );
     let high = operation.size;
     // First bracket near the feasible geometry, even for a huge typed request.
     for (let i = 0; i < 24 && low.size * 2 < high; i++) {
@@ -85,8 +94,7 @@ export class EdgeSizeLimit<Result = KernelResult> {
     try {
       return { size, result: await calculate(size) };
     } catch (error) {
-      if (error instanceof Error && error.message.includes("not feasible at this size"))
-        return null;
+      if (hasFailureCode(error, "geometric-infeasibility")) return null;
       throw error;
     }
   }
