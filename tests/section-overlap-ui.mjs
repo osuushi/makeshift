@@ -25,17 +25,22 @@ await withUiRuntimes(async (page, name) => {
   await page.getByRole("button", { name: "Hide Body 3", exact: true }).click();
   await page.getByRole("button", { name: "Hide Body 4", exact: true }).click();
   await page.getByRole("button", { name: "Hide Body 2", exact: true }).click();
-  const first = await samples(page);
+  const capPoint = [15.3, 0, 27.2];
+  const first = await pixelPatch(page, capPoint, 9);
   await page.getByRole("button", { name: "Show Body 2", exact: true }).click();
   await page.getByRole("button", { name: "Hide Body 1", exact: true }).click();
-  const second = await samples(page);
+  const second = await pixelPatch(page, capPoint, 9);
   await page.getByRole("button", { name: "Show Body 1", exact: true }).click();
-  const blended = await samples(page);
+  const blended = await pixelPatch(page, capPoint, 9);
   assert.ok(
-    first.some((v, i) => Math.abs(v - second[i]) > 20),
+    first.some((pixel, i) => pixel.some((v, channel) => Math.abs(v - second[i][channel]) > 20)),
     "Bodies have distinct colors",
   );
-  const delta = Math.max(...blended.map((v, i) => Math.abs(v - (first[i] + second[i]) / 2)));
+  const delta = Math.max(
+    ...blended.flatMap((pixel, i) =>
+      pixel.map((v, channel) => Math.abs(v - (first[i][channel] + second[i][channel]) / 2)),
+    ),
+  );
   assert.ok(delta < 4, `Overlap blends both patterns uniformly: maximum RGB error ${delta}`);
   await chooseTool(page, "cross section", "cross-section");
   await page.getByRole("button", { name: "Choose section plane", exact: true }).click();
@@ -50,10 +55,11 @@ await withUiRuntimes(async (page, name) => {
   await page.keyboard.press("l");
   await drag(page, [-5, 8], [17, 8], ["Shift"]);
   await page.keyboard.press("Escape");
-  const ink = await samples(page, [15, 0, 8], 3);
+  // The thin stroke's antialiased pixels mix with the surface underneath.
+  // Check its contrast against the neighboring surface with and without caps.
+  await sketchInkContrast(page, "section cap");
   await chooseTool(page, "hide bodies", "hide-bodies");
-  const unobscured = await samples(page, [15, 0, 8], 3);
-  assert.deepEqual(ink, unobscured, "Caps preserve sketch ink on their plane");
+  await sketchInkContrast(page, "sketch plane");
   await chooseTool(page, "show bodies", "show-bodies");
   await chooseTool(page, "return to modeling", "modeling");
   await page.getByRole("button", { name: "Select Sketch 1", exact: true }).click();
@@ -66,7 +72,21 @@ await withUiRuntimes(async (page, name) => {
   );
 });
 
+async function sketchInkContrast(page, surface) {
+  const ink = await samples(page, [15, 0, 8], 3);
+  const background = await samples(page, [15, 0, 8.5], 3);
+  assert.ok(
+    background.slice(0, 3).every((value, i) => value - ink[i] > 30),
+    `Sketch ink stays legible over the ${surface}: ${ink} / ${background}`,
+  );
+}
+
 async function samples(page, point = [15.3, 0, 27.2], size = 1, keepPointer = false) {
+  const colors = await pixelPatch(page, point, size, keepPointer);
+  return colors.sort((a, b) => a[0] + a[1] + a[2] - b[0] - b[1] - b[2])[0];
+}
+
+async function pixelPatch(page, point, size, keepPointer = false) {
   if (!keepPointer) await page.mouse.move(1100, 80);
   const p = await project(page, point);
   const png = await page.screenshot({
@@ -87,10 +107,9 @@ async function samples(page, point = [15.3, 0, 27.2], size = 1, keepPointer = fa
     const context = canvas.getContext("2d");
     context.drawImage(image, 0, 0);
     const pixels = context.getImageData(0, 0, image.width, image.height).data;
-    const colors = Array.from({ length: image.width * image.height }, (_, i) => [
+    return Array.from({ length: image.width * image.height }, (_, i) => [
       ...pixels.slice(i * 4, i * 4 + 3),
     ]);
-    return colors.sort((a, b) => a[0] + a[1] + a[2] - b[0] - b[1] - b[2])[0];
   }, png.toString("base64"));
 }
 
@@ -155,24 +174,31 @@ async function pseudofaceChoice(page) {
 
 async function profileTint(page) {
   const point = [15.3, 0, 27.2];
-  const base = await samples(page, point);
+  const base = await pixelPatch(page, point, 13);
   const p = await project(page, point);
   await page.mouse.move(p.x, p.y);
   assert.equal((await inspect(page)).modelingHover, "profile");
-  const hovered = await samples(page, point, 1, true);
+  const hovered = await pixelPatch(page, point, 13, true);
   assert.ok(
-    hovered[2] < base[2] - 15 && hovered[0] - hovered[2] > base[0] - base[2] + 15,
-    `Amber hover overlays cap: ${hovered} / ${base}`,
+    hovered.some(([r, , b], i) => r - b > base[i][0] - base[i][2] + 15),
+    "Amber hover grid overlays the cap",
   );
   await page.mouse.click(p.x, p.y);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "profile");
-  const selected = await samples(page, point);
-  assert.ok(selected[0] < base[0] - 15, `Blue selection overlays cap: ${selected} / ${base}`);
+  const selected = await pixelPatch(page, point, 13);
+  assert.ok(
+    selected.some(([r, , b], i) => b - r > base[i][2] - base[i][0] + 15),
+    "Blue selection grid overlays the cap",
+  );
+  assert.ok(
+    selected.some((pixel, i) => pixel.every((value, channel) => value === base[i][channel])),
+    "Cells between blue lines retain their neutral fill",
+  );
   await page.keyboard.press("e");
   await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
   await page.getByRole("textbox", { name: "Extrusion distance" }).waitFor({ state: "visible" });
   assert.equal((await inspect(page)).interaction?.kind, "extrude");
-  const extrusion = await samples(page, point);
+  const extrusion = await pixelPatch(page, point, 13);
   assert.deepEqual(extrusion, selected, "Extrusion source preserves selection tint over caps");
   await page.keyboard.press("Escape");
   await chooseTool(page, "clear selection", "selection-clear");

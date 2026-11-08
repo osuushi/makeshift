@@ -47,7 +47,23 @@ await withUiRuntimes(async (page, name) => {
   const interior = [];
   for (const x of [17, 21, 25])
     for (const z of [34, 37, 40]) interior.push(await project(page, [x, 0, z]));
-  const fill = await page.evaluate(
+  const fill = await regionRed(page, png, interior);
+  await page.getByRole("button", { name: "Hide Sketch 2", exact: true }).click();
+  const bare = await regionRed(page, await page.screenshot(), interior);
+  assert.ok(
+    fill.every((red, i) => red < bare[i] - 8),
+    `Gray circle fill has no clipped triangle gaps: ${fill} / ${bare}`,
+  );
+  assert.ok(
+    ink.every((v) => v < 150),
+    "Every coplanar circle segment remains visible",
+  );
+  assert.deepEqual((await inspect(page)).document, before.document);
+  console.log(name, "48 coplanar ink samples and nine interior fill samples passed");
+});
+
+async function regionRed(page, png, points) {
+  return page.evaluate(
     async ({ data, points }) => {
       const image = new Image();
       image.src = `data:image/png;base64,${data}`;
@@ -57,18 +73,8 @@ await withUiRuntimes(async (page, name) => {
       canvas.height = image.height;
       const ctx = canvas.getContext("2d");
       ctx.drawImage(image, 0, 0);
-      return points.map((p) => [...ctx.getImageData(Math.round(p.x), Math.round(p.y), 1, 1).data]);
+      return points.map((p) => ctx.getImageData(Math.round(p.x), Math.round(p.y), 1, 1).data[0]);
     },
-    { data: png.toString("base64"), points: interior },
+    { data: png.toString("base64"), points },
   );
-  assert.ok(
-    fill.every(([r, , b]) => r < 220 && b > r + 15),
-    "Circle fill has no clipped triangle gaps",
-  );
-  console.log(name, "48 coplanar ink samples and nine interior fill samples passed");
-  assert.ok(
-    ink.every((v) => v < 150),
-    "Every coplanar circle segment remains visible",
-  );
-  assert.deepEqual((await inspect(page)).document, before.document);
-});
+}

@@ -12,30 +12,33 @@ import { stableClipping } from "./stable-clipping.js";
 
 export function drawSketches(editor: SketchEditor, obscured = false): () => void {
   const disposeObscured = obscured ? null : drawSketches(editor, true);
-  const material = new LineMaterial({
-    linewidth: 2,
-    vertexColors: true,
-    depthTest: true,
-    depthFunc: obscured ? THREE.GreaterDepth : THREE.LessEqualDepth,
-    transparent: obscured,
-    opacity: obscured ? 0.3 : 1,
-    depthWrite: false,
-    // Preserve visible sketch samples when the later section-cap pass fills the cut.
-    stencilWrite: !obscured,
-    stencilRef: 16,
-    stencilWriteMask: 16,
-    stencilFunc: THREE.AlwaysStencilFunc,
-    stencilZPass: THREE.ReplaceStencilOp,
+  const batches = [1.5, 4].map((linewidth, index) => {
+    const material = stableClipping(
+      new LineMaterial({
+        linewidth,
+        vertexColors: true,
+        depthTest: true,
+        depthFunc: obscured ? THREE.GreaterDepth : THREE.LessEqualDepth,
+        transparent: obscured,
+        opacity: obscured ? 0.3 : 1,
+        depthWrite: false,
+        // Preserve visible sketch samples when the later section-cap pass fills the cut.
+        stencilWrite: !obscured,
+        stencilRef: 16,
+        stencilWriteMask: 16,
+        stencilFunc: THREE.AlwaysStencilFunc,
+        stencilZPass: THREE.ReplaceStencilOp,
+      }),
+    );
+    const lines = new LineSegments2(new LineSegmentsGeometry(), material);
+    lines.renderOrder = 10 + index;
+    editor.world.scene.add(lines);
+    return lines;
   });
-  stableClipping(material);
-  let geometry = new LineSegmentsGeometry(),
-    lines = new LineSegments2(geometry, material);
-  editor.world.scene.add(lines);
-  lines.renderOrder = 10;
   let previous: DisplayDocument | null = null,
     selection = "";
   const update = () => {
-    const selected = editor.selectionOwners;
+    const selected = editor.selectedCurves;
     if (!editor.world.active)
       for (const target of editor.modeling.targets)
         if (target.kind === "sketch") for (const id of target.curves ?? []) selected.add(id);
@@ -47,10 +50,10 @@ export function drawSketches(editor: SketchEditor, obscured = false): () => void
     const mergeable = !editor.world.active
       ? editor.mergeableSketches.map((sketch) => sketch.id)
       : [];
-    const key = `${viewportPalette().background}:${editor.visibility.key}:${modeling.join()}:${mergeable.join()}:${editor.modeling.hover?.sketch}:${[...selected].sort().join(",")}:${[...editor.selectedCurves].join(",")}:${[...hover].join(",")}:${editor.constraintHover}:${editor.selected.firstPointKey}:${[...(editor.selected.pointKeys ?? [])].join()}:${JSON.stringify(editor.pointHover)}:${editor.world.active}:${editor.world.height}:${rect.height}`;
-    material.resolution.set(rect.width, rect.height);
+    const key = `${viewportPalette().background}:${editor.visibility.key}:${modeling.join()}:${mergeable.join()}:${editor.modeling.hover?.sketch}:${[...selected].sort().join(",")}:${[...hover].join(",")}:${editor.constraintHover}:${editor.selected.firstPointKey}:${[...(editor.selected.pointKeys ?? [])].join()}:${JSON.stringify(editor.pointHover)}:${editor.world.active}:${editor.world.height}:${rect.height}`;
+    for (const lines of batches) lines.material.resolution.set(rect.width, rect.height);
     if (previous !== editor.display || selection !== key) {
-      const { positions, colors } = sketchSegments(
+      const segments = sketchSegments(
         editor,
         selected,
         hover,
@@ -58,17 +61,16 @@ export function drawSketches(editor: SketchEditor, obscured = false): () => void
         new Set(mergeable),
         obscured,
       );
-      geometry.dispose();
-      editor.world.scene.remove(lines);
-      geometry = new LineSegmentsGeometry();
-      if (positions.length) {
-        geometry.setPositions(positions);
-        geometry.setColors(colors);
+      for (const [index, lines] of batches.entries()) {
+        const { positions, colors } = segments[index];
+        lines.geometry.dispose();
+        lines.geometry = new LineSegmentsGeometry();
+        if (positions.length) {
+          lines.geometry.setPositions(positions);
+          lines.geometry.setColors(colors);
+        }
+        lines.visible = positions.length > 0;
       }
-      lines = new LineSegments2(geometry, material);
-      lines.visible = positions.length > 0;
-      lines.renderOrder = 10;
-      editor.world.scene.add(lines);
       previous = editor.display;
       selection = key;
     }
@@ -78,9 +80,11 @@ export function drawSketches(editor: SketchEditor, obscured = false): () => void
   return () => {
     disposeObscured?.();
     editor.world.changed.delete(update);
-    geometry.dispose();
-    material.dispose();
-    editor.world.scene.remove(lines);
+    for (const lines of batches) {
+      lines.geometry.dispose();
+      lines.material.dispose();
+      editor.world.scene.remove(lines);
+    }
   };
 }
 
@@ -92,36 +96,38 @@ function sketchSegments(
   mergeable: Set<string>,
   obscured: boolean,
 ) {
-  const positions: number[] = [],
-    colors: number[] = [];
+  const palette = viewportPalette();
+  const segments = Array.from({ length: 2 }, () => ({
+    positions: [] as number[],
+    colors: [] as number[],
+  }));
   for (const sketch of editor.display.sketches) {
     if (!editor.visibility.visible(sketch.id)) continue;
     if (obscured && !modeling.includes(sketch.id)) continue;
     const feedback = pointFeedback(editor, sketch);
     const locks = visibleConstraints(sketch);
-    const constrained = new Set(locks.flatMap(constraintCurves));
     const hoveredConstraint = locks.find((c) => c.id === editor.constraintHover);
     const highlight = new Set(hoveredConstraint ? constraintCurves(hoveredConstraint) : []);
     for (const curve of sketch.curves) {
-      const color = new THREE.Color(
+      const isSelected = modeling.includes(sketch.id) || selected.has(curve.id);
+      const isHovered =
         hover.has(curve.id) ||
-          highlight.has(curve.id) ||
-          (!editor.world.active &&
-            editor.modeling.hover?.sketch === sketch.id &&
-            editor.modeling.hover.kind === "sketch")
-          ? viewportPalette().hover
-          : modeling.includes(sketch.id) ||
-              editor.selectedCurves.has(curve.id) ||
-              (selected.has(curve.id) && !feedback.affected.has(curve.id))
-            ? viewportPalette().selected
-            : mergeable.has(sketch.id)
-              ? viewportPalette().hover
+        highlight.has(curve.id) ||
+        (!editor.world.active &&
+          editor.modeling.hover?.sketch === sketch.id &&
+          editor.modeling.hover.kind === "sketch");
+      const color = new THREE.Color(
+        highlight.has(curve.id)
+          ? palette.hover
+          : isSelected
+            ? palette.selectionStroke
+            : isHovered || mergeable.has(sketch.id)
+              ? palette.hover
               : editor.world.active && sketch.id !== editor.sketch?.id
-                ? viewportPalette().inactive
-                : constrained.has(curve.id)
-                  ? viewportPalette().constrained
-                  : viewportPalette().ink,
+                ? palette.inactive
+                : palette.ink,
       );
+      const { positions, colors } = segments[isSelected || isHovered ? 1 : 0];
       const rendered = coloredCurve(
         curve,
         editor.world.height / editor.world.canvas.clientHeight,
@@ -142,5 +148,5 @@ function sketchSegments(
     }
   }
 
-  return { positions, colors };
+  return segments;
 }

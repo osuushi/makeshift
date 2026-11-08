@@ -7,11 +7,9 @@ import { pointChoiceGroups } from "./point-choice-groups.js";
 import { distance } from "./point-math.js";
 import { pointHits, pointKey } from "./point-query.js";
 import { type PointBranch, pointBranches, pointSelected } from "./point-selection.js";
-import { hitIds } from "./sketch-hit.js";
 
 export function pointFeedback(editor: SketchEditor, sketch: Sketch) {
   const points = pointHits(sketch).filter((hit) => pointSelected(editor, pointKey(hit) ?? ""));
-  const affected = new Set(points.flatMap((hit) => [...hitIds(hit)]));
   const selected = points.flatMap(pointBranches);
   const hover = editor.pointHover;
   const hoverGroup = hover
@@ -20,7 +18,7 @@ export function pointFeedback(editor: SketchEditor, sketch: Sketch) {
       )
     : null;
   const hovered = hoverGroup?.flatMap(pointBranches) ?? [];
-  return { affected, selected, hovered };
+  return { selected, hovered };
 }
 export function coloredCurve(
   curve: Curve,
@@ -51,7 +49,7 @@ export function coloredCurve(
           : Math.max(0, 1 - Math.abs(length - b.fraction * total) / (48 * unit)),
       ),
     );
-  const blue = new Color(viewportPalette().selected),
+  const blue = new Color(viewportPalette().selectionStroke),
     amber = new Color(viewportPalette().hover);
   const colors = lengths.map((length) =>
     base.clone().lerp(blue, strength(branches, length)).lerp(amber, strength(hover, length)),
