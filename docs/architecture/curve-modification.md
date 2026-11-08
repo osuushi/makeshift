@@ -174,8 +174,13 @@ use native planar intersection-join offsets; positive distances expand the loop.
 The result returns independent ordinary curves through the existing 0.001 mm
 bounded cubic conversion and shared-vertex endpoint correction. Source geometry
 and constraints remain unchanged; new joined endpoints receive coincidence links.
-Preview remains temporary after drag release; Enter or tool completion accepts one
-Undo step, and Escape cancels. The numeric field stays beside the full offset handle and panel grip.
+The handle points along the outward normal at the nearest selected source curve
+to its displayed position, including after collision layout or panel movement.
+Each drag freezes that normal in the sketch plane: outward increases the offset,
+inward decreases it, and tangential movement does not change it.
+Preview remains temporary after drag release; Enter, clicking away or tool completion
+accepts one Undo step, and Escape cancels. Invalid previews stay open for correction.
+The numeric field stays beside the full offset handle and panel grip.
 After clicking or typing, dragging the handle resumes the same preview from its
 current amount; release retains the value for refinement. First Tab focuses that
 field without restarting the offset.

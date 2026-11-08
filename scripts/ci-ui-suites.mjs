@@ -142,9 +142,12 @@ export const uiSuites = [
   },
   {
     args: ["modal-undo-boundary-ui.mjs"],
+    // macOS hidden Electron: 14.58s including relocated Sketch Offset and click-away.
     seconds: 23,
     browsers: ["electron"],
-    reason: "Native menu and keyboard Undo must stay inside a modal before document history.",
+    reason:
+      "Native menu and keyboard Undo must stay inside a modal before document history. Relocated Sketch Offset glyphs and real drags must share the nearest normal; click-away must accept once, retain invalid previews and preserve document Undo/Redo through DOM event ordering.",
+    // Offset frame/drag math: offset-handle-frame.test.ts.
     unit: "interaction-history.test.ts",
   },
   {
