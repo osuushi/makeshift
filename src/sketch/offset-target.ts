@@ -17,17 +17,19 @@ export interface OffsetTarget {
   direction: number;
   loop?: LoopEdge[];
   native?: boolean;
+  boundary?: { curve: Curve; direction: number }[];
 }
 export function prepareOffset(curves: readonly Curve[]): OffsetTarget {
   if (curves.some((c) => c.kind === "bezier")) {
     const profile = cubicOffsetProfile(curves);
-    const span = profile.outer[0];
-    const curve = span.curve;
-    const direction =
-      curve.kind === "segment" || curve.kind === "bezier"
-        ? -Math.sign(span.end - span.start)
-        : Math.sign(span.end - span.start);
-    return { curve, direction, native: true };
+    const boundary = profile.outer.map(({ curve, start, end }) => ({
+      curve,
+      direction:
+        curve.kind === "segment" || curve.kind === "bezier"
+          ? -Math.sign(end - start)
+          : Math.sign(end - start),
+    }));
+    return { ...boundary[0], boundary, native: true };
   }
   if (curves.length === 1) return { curve: curves[0], direction: 1 };
   const loop = orderedLoop(curves),

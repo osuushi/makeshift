@@ -2,6 +2,7 @@ import "../tools/tool-prerequisites.css";
 import "../tools/selection-step.css";
 import { DecoratorPanel } from "../decorators/panel.js";
 import { decoratorOverlay } from "../decorators/preview.js";
+import { DecoratorSelectionWidget } from "../decorators/selection-widget.js";
 import { GuideControls } from "../guides/controls.js";
 import { BodyActions } from "../model/body-actions.js";
 import { BodyEdgeFinishControls } from "../model/body-edge-finish-controls.js";
@@ -221,6 +222,9 @@ const disposeHost =
 const disposePlaneEntry = planeEntryTools(editor);
 const disposeSettings = installSettings(editor, app);
 const disposeTools = installToolSurfaces(editor, app, entities.element);
+const decoratorWidget = new DecoratorSelectionWidget(editor, overlay, () =>
+  inspector.reveal("Decorators"),
+);
 installViewInspection(editor, sections);
 world.draw();
 export const ready = editor.store.request({ kind: "read" }).then((success) => {
@@ -229,6 +233,7 @@ export const ready = editor.store.request({ kind: "read" }).then((success) => {
 });
 window.addEventListener("pagehide", (event) => {
   if (event.persisted) return;
+  decoratorWidget.dispose();
   decorators.dispose();
   inspector.dispose();
   disposeDecorators();

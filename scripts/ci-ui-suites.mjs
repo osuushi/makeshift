@@ -116,7 +116,8 @@ export const uiSuites = [
     args: ["decorator-removal-ui.mjs"],
     seconds: 14,
     browsers: ["electron"],
-    reason: "Removing a decorator must clear a late worker result and rendered picking state.",
+    reason:
+      "Decorator removal clears late worker/picking state; its viewport shortcut stays clickable beside transforms and reveals collapsed Inspector controls without transiently scrolling the workspace.",
     unit: "decorator-display.test.ts",
   },
   {
@@ -142,9 +143,12 @@ export const uiSuites = [
   },
   {
     args: ["modal-undo-boundary-ui.mjs"],
+    // macOS hidden Electron: 14.58s including relocated Sketch Offset and click-away.
     seconds: 23,
     browsers: ["electron"],
-    reason: "Native menu and keyboard Undo must stay inside a modal before document history.",
+    reason:
+      "Native menu and keyboard Undo must stay inside a modal before document history. Relocated Sketch Offset glyphs and real drags must share the nearest normal; click-away must accept once, retain invalid previews and preserve document Undo/Redo through DOM event ordering.",
+    // Offset frame/drag math: offset-handle-frame.test.ts.
     unit: "interaction-history.test.ts",
   },
   {

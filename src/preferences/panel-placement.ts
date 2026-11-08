@@ -16,7 +16,7 @@ try {
 
 const panels = new WeakMap<HTMLElement, FloatingPanel>();
 export function placeFloatingPanel(element: HTMLElement): boolean {
-  if (element.matches("button, input, .move-anchor")) return false;
+  if (element.matches("button, input, .move-anchor, .decorator-selection-actions")) return false;
   let panel = panels.get(element);
   if (!panel) {
     panel = new FloatingPanel(element);

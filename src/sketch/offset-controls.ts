@@ -8,7 +8,7 @@ import { onModelKeydown } from "./model-keys.js";
 import { offsetDistance } from "./offset-geometry.js";
 import { selectedOffsetCurves } from "./offset-selection.js";
 import { type OffsetTarget, offsetLinks, offsetPreview, prepareOffset } from "./offset-target.js";
-import { placeOffsetWidget } from "./offset-widget.js";
+import { OffsetWidget } from "./offset-widget.js";
 import type { Point } from "./planes.js";
 import { distance } from "./point-math.js";
 import type { SelectionTarget } from "./selection-target.js";
@@ -22,6 +22,7 @@ type Session = {
   selection: readonly SelectionTarget[];
   solve: GestureSolve;
   start: Point;
+  normal: Point;
   screen: Point;
   pointer: number;
   moved: boolean;
@@ -37,6 +38,7 @@ export class OffsetControls {
   private abort = new AbortController();
   private session: Session | null = null;
   private interaction: InteractionLease | null = null;
+  private widget: OffsetWidget;
   private get closing(): boolean {
     return !!this.interaction && this.interaction.phase !== "editing";
   }
@@ -44,6 +46,7 @@ export class OffsetControls {
     private editor: SketchEditor,
     overlay: HTMLElement,
   ) {
+    this.widget = new OffsetWidget(editor, this.root, this.handle);
     this.disposeTool = toolCatalog(editor).register({
       id: "sketch-offset",
       finishEdit: true,
@@ -107,7 +110,7 @@ export class OffsetControls {
         if (!this.session || this.root.contains(event.target as Node)) return;
         event.preventDefault();
         event.stopImmediatePropagation();
-        void this.cancel();
+        void this.commit();
       },
       { ...options, capture: true },
     );
@@ -132,6 +135,7 @@ export class OffsetControls {
       if (!point) return;
       this.input.blur();
       s.start = point;
+      s.normal = this.widget.normal(s.sketch, s.target);
       s.screen = { x: event.clientX, y: event.clientY };
       s.pointer = event.pointerId;
       s.moved = false;
@@ -172,6 +176,7 @@ export class OffsetControls {
       selection: this.editor.selected.targets,
       solve: new GestureSolve(this.editor, interaction),
       start,
+      normal: this.widget.normal(sketch, target),
       screen: { x: point.x, y: point.y },
       pointer: pointer ?? -1,
       moved: false,
@@ -226,12 +231,11 @@ export class OffsetControls {
       this.preview(
         s.dragAmount +
           offsetDistance(
-            s.target.curve,
+            s.normal,
             s.start,
             point,
             this.editor.gridSnap ? this.editor.world.spacing : 0,
-          ) *
-            s.target.direction,
+          ),
       );
   };
   private release = (event: PointerEvent): void => {
@@ -302,7 +306,7 @@ export class OffsetControls {
     const loop = !!s?.target.native || !!s?.target.loop || (curves?.length ?? 0) > 1;
     this.handle.title = `${loop ? "Offset loop" : "Offset edge"} · drag outward or click to type`;
     this.handle.setAttribute("aria-label", loop ? "Offset loop" : "Offset edge");
-    placeOffsetWidget(this.editor, sketch, target, this.root, this.handle);
+    this.widget.place(sketch, target, this.interaction?.captured ? s?.normal : undefined);
     const invalid = !!s && (!s.valid || (s.target.native && s.solve.settled && !s.solve.valid));
     this.handle.dataset.geometryInvalid = String(invalid);
     if (s?.target.native) this.input.setAttribute("aria-invalid", String(invalid));
@@ -313,6 +317,7 @@ export class OffsetControls {
     void this.cancel();
     this.disposeTool();
     this.abort.abort();
+    this.widget.dispose();
     this.editor.world.changed.delete(this.update);
     this.root.remove();
   }

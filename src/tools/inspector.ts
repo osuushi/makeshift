@@ -82,6 +82,24 @@ export class Inspector {
     if (!section) throw new Error(`Missing Inspector section ${title}`);
     return section.content;
   }
+  reveal(title: Title): void {
+    const section = this.sections.get(title);
+    if (!section) return;
+    this.layout.collapsed = false;
+    this.root.classList.remove("collapsed");
+    this.root.style.height = "";
+    this.body.hidden = false;
+    const collapse = this.root.querySelector<HTMLButtonElement>(".inspector-collapse");
+    collapse?.setAttribute("aria-label", "Collapse Inspector");
+    collapse?.setAttribute("aria-expanded", "true");
+    this.expand(section, true);
+    this.layout.closed = this.layout.closed?.filter((name) => name !== title);
+    this.update();
+    this.save();
+    this.body.scrollTop +=
+      section.root.getBoundingClientRect().top - this.body.getBoundingClientRect().top;
+    section.toggle.focus({ preventScroll: true });
+  }
   private button(label: string, text: string): HTMLButtonElement {
     const button = document.createElement("button");
     button.type = "button";

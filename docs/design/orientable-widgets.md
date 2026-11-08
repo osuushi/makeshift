@@ -194,7 +194,10 @@ form to explain the positive drag direction. Existing blend resize uses Fillet's
 form. Sketch Offset shows the same separated contours in its sketch plane.
 
 Solid controls use the operation axis with the roll rules above;
-sketch Offset uses its curve normal and perpendicular in the sketch plane. The
+sketch Offset uses the nearest selected curve's outward normal and perpendicular
+at its final displayed position in the sketch plane, including panel movement.
+That normal is frozen for each drag (see
+[curve modification](../architecture/curve-modification.md)). The
 64 × 64 CSS-pixel glyph/target sits 48 CSS-pixel world units along the edit direction
 and 32 along its perpendicular before projection. This fixed transverse offset
 keeps an end-on handle clear of the geometry selection click. Fillet/Chamfer retain

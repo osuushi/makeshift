@@ -49,8 +49,9 @@ founder feedback update these contracts before further tools depend on them.
   It changes neither saved geometry nor Undo. All enabled bodies share one layer:
   normal depth and edge precedence apply within each layer, while any eligible
   non-X-ray body face/edge wins over X-ray body geometry. Hidden bodies never
-  participate. The overlap chooser retains explicit X-ray choices after normal
-  choices. X-ray membership does not itself select or reveal a hidden body.
+  participate. The overlap chooser retains explicit X-ray choices through the same
+  type/depth ordering as other targets. X-ray membership does not itself select or
+  reveal a hidden body.
 - Isolate selection is a per-window view overlay. Selected curves/points resolve to
   their sketch; selected faces/edges resolve to their body. All owning top-level
   entities are shown and other entities are hidden. Entities eye controls can
@@ -90,8 +91,10 @@ founder feedback update these contracts before further tools depend on them.
   Candidates include front-facing body faces, edges with at least one locally
   front-facing adjacent face, whole bodies, and visible canonical/saved plane
   patches. Back/back edges are excluded; silhouette edges remain eligible. Curved
-  faces use the triangle normal nearest the hit on the edge. Candidates are sorted
-  by camera distance, including occluded front-facing geometry. Hidden entities
+  faces use the triangle normal nearest the hit on the edge. Candidates of each
+  type stay together without group headings, ordered by camera distance within
+  each type. Types are ordered by their nearest candidate; ties retain the existing
+  candidate order. This includes occluded front-facing geometry. Hidden entities
   are excluded.
   Section pseudofaces also contribute their owning whole bodies at the cut depth,
   including every overlapping body under the press. Cavities and tangent contact
@@ -107,7 +110,7 @@ founder feedback update these contracts before further tools depend on them.
   A disk grows from its center to a fixed circular outline over the hold delay; it indicates elapsed hold time, not
   processing. The delay is currently fixed; a future preferences window can expose it.
   The chooser grows across the available window with complete thumbnail rows and no
-  scrollbar. When the window is full, remaining depth-sorted choices are omitted;
+  scrollbar. When the window is full, remaining choices in this order are omitted;
   hiding entities narrows the choices.
   Each choice shows the actual target geometry in the current camera orientation,
   with subdued body context. Thumbnails share full-scene framing while the target
@@ -118,7 +121,7 @@ founder feedback update these contracts before further tools depend on them.
   Sketches off the visible defined planes get their own Sketch choice when a curve
   or enclosed region overlaps the press. Coplanar sketches stay represented by the
   plane thumbnail without a duplicate sketch choice. Sketch choices highlight their
-  curves and select the whole sketch on release. They share camera-distance sorting.
+  curves and select the whole sketch on release. They share type/depth ordering.
   Every visible sketch also contributes its exact filled region under the ray,
   including sketches represented by a canonical or saved plane. A second Connected
   regions choice appears when the hit region has a larger transitive closure across
