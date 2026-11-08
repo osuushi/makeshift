@@ -116,7 +116,8 @@ export const uiSuites = [
     args: ["decorator-removal-ui.mjs"],
     seconds: 14,
     browsers: ["electron"],
-    reason: "Removing a decorator must clear a late worker result and rendered picking state.",
+    reason:
+      "Decorator removal clears late worker/picking state; its viewport shortcut stays clickable beside transforms and reveals collapsed Inspector controls.",
     unit: "decorator-display.test.ts",
   },
   {
