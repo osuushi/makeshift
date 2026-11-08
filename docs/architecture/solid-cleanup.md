@@ -6,31 +6,36 @@ Later founder decisions override earlier proposals.
 ## Automatic microscopic topology repair (2026-11-06)
 
 Solid modeling and STEP-import results pass one shared microscopic-topology gate
-before ordinary or deferred presentation. Its broad phase has only two outcomes:
-**certified safe** or **inspect**. No bounding-box size, area/perimeter ratio, or
-sampled width can clear a face. Complete analytic boundaries can certify convex
-straight-sided polygons, disks, nested circular loops and complete cylindrical
-bands. The lower bounds include entity tolerances and placement-dependent floating
-point error. An additional conservative margin covers the detailed spot check's
-half-box convention in every orientation. Unsupported surfaces/trims, concavity,
-unresolved holes, and near-threshold values always reach detailed inspection.
-This is a no-false-negative bypass for the shared size screen; it does not claim
-that OCCT's detailed diagnostics prove all possible local defects of arbitrary
-freeform geometry. General BRep/operation validation remains separate and mandatory.
+before ordinary or deferred presentation. The face criterion is whole-face width:
 
-Detailed kernel spot/strip checks identify faces below 0.001 mm for boundary
-reconstruction. A separate shared clearance check compares edges belonging to
-different boundary loops, without a surface-type or edge-count restriction.
-Tolerance-inclusive exact-curve bounding boxes exclude distant pairs; remaining
-pairs require the kernel's curve-distance calculation. A sub-threshold gap is a
-mandatory repair/rejection condition, including loops assembled from many arcs.
-This checks inter-loop clearance, not arbitrary self-proximity within one curve
-or every local neck of a single loop. It must not be presented as a complete
-minimum-feature-size algorithm. Minimum distance within a single loop alone is
-not grounds for deleting the entire face: short corner subdivisions can give
-that result on an otherwise large face. Existing spot/strip/short-edge checks
-continue to handle those cases. Short nondegenerate edges still receive their independent length
-check; only continuous curves may merge. Surface-pole edges remain bookkeeping.
+`width(F) = 2 * max(p in F) min(q in boundary(F)) distance(p, q)`.
+
+The boundary is the union of **all** physical perimeter loops, including holes.
+Internal triangulation edges and periodic seams are not perimeter. A narrow local
+neck or gap between holes does not make an otherwise wide face degenerate.
+Faces at or below 0.001 mm require repair; independent short-edge checks remain.
+The comparison retains the existing 1e-9 mm roundoff allowance at the threshold.
+
+The cheap screen clears only proven wide interiors. Complete analytic boundaries
+can certify convex straight-sided polygons, disks, nested circular loops and
+complete cylindrical bands. Their lower bounds include entity tolerances and
+placement-dependent floating-point error. For other faces, a coarse mesh proposes
+interior locations: a location must be inside the exact trimmed face, and its
+exact surface-to-perimeter distance must exceed the candidate radius plus a
+numerical margin. A small box, area/perimeter ratio, or failed sample never clears
+a face. Unsupported or inconclusive cases go to detailed inspection.
+
+Detailed inspection uses a private triangulation with target linear deflection
+`threshold / 64` and its piecewise-linear physical perimeter. This numerical
+approximation was approved by the founder; it is not an analytic Hausdorff-error
+certificate for arbitrary BReps. On that mesh, adaptive triangle subdivision
+bounds the maximum distance over **entire triangle interiors**, not only vertices.
+A sampled nearest-perimeter distance is a lower bound. For any one boundary
+segment, the maximum of its distances from a triangle's vertices is an upper
+bound on that triangle's distance to the perimeter. A segment BVH accelerates
+nearest queries. Unresolved bounds, missing mesh/perimeter data, or exhausted
+work reject as uncertain; they never silently count as healthy.
+
 Faces within twice the detection threshold are also considered for **bounded
 repair**, regardless of whether they are planar, circular or freeform. They are
 not automatically defective: a successful repair must still keep the complete
@@ -38,6 +43,8 @@ solid's added and removed material within 0.001 mm. Failed optional repairs reta
 above-threshold geometry; mandatory sub-threshold failures reject the edit.
 Above-threshold coplanar subdivisions remain explicit. The wider candidate range
 is not an increase to the material-change budget or kernel tolerance.
+Short nondegenerate edges retain their independent length check; only continuous
+curves may merge. Surface-pole edges remain bookkeeping.
 
 Repair operates on a private copy, carries face/edge correspondence, clears stale
 measurements and belongs to the originating edit's Undo step. When two boundaries

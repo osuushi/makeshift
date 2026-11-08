@@ -2,8 +2,7 @@
 #include "geometry-policy.h"
 #include "microscopic-validation.h"
 #include "microscopic-correspondence.h"
-#include "microscopic-face-size.h"
-#include "microscopic-clearance.h"
+#include "microscopic-face-width.h"
 #include <BRepAdaptor_Surface.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <BRepAlgoAPI_Defeaturing.hxx>
@@ -11,7 +10,6 @@
 #include <BRepGProp.hxx>
 #include <BRep_Tool.hxx>
 #include <GProp_GProps.hxx>
-#include <ShapeAnalysis_CheckSmallFace.hxx>
 #include <ShapeBuild_ReShape.hxx>
 #include <ShapeFix_Wireframe.hxx>
 #include <Standard_Failure.hxx>
@@ -53,25 +51,19 @@ bool planarSubdivision(const TopoDS_Face& face,
 }
 SmallTopology findSmall(const TopoDS_Shape& shape) {
     SmallTopology found;
-    ShapeAnalysis_CheckSmallFace check;
     TopTools_IndexedDataMapOfShapeListOfShape adjacency;
     for (TopExp_Explorer f(shape, TopAbs_FACE); f.More(); f.Next()) {
         const auto face = TopoDS::Face(f.Current());
-        // The broad phase may skip the kernel inspection only with a complete
-        // boundary certificate. Unsupported geometry always takes the slow path.
-        if (faceSizeGate(face, 2*limit) == FaceSizeGate::safe) continue;
-        TopoDS_Edge a, b;
-        if (check.CheckSpotFace(face, detectionLimit) || check.CheckStripFace(face, a, b, detectionLimit) ||
-            hasMicroscopicClearance(face, detectionLimit)) {
+        const auto width = microscopicFaceWidth(face, detectionLimit);
+        if (width == FaceWidth::healthy) continue;
+        if (width == FaceWidth::uncertain)
+            throw std::runtime_error("Could not resolve the face width within the numerical budget");
+        if (width == FaceWidth::thin) {
             found.faces.push_back(face);
             continue;
         }
-        const bool spot = check.CheckSpotFace(face, 2*detectionLimit);
-        if (!spot && !check.CheckStripFace(face, a, b, 2*detectionLimit)) continue;
         if (adjacency.IsEmpty()) TopExp::MapShapesAndAncestors(shape, TopAbs_EDGE, TopAbs_FACE, adjacency);
-        // Exact above-threshold coplanar subdivisions remain intentional. A
-        // material ledge is instead eligible for a bounded removal attempt.
-        if (!spot && planarSubdivision(face, adjacency)) continue;
+        if (planarSubdivision(face, adjacency)) continue;
         found.candidates.push_back(face);
     }
     TopTools_IndexedMapOfShape edges;
@@ -180,7 +172,7 @@ void repair(Result& result, SmallTopology small) {
 }
 void repairMicroscopicTopology(Result& result) {
     repair(result, findSmall(result.shape));
-    // Near-threshold spots and strips are candidates, not defects: removal
+    // Near-threshold face widths are candidates, not defects: removal
     // must still satisfy the same complete-solid one-micron material budget.
     for (;;) {
         bool changed = false;

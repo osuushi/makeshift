@@ -140,10 +140,10 @@ FaceSizeGate faceSizeGate(const TopoDS_Face& face, double minimumSpan) {
         } else if (surface.GetType() == GeomAbs_Cylinder) lower = cylinderBand(surface, b);
         if (!lower || !std::isfinite(*lower)) return FaceSizeGate::inspect;
         const double conservative = std::nextafter(*lower-b.uncertainty, -std::numeric_limits<double>::infinity());
-        // The detailed spot test uses half the largest world-axis box span.
-        // A diameter d has some axis span >= d/sqrt(3). Since lower <= d,
-        // a factor four also excludes spots in every orientation; the extra
-        // candidates near the cutoff are intentional, never optimistic passes.
+        // For a convex n-gon, the mean of its vertices is at least
+        // (n-2)/n * lower from every supporting line: an inscribed disk has
+        // radius at least lower/3. The factor four is conservative for that
+        // certificate and the direct disk/annulus/cylinder bounds above.
         return conservative > 4*minimumSpan ? FaceSizeGate::safe : FaceSizeGate::inspect;
     } catch (const Standard_Failure&) {
         return FaceSizeGate::inspect;
