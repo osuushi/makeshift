@@ -7,7 +7,7 @@ import type { ConstructionPlane } from "./construction-plane.js";
 import { cancelModelSelectionDrag } from "./model-selection-drag.js";
 import { type OverlapCandidate, overlapCandidates } from "./overlap-candidates.js";
 import { OverlapHighlight } from "./overlap-highlight.js";
-import { fitOverlapChoices } from "./overlap-layout.js";
+import { fitOverlapChoices, orderOverlapChoices } from "./overlap-layout.js";
 import { overlapPreviews } from "./overlap-preview.js";
 import { pullSketchEdges } from "./pull-sketch-edges.js";
 
@@ -57,7 +57,7 @@ export class OverlapChooser {
     this.document = e.store.data;
     this.snapshot = this.viewKey();
     e.modeling.hover = null;
-    this.populate(candidates, event);
+    this.populate(orderOverlapChoices(candidates), event);
     this.element.hidden = false;
     for (const button of fitOverlapChoices(this.element)) this.choices.delete(button);
     const bounds = this.element.getBoundingClientRect();

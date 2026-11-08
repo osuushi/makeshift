@@ -36,6 +36,23 @@ async function loadFixture(page) {
   });
   await inspect(page);
 }
+function assertChoiceOrder(rows) {
+  const types = [...new Set(rows.map((r) => r.kind))];
+  const groups = types.map((kind) => rows.filter((r) => r.kind === kind));
+  assert.deepEqual(rows, groups.flat(), "Each type stays contiguous in the flat chooser");
+  for (const group of groups)
+    assert.deepEqual(
+      group.map((r) => r.depth),
+      group.map((r) => r.depth).sort((a, b) => a - b),
+      "Choices within a type run nearest first",
+    );
+  const nearest = groups.map((g) => g[0].depth);
+  assert.deepEqual(
+    nearest,
+    [...nearest].sort((a, b) => a - b),
+    "Nearest type comes first",
+  );
+}
 async function route(page, name) {
   await loadFixture(page);
   const original = (await inspect(page)).document;
@@ -69,10 +86,7 @@ async function route(page, name) {
   assert.equal(rows.filter((r) => r.kind === "face").length, 1, "Back face not listed");
   assert.ok(rows.some((r) => r.kind === "body"));
   assert.ok(rows.some((r) => r.kind === "plane"));
-  assert.deepEqual(
-    rows.map((r) => r.depth),
-    rows.map((r) => r.depth).sort((a, b) => a - b),
-  );
+  assertChoiceOrder(rows);
   assert.equal(await items.locator("svg path").count(), rows.length * 4);
   const plane = items.filter({ hasText: "Plane · XY" });
   await plane.hover();

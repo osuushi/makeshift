@@ -1,6 +1,22 @@
 import { uiScale } from "../preferences/ui-scale.js";
+import type { OverlapCandidate } from "./overlap-candidates.js";
 
-/** Fit complete choices into the viewport; excess depth-sorted choices are omitted. */
+/** Keep each displayed type together, nearest type first, then nearest choice. */
+export function orderOverlapChoices(candidates: readonly OverlapCandidate[]): OverlapCandidate[] {
+  const groups = new Map<string, OverlapCandidate[]>();
+  for (const candidate of candidates) {
+    const type = candidate.target.kind === "sketch-hit" ? candidate.label : candidate.target.kind;
+    const group = groups.get(type);
+    if (group) group.push(candidate);
+    else groups.set(type, [candidate]);
+  }
+  const ordered = [...groups.values()];
+  for (const group of ordered) group.sort((a, b) => a.depth - b.depth);
+  ordered.sort((a, b) => a[0].depth - b[0].depth);
+  return ordered.flat();
+}
+
+/** Fit complete choices into the viewport; excess ordered choices are omitted. */
 export function fitOverlapChoices(root: HTMLElement): HTMLButtonElement[] {
   const list = root.querySelector<HTMLElement>(".selection-overlap-items");
   if (!list) return [];
