@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { ScriptOperation, SolidResult } from "../src/agent-script/api.js";
 import { DocumentOwner } from "../src/backend/document-owner.js";
+import { hasFailureCode } from "../src/model/calculation-failure.js";
 import { documentArchive, readArchive } from "../src/model/document-archive.js";
 import { prism, square, vertical } from "./body-edge-fixtures.js";
 import { cap } from "./shell-fixtures.js";
@@ -92,7 +93,7 @@ test("agent fillet/chamfer match manual geometry, reject clamping and zero is a 
     owner.beginScript("oversize.ts");
     await assert.rejects(
       () => owner.scripts.step({ kind: "finishEdges", input: tooLarge }),
-      /achieved exactly/,
+      (error) => hasFailureCode(error, "geometric-infeasibility"),
     );
     await owner.scripts.cancel("oversize");
     assert.equal(owner.view.data, original);
