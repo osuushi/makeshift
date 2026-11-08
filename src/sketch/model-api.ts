@@ -75,6 +75,7 @@ export type ModelRequest =
   | { kind: "open"; document: SketchDocument }
   | { kind: "transform-bodies"; transform: BodyTransform }
   | { kind: "complete-preview" }
+  | { kind: "cancel-edge-finish-targets" }
   | { kind: "move-edges"; operation: EdgeMovement; presentation?: "deferred" }
   | { kind: "move-faces"; operation: FaceMovement; presentation?: "deferred" }
   | { kind: "boolean-bodies"; operation: BodyBoolean }
@@ -100,6 +101,7 @@ export type ModelRequest =
       sketchIds: string[];
       topology?: CleanupSelection[];
       profiles?: { sketch: string; profile: string }[];
+      curves?: { sketch: string; ids: string[] }[];
     }
   | { kind: "delete-sketch"; sketchId: string }
   | { kind: "navigation-history"; direction: "undo" | "redo" }

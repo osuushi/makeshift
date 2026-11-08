@@ -9,6 +9,7 @@ not one global precision setting or a replacement for OCCT entity tolerances.
 | --- | --- | --- |
 | Minimum recoverable finish | 0.001 mm | Rounds below this radius and recognized bevels below this setback recover their sharp supporting intersection. This is modeling resolution, not a looser BRep validity tolerance. |
 | Minimum solid volume | 1e-12 mm³ | Solid extraction and reconstructed/offset material must exceed the same floor. Reconnection and offset also require positive signed volume, retaining the orientation check. |
+| Minimum topology extent | 0.001 mm | Shared certified-safe/inspect screen; detailed mesh bounds classify whole-face maximum interior distance to all perimeter loops; short edges retain a separate check. Near-threshold candidates require the same one-micron material bound; unrepairable sub-threshold results reject. Degenerate surface-pole edges are exempt. |
 | Boundary distance | 1e-6 mm | Reconnection fitting, offset boundary/surface agreement and minimum Shell/Offset separation. |
 | Offset topology tolerance | 2e-6 mm | Bounds recorded on generated faces, edges and vertices; conservative rounded-join bounds do not enlarge the geometric distance budget. |
 | Generated vertex adjustment | 0.001 mm | Maximum correction of a generated vertex onto its incident curves. Retained source vertices cannot move; the corrected geometry must still satisfy the boundary-distance budget. |
@@ -20,7 +21,9 @@ not one global precision setting or a replacement for OCCT entity tolerances.
 | Full circle angle | 1e-9 radians | Distinguish a complete circle from a trimmed arc. |
 | Tangent crescent fillet | 0.01 mm radius | Intentional printable relief during extrusion, capped at 1% of inner radius and wall thickness; this is not a validation tolerance. |
 
-The volume floor does not establish a minimum supported feature size. Operations
+The volume floor alone does not establish a minimum supported feature size.
+[Automatic microscopic repair](solid-cleanup.md#automatic-microscopic-topology-repair-2026-11-06)
+enforces a separate topology extent on newly calculated solid results. Operations
 also enforce valid BReps, closed shells, noncollapsed boundaries and their own
 feasibility checks. A valid small solid must not fail reconnection merely because
 that path applies an unrelated, larger volume floor. Large coordinate magnitudes
@@ -48,6 +51,13 @@ them, the optimal surface bounds for that final shape. Presentation reuses those
 measurements; no geometry mutation may follow them. Both bounds paths use
 `BRepBndLib::AddOptimal` with triangulation and shape-tolerance expansion disabled.
 Planar volume integration does not need bounds, so presentation computes them once.
+Closed ruled spline walls are partitioned into quarter patches on a private
+measurement copy before Gauss–Kronrod integration. This prevents nearly cancelling
+inner flux integrals from stalling simple tube edits; the span integration and
+1e-10 relative tolerance remain unchanged. Already trimmed partial walls skip this
+step. Accepted faces/edges and presentation bounds come from the original shape,
+so these integration patches do not create visible or selectable seams. Linear cap
+offsets reuse the result volume computed by their material validation.
 
 Temporary profile wires also collapse sub-0.0001 mm remnants at cubic junctions
 (a cubic edge or an adjoining edge). Tangent trimming can otherwise leave sliver
@@ -88,6 +98,10 @@ reject coarse older or imported geometry.
 
 ## Microscopic finishes
 
+Exact typed finish sizes between zero and 0.001 mm reject inline rather than
+silently becoming zero. Dragging and explicit Find Nearest retain sharp recovery
+below the modeling resolution.
+
 Ordinary solid results, including inspected/reopened and STEP-imported bodies,
 simplify recognized sub-0.001 mm rounds and equal-setback chamfers before either
 full or deferred presentation. A cheap face/edge scan filters possible small
@@ -113,7 +127,9 @@ existing round/bevel below the floor heals it to zero; dragging snaps to that
 endpoint. Standalone cylinders, ordinary holes/walls and unrecognized surfaces
 are not deleted merely for being small. Larger supported finishes retain their
 geometry. This is intentionally bounded finish simplification, not arbitrary
-small-face removal.
+small-face removal. New solid edits additionally pass through
+[general microscopic topology repair](solid-cleanup.md#automatic-microscopic-topology-repair-2026-11-06)
+for narrow residual faces and short edges that are not recognized finishes.
 
 The normal-offset feasibility search can otherwise retain a microscopic round
 when shrinking its tangent supporting faces toward the zero-radius limit:

@@ -39,7 +39,7 @@ export async function openDocument(
   source: SketchDocument,
   kernel: SolidCalculator,
 ): Promise<SketchDocument> {
-  const decorators = Array.isArray(source.decorators)
+  const decorators: SketchDocument["decorators"] = Array.isArray(source.decorators)
     ? source.decorators.map((instance) => {
         if (instance?.definition !== knurlDefinition || !instance.settings) return instance;
         const previous = instance.settings.preset;
@@ -58,6 +58,14 @@ export async function openDocument(
     : source.decorators;
   const migrated = { ...source, decorators };
   validateDocument(migrated);
+  if (migrated.decorators?.length) {
+    const facesByBody = new Map(
+      migrated.bodies?.map((body) => [body.id, new Set(body.faces.map((face) => face.id))]),
+    );
+    migrated.decorators = migrated.decorators.filter((instance) =>
+      instance.faces.every((ref) => facesByBody.get(ref.body)?.has(ref.face)),
+    );
+  }
   const result = await kernel.calculate({ kind: "inspect", bodies: migrated.bodies ?? [] });
   const bodies = materialize([], result);
   const document = continueBodyMetadata(inspectedMetadataSource(migrated, bodies), {

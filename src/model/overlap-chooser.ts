@@ -146,8 +146,9 @@ export class OverlapChooser {
           target.profiles,
           event.shiftKey,
           event.metaKey || event.ctrlKey,
+          event.altKey,
         );
-      else e.modeling.choose(target, event.shiftKey, event.metaKey || event.ctrlKey);
+      else e.modeling.choose(target, event.shiftKey, event.metaKey || event.ctrlKey, event.altKey);
       e.modeling.alternatives = [];
       e.refresh();
     }

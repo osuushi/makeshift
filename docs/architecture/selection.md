@@ -11,6 +11,20 @@ founder feedback update these contracts before further tools depend on them.
 
 ### Plane, tool and selection
 
+- A whole-sketch entity selection contributes all derived regions to tool input
+  refinement. Its sketch token represents the curves, including open edges;
+  ordinary category narrowing drops that token for region tools such as Extrude,
+  Revolve and Loft. Explicitly selected regions are deduplicated, preserving first
+  selection order. Incomplete inputs retain the expanded eligible categories in
+  the normal tool selection flow. Tools accepting whole sketches (including Move,
+  Copy and Delete) retain the entity token and its existing ownership semantics.
+  Option-clicking a region first expands that whole selection to ordinary region
+  targets, then removes the clicked region. Open curves remain positively selected
+  as a curve subset; no hidden exclusion mask substitutes for actual selection.
+  Chooser subtraction follows the same route. Copy, Delete and projection consume
+  the selected regions and open curves. Transforming a proper curve subset enters
+  its sketch workspace so unselected curves stay put.
+
 - Command/Ctrl-A selects all visible whole bodies and sketches in Modeling; in a
   planar workspace it selects all curves in the active sketch and switches to Select.
   Command/Ctrl-Shift-A selects all visible bodies; Command/Ctrl-Alt-A selects all
@@ -115,8 +129,11 @@ founder feedback update these contracts before further tools depend on them.
   Both choices show filled thumbnails and hover previews with holes preserved.
   Text identifies the type;
   canonical planes additionally name XY/XZ/YZ. Hover/focus highlights that exact
-  viewport entity, including occluded targets. Keep the pointer held, drag over a
-  thumbnail, and release to choose; releasing outside cancels. Captured touch uses
+  viewport entity, including occluded targets. Disambiguation highlights draw after
+  section patterns and X-ray composition, retaining their full tint and outline over
+  cut material; dismissing the chooser removes only that transient overlay.
+  Keep the pointer held, drag over a thumbnail, and release to choose; releasing
+  outside cancels. Captured touch uses
   screen-coordinate hit testing, so the thumbnail and viewport highlight follow
   the finger. No second click/tap is needed. Shift adds and
   Command/Ctrl toggles geometry. Canonical and saved planes become selected references;

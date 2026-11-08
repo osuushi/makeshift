@@ -65,6 +65,9 @@ async function planarOffset(page, name) {
   close(state.preview.bodies[0].volume, (400 - Math.PI * 1.5 ** 2) * 7);
   await page.screenshot({ path: `.cache/sketch-review/${name}-planar-offset.png` });
   await input.fill("-10");
+  assert.equal((await inspect(page)).preview, null);
+  assert.equal(await input.inputValue(), "-10");
+  await page.getByRole("button", { name: "Find Nearest", exact: true }).click();
   await verifiedOffsetReady(page);
   assert.equal(await page.getByRole("button", { name: "Accept face offset" }).isEnabled(), true);
   assert.ok(Number(await input.inputValue()) > -5);

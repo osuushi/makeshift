@@ -15,8 +15,9 @@ The entire mutation lifecycle is:
 2. Change a temporary candidate, solve when necessary and validate it.
 3. On success, replace accepted data and add one Undo entry. On failure, retain
    the accepted document and display the relevant error in the lower-left status
-   box. Errors have a dismiss button and clear on the next pointer, keyboard or
-   field-edit action; pointer movement alone preserves them. No error follows the cursor.
+   box, above the toolbox and its flyouts. Errors have a dismiss button and clear
+   on the next pointer, keyboard or field-edit action; pointer movement alone
+   preserves them. No error follows the cursor.
 4. Refresh derived geometry and controls, then accept the next edit.
 
 A deliberate mode/action switch resolves the released modal first: valid latest
@@ -87,8 +88,10 @@ During pointer dragging, fields display the latest requested quantity immediatel
 including while an earlier calculation is pending. An older result can update
 the geometry preview but must not roll the field back. Sketch dimension readouts
 retain only requested numbers, independently of solver-owned geometry. Verified
-size limits apply when the latest target finishes; explicit typed text keeps its
-ordinary focus ownership.
+size limits apply when the latest drag target finishes. Typed surface-edit values
+are exact requests (`limit: false`), keep focus through rejection, and show an inline
+error with acceptance disabled. Find Nearest explicitly opts into verified search;
+omitted `limit` preserves the existing backend search behavior for other callers.
 
 The composition root passes a named NumericEdit collaborator to the editor and
 connects Dimensions and PointerGestures as its field and gesture owners before
@@ -113,8 +116,8 @@ and uses the shared cancellation path, with no late candidate publication after
 its lease closes. Offset and Fillet/Chamfer finish an in-flight geometry probe but
 stop later probes when superseded. Their mesh and verified distance/size draw
 before full presentation; new input skips or interrupts that deferred completion.
-Offset retains its last verified distance and selection feedback. Fillet/Chamfer
-retain verified size-limit feedback; their pending sizes use the expanded edge
+Offset retains verified distance and selection feedback during drags and explicit
+search. Fillet/Chamfer retain the same verified size-limit feedback; their pending sizes use the expanded edge
 selection when calculation starts. Each controller checks its lease and the applicable target
 before changing presentation. Invalid input clears waiting
 targets; cancellation closes the lease before awaiting native cancellation. Modeling

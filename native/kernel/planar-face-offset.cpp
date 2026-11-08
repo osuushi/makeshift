@@ -1,4 +1,5 @@
 #include "planar-face-offset.h"
+#include "conical-cap-offset.h"
 #include "boundary-move.h"
 #include "offset-geometry.h"
 #include <BRepAdaptor_Surface.hxx>
@@ -9,6 +10,7 @@
 
 std::optional<Result> planarFaceOffset(const Operand& body,
         const std::vector<TopoDS_Face>& faces, double distance) {
+    if (auto conical = conicalCapOffset(body, faces, distance)) return conical;
     if (faces.size() != 1) return std::nullopt;
     BRepAdaptor_Surface surface(faces.front());
     if (surface.GetType() != GeomAbs_Plane) return std::nullopt;

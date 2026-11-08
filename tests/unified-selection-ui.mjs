@@ -10,6 +10,7 @@ import { pointChoiceRoute } from "./ui-point-choice.mjs";
 import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 import { typedSelectionRoute } from "./ui-typed-selection.mjs";
+import { wholeSketchSubtraction } from "./ui-whole-sketch-subtraction.mjs";
 
 async function mouseSelection(page, name) {
   await typedSelectionRoute(page, name);
@@ -106,7 +107,8 @@ async function overlapSelection(page) {
   await page.keyboard.press("v");
   await click(page, -2, 8);
   await page
-    .getByRole("button", { name: "Rectangle 2", exact: true })
+    .getByRole("button", { name: "Rectangle", exact: true })
+    .nth(1)
     .click({ modifiers: ["Shift"] });
   assert.equal((await inspect(page)).selectedCurves.length, 8);
   const ordered = (await inspect(page)).selectionTargets;
@@ -119,14 +121,16 @@ async function overlapSelection(page) {
   await click(page, -2, 8);
   await page.keyboard.up("Shift");
   await page
-    .getByRole("button", { name: "Rectangle 2", exact: true })
+    .getByRole("button", { name: "Rectangle", exact: true })
+    .nth(1)
     .click({ modifiers: ["Shift"] });
   assert.deepEqual((await inspect(page)).selectionTargets, ordered);
   await page.keyboard.down("Shift");
   await click(page, -2, 8);
   await page.keyboard.up("Shift");
   await page
-    .getByRole("button", { name: "Rectangle 2", exact: true })
+    .getByRole("button", { name: "Rectangle", exact: true })
+    .nth(1)
     .click({ modifiers: ["Meta"] });
   assert.equal((await inspect(page)).selectedCurves.length, 4);
 }
@@ -160,6 +164,7 @@ try {
         await modelSelection(page, name);
       }
       await overlapSelection(page);
+      await wholeSketchSubtraction(page);
       console.log(name, "overlap-panel add/toggle and stable selection order passed");
       assert.deepEqual(errors, []);
     } finally {

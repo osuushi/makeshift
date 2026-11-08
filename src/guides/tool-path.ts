@@ -12,6 +12,7 @@ export interface GuideToolPath {
   distanceScale?: number;
 }
 export interface GuideSurfacePlan {
+  cancel?(): void;
   origin: Vector;
   targets:
     | import("./move-target.js").GuideMoveCandidate[]

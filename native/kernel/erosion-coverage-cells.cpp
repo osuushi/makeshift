@@ -22,6 +22,8 @@ std::vector<Plane> convexPlanes(const TopoDS_Shape& solid) {
         if (surface.GetType() != GeomAbs_Plane) return {};
         const auto plane = surface.Plane();
         gp_Vec normal(plane.Axis().Direction());
+        // Reconstructed supports can retain a left-handed parameter frame.
+        if (!plane.Direct()) normal.Reverse();
         if (face.Orientation() == TopAbs_REVERSED) normal.Reverse();
         planes.push_back({plane.Location(), normal});
     }

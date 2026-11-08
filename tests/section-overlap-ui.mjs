@@ -7,6 +7,7 @@ import { drag, inspect } from "./ui-helpers.mjs";
 import { chooseWidget } from "./ui-modal-plane-widgets.mjs";
 import { hold } from "./ui-overlap-gesture.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
+import { sectionGrid } from "./ui-section-grid.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 // Founder capture: four bodies hashed to blue and their coplanar caps fought for depth.
@@ -45,6 +46,7 @@ await withUiRuntimes(async (page, name) => {
   await profileTint(page);
   await pseudofaceChoice(page);
   await chooseTool(page, "Sketch on XZ", "sketch-xz");
+  await sectionGrid(page);
   await page.keyboard.press("l");
   await drag(page, [-5, 8], [17, 8], ["Shift"]);
   await page.keyboard.press("Escape");
@@ -60,7 +62,7 @@ await withUiRuntimes(async (page, name) => {
   await orient(page, [1, -1, 1]);
   await page.screenshot({ path: `.cache/sketch-review/${name}-section-overlap.png` });
   console.log(
-    `${name}: captured cap blending, sketch ink/tint and owning-body long-press selection passed`,
+    `${name}: captured cap blending, sketch grid/ink/tint and owning-body long-press selection passed`,
   );
 });
 
@@ -102,8 +104,10 @@ async function regionTint(page, filled) {
 
 async function pseudofaceChoice(page) {
   const before = await inspect(page);
-  await page.getByRole("button", { name: "Hide Sketch 1", exact: true }).click();
-  await page.getByRole("button", { name: "Hide Sketch 2", exact: true }).click();
+  await orient(page, [1, -1, 0.5]);
+  const bare = await samples(page);
+  const removedPoint = [12, 13, 31];
+  const removedBare = await samples(page, removedPoint);
   await hold(page, await project(page, [15.3, 0, 27.2]));
   const panel = page.getByRole("dialog", { name: "Choose overlapping geometry" });
   await panel.waitFor({ state: "visible" });
@@ -115,6 +119,29 @@ async function pseudofaceChoice(page) {
     new Set(before.document.bodies.slice(0, 2).map((b) => b.id)),
     "Every overlapping pseudoface offers its owning body",
   );
+  await panel
+    .locator(`button[data-kind="body"][data-key="${before.document.bodies[0].id}"]`)
+    .hover();
+  const highlighted = await samples(page, undefined, 1, true);
+  assert.ok(
+    highlighted[0] - highlighted[2] > bare[0] - bare[2] + 20,
+    `Disambiguation amber overlays section patterns: ${highlighted} / ${bare}`,
+  );
+  await page.screenshot({ path: ".cache/sketch-review/section-unclipped-choice.png" });
+  const removedHighlight = await samples(page, removedPoint, 1, true);
+  assert.ok(
+    removedHighlight[0] - removedHighlight[2] > removedBare[0] - removedBare[2] + 20,
+    `Whole orange body survives on removed side: ${removedHighlight} / ${removedBare}`,
+  );
+  await page.keyboard.press("Escape");
+  await page.mouse.up();
+  assert.deepEqual(await samples(page, removedPoint), removedBare);
+  assert.deepEqual(
+    await samples(page),
+    bare,
+    "Dismissing disambiguation restores section patterns",
+  );
+  await hold(page, await project(page, [15.3, 0, 27.2]));
   await panel.locator(`button[data-kind="body"][data-key="${bodies[0]}"]`).hover();
   await page.mouse.up();
   assert.deepEqual((await inspect(page)).modelingSelection, [{ kind: "body", body: bodies[0] }]);
@@ -123,8 +150,7 @@ async function pseudofaceChoice(page) {
     before.document,
     "Pseudoface selection does not edit geometry",
   );
-  await page.getByRole("button", { name: "Show Sketch 1", exact: true }).click();
-  await page.getByRole("button", { name: "Show Sketch 2", exact: true }).click();
+  await orient(page, [0, -1, 0]);
 }
 
 async function profileTint(page) {

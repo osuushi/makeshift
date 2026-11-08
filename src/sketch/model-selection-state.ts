@@ -8,14 +8,14 @@ import { expandedSelection, selectionContext } from "../model/selection-context.
 import { defaultModelingTool, type ModelingTool } from "../model/tool-policy.js";
 import type { SketchDocument } from "./document.js";
 import type { Vector } from "./planes.js";
-import type { Profile } from "./profiles.js";
+import { type Profile, profilesFor } from "./profiles.js";
 
 export type { ModelingTool } from "../model/tool-policy.js";
 export type ModelingTarget =
   | { kind: "body"; body: string; sketch?: never }
   | { kind: "edge"; body: string; edge: string; point?: Vector; sketch?: never }
   | { kind: "face"; body: string; face: string; sketch?: never }
-  | { kind: "sketch"; sketch: string }
+  | { kind: "sketch"; sketch: string; curves?: string[] }
   | { kind: "profile"; sketch: string; profile: Profile };
 export const modelingKey = (target: ModelingTarget): string =>
   target.kind === "body"
@@ -25,7 +25,9 @@ export const modelingKey = (target: ModelingTarget): string =>
       : target.kind === "face"
         ? target.face
         : target.kind === "sketch"
-          ? target.sketch
+          ? target.curves
+            ? `${target.sketch}/curves/${target.curves.join(",")}`
+            : target.sketch
           : target.profile.key;
 export class ModelSelection {
   readonly selectionChosen = new Set<() => void>();
@@ -85,7 +87,12 @@ export class ModelSelection {
     this.document = document;
     this.targets = this.targets.filter(
       (t) =>
-        (t.kind === "sketch" && document.sketches.some((s) => s.id === t.sketch)) ||
+        (t.kind === "sketch" &&
+          document.sketches.some(
+            (s) =>
+              s.id === t.sketch &&
+              (!t.curves || t.curves.every((id) => s.curves.some((c) => c.id === id))),
+          )) ||
         (t.kind === "profile" &&
           sameBodies &&
           document.sketches.some(
@@ -107,20 +114,48 @@ export class ModelSelection {
     this.hover = null;
     this.alternatives = [];
   }
-  chooseProfiles(sketch: string, profiles: Profile[], add: boolean, toggle: boolean): void {
+  private expandSketch(sketchId: string): void {
+    this.targets = this.targets.flatMap((selected): ModelingTarget[] => {
+      if (selected.kind !== "sketch" || selected.curves || selected.sketch !== sketchId)
+        return [selected];
+      const sketch = this.document?.sketches.find((s) => s.id === selected.sketch);
+      if (!sketch) return [];
+      const profiles = profilesFor(sketch);
+      const bounded = new Set(
+        profiles.flatMap((p) => [p.outer, ...p.holes].flat().map((s) => s.curve.id)),
+      );
+      const curves = sketch.curves
+        .filter((curve) => !bounded.has(curve.id))
+        .map((curve) => curve.id);
+      return [
+        ...profiles.map(
+          (profile): ModelingTarget => ({ kind: "profile", sketch: sketch.id, profile }),
+        ),
+        ...(curves.length ? [{ kind: "sketch" as const, sketch: sketch.id, curves }] : []),
+      ];
+    });
+  }
+  chooseProfiles(
+    sketch: string,
+    profiles: Profile[],
+    add: boolean,
+    toggle: boolean,
+    remove = false,
+  ): void {
     const targets: ModelingTarget[] = profiles.map((profile) => ({
       kind: "profile",
       sketch,
       profile,
     }));
     if (targets.some((target) => !this.allows(target))) return;
-    if (!add && !toggle) this.referencePlane = null;
+    if (!add && !toggle && !remove) this.referencePlane = null;
     this.chosenTool = null;
+    if (toggle || remove) this.expandSketch(sketch);
     const keys = new Set(targets.map(modelingKey));
     const selected = new Set(this.targets.map(modelingKey));
     const allSelected = targets.every((target) => selected.has(modelingKey(target)));
     this.targets =
-      toggle && allSelected
+      remove || (toggle && allSelected)
         ? this.targets.filter((target) => !keys.has(modelingKey(target)))
         : add || toggle
           ? [...this.targets, ...targets.filter((target) => !selected.has(modelingKey(target)))]
@@ -148,13 +183,16 @@ export class ModelSelection {
     ) {
       this.targets = expandedSelection(selectionContext(this.targets, this.document));
     }
+    if ((toggle || remove) && target.kind === "profile") this.expandSketch(target.sketch);
     const exists = this.targets.some((t) => modelingKey(t) === modelingKey(target));
     this.targets =
       remove || (toggle && exists)
         ? this.targets.filter((t) =>
             remove && target.kind === "body"
               ? !("body" in t && t.body === target.body)
-              : modelingKey(t) !== modelingKey(target),
+              : remove && target.kind === "sketch" && !target.curves
+                ? t.sketch !== target.sketch
+                : modelingKey(t) !== modelingKey(target),
           )
         : add || toggle
           ? exists

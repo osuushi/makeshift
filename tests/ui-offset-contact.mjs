@@ -58,6 +58,8 @@ export async function offsetContactRoute(page, name, electron) {
     );
   }
   await input.fill("-30");
+  assert.equal((await inspect(page)).preview, null);
+  await page.getByRole("button", { name: "Find Nearest", exact: true }).click();
   const limited = (await inspect(page)).preview.bodies[0];
   // Four-significant-figure display can round a legal near-collapse to -20.
   // Verify the actual retained geometry instead of treating its label as exact.

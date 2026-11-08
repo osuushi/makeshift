@@ -8,6 +8,39 @@ evidence, not a change to the pinned upstream findings below.
 
 Scope: `/Users/adacohen/projects/makeshift/.reference/FreeCAD`, revision `78e4038a564e4c8bfebb40119b41d67531232223`. Links are immutable GitHub links to that revision. No source/build/install changes were made.
 
+## Microscopic cleanup cost (2026-11-08)
+
+Pinned OCCT [`BRepAlgoAPI_Defeaturing::Build`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepAlgoAPI/BRepAlgoAPI_Defeaturing.cxx)
+passes its parallel flag to the feature-removal tool. Makeshift now enables that
+flag when its configured thread pool has workers, as ordinary face deletion already
+does. The built-in [`Delabella factory`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepMesh/BRepMesh_DelabellaMeshAlgoFactory.cxx)
+provides an alternative triangulation implementation; the width classifier selects
+it for detailed planar inspection with unchanged linear/angular deflection and
+unchanged whole-interior bounds. Coarse sampling and curved faces retain the
+established mesher: applying Delabella to coarse samples caused a native crash
+in the maximum-fillet search regression, so that broader change was rejected.
+Local runtime profiling of the segmented chamfer capture found both changes reduce
+cost. Neither observation proves universal speedups or relaxes geometry validation.
+No upstream code was copied.
+
+## OCCT small-face diagnostic limit (2026-11-07)
+
+In the pinned OCCT 7.9.3 source, [`CheckStripFace` / `FindStripEdges`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/ShapeAnalysis/ShapeAnalysis_CheckSmallFace.cxx)
+recognize particular strip configurations; the long-boundary path looks for two
+edges and `CheckStripEdges` projects sampled points. A false return is not proof
+that an arbitrary trimmed face has no microscopic clearance. This is source
+observation, not a completeness claim about other OCCT diagnostics.
+
+Makeshift's segmented-shoulder capture contains a 0.0005 mm planar shelf bounded
+by multiple arcs. Runtime reproduction showed the existing spot/strip pass
+missed it. Independent inter-loop edge distances now catch that clearance before
+publication. Native regressions cover segmented circular loops under rotation
+and large translations; the model regression verifies rejection, correction and
+Undo/Redo. Whole-face deletion based only on a close pair in one loop incorrectly
+nominated larger neighboring faces in existing tests; it is not adopted. No
+upstream code was copied. General single-curve self-proximity and automatic
+healing of every curved strip remain unverified.
+
 ## Makeshift face-edit helper follow-up
 
 The helper built after Makeshift `a4dac00` resolves six faces from a validated
@@ -428,6 +461,19 @@ Shape comparisons are deliberately different: `isPartner` tests shared topologic
 Validity is a separate OCCT check. `TopoShape::isValid()` constructs `BRepCheck_Analyzer` ([TopoShape.cpp#L1433-L1446](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Part/App/TopoShape.cpp#L1433-L1446)). `fix()` is a separate best-effort operation returning success/failure ([TopoShape.pyi#L780-L820](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Part/App/TopoShape.pyi#L780-L820)). Neither defines a product tolerance policy or guarantees future boolean/fillet stability.
 
 ## Boolean, fillet, and history behavior
+
+OCCT 7.9.3 source observation: curve concatenation can rescale the second curve's
+parameter interval using endpoint derivative magnitudes in
+[`GeomConvert_CompCurveToBSplineCurve::Add`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/GeomConvert/GeomConvert_CompCurveToBSplineCurve.cxx#L156-L190).
+Makeshift's microscopic-boundary concatenation instead uses matching piecewise
+affine intervals for the spatial curve and both incident pcurves, retains C0 knot
+multiplicity, and verifies their resulting world-space agreement. The compatible
+surface-patch path concatenates control nets rather than fitting only a perimeter.
+Runtime regressions cover the captured segmented fillet and preserve a deliberately
+bulged patch interior across differing degrees, knots and exchanged UV axes. This
+is independent application code using the spline representation, not copied upstream
+implementation; unsupported representations still take the existing refusal path.
+
 
 OCCT 7.9.3 source observation: periodic face division delegates reconstruction to
 [`ShapeFix_ComposeShell`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/ShapeUpgrade/ShapeUpgrade_ClosedFaceDivide.cxx#L225-L260),
@@ -1214,6 +1260,15 @@ an inaccurate neighboring single-loop fill carrying a roughly 0.0059 mm vertex
 bound; reversing the edit then merged endpoints around a 0.0006 mm span. The ruled
 construction and measured boundary precision checks allow that move and its
 reverse after reopening, without increasing tolerances or relying on edit history.
+
+The same pinned [`BRepFill::Face`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepFill/BRepFill.cxx#L266-L296)
+reverses each spatial curve according to its input edge orientation before generating
+the support. Makeshift inference: a periodic band's opposite wire traversals must
+be aligned explicitly; forcing both edges forward loses that information when
+analytic and spline rims have opposite natural directions. Its segmented seam must
+also be retained as requested trimming edges, rather than replaced by one generator.
+Direct native replay of the 2026-11-06 capture verifies axial movement with both seam
+segments and all topology IDs retained. No upstream implementation was copied.
 
 ## Shared bicubic mesh reconstruction (2026-10-02)
 

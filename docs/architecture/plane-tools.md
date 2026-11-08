@@ -179,8 +179,17 @@ cut never captures an invisible slice at the sketch plane. Automatic camera-faci
 sketch cutaways and capture resume when the explicit section is turned off.
 New/Open resets the view.
 The section is not saved in the document or included in exported geometry.
+In Sketch mode the active sketch grid draws once after section fills and X-ray
+composition, keeping grid lines visible across patterned caps. Canonical grids in
+Modeling retain their normal depth behavior.
 
 Coplanar rendering gives existing body faces priority over generated section fills.
+For an explicit hard cut, a body must retain material beyond the section plane:
+a body entirely on the removed side, touching only at its boundary, contributes
+no faces, outlines, caps or picking targets. This applies to accepted bodies and
+live previews. Flip side, section movement and turning the cut off reevaluate
+visibility without changing geometry. Ordinary coplanar faces backed by retained
+material still take priority over generated fills.
 Body faces on the active section support mark stencil bit 4; caps exclude those
 samples and write only the solid-silhouette bit 2. Sketch-fill union retains bit 1.
 The per-body section parity uses scratch bit 8, cleared between bodies and after

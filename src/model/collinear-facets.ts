@@ -65,3 +65,44 @@ export function retriangulateCollinear(mesh: ExportMesh, rounding: number): Expo
   }
   return { ...mesh, triangles };
 }
+
+/** A pair of opposing zero-area facets can bridge two copies of one seam.
+ * Join only the coincident middle vertices of that pair and remove the bridge. */
+export function joinCollinearSeams(mesh: ExportMesh, collapsed: number[][]): ExportMesh {
+  const sides = new Map<string, { middle: number; triangle: number[] }>();
+  const removed = new Set<number[]>();
+  const parents = new Map<number, number>();
+  const root = (index: number): number => {
+    let parent = parents.get(index);
+    while (parent !== undefined) {
+      index = parent;
+      parent = parents.get(index);
+    }
+    return index;
+  };
+  const length = ([a, b]: number[]) =>
+    Math.hypot(...mesh.vertices[a].map((v, axis) => v - mesh.vertices[b][axis]));
+  for (const triangle of collapsed) {
+    const [a, b] = edges(triangle).sort((x, y) => length(y) - length(x))[0];
+    const middle = triangle.find((v) => v !== a && v !== b);
+    if (middle === undefined) continue;
+    const oppositeKey = `${b}/${a}`;
+    const opposite = sides.get(oppositeKey);
+    if (
+      opposite &&
+      mesh.vertices[middle].every((value, axis) => value === mesh.vertices[opposite.middle][axis])
+    ) {
+      const from = root(middle),
+        to = root(opposite.middle);
+      if (from !== to) parents.set(from, to);
+      removed.add(triangle);
+      removed.add(opposite.triangle);
+      sides.delete(oppositeKey);
+    } else sides.set(`${a}/${b}`, { middle, triangle });
+  }
+  if (!removed.size) return mesh;
+  return {
+    ...mesh,
+    triangles: mesh.triangles.filter((triangle) => !removed.has(triangle)).map((t) => t.map(root)),
+  };
+}

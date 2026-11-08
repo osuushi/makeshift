@@ -77,19 +77,30 @@ test("decimal-height cavity merges and continues across reversed cylinder axes",
   }
 });
 
-test("decimal contact preserves a deliberately requested tiny shelf and rotated placement", async () => {
+test("decimal contact rejects unrepairable microscopic shelves and preserves larger shelves and placement", async () => {
   const owner = new DocumentOwner();
   try {
     await owner.call({ kind: "open", document: fixture.document });
-    const smaller = await offset(owner, fixture.floor, gap - 0.0005);
-    assert.equal(
-      smaller.result.faces.length,
-      11,
-      "A requested sub-contact step must not snap away",
-    );
+    const before = owner.view.data;
+    const bodyId = before.bodies?.[0].id;
+    assert.ok(bodyId);
+    const rejected = await owner.call({
+      kind: "offset-faces",
+      operation: {
+        faces: [{ body: bodyId, face: fixture.floor }],
+        distance: gap - 0.0005,
+        limit: false,
+      },
+    });
+    assert.match(rejected.error ?? "", /microscopic topology repair/);
+    assert.equal(rejected.view.candidate, null);
+    assert.equal(owner.view.data, before);
+    assert.match((await owner.call({ kind: "accept" })).error ?? "", /No valid edit/);
+    const smaller = await offset(owner, fixture.floor, gap - 0.002);
+    assert.equal(smaller.result.faces.length, 11, "An above-resolution shelf must remain explicit");
     close(
       -(smaller.result.faces.find((f) => f.id === fixture.floor)?.plane?.origin[1] ?? NaN),
-      11.7795,
+      11.778,
     );
     await owner.call({ kind: "discard" });
     const id = owner.view.data.bodies?.[0].id;

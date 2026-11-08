@@ -22,7 +22,7 @@ const key = (t: ModelingTarget) =>
       ? `face:${t.body}:${t.face}`
       : t.kind === "edge"
         ? `edge:${t.body}:${t.edge}`
-        : `${t.kind}:${t.sketch}:${t.kind === "profile" ? t.profile.key : ""}`;
+        : `${t.kind}:${t.sketch}:${t.kind === "profile" ? t.profile.key : (t.curves?.join(",") ?? "")}`;
 
 /** Derived from accepted topology; never a second selection or geometry document. */
 export function selectionContext(

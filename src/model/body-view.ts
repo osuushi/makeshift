@@ -4,6 +4,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { foregroundBodyLayer } from "../sketch/world-foreground.js";
 import { BodyDrawable } from "./body-drawable.js";
 import { SectionStyleSeeds } from "./section-pattern.js";
+import { sectionKeepsBody } from "./section-visibility.js";
 import { visualPreviewView } from "./visual-preview-view.js";
 
 function bodyLights(): THREE.Light[] {
@@ -79,6 +80,7 @@ class BodyView {
         accepted.some((source) => source.id === body.id),
       );
       drawing.group.visible =
+        sectionKeepsBody(body, editor.world.crossSection) &&
         !editor.interactions.current?.visualPreview?.replaces?.includes(body.id) &&
         editor.visibility.visible(body.id) &&
         (editor.bodiesVisible || !accepted.some((accepted) => accepted.id === body.id));
@@ -100,6 +102,7 @@ class BodyView {
           ? (accepted.find((source) => source.id === body.id) ?? body)
           : body;
       drawing.highlight(source, selectedEdges, hover?.kind === "edge" ? hover.edge : undefined);
+      drawing.sectionVisibility(editor.world.crossSection);
       drawing.group.userData.xrayBody = editor.visibility.xray.has(body.id) ? body.id : null;
     }
   };

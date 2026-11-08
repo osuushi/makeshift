@@ -28,7 +28,7 @@ export const macModelCases = [
   },
   {
     file: "offset-move-capture.test.js",
-    name: "captured tilted plate moves its hole along world X and reverses after reopening",
+    name: "legacy tilted plate hole edits repair or refuse without corrupting history",
     seconds: 29,
   },
   {

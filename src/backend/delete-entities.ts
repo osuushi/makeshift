@@ -1,6 +1,7 @@
 import { continueSketchGuides } from "../guides/sketch-continuation.js";
 import { deleteProfiles } from "../sketch/delete-profiles.js";
 import { type SketchDocument, withSketch } from "../sketch/document.js";
+import { removeCurves } from "../sketch/geometry.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 
 /** Delete owners and selected region boundaries together with their attached metadata. */
@@ -49,6 +50,16 @@ export function deleteEntities(
       withSketch(next, result.sketch),
       sketch.id,
       result.curveOrigins,
+    );
+  }
+  for (const target of request.curves ?? []) {
+    const sketch = next.sketches.find((s) => s.id === target.sketch);
+    if (!sketch) continue;
+    next = continueSketchGuides(
+      next,
+      withSketch(next, removeCurves(sketch, new Set(target.ids))),
+      sketch.id,
+      target.ids.map((source) => ({ source, curves: [] })),
     );
   }
   return next;

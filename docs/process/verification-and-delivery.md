@@ -69,10 +69,12 @@ canceled application Quit, which document-owner tests cannot exercise. Section
 regressions cover GPU composition, cavities, captured cap overlap/hover/selection,
 distant-camera clipping, and localized X-ray masks. CPU geometry tests cannot
 observe these escaped rendering failures.
-The inventory permits 28 suites, totaling 586 seconds with the existing shard count.
+The inventory permits 28 suites, totaling 591 seconds with the existing shard count.
 The mesh-first movement and Offset/Fillet regressions cover real paint ordering,
-numeric supersession and acceptance while metadata is pending. They measured
-4.59 and 7.05 seconds in hidden macOS Electron, respectively; allocations of 10
+numeric supersession and acceptance while metadata is pending. The surface case
+also covers captured diameter typing through rejection, explicit nearest search,
+and continued drag limiting. They measured
+4.59 and 12.41 seconds in hidden macOS Electron, respectively; allocations of 10
 and 15 seconds include startup/software-rendering headroom. Offset and Fillet
 share one app session. These add 25 seconds to the previous 555-second budget;
 they do not add shards or repeat a cross-browser matrix. Geometry and clamping
@@ -80,16 +82,20 @@ combinations remain in lower-level tests. Linux timings are not yet measured.
 The transform entry regression includes escaped Tab focus, released body/sketch
 widget refinement and cross-layer acceptance in the same app session. Its measured
 18.2-second hidden macOS Electron run has a 20-second allocation (previously 14).
-The six-second increase raises the aggregate budget to 586 seconds without adding
-a suite or shard. Geometry calculations remain covered below the UI.
+The six-second increase raised the aggregate budget to 586 seconds without adding
+a suite or shard. The movement preview session now includes the escaped captured
+edge-drag refusal/recovery case and measures 10.26 seconds in hidden macOS Electron.
+Its allocation increases from 10 to 15 seconds, raising the aggregate to 591 seconds
+with no additional suite or shard. Linux timing remains unmeasured. Geometry
+calculations remain covered below the UI.
 Feature-demo recording runs separately as one Linux job per recipe. Each uploads
 its own media and manifest; the final `feature-demos` job requires all recordings,
 checks their source/configuration and completeness, then validates the assembled
 gallery and uploads the combined artifact. A failed recipe does not cancel others.
 The three additional section cases were measured in hidden Electron on macOS:
 X-ray mask/settings/resize/pinch 7.05s, distant-camera ink/fill 6.72s, and cap
-overlap/selection/extrusion/chooser 8.75s. The X-ray route including New/XY/circle
-frame freshness now measures 9.18s locally. Their allocations are 20/15/20 seconds,
+overlap/selection/extrusion/chooser plus sketch-grid priority 11.40s. The X-ray route
+including New/XY/circle frame freshness now measures 9.18s locally. Their allocations are 20/15/20 seconds,
 adding 55 seconds to the earlier 498-second inventory, with startup and software
 rendering headroom. These are local timings, not Linux runner measurements.
 Linux run 38146139847 measured partial sections at 23 seconds, section fills at

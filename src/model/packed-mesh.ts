@@ -1,5 +1,5 @@
 import { retriangulateCollapsedEdges } from "./collapsed-edge-facets.js";
-import { facetArea, retriangulateCollinear } from "./collinear-facets.js";
+import { facetArea, joinCollinearSeams, retriangulateCollinear } from "./collinear-facets.js";
 import type { ExportMesh } from "./export-mesh.js";
 
 /** Collapsed zero-thickness sheets leave identical facets with opposite winding. */
@@ -65,7 +65,10 @@ export function packedMesh(mesh: ExportMesh, rounding: number): ExportMesh {
     ...retriangulated,
     triangles: cancelOppositeFacets(retriangulated.triangles),
   };
-  if (result.triangles.some((triangle) => facetArea(result, triangle) === 0))
+  const collapsed = result.triangles.filter((triangle) => facetArea(result, triangle) === 0);
+  if (!collapsed.length) return result;
+  const joined = joinCollinearSeams(result, collapsed);
+  if (joined.triangles.some((triangle) => facetArea(joined, triangle) === 0))
     throw new Error("A collapsed mesh facet exceeds numerical precision");
-  return result;
+  return joined;
 }

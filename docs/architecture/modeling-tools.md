@@ -146,8 +146,20 @@ directly along the movement axis also offers typed size entry until orbit reveal
 a direction. The click anchor is UI state and clears when accepted body geometry changes.
 A white capsule fill and near-black outline follow the
 [orientable widget guide](../design/orientable-widgets.md). Blue hover and red
-geometry-limit/rejection feedback supplement the contours. Legal-size clamping
-retains its valid preview and existing acceptance behavior.
+geometry-limit/rejection feedback supplement the contours. Dragging limits sizes
+to verified geometry and retains its valid preview and acceptance behavior.
+Fillet/Chamfer surface snap targets are calculated only after pointer movement
+crosses the drag threshold. Clicking a handle to focus its numeric field must not
+start a background search through trial finish sizes. Releasing or cancelling the
+gesture cancels active and queued snap searches; their worker is independent of
+measurements and the editing calculator.
+
+Typed Offset, Fillet and Chamfer values request exact previews. An infeasible value
+keeps its text and focus, clears the candidate, disables acceptance, and shows the
+error inline in the local panel. Normal face offsets and edge finishes offer
+**Find Nearest** to explicitly search toward the requested value from verified
+geometry. Only that action or a drag can replace the field with a searched value.
+Correcting the text always requests the new exact value, even after a prior search.
 If OCCT builds an edge finish with invalid topology, the kernel makes one shape
 repair pass and validates the repaired solid before offering a preview. A repair
 that remains invalid still rejects the edit.
@@ -268,6 +280,13 @@ A complete one-face spherical shell can change radius through an exact centered
 scale when the ordinary offset builder cannot process its closed shells. Only the
 selected shell changes; stable topology correspondence, signed parallel-surface
 checks, strict solid/interference validation and the existing volume checks apply.
+When ordinary offset construction rejects a complete internal cylindrical wall
+with circular rims on perpendicular planar faces, a local reconnection can
+resize the bore. It keeps the depth and planar supports fixed, preserves the
+existing face and edge topology, and verifies that the volume change matches
+only the resized cylindrical region. Periodic seams may contain axial lines
+and coaxial circular arcs left by Boolean edits. Reconnection preserves shared
+seam endpoints and uses the final solid's face orientations for offset validation.
 Draft display rounding does not change the driving value. Ordinary completion
 preserves subdivisions; neither tool probes cleanup availability. Rejected extrusion
 and rejected/clamped offset requests turn their arrows red. Sketch-entry actions sit
@@ -294,8 +313,16 @@ The ordinary offset path runs first to preserve contact merging.
 If those paths fail for a single outward planar offset, a swept-material Boolean
 fallback can fill a cavity and absorb contacted coplanar caps. It uses the same
 finite-face contact rule, removes consumed walls, and unifies the resulting cap.
-Every result face must lie on an exact target plane or an unchanged analytic
-plane/cylinder support; strict solid, interference and tolerance checks still apply.
+The cap plane moves by its signed normal distance while adjoining wall supports
+continue unchanged. Straight oblique tubes continue along their existing generator,
+not along the cap normal. Linear extrusion surfaces and degree-one B-spline control
+rows certify that generator; unsupported curved supports reject this fallback.
+Connected walls sharing that generator extend their existing trims from a common
+stationary rim plane. This preserves wall topology through sheared or split tubes
+and creates no join ring between the old wall and its continuation.
+Complete conical walls perpendicular to the cap rebuild their circular intersection
+at the new plane, changing its radius and area. Their cone supports remain fixed.
+The resulting solid still passes interference, topology and tolerance checks.
 Cylinder support comparison ignores reversal of its parameter axis, while retaining
 the same angular, axis-line distance and radius tolerances.
 Merged faces receive fresh IDs and remain selected. Contact is constructed at the
@@ -315,8 +342,8 @@ signed normal offset across C2 spans, unselected supports remain fixed, and cont
 face orientations agree. Exact BRep validity, positive volume/orientation, closed
 boundaries, self-interference and minimum separation supplement the sampled checks.
 This conservatively rejects unaccounted topology changes; it does not guarantee all
-freeform offsets. Existing verified-limit clamping remains, and can be slow because
-each trial repeats native construction and validation.
+freeform offsets. Verified-limit search during drags or explicit Find Nearest can
+be slow because each trial repeats native construction and validation.
 
 An explicit tool choice survives geometry preview replies. A fresh selection
 restores its default. Switching tools completes a valid operation through its
@@ -376,6 +403,9 @@ Each gesture or typed quantity is one axis operation. Release retains a temporar
 preview. Enter/check accepts one Undo step; Escape/cross cancels. Tool switching
 finishes only a valid request. Invalid requests show a red gizmo, retain the last
 valid image and disable acceptance; typed values are never silently clamped.
+An explanatory refusal stays beside the movement controls until the value changes
+or the edit ends. Dismissing workspace feedback or reading/capturing the document
+does not clear this tool-local refusal, and rejected input never offers acceptance.
 Camera navigation and pivot repositioning remain available.
 
 There is one selection/neighborhood rule:
@@ -397,7 +427,11 @@ trim loops; projected boundary parameters preserve the original periodic branche
 and both seam occurrences. This allows a neck with a threaded lower boundary to
 lengthen when its cap moves axially. Projection correspondence and resulting edge/
 vertex tolerances must remain within 1e-6 mm. A periodic band with two closed
-boundary edges otherwise uses a ruled connection. A nonplanar single loop uses a
+boundary edges otherwise uses a ruled connection. The rims retain their directions
+relative to the source wire, including opposite natural analytic/spline parameter
+directions. Segmented seams retain every requested edge and stationary junction;
+both periodic branches are trimmed and checked against their spatial curves.
+A nonplanar single loop uses a
 fitted surface. This changes accepted BRep surfaces, not just the mesh.
 The kernel checks fitting error against 1e-6 mm, sews within that tolerance and
 requires one valid, positive, non-self-intersecting solid. Sewing history continues
@@ -529,3 +563,8 @@ Extrusion lifecycle. Bodies continue to store materialized BRep rather than a
 feature dependency on the original face.
 The offset surface carries face correspondence through the Boolean, retaining
 one-to-one face identity and selection. New shoulder faces receive new identities.
+
+A translated cap on a straight cylindrical extrusion carries internal periodic seam
+subdivisions with the wall. The opposite parallel cap stays fixed; a single affine
+shear/axial stretch defines the connecting walls. Collapsed or inverted results
+reject. This applies to Move; Offset instead preserves adjoining supports.

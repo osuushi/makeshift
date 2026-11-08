@@ -2,6 +2,7 @@ import { RadialInput } from "../preferences/radial-input.js";
 import { bindWidgetField } from "../sketch/widget-numeric-field.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { directionalOffset, directionalWidget } from "./directional-widget.js";
+import { PreviewError } from "./preview-error.js";
 import { WidgetClearance } from "./widget-clearance.js";
 import "./body-edge-finish-widget.css";
 import type { Point } from "../sketch/planes.js";
@@ -14,6 +15,7 @@ interface EdgeFinishInput {
   activate: (mode: BodyEdgeFinish["mode"]) => void;
   chooseMode: (mode: BodyEdgeFinish["mode"]) => void;
   size: (value: number) => void;
+  findNearest: () => void;
 }
 
 export class BodyEdgeFinishWidget {
@@ -28,6 +30,7 @@ export class BodyEdgeFinishWidget {
   };
   readonly input = document.createElement("input");
   readonly radial = new RadialInput(this.input);
+  readonly error = new PreviewError();
   readonly modeButtons = {
     fillet: document.createElement("button"),
     chamfer: document.createElement("button"),
@@ -52,6 +55,7 @@ export class BodyEdgeFinishWidget {
     }
     this.input.type = "text";
     this.input.inputMode = "decimal";
+    this.input.setAttribute("aria-describedby", this.error.root.id);
     this.input.setAttribute("aria-label", "Fillet radius");
     this.input.title = "Shared fillet radius (mm)";
     const unit = document.createElement("span");
@@ -74,7 +78,7 @@ export class BodyEdgeFinishWidget {
     this.panel.className = "edge-finish-panel";
     this.requirement.className = "tool-requirement";
     this.requirement.setAttribute("role", "status");
-    this.panel.append(field, this.options, this.requirement);
+    this.panel.append(field, this.options, this.requirement, this.error.root);
     this.root.append(this.handles.fillet, this.handles.chamfer, this.panel);
     overlay.append(this.root);
     this.root.hidden = true;
@@ -93,6 +97,7 @@ export class BodyEdgeFinishWidget {
     }
     this.input.addEventListener("focus", input.begin, options);
     this.input.addEventListener("input", () => input.size(this.radial.read()), options);
+    this.error.findNearest.addEventListener("click", input.findNearest, options);
   }
   update(
     world: World,
@@ -104,6 +109,8 @@ export class BodyEdgeFinishWidget {
     busy: boolean,
     invalid: boolean,
     requirement = "",
+    error = "",
+    canFind = false,
   ) {
     const { camera } = world;
     const point = frame ? world.project(frame.anchor) : { x: innerWidth / 2, y: 100 };
@@ -156,7 +163,8 @@ export class BodyEdgeFinishWidget {
     this.panel.style.top = `${Math.max(65, Math.min(innerHeight - this.panel.offsetHeight - 12, point.y + 45)) - point.y}px`;
     this.accept.disabled = !active || !valid || busy;
     this.input.setAttribute("aria-invalid", String(active && invalid && !valid && !busy));
-    if (!numericFocus(this.input))
+    this.error.update(error, canFind, busy);
+    if (!numericFocus(this.input) && !(active && invalid && !valid))
       this.input.value = Number.isFinite(size)
         ? String(Number(this.radial.display(size).toPrecision(4)))
         : "";

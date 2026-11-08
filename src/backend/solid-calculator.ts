@@ -16,7 +16,10 @@ export class SolidCalculator extends NativeCalculator<KernelRequest, unknown> {
   override async calculate<Input extends KernelRequest>(input: Input): Promise<KernelReply<Input>> {
     // Enforce the wire envelope here even when callers hold a full accepted Body.
     this.deferred = null;
-    const reply = await super.calculate({ ...input, bodies: exactBodies(input.bodies) });
+    const reply = await super.calculate(
+      { ...input, bodies: exactBodies(input.bodies) },
+      input.kind === "measure" ? 10_000 : undefined,
+    );
     const result = readKernelReply(input, reply);
     this.deferred = "presentation" in input && input.presentation === "deferred" ? result : null;
     return result;

@@ -198,7 +198,7 @@ const scaling = new ScaleControls(
         (target) => target.kind === "sketch" || target.kind === "profile",
       )
     )
-      modelControls.move();
+      return modelControls.move();
     else {
       editor.modeling.setTool("move");
       editor.refresh();

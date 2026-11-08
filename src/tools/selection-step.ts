@@ -46,8 +46,9 @@ class SelectionStep {
     this.acceptedContent = JSON.stringify(this.accepted);
     this.candidates = selectionCandidates(selection);
     // Retain eligible categories even when the count/combination still needs editing.
-    selection.targets = this.previous.filter((target) =>
-      this.previous
+    const refined = selection.refinementTargets;
+    selection.targets = refined.filter((target) =>
+      refined
         .filter((other) => selection.category(other) === selection.category(target))
         .every((other) => selection.accepts(other)),
     );

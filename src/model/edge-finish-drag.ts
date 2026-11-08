@@ -48,7 +48,6 @@ export class EdgeFinishDrag {
             return;
           }
           widget.input.blur();
-          this.snap.start(snapPlan);
           const direction = widget.direction;
           this.pointer = {
             direction,
@@ -69,7 +68,10 @@ export class EdgeFinishDrag {
       const p = this.pointer;
       if (!p || p.id !== event.pointerId) return;
       p.lastY = event.clientX * p.direction.x + event.clientY * p.direction.y;
-      if (Math.abs(p.lastY - p.y) > 3) p.moved = true;
+      if (!p.moved && Math.abs(p.lastY - p.y) > 3) {
+        p.moved = true;
+        this.snap.start(snapPlan);
+      }
       if (!p.moved) return;
       let value = p.size + (p.lastY - p.y) * p.scale;
       if (editor.gridSnap) value = Math.round(value / editor.world.spacing) * editor.world.spacing;

@@ -16,11 +16,14 @@ export function clipboardSelection(editor: SketchEditor): ClipboardGeometry {
   } else {
     for (const sketch of document.sketches) {
       const targets = editor.modeling.targets.filter((t) => t.sketch === sketch.id);
-      if (targets.some((t) => t.kind === "sketch")) sketches.push(sketch);
+      if (targets.some((t) => t.kind === "sketch" && !t.curves)) sketches.push(sketch);
       else {
         const keys = new Set(targets.flatMap((t) => (t.kind === "profile" ? [t.profile.key] : [])));
-        if (!keys.size) continue;
-        const copy = copyRegions(sketch, keys);
+        const ids = new Set(targets.flatMap((t) => (t.kind === "sketch" ? (t.curves ?? []) : [])));
+        if (!keys.size && !ids.size) continue;
+        const regions = copyRegions(sketch, keys);
+        const open = copySelection(sketch, ids);
+        const copy = { ...open, curves: [...regions.curves, ...open.curves] };
         if (copy.curves.length) sketches.push(copy);
       }
     }

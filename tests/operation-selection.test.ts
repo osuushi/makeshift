@@ -173,6 +173,7 @@ test("unsupported preferred tools remain unavailable and mixed deletion resolves
   assert.deepEqual(deletion.inputs, {
     bodyIds: [a.id],
     sketchIds: [],
+    curves: [],
     profiles: [],
     topology: [{ body: b.id, whole: false, faces: [b.faces[0].id], edges: [] }],
   });

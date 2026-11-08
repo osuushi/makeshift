@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { historyMenu } from "./native-documents.mjs";
 import { plate } from "./ui-body-fillet.mjs";
 import { holdCompletion } from "./ui-deferred-preview.mjs";
+import { exactDiameterRoute, exactFinishSize } from "./ui-exact-surface-input.mjs";
 import { makePlate, worldClick } from "./ui-face-offset.mjs";
 import { close, inspect, modalCompleted } from "./ui-helpers.mjs";
 import { relativeOffsetInput } from "./ui-offset-input.mjs";
@@ -23,6 +24,7 @@ async function route(page, runtime, kind) {
   }
   await input.fill("1");
   const original = (await inspect(page)).document;
+  if (kind === "fillet") await exactFinishSize(page, input, accept);
   await holdCompletion(page);
   try {
     await input.fill("2");
@@ -70,6 +72,7 @@ await withUiRuntimes(
   async (page, runtime) => {
     await route(page, runtime, "offset");
     await route(page, runtime, "fillet");
+    await exactDiameterRoute(page, runtime);
   },
   { defaults: ["electron"] },
 );

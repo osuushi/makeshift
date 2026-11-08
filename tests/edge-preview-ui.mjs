@@ -17,7 +17,9 @@ async function latestSize(page, selection, held, requests, flags, original) {
   held.get(3).release.resolve();
   await waitForDelivery(held.get(4));
   const pending = await page.evaluate(() => window.makeshiftInspect());
-  assert.equal(pending.preview.bodies[0].volume, reply.view.candidate.bodies[0].volume);
+  assert.ok(reply.view.visualPreview, "Native edge edits deliver meshes before metadata");
+  assert.deepEqual(pending.visualPreview, reply.view.visualPreview);
+  assert.equal(await page.getByRole("button", { name: "Accept fillet" }).isDisabled(), true);
   assert.deepEqual(pending.document, original);
   assert.deepEqual(
     requests.map((request) => request.size),
@@ -29,6 +31,7 @@ async function latestSize(page, selection, held, requests, flags, original) {
   held.get(4).release.resolve();
   const invalid = await inspect(page);
   assert.equal(invalid.preview === null, true, "Late success must not restore invalid size input");
+  assert.equal(invalid.visualPreview, null);
   assert.ok(await page.getByRole("button", { name: "Accept fillet", exact: true }).isDisabled());
   await input.fill("2");
   const recovery = await inspect(page);
@@ -64,6 +67,7 @@ async function modeAndClamp(page, cleanupChecks, original, timeline) {
   await inspect(page);
   const count = cleanupChecks();
   await input.fill("100");
+  await page.getByRole("button", { name: "Find Nearest", exact: true }).click();
   await inspect(page);
   const maximum = Number(await input.inputValue());
   assert.ok(maximum > 2 && maximum < 100);
@@ -75,9 +79,13 @@ async function modeAndClamp(page, cleanupChecks, original, timeline) {
     `Geometry does not schedule cleanup: ${JSON.stringify(timeline)}`,
   );
   await input.fill("100");
+  await page.getByRole("button", { name: "Find Nearest", exact: true }).click();
   await inspect(page);
   assert.equal(Number(await input.inputValue()), maximum);
   await input.fill("-5");
+  assert.equal((await inspect(page)).preview, null);
+  assert.equal(await input.inputValue(), "-5");
+  await input.fill("0");
   assert.deepEqual((await inspect(page)).preview, original);
   await page.keyboard.press("Enter");
   assert.equal((await inspect(page)).interaction, null);
@@ -96,7 +104,11 @@ async function edgeScheduling(page) {
   let cleanupChecks = 0;
   await page.route("**/sketch-api", async (route) => {
     const request = route.request().postDataJSON();
-    if (["check-cleanup", "finish-edges", "edge-finish-selection"].includes(request.kind))
+    if (
+      ["check-cleanup", "finish-edges", "edge-finish-selection", "edge-finish-targets"].includes(
+        request.kind,
+      )
+    )
       timeline.push({
         kind: request.kind,
         size: request.operation?.size,
@@ -116,6 +128,11 @@ async function edgeScheduling(page) {
     await latestSize(page, selection, held, requests, flags, original);
     await cancelSize(page, held, cancelled, original);
     await modeAndClamp(page, () => cleanupChecks, original, timeline);
+    assert.equal(
+      timeline.filter((request) => request.kind === "edge-finish-targets").length,
+      0,
+      "Clicking handles and typing must not start expensive drag snap searches",
+    );
   } finally {
     const gates = [selection, ...held.values()];
     for (const delay of gates) delay.release.resolve();
@@ -129,7 +146,31 @@ async function edgeScheduling(page) {
 await withUiRuntimes(
   async (page, name) => {
     await edgeScheduling(page);
-    await edgeLiveDrag(page);
+    let snapQueries = 0,
+      snapCancellations = 0;
+    const observe = (request) => {
+      if (
+        request.url().endsWith("/sketch-api") &&
+        request.postDataJSON()?.kind === "cancel-edge-finish-targets"
+      )
+        snapCancellations++;
+      if (
+        request.url().endsWith("/sketch-api") &&
+        request.postDataJSON()?.kind === "edge-finish-targets"
+      )
+        snapQueries++;
+    };
+    page.on("request", observe);
+    try {
+      await edgeLiveDrag(page);
+      assert.ok(snapQueries > 0, "Actual edge dragging still requests surface snap targets");
+      assert.ok(snapCancellations > 0, "Releasing the handle cancels its background snap search");
+      await page.waitForFunction(
+        () => document.querySelectorAll(".measurement-readout > div strong").length > 0,
+      );
+    } finally {
+      page.off("request", observe);
+    }
     console.log(
       `${name}: real edge expansion, size coalescing, invalidation, cancellation, mode/limits, live pointer values and fixed minor-grid steps pass`,
     );

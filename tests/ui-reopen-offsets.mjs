@@ -35,6 +35,7 @@ export async function reopenOffset(page, name, blend = false) {
     face = before.bodies[0].faces.find((face) => face.id === source.modelingSelection[0].face);
     await chooseTool(page, "offset faces", "offset");
     await (await relativeOffsetInput(page)).fill("-100");
+    await page.getByRole("button", { name: "Find Nearest", exact: true }).click();
   }
   await ready(page, "Accept face offset");
   const quantity = blend ? "Fillet face radius" : "Face offset distance";

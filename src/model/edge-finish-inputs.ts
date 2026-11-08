@@ -17,6 +17,10 @@ export function edgeFinishInputs(
       if (!actions.active() || !["Enter", "Escape"].includes(event.key)) return;
       event.preventDefault();
       event.stopImmediatePropagation();
+      if (event.key === "Enter" && event.target === widget.error.findNearest) {
+        actions.findNearest();
+        return;
+      }
       if (event.key === "Escape") actions.cancel();
       else actions.finish();
     },

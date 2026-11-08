@@ -1,5 +1,7 @@
 #include "edge-finish-construction.h"
 #include "edge-finish-validation.h"
+#include "microscopic-topology.h"
+#include "small-finishes.h"
 #include "timing.h"
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
@@ -97,6 +99,8 @@ Result constructEdgeFinish(const Operand& body, const std::vector<TopoDS_Edge>& 
         std::vector<Result> results;
         solids(results, rounded.shape, rounded.predecessors, {body.id});
         if (results.size() != 1) throw std::runtime_error("Edge finish is not feasible at this size");
+        simplifySmallFinishes(results.front());
+        resolveMicroscopicTopology(results.front());
         return results.front();
     } catch (const Standard_Failure&) {
         throw std::runtime_error("Edge finish is not feasible at this size");

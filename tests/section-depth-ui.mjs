@@ -89,7 +89,14 @@ async function coplanarSketch(page, name) {
     const after = await sample(page, [-6, -6, 0]);
     const delta = Math.max(...after.map((n, j) => Math.abs(n - before[j])));
     console.log(name, "coplanar sketch", flip, "RGB delta", delta);
-    assert.ok(delta <= 1, `Section must preserve coplanar sketch/face pixels: ${delta}`);
+    if (flip === 0) {
+      assert.ok(delta <= 1, `Section must preserve a face backed by retained material: ${delta}`);
+    } else {
+      assert.ok(delta > 20, "Removing the whole solid must also remove its boundary face");
+      await chooseTool(page, "hide bodies", "hide-bodies");
+      assert.deepEqual(after, await sample(page, [-6, -6, 0]), "Only the sketch remains visible");
+      await chooseTool(page, "show bodies", "show-bodies");
+    }
     await page.getByRole("button", { name: "Flip side", exact: true }).click();
     await page.waitForFunction(() => !window.makeshiftInspect().sectionCalculating);
   }

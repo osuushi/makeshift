@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "linear-cap-offset.h"
 #include "blends.h"
 #include "offset-contacts.h"
 #include "offset-collapse.h"
@@ -8,6 +9,7 @@
 #include "planar-face-offset.h"
 #include "planar-offset-prisms.h"
 #include "spherical-face-offset.h"
+#include "cylindrical-face-offset.h"
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <BRepOffset_MakeOffset.hxx>
 #include <BRepAdaptor_Surface.hxx>
@@ -109,6 +111,10 @@ std::vector<Result> offsetFaces(const Tree& input, const std::vector<Operand>& b
         if (std::abs(distance) < 1e-8) { solids(results, body.shape, body.entities, {body.id}); continue; }
         const auto originalBody = body;
         const auto requestedFaces = found->second;
+        if (auto linear = linearCapOffset(body, requestedFaces, distance)) {
+            results.push_back(std::move(*linear));
+            continue;
+        }
         try {
             const bool freeform = offset_geometry::freeform(body.shape);
             const auto original = body.shape;
@@ -142,6 +148,10 @@ std::vector<Result> offsetFaces(const Tree& input, const std::vector<Operand>& b
         } catch (const std::runtime_error&) {
             if (auto spherical = sphericalFaceOffset(originalBody, requestedFaces, distance)) {
                 results.push_back(std::move(*spherical));
+                continue;
+            }
+            if (auto cylindrical = cylindricalFaceOffset(originalBody, requestedFaces, distance)) {
+                results.push_back(std::move(*cylindrical));
                 continue;
             }
             auto planar = planarFaceOffset(originalBody, requestedFaces, distance);

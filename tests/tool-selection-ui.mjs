@@ -11,6 +11,22 @@ import { chooseTool } from "./ui-tools.mjs";
 await withUiRuntimes(async (page) => {
   await createOperands(page);
   const original = (await inspect(page)).document;
+  // Entity selection must reach the same region refinement as viewport selection.
+  await page
+    .locator(".entity-label")
+    .filter({ hasText: /Sketch/ })
+    .first()
+    .click();
+  await chooseTool(page, "extrude", "extrude");
+  const selectedRegions = (await inspect(page)).modelingSelection;
+  assert.equal(selectedRegions.length, 3);
+  assert.ok(selectedRegions.every((target) => target.kind === "profile"));
+  assert.equal(
+    await page.getByRole("group", { name: "Select tool inputs", exact: true }).count(),
+    0,
+  );
+  await page.keyboard.press("Escape");
+
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   await page
     .getByRole("button", { name: "Select Body 2", exact: true })

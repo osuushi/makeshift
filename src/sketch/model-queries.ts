@@ -72,6 +72,9 @@ export class ModelQueries {
     return { count: this.view.solveCount, milliseconds: this.view.solveMs };
   }
 
+  async cancelEdgeFinishTargets(): Promise<void> {
+    await call({ kind: "cancel-edge-finish-targets" });
+  }
   async edgeFinishTargets(
     operation: Omit<import("../model/body.js").BodyEdgeFinish, "size">,
     points: import("./planes.js").Vector[],

@@ -1,3 +1,21 @@
+# Opposed blind bores
+
+`offset-opposed-bores.json` retains the exact selected body and topology identities
+from the founder's 2026-11-03T19:51:08.197Z capture. A cylinder has blind bores at
+both ends, with a relief cut at one end. The test resizes the other bore to a
+2 mm wall and checks that the opposite end survives. Unrelated bodies, display
+meshes, sketches and history are omitted. This is user-created Makeshift geometry.
+
+# Normal extension of a bent tube
+
+`offset-bent-tube-cap.json` retains the affected exact body, topology IDs, requested
+17.3 mm face offset and camera from the founder's 2026-11-06T23:28:11.598Z capture.
+Unrelated geometry, sketches, decorators, history and transient candidates are
+omitted. The annular cap must extend normally with new straight tube walls while
+both spline bend supports stay fixed. Model tests cover small/large requests,
+preview reversal, cancellation, history, reopening, later editing and rotation.
+This is user-created Makeshift geometry.
+
 # Detailed body extrusion
 
 `extrude-detailed-body.json` retains the circle, exact body and topology identity
@@ -186,3 +204,40 @@ meshes and history are omitted. Its radius-40 cylinder must split the plate/coll
 at an existing circular rim; an unbounded cylindrical cutter silently returned no
 split. The model regression checks both pieces, collar bounds, volume conservation,
 unchanged cutter, preview cancellation and Undo/Redo.
+
+`offset-segmented-seam.json` is a synthetic radius-5 bore through a radius-10,
+12 mm tube. Its periodic seam has two axial lines joined by a 0.4-radian circular
+arc at z=4. It reproduces the cylindrical Offset failure from the founder's
+2026-11-06 capture without retaining captured geometry. The generator is
+`offset-segmented-seam.cpp`; compile it against the configured OCCT SDK and run
+it to emit the exact body JSON. Tests verify signed offsets, shared seam topology,
+stationary caps/exterior, independent volume, closed STL/3MF exports and history.
+
+`section-tangent-body.json` preserves exact BReps and topology IDs/signatures from
+the founder's 2026-11-07T16:53:42.316Z capture. A radius-30 flange joined to a
+radius-12.5 sphere was split at z=-1. A hard section retaining the lower half
+incorrectly kept the removed upper body's coplanar bottom face. Cached meshes,
+sketches and history are omitted; ordinary Open regenerates presentation.
+Tests cover tangent shell visibility, retained material, Flip/Off, picking and
+actual hidden Electron pixels. This is user-created Makeshift geometry.
+
+`offset-outer-wall.json` retains exact body geometry and topology IDs/signatures
+from the founder's 2026-11-07T19:21:37.073Z capture. It covers outward and inward
+outer-wall offsets while preserving the opposed cavities.
+
+`section-top-ledge.json` retains the accepted document and section frame from the
+founder's 2026-11-07T19:40:08.350Z capture. It covers a removed top ledge on a body
+whose dome remains above the cut, complementing the whole-body tangent case.
+The supplied capture has no committed sketch; temporary drawing on that face is
+exercised through the UI rather than fabricated into the captured document.
+
+`offset-near-fillet-limit.json` retains exact body geometry and topology IDs from
+2026-11-07T19:36:05.273Z. Offsetting the planar face between the fillets to the
+captured verified distance must collapse sub-micron finishes into shared box edges.
+Tests measure every resulting edge pair and preserve ordinary Undo/Redo.
+
+`offset-shear-extension.json` and `offset-split-extension.json` retain exact geometry
+and the attempted cap offsets from the founder’s 2026-11-07T20:33:05.666Z and
+20:33:43.453Z captures. A sideways-moved tube and its split half must extend along
+their current straight supports without adding join edges. Display meshes and
+history are omitted; topology identity, volume, repeated offsets and Undo/Redo are checked.

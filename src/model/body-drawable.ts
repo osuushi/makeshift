@@ -12,6 +12,8 @@ import { faceGeometry, faceMaterial } from "./body-mesh.js";
 import { decoratorErrorMaterial, setDecoratorError } from "./decorator-error-material.js";
 import { featureEdges } from "./feature-edges.js";
 
+import { sectionVisibility } from "./section-visibility.js";
+
 interface Counts {
   created: number;
   disposed: number;
@@ -162,6 +164,17 @@ export class BodyDrawable {
       if (onSection) mesh.layers.disable(foregroundBodyLayer);
       else mesh.layers.enable(foregroundBodyLayer);
     });
+  }
+  sectionVisibility(frame: PlaneFrame | null): void {
+    const kept = sectionVisibility(this.body, frame);
+    this.faces.forEach((mesh, i) => {
+      mesh.visible = kept.faces.has(this.body.faces[i].id);
+    });
+    const edges = featureEdges(this.body);
+    this.edges.forEach((line, i) => {
+      line.visible = kept.edges.has(edges[i].id);
+    });
+    for (const [id, item] of this.highlights) item.line.visible = !frame || kept.edges.has(id);
   }
   highlight(source: BodyGeometry, selected: ReadonlySet<string>, hover?: string): void {
     const edges = featureEdges(source).filter((edge) => selected.has(edge.id) || hover === edge.id);

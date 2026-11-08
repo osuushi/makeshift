@@ -4,20 +4,20 @@
 export const uiSuites = [
   {
     args: ["surface-preview-ui.mjs"],
-    // Hidden macOS Electron: 7.05s for Offset and Fillet in one app session.
+    // Hidden macOS Electron: 12.41s including captured typed-diameter focus/search.
     seconds: 15,
     browsers: ["electron"],
     reason:
-      "Offset and Fillet must display meshes before metadata through actual controls, retain the latest numeric target, and gate acceptance through the renderer/host boundary.",
+      "Offset and Fillet must display meshes before metadata, retain numeric focus through rejected intermediate text, search only on Find Nearest or drag, and gate acceptance through the renderer/host boundary.",
     unit: "surface-preview.test.ts",
   },
   {
     args: ["movement-preview-ui.mjs"],
-    // Hidden macOS Electron: 4.59s with the captured face-movement fixture.
-    seconds: 10,
+    // Hidden macOS Electron: 10.26s including captured edge refusal/recovery.
+    seconds: 15,
     browsers: ["electron"],
     reason:
-      "Face movement must draw the real mesh through IPC while metadata is pending, hide its accepted operand, and accept only the latest target; model tests cannot prove frame ordering or tool readiness.",
+      "Face movement must draw the real mesh through IPC while metadata is pending and accept only the latest target. Captured edge movement must retain its local refusal across keyboard error dismissal and recover through real controls; model tests cannot prove paint/event ordering.",
     unit: "movement-preview.test.ts",
   },
   {
@@ -40,11 +40,11 @@ export const uiSuites = [
   },
   {
     args: ["section-overlap-ui.mjs"],
-    // macOS hidden Electron: 8.75s, including source-profile extrusion and chooser.
+    // macOS hidden Electron: 11.40s, including extrusion, chooser and sketch grid.
     seconds: 20,
     browsers: ["electron"],
     reason:
-      "Captured caps must blend body patterns, preserve sketch ink and region hover/selection through extrusion, and offer owning bodies on a real hold; CPU geometry/style tests cannot prove GPU composition or chooser routing.",
+      "Captured caps must blend body patterns, preserve sketch ink, grid and region hover/selection through extrusion, and offer owning bodies with highlights over the pattern on a real hold; CPU geometry/style tests cannot prove GPU composition or chooser routing.",
     unit: "section-pattern.test.ts",
   },
   {

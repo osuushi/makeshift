@@ -59,3 +59,16 @@ export function rotationVisible(camera: THREE.Camera, normal: Vector): boolean {
     Math.sin((alignmentAngle * Math.PI) / 180)
   );
 }
+
+/** A boundary normal adds a control only when no world axis offers the same movement. */
+export function boundaryNormalVisible(normal: Vector | null): boolean {
+  if (!normal) return false;
+  const direction = new THREE.Vector3(...normal).normalize();
+  return canonical.every(
+    (axis) =>
+      direction
+        .clone()
+        .cross(new THREE.Vector3(...axis))
+        .lengthSq() > 1e-12,
+  );
+}

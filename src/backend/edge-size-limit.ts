@@ -25,7 +25,14 @@ export class EdgeSizeLimit<Result = KernelResult> {
       this.upper = Infinity;
     }
     if (!Number.isFinite(operation.size)) throw new Error("Enter a finite edge size");
+    if (operation.limit === false && operation.size !== 0 && operation.size < minimumFinishMm)
+      throw new Error(`Size must be zero or at least ${minimumFinishMm} mm`);
     if (operation.size < minimumFinishMm) return { size: 0, result: null };
+    if (operation.limit === false) {
+      const requested = { size: operation.size, result: await calculate(operation.size) };
+      if (!this.best || requested.size > this.best.size) this.best = requested;
+      return requested;
+    }
     if (this.best && operation.size >= this.upper) return this.best;
     const requested = await this.probe(operation.size, calculate);
     if (requested) {

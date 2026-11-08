@@ -10,7 +10,7 @@ await withUiRuntimes(async (page, name) => {
     await settled(page);
     assert.equal((await inspect(page)).activePlane, id);
     await chooseTool(page, "grid", "sketch-grid");
-    const panel = page.getByRole("region", { name: "Sketch grid controls" });
+    const panel = page.getByRole("dialog", { name: "View options", exact: true });
     const color = { XY: "#d4ae3a", XZ: "#55bb6e", YZ: "#b325c1" }[id];
     for (const label of ["Minor grid color", "Major grid color"]) {
       await panel.getByLabel(label, { exact: true }).fill(color);
@@ -18,9 +18,10 @@ await withUiRuntimes(async (page, name) => {
       await settled(page);
     }
     await panel.getByRole("button", { name: "Done", exact: true }).click();
-    const counts = await page.evaluate(async () => {
+    const png = await page.screenshot();
+    const counts = await page.evaluate(async (data) => {
       const image = new Image();
-      image.src = document.querySelector("canvas").toDataURL();
+      image.src = `data:image/png;base64,${data}`;
       await image.decode();
       const canvas = document.createElement("canvas");
       canvas.width = image.width;
@@ -38,7 +39,7 @@ await withUiRuntimes(async (page, name) => {
         if (r > g + 15 && b > g + 15) counts.YZ++;
       }
       return counts;
-    });
+    }, png.toString("base64"));
     assert.ok(
       counts[id] > 3000,
       `${id} sketch grid renders its document color (${counts[id]} pixels)`,
