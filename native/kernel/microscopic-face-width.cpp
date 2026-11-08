@@ -1,5 +1,6 @@
 #include "microscopic-face-width.h"
 #include "face-width-mesh.h"
+#include "timing.h"
 #include "microscopic-face-size.h"
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
@@ -7,6 +8,7 @@
 #include <BRepClass_FaceClassifier.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
+#include <IMeshTools_Parameters.hxx>
 #include <BRepTools.hxx>
 #include <BRep_Builder.hxx>
 #include <BRep_Tool.hxx>
@@ -29,7 +31,14 @@ std::optional<Meshed> triangulate(const TopoDS_Face &source, double deflection,
                                   double witnessWidth = 0) {
     const auto face = TopoDS::Face(BRepBuilderAPI_Copy(source, true, false).Shape());
     BRepTools::Clean(face);
-    BRepMesh_IncrementalMesh mesher(face, deflection, false, 0.2, false);
+    IMeshTools_Parameters parameters;
+    parameters.Deflection = deflection;
+    parameters.Angle = 0.2;
+    // Keep the established coarse sampler and curved-surface mesher. Detailed
+    // planar trims benefit from Delabella without changing boundary accuracy.
+    if (witnessWidth == 0 && BRepAdaptor_Surface(face).GetType() == GeomAbs_Plane)
+        parameters.MeshAlgo = IMeshTools_MeshAlgoType_Delabella;
+    BRepMesh_IncrementalMesh mesher(face, parameters);
     TopLoc_Location location;
     const auto mesh = BRep_Tool::Triangulation(face, location);
     if (mesh.IsNull() || mesh->NbTriangles() == 0)
@@ -91,12 +100,15 @@ FaceWidth microscopicFaceWidth(const TopoDS_Face &face, double threshold) {
         // Coarse triangles only propose sample locations. A point on the exact
         // trimmed surface and exact perimeter distance prove a wide interior;
         // coarse mesh error cannot accidentally clear a thin face.
+        KernelTiming timing("face-width-detail");
         const auto coarse = triangulate(face, threshold * 4, 2 * threshold);
+        timing.phase("coarse-witness");
         if (!coarse)
             return FaceWidth::uncertain;
         if (coarse->wideWitness)
             return FaceWidth::healthy;
         const auto fine = triangulate(face, threshold / 64);
+        timing.phase("fine-mesh");
         if (!fine)
             return FaceWidth::uncertain;
         const auto broad = face_width::classify(fine->data, 2 * threshold);
@@ -104,7 +116,9 @@ FaceWidth microscopicFaceWidth(const TopoDS_Face &face, double threshold) {
             return FaceWidth::healthy;
         if (broad == face_width::Class::uncertain)
             return FaceWidth::uncertain;
+        timing.phase("broad-width");
         const auto small = face_width::classify(fine->data, threshold);
+        timing.phase("thin-width");
         if (small == face_width::Class::thin)
             return FaceWidth::thin;
         if (small == face_width::Class::wide)

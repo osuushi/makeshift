@@ -26,7 +26,11 @@ numerical margin. A small box, area/perimeter ratio, or failed sample never clea
 a face. Unsupported or inconclusive cases go to detailed inspection.
 
 Detailed inspection uses a private triangulation with target linear deflection
-`threshold / 64` and its piecewise-linear physical perimeter. This numerical
+`threshold / 64` and its piecewise-linear physical perimeter. For detailed planar
+inspection it uses OCCT’s Delabella triangulator to avoid the default
+triangulator’s high cost on thin trimmed regions. Coarse witness sampling and
+curved faces retain the established mesher; the deflection, interior-width bounds and uncertain-case
+refusal are unchanged. This numerical
 approximation was approved by the founder; it is not an analytic Hausdorff-error
 certificate for arbitrary BReps. On that mesh, adaptive triangle subdivision
 bounds the maximum distance over **entire triangle interiors**, not only vertices.
@@ -95,6 +99,9 @@ spline patches, preserving the underlying surfaces rather than approximating the
 from their perimeter. This does not guarantee reconstruction of every arbitrary
 curved sliver: layouts without a verified join or bounded defeaturing still reject
 without modifying the accepted document.
+
+Defeaturing uses the kernel’s configured thread pool (serial in the single-thread
+WASM runtime). Geometry and material validation remain mandatory after repair.
 
 The general pass does not mutate read-only inspection or Open. Existing recognized
 microscopic finishes still heal on Open under the separate finish-simplification

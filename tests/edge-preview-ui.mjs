@@ -104,7 +104,11 @@ async function edgeScheduling(page) {
   let cleanupChecks = 0;
   await page.route("**/sketch-api", async (route) => {
     const request = route.request().postDataJSON();
-    if (["check-cleanup", "finish-edges", "edge-finish-selection"].includes(request.kind))
+    if (
+      ["check-cleanup", "finish-edges", "edge-finish-selection", "edge-finish-targets"].includes(
+        request.kind,
+      )
+    )
       timeline.push({
         kind: request.kind,
         size: request.operation?.size,
@@ -124,6 +128,11 @@ async function edgeScheduling(page) {
     await latestSize(page, selection, held, requests, flags, original);
     await cancelSize(page, held, cancelled, original);
     await modeAndClamp(page, () => cleanupChecks, original, timeline);
+    assert.equal(
+      timeline.filter((request) => request.kind === "edge-finish-targets").length,
+      0,
+      "Clicking handles and typing must not start expensive drag snap searches",
+    );
   } finally {
     const gates = [selection, ...held.values()];
     for (const delay of gates) delay.release.resolve();
@@ -137,7 +146,21 @@ async function edgeScheduling(page) {
 await withUiRuntimes(
   async (page, name) => {
     await edgeScheduling(page);
-    await edgeLiveDrag(page);
+    let snapQueries = 0;
+    const observe = (request) => {
+      if (
+        request.url().endsWith("/sketch-api") &&
+        request.postDataJSON()?.kind === "edge-finish-targets"
+      )
+        snapQueries++;
+    };
+    page.on("request", observe);
+    try {
+      await edgeLiveDrag(page);
+      assert.ok(snapQueries > 0, "Actual edge dragging still requests surface snap targets");
+    } finally {
+      page.off("request", observe);
+    }
     console.log(
       `${name}: real edge expansion, size coalescing, invalidation, cancellation, mode/limits, live pointer values and fixed minor-grid steps pass`,
     );

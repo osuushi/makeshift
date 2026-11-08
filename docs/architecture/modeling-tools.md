@@ -148,6 +148,10 @@ A white capsule fill and near-black outline follow the
 [orientable widget guide](../design/orientable-widgets.md). Blue hover and red
 geometry-limit/rejection feedback supplement the contours. Dragging limits sizes
 to verified geometry and retains its valid preview and acceptance behavior.
+Fillet/Chamfer surface snap targets are calculated only after pointer movement
+crosses the drag threshold. Clicking a handle to focus its numeric field must not
+start a background search through trial finish sizes.
+
 Typed Offset, Fillet and Chamfer values request exact previews. An infeasible value
 keeps its text and focus, clears the candidate, disables acceptance, and shows the
 error inline in the local panel. Normal face offsets and edge finishes offer

@@ -9,6 +9,7 @@
 #include <BRepAdaptor_Surface.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <BRepAlgoAPI_Defeaturing.hxx>
+#include <OSD_ThreadPool.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepGProp.hxx>
 #include <BRep_Tool.hxx>
@@ -90,6 +91,7 @@ void healFaces(Result& result, const std::vector<TopoDS_Face>& faces) {
     KernelTiming timing("microscopic-face-reconnection");
     BRepAlgoAPI_Defeaturing heal;
     heal.SetShape(result.shape);
+    heal.SetRunParallel(OSD_ThreadPool::DefaultPool()->HasThreads());
     heal.SetToFillHistory(true);
     for (const auto& face : faces) heal.AddFaceToRemove(face);
     heal.Build();
@@ -183,6 +185,7 @@ void repair(Result& result, SmallTopology small) {
 }
 void repairMicroscopicTopology(Result& result) {
     auto small = findSmall(result.shape);
+    if (small.faces.empty() && !small.edges && small.candidates.empty()) return;
     bool joined = false;
     while ((!small.faces.empty() || small.edges) && joinMicroscopicPatch(result, small.faces)) {
         joined = true;

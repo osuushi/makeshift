@@ -8,6 +8,21 @@ evidence, not a change to the pinned upstream findings below.
 
 Scope: `/Users/adacohen/projects/makeshift/.reference/FreeCAD`, revision `78e4038a564e4c8bfebb40119b41d67531232223`. Links are immutable GitHub links to that revision. No source/build/install changes were made.
 
+## Microscopic cleanup cost (2026-11-08)
+
+Pinned OCCT [`BRepAlgoAPI_Defeaturing::Build`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepAlgoAPI/BRepAlgoAPI_Defeaturing.cxx)
+passes its parallel flag to the feature-removal tool. Makeshift now enables that
+flag when its configured thread pool has workers, as ordinary face deletion already
+does. The built-in [`Delabella factory`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepMesh/BRepMesh_DelabellaMeshAlgoFactory.cxx)
+provides an alternative triangulation implementation; the width classifier selects
+it for detailed planar inspection with unchanged linear/angular deflection and
+unchanged whole-interior bounds. Coarse sampling and curved faces retain the
+established mesher: applying Delabella to coarse samples caused a native crash
+in the maximum-fillet search regression, so that broader change was rejected.
+Local runtime profiling of the segmented chamfer capture found both changes reduce
+cost. Neither observation proves universal speedups or relaxes geometry validation.
+No upstream code was copied.
+
 ## OCCT small-face diagnostic limit (2026-11-07)
 
 In the pinned OCCT 7.9.3 source, [`CheckStripFace` / `FindStripEdges`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/ShapeAnalysis/ShapeAnalysis_CheckSmallFace.cxx)
