@@ -124,6 +124,19 @@ targets; cancellation closes the lease before awaiting native cancellation. Mode
 controls never schedule completion-cleanup probes. Standalone Clean up previews and
 accepts its own ordinary edit; compatible native/script cleanup flags remain available.
 
+Offset and Fillet/Chamfer result status is separate from the lease and runner:
+idle, pending, visual-only, exact, limited, or rejected. Results retain requested
+and verified values. Exact and limited complete results can be accepted; guides
+require exact results. Visual-only results can draw and report a limited value
+without enabling acceptance. Superseded replies may draw intermediate geometry
+but cannot change the latest request's result status.
+
+Numeric text parsing distinguishes unfinished, invalid and finite values; quantity
+rules remain with each tool. Mirror uses the same parsed offset for both preview
+eligibility and reference drawing, hiding the derived reference while text is
+unfinished or invalid. Text/focus remain intact. Explicit zero remains a valid
+Mirror offset; sketch Offset still requires nonzero distance.
+
 Unconstrained movement and transforms that preserve every existing constraint
 exactly can run directly. Use the solver for coupled constrained edits; do not
 duplicate a numerical constraint solver in TypeScript for preview. If measured

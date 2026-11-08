@@ -1,3 +1,4 @@
+#include "calculation-failure.h"
 #include "boolean-periodic.h"
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
@@ -59,7 +60,7 @@ TopoDS_Shape splitFailedCutFaces(const TopoDS_Shape& source,
                                 BRepAlgoAPI_BooleanOperation& failed,
                                 std::vector<SourceEntity>& origins) {
     const auto selected = failedCylinders(source, failed);
-    if (selected.IsEmpty()) throw std::runtime_error("Kernel produced invalid geometry");
+    if (selected.IsEmpty()) throw InvalidGeometryFailure("Kernel produced invalid geometry");
     // A tangential opening at a periodic face boundary can leave the Boolean's
     // wires open in UV. Partition only implicated source cylinders, keeping
     // their exact supports, then let the Boolean rebuild the requested cut.

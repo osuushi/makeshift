@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { orient } from "./ui-blend-edit.mjs";
+import { orient, project } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { cleanupCompletionRoute } from "./ui-cleanup-completion.mjs";
 import { standaloneOnly } from "./ui-cleanup-controls.mjs";
@@ -67,6 +67,7 @@ export async function bodyFilletRoute(page, name, electron, cleanup = false) {
     await standaloneOnly(page);
     await page.getByRole("button", { name: "Accept fillet", exact: true }).click();
   } else await page.keyboard.press("Enter");
+  await modalCompleted(page);
   const accepted = (await inspect(page)).document;
   assert.ok(accepted.bodies[0].volume < original.bodies[0].volume);
   assert.equal((await inspect(page)).interaction, null);
@@ -82,7 +83,7 @@ export async function bodyFilletRoute(page, name, electron, cleanup = false) {
   const center = await at(page, 6, -6);
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(center.x, center.y);
-  await page.keyboard.press("Enter");
+  await page.keyboard.press("Meta+Enter");
   assert.ok((await inspect(page)).activePlane);
   await page.keyboard.press("l");
   await drag(page, [-3, 0], [3, 0]);
@@ -119,6 +120,11 @@ async function dragCancelAndAccept(page, name) {
   await page.mouse.wheel(0, -15);
   await previewActionReady(page, "Accept fillet");
   await page.mouse.click(points.center.x, points.center.y);
+  state = await inspect(page);
+  assert.equal(state.interaction.kind, "body-edge-finish", "A face click refines its boundaries");
+  assert.equal(state.modelingSelection.length, 4);
+  const blank = await project(page, [30, -25, 0]);
+  await page.mouse.click(blank.x, blank.y);
   await modalCompleted(page);
   assert.equal((await inspect(page)).interaction, null);
   assert.ok((await inspect(page)).document.bodies[0].volume < original.bodies[0].volume);
@@ -139,6 +145,7 @@ export async function circularFinish(page, name, mode = "fillet") {
   await page.keyboard.press("Enter");
   await inspect(page);
   await page.keyboard.press("Enter");
+  await modalCompleted(page);
   close((await inspect(page)).document.bodies[0].volume, 640 * Math.PI);
   await page.mouse.click(rim.x, rim.y);
   const nameLabel = mode === "fillet" ? "Fillet" : "Chamfer";

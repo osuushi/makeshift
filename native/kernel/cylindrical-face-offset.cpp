@@ -1,3 +1,4 @@
+#include "calculation-failure.h"
 #include "cylindrical-face-offset.h"
 #include "boundary-move.h"
 #include "offset-geometry.h"
@@ -102,7 +103,7 @@ Result rebuildBore(const Operand& body, const TopoDS_Face& bore,
                    gp_Cylinder cylinder, double distance) {
     const double direction = (bore.Orientation() == TopAbs_FORWARD) == cylinder.Direct() ? 1 : -1;
     const double radius = cylinder.Radius() + direction * distance;
-    if (radius <= tolerance) throw std::runtime_error("Offset would collapse the cylindrical face");
+    if (radius <= tolerance) throw GeometricFailure("Offset would collapse the cylindrical face");
     const auto edit = boreBoundaries(body, bore, cylinder, radius);
     std::string boreId;
     std::vector<const SourceEntity*> adjacentPlanes;

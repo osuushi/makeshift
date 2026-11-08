@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { openDocument, saveDocument } from "./native-documents.mjs";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { at, click, drag, inspect, reset } from "./ui-helpers.mjs";
+import { mirrorNumericDraft } from "./ui-mirror-numeric.mjs";
 import { findRaycastPoint } from "./ui-plane-targets.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -22,14 +23,7 @@ export async function mirrorSketchRoute(page, name) {
   let state = await inspect(page);
   assert.equal(state.preview.sketches[0].curves.length, 8);
   assert.deepEqual(state.document, original);
-  await page.getByRole("textbox", { name: "Mirror offset" }).fill("");
-  await inspect(page);
-  assert.equal(
-    await page.getByRole("button", { name: "Accept mirror", exact: true }).isEnabled(),
-    false,
-  );
-  await page.keyboard.press("Enter");
-  assert.deepEqual((await inspect(page)).document, original);
+  await mirrorNumericDraft(page, original);
   await page.getByRole("textbox", { name: "Mirror offset" }).fill("2");
   state = await inspect(page);
   for (const [i, curve] of state.preview.sketches[0].curves.slice(4).entries()) {

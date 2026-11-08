@@ -5,19 +5,26 @@ import type { Curve } from "./document.js";
 import type { Point } from "./planes.js";
 import { add, distance, midpoint, scale, subtract } from "./point-math.js";
 
+// Separate distance checks: numeric no-op, collapsed support, and tangent regularity.
+const minimumOffsetDistanceMm = 1e-7;
+const minimumOffsetRadiusMm = 1e-7;
+const minimumTangentMagnitudeMm = 1e-10;
+
 export function offsetFrame(curve: Curve, near?: Point): { point: Point; normal: Point } {
   if (curve.kind === "bezier") {
     const t = near ? bezierParameter(curve, near) : 0.5;
     let tangent = bezierDerivative(curve, t);
-    if (Math.hypot(tangent.x, tangent.y) < 1e-10 && (t === 0 || t === 1)) {
+    if (Math.hypot(tangent.x, tangent.y) < minimumTangentMagnitudeMm && (t === 0 || t === 1)) {
       const candidates =
         t === 0
           ? [curve.c1, curve.c2, curve.b].map((p) => subtract(p, curve.a))
           : [curve.c2, curve.c1, curve.a].map((p) => subtract(curve.b, p));
-      tangent = candidates.find((p) => Math.hypot(p.x, p.y) >= 1e-10) ?? tangent;
+      tangent =
+        candidates.find((p) => Math.hypot(p.x, p.y) >= minimumTangentMagnitudeMm) ?? tangent;
     }
     const length = Math.hypot(tangent.x, tangent.y);
-    if (length < 1e-10) throw new Error("Offset handle requires a regular curve tangent");
+    if (length < minimumTangentMagnitudeMm)
+      throw new Error("Offset handle requires a regular curve tangent");
     return {
       point: bezierAt(curve, t),
       normal: { x: -tangent.y / length, y: tangent.x / length },
@@ -42,7 +49,7 @@ export function offsetFrame(curve: Curve, near?: Point): { point: Point; normal:
 
 export function offsetCurve(curve: Curve, amount: number, id: string): Curve {
   if (curve.kind === "bezier") throw new Error("Cubic offsets are not available yet");
-  if (!Number.isFinite(amount) || Math.abs(amount) < 1e-7)
+  if (!Number.isFinite(amount) || Math.abs(amount) < minimumOffsetDistanceMm)
     throw new Error("Enter a non-zero offset distance");
   if (curve.kind === "segment") {
     const delta = scale(offsetFrame(curve).normal, amount);
@@ -50,7 +57,7 @@ export function offsetCurve(curve: Curve, amount: number, id: string): Curve {
   }
   const circle = curve.kind === "arc" ? arcCircle(curve) : curve;
   const radius = circle.radius + amount;
-  if (radius <= 1e-7) throw new Error("Offset would collapse the curve");
+  if (radius <= minimumOffsetRadiusMm) throw new Error("Offset would collapse the curve");
   if (curve.kind === "circle") return { ...curve, id, radius };
   const move = (p: Point) =>
     add(circle.center, scale(subtract(p, circle.center), radius / circle.radius));

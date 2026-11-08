@@ -5,6 +5,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { setTimeout as delay } from "node:timers/promises";
 import { NativeCalculator } from "../src/backend/native-calculator.js";
+import { CalculationFailure } from "../src/model/calculation-failure.js";
 
 async function calculator(deadline = 3000) {
   const dir = await mkdtemp(join(tmpdir(), "makeshift-calculator-"));
@@ -21,17 +22,16 @@ createInterface({input: process.stdin}).on('line', line => {
   if (input.stall) {
     writeFileSync(${JSON.stringify(ready)}, String(process.pid));
     setTimeout(() => console.log(JSON.stringify({late: true})), 1500);
-  } else if (input.error !== undefined) console.log(JSON.stringify({error: input.error}));
+  } else if (input.error !== undefined) console.log(JSON.stringify({error: input.error, code: input.code}));
   else console.log(JSON.stringify({pid: process.pid}));
 });
 `,
   );
   await chmod(executable, 0o755);
-  const native = new NativeCalculator<{ stall?: boolean; error?: string }, { pid: number }>(
-    executable,
-    "Test kernel",
-    deadline,
-  );
+  const native = new NativeCalculator<
+    { stall?: boolean; error?: string; code?: string },
+    { pid: number }
+  >(executable, "Test kernel", deadline);
   return { native, ready, dir };
 }
 async function started(path: string): Promise<number> {
@@ -54,7 +54,10 @@ test("native cancellation kills an uncooperative process, drains it and restarts
   const { native, ready, dir } = await calculator();
   try {
     const pending = native.calculate({ stall: true });
-    const rejected = assert.rejects(pending, /^Error: Native calculation cancelled$/);
+    const rejected = assert.rejects(
+      pending,
+      (error) => error instanceof CalculationFailure && error.code === "cancelled",
+    );
     const pid = await started(ready);
     await assert.rejects(native.calculate({}), /busy/);
     const begin = performance.now();
@@ -77,7 +80,10 @@ test("native deadline is distinct from cancellation and a subsequent calculation
   const { native, ready, dir } = await calculator(3000);
   try {
     const pending = native.calculate({ stall: true }, 600);
-    const rejected = assert.rejects(pending, /Test kernel timed out after 0.6 seconds/);
+    const rejected = assert.rejects(
+      pending,
+      (error) => error instanceof CalculationFailure && error.code === "timeout",
+    );
     const pid = await started(ready);
     await rejected;
     const next = await native.calculate({});

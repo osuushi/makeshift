@@ -102,6 +102,7 @@ async function planarOffset(page, name) {
   await (await relativeOffsetInput(page)).fill("2");
   await inspect(page);
   await page.keyboard.press("Enter");
+  await modalCompleted(page);
   state = await inspect(page);
   close(state.document.bodies[0].bounds[5], 7 + 1e-7);
   await chooseTool(page, "undo", "undo");
@@ -130,6 +131,9 @@ async function holeOffset(page, name, electron, cleanup = false) {
   assert.deepEqual(state.document, original);
   await page.screenshot({ path: `.cache/sketch-review/${name}-hole-diameter.png` });
   await distance.fill("1.5");
+  assert.equal((await inspect(page)).preview, null, "Exact hole collapse must reject");
+  assert.equal(await distance.inputValue(), "1.5");
+  await page.getByRole("button", { name: "Find Nearest", exact: true }).click();
   await verifiedOffsetReady(page);
   assert.equal(await page.getByRole("button", { name: "Accept face offset" }).isEnabled(), true);
   assert.ok(
@@ -183,6 +187,7 @@ async function sharedOffset(page, name) {
   await page.screenshot({ path: `.cache/sketch-review/${name}-shared-offset.png` });
   await standaloneOnly(page);
   await worldClick(page, [-6, 4, 6]);
+  await modalCompleted(page);
   let state = await inspect(page);
   assert.equal(state.interaction, null, "Next selection accepts the valid offset");
   close(state.document.bodies[0].volume, (420 - Math.PI * 1.5 ** 2) * 6);
@@ -192,6 +197,7 @@ async function sharedOffset(page, name) {
   await (await relativeOffsetInput(page)).fill("1");
   await inspect(page);
   await page.keyboard.press("Enter");
+  await modalCompleted(page);
   state = await inspect(page);
   close(state.document.bodies[0].volume, (420 - Math.PI * 1.5 ** 2) * 7);
   await chooseTool(page, "undo", "undo");

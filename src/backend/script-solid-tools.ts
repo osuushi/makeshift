@@ -21,7 +21,7 @@ export async function scriptSolidTool(
     return solids.calculate(document, { kind: "erode", operation: operation.input });
   const next = await solids.calculate(document, {
     kind: "finish-edges",
-    operation: operation.input,
+    operation: { ...operation.input, limit: false },
   });
   if (solids.edgeSize !== operation.input.size)
     throw new Error("Requested edge size could not be achieved exactly");
@@ -30,7 +30,11 @@ export async function scriptSolidTool(
 function validate(document: SketchDocument, operation: Operation): void {
   const bodies = document.bodies ?? [];
   if (operation.kind === "booleanBodies") {
-    const { ids, mode, keepOriginals, experimentalTrimFiltering } = operation.input;
+    const { ids, mode, keepOriginals } = operation.input;
+    const experimentalTrimFiltering =
+      "experimentalTrimFiltering" in operation.input
+        ? operation.input.experimentalTrimFiltering
+        : undefined;
     if (
       !uniqueStrings(ids) ||
       ids.length < 2 ||

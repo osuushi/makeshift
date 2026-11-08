@@ -1,3 +1,4 @@
+#include "calculation-failure.h"
 #include "timing.h"
 #include "offset-geometry.h"
 #include <OSD_ThreadPool.hxx>
@@ -24,7 +25,7 @@
 namespace offset_geometry {
 namespace {
 void require(bool condition, const std::string& message) {
-    if (!condition) throw std::runtime_error(message);
+    if (!condition) throw InvalidGeometryFailure(message);
 }
 double mass(const TopoDS_Shape& shape) {
     GProp_GProps p; BRepGProp::VolumeProperties(shape, p);

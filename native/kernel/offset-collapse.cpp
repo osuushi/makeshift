@@ -1,3 +1,4 @@
+#include "calculation-failure.h"
 #include "offset-collapse.h"
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepAlgoAPI_Defeaturing.hxx>
@@ -112,7 +113,7 @@ Operand mergeBoundaries(const Operand& body, const std::vector<TopoDS_Face>& rem
         const auto next = std::find_if(merged.predecessors.begin(), merged.predecessors.end(),
             [&](const auto& e) { return e.id == source->id && current.Contains(e.shape); });
         if (next == merged.predecessors.end())
-            throw std::runtime_error("Those faces cannot be offset after boundary absorption");
+            throw GeometricFailure("Those faces cannot be offset after boundary absorption");
         seed = TopoDS::Face(current(current.FindIndex(next->shape)));
     }
     return {body.id, merged.shape, merged.predecessors};
@@ -130,10 +131,10 @@ Operand prepareOffset(const Operand& body, std::vector<TopoDS_Face>& seeds, doub
     for (const auto& face : removed) heal.AddFaceToRemove(face);
     heal.Build();
     if (!heal.IsDone() || heal.HasErrors() || heal.HasWarnings())
-        throw std::runtime_error("Those faces cannot be offset across the disappearing boundary");
+        throw GeometricFailure("Those faces cannot be offset across the disappearing boundary");
     validate(heal.Shape());
     if (std::abs(volume(heal.Shape()) - volume(body.shape)) > std::max(1e-8, volume(body.shape) * 1e-10))
-        throw std::runtime_error("Kernel produced invalid geometry: offset preparation changed material");
+        throw InvalidGeometryFailure("Kernel produced invalid geometry: offset preparation changed material");
     Operand result{body.id, heal.Shape(), {}};
     for (const auto& source : body.entities) {
         if (!heal.IsDeleted(source.shape)) result.entities.push_back(source);
@@ -150,7 +151,7 @@ Operand prepareOffset(const Operand& body, std::vector<TopoDS_Face>& seeds, doub
     for (const auto& source : body.entities) {
         if (!contains(removed, source.shape)) continue;
         if (!heal.IsDeleted(source.shape))
-            throw std::runtime_error("Those faces cannot be offset across the disappearing boundary");
+            throw GeometricFailure("Those faces cannot be offset across the disappearing boundary");
         for (const auto& neighbor : body.entities) {
             if (neighbor.shape.ShapeType() != TopAbs_FACE || contains(removed, neighbor.shape) ||
                 !sameSupport(TopoDS::Face(source.shape), TopoDS::Face(neighbor.shape))) continue;
@@ -162,7 +163,7 @@ Operand prepareOffset(const Operand& body, std::vector<TopoDS_Face>& seeds, doub
         const auto& modified = heal.Modified(seed);
         if (modified.Extent() == 1) seed = TopoDS::Face(modified.First());
         else if (heal.IsDeleted(seed) || !modified.IsEmpty())
-            throw std::runtime_error("Those faces cannot be offset after boundary absorption");
+            throw GeometricFailure("Those faces cannot be offset after boundary absorption");
     }
     return result;
 }

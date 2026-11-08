@@ -16,7 +16,14 @@ The accepted operands it replaces are hidden while that drawing is shown.
 The calculator retains at most one disposable result from this stage. It is a
 calculation cache, not a document: the next kernel operation replaces it, completion
 consumes it, and cancellation releases it. `DocumentOwner` owns the pending typed
-operation and accepted data. The same protocol runs in the native calculator and
+operation through its `DocumentSession`, and accepted data through `DocumentStore`.
+The session transitions between idle, preparing, visual-only, completing and complete work;
+completion retains the drawable mesh until full metadata is ready, without allowing acceptance.
+Reopened metadata belongs only to a complete candidate. Other backend components
+request transitions instead of independently assigning candidate, mesh and operation
+fields. A verified no-op is complete even when its candidate is the accepted document.
+Failed acceptance retains complete work for recovery; cancellation and replacement
+clear the entire temporary state. The same protocol runs in the native calculator and
 persistent WASM calculator worker; worker termination discards the cache.
 
 After drawing, the renderer yields across a paint opportunity before requesting
@@ -39,6 +46,23 @@ separate exact transforms and result composition have not been staged. Reopened
 accepted previews retain their existing complete snapshot behavior.
 
 ### Offset and Fillet/Chamfer search
+
+Search continues only after a typed geometry failure eligible for that operation.
+Offset also searches after its `invalid-geometry` validators reject a candidate;
+Fillet/Chamfer require `geometric-infeasibility` from their construction boundary,
+after the supported fallback attempts. Invalid input preparation or presentation
+must not broaden the finish search. Unsupported
+or invalid input, cancellation, supersession, timeout and unknown/internal failures
+stop the search. The native boundary assigns categories where their causes are
+known, independently of human-readable diagnostics. Desktop and WASM adapters
+preserve the category and reject even an empty-string error envelope. Erosion
+allowance feedback remains separately validated for the failed operation.
+
+Typed UI values and scripts request exact calculation. Dragging and explicit
+Find Nearest request the existing operation-specific search. A positive scripted
+finish radius below 0.001 mm rejects; explicit zero keeps its tool-specific no-op
+or sharp-recovery meaning. The native construction fallback ladder and geometry
+tolerances are unchanged.
 
 Each feasibility probe validates and meshes its exact result without full
 presentation metadata. The existing search still returns a verified distance or

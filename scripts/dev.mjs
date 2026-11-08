@@ -1,3 +1,4 @@
+import "./generate-script-types.mjs";
 import "./build-native.mjs";
 import { spawn } from "node:child_process";
 import electron from "electron";

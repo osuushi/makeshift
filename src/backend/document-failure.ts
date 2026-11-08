@@ -1,4 +1,5 @@
 import type { BodyErosion } from "../model/body.js";
+import { hasFailureCode } from "../model/calculation-failure.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 
 /** Only a finite, larger allowance from this failed erosion may reach its widget. */
@@ -29,7 +30,10 @@ export function documentFailure(
       ? error.message
       : String(error);
   const outcome =
-    cancelling || superseded || message === "Preview superseded"
+    cancelling ||
+    superseded ||
+    hasFailureCode(error, "superseded") ||
+    hasFailureCode(error, "cancelled")
       ? ("cancelled" as const)
       : ("failed" as const);
   return {

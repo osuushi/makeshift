@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { at, drag, inspect, reset } from "./ui-helpers.mjs";
+import { at, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function hiddenBodiesRoute(page, global = false) {
@@ -17,6 +17,7 @@ export async function hiddenBodiesRoute(page, global = false) {
   await extrude();
   await page.keyboard.press("Enter");
   await page.keyboard.press("Enter");
+  await modalCompleted(page);
   const original = (await inspect(page)).document.bodies[0];
   await page.getByRole("button", { name: "Show Sketch 1", exact: true }).click();
   await page
@@ -24,7 +25,10 @@ export async function hiddenBodiesRoute(page, global = false) {
     .click();
   let state = await extrude();
   assert.equal(
-    await page.getByRole("button", { name: "Union", exact: true }).getAttribute("aria-pressed"),
+    await page
+      .locator(".extrude-controls")
+      .getByRole("button", { name: "Union", exact: true })
+      .getAttribute("aria-pressed"),
     "true",
   );
   assert.equal(
@@ -38,14 +42,21 @@ export async function hiddenBodiesRoute(page, global = false) {
   );
   assert.equal(await page.getByRole("button", { name: "Target body 1", exact: true }).count(), 0);
   for (const mode of ["Subtract", "Intersect"]) {
-    await page.getByRole("button", { name: mode, exact: true }).click();
+    await page
+      .locator(".extrude-controls")
+      .getByRole("button", { name: mode, exact: true })
+      .click();
     state = await inspect(page);
     assert.deepEqual(state.document.bodies, [original]);
     assert.equal(state.preview, null, "No visible target must reject the Boolean");
   }
-  await page.getByRole("button", { name: "Union", exact: true }).click();
+  await page
+    .locator(".extrude-controls")
+    .getByRole("button", { name: "Union", exact: true })
+    .click();
   await inspect(page);
   await page.keyboard.press("Enter");
+  await modalCompleted(page);
   state = await inspect(page);
   assert.equal(state.document.bodies.length, 2);
   assert.deepEqual(

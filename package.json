@@ -11,9 +11,9 @@
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "dev:web": "npm run build:native && vite --host 127.0.0.1",
-    "build": "npm run build:native && vite build && tsc -p tsconfig.host.json",
+    "build": "npm run generate:script-types && npm run build:native && vite build && tsc -p tsconfig.host.json",
     "start": "npm run build && electron .",
-    "typecheck": "tsc --noEmit && tsc -p tsconfig.host.json --noEmit && tsc -p tsconfig.test.json --noEmit && npm run typecheck:ui",
+    "typecheck": "node scripts/generate-script-types.mjs --check && tsc --noEmit && tsc -p tsconfig.host.json --noEmit && tsc -p tsconfig.test.json --noEmit && npm run typecheck:ui",
     "typecheck:ui": "tsc -p tsconfig.ui.json --noEmit",
     "check": "biome check package.json tsconfig.json tsconfig.host.json tsconfig.test.json tsconfig.ui.json vite.config.ts forge.config.js packaging biome.json scripts tests src website",
     "format": "biome check --write package.json tsconfig.json tsconfig.host.json tsconfig.test.json tsconfig.ui.json vite.config.ts forge.config.js packaging biome.json scripts tests src website",
@@ -64,7 +64,8 @@
     "test:ui:extended": "node tests/ui.mjs",
     "demos:record": "node scripts/demos/record.mjs",
     "demos:check": "node scripts/demos/record.mjs && node tests/website-gallery.mjs",
-    "demos:package": "node scripts/demos/package.mjs"
+    "demos:package": "node scripts/demos/package.mjs",
+    "generate:script-types": "node scripts/generate-script-types.mjs"
   },
   "dependencies": {
     "@jitl/quickjs-wasmfile-release-sync": "0.32.0",

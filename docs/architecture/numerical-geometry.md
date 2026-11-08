@@ -5,6 +5,13 @@ Native coordinates and distances use millimeters; volume uses cubic millimeters.
 Shell/Face Offset validation and projection. These are checks for distinct tasks,
 not one global precision setting or a replacement for OCCT entity tolerances.
 
+Sketch offset checks likewise keep separate names and units: endpoint joining,
+ambiguous-join distance and minimum edge length are each 1e-7 mm; minimum loop
+area is 1e-7 mm²; minimum arc sweep is 1e-7 radians and semicircle recognition is
+1e-10 radians. Numeric offset distance and minimum curve radius are each 1e-7 mm;
+cubic tangent regularity uses 1e-10 mm. Equal literal values do not make these one
+tolerance. Naming these checks does not change their values.
+
 | Policy | Value | Purpose |
 | --- | --- | --- |
 | Minimum recoverable finish | 0.001 mm | Rounds below this radius and recognized bevels below this setback recover their sharp supporting intersection. This is modeling resolution, not a looser BRep validity tolerance. |

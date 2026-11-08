@@ -1,6 +1,11 @@
 import { type ChildProcessWithoutNullStreams, spawn } from "node:child_process";
 import { resolve } from "node:path";
 import { createInterface } from "node:readline";
+import {
+  CalculationFailure,
+  type CalculationFailureCode,
+  calculationFailure,
+} from "../model/calculation-failure.js";
 import { calculationTimeoutMs } from "../model/calculation-limits.js";
 
 export class NativeCalculator<Input, Output> {
@@ -36,11 +41,11 @@ export class NativeCalculator<Input, Output> {
         const reply = JSON.parse(line) as Output & { error?: string };
         if (typeof reply.error === "string")
           pending.reject(
-            new Error(reply.error || `${this.name} calculation failed`, { cause: reply }),
+            calculationFailure(reply as { error: string }, `${this.name} calculation failed`),
           );
         else pending.resolve(reply);
       } catch {
-        pending.reject(new Error("Invalid native calculator reply"));
+        pending.reject(new CalculationFailure("internal", "Invalid native calculator reply"));
       }
     });
     child.stderr.on("data", (data: Buffer) => {
@@ -57,7 +62,8 @@ export class NativeCalculator<Input, Output> {
     child.stdin.on("error", failed);
   }
   calculate(input: Input, deadlineMs = this.deadlineMs): Promise<Output> {
-    if (this.pending) return Promise.reject(new Error("Native calculator is busy"));
+    if (this.pending)
+      return Promise.reject(new CalculationFailure("invalid-request", "Native calculator is busy"));
     return new Promise((resolve, reject) => {
       const pending = { resolve, reject };
       this.pending = pending;
@@ -74,7 +80,7 @@ export class NativeCalculator<Input, Output> {
       if (this.pending !== pending) return;
       if (!this.child) this.start();
       this.timer = setTimeout(
-        () => this.stop(`${this.name} timed out after ${deadlineMs / 1000} seconds`),
+        () => this.stop(`${this.name} timed out after ${deadlineMs / 1000} seconds`, "timeout"),
         deadlineMs,
       );
       this.child?.stdin.write(`${JSON.stringify(input)}\n`);
@@ -83,12 +89,12 @@ export class NativeCalculator<Input, Output> {
     }
   }
   async cancel(): Promise<void> {
-    if (this.pending) this.stop("Native calculation cancelled");
+    if (this.pending) this.stop("Native calculation cancelled", "cancelled");
     await this.stopping;
   }
-  private stop(message: string): void {
+  private stop(message: string, code: CalculationFailureCode = "internal"): void {
     clearTimeout(this.timer);
-    this.pending?.reject(new Error(message));
+    this.pending?.reject(new CalculationFailure(code, message));
     this.pending = null;
     const child = this.child;
     this.child = null;
@@ -110,6 +116,6 @@ export class NativeCalculator<Input, Output> {
     });
   }
   close(): void {
-    this.stop("Native calculation cancelled");
+    this.stop("Native calculation cancelled", "cancelled");
   }
 }

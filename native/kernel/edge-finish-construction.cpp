@@ -1,3 +1,4 @@
+#include "calculation-failure.h"
 #include "edge-finish-construction.h"
 #include "edge-finish-validation.h"
 #include "microscopic-topology.h"
@@ -24,9 +25,9 @@ Result buildWith(Operation& operation, const Operand& body, const std::vector<To
     for (const auto& edge : edges)
         if (!operation.Contour(edge)) throw std::runtime_error("A selected edge cannot be rounded or chamfered");
     operation.Build();
-    if (!operation.IsDone()) throw std::runtime_error("Edge finish is not feasible at this size");
+    if (!operation.IsDone()) throw GeometricFailure("Edge finish is not feasible at this size");
     auto shape = operation.Shape();
-    if (shape.IsNull()) throw std::runtime_error("Kernel produced invalid geometry");
+    if (shape.IsNull()) throw InvalidGeometryFailure("Kernel produced invalid geometry");
     if (!BRepCheck_Analyzer(shape).IsValid()) {
         ShapeFix_Shape repair(shape);
         repair.Perform();
@@ -62,7 +63,7 @@ Result normalizedFinish(Result rounded, const Operand& body) {
     validateFinishManifold(rounded.shape);
     std::vector<Result> results;
     solids(results, rounded.shape, rounded.predecessors, {body.id});
-    if (results.size() != 1) throw std::runtime_error("Edge finish is not feasible at this size");
+    if (results.size() != 1) throw GeometricFailure("Edge finish is not feasible at this size");
     simplifySmallFinishes(results.front());
     resolveMicroscopicTopology(results.front());
     return results.front();
@@ -132,9 +133,9 @@ Result constructEdgeFinish(const Operand& body, const std::vector<TopoDS_Edge>& 
         return normalizedFinish(constructCrossingEdgeFinish(body, edges, radius, chamfer, continuingBlends), body);
     } catch (const Standard_Failure& error) {
         if (std::getenv("MAKESHIFT_KERNEL_TIMING")) std::cerr << "edge-finish rejected: " << error.GetMessageString() << "\n";
-        throw std::runtime_error("Edge finish is not feasible at this size");
+        throw GeometricFailure("Edge finish is not feasible at this size");
     } catch (const std::runtime_error& error) {
         if (std::getenv("MAKESHIFT_KERNEL_TIMING")) std::cerr << "edge-finish rejected: " << error.what() << "\n";
-        throw std::runtime_error("Edge finish is not feasible at this size");
+        throw GeometricFailure("Edge finish is not feasible at this size");
     }
 }

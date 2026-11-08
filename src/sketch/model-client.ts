@@ -1,3 +1,4 @@
+import { hasFailureCode } from "../model/calculation-failure.js";
 import type { VisualPreview } from "../model/visual-preview.js";
 import { sketchGridPreferences } from "../preferences/sketch-grid.js";
 import { cancellableCalculation } from "./calculation-state.js";
@@ -183,7 +184,7 @@ export class ModelClient extends ModelQueries {
       if (
         !this.cancelling &&
         !this.presentation?.superseded &&
-        !(this.superseding && error instanceof Error && error.message === "Preview superseded")
+        !(this.superseding && hasFailureCode(error, "superseded"))
       )
         this.error(error instanceof Error ? error.message : String(error));
       return false;

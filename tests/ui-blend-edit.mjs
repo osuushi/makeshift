@@ -50,11 +50,6 @@ export async function outwardDrag(page, action, face, amount = 1, scope = page) 
 }
 async function roundEdit(page, name, mode) {
   await circularFinish(page, name, mode);
-  await page.mouse.move(640, 425);
-  await page.keyboard.down("Control");
-  await page.mouse.wheel(0, -90);
-  await page.keyboard.up("Control");
-  await page.waitForFunction(() => window.makeshiftInspect().camera.height < 40);
   const original = (await inspect(page)).document;
   const face = original.bodies[0].faces.find((f) => (mode === "fillet" ? f.blend : f.chamfer));
   assert.ok(face);
@@ -71,7 +66,7 @@ async function roundEdit(page, name, mode) {
   if (mode === "fillet") close(state.preview.bodies[0].faces.find((f) => f.blend).blend.radius, 3);
   else close(state.preview.bodies[0].faces.find((f) => f.chamfer).chamfer.distance, 3);
   await page.getByRole("button", { name: "Accept face offset" }).click();
-  await inspect(page);
+  await modalCompleted(page);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);
   await selectSurface(page, face);
@@ -89,9 +84,15 @@ async function roundEdit(page, name, mode) {
 }
 async function flatChamferDrag(page, name) {
   await plate(page);
+  // The plate helper retains its edge selection. Clear the idle finish controls
+  // before picking a different world edge so the panel cannot intercept the click.
+  await page.keyboard.press("Escape");
   await orient(page, [-1, -1, 0.4]);
   const edge = await project(page, [-10, -10, 5]);
   await page.mouse.click(edge.x, edge.y);
+  const selected = (await inspect(page)).modelingSelection;
+  assert.equal(selected.length, 1);
+  assert.equal(selected[0].kind, "edge");
   await chooseTool(page, "chamfer", "chamfer");
   await page.getByRole("button", { name: "Chamfer edges", exact: true }).click();
   await page.getByRole("textbox", { name: "Chamfer distance" }).fill("4");

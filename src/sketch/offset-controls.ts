@@ -5,6 +5,7 @@ import { type Constraint, newId, type Sketch } from "./document.js";
 import type { SketchEditor } from "./editor.js";
 import { GestureSolve } from "./gesture-solve.js";
 import { onModelKeydown } from "./model-keys.js";
+import { parseNumericDraft } from "./numeric-draft.js";
 import { offsetDistance } from "./offset-geometry.js";
 import { selectedOffsetCurves } from "./offset-selection.js";
 import { type OffsetTarget, offsetLinks, offsetPreview, prepareOffset } from "./offset-target.js";
@@ -87,7 +88,11 @@ export class OffsetControls {
     this.handle.addEventListener("pointermove", this.move, options);
     this.handle.addEventListener("pointerup", this.release, options);
     this.handle.addEventListener("pointercancel", () => void this.cancel(), options);
-    this.input.addEventListener("input", () => this.preview(Number(this.input.value)), options);
+    this.input.addEventListener(
+      "input",
+      () => this.preview(parseNumericDraft(this.input.value).value ?? NaN),
+      options,
+    );
     onModelKeydown(
       (event) => {
         if (!this.session) return;
