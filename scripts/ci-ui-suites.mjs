@@ -117,7 +117,7 @@ export const uiSuites = [
     seconds: 14,
     browsers: ["electron"],
     reason:
-      "Decorator removal clears late worker/picking state; its viewport shortcut stays clickable beside transforms and reveals collapsed Inspector controls.",
+      "Decorator removal clears late worker/picking state; its viewport shortcut stays clickable beside transforms and reveals collapsed Inspector controls without transiently scrolling the workspace.",
     unit: "decorator-display.test.ts",
   },
   {

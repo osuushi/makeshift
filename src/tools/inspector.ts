@@ -96,7 +96,8 @@ export class Inspector {
     this.layout.closed = this.layout.closed?.filter((name) => name !== title);
     this.update();
     this.save();
-    section.root.scrollIntoView({ block: "nearest" });
+    this.body.scrollTop +=
+      section.root.getBoundingClientRect().top - this.body.getBoundingClientRect().top;
     section.toggle.focus({ preventScroll: true });
   }
   private button(label: string, text: string): HTMLButtonElement {

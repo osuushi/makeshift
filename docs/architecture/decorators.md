@@ -126,6 +126,7 @@ mesh operations to native Manifold; clients without that capability retain WASM.
 Decorated face and whole-body selections show a compact viewport widget beside
 the selection. Its drawn layer icon selects the decorated supports in that selection
 and reveals, expands, scrolls to and focuses the Inspector's Decorators section.
+Revealing scrolls only the Inspector contents, keeping the workspace and canvas fixed.
 The adjacent red X removes only the selected decorated face membership (all
 decorated faces for whole-body selection) through the ordinary decorator edit and
 Undo/Redo path. Unselected members and underlying solids remain intact. The widget

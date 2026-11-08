@@ -37,7 +37,7 @@ await withUiRuntimes(
 );
 
 // Only real input and layout can verify that this selection widget remains clickable
-// beside transform controls and reveals an independently collapsed Inspector.
+// beside transform controls and reveals a collapsed Inspector without scrolling the workspace.
 async function selectionShortcut(page, name) {
   const before = (await inspect(page)).document;
   const shortcut = page.getByRole("button", { name: "Show decorators in Inspector", exact: true });
@@ -45,10 +45,12 @@ async function selectionShortcut(page, name) {
   await page
     .locator(".decorator-selection-actions")
     .screenshot({ path: `.cache/sketch-review/${name}-decorator-shortcut.png` });
+  await page.getByRole("button", { name: "Collapse Inspector", exact: true }).click();
+  await revealShortcut(page, shortcut);
   await page.getByRole("button", { name: "Decorators", exact: true }).click();
   await page.getByRole("button", { name: "Collapse Inspector", exact: true }).click();
   await page.setViewportSize({ width: 600, height: 400 });
-  await shortcut.click();
+  await revealShortcut(page, shortcut);
   assert.equal(
     await page
       .getByRole("button", { name: "Decorators", exact: true })
@@ -78,6 +80,38 @@ async function selectionShortcut(page, name) {
   assert.deepEqual((await inspect(page)).document.decorators, before.decorators);
   await shortcut.click();
   assert.ok((await inspect(page)).modelingSelection.every((target) => target.kind === "face"));
+}
+
+async function revealShortcut(page, shortcut) {
+  const workspace = await workspaceBounds(page);
+  // Record in the click handler, before placement frames can undo a page scroll
+  // and leave the canvas showing the shifted frame until the next pointer move.
+  await shortcut.evaluate((button) => {
+    button.addEventListener(
+      "click",
+      () => {
+        button.dataset.workspaceScroll = JSON.stringify([scrollX, scrollY]);
+      },
+      { once: true },
+    );
+  });
+  await shortcut.click();
+  assert.deepEqual(
+    JSON.parse(await shortcut.getAttribute("data-workspace-scroll")),
+    workspace.scroll,
+    "Inspector reveal cannot transiently scroll the workspace during the click",
+  );
+  assert.deepEqual(await workspaceBounds(page), workspace, "Workspace bounds stay fixed");
+}
+
+async function workspaceBounds(page) {
+  return page.evaluate(() => ({
+    scroll: [scrollX, scrollY],
+    bounds: ["#app", "canvas", "header", "footer"].map((selector) => {
+      const { x, y, width, height } = document.querySelector(selector).getBoundingClientRect();
+      return { x, y, width, height };
+    }),
+  }));
 }
 
 async function removeAndUndo(page, label, original) {
