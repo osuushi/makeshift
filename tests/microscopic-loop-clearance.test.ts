@@ -27,8 +27,13 @@ test("segmented boundary loops cannot publish a sub-micron chamfer shelf", async
       kind: "offset-faces",
       operation: { faces, radius: 3.4995, chamfer: true, distance: 0, limit: false },
     });
-    assert.ok(candidate.error, "The captured 0.0005 mm shelf must not be accepted");
-    assert.equal(candidate.view.candidate, null);
+    assert.equal(candidate.error, undefined);
+    const repaired = candidate.view.candidate?.bodies?.[0];
+    assert.ok(repaired);
+    assert.ok(
+      repaired.faces.filter((face) => face.plane).every((face) => face.signature[2] > 1),
+      "The captured 0.0005 mm shelf must be removed before acceptance",
+    );
     assert.deepEqual(owner.view.data, before);
     const correction = await owner.call({
       kind: "offset-faces",

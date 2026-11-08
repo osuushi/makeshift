@@ -1,4 +1,7 @@
 #include "microscopic-validation.h"
+#include "microscopic-cover.h"
+#include "timing.h"
+#include <Standard_Failure.hxx>
 #include "geometry-policy.h"
 #include "kernel.h"
 #include "offset-geometry.h"
@@ -42,7 +45,7 @@ bool contained(const TopoDS_Shape& candidate, const TopoDS_Shape& source) {
             return false;
     return true;
 }
-void insideEnvelope(const TopoDS_Shape& source, const TopoDS_Shape& candidate) {
+void offsetEnvelope(const TopoDS_Shape& source, const TopoDS_Shape& candidate) {
     // A material-removing repair is already contained in its source. Avoid an
     // unnecessary offset of the very sliver being removed: its rounded joins
     // can self-intersect even though no containment envelope is needed.
@@ -61,6 +64,18 @@ void insideEnvelope(const TopoDS_Shape& source, const TopoDS_Shape& candidate) {
     if (!solid) throw std::runtime_error("Microscopic repair envelope is empty");
     if (!contained(candidate, offset.Shape()))
         throw std::runtime_error("Microscopic topology repair exceeds one micron");
+}
+void insideEnvelope(const TopoDS_Shape& source, const TopoDS_Shape& candidate) {
+    KernelTiming timing("microscopic-material");
+    try {
+        offsetEnvelope(source, candidate);
+        return;
+    } catch (const Standard_Failure&) {
+    } catch (const std::runtime_error&) {
+    }
+    timing.phase("offset-envelope");
+    if (!microscopicCoverContains(source, candidate))
+        throw std::runtime_error("Could not verify microscopic repair within one micron");
 }
 }
 void validateMicroscopicRepair(const TopoDS_Shape& before, const TopoDS_Shape& after) {

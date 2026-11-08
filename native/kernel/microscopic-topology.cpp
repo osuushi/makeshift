@@ -3,6 +3,8 @@
 #include "microscopic-validation.h"
 #include "microscopic-correspondence.h"
 #include "microscopic-face-width.h"
+#include "microscopic-patch-join.h"
+#include "offset-geometry.h"
 #include <BRepAdaptor_Surface.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <BRepAlgoAPI_Defeaturing.hxx>
@@ -171,12 +173,20 @@ void repair(Result& result, SmallTopology small) {
     result = std::move(repaired);
 }
 void repairMicroscopicTopology(Result& result) {
-    repair(result, findSmall(result.shape));
+    auto small = findSmall(result.shape);
+    bool joined = false;
+    while ((!small.faces.empty() || small.edges) && joinMicroscopicPatch(result, small.faces)) {
+        joined = true;
+        small = findSmall(result.shape);
+    }
+    if (joined) offset_geometry::validSolid(result.shape, "Joined microscopic spline patches");
+    repair(result, small);
     // Near-threshold face widths are candidates, not defects: removal
     // must still satisfy the same complete-solid one-micron material budget.
     for (;;) {
         bool changed = false;
-        for (const auto& face : findSmall(result.shape).candidates) {
+        const auto candidates = findSmall(result.shape).candidates;
+        for (const auto& face : candidates) {
             try {
                 repair(result, {{face}, false});
                 changed = true;

@@ -447,6 +447,19 @@ Validity is a separate OCCT check. `TopoShape::isValid()` constructs `BRepCheck_
 
 ## Boolean, fillet, and history behavior
 
+OCCT 7.9.3 source observation: curve concatenation can rescale the second curve's
+parameter interval using endpoint derivative magnitudes in
+[`GeomConvert_CompCurveToBSplineCurve::Add`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/GeomConvert/GeomConvert_CompCurveToBSplineCurve.cxx#L156-L190).
+Makeshift's microscopic-boundary concatenation instead uses matching piecewise
+affine intervals for the spatial curve and both incident pcurves, retains C0 knot
+multiplicity, and verifies their resulting world-space agreement. The compatible
+surface-patch path concatenates control nets rather than fitting only a perimeter.
+Runtime regressions cover the captured segmented fillet and preserve a deliberately
+bulged patch interior across differing degrees, knots and exchanged UV axes. This
+is independent application code using the spline representation, not copied upstream
+implementation; unsupported representations still take the existing refusal path.
+
+
 OCCT 7.9.3 source observation: periodic face division delegates reconstruction to
 [`ShapeFix_ComposeShell`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/ShapeUpgrade/ShapeUpgrade_ClosedFaceDivide.cxx#L225-L260),
 whose edge reconstruction uses

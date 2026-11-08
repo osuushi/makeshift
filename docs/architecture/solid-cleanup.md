@@ -46,6 +46,25 @@ is not an increase to the material-change budget or kernel tolerance.
 Short nondegenerate edges retain their independent length check; only continuous
 curves may merge. Surface-pole edges remain bookkeeping.
 
+Compatible rectangular spline patches join before destructive face removal. Their
+surface degrees, transverse knots and parameter directions are aligned, then their
+control nets concatenate across the shared isoparametric boundary. This preserves
+the original interiors, including curvature that a perimeter-only fit would lose.
+Positive rational control weights provide a whole-patch displacement bound on the
+shared-row reconciliation, limited to 1e-7 mm. Straight UV boundaries may themselves
+be represented as splines; their control hulls establish the isoparametric condition.
+Unsupported trims, incompatible control rows, and periodic patch layouts retain the
+ordinary repair/refusal path.
+
+A former patch junction can leave microscopic boundary segments. Joining the next
+compatible patch removes that junction, after which degree-two curve pieces can
+concatenate without discarding a corner or refitting their geometry. Spatial and
+parameter curves use the same piecewise affine parameter intervals; C0 joins remain
+C0. Both old edge references continue to the resulting edge. Above-threshold faces
+are not proactively concatenated unless they border such a microscopic junction.
+Each join checks closed topology and curve/surface agreement; the completed batch
+also receives the full solid, orientation, tolerance and self-intersection checks.
+
 Repair operates on a private copy, carries face/edge correspondence, clears stale
 measurements and belongs to the originating edit's Undo step. When two boundaries
 of a removed face become the unique intersection of the same surviving supports,
@@ -63,14 +82,19 @@ exact vertex distances to bound the entire solid. Other shapes first check exact
 Boolean containment: a contained candidate needs no outward envelope. Only a
 non-contained side needs the fixed 0.001 mm outward envelope and its independent
 validity/containment checks. This avoids offsetting a disappearing sliver merely
-to prove that removing it cannot add material. Unverifiable repairs still reject;
-this does not guarantee that every curved sliver can be healed. In particular,
-the segmented conical-shoulder capture is now refused at the edit that creates
-its 0.0005 mm shelf. Automatic recovery of that previously accepted capture is
-not established: trial reconnection can lead to unrepairable microscopic
-transition faces in a subsequent fillet. Keep the accepted document unchanged
-on refusal; changing the originating chamfer to leave a meaningful ledge remains
-available.
+to prove that removing it cannot add material. If that envelope cannot be verified,
+a union of rigidly translated source solids provides another conservative cover:
+each copy moves no more than 0.001 mm, so their union lies inside the permitted
+neighborhood. Exact successful Boolean differences must exhaust the candidate;
+a failed or warning-bearing cut contributes no coverage. The proof runs in both
+directions and does not enlarge entity tolerances.
+
+The segmented conical-shoulder capture now repairs its 0.0005 mm shelf and accepts
+a 0.5 mm fillet. Generated microscopic transition patches join their neighboring
+spline patches, preserving the underlying surfaces rather than approximating them
+from their perimeter. This does not guarantee reconstruction of every arbitrary
+curved sliver: layouts without a verified join or bounded defeaturing still reject
+without modifying the accepted document.
 
 The general pass does not mutate read-only inspection or Open. Existing recognized
 microscopic finishes still heal on Open under the separate finish-simplification
