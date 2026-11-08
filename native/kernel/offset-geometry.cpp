@@ -1,3 +1,4 @@
+#include "timing.h"
 #include "offset-geometry.h"
 #include <OSD_ThreadPool.hxx>
 #include "offset-repair.h"
@@ -136,6 +137,7 @@ void checkParallel(const TopoDS_Face& source, const TopoDS_Face& offset, double 
     }
 }
 void validSolid(const TopoDS_Shape& shape, const char* context) {
+    KernelTiming timing("solid-validation");
     // Arc joins carry conservative vertex bounds above 1e-6 mm in OCCT.
     // Keep a separate 2e-6 mm topology budget; geometric distance stays at 1e-6.
     using geometry_policy::offsetTopologyToleranceMm;
@@ -144,6 +146,7 @@ void validSolid(const TopoDS_Shape& shape, const char* context) {
     const bool parallel = OSD_ThreadPool::DefaultPool()->HasThreads();
     BRepCheck_Analyzer validity(shape, true, parallel, true);
     require(validity.IsValid(), std::string(context) + " has invalid boundaries or surface geometry");
+    timing.phase("boundary-validity");
     const double v = mass(shape);
     require(std::isfinite(v) && v > geometry_policy::minimumSolidVolumeMm3,
             std::string(context) + " has collapsed or inverted material");
@@ -161,9 +164,11 @@ void validSolid(const TopoDS_Shape& shape, const char* context) {
     for (TopExp_Explorer it(shape, TopAbs_VERTEX); it.More(); it.Next())
         require(BRep_Tool::Tolerance(TopoDS::Vertex(it.Current())) <= offsetTopologyToleranceMm,
                 std::string(context) + " exceeds the vertex tolerance");
+    timing.phase("mass-orientation-tolerances");
     BOPAlgo_ArgumentAnalyzer check;
     check.SetShape1(shape); check.SelfInterMode() = true;
     check.SetRunParallel(parallel); check.Perform();
     require(!check.HasErrors() && !check.HasFaulty(), std::string(context) + " contains self-intersections");
+    timing.phase("self-intersections");
 }
 }

@@ -1,4 +1,5 @@
 #include "microscopic-topology.h"
+#include "timing.h"
 #include "geometry-policy.h"
 #include "microscopic-validation.h"
 #include "microscopic-correspondence.h"
@@ -52,6 +53,7 @@ bool planarSubdivision(const TopoDS_Face& face,
     return continuations > 0;
 }
 SmallTopology findSmall(const TopoDS_Shape& shape) {
+    KernelTiming timing("microscopic-detection");
     SmallTopology found;
     TopTools_IndexedDataMapOfShapeListOfShape adjacency;
     for (TopExp_Explorer f(shape, TopAbs_FACE); f.More(); f.Next()) {
@@ -85,6 +87,7 @@ int count(const TopoDS_Shape& shape, TopAbs_ShapeEnum type) {
     return items.Extent();
 }
 void healFaces(Result& result, const std::vector<TopoDS_Face>& faces) {
+    KernelTiming timing("microscopic-face-reconnection");
     BRepAlgoAPI_Defeaturing heal;
     heal.SetShape(result.shape);
     heal.SetToFillHistory(true);
@@ -94,6 +97,7 @@ void healFaces(Result& result, const std::vector<TopoDS_Face>& faces) {
         throw std::runtime_error("Microscopic faces could not be reconnected into a solid");
     for (const auto& face : faces)
         if (!heal.IsDeleted(face)) throw std::runtime_error("Microscopic face was not removed");
+    timing.phase("defeature");
     std::vector<SourceEntity> mapped;
     for (const auto& origin : result.predecessors) {
         if (!heal.IsDeleted(origin.shape)) mapped.push_back(origin);
@@ -102,6 +106,7 @@ void healFaces(Result& result, const std::vector<TopoDS_Face>& faces) {
                 if (i.Value().ShapeType() == origin.shape.ShapeType()) mapped.push_back({origin.id, i.Value()});
     }
     continueRemovedFaceEdges(result, faces, heal, mapped);
+    timing.phase("continue-selection");
     std::vector<TopoDS_Face> selected;
     for (const auto& face : result.selectedFaces) {
         if (!heal.IsDeleted(face)) selected.push_back(face);
@@ -144,6 +149,7 @@ void repair(Result& result, SmallTopology small) {
     if (small.faces.empty() && !small.edges) return;
     // OCCT healing can modify shared tolerances. Never expose those mutations
     // to an operand or to an earlier preview if the repair subsequently fails.
+    KernelTiming timing("microscopic-repair");
     const auto before = result.shape;
     BRepBuilderAPI_Copy copy(before);
     Result repaired = result;
@@ -157,6 +163,7 @@ void repair(Result& result, SmallTopology small) {
     for (auto& face : repaired.selectedFaces) face = TopoDS::Face(copy.ModifiedShape(face));
     for (auto& face : small.faces) face = TopoDS::Face(copy.ModifiedShape(face));
     if (!small.faces.empty()) healFaces(repaired, small.faces);
+    timing.phase("reconnect-faces");
     if (findSmall(repaired.shape).edges) healEdges(repaired);
     validate(repaired.shape);
     if (count(before, TopAbs_SOLID) != count(repaired.shape, TopAbs_SOLID) ||
@@ -167,7 +174,9 @@ void repair(Result& result, SmallTopology small) {
         throw std::runtime_error("Geometry contains a sub-micron feature that cannot be safely collapsed");
     if (volume(repaired.shape) <= geometry_policy::minimumSolidVolumeMm3)
         throw std::runtime_error("Microscopic topology repair would remove the solid");
+    timing.phase("check-topology");
     validateMicroscopicRepair(before, repaired.shape);
+    timing.phase("validate-repair");
     repaired.exactVolume.reset();
     repaired.exactBounds.reset();
     result = std::move(repaired);
