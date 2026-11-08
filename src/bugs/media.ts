@@ -10,7 +10,7 @@ export function recordStream(stream: MediaStream, audio = false) {
   const mimeType = audio ? "audio/webm;codecs=opus" : "video/webm;codecs=vp8";
   const recorder = new MediaRecorder(stream, {
     mimeType,
-    ...(audio ? { audioBitsPerSecond: 64000 } : { videoBitsPerSecond: 1000000 }),
+    ...(audio ? { audioBitsPerSecond: 64000 } : { videoBitsPerSecond: 4000000 }),
   });
   const chunks: Blob[] = [];
   let failure: Error | undefined;
@@ -61,8 +61,8 @@ export class BugVideo {
       audio: false,
       video: {
         frameRate: { ideal: 8, max: 8 },
-        width: { ideal: 1280, max: 1280 },
-        height: { ideal: 800, max: 800 },
+        width: { ideal: 1920, max: 1920 },
+        height: { ideal: 1200, max: 1200 },
       },
     });
     for (const track of this.stream.getTracks())

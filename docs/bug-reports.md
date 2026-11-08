@@ -43,8 +43,10 @@ so add its manifest offset to transcript times. Video segment boundaries are enc
 boundaries, not semantic events; do not concatenate WebM bytes or assume perfectly
 continuous frames. Inspect manifest gaps and warnings before claiming causality.
 
-Capture is capped at 8 fps, 1280×800 and a target 1 Mbps video bitrate; microphone is
-64 kbps. Five-second independently decodable segments bound idle retention. Reports
+Capture is capped at 8 fps, 1920×1200 and a target 4 Mbps video bitrate; microphone is
+64 kbps. The higher resolution and bitrate give small CAD text and fine edges more
+encoding detail. The 15–20 second prebuffer targets roughly 7.5–10 MB at that bitrate
+(actual size varies). Five-second independently decodable segments bound idle retention. Reports
 stop after five minutes, video is bounded to 100 MB, and input logs to 20,000 events
 (oldest entries drop with a warning). Actual CPU/GPU cost depends on scene, hardware
 and open-window count. Closing/reloading/crashing the renderer discards unsaved media;
