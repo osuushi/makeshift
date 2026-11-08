@@ -1,6 +1,10 @@
 #include "presentation-mesh.h"
 #include "timing.h"
 #include <BRepBndLib.hxx>
+#include <BRepGProp.hxx>
+#include <BRepTools.hxx>
+#include <GProp_GProps.hxx>
+#include <IMeshTools_Parameters.hxx>
 #include <BRepLib_ToolTriangulatedShape.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <gp_Pln.hxx>
@@ -14,6 +18,7 @@
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
+#include <algorithm>
 #include <cmath>
 #include <set>
 
@@ -27,6 +32,22 @@ void sources(std::ostream& out, const TopoDS_Shape& shape, const Result& result)
     bool comma = false;
     for (const auto& id : ids) { if (comma) out << ','; comma = true; out << quoted(id); }
     out << ']';
+}
+
+double triangleArea(const TopoDS_Face& face) {
+    TopLoc_Location location;
+    const auto triangles = BRep_Tool::Triangulation(face, location);
+    if (triangles.IsNull() || triangles->NbTriangles() == 0)
+        throw std::runtime_error("Kernel could not mesh every face; the geometry result was rejected");
+    double area = 0;
+    for (int i = 1; i <= triangles->NbTriangles(); ++i) {
+        int a, b, c; triangles->Triangle(i).Get(a, b, c);
+        const auto point = [&](int index) {
+            return triangles->Node(index).Transformed(location.Transformation());
+        };
+        area += gp_Vec(point(a), point(b)).Crossed(gp_Vec(point(a), point(c))).Magnitude() / 2;
+    }
+    return area;
 }
 }
 void presentPlane(std::ostream& out, const TopoDS_Face& shape) {
@@ -47,12 +68,41 @@ void meshPresentation(const TopoDS_Shape& shape, double deflection) {
     if (!std::isfinite(deflection) || deflection < 1e-5 || deflection > 0.05)
         throw std::runtime_error("Invalid mesh deflection");
     BRepMesh_IncrementalMesh mesh(shape, deflection, false, 0.2, OSD_ThreadPool::DefaultPool()->HasThreads());
+    double boundaryDeflection = deflection;
+    std::vector<std::pair<TopoDS_Face, double>> oversized;
+    for (TopExp_Explorer faces(shape, TopAbs_FACE); faces.More(); faces.Next()) {
+        const auto face = TopoDS::Face(faces.Current());
+        const double area = triangleArea(face);
+        GProp_GProps surface, boundary;
+        BRepGProp::SurfaceProperties(face, surface);
+        if (area <= surface.Mass() * 1.1) continue;
+        oversized.emplace_back(face, surface.Mass());
+        BRepGProp::LinearProperties(face, boundary);
+        if (boundary.Mass() > 0)
+            boundaryDeflection = std::min(boundaryDeflection, surface.Mass() / boundary.Mass() * 0.05);
+    }
+    if (boundaryDeflection < deflection) {
+        // Coarse chords can cross a thin ring's inner loop, yielding an overlapping
+        // disk despite a nonempty triangulation. Resolve the trim's area/perimeter
+        // scale, remeshing the whole shell so adjacent faces share boundary nodes.
+        // Keep interior deflection unchanged to avoid globally dense curved surfaces.
+        BRepTools::Clean(shape);
+        IMeshTools_Parameters parameters;
+        parameters.Deflection = std::max(1e-7, boundaryDeflection);
+        parameters.DeflectionInterior = deflection;
+        parameters.Angle = 0.2;
+        parameters.InParallel = OSD_ThreadPool::DefaultPool()->HasThreads();
+        BRepMesh_IncrementalMesh refined(shape, parameters);
+    }
     for (TopExp_Explorer faces(shape, TopAbs_FACE); faces.More(); faces.Next()) {
         TopLoc_Location location;
         const auto triangles = BRep_Tool::Triangulation(TopoDS::Face(faces.Current()), location);
         if (triangles.IsNull() || triangles->NbTriangles() == 0)
             throw std::runtime_error("Kernel could not mesh every face; the geometry result was rejected");
     }
+    for (const auto& [face, area] : oversized)
+        if (triangleArea(face) > area * 1.1)
+            throw std::runtime_error("Kernel mesh overlaps a face trim; the geometry result was rejected");
 }
 
 void presentVertices(std::ostream& out, const TopoDS_Face& shape) {

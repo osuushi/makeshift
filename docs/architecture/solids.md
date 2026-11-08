@@ -15,6 +15,14 @@ legacy display data without normals retains renderer-side averaging. Rigid displ
 previews rotate normals without translating them. Normals are derived presentation
 data and are regenerated from the exact body when opening a drawing.
 
+Display meshing checks triangle area against exact trimmed-face area. If a coarse
+boundary mesh overfills a face by more than 10%, boundary sampling is refined from
+that face's area/perimeter scale and the whole shell is remeshed to keep adjacent
+edges consistent. Interior surface deflection stays at the requested detail level.
+A still-overfilled face rejects presentation instead of publishing overlapping
+triangles. This prevents thin cavity rings from becoming disks that corrupt section
+parity; it changes derived meshes, not accepted BReps or Undo history.
+
 The first B1 increment separates the active workspace's sketch ID and plane frame
 from the XY/XZ/YZ entry presets. Sketching owns point/curve/group selection;
 Modeling owns typed whole-sketch or derived-profile selection. Plane equality is
