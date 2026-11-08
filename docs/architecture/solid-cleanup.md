@@ -41,7 +41,11 @@ nearest queries. Unresolved bounds, missing mesh/perimeter data, or exhausted
 work reject as uncertain; they never silently count as healthy.
 
 Faces within twice the detection threshold are also considered for **bounded
-repair**, regardless of whether they are planar, circular or freeform. They are
+repair** when the face and its incident neighbors have analytic supports (planes,
+cylinders, cones, spheres or tori). This optional convenience preserves legacy
+near-threshold annular shelves without launching costly speculative freeform
+intersections on valid fillet patches. Mandatory sub-threshold repair remains
+universal across support types. These above-threshold candidates are
 not automatically defective: a successful repair must still keep the complete
 solid's added and removed material within 0.001 mm. Failed optional repairs retain
 above-threshold geometry; mandatory sub-threshold failures reject the edit.

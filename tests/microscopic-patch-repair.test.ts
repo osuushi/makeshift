@@ -74,3 +74,46 @@ test("captured segmented shelf accepts a fillet and retains editable, persistent
     owner.close();
   }
 });
+
+// Pointer picking can mix the nearly coincident inner and outer shelf rims.
+// These are the four IDs from the escaped UI route, not an idealized outer loop.
+test("mixed shelf rims fillet without speculative freeform cleanup stalls", async () => {
+  const owner = new DocumentOwner();
+  try {
+    assert.equal((await owner.call({ kind: "open", document: fixture.document })).error, undefined);
+    const before = owner.view.data;
+    const source = before.bodies?.[0];
+    assert.ok(source);
+    const picked = [
+      rims[0],
+      rims[3],
+      "d3aabaac-8333-421e-81e5-3285d60cdcad",
+      "0b74742b-a901-4ffb-b0e5-5b0dfe4a61b5",
+    ];
+    for (const size of [0.5, 1]) {
+      const started = performance.now();
+      const reply = await owner.call({
+        kind: "finish-edges",
+        operation: {
+          edges: picked.map((edge) => ({ body: source.id, edge })),
+          size,
+          mode: "fillet",
+          limit: false,
+        },
+      });
+      assert.equal(reply.error, undefined);
+      assert.ok(
+        performance.now() - started < 8000,
+        "Healthy freeform patches must not trigger speculative repair",
+      );
+      const result = reply.view.candidate?.bodies?.[0];
+      assert.ok(result);
+      assert.ok(result.volume < source.volume);
+      assert.ok(result.edges.every((edge) => edge.signature[2] >= 0.001));
+      assert.deepEqual(owner.view.data, before);
+      assert.equal((await owner.call({ kind: "cancel-preview" })).error, undefined);
+    }
+  } finally {
+    owner.close();
+  }
+});

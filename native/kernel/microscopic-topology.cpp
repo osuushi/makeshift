@@ -53,6 +53,22 @@ bool planarSubdivision(const TopoDS_Face& face,
     }
     return continuations > 0;
 }
+bool analyticNeighborhood(const TopoDS_Face& face,
+                          const TopTools_IndexedDataMapOfShapeListOfShape& adjacency) {
+    // Optional cleanup is only a convenience for already healthy faces. Avoid
+    // unbounded freeform surface intersections here; mandatory repair below
+    // continues to handle every surface type with the same validation budget.
+    const auto analytic = [](const TopoDS_Shape& shape) {
+        const auto type = BRepAdaptor_Surface(TopoDS::Face(shape)).GetType();
+        return type == GeomAbs_Plane || type == GeomAbs_Cylinder || type == GeomAbs_Cone ||
+               type == GeomAbs_Sphere || type == GeomAbs_Torus;
+    };
+    if (!analytic(face)) return false;
+    for (TopExp_Explorer edge(face, TopAbs_EDGE); edge.More(); edge.Next())
+        for (TopTools_ListIteratorOfListOfShape f(adjacency.FindFromKey(edge.Current())); f.More(); f.Next())
+            if (!analytic(f.Value())) return false;
+    return true;
+}
 SmallTopology findSmall(const TopoDS_Shape& shape) {
     KernelTiming timing("microscopic-detection");
     SmallTopology found;
@@ -68,7 +84,7 @@ SmallTopology findSmall(const TopoDS_Shape& shape) {
             continue;
         }
         if (adjacency.IsEmpty()) TopExp::MapShapesAndAncestors(shape, TopAbs_EDGE, TopAbs_FACE, adjacency);
-        if (planarSubdivision(face, adjacency)) continue;
+        if (planarSubdivision(face, adjacency) || !analyticNeighborhood(face, adjacency)) continue;
         found.candidates.push_back(face);
     }
     TopTools_IndexedMapOfShape edges;
