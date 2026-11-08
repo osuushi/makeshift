@@ -83,8 +83,9 @@ The accepted merged edge receives identity through the ordinary correspondence
 rules. Fillet/Chamfer also prepare captured/legacy operands through this gate, so a
 previously accepted sliver cannot prevent construction before result repair runs.
 Feasibility includes repair: an unrepairable result cannot be accepted through
-Find Nearest or dragging. Exact typed input is not silently changed. Sketch curves
-remain unchanged.
+Find Nearest or dragging. Exact typed input retains its requested value except
+for the bounded contact normalization described below. Sketch curves remain
+unchanged.
 
 Validation requires valid closed solids, unchanged solid/shell counts, tight
 curve/surface agreement and bounded added/removed material. Convex polyhedra use
@@ -163,17 +164,41 @@ Reading and copying section curves does not itself publish a new solid. Tests of
 legacy captures enforce these guarantees rather than exact preservation or
 reversibility of topology that the current model would no longer accept.
 
-## Deferred boundary consumption (2026-11-08)
+## Finish boundary consumption (2026-11-08)
 
-Founder-approved post-omnibus direction: consume a disappearing chamfer shelf at
-its exact limiting boundary. A typed 3.4999 mm request may resolve to exact 3.5 mm
-because the difference is 0.0001 mm (0.1 micron), subject to the existing complete
-solid material-change budget and validity checks. This sub-micron normalization
-is permitted; it is not the general nearest-feasible-value behavior.
+Fillet and Chamfer can consume a disappearing planar shelf and continue across
+its opposite boundary. This covers both convex material removal at the outer
+rim and concave material addition at an inner rim, including current-geometry
+chamfer resizing. The captured segmented shelf accepts exact 3.5 mm, as well as
+3.6 and 4 mm finishes in both directions, without retaining the shelf.
 
-This is not implemented. The segmented-shelf fixture accepts 3.4995 mm but refuses
-3.4999 mm: reconstructed curve/surface disagreement was about 3.07692e-5 mm,
-above the 1e-6 mm boundary budget. Rebuilding spatial curves removed that mismatch
-but left incompatible boundary endpoints. Those experiments were reverted.
-Follow up through boundary consumption, preserving preview, acceptance, selection
-correspondence and Undo, rather than enlarging entity tolerances.
+When ordinary construction or microscopic normalization cannot complete, a private
+carrier continues the selected rim supports across the obstruction. Its side
+surfaces must be the same analytic planes or cylinders as the actual source walls;
+line/circle geometry and extrusion direction establish that correspondence. The
+opposite loop's walls must admit the same exact continuation. A convex finish
+removes a region clipped outside the inner material. For a concave finish, a
+bounded complementary carrier computes the added region, clipped inside the outer
+material boundary. Booleans transfer only that region to the source body.
+Only the consumed loop is eligible for joining an original wall to its continuing
+support; remote subdivisions remain protected. Face/edge history carries selection
+correspondence. Every construction attempt has a private copy, so a rejected OCCT
+build cannot change the operand tolerances used by another attempt.
+
+Founder-approved sub-micron normalization may resolve a nearby requested size to
+the measured contact with the opposite loop. A typed 3.4999 mm request may therefore
+produce the exact 3.5 mm consumed result, for fillets as well as chamfers. This is
+not a nearest-feasible search: the size correction must be below 0.001 mm and both
+complete solids must pass the existing mutual one-micron material-change proof.
+The requested reference is constructed at the original size; failure to construct
+or bound it refuses normalization. The field retains the typed request.
+
+Consumed results still require manifold, closed, positively oriented solids,
+tight curve/surface and endpoint agreement, unchanged topology tolerances,
+self-intersection validation, and the universal microscopic-topology gate.
+Preview, Accept, Undo/Redo and Save/Open use the ordinary document-owner path.
+Selected walls must span the complete finish size; an end cap remains a limit,
+so a concave fill cannot add material beyond the actual wall.
+The new carrier does not approximate tapered or freeform walls; unsupported
+layouts retain ordinary construction or an explicit refusal. General consumption
+across arbitrary freeform boundaries remains unsupported.

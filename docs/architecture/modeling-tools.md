@@ -198,6 +198,16 @@ manifold and conserve the original volume minus those disjoint cuts. Interacting
 finishes still require joint construction, and ambiguous/non-exterior supports
 retain the normal feasibility failure. No section faces become document geometry.
 
+When a finish reaches an intervening shelf boundary, both Fillet and Chamfer can
+consume that loop and terminate on the continuing wall. This applies to convex
+cuts, concave fills and chamfer resizing on planar shelves with exact prismatic
+supports. Construction extends the unchanged supports on a temporary carrier and
+clips its removed/added material to the opposite wall. A sub-micron size correction
+to the exact contact is permitted only after the existing complete-solid material
+proof; it does not perform a nearest-feasible search or replace the typed field.
+See [boundary consumption](solid-cleanup.md#finish-boundary-consumption-2026-11-08)
+for the supported geometry and validation contract.
+
 Every finish result also requires exactly two uses per non-degenerate boundary
 edge (including both uses of a periodic seam), with connected face neighborhoods
 at vertices. OCCT's ordinary/exact validity and self-intersection analyzers can

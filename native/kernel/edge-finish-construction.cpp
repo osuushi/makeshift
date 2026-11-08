@@ -3,13 +3,17 @@
 #include "microscopic-topology.h"
 #include "small-finishes.h"
 #include "timing.h"
+#include <BRepBuilderAPI_Copy.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <ShapeFix_Shape.hxx>
 #include <Standard_Failure.hxx>
+#include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
+#include <TopTools_IndexedMapOfShape.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
+#include <TopoDS.hxx>
 #include <stdexcept>
 
 namespace {
@@ -54,10 +58,44 @@ Result build(const Operand& body, const std::vector<TopoDS_Edge>& edges, double 
     operation.SetParams(1e-2, 1e-7, 1e-7, 1e-7, 1e-7, 1e-3);
     return buildWith(operation, body, edges, size, continuingBlends);
 }
+Result normalizedFinish(Result rounded, const Operand& body) {
+    validateFinishManifold(rounded.shape);
+    std::vector<Result> results;
+    solids(results, rounded.shape, rounded.predecessors, {body.id});
+    if (results.size() != 1) throw std::runtime_error("Edge finish is not feasible at this size");
+    simplifySmallFinishes(results.front());
+    resolveMicroscopicTopology(results.front());
+    return results.front();
+}
+Result ordinaryFinish(const Operand& body, const std::vector<TopoDS_Edge>& edges, double radius, bool chamfer,
+                      const std::vector<SourceEntity>& continuingBlends) {
+    try {
+        auto rounded = constructEdgeFinishOnSupports(body, edges, radius, chamfer, continuingBlends);
+        validateFinishManifold(rounded.shape);
+        return rounded;
+    } catch (const Standard_Failure&) {
+        return constructLocalEdgeFinish(body, edges, radius, chamfer, continuingBlends);
+    } catch (const std::runtime_error&) {
+        return constructLocalEdgeFinish(body, edges, radius, chamfer, continuingBlends);
+    }
+}
 }
 
-Result constructEdgeFinishOnSupports(const Operand& body, const std::vector<TopoDS_Edge>& edges, double radius, bool chamfer,
-                 const std::vector<SourceEntity>& continuingBlends) {
+Result constructEdgeFinishOnSupports(const Operand& source, const std::vector<TopoDS_Edge>& selected, double radius, bool chamfer,
+                 const std::vector<SourceEntity>& previousBlends) {
+    // OCCT construction/ShapeFix may change shared entity tolerances even on a
+    // rejected attempt. Keep subsequent construction and material proofs isolated.
+    BRepBuilderAPI_Copy copy(source.shape, true, false);
+    Operand body{source.id, copy.Shape(), {}};
+    TopTools_IndexedMapOfShape current;
+    TopExp::MapShapes(source.shape, current);
+    for (const auto& entity : source.entities)
+        if (current.Contains(entity.shape)) body.entities.push_back({entity.id, copy.ModifiedShape(entity.shape)});
+    std::vector<TopoDS_Edge> edges;
+    for (const auto& edge : selected) edges.push_back(TopoDS::Edge(copy.ModifiedShape(edge)));
+    std::vector<SourceEntity> continuingBlends;
+    for (const auto& blend : previousBlends)
+        if (current.Contains(blend.shape)) continuingBlends.push_back({blend.id, copy.ModifiedShape(blend.shape)});
     KernelTiming timing("edge-finish-construction");
     if (const auto supports = edgeFinishSupports(body, edges)) {
         timing.phase("supports");
@@ -86,23 +124,14 @@ Result constructEdgeFinishOnSupports(const Operand& body, const std::vector<Topo
 Result constructEdgeFinish(const Operand& body, const std::vector<TopoDS_Edge>& edges, double radius, bool chamfer,
                            const std::vector<SourceEntity>& continuingBlends) {
     try {
-        Result rounded;
         try {
-            rounded = constructEdgeFinishOnSupports(body, edges, radius, chamfer, continuingBlends);
-            validateFinishManifold(rounded.shape);
+            return normalizedFinish(ordinaryFinish(body, edges, radius, chamfer, continuingBlends), body);
         } catch (const Standard_Failure&) {
-            rounded = constructLocalEdgeFinish(body, edges, radius, chamfer, continuingBlends);
         } catch (const std::runtime_error&) {
-            rounded = constructLocalEdgeFinish(body, edges, radius, chamfer, continuingBlends);
         }
-        validateFinishManifold(rounded.shape);
-        std::vector<Result> results;
-        solids(results, rounded.shape, rounded.predecessors, {body.id});
-        if (results.size() != 1) throw std::runtime_error("Edge finish is not feasible at this size");
-        simplifySmallFinishes(results.front());
-        resolveMicroscopicTopology(results.front());
-        return results.front();
-    } catch (const Standard_Failure&) {
+        return normalizedFinish(constructCrossingEdgeFinish(body, edges, radius, chamfer, continuingBlends), body);
+    } catch (const Standard_Failure& error) {
+        if (std::getenv("MAKESHIFT_KERNEL_TIMING")) std::cerr << "edge-finish rejected: " << error.GetMessageString() << "\n";
         throw std::runtime_error("Edge finish is not feasible at this size");
     } catch (const std::runtime_error& error) {
         if (std::getenv("MAKESHIFT_KERNEL_TIMING")) std::cerr << "edge-finish rejected: " << error.what() << "\n";

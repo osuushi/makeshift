@@ -27,3 +27,5 @@ Result constructEdgeFinishOnSupports(const Operand&, const std::vector<TopoDS_Ed
                                      const std::vector<SourceEntity>&);
 Result constructLocalEdgeFinish(const Operand&, const std::vector<TopoDS_Edge>&, double, bool,
                                 const std::vector<SourceEntity>&);
+Result constructCrossingEdgeFinish(const Operand&, const std::vector<TopoDS_Edge>&, double, bool,
+                                  const std::vector<SourceEntity>&);
