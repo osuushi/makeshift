@@ -65,40 +65,45 @@ From the repository root, activate Node before running commands:
 
 ```sh
 source /Users/adacohen/.nvm/nvm.sh && nvm use
-node scripts/bugs/analyze.mjs /path/to/bug-TIMESTAMP.zip --out /tmp/bug-review
+npm run bug:analyze -- /path/to/bug-TIMESTAMP.zip
 ```
 
-The extractor requires a new output directory, rejects nested/traversal paths, and
-bounds compressed/expanded size. It never executes archive contents. Extraction alone
-needs only the repository's npm dependencies. For images and audio conversion, install
-FFmpeg separately and ensure `ffmpeg` is on PATH:
+One command extracts into a new `.cache/bug-analysis/` directory, makes
+`playback.mp4` with prebuffer and synchronized narration, extracts **1 fps within
+±2 seconds** of up to twelve input/error moments, and produces `narration.wav`,
+`transcript.txt`, `transcript.json` and `analysis.json`. The index maps images to
+nearby events, narration offsets and the report start within playback. Playback
+pads missing intervals with black; segment ends may hold their last frame to match
+manifest timing. Original segments remain available for checking boundaries.
+
+On first use the scripts reuse installed FFmpeg/whisper-cli or install pinned tools
+under `.cache/bug-tools`. Whisper builds locally using Git, CMake and a C++ compiler;
+the pinned English base.en model downloads once (~148 MB) with SHA-256 validation.
+No audio leaves the machine. First setup needs network access; cached runs work
+offline. `npm run bug:setup` prepares everything ahead of time. FFmpeg's fallback
+uses a lockfile-pinned ffmpeg-static package. Tool binaries retain their upstream
+licenses; these analysis dependencies are not included in the application.
+
+Optional modes avoid unnecessary work:
 
 ```sh
-node scripts/bugs/analyze.mjs /path/to/bug-TIMESTAMP.zip --out /tmp/bug-media --frames --audio
+npm run bug:analyze -- report.zip --extract
+npm run bug:analyze -- report.zip --playback
+npm run bug:analyze -- report.zip --frames --at=-4 --at=3.5
+npm run bug:analyze -- report.zip --transcribe
 ```
 
-This selects up to twelve moments around errors, report start and recent clicks/keys,
-extracts **1 fps within ±2 seconds** of each, and creates `analysis.json` mapping image
-patterns to nearby input events and report-relative times. Use repeated `--at SECONDS`
-to select specific moments, including negatives for prebuffer:
+Use `--out NEW_DIRECTORY` for a chosen destination; existing directories are never
+overwritten. `--audio` converts narration without transcription. `--all` explicitly
+selects the default full workflow. Repeated `--at SECONDS` selects report-relative
+moments (negative for prebuffer). Add the narration offset in `analysis.json` to
+transcript times before choosing frames. Missing narration skips transcription.
+`--extract` requires only repository npm dependencies and never sets up media tools.
+The extractor rejects nested/traversal paths and bounds compressed/expanded size.
 
-```sh
-node scripts/bugs/analyze.mjs /path/to/bug-TIMESTAMP.zip --out /tmp/bug-selected --frames --at=-4 --at=3.5
-```
-
-For local transcription, supply an installed `whisper.cpp` CLI and a downloaded model.
-The tool converts narration to mono 16 kHz PCM WAV and requests text and timestamped
-JSON outputs. It does not download tools/models or send audio to a service:
-
-```sh
-node scripts/bugs/analyze.mjs /path/to/bug-TIMESTAMP.zip --out /tmp/bug-transcribed --frames --whisper /path/to/whisper-cli --model /path/to/ggml-base.en.bin
-```
-
-Read `transcript.txt` and `transcript.json`, then inspect frames at the corresponding
-report-relative moments using the narration offset in `analysis.json`. If Whisper is
-not installed, `--audio` still produces a WAV for an explicitly chosen transcription
-workflow. See the [upstream CLI documentation](https://github.com/ggml-org/whisper.cpp/tree/f92e1e4d1056700c39d4e86c1140f0a088fe1ab6/examples/cli)
-for installation and model-specific options.
+Set `MAKESHIFT_FFMPEG`, `MAKESHIFT_WHISPER` and `MAKESHIFT_WHISPER_MODEL` to reuse
+custom tools/models, or pass `--whisper PATH --model PATH` for explicit transcription.
+See the [pinned upstream CLI documentation](https://github.com/ggml-org/whisper.cpp/tree/f92e1e4d1056700c39d4e86c1140f0a088fe1ab6/examples/cli).
 
 ## Verification
 

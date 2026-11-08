@@ -9,6 +9,8 @@
     "node": ">=24.15.0 <25"
   },
   "scripts": {
+    "bug:analyze": "node scripts/bugs/analyze.mjs",
+    "bug:setup": "node scripts/bugs/setup.mjs",
     "dev": "node scripts/dev.mjs",
     "dev:bundle": "npm run build && node scripts/dev-bundle.mjs",
     "dev:web": "npm run build:native && vite --host 127.0.0.1",

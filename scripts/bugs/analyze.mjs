@@ -1,13 +1,19 @@
-import { spawn } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { extractReport, importantMoments } from "./archive.mjs";
+import { makePlayback } from "./playback.mjs";
+import { command, ffmpegCommand } from "./process.mjs";
+import { resolveFFmpeg, resolveWhisper } from "./setup.mjs";
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
   options: {
     out: { type: "string" },
+    extract: { type: "boolean" },
+    all: { type: "boolean" },
+    playback: { type: "boolean" },
+    transcribe: { type: "boolean" },
     frames: { type: "boolean" },
     audio: { type: "boolean" },
     at: { type: "string", multiple: true },
@@ -15,33 +21,50 @@ const { values, positionals } = parseArgs({
     model: { type: "string" },
   },
 });
-if (positionals.length !== 1 || !values.out)
+if (positionals.length !== 1)
   throw new Error(
-    "Usage: node scripts/bugs/analyze.mjs bug-TIMESTAMP.zip --out NEW_DIRECTORY [--frames] [--at SECONDS] [--audio] [--whisper /path/to/whisper-cli --model /path/to/model.bin]",
+    "Usage: node scripts/bugs/analyze.mjs bug-TIMESTAMP.zip [--out NEW_DIRECTORY] [--all] [--playback] [--transcribe] [--frames] [--at SECONDS] [--audio] [--whisper /path/to/whisper-cli --model /path/to/model.bin]",
   );
 if (!!values.whisper !== !!values.model) throw new Error("Use --whisper and --model together");
+if (
+  values.extract &&
+  (values.all ||
+    values.frames ||
+    values.audio ||
+    values.playback ||
+    values.transcribe ||
+    values.whisper)
+)
+  throw new Error("Use --extract alone, without media options");
 const at = (values.at ?? []).map(Number);
 if (at.some((time) => !Number.isFinite(time)))
   throw new Error("--at must be seconds relative to report start (negative for prebuffer)");
-const directory = resolve(values.out);
+const full =
+  values.all ||
+  !(
+    values.extract ||
+    values.frames ||
+    values.audio ||
+    values.playback ||
+    values.transcribe ||
+    values.whisper
+  );
+const directory = resolve(
+  values.out ?? `.cache/bug-analysis/${basename(positionals[0], ".zip")}-${Date.now()}`,
+);
+await mkdir(dirname(directory), { recursive: true });
 const { manifest, events } = await extractReport(resolve(positionals[0]), directory);
-const command = (program, args) =>
-  new Promise((resolve, reject) => {
-    const child = spawn(program, args, { stdio: "inherit", shell: false });
-    child.on("error", reject);
-    child.on("exit", (code) =>
-      code === 0 ? resolve() : reject(new Error(`${program} exited ${code}`)),
-    );
-  });
-const ffmpeg = (args) =>
-  command("ffmpeg", ["-hide_banner", "-loglevel", "error", "-nostdin", "-n", ...args]);
+const ffmpegExecutable = values.extract ? null : await resolveFFmpeg();
+const ffmpeg = ffmpegCommand(ffmpegExecutable);
 const index = {
   startedAt: manifest.startedAt,
   warnings: manifest.warnings,
   moments: [],
   narration: null,
 };
-if (values.frames) {
+if (full || values.playback)
+  index.playback = await makePlayback(directory, manifest, ffmpegExecutable);
+if (full || values.frames) {
   await mkdir(join(directory, "frames"));
   const moments = importantMoments(manifest, events, at);
   for (const [number, time] of moments.entries()) {
@@ -62,7 +85,7 @@ if (values.frames) {
         "-t",
         String((end - start) / 1000),
         "-vf",
-        "fps=1",
+        "fps=1,format=yuvj420p",
         join(directory, "frames", `${prefix}-%02d.jpg`),
       ]);
       moment.images.push({
@@ -74,7 +97,7 @@ if (values.frames) {
   }
 }
 const narration = manifest.media.find((media) => media.name === "narration.webm");
-if ((values.audio || values.whisper) && narration) {
+if ((full || values.audio || values.transcribe || values.whisper) && narration) {
   const wav = join(directory, "narration.wav");
   await ffmpeg([
     "-i",
@@ -92,10 +115,13 @@ if ((values.audio || values.whisper) && narration) {
     file: "narration.wav",
     offsetSeconds: (narration.start - manifest.startedAt) / 1000,
   };
-  if (values.whisper)
-    await command(resolve(values.whisper), [
+  if (full || values.transcribe || values.whisper) {
+    const whisper = values.whisper
+      ? { executable: resolve(values.whisper), model: resolve(values.model) }
+      : await resolveWhisper();
+    await command(whisper.executable, [
       "-m",
-      resolve(values.model),
+      whisper.model,
       "-f",
       wav,
       "-oj",
@@ -103,10 +129,11 @@ if ((values.audio || values.whisper) && narration) {
       "-of",
       join(directory, "transcript"),
     ]);
+  }
 }
 await writeFile(join(directory, "analysis.json"), JSON.stringify(index, null, 2));
 console.log(
   `Extracted report to ${directory}. Read manifest.json, analysis.json and fixture-start.json first.`,
 );
-if ((values.audio || values.whisper) && !narration)
+if ((full || values.audio || values.transcribe || values.whisper) && !narration)
   console.log("No narration track; inspect manifest warnings.");

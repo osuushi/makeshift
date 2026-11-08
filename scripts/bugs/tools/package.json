@@ -1,0 +1,8 @@
+{
+  "name": "makeshift-bug-tools",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "ffmpeg-static": "5.3.0"
+  }
+}
