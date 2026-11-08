@@ -91,7 +91,7 @@ export function modelHighlight(editor: SketchEditor): () => void {
 function profileGeometry(profiles: readonly Profile[], plane: PlaneFrame, scale: number) {
   const positions: number[] = [],
     coordinates: number[] = [];
-  const gridCoordinates = regionGridCoordinates(plane);
+  const gridCoordinates = regionGridCoordinates(plane, scale);
   for (const profile of profiles) {
     const outer = boundaryPoints(profile.outer, scale),
       holes = profile.holes.map((h) => boundaryPoints(h, scale));

@@ -2,10 +2,13 @@ import * as THREE from "three";
 import { type PlaneFrame, planeNormal, type Vector } from "./planes.js";
 import { stableClipping } from "./stable-clipping.js";
 
-const hexRadius = 1.25; // mm, from center to corner
+const hexRadiusPixels = 13; // CSS pixels on a face-on plane, from center to corner
 
 /** Project world positions into a shared lattice for each unoriented plane normal. */
-export function regionGridCoordinates(plane: PlaneFrame): (point: Vector) => [number, number] {
+export function regionGridCoordinates(
+  plane: PlaneFrame,
+  unitsPerPixel: number,
+): (point: Vector) => [number, number] {
   const normal = new THREE.Vector3(...planeNormal(plane)).normalize();
   const alignment = normal.toArray().map(Math.abs);
   // Treat near ties alike so rotating a sketch frame in its own plane cannot
@@ -14,7 +17,9 @@ export function regionGridCoordinates(plane: PlaneFrame): (point: Vector) => [nu
   if (normal.getComponent(major) < 0) normal.negate();
   const minor = alignment.findIndex((value) => value <= Math.min(...alignment) + 1e-7);
   const u = new THREE.Vector3().setComponent(minor, 1);
-  u.addScaledVector(normal, -u.dot(normal)).normalize().divideScalar(hexRadius);
+  u.addScaledVector(normal, -u.dot(normal))
+    .normalize()
+    .divideScalar(hexRadiusPixels * unitsPerPixel);
   const v = new THREE.Vector3().crossVectors(normal, u);
   const position = new THREE.Vector3();
   // Dotting world positions with the axes anchors the pattern to the projected

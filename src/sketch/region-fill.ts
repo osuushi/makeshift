@@ -57,7 +57,7 @@ export function drawRegionFills(editor: SketchEditor): () => void {
     const positions: number[] = [],
       coordinates: number[] = [];
     for (const { plane, boundaries } of regions) {
-      const gridCoordinates = regionGridCoordinates(plane);
+      const gridCoordinates = regionGridCoordinates(plane, scale);
       for (const boundary of boundaries) {
         const cell = boundaryPoints(boundary, scale);
         const contour = cell.map((p) => new THREE.Vector2(p.x, p.y));

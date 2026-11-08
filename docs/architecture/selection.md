@@ -177,12 +177,13 @@ founder feedback update these contracts before further tools depend on them.
   and edges, retaining normal depth order among selected sketches. Clearing selection
   restores ordinary picking; hidden sketches remain excluded. This is view state only.
   Sketch curves use thin neutral ink and thick blue strokes for whole-curve
-  selection. Closed sketch regions have a neutral gray hex grid with a fixed
-  1.25 mm cell radius. Parallel planes share its orientation and phase through
-  projected world axes and origin. Selection gives the cells a blue tint and
-  the grid lines a stronger blue, distinguishing the region from a uniformly
-  tinted solid face. Region fills draw after
-  section pseudofaces, respecting real geometry depth and preserving sketch ink.
+  selection. Closed sketch regions have a neutral gray hex grid with a
+  13 CSS pixel cell radius viewed face-on, independent of zoom. Parallel planes
+  share its orientation and phase through projected world axes and origin.
+  Selection gives the cells a blue tint and the grid lines a stronger blue,
+  distinguishing the region from a uniformly tinted solid face. Region fills
+  draw after section pseudofaces, respecting real geometry depth and preserving
+  sketch ink.
 - Selection occurs on a completed click. In modeling, double-clicking a body face
   or edge selects its whole body; a single face click retains face selection.
   Enter on one selected plane reference, planar face or whole sketch opens its sketch workspace,
