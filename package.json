@@ -10,6 +10,7 @@
   },
   "scripts": {
     "dev": "node scripts/dev.mjs",
+    "dev:bundle": "npm run build && node scripts/dev-bundle.mjs",
     "dev:web": "npm run build:native && vite --host 127.0.0.1",
     "build": "npm run build:native && vite build && tsc -p tsconfig.host.json",
     "start": "npm run build && electron .",
@@ -68,6 +69,7 @@
   },
   "dependencies": {
     "@jitl/quickjs-wasmfile-release-sync": "0.32.0",
+    "fflate": "0.8.3",
     "ghostty-web": "0.4.0",
     "node-pty": "1.1.0",
     "qrcode": "1.5.4",

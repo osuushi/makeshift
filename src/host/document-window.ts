@@ -7,6 +7,7 @@ import type { DocumentCommand } from "../model/document-host.js";
 import { AgentSession } from "./agent-session.js";
 import type { AgentSettings } from "./agent-settings.js";
 import type { AgentSetup } from "./agent-setup.js";
+import { installBugRecording } from "./bug-recording.js";
 import { DocumentIPC } from "./document-ipc.js";
 import { DocumentSession } from "./document-session.js";
 import { exportDestination } from "./export-destination.js";
@@ -108,6 +109,7 @@ export class DocumentWindow {
       await this.mesh.cancel();
     });
     ipc.handle("settings-open", (_event, tools: unknown) => openSettingsWindow(directory, tools));
+    installBugRecording(ipc, window, icon);
     ipc.attach(window);
     this.installNavigation(window);
     window.webContents.on("did-start-loading", () => this.mesh.close());

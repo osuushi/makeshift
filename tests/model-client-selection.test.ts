@@ -65,4 +65,12 @@ test("skip identical selection writes but deliver baseline changes, steps and hi
   response.documentChanged = false;
   await client.request({ kind: "discard" });
   assert.equal(requests.filter((r) => r.kind === "selection").length, 7);
+  const beforeDiagnostic = requests.length;
+  changes.steps = [{ expireNavigation: true }];
+  await client.history(false);
+  assert.deepEqual(
+    requests.slice(beforeDiagnostic),
+    [{ kind: "read-history" }],
+    "Bug capture must not synchronize pending selection or mutate history",
+  );
 });

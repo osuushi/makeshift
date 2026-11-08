@@ -1,7 +1,7 @@
 import "./build-native.mjs";
 import { spawn } from "node:child_process";
-import electron from "electron";
 import { build, createServer } from "vite";
+import { prepareDevBundle } from "./dev-bundle.mjs";
 
 // The optional iPad listener serves only built assets, never Vite's development endpoints.
 const previousNodeEnv = process.env.NODE_ENV;
@@ -22,7 +22,10 @@ if (code !== 0) {
   await server.close();
   process.exit(1);
 }
-const child = spawn(electron, [".", ...process.argv.slice(2)], {
+const executable = await prepareDevBundle();
+const args =
+  process.platform === "darwin" ? process.argv.slice(2) : [".", ...process.argv.slice(2)];
+const child = spawn(executable, args, {
   stdio: "inherit",
   env: { ...process.env, MAKESHIFT_DEV_URL: server.resolvedUrls.local[0] },
 });

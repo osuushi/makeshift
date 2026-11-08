@@ -92,8 +92,9 @@ export class ModelClient extends ModelQueries {
     this.sentSelection = encoded;
     this.view = retainViewSketches(this.view, reply.view);
   }
-  async history(): Promise<OperationHistoryEntry[]> {
-    if (!this.working && this.selectionHistory) await this.request({ kind: "read" });
+  async history(synchronizeSelection = true): Promise<OperationHistoryEntry[]> {
+    if (synchronizeSelection && !this.working && this.selectionHistory)
+      await this.request({ kind: "read" });
     return this.readHistory();
   }
   private async readHistory(): Promise<OperationHistoryEntry[]> {

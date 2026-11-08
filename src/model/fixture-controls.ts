@@ -2,6 +2,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { saveFixture } from "./fixture-host.js";
 import { fixtureResult } from "./fixture-result.js";
+import { fixtureSnapshot } from "./fixture-snapshot.js";
 
 /** Capture accepted and temporary geometry without finishing or cancelling the tool. */
 export function fixtureControls(editor: SketchEditor, toolbar: HTMLElement): () => void {
@@ -10,38 +11,7 @@ export function fixtureControls(editor: SketchEditor, toolbar: HTMLElement): () 
   const capture = async () => {
     if (editor.blocked || capturing) return;
     capturing = true;
-    const snapshot = {
-      document: editor.store.data,
-      preview: editor.candidate,
-      backendCandidate: editor.store.candidate,
-      lastEdit: editor.store.lastEdit,
-      measurements: {
-        offsetDistance: editor.store.offsetDistance,
-        edgeSize: editor.store.edgeSize,
-      },
-      error: editor.message,
-      notice: editor.notice,
-      interaction: editor.interactions.current
-        ? {
-            kind: editor.interactions.current.kind,
-            phase: editor.interactions.current.phase,
-          }
-        : null,
-      modelingSelection: editor.modeling.targets,
-      sketchSelection: editor.selected.targets,
-      activePlane: editor.world.activeFrame,
-      crossSection: editor.world.crossSection,
-      partialSection: editor.world.partialSection,
-      bodiesVisible: editor.bodiesVisible,
-      tool: editor.tool,
-      hiddenEntities: editor.visibility.hiddenIds(editor.store.data),
-      camera: {
-        position: editor.world.camera.position.toArray(),
-        up: editor.world.camera.up.toArray(),
-        target: editor.world.target.toArray(),
-        height: editor.world.height,
-      },
-    };
+    const snapshot = fixtureSnapshot(editor);
     try {
       const history = await editor.store.history();
       const saved = await saveFixture({ ...snapshot, history });

@@ -38,6 +38,7 @@ is a later operation on current geometry, through ordinary Undo.
 | Startup, loading animation and runtime readiness | [Startup](architecture/startup.md) |
 | Async edits, cancellation, history, files | [Edit lifecycle](architecture/edit-lifecycle.md), [persistence](architecture/persistence.md) |
 | Camera, plane entry, picking, point chooser | [Navigation](architecture/navigation.md), [selection](architecture/selection.md) |
+| Desktop bug reporting | [Recording, prebuffer, diagnostics and analysis](bug-reports.md) |
 | Interface scale and local settings | [Interface preferences](architecture/interface-preferences.md) |
 | Creation, circle/arc editing | [Curve editing](architecture/curve-editing.md), [curved controls](architecture/curved-controls.md) |
 | Orientable widget visuals | [Design language and implementation references](design/orientable-widgets.md) |
