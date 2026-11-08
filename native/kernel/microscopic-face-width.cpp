@@ -107,6 +107,12 @@ FaceWidth microscopicFaceWidth(const TopoDS_Face &face, double threshold) {
             return FaceWidth::uncertain;
         if (coarse->wideWitness)
             return FaceWidth::healthy;
+        // Closed faces have no physical boundary to collapse onto. Preserve
+        // the classifier's finite-mesh validation without a micron-scale mesh
+        // of the entire sphere or torus merely to reach that same decision.
+        if (coarse->data.perimeter.empty() &&
+            face_width::classify(coarse->data, 2 * threshold) == face_width::Class::wide)
+            return FaceWidth::healthy;
         const auto fine = triangulate(face, threshold / 64);
         timing.phase("fine-mesh");
         if (!fine)

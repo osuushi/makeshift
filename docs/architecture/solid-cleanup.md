@@ -13,6 +13,8 @@ before ordinary or deferred presentation. The face criterion is whole-face width
 The boundary is the union of **all** physical perimeter loops, including holes.
 Internal triangulation edges and periodic seams are not perimeter. A narrow local
 neck or gap between holes does not make an otherwise wide face degenerate.
+Closed faces with no physical perimeter use the same no-collapse result after
+coarse mesh validation, without unnecessarily building the detailed mesh.
 Faces at or below 0.001 mm require repair; independent short-edge checks remain.
 The comparison retains the existing 1e-9 mm roundoff allowance at the threshold.
 

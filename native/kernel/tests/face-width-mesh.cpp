@@ -6,6 +6,9 @@
 #include <BRepBuilderAPI_MakePolygon.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepPrimAPI_MakeCylinder.hxx>
+#include <BRepPrimAPI_MakeSphere.hxx>
+#include <BRepPrimAPI_MakeTorus.hxx>
+#include <chrono>
 #include <GeomConvert.hxx>
 #include <Geom_Circle.hxx>
 #include <TopExp_Explorer.hxx>
@@ -117,7 +120,19 @@ void trimmedFaces() {
     require(microscopicFaceWidth(network.Face(), .001) == FaceWidth::thin,
             "Three-perimeter thin network must be detected");
 }
+void closedFaces() {
+    const auto start = std::chrono::steady_clock::now();
+    for (const auto &shape : {BRepPrimAPI_MakeSphere(5).Shape(),
+                              BRepPrimAPI_MakeTorus(5, 1).Shape()}) {
+        for (TopExp_Explorer f(shape, TopAbs_FACE); f.More(); f.Next())
+            require(microscopicFaceWidth(TopoDS::Face(f.Current()), .001) == FaceWidth::healthy,
+                    "Closed faces have no physical perimeter to collapse onto");
+    }
+    require(std::chrono::steady_clock::now() - start < std::chrono::seconds(5),
+            "Closed-face classification must not build a micron-scale surface mesh");
+}
 int main() {
+    closedFaces();
     meshInteriors();
     trimmedFaces();
     std::cout << "mesh width tests passed\n";
