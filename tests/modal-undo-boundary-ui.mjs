@@ -3,6 +3,7 @@ import { historyMenu } from "./native-documents.mjs";
 import { plate } from "./ui-body-fillet.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
+import { sketchOffsetNormalRoute } from "./ui-sketch-offset-normal.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function history(page, redo = false, menu = false) {
@@ -176,6 +177,7 @@ await withUiRuntimes(
     console.log(
       `${name}: initial modal Undo exits Fillet/Extrude/Boolean without geometry acceptance; local redo, next document Undo, menus and Escape passed`,
     );
+    await sketchOffsetNormalRoute(page);
   },
   { timeout: 30000 },
 );

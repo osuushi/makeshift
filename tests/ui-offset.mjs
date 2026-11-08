@@ -109,7 +109,12 @@ export async function offsetRoute(page, name) {
   await number(page, 0);
   assert.deepEqual(await sketch(page), result);
   await page.keyboard.press("Escape");
-  await offsetDrag(page, 2, 0);
+  const handle = await overlayPoint(page, '[aria-label="Offset edge"]');
+  const center = await at(page, 0, 0);
+  const dx = handle.x - center.x,
+    dy = center.y - handle.y;
+  const length = Math.hypot(dx, dy);
+  await offsetDrag(page, (2 * dx) / length, (2 * dy) / length);
   result = await sketch(page);
   assert.equal(result.curves.length, 3);
   close(result.curves[2].radius, 6);
@@ -120,6 +125,8 @@ export async function offsetRoute(page, name) {
   const saved = await sketch(page);
   await page.getByRole("button", { name: "Offset edge", exact: true }).click();
   await click(page, -20, -15);
+  assert.equal((await sketch(page)).curves.length, saved.curves.length + 1);
+  await chooseTool(page, "undo", "undo");
   assert.deepEqual(await sketch(page), saved);
   await page.screenshot({ path: `.cache/sketch-review/${name}-offset.png` });
   await arcOffsets(page);
