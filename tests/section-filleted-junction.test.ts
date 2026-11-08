@@ -8,28 +8,35 @@ import { emptySketch } from "../src/sketch/document.js";
 import type { PlaneFrame } from "../src/sketch/planes.js";
 import { insideBoundary, profilesFor } from "../src/sketch/profiles.js";
 import { projectedSketch } from "../src/sketch/projected-sketch.js";
+import { undoState } from "./undo-state-fixture.js";
 
 const fixture = JSON.parse(readFileSync("tests/fixtures/section-filleted-junction.json", "utf8"));
 const frame: PlaneFrame = fixture.frame;
 
-test("filleted section retains native vertex joins through copying, extrusion and Undo", async () => {
+async function openCapture(owner: DocumentOwner) {
+  const document = readArchive(
+    JSON.stringify({
+      format: "makeshift",
+      version: 1,
+      document: {
+        units: "mm",
+        sketches: [],
+        bodies: [fixture.body],
+      },
+    }),
+  );
+  assert.equal((await owner.call({ kind: "open", document })).error, undefined);
+}
+
+test("legacy microscopic filleted shelf refuses splitting without changing history", async () => {
   const owner = new DocumentOwner();
   try {
-    const document = readArchive(
-      JSON.stringify({
-        format: "makeshift",
-        version: 1,
-        document: {
-          units: "mm",
-          sketches: [],
-          bodies: [fixture.body],
-        },
-      }),
-    );
-    assert.equal((await owner.call({ kind: "open", document })).error, undefined);
+    await openCapture(owner);
     const before = owner.view.data;
-    // The same plane is already valid for native solid splitting.
-    assert.equal(
+    const history = await undoState(owner);
+    // This pre-policy capture has a 0.0008 mm shelf. New solids must satisfy
+    // the microscopic topology gate even when legacy geometry did not.
+    assert.match(
       (
         await owner.call({
           kind: "plane-cut",
@@ -39,10 +46,22 @@ test("filleted section retains native vertex joins through copying, extrusion an
             frame,
           },
         })
-      ).error,
-      undefined,
+      ).error ?? "",
+      /microscopic topology repair/,
     );
-    await owner.call({ kind: "cancel-preview" });
+    assert.equal(owner.view.candidate, null);
+    assert.deepEqual(owner.view.data, before);
+    assert.deepEqual(await undoState(owner), history);
+  } finally {
+    owner.close();
+  }
+});
+
+test("legacy filleted section preserves read-only joins and refuses extrusion without losing history", async () => {
+  const owner = new DocumentOwner();
+  try {
+    await openCapture(owner);
+    const before = owner.view.data;
     const reply = await owner.call({ kind: "sections", frame, bodies: ["captured"] });
     assert.equal(reply.error, undefined);
     assert.equal(reply.sections?.length, 1);
@@ -64,7 +83,9 @@ test("filleted section retains native vertex joins through copying, extrusion an
     assert.deepEqual(owner.view.data, before);
     await owner.call({ kind: "redo" });
     assert.deepEqual(owner.view.data.sketches[0], copied);
-    assert.equal(
+    const withCopy = owner.view.data;
+    const copiedHistory = await undoState(owner);
+    assert.match(
       (
         await owner.call({
           kind: "extrude",
@@ -74,13 +95,17 @@ test("filleted section retains native vertex joins through copying, extrusion an
             mode: "new",
           },
         })
-      ).error,
-      undefined,
+      ).error ?? "",
+      /microscopic topology repair/,
     );
-    await owner.call({ kind: "accept" });
-    const extruded = owner.view.data.bodies?.at(-1);
-    assert.ok(extruded);
-    assert.ok(Math.abs(extruded.volume - 2 * profile.area) < 0.001);
+    assert.equal(owner.view.candidate, null);
+    assert.ok((await owner.call({ kind: "accept" })).error);
+    assert.deepEqual(owner.view.data, withCopy);
+    assert.deepEqual(await undoState(owner), copiedHistory);
+    await owner.call({ kind: "undo" });
+    assert.deepEqual(owner.view.data, before);
+    await owner.call({ kind: "redo" });
+    assert.deepEqual(owner.view.data, withCopy);
   } finally {
     owner.close();
   }

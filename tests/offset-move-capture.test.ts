@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
+import type { Body } from "../src/model/body.js";
 import type { SketchDocument } from "../src/sketch/document.js";
+import { undoState } from "./undo-state-fixture.js";
 
 const fixture = JSON.parse(
   readFileSync("tests/fixtures/offset-move-tilted-plate.json", "utf8"),
@@ -54,6 +56,57 @@ test("captured boss cap offsets independently of untouched spline base boundarie
   }
 });
 
+// This pre-policy plate contains 0.0001 mm end strips. Legacy edit success is
+// not a compatibility promise: require healthy results or an atomic refusal.
+// Fresh hole/pocket/boss edits retain success and reverse-edit assertions in
+// face-movement.test.ts.
+function healthy(body: Body) {
+  assert.ok(Number.isFinite(body.volume) && body.volume > 0);
+  assert.ok(body.edges.every((edge) => edge.signature[2] >= 0.001 - 1e-9));
+}
+
+async function acceptedMoveHistory(
+  owner: DocumentOwner,
+  original: SketchDocument,
+  move: (distance: number) => ReturnType<DocumentOwner["call"]>,
+  distance: number,
+  selection: readonly string[],
+) {
+  assert.equal((await owner.call({ kind: "accept" })).error, undefined);
+  const accepted = owner.view.data;
+  assert.equal((await owner.call({ kind: "undo" })).error, undefined);
+  assert.deepEqual(owner.view.data, original);
+  assert.equal((await owner.call({ kind: "redo" })).error, undefined);
+  assert.deepEqual(owner.view.data, accepted);
+  assert.equal((await owner.call({ kind: "open", document: accepted })).error, undefined);
+  const reopened = owner.view.data;
+  const reopenedHistory = await undoState(owner);
+  const reverse = await move(-distance);
+  assert.deepEqual(owner.view.data, reopened);
+  assert.deepEqual(await undoState(owner), reopenedHistory);
+  if (reverse.error) {
+    assert.match(
+      reverse.error,
+      /microscopic topology repair|Cannot fit a surface within the boundary tolerance|Selected boundary no longer exists/,
+    );
+    if (reverse.error === "Selected boundary no longer exists") {
+      const faces = new Set(reopened.bodies?.[0].faces.map((face) => face.id));
+      assert.ok(
+        selection.some((face) => !faces.has(face)),
+        "Cleanup removed the selected legacy strip",
+      );
+    }
+    assert.equal(reverse.view.candidate, null);
+    assert.ok((await owner.call({ kind: "accept" })).error);
+    assert.deepEqual(owner.view.data, reopened);
+    assert.deepEqual(await undoState(owner), reopenedHistory);
+  } else {
+    const restored = reverse.view.candidate?.bodies?.[0];
+    assert.ok(restored);
+    healthy(restored);
+  }
+}
+
 const hole = "6516dd0f-680c-4c05-a20a-923abd04f9e0";
 const end = [
   "c73d0cec-15e0-467e-a233-e8302b5d2f26",
@@ -66,7 +119,7 @@ for (const [name, selection] of [
   ["lower rounded face", [end[0]]],
   ["upper rounded face", [end[2]]],
 ] as const) {
-  test(`captured tilted plate moves its ${name} along world X and reverses after reopening`, async () => {
+  test(`legacy tilted plate ${name} edits repair or refuse without corrupting history`, async () => {
     const owner = new DocumentOwner();
     try {
       const captured = fixture.document.bodies?.[0];
@@ -91,40 +144,23 @@ for (const [name, selection] of [
           },
         });
       for (const distance of [-6, 6]) {
+        const history = await undoState(owner);
         const reply = await move(distance);
-        assert.equal(reply.error, undefined);
+        assert.deepEqual(owner.view.data, original);
+        assert.deepEqual(await undoState(owner), history);
+        if (reply.error) {
+          assert.match(reply.error, /microscopic topology repair/);
+          assert.equal(reply.view.candidate, null);
+          assert.ok((await owner.call({ kind: "accept" })).error);
+          assert.deepEqual(owner.view.data, original);
+          assert.deepEqual(await undoState(owner), history);
+          continue;
+        }
         const result = reply.view.candidate?.bodies?.[0];
         assert.ok(result);
-        for (const id of selection) {
-          const from = body.faces.find((face) => face.id === id);
-          const to = result.faces.find((face) => face.id === id);
-          assert.ok(from && to);
-          for (let axis = 0; axis < 3; axis++)
-            near(to.signature[axis + 3], from.signature[axis + 3] + (axis === 0 ? distance : 0));
-        }
-        const movedEdges = new Set(
-          body.faces
-            .filter((face) => selection.some((id) => id === face.id))
-            .flatMap((face) => face.edges),
-        );
-        for (const edge of body.edges.filter((edge) => !movedEdges.has(edge.id))) {
-          // Edges with one selected endpoint legitimately stretch; whole fixed rims do not.
-          if (name !== "hole") continue;
-          const after = result.edges.find((candidate) => candidate.id === edge.id);
-          assert.ok(after);
-          for (let i = 2; i < 6; i++) near(after.signature[i], edge.signature[i]);
-        }
-        if (name === "hole") near(result.volume, body.volume, 0.001);
-        assert.deepEqual(owner.view.data, original);
-        assert.equal((await owner.call({ kind: "accept" })).error, undefined);
-        const accepted = owner.view.data;
-        assert.equal((await owner.call({ kind: "undo" })).error, undefined);
-        assert.deepEqual(owner.view.data, original);
-        assert.equal((await owner.call({ kind: "redo" })).error, undefined);
-        assert.equal((await owner.call({ kind: "open", document: accepted })).error, undefined);
-        const reverse = await move(-distance);
-        assert.equal(reverse.error, undefined);
-        near(reverse.view.candidate?.bodies?.[0].volume ?? NaN, body.volume, 0.001);
+        assert.equal(result.id, body.id);
+        healthy(result);
+        await acceptedMoveHistory(owner, original, move, distance, selection);
         assert.equal((await owner.call({ kind: "open", document: original })).error, undefined);
       }
       const rejected = await move(name === "hole" ? 50 : 28);

@@ -153,6 +153,16 @@ through older subdivisions. Decorator boundaries remain protected. These compati
 requests do not expose a modeling completion control or trigger an automatic UI
 probe; standalone cleanup is the ordinary application interaction.
 
+## Pre-launch document compatibility
+
+Legacy documents containing sub-resolution topology do not require successful
+editing compatibility (founder decision, 2026-11-08). Their operations pass through
+the same repair gate as newly created solids. A result may repair the old topology
+or refuse explicitly; refusal must preserve the accepted document and Undo/Redo.
+Reading and copying section curves does not itself publish a new solid. Tests of
+legacy captures enforce these guarantees rather than exact preservation or
+reversibility of topology that the current model would no longer accept.
+
 ## Deferred boundary consumption (2026-11-08)
 
 Founder-approved post-omnibus direction: consume a disappearing chamfer shelf at
