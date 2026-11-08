@@ -6,7 +6,7 @@ import { type ModelingTarget, modelingKey } from "./model-selection-state.js";
 import { type PlaneFrame, worldPoint } from "./planes.js";
 import { type Profile, profilesFor } from "./profiles.js";
 import { sketchFillLayer } from "./region-fill.js";
-import { regionGridSpacing, regionMaterial } from "./region-material.js";
+import { regionGridCoordinates, regionMaterial } from "./region-material.js";
 
 export function modelHighlight(editor: SketchEditor): () => void {
   const group = new THREE.Group();
@@ -44,13 +44,13 @@ export function modelHighlight(editor: SketchEditor): () => void {
       stencilWriteMask: 0,
       stencilFunc: THREE.EqualStencilFunc,
     };
-    const material = regionMaterial(0, options);
+    const material = regionMaterial(hover ? 0.1 : 0.32, options);
     const mesh = new THREE.Mesh(geometry, material);
     mesh.layers.set(sketchFillLayer);
     mesh.renderOrder = 6;
     group.add(mesh);
     if (!hover) {
-      const hiddenMaterial = regionMaterial(0, {
+      const hiddenMaterial = regionMaterial(0.06, {
         ...options,
         depthFunc: THREE.GreaterDepth,
         opacity: 0.24,
@@ -91,7 +91,7 @@ export function modelHighlight(editor: SketchEditor): () => void {
 function profileGeometry(profiles: readonly Profile[], plane: PlaneFrame, scale: number) {
   const positions: number[] = [],
     coordinates: number[] = [];
-  const spacing = regionGridSpacing(scale);
+  const gridCoordinates = regionGridCoordinates(plane);
   for (const profile of profiles) {
     const outer = boundaryPoints(profile.outer, scale),
       holes = profile.holes.map((h) => boundaryPoints(h, scale));
@@ -102,8 +102,9 @@ function profileGeometry(profiles: readonly Profile[], plane: PlaneFrame, scale:
       holes.map((h) => h.map(vector)),
     ))
       for (const i of triangle) {
-        positions.push(...worldPoint(plane, points[i]));
-        coordinates.push(points[i].x / spacing, points[i].y / spacing);
+        const position = worldPoint(plane, points[i]);
+        positions.push(...position);
+        coordinates.push(...gridCoordinates(position));
       }
   }
   const geometry = new THREE.BufferGeometry();

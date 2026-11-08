@@ -26,12 +26,12 @@ await withUiRuntimes(async (page, name) => {
   await page.getByRole("button", { name: "Hide Body 4", exact: true }).click();
   await page.getByRole("button", { name: "Hide Body 2", exact: true }).click();
   const capPoint = [15.3, 0, 27.2];
-  const first = await pixelPatch(page, capPoint, 9);
+  const first = await pixelPatch(page, capPoint, 21);
   await page.getByRole("button", { name: "Show Body 2", exact: true }).click();
   await page.getByRole("button", { name: "Hide Body 1", exact: true }).click();
-  const second = await pixelPatch(page, capPoint, 9);
+  const second = await pixelPatch(page, capPoint, 21);
   await page.getByRole("button", { name: "Show Body 1", exact: true }).click();
-  const blended = await pixelPatch(page, capPoint, 9);
+  const blended = await pixelPatch(page, capPoint, 21);
   assert.ok(
     first.some((pixel, i) => pixel.some((v, channel) => Math.abs(v - second[i][channel]) > 20)),
     "Bodies have distinct colors",
@@ -186,13 +186,11 @@ async function profileTint(page) {
   await page.mouse.click(p.x, p.y);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "profile");
   const selected = await pixelPatch(page, point, 13);
+  const blueShift = selected.map(([r, , b], i) => b - r - (base[i][2] - base[i][0]));
+  assert.ok(Math.min(...blueShift) > 10, "Selected hex cells have a blue tint");
   assert.ok(
-    selected.some(([r, , b], i) => b - r > base[i][2] - base[i][0] + 15),
-    "Blue selection grid overlays the cap",
-  );
-  assert.ok(
-    selected.some((pixel, i) => pixel.every((value, channel) => value === base[i][channel])),
-    "Cells between blue lines retain their neutral fill",
+    Math.max(...blueShift) - Math.min(...blueShift) > 15,
+    "Blue hex lines stand out over the tinted cells",
   );
   await page.keyboard.press("e");
   await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();

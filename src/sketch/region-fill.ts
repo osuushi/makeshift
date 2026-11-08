@@ -4,7 +4,7 @@ import { boundaryPoints, type CurveSpan } from "./curve-spans.js";
 import type { Sketch } from "./document.js";
 import type { SketchEditor } from "./editor.js";
 import { type PlaneFrame, worldPoint } from "./planes.js";
-import { regionGridSpacing, regionMaterial } from "./region-material.js";
+import { regionGridCoordinates, regionMaterial } from "./region-material.js";
 import { closedBoundaries } from "./regions.js";
 import type { World } from "./world.js";
 
@@ -54,10 +54,10 @@ export function drawRegionFills(editor: SketchEditor): () => void {
     previousScale = scale;
     mesh.material.color.set(theme === "dark" ? "#b4b4b4" : "#656565");
     previousTheme = theme;
-    const spacing = regionGridSpacing(scale);
     const positions: number[] = [],
       coordinates: number[] = [];
     for (const { plane, boundaries } of regions) {
+      const gridCoordinates = regionGridCoordinates(plane);
       for (const boundary of boundaries) {
         const cell = boundaryPoints(boundary, scale);
         const contour = cell.map((p) => new THREE.Vector2(p.x, p.y));
@@ -65,8 +65,9 @@ export function drawRegionFills(editor: SketchEditor): () => void {
           for (const index of triangle) {
             const point = cell[index];
             if (!point) continue;
-            positions.push(...worldPoint(plane, point));
-            coordinates.push(point.x / spacing, point.y / spacing);
+            const position = worldPoint(plane, point);
+            positions.push(...position);
+            coordinates.push(...gridCoordinates(position));
           }
         }
       }
