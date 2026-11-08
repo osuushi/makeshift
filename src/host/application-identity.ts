@@ -4,8 +4,13 @@ import { app } from "electron";
 
 /** Reuse the former application's preferences and private agent workspace in place. */
 export function configureApplicationIdentity(): void {
-  app.setName("Makeshift");
+  const dev = process.env.MAKESHIFT_DEV_BUNDLE === "1";
+  app.setName(dev ? "Makeshift Dev" : "Makeshift");
   if (app.commandLine.hasSwitch("user-data-dir")) return;
+  if (dev) {
+    app.setPath("userData", join(app.getPath("appData"), "Makeshift Dev"));
+    return;
+  }
   const current = app.getPath("userData");
   if (existsSync(current)) return;
   for (const name of ["Freac", "freac"]) {

@@ -20,6 +20,7 @@ export default {
     extendInfo: {
       MakeshiftReleaseTimestamp: metadata.timestamp,
       MakeshiftCommit: metadata.commit,
+      NSMicrophoneUsageDescription: "Record your narration when you start a Makeshift bug report.",
       LSMinimumSystemVersion: "14.0",
       CFBundleDocumentTypes: [
         {

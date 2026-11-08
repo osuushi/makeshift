@@ -1,3 +1,4 @@
+import { bugControls } from "../bugs/controls.js";
 import { clipboardControls } from "../clipboard/controls.js";
 import { fileControls } from "../model/file-controls.js";
 import { fixtureControls } from "../model/fixture-controls.js";
@@ -24,6 +25,7 @@ export function installControls(
   const disposeFiles = fileControls(editor, app);
   const disposeFixtures =
     import.meta.env.DEV || window.makeshiftFixture ? fixtureControls(editor, app) : () => {};
+  const disposeBugs = bugControls(editor, app);
   const abort = installShortcuts(editor, numeric, app);
   browserHistoryControls(editor, abort.signal);
   const standardMenu = new StandardCommandMenu(editor);
@@ -47,6 +49,7 @@ export function installControls(
     disposeClipboard();
     disposeFiles();
     disposeFixtures();
+    disposeBugs();
   };
 }
 function installShortcuts(

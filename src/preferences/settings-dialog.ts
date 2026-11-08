@@ -1,3 +1,4 @@
+import { bugRecordingSettings } from "./bug-recording.js";
 import { canonicalPlaneSettings } from "./canonical-plane-settings.js";
 import { decoratorSettings } from "./decorator-settings.js";
 import { experimentalSettings } from "./experimental-settings.js";
@@ -61,6 +62,7 @@ export function settingsDialog(extra: [string, HTMLElement][] = []): HTMLDialogE
     ["View", view],
     ["Decorators", decoratorSettings()],
     ["Experimental", experimentalSettings()],
+    ["Bug Reports", bugRecordingSettings()],
     ...extra,
   ]);
   form.querySelector(".settings-actions")?.before(tabs);

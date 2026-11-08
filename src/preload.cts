@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type { InspectionView } from "./agent/inspection-protocol.js";
 import type { AgentRequest } from "./agent/protocol.js";
+import type { BugReport } from "./bugs/protocol.js";
 import type { HostModelRequest } from "./host/model-request.js";
 import type { IPadStatus } from "./ipad/protocol.js";
 import type { ModelView } from "./sketch/model-api.js";
@@ -137,4 +138,11 @@ contextBridge.exposeInMainWorld("makeshiftPreview", {
     ipcRenderer.on("preview-open", listener);
     return () => ipcRenderer.removeListener("preview-open", listener);
   },
+});
+
+contextBridge.exposeInMainWorld("makeshiftBug", {
+  prepare: () => ipcRenderer.invoke("bug-prepare"),
+  save: (report: BugReport) => ipcRenderer.invoke("bug-save", report),
+  drag: () => ipcRenderer.send("bug-drag"),
+  reveal: () => ipcRenderer.send("bug-reveal"),
 });
