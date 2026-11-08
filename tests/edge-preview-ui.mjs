@@ -146,8 +146,14 @@ async function edgeScheduling(page) {
 await withUiRuntimes(
   async (page, name) => {
     await edgeScheduling(page);
-    let snapQueries = 0;
+    let snapQueries = 0,
+      snapCancellations = 0;
     const observe = (request) => {
+      if (
+        request.url().endsWith("/sketch-api") &&
+        request.postDataJSON()?.kind === "cancel-edge-finish-targets"
+      )
+        snapCancellations++;
       if (
         request.url().endsWith("/sketch-api") &&
         request.postDataJSON()?.kind === "edge-finish-targets"
@@ -158,6 +164,10 @@ await withUiRuntimes(
     try {
       await edgeLiveDrag(page);
       assert.ok(snapQueries > 0, "Actual edge dragging still requests surface snap targets");
+      assert.ok(snapCancellations > 0, "Releasing the handle cancels its background snap search");
+      await page.waitForFunction(
+        () => document.querySelectorAll(".measurement-readout > div strong").length > 0,
+      );
     } finally {
       page.off("request", observe);
     }

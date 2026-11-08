@@ -33,6 +33,9 @@ export function edgeFinishSurfacePlan(
         origin: frame.anchor,
         targets: targets(editor, { edges: frame.edges, mode }),
         settled,
+        cancel: () => {
+          void editor.store.cancelEdgeFinishTargets().catch(() => {});
+        },
       }
     : null;
 }

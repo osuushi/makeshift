@@ -87,3 +87,11 @@ the document owner. Native calculation keeps its existing ten-second deadline.
 Measurement queries have a ten-second native/WASM watchdog rather than the longer
 modeling-operation budget. A stalled query reports its timeout and terminates the
 calculator; the next query starts a fresh worker. It never changes geometry.
+
+Snap-target fitting has its own cancellable calculator and queue, separate from
+measurement/section readouts. Releasing or cancelling an edge-finish gesture
+terminates its active snap search and invalidates queued searches. A later drag
+can start a fresh search. Preview cancellation also cancels snap work. Neither
+cancellation installs a query's model view or changes accepted geometry/history.
+The measurement watchdog starts at execution, so keeping long snap searches off
+this queue is required to prevent measurements waiting before their watchdog starts.

@@ -98,10 +98,8 @@ export class DocumentOwner {
     if (this.cancelling) throw new Error("Calculation cancelled");
   }
   async call(request: ModelRequest): Promise<ModelReply> {
-    if (request.kind === "cancel-step-export") {
-      await this.queries.cancelStep();
-      return { view: this.view };
-    }
+    if (isGeometryQuery(request) && request.kind.startsWith("cancel-"))
+      return this.queries.call(this.view, request);
     if (request.kind === "decorator-inspect" || request.kind === "decorator-draft")
       return {
         view: this.view,
@@ -150,7 +148,12 @@ export class DocumentOwner {
       return { view: this.view, error: "Finish the current edit first" };
     this.cancelling = true;
     try {
-      await Promise.all([this.kernel.cancel(), this.solver.cancel(), this.active?.promise]);
+      await Promise.all([
+        this.kernel.cancel(),
+        this.solver.cancel(),
+        this.queries.cancelSnaps(),
+        this.active?.promise,
+      ]);
       this.session.discard();
       this.session.clearPreview();
       return { view: this.view };

@@ -150,7 +150,9 @@ geometry-limit/rejection feedback supplement the contours. Dragging limits sizes
 to verified geometry and retains its valid preview and acceptance behavior.
 Fillet/Chamfer surface snap targets are calculated only after pointer movement
 crosses the drag threshold. Clicking a handle to focus its numeric field must not
-start a background search through trial finish sizes.
+start a background search through trial finish sizes. Releasing or cancelling the
+gesture cancels active and queued snap searches; their worker is independent of
+measurements and the editing calculator.
 
 Typed Offset, Fillet and Chamfer values request exact previews. An infeasible value
 keeps its text and focus, clears the candidate, disables acceptance, and shows the

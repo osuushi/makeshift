@@ -14,7 +14,9 @@ type Query = Extract<
       | "export-geometry"
       | "export-step"
       | "center-of-mass"
-      | "edge-finish-targets";
+      | "edge-finish-targets"
+      | "cancel-edge-finish-targets"
+      | "cancel-step-export";
   }
 >;
 
@@ -24,32 +26,55 @@ export function isGeometryQuery(request: ModelRequest): request is Query {
     request.kind === "measure" ||
     request.kind === "center-of-mass" ||
     request.kind === "edge-finish-targets" ||
+    request.kind === "cancel-edge-finish-targets" ||
+    request.kind === "cancel-step-export" ||
     request.kind === "export-step" ||
     request.kind === "export-geometry"
   );
 }
 
-/** Geometry readouts share a worker; STEP has its own cancellable snapshot writer. */
+/** Readouts, cancellable snap searches and STEP export own independent workers. */
 export class GeometryQueries {
   private kernel: SolidCalculator;
   private step: StepExporter;
+  private snaps: SolidCalculator;
+  private snapPending = Promise.resolve();
+  private snapCancellation = new AbortController();
   private pending = Promise.resolve();
   private closed = false;
   constructor(executable?: string) {
     this.kernel = new SolidCalculator(executable);
+    this.snaps = new SolidCalculator(executable);
     this.step = new StepExporter(executable ?? SolidCalculator.executable, "STEP exporter");
   }
   call(view: ModelView, request: Query): Promise<ModelReply> {
-    if (request.kind === "export-step") return this.calculate(view, request);
+    if (request.kind === "export-step" || request.kind.startsWith("cancel-"))
+      return this.calculate(view, request);
+    if (request.kind === "edge-finish-targets") {
+      const signal = this.snapCancellation.signal;
+      const result = this.snapPending.then(() =>
+        signal.aborted ? { view, error: "Snap search cancelled" } : this.calculate(view, request),
+      );
+      this.snapPending = result.then(() => {});
+      return result;
+    }
     const result = this.pending.then(() => this.calculate(view, request));
     this.pending = result.then(() => {});
     return result;
   }
   private async calculate(view: ModelView, request: Query): Promise<ModelReply> {
     try {
+      if (request.kind === "cancel-edge-finish-targets") {
+        await this.cancelSnaps();
+        return { view };
+      }
+      if (request.kind === "cancel-step-export") {
+        await this.cancelStep();
+        return { view };
+      }
       if (this.closed) throw new Error("Geometry query cancelled");
       if (request.kind === "edge-finish-targets") {
-        const reply = await this.kernel.calculate({
+        const reply = await this.snaps.calculate({
           ...request.operation,
           kind: request.kind,
           points: request.points,
@@ -91,6 +116,13 @@ export class GeometryQueries {
     this.closed = true;
     this.kernel.close();
     this.step.close();
+    this.snapCancellation.abort();
+    this.snaps.close();
+  }
+  async cancelSnaps(): Promise<void> {
+    this.snapCancellation.abort();
+    this.snapCancellation = new AbortController();
+    await this.snaps.cancel();
   }
   async cancelStep(): Promise<void> {
     await this.step.cancel();

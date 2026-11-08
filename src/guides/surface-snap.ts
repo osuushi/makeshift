@@ -132,6 +132,7 @@ export class GuideSurfaceSnap {
     });
   }
   clear(): void {
+    this.plan?.cancel?.();
     this.plan = null;
     this.create = null;
     this.targets = [];

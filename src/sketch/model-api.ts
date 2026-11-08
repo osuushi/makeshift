@@ -75,6 +75,7 @@ export type ModelRequest =
   | { kind: "open"; document: SketchDocument }
   | { kind: "transform-bodies"; transform: BodyTransform }
   | { kind: "complete-preview" }
+  | { kind: "cancel-edge-finish-targets" }
   | { kind: "move-edges"; operation: EdgeMovement; presentation?: "deferred" }
   | { kind: "move-faces"; operation: FaceMovement; presentation?: "deferred" }
   | { kind: "boolean-bodies"; operation: BodyBoolean }
