@@ -53,17 +53,6 @@ async function ringDrag(page, bodies) {
   await handle.hover();
   await page.evaluate(() => {
     window.bodyPointerSamples = { first: null, last: null };
-    window.addEventListener(
-      "keydown",
-      (e) => {
-        window.bodyPointerSamples.key = {
-          key: e.key,
-          target: e.target.tagName,
-          classes: e.target.className,
-        };
-      },
-      { once: true, capture: true },
-    );
     window.bodyPointerDown = (e) => {
       window.bodyPointerSamples.first = [e.clientX, e.clientY];
     };
@@ -103,22 +92,7 @@ async function ringDrag(page, bodies) {
   await page.mouse.up();
   assert.deepEqual((await inspect(page)).document.bodies, bodies);
   await page.keyboard.press("Enter");
-  await modalCompleted(page).catch(async (error) => {
-    console.error(
-      "Rotation failure",
-      await page.evaluate(() => ({
-        interaction: window.makeshiftInspect().interaction,
-        busy: window.makeshiftInspect().busy,
-        focus: document.activeElement.tagName + "." + document.activeElement.className,
-        value: document.querySelector(".body-transform-value").value,
-        events: window.bodyPointerSamples,
-        dialogs: [...document.querySelectorAll("dialog[open]")].map((d) =>
-          d.getAttribute("aria-label"),
-        ),
-      })),
-    );
-    throw error;
-  });
+  await modalCompleted(page);
   const rotated = (await inspect(page)).document.bodies;
   const samples = await page.evaluate(() => {
     window.removeEventListener("pointerdown", window.bodyPointerDown, { capture: true });
