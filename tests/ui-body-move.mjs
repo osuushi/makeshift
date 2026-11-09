@@ -124,7 +124,7 @@ export async function bodySnapRoute(page, name) {
   await page.getByRole("button", { name: "Reposition body pivot", exact: true }).click();
   const before = (await inspect(page)).document.bodies;
   for (const bypass of [false, true]) {
-    const box = await page.getByRole("button", { name: "Move body X", exact: true }).boundingBox();
+    const handle = page.getByRole("button", { name: "Move body X", exact: true });
     await page.evaluate(() => {
       window.addEventListener(
         "pointerdown",
@@ -142,9 +142,12 @@ export async function bodySnapRoute(page, name) {
       );
     });
     if (bypass) await page.keyboard.down("Shift");
-    await page.mouse.move(box.x + 13, box.y + 13);
+    // Hover resolves the moving docked handle; press freezes its displayed position.
+    await handle.hover();
     await page.mouse.down();
-    await page.mouse.move(box.x + 13 + 20 * projection.scale, box.y + 13, { steps: 6 });
+    const start = await handle.boundingBox();
+    const x = await page.evaluate(() => window.snapDragStart);
+    await page.mouse.move(x + 20 * projection.scale, start.y + start.height / 2, { steps: 6 });
     await page.mouse.up();
     if (bypass) await page.keyboard.up("Shift");
     assert.deepEqual((await inspect(page)).document.bodies, before);

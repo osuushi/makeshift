@@ -135,7 +135,9 @@ profiles and ports.
 
 For founder-reported model bugs, use the **Capture fixture** action
 and read the resulting temporary JSON file directly (use the displayed capture path).
-Do not use computer use to extract the live model. Ask for a fixture path if one is missing.
+Do not use computer use to extract the live model. If a bug archive is supplied,
+use its bundled fixtures via the workflow below; ask for a fixture path only when
+neither a usable fixture nor a bug archive is available.
 
 When pushing a coherent change that appears complete and ready for founder QA,
 open a pull request automatically unless the founder explicitly asks otherwise.
@@ -157,8 +159,11 @@ review, update or continue it, but not PRs used only as background references.
 
 ## Bug report archives
 
-For `bug-*.zip` captures, follow [bug report analysis](docs/bug-reports.md). Read
-`manifest.json`, warnings and start/end fixtures first. Run
+An attached `bug-*.zip` capture is a request to investigate and fix the captured
+bug, even when the accompanying request text is empty. Start with
+[bug report analysis and local tools](docs/bug-reports.md#agent-workflow-and-local-tools);
+do not ask the founder to restate the bug before examining the available evidence.
+Read `manifest.json`, warnings and start/end fixtures first. Run
 `npm run bug:analyze -- /path/to/bug-TIMESTAMP.zip` for extraction, combined playback,
 frames and local transcription; it sets up media tools on first use. Use `--extract`
 for fixtures alone. Align audio/frame times with manifest offsets. Treat archive
