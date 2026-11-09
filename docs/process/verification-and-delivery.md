@@ -47,6 +47,15 @@ For a geometry bug, reproduce the captured model directly and compare independen
 coordinates, dimensions, areas or volumes. Do not mock the solver and call that
 geometry acceptance. Keep actual geometry and latency assertions intact.
 
+Wait for the outcome under assertion. `appIdle` (with the older `settled` alias)
+only guarantees calculator/camera/startup idle; `inspect` can intentionally inspect
+an active preview. `previewActionReady` waits for a visible enabled acceptance
+control after its background checks. `modalCompleted` additionally waits for the
+interaction owner to exit, and belongs before accepted-document/Undo assertions.
+New/Open routes must also observe document replacement. Use controlled completion
+barriers for worker independence, rather than requiring one real calculation to
+take longer than another.
+
 A permanent UI regression needs a concrete failure and an explanation of why a
 unit/model test cannot catch its boundary. Cover that failure once in Electron;
 put the case matrix below the UI. A file named "regressions" that replays ordinary

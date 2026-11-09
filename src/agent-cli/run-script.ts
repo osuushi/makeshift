@@ -41,7 +41,7 @@ export async function runScript(path: string): Promise<unknown> {
   }
 }
 
-async function executeScript(
+export async function executeScript(
   entry: string,
   selection: ScriptApi["selection"],
   send: (action: ScriptRequest["action"], operation?: ScriptOperation) => Promise<unknown>,

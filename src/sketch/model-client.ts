@@ -1,3 +1,4 @@
+import { hasFailureCode } from "../model/calculation-failure.js";
 import type { VisualPreview } from "../model/visual-preview.js";
 import { sketchGridPreferences } from "../preferences/sketch-grid.js";
 import { cancellableCalculation } from "./calculation-state.js";
@@ -92,8 +93,9 @@ export class ModelClient extends ModelQueries {
     this.sentSelection = encoded;
     this.view = retainViewSketches(this.view, reply.view);
   }
-  async history(): Promise<OperationHistoryEntry[]> {
-    if (!this.working && this.selectionHistory) await this.request({ kind: "read" });
+  async history(synchronizeSelection = true): Promise<OperationHistoryEntry[]> {
+    if (synchronizeSelection && !this.working && this.selectionHistory)
+      await this.request({ kind: "read" });
     return this.readHistory();
   }
   private async readHistory(): Promise<OperationHistoryEntry[]> {
@@ -183,7 +185,7 @@ export class ModelClient extends ModelQueries {
       if (
         !this.cancelling &&
         !this.presentation?.superseded &&
-        !(this.superseding && error instanceof Error && error.message === "Preview superseded")
+        !(this.superseding && hasFailureCode(error, "superseded"))
       )
         this.error(error instanceof Error ? error.message : String(error));
       return false;

@@ -1,4 +1,5 @@
 import type { BodyFaceOffset } from "../model/body.js";
+import { CalculationFailure, offsetSearchFailure } from "../model/calculation-failure.js";
 import { minimumFinishMm } from "../model/geometry-policy.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { DeferredKernelReply } from "./kernel-reply.js";
@@ -32,14 +33,18 @@ export class FaceOffsetEdit {
       this.key = key;
       this.last = { distance: 0, result: null };
     }
-    if (!Number.isFinite(operation.distance)) throw new Error("Enter a finite face offset");
+    if (!Number.isFinite(operation.distance))
+      throw new CalculationFailure("invalid-request", "Enter a finite face offset");
     if (
       operation.limit === false &&
       operation.radius !== undefined &&
       operation.radius !== 0 &&
       operation.radius < minimumFinishMm
     )
-      throw new Error(`Size must be zero or at least ${minimumFinishMm} mm`);
+      throw new CalculationFailure(
+        "invalid-request",
+        `Size must be zero or at least ${minimumFinishMm} mm`,
+      );
     const verified =
       operation.radius !== undefined || operation.limit === false
         ? {
@@ -89,7 +94,7 @@ export class FaceOffsetEdit {
     try {
       return { distance, result: await calculate(distance) };
     } catch (error) {
-      if (!this.geometricFailure(error)) throw error;
+      if (!offsetSearchFailure(error)) throw error;
     }
     let low =
       this.last.distance * distance > 0 && Math.abs(this.last.distance) < Math.abs(distance)
@@ -101,18 +106,10 @@ export class FaceOffsetEdit {
       try {
         low = { distance: next, result: await calculate(next) };
       } catch (error) {
-        if (!this.geometricFailure(error)) throw error;
+        if (!offsetSearchFailure(error)) throw error;
         high = next;
       }
     }
     return low;
-  }
-  private geometricFailure(error: unknown): boolean {
-    return (
-      error instanceof Error &&
-      /Kernel produced invalid geometry|Those faces cannot be offset|Offset would (collapse|move)|Face offset must leave/.test(
-        error.message,
-      )
-    );
   }
 }

@@ -17,6 +17,12 @@ import { FaceOffsetWidget } from "./face-offset-widget.js";
 import { OffsetPlacement } from "./offset-placement.js";
 import { OffsetQuantity } from "./offset-quantity.js";
 import { PreviewRunner } from "./preview-runner.js";
+import {
+  acceptsSurfaceResult,
+  measuredSurfaceResult,
+  type SurfacePreviewResult,
+  surfaceResultFeedback,
+} from "./surface-preview-result.js";
 
 export class FaceOffsetControls {
   private widget: FaceOffsetWidget;
@@ -29,8 +35,13 @@ export class FaceOffsetControls {
   private quantity = new OffsetQuantity();
   private blend: FaceFinish | null = null;
   private distance = 0;
-  private valid = false;
-  private invalid = false;
+  private result: SurfacePreviewResult = { kind: "idle" };
+  private get canAccept(): boolean {
+    return acceptsSurfaceResult(this.result);
+  }
+  private get hasFeedback(): boolean {
+    return surfaceResultFeedback(this.result);
+  }
   private previews = new PreviewRunner<BodyFaceOffset>({
     editing: () => this.lease?.phase === "editing",
     calculate: (request) => this.calculate(request),
@@ -78,7 +89,7 @@ export class FaceOffsetControls {
     if (!this.begin(operation)) throw new Error("Cannot restore offset inputs");
     this.queue(operation.distance);
     await this.previews.settle();
-    if (!this.valid) throw new Error("Cannot regenerate the accepted face offset");
+    if (!this.canAccept) throw new Error("Cannot regenerate the accepted face offset");
     this.focus();
   }
   guide(point: Vector): GuideToolPlan | null {
@@ -97,7 +108,7 @@ export class FaceOffsetControls {
           existing,
           queue: (distance) => this.queue(distance, true),
           settle: () => this.previews.settle(),
-          valid: () => this.valid && !this.invalid,
+          valid: () => this.result.kind === "exact",
           distance: () => this.distance,
           cancel: () => this.cancel(),
         });
@@ -126,8 +137,7 @@ export class FaceOffsetControls {
     if (restored && !this.blend)
       this.quantity.setMode(restored.radius !== undefined ? "radius" : "offset");
     this.widget.input.value = this.quantity.text(this.distance);
-    this.valid = true;
-    this.invalid = false;
+    this.result = measuredSurfaceResult(this.distance, this.distance, true);
     this.previews.clear();
     this.lease.trackHistory(
       this.widget.root,
@@ -161,9 +171,8 @@ export class FaceOffsetControls {
       (latest?.distance === distance && latest.limit === limit)
     )
       return;
-    this.invalid = !Number.isFinite(distance);
     this.distance = distance;
-    this.valid = false;
+    this.result = { kind: Number.isFinite(distance) ? "pending" : "rejected", requested: distance };
     this.editor.message = "";
     if (!Number.isFinite(distance)) {
       this.previews.clear();
@@ -187,7 +196,7 @@ export class FaceOffsetControls {
       (preview) => {
         if (this.lease?.phase !== "editing" || !this.previews.latest) return;
         this.lease.showVisual(preview);
-        if (request === this.previews.latest) this.measure(request);
+        if (request === this.previews.latest) this.measure(request, false);
         this.editor.refresh();
       },
     );
@@ -195,21 +204,20 @@ export class FaceOffsetControls {
       if (success) this.lease.show(this.editor.store.candidate);
       if (request !== this.previews.latest) return;
       if (success) {
-        this.measure(request);
+        this.measure(request, true);
         this.editor.modeling.targets = (this.editor.store.offsetSelection ?? this.faces).map(
           (face) => ({ kind: "face", ...face }),
         );
       }
-      if (!success) this.invalid = true;
-      this.valid = success;
+      if (!success) this.result = { kind: "rejected", requested: request.distance };
       this.lease.show(success ? this.editor.store.candidate : null);
     }
     this.editor.refresh();
   }
-  private measure(request: BodyFaceOffset): void {
+  private measure(request: BodyFaceOffset, complete: boolean): void {
     this.distance = this.editor.store.offsetDistance ?? request.distance;
-    this.invalid = this.distance !== request.distance;
-    if (this.invalid) {
+    this.result = measuredSurfaceResult(request.distance, this.distance, complete);
+    if (this.hasFeedback) {
       this.widget.input.value = this.quantity.text(this.distance);
       this.editor.notice = "Offset stopped at the last verified position";
     }
@@ -217,7 +225,7 @@ export class FaceOffsetControls {
   private async finish(): Promise<boolean> {
     await this.previews.settle();
     const lease = this.lease;
-    if (this.drag.active || !lease || lease.captured || !this.valid) return false;
+    if (this.drag.active || !lease || lease.captured || !this.canAccept) return false;
     if (Math.abs(this.distance) < 1e-8) {
       await this.cancel();
       return true;
@@ -256,7 +264,7 @@ export class FaceOffsetControls {
     this.lease = null;
     this.widget.input.blur();
     this.distance = 0;
-    this.invalid = false;
+    this.result = { kind: "idle" };
     this.editor.notice = "";
     lease.release();
     this.editor.refresh();
@@ -291,9 +299,9 @@ export class FaceOffsetControls {
         !!this.lease,
         this.distance,
         this.quantity,
-        this.valid,
+        this.canAccept,
         this.blend,
-        this.invalid,
+        this.hasFeedback,
         !!this.previews.latest &&
           !this.blend &&
           this.previews.latest.limit === false &&

@@ -1,3 +1,4 @@
+import { CalculationFailure } from "../model/calculation-failure.js";
 import type { ModelCall, ModelReply, ModelRequest } from "./model-api.js";
 
 /** One mesh-first request. Refinement yields to paint and to the next tool target. */
@@ -18,12 +19,12 @@ export class DeferredPreview {
     call: ModelCall,
     show: (reply: ModelReply) => void,
   ): Promise<ModelReply> {
-    if (this.superseded) throw new Error("Preview superseded");
+    if (this.superseded) throw new CalculationFailure("superseded", "Preview superseded");
     const reply = await call(request);
     if (reply.error || !reply.view.visualPreview) return reply;
     show(reply);
     if (!this.superseded) await this.painted();
-    if (this.superseded) throw new Error("Preview superseded");
+    if (this.superseded) throw new CalculationFailure("superseded", "Preview superseded");
     this.completing = true;
     return call({ kind: "complete-preview" });
   }

@@ -2,7 +2,7 @@
 
 Settings is available in the editor header, through Tools and with Cmd-, on Mac.
 It opens a separate, reusable Settings window on native desktop and a compact modal
-dialog in browsers. Interface, Sketch Grid, View, Decorators, Experimental and Toolbox tabs
+dialog in browsers. Interface, Sketch Grid, View, Decorators, Experimental, Bug Reports and Toolbox tabs
 support arrow keys and Home/End. The active tab has an accent underline; tabs share a
 continuous strip, wrapping at narrow widths without sideways scrolling. Labels sit above their controls; related grid
 spacing and color fields share compact Minor/Major groups. Groups stack at narrow
@@ -268,3 +268,6 @@ Inspector disclosures use drawn chevrons in visible 26px tiles, with full-row ta
 hover/focus feedback and distinct expanded styling. Decorator notices retain native
 keyboard disclosure behavior but suppress browser markers. Reduced motion disables
 chevron transitions. Reorder and reset controls also use drawn icons.
+
+Desktop Bug Reports settings opt into a local silent recent-video buffer. See
+[bug reports](../bug-reports.md) for retention, recording, input diagnostics and privacy.

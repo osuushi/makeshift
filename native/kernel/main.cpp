@@ -1,3 +1,4 @@
+#include "calculation-failure.h"
 #include "kernel.h"
 #include "microscopic-topology.h"
 #include "deferred-presentation.h"
@@ -48,7 +49,7 @@ gp_Pnt point(const Tree& tree) {
     return {xyz[0], xyz[1], xyz[2]};
 }
 void validate(const TopoDS_Shape& shape) {
-    if (shape.IsNull() || !BRepCheck_Analyzer(shape).IsValid()) throw std::runtime_error("Kernel produced invalid geometry");
+    if (shape.IsNull() || !BRepCheck_Analyzer(shape).IsValid()) throw InvalidGeometryFailure("Kernel produced invalid geometry");
 }
 std::string encode(const TopoDS_Shape& shape) {
     std::ostringstream stream; BRepTools::Write(shape, stream, false, false, TopTools_FormatVersion_CURRENT);
@@ -62,7 +63,10 @@ TopoDS_Shape decode(const std::string& data) {
     std::string bytes; bytes.reserve(data.size() / 2);
     for (size_t i = 0; i < data.size(); i += 2) bytes += char(digit(data[i]) * 16 + digit(data[i + 1]));
     std::istringstream stream(bytes); TopoDS_Shape shape; BRep_Builder builder;
-    BRepTools::Read(shape, stream, builder); validate(shape); return shape;
+    BRepTools::Read(shape, stream, builder);
+    if (shape.IsNull() || !BRepCheck_Analyzer(shape).IsValid())
+        throw CalculationFailure("invalid-request", "Invalid exact-shape geometry");
+    return shape;
 }
 std::vector<Operand> operands(const Tree& input) {
     std::vector<Operand> result;
@@ -226,6 +230,9 @@ int main() {
             std::ostringstream output;
             request(output,input,timing);
             std::cout << output.str() << std::endl;
+        } catch (const CalculationFailure& e) {
+            clearDeferredPresentation();
+            std::cout << "{\"error\":" << quoted(e.what()) << ",\"code\":" << quoted(e.code) << "}" << std::endl;
         } catch (const erosion::AllowanceFailure& e) {
             clearDeferredPresentation();
             std::cout << "{\"error\":" << quoted(e.what());

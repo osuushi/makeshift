@@ -197,9 +197,10 @@ requirement. No persistent offset dependency or general NURBS editing is introdu
 
 Released numeric sketch Fillet/Offset previews and valid Projection previews use
 their ordinary acceptance path before a deliberate mode/action switch. Opening or
-browsing Tools only borrows focus. Invalid numeric text, unfinished Projection
-targets and rejected acceptance retain the owner and latest draft with a local
-error; the requested action does not run. Captured drags retain their guards,
+browsing Tools only borrows focus. Enter on invalid text retains the owner and
+draft with local feedback. A deliberate action switch cancels invalid or unfinished
+work, then runs the action, following the shared
+[completion policy](edit-lifecycle.md). Captured drags retain their guards,
 including the existing invalid fillet pointer-release cancellation.
 Their existing document Undo/Redo path still cancels the temporary preview before
 navigating accepted history; adding mode-switch finishers does not introduce local

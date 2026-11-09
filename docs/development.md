@@ -24,6 +24,11 @@ npm run setup:mesh
 npm run dev
 ```
 
+On macOS, `dev` builds/reuses a signed `.build/dev/Makeshift Dev.app` with its own
+microphone permission identity and Finder document-drop support. `npm run dev:bundle`
+builds it for launching directly from Finder. See [development bug reporting](bug-reports.md#macos-development-app)
+for signing, permissions and its separate preferences directory.
+
 `dev` starts Vite and one Electron window, with renderer hot reload. Closing the
 window or pressing Ctrl+C stops the owned development server. Electron launch flags
 can be passed after `--`; use `npm run dev -- --user-data-dir=/path/to/qa-profile`

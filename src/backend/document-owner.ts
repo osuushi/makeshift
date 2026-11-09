@@ -1,3 +1,4 @@
+import { CalculationFailure } from "../model/calculation-failure.js";
 import { operationCleanup } from "../model/cleanup.js";
 import { cancellableCalculation } from "../sketch/calculation-state.js";
 import type { ModelReply, ModelRequest, ModelView } from "../sketch/model-api.js";
@@ -95,7 +96,7 @@ export class DocumentOwner {
     if (request.kind === "edit") await this.accept();
   }
   private checkCancellation(): void {
-    if (this.cancelling) throw new Error("Calculation cancelled");
+    if (this.cancelling) throw new CalculationFailure("cancelled", "Calculation cancelled");
   }
   async call(request: ModelRequest): Promise<ModelReply> {
     if (isGeometryQuery(request) && request.kind.startsWith("cancel-"))
@@ -167,17 +168,21 @@ export class DocumentOwner {
       cleanup &&
       (!this.session.reopenedPreview || this.session.pendingOperation?.parameters.cleanup !== true)
     ) {
-      this.session.reopenedPreview = null;
-      this.session.candidate = await this.solids.removeTopology(
-        this.session.candidate,
-        operationCleanup(this.session.store.data.bodies ?? [], this.session.candidate.bodies ?? []),
+      this.session.refine(
+        await this.solids.removeTopology(
+          this.session.candidate,
+          operationCleanup(
+            this.session.store.data.bodies ?? [],
+            this.session.candidate.bodies ?? [],
+          ),
+        ),
+        false,
       );
     }
     const feedback = this.view.cutEdges;
     if (!this.session.reopenedPreview)
-      this.session.candidate = await this.decorators.continue(
-        this.session.candidate,
-        this.session.store.data,
+      this.session.refine(
+        await this.decorators.continue(this.session.candidate, this.session.store.data),
       );
     if (feedback) cutEdgeHighlights.set(this.session.candidate, feedback);
     this.checkCancellation();
@@ -196,9 +201,9 @@ export class DocumentOwner {
         );
       else await this.dispatch(request, operation);
       if (this.session.candidate && !this.session.reopenedPreview)
-        this.session.candidate = await this.decorators.continue(this.session.candidate, before);
+        this.session.refine(await this.decorators.continue(this.session.candidate, before));
       if (request.kind === "complete-preview" && this.kernel.wasSuperseded)
-        throw new Error("Preview superseded");
+        throw new CalculationFailure("superseded", "Preview superseded");
       this.checkCancellation();
       return { view: this.view, documentChanged: before !== this.session.store.data };
     } catch (error) {
@@ -211,10 +216,7 @@ export class DocumentOwner {
       this.session.store.record(operation, outcome, failure.error);
       if (request.kind !== "accept" && request.kind !== "check-cleanup") {
         await this.kernel.cancel();
-        this.session.visualPreview = undefined;
-        this.session.deferredEdit = null;
-        this.session.candidate = null;
-        this.session.pendingOperation = null;
+        this.session.clearPreview();
       }
       return { view: this.view, ...failure };
     }
@@ -229,21 +231,20 @@ export class DocumentOwner {
         request.kind !== "move-edges"
       )
         await this.kernel.cancel();
-      this.session.deferredEdit = null;
     }
+    if (!["read", "reopen", "accept"].includes(request.kind))
+      this.session.leavePresentation(
+        ["check-cleanup", "navigation-history", "sketch-grid"].includes(request.kind),
+      );
     if (request.kind === "sketch-grid") {
       this.session.store.setGrid(request.grid, request.initialize);
       if (this.session.candidate)
-        this.session.candidate = {
+        this.session.refine({
           ...this.session.candidate,
           sketchGrid: this.session.store.data.sketchGrid,
-        };
+        });
       return;
     }
-    if (!["read", "reopen", "accept", "check-cleanup", "navigation-history"].includes(request.kind))
-      this.session.reopenedPreview = null;
-    if (!["read", "reopen", "accept"].includes(request.kind))
-      this.session.visualPreview = undefined;
     const decoratorEdit =
       request.kind === "decorator" || request.kind === "decorator-enable"
         ? await this.decorators.edit(this.session.store.data, request)
@@ -252,17 +253,19 @@ export class DocumentOwner {
       decoratorEdit ??
       (isDirectDocumentEdit(request) ? editDocument(this.session.store.data, request) : null);
     if (direct) {
-      this.session.pendingOperation = null;
-      this.session.candidate = null;
+      this.session.clearPreview();
       this.session.store.accept(direct, operation);
       return;
     }
     if (request.kind === "extrude" && request.presentation === "visual") {
-      this.session.pendingOperation = operation;
-      this.session.candidate = null;
+      this.session.begin(operation);
       const result = await extrudeVisual(this.kernel, this.session.store.data, request.extrusion);
       this.checkCancellation();
-      this.session.visualPreview = { bodies: result.results, replaces: result.participants };
+      this.session.drawable(
+        { bodies: result.results, replaces: result.participants },
+        null,
+        operation,
+      );
       this.solids.booleanMode = result.mode;
       this.solids.booleanTargets = result.participants;
       this.solids.booleanTools = materialize([], {
@@ -273,19 +276,20 @@ export class DocumentOwner {
       return;
     }
     if (isSolidRequest(request)) {
-      this.session.pendingOperation = operation;
-      this.session.candidate = null;
-      this.session.candidate = await this.solids.calculate(this.session.store.data, request);
-      this.session.pendingOperation = acceptedParameters(operation, {
-        edgeSize: this.solids.edgeSize,
-        offsetDistance: this.solids.offsetEdit.view.offsetDistance,
-      });
+      this.session.begin(operation);
+      const candidate = await this.solids.calculate(this.session.store.data, request);
+      this.session.complete(
+        candidate,
+        acceptedParameters(operation, {
+          edgeSize: this.solids.edgeSize,
+          offsetDistance: this.solids.offsetEdit.view.offsetDistance,
+        }),
+      );
       if (request.kind === "transform-bodies") await this.accept();
       return;
     }
     if (isPreviewRequest(request)) {
-      this.session.pendingOperation = operation;
-      this.session.candidate = null;
+      this.session.begin(operation);
       await this.preview(request);
       return;
     }

@@ -1,3 +1,4 @@
+#include "calculation-failure.h"
 #include "spherical-face-offset.h"
 #include "offset-geometry.h"
 #include <BRepAdaptor_Surface.hxx>
@@ -29,7 +30,7 @@ std::optional<Result> sphericalFaceOffset(const Operand& body,
     const auto sphere = surface.Sphere();
     const double sign = (face.Orientation() == TopAbs_REVERSED ? -1 : 1) * (sphere.Direct() ? 1 : -1);
     const double radius = sphere.Radius() + sign * distance;
-    if (radius <= 1e-7) throw std::runtime_error("Offset would collapse the spherical face");
+    if (radius <= 1e-7) throw GeometricFailure("Offset would collapse the spherical face");
     gp_Trsf scale;
     scale.SetScale(sphere.Location(), radius / sphere.Radius());
     BRepBuilderAPI_Transform operation(shell, scale, true);
@@ -39,7 +40,7 @@ std::optional<Result> sphericalFaceOffset(const Operand& body,
     TopoDS_Face moved;
     for (TopExp_Explorer it(shape, TopAbs_FACE); it.More(); it.Next())
         if (it.Current().IsSame(operation.ModifiedShape(face))) moved = TopoDS::Face(it.Current());
-    if (moved.IsNull()) throw std::runtime_error("Kernel produced invalid geometry: spherical offset lost its face");
+    if (moved.IsNull()) throw InvalidGeometryFailure("Kernel produced invalid geometry: spherical offset lost its face");
     offset_geometry::checkParallel(face, moved, distance,
                                   "Kernel produced invalid geometry: spherical offset", true);
     offset_geometry::validSolid(shape, "Kernel produced invalid geometry: spherical offset");

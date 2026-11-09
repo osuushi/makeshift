@@ -1,3 +1,4 @@
+#include "calculation-failure.h"
 #include "kernel.h"
 #include "linear-cap-offset.h"
 #include "blends.h"
@@ -29,16 +30,16 @@ std::map<std::string, std::vector<TopoDS_Face>> selectedFaces(
     for (const auto& item : input.get_child("faces")) {
         const auto bodyId = item.second.get<std::string>("body");
         const auto faceId = item.second.get<std::string>("face");
-        if (!unique.insert(faceId).second) throw std::runtime_error("Select each face only once");
+        if (!unique.insert(faceId).second) throw CalculationFailure("invalid-request", "Select each face only once");
         const auto body = std::find_if(bodies.begin(), bodies.end(), [&](const Operand& b) { return b.id == bodyId; });
-        if (body == bodies.end()) throw std::runtime_error("Selected body no longer exists");
+        if (body == bodies.end()) throw CalculationFailure("invalid-request", "Selected body no longer exists");
         const auto face = std::find_if(body->entities.begin(), body->entities.end(), [&](const SourceEntity& e) {
             return e.id == faceId && e.shape.ShapeType() == TopAbs_FACE;
         });
-        if (face == body->entities.end()) throw std::runtime_error("Selected face does not belong to this body");
+        if (face == body->entities.end()) throw CalculationFailure("invalid-request", "Selected face does not belong to this body");
         selected[bodyId].push_back(TopoDS::Face(face->shape));
     }
-    if (selected.empty()) throw std::runtime_error("Select at least one body face");
+    if (selected.empty()) throw CalculationFailure("invalid-request", "Select at least one body face");
     return selected;
 }
 Result finishOffset(const Operand& body, BRepOffset_MakeOffset& operation,
@@ -83,7 +84,7 @@ Result finishOffset(const Operand& body, BRepOffset_MakeOffset& operation,
     checkOffsetVolume(body.shape, unify.Shape(), distance);
     std::vector<Result> results;
     solids(results, unify.Shape(), continued, {body.id});
-    if (results.size() != 1) throw std::runtime_error("Face offset must leave one valid solid per body");
+    if (results.size() != 1) throw GeometricFailure("Face offset must leave one valid solid per body");
     results.front().selectedFaces = highlighted;
     return std::move(results.front());
 }
@@ -93,7 +94,7 @@ std::vector<Result> offsetFaces(const Tree& input, const std::vector<Operand>& b
                                std::vector<std::string>& participants) {
     if (input.get_optional<double>("radius")) return resizeBlends(input, bodies, participants);
     const double distance = input.get<double>("distance");
-    if (!std::isfinite(distance)) throw std::runtime_error("Enter a finite face offset");
+    if (!std::isfinite(distance)) throw CalculationFailure("invalid-request", "Enter a finite face offset");
     auto selected = selectedFaces(input, bodies);
     std::vector<Result> results;
     for (auto body : bodies) {
@@ -129,11 +130,11 @@ std::vector<Result> offsetFaces(const Tree& input, const std::vector<Operand>& b
             for (const auto& offset : offsets) operation.SetOffsetOnFace(offset.face, offset.distance);
             operation.MakeOffsetShape();
             timing.phase("construct");
-            if (!operation.IsDone()) throw std::runtime_error("Those faces cannot be offset by that distance");
+            if (!operation.IsDone()) throw GeometricFailure("Those faces cannot be offset by that distance");
             if (freeform) offset_geometry::rebuildBoundaries(operation.Shape(), body.shape);
             timing.phase("boundaries");
             if (freeform && offset_geometry::encoding(body.shape) != preparedEncoding)
-                throw std::runtime_error("Kernel produced invalid geometry: offset construction altered its operand");
+                throw InvalidGeometryFailure("Kernel produced invalid geometry: offset construction altered its operand");
             validate(operation.Shape());
             timing.phase("validate");
             if (freeform) checkFreeformOffset(body, operation, offsets);
@@ -143,7 +144,7 @@ std::vector<Result> offsetFaces(const Tree& input, const std::vector<Operand>& b
             timing.phase("result");
             if (freeform && (offset_geometry::encoding(original) != originalEncoding ||
                              offset_geometry::encoding(body.shape) != preparedEncoding))
-                throw std::runtime_error("Kernel produced invalid geometry: offset altered input geometry");
+                throw InvalidGeometryFailure("Kernel produced invalid geometry: offset altered input geometry");
             results.push_back(std::move(result));
         } catch (const std::runtime_error&) {
             if (auto spherical = sphericalFaceOffset(originalBody, requestedFaces, distance)) {

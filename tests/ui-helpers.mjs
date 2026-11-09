@@ -2,12 +2,15 @@ import assert from "node:assert/strict";
 import { documentFixture, followDocument } from "./document-test-page.mjs";
 import { installTestFrames } from "./ui-test-frames.mjs";
 import { chooseTool } from "./ui-tools.mjs";
-export async function settled(page) {
+/** Calculator, camera and startup are idle; modal acceptance can still be continuing. */
+export async function appIdle(page) {
   await page.waitForFunction(() => {
     const state = window.makeshiftInspect?.();
     return state && !state.busy && !state.camera.moving && !document.querySelector("#startup");
   });
 }
+// Existing journeys use this alias; new waits should name the outcome they require.
+export { appIdle as settled };
 // Native busy can end before an ordinary modal acceptance continuation finishes.
 export async function modalCompleted(page) {
   await page.waitForFunction(() => {
@@ -16,11 +19,11 @@ export async function modalCompleted(page) {
   });
 }
 export async function inspect(page) {
-  await settled(page);
+  await appIdle(page);
   return page.evaluate(() => window.makeshiftInspect());
 }
 export async function reset(page) {
-  await settled(page);
+  await appIdle(page);
   const fixture = documentFixture(page);
   if (fixture) {
     const opened = fixture.session.app.waitForEvent("window");
@@ -33,7 +36,7 @@ export async function reset(page) {
     .getByRole("dialog", { name: "Unsaved changes" })
     .getByRole("button", { name: "Don’t Save", exact: true });
   if (await discard.isVisible()) await discard.click();
-  await settled(page);
+  await appIdle(page);
   // Idle alone does not establish that ordinary New replaced the document.
   await page.waitForFunction(() => {
     const state = window.makeshiftInspect();
@@ -47,7 +50,7 @@ export async function reset(page) {
     );
   });
   await page.reload();
-  await settled(page);
+  await appIdle(page);
 }
 export async function at(page, x, y) {
   const { projection: p } = await inspect(page);
@@ -66,7 +69,7 @@ export async function drag(page, from, to, modifiers = []) {
   await page.mouse.move(b.x, b.y, { steps: 8 });
   await page.mouse.up();
   for (const modifier of modifiers) await page.keyboard.up(modifier);
-  await settled(page);
+  await appIdle(page);
 }
 export async function click(page, x, y) {
   const point = await at(page, x, y);

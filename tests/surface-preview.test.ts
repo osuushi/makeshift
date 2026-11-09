@@ -199,3 +199,51 @@ for (const kind of ["offset", "fillet"] as const) {
     }
   });
 }
+
+test("completion retains the drawable mesh and Cancel cannot publish a late exact candidate", async (context) => {
+  const owner = new DocumentOwner();
+  let enter = () => {},
+    release = () => {};
+  const entered = new Promise<void>((resolve) => {
+    enter = resolve;
+  });
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  try {
+    const { request } = await surfaceFixture(owner, "offset");
+    const before = owner.view.data;
+    const visual = (await owner.call({ ...request, presentation: "deferred" })).view.visualPreview;
+    assert.ok(visual);
+    const kernel = Reflect.get(owner, "kernel") as SolidCalculator;
+    const calculate = kernel.calculate.bind(kernel);
+    context.mock.method(kernel, "calculate", async (input: KernelRequest) => {
+      const result = await calculate(input);
+      if (input.kind === "complete-preview") {
+        enter();
+        await held;
+      }
+      return result;
+    });
+    const completing = owner.call({ kind: "complete-preview" });
+    await entered;
+    assert.equal(owner.view.visualPreview, visual);
+    assert.equal(owner.view.candidate, null);
+    assert.equal(owner.view.data, before);
+    const cancelling = owner.call({ kind: "cancel-preview" });
+    release();
+    assert.ok((await completing).error);
+    assert.equal((await cancelling).error, undefined);
+    assert.equal(owner.view.candidate, null);
+    assert.equal(owner.view.visualPreview, undefined);
+    assert.equal(owner.view.data, before);
+    context.mock.restoreAll();
+    assert.equal((await owner.call(request)).error, undefined);
+    assert.equal((await owner.call({ kind: "accept" })).error, undefined);
+    await owner.call({ kind: "undo" });
+    assert.equal(owner.view.data, before);
+  } finally {
+    release();
+    owner.close();
+  }
+});

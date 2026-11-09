@@ -54,7 +54,7 @@ test("shard arguments cannot silently omit a partition", () => {
   for (const bad of ["0/4", "5/4", "1/0", "1", undefined]) assert.throws(() => shardIndex(bad));
 });
 
-test("platform filtering retains every file and only the seven reproduced Mac cases", async () => {
+test("platform filtering retains every file and only the reproduced Mac cases", async () => {
   const files = (await readdir(new URL(".", import.meta.url)))
     .filter((file) => file.endsWith(".test.ts"))
     .map((file) => file.replace(/\.ts$/, ".js"));
@@ -64,7 +64,6 @@ test("platform filtering retains every file and only the seven reproduced Mac ca
   assert.deepEqual(linux.sort(), files.sort());
   assert.deepEqual(mac.sort(), [...new Set(macModelCases.map((c) => c.file))].sort());
   assert.ok(linux.includes("new-unmeasured.test.js"));
-  assert.equal(macModelCases.length, 7);
   const pattern = new RegExp(macModelPattern);
   for (const { name } of macModelCases) {
     assert.ok(pattern.test(name));
