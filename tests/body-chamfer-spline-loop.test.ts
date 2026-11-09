@@ -8,7 +8,7 @@ const fixture = JSON.parse(
   readFileSync("tests/fixtures/chamfer-spline-loop.json", "utf8"),
 ) as SketchDocument;
 
-async function nearestChamfer(owner: DocumentOwner, body: string, selected: string[]) {
+async function nearestChamfer(owner: DocumentOwner, body: string, selected: readonly string[]) {
   const nearest = await owner.call({
     kind: "finish-edges",
     operation: {
