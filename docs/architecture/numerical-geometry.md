@@ -104,6 +104,15 @@ possible at sphere/plane and sphere/cylinder junctions without relaxing their
 fillet meets the offset budget; offset operations still measure their input and
 reject coarse older or imported geometry.
 
+Fillet and Chamfer also check individual B-spline parameter-curve knot spans
+for self-intersection before publishing a candidate. The ordinary whole-wire
+check can miss a short loop in a high-degree trim. Span intersections use the
+existing 1e-10 parameter-space precision and allow only intersections inside
+existing vertex tolerances; they do not enlarge model tolerances. A failing
+finish is infeasible, so dragging/Find Nearest can search for a smaller valid
+size while exact typed input remains rejected. This supplements ordinary shape
+validation; it is not a general self-intersection proof for arbitrary surfaces.
+
 ## Microscopic finishes
 
 Exact typed finish sizes between zero and 0.001 mm reject inline rather than

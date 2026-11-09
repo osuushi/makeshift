@@ -66,6 +66,7 @@ Result normalizedFinish(Result rounded, const Operand& body) {
     if (results.size() != 1) throw GeometricFailure("Edge finish is not feasible at this size");
     simplifySmallFinishes(results.front());
     resolveMicroscopicTopology(results.front());
+    validateFinishTrimLoops(results.front().shape);
     return results.front();
 }
 Result ordinaryFinish(const Operand& body, const std::vector<TopoDS_Edge>& edges, double radius, bool chamfer,

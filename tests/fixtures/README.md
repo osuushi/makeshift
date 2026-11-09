@@ -1,3 +1,15 @@
+# Chamfer spline loop
+
+`chamfer-spline-loop.json` derives from the founder's
+`bug-2026-11-09T01-11-03-974Z-b55b487d.zip` capture. The cylinder is unchanged;
+the second body's four spline chamfer faces were removed together with OCCT
+defeaturing to recover its valid six-face stock. Reapplying the captured
+22.9687 mm chamfer reproduces a self-intersecting trim that whole-curve BRepCheck
+can miss. The regression rejects that finish before acceptance, accepts 20 mm,
+reopens it, and verifies subsequent cylinder edits with independent volumes.
+Only exact geometry and ordered topology identity are retained. This is
+user-created Makeshift geometry; the original report is not modified.
+
 # Opposed blind bores
 
 `offset-opposed-bores.json` retains the exact selected body and topology identities
