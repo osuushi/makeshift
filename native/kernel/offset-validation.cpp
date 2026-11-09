@@ -14,6 +14,20 @@
 #include <cmath>
 #include <algorithm>
 #include <stdexcept>
+#include <numbers>
+
+namespace {
+bool torusOffsetReachesAxis(const BRepAdaptor_Surface& surface, double radius) {
+    // A fillet may use only the outer portion of a spindle torus. Its unused
+    // supporting surface can cross the axis without the trimmed face doing so.
+    const double first = surface.FirstVParameter(), last = surface.LastVParameter();
+    const double pi = std::numbers::pi;
+    double minimumCosine = std::min(std::cos(first), std::cos(last));
+    if (std::ceil((first - pi) / (2 * pi)) <= std::floor((last - pi) / (2 * pi)))
+        minimumCosine = -1;
+    return surface.Torus().MajorRadius() + radius * minimumCosine <= 1e-7;
+}
+}
 
 void checkOffsetFace(const TopoDS_Face& face, double distance) {
     BRepAdaptor_Surface surface(face);
@@ -23,7 +37,7 @@ void checkOffsetFace(const TopoDS_Face& face, double distance) {
         const bool direct = sphere ? surface.Sphere().Direct() : surface.Torus().Direct();
         const double sign = (face.Orientation() == TopAbs_REVERSED ? -1 : 1) * (direct ? 1 : -1);
         const double next = radius + sign * distance;
-        if (next <= 1e-7 || (!sphere && next >= surface.Torus().MajorRadius() - 1e-7))
+        if (next <= 1e-7 || (!sphere && torusOffsetReachesAxis(surface, next)))
             throw GeometricFailure("Offset would collapse or self-intersect the curved face");
     }
     if (surface.GetType() == GeomAbs_Cylinder) {
