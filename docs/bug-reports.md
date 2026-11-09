@@ -1,9 +1,9 @@
 # Desktop bug reports
 
 Press **Cmd-B** (Mac) or **Ctrl-B** (Windows/Linux) to record the Makeshift document
-window and microphone. Repeat to save; **Escape cancels the report** and consumes
-that key without cancelling the modeling gesture. A small panel shows recording,
-saving, errors and the completed `bug-[timestamp]-[id].zip`. Drag the file tile into
+window and microphone. Repeat to save; use the on-screen **Cancel recording** button
+to discard the report. Escape remains available to the active app interaction.
+A small panel shows recording, saving, errors and the completed `bug-[timestamp]-[id].zip`. Drag the file tile into
 an agent chat, or click it to reveal the archive. Reports remain in the OS temporary
 `makeshift-bugs` directory; move important captures somewhere durable.
 
@@ -51,7 +51,7 @@ stop after five minutes, video is bounded to 100 MB, and input logs to 20,000 ev
 (oldest entries drop with a warning). Actual CPU/GPU cost depends on scene, hardware
 and open-window count. Closing/reloading/crashing the renderer discards unsaved media;
 this is a quick repro recorder, not crash recovery. Saving failure retains the assembled
-report in memory; Cmd/Ctrl-B retries and Escape discards it.
+report in memory; Cmd/Ctrl-B retries and **Cancel recording** discards it.
 
 ## Agent workflow and local tools
 
