@@ -1,5 +1,7 @@
 #include "kernel.h"
 #include "timing.h"
+#include "delete-band.h"
+#include <Standard_Failure.hxx>
 #include <OSD_ThreadPool.hxx>
 #include <BRepAlgoAPI_Defeaturing.hxx>
 #include <BRep_Tool.hxx>
@@ -62,7 +64,10 @@ Result erase(const Tree& selection, const Operand& body) {
     if (selection.get<bool>("whole", false)) throw std::runtime_error("Select faces or edges to delete");
     const auto faces = selected(selection, body, TopAbs_FACE), edges = selected(selection, body, TopAbs_EDGE);
     if (faces.empty() && edges.empty()) throw std::runtime_error("Select faces or edges to delete");
-    auto result = healFaces(body, faces);
+    Result result;
+    try { result = healFaces(body, faces); }
+    catch (const Standard_Failure&) { result = delete_band::flattenBand(body, faces); }
+    catch (const std::runtime_error&) { result = delete_band::flattenBand(body, faces); }
     TopTools_IndexedMapOfShape current;
     TopExp::MapShapes(result.shape, TopAbs_EDGE, current);
     TopTools_MapOfShape eligible;
