@@ -18,21 +18,20 @@ export async function mixedThreadPresetRoute(page, name) {
   });
   await orient(page, [1, 0, -1]);
   await worldClick(page, [4, 35.5, 12]);
-  await worldClick(page, [-4, 35.5, 32], true);
+  await page.getByRole("button", { name: "Select all threads sharing this preset" }).click();
   let state = await inspect(page);
   assert.deepEqual(
     new Set(state.modelingSelection.map((f) => f.face)),
-    new Set(fixture.selection.map((f) => f.face)),
+    new Set(fixture.document.decorators.flatMap((d) => d.faces.map((f) => f.face))),
   );
   const preset = page.getByRole("combobox", { name: "Preset", exact: true });
   assert.equal(await preset.inputValue(), "fdm-fine");
   await preset.selectOption("fdm-fine");
   state = await inspect(page);
-  const ids = fixture.selection.map(
-    (f) => state.document.decorators.find((d) => d.faces.some((r) => r.face === f.face)).id,
+  assert.deepEqual(
+    state.document.decorators.map((d) => d.settings.startTaper).sort(),
+    [0, 0, 1, 1],
   );
-  const selected = state.document.decorators.filter((d) => ids.includes(d.id));
-  assert.deepEqual(selected.map((d) => d.settings.startTaper).sort(), [0, 1]);
   assert.equal(await preset.inputValue(), "fdm-fine");
   const first = page
     .getByRole("region", { name: "Decorators", exact: true })
@@ -48,6 +47,10 @@ export async function mixedThreadPresetRoute(page, name) {
     state.document.decoratorPresets,
     before,
     "Computed presets do not store hidden snapshots",
+  );
+  assert.ok(
+    state.document.decorators.every((d) => d.settings.clearance === 0.35),
+    "One Inspector edit reaches every matching thread decorator",
   );
   const computed = await preset.locator('optgroup[label="Document"] option').allTextContents();
   assert.ok(computed.some((label) => /^FDM fine \[.+\]$/.test(label)));

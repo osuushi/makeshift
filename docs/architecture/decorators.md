@@ -273,7 +273,10 @@ named snapshot explicitly. Computed presets are exposed consistently in the menu
 and scripting catalog, and are reconstructed from accepted instances after opening.
 The thread Preset menu comes first and shows a shared built-in identity even when
 rod/hole taper defaults or metric dimensions differ; individual fields still show
-Mixed as needed. Existing saved presets remain available. Preset selection, copies,
+Mixed as needed. When the selected threads share one preset and other instances
+use it, **Select all threads sharing this preset** selects their faces across the
+document. Inspector settings then edit those instances together in one Undo step.
+Existing saved presets remain available. Preset selection, copies,
 names, origins and last choices participate in ordinary Undo and archives.
 Numeric preview/cancellation does not accept a preset.
 These settings snapshots do not link geometry or automatically resize mating parts.
