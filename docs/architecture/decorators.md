@@ -273,7 +273,10 @@ named snapshot explicitly. Computed presets are exposed consistently in the menu
 and scripting catalog, and are reconstructed from accepted instances after opening.
 The thread Preset menu comes first and shows a shared built-in identity even when
 rod/hole taper defaults or metric dimensions differ; individual fields still show
-Mixed as needed. Existing saved presets remain available. Preset selection, copies,
+Mixed as needed. When the selected threads share one preset and other instances
+use it, **Select all threads sharing this preset** selects their faces across the
+document. Inspector settings then edit those instances together in one Undo step.
+Existing saved presets remain available. Preset selection, copies,
 names, origins and last choices participate in ordinary Undo and archives.
 Numeric preview/cancellation does not accept a preset.
 These settings snapshots do not link geometry or automatically resize mating parts.
@@ -641,11 +644,11 @@ query worker. Only decorated bodies are retessellated; the original BRep, IDs,
 settings and Undo history stay unchanged. The linear sampling target is the minimum
 of 0.004 mm, pitch/200 and positive hole relief/8; zero relief does not imply zero
 numerical tolerance. Requests below 0.00001 mm fail explicitly. Metric mesh edges
-follow crest/root transitions; axial rows include taper transitions. Untapered
-metric threads bound the mixed radial/angular interpolation error to choose axial
-samples; rounded profiles and tapered metric threads retain their curvature-based
-sampling. The sampling target and fit allowance are unchanged. Facet samples
-are checked against the analytic envelope with a separate allowance of twice the
+follow crest/root transitions; axial rows include taper transitions. Straight-sided
+profiles use the mixed radial/angular interpolation bound to choose axial samples.
+Tapered profiles also account for the cone slope up to the curvature-based
+sampling rate used for rounded profiles. Facet samples are checked against the
+analytic envelope with a separate allowance of twice the
 sampling target. This is measured numerical accuracy, not a general certification
 of arbitrary curved neighboring surfaces or physical fit.
 
@@ -660,7 +663,8 @@ extension/intersection treatment for arbitrary BRep surface classes.
 
 Mesh Booleans run in body-local coordinates so world placement does not consume
 float precision. Their recorded numerical rounding must fit within one quarter
-of the sampling target. Float packing can collapse very small Boolean facets;
+of the sampling target. Native integration transfers Boolean output in float64.
+Float packing for WASM and STL can collapse very small Boolean facets;
 short edges of actually collapsed facets are normalized within the existing
 rounding bound. If a collapsed edge would join two other edges, an original adjacent
 facet pair can exchange its diagonal when the new diagonal is unused, its projection

@@ -40,9 +40,15 @@ function stlMesh(mesh: ExportMesh): ExportMesh {
     );
   if (!Number.isFinite(rounding) || rounding >= mesh.precision)
     throw new Error("Coordinates exceed STL precision; export 3MF to retain this placement");
-  const result = packedMesh({ vertices, triangles: mesh.triangles }, mesh.precision - rounding);
-  validateMesh(result);
-  return result;
+  try {
+    const result = packedMesh({ vertices, triangles: mesh.triangles }, mesh.precision - rounding);
+    validateMesh(result);
+    return result;
+  } catch (cause) {
+    throw new Error("STL rounding collapsed mesh facets; export 3MF to retain mesh precision", {
+      cause,
+    });
+  }
 }
 
 function stl(source: ExportMesh[]): Uint8Array<ArrayBuffer> {
