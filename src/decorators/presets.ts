@@ -77,6 +77,27 @@ export function localPreset(document: SketchDocument, instance: DecoratorInstanc
       sameSettings(p.settings, instance.settings),
   );
 }
+
+function threadPresetKey(instance: DecoratorInstance): string | undefined {
+  if (instance.definition !== threadDefinition) return undefined;
+  const computed = ephemeralPresetId(instance);
+  if (computed) return computed;
+  if (instance.presetId) return JSON.stringify(["saved", instance.version, instance.presetId]);
+  const preset = instance.settings.preset;
+  if (preset === "fdm-fine" || preset === "fdm-coarse" || preset === "metric")
+    return JSON.stringify(["builtin", instance.version, preset]);
+}
+
+export function threadsSharingPreset(
+  document: SketchDocument,
+  selected: readonly DecoratorInstance[],
+): DecoratorInstance[] {
+  if (!selected.length) return [];
+  const key = threadPresetKey(selected[0]);
+  if (!key || selected.some((instance) => threadPresetKey(instance) !== key)) return [];
+  return (document.decorators ?? []).filter((instance) => threadPresetKey(instance) === key);
+}
+
 export function copyPreset(
   presets: readonly DecoratorPreset[],
   instance: DecoratorInstance,

@@ -3,7 +3,7 @@ import { toolCatalog } from "../tools/catalog.js";
 import { documentPresets } from "./ephemeral-presets.js";
 import { presetNameDialog } from "./preset-name-dialog.js";
 import { presetSelector } from "./preset-selector.js";
-import { localPreset, presetCopyName, presetName } from "./presets.js";
+import { localPreset, presetCopyName, presetName, threadsSharingPreset } from "./presets.js";
 import type { DecoratorEdit, DecoratorInstance } from "./types.js";
 
 export function appendPresetControls(
@@ -25,6 +25,27 @@ export function appendPresetControls(
     });
   controls.append(presetSelector(editor.store.data, instances, run));
   root.append(controls);
+  if (threadsSharingPreset(editor.store.data, instances).length <= instances.length) return;
+  const select = document.createElement("button");
+  select.type = "button";
+  select.textContent = "Select all threads sharing this preset";
+  const ids = new Set(instances.map((instance) => instance.id));
+  select.onclick = () =>
+    void toolCatalog(editor).activate({
+      finishEdit: true,
+      reason: () => null,
+      run: () => {
+        const source = editor.store.data;
+        const current = (source.decorators ?? []).filter((instance) => ids.has(instance.id));
+        const matches = threadsSharingPreset(source, current);
+        if (matches.length <= current.length) return;
+        editor.modeling.targets = matches.flatMap((instance) =>
+          instance.faces.map((face) => ({ kind: "face" as const, ...face })),
+        );
+        editor.refresh();
+      },
+    });
+  root.append(select);
 }
 
 function namePreset(editor: SketchEditor, edit: Extract<DecoratorEdit, { action: "preset" }>) {

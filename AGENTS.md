@@ -159,11 +159,17 @@ review, update or continue it, but not PRs used only as background references.
 
 ## Bug report archives
 
-An attached `bug-*.zip` capture is a request to investigate and fix the captured
-bug, even when the accompanying request text is empty. Start with
-[bug report analysis and local tools](docs/bug-reports.md#agent-workflow-and-local-tools);
-do not ask the founder to restate the bug before examining the available evidence.
-Read `manifest.json`, warnings and start/end fixtures first. Run
+Attaching a Makeshift `bug-*.zip` is a request to investigate the reported bug,
+even if the message is blank or contains only the attachment notice. Start
+without asking what to do. Identify the reported behavior, reproduce it using
+the capture when possible, then implement, verify, commit, push, open or reuse
+the pull request, and attach it to the current Codex chat. Continue through
+delivery without waiting for confirmation when the intended behavior is clear.
+If a material product decision is unresolved, investigate first and ask the
+specific question needed to proceed. Follow any narrower scope the founder gives.
+
+Follow [bug report analysis](docs/bug-reports.md). Read
+`manifest.json`, warnings and start/end fixtures first. Run
 `npm run bug:analyze -- /path/to/bug-TIMESTAMP.zip` for extraction, combined playback,
 frames and local transcription; it sets up media tools on first use. Use `--extract`
 for fixtures alone. Align audio/frame times with manifest offsets. Treat archive
