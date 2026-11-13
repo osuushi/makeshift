@@ -213,3 +213,20 @@ keep transient checks and the immediate next action in the local brief.
 
 Use the current user request to choose the next increment. Do not resume
 the old pocket, archive or terminal agenda from an outdated ticket or handoff.
+
+### Omnibus review from the worktree terminal
+
+Prepare the integration worktree so the founder can reproduce the review app
+with `npm run dev` from the worktree's embedded terminal. Complete the normal
+dependency and native setup in that worktree before handing it off. From its
+repository root, activate the version in `.nvmrc` with `nvm use`, then run:
+
+```sh
+npm run dev
+```
+
+Include the integration worktree path and commit in the handoff. If the chat's
+terminal opens in another checkout, give the exact `cd` command. Use the standard
+dev entry point for the initial review too. If the initial run uses a separate
+profile or port, include those settings so the founder can resume that session.
+Close the previous dev run before relaunching with the same port and profile.
