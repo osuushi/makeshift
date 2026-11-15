@@ -64,8 +64,7 @@ export function focusNumericField(
       style.display !== "none"
     );
   });
-  if (numericOnly === "sketch")
-    targets.sort((a, b) => Number(!a.matches(fields)) - Number(!b.matches(fields)));
+  if (numericOnly === "sketch") targets.sort((a, b) => sketchTabOrder(a) - sketchTabOrder(b));
   if (!targets.length) return false;
   const active = document.activeElement;
   if (lastTarget?.matches("[data-move-marker]") && !lastTarget.isConnected)
@@ -116,4 +115,9 @@ export function focusNumericField(
     if (target instanceof HTMLInputElement && target.matches(fields)) target.select();
   }
   return true;
+}
+
+function sketchTabOrder(target: Element): number {
+  if (target.matches(".fillet-guide-hit")) return 0;
+  return target.matches(fields) ? 1 : 2;
 }

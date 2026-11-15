@@ -48,6 +48,7 @@ export async function sketchDimensionTabRoute(page, name) {
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, rectangle);
   await sketchGuideTabRoute(page);
+  await selectedCornerTabRoute(page);
   console.log(
     `${name}: sketch Tab edits Radius with Undo; reverse Tab, dimension cycling, bow/fillet entry and Undo pass`,
   );
@@ -98,10 +99,6 @@ async function sketchGuideTabRoute(page) {
   await page.keyboard.up("Shift");
   const corner = (await inspect(page)).document;
   await page.keyboard.press("Tab");
-  await focused(page, "Corner angle");
-  await page.keyboard.press("Tab");
-  await focused(page, "Angle");
-  await page.keyboard.press("Tab");
   await focused(page, "Fillet radius");
   await page.keyboard.insertText("2");
   await page.keyboard.press("Enter");
@@ -109,4 +106,22 @@ async function sketchGuideTabRoute(page) {
   assert.equal((await inspect(page)).document.sketches[0].curves.length, 3);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, corner);
+}
+
+async function selectedCornerTabRoute(page) {
+  await reset(page);
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
+  await page.keyboard.press("r");
+  await drag(page, [0, 0], [20, 10]);
+  await page.keyboard.press("v");
+  await click(page, 0, 0);
+  const original = (await inspect(page)).document;
+  await page.keyboard.press("Tab");
+  await focused(page, "Fillet radius");
+  await page.keyboard.insertText("2");
+  await page.keyboard.press("Enter");
+  await modalCompleted(page);
+  assert.equal((await inspect(page)).document.sketches[0].curves.length, 5);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
 }
