@@ -387,16 +387,27 @@ Selected faces heal by extending neighboring surfaces, using current exact BRep,
 not construction history. Select all relevant hole walls or pocket/boss walls and
 floor/cap; fillet/chamfer faces can recover their supporting intersection. Edges
 between matching supporting surfaces dissolve using scoped same-domain cleanup.
-Sharp edges that require choosing a new replacement surface reject; no fitted
-surface or open-shell mode is implied. Every selected face/edge must disappear;
+Other edges remove their incident face regions and reconnect the surviving
+boundaries with ruled lofts (founder decision, 2026-11-15). Selected edges that share
+faces form one region before reconstruction, so multi-edge deletion does not depend
+on selection order. Each region must have two closed boundary loops. Circular
+shoulders become conical transitions; polygonal loops can produce several loft
+faces. The boundary curves stay fixed; tangency to neighboring faces and a global
+minimum-energy surface are not imposed. Open-edge regions with one loop, regions
+with more than two loops, boundaryless regions and invalid or self-intersecting
+results reject without changing the document. No open-shell mode is implied.
+Every selected face/edge must disappear;
 partial healing and kernel warnings reject the rigorous repair candidate. Mixed selections heal
-faces first and dissolve surviving selected edges. Partial-body healing across multiple bodies is atomic, each retaining one valid
+faces first, dissolve same-support edges, then reconnect surviving selected edges.
+Partial-body healing across multiple bodies is atomic, each retaining one valid
 closed solid and its body identity. Complete body coverage instead removes that
 body directly, including when selected through all its faces.
 
 DocumentOwner owns accepted data and history. Immediate kernel correspondence
 retains one-to-one topology IDs; splits/merges get new IDs. Unrelated subdivisions
-remain protected in edge dissolution, as with explicit cleanup. After acceptance,
+remain protected in edge dissolution, as with explicit cleanup. Loft replacement
+faces get new IDs; unaffected faces and surviving boundary edges retain theirs,
+including boundaries shared by two replacement regions. After acceptance,
 selection becomes the affected bodies because removed topology no longer exists.
 Save/Open stores the healed BRep, which remains available for ordinary later edits.
 

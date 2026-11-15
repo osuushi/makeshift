@@ -113,11 +113,11 @@ export async function deleteEdgeRoute(page, name) {
   state = await inspect(page);
   assert.equal(state.preview, null);
   assert.deepEqual(state.document, after);
-  assert.match(await page.getByRole("status").textContent(), /different surfaces/);
+  assert.match(await page.getByRole("status").textContent(), /two surviving closed boundary loops/);
   const history = await page.evaluate(() => window.makeshiftHistory());
   const failure = history.at(-1);
   assert.equal(failure.outcome, "failed");
-  assert.match(failure.error, /different surfaces/);
+  assert.match(failure.error, /two surviving closed boundary loops/);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before, "Undo skips the rejected deletion");
   await chooseTool(page, "redo", "redo");

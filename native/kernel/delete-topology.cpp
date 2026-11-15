@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "delete-edge-regions.h"
 #include "timing.h"
 #include "delete-band.h"
 #include <Standard_Failure.hxx>
@@ -78,10 +79,13 @@ Result erase(const Tree& selection, const Operand& body) {
         result = cleanupEdges({body.id, result.shape, result.predecessors}, eligible);
         TopTools_IndexedMapOfShape after;
         TopExp::MapShapes(result.shape, TopAbs_EDGE, after);
+        TopTools_MapOfShape remaining;
         for (const auto& edge : edges)
             for (const auto& origin : result.predecessors)
                 if (origin.id == edge.id && after.Contains(origin.shape))
-                    throw std::runtime_error("This edge separates different surfaces; delete the feature's faces instead");
+                    remaining.Add(origin.shape);
+        if (!remaining.IsEmpty())
+            result = reconnectDeletedEdges({body.id, result.shape, result.predecessors}, remaining);
     }
     validate(result.shape);
     for (TopExp_Explorer s(result.shape, TopAbs_SHELL); s.More(); s.Next())
