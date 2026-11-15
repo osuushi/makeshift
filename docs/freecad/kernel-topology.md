@@ -1095,6 +1095,17 @@ setting that option on the analyzer does not exercise it. The native
 intersection level and original-shape fault predicate. It is an experiment;
 production continues to use the analyzer.
 
+Edge-finish validation follow-up (2026-11-15): the pinned
+[`BOPAlgo_CheckerSI::Perform`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BOPAlgo/BOPAlgo_CheckerSI.cxx#L156-L203)
+also checks each non-analytic face against itself and reports caught failures as
+intersection failures. Runtime reproduction with the collapsed-handle Bézier
+fillet fixture aborts on its extrusion surfaces. Makeshift retries on a private,
+exact tensor-product representation that preserves the original UV parameters
+and pcurves, then requires ordinary validity and the full intersection check.
+Native checks verify unchanged input and rejection of overlapping inspection
+copies; model tests retain the valid single/two-corner fillets. No upstream code
+was copied.
+
 Makeshift inference: keep one stable-address query per loft face, accept a sample only
 when a classified face point is within the existing section tolerance, and retain
 the general shape-distance fallback for edge/corner or unsuccessful projections.

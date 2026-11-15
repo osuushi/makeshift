@@ -1,4 +1,6 @@
 #include "edge-finish-validation.h"
+#include "edge-finish-inspection.h"
+#include <BRepBuilderAPI_Transform.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepCheck_Analyzer.hxx>
@@ -8,7 +10,9 @@
 #include <BRep_Builder.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
+#include <TopoDS_Compound.hxx>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 
 void checkOverlappingCorner(const char* path) {
@@ -25,10 +29,35 @@ void checkOverlappingCorner(const char* path) {
     if (!caught) throw std::runtime_error("Accepted the captured overlapping fillet corner");
 }
 
+void checkBezierInspection(const char* path) {
+    // Exact 0.1 mm fillet output from bezier-extrusion-fillet.json.
+    TopoDS_Shape shape;
+    BRep_Builder builder;
+    BRepTools::Read(shape, path, builder);
+    std::ostringstream before, after;
+    BRepTools::Write(shape, before);
+    validateFinishIntersections(shape);
+    BRepTools::Write(shape, after);
+    if (before.str() != after.str())
+        throw std::runtime_error("Inspection changed the accepted Bezier geometry");
+    gp_Trsf shift;
+    shift.SetTranslation(gp_Vec(0.1, 0.1, 0.1));
+    TopoDS_Compound overlap;
+    builder.MakeCompound(overlap);
+    builder.Add(overlap, shape);
+    builder.Add(overlap, BRepBuilderAPI_Transform(shape, shift, true).Shape());
+    const auto inspection = finishInspectionCopy(overlap);
+    bool caught = false;
+    try { validateFinishIntersections(inspection); }
+    catch (const std::runtime_error&) { caught = true; }
+    if (!caught) throw std::runtime_error("Inspection copy concealed overlapping Bezier solids");
+}
+
 int main(int argc, char** argv) {
     try {
-        if (argc != 3) throw std::runtime_error("Expected captured BRep paths");
+        if (argc != 4) throw std::runtime_error("Expected captured BRep paths");
         checkOverlappingCorner(argv[2]);
+        checkBezierInspection(argv[3]);
         const auto stock = BRepPrimAPI_MakeCylinder(40, 24).Shape();
         BRepFilletAPI_MakeFillet round(stock);
         for (TopExp_Explorer e(stock, TopAbs_EDGE); e.More(); e.Next()) {

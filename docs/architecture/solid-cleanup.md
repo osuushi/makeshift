@@ -201,6 +201,10 @@ after microscopic normalization, before ordinary or deferred presentation.
 Two face uses per edge and connected vertex fans do not rule out overlapping
 faces or crossing edges. Such candidates are refused at the requested size;
 the explicit nearest-size search applies the same checks to every candidate.
+If OCCT aborts this check on a non-rational Bézier extrusion, retry on a private
+inspection copy with exact tensor-product spline surfaces and unchanged parameter
+coordinates. The copy must pass BRep validity and the complete intersection check;
+the result retains its original geometry. Other checker failures still refuse.
 Preview, Accept, Undo/Redo and Save/Open use the ordinary document-owner path.
 Selected walls must span the complete finish size; an end cap remains a limit,
 so a concave fill cannot add material beyond the actual wall.
