@@ -264,3 +264,11 @@ it and exercise planar transition replacement. `expected` is the founder's sharp
 square/cylinder step with its shelf at Z=15; the fallback deliberately uses the
 current planar boundary at Z=9 instead. Native eligibility checks also use that
 sharp shelf to reject already-coplanar bands.
+
+`delete-shoulder.json` preserves the exact body, sketches, topology IDs/signatures
+and attempted edge deletion from the founder's 2026-11-15T19:55:00.336Z capture.
+Presentation meshes and interaction/history data are omitted. Deleting the outer
+shoulder rim must replace the lower cylinder and annular shelf with a conical loft
+between the stationary radius-20 bottom and radius-11 shoulder circles. Selecting
+both shoulder rims must loft directly to the top circle. Tests also cover
+rectangular loops, adjacent replacement regions, rotated copies and atomic Undo.

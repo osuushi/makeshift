@@ -119,6 +119,9 @@ Result sew(const Operand& body, const TopTools_MapOfShape& removed,
             auto next = source.shape;
             if (sewing.IsModified(next)) next = sewing.Modified(next);
             require(faces.Contains(next), "Deletion lost an unaffected face");
+            next = faces(faces.FindIndex(next));
+            require(current(current.FindIndex(source.shape)).Orientation() == next.Orientation(),
+                    "Deletion inverted an unaffected face");
             result.predecessors.push_back({source.id, next});
         } else if (source.shape.ShapeType() == TopAbs_EDGE && retainedEdges.Contains(source.shape)) {
             TopoDS_Shape match;

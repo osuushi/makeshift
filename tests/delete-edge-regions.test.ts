@@ -45,6 +45,13 @@ for (const edges of [[outer], [inner], [outer, inner], [inner, outer]])
             : Math.PI * 400 * 44 + frustum(49);
       assert.ok(Math.abs(body.volume - expected) < 1e-5, `${body.volume} != ${expected}`);
       assert.ok(edges.every((id) => !body.edges.some((e) => e.id === id)));
+      for (const face of original.faces) {
+        const replaced = face.edges.some((id) => edges.includes(id));
+        assert.equal(
+          body.faces.some((f) => f.id === face.id),
+          !replaced,
+        );
+      }
       const rimIds = [
         "2383d366-077f-40e0-982d-648fdd9e414d",
         "a1af30a9-bd77-490f-91f5-edb08f4e2c40",
@@ -220,6 +227,60 @@ test("same-support dissolution composes with loft deletion; mixed invalid select
       ],
     });
     assert.ok(invalid.error);
+    assert.deepEqual(owner.view.data, before);
+  } finally {
+    owner.close();
+  }
+});
+
+test("loft deletion across rotated bodies accepts once and rolls back a failing second body", async () => {
+  const owner = new DocumentOwner();
+  try {
+    assert.equal((await owner.call({ kind: "open", document: fixture.document })).error, undefined);
+    assert.equal(
+      (
+        await owner.call({
+          kind: "transform-bodies",
+          transform: {
+            ids: [fixture.selection[0].body],
+            axis: [1, 0, 0],
+            angle: 73,
+            pivot: [0, 0, 0],
+            translation: [100, 20, -40],
+            duplicate: true,
+          },
+        })
+      ).error,
+      undefined,
+    );
+    const before = owner.view.data;
+    const copy = before.bodies?.[1];
+    assert.ok(copy);
+    const rim = copy.edges.find(
+      (e) =>
+        e.curve?.kind === "circle" &&
+        Math.abs(e.curve.radius - 20) < 1e-7 &&
+        Math.abs(e.curve.center[2] - (-40 + 44 * Math.cos((73 * Math.PI) / 180))) < 1e-6,
+    );
+    const seam = copy.edges.find((e) => e.curve?.kind === "line");
+    assert.ok(rim && seam);
+    const second = { body: copy.id, whole: false, faces: [] as string[], edges: [seam.id] };
+    const failed = await owner.call({
+      kind: "delete-topology",
+      selection: [fixture.selection[0], second],
+    });
+    assert.ok(failed.error);
+    assert.deepEqual(owner.view.data, before);
+    const reply = await owner.call({
+      kind: "delete-topology",
+      selection: [fixture.selection[0], { ...second, edges: [rim.id] }],
+    });
+    assert.equal(reply.error, undefined);
+    const bodies = reply.view.data.bodies;
+    assert.ok(bodies && bodies.length === 2);
+    assert.ok(Math.abs(bodies[0].volume - bodies[1].volume) < 1e-5);
+    assert.equal(bodies[1].id, copy.id);
+    await owner.call({ kind: "undo" });
     assert.deepEqual(owner.view.data, before);
   } finally {
     owner.close();
