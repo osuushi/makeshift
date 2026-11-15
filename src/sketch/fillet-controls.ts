@@ -59,6 +59,7 @@ export class FilletControls {
         const rect = this.handle.getBoundingClientRect();
         this.begin({ x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 });
         if (this.session) {
+          this.update();
           this.input.focus();
           this.input.select();
         }

@@ -1,7 +1,7 @@
 import { widgetField } from "./widget-numeric-field.js";
 
 const widgets =
-  ".fillet-guide-hit, .orientable-handle, .body-axis-handle, .transform-box-handle, [data-move-marker]";
+  "[data-bow-numeric], .fillet-guide-hit, .orientable-handle, .body-axis-handle, .transform-box-handle, [data-move-marker]";
 const fields = 'input[inputmode="decimal"], input[type="number"]';
 let lastTarget: Element | null = null;
 function clearWidgetHighlight(): void {
@@ -38,9 +38,18 @@ document.addEventListener(
 );
 
 /** Tab visits widget quantities, first refining the last pointer gesture. */
-export function focusNumericField(root: ParentNode, reverse = false, numericOnly = false): boolean {
+export function focusNumericField(
+  root: ParentNode,
+  reverse = false,
+  numericOnly: boolean | "sketch" = false,
+): boolean {
   const targets = [...root.querySelectorAll<Element>(`${widgets}, ${fields}`)].filter((target) => {
-    if (numericOnly && !target.matches(fields)) return false;
+    if (
+      numericOnly &&
+      !target.matches(fields) &&
+      !(numericOnly === "sketch" && target.matches(".fillet-guide-hit, [data-bow-numeric]"))
+    )
+      return false;
     if (
       target.matches(":disabled, [readonly], .parameter-panel-grip") ||
       target.closest("[hidden], [inert]")
@@ -55,6 +64,8 @@ export function focusNumericField(root: ParentNode, reverse = false, numericOnly
       style.display !== "none"
     );
   });
+  if (numericOnly === "sketch")
+    targets.sort((a, b) => Number(!a.matches(fields)) - Number(!b.matches(fields)));
   if (!targets.length) return false;
   const active = document.activeElement;
   if (lastTarget?.matches("[data-move-marker]") && !lastTarget.isConnected)
@@ -72,7 +83,7 @@ export function focusNumericField(root: ParentNode, reverse = false, numericOnly
   // Do not visit a handle and then its field a second time in the same cycle.
   const associated = new Set(targets.filter((target) => target.matches(widgets)).map(widgetField));
   const stops = targets.filter((target) => !associated.has(target as HTMLInputElement));
-  if (!numericOnly && stops.length) targets.splice(0, targets.length, ...stops);
+  if (numericOnly !== true && stops.length) targets.splice(0, targets.length, ...stops);
   const fromWidget = lastTarget?.matches(widgets) && targets.includes(lastTarget);
   const activeWidget = targets.find((target) => widgetField(target) === active);
   const index = targets.indexOf(
