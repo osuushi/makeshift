@@ -1,5 +1,7 @@
 #include "edge-finish-validation.h"
+#include "edge-finish-inspection.h"
 #include "geometry-policy.h"
+#include <BOPAlgo_ArgumentAnalyzer.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
@@ -16,6 +18,7 @@
 #include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Compound.hxx>
+#include <OSD_ThreadPool.hxx>
 #include <cmath>
 #include <memory>
 #include <stdexcept>
@@ -94,6 +97,28 @@ void validateFinishManifold(const TopoDS_Shape& shape) {
         if (pending.size() != static_cast<size_t>(faces.Extent()))
             throw std::runtime_error("Edge finish has a pinched nonmanifold vertex");
     }
+}
+
+void validateFinishIntersections(const TopoDS_Shape& shape) {
+    BOPAlgo_ArgumentAnalyzer check;
+    check.SetShape1(shape);
+    check.SelfInterMode() = true;
+    check.SetRunParallel(OSD_ThreadPool::DefaultPool()->HasThreads());
+    check.Perform();
+    bool aborted = false;
+    for (const auto& fault : check.GetCheckResult()) {
+        if (fault.GetCheckStatus() != BOPAlgo_OperationAborted)
+            throw std::runtime_error("Edge finish contains self-intersections");
+        aborted = true;
+    }
+    if (aborted) {
+        // OCCT can abort self-intersection checks on collapsed-handle Bezier
+        // extrusions. Retry the full check on an exact, parameter-preserving copy.
+        check.SetShape1(finishInspectionCopy(shape));
+        check.Perform();
+    }
+    if (check.HasErrors() || check.HasFaulty())
+        throw std::runtime_error("Edge finish contains self-intersections");
 }
 
 void validateFinishBoundary(const TopoDS_Shape& result, const TopoDS_Shape& envelope,

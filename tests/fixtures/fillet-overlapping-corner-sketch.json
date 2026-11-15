@@ -1,0 +1,441 @@
+{
+  "id": "59fece8c-2cda-4130-a131-9a7e0f3599f0",
+  "plane": {
+    "origin": [0, 0, 0],
+    "u": [1, 0, 0],
+    "v": [0, 1, 0]
+  },
+  "curves": [
+    {
+      "id": "443863cf-df52-4b54-9371-5cab1a6ab908",
+      "kind": "segment",
+      "a": {
+        "x": -8.999999999999986,
+        "y": 13.499999999999995
+      },
+      "b": {
+        "x": 18.500000000000004,
+        "y": 13.500000000000007
+      },
+      "construction": false
+    },
+    {
+      "id": "6d13dfcd-dc26-4b24-9ea7-67f677bbe5f5",
+      "kind": "segment",
+      "a": {
+        "x": 18.500000000000004,
+        "y": 13.500000000000007
+      },
+      "b": {
+        "x": 18.500000000000007,
+        "y": 9.499999999999995
+      },
+      "construction": false
+    },
+    {
+      "id": "8222eb67-940d-4ed9-9f1e-11a2f70504bc",
+      "kind": "segment",
+      "a": {
+        "x": 18.50000000000004,
+        "y": -17.500000000000004
+      },
+      "b": {
+        "x": 18.50000000000004,
+        "y": -20.499999999999993
+      },
+      "construction": false
+    },
+    {
+      "id": "f0404382-58cc-4fb4-91ef-a77cbb3a2fe3",
+      "kind": "segment",
+      "a": {
+        "x": 18.50000000000004,
+        "y": -20.499999999999993
+      },
+      "b": {
+        "x": -0.9999999999999702,
+        "y": -20.5
+      },
+      "construction": false
+    },
+    {
+      "id": "fe53d558-4d3b-4253-9ee4-811c15b26ecb",
+      "kind": "segment",
+      "a": {
+        "x": -14.499999999999975,
+        "y": -7.00000000000001
+      },
+      "b": {
+        "x": -14.499999999999982,
+        "y": 7.999999999999991
+      },
+      "construction": false
+    },
+    {
+      "id": "3b384738-f5f7-4ac6-ba6c-7023e111d1ce",
+      "kind": "segment",
+      "a": {
+        "x": 27.000000000000007,
+        "y": 0.9999999999999996
+      },
+      "b": {
+        "x": 33,
+        "y": 0.9999999999999997
+      },
+      "construction": false
+    },
+    {
+      "id": "dec56e0f-9059-4400-8635-eb32b83ebc87",
+      "kind": "segment",
+      "a": {
+        "x": 33,
+        "y": 0.9999999999999997
+      },
+      "b": {
+        "x": 33,
+        "y": -12
+      },
+      "construction": false
+    },
+    {
+      "id": "0993d48b-5975-45b6-9486-0e5673fbdf8f",
+      "kind": "segment",
+      "a": {
+        "x": 33,
+        "y": -12
+      },
+      "b": {
+        "x": 24.00000000000004,
+        "y": -12
+      },
+      "construction": false
+    },
+    {
+      "id": "6761d49f-90b3-49d0-b2a3-3c90519d9483",
+      "kind": "arc",
+      "construction": false,
+      "a": {
+        "x": 18.50000000000004,
+        "y": -17.500000000000004
+      },
+      "b": {
+        "x": 24.00000000000004,
+        "y": -12
+      },
+      "bulge": -0.41421356237309515
+    },
+    {
+      "id": "c76ab6e4-3d4f-481d-9111-2c6bd5e970b0",
+      "kind": "arc",
+      "construction": false,
+      "a": {
+        "x": 18.500000000000007,
+        "y": 9.499999999999995
+      },
+      "b": {
+        "x": 27.000000000000007,
+        "y": 1
+      },
+      "bulge": 0.4142135623730948
+    },
+    {
+      "id": "eb81eecc-d97a-4f9b-bf8f-2e3d1d80cac2",
+      "kind": "arc",
+      "construction": false,
+      "a": {
+        "x": -8.999999999999986,
+        "y": 13.499999999999995
+      },
+      "b": {
+        "x": -14.499999999999982,
+        "y": 7.99999999999999
+      },
+      "bulge": 0.41421356237309503
+    },
+    {
+      "id": "52174b1c-94b8-42b4-8988-31e4591d1443",
+      "kind": "arc",
+      "construction": false,
+      "a": {
+        "x": -0.9999999999999716,
+        "y": -20.5
+      },
+      "b": {
+        "x": -14.499999999999975,
+        "y": -7.000000000000011
+      },
+      "bulge": -0.414213562373095
+    }
+  ],
+  "constraints": [
+    {
+      "id": "9b16462c-7e6e-4f4f-ba0f-dde44aaa81c3",
+      "kind": "parallel",
+      "a": "443863cf-df52-4b54-9371-5cab1a6ab908",
+      "b": "f0404382-58cc-4fb4-91ef-a77cbb3a2fe3"
+    },
+    {
+      "id": "39971be3-1a81-4075-bea7-a029c7c93da6",
+      "kind": "parallel",
+      "a": "6d13dfcd-dc26-4b24-9ea7-67f677bbe5f5",
+      "b": "fe53d558-4d3b-4253-9ee4-811c15b26ecb"
+    },
+    {
+      "id": "99aa47a6-7b18-4fbf-b600-add18af1ac03",
+      "kind": "parallel",
+      "a": "6d13dfcd-dc26-4b24-9ea7-67f677bbe5f5",
+      "b": "8222eb67-940d-4ed9-9f1e-11a2f70504bc"
+    },
+    {
+      "id": "fd9a7ca9-a59d-403a-96ee-d22e455acadd",
+      "kind": "perpendicular",
+      "a": "443863cf-df52-4b54-9371-5cab1a6ab908",
+      "b": "6d13dfcd-dc26-4b24-9ea7-67f677bbe5f5"
+    },
+    {
+      "id": "9611387e-17a3-4944-a38d-23a9db408bed",
+      "kind": "parallel",
+      "a": "3b384738-f5f7-4ac6-ba6c-7023e111d1ce",
+      "b": "0993d48b-5975-45b6-9486-0e5673fbdf8f"
+    },
+    {
+      "id": "002f083c-08a7-42b9-9908-98689fb09443",
+      "kind": "perpendicular",
+      "a": "3b384738-f5f7-4ac6-ba6c-7023e111d1ce",
+      "b": "dec56e0f-9059-4400-8635-eb32b83ebc87"
+    },
+    {
+      "id": "5f548c2e-a916-4717-a5e3-2fdf664041e3",
+      "kind": "coincident",
+      "a": {
+        "curve": "443863cf-df52-4b54-9371-5cab1a6ab908",
+        "end": "b"
+      },
+      "b": {
+        "curve": "6d13dfcd-dc26-4b24-9ea7-67f677bbe5f5",
+        "end": "a"
+      }
+    },
+    {
+      "id": "af04fe5b-0f32-4d51-94bc-46fc1e49e764",
+      "kind": "coincident",
+      "a": {
+        "curve": "8222eb67-940d-4ed9-9f1e-11a2f70504bc",
+        "end": "b"
+      },
+      "b": {
+        "curve": "f0404382-58cc-4fb4-91ef-a77cbb3a2fe3",
+        "end": "a"
+      }
+    },
+    {
+      "id": "78b546ed-2d66-4f25-b843-99e4448d1e3b",
+      "kind": "coincident",
+      "a": {
+        "curve": "3b384738-f5f7-4ac6-ba6c-7023e111d1ce",
+        "end": "b"
+      },
+      "b": {
+        "curve": "dec56e0f-9059-4400-8635-eb32b83ebc87",
+        "end": "a"
+      }
+    },
+    {
+      "id": "b3ac4a4a-062a-4959-9d27-ac33eb4bc124",
+      "kind": "coincident",
+      "a": {
+        "curve": "dec56e0f-9059-4400-8635-eb32b83ebc87",
+        "end": "b"
+      },
+      "b": {
+        "curve": "0993d48b-5975-45b6-9486-0e5673fbdf8f",
+        "end": "a"
+      }
+    },
+    {
+      "id": "d59e6400-ace3-401c-b6b0-8cc64cb87fca",
+      "kind": "coincident",
+      "a": {
+        "curve": "8222eb67-940d-4ed9-9f1e-11a2f70504bc",
+        "end": "a"
+      },
+      "b": {
+        "curve": "6761d49f-90b3-49d0-b2a3-3c90519d9483",
+        "end": "a"
+      }
+    },
+    {
+      "id": "5c155023-287f-4980-bff2-1b830318db91",
+      "kind": "tangent",
+      "a": "8222eb67-940d-4ed9-9f1e-11a2f70504bc",
+      "b": "6761d49f-90b3-49d0-b2a3-3c90519d9483",
+      "side": 1,
+      "junction": {
+        "aEnd": "a",
+        "bEnd": "a"
+      }
+    },
+    {
+      "id": "5c012c54-400a-4744-9aaf-586890e77f60",
+      "kind": "coincident",
+      "a": {
+        "curve": "0993d48b-5975-45b6-9486-0e5673fbdf8f",
+        "end": "b"
+      },
+      "b": {
+        "curve": "6761d49f-90b3-49d0-b2a3-3c90519d9483",
+        "end": "b"
+      }
+    },
+    {
+      "id": "06fb1d5b-d0b1-425f-9a35-4bf87a86a5af",
+      "kind": "tangent",
+      "a": "0993d48b-5975-45b6-9486-0e5673fbdf8f",
+      "b": "6761d49f-90b3-49d0-b2a3-3c90519d9483",
+      "side": 1,
+      "junction": {
+        "aEnd": "b",
+        "bEnd": "b"
+      }
+    },
+    {
+      "id": "aa272f84-af67-4792-b48c-d8b87565abeb",
+      "kind": "coincident",
+      "a": {
+        "curve": "6d13dfcd-dc26-4b24-9ea7-67f677bbe5f5",
+        "end": "b"
+      },
+      "b": {
+        "curve": "c76ab6e4-3d4f-481d-9111-2c6bd5e970b0",
+        "end": "a"
+      }
+    },
+    {
+      "id": "ba6e835e-ddc7-4fcf-9d92-ba168041e5ad",
+      "kind": "tangent",
+      "a": "6d13dfcd-dc26-4b24-9ea7-67f677bbe5f5",
+      "b": "c76ab6e4-3d4f-481d-9111-2c6bd5e970b0",
+      "side": 1,
+      "junction": {
+        "aEnd": "b",
+        "bEnd": "a"
+      }
+    },
+    {
+      "id": "92028d0a-8183-4cd3-b3be-fd8e038127a8",
+      "kind": "coincident",
+      "a": {
+        "curve": "3b384738-f5f7-4ac6-ba6c-7023e111d1ce",
+        "end": "a"
+      },
+      "b": {
+        "curve": "c76ab6e4-3d4f-481d-9111-2c6bd5e970b0",
+        "end": "b"
+      }
+    },
+    {
+      "id": "71ca4d90-def0-40be-8bd8-b4dc27c4614c",
+      "kind": "tangent",
+      "a": "3b384738-f5f7-4ac6-ba6c-7023e111d1ce",
+      "b": "c76ab6e4-3d4f-481d-9111-2c6bd5e970b0",
+      "side": 1,
+      "junction": {
+        "aEnd": "a",
+        "bEnd": "b"
+      }
+    },
+    {
+      "id": "ef80cf55-1775-47da-9e2b-57116fa61861",
+      "kind": "coincident",
+      "a": {
+        "curve": "443863cf-df52-4b54-9371-5cab1a6ab908",
+        "end": "a"
+      },
+      "b": {
+        "curve": "eb81eecc-d97a-4f9b-bf8f-2e3d1d80cac2",
+        "end": "a"
+      }
+    },
+    {
+      "id": "20bd9d1e-b8f9-453f-9976-bfffc6f2df14",
+      "kind": "tangent",
+      "a": "443863cf-df52-4b54-9371-5cab1a6ab908",
+      "b": "eb81eecc-d97a-4f9b-bf8f-2e3d1d80cac2",
+      "side": -1,
+      "junction": {
+        "aEnd": "a",
+        "bEnd": "a"
+      }
+    },
+    {
+      "id": "0285bf20-6a1d-423f-9ed3-35f60a5265a0",
+      "kind": "coincident",
+      "a": {
+        "curve": "fe53d558-4d3b-4253-9ee4-811c15b26ecb",
+        "end": "b"
+      },
+      "b": {
+        "curve": "eb81eecc-d97a-4f9b-bf8f-2e3d1d80cac2",
+        "end": "b"
+      }
+    },
+    {
+      "id": "cf14dd6b-8689-44b5-9f0e-681114fda68c",
+      "kind": "tangent",
+      "a": "fe53d558-4d3b-4253-9ee4-811c15b26ecb",
+      "b": "eb81eecc-d97a-4f9b-bf8f-2e3d1d80cac2",
+      "side": -1,
+      "junction": {
+        "aEnd": "b",
+        "bEnd": "b"
+      }
+    },
+    {
+      "id": "a37dac29-7aee-4376-9101-01043c285eb9",
+      "kind": "coincident",
+      "a": {
+        "curve": "f0404382-58cc-4fb4-91ef-a77cbb3a2fe3",
+        "end": "b"
+      },
+      "b": {
+        "curve": "52174b1c-94b8-42b4-8988-31e4591d1443",
+        "end": "a"
+      }
+    },
+    {
+      "id": "4fd8a517-bbc6-4e1f-84ed-90071def5583",
+      "kind": "tangent",
+      "a": "f0404382-58cc-4fb4-91ef-a77cbb3a2fe3",
+      "b": "52174b1c-94b8-42b4-8988-31e4591d1443",
+      "side": -1,
+      "junction": {
+        "aEnd": "b",
+        "bEnd": "a"
+      }
+    },
+    {
+      "id": "2ea51ac7-6c85-474a-8611-0ad9f7f796a8",
+      "kind": "coincident",
+      "a": {
+        "curve": "fe53d558-4d3b-4253-9ee4-811c15b26ecb",
+        "end": "a"
+      },
+      "b": {
+        "curve": "52174b1c-94b8-42b4-8988-31e4591d1443",
+        "end": "b"
+      }
+    },
+    {
+      "id": "4fd1a430-6707-4f98-ab67-1bceb5314a2d",
+      "kind": "tangent",
+      "a": "fe53d558-4d3b-4253-9ee4-811c15b26ecb",
+      "b": "52174b1c-94b8-42b4-8988-31e4591d1443",
+      "side": -1,
+      "junction": {
+        "aEnd": "a",
+        "bEnd": "b"
+      }
+    }
+  ],
+  "groups": []
+}
