@@ -70,7 +70,10 @@ await withUiRuntimes(async (page, name) => {
       return { x: r.x, y: r.y, width: r.width, height: r.height };
     }),
   );
-  assert.ok(Math.abs(boxes[0].x - boxes[1].x) >= 30 || Math.abs(boxes[0].y - boxes[1].y) >= 30);
+  assert.ok(
+    Math.abs(boxes[0].x - boxes[1].x) >= boxes[0].width ||
+      Math.abs(boxes[0].y - boxes[1].y) >= boxes[0].height,
+  );
   await page.screenshot({ path: `.cache/sketch-review/${name}-two-loop-buttons.png` });
   await button.first().click();
   assert.equal((await inspect(page)).modelingSelection.length, 5);
