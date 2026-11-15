@@ -37,7 +37,7 @@ export function layoutLocalControls(editor: SketchEditor, overlay: HTMLElement):
   }
   const occupied: Box[] = [
     ...overlay.querySelectorAll(
-      ".rotation-handle, .transform-ring, polygon.transform-axis, .bow-handle, .fillet-guide-hit, .edit-handle, .center-handle, .constraint-list:not([hidden]), .point-chooser:not([hidden]), .overlap-chooser:not([hidden])",
+      "[data-move-marker] > svg, .move-anchor:not([hidden]), .rotation-handle, .transform-ring, polygon.transform-axis, .bow-handle, .fillet-guide-hit, .edit-handle, .center-handle, .constraint-list:not([hidden]), .point-chooser:not([hidden]), .overlap-chooser:not([hidden])",
     ),
   ].map((node) => node.getBoundingClientRect());
   const controls = [

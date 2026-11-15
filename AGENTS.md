@@ -160,13 +160,16 @@ review, update or continue it, but not PRs used only as background references.
 ## Bug report archives
 
 Attaching a Makeshift `bug-*.zip` is a request to investigate the reported bug,
-even if the message is blank or contains only the attachment notice. Start
-without asking what to do. Identify the reported behavior, reproduce it using
-the capture when possible, then implement, verify, commit, push, open or reuse
+even if the message is blank or contains only the attachment notice. The opening
+message will typically be empty. Start without asking what to do.
+Identify the reported behavior, reproduce it using the capture when possible,
+then implement, verify, commit, push, open or reuse
 the pull request, and attach it to the current Codex chat. Continue through
 delivery without waiting for confirmation when the intended behavior is clear.
 If a material product decision is unresolved, investigate first and ask the
 specific question needed to proceed. Follow any narrower scope the founder gives.
+Once the issue is understood, rename the current Codex chat to a concise
+description of the bug.
 
 Follow [bug report analysis](docs/bug-reports.md). Read
 `manifest.json`, warnings and start/end fixtures first. Run

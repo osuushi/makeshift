@@ -25,8 +25,17 @@ void offsetSketch(std::ostream& out, const Tree& input) {
     if (!BRepCheck_Analyzer(face).IsValid()) throw std::runtime_error("Offset source is not a valid planar loop");
     BRepOffsetAPI_MakeOffset offset(face, GeomAbs_Intersection);
     offset.Perform(amount);
-    if (!offset.IsDone() || offset.Shape().IsNull()) throw std::runtime_error("Offset could not be calculated");
-    const auto sections = closedOffsetSections(offset.Shape(), wire.Wire(), amount);
+    TopoDS_Shape result;
+    if (offset.IsDone()) result = offset.Shape();
+    if (result.IsNull() && amount < 0) {
+        // Concave cubic corners need circular erosion joins when extending
+        // neighboring offset supports cannot produce an intersection join.
+        BRepOffsetAPI_MakeOffset erosion(face, GeomAbs_Arc);
+        erosion.Perform(amount);
+        if (erosion.IsDone()) result = erosion.Shape();
+    }
+    if (result.IsNull()) throw std::runtime_error("Offset could not be calculated");
+    const auto sections = closedOffsetSections(result, wire.Wire(), amount);
     out << "{\"curves\":";
     planarSketchCurves(out, sections, input.get_child("frame"));
     out << '}';

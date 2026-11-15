@@ -56,6 +56,8 @@ handles snap their gesture angle. Numeric entry remains exact, and Option retain
 its Move duplication behavior. Move arrows snap displacement to the current grid
 spacing; Shift uses one tenth of that spacing while bypassing geometry attraction.
 The grid toggle still controls translation grid snapping.
+Sketch numeric fields avoid the displayed Move glyphs and pivot anchor when
+choosing their default position, keeping the full editing field unobstructed.
 Numeric widgets retain the value field after a drag. The first Tab focuses and
 selects that widget's current value without resetting it or activating a different
 handle. Once its field is focused, Tab/Shift-Tab visits the next/previous widget's
