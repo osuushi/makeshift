@@ -7,7 +7,7 @@ import { drag, inspect } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 // The Electron boundary is essential: real WebContents capture, media permissions,
-// sandbox IPC, keyboard cancellation and native drag cannot be proven by model tests.
+// sandbox IPC, keyboard routing and native drag cannot be proven by model tests.
 const app = await launchElectron({
   executablePath: await prepareDevBundle(),
   args: process.platform === "darwin" ? [] : ["."],
@@ -41,11 +41,19 @@ try {
   await page.keyboard.press(shortcut);
   await page.getByRole("status").filter({ hasText: "Recording window + microphone" }).waitFor();
   await page.keyboard.press("Escape");
+  await page.getByRole("status").filter({ hasText: "Recording window + microphone" }).waitFor();
+  const afterEscape = await inspect(page);
+  assert.equal(afterEscape.tool, "select", "Escape still exits the drawing tool while recording");
+  await page.getByRole("button", { name: "Cancel recording", exact: true }).click();
   await page.getByRole("status").filter({ hasText: "Bug recording cancelled" }).waitFor();
   const afterCancel = await page.evaluate(() => window.makeshiftInspect());
   assert.deepEqual(afterCancel.document, before.document);
   assert.deepEqual(afterCancel.preview, before.preview);
-  assert.equal(afterCancel.tool, before.tool, "Escape cancels the report, not the drawing tool");
+  assert.equal(
+    afterCancel.tool,
+    afterEscape.tool,
+    "The Cancel button leaves the drawing tool alone",
+  );
   // Enable via Settings so persistence and native-window storage delivery are exercised.
   await page.keyboard.press("v");
   await page.getByRole("button", { name: "Application settings" }).click();

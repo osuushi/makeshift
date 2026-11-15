@@ -18,6 +18,7 @@
 
 using manifold::Manifold;
 constexpr uint32_t magic = 0x46524d31;
+constexpr uint32_t replyMagic = 0x46524d32;
 constexpr size_t budget = 512 * 1024 * 1024;
 size_t consumed = 0;
 static_assert(std::endian::native == std::endian::little);
@@ -105,15 +106,16 @@ void integrate() {
   const auto tolerance = result.GetTolerance();
   if (!std::isfinite(tolerance) || tolerance > precision)
     throw std::runtime_error("This body's extent exceeds the thread mesh precision budget");
-  const auto mesh = result.GetMeshGL();
-  if (20ull + mesh.vertProperties.size() * 4ull + mesh.triVerts.size() * 4ull > budget)
+  const auto mesh = result.GetMeshGL64();
+  if (20ull + mesh.vertProperties.size() * 8ull + mesh.triVerts.size() * 4ull > budget)
     throw std::runtime_error("Native export result exceeds transfer budget");
-  write(magic);
+  write(replyMagic);
   write(uint32_t(mesh.vertProperties.size() / 3));
   write(uint32_t(mesh.triVerts.size() / 3));
   write(tolerance);
-  std::cout.write(reinterpret_cast<const char*>(mesh.vertProperties.data()), mesh.vertProperties.size() * 4);
-  std::cout.write(reinterpret_cast<const char*>(mesh.triVerts.data()), mesh.triVerts.size() * 4);
+  std::cout.write(reinterpret_cast<const char*>(mesh.vertProperties.data()), mesh.vertProperties.size() * sizeof(double));
+  const std::vector<uint32_t> indices(mesh.triVerts.begin(), mesh.triVerts.end());
+  std::cout.write(reinterpret_cast<const char*>(indices.data()), indices.size() * sizeof(uint32_t));
 }
 int main() {
 #ifdef _WIN32

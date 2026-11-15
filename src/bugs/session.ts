@@ -22,13 +22,6 @@ export class BugSession {
   private pending?: BugReport;
   private disposed = false;
   private buffering: Promise<void> = Promise.resolve();
-  get cancellable(): boolean {
-    return (
-      this.state === "starting" ||
-      this.state === "recording" ||
-      (this.state === "idle" && !!this.pending)
-    );
-  }
   constructor(
     private editor: SketchEditor,
     parent: HTMLElement,
@@ -65,7 +58,7 @@ export class BugSession {
     this.warnings = [];
     this.timeline.add("report-start", {});
     this.timeline.recording = true;
-    this.panel.state("Starting bug report… Escape cancels", false, true);
+    this.panel.state("Starting bug report…", false, true);
     try {
       await this.buffering;
       if (generation !== this.generation) return;
@@ -113,8 +106,8 @@ export class BugSession {
     if (generation !== this.generation) return;
     this.panel.state(
       this.audio
-        ? "Recording window + microphone · Cmd/Ctrl-B saves · Escape cancels"
-        : "Recording window without microphone · Cmd/Ctrl-B saves · Escape cancels",
+        ? "Recording window + microphone · Cmd/Ctrl-B saves"
+        : "Recording window without microphone · Cmd/Ctrl-B saves",
       true,
       true,
     );
@@ -195,11 +188,7 @@ export class BugSession {
       this.pending = undefined;
       this.panel.saved(result);
     } catch (error) {
-      this.panel.state(
-        `Save failed: ${String(error)} · Cmd/Ctrl-B retries · Escape discards`,
-        true,
-        true,
-      );
+      this.panel.state(`Save failed: ${String(error)} · Cmd/Ctrl-B retries`, true, true);
     } finally {
       this.state = "idle";
       await this.bufferChanged();

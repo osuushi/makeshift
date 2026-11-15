@@ -5,6 +5,7 @@ import type { ExportTiming } from "./export-timing.js";
 import { packedMesh } from "./packed-mesh.js";
 
 const magic = 0x46524d31;
+const replyMagic = 0x46524d32;
 export const meshWireLimit = 512 * 1024 * 1024;
 const opcodes = { mesh: 0, add: 1, subtract: 2, intersect: 3, trim: 4, cylinder: 5, transform: 6 };
 function nodeBytes(node: MeshNode): number {
@@ -93,17 +94,20 @@ export function decodeNativeMesh(
   const vertices = view.getUint32(4, true),
     triangles = view.getUint32(8, true);
   const rounding = view.getFloat64(12, true);
-  if (view.getUint32(0, true) !== magic || buffer.byteLength !== 20 + 12 * (vertices + triangles))
+  if (
+    view.getUint32(0, true) !== replyMagic ||
+    buffer.byteLength !== 20 + 24 * vertices + 12 * triangles
+  )
     throw new Error("Invalid native export reply");
   if (!Number.isFinite(rounding) || rounding < 0 || rounding > precision)
     throw new Error("This body's extent exceeds the thread mesh precision budget");
   const mesh: ExportMesh = { vertices: [], triangles: [] };
   let offset = 20;
   for (let i = 0; i < vertices; i++) {
-    const point = [0, 1, 2].map((axis) => view.getFloat32(offset + 4 * axis, true) + origin[axis]);
+    const point = [0, 1, 2].map((axis) => view.getFloat64(offset + 8 * axis, true) + origin[axis]);
     if (!point.every(Number.isFinite)) throw new Error("Invalid native mesh coordinates");
     mesh.vertices.push(point);
-    offset += 12;
+    offset += 24;
   }
   for (let i = 0; i < triangles; i++) {
     const triangle = [0, 1, 2].map((axis) => view.getUint32(offset + 4 * axis, true));

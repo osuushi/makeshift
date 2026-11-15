@@ -116,8 +116,10 @@ Before publishing, each body must have:
   Inward hollowing must actually remove volume. Verification Booleans reject warnings.
 
 Inputs below or equal to 1e-5 mm absolute thickness reject. Analytic planar,
-cylindrical, conical, spherical and ring-toroidal supports are eligible; collapsed
-radii reject. Freeform supports are attempted with the same geometry, correspondence,
+cylindrical, conical, spherical and toroidal supports are eligible; collapsed
+radii reject. Toroidal axis-collapse checks use the face's trimmed V extent,
+so an outer fillet can use a regular portion of a spindle-torus support.
+Freeform supports are attempted with the same geometry, correspondence,
 separation and containment checks; merely completing OCCT's offset does not suffice.
 Missing correspondence, changed preserved faces, excess tolerances,
 collisions, kernel failure or inability to verify also reject atomically.

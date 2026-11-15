@@ -4,7 +4,7 @@ import { MeshCalculator } from "../src/backend/mesh-calculator.js";
 import { MeshPlan } from "../src/decorators/mesh-plan.js";
 import { decodeNativeMesh, encodeMeshPlan } from "../src/model/mesh-wire.js";
 
-function tetrahedron() {
+function tetrahedron(shift = 0) {
   const plan = new MeshPlan([10, 20, 30]);
   const solid = plan.from({
     vertices: [
@@ -20,7 +20,10 @@ function tetrahedron() {
       [2, 0, 3],
     ],
   });
-  return encodeMeshPlan(plan, solid.index, 0.001);
+  const result = shift
+    ? solid.transform([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, shift, 0, 0, 1])
+    : solid;
+  return encodeMeshPlan(plan, result.index, 0.001);
 }
 
 test("native cancellation drains the child before the export slot can be reused", async () => {
@@ -66,6 +69,18 @@ test("native output retains precision and payload integrity checks", async () =>
     assert.throws(() => decodeNativeMesh(result.slice(0, -4), [0, 0, 0], 0.001), /Invalid/);
     new DataView(result).setFloat64(12, 0.01, true);
     assert.throws(() => decodeNativeMesh(result, [0, 0, 0], 0.001), /precision budget/);
+  } finally {
+    await calculator.cancel();
+  }
+});
+
+test("native Boolean output positions survive handoff without float32 rounding", async () => {
+  const calculator = new MeshCalculator();
+  const shift = 2 ** -26;
+  try {
+    const result = await calculator.calculate(tetrahedron(shift));
+    const mesh = decodeNativeMesh(result, [10, 20, 30], 0.001);
+    assert.equal(Math.max(...mesh.vertices.map(([x]) => x)), 11 + shift);
   } finally {
     await calculator.cancel();
   }

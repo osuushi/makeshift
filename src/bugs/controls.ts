@@ -15,13 +15,11 @@ export function bugControls(editor: SketchEditor, parent: HTMLElement): () => vo
   const shortcut = (event: KeyboardEvent) => {
     const toggle =
       (event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.code === "KeyB";
-    const cancel = event.key === "Escape" && session.cancellable;
-    if (!toggle && !cancel) return;
+    if (!toggle) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     if (event.repeat) return;
-    if (cancel) void session.cancel();
-    else void session.toggle();
+    void session.toggle();
   };
   window.addEventListener("keydown", shortcut, true);
   const tool = toolCatalog(editor).register({
