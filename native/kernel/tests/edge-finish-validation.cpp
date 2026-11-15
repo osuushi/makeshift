@@ -11,9 +11,24 @@
 #include <iostream>
 #include <stdexcept>
 
+void checkOverlappingCorner(const char* path) {
+    TopoDS_Shape shape;
+    BRep_Builder builder;
+    BRepTools::Read(shape, path, builder);
+    if (!BRepCheck_Analyzer(shape, true, false, true).IsValid())
+        throw std::runtime_error("Capture must demonstrate overlapping kernel-valid faces");
+    validateFinishManifold(shape);
+    validateFinishTrimLoops(shape);
+    bool caught = false;
+    try { validateFinishIntersections(shape); }
+    catch (const std::runtime_error&) { caught = true; }
+    if (!caught) throw std::runtime_error("Accepted the captured overlapping fillet corner");
+}
+
 int main(int argc, char** argv) {
     try {
-        if (argc != 2) throw std::runtime_error("Expected captured BRep path");
+        if (argc != 3) throw std::runtime_error("Expected captured BRep paths");
+        checkOverlappingCorner(argv[2]);
         const auto stock = BRepPrimAPI_MakeCylinder(40, 24).Shape();
         BRepFilletAPI_MakeFillet round(stock);
         for (TopExp_Explorer e(stock, TopAbs_EDGE); e.More(); e.Next()) {
@@ -39,6 +54,7 @@ int main(int argc, char** argv) {
         const auto hole = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(0,-30,0), gp_Dir(0,0,1)),4,24).Shape();
         const auto good = BRepAlgoAPI_Cut(round.Shape(), hole).Shape();
         validateFinishManifold(good);
+        validateFinishIntersections(good);
         validateFinishBoundary(good, round.Shape(), hole);
         std::cout << "Captured reversed lid rejected; valid intersecting bore accepted\n";
         return 0;

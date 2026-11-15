@@ -2,6 +2,8 @@
 #include <TopoDS_Shape.hxx>
 
 void validateFinishManifold(const TopoDS_Shape&);
+// Closed topology can still contain intersecting edges or overlapping faces.
+void validateFinishIntersections(const TopoDS_Shape&);
 // Supplement whole-wire checks with individual spline spans: a short loop in
 // a high-degree trim can be missed when intersecting the entire spline at once.
 void validateFinishTrimLoops(const TopoDS_Shape&);

@@ -67,6 +67,8 @@ Result normalizedFinish(Result rounded, const Operand& body) {
     simplifySmallFinishes(results.front());
     resolveMicroscopicTopology(results.front());
     validateFinishTrimLoops(results.front().shape);
+    validateFinishManifold(results.front().shape);
+    validateFinishIntersections(results.front().shape);
     return results.front();
 }
 Result ordinaryFinish(const Operand& body, const std::vector<TopoDS_Edge>& edges, double radius, bool chamfer,

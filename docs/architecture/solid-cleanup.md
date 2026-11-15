@@ -196,6 +196,11 @@ or bound it refuses normalization. The field retains the typed request.
 Consumed results still require manifold, closed, positively oriented solids,
 tight curve/surface and endpoint agreement, unchanged topology tolerances,
 self-intersection validation, and the universal microscopic-topology gate.
+All fillet/chamfer candidates additionally check whole-solid self-interference
+after microscopic normalization, before ordinary or deferred presentation.
+Two face uses per edge and connected vertex fans do not rule out overlapping
+faces or crossing edges. Such candidates are refused at the requested size;
+the explicit nearest-size search applies the same checks to every candidate.
 Preview, Accept, Undo/Redo and Save/Open use the ordinary document-owner path.
 Selected walls must span the complete finish size; an end cap remains a limit,
 so a concave fill cannot add material beyond the actual wall.
