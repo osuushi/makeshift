@@ -19,15 +19,24 @@ founder feedback update these contracts before further tools depend on them.
   sketch workspaces and active modeling operations do not expose these controls.
   Buttons follow camera projection and use viewport/chrome clearance.
   Return paths cannot revisit vertices or cross the seed chain's interior. Ranking
-  uses total tessellated arc length plus `400 * planeError / seedScale²`, where
-  `planeError` is the arc-length integral of squared distance to the best-fit plane,
-  and `seedScale` is twice the seed's RMS spatial extent. Thus planar alternatives
-  favor the shortest loop, while small bends incur a smooth penalty instead of
-  becoming ineligible. Segment integrals avoid tessellation-density weighting;
-  the tunable weight lives in `edge-loop-score.ts`. Endpoint connectivity uses
+  uses `log1p(loopLength / seedLength) + 400 * thicknessScatter / widthScatter`.
+  The scatter terms are the smallest and middle eigenvalues of the arc-length
+  scatter matrix: squared deviation from the best-fit plane relative to the
+  loop's in-plane width. Comparing against width avoids treating a long narrow
+  fillet patch as planar just because its selected edge is long. Logarithmic
+  length cost lets a larger planar perimeter beat small nonplanar detours;
+  planar alternatives still favor the shortest loop, and small bends incur a
+  smooth penalty instead of becoming ineligible. A lone straight edge can lie
+  in several planes, so a smaller planar side-wall loop is a valid result;
+  including an adjacent curved edge specifies the rim's plane.
+  Segment integrals avoid tessellation-density and topology-segment-count bias.
+  The tunable weight lives in `edge-loop-score.ts`. Endpoint connectivity uses
   exact landmarks (sampled endpoints for older documents) within 0.00001 mm.
   Search starts with a shortest return, then improves the combined loss with
-  length/regression bounds, capped at 20,000 states per chain. Highly connected
+  conservative length/regression bounds, visiting flatter partial paths first.
+  The regression bound uses the whole graph's maximum in-plane scatter, since
+  a wider completion can improve the relative flatness of a partial path.
+  Search is capped at 20,000 states per chain. Highly connected
   graphs therefore return the best found loop, without a global-optimum guarantee.
 
 - A whole-sketch entity selection contributes all derived regions to tool input

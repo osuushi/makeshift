@@ -7,7 +7,13 @@ import {
   type OpenChain,
   openEdgeChains,
 } from "./edge-loop-graph.js";
-import { addMoments, emptyMoments, loopScore } from "./edge-loop-score.js";
+import {
+  addMoments,
+  emptyMoments,
+  loopScatter,
+  loopScore,
+  loopScoreBound,
+} from "./edge-loop-score.js";
 
 export interface EdgeLoopCompletion {
   body: string;
@@ -66,12 +72,9 @@ function closeChain(graph: LoopGraph, chain: OpenChain) {
     (sum, i) => addMoments(sum, graph.edges[i].moments),
     emptyMoments(),
   );
-  // Twice the RMS spatial extent is invariant under rotation and translation.
-  const variance = seed.second.reduce(
-    (sum, row, i) => sum + row[i] / seed.length - (seed.first[i] / seed.length) ** 2,
-    0,
-  );
-  const scale = Math.max(2 * Math.sqrt(Math.max(0, variance)), 1e-5);
+  const maximumWidth = loopScatter(
+    graph.edges.reduce((sum, edge) => addMoments(sum, edge.moments), emptyMoments()),
+  )[1];
   let best: number[] = [],
     moments = seed;
   for (let v = chain.start; v !== chain.end; ) {
@@ -81,7 +84,7 @@ function closeChain(graph: LoopGraph, chain: OpenChain) {
     moments = addMoments(moments, graph.edges[step.edge].moments);
     v = step.vertex;
   }
-  let score = loopScore(moments, scale),
+  let score = loopScore(moments, seed.length),
     visited = 0;
   const stack = [
     { vertex: chain.start, path: [] as number[], seen: new Set(chain.vertices), moments: seed },
@@ -89,15 +92,22 @@ function closeChain(graph: LoopGraph, chain: OpenChain) {
   while (stack.length && visited++ < searchLimit) {
     const state = stack.pop();
     if (!state) break;
-    if (loopScore(state.moments, scale) + distances[state.vertex] >= score - 1e-8) continue;
+    if (
+      loopScoreBound(state.moments, distances[state.vertex], seed.length, maximumWidth) >=
+      score - 1e-8
+    )
+      continue;
     const steps = adjacency[state.vertex]
-      .slice()
-      .sort((a, b) => b.length + distances[b.next] - (a.length + distances[a.next]));
+      .map((step) => {
+        const sum = addMoments(state.moments, graph.edges[step.index].moments);
+        return { ...step, sum, priority: loopScore(sum, seed.length) };
+      })
+      .sort((a, b) => b.priority - a.priority);
     for (const step of steps) {
-      const sum = addMoments(state.moments, graph.edges[step.index].moments);
+      const sum = step.sum;
       const path = [...state.path, step.index];
       if (step.next === chain.end) {
-        const candidate = loopScore(sum, scale);
+        const candidate = loopScore(sum, seed.length);
         if (candidate < score - 1e-8) {
           best = path;
           score = candidate;

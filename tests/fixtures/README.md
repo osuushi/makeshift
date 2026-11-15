@@ -272,3 +272,14 @@ shoulder rim must replace the lower cylinder and annular shelf with a conical lo
 between the stationary radius-20 bottom and radius-11 shoulder circles. Selecting
 both shoulder rims must loft directly to the top circle. Tests also cover
 rectangular loops, adjacent replacement regions, rotated copies and atomic Undo.
+
+# Close-loop selection around fillets
+
+`close-edge-loop.json` preserves the founder's 2026-11-15T20:07:44.153Z
+lobed-body capture and its selected edge. `close-edge-loop-fillets.json` preserves
+the 2026-11-15T20:46:37.481Z many-sided body; its expected rim contains the 16
+edges at z=20.5 mm. The second capture has no saved selection, so regressions
+exercise each curved rim edge and adjacent straight/curved pairs. The cases
+compare complete planar perimeters with shorter nonplanar fillet patches and
+retain exact BReps, display geometry and topology IDs for pointer tests.
+These are user-created Makeshift models; capture history and diagnostics are omitted.

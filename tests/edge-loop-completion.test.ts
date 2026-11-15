@@ -128,7 +128,7 @@ test("plane regression is invariant to collinear subdivision, rotation, translat
     77 + 3 * (0.48 * p[0] + 0.36 * p[1] + 0.8 * p[2]),
   ];
   const changed = edgeMoments(edge("loop", ...points.map(transform)), transform(a));
-  assert.ok(Math.abs(loopScore(changed, 30) / loopScore(original, 10) - 3) < 1e-8);
+  assert.ok(Math.abs(loopScore(changed, 30) - loopScore(original, 10)) < 1e-8);
   const sum = [seed, edge("close", a, b)].reduce(
     (m, e) => addMoments(m, edgeMoments(e, a)),
     emptyMoments(),

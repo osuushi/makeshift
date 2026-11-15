@@ -11,6 +11,11 @@ import { chooseTool } from "./ui-tools.mjs";
 // through to canvas selection, and disappear when the chain closes or a tool starts.
 const fixture = JSON.parse(await readFile("tests/fixtures/close-edge-loop.json", "utf8"));
 await withUiRuntimes(async (page, name) => {
+  await capturedLobedLoop(page, name);
+  await capturedFilletLoop(page, name);
+});
+
+async function capturedLobedLoop(page, name) {
   await openDocument(page, {
     name: "close-edge-loop.makeshift",
     mimeType: "application/json",
@@ -93,4 +98,35 @@ await withUiRuntimes(async (page, name) => {
   console.log(
     `${name}: captured rim pointer/keyboard completion, selection Undo, unchanged geometry and modal hiding passed`,
   );
-});
+}
+
+async function capturedFilletLoop(page, name) {
+  const fixture = JSON.parse(await readFile("tests/fixtures/close-edge-loop-fillets.json", "utf8"));
+  await openDocument(page, {
+    name: "close-edge-loop-fillets.makeshift",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
+    ),
+  });
+  await inspect(page);
+  await orient(page, [0, -0.6, 1]);
+  const hide = page.getByRole("button", { name: "Hide Sketch 1", exact: true });
+  if (await hide.isVisible()) await hide.click();
+  const original = (await inspect(page)).document;
+  const seed = original.bodies[0].edges.find(
+    (e) => e.id === "bd8c7f4a-e864-420f-8246-54675d38ad83",
+  );
+  await worldClick(page, seed.landmarks.midpoint);
+  assert.equal((await inspect(page)).modelingSelection[0]?.edge, seed.id);
+  await page.getByRole("button", { name: "Close loop", exact: true }).click();
+  const completed = await inspect(page);
+  assert.deepEqual(new Set(completed.modelingSelection.map((t) => t.edge)), new Set(fixture.rim));
+  assert.deepEqual(completed.document, original);
+  await page.screenshot({ path: `.cache/sketch-review/${name}-fillet-planar-loop.png` });
+  await chooseTool(page, "undo", "undo");
+  const undone = await inspect(page);
+  assert.equal(undone.modelingSelection.length, 1);
+  assert.equal(undone.modelingSelection[0].edge, seed.id);
+  console.log(`${name}: many-sided capture closes the planar rim instead of the tiny fillet loop`);
+}

@@ -40,9 +40,9 @@ export function addMoments(a: LoopMoments, b: LoopMoments): LoopMoments {
   };
 }
 
-/** Integral of squared orthogonal distance to the least-squares plane. */
-export function planeError(moments: LoopMoments): number {
-  if (!moments.length) return 0;
+/** Eigenvalues of the arc-length scatter matrix, from narrowest to longest axis. */
+export function loopScatter(moments: LoopMoments): number[] {
+  if (!moments.length) return [0, 0, 0];
   const m = moments.second.map((row, i) =>
     row.map((v, j) => v - (moments.first[i] * moments.first[j]) / moments.length),
   );
@@ -73,12 +73,36 @@ export function planeError(moments: LoopMoments): number {
       m[k][q] = m[q][k] = s * kp + c * kq;
     }
   }
-  return Math.max(0, Math.min(m[0][0], m[1][1], m[2][2]));
+  return [m[0][0], m[1][1], m[2][2]].map((v) => Math.max(0, v)).sort((a, b) => a - b);
 }
 
-// Fixed per chain: scaling the model scales the loss, without changing the winner.
-// A 1% RMS bend relative to the seed extent adds 4% to the loop's length cost.
+/** Integral of squared orthogonal distance to the least-squares plane. */
+export function planeError(moments: LoopMoments): number {
+  return loopScatter(moments)[0];
+}
+
+// Compare thickness to in-plane width, not the length of a long selected edge.
+// A 1% thickness/width ratio costs 0.04; logarithmic length leaves small bends usable.
 export const loopPlanarityWeight = 400;
-export function loopScore(moments: LoopMoments, scale: number): number {
-  return moments.length + (loopPlanarityWeight * planeError(moments)) / (scale * scale);
+export function loopScore(moments: LoopMoments, seedLength: number): number {
+  const [thickness, width] = loopScatter(moments);
+  return (
+    Math.log1p(moments.length / seedLength) +
+    loopPlanarityWeight * (width > 0 ? thickness / width : 0)
+  );
+}
+
+/** Every completion adds a positive-semidefinite scatter increment. Its middle
+ * eigenvalue is at most the entire graph's; using that fixed upper bound keeps
+ * pruning valid even when the completed loop is much wider than a partial path. */
+export function loopScoreBound(
+  moments: LoopMoments,
+  remaining: number,
+  seedLength: number,
+  maximumWidth: number,
+): number {
+  return (
+    Math.log1p((moments.length + remaining) / seedLength) +
+    loopPlanarityWeight * (maximumWidth > 0 ? planeError(moments) / maximumWidth : 0)
+  );
 }
