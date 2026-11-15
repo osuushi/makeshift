@@ -157,6 +157,13 @@ review, update or continue it, but not PRs used only as background references.
 
 ## Bug report archives
 
+Dropping a `bug-*.zip` capture is a request to investigate and fix the reported
+bug. The opening message will typically be empty; proceed through analysis,
+implementation, verification and a PR without asking the founder to restate the
+request. Once the issue is understood, rename the current Codex chat to a concise
+description of the bug. Ask only about a real unresolved product choice or missing
+evidence that the capture and code cannot resolve.
+
 For `bug-*.zip` captures, follow [bug report analysis](docs/bug-reports.md). Read
 `manifest.json`, warnings and start/end fixtures first. Run
 `npm run bug:analyze -- /path/to/bug-TIMESTAMP.zip` for extraction, combined playback,
