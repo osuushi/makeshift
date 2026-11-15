@@ -1,0 +1,26 @@
+.edge-loop-controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.edge-loop-button {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 5px;
+  background: var(--panel);
+  box-shadow: 0 2px 5px var(--shadow);
+  color: var(--accent);
+  pointer-events: auto;
+  cursor: pointer;
+}
+.edge-loop-button:hover,
+.edge-loop-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

@@ -13,6 +13,7 @@ import { ConstructionPlaneControls } from "../model/construction-plane-controls.
 import { CrossSectionControls } from "../model/cross-section-controls.js";
 import { DeleteTopologyAction } from "../model/delete-topology-action.js";
 import { DxfImportControls } from "../model/dxf-import-controls.js";
+import { EdgeLoopControls } from "../model/edge-loop-controls.js";
 import { EntityViewer } from "../model/entity-viewer.js";
 import { ErosionControls } from "../model/erosion-controls.js";
 import { FaceOffsetControls } from "../model/face-offset-controls.js";
@@ -118,6 +119,7 @@ const faceOffsets = new FaceOffsetControls(editor, overlay);
 const faceMoves = new TopologyMoveControls(editor, overlay);
 const edgeMoves = new TopologyMoveControls(editor, overlay, "edges");
 const bodyFinishes = new BodyEdgeFinishControls(editor, overlay);
+const edgeLoops = new EdgeLoopControls(editor, overlay);
 const tags = new TagControls(editor, app);
 const entities = new EntityViewer(editor, app, tags, guides);
 const booleans = new BooleanControls(editor, overlay, entities);
@@ -260,6 +262,7 @@ window.addEventListener("pagehide", (event) => {
   faceMoves.dispose();
   edgeMoves.dispose();
   bodyFinishes.dispose();
+  edgeLoops.dispose();
   disposeModelHighlight();
   disposeBodies();
   bodyEdges.dispose();

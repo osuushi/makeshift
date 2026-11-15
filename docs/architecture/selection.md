@@ -11,6 +11,25 @@ founder feedback update these contracts before further tools depend on them.
 
 ### Plane, tool and selection
 
+- In idle Modeling, each simple open chain of selected solid edges offers a small
+  square **Close loop** button beside one endpoint. Clicking or keyboard-activating
+  it adds the preferred return path, preserving ordered existing and unrelated
+  selections. This is ordinary selection history, never a geometry edit. Completed
+  loops, branches and chains with no return path have no button. Hidden bodies,
+  sketch workspaces and active modeling operations do not expose these controls.
+  Buttons follow camera projection and use viewport/chrome clearance.
+  Return paths cannot revisit vertices or cross the seed chain's interior. Ranking
+  uses total tessellated arc length plus `400 * planeError / seedScale²`, where
+  `planeError` is the arc-length integral of squared distance to the best-fit plane,
+  and `seedScale` is twice the seed's RMS spatial extent. Thus planar alternatives
+  favor the shortest loop, while small bends incur a smooth penalty instead of
+  becoming ineligible. Segment integrals avoid tessellation-density weighting;
+  the tunable weight lives in `edge-loop-score.ts`. Endpoint connectivity uses
+  exact landmarks (sampled endpoints for older documents) within 0.00001 mm.
+  Search starts with a shortest return, then improves the combined loss with
+  length/regression bounds, capped at 20,000 states per chain. Highly connected
+  graphs therefore return the best found loop, without a global-optimum guarantee.
+
 - A whole-sketch entity selection contributes all derived regions to tool input
   refinement. Its sketch token represents the curves, including open edges;
   ordinary category narrowing drops that token for region tools such as Extrude,
