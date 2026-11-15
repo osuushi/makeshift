@@ -171,6 +171,12 @@ The explicit Fillet sketch corner menu command retains numeric entry before acce
 Sketch offset accepts a single analytic edge or one closed loop, including mixed
 cubic/line/arc loops copied from solid sections. Closed loops containing cubics
 use native planar intersection-join offsets; positive distances expand the loop.
+If an inward intersection-join calculation returns no result, retry with circular
+joins so concave cubic corners can erode into a closed boundary. Generated planar
+curve representations may have their measured edge/vertex tolerances corrected,
+bounded by the existing 0.000002 mm offset topology budget; full native validity
+and the ordinary closed-section checks still apply. This does not move source
+curves or relax the output approximation budget.
 The result returns independent ordinary curves through the existing 0.001 mm
 bounded cubic conversion and shared-vertex endpoint correction. Source geometry
 and constraints remain unchanged; new joined endpoints receive coincidence links.
