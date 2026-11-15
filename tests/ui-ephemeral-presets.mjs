@@ -38,6 +38,10 @@ export async function ephemeralPresetRoute(page) {
     "Application recalls the last computed preset",
   );
   assert.equal(await clearance.inputValue(), "0.32");
+  const selectPeers = page.getByRole("button", { name: "Select all threads sharing this preset" });
+  await selectPeers.click();
+  assert.equal((await inspect(page)).modelingSelection.length, 2);
+  await pick(hole);
   const before = (await inspect(page)).document;
   await preset.selectOption("::rename");
   const dialog = page.getByRole("dialog", { name: "Rename preset", exact: true });
@@ -55,6 +59,9 @@ export async function ephemeralPresetRoute(page) {
   assert.deepEqual((await inspect(page)).document, before);
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, after);
+  await selectPeers.click();
+  assert.equal((await inspect(page)).modelingSelection.length, 2);
+  await pick(hole);
   await removeThread(page);
   await pick(rod);
   await removeThread(page);

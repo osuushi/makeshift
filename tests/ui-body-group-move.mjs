@@ -51,7 +51,20 @@ export async function groupDragAndSketch(page) {
 async function ringDrag(page, bodies) {
   const handle = page.getByRole("button", { name: "Rotate body Z", exact: true });
   await handle.hover();
-  const button = await handle.boundingBox();
+  await page.evaluate(() => {
+    window.bodyPointerSamples = { first: null, last: null };
+    window.bodyPointerDown = (e) => {
+      window.bodyPointerSamples.first = [e.clientX, e.clientY];
+    };
+    window.bodyPointerMove = (e) => {
+      window.bodyPointerSamples.last = [e.clientX, e.clientY];
+    };
+    window.addEventListener("pointerdown", window.bodyPointerDown, { capture: true });
+    window.addEventListener("pointermove", window.bodyPointerMove, { capture: true });
+    window.addEventListener("pointerup", window.bodyPointerMove, { capture: true });
+  });
+  // Press at the locator-hovered point before measuring the frozen docking offset.
+  await page.mouse.down();
   const offset = await handle.evaluate((element) => {
     const values = getComputedStyle(element).translate.split(" ").map(Number.parseFloat);
     return { x: values[0] || 0, y: values[1] || 0 };
@@ -65,22 +78,10 @@ async function ringDrag(page, bodies) {
   // A docked ring uses the display correction frozen at press for its plane ray.
   const x = pivot.x + offset.x,
     y = pivot.y + offset.y;
-  const dx = button.x + button.width / 2 - x,
-    dy = button.y + button.height / 2 - y;
-  await page.evaluate(() => {
-    window.bodyPointerSamples = { first: null, last: null };
-    window.bodyPointerDown = (e) => {
-      window.bodyPointerSamples.first = [e.clientX, e.clientY];
-    };
-    window.bodyPointerMove = (e) => {
-      window.bodyPointerSamples.last = [e.clientX, e.clientY];
-    };
-    window.addEventListener("pointerdown", window.bodyPointerDown, { capture: true });
-    window.addEventListener("pointermove", window.bodyPointerMove, { capture: true });
-    window.addEventListener("pointerup", window.bodyPointerMove, { capture: true });
-  });
-  await page.mouse.move(x + dx, y + dy);
-  await page.mouse.down();
+  const press = await page.evaluate(() => window.bodyPointerSamples.first);
+  const dx = press[0] - x,
+    dy = press[1] - y;
+
   for (let i = 1; i <= 12; i++) {
     const angle = (-i * Math.PI) / 24;
     await page.mouse.move(

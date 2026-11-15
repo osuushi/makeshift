@@ -4,7 +4,7 @@ import { openDocument } from "./native-documents.mjs";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { standaloneOnly } from "./ui-cleanup-controls.mjs";
-import { at, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
+import { drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function selectBodies(page, count) {
@@ -33,10 +33,10 @@ export async function createStack(page) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -10], [10, 10]);
-  const center = await at(page, 0, 0);
   await chooseTool(page, "return to modeling", "modeling");
   for (let i = 0; i < 3; i++) {
-    await page.mouse.click(1120, 740);
+    await page.keyboard.press("Escape");
+    const center = await project(page, [0, 0, i * 10]);
     await page.mouse.click(center.x, center.y);
     await page.keyboard.press("e");
     await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
@@ -52,11 +52,15 @@ export async function createStack(page) {
       await page.keyboard.press("Enter");
     }
     await modalCompleted(page);
-    assert.equal((await inspect(page)).document.bodies.length, i + 1);
+    const bodies = (await inspect(page)).document.bodies;
+    assert.equal(bodies.length, i + 1);
+    assert.ok(Math.abs(bodies[i].bounds[2] - i * 10) < 1e-7);
+    assert.ok(Math.abs(bodies[i].bounds[5] - (i + 1) * 10) < 1e-7);
   }
 }
 async function cleanupSeamRoutes(page, joined, original, fixturePath) {
   // Actual edge and face clicks: each cleans just one upper side seam.
+  await page.keyboard.press("Escape");
   await orient(page, [0.3, -1, 0.5]);
   const body = joined.bodies[0];
   const seamZ = fixturePath ? 25 : 20;
@@ -69,6 +73,7 @@ async function cleanupSeamRoutes(page, joined, original, fixturePath) {
   await modalCompleted(page);
   assert.equal((await inspect(page)).document.bodies[0].faces.length, 13);
   await historyTo(page, joined);
+  await page.keyboard.press("Escape");
   const facePoint = await project(page, [0, -10, (seamZ + body.bounds[5]) / 2]);
   await page.mouse.click(facePoint.x, facePoint.y);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");

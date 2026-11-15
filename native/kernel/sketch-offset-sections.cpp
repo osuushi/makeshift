@@ -1,9 +1,11 @@
 #include "sketch-offset-sections.h"
+#include "geometry-policy.h"
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepCheck_Analyzer.hxx>
+#include <BRepLib.hxx>
 #include <BRepClass_FaceClassifier.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <vector>
@@ -119,6 +121,19 @@ TopoDS_Shape closedOffsetSections(const TopoDS_Shape& offset, const TopoDS_Wire&
     recoverCircularIslands(sections, source, amount);
     for (const auto& wire : sections) {
         const auto face = BRepBuilderAPI_MakeFace(gp_Pln(gp::XOY()), wire).Face();
+        if (!BRepCheck_Analyzer(face).IsValid()) {
+            // Planar projection of offset cubics can differ from the spatial
+            // curve by more than OCCT's default 1e-7 mm edge tolerance. Measure
+            // the representation discrepancy, cap it at the existing offset
+            // budget, and still require full validity; never move the curves.
+            BRepLib::UpdateInnerTolerances(face);
+            for (TopExp_Explorer it(face, TopAbs_EDGE); it.More(); it.Next())
+                if (BRep_Tool::Tolerance(TopoDS::Edge(it.Current())) > geometry_policy::offsetTopologyToleranceMm)
+                    throw std::runtime_error("Offset boundary tolerance exceeded");
+            for (TopExp_Explorer it(face, TopAbs_VERTEX); it.More(); it.Next())
+                if (BRep_Tool::Tolerance(TopoDS::Vertex(it.Current())) > geometry_policy::offsetTopologyToleranceMm)
+                    throw std::runtime_error("Offset endpoint tolerance exceeded");
+        }
         if (!BRepCheck_Analyzer(face).IsValid())
             throw std::runtime_error("Offset section is not a valid closed boundary");
         builder.Add(result, wire);

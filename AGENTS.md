@@ -135,7 +135,9 @@ profiles and ports.
 
 For founder-reported model bugs, use the **Capture fixture** action
 and read the resulting temporary JSON file directly (use the displayed capture path).
-Do not use computer use to extract the live model. Ask for a fixture path if one is missing.
+Do not use computer use to extract the live model. If a bug archive is supplied,
+use its bundled fixtures via the workflow below; ask for a fixture path only when
+neither a usable fixture nor a bug archive is available.
 
 When pushing a coherent change that appears complete and ready for founder QA,
 open a pull request automatically unless the founder explicitly asks otherwise.
@@ -157,7 +159,19 @@ review, update or continue it, but not PRs used only as background references.
 
 ## Bug report archives
 
-For `bug-*.zip` captures, follow [bug report analysis](docs/bug-reports.md). Read
+Attaching a Makeshift `bug-*.zip` is a request to investigate the reported bug,
+even if the message is blank or contains only the attachment notice. The opening
+message will typically be empty. Start without asking what to do.
+Identify the reported behavior, reproduce it using the capture when possible,
+then implement, verify, commit, push, open or reuse
+the pull request, and attach it to the current Codex chat. Continue through
+delivery without waiting for confirmation when the intended behavior is clear.
+If a material product decision is unresolved, investigate first and ask the
+specific question needed to proceed. Follow any narrower scope the founder gives.
+Once the issue is understood, rename the current Codex chat to a concise
+description of the bug.
+
+Follow [bug report analysis](docs/bug-reports.md). Read
 `manifest.json`, warnings and start/end fixtures first. Run
 `npm run bug:analyze -- /path/to/bug-TIMESTAMP.zip` for extraction, combined playback,
 frames and local transcription; it sets up media tools on first use. Use `--extract`

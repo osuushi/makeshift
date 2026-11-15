@@ -2,10 +2,22 @@ import assert from "node:assert/strict";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { createStack } from "./ui-cleanup.mjs";
+import { undoToDocument } from "./ui-cleanup-controls.mjs";
 import { makeFeature, pickFeatureFace } from "./ui-face-move-fixtures.mjs";
 import { close, inspect } from "./ui-helpers.mjs";
 import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { chooseTool } from "./ui-tools.mjs";
+
+async function frameReopenedStock(page, height) {
+  // Pocket fixtures zoom into the opening; restore room to pick the outer cap.
+  const viewport = await page.getByLabel("Modeling viewport", { exact: true }).boundingBox();
+  assert.ok(viewport);
+  await page.mouse.move(viewport.x + viewport.width / 2, viewport.y + viewport.height / 2);
+  await page.keyboard.down("Control");
+  await page.mouse.wheel(0, Math.log(40 / height) / 0.01);
+  await page.keyboard.up("Control");
+  await inspect(page);
+}
 
 export async function deleteFeatureRoute(page, name, electron, kind) {
   const pocket = kind !== "boss";
@@ -47,6 +59,7 @@ export async function deleteFeatureRoute(page, name, electron, kind) {
     f.vertices.every((v, i) => i % 3 !== 2 || Math.abs(v - 5) < 1e-6),
   );
   assert.ok(top);
+  await frameReopenedStock(page, state.camera.height);
   await pickFeatureFace(page, top);
   // Deleting a box cap cannot heal; error must not accept or open the shell.
   const reopened = (await inspect(page)).document;
@@ -91,6 +104,7 @@ export async function deleteEdgeRoute(page, name) {
   await inspect(page);
   await page.getByRole("button", { name: "Accept Boolean", exact: true }).click();
   const before = (await inspect(page)).document;
+  await page.keyboard.press("Escape");
   await orient(page, [0.3, -1, 0.5]);
   const point = await project(page, [0, -10, 20]);
   await page.mouse.click(point.x, point.y);
@@ -106,6 +120,7 @@ export async function deleteEdgeRoute(page, name) {
   assert.deepEqual((await inspect(page)).document, before);
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, after);
+  await page.keyboard.press("Escape");
   const sharp = await project(page, [0, -10, 30]);
   await page.mouse.click(sharp.x, sharp.y);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "edge");
@@ -113,12 +128,12 @@ export async function deleteEdgeRoute(page, name) {
   state = await inspect(page);
   assert.equal(state.preview, null);
   assert.deepEqual(state.document, after);
-  assert.match(await page.getByRole("status").textContent(), /different surfaces/);
+  assert.match(await page.getByRole("status").textContent(), /two surviving closed boundary loops/);
   const history = await page.evaluate(() => window.makeshiftHistory());
   const failure = history.at(-1);
   assert.equal(failure.outcome, "failed");
-  assert.match(failure.error, /different surfaces/);
-  await chooseTool(page, "undo", "undo");
+  assert.match(failure.error, /two surviving closed boundary loops/);
+  await undoToDocument(page, before);
   assert.deepEqual((await inspect(page)).document, before, "Undo skips the rejected deletion");
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, after);

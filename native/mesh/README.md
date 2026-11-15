@@ -18,7 +18,7 @@ required. All upstream source remains unmodified in ignored `.cache/mesh-inputs`
   [`0edd9d5`](https://github.com/elalish/manifold/tree/0edd9d54876f3135e431575214dd6d8a72866fee).
   The [public Manifold API](https://github.com/elalish/manifold/blob/0edd9d54876f3135e431575214dd6d8a72866fee/include/manifold/manifold.h)
   supplies `Boolean`, `TrimByPlane`, `Cylinder`, `Transform`, `GetTolerance` and
-  `GetMeshGL`. Both runtimes receive the same float32 local-coordinate vertices.
+  `GetMeshGL64`. Both runtimes receive the same float32 local-coordinate vertices.
 - oneTBB 2022.3.0, Apache-2.0 with included third-party notices, commit
   [`f1862f3`](https://github.com/uxlfoundation/oneTBB/tree/f1862f38f83568d96e814e469ab61f88336cc595).
   Manifold's [dependency configuration](https://github.com/elalish/manifold/blob/0edd9d54876f3135e431575214dd6d8a72866fee/cmake/manifoldDeps.cmake)
@@ -37,7 +37,8 @@ Each body uses a disposable process and one bounded, little-endian binary reques
 on stdin. Input meshes are float32 coordinates and uint32 indices. Operations
 reference earlier operands; transforms and plane parameters use float64. The
 process checks sizes, indices and finite values, evaluates the final mesh and
-writes float32 mesh arrays plus its numerical tolerance to stdout. Diagnostics
+writes float64 positions and uint32 triangle indices plus its numerical tolerance
+to stdout. Diagnostics
 use stderr and a nonzero exit. Both directions are limited to 512 MiB per body.
 
 The host allows one native export calculation at a time. Cancel/timeout terminates
@@ -50,8 +51,8 @@ for native benchmarking, not a document setting.
 
 Conservative operand bounds construct cylindrical clipping tools without forcing
 intermediate Booleans. Those tools still extend beyond the entire target and use
-the existing radial error budget. Native results pass the same rounding, collapsed
-facet repair, closure and orientation checks as WASM before encoding.
+the existing radial error budget. Native results retain the Boolean positions in float64 through the handoff and
+pass the collapsed facet repair, closure and orientation checks before encoding.
 
 Electron uses binary IPC through the preload bridge. Browser development uses the
 localhost binary export endpoint. Clients without that capability, including the

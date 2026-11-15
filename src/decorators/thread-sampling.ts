@@ -24,22 +24,22 @@ export function threadSampling(
       ? Math.max(12, Math.min(baseSegments, Math.round(previewResolution.segments)))
       : baseSegments;
   // Straight profile facets are aligned to crest/root corners in threadGrid.
-  // Their mixed radial/angular interpolation needs fewer axial samples.
-  const linearProfile =
-    settings.profile !== "rounded" && !settings.startTaper && !settings.endTaper;
+  // The grid also splits at taper transitions and cone/profile intersections.
+  // Each resulting straight-profile patch is linear in radius at fixed angle.
+  const { pitch, profile, startTaper, endTaper } = settings;
+  const profileSpan = profile === "metric" ? Math.sqrt(3) * pitch : 2 * depth;
+  const taperSpan = Math.max(
+    startTaper ? (depth * pitch) / startTaper : 0,
+    endTaper ? (depth * pitch) / endTaper : 0,
+  );
+  const curvedSamples = Math.max(32, Math.ceil(Math.PI * Math.sqrt(depth / tolerance)));
+  const mixedSamples = (span: number) => Math.ceil((span * Math.PI) / (segments * tolerance));
   const baseSamples =
     quality === "preview"
       ? 12
-      : linearProfile
-        ? Math.max(
-            8,
-            Math.ceil(
-              ((settings.profile === "metric" ? Math.sqrt(3) * settings.pitch : 2 * depth) *
-                Math.PI) /
-                (segments * tolerance),
-            ),
-          )
-        : Math.max(32, Math.ceil(Math.PI * Math.sqrt(depth / tolerance)));
+      : profile === "rounded"
+        ? curvedSamples
+        : Math.max(8, mixedSamples(profileSpan), Math.min(curvedSamples, mixedSamples(taperSpan)));
   const samples =
     quality === "preview" && previewResolution
       ? Math.max(6, Math.min(baseSamples, Math.round(previewResolution.samples)))

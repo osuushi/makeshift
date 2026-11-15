@@ -189,17 +189,19 @@ test("closed spherical and toroidal shells preserve analytic distance and reject
         );
         await owner.call({ kind: "discard" });
       }
-      assert.ok(
-        (
-          await owner.call({
-            kind: "shell",
-            operation: {
-              selection: [{ body: body.id, faces: [] }],
-              thickness: -5,
-            },
-          })
-        ).error,
-      );
+      for (const thickness of kind === "torus" ? [-5, 6] : [-5]) {
+        assert.ok(
+          (
+            await owner.call({
+              kind: "shell",
+              operation: {
+                selection: [{ body: body.id, faces: [] }],
+                thickness,
+              },
+            })
+          ).error,
+        );
+      }
     }
   } finally {
     owner.close();

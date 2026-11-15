@@ -2,6 +2,21 @@ import assert from "node:assert/strict";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
+async function assertMoveFieldClear(page, label) {
+  // Real SVG/DOM bounds catch the escaped pivot-over-input overlap; model
+  // tests cannot observe these independently positioned presentation layers.
+  const clear = await page.locator(".dimension:visible").evaluate((field) => {
+    const a = field.getBoundingClientRect();
+    return [
+      ...document.querySelectorAll("[data-move-marker] > svg, .move-anchor:not([hidden])"),
+    ].every((widget) => {
+      const b = widget.getBoundingClientRect();
+      return a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom;
+    });
+  });
+  assert.ok(clear, `${label} field stays clear of Move glyphs and pivot`);
+}
+
 export async function moveFieldsRoute(page, name) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
@@ -19,6 +34,8 @@ export async function moveFieldsRoute(page, name) {
       label,
     );
     assert.equal(await page.locator(".dimension input:visible").count(), 1);
+    await assertMoveFieldClear(page, label);
+    await page.getByRole("textbox", { name: label, exact: true }).click();
   }
   await page.keyboard.press("Shift+Tab");
   await page.getByRole("textbox", { name: "Move X", exact: true }).fill("3");

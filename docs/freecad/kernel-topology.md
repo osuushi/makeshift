@@ -8,6 +8,21 @@ evidence, not a change to the pinned upstream findings below.
 
 Scope: `/Users/adacohen/projects/makeshift/.reference/FreeCAD`, revision `78e4038a564e4c8bfebb40119b41d67531232223`. Links are immutable GitHub links to that revision. No source/build/install changes were made.
 
+## Chamfer trim self-intersection (2026-11-08)
+
+Pinned OCCT [`BRepCheck_Wire::SelfIntersect`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepCheck/BRepCheck_Wire.cxx)
+passes each whole parameter curve and its edge domain to the 2D intersector,
+with 1e-10 intersection precision and existing vertex-tolerance allowances.
+That is source observation, not a completeness guarantee for spline loops.
+
+The captured 22.9687 mm chamfer has two distinct parameters at the same point
+inside a degree-11 spline span. Local reproduction produced nearly identical
+geometry that passed ordinary BRepCheck, while checking the isolated knot span
+found the loop in both versions. Makeshift therefore supplements finish
+validation with knot-span checks before acceptance and size-limit probing.
+This does not relax tolerances or claim complete arbitrary-surface validation.
+The implementation uses public OCCT APIs; no upstream code was copied.
+
 ## Microscopic cleanup cost (2026-11-08)
 
 Pinned OCCT [`BRepAlgoAPI_Defeaturing::Build`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepAlgoAPI/BRepAlgoAPI_Defeaturing.cxx)
@@ -22,6 +37,24 @@ in the maximum-fillet search regression, so that broader change was rejected.
 Local runtime profiling of the segmented chamfer capture found both changes reduce
 cost. Neither observation proves universal speedups or relaxes geometry validation.
 No upstream code was copied.
+
+## Planar cubic offset representations (2026-11-15)
+
+In pinned OCCT 7.9.3, [`BRepCheck_Edge::InContext`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepCheck/BRepCheck_Edge.cxx)
+checks a planar edge against a projected curve even when no stored pcurve exists.
+[`BRepLib::UpdateInnerTolerances`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepLib/BRepLib.cxx)
+samples curve representations and updates edge/vertex tolerances. That sampling
+alone does not prove full validity; Makeshift reruns the ordinary analyzer and
+caps corrected tolerances at its existing 0.000002 mm offset topology budget.
+
+The captured lobed cubic section failed with intersection joins. Circular joins
+produced inward offsets, but at -3 mm the planar representation differed from the
+spatial offset curve by about 0.00000017 mm, above the default edge tolerance.
+Local runtime checks confirm bounded tolerance correction allows the result
+through full validation without moving its geometry. The model regression checks
+sampled distances against the original curves within the 0.001 mm conversion
+budget, closed regions and Undo/Redo. This is evidence for the captured case,
+not a claim that every freeform offset succeeds. No upstream code was copied.
 
 ## OCCT small-face diagnostic limit (2026-11-07)
 
