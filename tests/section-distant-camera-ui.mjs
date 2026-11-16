@@ -4,6 +4,7 @@ import { openDocument } from "./native-documents.mjs";
 import { project } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
+import { sectionPlaneHover } from "./ui-section-plane-hover.mjs";
 
 // Founder capture: distant camera makes camera-space clipping lose the plane tolerance.
 // Only real GPU rendering can catch the resulting broken coplanar ink and triangle gaps.
@@ -60,6 +61,7 @@ await withUiRuntimes(async (page, name) => {
   );
   assert.deepEqual((await inspect(page)).document, before.document);
   console.log(name, "48 coplanar ink samples and nine interior fill samples passed");
+  await sectionPlaneHover(page);
 });
 
 async function regionRed(page, png, points) {
