@@ -164,6 +164,13 @@ async function pseudofaceChoice(page) {
   await panel.locator(`button[data-kind="body"][data-key="${bodies[0]}"]`).hover();
   await page.mouse.up();
   assert.deepEqual((await inspect(page)).modelingSelection, [{ kind: "body", body: bodies[0] }]);
+  const selected = await samples(page);
+  assert.ok(
+    selected[2] - selected[0] > bare[2] - bare[0] + 10,
+    `Selected body tints its section pattern blue: ${selected} / ${bare}`,
+  );
+  await chooseTool(page, "clear selection", "selection-clear");
+  assert.deepEqual(await samples(page), bare, "Deselecting restores the section pattern");
   assert.deepEqual(
     (await inspect(page)).document,
     before.document,
