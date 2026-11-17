@@ -89,6 +89,21 @@ async function sketchGuideTabRoute(page) {
   assert.ok(Math.abs((chord * (1 + arc.bulge ** 2)) / (4 * Math.abs(arc.bulge)) - 15) < 1e-6);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);
+  await page.keyboard.press("Shift+Tab");
+  await focused(page, "Bow radius");
+  const radius = page.getByRole("textbox", { name: "Bow radius", exact: true });
+  // Repeated negative drafts must not flip against the previous preview each time.
+  await radius.fill("-15");
+  await radius.fill("-16");
+  await radius.fill("-17");
+  await radius.fill("-15");
+  await page.keyboard.press("Enter");
+  await modalCompleted(page);
+  const reversed = (await inspect(page)).document.sketches[0].curves[0];
+  assert.equal(reversed.kind, "arc");
+  assert.ok(Math.abs(reversed.bulge + arc.bulge) < 1e-6, "Negative radius reverses the bow");
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
 
   await page.keyboard.press("l");
   await drag(page, [0, 0], [0, 10], ["Shift"]);

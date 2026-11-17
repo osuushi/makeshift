@@ -18,7 +18,7 @@ type Session = {
   sketch: Sketch;
   source: Segment | Arc;
   sources: (Segment | Arc)[];
-  curve: Segment | Arc;
+  radiusReference: Segment | Arc;
   side: number;
   solve: GestureSolve;
   selection: readonly SelectionTarget[];
@@ -60,7 +60,7 @@ export class BowControls {
       () => {
         const s = this.session;
         if (!s) return;
-        this.preview(() => bowRadius(s.curve, this.radial.read(), s.side));
+        this.preview(() => bowRadius(s.radiusReference, this.radial.read(), s.side));
       },
       options,
     );
@@ -134,8 +134,8 @@ export class BowControls {
     this.session = {
       sketch,
       source,
+      radiusReference: source,
       sources,
-      curve: source,
       side: hit.side,
       solve: new GestureSolve(this.editor, interaction),
       selection: this.editor.selected.targets,
@@ -154,12 +154,13 @@ export class BowControls {
     try {
       const curve = make(),
         result = jointBow(s.sketch, s.sources, curve);
-      s.curve = curve;
       s.valid = true;
       s.solve.update(result);
       this.editor.message = "";
-      if (curve.kind === "arc" && !numericFocus(this.input))
+      if (curve.kind === "arc" && !numericFocus(this.input)) {
+        s.radiusReference = curve;
         this.input.value = String(Number(this.radial.display(arcCircle(curve).radius).toFixed(4)));
+      }
     } catch (error) {
       s.valid = false;
       s.solve.invalidate();

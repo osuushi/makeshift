@@ -42,6 +42,10 @@ test("bow passes through arbitrary third point, supports both sides and branches
   near(major.bulge, -2);
   near(arcCircle(bowRadius(line, 5, 1)).center.y, -3);
   near(bowRadius(major, 5, 1).bulge, -2);
+  near(bowRadius(major, -5, 1).bulge, 2);
+  near(bowRadius(minor, -5, 1).bulge, 0.5);
+  near(bowRadius(line, -5, 1).bulge, -bowRadius(line, 5, 1).bulge);
+  assert.throws(() => bowRadius(line, -3, 1), /at least/);
   assert.ok(Math.abs(bowRadius(major, 8, 1).bulge) > 1);
   assert.ok(Math.abs(bowRadius(bowRadius(major, 4, 1), 5, 1).bulge) > 1);
   assert.throws(() => bowRadius(line, 3, 1), /at least/);

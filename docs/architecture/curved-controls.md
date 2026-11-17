@@ -13,7 +13,9 @@ Founder-approved behavior for the next sketch increments:
   endpoints and the mouse point. Collinearity shows the straight state. Click a
   guide to enter radius on that side: new arcs default to minor; existing arcs
   preserve their side and minor/major branch. Radius below half the chord is
-  invalid. Tab opens Fillet radius first for a selected corner. For a straight edge,
+  invalid in magnitude. A negative bow radius flips to the opposite side of the
+  guide or arc at numeric entry; continued negative typing keeps that side.
+  Tab opens Fillet radius first for a selected corner. For a straight edge,
   Tab visits visible sketch dimensions before its bow guides; Shift-Tab reverses that order. Activating a
   guide opens its existing local radius editor. Numeric editing does not implicitly lock a dimension. Release accepts
   a valid drag; Escape cancels. This replaces a standalone arc drawing gesture.
