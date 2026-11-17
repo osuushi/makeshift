@@ -44,7 +44,12 @@ export async function launchElectron(options) {
       }
     };
     await app.evaluate(({ dialog }) => {
-      dialog.showMessageBox = async () => ({ response: 2 });
+      dialog.showMessageBox = async (_window, options) => {
+        const buttons = (options ?? _window).buttons ?? [];
+        for (const label of ["Save unsigned", "Trust this version"])
+          if (buttons.includes(label)) return { response: buttons.indexOf(label) };
+        return { response: 2 };
+      };
     });
     const firstWindow = app.firstWindow.bind(app);
     app.firstWindow = async (...args) => {

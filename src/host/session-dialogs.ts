@@ -68,7 +68,7 @@ export const sessionDialogs = {
   },
   async showMessageBox(
     window: BrowserWindow,
-    options: Electron.MessageBoxOptions,
+    options: Electron.MessageBoxOptions & { fingerprint?: string },
   ): Promise<Electron.MessageBoxReturnValue> {
     const remote = this.remotes.get(window);
     if (!remote) return dialog.showMessageBox(window, options);
@@ -76,6 +76,7 @@ export const sessionDialogs = {
       kind: "message",
       message: options.message,
       detail: options.detail,
+      fingerprint: options.fingerprint,
       buttons: options.buttons ?? ["OK"],
       cancelId: options.cancelId,
     });

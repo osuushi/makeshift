@@ -61,6 +61,16 @@ export function fileControls(editor: SketchEditor, container: HTMLElement): () =
       run: () => documents.browse(() => input.click()),
     }),
     catalog.register({
+      id: "export-without-workspace",
+      label: "Export without agent workspace…",
+      category: "Document & Edit",
+      finishEdit: true,
+      reason,
+      run: async () => {
+        await documents.save(false, true, true);
+      },
+    }),
+    catalog.register({
       id: "download-document",
       finishEdit: true,
       label: "Download drawing…",

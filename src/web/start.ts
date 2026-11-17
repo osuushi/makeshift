@@ -1,9 +1,11 @@
 import { DocumentOwner } from "../backend/document-owner.js";
 import type {} from "../model/fixture-host.js";
+import { browserTrust } from "../security/browser-device.js";
 import { modelWireReply } from "../sketch/model-wire.js";
 
 export function installWebModel(): void {
   const owner = new DocumentOwner();
+  owner.setDecoratorAuthorization((doc) => browserTrust.allowDecorators(doc));
   window.makeshiftModel = async (request) => {
     await owner.initialize();
     return structuredClone(modelWireReply(request, await owner.call(structuredClone(request))));

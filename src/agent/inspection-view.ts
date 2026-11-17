@@ -6,6 +6,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { worldPoint } from "../sketch/planes.js";
 import { pointTarget } from "../sketch/selection-target.js";
 import { toolCatalog } from "../tools/catalog.js";
+import { frameSummary } from "./inspection-fields.js";
 import type { InspectionTarget, InspectionView } from "./inspection-protocol.js";
 import { changeAgentSelection } from "./selection-command.js";
 
@@ -67,7 +68,7 @@ export function inspectionView(editor: SketchEditor, render: boolean): Inspectio
     clipping: clippingFrame
       ? {
           kind: "visual",
-          plane: clippingFrame,
+          plane: frameSummary(clippingFrame),
           equations: world.renderer.clippingPlanes.map((p) => [...p.normal.toArray(), p.constant]),
         }
       : null,

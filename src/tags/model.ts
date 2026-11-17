@@ -1,3 +1,4 @@
+import { validName } from "../security/text.js";
 import { newId, type SketchDocument } from "../sketch/document.js";
 
 export interface TagMember {
@@ -56,15 +57,15 @@ export function validateTags(document: SketchDocument): void {
     if (
       !g ||
       !body ||
-      typeof g.name !== "string" ||
-      !g.name.trim() ||
-      g.name.length > 200 ||
+      !validName(g.name) ||
       (g.description !== undefined &&
         (typeof g.description !== "string" || g.description.length > 2000)) ||
       (g.splitFrom !== undefined && (typeof g.splitFrom !== "string" || !g.splitFrom)) ||
       !Array.isArray(g.members) ||
       !Array.isArray(g.problems) ||
-      g.problems.some((p: string) => !Object.hasOwn(tagProblemLabels, p)) ||
+      g.problems.some(
+        (p: unknown) => typeof p !== "string" || !Object.hasOwn(tagProblemLabels, p),
+      ) ||
       new Set(g.members.map((m: TagMember) => m?.id)).size !== g.members.length
     )
       throw new Error("Invalid tagged group");

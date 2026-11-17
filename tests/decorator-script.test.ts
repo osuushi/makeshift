@@ -85,6 +85,8 @@ test("script authors, continues and transforms bundled decorators with atomic so
       await readFile("examples/decorators/linked-pads.json", "utf8"),
     );
     const before = owner.view.data;
+    let approved = false;
+    owner.setDecoratorAuthorization(async () => approved);
     owner.beginScript("pads.ts");
     await owner.scripts.step({
       kind: "editDecoratorDefinition",
@@ -99,6 +101,14 @@ test("script authors, continues and transforms bundled decorators with atomic so
       },
     })) as DecoratorInspection;
     assert.match(disabled.reason ?? "", /Enable bundled code/);
+    await assert.rejects(
+      owner.scripts.step({
+        kind: "enableDecorator",
+        input: { id: definition.id, version: 1, enabled: true },
+      }),
+      /disabled/,
+    );
+    approved = true;
     await owner.scripts.step({
       kind: "enableDecorator",
       input: { id: definition.id, version: 1, enabled: true },

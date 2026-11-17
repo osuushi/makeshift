@@ -515,8 +515,7 @@ These limits constrain execution; they do not validate returned geometry.
 
 `decoratorDefinitions` stores a manifest, bounded settings schema and exact source
 once per ID/version. The ordinary `decorator-definition` owner edit installs,
-replaces or removes this bundle with snapshot Undo. Installation and opening do
-not execute source. Replacement must preserve valid settings on existing instances;
+replaces or removes this bundle with snapshot Undo. Installation leaves source disabled. On open, only referenced custom definitions are offered for activation under the [drawing trust policy](persistence.md#sharing-drawings-and-author-trust). Dormant definitions require approval when enabled. Replacement must preserve valid settings on existing instances;
 removal is rejected while instances reference that version. Source-specific
 enablement is owner-session state, cleared on new/open and excluded from archive
 and Undo snapshots. Custom apply/settings/continue edits pass through the owner;

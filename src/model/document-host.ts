@@ -3,6 +3,7 @@ export type DocumentCommand =
   | "open"
   | "save"
   | "save-as"
+  | "export-without-workspace"
   | "close"
   | "quit"
   | "restart-update"

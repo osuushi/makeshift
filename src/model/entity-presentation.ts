@@ -1,3 +1,4 @@
+import { validName } from "../security/text.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { DisplayDocument } from "./display-document.js";
 
@@ -44,8 +45,7 @@ export function editEntityPresentation(
   if (!group) throw new Error("Entity no longer exists");
   const index = group.findIndex((row) => row.id === request.id);
   if (request.name !== undefined) {
-    if (typeof request.name !== "string" || !request.name.trim() || request.name.length > 200)
-      throw new Error("Use a name between 1 and 200 characters");
+    if (!validName(request.name)) throw new Error("Use a name of up to 96 printable characters");
     if (group[index].name === request.name.trim()) return document;
     group[index] = { id: request.id, name: request.name.trim() };
   } else {

@@ -19,7 +19,11 @@ export function readArchive(data: string): SketchDocument {
   return readFileArchive(data).document;
 }
 
-export function readFileArchive(data: string): { document: SketchDocument; camera?: CameraState } {
+export function readFileArchive(data: string): {
+  document: SketchDocument;
+  camera?: CameraState;
+  seals?: import("../security/signatures.js").Seals;
+} {
   if (data.startsWith("FREACP1C"))
     throw new Error(
       "This file was saved by the older Freac prototype. This version cannot open that format yet. The file has not been changed.",
@@ -27,7 +31,7 @@ export function readFileArchive(data: string): { document: SketchDocument; camer
   const archive = JSON.parse(data);
   if (
     !["makeshift", "freac"].includes(archive?.format) ||
-    archive.version !== 1 ||
+    ![1, 3].includes(archive.version) ||
     !archive.document
   )
     throw new Error("Unsupported Makeshift file format");
@@ -43,5 +47,9 @@ export function readFileArchive(data: string): { document: SketchDocument; camer
         ),
       }
     : original;
-  return { document, ...(camera ? { camera } : {}) };
+  return {
+    document,
+    ...(archive.seals !== undefined ? { seals: archive.seals } : {}),
+    ...(camera ? { camera } : {}),
+  };
 }

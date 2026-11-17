@@ -1,3 +1,4 @@
+import { validId } from "../security/text.js";
 import { validateNumeric } from "./constraint-geometry.js";
 import { measuredAngle, wrapDegrees } from "./corner-angle.js";
 import { curveDistance } from "./curve-geometry.js";
@@ -9,11 +10,24 @@ import { validateTangency } from "./tangency.js";
 function validateIdentities(items: readonly { id: string }[], kind: string): void {
   const seen = new Set<string>();
   for (const { id } of items) {
-    if (typeof id !== "string" || !id || seen.has(id))
-      throw new Error(`Invalid or duplicate ${kind} identity`);
+    if (!validId(id) || seen.has(id)) throw new Error(`Invalid or duplicate ${kind} identity`);
     seen.add(id);
   }
 }
+
+const constraintKinds = new Set([
+  "length",
+  "radius",
+  "corner-angle",
+  "point-on-edge",
+  "tangent",
+  "horizontal",
+  "vertical",
+  "coincident",
+  "parallel",
+  "perpendicular",
+  "equal",
+]);
 
 // Current curve and constraint invariants, in millimetres.
 export function validateSketch(sketch: Sketch, solved = true): void {
@@ -23,6 +37,14 @@ export function validateSketch(sketch: Sketch, solved = true): void {
   validateIdentities(sketch.groups, "group");
   const definitions = new Set<string>();
   for (const constraint of sketch.constraints) {
+    if (!constraintKinds.has(constraint.kind)) throw new Error("Unknown sketch constraint kind");
+    if ("curve" in constraint !== (constraint.kind === "length" || constraint.kind === "radius"))
+      throw new Error("Invalid sketch constraint reference");
+    if (
+      constraint.kind === "corner-angle" &&
+      (!["a", "b"].includes(constraint.aEnd) || !["a", "b"].includes(constraint.bEnd))
+    )
+      throw new Error("Invalid angle endpoint");
     const { id: _id, ...definition } = constraint;
     const key = JSON.stringify(Object.entries(definition).sort(([a], [b]) => a.localeCompare(b)));
     if (definitions.has(key)) throw new Error("Duplicate sketch constraint");

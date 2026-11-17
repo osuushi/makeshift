@@ -1,3 +1,10 @@
+import {
+  adoptBrowserTrust,
+  browserAsk,
+  browserTrust,
+  newBrowserTrust,
+} from "../security/browser-device.js";
+import { usedDefinitions } from "../security/drawing-trust.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { BrowserArchive, downloadArchive } from "./browser-archive.js";
 import { confirmReplacement, pickSaveFile, writeBrowserFile } from "./browser-file-access.js";
@@ -45,23 +52,43 @@ export class BrowserDocuments {
       ? confirmReplacement(() => this.save())
       : Promise.resolve(true);
   }
-  async save(saveAs = false, download = false): Promise<boolean> {
+  async save(saveAs = false, download = false, clean = false): Promise<boolean> {
     if (this.blocked()) return false;
     this.active = true;
     const editor = this.editor;
     editor.store.busy = true;
     editor.refresh();
     try {
+      if (
+        clean &&
+        usedDefinitions(editor.store.data).length &&
+        (await browserAsk({
+          message: "This copy uses custom decorators",
+          detail:
+            "Recipients may be asked to trust them. The copy excludes agent files and conversations.",
+          buttons: ["Cancel", "Export copy"],
+        })) !== 1
+      )
+        return false;
       const name =
-        saveAs || download || !this.drawingId ? await drawingName(this.filename) : this.filename;
+        saveAs || download || !this.drawingId
+          ? await drawingName(
+              clean
+                ? this.filename.replace(/\.makeshift$/i, "") + " - shared.makeshift"
+                : this.filename,
+            )
+          : this.filename;
       if (!name) return false;
       const destination = download ? await pickSaveFile(name) : undefined;
       const saved = this.contents();
+      const files = clean ? {} : this.files;
+      const publication = await browserTrust.prepareSave(editor.store.data, files);
       const data = await this.codec.run(
         {
           kind: "write",
           model: documentArchive(editor.store.data, captureCamera(editor.world)),
-          files: this.files,
+          files,
+          seals: publication.seals,
         },
         editor,
       );
@@ -77,6 +104,7 @@ export class BrowserDocuments {
         this.drawingId = id;
         this.filename = name;
         this.baseline = saved;
+        await publication.saved();
         editor.notice = `Saved ${name} in this browser`;
       }
       return true;
@@ -95,6 +123,7 @@ export class BrowserDocuments {
     const editor = this.editor;
     if (!(await editor.newDocument())) return;
     this.files = {};
+    await browserTrust.opened(editor.store.data, {});
     this.filename = "Untitled.makeshift";
     this.drawingId = undefined;
     this.baseline = this.contents();
@@ -127,7 +156,21 @@ export class BrowserDocuments {
         editor,
       );
       if (archive instanceof Uint8Array) throw new Error("Invalid archive result.");
+      const trust = newBrowserTrust();
+      await trust.opened(archive.document, archive.files, archive.seals);
       if (!(await editor.store.request({ kind: "open", document: archive.document }))) return;
+      adoptBrowserTrust(trust);
+      for (const def of usedDefinitions(editor.store.data)) {
+        if (
+          !(await editor.store.request({
+            kind: "decorator-enable",
+            id: def.id,
+            version: def.version,
+            enabled: true,
+          }))
+        )
+          break;
+      }
       this.files = archive.files;
       this.filename = file.name.replace(/\.freac$/i, ".makeshift");
       this.drawingId = drawingId;

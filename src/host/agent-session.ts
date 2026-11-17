@@ -69,6 +69,10 @@ export class AgentSession {
   get status(): AgentReply {
     return { ...this.process.status, workspace: this.workspace.cwd, setup: this.setup.status };
   }
+  fileBusy = () => false;
+  get lifecycleBusy() {
+    return this.busy;
+  }
   get unused(): boolean {
     return !this.busy && !this.replacing && !this.process.status.running && !this.workspace.root;
   }
@@ -125,7 +129,7 @@ export class AgentSession {
     }
     if (this.setup.conflicts(request))
       throw new Error("Wait for or cancel Codex installation before changing agent setup.");
-    if (this.busy || this.replacing)
+    if (this.busy || this.replacing || this.fileBusy())
       throw new Error("An agent lifecycle operation is already in progress.");
     this.busy = true;
     try {
@@ -139,6 +143,9 @@ export class AgentSession {
     if (!window) throw new Error("The document window is closed.");
     if (await this.setup.request(request, this.process.status.running)) return this.status;
     switch (request.kind) {
+      case "open-pane":
+        await this.workspace.unlock();
+        return this.status;
       case "settings":
         return {
           ...this.status,
@@ -211,6 +218,7 @@ export class AgentSession {
             throw new Error("Preview requires the desktop document.");
           return this.preview.request(input, output);
         },
+        this.workspace.fresh,
       );
       const overrides =
         preferences.preset === "codex"
