@@ -2,7 +2,7 @@ import { placeFloatingPanel } from "../preferences/panel-placement.js";
 import { RadialInput } from "../preferences/radial-input.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import type { InteractionLease } from "./active-interaction.js";
-import { selectedBowCurves } from "./arc-edit.js";
+import { type BowGuide, selectedBowCurves } from "./arc-edit.js";
 import { arcCircle, bowRadius, bowThrough } from "./arc-geometry.js";
 import type { Arc, Segment, Sketch } from "./document.js";
 import type { SketchEditor } from "./editor.js";
@@ -83,6 +83,21 @@ export class BowControls {
       },
       options,
     );
+    overlay.addEventListener(
+      "bow-numeric-activate",
+      (event) => {
+        const guide = (event as CustomEvent<BowGuide>).detail;
+        if (!editor.sketch) return;
+        const point = editor.world.projectLocal(editor.sketch.plane, guide.point);
+        this.begin(guide, point);
+        if (this.session) {
+          this.update();
+          this.input.focus();
+          this.input.select();
+        }
+      },
+      { signal: this.abort.signal },
+    );
     editor.world.changed.add(this.update);
   }
   private start = (event: PointerEvent): void => {
@@ -100,10 +115,19 @@ export class BowControls {
       return;
     const hit = pick(this.editor, { x: event.clientX, y: event.clientY });
     if (hit?.kind !== "bow") return;
-    const source = sources.find((c) => c.id === hit.curve);
-    if (!source) return;
     event.preventDefault();
     event.stopImmediatePropagation();
+    this.begin(hit, { x: event.clientX, y: event.clientY }, event.pointerId);
+  };
+  private begin(
+    hit: Pick<BowGuide, "curve" | "side" | "point">,
+    start: Point,
+    pointer?: number,
+  ): void {
+    const sources = selectedBowCurves(this.editor),
+      sketch = this.editor.sketch;
+    const source = sources.find((c) => c.id === hit.curve);
+    if (!source || !sketch || this.session || this.editor.blocked) return;
     const interaction = this.editor.interactions.acquire("bow", () => this.cancel());
     if (!interaction) return;
     this.interaction = interaction;
@@ -115,15 +139,15 @@ export class BowControls {
       side: hit.side,
       solve: new GestureSolve(this.editor, interaction),
       selection: this.editor.selected.targets,
-      start: { x: event.clientX, y: event.clientY },
-      pointer: event.pointerId,
+      start,
+      pointer: pointer ?? -1,
       moved: false,
       valid: false,
     };
     this.editor.select([]);
-    interaction.capture(this.editor.world.canvas, event.pointerId);
+    if (pointer !== undefined) interaction.capture(this.editor.world.canvas, pointer);
     this.preview(() => bowThrough(source, hit.point));
-  };
+  }
   private preview(make: () => Segment | Arc): void {
     const s = this.session;
     if (!s || this.closing) return;

@@ -66,7 +66,11 @@ function installShortcuts(
       focusNumericField(
         app,
         event.shiftKey,
-        !!editor.interactions.current?.captured || (!!editor.world.active && !editor.moveMode),
+        editor.interactions.current?.captured
+          ? true
+          : editor.world.active && !editor.moveMode
+            ? "sketch"
+            : false,
       );
       return;
     }
