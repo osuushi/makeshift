@@ -4,6 +4,7 @@ import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { worldPoint } from "../sketch/planes.js";
+import { stableClipping } from "../sketch/stable-clipping.js";
 import type { MirrorReference } from "./mirror-reference.js";
 
 /** The temporary mirror reference is scene decoration, never document geometry. */
@@ -100,6 +101,9 @@ export class MirrorReferenceView {
         new THREE.Vector3(...reference.plane.normal),
       );
     }
+    // References can coincide with the section plane; camera-space clipping
+    // loses the coplanar tolerance and tears their fill into horizontal bands.
+    stableClipping(mesh.material);
     mesh.renderOrder = 25;
     this.group.add(mesh);
   }
