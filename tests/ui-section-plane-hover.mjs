@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { openDocument } from "./native-documents.mjs";
 import { inspect } from "./ui-helpers.mjs";
-import { captureTestFrame } from "./ui-test-frames.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 // Reduced from bug-2026-11-16T19-52-04-119Z-1e75a8c2: retain the camera and
@@ -74,11 +73,12 @@ export async function sectionPlaneHover(page) {
 }
 
 async function pixels(page) {
-  await captureTestFrame(page);
-  return page.evaluate(async () => {
+  // The document-page proxy's screenshot route captures a fresh on-demand frame.
+  const png = await page.screenshot();
+  return page.evaluate(async (data) => {
     const source = document.querySelector("canvas");
     const image = new Image();
-    image.src = source.toDataURL();
+    image.src = `data:image/png;base64,${data}`;
     await image.decode();
     const canvas = document.createElement("canvas");
     canvas.width = source.clientWidth;
@@ -86,5 +86,5 @@ async function pixels(page) {
     const ctx = canvas.getContext("2d");
     ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
     return Array.from(ctx.getImageData(300, 250, 300, 300).data);
-  });
+  }, png.toString("base64"));
 }
