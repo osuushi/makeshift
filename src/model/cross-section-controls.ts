@@ -35,8 +35,7 @@ export class CrossSectionControls {
       category: "View",
       aliases: ["section view", "clipping plane", "cutaway"],
       description: "Inspect inside with a movable, rotatable plane and flip the visible side",
-      reason: () =>
-        editor.world.active ? "Return to Modeling first" : this.lease ? null : idleReason(editor),
+      reason: () => (this.lease ? null : idleReason(editor)),
       run: () => (this.lease ? this.finish() : this.begin()),
     });
     this.root.className = "cross-section-actions";
@@ -126,7 +125,13 @@ export class CrossSectionControls {
   }
   private begin(): void {
     const e = this.editor;
-    if (e.blocked || e.interactions.current || e.world.active) return;
+    if (e.blocked || e.interactions.current) return;
+    if (e.world.activeFrame) {
+      this.place(structuredClone(e.world.activeFrame));
+      e.notice = "";
+      e.refresh();
+      return;
+    }
     this.previous = structuredClone(e.world.crossSection);
     const frame = e.world.crossSection ?? this.reference();
     this.lease = e.interactions.acquire(

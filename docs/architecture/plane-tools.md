@@ -170,6 +170,9 @@ of immediate visual fills. Faces, edges, reference patches and sketches on the r
 side do not participate in point picking or snapping. Geometry operations still
 operate on whole accepted entities, not visually trimmed fragments.
 
+Invoking Cross section in Sketch mode immediately copies the current sketch plane,
+replacing any existing cut and removing the camera-facing half. Sketching remains
+active without entering plane placement or adding a document Undo entry.
 An explicit cross section retains priority in Sketch mode, including its fixed
 clipping direction and hidden geometry. Its Manual cross section controls remain
 visible: Flip side and Turn off work in Sketch, while Adjust requires Modeling.
