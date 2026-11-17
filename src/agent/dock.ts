@@ -166,13 +166,16 @@ class AgentDock {
     );
     this.button("collapse").setAttribute("aria-expanded", String(!this.collapsed));
     if (!this.collapsed) {
-      if (this.terminal) this.terminal.focus();
+      if (this.terminal && this.status.workspace) this.terminal.focus();
       else
         void this.action(async () => {
           const reply = await this.host.request({ kind: "open-pane" });
-          if (reply.error) throw new Error(reply.error);
-          if (!this.collapsed && !this.terminal && !this.disposed) this.initialize();
+          if (this.collapsed || this.disposed) return;
+          if (reply.error) this.launchOnReady = false;
+          if (!this.terminal) this.initialize();
           this.update(reply);
+          if (reply.error) throw new Error(reply.error);
+          this.terminal?.focus();
         });
     } else document.querySelector<HTMLElement>('canvas[aria-label="Modeling viewport"]')?.focus();
     this.update(this.status);

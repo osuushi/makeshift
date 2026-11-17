@@ -43,6 +43,11 @@ try {
     globalThis.securityMessages = [];
     dialog.showMessageBox = async (_w, options) => {
       globalThis.securityMessages.push(options.message);
+      if (
+        options.message === "Use the included agent workspace?" &&
+        globalThis.securityMessages.length === 1
+      )
+        return { response: 0 };
       return {
         response: options.buttons.includes("Trust this version")
           ? options.buttons.indexOf("Trust this version")
@@ -89,10 +94,17 @@ try {
     process.platform === "win32" ? "cmd.exe" : "/bin/cat",
   );
   await page.getByRole("button", { name: "Open agent terminal" }).click();
+  await page.getByText("The included agent workspace is disabled.", { exact: true }).waitFor();
+  assert.equal(
+    (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" }))).workspace,
+    null,
+  );
+  await page.getByRole("button", { name: "Start", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
   const state = await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" }));
   assert.equal(await readFile(join(state.workspace, "notes.txt"), "utf8"), "Fixture drawing notes");
   assert.deepEqual(await app.evaluate(() => globalThis.securityMessages), [
+    "Use the included agent workspace?",
     "Use the included agent workspace?",
   ]);
   await page.getByRole("button", { name: "Stop", exact: true }).click();
@@ -103,6 +115,7 @@ try {
   );
   assert.deepEqual(readPortableArchive(await readFile(copy)).seals, { workspace, decorators });
   assert.deepEqual(await app.evaluate(() => globalThis.securityMessages), [
+    "Use the included agent workspace?",
     "Use the included agent workspace?",
   ]);
   await verifyEndorsement(app, page, state.workspace, copy, workspace, decorators);
