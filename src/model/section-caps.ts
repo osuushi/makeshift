@@ -65,7 +65,7 @@ export class SectionCaps {
   render(world: World, depthOnly = false): void {
     const frame = world.partialSection ?? world.crossSection;
     if (!frame) return;
-    const { bodies, seeds, hovered } = this.surfaces(world);
+    const { bodies, seeds, hovered, selected } = this.surfaces(world);
     for (const [id, material] of this.styles) {
       if (bodies.has(id)) continue;
       material.dispose();
@@ -108,7 +108,8 @@ export class SectionCaps {
           renderer.render(this.scene, camera);
           continue;
         }
-        this.renderPattern(body, seeds.get(body) ?? body, palettes, hovered, frame, faces, world);
+        const tint = hovered.has(body) ? "#ffe5b7" : selected.has(body) ? "#82b5e0" : "#ffffff";
+        this.renderPattern(body, seeds.get(body) ?? body, palettes, tint, frame, faces, world);
       }
       renderer.render(this.resetScene, this.resetCamera);
     } finally {
@@ -123,7 +124,7 @@ export class SectionCaps {
     body: string,
     seed: string,
     palettes: ReadonlyMap<string, number>,
-    hovered: ReadonlySet<string>,
+    tint: string,
     frame: PlaneFrame,
     faces: THREE.Mesh[],
     { renderer, camera }: World,
@@ -138,7 +139,7 @@ export class SectionCaps {
       material.userData.sectionStyleKey = seed;
       this.styles.set(body, material);
     }
-    material.color.set(hovered.has(body) ? "#ffe5b7" : "#ffffff");
+    material.color.set(tint);
     this.plane.material = material;
     this.position(frame, faces);
     this.scene.clear();
@@ -160,19 +161,22 @@ export class SectionCaps {
     const bodies = new Map<string, THREE.Mesh[]>();
     const seeds = new Map<string, string>();
     const hovered = new Set<string>();
+    const selected = new Set<string>();
     world.scene.traverseVisible((object) => {
       if (!(object instanceof THREE.Mesh)) return;
       if (object.userData.sectionBody) hovered.add(object.userData.sectionBody);
       const body: string | undefined =
         object.userData.sectionCapBody ?? object.userData.bodyFace?.body;
       if (!body) return;
-      for (let owner: THREE.Object3D | null = object; owner; owner = owner.parent)
+      for (let owner: THREE.Object3D | null = object; owner; owner = owner.parent) {
         if (owner.userData.sectionStyleKey) seeds.set(body, owner.userData.sectionStyleKey);
+        if (owner.userData.sectionSelected) selected.add(body);
+      }
       const faces = bodies.get(body) ?? [];
       faces.push(object);
       bodies.set(body, faces);
     });
-    return { bodies, seeds, hovered };
+    return { bodies, seeds, hovered, selected };
   }
 
   private position(frame: PlaneFrame, faces: THREE.Mesh[]): void {
