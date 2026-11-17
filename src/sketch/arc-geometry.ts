@@ -70,9 +70,13 @@ export function bowThrough(curve: Segment | Arc, point: Point): Segment | Arc {
   return { ...base, kind: "arc", bulge: (-Math.sign(y) * 2 * sagitta) / length };
 }
 export function bowRadius(curve: Segment | Arc, radius: number, side: number): Arc {
+  const direction = radius < 0 ? -1 : 1;
+  radius = Math.abs(radius);
   const half = distance(curve.a, curve.b) / 2;
   if (!Number.isFinite(radius) || radius < half || half < 1e-8)
-    throw new Error(`Radius must be at least ${half.toFixed(4)} mm (half the endpoint distance)`);
+    throw new Error(
+      `Radius magnitude must be at least ${half.toFixed(4)} mm (half the endpoint distance)`,
+    );
   const minor = half / (radius + Math.sqrt(Math.max(0, radius * radius - half * half)));
   const major =
     curve.kind === "arc" && (Math.abs(curve.bulge) > 1 || curve.semicircleBranch === "major");
@@ -84,6 +88,7 @@ export function bowRadius(curve: Segment | Arc, radius: number, side: number): A
     construction: curve.construction,
     ...(major && radius === half ? { semicircleBranch: "major" as const } : {}),
     bulge:
-      curve.kind === "arc" ? Math.sign(curve.bulge) * (major ? 1 / minor : minor) : -side * minor,
+      direction *
+      (curve.kind === "arc" ? Math.sign(curve.bulge) * (major ? 1 / minor : minor) : -side * minor),
   };
 }

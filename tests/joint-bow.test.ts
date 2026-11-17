@@ -15,7 +15,7 @@ test("joint bow casts rectangle sides to separate equal-radius arcs with fixed e
   assert.equal(changed.constraints.filter((c) => c.kind === "coincident").length, 4);
   assert.throws(
     () => jointBow(sketch, sources, bowRadius(sources[1], 6, 1)),
-    /Radius must be at least/,
+    /Radius magnitude must be at least/,
   );
   const owner = new DocumentOwner();
   try {

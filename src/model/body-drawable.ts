@@ -137,6 +137,7 @@ export class BodyDrawable {
     appearance = defaultBodyAppearance,
     invalidFaces: ReadonlySet<string> = new Set(),
   ): void {
+    this.group.userData.sectionSelected = selectedBodies.has(this.source.id);
     this.faces.forEach((mesh, i) => {
       const face = this.source.faces[i];
       const selected = selectedBodies.has(this.source.id) || selectedFaces.has(face.id);

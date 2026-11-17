@@ -218,11 +218,27 @@ export class SelectionOverlay {
             class: `bow-guide${emphasis}`,
           });
         }
-        this.circle(
-          this.editor.world.projectLocal(sketch.plane, guide.point),
-          4,
-          `bow-handle${emphasis}`,
-        );
+        const point = this.editor.world.projectLocal(sketch.plane, guide.point);
+        const handle = this.node("circle", {
+          cx: point.x - this.rect.left,
+          cy: point.y - this.rect.top,
+          r: 4,
+          class: `bow-handle${emphasis}`,
+        });
+        if (
+          guide.shape.kind === "arc" &&
+          sketch.curves.some((curve) => curve.id === guide.curve && curve.kind === "segment")
+        )
+          handle.setAttribute("data-bow-numeric", "");
+        handle.addEventListener("click", (event) => {
+          if ((event as MouseEvent).detail === 0)
+            this.svg.dispatchEvent(
+              new CustomEvent("bow-numeric-activate", {
+                bubbles: true,
+                detail: guide,
+              }),
+            );
+        });
       }
     this.drawHints();
     this.showChoices();

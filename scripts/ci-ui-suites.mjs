@@ -31,11 +31,11 @@ export const uiSuites = [
   },
   {
     args: ["section-distant-camera-ui.mjs"],
-    // macOS hidden Electron: 6.72s.
+    // macOS hidden Electron: 12.00s, including coplanar plane-reference hover.
     seconds: 15,
     browsers: ["electron"],
     reason:
-      "Founder capture loses coplanar sketch ink and fill when clipping subtracts distant camera coordinates; real GPU samples catch precision errors that CPU clipping tests cannot.",
+      "Founder captures lose coplanar sketch ink, fill and plane-reference hover when clipping subtracts camera coordinates; real GPU samples catch precision errors that CPU clipping tests cannot.",
     unit: "section-pattern.test.ts",
   },
   {

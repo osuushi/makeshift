@@ -104,7 +104,8 @@ therefore do not accumulate transparency. Sketch curves and grids do not enter
 this foreground pass. Coplanar and behind-plane geometry remain normally visible;
 a 0.0001 mm rendering tolerance retains coplanar geometry. Materials interpolate
 world-space signed clipping distances so camera retreat cannot erase that tolerance
-and fragment coplanar sketch ink, region fills or shell parity.
+and fragment coplanar sketch ink, region fills, shell parity or plane-reference
+hover fills (Project, Mirror and cutting tools).
 Skip the empty foreground pass when no visible body geometry or decorator preview
 contributes. Lights and empty/hidden groups alone do not require compositing;
 showing their geometry restores the same full-resolution pass.

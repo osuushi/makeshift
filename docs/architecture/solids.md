@@ -278,6 +278,8 @@ edge curves. Endpoint corrections consume the existing conversion budget; sketch
 region tolerances remain unchanged. Bodies are unchanged and no dependency is
 created. Hidden bodies contribute no caps or click targets. The cap itself is
 transient view geometry and creates neither a saved object nor an Undo entry.
+Whole-body selection tints its section pattern blue and deselection restores its
+assigned palette. Overlap-chooser hover keeps its amber tint while active.
 
 ## Body appearance
 
