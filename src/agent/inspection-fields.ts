@@ -7,12 +7,13 @@ import type { TaggedGroup } from "../tags/model.js";
 
 export const frameSummary = ({ origin, u, v }: PlaneFrame) => ({ origin, u, v });
 export const groupSummary = ({ id, kind, members }: EditingGroup) => ({ id, kind, members });
-export const tagSummary = ({ id, name, body, members, problems }: TaggedGroup) => ({
+export const tagSummary = ({ id, name, body, members, problems, splitFrom }: TaggedGroup) => ({
   id,
   name,
   body,
   members: members.map(({ id, kind }) => ({ id, kind })),
   problems,
+  ...(splitFrom ? { splitFrom } : {}),
 });
 export const decoratorSummary = ({ id, definition, version, faces }: DecoratorInstance) => ({
   id,

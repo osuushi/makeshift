@@ -7,6 +7,7 @@ import { documentPresets } from "../decorators/ephemeral-presets.js";
 import { gearManifest } from "../decorators/gear-settings.js";
 import { knurlFields } from "../decorators/knurl-settings.js";
 import { threadDefinition, threadFields } from "../decorators/thread-settings.js";
+import { base64 } from "../security/signatures.js";
 import { safeName } from "../security/text.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { DecoratorSession } from "./decorator-session.js";
@@ -23,10 +24,27 @@ function summarizeSettings(settings: import("../decorators/types.js").Settings) 
       ),
   );
 }
-export function decoratorCatalog(
+// The model's computed preset IDs contain serialized settings. Scripts receive an opaque ID
+// that resolves to the same preset when used in a subsequent select operation.
+async function scriptPresets(document: SketchDocument) {
+  return Promise.all(
+    documentPresets(document).map(async (preset) => {
+      const id =
+        preset.origin === undefined && !preset.id.startsWith("computed:")
+          ? preset.id
+          : "computed:" +
+            base64(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(preset.id)));
+      return { id, preset };
+    }),
+  );
+}
+
+async function decoratorCatalog(
   document: SketchDocument,
   session: DecoratorSession,
-): DecoratorCatalog {
+): Promise<DecoratorCatalog> {
+  const presets = await scriptPresets(document);
+  const presetIds = new Map(presets.map(({ id, preset }) => [preset.id, id]));
   return {
     instances: (document.decorators ?? []).map((d) => ({
       ...decoratorSummary(d),
@@ -34,12 +52,12 @@ export function decoratorCatalog(
       settings: summarizeSettings(d.settings),
       display: d.display,
       axialReference: d.axialReference,
-      presetId: d.presetId ? safeName(d.presetId, "") : undefined,
-      gearGroup: d.gearGroup ? safeName(d.gearGroup, "") : undefined,
+      presetId: d.presetId ? presetIds.get(d.presetId) : undefined,
+      gearGroup: d.gearGroup,
       gearPitchRadius: d.gearPitchRadius,
       ...(d.problem ? { problem: safeName(d.problem, "Invalid decorator") } : {}),
     })),
-    presets: documentPresets(document).map(({ id, name, definition, version, settings }) => ({
+    presets: presets.map(({ id, preset: { name, definition, version, settings } }) => ({
       id,
       name: safeName(name, "Preset"),
       definition,
@@ -112,11 +130,23 @@ export async function scriptDecorator(
   switch (operation.kind) {
     case "inspectDecorator":
       return { document, result: await session.inspect(document, operation.input) };
-    case "editDecorator":
+    case "editDecorator": {
+      let edit = operation.input;
+      if (
+        edit.action === "preset" &&
+        edit.operation === "select" &&
+        edit.presetId?.startsWith("computed:")
+      ) {
+        const id = edit.presetId;
+        const match = (await scriptPresets(document)).find((p) => p.id === id);
+        if (!match) throw new Error("Select an existing preset for this decorator");
+        edit = { ...edit, presetId: match.preset.id };
+      }
       next =
-        (await session.edit(document, { kind: "decorator", edit: operation.input })) ??
-        editDecorators(document, operation.input);
+        (await session.edit(document, { kind: "decorator", edit })) ??
+        editDecorators(document, edit);
       break;
+    }
     case "editDecoratorDefinition":
       next = editDefinitions(document, operation.input);
       break;
@@ -126,5 +156,5 @@ export async function scriptDecorator(
       break;
     }
   }
-  return { document: next, result: decoratorCatalog(next, session) };
+  return { document: next, result: await decoratorCatalog(next, session) };
 }

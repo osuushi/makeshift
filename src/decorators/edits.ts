@@ -107,9 +107,7 @@ export function validateDecorators(document: SketchDocument): void {
       (instance.display !== undefined && !validDecoratorDisplay(instance.display)) ||
       (instance.problem !== undefined && typeof instance.problem !== "string") ||
       (instance.gearGroup !== undefined &&
-        (instance.definition !== gearDefinition ||
-          typeof instance.gearGroup !== "string" ||
-          !instance.gearGroup)) ||
+        (instance.definition !== gearDefinition || !validId(instance.gearGroup))) ||
       (instance.gearColor !== undefined &&
         (instance.definition !== gearDefinition ||
           typeof instance.gearColor !== "string" ||

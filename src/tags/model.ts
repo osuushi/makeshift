@@ -1,4 +1,4 @@
-import { validName } from "../security/text.js";
+import { validId, validName } from "../security/text.js";
 import { newId, type SketchDocument } from "../sketch/document.js";
 
 export interface TagMember {
@@ -60,7 +60,7 @@ export function validateTags(document: SketchDocument): void {
       !validName(g.name) ||
       (g.description !== undefined &&
         (typeof g.description !== "string" || g.description.length > 2000)) ||
-      (g.splitFrom !== undefined && (typeof g.splitFrom !== "string" || !g.splitFrom)) ||
+      (g.splitFrom !== undefined && !validId(g.splitFrom)) ||
       !Array.isArray(g.members) ||
       !Array.isArray(g.problems) ||
       g.problems.some(

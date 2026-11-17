@@ -44,12 +44,23 @@ test("script thread inspection and edits use current geometry and accept as one 
     })) as DecoratorCatalog;
     assert.ok(catalog.builtins[0].fields.some((f) => f.key === "pitch"));
     assert.equal(catalog.instances[0].settings.pitch, 1);
-    await owner.scripts.step({
+    const edited = (await owner.scripts.step({
       kind: "editDecorator",
       input: {
         action: "settings",
         ids: [catalog.instances[0].id],
         patch: { pitch: 1.5, clearance: 0.15 },
+      },
+    })) as DecoratorCatalog;
+    const computed = edited.presets.find((p) => p.settings.pitch === 1.5);
+    assert.match(computed?.id ?? "", /^computed:[a-zA-Z0-9+/]{43}=$/);
+    await owner.scripts.step({
+      kind: "editDecorator",
+      input: {
+        action: "preset",
+        operation: "select",
+        ids: [catalog.instances[0].id],
+        presetId: computed?.id,
       },
     });
     assert.equal(owner.view.data, before);
