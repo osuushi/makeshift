@@ -33,6 +33,7 @@ export class PreviewOverlaySurfaces {
   private definitions = new Map<string, string>();
   private displayModes = new Map<string, DecoratorDisplayMode | undefined>();
   private colors = new Map<string, string>();
+  private adjacent = new Map<string, Set<string>>();
   private clipping = new Map<string, THREE.Plane[]>();
   private pulseFrame: number | null = null;
   private supports: readonly DecoratorInstance[] = [];
@@ -57,6 +58,23 @@ export class PreviewOverlaySurfaces {
       }
     if (document) {
       this.supports = document.decorators ?? [];
+      this.adjacent.clear();
+      for (const instance of this.supports) {
+        const adjacent = new Set<string>();
+        for (const body of document.bodies ?? []) {
+          const ids = new Set(
+            instance.faces.filter((ref) => ref.body === body.id).map((ref) => ref.face),
+          );
+          if (!ids.size) continue;
+          const edges = new Set(
+            body.faces.filter((face) => ids.has(face.id)).flatMap((face) => face.edges),
+          );
+          for (const face of body.faces)
+            if (!ids.has(face.id) && face.edges.some((edge) => edges.has(edge)))
+              adjacent.add(previewFaceKey(body.id, face.id));
+        }
+        this.adjacent.set(instance.id, adjacent);
+      }
       this.displayModes = new Map(
         document.decorators?.map((instance) => [instance.id, instance.display]),
       );
@@ -237,6 +255,8 @@ export class PreviewOverlaySurfaces {
     const attached = this.style();
     if (this.group.visible) {
       const surfaces = [...this.surfaces, ...attached];
+      for (const surface of surfaces)
+        surface.adjacent = this.adjacent.get(surface.mesh.userData.decorator);
       this.pulseSelection(surfaces);
       this.compositor.render(
         this.editor.world.renderer,

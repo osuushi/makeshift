@@ -6,6 +6,7 @@ export interface PreviewSurface {
   mesh: THREE.Mesh;
   occluder?: THREE.Mesh;
   faces: ReadonlySet<string>;
+  adjacent?: ReadonlySet<string>;
   opacity?: number;
   displayOpacity?: number;
   clipPlanes?: readonly THREE.Plane[];
@@ -19,6 +20,9 @@ export class DecoratorPreviewCompositor {
   private readonly occlusion = new THREE.WebGLRenderTarget(1, 1, {
     depthTexture: this.depth,
     stencilBuffer: true,
+  });
+  private readonly adjoining = new THREE.WebGLRenderTarget(1, 1, {
+    depthTexture: new THREE.DepthTexture(1, 1, THREE.UnsignedIntType),
   });
   private readonly previews = new THREE.WebGLRenderTarget(1, 1, { samples: 4 });
   private readonly scene = new THREE.Scene();
@@ -56,12 +60,16 @@ export class DecoratorPreviewCompositor {
       clip.call(material, shader, renderer);
       shader.uniforms.decoratorEndPlanes = endPlanes;
       shader.uniforms.decoratorOcclusion = { value: this.occlusion.depthTexture };
+      shader.uniforms.decoratorAdjoining = { value: this.adjoining.depthTexture };
       shader.uniforms.decoratorResolution = { value: this.size };
       shader.fragmentShader = `uniform int decoratorEndPlanes;
 uniform sampler2D decoratorOcclusion;
+uniform sampler2D decoratorAdjoining;
 uniform vec2 decoratorResolution;\n${shader.fragmentShader}`.replace(
         "#include <alphatest_fragment>",
         `#include <alphatest_fragment>
+float adjacentDepth = texture2D(decoratorAdjoining, gl_FragCoord.xy / decoratorResolution).r;
+if (adjacentDepth < 1.0 && abs(gl_FragCoord.z - adjacentDepth) <= 2.0 / 16777215.0) discard;
 if (gl_FragCoord.z > texture2D(decoratorOcclusion, gl_FragCoord.xy / decoratorResolution).r + 0.0000001) discard;`,
       );
       // Reserve half a pixel at end planes so MSAA coverage cannot color the rim.
@@ -87,6 +95,7 @@ if (gl_FragCoord.z > texture2D(decoratorOcclusion, gl_FragCoord.xy / decoratorRe
     if (!visible.length) return;
     renderer.getDrawingBufferSize(this.size);
     this.occlusion.setSize(this.size.x, this.size.y);
+    this.adjoining.setSize(this.size.x, this.size.y);
     this.previews.setSize(this.size.x, this.size.y);
     const background = scene.background,
       layers = camera.layers.mask;
@@ -134,6 +143,7 @@ if (gl_FragCoord.z > texture2D(decoratorOcclusion, gl_FragCoord.xy / decoratorRe
     layers: number,
     occludeSections?: () => void,
   ): void {
+    camera.layers.mask = layers;
     const hidden = supports.filter((object) => surface.faces.has(object.userData.decoratorFace));
     const offsets = supports.flatMap((object) =>
       object instanceof THREE.Mesh
@@ -143,10 +153,29 @@ if (gl_FragCoord.z > texture2D(decoratorOcclusion, gl_FragCoord.xy / decoratorRe
         : [],
     );
     try {
+      // Sample original neighboring faces separately: Boolean previews can legitimately
+      // expose geometry behind them. Only a depth tie gives that original face priority.
+      const neighbors = supports.filter(
+        (object) =>
+          surface.adjacent?.has(object.userData.decoratorFace) && object.layers.test(camera.layers),
+      );
+      for (const material of offsets) material.polygonOffset = false;
+      const masks = neighbors.map((object) => object.layers.mask);
+      try {
+        camera.layers.set(30);
+        for (const object of neighbors) object.layers.enable(30);
+        renderer.setRenderTarget(this.adjoining);
+        renderer.autoClear = true;
+        renderer.render(scene, camera);
+      } finally {
+        neighbors.forEach((object, index) => {
+          object.layers.mask = masks[index];
+        });
+        camera.layers.mask = layers;
+      }
       for (const object of hidden) object.visible = false;
       if (surface.occluder) surface.occluder.visible = true;
       // Preserve display offsets for edge lines, but use actual solid depth for occlusion.
-      for (const material of offsets) material.polygonOffset = false;
       camera.layers.mask = layers;
       renderer.setRenderTarget(this.occlusion);
       renderer.autoClear = true;
@@ -178,6 +207,7 @@ if (gl_FragCoord.z > texture2D(decoratorOcclusion, gl_FragCoord.xy / decoratorRe
   }
 
   dispose(): void {
+    this.adjoining.dispose();
     this.occlusion.dispose();
     this.previews.dispose();
     this.material.dispose();
