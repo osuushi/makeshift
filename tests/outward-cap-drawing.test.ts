@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { kernelInput } from "../src/backend/kernel-input.js";
 import { materialize } from "../src/backend/kernel-result.js";
 import { SolidCalculator } from "../src/backend/solid-calculator.js";
 import type { Extrusion } from "../src/model/body.js";
@@ -25,6 +26,20 @@ test("an isolated outward cap draws a closed extension and reseats only its tip 
     assert.equal(first.stationary.faces.length, body.faces.length - 1);
     assert.ok(
       first.stationary.faces.every((points) => body.faces.some((f) => f.vertices === points)),
+    );
+    const checked = await kernel.calculate({
+      ...kernelInput({ units: "mm", sketches: [], bodies: [body] }, edit, [body]),
+      presentation: "visual",
+    });
+    const [exact] = checked.results;
+    assert.equal(first.edges.length + first.stationary.edges.length, exact.edges.length);
+    assert.deepEqual(
+      [...(first.stationary.sourceFaces ?? []), ...(first.sourceFaces ?? [])].flat().sort(),
+      exact.sourceFaces?.flat().sort(),
+    );
+    assert.deepEqual(
+      [...(first.stationary.sourceEdges ?? []), ...(first.sourceEdges ?? [])].flat().sort(),
+      exact.sourceEdges?.flat().sort(),
     );
     // Every oriented boundary segment in the closed display must have its reverse.
     const counts = new Map<string, number>();

@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <cmath>
 #include <set>
+#include <sstream>
 
 namespace {
 void xyz(std::ostream& out, const gp_XYZ& p) { out << '[' << p.X() << ',' << p.Y() << ',' << p.Z() << ']'; }
@@ -98,19 +99,45 @@ void meshPresentation(const TopoDS_Shape& shape, double deflection) {
             throw std::runtime_error("Kernel mesh overlaps a face trim; the geometry result was rejected");
 }
 
-void presentVertices(std::ostream& out, const TopoDS_Face& shape) {
-    out << '[';
-    TopLoc_Location location; const auto mesh = BRep_Tool::Triangulation(shape, location);
+namespace {
+// Triangles reuse the same mesh nodes. Format each transformed coordinate triple
+// once while it is nearby, retaining at most 4096 entries for the current face.
+template<class Coordinate>
+void writeCorners(std::ostream& out, const Handle(Poly_Triangulation)& mesh, bool reversed,
+                  const Coordinate& coordinate) {
+    struct NodeText { int index = 0; std::string text; };
+    std::vector<NodeText> nodes(std::min(mesh->NbNodes(), 4096));
+    std::ostringstream triple;
+    triple.imbue(out.getloc());
+    triple.flags(out.flags());
+    triple.precision(out.precision());
     bool comma = false;
-    if (!mesh.IsNull()) for (int i = 1; i <= mesh->NbTriangles(); ++i) {
-        int a, b, c; mesh->Triangle(i).Get(a, b, c);
-        if (shape.Orientation() == TopAbs_REVERSED) std::swap(b, c);
+    for (int i = 1; i <= mesh->NbTriangles(); ++i) {
+        int a, b, c;
+        mesh->Triangle(i).Get(a, b, c);
+        if (reversed) std::swap(b, c);
         for (int index : {a, b, c}) {
-            if (comma) out << ','; comma = true;
-            const auto p = mesh->Node(index).Transformed(location.Transformation());
-            out << p.X() << ',' << p.Y() << ',' << p.Z();
+            auto& cached = nodes[(index - 1) % nodes.size()];
+            if (cached.index != index) {
+                const auto p = coordinate(index);
+                triple.str({});
+                triple << p.X() << ',' << p.Y() << ',' << p.Z();
+                cached = {index, triple.str()};
+            }
+            if (comma) out << ',';
+            comma = true;
+            out << cached.text;
         }
     }
+}
+}
+void presentVertices(std::ostream& out, const TopoDS_Face& shape) {
+    out << '[';
+    TopLoc_Location location;
+    const auto mesh = BRep_Tool::Triangulation(shape, location);
+    if (!mesh.IsNull()) writeCorners(out, mesh, shape.Orientation() == TopAbs_REVERSED, [&](int index) {
+        return mesh->Node(index).Transformed(location.Transformation());
+    });
     out << ']';
 }
 
@@ -118,21 +145,14 @@ void presentNormals(std::ostream& out, const TopoDS_Face& shape) {
     out << '[';
     TopLoc_Location location;
     const auto mesh = BRep_Tool::Triangulation(shape, location);
-    bool comma = false;
     if (!mesh.IsNull()) {
         BRepLib_ToolTriangulatedShape::ComputeNormals(shape, mesh);
-        for (int i = 1; i <= mesh->NbTriangles(); ++i) {
-            int a, b, c;
-            mesh->Triangle(i).Get(a, b, c);
-            if (shape.Orientation() == TopAbs_REVERSED) std::swap(b, c);
-            for (int index : {a, b, c}) {
-                auto normal = mesh->Normal(index).Transformed(location.Transformation());
-                if (shape.Orientation() == TopAbs_REVERSED) normal.Reverse();
-                if (comma) out << ',';
-                comma = true;
-                out << normal.X() << ',' << normal.Y() << ',' << normal.Z();
-            }
-        }
+        const bool reversed = shape.Orientation() == TopAbs_REVERSED;
+        writeCorners(out, mesh, reversed, [&](int index) {
+            auto normal = mesh->Normal(index).Transformed(location.Transformation());
+            if (reversed) normal.Reverse();
+            return normal;
+        });
     }
     out << ']';
 }

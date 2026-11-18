@@ -185,7 +185,7 @@ void present(std::ostream& out, const Result& result, double deflection) {
 }
 void presentMeshed(std::ostream& out, const Result& result) {
     KernelTiming timing("presentation-metadata");
-    out << "{\"brep\":" << quoted(encode(result.shape)) << ",\"volume\":"
+    out << "{\"brep\":" << '"' << encode(result.shape) << '"' << ",\"volume\":"
         << (result.exactVolume ? *result.exactVolume : volume(result.shape));
     out << ",\"copy\":" << (result.copy ? "true" : "false") << ",\"predecessorBodies\":[";
     for (size_t i = 0; i < result.bodies.size(); ++i) { if (i) out << ','; out << quoted(result.bodies[i]); }

@@ -1,5 +1,6 @@
 import { planeNormal, type Vector } from "../sketch/planes.js";
 import type { Body, Edge, Extrusion, Face } from "./body.js";
+import { featureEdges } from "./feature-edges.js";
 import type { VisualBody, VisualPreview } from "./visual-preview.js";
 
 type Bounds = VisualBody["bounds"];
@@ -36,6 +37,7 @@ function capOf(body: Body, face: Face): Cap | undefined {
   if (neighbors.length !== 1 || neighbors[0].cylinder || neighbors[0].plane) return;
   const normal = planeNormal(face.plane);
   const rest = body.faces.filter((f) => f !== face);
+  const outlines = featureEdges(body);
   const cap: Cap = {
     face,
     rim: { ...rim, curve: rim.curve },
@@ -47,8 +49,8 @@ function capOf(body: Body, face: Face): Cap | undefined {
       faces: rest.map((f) => f.vertices),
       normals: rest.map((f) => f.normals ?? []),
       planes: rest.map((f) => f.plane),
-      sourceEdges: body.edges.map((e) => [e.id]),
-      edges: body.edges.map((e) => e.points),
+      sourceEdges: outlines.map((e) => [e.id]),
+      edges: outlines.map((e) => e.points),
     },
   };
   prepared.set(body, cap);
@@ -132,8 +134,7 @@ export function outwardCapDrawing(bodies: readonly Body[], edit: Extrusion): Vis
     )
   )
     return null;
-  const wall = cylinderWall(cap, delta),
-    seam = cap.rim.points.slice(0, 3);
+  const wall = cylinderWall(cap, delta);
   const bounds = body.bounds.map((x, i) => (i < 3 ? Math.min : Math.max)(x, swept[i])) as Bounds;
   return {
     replaces: [body.id],
@@ -144,10 +145,10 @@ export function outwardCapDrawing(bodies: readonly Body[], edit: Extrusion): Vis
         bounds,
         faces: [translate(face.vertices, delta), wall.vertices],
         normals: [face.normals ?? [], wall.normals],
-        sourceFaces: [[face.id], []],
+        sourceFaces: [[], []],
         planes: [{ ...face.plane, origin: translate(face.plane.origin, delta) as Vector }, null],
-        edges: [translate(cap.rim.points, delta), [...seam, ...translate(seam, delta)]],
-        sourceEdges: [[], []],
+        edges: [translate(cap.rim.points, delta)],
+        sourceEdges: [[]],
       },
     ],
   };
