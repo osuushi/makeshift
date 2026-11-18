@@ -49,8 +49,8 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
     label: "Settings",
     category: "View",
     description: "Adjust appearance, interface scale, viewport opacity and decorator display",
-    aliases: [
-      "preferences",
+    aliases: ["preferences"],
+    related: [
       "dark mode",
       "light mode",
       "system appearance",
