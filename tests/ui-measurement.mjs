@@ -42,6 +42,20 @@ export async function pick(page, point, shift = false) {
   if (shift) await page.keyboard.up("Shift");
   return inspect(page);
 }
+async function verifyWitnessPan(page) {
+  const line = await page.locator(".measurement-witnesses line").first().getAttribute("x1");
+  // The right dock can occupy the old fixed pan point.
+  const viewport = await page.getByLabel("Modeling viewport", { exact: true }).boundingBox();
+  assert.ok(viewport);
+  await page.mouse.move(viewport.x + viewport.width * 0.8, viewport.y + viewport.height * 0.85);
+  await page.mouse.wheel(60, 30);
+  await inspect(page);
+  assert.notEqual(
+    await page.locator(".measurement-witnesses line").first().getAttribute("x1"),
+    line,
+  );
+}
+
 export async function measurementRoute(page, name) {
   await plate(page);
   const original = (await inspect(page)).document;
@@ -65,14 +79,7 @@ export async function measurementRoute(page, name) {
   await readout(page, "Minimum gap", "20 mm");
   await readout(page, "Maximum gap", "20 mm");
   await readout(page, "Relationship", "Parallel");
-  const line = await page.locator(".measurement-witnesses line").first().getAttribute("x1");
-  await page.mouse.move(1000, 600);
-  await page.mouse.wheel(60, 30);
-  await inspect(page);
-  assert.notEqual(
-    await page.locator(".measurement-witnesses line").first().getAttribute("x1"),
-    line,
-  );
+  await verifyWitnessPan(page);
   assert.deepEqual((await inspect(page)).document, original);
   const afterHistory = await page.evaluate(() => window.makeshiftHistory());
   assert.deepEqual(
