@@ -6,6 +6,7 @@ export interface PaneOptions {
   height: number;
   width?: number;
   autoHide?: boolean;
+  fitContent?: boolean;
   saved?: unknown;
   persist?: (state: Placement) => void;
   close?: () => void;
@@ -45,7 +46,8 @@ export function createPane(options: PaneOptions) {
   body.className = "pane-content";
   title.className = "pane-title";
   grip.className = "pane-grip";
-  menu.setAttribute("aria-label", `${options.title} pane options`);
+  menu.title = `${options.title} pane options`;
+  menu.setAttribute("aria-label", menu.title);
   for (const [value, label] of [
     ["", "⋯"],
     ["left", "Dock left"],
@@ -61,6 +63,18 @@ export function createPane(options: PaneOptions) {
 }
 export type Pane = ReturnType<typeof createPane>;
 
+export function populatePaneMenu(p: Pane, choices: HTMLOptionElement[]) {
+  p.menu.querySelector("optgroup")?.remove();
+  if (p.state.place === "floating") return;
+  const group = document.createElement("optgroup");
+  group.label = "Show in this dock";
+  for (const option of choices) {
+    option.value = `show/${option.value}`;
+    group.append(option);
+  }
+  p.menu.append(group);
+}
+
 export function paintPane(p: Pane, app: HTMLElement) {
   const { root, state } = p,
     floating = state.place === "floating";
@@ -72,7 +86,8 @@ export function paintPane(p: Pane, app: HTMLElement) {
     const option = Array.from(p.menu.options).find((o) => o.value === "auto");
     if (option) option.text = state.autoHide ? "Keep visible when empty" : "Hide when empty";
   }
-  root.style.height = state.folded ? "auto" : `${Math.max(72, state.height)}px`;
+  const natural = !floating && p.options.fitContent && state.height === p.options.height;
+  root.style.height = state.folded || natural ? "auto" : `${state.height}px`;
   if (floating) {
     const width = Math.min(app.clientWidth, Math.max(186, state.width));
     root.style.width = `${width}px`;

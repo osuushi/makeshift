@@ -31,6 +31,10 @@ export class DockColumn {
     };
     this.rail = button(`Toggle or drag to resize ${side} dock`, "");
     this.rail.className = "pane-rail";
+    const tab = document.createElement("span");
+    tab.className = "pane-tab";
+    tab.setAttribute("aria-hidden", "true");
+    this.rail.append(tab);
     this.root.append(this.chooser, this.stack, this.rail);
     app.append(this.root);
     gesture(this.rail, () => {

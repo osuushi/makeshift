@@ -3,16 +3,23 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { installToolSurfaces } from "../tools/surfaces.js";
 import { WorkspacePanes } from "./workspace.js";
 import "../tools/inspector.css";
+import "./editor-panes.css";
 
 const sections = ["Measurements", "Decorators", "Gear groups", "Constraints"] as const;
 type Section = (typeof sections)[number];
 
 /** Slots for long-lived editor controls. The controls retain selection and model ownership. */
 export class EditorPanes extends WorkspacePanes {
-  readonly entities = this.slot("Entities", "left", 212);
-  readonly tools = this.slot("Tools", "left", 426);
-  readonly status = this.slot("Status", "left", 88);
-  private orientation = this.slot("Orientation", "right", 200);
+  readonly entities = this.slot("Entities", "left", 282);
+  readonly tools = this.slot("Tools", "left", 358);
+  readonly status = this.register({
+    id: "Status",
+    title: "Status",
+    place: "left",
+    height: 38,
+    fitContent: true,
+  }).body;
+  private orientation = this.slot("Orientation", "right", 176);
   private sections = new Map<Section, HTMLElement>();
   private observers: (MutationObserver | ResizeObserver)[] = [];
   constructor(app: HTMLElement) {
@@ -22,7 +29,7 @@ export class EditorPanes extends WorkspacePanes {
         id: title,
         title,
         place: "right",
-        height: title === "Measurements" ? 112 : 208,
+        height: title === "Measurements" ? 84 : 208,
         autoHide: title !== "Measurements",
       });
       this.sections.set(title, pane.body);

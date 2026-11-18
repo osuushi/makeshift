@@ -3,7 +3,7 @@ import { type CubeSurface, cubeSurfaces } from "./orientation-cube-geometry.js";
 import type { World } from "./world.js";
 
 const svgNamespace = "http://www.w3.org/2000/svg";
-const scale = 38;
+const scale = 46;
 
 /** A camera-only control, outside the modeling overlay's input surface. */
 export function createOrientationCube(world: World) {

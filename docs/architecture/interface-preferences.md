@@ -249,7 +249,8 @@ their source colors. These exceptions do not justify low-contrast interface text
 Entities, Tools and Status start in the left dock. Orientation, Measurements, Decorators,
 Gear groups and Constraints start on the right. The title folds a pane and doubles as its
 drag handle. Drop over a dock to insert at that height, or over the canvas to float.
-Each dock has a panel picker, and each pane menu supports moving, floating and hiding.
+The ellipsis menu moves, floats or hides the pane. Its “Show in this dock” group brings
+other panes into that column. An empty dock offers an Add pane picker.
 Drag a dock rail to set its width or click it to collapse. Narrow workspaces use rails
 that reveal the docks over the canvas. The agent terminal retains its own drawer.
 

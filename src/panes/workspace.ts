@@ -1,7 +1,14 @@
 import { DockColumn } from "./column.js";
 import { gesture } from "./gesture.js";
 import { type Place, preference, remember, type Side } from "./layout.js";
-import { createPane, nextDockPane, type Pane, type PaneOptions, paintPane } from "./pane.js";
+import {
+  createPane,
+  nextDockPane,
+  type Pane,
+  type PaneOptions,
+  paintPane,
+  populatePaneMenu,
+} from "./pane.js";
 import "./workspace.css";
 
 export class WorkspacePanes {
@@ -11,19 +18,19 @@ export class WorkspacePanes {
   private order = preference<string[]>("order", []);
   constructor(readonly app: HTMLElement) {
     if (!Array.isArray(this.order)) this.order = [];
-    const column = (side: Side) =>
-      new DockColumn(app, side, (id) => {
-        const pane = this.panes.get(id);
-        if (!pane) return;
-        pane.state.folded = false;
-        pane.state.hidden = false;
-        if (pane.empty) pane.state.autoHide = false;
-        this.dock(pane, side);
-      });
+    const column = (side: Side) => new DockColumn(app, side, (id) => this.showInDock(id, side));
     this.columns = { left: column("left"), right: column("right") };
     this.observer = new ResizeObserver(() => this.fit());
     this.observer.observe(app);
     this.fit();
+  }
+  private showInDock(id: string, side: Side) {
+    const pane = this.panes.get(id);
+    if (!pane) return;
+    pane.state.folded = false;
+    pane.state.hidden = false;
+    if (pane.empty) pane.state.autoHide = false;
+    this.dock(pane, side);
   }
   private fit() {
     for (const column of Object.values(this.columns)) column.fit();
@@ -99,11 +106,11 @@ export class WorkspacePanes {
     });
   }
   private choices() {
+    const options = () =>
+      Array.from(this.panes.values(), (p) => new Option(p.options.title, p.options.id));
+    for (const p of this.panes.values()) populatePaneMenu(p, options());
     for (const col of Object.values(this.columns))
-      col.chooser.replaceChildren(
-        new Option("Panels", ""),
-        ...Array.from(this.panes.values(), (p) => new Option(p.options.title, p.options.id)),
-      );
+      col.chooser.replaceChildren(new Option("+ Add pane", ""), ...options());
   }
   private save(p: Pane) {
     if (p.options.persist) p.options.persist({ ...p.state });
@@ -132,6 +139,7 @@ export class WorkspacePanes {
     }
     this.order = order;
     remember("order", order);
+    this.choices();
     paintPane(p, this.app);
     this.save(p);
   }
@@ -148,6 +156,10 @@ export class WorkspacePanes {
     menu.onchange = () => {
       const action = menu.value;
       menu.selectedIndex = 0;
+      if (action.startsWith("show/") && state.place !== "floating") {
+        this.showInDock(action.slice(5), state.place);
+        return;
+      }
       if (action === "hide" && p.options.close) return p.options.close();
       if (action === "hide") state.hidden = true;
       else if (action === "auto") state.autoHide = !state.autoHide;
@@ -258,7 +270,7 @@ export class WorkspacePanes {
             neighbor.state.height =
               neighborHeight - (delta > 0 ? Math.max(0, delta - slack) : delta);
             for (const q of docked) paintPane(q, this.app);
-          } else state.height = Math.max(72, Math.min(this.app.clientHeight, height + dy));
+          } else state.height = Math.max(minimum(p), Math.min(this.app.clientHeight, height + dy));
           if (state.place === "floating") state.width = Math.max(186, width + dx);
           paintPane(p, this.app);
         },
@@ -270,7 +282,10 @@ export class WorkspacePanes {
     grip.onkeydown = (e) => {
       if (!["ArrowUp", "ArrowDown"].includes(e.key)) return;
       e.preventDefault();
-      state.height = Math.max(72, state.height + (e.key === "ArrowUp" ? -16 : 16));
+      state.height = Math.max(
+        parseFloat(getComputedStyle(root).minHeight) || 72,
+        root.offsetHeight + (e.key === "ArrowUp" ? -16 : 16),
+      );
       paintPane(p, this.app);
       this.save(p);
     };
