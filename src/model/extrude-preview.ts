@@ -10,6 +10,7 @@ type Target = { extrusion: Extrusion; visual: boolean };
 export class ExtrudePreview {
   valid = false;
   private runner: PreviewRunner<Target>;
+  private drawn: Extrusion | null = null;
   constructor(
     private editor: SketchEditor,
     private lease: () => InteractionLease | null,
@@ -26,10 +27,13 @@ export class ExtrudePreview {
   }
   clear(): void {
     this.runner.clear();
+    this.drawn = null;
     this.valid = false;
   }
   enqueue(extrusion: Extrusion): void {
-    const visual = !!(this.lease()?.captured && visualExtrusion(extrusion));
+    const visual = !!(
+      this.lease()?.captured && visualExtrusion(extrusion, this.editor.store.data.bodies ?? [])
+    );
     this.valid = false;
     this.runner.enqueue({ extrusion, visual });
   }
@@ -45,18 +49,27 @@ export class ExtrudePreview {
     await this.runner.settle();
   }
   private async calculate(target: Target): Promise<void> {
-    const success = await this.editor.store.request({
-      kind: "extrude",
-      extrusion: target.extrusion,
-      ...(target.visual ? { presentation: "visual" } : {}),
-    });
-    const lease = this.lease(),
-      latest = this.runner.latest;
-    if (!latest || lease?.phase !== "editing") return;
+    const lease = this.lease();
+    const complete =
+      !target.visual && target.extrusion === this.drawn && this.editor.store.visualPreview;
+    this.drawn = null;
+    const success = await this.editor.store.request(
+      complete
+        ? { kind: "complete-preview" }
+        : {
+            kind: "extrude",
+            extrusion: target.extrusion,
+            ...(target.visual ? { presentation: "visual" } : {}),
+          },
+    );
+    const latest = this.runner.latest;
+    if (!latest || lease?.phase !== "editing" || lease !== this.lease()) return;
     this.valid = success && target === latest && !target.visual;
-    if (success && target.visual && this.editor.store.visualPreview)
+    if (success && target.visual && this.editor.store.visualPreview) {
+      this.drawn = target.extrusion;
       lease.showVisual(this.editor.store.visualPreview);
-    else if (success || target === latest) lease.show(success ? this.editor.store.candidate : null);
+    } else if (success || target === latest)
+      lease.show(success ? this.editor.store.candidate : null);
     if (success) this.showOperands();
     this.editor.refresh();
   }

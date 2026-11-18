@@ -83,6 +83,14 @@ amplification of boundary tolerances. Planar bodies retain ordinary adaptive
 integration. Nonfinite or failed integration rejects; tessellation is not a volume
 source. Offset reversal, shell-cap differences, plane-cut conservation and rigid
 placement are regression checks for these measurements.
+The calculator reuses tight bounding boxes and surface properties of spline faces
+with identical binary geometry, placement, trims and tolerances. Cold bounds can
+run on independent copies using the configured native thread pool. A separate
+cache reuses signed mass and default-axis volume integrations of unchanged spline
+solids. The face cache holds up to 512 entries and 16 MiB of keys, the solid cache
+up to four entries and 8 MiB. Control hulls can reject disjoint thickness rays or
+cap travel. Transform handles still use tight geometric bounds.
+
 Display meshes/outlines and planar frames derive from the exact geometry. Body
 edge polylines use the active face triangulation's boundary nodes so curved
 chords cannot sink beneath independently sampled surface triangles. Exact curve
@@ -146,9 +154,9 @@ correspondence. Count changes rebuild the drawable; removed bodies and view
 disposal release its resources. Edge-finish previews
 continue highlighting the accepted source chain when the candidate consumes it.
 
-Straight sketch extrusion uses a separate visual reply while its distance handle
-is captured, including Auto, Union, Subtract and Intersect. Draft, twist and
-body-face extrusion retain complete previews. Each target still computes and
+Straight extrusion from a sketch or planar face uses a visual reply while its
+distance handle is captured, including Auto, Union, Subtract and Intersect.
+Draft, twist and curved-face normal extrusion use complete previews. Each target computes and
 validates its exact Boolean geometry and meshes every face. The visual result
 contains triangles, feature outlines, bounds, section plane frames and appearance
 references, with no BRep, persistent topology IDs or editing metadata. Participants
@@ -157,12 +165,16 @@ ordinary translucent display. Empty subtraction/intersection results are valid.
 Thickness counterparts, face chains, blend recognition and exact edge landmarks
 are built for the latest complete target instead. New-body extrusion sends only
 bodies supplying selected faces to the calculator; sketch-only New sends no
-existing BReps, regardless of document size or placement.
+existing BReps, regardless of document size or placement. Visibility and explicit
+target lists also narrow the operands sent for Booleans. Face Offset and edge
+finishes send the selected owners.
 
 `ExtrudePreview` owns one serial calculation and one replaceable target. Pointer
 release or a request to confirm a guide target completes the latest extrusion;
-acceptance waits for that complete candidate. The visual mesh stays visible while
-completion runs. `DocumentOwner` clears any older acceptable candidate before a
+acceptance waits for that complete candidate. If that target supplied the visible
+mesh, completion reads editing metadata from the retained solid. A newer undrawn
+target computes its own geometry. The mesh stays visible during completion.
+`DocumentOwner` clears any older acceptable candidate before a
 visual calculation and cannot accept visual data. Cancellation retires both forms.
 Visual drawing batches faces and outlines, separately retaining coplanar section
 stencil ownership, and does not expose its display slots as pickable topology.

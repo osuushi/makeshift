@@ -58,14 +58,17 @@ std::string encode(const TopoDS_Shape& shape) {
     return result;
 }
 TopoDS_Shape decode(const std::string& data) {
+    KernelTiming timing("decode");
     if (data.empty() || data.size() % 2) throw std::runtime_error("Invalid exact-shape encoding");
     auto digit = [](char c) { if (c >= '0' && c <= '9') return c - '0'; if (c >= 'a' && c <= 'f') return c - 'a' + 10; throw std::runtime_error("Invalid shape byte"); };
     std::string bytes; bytes.reserve(data.size() / 2);
     for (size_t i = 0; i < data.size(); i += 2) bytes += char(digit(data[i]) * 16 + digit(data[i + 1]));
     std::istringstream stream(bytes); TopoDS_Shape shape; BRep_Builder builder;
     BRepTools::Read(shape, stream, builder);
+    timing.phase("read");
     if (shape.IsNull() || !BRepCheck_Analyzer(shape).IsValid())
         throw CalculationFailure("invalid-request", "Invalid exact-shape geometry");
+    timing.phase("validation");
     return shape;
 }
 std::vector<Operand> operands(const Tree& input) {
@@ -130,28 +133,27 @@ void calculateAndPresent(std::ostream& reply, const Tree& input,
     }
 
     timing.phase("calculate");
-    if (input.get<std::string>("presentation", "") == "deferred") {
+    const auto presentation = input.get<std::string>("presentation", "");
+    if (presentation == "deferred" || presentation == "visual") {
         const auto kind = input.get<std::string>("kind");
-        if (kind != "move-faces" && kind != "move-edges" && kind != "offset-faces" && kind != "edge-finish")
+        if (presentation == "visual" && kind != "extrude")
+            throw std::runtime_error("Visual presentation requires an extrusion");
+        if (presentation == "deferred" && kind != "move-faces" && kind != "move-edges" &&
+            kind != "offset-faces" && kind != "edge-finish")
             throw std::runtime_error("Deferred presentation requires a supported solid edit");
-        deferPresentation(reply, results, mode, participants);
+        deferPresentation(reply, std::move(results), mode, participants, tools, presentation);
         return;
     }
-    const bool visual = input.get<std::string>("presentation", "") == "visual";
-    if (visual && input.get<std::string>("kind") != "extrude")
-        throw std::runtime_error("Visual presentation requires an extrusion");
-    const auto presentation = visual ? presentVisual : present;
     std::ostringstream output; output << std::setprecision(17) << "{\"mode\":" << quoted(mode) << ",\"participants\":[";
     for (size_t i = 0; i < participants.size(); i++) { if (i) output << ','; output << quoted(participants[i]); }
     output << "],\"results\":[";
     const double deflection = input.get<std::string>("kind") == "inspect"
         ? input.get<double>("deflection", 0.05) : 0.05;
-    for (size_t i = 0; i < results.size(); i++) { if (i) output << ','; presentation(output, results[i], deflection); }
+    for (size_t i = 0; i < results.size(); i++) { if (i) output << ','; present(output, results[i], deflection); }
     output << "],\"tools\":[";
     for (size_t i = 0; i < tools.size(); i++) { if (i) output << ','; present(output, tools[i], deflection); }
     timing.phase("presentation");
     output << ']';
-    if (visual) output << ",\"presentation\":\"visual\"";
     if (erode && input.get<std::string>("method","fast") == "fast") writeErosionQuality(output,erosionQuality);
     reply << output.str() << '}';
     timing.phase("write");

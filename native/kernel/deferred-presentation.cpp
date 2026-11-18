@@ -3,6 +3,7 @@
 #include "timing.h"
 #include <iomanip>
 #include <optional>
+#include <sstream>
 #include <stdexcept>
 #include <utility>
 
@@ -11,6 +12,7 @@ struct Pending {
     std::vector<Result> results;
     std::string mode;
     std::vector<std::string> participants;
+    std::string tools;
 };
 // Also survives separate WASM entry calls on the same calculator worker.
 std::optional<Pending> pending;
@@ -20,19 +22,27 @@ void header(std::ostream& out, const Pending& value) {
         if (i) out << ',';
         out << quoted(value.participants[i]);
     }
-    out << "],\"tools\":[],\"results\":[";
+    out << "],\"results\":[";
 }
 }
 void clearDeferredPresentation() { pending.reset(); }
 void deferPresentation(std::ostream& out, std::vector<Result> results, const std::string& mode,
-                       const std::vector<std::string>& participants) {
-    Pending next{std::move(results), mode, participants};
+                       const std::vector<std::string>& participants, const std::vector<Result>& tools,
+                       const std::string& presentation) {
+    Pending next{std::move(results), mode, participants, {}};
     header(out, next);
     for (size_t i = 0; i < next.results.size(); ++i) {
         if (i) out << ',';
         presentVisual(out, next.results[i]);
     }
-    out << "],\"presentation\":\"deferred\"}";
+    std::ostringstream cutters;
+    cutters << std::setprecision(17);
+    for (size_t i = 0; i < tools.size(); ++i) {
+        if (i) cutters << ',';
+        present(cutters, tools[i]);
+    }
+    next.tools = std::move(cutters).str();
+    out << "],\"tools\":[" << next.tools << "],\"presentation\":" << quoted(presentation) << '}';
     pending = std::move(next);
 }
 void completePresentation(std::ostream& out) {
@@ -44,5 +54,5 @@ void completePresentation(std::ostream& out) {
         if (i) out << ',';
         presentMeshed(out, value->results[i]);
     }
-    out << "]}";
+    out << "],\"tools\":[" << value->tools << "]}";
 }

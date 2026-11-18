@@ -14,7 +14,7 @@ type PreviewState =
       kind: "visual";
       operation: HistoryOperation;
       visual: VisualPreview;
-      edit: DeferredEditRequest | null;
+      edit: DeferredEditRequest;
     }
   | {
       kind: "complete";
@@ -50,16 +50,11 @@ export class DocumentSession {
   begin(operation: HistoryOperation): void {
     this.state = { kind: "preparing", operation };
   }
-  drawable(
-    visual: VisualPreview,
-    edit: DeferredEditRequest | null,
-    operation: HistoryOperation,
-  ): void {
+  drawable(visual: VisualPreview, edit: DeferredEditRequest, operation: HistoryOperation): void {
     this.state = { kind: "visual", visual, edit, operation };
   }
   beginCompletion(): DeferredEditRequest {
-    if (this.state.kind !== "visual" || !this.state.edit)
-      throw new Error("No preview presentation to complete");
+    if (this.state.kind !== "visual") throw new Error("No preview presentation to complete");
     const { edit, operation, visual } = this.state;
     this.state = { kind: "completing", operation, visual };
     return edit;

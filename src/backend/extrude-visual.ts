@@ -9,8 +9,8 @@ export async function extrudeVisual(
   document: SketchDocument,
   extrusion: Extrusion,
 ) {
-  if (!visualExtrusion(extrusion))
-    throw new Error("Visual preview requires a straight sketch extrusion");
+  if (!visualExtrusion(extrusion, document.bodies ?? []))
+    throw new Error("Visual preview requires a straight extrusion from a sketch or planar face");
   return kernel.calculate({
     ...kernelInput(document, extrusion, document.bodies ?? []),
     presentation: "visual",

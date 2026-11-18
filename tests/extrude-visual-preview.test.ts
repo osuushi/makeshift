@@ -71,10 +71,7 @@ test("captured perforated extrusion draws complete mesh before editing metadata,
     });
     assert.equal(latest.error, undefined);
     assert.equal(latest.view.visualPreview?.bodies[0].bounds[5], 7);
-    const finished = await owner.call({
-      kind: "extrude",
-      extrusion: { ...extrusion, distance: 7 },
-    });
+    const finished = await owner.call({ kind: "complete-preview" });
     assert.equal(finished.error, undefined);
     assert.equal(finished.view.visualPreview, undefined);
     const body = finished.view.candidate?.bodies?.[0];
@@ -109,7 +106,7 @@ async function checkVariants(
   ]) {
     const input = { ...extrusion, ...options, mode: "auto" as const };
     const light = await owner.call({ kind: "extrude", extrusion: input, presentation: "visual" });
-    const full = await owner.call({ kind: "extrude", extrusion: input });
+    const full = await owner.call({ kind: "complete-preview" });
     assert.equal(light.error, undefined);
     assert.equal(full.error, undefined);
     assert.deepEqual(

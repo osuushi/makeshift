@@ -57,13 +57,19 @@ export function kernelInput(
   extrusion: Extrusion,
   bodies: readonly Body[],
 ) {
-  // New-body sweeps need only bodies supplying selected faces. Unrelated
-  // accepted geometry must not be serialized, decoded or validated per target.
-  if (extrusion.mode === "new") {
+  // Keep every source, including hidden or deselected sources of a New body.
+  // An unrestricted Boolean still needs every eligible body for contact tests.
+  if (extrusion.mode === "new" || extrusion.targets || extrusion.eligibleTargets) {
     const sourceFaces = new Set(
       extrusion.sources.flatMap((source) => ("face" in source ? [source.face] : [])),
     );
-    bodies = bodies.filter((body) => body.faces.some((face) => sourceFaces.has(face.id)));
+    bodies = bodies.filter(
+      (body) =>
+        body.faces.some((face) => sourceFaces.has(face.id)) ||
+        (extrusion.mode !== "new" &&
+          (!extrusion.targets || extrusion.targets.includes(body.id)) &&
+          (!extrusion.eligibleTargets || extrusion.eligibleTargets.includes(body.id))),
+    );
   }
   const faces = extrusion.sources.flatMap((source) =>
     "face" in source
