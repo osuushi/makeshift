@@ -13,7 +13,7 @@ import "./workspace.css";
 
 export class WorkspacePanes {
   private panes = new Map<string, Pane>();
-  private columns: Record<Side, DockColumn>;
+  protected readonly columns: Record<Side, DockColumn>;
   private observer: ResizeObserver;
   private order = preference<string[]>("order", []);
   constructor(readonly app: HTMLElement) {

@@ -61,7 +61,11 @@ export function createPane(options: PaneOptions) {
     ...(options.autoHide !== undefined ? [["auto", "Toggle auto-hide when empty"]] : []),
   ])
     menu.add(new Option(label, value));
-  bar.append(title, menu);
+  const menuControl = document.createElement("span");
+  menuControl.className = "pane-menu";
+  menuControl.innerHTML = `<svg aria-hidden="true" viewBox="0 0 18 6" fill="currentColor"><circle cx="3" cy="3" r="1.5"/><circle cx="9" cy="3" r="1.5"/><circle cx="15" cy="3" r="1.5"/></svg>`;
+  menuControl.append(menu);
+  bar.append(title, menuControl);
   root.append(bar, body, grip);
   return { root, body, bar, title, menu, grip, state, options, empty: false };
 }

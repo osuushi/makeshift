@@ -11,7 +11,6 @@ type Section = (typeof sections)[number];
 
 /** Slots for long-lived editor controls. The controls retain selection and model ownership. */
 export class EditorPanes extends WorkspacePanes {
-  private application = this.slot("Makeshift", "left", 46);
   readonly entities = this.slot("Entities", "left", 282);
   readonly tools = this.slot("Tools", "left", 358);
   readonly status = this.register({
@@ -26,7 +25,10 @@ export class EditorPanes extends WorkspacePanes {
   private observers: (MutationObserver | ResizeObserver)[] = [];
   constructor(app: HTMLElement) {
     super(app);
-    this.application.innerHTML = `<button type="button" class="brand" title="Makeshift menu"><img src="./makeshift.png" alt=""/><strong>Makeshift</strong></button>`;
+    const application = document.createElement("div");
+    application.className = "application-pane";
+    application.innerHTML = `<button type="button" class="brand" title="Makeshift menu"><img src="./makeshift.png" alt=""/><strong>Makeshift</strong></button>`;
+    this.columns.left.root.prepend(application);
     for (const title of sections) {
       const pane = this.register({
         id: title,

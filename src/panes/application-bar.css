@@ -1,38 +1,10 @@
-/* The application menu participates in the same dock, fold and float gestures as other panes. */
-.workspace-pane[data-pane="Makeshift"]:not(.folded, [hidden]) {
-  display: grid;
-  grid-template-columns: minmax(0, max-content) minmax(24px, 1fr) 28px;
-  grid-template-rows: minmax(36px, 1fr) 6px;
+.application-pane {
+  display: flex;
   align-items: center;
-  min-height: 44px;
-  flex-shrink: 0;
+  flex: none;
+  min-height: 46px;
   padding-inline: 8px;
-}
-[data-pane="Makeshift"]:not(.folded) .pane-heading {
-  display: contents;
-}
-[data-pane="Makeshift"]:not(.folded) .pane-title {
-  grid-area: 1 / 2;
-  height: 32px;
-  padding-inline: 0;
-}
-[data-pane="Makeshift"]:not(.folded) .pane-title > span,
-[data-pane="Makeshift"]:not(.folded) .pane-title::before {
-  display: none;
-}
-[data-pane="Makeshift"]:not(.folded) .pane-title::after {
-  margin-inline: 2px;
-}
-[data-pane="Makeshift"] .pane-heading select {
-  grid-area: 1 / 3;
-  width: 100%;
-  max-width: 30px;
-}
-[data-pane="Makeshift"] .pane-content {
-  grid-area: 1 / 1;
-}
-[data-pane="Makeshift"] .pane-grip {
-  grid-column: 1 / -1;
+  border-bottom: 1px solid var(--pane-rule);
 }
 .brand {
   display: flex;
@@ -184,11 +156,7 @@
 .workspace-toolbar .toolbar-app-menu {
   padding: 3px;
 }
-#app:has(
-    .pane-column:not(.closed) [data-pane="Makeshift"]:not(.folded, [hidden]),
-    .floating[data-pane="Makeshift"]:not(.folded, [hidden])
-  )
-  .toolbar-app-menu {
+#app:has(.pane-column:not(.closed) > .application-pane) .toolbar-app-menu {
   display: none;
 }
 @media (pointer: coarse) {

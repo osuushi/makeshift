@@ -138,26 +138,35 @@
 .folded .pane-title::before {
   transform: rotate(-45deg);
 }
-.pane-heading select {
-  appearance: none;
+.pane-menu {
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 4px;
+  color: var(--muted);
+}
+.pane-menu > * {
+  grid-area: 1 / 1;
+}
+.pane-menu svg {
+  width: 18px;
+  height: 6px;
+  pointer-events: none;
+}
+.pane-menu select {
+  opacity: 0;
   width: 30px;
   height: 26px;
-  text-align: center;
-  text-align-last: center;
-  font:
-    bold 17px / 1 system-ui,
-    sans-serif;
-  color: var(--muted);
-  cursor: pointer;
-  border-radius: 4px;
-}
-.pane-heading option,
-.pane-heading optgroup {
   font:
     13px system-ui,
     sans-serif;
+  cursor: pointer;
 }
-.pane-heading select:hover,
+.pane-menu:has(select:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.pane-menu:hover,
 .pane-title:hover {
   background: var(--surface);
 }

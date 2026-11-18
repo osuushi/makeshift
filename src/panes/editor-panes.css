@@ -114,7 +114,7 @@
   width: 14px;
   margin-left: 3px;
 }
-.pane-stack > [data-pane="Status"]:not(.folded, [hidden]) .pane-heading select {
+.pane-stack > [data-pane="Status"]:not(.folded, [hidden]) .pane-menu {
   grid-area: 1 / 3;
 }
 .pane-stack > [data-pane="Status"]:not(.folded, [hidden]) > .pane-content {
