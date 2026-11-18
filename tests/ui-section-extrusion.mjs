@@ -15,10 +15,14 @@ export async function sectionExtrusion(page, sample) {
   await page.getByRole("button", { name: "Done", exact: true }).click();
   await orient(page, [1, 0.7, 1.4]);
   const original = (await inspect(page)).document;
-  // Opposite the extrusion handle so moving UI never covers the GPU sample.
-  const material = [-10, -2, 0];
+  // Away from both the active extrusion handle and its ghost on the section.
+  const material = [-10, -6, 0];
   await page.mouse.move(1100, 80);
   const unselected = await sample(page, material);
+  assert.ok(
+    unselected.some((red, i) => i % 4 === 0 && unselected[i + 2] - red > 15),
+    "Color sample lies on the patterned section material",
+  );
   const p = await project(page, [3, 2, 0]);
   await page.mouse.click(p.x, p.y);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "profile");

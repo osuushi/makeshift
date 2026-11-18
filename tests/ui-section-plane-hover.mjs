@@ -74,17 +74,16 @@ export async function sectionPlaneHover(page) {
 
 async function pixels(page) {
   // The document-page proxy's screenshot route captures a fresh on-demand frame.
-  const png = await page.screenshot();
+  const png = await page.screenshot({ clip: { x: 300, y: 250, width: 300, height: 300 } });
   return page.evaluate(async (data) => {
-    const source = document.querySelector("canvas");
     const image = new Image();
     image.src = `data:image/png;base64,${data}`;
     await image.decode();
     const canvas = document.createElement("canvas");
-    canvas.width = source.clientWidth;
-    canvas.height = source.clientHeight;
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
     const ctx = canvas.getContext("2d");
     ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-    return Array.from(ctx.getImageData(300, 250, 300, 300).data);
+    return Array.from(ctx.getImageData(0, 0, canvas.width, canvas.height).data);
   }, png.toString("base64"));
 }
