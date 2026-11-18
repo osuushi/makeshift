@@ -63,7 +63,7 @@ export async function regionMeasurementRoute(page, name) {
   await readout(page, "Area", "400 mm²");
   assert.equal(
     await page
-      .getByRole("region", { name: "Measurements" })
+      .getByRole("region", { name: "Measurements", exact: true })
       .getByText("Maximum gap", { exact: true })
       .count(),
     0,

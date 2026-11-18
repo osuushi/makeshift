@@ -4,10 +4,15 @@ import { installPreviewPane } from "../agent/preview-pane.js";
 import { installScriptView } from "../agent-script/view.js";
 import { installTabletChrome } from "../ipad/connection-screen.js";
 import { installIPadButton } from "../ipad/desktop.js";
+import type { WorkspacePanes } from "../panes/workspace.js";
 import type { SketchEditor } from "./editor.js";
 
-export function installHostControls(editor: SketchEditor, app: HTMLElement): () => void {
-  const disposePreview = installPreviewPane();
+export function installHostControls(
+  editor: SketchEditor,
+  app: HTMLElement,
+  panes: WorkspacePanes,
+): () => void {
+  const disposePreview = installPreviewPane(panes);
   const disposeAgent = installAgentDock(app);
   const disposeInspection = installInspection(editor);
   installIPadButton(editor, app);

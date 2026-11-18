@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { inspect } from "./ui-helpers.mjs";
+import { click, inspect } from "./ui-helpers.mjs";
 
 async function dragControl(page, control, dx, dy) {
   const box = await control.boundingBox();
@@ -14,83 +14,33 @@ async function dragControl(page, control, dx, dy) {
 // Real selected curves keep measurement/constraint visibility and rerenders in play.
 // Unit layout tests cannot catch panel interception of canvas gestures or lost controls.
 export async function inspectorRoute(page, name) {
-  const pane = page.getByRole("complementary", { name: "Inspector", exact: true });
+  const pane = page.locator('[data-pane="Measurements"]');
+  const title = pane.locator(".pane-title");
+  await click(page, 8, 4);
   await page.locator(".measurement-readout > div").first().waitFor();
   const original = (await inspect(page)).document;
-  const anchored = await pane.boundingBox();
-  await dragControl(page, page.locator('.inspector-edge[data-edge="nw"]'), -60, -50);
-  const grown = await pane.boundingBox();
-  assert.ok(Math.abs(grown.width - anchored.width - 60) < 2);
-  assert.ok(Math.abs(grown.height - anchored.height - 50) < 2);
-  assert.ok(Math.abs(grown.x + grown.width - anchored.x - anchored.width) < 2);
-  assert.ok(Math.abs(grown.y + grown.height - anchored.y - anchored.height) < 2);
-  await page.getByRole("button", { name: "Reset Inspector layout", exact: true }).click();
-  await page.waitForFunction(
-    (width) =>
-      Math.abs(document.querySelector(".inspector").getBoundingClientRect().width - width) < 2,
-    anchored.width,
-  );
+  await dragControl(page, title, -330, 20);
+  assert.ok(await pane.evaluate((el) => el.classList.contains("floating")));
   const before = await pane.boundingBox();
-  await dragControl(
-    page,
-    page.getByRole("button", { name: "Move Inspector", exact: true }),
-    -160,
-    -140,
-  );
-  const moved = await pane.boundingBox();
-  assert.ok(Math.abs(moved.x - before.x + 160) < 2);
-  assert.ok(Math.abs(moved.y - before.y + 140) < 2);
-  await dragControl(page, page.locator('.inspector-edge[data-edge="se"]'), 80, 60);
+  await dragControl(page, pane.locator(".pane-grip"), 35, 30);
   const resized = await pane.boundingBox();
-  assert.ok(resized.width > moved.width + 70);
-  assert.ok(resized.height > moved.height + 50);
-  await page.getByRole("button", { name: "Measurements", exact: true }).focus();
+  assert.ok(resized.width >= before.width + 34 && resized.height >= before.height + 29);
+  await title.focus();
   await page.keyboard.press("Space");
-  assert.equal(await page.locator(".measurement-readout").isVisible(), false);
-  await page.getByRole("button", { name: "Move Measurements up", exact: true }).click();
-  assert.equal(
-    await page.locator(".inspector-section").first().getAttribute("data-section"),
-    "Measurements",
-  );
-  await page.getByRole("button", { name: "Collapse Inspector", exact: true }).click();
-  assert.ok((await pane.boundingBox()).height < 50);
+  assert.equal(await title.getAttribute("aria-expanded"), "false");
+  await pane.getByRole("combobox").selectOption("left");
   assert.deepEqual((await inspect(page)).document, original);
   await page.reload();
-  await page.getByRole("button", { name: "Expand Inspector", exact: true }).waitFor();
-  await page.getByRole("button", { name: "Expand Inspector", exact: true }).click();
-  assert.equal(
-    await page
-      .getByRole("button", { name: "Measurements", exact: true })
-      .getAttribute("aria-expanded"),
-    "false",
-  );
-  assert.equal(
-    await page.locator(".inspector-section").first().getAttribute("data-section"),
-    "Measurements",
-  );
-  await page.waitForFunction(
-    (width) =>
-      Math.abs(document.querySelector(".inspector").getBoundingClientRect().width - width) < 2,
-    resized.width,
-  );
-  const restored = await pane.boundingBox();
-  assert.ok(Math.abs(restored.width - resized.width) < 2);
-  assert.ok(Math.abs(restored.x - resized.x) < 2);
-  await page.getByRole("button", { name: "Measurements", exact: true }).click();
-  await page.locator(".measurement-readout > div").first().waitFor();
-  await page.screenshot({ path: `.cache/sketch-review/${name}-inspector.png` });
+  await page.locator('[data-side="left"] [data-pane="Measurements"]').waitFor();
+  assert.equal(await title.getAttribute("aria-expanded"), "false");
+  await title.click();
+  await pane.getByRole("combobox").selectOption("right");
   await page.setViewportSize({ width: 600, height: 400 });
-  await page.waitForFunction(() => {
-    const r = document.querySelector(".inspector").getBoundingClientRect();
-    const footer = document.querySelector("footer").getBoundingClientRect();
-    return r.right <= innerWidth && r.bottom <= footer.top && r.top >= 0;
-  });
-  await page.screenshot({ path: `.cache/sketch-review/${name}-inspector-narrow.png` });
-  await page.getByRole("button", { name: "Reset Inspector layout", exact: true }).click();
+  await page.waitForSelector('.pane-column.closed[data-side="right"]');
+  await page.locator('[data-side="right"] .pane-rail').click();
+  assert.ok(await pane.isVisible());
   await page.setViewportSize({ width: 1280, height: 850 });
-  console.log(
-    `${name}: Inspector move, resize, collapse, reorder, persistence and viewport fitting passed`,
-  );
+  console.log(`${name} pane drag, resize, fold, docking, persistence and narrow screen passed`);
 }
 
 export async function inspectorRepairsRoute(page, name, document) {
@@ -121,7 +71,7 @@ export async function inspectorRepairsRoute(page, name, document) {
   assert.equal(await page.locator(".decorator-repair[open]").count(), 0);
   await page.screenshot({ path: `.cache/sketch-review/${name}-inspector-repairs.png` });
   await page
-    .locator(".inspector")
+    .locator('[data-pane="Decorators"]')
     .screenshot({ path: `.cache/sketch-review/${name}-inspector-styled-detail.png` });
   await repairs.first().locator("summary").focus();
   await page.keyboard.press("Enter");

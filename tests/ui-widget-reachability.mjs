@@ -210,7 +210,7 @@ async function widgetFailure(page, selector, label, error) {
       snap: window.widgetNavigationState?.(),
       chrome: [
         ...document.querySelectorAll(
-          "header,.entity-viewer,.orientation-cube,.agent-dock,.agent-toggle,.workspace-footer,.selection-readouts,.calculation-progress",
+          "header,.entity-viewer,.orientation-cube,.agent-dock,.agent-toggle,.workspace-footer,.pane-column,.workspace-pane.floating,.calculation-progress",
         ),
       ].map((e) => {
         const r = e.getBoundingClientRect();

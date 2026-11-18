@@ -32,14 +32,14 @@ const app = await launchElectron({
 try {
   const page = await app.firstWindow();
   page.setDefaultTimeout(10000);
-  await page.waitForSelector(".preview-pane", { state: "attached" });
+  await page.waitForSelector(".pane-rail", { state: "attached" });
   const command = (input) =>
     app.evaluate(
       async (_, { input, root }) => globalThis.previewTest.request(JSON.stringify(input), root),
       { input, root },
     );
   await command({ action: "open", directory: "app", title: "Profile editor" });
-  await page.getByRole("button", { name: "Collapse preview", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Profile editor", exact: true }).waitFor();
   const preview = app
     .context()
     .pages()
@@ -56,7 +56,7 @@ try {
   const before = await command({ action: "screenshot" });
   assert.equal(before.width, 640 * scale);
   assert.equal(before.height, 480 * scale);
-  await page.getByRole("button", { name: "Collapse preview", exact: true }).click();
+  await page.getByRole("button", { name: "Profile editor", exact: true }).click();
   const collapsed = await command({ action: "screenshot" });
   assert.equal(collapsed.width, before.width);
   assert.equal(collapsed.height, before.height);
@@ -81,12 +81,12 @@ try {
     }),
     false,
   );
-  await page.getByRole("button", { name: "Expand preview", exact: true }).click();
+  await page.getByRole("button", { name: "Profile editor", exact: true }).click();
   const header = page.locator(".preview-pane .preview-header");
   const box = await header.boundingBox();
   await page.mouse.move(box.x + 80, box.y + 15);
   await page.mouse.down();
-  await page.mouse.move(box.x + 140, box.y + 60);
+  await page.mouse.move(box.x + 340, box.y + 60);
   await page.mouse.up();
   assert.ok((await header.boundingBox()).x > box.x);
   const bounds = await page.locator(".preview-pane").boundingBox();
@@ -101,7 +101,7 @@ try {
   assert.ok(resized.width > before.width);
   assert.ok(resized.height > before.height);
   await command({ action: "reload" });
-  await page.getByRole("button", { name: "Close preview", exact: true }).click();
+  await page.getByLabel("Profile editor pane options").selectOption("hide");
   await assert.rejects(command({ action: "read" }), /Open a preview/);
   await writeFile(
     join(root, "app/image.svg"),
@@ -130,8 +130,47 @@ try {
   assert.equal(imageFit.x, 0);
   assert.equal(imageFit.y, 0);
   assert.deepEqual([imageFit.width, imageFit.height], imageFit.viewport);
+  await mkdir(join(root, "second"));
+  await writeFile(join(root, "second/index.html"), "<h1>Independent preview</h1>");
+  await command({ action: "open", directory: "second", title: "Second" });
+  const second = page.locator('[data-pane="preview/second"]');
+  await second.waitFor();
+  assert.equal(await page.locator(".preview-pane").count(), 2);
+  await page.waitForFunction(() =>
+    document
+      .querySelector('[data-pane="preview/app"] .pane-content')
+      .style.backgroundImage.startsWith("url("),
+  );
+  assert.equal(
+    (await command({ action: "eval", code: "document.querySelector('h1').textContent" })).result,
+    "Independent preview",
+  );
+  assert.deepEqual((await command({ action: "read", directory: "app" })).data, {
+    profile: "script update",
+  });
+  const source = await second.locator(".pane-title").boundingBox();
+  const target = await page.locator('[data-pane="Tools"]').boundingBox();
+  await page.mouse.move(source.x + 40, source.y + 10);
+  await page.mouse.down();
+  await page.mouse.move(target.x + 40, target.y + 8, { steps: 8 });
+  await page.mouse.up();
+  const ids = () =>
+    page
+      .locator('[data-side="left"] .workspace-pane')
+      .evaluateAll((els) => els.map((e) => e.dataset.pane));
+  assert.deepEqual(await ids(), ["Entities", "preview/second", "Tools", "Status"]);
+  await app.evaluate(() => globalThis.savePreviewDrawing());
+  await app.evaluate(() => globalThis.reopenPreviewDrawing());
+  await second.waitFor();
+  assert.deepEqual(await ids(), ["Entities", "preview/second", "Tools", "Status"]);
+  await command({ action: "close", directory: "second" });
+  await second.waitFor({ state: "detached" });
+  await page.getByLabel("Tools pane options").selectOption("right");
+  await app.evaluate(() => globalThis.reopenPreviewDrawing());
+  await second.waitFor();
+  assert.deepEqual(await ids(), ["Entities", "Status", "preview/second"]);
   console.log(
-    "Preview input, JSON, triggers, reload, isolation, dragging, resizing, close and collapsed screenshot passed",
+    "Preview input, JSON, triggers, reload, isolation, dragging, resizing, close, collapsed capture, multiple views and portable dock restoration passed",
   );
 } finally {
   await app.close();

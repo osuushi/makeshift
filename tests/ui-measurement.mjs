@@ -24,6 +24,19 @@ export async function readout(page, label, value) {
 }
 export async function pick(page, point, shift = false) {
   const p = await project(page, point);
+  // The live offset editor can cover the next face or edge in a narrow modeling viewport.
+  const obstructed = await page.evaluate(
+    ({ x, y }) => !!document.elementFromPoint(x, y)?.closest(".face-offset-options"),
+    p,
+  );
+  if (obstructed) {
+    const grip = await page.locator(".face-offset-options .parameter-panel-grip").boundingBox();
+    const canvas = await page.getByLabel("Modeling viewport", { exact: true }).boundingBox();
+    await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(canvas.x + 20, canvas.y + 100, { steps: 6 });
+    await page.mouse.up();
+  }
   if (shift) await page.keyboard.down("Shift");
   await page.mouse.click(p.x, p.y);
   if (shift) await page.keyboard.up("Shift");
@@ -37,7 +50,10 @@ export async function measurementRoute(page, name) {
   await readout(page, "Maximum gap", "20 mm");
   assert.equal(await page.locator(".measurement-witnesses line").count(), 2);
   await clearSelection(page);
-  assert.equal(await page.getByRole("region", { name: "Measurements" }).isVisible(), false);
+  assert.equal(
+    await page.getByRole("region", { name: "Measurements", exact: true }).isVisible(),
+    false,
+  );
   await orient(page, [0.4, -1, 0.7]);
   let state = await pick(page, [-5, -10, 4]);
   assert.equal(state.modelingSelection[0].kind, "face");
@@ -73,7 +89,10 @@ export async function measurementRoute(page, name) {
   await page.screenshot({ path: `.cache/sketch-review/${name}-measurements.png` });
   await (await relativeOffsetInput(page)).fill("1");
   await inspect(page);
-  assert.equal(await page.getByRole("region", { name: "Measurements" }).isVisible(), false);
+  assert.equal(
+    await page.getByRole("region", { name: "Measurements", exact: true }).isVisible(),
+    false,
+  );
   await page.getByRole("button", { name: "Accept face offset", exact: true }).click();
   await inspect(page);
   await readout(page, "Maximum gap", "22 mm");
@@ -96,7 +115,10 @@ export async function measurementRoute(page, name) {
   assert.deepEqual((await inspect(page)).modelingSelection, state.modelingSelection);
   await readout(page, "Maximum gap", "20 mm");
   await chooseTool(page, "redo", "redo");
-  assert.equal(await page.getByRole("region", { name: "Measurements" }).isVisible(), false);
+  assert.equal(
+    await page.getByRole("region", { name: "Measurements", exact: true }).isVisible(),
+    false,
+  );
   assert.deepEqual((await inspect(page)).document, original);
   await sketchMeasurements(page, name);
   console.log(
@@ -121,13 +143,14 @@ async function sketchMeasurements(page, name) {
   await readout(page, "Maximum gap", "8 mm");
   await readout(page, "Line angle", "0 °");
   const constraints = page.getByRole("group", { name: "Selected entity constraints" });
-  const measurements = page.getByRole("region", { name: "Measurements" });
-  const constraintBox = await constraints.boundingBox(),
-    measurementBox = await measurements.boundingBox();
-  assert.ok(constraintBox && measurementBox);
+  const measurements = page.getByRole("region", { name: "Measurements", exact: true });
+  const constraintBox = await page.locator('[data-pane="Constraints"]').boundingBox();
+  const measurementBox = await page.locator('[data-pane="Measurements"]').boundingBox();
+  assert.ok(constraintBox && measurementBox && (await measurements.isVisible()));
   assert.ok(
-    constraintBox.y + constraintBox.height + 7 <= measurementBox.y,
-    "Constraints and measurements share a nonoverlapping stack",
+    measurementBox.y + measurementBox.height <= constraintBox.y ||
+      constraintBox.y + constraintBox.height <= measurementBox.y,
+    "Docked selection panes occupy separate rows",
   );
   await constraints.getByRole("button", { name: "Constrain parallel", exact: true }).click();
   await inspect(page);
@@ -141,11 +164,13 @@ async function sketchMeasurements(page, name) {
   if (name !== "electron") {
     await page.setViewportSize({ width: 1280, height: 400 });
     const camera = (await inspect(page)).camera;
-    const stack = await page.locator(".selection-readouts").boundingBox();
+    const stack = await page.locator("[data-pane=Constraints] .pane-content").boundingBox();
     assert.ok(stack);
-    await page.mouse.move(stack.x + 150, stack.y + 50);
+    await page.mouse.move(stack.x + stack.width / 2, stack.y + stack.height / 2);
     await page.mouse.wheel(0, 220);
-    await page.waitForFunction(() => document.querySelector(".selection-readouts").scrollTop > 0);
+    await page.waitForFunction(
+      () => document.querySelector("[data-pane=Constraints] .pane-content").scrollTop > 0,
+    );
     assert.deepEqual(
       (await inspect(page)).camera,
       camera,

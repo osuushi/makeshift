@@ -29,7 +29,15 @@ try {
         JSON.parse(await readFile("examples/decorators/raised-pad.json", "utf8")),
       ],
     };
-  const files = { "workspace/notes.txt": new TextEncoder().encode("Fixture drawing notes") };
+  const encoder = new TextEncoder();
+  const archivedPreview = page.getByRole("button", { name: "Archived preview", exact: true });
+  const files = {
+    "workspace/notes.txt": encoder.encode("Fixture drawing notes"),
+    "workspace/preview/index.html": encoder.encode("<h1>Archived preview content</h1>"),
+    "workspace/preview/.makeshift-pane.json": encoder.encode(
+      JSON.stringify({ open: true, title: "Archived preview" }),
+    ),
+  };
   const workspace = await signContent(bob, "workspace", await portableDigest(files), bob);
   const decorators = await signContent(bob, "decorators", await decoratorDigest(doc), bob);
   const incoming = join(directory, "from-bob.makeshift"),
@@ -56,6 +64,7 @@ try {
     };
   });
   await openDocument(page, incoming);
+  assert.equal(await archivedPreview.count(), 0);
   assert.equal(
     (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" }))).workspace,
     null,
@@ -95,12 +104,14 @@ try {
   );
   await page.getByRole("button", { name: "Open agent terminal" }).click();
   await page.getByText("The included agent workspace is disabled.", { exact: true }).waitFor();
+  assert.equal(await archivedPreview.count(), 0);
   assert.equal(
     (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" }))).workspace,
     null,
   );
   await page.getByRole("button", { name: "Start", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
+  await archivedPreview.waitFor();
   const state = await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" }));
   assert.equal(await readFile(join(state.workspace, "notes.txt"), "utf8"), "Fixture drawing notes");
   assert.deepEqual(await app.evaluate(() => globalThis.securityMessages), [

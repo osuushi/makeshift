@@ -1,87 +1,122 @@
+import type { Placement } from "../panes/layout.js";
+import type { WorkspacePanes } from "../panes/workspace.js";
 import type { PreviewLayout } from "./preview-protocol.js";
-import "./preview-pane.css";
 
+interface PreviewEvent {
+  id: string;
+  title: string | null;
+  saved?: unknown;
+}
 declare global {
   interface Window {
     makeshiftPreview?: {
-      layout(value: PreviewLayout | null): Promise<void>;
-      subscribe(callback: (title: string | null) => void): () => void;
+      layout(id: string, value: PreviewLayout | null): Promise<string | undefined>;
+      save(id: string, state: Placement): Promise<void>;
+      subscribe(callback: (event: PreviewEvent) => void): () => void;
     };
   }
 }
 
-const icon = (path: string) =>
-  `<svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="${path}"/></svg>`;
+/** Native views always composite above HTML. Keep an image underneath overlapping panes. */
+function covered(pane: HTMLElement, rect: PreviewLayout, floats: HTMLElement[]) {
+  for (const other of floats) {
+    if (other === pane) continue;
+    const bounds = other.getBoundingClientRect();
+    const left = Math.max(rect.x, bounds.left),
+      right = Math.min(rect.x + rect.width, bounds.right);
+    const top = Math.max(rect.y, bounds.top),
+      bottom = Math.min(rect.y + rect.height, bounds.bottom);
+    if (left >= right || top >= bottom) continue;
+    const hit = document.elementFromPoint((left + right) / 2, (top + bottom) / 2);
+    if (hit && !pane.contains(hit)) return true;
+  }
+  return false;
+}
 
-export function installPreviewPane(): () => void {
+/** Native child views need screen bounds even when a sibling moves without resizing them. */
+export function installPreviewPane(panes: WorkspacePanes): () => void {
   const host = window.makeshiftPreview;
   if (!host) return () => {};
-  const pane = document.createElement("section");
-  pane.className = "preview-pane";
-  pane.hidden = true;
-  pane.setAttribute("aria-label", "Interactive preview");
-  pane.innerHTML = `<div class="preview-header"><strong></strong><button aria-label="Collapse preview">${icon("M5 12h14")}</button><button aria-label="Close preview">${icon("m6 6 12 12M6 18 18 6")}</button></div><div class="preview-content"></div>`;
-  document.body.append(pane);
-  const header = pane.querySelector<HTMLElement>(".preview-header");
-  const content = pane.querySelector<HTMLElement>(".preview-content");
-  const titleElement = pane.querySelector("strong");
-  if (!header || !content || !titleElement) throw new Error("Missing preview controls.");
-  const [collapse, close] = pane.querySelectorAll("button");
-  let collapsed = false;
-  let size = { width: 640, height: 480 };
+  const active = new Map<
+    string,
+    { pane: ReturnType<WorkspacePanes["register"]>; previous: string; covered: boolean }
+  >();
+  let frame = 0;
   const sync = () => {
-    if (pane.hidden) return;
-    const rect = content.getBoundingClientRect();
-    if (!collapsed) size = { width: rect.width, height: rect.height };
-    void host.layout({ x: rect.x, y: rect.y, ...size, collapsed }).catch(console.error);
+    frame = 0;
+    const floats = Array.from(
+      panes.app.querySelectorAll<HTMLElement>(".workspace-pane.floating:not([hidden])"),
+    );
+    for (const [id, item] of active) {
+      const rect = item.pane.body.getBoundingClientRect();
+      const stack = item.pane.element.closest(".pane-stack")?.getBoundingClientRect();
+      const layout: PreviewLayout = {
+        x: rect.x,
+        y: Math.max(rect.y, stack?.top ?? rect.y),
+        width: rect.width,
+        height: Math.max(
+          0,
+          Math.min(rect.bottom, stack?.bottom ?? rect.bottom) -
+            Math.max(rect.top, stack?.top ?? rect.top),
+        ),
+        collapsed: false,
+      };
+      layout.collapsed =
+        layout.width < 1 || layout.height < 1 || item.pane.element.classList.contains("moving");
+      layout.covered = !layout.collapsed && covered(item.pane.element, layout, floats);
+      const signature = JSON.stringify(layout);
+      if (signature !== item.previous) {
+        item.previous = signature;
+        item.covered = !!layout.covered;
+        if (!layout.covered) item.pane.body.style.backgroundImage = "";
+        void host
+          .layout(id, layout)
+          .then((image) => {
+            if (image && item.covered) item.pane.body.style.backgroundImage = `url("${image}")`;
+          })
+          .catch(console.error);
+      }
+    }
   };
-  const observer = new ResizeObserver(sync);
-  observer.observe(pane);
-  const unsubscribe = host.subscribe((title) => {
-    pane.hidden = title === null;
+  const schedule = () => {
+    if (active.size && !frame) frame = requestAnimationFrame(sync);
+  };
+  const observer = new ResizeObserver(schedule);
+  observer.observe(panes.app);
+  const abort = new AbortController();
+  panes.app.addEventListener("pane-layout", schedule, { signal: abort.signal });
+  window.addEventListener("scroll", schedule, { capture: true, signal: abort.signal });
+  const unsubscribe = host.subscribe(({ id, title, saved }) => {
+    const old = active.get(id);
+    if (old) {
+      observer.unobserve(old.pane.body);
+      old.pane.remove();
+    }
+    active.delete(id);
     if (title === null) return;
-    titleElement.textContent = title;
-    collapsed = false;
-    pane.classList.remove("collapsed");
-    pane.style.width = "640px";
-    pane.style.height = "524px";
-    collapse.innerHTML = icon("M5 12h14");
-    collapse.setAttribute("aria-label", "Collapse preview");
-    sync();
+    const close = () => void host.layout(id, null).catch(console.error);
+    const pane = panes.register({
+      id: `preview/${id}`,
+      title,
+      place: "floating",
+      height: 518,
+      width: 642,
+      saved: saved ?? { x: 24 + 24 * (active.size % 8), y: 64 + 24 * (active.size % 8) },
+      persist: (state) => void host.save(id, state).catch(console.error),
+      close,
+    });
+    pane.element.classList.add("preview-pane");
+    pane.header.classList.add("preview-header");
+    active.set(id, { pane, previous: "", covered: false });
+    observer.observe(pane.body);
+    schedule();
   });
-  collapse.onclick = () => {
-    collapsed = !collapsed;
-    pane.classList.toggle("collapsed", collapsed);
-    pane.style.height = collapsed ? "36px" : `${size.height + 44}px`;
-    collapse.innerHTML = icon(collapsed ? "M5 12h14M12 5v14" : "M5 12h14");
-    collapse.setAttribute("aria-label", collapsed ? "Expand preview" : "Collapse preview");
-    sync();
-  };
-  close.onclick = () => {
-    pane.hidden = true;
-    void host.layout(null).catch(console.error);
-  };
-  header.onpointerdown = (event) => {
-    if ((event.target as Element).closest("button")) return;
-    const rect = pane.getBoundingClientRect();
-    const dx = event.clientX - rect.x,
-      dy = event.clientY - rect.y;
-    header.setPointerCapture(event.pointerId);
-    header.onpointermove = (move) => {
-      pane.style.left = `${Math.max(0, Math.min(innerWidth - 100, move.clientX - dx))}px`;
-      pane.style.top = `${Math.max(0, Math.min(innerHeight - 36, move.clientY - dy))}px`;
-      sync();
-    };
-    header.onpointerup = header.onpointercancel = () => {
-      header.onpointermove = null;
-    };
-  };
-  pane.addEventListener("keydown", (event) => event.stopPropagation());
-  window.addEventListener("resize", sync);
   return () => {
     unsubscribe();
     observer.disconnect();
-    window.removeEventListener("resize", sync);
-    pane.remove();
+    abort.abort();
+    cancelAnimationFrame(frame);
+    for (const item of active.values()) item.pane.remove();
+    active.clear();
   };
 }

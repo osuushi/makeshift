@@ -34,46 +34,9 @@ canvas {
   touch-action: none;
 }
 #overlay {
+  overflow: clip;
   pointer-events: none;
 }
-header {
-  position: absolute;
-  top: 22px;
-  left: 26px;
-  display: flex;
-  align-items: center;
-  gap: 10px 22px;
-  flex-wrap: wrap;
-  max-width: calc(100% - 210px);
-  pointer-events: none;
-}
-header .brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-header .brand img {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-}
-header strong {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -1px;
-}
-header .document-title {
-  max-width: 45vw;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-header span {
-  color: var(--muted);
-  font-size: 13px;
-}
-header .brand,
-header span,
 .origin,
 .axis,
 .status,

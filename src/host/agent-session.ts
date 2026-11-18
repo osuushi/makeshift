@@ -80,6 +80,8 @@ export class AgentSession {
     this.ipc.attach(window);
     this.window = window;
     this.preview = new AgentPreview(window, () => this.workspace.cwd);
+    this.workspace.beforeSnapshot = () => this.preview?.settled() ?? Promise.resolve();
+    this.workspace.onAdopt = (files) => this.preview?.restore(files);
     window.webContents.on("did-finish-load", () =>
       window.webContents.setIgnoreMenuShortcuts(false),
     );
@@ -265,6 +267,7 @@ export class AgentSession {
     this.preview?.close();
     this.busy = true;
     try {
+      await this.preview?.settled();
       await this.stopProcess();
     } finally {
       this.busy = false;

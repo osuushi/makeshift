@@ -15,7 +15,7 @@ export function installHistoryControls(editor: SketchEditor, app: HTMLElement): 
   const buttons = (["undo", "redo"] as const).map((id) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.append(sketchIcon(id), id === "undo" ? "Undo" : "Redo");
+    button.append(sketchIcon(id));
     button.setAttribute("aria-label", id === "undo" ? "Undo" : "Redo");
     button.onclick = () => void catalog.invoke(id);
     group.append(button);
@@ -29,7 +29,7 @@ export function installHistoryControls(editor: SketchEditor, app: HTMLElement): 
       button.title = tool?.unavailable ?? tool?.label ?? id;
     }
   };
-  app.querySelector("header .brand")?.after(group);
+  app.querySelector(".toolbar-context")?.after(group);
   editor.world.changed.add(update);
   update();
   return () => {
