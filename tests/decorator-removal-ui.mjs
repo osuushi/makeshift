@@ -40,15 +40,14 @@ await withUiRuntimes(
 // beside transform controls and reveals a collapsed Inspector without scrolling the workspace.
 async function selectionShortcut(page, name) {
   const before = (await inspect(page)).document;
-  const shortcut = page.getByRole("button", { name: "Show decorators in Inspector", exact: true });
+  const shortcut = page.getByRole("button", { name: "Show Decorators pane", exact: true });
   await shortcut.waitFor();
   await page
     .locator(".decorator-selection-actions")
     .screenshot({ path: `.cache/sketch-review/${name}-decorator-shortcut.png` });
-  await page.getByRole("button", { name: "Collapse Inspector", exact: true }).click();
+  await page.getByRole("button", { name: "Decorators", exact: true }).click();
   await revealShortcut(page, shortcut);
   await page.getByRole("button", { name: "Decorators", exact: true }).click();
-  await page.getByRole("button", { name: "Collapse Inspector", exact: true }).click();
   await page.setViewportSize({ width: 600, height: 400 });
   await revealShortcut(page, shortcut);
   assert.equal(
@@ -57,9 +56,7 @@ async function selectionShortcut(page, name) {
       .getAttribute("aria-expanded"),
     "true",
   );
-  assert.ok(
-    await page.getByRole("button", { name: "Collapse Inspector", exact: true }).isVisible(),
-  );
+  assert.ok(await page.locator('[data-pane="Decorators"]').isVisible());
   assert.deepEqual((await inspect(page)).document, before, "Shortcut changes no accepted data");
   await page.setViewportSize({ width: 1280, height: 850 });
   await page.getByRole("button", { name: "Remove decorators from selection", exact: true }).click();

@@ -13,6 +13,8 @@ export class AgentWorkspace {
   private timer: ReturnType<typeof setTimeout> | undefined;
   private scanning: Promise<void> | null = null;
   error: string | undefined;
+  beforeSnapshot = () => Promise.resolve();
+  onAdopt: (files: PortableFiles) => void = () => {};
   changed = (): void => {};
   constructor(readonly directory: string) {}
   get cwd(): string | null {
@@ -47,6 +49,7 @@ export class AgentWorkspace {
     this.watcher?.close();
     clearTimeout(this.timer);
     this.root = root;
+    this.onAdopt(files);
     this.error = undefined;
     this.baseline = this.current = workspaceDigest(files);
     if (root) {
@@ -78,6 +81,7 @@ export class AgentWorkspace {
     this.changed();
   }
   async snapshot(): Promise<PortableFiles> {
+    await this.beforeSnapshot();
     return this.root ? workspaceSnapshot(this.root) : {};
   }
   async refresh(): Promise<void> {

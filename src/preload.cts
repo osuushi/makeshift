@@ -132,10 +132,12 @@ contextBridge.exposeInMainWorld("makeshiftSettings", {
 });
 
 contextBridge.exposeInMainWorld("makeshiftPreview", {
-  layout: (value: unknown) => ipcRenderer.invoke("preview-layout", value),
-  subscribe: (callback: (title: string | null) => void) => {
-    const listener = (_event: unknown, title: string | null) => callback(title);
+  layout: (id: string, value: unknown) => ipcRenderer.invoke("preview-layout", id, value),
+  save: (id: string, state: unknown) => ipcRenderer.invoke("preview-placement", id, state),
+  subscribe: (callback: (title: unknown) => void) => {
+    const listener = (_event: unknown, title: unknown) => callback(title);
     ipcRenderer.on("preview-open", listener);
+    void ipcRenderer.invoke("preview-ready").catch(console.error);
     return () => ipcRenderer.removeListener("preview-open", listener);
   },
 });

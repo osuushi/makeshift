@@ -1,6 +1,8 @@
-<!doctype html><meta charset="utf-8"><script type="module">
+<!doctype html><meta charset="utf-8"><main id="app"></main><script type="module">
 import '../src/sketch/style.css';
+import { WorkspacePanes } from '../src/panes/workspace.ts';
 import { installPreviewPane } from '../src/agent/preview-pane.ts';
-
-installPreviewPane();
+const panes = new WorkspacePanes(document.querySelector('#app'));
+for(const title of ["Entities","Tools","Status"])panes.register({id:title,title,place:"left",height:100});
+installPreviewPane(panes);
 </script>
