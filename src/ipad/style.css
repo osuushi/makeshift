@@ -91,7 +91,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
+  right: var(--pane-right, 0px);
   height: 28px;
   background: var(--warning-surface);
   color: var(--danger);
