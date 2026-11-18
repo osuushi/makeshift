@@ -38,13 +38,24 @@ try {
       async (_, { input, root }) => globalThis.previewTest.request(JSON.stringify(input), root),
       { input, root },
     );
+  for (const side of ["left", "right"]) {
+    const dock = page.locator(`.pane-column[data-side="${side}"]`);
+    const rail = dock.locator(".pane-rail");
+    await rail.hover();
+    const bounds = await dock.boundingBox();
+    const handle = await rail.boundingBox();
+    const divider = side === "left" ? bounds.x + bounds.width : bounds.x;
+    assert.ok(Math.abs(handle.x + handle.width / 2 - divider) < 1);
+    assert.notEqual(
+      await rail.evaluate((button) => getComputedStyle(button, "::before").content),
+      "none",
+    );
+  }
+  const previewOpened = app.context().waitForEvent("page");
   await command({ action: "open", directory: "app", title: "Profile editor" });
   await page.getByRole("button", { name: "Profile editor", exact: true }).waitFor();
-  const preview = app
-    .context()
-    .pages()
-    .find((p) => p.url().startsWith("https://preview.local/"));
-  assert.ok(preview);
+  const preview = await previewOpened;
+  await preview.waitForURL("https://preview.local/index.html");
   await preview.getByRole("textbox", { name: "Profile" }).fill("curved");
   await preview.getByRole("textbox", { name: "Profile" }).press("Tab");
   await preview.getByText("Saved", { exact: true }).waitFor();
@@ -108,11 +119,10 @@ try {
     '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100"><rect width="200" height="100" fill="red"/></svg>',
   );
   await writeFile(join(root, "app/index.html"), imagePage(".svg", false));
+  const imageOpened = app.context().waitForEvent("page");
   await command({ action: "open", directory: "app", title: "Fit image" });
-  const imageView = app
-    .context()
-    .pages()
-    .find((p) => p.url().startsWith("https://preview.local/"));
+  const imageView = await imageOpened;
+  await imageView.waitForURL("https://preview.local/index.html");
   await imageView.waitForFunction(() => document.querySelector("img")?.complete);
   const imageFit = await imageView.evaluate(() => {
     const image = document.querySelector("img"),
@@ -153,7 +163,12 @@ try {
   await page.mouse.move(source.x + 40, source.y + 10);
   await page.mouse.down();
   await page.mouse.move(target.x + 40, target.y + 8, { steps: 8 });
+  assert.equal(await page.locator(".pane-drop-available").count(), 2);
+  const marker = page.locator(".pane-drop-marker");
+  const gap = await marker.boundingBox();
+  assert.ok(gap && Math.abs(gap.y + gap.height / 2 - target.y) <= 2);
   await page.mouse.up();
+  assert.equal(await marker.count(), 0);
   const ids = () =>
     page
       .locator('[data-side="left"] .workspace-pane')
@@ -169,6 +184,20 @@ try {
   await app.evaluate(() => globalThis.reopenPreviewDrawing());
   await second.waitFor();
   assert.deepEqual(await ids(), ["Entities", "Status", "preview/second"]);
+  await command({ action: "close", directory: "app" });
+  const rightDock = page.locator('.pane-column[data-side="right"]');
+  await rightDock.locator(".pane-rail").click();
+  const tab = rightDock.locator(".pane-tab");
+  await tab.waitFor();
+  const closed = await tab.boundingBox();
+  const heading = await second.locator(".pane-title").boundingBox();
+  await page.mouse.move(heading.x + 40, heading.y + 10);
+  await page.mouse.down();
+  await page.mouse.move(closed.x + closed.width / 2, closed.y + closed.height / 2, { steps: 8 });
+  await page.locator(".pane-drop-marker.tab").waitFor();
+  await page.mouse.up();
+  await rightDock.locator('[data-pane="preview/second"]').waitFor();
+  assert.equal(await marker.count(), 0);
   console.log(
     "Preview input, JSON, triggers, reload, isolation, dragging, resizing, close, collapsed capture, multiple views and portable dock restoration passed",
   );

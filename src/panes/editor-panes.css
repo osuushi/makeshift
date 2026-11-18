@@ -163,3 +163,14 @@
   font-size: 14px;
   color: var(--text);
 }
+
+/* Entity reordering scrolls the list itself. Give it the full pane body. */
+.pane-content:has(> .entity-viewer) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.pane-content > .entity-viewer {
+  flex: 1;
+  min-height: 0;
+}

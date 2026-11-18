@@ -9,6 +9,7 @@ import {
   paintPane,
   populatePaneMenu,
 } from "./pane.js";
+import { bindPaneDrag } from "./pane-drag.js";
 import "./workspace.css";
 
 export class WorkspacePanes {
@@ -167,68 +168,15 @@ export class WorkspacePanes {
       paintPane(p, this.app);
       this.save(p);
     };
-    this.bindMove(p, fold);
+    bindPaneDrag(
+      this.app,
+      p,
+      this.columns,
+      (side) => this.items(side),
+      fold,
+      (place, before) => this.dock(p, place, before),
+    );
     this.bindResize(p);
-  }
-  private bindMove(p: Pane, fold: () => void) {
-    const { root, title, state } = p;
-    gesture(title, (down) => {
-      const rect = root.getBoundingClientRect();
-      const target = (e: PointerEvent) =>
-        Object.values(this.columns).find((c) => {
-          const r = c.root.getBoundingClientRect();
-          return (
-            e.clientX >= r.left &&
-            e.clientX <= r.right &&
-            e.clientY >= r.top &&
-            e.clientY <= r.bottom
-          );
-        });
-      const ghost = document.createElement("div");
-      ghost.className = "pane-drag-label";
-      ghost.textContent = p.options.title;
-      const clear = () => {
-        ghost.remove();
-        root.classList.remove("moving");
-        this.app.dispatchEvent(new Event("pane-layout"));
-        for (const c of Object.values(this.columns)) c.root.classList.remove("drop-target");
-      };
-      return {
-        move: (_dx, _dy, e) => {
-          if (!root.classList.contains("moving")) {
-            root.classList.add("moving");
-            this.app.dispatchEvent(new Event("pane-layout"));
-          }
-          if (!ghost.isConnected) document.body.append(ghost);
-          ghost.style.left = `${e.clientX + 10}px`;
-          ghost.style.top = `${e.clientY + 10}px`;
-          const hit = target(e);
-          for (const c of Object.values(this.columns))
-            c.root.classList.toggle("drop-target", hit === c);
-        },
-        cancel: clear,
-        end: (dragged, e) => {
-          clear();
-          if (!dragged) return fold();
-          const hit = target(e);
-          if (hit) {
-            const { side } = hit;
-            hit.open();
-            this.fit();
-            const next = this.items(side).find((q) => {
-              const r = q.root.getBoundingClientRect();
-              return q !== p && !q.root.hidden && e.clientY < r.top + r.height / 2;
-            });
-            this.dock(p, side, next?.root);
-          } else {
-            const area = this.app.getBoundingClientRect();
-            state.x = rect.left - area.left + e.clientX - down.clientX;
-            state.y = rect.top - area.top + e.clientY - down.clientY;
-            this.dock(p, "floating");
-          }
-        },
-      };
-    });
   }
   private bindResize(p: Pane) {
     const { root, grip, state } = p;

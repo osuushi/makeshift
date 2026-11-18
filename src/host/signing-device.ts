@@ -4,7 +4,7 @@ import { userInfo } from "node:os";
 import { join } from "node:path";
 import { app, type BrowserWindow, nativeImage, safeStorage } from "electron";
 import type { Author, Grant, TrustDevice, TrustPrompt } from "../security/content-trust.js";
-import { fingerprintTiles } from "../security/fingerprint.js";
+import { fingerprintArtSize, fingerprintBitmap } from "../security/fingerprint.js";
 import { createIdentity, type Identity, signContent } from "../security/identity.js";
 import { fingerprint, type Scope } from "../security/signatures.js";
 import { safeName } from "../security/text.js";
@@ -81,13 +81,10 @@ export function changeGrants(change: (items: Grant[]) => Grant[]) {
   );
 }
 function art(value: string) {
-  const data = Buffer.alloc(17 * 9 * 4);
-  fingerprintTiles(value).forEach((color, i) => {
-    data.writeUInt32LE(Number.parseInt("ff" + color.slice(1), 16), i * 4);
-  });
+  const size = fingerprintArtSize;
   return nativeImage
-    .createFromBitmap(data, { width: 17, height: 9 })
-    .resize({ width: 136, height: 72, quality: "good" });
+    .createFromBitmap(Buffer.from(fingerprintBitmap(value)), { width: size, height: size })
+    .resize({ width: 144, height: 144 });
 }
 export function signingDevice(window: () => BrowserWindow): TrustDevice {
   return {

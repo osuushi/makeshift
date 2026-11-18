@@ -6,8 +6,9 @@
 .security-settings img,
 .content-trust-dialog img {
   display: block;
-  width: 136px;
-  height: 72px;
+  width: 144px;
+  max-width: 100%;
+  height: auto;
 }
 .security-settings code,
 .content-trust-dialog code {

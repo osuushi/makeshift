@@ -49,8 +49,10 @@ try {
   );
   await app.evaluate(({ dialog }) => {
     globalThis.securityMessages = [];
+    globalThis.securityIconSizes = [];
     dialog.showMessageBox = async (_w, options) => {
       globalThis.securityMessages.push(options.message);
+      if (options.icon) globalThis.securityIconSizes.push(options.icon.getSize());
       if (
         options.message === "Use the included agent workspace?" &&
         globalThis.securityMessages.length === 1
@@ -109,6 +111,14 @@ try {
     (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" }))).workspace,
     null,
   );
+  const entities = page.locator('[data-pane="Entities"] .entity-viewer');
+  assert.ok(
+    await entities.evaluate((list) => list.clientHeight === list.parentElement.clientHeight),
+    "the Entities list fills its pane while the agent terminal is open",
+  );
+  assert.deepEqual(await app.evaluate(() => globalThis.securityIconSizes), [
+    { width: 144, height: 144 },
+  ]);
   await page.getByRole("button", { name: "Start", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
   await archivedPreview.waitFor();
