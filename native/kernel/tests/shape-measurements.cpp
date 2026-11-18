@@ -1,4 +1,5 @@
 #include "shape-measurements.h"
+#include "measurement-cache.h"
 #include "kernel.h"
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBndLib.hxx>
@@ -14,6 +15,7 @@
 #include <GeomConvert.hxx>
 #include <OSD_ThreadPool.hxx>
 #include <TopLoc_Location.hxx>
+#include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Compound.hxx>
 #include <TopoDS_Edge.hxx>
@@ -57,6 +59,18 @@ void checkSolids() {
         check(std::abs(volume(shape, 2) - 135) < 1e-9, "Changed axis-specific volume");
     }
 }
+void checkBoundaryKeys() {
+    const auto solid = BRepPrimAPI_MakeBox(2, 3, 4).Shape();
+    const auto edge = TopoDS::Edge(TopExp_Explorer(solid, TopAbs_EDGE).Current());
+    const auto key = measurementKey(solid);
+    check(!key.empty(), "Missing exact source key");
+    BRep_Builder builder;
+    builder.UpdateEdge(edge, 0.002);
+    const auto relaxed = measurementKey(solid);
+    check(relaxed != key, "Changing an edge tolerance reused a source check");
+    builder.SameParameter(edge, false);
+    check(relaxed != measurementKey(solid), "Changing edge parameter correspondence reused a source check");
+}
 }
 int main() {
     OSD_ThreadPool::DefaultPool(4);
@@ -96,4 +110,5 @@ int main() {
     builder.Add(compound, BRepBuilderAPI_MakeVertex(gp_Pnt(500, 375, 210)).Vertex());
     checkBounds(compound);
     checkSolids();
+    checkBoundaryKeys();
 }

@@ -91,6 +91,11 @@ solids. The face cache holds up to 512 entries and 16 MiB of keys, the solid cac
 up to four entries and 8 MiB. Control hulls can reject disjoint thickness rays or
 cap travel. Transform handles still use tight geometric bounds.
 
+General offsets and shells prepare private copies of their inputs. When the exact
+boundary and self-intersection checks succeed without changing any geometry or
+tolerance, the calculator remembers that result for up to two source solids
+(8 MiB of keys). Retargeting still checks the newly constructed solid.
+
 Display meshes/outlines and planar frames derive from the exact geometry. Body
 edge polylines use the active face triangulation's boundary nodes so curved
 chords cannot sink beneath independently sampled surface triangles. Exact curve

@@ -12,7 +12,7 @@
 
 // Exact geometry can be read, copied and meshed repeatedly. Binary BReps
 // include placement, support, trims and tolerances, excluding display meshes.
-// The serial calculator owns only measured values and their full keys.
+// The serial calculator owns derived values and their full geometry keys.
 inline std::string measurementKey(const TopoDS_Shape& shape) {
     std::ostringstream stream(std::ios::out | std::ios::binary);
     try {
@@ -27,7 +27,7 @@ template<class Value> class MeasurementCache {
 public:
     struct Entry {
         std::string key;
-        Value value;
+        Value value{};
     };
     MeasurementCache(size_t capacity, size_t byteLimit) : capacity(capacity), byteLimit(byteLimit) {}
     std::shared_ptr<Entry> lookup(const TopoDS_Shape& shape) {

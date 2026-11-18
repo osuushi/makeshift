@@ -1,6 +1,7 @@
 #include "calculation-failure.h"
 #include "timing.h"
 #include "offset-geometry.h"
+#include "measurement-cache.h"
 #include "shape-measurements.h"
 #include <OSD_ThreadPool.hxx>
 #include "offset-repair.h"
@@ -23,6 +24,7 @@
 
 namespace offset_geometry {
 namespace {
+MeasurementCache<bool> preciseSources(2, 8 * 1024 * 1024);
 void require(bool condition, const std::string& message) {
     if (!condition) throw InvalidGeometryFailure(message);
 }
@@ -58,6 +60,7 @@ std::string encoding(const TopoDS_Shape& shape) {
 Operand prepare(const Operand& original, const char* context, std::vector<TopoDS_Face>* selected,
                 bool forceCopy) {
     if (!freeform(original.shape) && !forceCopy) return original;
+    KernelTiming timing("offset-source");
     // Recompute parameter correspondence, retaining the spatial supports/curves.
     // Never mutate the accepted operand or take orientation from local copy history.
     BRepBuilderAPI_Copy copy(original.shape, true, false);
@@ -76,9 +79,17 @@ Operand prepare(const Operand& original, const char* context, std::vector<TopoDS
     }
     // Preserve an already precise parameterization. Forcing SameParameter on
     // trimmed periodic Boolean edges can replace valid pcurves with invalid ones.
+    const auto checked = preciseSources.lookup(result.shape);
+    if (checked && checked->value) {
+        timing.phase("verified-copy");
+        return result;
+    }
     try {
         tightenGeneratedBoundaries(result.shape, original.shape, false);
         validSolid(result.shape, context);
+        // Only a source that passed without any repair can skip preparation on
+        // another drag target. The result of every edit still gets its own check.
+        if (checked && checked->key == measurementKey(result.shape)) checked->value = true;
         return result;
     } catch (const std::runtime_error&) { /* Repair only when verification requires it. */ }
     BRepLib::SameParameter(result.shape, geometry_policy::parameterCorrespondenceMm, true);
