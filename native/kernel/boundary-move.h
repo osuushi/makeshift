@@ -32,7 +32,9 @@ TopoDS_Face cylinderFace(const TopoDS_Face&, const Edit&, const gp_Cylinder&);
 TopoDS_Face periodicBand(const TopoDS_Face&, const Edit&);
 TopoDS_Face fillFace(const TopoDS_Face&, const std::vector<TopoDS_Edge>&,
                      const std::vector<TopoDS_Wire>&);
-Result reconstruct(const Edit&, const std::vector<SourceEntity>& replacements = {});
+using SolidValidator = void(const TopoDS_Shape&, const char*);
+Result reconstruct(const Edit&, const std::vector<SourceEntity>& replacements = {},
+                   SolidValidator* validateSolid = nullptr);
 bool sameBoundary(const TopoDS_Edge&, const TopoDS_Edge&);
 }
 std::vector<Result> reconnectBoundaries(const Tree&, const std::vector<Operand>&,

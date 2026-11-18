@@ -1,6 +1,7 @@
 #include "calculation-failure.h"
 #include "timing.h"
 #include "offset-geometry.h"
+#include "shape-measurements.h"
 #include <OSD_ThreadPool.hxx>
 #include "offset-repair.h"
 #include <BRepAdaptor_Surface.hxx>
@@ -9,8 +10,6 @@
 #include <BRep_Tool.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
-#include <BRepGProp.hxx>
-#include <GProp_GProps.hxx>
 #include <BOPAlgo_ArgumentAnalyzer.hxx>
 #include <Geom_OffsetSurface.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
@@ -26,10 +25,6 @@ namespace offset_geometry {
 namespace {
 void require(bool condition, const std::string& message) {
     if (!condition) throw InvalidGeometryFailure(message);
-}
-double mass(const TopoDS_Shape& shape) {
-    GProp_GProps p; BRepGProp::VolumeProperties(shape, p);
-    return p.Mass();
 }
 std::vector<double> samples(const BRepAdaptor_Surface& surface, bool u) {
     const int count = u ? surface.NbUIntervals(GeomAbs_C2) : surface.NbVIntervals(GeomAbs_C2);
@@ -148,7 +143,7 @@ void validSolid(const TopoDS_Shape& shape, const char* context) {
     BRepCheck_Analyzer validity(shape, true, parallel, true);
     require(validity.IsValid(), std::string(context) + " has invalid boundaries or surface geometry");
     timing.phase("boundary-validity");
-    const double v = mass(shape);
+    const double v = signedSolidMass(shape);
     require(std::isfinite(v) && v > geometry_policy::minimumSolidVolumeMm3,
             std::string(context) + " has collapsed or inverted material");
     BRepClass3d_SolidClassifier classifier(shape);

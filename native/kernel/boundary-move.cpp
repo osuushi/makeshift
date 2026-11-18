@@ -1,9 +1,12 @@
 #include "boundary-move.h"
 #include "boundary-validation.h"
+#include "timing.h"
 #include <BRepBuilderAPI_MakeSolid.hxx>
 #include <BRepBuilderAPI_Sewing.hxx>
 #include <BRepLib.hxx>
+#include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <algorithm>
+#include <map>
 #include <TopoDS_Solid.hxx>
 
 namespace boundary_move {
@@ -18,28 +21,54 @@ TopoDS_Shape sewnFace(const TopoDS_Shape& face, const BRepBuilderAPI_Sewing& sew
             "Cannot continue a reconstructed face through sewing");
     return result;
 }
-void matchEdges(Result& result, const Edit& edit, const TopTools_IndexedMapOfShape& candidates) {
+// Every face in this reconstruction has a one-to-one successor. Only edges
+// between the same continued faces can correspond. Include repeated face
+// uses so periodic seams stay distinct from open or internal boundaries.
+std::vector<int> incidentFaces(const TopTools_ListOfShape& neighbors,
+                               const TopTools_IndexedMapOfShape& faceOrder) {
+    std::vector<int> indices;
+    for (const auto& face : neighbors) {
+        const int i = faceOrder.FindIndex(face);
+        require(i != 0, "Cannot identify a reconnected edge's incident face");
+        indices.push_back(i);
+    }
+    std::sort(indices.begin(), indices.end());
+    return indices;
+}
+void matchEdges(Result& result, const Edit& edit, const TopTools_IndexedMapOfShape& sourceFaces,
+                const TopTools_IndexedMapOfShape& sewnFaces) {
+    TopTools_IndexedDataMapOfShapeListOfShape before, after;
+    TopExp::MapShapesAndAncestors(edit.body->shape, TopAbs_EDGE, TopAbs_FACE, before);
+    TopExp::MapShapesAndAncestors(result.shape, TopAbs_EDGE, TopAbs_FACE, after);
+    std::map<std::vector<int>, std::vector<TopoDS_Edge>> candidates;
+    for (int i = 1; i <= after.Extent(); ++i)
+        candidates[incidentFaces(after.FindFromIndex(i), sewnFaces)].push_back(TopoDS::Edge(after.FindKey(i)));
     TopTools_IndexedMapOfShape assigned;
     for (const auto& source : edit.body->entities) {
         if (source.shape.ShapeType() != TopAbs_EDGE) continue;
         const auto expected = edit.edge(TopoDS::Edge(source.shape));
         TopoDS_Shape match;
-        for (int i = 1; i <= candidates.Extent(); ++i) {
-            if (!sameBoundary(expected, TopoDS::Edge(candidates(i)))) continue;
+        const auto key = incidentFaces(before.FindFromKey(source.shape), sourceFaces);
+        const auto group = candidates.find(key);
+        require(group != candidates.end(), "Reconnection changed edge adjacency");
+        for (const auto& candidate : group->second) {
+            if (!sameBoundary(expected, candidate)) continue;
             require(match.IsNull(), "Ambiguous reconnected edge correspondence");
-            match = candidates(i);
+            match = candidate;
         }
         require(!match.IsNull() && !assigned.Contains(match),
                 "Reconnection did not preserve the requested boundaries");
         assigned.Add(match);
         result.predecessors.push_back({source.id, match});
     }
-    require(assigned.Extent() == candidates.Extent(), "Reconnection changed edge topology");
+    require(assigned.Extent() == after.Extent(), "Reconnection changed edge topology");
 }
 }
-Result reconstruct(const Edit& edit, const std::vector<SourceEntity>& replacements) {
+Result reconstruct(const Edit& edit, const std::vector<SourceEntity>& replacements, SolidValidator* validateSolid) {
+    KernelTiming timing("boundary-reconnection");
     BRepBuilderAPI_Sewing sewing(boundaryDistanceMm);
     std::vector<SourceEntity> expected;
+    TopTools_IndexedMapOfShape sourceFaces;
     for (const auto& entity : edit.body->entities) {
         if (entity.shape.ShapeType() != TopAbs_FACE) continue;
         const auto replacement = std::find_if(replacements.begin(), replacements.end(),
@@ -49,16 +78,21 @@ Result reconstruct(const Edit& edit, const std::vector<SourceEntity>& replacemen
         require(BRepCheck_Analyzer(face).IsValid(), "Reconstructed face is invalid");
         sewing.Add(face);
         expected.push_back({entity.id, face});
+        sourceFaces.Add(entity.shape);
     }
+    timing.phase("faces");
     sewing.Perform();
+    timing.phase("sew");
     const auto shell = sewing.SewedShape();
     require(shell.ShapeType() == TopAbs_SHELL, "Reconnected faces do not form one shell");
     auto solid = BRepBuilderAPI_MakeSolid(TopoDS::Shell(shell)).Solid();
     require(BRepLib::OrientClosedSolid(solid), "Reconnected shell is not closed");
-    boundary_move::valid(solid, "Boundary reconnection");
-    TopTools_IndexedMapOfShape faces, edges, assigned;
+    // Offset checks every boundary, tolerance, orientation and intersection on
+    // this same sewn solid. Run its stricter validator once when requested.
+    (validateSolid ? validateSolid : valid)(solid, "Boundary reconnection");
+    timing.phase("validate");
+    TopTools_IndexedMapOfShape faces, assigned;
     TopExp::MapShapes(solid, TopAbs_FACE, faces);
-    TopExp::MapShapes(solid, TopAbs_EDGE, edges);
     require(faces.Extent() == static_cast<int>(expected.size()), "Reconnection changed face topology");
     Result result{solid, {}, {edit.body->id}, {}};
     for (const auto& item : expected) {
@@ -67,7 +101,8 @@ Result reconstruct(const Edit& edit, const std::vector<SourceEntity>& replacemen
         assigned.Add(match);
         result.predecessors.push_back({item.id, match});
     }
-    matchEdges(result, edit, edges);
+    matchEdges(result, edit, sourceFaces, assigned);
+    timing.phase("correspondence");
     return result;
 }
 }

@@ -2,8 +2,11 @@
 #include "boundary-move.h"
 #include "boundary-validation.h"
 #include "offset-geometry.h"
+#include "shape-measurements.h"
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
+#include <BndLib.hxx>
+#include <Bnd_Box.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
@@ -53,7 +56,62 @@ void rebuildEdges(boundary_move::Edit& edit, const std::vector<Rim>& rims) {
         } else edit.edges.push_back(TopoDS::Edge(BRepBuilderAPI_Copy(edge).Shape()));
     }
 }
-Result extend(const Operand& body, const TopoDS_Face& cap, double distance) {
+// A disk swept between the two coaxial circles stays inside their union box.
+bool clearTravel(const Operand& body, const TopoDS_Face& cap, const Rim& rim,
+                 const TopoDS_Face& wall) {
+    Bnd_Box swept;
+    BndLib::Add(BRepAdaptor_Curve(rim.source).Circle(), boundary_move::boundaryDistanceMm, swept);
+    BndLib::Add(rim.next, boundary_move::boundaryDistanceMm, swept);
+    for (const auto& entity : body.entities) {
+        if (entity.shape.ShapeType() != TopAbs_FACE || cap.IsSame(entity.shape) || wall.IsSame(entity.shape)) continue;
+        const auto box = conservativeFaceBounds(TopoDS::Face(entity.shape));
+        if (box.IsVoid() || !box.IsOut(swept)) return false;
+    }
+    return true;
+}
+struct ContinuedWall {
+    Rim rim;
+    SourceEntity replacement;
+    TopoDS_Face original;
+};
+ContinuedWall continueWall(const Operand& body, const TopoDS_Face& cap, const gp_Pln& plane,
+                           const gp_Vec& travel, const TopoDS_Edge& edge) {
+    const BRepAdaptor_Curve curve(edge);
+    require(curve.GetType() == GeomAbs_Circle && BRep_Tool::IsClosed(edge), "Cap requires complete circular rims");
+    const SourceEntity* wall = nullptr;
+    for (const auto& entity : body.entities) {
+        if (entity.shape.ShapeType() != TopAbs_FACE || entity.shape.IsSame(cap)) continue;
+        TopTools_IndexedMapOfShape edges; TopExp::MapShapes(entity.shape, TopAbs_EDGE, edges);
+        if (!edges.Contains(edge)) continue;
+        require(!wall && edges.Extent() == 3, "Cap requires a single uninterrupted wall at each rim");
+        wall = &entity;
+    }
+    require(wall, "Cap rim has no adjoining wall");
+    const auto face = TopoDS::Face(wall->shape);
+    const BRepAdaptor_Surface support(face);
+    require(support.GetType() == GeomAbs_Cone, "Cap continuation requires conical supports");
+    const auto cone = support.Cone();
+    require(cone.Axis().IsParallel(plane.Axis(), 1e-10), "Cap must be perpendicular to its cone");
+    auto circle = curve.Circle();
+    const double axial = travel.Dot(gp_Vec(cone.Axis().Direction()));
+    circle.SetRadius(circle.Radius() + axial * std::tan(cone.SemiAngle()));
+    require(circle.Radius() > 1e-7, "Cap continuation crosses the cone apex");
+    circle.Translate(travel);
+
+    double low = support.FirstVParameter(), high = support.LastVParameter();
+    const double atLow = plane.Distance(support.Value(support.FirstUParameter(), low));
+    const double atHigh = plane.Distance(support.Value(support.FirstUParameter(), high));
+    if (atLow < atHigh) low += axial / std::cos(cone.SemiAngle());
+    else high += axial / std::cos(cone.SemiAngle());
+    require(high - low > 1e-7, "Cap continuation collapses the wall");
+    // Reuse the infinite analytic support, not an old rectangular trim that
+    // would clamp the continuing seam to the original cap.
+    BRepBuilderAPI_MakeFace replacement(new Geom_ConicalSurface(cone), support.FirstUParameter(),
+        support.LastUParameter(), low, high, 1e-7);
+    require(replacement.IsDone(), "Cannot continue the conical support");
+    return {{edge, circle}, {wall->id, replacement.Face()}, face};
+}
+Result extend(const Operand& body, const TopoDS_Face& cap, double distance, bool requireClearTravel) {
     const auto plane = BRepAdaptor_Surface(cap).Plane();
     auto normal = gp_Vec(plane.Position().XDirection()).Crossed(gp_Vec(plane.Position().YDirection()));
     if (cap.Orientation() == TopAbs_REVERSED) normal.Reverse();
@@ -61,49 +119,21 @@ Result extend(const Operand& body, const TopoDS_Face& cap, double distance) {
     boundary_move::Edit edit;
     edit.body = &body;
     TopExp::MapShapes(cap, TopAbs_EDGE, edit.rigidEdges);
+    if (requireClearTravel) require(edit.rigidEdges.Extent() == 1, "Isolated cap requires one circular rim");
     TopExp::MapShapes(cap, TopAbs_VERTEX, edit.movedVertices);
     TopExp::MapShapes(body.shape, TopAbs_EDGE, edit.sourceEdges);
     std::vector<Rim> rims;
     std::vector<SourceEntity> replacements;
     for (int i = 1; i <= edit.rigidEdges.Extent(); ++i) {
         const auto edge = TopoDS::Edge(edit.rigidEdges(i));
-        const BRepAdaptor_Curve curve(edge);
-        require(curve.GetType() == GeomAbs_Circle && BRep_Tool::IsClosed(edge), "Cap requires complete circular rims");
-        const SourceEntity* wall = nullptr;
-        for (const auto& entity : body.entities) {
-            if (entity.shape.ShapeType() != TopAbs_FACE || entity.shape.IsSame(cap)) continue;
-            TopTools_IndexedMapOfShape edges; TopExp::MapShapes(entity.shape, TopAbs_EDGE, edges);
-            if (!edges.Contains(edge)) continue;
-            require(!wall && edges.Extent() == 3, "Cap requires a single uninterrupted wall at each rim");
-            wall = &entity;
-        }
-        require(wall, "Cap rim has no adjoining wall");
-        const auto face = TopoDS::Face(wall->shape);
-        const BRepAdaptor_Surface support(face);
-        require(support.GetType() == GeomAbs_Cone, "Cap continuation requires conical supports");
-        const auto cone = support.Cone();
-        require(cone.Axis().IsParallel(plane.Axis(), 1e-10), "Cap must be perpendicular to its cone");
-        auto circle = curve.Circle();
-        const double axial = travel.Dot(gp_Vec(cone.Axis().Direction()));
-        circle.SetRadius(circle.Radius() + axial * std::tan(cone.SemiAngle()));
-        require(circle.Radius() > 1e-7, "Cap continuation crosses the cone apex");
-        circle.Translate(travel);
-        rims.push_back({edge, circle});
-        double low = support.FirstVParameter(), high = support.LastVParameter();
-        const double atLow = plane.Distance(support.Value(support.FirstUParameter(), low));
-        const double atHigh = plane.Distance(support.Value(support.FirstUParameter(), high));
-        if (atLow < atHigh) low += axial / std::cos(cone.SemiAngle());
-        else high += axial / std::cos(cone.SemiAngle());
-        require(high - low > 1e-7, "Cap continuation collapses the wall");
-        // Reuse the infinite analytic support, not an old rectangular trim that
-        // would clamp the continuing seam to the original cap.
-        BRepBuilderAPI_MakeFace replacement(new Geom_ConicalSurface(cone), support.FirstUParameter(),
-            support.LastUParameter(), low, high, 1e-7);
-        require(replacement.IsDone(), "Cannot continue the conical support");
-        replacements.push_back({wall->id, replacement.Face()});
+        const auto wall = continueWall(body, cap, plane, travel, edge);
+        if (requireClearTravel)
+            require(clearTravel(body, cap, wall.rim, wall.original), "Cap travel may contact another face");
+        rims.push_back(wall.rim);
+        replacements.push_back(wall.replacement);
     }
     rebuildEdges(edit, rims);
-    auto result = boundary_move::reconstruct(edit, replacements);
+    auto result = boundary_move::reconstruct(edit, replacements, offset_geometry::validSolid);
     for (const auto& entity : body.entities) {
         if (entity.shape.ShapeType() != TopAbs_FACE) continue;
         const auto next = std::find_if(result.predecessors.begin(), result.predecessors.end(), [&](const auto& e) { return e.id == entity.id; });
@@ -114,14 +144,14 @@ Result extend(const Operand& body, const TopoDS_Face& cap, double distance) {
             result.selectedFaces.push_back(face);
         } else checkUnselectedSupport(TopoDS::Face(entity.shape), face);
     }
-    offset_geometry::validSolid(result.shape, "Conical cap offset");
-    checkOffsetVolume(body.shape, result.shape, distance);
+    result.exactVolume = checkOffsetVolume(body.shape, result.shape, distance, {}, -1, &result.exactBounds);
     return result;
 }
 }
-std::optional<Result> conicalCapOffset(const Operand& body, const std::vector<TopoDS_Face>& faces, double distance) {
+std::optional<Result> conicalCapOffset(const Operand& body, const std::vector<TopoDS_Face>& faces,
+                                      double distance, bool requireClearTravel) {
     if (faces.size() != 1 || BRepAdaptor_Surface(faces[0]).GetType() != GeomAbs_Plane) return std::nullopt;
-    try { return extend(body, faces[0], distance); }
+    try { return extend(body, faces[0], distance, requireClearTravel); }
     catch (const Standard_Failure&) { return std::nullopt; }
     catch (const std::runtime_error&) { return std::nullopt; }
 }

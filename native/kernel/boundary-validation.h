@@ -5,6 +5,7 @@
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepGProp.hxx>
 #include <GProp_GProps.hxx>
+#include <OSD_ThreadPool.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopTools_IndexedMapOfShape.hxx>
@@ -38,8 +39,10 @@ inline void valid(const TopoDS_Shape& shape, const char* stage) {
     require(std::isfinite(volume) && volume > geometry_policy::minimumSolidVolumeMm3,
             "Expected positive volume");
     BOPAlgo_ArgumentAnalyzer check;
-    check.SetShape1(shape); check.SelfInterMode() = true; check.Perform();
-    require(!check.HasFaulty(), "Self-interference");
+    check.SetShape1(shape); check.SelfInterMode() = true;
+    check.SetRunParallel(OSD_ThreadPool::DefaultPool()->HasThreads());
+    check.Perform();
+    require(!check.HasErrors() && !check.HasFaulty(), "Self-interference");
 }
 inline Faces faces(const TopoDS_Shape& shape) {
     Faces result;

@@ -1,5 +1,5 @@
 #include "offset-thickness-ray.h"
-#include <BRepBndLib.hxx>
+#include "shape-measurements.h"
 #include <Bnd_Box.hxx>
 #include <IntCurvesFace_Intersector.hxx>
 #include <TopExp.hxx>
@@ -19,7 +19,10 @@ struct FaceRay {
     Bnd_Box bounds;
     std::unique_ptr<IntCurvesFace_Intersector> tool;
     explicit FaceRay(const TopoDS_Face& value) : face(value) {
-        BRepBndLib::AddOptimal(face, bounds, false, true);
+        // Only a rejection filter. A loose geometry box can cost an extra
+        // intersection; computing precise trimmed spline extrema for every
+        // possible obstruction can cost more than all the rays combined.
+        bounds = conservativeFaceBounds(face);
         bounds.Enlarge(tolerance);
     }
     IntCurvesFace_Intersector& intersect(const gp_Lin& ray, double end) {

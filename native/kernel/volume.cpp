@@ -1,10 +1,11 @@
 #include "kernel.h"
+#include "measurement-cache.h"
 #include "timing.h"
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
 #include <ShapeUpgrade_ShapeDivideClosed.hxx>
 #include <Geom_BSplineSurface.hxx>
-#include <BRepBndLib.hxx>
+#include "shape-measurements.h"
 #include <BRepGProp.hxx>
 #include <Bnd_Box.hxx>
 #include <GProp_GProps.hxx>
@@ -84,8 +85,23 @@ std::array<int, 3> integrationAxes(const TopoDS_Shape& shape, const double* lo, 
     }
     return axes;
 }
+struct Integrals {
+    std::optional<double> signedMass, volume;
+    std::optional<std::array<double, 6>> bounds;
+};
+using SolidCache = MeasurementCache<Integrals>;
+SolidCache integrals(4, 8 * 1024 * 1024);
+
+std::shared_ptr<SolidCache::Entry> solidMeasurements(const TopoDS_Shape& shape) {
+    if (shape.IsNull() || shape.ShapeType() != TopAbs_SOLID) return nullptr;
+    for (TopExp_Explorer it(shape, TopAbs_FACE); it.More(); it.Next()) {
+        const auto type = BRepAdaptor_Surface(TopoDS::Face(it.Current())).GetType();
+        if (type == GeomAbs_BSplineSurface || type == GeomAbs_BezierSurface) return integrals.lookup(shape);
+    }
+    return nullptr;
 }
-double volume(const TopoDS_Shape& input, int referenceAxis,
+
+double integrateVolume(const TopoDS_Shape& input, int referenceAxis,
               std::optional<std::array<double, 6>>* exactBounds) {
     KernelTiming timing("volume");
     if (exactBounds) exactBounds->reset();
@@ -99,7 +115,7 @@ double volume(const TopoDS_Shape& input, int referenceAxis,
     double error;
     if (planar) error = BRepGProp::VolumeProperties(shape, props, 1e-10);
     else {
-        Bnd_Box bounds; BRepBndLib::AddOptimal(input, bounds, false, false);
+        const auto bounds = exactShapeBounds(input);
         timing.phase("bounds");
         if (bounds.IsVoid()) return 0;
         double lo[3], hi[3]; bounds.Get(lo[0], lo[1], lo[2], hi[0], hi[1], hi[2]);
@@ -130,4 +146,26 @@ double volume(const TopoDS_Shape& input, int referenceAxis,
     timing.phase("integrate");
     if (!std::isfinite(value)) throw std::runtime_error("Non-finite solid volume");
     return value;
+}
+
+}
+
+double signedSolidMass(const TopoDS_Shape& shape) {
+    const auto entry = solidMeasurements(shape);
+    if (entry && entry->value.signedMass) return *entry->value.signedMass;
+    GProp_GProps props;
+    BRepGProp::VolumeProperties(shape, props);
+    const double mass = props.Mass();
+    if (entry && std::isfinite(mass)) entry->value.signedMass = mass;
+    return mass;
+}
+
+double volume(const TopoDS_Shape& shape, int referenceAxis,
+              std::optional<std::array<double, 6>>* exactBounds) {
+    const auto entry = referenceAxis < 0 ? solidMeasurements(shape) : nullptr;
+    if (!entry) return integrateVolume(shape, referenceAxis, exactBounds);
+    auto& cached = entry->value;
+    if (!cached.volume) cached.volume = integrateVolume(shape, referenceAxis, &cached.bounds);
+    if (exactBounds) *exactBounds = cached.bounds;
+    return *cached.volume;
 }

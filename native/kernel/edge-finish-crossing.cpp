@@ -6,7 +6,7 @@
 #include "offset-repair.h"
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
-#include <BRepBndLib.hxx>
+#include "shape-measurements.h"
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
@@ -151,8 +151,7 @@ ShelfCarrier carrierFor(const Operand& body, const TopoDS_Face& shelf, const std
     const auto plane = BRepAdaptor_Surface(shelf).Plane();
     auto normal = gp_Vec(plane.Position().XDirection()).Crossed(gp_Vec(plane.Position().YDirection()));
     if (shelf.Orientation() == TopAbs_REVERSED) normal.Reverse();
-    Bnd_Box bounds;
-    BRepBndLib::AddOptimal(body.shape, bounds, false, false);
+    const auto bounds = exactShapeBounds(body.shape);
     const double depth = std::max(2 * size, 2 * std::sqrt(bounds.SquareExtent()));
     const auto vector = normal * (adding ? depth : -depth);
     BRepPrimAPI_MakePrism prism(carrierFace(shelf, copy, adding, depth), vector, false, true);

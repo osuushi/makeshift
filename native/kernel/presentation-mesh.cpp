@@ -1,6 +1,7 @@
 #include "presentation-mesh.h"
 #include "timing.h"
-#include <BRepBndLib.hxx>
+#include "shape-measurements.h"
+#include "presentation-origins.h"
 #include <BRepGProp.hxx>
 #include <BRepTools.hxx>
 #include <GProp_GProps.hxx>
@@ -24,15 +25,7 @@
 
 namespace {
 void xyz(std::ostream& out, const gp_XYZ& p) { out << '[' << p.X() << ',' << p.Y() << ',' << p.Z() << ']'; }
-void sources(std::ostream& out, const TopoDS_Shape& shape, const Result& result) {
-    std::set<std::string> ids;
-    for (const auto& source : result.predecessors)
-        if (source.shape.IsSame(shape)) ids.insert(source.id);
-    out << '[';
-    bool comma = false;
-    for (const auto& id : ids) { if (comma) out << ','; comma = true; out << quoted(id); }
-    out << ']';
-}
+
 
 double triangleArea(const TopoDS_Face& face) {
     TopLoc_Location location;
@@ -73,13 +66,13 @@ void meshPresentation(const TopoDS_Shape& shape, double deflection) {
     for (TopExp_Explorer faces(shape, TopAbs_FACE); faces.More(); faces.Next()) {
         const auto face = TopoDS::Face(faces.Current());
         const double area = triangleArea(face);
-        GProp_GProps surface, boundary;
-        BRepGProp::SurfaceProperties(face, surface);
-        if (area <= surface.Mass() * 1.1) continue;
-        oversized.emplace_back(face, surface.Mass());
+        const double exactArea = measuredSurface(face).Mass();
+        if (area <= exactArea * 1.1) continue;
+        oversized.emplace_back(face, exactArea);
+        GProp_GProps boundary;
         BRepGProp::LinearProperties(face, boundary);
         if (boundary.Mass() > 0)
-            boundaryDeflection = std::min(boundaryDeflection, surface.Mass() / boundary.Mass() * 0.05);
+            boundaryDeflection = std::min(boundaryDeflection, exactArea / boundary.Mass() * 0.05);
     }
     if (boundaryDeflection < deflection) {
         // Coarse chords can cross a thin ring's inner loop, yielding an overlapping
@@ -172,12 +165,9 @@ void presentVisual(std::ostream& out, const Result& result, double deflection) {
     KernelTiming timing("visual-presentation");
     meshPresentation(result.shape, deflection);
     timing.phase("mesh");
-    Bnd_Box bounds;
-    BRepBndLib::AddOptimal(result.shape, bounds, false, false);
-    double values[6];
-    bounds.Get(values[0], values[1], values[2], values[3], values[4], values[5]);
+    const auto bounds = resultBounds(result);
     out << "{\"bounds\":[";
-    for (int i = 0; i < 6; ++i) { if (i) out << ','; out << values[i]; }
+    for (int i = 0; i < 6; ++i) { if (i) out << ','; out << bounds[i]; }
     out << "],\"faces\":[";
     TopTools_IndexedMapOfShape faces, edges;
     TopExp::MapShapes(result.shape, TopAbs_FACE, faces);
@@ -202,6 +192,7 @@ void presentVisual(std::ostream& out, const Result& result, double deflection) {
         presentPlane(out, TopoDS::Face(faces(i)));
     }
     out << "],\"edges\":[";
+    const PresentationOrigins origins(result);
     const auto samples = meshEdges(faces, edges);
     bool comma = false;
     for (size_t i = 0; i < samples.size(); ++i) {
@@ -224,7 +215,7 @@ void presentVisual(std::ostream& out, const Result& result, double deflection) {
     out << "],\"sourceFaces\":[";
     for (int i = 1; i <= faces.Extent(); ++i) {
         if (i > 1) out << ',';
-        sources(out, faces(i), result);
+        origins.write(out, faces(i));
     }
     out << "],\"sourceEdges\":[";
     comma = false;
@@ -232,7 +223,7 @@ void presentVisual(std::ostream& out, const Result& result, double deflection) {
         if (seams.contains(int(i)) || samples[i].size() < 2) continue;
         if (comma) out << ',';
         comma = true;
-        sources(out, edges(int(i) + 1), result);
+        origins.write(out, edges(int(i) + 1));
     }
     out << "]}";
     timing.phase("mesh-json");

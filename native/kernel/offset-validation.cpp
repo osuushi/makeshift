@@ -1,12 +1,14 @@
 #include "calculation-failure.h"
 #include "kernel.h"
+#include "shape-measurements.h"
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepOffset_MakeOffset.hxx>
 #include <BRep_Tool.hxx>
-#include <BRepGProp.hxx>
-#include <GProp_GProps.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
 #include <Geom_RectangularTrimmedSurface.hxx>
+#include <Geom_BSplineSurface.hxx>
+#include <Geom_BezierSurface.hxx>
+#include <BinTools_SurfaceSet.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Vertex.hxx>
@@ -15,8 +17,28 @@
 #include <algorithm>
 #include <stdexcept>
 #include <numbers>
+#include <sstream>
 
 namespace {
+bool sameSupport(const Handle(Geom_Surface)& original, const Handle(Geom_Surface)& next) {
+    if (original == next) return true;
+    if (original.IsNull() || next.IsNull() || original->DynamicType() != next->DynamicType())
+        return false;
+    if (original->DynamicType() != STANDARD_TYPE(Geom_BSplineSurface) &&
+        original->DynamicType() != STANDARD_TYPE(Geom_BezierSurface)) return false;
+    // Both surfaces are in world coordinates. Sewing can copy an unchanged
+    // spline, for which projecting nine points is much costlier than comparing
+    // the actual knots, poles, weights, degrees and periodicity.
+    try {
+        std::ostringstream a, b;
+        BinTools_OStream first(a), second(b);
+        BinTools_SurfaceSet::WriteSurface(original, first);
+        BinTools_SurfaceSet::WriteSurface(next, second);
+        return a && b && a.view() == b.view();
+    } catch (const Standard_Failure&) {
+        return false;
+    }
+}
 bool torusOffsetReachesAxis(const BRepAdaptor_Surface& surface, double radius) {
     // A fillet may use only the outer portion of a spindle torus. Its unused
     // supporting surface can cross the axis without the trimmed face doing so.
@@ -54,6 +76,7 @@ void checkUnselectedSupport(const TopoDS_Face& source, const TopoDS_Face& result
     // may extend a surviving face beyond that temporary domain.
     while (const auto trimmed = Handle(Geom_RectangularTrimmedSurface)::DownCast(original))
         original = trimmed->BasisSurface();
+    if (sameSupport(original, BRep_Tool::Surface(result))) return;
     BRepAdaptor_Surface target(result);
     for (const double u : {0.2, 0.5, 0.8}) for (const double v : {0.2, 0.5, 0.8}) {
         const auto p = target.Value(target.FirstUParameter() * (1-u) + target.LastUParameter() * u,
@@ -65,12 +88,13 @@ void checkUnselectedSupport(const TopoDS_Face& source, const TopoDS_Face& result
 }
 
 double checkOffsetVolume(const TopoDS_Shape& before, const TopoDS_Shape& after, double distance,
-                       const std::vector<TopoDS_Shape>& preservedVertices, int referenceAxis) {
-    GProp_GProps props; BRepGProp::VolumeProperties(after, props);
+                       const std::vector<TopoDS_Shape>& preservedVertices, int referenceAxis,
+                       std::optional<std::array<double, 6>>* exactBounds) {
+    const double signedMass = signedSolidMass(after);
     // Compare like integrations; coarse quadrature on a ruled spline can
     // incorrectly report material loss after a valid small extension.
-    const double oldVolume = volume(before), next = volume(after, referenceAxis);
-    if (props.Mass() <= 1e-9 || next <= 1e-9 || (next - oldVolume) * (distance > 0 ? 1 : -1) < -1e-6)
+    const double oldVolume = volume(before), next = volume(after, referenceAxis, exactBounds);
+    if (signedMass <= 1e-9 || next <= 1e-9 || (next - oldVolume) * (distance > 0 ? 1 : -1) < -1e-6)
         throw InvalidGeometryFailure("Kernel produced invalid geometry: offset inverted material");
     for (TopExp_Explorer v(after, TopAbs_VERTEX); v.More(); v.Next()) {
         const auto vertex = TopoDS::Vertex(v.Current());

@@ -20,6 +20,7 @@
 #include <TopoDS.hxx>
 #include <TopoDS_Compound.hxx>
 #include <algorithm>
+#include <cmath>
 #include <optional>
 
 namespace {
@@ -27,6 +28,44 @@ struct Meshed {
     face_width::Mesh data;
     bool wideWitness = false;
 };
+TopoDS_Compound physicalBoundary(const TopoDS_Face& face, const TopTools_IndexedMapOfShape& edges) {
+    BRep_Builder builder;
+    TopoDS_Compound boundary;
+    builder.MakeCompound(boundary);
+    for (int i = 1; i <= edges.Extent(); ++i) {
+        const auto edge = TopoDS::Edge(edges(i));
+        if (!BRep_Tool::Degenerated(edge) && !BRep_Tool::IsClosed(edge, face))
+            builder.Add(boundary, edge);
+    }
+    return boundary;
+}
+bool wideAt(const BRepAdaptor_Surface& surface, const gp_Pnt2d& uv,
+            const TopoDS_Compound& boundary, double radius) {
+    if (BRepClass_FaceClassifier(surface.Face(), uv, 1e-7).State() != TopAbs_IN)
+        return false;
+    const auto sample = BRepBuilderAPI_MakeVertex(surface.Value(uv.X(), uv.Y())).Vertex();
+    BRepExtrema_DistShapeShape distance(sample, boundary);
+    return distance.IsDone() && distance.Value() > radius + 1e-6;
+}
+bool wideInParameterDomain(const TopoDS_Face& face, double radius) {
+    const BRepAdaptor_Surface surface(face);
+    TopTools_IndexedMapOfShape edges;
+    TopExp::MapShapes(face, TopAbs_EDGE, edges);
+    const auto boundary = physicalBoundary(face, edges);
+    if (!boundary.NbChildren()) return false;
+    for (const auto& [u, v] : {std::pair{0.5, 0.5}, {0.25, 0.25}, {0.75, 0.75},
+                               {0.25, 0.75}, {0.75, 0.25}}) {
+        const gp_Pnt2d uv(std::lerp(surface.FirstUParameter(), surface.LastUParameter(), u),
+                          std::lerp(surface.FirstVParameter(), surface.LastVParameter(), v));
+        gp_Pnt point;
+        gp_Vec du, dv;
+        surface.D1(uv.X(), uv.Y(), point, du, dv);
+        const double area = du.Crossed(dv).SquareMagnitude();
+        if (!std::isfinite(area) || area <= 0) continue;
+        if (wideAt(surface, uv, boundary, radius)) return true;
+    }
+    return false;
+}
 std::optional<Meshed> triangulate(const TopoDS_Face &source, double deflection,
                                   double witnessWidth = 0) {
     const auto face = TopoDS::Face(BRepBuilderAPI_Copy(source, true, false).Shape());
@@ -66,25 +105,14 @@ std::optional<Meshed> triangulate(const TopoDS_Face &source, double deflection,
             result.data.perimeter.push_back({point(nodes(j - 1)), point(nodes(j))});
     }
     if (witnessWidth > 0 && mesh->HasUVNodes() && !result.data.perimeter.empty()) {
-        BRep_Builder builder;
-        TopoDS_Compound boundary;
-        builder.MakeCompound(boundary);
-        for (int i = 1; i <= edges.Extent(); ++i) {
-            const auto edge = TopoDS::Edge(edges(i));
-            if (!BRep_Tool::Degenerated(edge) && !BRep_Tool::IsClosed(edge, face))
-                builder.Add(boundary, edge);
-        }
+        const auto boundary = physicalBoundary(face, edges);
         const BRepAdaptor_Surface surface(face);
         for (int i = 1; i <= mesh->NbTriangles(); i += std::max(1, mesh->NbTriangles() / 16)) {
             int a, b, c;
             mesh->Triangle(i).Get(a, b, c);
             const gp_Pnt2d uv((mesh->UVNode(a).XY() + mesh->UVNode(b).XY() + mesh->UVNode(c).XY()) /
                               3);
-            if (BRepClass_FaceClassifier(face, uv, 1e-7).State() != TopAbs_IN)
-                continue;
-            const auto sample = BRepBuilderAPI_MakeVertex(surface.Value(uv.X(), uv.Y())).Vertex();
-            BRepExtrema_DistShapeShape distance(sample, boundary);
-            if (distance.IsDone() && distance.Value() > witnessWidth / 2 + 1e-6) {
+            if (wideAt(surface, uv, boundary, witnessWidth / 2)) {
                 result.wideWitness = true;
                 break;
             }
@@ -97,6 +125,13 @@ FaceWidth microscopicFaceWidth(const TopoDS_Face &face, double threshold) {
     try {
         if (faceSizeGate(face, 2 * threshold) == FaceSizeGate::safe)
             return FaceWidth::healthy;
+        // The witness is an exact interior surface point and its distance to
+        // every physical boundary. Try the middle of the UV domain and its
+        // quadrants before meshing a face just to propose a sample.
+        try {
+            if (wideInParameterDomain(face, threshold))
+                return FaceWidth::healthy;
+        } catch (const Standard_Failure&) {}
         // Coarse triangles only propose sample locations. A point on the exact
         // trimmed surface and exact perimeter distance prove a wide interior;
         // coarse mesh error cannot accidentally clear a thin face.
