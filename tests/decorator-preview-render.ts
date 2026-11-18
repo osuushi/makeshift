@@ -122,13 +122,10 @@ function checkCoplanarFace(
   face.rotation.y = surface.mesh.rotation.y = 0.35;
   scene.add(face);
   try {
-    surface.clipPlanes = [
-      new THREE.Plane(new THREE.Vector3(0, 0, -1).applyQuaternion(surface.mesh.quaternion), -1e-6),
-    ];
+    surface.adjacent = new Set(["neighbor"]);
     const coincident = pixel([surface]);
     if (coincident.slice(0, 3).some((value) => value < 250))
       throw new Error(`Thread profile leaked through its adjacent coplanar face: ${coincident}`);
-    surface.clipPlanes = undefined;
     face.position.z -= 0.01;
     const protruding = pixel([surface]);
     if (protruding[0] < protruding[1] + 50)
@@ -136,7 +133,7 @@ function checkCoplanarFace(
     if (!face.material.polygonOffset) throw new Error("Face display offset was not restored");
     return coincident;
   } finally {
-    surface.clipPlanes = undefined;
+    surface.adjacent = undefined;
     surface.mesh.rotation.y = 0;
     scene.remove(face);
     face.geometry.dispose();

@@ -6,44 +6,50 @@ import { cross, dot, subtract } from "./cylinder.js";
 import { threadDefinition } from "./thread-settings.js";
 import type { DecoratorInstance } from "./types.js";
 
-/** Every original face is replaced in the occlusion pass by the remaining body mesh.
- * Decorator membership and analytic picking stay unchanged. */
+/** Retain adjacent end faces as depth masks for the visible rim of the original body. */
 export function threadPreviewFaces(document: DisplayDocument, instance: DecoratorInstance) {
   if (instance.definition !== threadDefinition) return [...instance.faces];
-  return (document.bodies ?? [])
-    .filter((body) => instance.faces.some((reference) => reference.body === body.id))
-    .flatMap((body) => body.faces.map((face) => ({ body: body.id, face: face.id })));
+  return (document.bodies ?? []).flatMap((body) => {
+    const ids = new Set(
+      instance.faces.filter((ref) => ref.body === body.id).map((ref) => ref.face),
+    );
+    if (!ids.size) return [];
+    const supports = body.faces.filter((face) => ids.has(face.id));
+    return body.faces
+      .filter((face) => !endPlane(supports, face))
+      .map((face) => ({ body: body.id, face: face.id }));
+  });
 }
 
 /** End planes also clip partial MSAA fragments whose centers exceed the mesh boundary. */
 export function threadPreviewPlanes(faces: readonly Face[], adjacent: readonly Face[]) {
-  return adjacent.flatMap((face) => {
-    const plane = face.plane;
-    if (!plane || !faces.some((support) => support.edges.some((id) => face.edges.includes(id))))
-      return [];
-    const normal = cross(plane.u, plane.v);
-    // Body-wide cuts must not be clipped back to longitudinal flats or oblique boundaries.
-    if (
-      !faces.every((face) => face.cylinder && Math.abs(dot(normal, face.cylinder.axis)) > 1 - 1e-7)
-    )
-      return [];
-    let low = Infinity,
-      high = -Infinity;
-    for (const support of faces)
-      for (let i = 0; i < support.vertices.length; i += 3) {
-        const distance = dot(
-          normal,
-          subtract(support.vertices.slice(i, i + 3) as Vector, plane.origin),
-        );
-        low = Math.min(low, distance);
-        high = Math.max(high, distance);
-      }
-    if (low < -1e-7 && high > 1e-7) return [];
-    const side = high > 1e-7 ? 1 : low < -1e-7 ? -1 : 0;
-    if (!side) return [];
-    const inward = normal.map((component) => component * side) as Vector;
-    return [{ normal: inward, constant: -dot(inward, plane.origin) - 1e-6 }];
-  });
+  return adjacent.flatMap((face) => endPlane(faces, face) ?? []);
+}
+
+function endPlane(faces: readonly Face[], face: Face) {
+  const plane = face.plane;
+  if (!plane || !faces.some((support) => support.edges.some((id) => face.edges.includes(id))))
+    return undefined;
+  const normal = cross(plane.u, plane.v);
+  // Body-wide cuts must not be clipped back to longitudinal flats or oblique boundaries.
+  if (!faces.every((face) => face.cylinder && Math.abs(dot(normal, face.cylinder.axis)) > 1 - 1e-7))
+    return undefined;
+  let low = Infinity,
+    high = -Infinity;
+  for (const support of faces)
+    for (let i = 0; i < support.vertices.length; i += 3) {
+      const distance = dot(
+        normal,
+        subtract(support.vertices.slice(i, i + 3) as Vector, plane.origin),
+      );
+      low = Math.min(low, distance);
+      high = Math.max(high, distance);
+    }
+  if (low < -1e-7 && high > 1e-7) return undefined;
+  const side = high > 1e-7 ? 1 : low < -1e-7 ? -1 : 0;
+  if (!side) return undefined;
+  const inward = normal.map((component) => component * side) as Vector;
+  return { normal: inward, constant: -dot(inward, plane.origin) - 1e-6 };
 }
 
 /** Closure facets are needed for volume clipping, but are not threaded surfaces. */
