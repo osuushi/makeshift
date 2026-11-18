@@ -49,6 +49,8 @@ async function selectionShortcut(page, name) {
   await revealShortcut(page, shortcut);
   await page.getByRole("button", { name: "Decorators", exact: true }).click();
   await page.setViewportSize({ width: 600, height: 400 });
+  // The resize returns before the dock ResizeObserver can apply the compact layout.
+  await page.waitForFunction(() => document.querySelectorAll(".pane-column.closed").length === 2);
   await revealShortcut(page, shortcut);
   assert.equal(
     await page
