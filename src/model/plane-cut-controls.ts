@@ -36,10 +36,8 @@ export class PlaneCutControls {
           finishEdit: () => this.source?.mode !== mode,
           label: mode === "split" ? "Split Body" : "Imprint",
           category: "Solid",
-          aliases:
-            mode === "split"
-              ? ["slice", "bisect", "cut with plane"]
-              : ["split face", "section face"],
+          aliases: mode === "split" ? ["slice", "bisect", "cut with plane"] : ["split face"],
+          related: mode === "imprint" ? ["section face"] : undefined,
           reason: () =>
             this.source?.mode === mode
               ? null

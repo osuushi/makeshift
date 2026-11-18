@@ -110,15 +110,21 @@ For example, **cstr** and **cp** find Construction plane;
 single-character queries only match word prefixes. Rank lexicographically:
 
 1. Available before disabled, even when the disabled match is exact.
-2. Within each group: exact canonical name, exact alias, literal name/alias prefix,
-   word-prefix match, fuzzy match anchored at the name/alias start, other fuzzy match,
-   small typing error, then related-term match.
+2. Within each group, rank an exact canonical name, literal name prefix and
+   name word-prefix match first, in that order. Next rank an exact alias,
+   literal alias prefix and alias word-prefix match. Then rank fuzzy matches
+   anchored at the name or alias start, other fuzzy matches, small typing errors
+   and related-term matches. Within each fuzzy or typing-error tier, name
+   matches precede alias matches.
 3. Within a fuzzy tier, reward word starts (especially the first query character)
    and consecutive characters; penalize gap openings and length. Score the best
    alignment rather than the first possible alignment. **cope** matches Construction
    plane better than **cole** because **p** begins its second word. Quality cannot
    override the preceding tiers. Related terms use the same matching quality.
 4. Stable canonical-name/ID tie break, without usage-history reshuffling.
+
+Use aliases for alternate names such as “split face” for Imprint. Register
+options and inputs such as “plane palette” and “sections” as related terms.
 
 Source observation: fzf's [scoring criteria and constants](https://github.com/junegunn/fzf/blob/ccedd064ca56921a4235219516b3d834f60e7b91/src/algo/algo.go#L40-L155)
 reward word boundaries and consecutive chunks, penalize gaps, and give the first

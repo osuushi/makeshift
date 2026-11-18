@@ -15,26 +15,41 @@ export interface SearchResult {
   score: number;
   explanation: string;
 }
+
+// Match-quality order: literal prefix, word prefixes, anchored fuzzy, internal fuzzy, typo.
+// Exact names use tier 0 and exact aliases use tier 3. Within each fuzzy
+// quality, a name match takes precedence over an alias match.
+const nameTiers = [1, 2, 6, 8, 10];
+const aliasTiers = [4, 5, 7, 9, 11];
+
 function match(tool: ToolResult, query: string): SearchResult | null {
   if (!query) return { tool, tier: 0, score: 0, explanation: "" };
   const name = normalize(tool.label);
   if (name === query) return { tool, tier: 0, score: 0, explanation: "" };
-  const candidates: { value: string; alias: boolean; related: boolean }[] = [
-    { value: tool.label, alias: false, related: false },
-    ...(tool.aliases ?? []).map((value) => ({ value, alias: true, related: false })),
-    ...(tool.related ?? []).map((value) => ({ value, alias: false, related: true })),
+  const candidates = [
+    { value: tool.label, source: "name" as const },
+    ...(tool.aliases ?? []).map((value) => ({ value, source: "alias" as const })),
+    ...(tool.related ?? []).map((value) => ({ value, source: "related" as const })),
   ];
-  const matches = candidates.flatMap(({ value, alias, related }) => {
+  const matches = candidates.flatMap(({ value, source }) => {
     const normalized = normalize(value),
       q = matchQuality(query, normalized);
     if (q === null) return [];
-    const tier = related ? 7 + q.tier : alias && normalized === query ? 1 : 2 + q.tier;
+    let tier = nameTiers[q.tier];
+    let explanation = "";
+    if (source === "alias") {
+      tier = normalized === query ? 3 : aliasTiers[q.tier];
+      explanation = `Also called ${value}`;
+    } else if (source === "related") {
+      tier = 12 + q.tier;
+      explanation = `Related: ${value}`;
+    }
     return [
       {
         tool,
         tier,
         score: q.score,
-        explanation: related ? `Related: ${value}` : alias ? `Also called ${value}` : "",
+        explanation,
       },
     ];
   });

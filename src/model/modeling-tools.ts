@@ -13,7 +13,7 @@ const entries = [
   ["move", "Move", ["translate", "rotate"], []],
   ["fillet", "Fillet", ["round", "rounding"], []],
   ["chamfer", "Chamfer", ["bevel"], []],
-  ["loft", "Loft", ["sections", "blend profiles"], ["smooth", "ruled"]],
+  ["loft", "Loft", ["blend profiles"], ["sections", "smooth", "ruled"]],
   ["revolve", "Revolve", ["revolution", "lathe"], ["screw", "helix"]],
 ] as const;
 export class ModelingTools {

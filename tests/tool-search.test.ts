@@ -97,17 +97,46 @@ test("availability dominates even an exact disabled name", () => {
     ["related", "shell"],
   );
 });
-test("canonical then alias then prefix then fuzzy then related", () => {
+test("direct tool names rank above exact and prefix aliases", () => {
   const tools = [
     tool("related", "E", { related: ["shell"] }),
     tool("fuzzy", "Shel"),
     tool("prefix", "Shell body"),
+    tool("word", "Adjust shell"),
+    tool("alias-prefix", "Other", { aliases: ["shell thickness"] }),
     tool("alias", "Hollow", { aliases: ["shell"] }),
     shell,
   ];
   assert.deepEqual(
     searchTools(tools, "shell").map((r) => r.tool.id),
-    ["shell", "alias", "prefix", "fuzzy", "related"],
+    ["shell", "prefix", "word", "alias", "alias-prefix", "fuzzy", "related"],
+  );
+});
+test("split, plane and section highlight the commands named in the query", () => {
+  const split = tool("split", "Split Body");
+  const imprint = tool("imprint", "Imprint", { aliases: ["split face", "section face"] });
+  const plane = tool("construction-plane", "Construction plane");
+  const settings = tool("settings", "Settings", { aliases: ["plane palette"] });
+  const section = tool("cross-section", "Cross section", { aliases: ["section view"] });
+  const loft = tool("loft", "Loft", { aliases: ["sections"] });
+  const tools = [imprint, split, settings, plane, loft, section];
+  for (const [query, expected] of [
+    ["split", split],
+    ["plane", plane],
+    ["section", section],
+  ] as const) {
+    const [first] = searchTools(tools, query);
+    assert.equal(first.tool.id, expected.id, query);
+    assert.equal(first.explanation, "", query);
+  }
+  assert.equal(searchTools(tools, "split face")[0]?.tool.id, imprint.id);
+});
+test("a fuzzy name match ranks above an alias of the same match quality", () => {
+  const plane = tool("construction-plane", "Construction plane");
+  const duplicate = tool("duplicate", "Duplicate", { aliases: ["copy bodies"] });
+  assert.deepEqual(
+    searchTools([duplicate, plane], "cope").map((result) => result.tool.id),
+    [plane.id, duplicate.id],
   );
 });
 test("multiword queries require all words; unrelated query stays empty", () => {
