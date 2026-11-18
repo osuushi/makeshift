@@ -56,10 +56,18 @@ test("guide discovery yields, coalesces current inputs and discards cancelled wo
     assert.ok(expected.length);
     assert.deepEqual(discovery.update(pointer, true), expected);
     const elsewhere = { x: pointer.x + 10, y: pointer.y + 10 };
-    assert.deepEqual(discovery.update(elsewhere, true), []);
+    assert.deepEqual(
+      discovery.update(elsewhere, true),
+      expected,
+      "Nearby guides stay visible during refresh",
+    );
     tick();
     editor.modeling.targets = [];
-    discovery.update(elsewhere, true);
+    assert.deepEqual(
+      discovery.update(elsewhere, true),
+      [],
+      "Clearing selection invalidates old guides",
+    );
     flush();
     assert.equal(published, 2, "The superseded selection must not publish");
     assert.deepEqual(discovery.update(elsewhere, true), []);

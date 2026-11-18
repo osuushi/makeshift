@@ -2,7 +2,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { modelingKey } from "../sketch/model-selection-state.js";
 import type { Point } from "../sketch/planes.js";
 import type { GuideCandidate } from "./candidates.js";
-import { discoverHoverGuides } from "./hover.js";
+import { discoverHoverGuides, guidePointerRadius } from "./hover.js";
 
 type Schedule = (run: () => void) => () => void;
 
@@ -25,6 +25,7 @@ const background: Schedule = (run) => {
 /** Optional candidate work never runs in a pointer, selection or tool refresh callback. */
 export class GuideDiscovery {
   private key = "";
+  private pointer: Point | null = null;
   private document: SketchEditor["display"] | null = null;
   private cancel: (() => void) | null = null;
   private candidates: GuideCandidate[] = [];
@@ -38,7 +39,6 @@ export class GuideDiscovery {
     const key =
       enabled && pointer
         ? JSON.stringify([
-            pointer,
             e.world.active,
             e.tool,
             e.hover,
@@ -55,12 +55,21 @@ export class GuideDiscovery {
             e.bodiesVisible,
           ])
         : "";
-    if (key === this.key && this.document === e.display) return this.candidates;
+    const sameContext = key === this.key && this.document === e.display;
+    if (sameContext && this.pointer?.x === pointer?.x && this.pointer?.y === pointer?.y)
+      return this.candidates;
     this.cancel?.();
     this.cancel = null;
+    this.pointer = pointer;
     this.key = key;
     this.document = e.display;
-    this.candidates = [];
+    if (!sameContext || !pointer) this.candidates = [];
+    else {
+      this.candidates = this.candidates.filter((candidate) => {
+        const screen = e.world.project(candidate.point);
+        return Math.hypot(screen.x - pointer.x, screen.y - pointer.y) <= guidePointerRadius;
+      });
+    }
     if (!key) return this.candidates;
     const work = discoverHoverGuides(e, pointer);
     const step = () => {
