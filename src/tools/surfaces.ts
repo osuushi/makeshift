@@ -10,6 +10,7 @@ export function installToolSurfaces(
   const toolbox = new Toolbox(editor, pane, (host) => {
     footer = host;
   });
+  app.querySelector(".toolbar-preferences")?.prepend(toolbox.activeToolLabel);
   const search = new ToolMenu(editor, app, toolbox.close);
   search.mountTrigger(footer);
   return () => {

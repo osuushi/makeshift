@@ -255,7 +255,7 @@ The ellipsis menu moves, floats or hides the pane. Its “Show in this dock” g
 other panes into that column. An empty dock offers an Add pane picker.
 Drag a dock rail to set its width or click it to collapse. Portrait tablet layouts keep
 the left tool dock available and reveal the right dock over the canvas. Phone layouts
-use edge tabs on both sides. Returning to a wider layout restores the pinned dock preferences. The agent terminal retains its own drawer.
+use edge tabs on both sides. The toolbar shows the active tool from the toolbox when the left dock is closed. In a narrow toolbar, the tool name starts the second row, with input controls and Settings on the right. Returning to a wider layout restores the pinned dock preferences. The agent terminal retains its own drawer.
 
 Built-in placement, dimensions, order and empty-content preferences persist locally
 outside geometry Undo. Measurements initially shows an empty selection prompt. Other

@@ -172,6 +172,7 @@
   }
 }
 
+.input-mode-trigger .compact-input-label,
 .input-mode-trigger svg {
   display: none;
   width: 18px;
@@ -213,11 +214,63 @@
   }
 }
 
-@container command-strip (max-width: 335px) {
-  .toolbar-context {
-    order: 1;
-  }
+.toolbar-active-tool {
+  display: none;
+  order: -1;
+  flex: 1 1 auto;
+  min-width: min(7ch, 100%);
+  align-items: center;
+  gap: 6px;
+  padding-inline: 4px;
+  font:
+    600 12px / 1.2 system-ui,
+    sans-serif;
+}
+.toolbar-active-tool svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+.toolbar-active-tool span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+#app:has(.pane-column[data-side="left"].closed) .toolbar-preferences {
+  flex-grow: 1;
+}
+#app:has(.pane-column[data-side="left"].closed) .toolbar-active-tool {
+  display: flex;
+}
+@container command-strip (max-width: 455px) {
   .toolbar-preferences {
-    order: 2;
+    flex: 1 0 100%;
+  }
+  .toolbar-active-tool {
+    display: flex;
+    flex-basis: 0;
+  }
+  .input-mode-trigger svg {
+    display: none;
+  }
+  .input-mode-trigger .compact-input-label {
+    display: inline;
+    position: static;
+    width: auto;
+    height: auto;
+    clip-path: none;
+  }
+}
+@container command-strip (max-width: 335px) {
+  .toolbar-context:has(.mode-label:only-child),
+  .toolbar-active-tool svg {
+    display: none;
+  }
+  .workspace-toolbar .touch-control-toggle {
+    margin-inline: 0;
+  }
+  .workspace-toolbar button.input-mode-trigger,
+  .workspace-toolbar .touch-control-toggle button {
+    min-width: 44px;
+    padding-inline: 4px;
   }
 }

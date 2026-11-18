@@ -33,6 +33,10 @@
   color: var(--text);
   box-shadow: 0 8px 24px var(--shadow);
 }
+#control-menu {
+  left: 0;
+  transform: translateX(max(8px, calc(var(--input-menu-edge) - 100%)));
+}
 .control-menu fieldset {
   border: 0;
   margin: 0;

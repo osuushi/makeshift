@@ -10,7 +10,10 @@ export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void
   button.title = "Controls";
   button.className = "input-mode-trigger";
   const modeLabel = document.createElement("span");
-  button.append(toolboxIcon("select"), modeLabel);
+  const compactLabel = document.createElement("span");
+  compactLabel.className = "compact-input-label";
+  compactLabel.textContent = "Input";
+  button.append(toolboxIcon("select"), compactLabel, modeLabel);
   button.setAttribute("aria-expanded", "false");
   const panel = document.createElement("div");
   panel.className = "control-menu";
@@ -59,7 +62,10 @@ export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void
     if (!open) return;
     const bounds = button.getBoundingClientRect();
     panel.style.top = `${bounds.bottom + 8}px`;
-    panel.style.right = `${Math.max(8, window.innerWidth - bounds.right)}px`;
+    panel.style.setProperty(
+      "--input-menu-edge",
+      `${Math.min(window.innerWidth - 8, bounds.right)}px`,
+    );
   });
   panel.addEventListener("toggle", () => {
     const open = panel.matches(":popover-open");

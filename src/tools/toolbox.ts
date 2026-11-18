@@ -6,6 +6,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { type ToolResult, toolCatalog } from "./catalog.js";
 import { borrowToolFocus, restoreToolFocus, toolMenuOpen } from "./menu-focus.js";
 import { ToolboxDrag } from "./toolbox-drag.js";
+import { toolboxIcon, toolboxIconPaths } from "./toolbox-icons.js";
 import { moveToolbox } from "./toolbox-layout.js";
 import { ToolboxReferences } from "./toolbox-references.js";
 import { toolboxRow } from "./toolbox-row.js";
@@ -20,6 +21,7 @@ import "./toolbox.css";
 
 /** A single owned tree; each row launches its remembered leaf or exposes alternatives. */
 export class Toolbox {
+  readonly activeToolLabel = document.createElement("div");
   private root = document.createElement("aside");
   private grid = document.createElement("div");
   private references: ToolboxReferences;
@@ -38,6 +40,7 @@ export class Toolbox {
     app: HTMLElement,
     mountMore: (host: HTMLElement) => void,
   ) {
+    this.activeToolLabel.className = "toolbar-active-tool";
     this.root.className = "toolbox";
     this.root.setAttribute("aria-label", "Toolbox");
     const title = document.createElement("strong");
@@ -122,6 +125,13 @@ export class Toolbox {
     ]);
     if (signature === this.signature || this.drag.dragging) return;
     this.signature = signature;
+    const id = this.activeTool();
+    const label = this.tools.get(id)?.label ?? id;
+    const name = document.createElement("span");
+    name.textContent = label;
+    this.activeToolLabel.title = label;
+    this.activeToolLabel.replaceChildren(name);
+    if (toolboxIconPaths[id]) this.activeToolLabel.prepend(toolboxIcon(id));
     this.close();
     this.grid.replaceChildren(...toolboxTree().items.map((_, index) => this.row([index])));
     this.references.update(this.tools);
@@ -269,6 +279,7 @@ export class Toolbox {
     this.disposePreference();
     this.abort.abort();
     this.editor.world.changed.delete(this.update);
+    this.activeToolLabel.remove();
     this.root.remove();
   }
 }
