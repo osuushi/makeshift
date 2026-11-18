@@ -72,9 +72,10 @@ async function planarNavigation(page) {
   await ordinaryNavigation(
     page,
     async () => {
-      await page.mouse.move(1000, 600);
+      const point = await navigationPoint(page);
+      await page.mouse.move(point.x, point.y);
       await page.mouse.down({ button: "right" });
-      await page.mouse.move(945, 570, { steps: 6 });
+      await page.mouse.move(point.x - 55, point.y - 30, { steps: 6 });
       await page.mouse.up({ button: "right" });
     },
     "Secondary pan",
@@ -99,8 +100,15 @@ async function planarNavigation(page) {
   );
 }
 
+export async function navigationPoint(page) {
+  const viewport = await page.getByLabel("Modeling viewport", { exact: true }).boundingBox();
+  assert.ok(viewport);
+  return { x: viewport.x + viewport.width * 0.8, y: viewport.y + viewport.height * 0.78 };
+}
+
 export async function wheel(page, x, y) {
-  await page.mouse.move(1000, 600);
+  const point = await navigationPoint(page);
+  await page.mouse.move(point.x, point.y);
   await page.mouse.wheel(x, y);
 }
 export async function pinch(page) {
@@ -122,7 +130,8 @@ function gesture(page, type, scale) {
   );
 }
 async function orbit(page, roll = false, cancel = false) {
-  await page.mouse.move(1000, 600);
+  const point = await navigationPoint(page);
+  await page.mouse.move(point.x, point.y);
   await page.keyboard.down("Meta");
   if (roll) await page.keyboard.down("Alt");
   await page.mouse.down();
@@ -139,7 +148,7 @@ async function orbit(page, roll = false, cancel = false) {
       const angle = (i * Math.PI) / 16;
       await page.mouse.move(cx + radius * Math.cos(angle), cy + radius * Math.sin(angle));
     }
-  } else await page.mouse.move(940, 550, { steps: 8 });
+  } else await page.mouse.move(point.x - 60, point.y - 50, { steps: 8 });
   if (cancel) await page.keyboard.press("Escape");
   await page.mouse.up();
   if (roll) await page.keyboard.up("Alt");
@@ -173,7 +182,8 @@ async function noOpNavigation(page) {
   await page.getByRole("button", { name, exact: true }).click();
   await navigationIdle(page);
   await wheel(page, 0, 0);
-  await page.mouse.move(1000, 600);
+  const point = await navigationPoint(page);
+  await page.mouse.move(point.x, point.y);
   await page.keyboard.down("Meta");
   await page.mouse.down();
   await page.keyboard.press("Escape");

@@ -7,7 +7,7 @@ import {
   navigationIdle,
   navigationTips,
 } from "./ui-navigation-history.mjs";
-import { cubeDrag } from "./ui-navigation-inputs.mjs";
+import { cubeDrag, navigationPoint } from "./ui-navigation-inputs.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function temporaryExtrusion(page) {
@@ -80,9 +80,10 @@ export async function navigationDuringAcceptance(page, name) {
       () => window.navigationAcceptanceReady && window.makeshiftInspect().busy,
     );
     const before = await page.evaluate(() => window.makeshiftInspect());
-    await page.mouse.move(1000, 600);
+    const point = await navigationPoint(page);
+    await page.mouse.move(point.x, point.y);
     await page.mouse.down({ button: "right" });
-    await page.mouse.move(965, 580, { steps: 5 });
+    await page.mouse.move(point.x - 35, point.y - 20, { steps: 5 });
     await page.waitForFunction(
       (target) => window.makeshiftInspect().camera.target.some((v, i) => v !== target[i]),
       before.camera.target,
@@ -101,7 +102,7 @@ export async function navigationDuringAcceptance(page, name) {
       () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
     );
     const rebased = await page.evaluate(() => window.makeshiftInspect());
-    await page.mouse.move(920, 550, { steps: 5 });
+    await page.mouse.move(point.x - 80, point.y - 50, { steps: 5 });
     await page.mouse.up({ button: "right" });
     const final = await navigationIdle(page);
     assert.equal((await navigationTips(page)).length, 0);

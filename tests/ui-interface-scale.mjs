@@ -21,13 +21,15 @@ export async function preferencesRoute(page) {
   for (const scale of [0.8, 0.9, 1, 1.1, 1.25, 1.5]) {
     await changeScale(page, scale, scale === 1.25);
     const font = await page
-      .locator(".settings-trigger")
+      .locator('[data-pane="Entities"] .pane-title')
       .evaluate((button) => Number.parseFloat(getComputedStyle(button).fontSize));
-    assert.ok(Math.abs(font - 14 * scale) < 0.05, `Actual CSS interface font scales to ${scale}`);
+    assert.ok(Math.abs(font - 13 * scale) < 0.05, `Actual CSS interface font scales to ${scale}`);
     const cube = await page.locator(".orientation-cube").boundingBox();
+    const cubeSpace = await page.locator(".cube-viewport").boundingBox();
     assert.ok(
-      Math.abs(cube.width - 144 * scale) < 0.03,
-      "Cube dimensions allow CSS subpixel layout rounding",
+      Math.abs(cube.width - Math.min(cubeSpace.width, cubeSpace.height)) < 0.1 &&
+        Math.abs(cube.width - cube.height) < 0.1,
+      "The orientation cube scales to fit its resized pane",
     );
     assert.deepEqual(
       await page.getByLabel("Modeling viewport", { exact: true }).boundingBox(),

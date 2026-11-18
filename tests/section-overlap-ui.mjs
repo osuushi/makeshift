@@ -42,15 +42,22 @@ await withUiRuntimes(async (page, name) => {
     ),
   );
   assert.ok(delta < 4, `Overlap blends both patterns uniformly: maximum RGB error ${delta}`);
+  await centerOrigin(page);
   await chooseTool(page, "cross section", "cross-section");
   await page.getByRole("button", { name: "Choose section plane", exact: true }).click();
   await chooseWidget(page, "XZ");
   await page.getByRole("button", { name: "Done", exact: true }).click();
+  const section = (await inspect(page)).crossSection;
+  assert.ok(
+    section && Math.abs(section.v[2]) === 1,
+    "The visible XZ plane cue establishes the cut",
+  );
   await chooseTool(page, "clear selection", "selection-clear");
   await regionTint(page, await samples(page));
   await profileTint(page);
   await pseudofaceChoice(page);
   await chooseTool(page, "Sketch on XZ", "sketch-xz");
+  await centerOrigin(page);
   await sectionGrid(page);
   await page.keyboard.press("l");
   await drag(page, [-5, 8], [17, 8], ["Shift"]);
@@ -72,6 +79,22 @@ await withUiRuntimes(async (page, name) => {
   );
 });
 
+async function centerOrigin(page) {
+  // The captured camera can put the world origin behind a dock. Use a real pan
+  // to bring the plane cues into the viewport while retaining the captured zoom.
+  const canvas = await page.getByLabel("Modeling viewport", { exact: true }).boundingBox();
+  assert.ok(canvas);
+  const origin = await project(page, [0, 0, 0]);
+  const center = { x: canvas.x + canvas.width / 2, y: canvas.y + canvas.height / 2 };
+  const start = { x: canvas.x + canvas.width * 0.8, y: center.y };
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down({ button: "right" });
+  await page.mouse.move(start.x + center.x - origin.x, start.y + center.y - origin.y, { steps: 8 });
+  await page.mouse.up({ button: "right" });
+  const positioned = await project(page, [0, 0, 0]);
+  assert.ok(Math.hypot(positioned.x - center.x, positioned.y - center.y) < 5);
+}
+
 async function sketchInkContrast(page, surface) {
   const ink = await samples(page, [15, 0, 8], 3);
   const background = await samples(page, [15, 0, 8.5], 3);
@@ -87,7 +110,10 @@ async function samples(page, point = [15.3, 0, 27.2], size = 1, keepPointer = fa
 }
 
 async function pixelPatch(page, point, size, keepPointer = false) {
-  if (!keepPointer) await page.mouse.move(1100, 80);
+  if (!keepPointer) {
+    const canvas = await page.getByLabel("Modeling viewport", { exact: true }).boundingBox();
+    await page.mouse.move(canvas.x + 16, canvas.y + canvas.height * 0.16);
+  }
   const p = await project(page, point);
   const png = await page.screenshot({
     clip: {
@@ -125,7 +151,8 @@ async function pseudofaceChoice(page) {
   const before = await inspect(page);
   await orient(page, [1, -1, 0.5]);
   const bare = await samples(page);
-  const removedPoint = [12, 13, 31];
+  // Sample inside the removed half of Body 1, clear of the chooser and section controls.
+  const removedPoint = [10, 5, 10];
   const removedBare = await samples(page, removedPoint);
   await hold(page, await project(page, [15.3, 0, 27.2]));
   const panel = page.getByRole("dialog", { name: "Choose overlapping geometry" });
@@ -160,17 +187,24 @@ async function pseudofaceChoice(page) {
     bare,
     "Dismissing disambiguation restores section patterns",
   );
+  // The body selection opens transform controls near the chooser anchor.
+  const tintPoint = [10, 0, 25];
+  const tintBare = await samples(page, tintPoint);
   await hold(page, await project(page, [15.3, 0, 27.2]));
   await panel.locator(`button[data-kind="body"][data-key="${bodies[0]}"]`).hover();
   await page.mouse.up();
   assert.deepEqual((await inspect(page)).modelingSelection, [{ kind: "body", body: bodies[0] }]);
-  const selected = await samples(page);
+  const selected = await samples(page, tintPoint);
   assert.ok(
-    selected[2] - selected[0] > bare[2] - bare[0] + 10,
-    `Selected body tints its section pattern blue: ${selected} / ${bare}`,
+    selected[2] - selected[0] > tintBare[2] - tintBare[0] + 10,
+    `Selected body tints its section pattern blue: ${selected} / ${tintBare}`,
   );
   await chooseTool(page, "clear selection", "selection-clear");
-  assert.deepEqual(await samples(page), bare, "Deselecting restores the section pattern");
+  assert.deepEqual(
+    await samples(page, tintPoint),
+    tintBare,
+    "Deselecting restores the section pattern",
+  );
   assert.deepEqual(
     (await inspect(page)).document,
     before.document,
@@ -180,7 +214,8 @@ async function pseudofaceChoice(page) {
 }
 
 async function profileTint(page) {
-  const point = [15.3, 0, 27.2];
+  // Sample inside the closed region, clear of the antialiased boundary ink after panning.
+  const point = [15, 0, 26.5];
   const base = await pixelPatch(page, point, 13);
   const p = await project(page, point);
   await page.mouse.move(p.x, p.y);
@@ -194,7 +229,10 @@ async function profileTint(page) {
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "profile");
   const selected = await pixelPatch(page, point, 13);
   const blueShift = selected.map(([r, , b], i) => b - r - (base[i][2] - base[i][0]));
-  assert.ok(Math.min(...blueShift) > 10, "Selected hex cells have a blue tint");
+  assert.ok(
+    Math.min(...blueShift) > 10,
+    `Selected hex cells have a blue tint: ${Math.min(...blueShift)} to ${Math.max(...blueShift)}`,
+  );
   assert.ok(
     Math.max(...blueShift) - Math.min(...blueShift) > 15,
     "Blue hex lines stand out over the tinted cells",
