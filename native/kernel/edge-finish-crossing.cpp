@@ -77,15 +77,19 @@ void checkSupportSpan(const TopoDS_Face& face, const TopoDS_Edge& spine, const g
     }
     if (!extent) throw std::runtime_error("Cannot bound the edge finish's supporting wall");
 }
+struct ShelfCore {
+    Result solid;
+    bool continuesWalls;
+};
 struct ShelfCarrier {
     Operand body;
     std::vector<TopoDS_Edge> edges;
-    std::vector<Result> cores;
+    std::vector<ShelfCore> cores;
     std::vector<SourceEntity> blends;
     std::set<std::string> consumedEdges;
     bool adding = false;
 };
-void appendSides(const Operand& body, const TopoDS_Face& shelf, const BRepBuilderAPI_Copy& copy,
+bool appendSides(const Operand& body, const TopoDS_Face& shelf, const BRepBuilderAPI_Copy& copy,
                  const TopoDS_Wire& wire, BRepPrimAPI_MakePrism& prism, const gp_Vec& vector,
                  std::vector<SourceEntity>& origins, double size = 0) {
     TopTools_IndexedDataMapOfShapeListOfShape adjacency;
@@ -100,13 +104,13 @@ void appendSides(const Operand& body, const TopoDS_Face& shelf, const BRepBuilde
             if (f.Value().IsSame(shelf)) continue;
             // Certify the extrusion against the exact source support. A tapered
             // or freeform wall must not be replaced by a vertical approximation.
-            if (!sameExtrudedSupport(TopoDS::Face(f.Value()), edge, vector))
-                throw std::runtime_error("Cannot extend the selected edge finish supports");
+            if (!sameExtrudedSupport(TopoDS::Face(f.Value()), edge, vector)) return false;
             if (size) checkSupportSpan(TopoDS::Face(f.Value()), edge, vector, size);
             for (const auto& source : body.entities)
                 if (source.shape.IsSame(f.Value())) origins.push_back({source.id, side});
         }
     }
+    return true;
 }
 TopoDS_Face carrierFace(const TopoDS_Face& shelf, BRepBuilderAPI_Copy& copy, bool adding, double margin) {
     const auto plane = BRepAdaptor_Surface(shelf).Plane();
@@ -130,11 +134,11 @@ void appendCore(ShelfCarrier& result, const Operand& body, const TopoDS_Face& sh
     const auto face = BRepBuilderAPI_MakeFace(plane, TopoDS::Wire(copy.ModifiedShape(wire)), true).Face();
     BRepPrimAPI_MakePrism prism(face, vector, false, true);
     Result core{prism.Shape(), {}, {}};
-    appendSides(body, shelf, copy, wire, prism, vector, core.predecessors);
+    const bool continues = appendSides(body, shelf, copy, wire, prism, vector, core.predecessors);
     for (TopExp_Explorer e(wire, TopAbs_EDGE); e.More(); e.Next())
         for (const auto& entity : body.entities)
             if (entity.shape.IsSame(e.Current())) result.consumedEdges.insert(entity.id);
-    result.cores.push_back(std::move(core));
+    result.cores.push_back({std::move(core), continues});
 }
 ShelfCarrier carrierFor(const Operand& body, const TopoDS_Face& shelf, const std::vector<TopoDS_Edge>& edges,
                         double size, const std::vector<SourceEntity>& continuingBlends) {
@@ -176,8 +180,9 @@ ShelfCarrier carrierFor(const Operand& body, const TopoDS_Face& shelf, const std
     for (TopExp_Explorer w(shelf, TopAbs_WIRE); w.More(); w.Next()) {
         const bool exterior = w.Current().IsSame(outer);
         inner |= !exterior;
-        if (exterior != adding) appendSides(body, shelf, copy, TopoDS::Wire(w.Current()), prism, vector, result.body.entities, size);
-        else appendCore(result, body, shelf, copy, TopoDS::Wire(w.Current()), vector);
+        if (exterior == adding) appendCore(result, body, shelf, copy, TopoDS::Wire(w.Current()), vector);
+        else if (!appendSides(body, shelf, copy, TopoDS::Wire(w.Current()), prism, vector, result.body.entities, size))
+            throw std::runtime_error("Cannot extend the selected edge finish supports");
     }
     if (!inner) throw std::runtime_error("No intervening shelf boundary");
     return result;
@@ -189,8 +194,19 @@ Result cutFinish(const Operand& body, const ShelfCarrier& carrier, double size, 
     // Clip the finish against the opposite wall's exact continuation: preserve
     // inner material on cuts and the outer material boundary on concave fills.
     for (const auto& core : carrier.cores) {
-        cutOrigins.insert(cutOrigins.end(), core.predecessors.begin(), core.predecessors.end());
-        removed = booleanShape(removed, core.shape, carrier.adding ? "intersect" : "subtract", cutOrigins);
+        if (!core.continuesWalls) {
+            // At exact contact the complete finish may fit on the shelf. In
+            // that case it needs no clipping by the opposite wall and makes
+            // no assumption about the continuation of a tapered/freeform wall.
+            std::vector<SourceEntity> unused;
+            const auto outside = booleanShape(removed, core.solid.shape,
+                carrier.adding ? "subtract" : "intersect", unused);
+            if (TopExp_Explorer(outside, TopAbs_SOLID).More())
+                throw std::runtime_error("Edge finish crosses a wall without an exact continuation");
+            continue;
+        }
+        cutOrigins.insert(cutOrigins.end(), core.solid.predecessors.begin(), core.solid.predecessors.end());
+        removed = booleanShape(removed, core.solid.shape, carrier.adding ? "intersect" : "subtract", cutOrigins);
     }
     auto mapped = body.entities;
     mapped.insert(mapped.end(), cutOrigins.begin(), cutOrigins.end());

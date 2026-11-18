@@ -59,13 +59,16 @@ Result build(const Operand& body, const std::vector<TopoDS_Edge>& edges, double 
     operation.SetParams(1e-2, 1e-7, 1e-7, 1e-7, 1e-7, 1e-3);
     return buildWith(operation, body, edges, size, continuingBlends);
 }
-Result normalizedFinish(Result rounded, const Operand& body) {
+Result normalizedFinish(Result rounded, const Operand& body, const std::vector<TopoDS_Edge>& edges) {
+    validateFinishContinuity(body, edges, rounded);
     validateFinishManifold(rounded.shape);
     std::vector<Result> results;
     solids(results, rounded.shape, rounded.predecessors, {body.id});
     if (results.size() != 1) throw GeometricFailure("Edge finish is not feasible at this size");
     simplifySmallFinishes(results.front());
     resolveMicroscopicTopology(results.front());
+    if (!results.front().shape.IsSame(rounded.shape))
+        validateFinishContinuity(body, edges, results.front());
     validateFinishTrimLoops(results.front().shape);
     validateFinishManifold(results.front().shape);
     validateFinishIntersections(results.front().shape);
@@ -129,11 +132,11 @@ Result constructEdgeFinish(const Operand& body, const std::vector<TopoDS_Edge>& 
                            const std::vector<SourceEntity>& continuingBlends) {
     try {
         try {
-            return normalizedFinish(ordinaryFinish(body, edges, radius, chamfer, continuingBlends), body);
+            return normalizedFinish(ordinaryFinish(body, edges, radius, chamfer, continuingBlends), body, edges);
         } catch (const Standard_Failure&) {
         } catch (const std::runtime_error&) {
         }
-        return normalizedFinish(constructCrossingEdgeFinish(body, edges, radius, chamfer, continuingBlends), body);
+        return normalizedFinish(constructCrossingEdgeFinish(body, edges, radius, chamfer, continuingBlends), body, edges);
     } catch (const Standard_Failure& error) {
         if (std::getenv("MAKESHIFT_KERNEL_TIMING")) std::cerr << "edge-finish rejected: " << error.GetMessageString() << "\n";
         throw GeometricFailure("Edge finish is not feasible at this size");

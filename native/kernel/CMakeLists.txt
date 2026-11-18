@@ -30,6 +30,7 @@ target_sources(makeshift-kernel PRIVATE microscopic-topology.cpp microscopic-val
 target_sources(makeshift-kernel PRIVATE small-finishes.cpp)
 target_sources(makeshift-kernel PRIVATE edge-finish-construction.cpp edge-finish-supports.cpp edge-finish-trim.cpp edge-finish-validation.cpp edge-finish-inspection.cpp edge-finish-local.cpp edge-finish-crossing.cpp)
 target_sources(makeshift-kernel PRIVATE edge-finish-trim-loops.cpp)
+target_sources(makeshift-kernel PRIVATE edge-finish-continuity.cpp)
 target_sources(makeshift-kernel PRIVATE boundary-move.cpp boundary-prism.cpp boundary-selection.cpp boundary-edges.cpp boundary-faces.cpp boundary-band.cpp boundary-cylinder.cpp boundary-filling.cpp boundary-polynomial.cpp)
 target_sources(makeshift-kernel PRIVATE offset-collapse.cpp)
 target_sources(makeshift-kernel PRIVATE chamfer-recognition.cpp)
