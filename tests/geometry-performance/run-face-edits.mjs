@@ -133,14 +133,18 @@ if (values["split-depth"] !== undefined) {
 }
 for (const model of models)
   for (const [operation, request] of editCases(model.source, model.bodies)) {
-    const clients = [values.reference, values.kernel]
-      .filter(Boolean)
-      .map((path) => new Client(path, threads));
+    const binaries = [values.reference, values.kernel].filter(Boolean);
+    const clients = [];
     try {
       for (const [index, factor] of [1, 0.9, 1.1, 1].entries()) {
         const samples = [];
         const input = request(mm * factor);
-        for (const client of clients) samples.push(await run(client, input));
+        for (const [i, binary] of binaries.entries()) {
+          // Include process startup in both cold timings. Starting the candidate
+          // before the reference runs would hide its startup on the split tip.
+          clients[i] ??= new Client(binary, threads);
+          samples.push(await run(clients[i], input));
+        }
         const same = samples.every(
           (s) =>
             isDeepStrictEqual(s.first.reply, samples[0].first.reply) &&
