@@ -1,9 +1,17 @@
 import { join } from "node:path";
 import { BrowserWindow, screen } from "electron";
 import type { DocumentCommand } from "../model/document-host.js";
+import { identitySettings } from "../security/settings-api.js";
 import { DocumentIPC } from "./document-ipc.js";
 import { lockInterfaceZoom } from "./interface-zoom.js";
 import { readSettingsSize, settingsTabBounds } from "./settings-bounds.js";
+import {
+  changeGrants,
+  getIdentity,
+  grants,
+  signingUpdate,
+  storeIdentity,
+} from "./signing-device.js";
 
 let settings: BrowserWindow | undefined;
 let toolboxTools: { id: string; label: string; description?: string; unavailable: null }[] = [];
@@ -44,6 +52,8 @@ export async function openSettingsWindow(directory: string, input: unknown): Pro
       nodeIntegration: false,
     },
   });
+  window.webContents.on("will-navigate", (event) => event.preventDefault());
+  window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   const ipc = settingsIPC(window);
   ipc.attach(window);
   settings = window;
@@ -66,6 +76,24 @@ export async function openSettingsWindow(directory: string, input: unknown): Pro
 /** Only tab selection or an explicit scale change applies a new native policy. */
 function settingsIPC(window: BrowserWindow): DocumentIPC {
   const ipc = new DocumentIPC();
+  const security = identitySettings(
+    getIdentity,
+    (id) => signingUpdate(() => storeIdentity(id)),
+    async () => grants(),
+    changeGrants,
+  );
+  ipc.handle("signing-info", () => security.info());
+  ipc.handle("signing-rename", (_e, name: string) => security.rename(name));
+  ipc.handle("signing-forget", (_e, grant: import("../security/content-trust.js").Grant) =>
+    security.forget(grant),
+  );
+  ipc.handle("signing-trust", (_e, grant: import("../security/content-trust.js").Grant) =>
+    security.trust(grant),
+  );
+  ipc.handle("signing-exportKey", (_e, password: string) => security.exportKey(password));
+  ipc.handle("signing-importKey", (_e, data: string, password: string) =>
+    security.importKey(data, password),
+  );
   ipc.handle("settings-close", () => {
     if (!window.isDestroyed()) window.close();
   });

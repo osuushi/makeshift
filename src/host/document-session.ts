@@ -63,11 +63,14 @@ export class DocumentSession {
     private createDocument: (command: "new" | "open", window: BrowserWindow) => Promise<void>,
     private agent: AgentSession,
     remember: (path: string | null) => Promise<void>,
-    write: (path: string, action: () => Promise<void>) => Promise<void>,
+    write: (path: string, action: () => Promise<void>, copy?: boolean) => Promise<void>,
     directory: () => string,
     name: string,
   ) {
-    this.files = new DocumentFiles(owner, agent.workspace, remember, write, directory, name);
+    this.files = new DocumentFiles(owner, agent.workspace, remember, write, directory, name, () => {
+      if (!this.window) throw new Error("Drawing window closed.");
+      return this.window;
+    });
     this.script = new ScriptSession(
       owner,
       async () => {
@@ -80,6 +83,7 @@ export class DocumentSession {
       () => !this.busy && !!this.window && !this.window.isDestroyed(),
       () => this.update(),
     );
+    agent.fileBusy = () => this.busy;
     agent.script = (request, channel) => this.script.request(request, channel);
     agent.cancelScript = () => this.script.cancel();
     this.ipc.handle("agent-script-cancel", async () => {
@@ -267,14 +271,24 @@ export class DocumentSession {
       }
     }
     if (command === "quit") clearTimeout(this.quitTimer);
+    if (this.agent.lifecycleBusy)
+      return { replaced: false, error: "Finish the agent operation first." };
     if (this.busy || !window) return { replaced: false };
     this.busy = true;
     try {
       const quitting = command === "quit" || command === "restart-update";
       await this.script.cancel();
       const view = validateCameraState(camera);
-      if (command === "save" || command === "save-as") {
-        if (await this.files.save(window, command === "save-as", undefined, view))
+      if (command === "save" || command === "save-as" || command === "export-without-workspace") {
+        if (
+          await this.files.save(
+            window,
+            command === "save-as",
+            undefined,
+            view,
+            command === "export-without-workspace",
+          )
+        )
           this.warning = undefined;
       } else if (command === "close" || quitting) {
         if (quitting && !this.quitReply) return { replaced: false };

@@ -16,6 +16,7 @@ import type { ModelRequest } from "../sketch/model-api.js";
 
 /** Local enablement is intentionally absent from archives and Undo snapshots. */
 export class DecoratorSession {
+  authorize?: (doc: SketchDocument) => Promise<boolean>;
   async query(
     document: SketchDocument,
     request: Extract<ModelRequest, { kind: "decorator-inspect" | "decorator-draft" }>,
@@ -47,7 +48,7 @@ export class DecoratorSession {
   }
   async edit(document: SketchDocument, request: ModelRequest): Promise<SketchDocument | null> {
     if (request.kind === "decorator-enable") {
-      this.enable(document, request.id, request.version, request.enabled);
+      await this.enable(document, request.id, request.version, request.enabled);
       return document;
     }
     if (request.kind === "decorator")
@@ -61,6 +62,7 @@ export class DecoratorSession {
   fork(): DecoratorSession {
     const session = new DecoratorSession();
     session.adopt(this);
+    session.authorize = this.authorize;
     return session;
   }
   adopt(session: DecoratorSession): void {
@@ -75,12 +77,14 @@ export class DecoratorSession {
   clear(): void {
     this.enabled = [];
   }
-  enable(document: SketchDocument, id: string, version: number, enabled: boolean): void {
+  async enable(document: SketchDocument, id: string, version: number, enabled: boolean) {
     if (typeof enabled !== "boolean") throw new Error("Invalid decorator enablement");
     const definition = document.decoratorDefinitions?.find(
       (d) => d.id === id && d.version === version,
     );
     if (!definition) throw new Error("Select an existing bundled decorator");
+    if (enabled && this.authorize && !(await this.authorize(document)))
+      throw new Error("Custom decorator code is disabled.");
     this.enabled = this.enabled.filter((d) => d.id !== id || d.version !== version);
     if (enabled) this.enabled.push({ id, version, source: definition.source });
   }

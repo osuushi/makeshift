@@ -139,9 +139,6 @@ export class MeasurementControls {
   }
   private render(result: Measurement): void {
     this.root.replaceChildren();
-    const heading = document.createElement("h2");
-    heading.textContent = "Measurements";
-    this.root.append(heading);
     for (const p of result.properties) this.row(p.label, `${number(p.value)} ${p.unit}`);
     for (const [label, value] of [
       ["Minimum gap", result.minimumGap],
@@ -163,7 +160,7 @@ export class MeasurementControls {
       help.textContent = "?";
       help.title = note;
       help.setAttribute("aria-label", `Measurement details: ${note}`);
-      heading.append(help);
+      this.root.append(help);
     }
   }
   private draw(): void {

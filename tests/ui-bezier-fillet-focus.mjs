@@ -58,7 +58,9 @@ export async function bezierFilletFocusRoute(page) {
       document.querySelector('[aria-label="Fillet radius"]')?.getAttribute("aria-invalid") ===
       "true",
   );
-  assert.match(await page.locator(".workspace-footer .status").textContent(), /cannot be rounded/);
+  const status = page.locator('[data-pane="Status"] .status');
+  await status.waitFor({ state: "visible" });
+  assert.match(await status.textContent(), /cannot be rounded/);
   let state = await inspect(page);
   assert.equal(state.interaction?.kind, "body-edge-finish");
   assert.ok(await input.evaluate((element) => document.activeElement === element));

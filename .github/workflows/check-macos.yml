@@ -179,13 +179,9 @@ jobs:
       - uses: ./.github/actions/ci-linux-runtime
       - name: Install recording tools
         run: |
-          # Match the browser dependency setup: avoid the runner's slow Azure mirror.
-          if [ -f /etc/apt/apt-mirrors.txt ]; then
-            sudo sed -i -E 's|http://(azure\.)?archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
-          fi
-          sudo apt-get update
+          bash scripts/ci-browser-deps.sh chromium
           sudo apt-get install -y ffmpeg
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
       - name: Render and verify one feature recipe
         env:
           DEMO_ONLY: ${{ matrix.demo }}
@@ -213,7 +209,7 @@ jobs:
           path: .cache/demo-shards
       - name: Combine verified recordings
         run: node scripts/demos/merge.mjs .cache/demo-shards "$(git rev-parse HEAD)"
-      - run: npx playwright install --with-deps chromium
+      - run: bash scripts/ci-browser-deps.sh chromium && npx playwright install chromium
       - name: Check complete gallery
         run: node tests/website-gallery.mjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

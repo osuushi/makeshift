@@ -80,7 +80,9 @@ export interface DecoratorPreset {
 export interface DecoratorCatalog {
   presets: readonly DecoratorPreset[];
   instances: readonly DecoratorInstance[];
-  definitions: readonly (DecoratorDefinition & { enabled: boolean })[];
+  definitions: readonly (Omit<DecoratorDefinition, "source"> & {
+    enabled: boolean;
+  })[];
   builtins: { id: string; version: number; name: string; fields: readonly DecoratorField[] }[];
 }
 export type DecoratorEdit =

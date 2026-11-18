@@ -3,6 +3,7 @@ import { validateDecorators } from "../decorators/edits.js";
 import { validatePresets } from "../decorators/presets.js";
 import { validateGuides } from "../guides/model.js";
 import { validateBodyAppearances } from "../model/body-appearance.js";
+import { validId, validName } from "../security/text.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { validateSketchGrid } from "../sketch/grid-settings.js";
 import { validateFrame } from "../sketch/planes.js";
@@ -28,22 +29,14 @@ export function validateDocument(document: SketchDocument): void {
     if (!Array.isArray(document.entityPresentation)) throw new Error("Invalid entity presentation");
     const seen = new Set<string>();
     for (const entry of document.entityPresentation) {
-      if (
-        !entry ||
-        typeof entry.id !== "string" ||
-        seen.has(entry.id) ||
-        typeof entry.name !== "string" ||
-        !entry.name.trim() ||
-        entry.name.length > 200
-      )
+      if (!entry || !validId(entry.id) || seen.has(entry.id) || !validName(entry.name))
         throw new Error("Invalid entity presentation");
       seen.add(entry.id);
     }
   }
   const ids = new Set<string>();
   const identify = (id: string) => {
-    if (typeof id !== "string" || !id || ids.has(id))
-      throw new Error("Invalid or duplicate document identity");
+    if (!validId(id) || ids.has(id)) throw new Error("Invalid or duplicate document identity");
     ids.add(id);
   };
   for (const sketch of document.sketches) {

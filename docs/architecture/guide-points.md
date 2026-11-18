@@ -16,9 +16,10 @@ Guide points creation tool.
 Candidate discovery runs after paint at background priority, yielding between
 discovery/filtering and destination probes. Pointer, selection, geometry, camera
 or visibility changes supersede pending work; entering a tool or closing the window
-cancels it. Selection and tool controls do not wait for candidates. Saved guides
-and their snapping stay immediate. Entering an existing marker preserves its hit
-target while discovery is deferred. Endpoint incidence uses an immutable-body
+cancels it. Selection and tool controls do not wait for candidates. Pointer movement
+within the same hover context keeps nearby markers visible until the new candidate
+set is ready. Saved guides and their snapping stay immediate. Entering an existing
+marker preserves its hit target while discovery is deferred. Endpoint incidence uses an immutable-body
 spatial index followed by the existing exact tolerance and ambiguity checks.
 
 With Select active, automatic discovery uses the ordinary click target. A guide

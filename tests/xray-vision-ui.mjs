@@ -5,6 +5,7 @@ import { closeSettings, settingsSurface } from "./settings-surface.mjs";
 import { project } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { chooseWidget } from "./ui-modal-plane-widgets.mjs";
+import { pinchStep } from "./ui-navigation-inputs.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 import { emptyXrayRoute } from "./ui-xray-empty.mjs";
@@ -87,10 +88,7 @@ async function resizeAndPinch(page, normal, name) {
   const resized = await samples(page);
   assert.ok(delta(resized[0], normal[0]) < 6, "Resize keeps exterior opaque");
   const height = (await inspect(page)).camera.height;
-  await page.mouse.move(950, 600);
-  await page.keyboard.down("Control");
-  await page.mouse.wheel(0, -12);
-  await page.keyboard.up("Control");
+  await pinchStep(page, 0, -12);
   await page.waitForFunction(
     (height) => window.makeshiftInspect().camera.height !== height,
     height,

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { launchElectron } from "./native-documents.mjs";
 import { drag, settled } from "./ui-helpers.mjs";
 import { navigationIdle, navigationRoundTrip } from "./ui-navigation-history.mjs";
+import { navigationPoint } from "./ui-navigation-inputs.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 // Emitted macOS host events prove BrowserWindow → IPC → preload → renderer.
@@ -33,7 +34,7 @@ try {
       window.navigationHostPackets++;
     });
   });
-  const anchor = { x: 950, y: 600 };
+  const anchor = await navigationPoint(page);
   const rotate = async (degrees) => {
     const previous = await page.evaluate(() => window.navigationHostPackets);
     await app.evaluate(

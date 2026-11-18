@@ -2,7 +2,6 @@ import "../tools/tool-prerequisites.css";
 import "../tools/selection-step.css";
 import { DecoratorPanel } from "../decorators/panel.js";
 import { decoratorOverlay } from "../decorators/preview.js";
-import { DecoratorSelectionWidget } from "../decorators/selection-widget.js";
 import { GuideControls } from "../guides/controls.js";
 import { BodyActions } from "../model/body-actions.js";
 import { BodyEdgeFinishControls } from "../model/body-edge-finish-controls.js";
@@ -31,10 +30,9 @@ import { installSelectionSection } from "../model/selection-section.js";
 import { ShellControls } from "../model/shell-controls.js";
 import { StepImportControls } from "../model/step-import-controls.js";
 import { TopologyMoveControls } from "../model/topology-move-controls.js";
+import { EditorPanes } from "../panes/editor-panes.js";
 import { installSettings } from "../preferences/settings.js";
 import { TagControls } from "../tags/controls.js";
-import { Inspector } from "../tools/inspector.js";
-import { installToolSurfaces } from "../tools/surfaces.js";
 import { installPlaneBounds } from "./plane-bounds.js";
 import { planeEntryTools } from "./plane-entry-tools.js";
 import { sketchEntryTool } from "./sketch-entry-tool.js";
@@ -81,23 +79,28 @@ import { installWorldLabels } from "./world-labels.js";
 const app = document.querySelector<HTMLElement>("#app");
 if (!app) throw new Error("Missing app root");
 app.innerHTML = `<div id="world"></div><div id="overlay"></div>
-  <header><div class="brand"><img src="./makeshift.png" alt=""/><strong>Makeshift</strong></div><span class="mode-label">Modeling</span></header>
+  <header class="workspace-toolbar" aria-label="Workspace controls">
+    <button type="button" class="toolbar-app-menu" title="Makeshift menu"><img src="./makeshift.png" alt=""/></button>
+    <div class="toolbar-context"><span class="mode-label">Modeling</span></div>
+    <div class="exchange-menus" role="group" aria-label="Import and export"></div>
+    <div class="toolbar-preferences"></div>
+  </header>
   <footer class="workspace-footer"><div class="status" role="status"></div><div class="navigation-hint">Two-finger scroll · pan &nbsp; ⌘-drag · orbit &nbsp; Pinch · zoom &nbsp; Hold · choose overlap</div></footer>`;
 const host = app.querySelector<HTMLElement>("#world"),
   overlay = app.querySelector<HTMLElement>("#overlay"),
   status = app.querySelector<HTMLElement>(".status");
 if (!host || !overlay || !status) throw new Error("Missing viewport elements");
+const panes = new EditorPanes(app);
 const numeric = new NumericEdit(),
   world = new World(host, overlay),
   editor = new SketchEditor(world, numeric);
 installWorkspaceStatus(editor, app, status);
 installPlaneBounds(editor);
-const inspector = new Inspector(app);
 const decorators = new DecoratorPanel(
   editor,
   app,
-  inspector.content("Decorators"),
-  inspector.content("Gear groups"),
+  panes.content("Decorators"),
+  panes.content("Gear groups"),
 );
 const disposeDecorators = decoratorOverlay(editor);
 const disposeLabels = installWorldLabels(editor, overlay),
@@ -152,7 +155,7 @@ const disposeModelHighlight = modelHighlight(editor);
 const disposeBodies = bodyView(editor);
 const selection = new SelectionOverlay(editor, overlay);
 const transforms = new TransformOverlay(editor, overlay, (axis) => numeric.activateTransform(axis));
-const constraints = new ConstraintDisplay(editor, inspector.content("Constraints"));
+const constraints = new ConstraintDisplay(editor, panes.content("Constraints"));
 const pointEdge = new PointEdgeControls(editor, constraints.available);
 const pointTangent = new PointTangentControls(editor, constraints.available);
 const pointChooser = new PointChooser(editor, overlay);
@@ -214,19 +217,16 @@ const sections = new SectionControls(editor);
 const disposeSelectionSection = installSelectionSection(editor);
 const bodyEdges = new BodyEdgeControls(editor);
 const disposeVisibility = visibilityControls(editor, () => constructionPlanes.selected()?.id);
-const measurements = new MeasurementControls(editor, app, inspector.content("Measurements"));
+const measurements = new MeasurementControls(editor, app, panes.content("Measurements"));
 const overlaps = new OverlapInput(editor, (plane) => constructionPlanes.select(plane));
 const planeCuts = new PlaneCutControls(editor, overlay, constructionPlanes.picker, entities);
+const disposePlaneEntry = planeEntryTools(editor);
+const disposeSettings = installSettings(editor, app);
+const disposePaneControls = panes.mountControls(editor, entities.element, status);
 const disposeHost =
   import.meta.env.MODE === "web"
     ? (await import("../web/chrome.js")).installWebChrome(editor, app)
-    : (await import("./host-controls.js")).installHostControls(editor, app);
-const disposePlaneEntry = planeEntryTools(editor);
-const disposeSettings = installSettings(editor, app);
-const disposeTools = installToolSurfaces(editor, app, entities.element);
-const decoratorWidget = new DecoratorSelectionWidget(editor, overlay, () =>
-  inspector.reveal("Decorators"),
-);
+    : (await import("./host-controls.js")).installHostControls(editor, app, panes);
 installViewInspection(editor, sections);
 world.draw();
 export const ready = editor.store.request({ kind: "read" }).then((success) => {
@@ -235,13 +235,12 @@ export const ready = editor.store.request({ kind: "read" }).then((success) => {
 });
 window.addEventListener("pagehide", (event) => {
   if (event.persisted) return;
-  decoratorWidget.dispose();
+  disposePaneControls();
   decorators.dispose();
-  inspector.dispose();
+  panes.dispose();
   disposeDecorators();
   disposeHost();
   disposeSettings();
-  disposeTools();
   disposeSketchEntryTool();
   modelingTools.dispose();
   disposeControls();

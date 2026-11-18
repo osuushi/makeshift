@@ -5,6 +5,7 @@ import { guide, types } from "../agent-cli/guide.js";
 import { startupGuide } from "../agent-cli/startup-guide.js";
 import type { ScriptRequest } from "../agent-script/api.js";
 import type { DocumentStatus } from "../model/document-host.js";
+import { safeName } from "../security/text.js";
 import { AgentConnection } from "./agent-connection.js";
 import { writeAgentLauncher } from "./agent-launcher.js";
 
@@ -21,6 +22,7 @@ export async function prepareOrientation(
   ) => Promise<unknown>,
   script: (request: ScriptRequest, channel: string) => Promise<unknown>,
   preview?: (input: string | undefined, output: string) => Promise<unknown>,
+  seedWorkspaceGuide = true,
 ): Promise<AgentConnection> {
   const connection = await AgentConnection.create((request, directory) => {
     const current = status();
@@ -35,7 +37,12 @@ export async function prepareOrientation(
     if (request.command !== "status") return inspect(request.command, request.entity, directory);
     return {
       application: "Makeshift",
-      document: { name: current.name, saved: !!current.path, edited: current.edited, units: "mm" },
+      document: {
+        name: safeName(current.name, "Drawing"),
+        saved: !!current.path,
+        edited: current.edited,
+        units: "mm",
+      },
       capabilities: [
         "help",
         "docs",
@@ -55,11 +62,12 @@ export async function prepareOrientation(
     };
   });
   try {
-    await writeFile(join(cwd, "AGENTS.md"), startupGuide, { flag: "wx", mode: 0o600 }).catch(
-      (error: NodeJS.ErrnoException) => {
-        if (error.code !== "EEXIST") throw error;
-      },
-    );
+    if (seedWorkspaceGuide)
+      await writeFile(join(cwd, "AGENTS.md"), startupGuide, { flag: "wx", mode: 0o600 }).catch(
+        (error: NodeJS.ErrnoException) => {
+          if (error.code !== "EEXIST") throw error;
+        },
+      );
     const cli = await writeAgentLauncher(connection.directory);
     const docs = join(connection.directory, "makeshift.md"),
       api = join(connection.directory, "makeshift.d.ts");

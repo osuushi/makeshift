@@ -49,6 +49,10 @@ export function installDocumentMenu(
           { type: "separator" },
           item("Save", "CmdOrCtrl+S", "save"),
           item("Save As…", "CmdOrCtrl+Shift+S", "save-as"),
+          {
+            label: "Export without agent workspace…",
+            click: () => dispatch("export-without-workspace"),
+          },
           { type: "separator" },
           item("Close", "CmdOrCtrl+W", "close"),
           ...(process.platform !== "darwin" ? [{ role: "quit" as const }] : []),

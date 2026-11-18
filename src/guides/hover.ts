@@ -8,6 +8,8 @@ import { visibleGuides } from "./snapping.js";
 import { guideVisibleThroughSolids } from "./solid-visibility.js";
 import { guideKey, guideOwner } from "./types.js";
 
+export const guidePointerRadius = 256;
+
 /** Coincident definitions share a marker; distinct crowded points cull both sides. */
 export function spacedGuides(
   candidates: readonly GuideCandidate[],
@@ -43,7 +45,7 @@ function filteredGuides(
       return false;
     seen.add(key);
     const p = editor.world.project(candidate.point);
-    return !!pointer && Math.hypot(p.x - pointer.x, p.y - pointer.y) <= 256;
+    return !!pointer && Math.hypot(p.x - pointer.x, p.y - pointer.y) <= guidePointerRadius;
   });
   const spaced = spacedGuides(candidates, saved, (point) => editor.world.project(point));
   const markers = [...spaced, ...saved].map((p) => editor.world.project(p.point));

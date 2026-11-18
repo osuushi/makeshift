@@ -3,6 +3,7 @@ import { holdAcceptanceReply } from "./native-model-reply.mjs";
 import { plate } from "./ui-body-fillet.mjs";
 import { close } from "./ui-helpers.mjs";
 import { navigationIdle } from "./ui-navigation-history.mjs";
+import { navigationPoint } from "./ui-navigation-inputs.mjs";
 import { acceptedOperation, button, completed, ready } from "./ui-reopen-cycle.mjs";
 import { reopen } from "./ui-reopen-first.mjs";
 import { chooseTool, toolEnabled } from "./ui-tools.mjs";
@@ -98,11 +99,12 @@ export async function reopenNavigationGuard(page, name) {
   await plate(page);
   await navigationIdle(page);
   await page.locator("#world canvas").focus();
-  await page.mouse.move(1000, 600);
+  const point = await navigationPoint(page);
+  await page.mouse.move(point.x, point.y);
   await page.mouse.down({ button: "right" });
   let before;
   try {
-    await page.mouse.move(965, 580, { steps: 5 });
+    await page.mouse.move(point.x - 35, point.y - 20, { steps: 5 });
     before = await snapshot(page);
     const held = await page.evaluate(() => window.makeshiftInspect());
     assert.equal(held.camera.navigationPending, false);
@@ -114,7 +116,7 @@ export async function reopenNavigationGuard(page, name) {
     assert.deepEqual(await snapshot(page), before);
     const after = await page.evaluate(() => window.makeshiftInspect());
     assert.deepEqual(after.camera, held.camera);
-    await page.mouse.move(930, 560, { steps: 5 });
+    await page.mouse.move(point.x - 70, point.y - 40, { steps: 5 });
   } finally {
     await page.mouse.up({ button: "right" });
   }

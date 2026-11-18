@@ -56,6 +56,7 @@ if (host) {
     await host.fitTab(measureSettings(dialog, available));
   };
   dialog.addEventListener("settings-tab-change", () => void fitSelectedTab());
+  dialog.addEventListener("security-size", () => void fitSelectedTab());
   onUiScaleChange(() => void fitSelectedTab());
   void fitSelectedTab();
   const updateTools = (next: ToolboxTool[]) => {

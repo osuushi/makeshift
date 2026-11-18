@@ -1,3 +1,4 @@
+import { tagSummary } from "../agent/inspection-fields.js";
 import type { ScriptOperation, ScriptResult } from "../agent-script/api.js";
 import { emptySketch, newId, type SketchDocument, withSketch } from "../sketch/document.js";
 import { planes, validateFrame } from "../sketch/planes.js";
@@ -36,10 +37,11 @@ export async function scriptOperation(
     if (!body) throw new Error("Unknown center-of-mass body");
     return { document, result: { centerOfMass: await kernel.centerOfMass(body) } };
   }
-  if (operation.kind === "taggedGroups") return { document, result: document.taggedGroups ?? [] };
+  if (operation.kind === "taggedGroups")
+    return { document, result: (document.taggedGroups ?? []).map(tagSummary) };
   if (operation.kind === "editTaggedGroup") {
     const next = editTags(document, operation.input);
-    return { document: next, result: next.taggedGroups ?? [] };
+    return { document: next, result: (next.taggedGroups ?? []).map(tagSummary) };
   }
   if (operation.kind === "applyTaggedGroup") {
     const resolved = resolveTagOperation(document, operation.input);

@@ -30,7 +30,8 @@ export async function recoverAgentFiles(
     });
     if (confirmed.response === 0) {
       await disconnect();
-      workspace.recovered(await workspace.prepare(files), files);
+      await workspace.onRecovery(files);
+      workspace.stage(files, true);
     }
   }
 }

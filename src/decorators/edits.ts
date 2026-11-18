@@ -1,4 +1,5 @@
 import type { DisplayDocument } from "../model/display-document.js";
+import { validId } from "../security/text.js";
 import { newId, type SketchDocument } from "../sketch/document.js";
 import { validateFrame } from "../sketch/planes.js";
 import { isBuiltinDecorator, knurlDefinition } from "./builtins.js";
@@ -81,7 +82,7 @@ function validateReferences(refs: readonly FaceReference[]): void {
   if (
     !Array.isArray(refs) ||
     !refs.length ||
-    refs.some((ref) => !ref || typeof ref.body !== "string" || typeof ref.face !== "string")
+    refs.some((ref) => !ref || !validId(ref.body) || !validId(ref.face))
   )
     throw new Error("Select existing faces");
   if (new Set(refs.map(faceKey)).size !== refs.length) throw new Error("Select each face once");
@@ -99,16 +100,14 @@ export function validateDecorators(document: SketchDocument): void {
       typeof instance.id !== "string" ||
       !instance.id ||
       ids.has(instance.id) ||
-      typeof instance.definition !== "string" ||
+      !validId(instance.definition) ||
       !Number.isInteger(instance.version) ||
       !instance.settings ||
       typeof instance.settings !== "object" ||
       (instance.display !== undefined && !validDecoratorDisplay(instance.display)) ||
       (instance.problem !== undefined && typeof instance.problem !== "string") ||
       (instance.gearGroup !== undefined &&
-        (instance.definition !== gearDefinition ||
-          typeof instance.gearGroup !== "string" ||
-          !instance.gearGroup)) ||
+        (instance.definition !== gearDefinition || !validId(instance.gearGroup))) ||
       (instance.gearColor !== undefined &&
         (instance.definition !== gearDefinition ||
           typeof instance.gearColor !== "string" ||

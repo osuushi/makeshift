@@ -1,0 +1,44 @@
+.security-settings {
+  overflow-wrap: anywhere;
+}
+.security-identity {
+  display: grid;
+  grid-template-columns: minmax(0, 144px) minmax(0, 1fr);
+  align-items: start;
+  gap: 8px 16px;
+}
+.security-identity img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
+.security-identity code,
+.security-fingerprint-actions {
+  grid-column: 1 / -1;
+}
+.security-identity code {
+  user-select: all;
+}
+.security-fingerprint-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.security-settings button {
+  margin: 0.2rem;
+}
+.security-settings details {
+  margin: 0.6rem 0;
+}
+.security-settings > p:empty {
+  display: none;
+}
+@container settings (max-width: 350px) {
+  .security-identity {
+    grid-template-columns: 1fr;
+  }
+  .security-identity img {
+    max-width: 108px;
+  }
+}

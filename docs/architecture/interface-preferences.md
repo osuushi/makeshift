@@ -244,30 +244,33 @@ use opaque ink or light/dark double outlines; orientation face labels choose bla
 or white against the configured face. Branding, QR images and color swatches keep
 their source colors. These exceptions do not justify low-contrast interface text.
 
-## Inspector pane
+## Workspace panes
 
-Constraints, measurements, gear groups and decorator controls share the Inspector.
-It starts at the lower right above guidance. Move it using the same dotted left-hand
-grip as parameter panels. Drag any edge or corner to resize, keeping the opposite
-edge fixed; there is no resize button. The grip accepts arrow keys to move and
-Shift + arrows to resize. The pane is
-clamped beneath the header and above the footer when the window or interface scale
-changes. Its contents scroll when space is limited.
+The Makeshift application menu is fixed at the top of the left dock. Entities, Tools and Status start beneath it. Orientation, Measurements, Decorators,
+Gear groups and Constraints start on the right. The title folds a pane and doubles as its
+drag handle. While dragging, the docks show their drop areas and the active dock
+marks the exact insertion gap. Drop onto a closed dock’s edge tab to reopen it,
+or over the canvas to float.
+Pane titles use the widget drag texture as a horizontal strip that fades toward the label.
+The Makeshift wordmark opens File / Edit. When the left dock is closed, a logo button in the toolbar opens the same menu.
+The ellipsis menu moves, floats or hides the pane. Its “Show in this dock” group brings
+other panes into that column. An empty dock offers an Add pane picker.
+Drag a dock rail to set its width or click it to collapse. Portrait tablet layouts keep
+the left tool dock available and reveal the right dock over the canvas. Phone layouts
+use edge tabs on both sides. The toolbar shows the active tool from the toolbox when the left dock is closed. In a narrow toolbar, the tool name starts the second row, with input controls and Settings on the right. Returning to a wider layout restores the pinned dock preferences. The agent terminal retains its own drawer.
 
-The title-bar chevron collapses or expands the whole pane. Section titles collapse
-individual contents; up/down arrows reorder currently visible sections. Sections
-without relevant controls disappear without losing their order or collapsed state.
-Reset layout restores the initial position, size, order and expanded sections.
-Position, size, order and collapsed sections persist in device-local
-`makeshift.inspector` storage, outside document data and Undo. Unresolved decorator
-items start collapsed, identify their body, and retain individual disclosure state
-across selection/model refreshes in the current window. Their original repair
-actions remain inside each disclosure. Physical iPad touch usability requires device review.
+Built-in placement, dimensions, order and empty-content preferences persist locally
+outside geometry Undo. Measurements initially shows an empty selection prompt. Other
+selection readouts initially hide when empty. Hidden content retains its placement.
 
-Inspector disclosures use drawn chevrons in visible 26px tiles, with full-row targets,
-hover/focus feedback and distinct expanded styling. Decorator notices retain native
-keyboard disclosure behavior but suppress browser markers. Reduced motion disables
-chevron transitions. Reorder and reset controls also use drawn icons.
+Each interactive preview uses its workspace directory as its identity. Agent preview
+commands accept a directory to target a particular view and otherwise operate on the
+most recently opened view. Open previews and their placements travel with the document
+in each preview directory’s `.makeshift-pane.json`. A docked preview records the
+global pane on each side and its order in that gap. If those neighbors have moved
+apart on the destination device, the preview goes at the bottom of its chosen dock.
+Previews from a saved drawing restore when its agent workspace is authorized and
+opened.
 
 Desktop Bug Reports settings opt into a local silent recent-video buffer. See
 [bug reports](../bug-reports.md) for retention, recording, input diagnostics and privacy.

@@ -6,47 +6,33 @@ import "./standard-command-menu.css";
 /** Browser equivalent of the desktop's ordinary File/Edit menus, including touch access. */
 export class StandardCommandMenu {
   private wrapper = document.createElement("div");
-  private trigger = document.createElement("button");
+  private activeTrigger?: HTMLButtonElement;
+  private abort = new AbortController();
   private menu = document.createElement("div");
   constructor(
     private editor: SketchEditor,
     private exchange?: "Import" | "Export",
   ) {
-    if (!exchange && window.makeshiftDocument) return;
-    this.wrapper.className = "control-selector standard-command-selector";
-    this.trigger.innerHTML = exchange ?? "<strong>Makeshift</strong>";
-    this.trigger.setAttribute("aria-label", exchange ?? "File / Edit");
-    this.trigger.setAttribute("aria-haspopup", "menu");
-    this.trigger.setAttribute("aria-expanded", "false");
-    this.menu.className = "control-menu";
+    this.menu.className = "control-menu standard-command-menu";
     this.menu.popover = "auto";
     this.menu.setAttribute("role", "menu");
     this.menu.setAttribute("aria-label", exchange ?? "File and edit");
-    this.wrapper.append(this.trigger);
     if (exchange) {
-      let group = document.querySelector<HTMLElement>(".exchange-menus");
-      if (!group) {
-        group = document.createElement("div");
-        group.className = "exchange-menus";
-        group.setAttribute("role", "group");
-        group.setAttribute("aria-label", "Import and export");
-        document.querySelector("header")?.append(group);
-      }
-      group.append(this.wrapper);
-    } else document.querySelector("header strong")?.replaceWith(this.wrapper);
+      const trigger = document.createElement("button");
+      trigger.textContent = exchange;
+      this.wrapper.className = "control-selector standard-command-selector";
+      this.wrapper.append(trigger);
+      document.querySelector(".exchange-menus")?.append(this.wrapper);
+      this.bind(trigger, exchange);
+    } else {
+      for (const trigger of document.querySelectorAll<HTMLButtonElement>(
+        "button.brand, .toolbar-app-menu",
+      ))
+        this.bind(trigger, "File / Edit");
+    }
     document.body.append(this.menu);
-    this.trigger.onclick = () => {
-      if (editor.interactions.current?.captured) return;
-      if (this.menu.matches(":popover-open")) return this.menu.hidePopover();
-      this.render();
-      const box = this.trigger.getBoundingClientRect();
-      this.menu.style.left = `${Math.max(8, Math.min(box.left, window.innerWidth - 230))}px`;
-      this.menu.style.top = `${box.bottom + 8}px`;
-      this.menu.showPopover();
-      this.menu.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus();
-    };
     this.menu.ontoggle = () =>
-      this.trigger.setAttribute("aria-expanded", String(this.menu.matches(":popover-open")));
+      this.activeTrigger?.setAttribute("aria-expanded", String(this.menu.matches(":popover-open")));
     this.menu.onkeydown = (event) => {
       if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
       event.preventDefault();
@@ -61,6 +47,27 @@ export class StandardCommandMenu {
       buttons[next]?.focus();
     };
     editor.world.changed.add(this.update);
+  }
+  private bind(trigger: HTMLButtonElement, label: string) {
+    trigger.setAttribute("aria-label", label);
+    trigger.setAttribute("aria-haspopup", "menu");
+    trigger.setAttribute("aria-expanded", "false");
+    trigger.addEventListener(
+      "click",
+      () => {
+        if (this.editor.interactions.current?.captured) return;
+        if (this.menu.matches(":popover-open")) return this.menu.hidePopover();
+        this.activeTrigger = trigger;
+        this.render();
+        this.menu.showPopover();
+        const anchor = trigger.getBoundingClientRect();
+        const { width, height } = this.menu.getBoundingClientRect();
+        this.menu.style.left = `${Math.max(4, Math.min(anchor.left, innerWidth - width - 4))}px`;
+        this.menu.style.top = `${Math.max(4, Math.min(anchor.bottom + 4, innerHeight - height - 4))}px`;
+        this.menu.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus();
+      },
+      { signal: this.abort.signal },
+    );
   }
   private update = (): void => {
     if (this.menu.matches(":popover-open")) this.render();
@@ -83,7 +90,7 @@ export class StandardCommandMenu {
       button.title = tool.unavailable ?? "";
       button.onclick = () => {
         this.menu.hidePopover();
-        this.trigger.focus();
+        this.activeTrigger?.focus();
         void toolCatalog(this.editor).invoke(tool.id);
       };
       this.menu.append(button);
@@ -92,9 +99,8 @@ export class StandardCommandMenu {
   }
   dispose(): void {
     this.editor.world.changed.delete(this.update);
-    const parent = this.wrapper.parentElement;
+    this.abort.abort();
     this.wrapper.remove();
-    if (this.exchange && !parent?.childElementCount) parent?.remove();
     this.menu.remove();
   }
 }

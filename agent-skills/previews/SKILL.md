@@ -6,9 +6,11 @@ description: Show images, documents, diagrams or small interactive apps in the M
 Use this for showing images to the user (Blender renders, generated or processed
 images), annotated diagrams, document previews, and custom input such as a bearing
 profile editor. Create ordinary static HTML/CSS/JavaScript in the drawing workspace.
-One pane per desktop document; opening replaces the current pane. The default content
-size is 640×480 CSS pixels. Design responsively. Users can drag its header, resize,
-collapse and close it. No build system is required.
+Each preview directory opens its own pane. Reopening a directory replaces that view.
+A new preview floats with 640×480 CSS pixels of content. Users can dock, float,
+resize, collapse or close it. Saved drawings retain open previews and their layout.
+Supply `directory` on a control command to target a specific preview. Omitting it
+targets the most recently opened preview.
 
 Quick presets (paths are resolved by the CLI, copied into the workspace):
 

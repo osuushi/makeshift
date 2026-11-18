@@ -62,7 +62,14 @@ async function save(page, path) {
     globalThis.savePath = path;
   }, path);
   await chooseTool(page, "save document as", "save-as");
-  await until(async () => (await status(page)).path === path && !(await status(page)).edited);
+  await until(async () => {
+    // A working system key store presents a document-modal endorsement prompt.
+    const prompt = app.windows().find((window) => window.url().endsWith("/trust.html"));
+    const unsigned = prompt?.getByRole("button", { name: "Save unsigned", exact: true });
+    if (await unsigned?.isVisible()) await unsigned.click();
+    const current = await status(page);
+    return current.path === path && !current.edited;
+  });
 }
 async function newWindow(page) {
   const opened = app.waitForEvent("window");
@@ -246,9 +253,10 @@ try {
   }
   const reopenedFirst = await openFile(firstPath);
   assert.equal(app.windows().length, 2);
+  assert.equal((await agent(reopenedFirst, { kind: "read" })).workspace, null);
   assert.equal(
     await readFile(
-      join((await agent(reopenedFirst, { kind: "read" })).workspace, "identity.txt"),
+      join((await agent(reopenedFirst, { kind: "open-pane" })).workspace, "identity.txt"),
       "utf8",
     ),
     "first",

@@ -1,5 +1,14 @@
 import { contextBridge, ipcRenderer } from "electron";
 
+contextBridge.exposeInMainWorld(
+  "makeshiftSecurity",
+  Object.fromEntries(
+    ["info", "rename", "forget", "trust", "exportKey", "importKey"].map((method) => [
+      method,
+      (...args: unknown[]) => ipcRenderer.invoke("signing-" + method, ...args),
+    ]),
+  ),
+);
 contextBridge.exposeInMainWorld("makeshiftSettingsWindow", {
   close: () => ipcRenderer.invoke("settings-close"),
   availableSize: () => ipcRenderer.invoke("settings-space"),

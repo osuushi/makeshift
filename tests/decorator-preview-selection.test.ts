@@ -13,10 +13,11 @@ test("thread body-wide occlusion does not turn unrelated face selection into a s
   const instance = instances[0];
   assert.ok(instance);
   const support = instance.faces[0];
-  const unrelated = threadPreviewFaces(document, instance).find(
-    (face) => face.body === support.body && !instance.faces.some((s) => s.face === face.face),
-  );
-  assert.ok(unrelated, "fixture includes an occluding face outside the thread supports");
+  const body = document.bodies?.find((candidate) => candidate.id === support.body);
+  const rim = body?.faces.find((face) => face.plane);
+  assert.ok(rim);
+  const unrelated = { body: support.body, face: rim.id };
+  assert.ok(!threadPreviewFaces(document, instance).some((face) => face.face === rim.id));
   assert.deepEqual(selectedPreviewSupports(instances, [{ kind: "face", ...unrelated }]), new Set());
   assert.deepEqual(
     selectedPreviewSupports(instances, [{ kind: "face", ...support }]),
