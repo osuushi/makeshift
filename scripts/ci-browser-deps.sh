@@ -15,10 +15,10 @@ Acquire::https::Timeout "30";
 Acquire::Retries "2";
 APT
 
-# The runner's Azure mirror can trickle bytes without hitting apt's idle timeout.
+# Regional cloud mirrors can trickle bytes without hitting apt's idle timeout.
 # Use HTTPS directly: HTTP retries can exhaust the bounded installation budget.
 if [[ -f /etc/apt/apt-mirrors.txt ]]; then
-  sudo sed -i -E 's|http://(azure\.)?archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
+  sudo sed -i -E 's|http://([a-z0-9-]+\.){0,2}archive\.ubuntu\.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
 fi
 
 # Keep Playwright's platform-specific dependency list authoritative.
