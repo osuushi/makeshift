@@ -94,6 +94,11 @@ async function queuedExtrusion(page, gates, requests, superseded, x, y) {
   assert.equal(requests.length, 2, "Unchanged snapped distance must not recompute");
   await page.mouse.move(x, y - 150);
   await page.mouse.move(x, y - 200);
+  // Pointer delivery can precede the widget refresh in WebKit. Let the
+  // queued input reach the field without releasing the older native reply.
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
   const requested = Number(
     await page.getByRole("textbox", { name: "Extrusion distance", exact: true }).inputValue(),
   );
