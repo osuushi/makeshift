@@ -163,8 +163,8 @@ export class GuideControls {
   }
   hover(anchor: GuideAnchor | readonly GuideAnchor[] | null): void {
     this.hovered = anchor ? (Array.isArray(anchor) ? anchor : [anchor as GuideAnchor]) : null;
-    this.update();
-    this.editor.world.draw();
+    // Projected markers can enter or leave a stationary pointer as the view moves.
+    this.editor.world.requestDraw();
   }
   async remove(id: string | string[]): Promise<void> {
     await toolCatalog(this.editor).activate({
@@ -182,6 +182,15 @@ export class GuideControls {
   }
   private update = (): void => {
     const e = this.editor;
+    const draggingCamera = e.world.navigation.dragging;
+    const navigating = draggingCamera || e.world.cameraTransitioning;
+    if (navigating) {
+      // Orbit consumes captured pointer movement. Drop the old hit and let
+      // discovery resume from a real hover once the new view is settled.
+      if (draggingCamera) this.pointer = null;
+      this.hovered = null;
+      this.markers.clearCandidates();
+    }
     const surfaceTargets = surfaceDragTargets(e);
     if (this.selected.size && this.selectedWith !== this.selectionKey()) this.selected.clear();
     const saved = visibleGuides(e, this.movement.toolActive || !!surfaceTargets).map(
@@ -195,7 +204,8 @@ export class GuideControls {
     const keys = new Set(saved.map((p) => guideKey(p.anchor)));
     let candidates: GuideMarker[] = this.discovery.update(
       this.pointer,
-      editingGuides(e) &&
+      !navigating &&
+        editingGuides(e) &&
         !e.interactions.current &&
         !e.blocked &&
         (!e.world.active || e.tool === "select"),
@@ -206,7 +216,8 @@ export class GuideControls {
         e.visibility.visible(guideOwner(p.anchor)) &&
         (p.anchor.kind === "sketch-curve" || e.bodiesVisible),
     );
-    const interactive = this.movement.interactive && (!e.world.active || e.tool === "select");
+    const interactive =
+      !navigating && this.movement.interactive && (!e.world.active || e.tool === "select");
     this.markers.update(
       [...saved, ...candidates],
       interactive,

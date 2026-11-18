@@ -3,6 +3,48 @@ import { openDocument } from "./native-documents.mjs";
 import { project } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
 
+// The orbit captures the real pointer before the guide UI can receive motion.
+export async function orbitPausesDiscovery(page, name, archive) {
+  await openDocument(page, {
+    name: "guide-orbit.makeshift",
+    mimeType: "application/json",
+    buffer: Buffer.from(archive),
+  });
+  const face = await project(page, [10, 10, 10]);
+  await page.mouse.move(face.x, face.y);
+  const ghost = page.locator(".guide-marker.ghost:visible").first();
+  await ghost.waitFor({ state: "visible" });
+  const marker = await ghost.boundingBox();
+  assert.ok(marker);
+  const x = marker.x + marker.width / 2;
+  const y = marker.y + marker.height / 2;
+  const before = (await inspect(page)).document;
+  await page.mouse.move(x, y);
+  await page.keyboard.down("Meta");
+  await page.mouse.down();
+  try {
+    await page.mouse.move(x + 12, y - 6);
+    await page.waitForFunction(() => {
+      const { camera } = window.makeshiftInspect();
+      return camera.orbitActive && !camera.moving;
+    });
+    assert.equal(await page.locator(".guide-marker.ghost").count(), 0);
+    await page.mouse.move(x + 24, y - 12);
+    await page.waitForFunction(() => !window.makeshiftInspect().camera.moving);
+    assert.equal(await page.locator(".guide-marker.ghost").count(), 0);
+  } finally {
+    await page.mouse.up();
+    await page.keyboard.up("Meta");
+  }
+  assert.deepEqual((await inspect(page)).document, before);
+  const moved = await project(page, [10, 10, 10]);
+  await page.mouse.move(moved.x, moved.y);
+  await ghost.waitFor({ state: "visible" });
+  console.log(
+    `${name}: a Command-drag from a ghost pauses discovery and renewed hover restores it`,
+  );
+}
+
 // Verify the actual renderer can select and show Offset without executing discovery.
 export async function deferredDiscovery(page, name, archive) {
   await openDocument(page, {
@@ -27,7 +69,10 @@ export async function deferredDiscovery(page, name, archive) {
       release: () => {
         window.requestIdleCallback = original;
         window.cancelIdleCallback = originalCancel;
-        for (const callback of pending.values()) original(callback);
+        for (const callback of pending.values()) {
+          if (original) original(callback);
+          else window.setTimeout(callback, 0);
+        }
         pending.clear();
       },
     };

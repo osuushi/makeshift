@@ -171,6 +171,13 @@ export class GuideMarkers {
   closeChoices(): void {
     this.meanings.close();
   }
+  clearCandidates(): void {
+    this.buttons = this.buttons.filter((entry) => {
+      if (entry.items.every((item) => item.guide)) return true;
+      entry.element.remove();
+      return false;
+    });
+  }
   dispose(): void {
     cancelAnimationFrame(this.frame);
     this.root.remove();

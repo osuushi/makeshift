@@ -6,7 +6,7 @@ import { planes } from "../.cache/sketch-tests/src/sketch/planes.js";
 import { lift, prism } from "../.cache/sketch-tests/tests/body-edge-fixtures.js";
 import { openDocument } from "./native-documents.mjs";
 import { project } from "./ui-blend-edit.mjs";
-import { deferredDiscovery } from "./ui-guide-discovery.mjs";
+import { deferredDiscovery, orbitPausesDiscovery } from "./ui-guide-discovery.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -66,6 +66,7 @@ try {
 // cannot catch click-through, overlay double-click handoff or stale hover ghosts.
 await withUiRuntimes(async (page, name) => {
   await deferredDiscovery(page, name, archive);
+  await orbitPausesDiscovery(page, name, archive);
   await selectedConcaveFace(page, name);
   await cylinderCap(page, name);
   await openDocument(page, {
