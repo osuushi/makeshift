@@ -201,6 +201,15 @@ async function keyboard(page) {
 }
 
 export async function cubeTouchRoute(page, name) {
+  await reset(page);
+  const size = await page.locator(".orientation-cube").boundingBox();
+  const divider = await page.locator('[data-pane="Orientation"] .pane-grip').boundingBox();
+  const x = divider.x + divider.width / 2,
+    y = divider.y + divider.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x, y + 144 - size.height, { steps: 4 });
+  await page.mouse.up();
   await sidewaysTop(page, true);
   const touchPoint = await surfacePoint(page, "Top");
   const start = (await inspect(page)).camera;
