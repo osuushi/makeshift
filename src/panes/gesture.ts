@@ -7,6 +7,9 @@ export function gesture(
     cancel?(): void;
   },
 ) {
+  // A touch release can move the handle away before the browser synthesizes its click.
+  // These handles already activate on pointerup, so that click must not hit the canvas below.
+  handle.addEventListener("touchend", (event) => event.preventDefault(), { passive: false });
   handle.onpointerdown = (down) => {
     if (down.button || !down.isPrimary) return;
     down.preventDefault();

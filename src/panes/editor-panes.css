@@ -152,15 +152,3 @@
   font-size: 14px;
   color: var(--text);
 }
-@media (max-width: 759px) {
-  #app > header {
-    left: 12px;
-    max-width: calc(100% - 28px);
-    column-gap: 10px;
-    row-gap: 4px;
-  }
-  #app > header .history-controls button {
-    font-size: 0;
-    gap: 0;
-  }
-}

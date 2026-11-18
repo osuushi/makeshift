@@ -103,6 +103,7 @@ export function paintPane(p: Pane, app: HTMLElement) {
 export function nextDockPane(p: Pane, items: Pane[], order: string[]) {
   const others = items.filter((q) => q !== p && !q.options.persist);
   const index = order.indexOf(p.options.id);
+  // Only compare saved positions with other saved positions. New built-ins keep their default order.
   let next = p.options.persist
     ? others[
         insertion(
@@ -111,9 +112,7 @@ export function nextDockPane(p: Pane, items: Pane[], order: string[]) {
           p.state.after,
         )
       ]
-    : others.find(
-        (q) => index >= 0 && (order.indexOf(q.options.id) > index || !order.includes(q.options.id)),
-      );
+    : others.find((q) => index >= 0 && order.indexOf(q.options.id) > index);
   if (p.options.persist) {
     const boundary = next ? items.indexOf(next) : items.length;
     let start = boundary;

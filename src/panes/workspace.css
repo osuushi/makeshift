@@ -19,9 +19,7 @@
 }
 
 .pane-column[data-side="left"] {
-  top: max(52px, calc(var(--editor-header-bottom, 54px) + 5px));
   left: 0;
-  border-top: 1px solid var(--pane-rule);
   border-right: 1px solid var(--pane-rule);
 }
 .pane-column[data-side="right"] {

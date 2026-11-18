@@ -1,11 +1,11 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
+import { toolboxIcon } from "../tools/toolbox-icons.js";
 import { onCanonicalPlanesChange } from "./canonical-planes.js";
 import { onRadialDimensionChange } from "./radial-dimension.js";
 import { settingsDialog } from "./settings-dialog.js";
 import { nativeSettings } from "./settings-host.js";
 import { onSketchGridPreferencesChange } from "./sketch-grid.js";
-
 import { installToolboxSettings } from "./toolbox-settings.js";
 import { onUiScaleChange } from "./ui-scale.js";
 import { onViewDisplayChange } from "./view-display.js";
@@ -13,11 +13,11 @@ import "./settings.css";
 
 export function installSettings(editor: SketchEditor, app: HTMLElement): () => void {
   const button = document.createElement("button");
-  button.textContent = "Settings";
+  button.append(toolboxIcon("gear"));
   button.className = "settings-trigger";
   button.setAttribute("aria-label", "Application settings");
   button.setAttribute("aria-haspopup", "dialog");
-  if (/Mac/.test(navigator.platform)) button.title = "Settings (⌘,)";
+  button.title = /Mac/.test(navigator.platform) ? "Settings (⌘,)" : "Settings";
   const toolbox = document.createElement("section");
   const dialog = settingsDialog([["Toolbox", toolbox]]);
   const disposeToolbox = installToolboxSettings(toolbox, () => toolCatalog(editor).results());
@@ -42,9 +42,7 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
     } else if (!dialog.open) dialog.showModal();
   };
   button.onclick = requestOpen;
-  const header = app.querySelector("header");
-  header?.append(button);
-  const disposeHeader = trackSettingsHeader(editor, app, header);
+  app.querySelector(".toolbar-preferences")?.append(button);
   document.body.append(dialog);
   const disposeTool = toolCatalog(editor).register({
     id: "settings",
@@ -83,7 +81,6 @@ export function installSettings(editor: SketchEditor, app: HTMLElement): () => v
     disposePreferences();
     editor.world.changed.delete(update);
     disposeKeyboard();
-    disposeHeader();
     button.remove();
     for (const section of dialog.querySelectorAll("section"))
       section.dispatchEvent(new Event("preferences-dispose"));
@@ -138,28 +135,6 @@ function installSettingsKeyboard(open: () => void): () => void {
   return () => {
     document.removeEventListener("keydown", blockZoom, true);
     window.removeEventListener("keydown", shortcut, true);
-  };
-}
-
-function trackSettingsHeader(
-  editor: SketchEditor,
-  app: HTMLElement,
-  header: HTMLElement | null,
-): () => void {
-  const fitHeader = () => {
-    if (!header) return;
-    const bottom = `${header.getBoundingClientRect().bottom - app.getBoundingClientRect().top}px`;
-    if (app.style.getPropertyValue("--editor-header-bottom") === bottom) return;
-    app.style.setProperty("--editor-header-bottom", bottom);
-    // Entities moves with this offset after the viewport's resize draw.
-    editor.world.requestDraw();
-  };
-  const headerObserver = new ResizeObserver(fitHeader);
-  if (header) headerObserver.observe(header);
-  fitHeader();
-  return () => {
-    headerObserver.disconnect();
-    app.style.removeProperty("--editor-header-bottom");
   };
 }
 

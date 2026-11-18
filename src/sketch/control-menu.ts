@@ -1,3 +1,4 @@
+import { toolboxIcon } from "../tools/toolbox-icons.js";
 import "./control-menu.css";
 import { type ControlMode, controlMode, setControlMode } from "./control-preference.js";
 import { installTouchToggle, touchHint } from "./touch-toggle.js";
@@ -7,6 +8,9 @@ export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void
   root.className = "control-selector";
   const button = document.createElement("button");
   button.title = "Controls";
+  button.className = "input-mode-trigger";
+  const modeLabel = document.createElement("span");
+  button.append(toolboxIcon("select"), modeLabel);
   button.setAttribute("aria-expanded", "false");
   const panel = document.createElement("div");
   panel.className = "control-menu";
@@ -19,7 +23,7 @@ export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void
   legend.textContent = "Controls";
   group.append(legend);
   const updateHint = () => {
-    button.textContent = touchHint()
+    modeLabel.textContent = touchHint()
       ? "Touch / Pencil"
       : controlMode() === "mouse"
         ? "Mouse"
@@ -65,7 +69,7 @@ export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void
   });
   root.append(button, panel);
   installTouchToggle(root, updateHint);
-  app.querySelector("header")?.append(root);
+  app.querySelector(".toolbar-preferences")?.prepend(root);
 }
 
 function installTabletAction(

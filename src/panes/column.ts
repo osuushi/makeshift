@@ -109,7 +109,13 @@ export class DockColumn {
     this.fit();
   }
   fit() {
-    const small = this.app.clientWidth < 760;
+    const { clientWidth, clientHeight } = this.app;
+    const phoneLandscape = clientHeight <= 500 && clientWidth <= 1024;
+    const tabletPortrait = clientHeight >= clientWidth && clientWidth <= 1024;
+    const small =
+      clientWidth < 760 ||
+      phoneLandscape ||
+      (this.side === "right" && (clientWidth < 960 || tabletPortrait));
     if (small !== this.small) this.peek = false;
     this.small = small;
     const pinned = !small && !this.closed;

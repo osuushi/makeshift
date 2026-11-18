@@ -1,0 +1,251 @@
+/* The application menu participates in the same dock, fold and float gestures as other panes. */
+.workspace-pane[data-pane="Makeshift"]:not(.folded, [hidden]) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20px 28px;
+  grid-template-rows: minmax(36px, 1fr) 6px;
+  align-items: center;
+  min-height: 44px;
+  flex-shrink: 0;
+  padding-inline: 8px;
+}
+[data-pane="Makeshift"]:not(.folded) .pane-heading {
+  display: contents;
+}
+[data-pane="Makeshift"]:not(.folded) .pane-title {
+  grid-area: 1 / 2;
+  height: 32px;
+  font-size: 0;
+}
+[data-pane="Makeshift"]:not(.folded) .pane-title::before {
+  display: inline-block;
+  margin: 0;
+  width: 7px;
+  height: 12px;
+  border: 0;
+  transform: none;
+  background: radial-gradient(circle, var(--muted) 1px, transparent 1.2px) 0 0 / 4px 4px;
+}
+[data-pane="Makeshift"] .pane-heading select {
+  grid-area: 1 / 3;
+  width: 100%;
+  max-width: 30px;
+}
+[data-pane="Makeshift"] .pane-content {
+  grid-area: 1 / 1;
+}
+[data-pane="Makeshift"] .pane-grip {
+  grid-column: 1 / -1;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  max-width: 100%;
+  padding: 2px 3px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.brand strong {
+  overflow: hidden;
+  font-size: 16px;
+  letter-spacing: -0.5px;
+  text-overflow: ellipsis;
+}
+.brand img,
+.toolbar-app-menu img {
+  width: 26px;
+  height: 26px;
+}
+.brand::after {
+  content: "";
+  width: 5px;
+  height: 5px;
+  flex: none;
+  margin: 0 2px 3px;
+  border: solid var(--muted);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+.workspace-toolbar {
+  position: absolute;
+  container: command-strip / inline-size;
+  z-index: 15;
+  inset: 0 var(--pane-right, 0px) auto var(--pane-left, 0px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 6px;
+  min-height: 46px;
+  padding: 1px 8px;
+  background: var(--panel);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 34%, var(--panel));
+}
+.toolbar-context,
+.exchange-menus,
+.toolbar-preferences {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.toolbar-context {
+  gap: 8px;
+  padding-inline: 6px;
+}
+.workspace-toolbar .mode-label {
+  font-size: 12px;
+}
+.document-title {
+  max-width: 16ch;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  color: var(--muted);
+}
+.toolbar-preferences {
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.workspace-toolbar .control-selector {
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.workspace-toolbar
+  :is(
+    .control-selector > button,
+    .settings-trigger,
+    .toolbar-app-menu,
+    .history-controls button,
+    .touch-control-toggle button
+  ) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  box-shadow: none;
+  min-height: 32px;
+  padding: 5px 8px;
+  color: var(--text);
+  font:
+    500 12px / 1.2 system-ui,
+    sans-serif;
+}
+.workspace-toolbar
+  :is(
+    .control-selector > button,
+    .settings-trigger,
+    .toolbar-app-menu,
+    .history-controls button,
+    .touch-control-toggle button
+  ):is(:hover, [aria-expanded="true"]):not(:disabled) {
+  background: var(--surface);
+}
+.workspace-toolbar .history-controls {
+  padding-inline: 4px;
+  overflow: visible;
+  border: 0;
+  border-inline: 1px solid var(--surface);
+  border-radius: 0;
+}
+.workspace-toolbar .history-controls button {
+  min-width: 32px;
+}
+.workspace-toolbar .control-selector > button::after {
+  width: 4px;
+  height: 4px;
+}
+.workspace-toolbar .touch-control-toggle {
+  gap: 0;
+  padding: 2px;
+  border-radius: 6px;
+  background: var(--surface);
+}
+.workspace-toolbar .touch-control-toggle button {
+  min-height: 26px;
+}
+.workspace-toolbar .touch-control-toggle button[aria-pressed="true"] {
+  background: var(--panel);
+  box-shadow: 0 1px 3px var(--shadow);
+  color: var(--accent);
+}
+.settings-trigger svg {
+  width: 18px;
+  height: 18px;
+}
+.workspace-toolbar .toolbar-app-menu {
+  padding: 3px;
+}
+#app:has(
+    .pane-column:not(.closed) [data-pane="Makeshift"]:not(.folded, [hidden]),
+    .floating[data-pane="Makeshift"]:not(.folded, [hidden])
+  )
+  .toolbar-app-menu {
+  display: none;
+}
+@media (pointer: coarse) {
+  .workspace-toolbar
+    :is(
+      .history-controls button,
+      .settings-trigger,
+      .toolbar-app-menu,
+      .control-selector > button
+    ) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+.input-mode-trigger svg {
+  display: none;
+  width: 18px;
+  height: 18px;
+}
+@container command-strip (max-width: 650px) {
+  .input-mode-trigger svg {
+    display: block;
+  }
+  .input-mode-trigger span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .workspace-toolbar .history-controls {
+    padding-inline: 0;
+  }
+  .workspace-toolbar .toolbar-context {
+    padding-inline: 2px;
+  }
+}
+@media (pointer: coarse) {
+  .workspace-toolbar .touch-control-toggle button {
+    min-height: 40px;
+  }
+  .closed .pane-tab::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    width: 44px;
+  }
+  .closed[data-side="right"] .pane-tab::before {
+    right: 0;
+  }
+  .closed[data-side="left"] .pane-tab::before {
+    left: 0;
+  }
+}
+
+@container command-strip (max-width: 335px) {
+  .toolbar-context {
+    order: 1;
+  }
+  .toolbar-preferences {
+    order: 2;
+  }
+}

@@ -246,13 +246,16 @@ their source colors. These exceptions do not justify low-contrast interface text
 
 ## Workspace panes
 
-Entities, Tools and Status start in the left dock. Orientation, Measurements, Decorators,
+The Makeshift application menu, Entities, Tools and Status start in the left dock. Orientation, Measurements, Decorators,
 Gear groups and Constraints start on the right. The title folds a pane and doubles as its
 drag handle. Drop over a dock to insert at that height, or over the canvas to float.
+The Makeshift wordmark opens File / Edit and its dotted handle folds or moves the pane.
+When that pane is hidden, folded or in a closed dock, a logo button in the toolbar opens the same menu.
 The ellipsis menu moves, floats or hides the pane. Its “Show in this dock” group brings
 other panes into that column. An empty dock offers an Add pane picker.
-Drag a dock rail to set its width or click it to collapse. Narrow workspaces use rails
-that reveal the docks over the canvas. The agent terminal retains its own drawer.
+Drag a dock rail to set its width or click it to collapse. Portrait tablet layouts keep
+the left tool dock available and reveal the right dock over the canvas. Phone layouts
+use edge tabs on both sides. Returning to a wider layout restores the pinned dock preferences. The agent terminal retains its own drawer.
 
 Built-in placement, dimensions, order and empty-content preferences persist locally
 outside geometry Undo. Measurements initially shows an empty selection prompt. Other
