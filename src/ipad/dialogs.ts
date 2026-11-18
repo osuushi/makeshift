@@ -1,3 +1,4 @@
+import { fingerprintSvg } from "../security/fingerprint.js";
 import type { DialogRequest, DirectoryListing } from "./protocol.js";
 import type { Rpc } from "./rpc.js";
 
@@ -24,6 +25,12 @@ export function showRemoteDialog(request: DialogRequest, rpc: Rpc): Promise<unkn
       const detail = document.createElement("p");
       detail.textContent = request.detail ?? "";
       dialog.append(detail);
+      if (request.fingerprint) {
+        const img = document.createElement("img");
+        img.alt = "Public key fingerprint";
+        img.src = "data:image/svg+xml," + encodeURIComponent(fingerprintSvg(request.fingerprint));
+        dialog.append(img);
+      }
       request.buttons.forEach((label, index) => {
         dialog.append(button(label, () => finish(index)));
       });

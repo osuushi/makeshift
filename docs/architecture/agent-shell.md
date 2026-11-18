@@ -67,7 +67,7 @@ on a fixed 100 ms polling interval. Idle reads do not hold the lifecycle lock.
 Collapsing preserves the process and output; stopping is a separate action.
 Founder accepted session continuity on 2026-09-20: collapse keeps the agent running,
 document close stops it. The 2026-09-20 review supersedes explicit initial Start:
-opening Agent launches the configured harness immediately.
+opening Agent launches the configured harness after any [included workspace trust decision](persistence.md#sharing-drawings-and-author-trust).
 Initially one document owns one agent workspace/session. Future tab scope must be
 explicit; changing UI focus must never silently retarget a running agent.
 
@@ -299,8 +299,8 @@ designed in area 2. Per-script Undo policy is accepted for area 5.
 ## Delivered orientation contract
 
 The founder authorized area 3 on 2026-09-20 before completing authenticated area 2
-review. First launch creates workspace `AGENTS.md` only when absent; existing user
-guidance is never overwritten. This portable file participates in file dirty state,
+review. First launch in a fresh workspace creates `AGENTS.md` if absent. Opening
+an imported workspace preserves its original files, including the absence of a guide. This portable file participates in file dirty state,
 not geometry Undo. Generated CLI/help/types live in a private temporary directory
 outside the archive. The launcher uses the app's Electron runtime as Node, so the
 user does not need a separate Node installation.

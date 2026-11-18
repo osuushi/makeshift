@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { readPortableArchive } from "../.build/host/model/portable-archive.js";
+import { downloadDrawing } from "./browser-library-helpers.mjs";
 import { launchElectron, openDocument, saveDocument } from "./native-documents.mjs";
 import { drag, reset, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -64,12 +65,13 @@ try {
   assert(Object.keys(portable.files).some((p) => p.startsWith("conversations/")));
   assert(!Object.keys(portable.files).some((p) => p.includes("auth.json")));
   await until(async () => !(await page.evaluate(() => window.makeshiftDocument.status())).edited);
-  const savedBytes = await readFile(file);
   await symlink(file, join(workspace, "linked.makeshift"));
-  await chooseTool(page, "save document", "save");
-  await page.getByRole("status").filter({ hasText: "link or special" }).waitFor();
-  assert.deepEqual(await readFile(file), savedBytes);
-  assert.equal((await page.evaluate(() => window.makeshiftDocument.status())).edited, true);
+  assert.equal(
+    (await page.evaluate(() => window.makeshiftDocument.command("save"))).error,
+    undefined,
+  );
+  // Local links stay outside the archive even when they point at the current drawing.
+  assert.deepEqual(readPortableArchive(await readFile(file)).files, portable.files);
   await unlink(join(workspace, "linked.makeshift"));
   await input.focus();
   await page.keyboard.type('printf "changed" > notes.txt');
@@ -138,7 +140,16 @@ try {
   );
   await openDocument(page, file);
   await settled(page);
-  const restored = (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" })))
+  assert.equal(
+    (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" }))).workspace,
+    null,
+  );
+  await app.evaluate(({ dialog }) => {
+    dialog.showMessageBox = async (_w, options) => ({
+      response: options.buttons.includes("Trust this version") ? 1 : 0,
+    });
+  });
+  const restored = (await page.evaluate(() => window.makeshiftAgent.request({ kind: "open-pane" })))
     .workspace;
   assert.notEqual(restored, workspace);
   assert.equal(await readFile(join(restored, "notes.txt"), "utf8"), "remember this design");
@@ -224,7 +235,12 @@ try {
       );
       await settled(page);
       const path = join(root, `${name}.makeshift`);
-      await saveDocument(page, path);
+      await page.evaluate(() => {
+        window.showSaveFilePicker = undefined;
+      });
+      const download = page.waitForEvent("download");
+      await downloadDrawing(page, name);
+      await (await download).saveAs(path);
       assert.deepEqual(
         readPortableArchive(await readFile(path)).files,
         readPortableArchive(await readFile(copy)).files,

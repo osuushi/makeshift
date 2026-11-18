@@ -30,7 +30,7 @@ export class TagControls {
     const title = document.createElement("h2");
     title.textContent = "Tagged group";
     this.name.setAttribute("aria-label", "Group name");
-    this.name.maxLength = 200;
+    this.name.maxLength = 192;
     this.description.setAttribute("aria-label", "Group description");
     this.description.placeholder = "What this geometry is for (optional)";
     this.description.maxLength = 2000;

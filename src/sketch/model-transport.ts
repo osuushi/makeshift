@@ -8,6 +8,11 @@ declare global {
   }
 }
 export async function call(request: ModelRequest, accepted?: SketchDocument): Promise<ModelReply> {
+  if (!window.makeshiftModel && request.kind === "decorator-enable" && request.enabled) {
+    const { browserTrust } = await import("../security/browser-device.js");
+    if (!accepted || !(await browserTrust.allowDecorators(accepted)))
+      throw new Error("Custom decorator code is disabled.");
+  }
   const reuse = request.kind === "extrude" && request.presentation === "visual" && accepted;
   const reply = await send(reuse ? { ...request, omitUnchangedData: true } : request);
   const data = reply.view.data ?? (reuse ? accepted : undefined);

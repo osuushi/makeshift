@@ -7,6 +7,34 @@ import { workspaceDigest, workspaceSnapshot } from "./workspace-files.js";
 /** Local file ownership is separate from geometry Undo. Old roots are retained for recovery. */
 export class AgentWorkspace {
   root: string | null = null;
+  fresh = true;
+  private staged: PortableFiles | null = null;
+  authorize: (files: PortableFiles) => Promise<"allow" | "empty" | "deny"> = async () => "deny";
+  onRecovery: (files: PortableFiles) => Promise<void> = async () => {};
+  stage(files: PortableFiles, recovered = false) {
+    this.adopt(null, files);
+    this.staged = Object.keys(files).length ? files : null;
+    if (recovered) this.baseline = workspaceDigest({});
+    this.changed();
+  }
+  async unlock() {
+    const files = this.staged;
+    if (!files) return;
+    const choice = await this.authorize(files);
+    if (choice === "deny") throw new Error("The included agent workspace is disabled.");
+    if (this.staged !== files) throw new Error("The workspace changed before authorization.");
+    const baseline = this.baseline;
+    if (choice === "allow") {
+      this.adopt(await this.prepare(files), files);
+      this.baseline = baseline;
+      this.changed();
+    } else {
+      this.adopt(await this.prepare({}), {});
+      this.baseline = baseline;
+      await this.onRecovery({});
+      this.changed();
+    }
+  }
   private baseline = workspaceDigest({});
   private current = this.baseline;
   private watcher: FSWatcher | null = null;
@@ -41,12 +69,15 @@ export class AgentWorkspace {
     return root;
   }
   async ensure(): Promise<void> {
+    await this.unlock();
     if (!this.root) this.adopt(await this.prepare({}), {});
   }
   adopt(root: string | null, files: PortableFiles): void {
     this.watcher?.close();
     clearTimeout(this.timer);
+    this.staged = null;
     this.root = root;
+    this.fresh = Object.keys(files).length === 0;
     this.error = undefined;
     this.baseline = this.current = workspaceDigest(files);
     if (root) {
@@ -78,7 +109,7 @@ export class AgentWorkspace {
     this.changed();
   }
   async snapshot(): Promise<PortableFiles> {
-    return this.root ? workspaceSnapshot(this.root) : {};
+    return this.staged ?? (this.root ? workspaceSnapshot(this.root) : {});
   }
   async refresh(): Promise<void> {
     while (this.scanning) {
@@ -87,7 +118,7 @@ export class AgentWorkspace {
     const root = this.root;
     this.scanning = (async () => {
       try {
-        const files = root ? await workspaceSnapshot(root) : {};
+        const files = await this.snapshot();
         if (root === this.root) {
           this.current = workspaceDigest(files);
           this.error = undefined;
@@ -107,10 +138,5 @@ export class AgentWorkspace {
     this.baseline = workspaceDigest(files);
     // Rescan after the atomic write to catch writes after snapshot capture.
     void this.refresh();
-  }
-  recovered(root: string, files: PortableFiles): void {
-    this.adopt(root, files);
-    this.baseline = workspaceDigest({});
-    this.changed();
   }
 }

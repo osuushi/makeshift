@@ -1,3 +1,4 @@
+import { validId } from "../security/text.js";
 import { newId, type SketchDocument } from "../sketch/document.js";
 import { knurlDefinition } from "./builtins.js";
 import { documentPresets, ephemeralPresetId } from "./ephemeral-presets.js";
@@ -145,14 +146,12 @@ export function validatePresets(document: SketchDocument): void {
   for (const preset of presets) {
     if (
       !preset ||
-      typeof preset.id !== "string" ||
-      !preset.id ||
+      !validId(preset.id) ||
       ids.has(preset.id) ||
       typeof preset.name !== "string" ||
       !preset.name.trim() ||
       preset.name.length > 200 ||
-      typeof preset.definition !== "string" ||
-      !preset.definition ||
+      !validId(preset.definition) ||
       !Number.isInteger(preset.version) ||
       preset.version < 1
     )

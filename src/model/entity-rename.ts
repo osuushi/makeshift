@@ -1,3 +1,4 @@
+import { validName } from "../security/text.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "../tools/catalog.js";
 
@@ -13,13 +14,13 @@ function startRename(editor: SketchEditor, label: HTMLButtonElement, id: string)
   const input = document.createElement("input");
   input.className = "entity-name";
   input.value = label.textContent ?? "";
-  input.maxLength = 200;
+  input.maxLength = 192;
   input.setAttribute("aria-label", `Name for ${input.value}`);
   let finished = false;
   const finish = async (accept: boolean) => {
     if (finished) return;
-    if (accept && !input.value.trim()) {
-      input.setCustomValidity("Enter a name");
+    if (accept && !validName(input.value)) {
+      input.setCustomValidity("Use up to 96 printable characters.");
       input.reportValidity();
       input.focus();
       return;

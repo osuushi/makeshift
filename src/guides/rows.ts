@@ -59,7 +59,7 @@ export class GuideRows {
         const input = document.createElement("input");
         input.className = "guide-name";
         input.value = guide.name;
-        input.maxLength = 200;
+        input.maxLength = 192;
         input.setAttribute("aria-label", "Guide point name");
         label.replaceWith(input);
         input.focus();

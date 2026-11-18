@@ -7,11 +7,15 @@ import { type CameraState, validateCameraState } from "../model/camera-state.js"
 import { documentArchive } from "../model/document-archive.js";
 import type { DocumentStatus } from "../model/document-host.js";
 import { readPortableArchive, writePortableArchive } from "../model/portable-archive.js";
+import { DrawingTrust, usedDefinitions } from "../security/drawing-trust.js";
+import { portableDigest } from "../security/signatures.js";
 import type { AgentWorkspace } from "./agent-workspace.js";
 import { safeWrite } from "./safe-write.js";
 import { sessionDialogs as dialog } from "./session-dialogs.js";
+import { signingDevice } from "./signing-device.js";
 
 export class DocumentFiles {
+  private trust: DrawingTrust;
   path: string | null = null;
   get directory(): string {
     return this.path ? dirname(this.path) : this.defaultDirectory();
@@ -24,10 +28,19 @@ export class DocumentFiles {
     private owner: DocumentOwner,
     private workspace: AgentWorkspace,
     private remembered: (path: string | null) => Promise<void>,
-    private write: (path: string, action: () => Promise<void>) => Promise<void>,
+    private write: (path: string, action: () => Promise<void>, copy?: boolean) => Promise<void>,
     private defaultDirectory: () => string,
     private untitledName: string,
+    private window: () => BrowserWindow,
   ) {
+    this.trust = new DrawingTrust(signingDevice(window));
+    owner.setDecoratorAuthorization((doc) => this.trust.allowDecorators(doc));
+    workspace.authorize = async (files) => {
+      const digest = await portableDigest(files);
+      return digest ? this.trust.authorize("workspace", digest) : "allow";
+    };
+    workspace.onRecovery = async (files) =>
+      this.trust.load("workspace", await portableDigest(files), {});
     this.cachedDocument = owner.view.data;
     this.saved = this.cachedArchive = documentArchive(this.cachedDocument);
   }
@@ -56,10 +69,9 @@ export class DocumentFiles {
     if ((await stat(path)).size > 72 * 1024 * 1024) throw new Error("Document is too large.");
     const archive = readPortableArchive(await readFile(path));
     validateDocument(archive.document);
-    const root = Object.keys(archive.files).length
-      ? await this.workspace.prepare(archive.files)
-      : null;
-    return { path, ...archive, root };
+    const trust = new DrawingTrust(signingDevice(this.window));
+    await trust.opened(archive.document, archive.files, archive.seals);
+    return { path, ...archive, trust };
   }
   async open(
     path: string,
@@ -71,7 +83,17 @@ export class DocumentFiles {
       document: archive.document,
     });
     if (reply.error) throw new Error(reply.error);
-    this.workspace.adopt(archive.root, archive.files);
+    this.trust = archive.trust;
+    this.workspace.stage(archive.files);
+    for (const def of usedDefinitions(this.owner.view.data)) {
+      const result = await this.owner.call({
+        kind: "decorator-enable",
+        id: def.id,
+        version: def.version,
+        enabled: true,
+      });
+      if (result.error) break;
+    }
     this.path = path;
     app.addRecentDocument(path);
     this.camera = archive.camera;
@@ -83,12 +105,31 @@ export class DocumentFiles {
     saveAs = false,
     beforeCapture?: () => Promise<void>,
     camera?: CameraState,
+    copy = false,
   ): Promise<boolean> {
     let path = this.path;
-    if (!path || saveAs) {
+    if (copy && usedDefinitions(this.owner.view.data).length) {
+      const choice = await dialog.showMessageBox(window, {
+        type: "warning",
+        message: "This copy uses custom decorators",
+        detail:
+          "The agent workspace and conversations will be removed. Recipients may be asked to trust the decorators before using them.",
+        buttons: ["Export copy", "Cancel"],
+        defaultId: 0,
+        cancelId: 1,
+      });
+      if (choice.response !== 0) return false;
+    }
+    if (!path || saveAs || copy) {
       const result = await dialog.showSaveDialog(window, {
-        title: "Save Document",
-        defaultPath: path ?? join(this.directory, `${this.untitledName}.makeshift`),
+        title: copy ? "Export without agent workspace" : "Save Document",
+        defaultPath: copy
+          ? join(
+              this.directory,
+              (path ? basename(path).replace(/\.(freac|makeshift)$/i, "") : this.untitledName) +
+                " - shared.makeshift",
+            )
+          : (path ?? join(this.directory, `${this.untitledName}.makeshift`)),
         filters: [{ name: "Makeshift Document", extensions: ["makeshift"] }],
       });
       if (result.canceled || !result.filePath) return false;
@@ -100,12 +141,19 @@ export class DocumentFiles {
       this.owner.view.data,
       validateCameraState(camera) ?? this.camera,
     );
-    const files = await this.workspace.snapshot();
-    const bytes = writePortableArchive(archive, files);
-    await this.write(path, async () => {
-      await safeWrite(path, bytes);
-      this.path = path;
-    });
+    const files = copy ? {} : await this.workspace.snapshot();
+    const publication = await this.trust.prepareSave(this.owner.view.data, files);
+    const bytes = writePortableArchive(archive, files, publication.seals);
+    await this.write(
+      path,
+      async () => {
+        await safeWrite(path, bytes);
+        if (!copy) this.path = path;
+      },
+      copy,
+    );
+    if (copy) return true;
+    await publication.saved();
     this.saved = model;
     this.camera = camera ?? this.camera;
     this.workspace.saved(files);

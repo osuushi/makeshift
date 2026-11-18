@@ -8,7 +8,15 @@ interface Bounds extends Size {
   x: number;
   y: number;
 }
-const tabs = ["Interface", "Sketch Grid", "View", "Decorators", "Experimental", "Toolbox"];
+const tabs = [
+  "Interface",
+  "Sketch Grid",
+  "View",
+  "Decorators",
+  "Experimental",
+  "Security",
+  "Toolbox",
+];
 
 export function readSettingsSize(input: unknown): SettingsSize {
   const value = input as Partial<SettingsSize> | null;

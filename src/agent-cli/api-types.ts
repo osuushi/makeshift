@@ -38,8 +38,8 @@ export interface BodySummary {
 /** inspect without ID. */
 export interface MakeshiftOverview {
   taggedGroups: readonly TaggedGroup[];
-  decorators: readonly DecoratorInstance[];
-  decoratorDefinitions: readonly DecoratorDefinition[];
+  decorators: readonly Pick<DecoratorInstance,"id"|"definition"|"version"|"faces">[];
+  decoratorDefinitions: readonly Pick<DecoratorDefinition,"id"|"name"|"version">[];
   builtinDecorators: DecoratorCatalog["builtins"];
   units: "mm"; context: ViewContext; bodies: BodySummary[];
   constructionPlanes: { kind: "plane"; id: string; frame: Plane; visible: boolean }[];

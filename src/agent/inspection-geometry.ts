@@ -4,9 +4,17 @@ import { knurlFields } from "../decorators/knurl-settings.js";
 import { threadDefinition, threadFields } from "../decorators/thread-settings.js";
 import type { Body } from "../model/body.js";
 import type { MeasurementTarget } from "../model/measurement.js";
-import { arcCircle } from "../sketch/arc-geometry.js";
-import type { Curve, Sketch, SketchDocument } from "../sketch/document.js";
+import { safeName } from "../security/text.js";
+import type { Sketch, SketchDocument } from "../sketch/document.js";
 import { profilesFor } from "../sketch/profiles.js";
+import {
+  constraintSummary,
+  curveSummary,
+  decoratorSummary,
+  frameSummary,
+  groupSummary,
+  tagSummary,
+} from "./inspection-fields.js";
 import type { InspectionTarget, InspectionView } from "./inspection-protocol.js";
 
 const required = <T>(value: T | undefined): T => {
@@ -27,31 +35,16 @@ export function bodySummary(body: Body) {
     edges: body.edges.map((e) => e.id),
   };
 }
-function curveSummary(curve: Curve) {
-  if (curve.kind === "segment")
-    return { ...curve, length: Math.hypot(curve.b.x - curve.a.x, curve.b.y - curve.a.y) };
-  if (curve.kind === "circle")
-    return { ...curve, diameter: 2 * curve.radius, length: 2 * Math.PI * curve.radius };
-  if (curve.kind === "arc") {
-    const circle = arcCircle(curve),
-      sweep = 4 * Math.atan(curve.bulge);
-    return {
-      ...curve,
-      center: circle.center,
-      radius: circle.radius,
-      sweepRadians: sweep,
-      length: Math.abs(sweep) * circle.radius,
-    };
-  }
-  return { ...curve };
-}
 export function targetGeometry(document: SketchDocument, target: InspectionTarget): unknown {
   if (target.kind === "tagged-group")
-    return required(document.taggedGroups?.find((g) => g.id === target.taggedGroup));
+    return tagSummary(required(document.taggedGroups?.find((g) => g.id === target.taggedGroup)));
   if (target.kind === "plane")
     return {
       kind: "plane",
-      ...required(document.constructionPlanes?.find((p) => p.id === target.plane)),
+      id: target.plane,
+      frame: frameSummary(
+        required(document.constructionPlanes?.find((p) => p.id === target.plane)).frame,
+      ),
     };
   if ("body" in target) {
     const body = required(document.bodies?.find((b) => b.id === target.body));
@@ -68,9 +61,9 @@ export function targetGeometry(document: SketchDocument, target: InspectionTarge
         cylinder: face.cylinder ?? null,
         cone: face.cone ?? null,
         blend: face.blend ?? null,
-        decorators: (document.decorators ?? []).filter((d) =>
-          d.faces.some((f) => f.body === body.id && f.face === face.id),
-        ),
+        decorators: (document.decorators ?? [])
+          .filter((d) => d.faces.some((f) => f.body === body.id && f.face === face.id))
+          .map(decoratorSummary),
       };
     }
     const edge = required(body.edges.find((e) => e.id === target.edge));
@@ -86,7 +79,10 @@ export function targetGeometry(document: SketchDocument, target: InspectionTarge
   if (target.kind === "sketch")
     return {
       kind: "sketch",
-      ...sketch,
+      id: sketch.id,
+      plane: frameSummary(sketch.plane),
+      constraints: sketch.constraints.map(constraintSummary),
+      groups: sketch.groups.map(groupSummary),
       curves: sketch.curves.map(curveSummary),
       profiles: profileSummary(sketch),
     };
@@ -96,7 +92,7 @@ export function targetGeometry(document: SketchDocument, target: InspectionTarge
     const curve = required(sketch.curves.find((c) => c.id === target.curve));
     return {
       target,
-      plane: sketch.plane,
+      plane: frameSummary(sketch.plane),
       curve: curveSummary(curve),
       note:
         target.kind === "curve"
@@ -107,8 +103,8 @@ export function targetGeometry(document: SketchDocument, target: InspectionTarge
   const group = required(sketch.groups.find((g) => g.id === target.group));
   return {
     target,
-    plane: sketch.plane,
-    group,
+    plane: frameSummary(sketch.plane),
+    group: groupSummary(group),
     curves: group.members.map((id) =>
       curveSummary(required(sketch.curves.find((c) => c.id === id))),
     ),
@@ -137,9 +133,13 @@ export function findInspectionTarget(document: SketchDocument, id: string): Insp
 export function inspectionOverview(document: SketchDocument, view: InspectionView) {
   return {
     units: document.units,
-    taggedGroups: document.taggedGroups ?? [],
-    decorators: document.decorators ?? [],
-    decoratorDefinitions: document.decoratorDefinitions ?? [],
+    taggedGroups: (document.taggedGroups ?? []).map(tagSummary),
+    decorators: (document.decorators ?? []).map(decoratorSummary),
+    decoratorDefinitions: (document.decoratorDefinitions ?? []).map(({ id, name, version }) => ({
+      id,
+      name: safeName(name, "Decorator"),
+      version,
+    })),
     builtinDecorators: [
       { id: threadDefinition, version: 1, name: "Threads", fields: threadFields },
       gearManifest,
@@ -147,7 +147,8 @@ export function inspectionOverview(document: SketchDocument, view: InspectionVie
     ],
     constructionPlanes: (document.constructionPlanes ?? []).map((p) => ({
       kind: "plane",
-      ...p,
+      id: p.id,
+      frame: frameSummary(p.frame),
       visible: !view.hidden.includes(p.id),
     })),
     bodies: (document.bodies ?? []).map((body) => ({
@@ -157,7 +158,7 @@ export function inspectionOverview(document: SketchDocument, view: InspectionVie
     sketches: document.sketches.map((s) => ({
       kind: "sketch",
       id: s.id,
-      plane: s.plane,
+      plane: frameSummary(s.plane),
       profiles: profileSummary(s),
       visible: !view.hidden.includes(s.id),
       curves: s.curves.map((c) => ({ id: c.id, kind: c.kind })),

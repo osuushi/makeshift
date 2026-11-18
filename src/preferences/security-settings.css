@@ -1,0 +1,32 @@
+.security-settings {
+  max-height: 60vh;
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+.security-settings img,
+.content-trust-dialog img {
+  display: block;
+  width: 136px;
+  height: 72px;
+}
+.security-settings code,
+.content-trust-dialog code {
+  display: block;
+  user-select: all;
+  margin: 0.5rem 0;
+}
+.security-settings button,
+.content-trust-dialog button {
+  margin: 0.2rem;
+}
+.security-settings details {
+  margin: 0.6rem 0;
+}
+.content-trust-dialog {
+  max-width: min(30rem, 85vw);
+  color: CanvasText;
+  background: Canvas;
+}
+.content-trust-dialog p {
+  white-space: pre-line;
+}

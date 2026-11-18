@@ -246,9 +246,10 @@ try {
   }
   const reopenedFirst = await openFile(firstPath);
   assert.equal(app.windows().length, 2);
+  assert.equal((await agent(reopenedFirst, { kind: "read" })).workspace, null);
   assert.equal(
     await readFile(
-      join((await agent(reopenedFirst, { kind: "read" })).workspace, "identity.txt"),
+      join((await agent(reopenedFirst, { kind: "open-pane" })).workspace, "identity.txt"),
       "utf8",
     ),
     "first",

@@ -1,4 +1,5 @@
 import type { DisplayDocument } from "../model/display-document.js";
+import { validName } from "../security/text.js";
 import { newId, type SketchDocument } from "../sketch/document.js";
 import { guidePosition } from "./evaluate.js";
 import { type GuideAnchor, type GuideEdit, guideKey } from "./types.js";
@@ -46,13 +47,7 @@ export function validateGuides(document: SketchDocument): void {
   if (document.guidePoints === undefined) return;
   if (!Array.isArray(document.guidePoints)) throw new Error("Invalid guide points");
   for (const point of document.guidePoints) {
-    if (
-      !point ||
-      typeof point.name !== "string" ||
-      !point.name.trim() ||
-      point.name.length > 200 ||
-      typeof point.hidden !== "boolean"
-    )
+    if (!point || !validName(point.name) || typeof point.hidden !== "boolean")
       throw new Error("Invalid guide point");
     validateGuideAnchor(document, point.anchor);
   }

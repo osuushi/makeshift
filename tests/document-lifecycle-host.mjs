@@ -26,6 +26,8 @@ export async function launchDocuments(profile) {
       globalThis.openPaths = [];
       dialog.showMessageBox = async (_window, options) => {
         const value = options ?? _window;
+        for (const label of ["Save unsigned", "Trust this version"])
+          if (value.buttons?.includes(label)) return { response: value.buttons.indexOf(label) };
         globalThis.promptNames.push(value.message);
         return { response: globalThis.answers.shift() ?? 2 };
       };
