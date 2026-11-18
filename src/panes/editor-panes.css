@@ -95,7 +95,7 @@
 /* Short updates share the header row. Errors get the whole width and a dismiss action. */
 .pane-stack > [data-pane="Status"]:not(.folded, [hidden]) {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 32px;
+  grid-template-columns: auto minmax(0, 1fr) 30px;
   grid-template-rows: minmax(0, 1fr) 6px;
   align-content: start;
   align-items: center;
@@ -105,6 +105,14 @@
 }
 .pane-stack > [data-pane="Status"]:not(.folded, [hidden]) > .pane-heading {
   display: contents;
+}
+.pane-stack > [data-pane="Status"]:not(.folded) .pane-title > span {
+  flex-shrink: 0;
+}
+.pane-stack > [data-pane="Status"]:not(.folded) .pane-title::after {
+  flex: none;
+  width: 14px;
+  margin-left: 3px;
 }
 .pane-stack > [data-pane="Status"]:not(.folded, [hidden]) .pane-heading select {
   grid-area: 1 / 3;
@@ -127,6 +135,9 @@
   display: block;
   padding: 4px;
   background: transparent;
+}
+.pane-stack .status:not(.error-feedback) {
+  padding-inline: 0;
 }
 .pane-content .status.error-feedback {
   display: flex;

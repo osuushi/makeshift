@@ -1,7 +1,7 @@
 /* The application menu participates in the same dock, fold and float gestures as other panes. */
 .workspace-pane[data-pane="Makeshift"]:not(.folded, [hidden]) {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 20px 28px;
+  grid-template-columns: minmax(0, max-content) minmax(24px, 1fr) 28px;
   grid-template-rows: minmax(36px, 1fr) 6px;
   align-items: center;
   min-height: 44px;
@@ -14,16 +14,14 @@
 [data-pane="Makeshift"]:not(.folded) .pane-title {
   grid-area: 1 / 2;
   height: 32px;
-  font-size: 0;
+  padding-inline: 0;
 }
+[data-pane="Makeshift"]:not(.folded) .pane-title > span,
 [data-pane="Makeshift"]:not(.folded) .pane-title::before {
-  display: inline-block;
-  margin: 0;
-  width: 7px;
-  height: 12px;
-  border: 0;
-  transform: none;
-  background: radial-gradient(circle, var(--muted) 1px, transparent 1.2px) 0 0 / 4px 4px;
+  display: none;
+}
+[data-pane="Makeshift"]:not(.folded) .pane-title::after {
+  margin-inline: 2px;
 }
 [data-pane="Makeshift"] .pane-heading select {
   grid-area: 1 / 3;
@@ -161,17 +159,23 @@
 }
 .workspace-toolbar .touch-control-toggle {
   gap: 0;
-  padding: 2px;
-  border-radius: 6px;
-  background: var(--surface);
+  margin-inline: 3px;
 }
 .workspace-toolbar .touch-control-toggle button {
-  min-height: 26px;
+  position: relative;
+  min-height: 36px;
+  color: var(--muted);
 }
 .workspace-toolbar .touch-control-toggle button[aria-pressed="true"] {
-  background: var(--panel);
-  box-shadow: 0 1px 3px var(--shadow);
   color: var(--accent);
+}
+.touch-control-toggle button[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 8px 3px;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
 }
 .settings-trigger svg {
   width: 18px;
@@ -225,7 +229,7 @@
 }
 @media (pointer: coarse) {
   .workspace-toolbar .touch-control-toggle button {
-    min-height: 40px;
+    min-height: 44px;
   }
   .closed .pane-tab::before {
     content: "";

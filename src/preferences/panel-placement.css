@@ -20,12 +20,15 @@
   right: 2px;
   top: 4px;
   bottom: 4px;
+  mask-image: linear-gradient(transparent, #000 21%, #000 79%, transparent);
+}
+.parameter-panel-grip::before,
+.pane-title::after {
   background:
     radial-gradient(circle at 3px 3px, var(--muted) 0.8px, transparent 1.2px),
     radial-gradient(circle at 3px 4px, var(--panel) 0.8px, transparent 1.3px);
   background-size: 6px 6px;
   filter: blur(0.3px);
-  mask-image: linear-gradient(transparent, #000 21%, #000 79%, transparent);
   pointer-events: none;
 }
 .parameter-panel-grip:active {

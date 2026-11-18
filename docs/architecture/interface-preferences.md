@@ -249,7 +249,8 @@ their source colors. These exceptions do not justify low-contrast interface text
 The Makeshift application menu, Entities, Tools and Status start in the left dock. Orientation, Measurements, Decorators,
 Gear groups and Constraints start on the right. The title folds a pane and doubles as its
 drag handle. Drop over a dock to insert at that height, or over the canvas to float.
-The Makeshift wordmark opens File / Edit and its dotted handle folds or moves the pane.
+Pane titles use the widget drag texture as a horizontal strip that fades toward the label.
+The Makeshift wordmark opens File / Edit. The strip alongside it folds or moves that pane.
 When that pane is hidden, folded or in a closed dock, a logo button in the toolbar opens the same menu.
 The ellipsis menu moves, floats or hides the pane. Its “Show in this dock” group brings
 other panes into that column. An empty dock offers an Add pane picker.

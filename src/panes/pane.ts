@@ -23,7 +23,7 @@ export function createPane(options: PaneOptions) {
   const root = document.createElement("section"),
     body = document.createElement("div"),
     bar = document.createElement("div");
-  const title = button(options.title, options.title),
+  const title = button(options.title, ""),
     menu = document.createElement("select"),
     grip = button(`Resize ${options.title}`, "");
   const state = placement(
@@ -45,6 +45,10 @@ export function createPane(options: PaneOptions) {
   bar.className = "pane-heading";
   body.className = "pane-content";
   title.className = "pane-title";
+  title.title = `Click to fold or expand ${options.title}, drag to move`;
+  const caption = document.createElement("span");
+  caption.textContent = options.title;
+  title.append(caption);
   grip.className = "pane-grip";
   menu.title = `${options.title} pane options`;
   menu.setAttribute("aria-label", menu.title);

@@ -13,10 +13,6 @@
   display: flex;
   gap: 2px;
 }
-.touch-control-toggle button[aria-pressed="true"] {
-  background: var(--selected);
-  color: var(--text);
-}
 .control-selector > button::after {
   content: "";
   width: 6px;

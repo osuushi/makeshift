@@ -74,7 +74,7 @@
   align-items: center;
   flex: none;
   gap: 3px;
-  padding: 1px 8px;
+  padding: 0 8px;
 }
 .pane-title,
 .pane-heading select,
@@ -86,18 +86,36 @@
   box-shadow: none;
 }
 .pane-title {
+  display: flex;
+  align-items: center;
   flex: 1;
   min-width: 0;
-  padding: 7px 4px;
+  min-height: 26px;
+  padding: 3px 4px;
   border-radius: 3px;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
   text-align: left;
   font-size: 13px;
   font-weight: 650;
   cursor: grab;
   touch-action: none;
+}
+.pane-title > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pane-title::after {
+  content: "";
+  mask-image: linear-gradient(to right, transparent, #000 21%, #000 79%, transparent);
+  flex: 1 1 24px;
+  min-width: 0;
+  height: 12px;
+  margin-left: 6px;
+  opacity: 0.62;
+}
+.pane-title:is(:hover, :focus-visible, :active)::after {
+  opacity: 1;
 }
 .pane-title:active {
   cursor: grabbing;
@@ -112,6 +130,7 @@
   border-bottom: 1.5px solid currentColor;
 }
 .pane-title::before {
+  flex: none;
   margin: 0 9px 3px 2px;
   color: var(--muted);
   transform: rotate(45deg);
@@ -122,7 +141,7 @@
 .pane-heading select {
   appearance: none;
   width: 30px;
-  height: 28px;
+  height: 26px;
   text-align: center;
   text-align-last: center;
   font:
@@ -181,13 +200,11 @@
 .floating > .pane-content {
   border-radius: 0 0 8px 8px;
 }
-.floating .pane-title::before {
-  width: 7px;
-  height: 11px;
-  margin-bottom: -1px;
-  border: 0;
-  transform: none;
-  background: radial-gradient(circle, var(--muted) 1px, transparent 1.3px) 0 0 / 4px 4px;
+@media (pointer: coarse) {
+  .pane-title,
+  .pane-heading select {
+    min-height: 30px;
+  }
 }
 
 .pane-drag-label {
