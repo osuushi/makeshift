@@ -3,6 +3,70 @@ import { openDocument } from "./native-documents.mjs";
 import { project } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
 
+// A selected sketch shares its midpoint with the front edge of its extrusion.
+export async function hoverChangesGuideMeanings(page, name, archive) {
+  await openDocument(page, {
+    name: "guide-hover-transition.makeshift",
+    mimeType: "application/json",
+    buffer: Buffer.from(archive),
+  });
+  const midpoint = await project(page, [0, -16.5, 0]);
+  const profile = await project(page, [-3, 5, 0]);
+  const inside = { x: midpoint.x - 35, y: midpoint.y + 24 };
+  const along = { x: midpoint.x - 31, y: midpoint.y + 7 };
+  await page.mouse.click(profile.x, profile.y);
+  assert.equal((await inspect(page)).modelingSelection[0]?.kind, "profile");
+  await page.mouse.move(inside.x, inside.y);
+  const marker = await page.waitForFunction(
+    ({ x, y }) =>
+      Array.from(document.querySelectorAll(".guide-marker.ghost")).find(
+        (node) =>
+          !node.hidden &&
+          node.style.pointerEvents === "auto" &&
+          Math.hypot(
+            Number.parseFloat(node.style.left) - x,
+            Number.parseFloat(node.style.top) - y,
+          ) < 1,
+      ),
+    midpoint,
+  );
+  assert.equal(await marker.evaluate((node) => !node.querySelector(".guide-count")), true);
+  await page.waitForFunction((node) => node.style.opacity === "0.8", marker);
+  await page.mouse.move(along.x, along.y);
+  await page.waitForFunction(() => window.makeshiftInspect().modelingHover === "edge");
+  assert.equal(
+    await marker.evaluate((node) => node.isConnected && node.style.pointerEvents),
+    "auto",
+  );
+  await page.waitForFunction(
+    (node) => node.querySelector(".guide-count")?.textContent === "2",
+    marker,
+  );
+  assert.equal(await marker.evaluate((node) => node.style.opacity), "0.8");
+  await page.mouse.move(inside.x, inside.y);
+  await page.waitForFunction((node) => !node.querySelector(".guide-count"), marker);
+  assert.equal(
+    await marker.evaluate((node) => node.isConnected && node.style.pointerEvents),
+    "auto",
+  );
+  await page.mouse.move(along.x, along.y);
+  await page.waitForFunction(
+    (node) => node.querySelector(".guide-count")?.textContent === "2",
+    marker,
+  );
+  await marker.asElement().click();
+  const choices = page.getByRole("dialog", { name: "Choose guide meaning" });
+  await choices.getByRole("button", { name: "Sketch curve midpoint", exact: true }).waitFor();
+  await choices.getByRole("button", { name: "Edge midpoint", exact: true }).click();
+  await page.waitForFunction(
+    () => window.makeshiftInspect().document.guidePoints?.[0]?.anchor.kind === "body-edge",
+  );
+  await marker.dispose();
+  console.log(
+    `${name}: a stable midpoint stays clickable through a count change and saves the new meaning`,
+  );
+}
+
 // The orbit captures the real pointer before the guide UI can receive motion.
 export async function orbitPausesDiscovery(page, name, archive) {
   await openDocument(page, {

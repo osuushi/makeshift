@@ -1,5 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { GuideCandidate } from "./candidates.js";
+import { near } from "./geometry.js";
 import { advanceMarkerFade, desireMarker, type MarkerFade } from "./marker-fade.js";
 import { guideMarkerOccluded } from "./marker-visibility.js";
 import { GuideMeaningChoices } from "./meaning-choices.js";
@@ -47,18 +48,33 @@ export class GuideMarkers {
       if (group) group.push(item);
       else groups.push([item]);
     }
-    const desired = new Set<MarkerEntry>();
-    for (const group of groups) {
+    const incoming = groups.map((group) => {
       const key = JSON.stringify(
         group.map((p) => [p.guide?.id, p.guide?.name, p.label, guideKey(p.anchor)]).sort(),
       );
-      let button = this.buttons.find((entry) => entry.key === key);
+      return { group, key, existing: this.buttons.find((entry) => entry.key === key) };
+    });
+    // Reserve unchanged groups before matching a changed set of meanings to its location.
+    const desired = new Set(incoming.flatMap(({ existing }) => (existing ? [existing] : [])));
+    for (const { group, key, existing } of incoming) {
+      let button =
+        existing ??
+        this.buttons.find(
+          (entry) =>
+            !desired.has(entry) &&
+            entry.items.some((previous) => group.some((next) => near(previous.point, next.point))),
+        );
       if (!button) {
         button = this.button(group, key);
         this.buttons.push(button);
       }
       desired.add(button);
       button.items = group;
+      if (button.key !== key) {
+        button.key = key;
+        describeMarker(button.element, group, true);
+        if (button.element.matches(":hover")) this.hover(group);
+      }
       const p = this.editor.world.project(group[0].point);
       button.element.style.left = `${p.x}px`;
       button.element.style.top = `${p.y}px`;
@@ -128,23 +144,10 @@ export class GuideMarkers {
       opacity: saved ? 1 : 0,
     };
     button.style.opacity = String(entry.opacity);
-    button.className = `guide-marker${items.some((p) => p.guide) ? " saved" : " ghost"}`;
+    button.className = "guide-marker";
     button.innerHTML =
       '<svg class="guide-cross" viewBox="0 0 12 12" aria-hidden="true"><path d="M 1 6 H 11 M 6 1 V 11"/></svg>';
-    if (items.length > 1) {
-      const count = document.createElement("span");
-      count.className = "guide-count";
-      count.textContent = String(items.length);
-      button.append(count);
-    }
-    button.title = items.map((p) => (p.guide ? guideLabel(p.guide) : p.label)).join("\n");
-    if (!items.some((p) => p.guide)) button.title += " · Click to keep";
-    button.setAttribute(
-      "aria-label",
-      items.length > 1
-        ? "Choose guide point"
-        : `${items[0].guide ? "Select" : "Create"} ${items[0].guide?.name ?? items[0].label}`,
-    );
+    describeMarker(button, items, false);
     const open = (additive: boolean) => {
       if (entry.items.length === 1) this.choose(entry.items[0], additive);
       else this.meanings.open(entry.items, additive);
@@ -184,4 +187,51 @@ export class GuideMarkers {
     this.meanings.dispose();
     this.clearance.dispose();
   }
+}
+
+function describeMarker(button: HTMLButtonElement, items: GuideMarker[], animateCount: boolean) {
+  const saved = items.some((item) => item.guide);
+  button.classList.toggle("saved", saved);
+  button.classList.toggle("ghost", !saved);
+  button.title = items.map((p) => (p.guide ? guideLabel(p.guide) : p.label)).join("\n");
+  if (!saved) button.title += " · Click to keep";
+  button.setAttribute(
+    "aria-label",
+    items.length > 1
+      ? "Choose guide point"
+      : `${items[0].guide ? "Select" : "Create"} ${items[0].guide?.name ?? items[0].label}`,
+  );
+  updateCount(button, items.length, animateCount);
+}
+
+function updateCount(button: HTMLButtonElement, count: number, animate: boolean): void {
+  const text = count > 1 ? String(count) : null;
+  const active = button.querySelector<HTMLSpanElement>(".guide-count");
+  if ((active?.textContent ?? null) === text) return;
+  if (active) fadeCount(active, false);
+  if (text === null) return;
+  const next =
+    [...button.querySelectorAll<HTMLSpanElement>(".guide-count-fading")].find(
+      (badge) => badge.textContent === text,
+    ) ?? document.createElement("span");
+  next.textContent = text;
+  next.setAttribute("aria-hidden", "true");
+  if (!next.parentElement) {
+    next.className = "guide-count";
+    if (animate) next.style.opacity = "0";
+    button.append(next);
+  }
+  if (animate) fadeCount(next, true);
+}
+
+function fadeCount(badge: HTMLSpanElement, visible: boolean): void {
+  const previous = getComputedStyle(badge).opacity;
+  for (const animation of badge.getAnimations()) animation.cancel();
+  badge.className = visible ? "guide-count" : "guide-count-fading";
+  badge.style.opacity = visible ? "1" : "0";
+  const animation = badge.animate([{ opacity: previous }, { opacity: badge.style.opacity }], 100);
+  if (!visible)
+    animation.onfinish = () => {
+      if (badge.classList.contains("guide-count-fading")) badge.remove();
+    };
 }

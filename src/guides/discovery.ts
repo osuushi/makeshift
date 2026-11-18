@@ -24,7 +24,8 @@ const background: Schedule = (run) => {
 
 /** Optional candidate work never runs in a pointer, selection or tool refresh callback. */
 export class GuideDiscovery {
-  private key = "";
+  private viewKey = "";
+  private hoverKey = "";
   private pointer: Point | null = null;
   private document: SketchEditor["display"] | null = null;
   private cancel: (() => void) | null = null;
@@ -36,13 +37,11 @@ export class GuideDiscovery {
   ) {}
   update(pointer: Point | null, enabled: boolean): GuideCandidate[] {
     const e = this.editor;
-    const key =
+    const viewKey =
       enabled && pointer
         ? JSON.stringify([
             e.world.active,
             e.tool,
-            e.hover,
-            e.modeling.hover && modelingKey(e.modeling.hover),
             e.modeling.targets.map(modelingKey),
             [...e.selectionOwners],
             e.world.camera.matrixWorld.elements,
@@ -55,22 +54,33 @@ export class GuideDiscovery {
             e.bodiesVisible,
           ])
         : "";
-    const sameContext = key === this.key && this.document === e.display;
-    if (sameContext && this.pointer?.x === pointer?.x && this.pointer?.y === pointer?.y)
+    const hoverKey = viewKey
+      ? JSON.stringify(e.world.active ? e.hover : e.modeling.hover && modelingKey(e.modeling.hover))
+      : "";
+    const sameView = viewKey === this.viewKey && this.document === e.display;
+    if (
+      sameView &&
+      hoverKey === this.hoverKey &&
+      this.pointer?.x === pointer?.x &&
+      this.pointer?.y === pointer?.y
+    )
       return this.candidates;
     this.cancel?.();
     this.cancel = null;
     this.pointer = pointer;
-    this.key = key;
+    this.viewKey = viewKey;
+    this.hoverKey = hoverKey;
     this.document = e.display;
-    if (!sameContext || !pointer) this.candidates = [];
+    if (!sameView || !pointer) this.candidates = [];
     else {
+      // Keep nearby guides while the next hover search runs, then commit the
+      // incoming set together after its destination probes finish.
       this.candidates = this.candidates.filter((candidate) => {
         const screen = e.world.project(candidate.point);
         return Math.hypot(screen.x - pointer.x, screen.y - pointer.y) <= guidePointerRadius;
       });
     }
-    if (!key) return this.candidates;
+    if (!viewKey) return this.candidates;
     const work = discoverHoverGuides(e, pointer);
     const step = () => {
       this.cancel = null;

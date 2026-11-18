@@ -6,13 +6,18 @@ import { planes } from "../.cache/sketch-tests/src/sketch/planes.js";
 import { lift, prism } from "../.cache/sketch-tests/tests/body-edge-fixtures.js";
 import { openDocument } from "./native-documents.mjs";
 import { project } from "./ui-blend-edit.mjs";
-import { deferredDiscovery, orbitPausesDiscovery } from "./ui-guide-discovery.mjs";
+import {
+  deferredDiscovery,
+  hoverChangesGuideMeanings,
+  orbitPausesDiscovery,
+} from "./ui-guide-discovery.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const owner = new DocumentOwner();
 let archive;
+let transition;
 let crowded;
 let cylinder;
 let concave;
@@ -58,6 +63,26 @@ try {
     { ...owner.view.data, sketches: [], bodies: [concaveBody] },
     { position: [30, 30, 100], target: [30, 30, 0], up: [0, 1, 0], height: 100 },
   );
+  // The reported hover transition was at the bottom edge of this rectangle.
+  const transitionBody = await prism(
+    owner,
+    [
+      [-17, 16.5],
+      [17, 16.5],
+      [17, -16.5],
+      [-17, -16.5],
+    ],
+    30.5,
+  );
+  transition = documentArchive(
+    { ...owner.view.data, sketches: owner.view.data.sketches.slice(-1), bodies: [transitionBody] },
+    {
+      position: [-48.22309612758281, -2700.7040894230677, -1911.3018682448871],
+      target: [11.576023093578767, -11.633716359497278, 1.646998782752387],
+      up: [0.025455805478628343, -0.5798568557105759, 0.8143205934107762],
+      height: 80,
+    },
+  );
 } finally {
   owner.close();
 }
@@ -67,6 +92,13 @@ try {
 await withUiRuntimes(async (page, name) => {
   await deferredDiscovery(page, name, archive);
   await orbitPausesDiscovery(page, name, archive);
+  const viewport = page.viewportSize();
+  await page.setViewportSize({ width: 1728, height: 1051 });
+  try {
+    await hoverChangesGuideMeanings(page, name, transition);
+  } finally {
+    await page.setViewportSize(viewport);
+  }
   await selectedConcaveFace(page, name);
   await cylinderCap(page, name);
   await openDocument(page, {

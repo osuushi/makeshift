@@ -16,9 +16,9 @@ Guide points creation tool.
 Candidate discovery runs after paint at background priority, yielding between
 discovery/filtering and destination probes. Pointer, selection, geometry, camera
 or visibility changes supersede pending work; entering a tool or closing the window
-cancels it. Selection and tool controls do not wait for candidates. Pointer movement
-within the same hover context keeps nearby markers visible until the new candidate
-set is ready. Camera drags and transitions cancel pending discovery and clear
+cancels it. Selection and tool controls do not wait for candidates. Moving the
+pointer across hover targets keeps nearby markers visible in the same view until
+the replacement set is ready. Camera drags and transitions cancel pending discovery and clear
 candidate markers immediately. Saved guides follow the view, and guide pointer
 hits resume after navigation. Entering an existing marker preserves its hit
 target while discovery is deferred. Endpoint incidence uses an immutable-body
@@ -53,6 +53,8 @@ after discovery and clearance filtering. Saved guides do not count toward this l
 This is the steady-state target set: candidate marker DOM nodes are retained while
 fading in or out over 100 ms, with a minimum 100 ms on-screen lifetime before
 fading out. Returning targets reverse their fade without recreating the marker.
+When the definitions at a location change, the existing marker stays in place
+and the choice count fades toward its new value independently.
 Departing markers are noninteractive; panel/widget occlusion remains immediate.
 Transitions may briefly show outgoing markers alongside the three incoming targets.
 Saved, candidate and destination markers are hidden immediately behind opaque visible

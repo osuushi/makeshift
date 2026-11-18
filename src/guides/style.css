@@ -94,7 +94,8 @@
   stroke-width: 1.5;
   pointer-events: none;
 }
-.guide-count {
+.guide-count,
+.guide-count-fading {
   position: absolute;
   left: 14px;
   top: -6px;
