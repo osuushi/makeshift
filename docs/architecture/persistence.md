@@ -316,8 +316,9 @@ and automatic recovery selection remain outside this increment.
 
 Settings → Security owns the local Ed25519 identity, public display name, OpenSSH SHA-256
 fingerprint, downloadable visual fingerprint, and local trust decisions. The visual
-fingerprint uses a grid of colored shapes for quick comparison. Use the full
-SHA-256 fingerprint to confirm the key. Desktop private
+fingerprint uses a grid of colored shapes for quick comparison. Signed trust and
+publication prompts display the artwork and full SHA-256 fingerprint together.
+On desktop, a modal window owns this prompt even while the drawing opens. Desktop private
 key storage requires a protected system key store. The standalone browser wraps its
 identity with a non-extractable AES key in IndexedDB. Private-key transfer uses a
 passphrase-encrypted backup. The settings interface lets the user import a published

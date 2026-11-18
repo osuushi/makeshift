@@ -9,9 +9,22 @@ export async function settingsResizeChecks(app, page, dialog) {
     "View",
     "Decorators",
     "Experimental",
+    "Security",
     "Toolbox",
   ]) {
     await dialog.getByRole("tab", { name, exact: true }).click();
+    if (name === "Security") {
+      const panel = dialog.getByRole("tabpanel", { name: "Security", exact: true });
+      await panel.getByText("Trusted authors and versions", { exact: true }).waitFor();
+      await page.waitForFunction(() => {
+        const panel = document.querySelector(".security-settings");
+        const picture = panel.querySelector("img");
+        if (!picture) return panel.clientHeight > 60;
+        const bounds = picture.getBoundingClientRect();
+        return bounds.height >= 130 && bounds.bottom <= panel.getBoundingClientRect().bottom;
+      });
+      await page.screenshot({ path: ".cache/sketch-review/settings-security-measured.png" });
+    }
     await frames(page);
     const state = await nativeState(app);
     if (name === "Toolbox") {
@@ -32,9 +45,10 @@ export async function settingsResizeChecks(app, page, dialog) {
   const panel = await dialog
     .getByRole("tabpanel", { name: "Interface", exact: true })
     .boundingBox();
+  const last = await dialog.getByLabel("Circular dimensions", { exact: true }).boundingBox();
   assert.ok(
-    row.y - panel.y < 2 && panel.height - row.height < 8,
-    "Interface has no artificial vertical space around its control row",
+    row.y - panel.y < 2 && Math.abs(panel.y + panel.height - last.y - last.height) < 12,
+    "Interface fits its control row and circular dimensions without trailing space",
   );
   await page.screenshot({ path: ".cache/sketch-review/settings-interface-measured.png" });
   console.log(

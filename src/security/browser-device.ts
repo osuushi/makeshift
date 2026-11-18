@@ -1,6 +1,6 @@
+import { showContentPrompt } from "./content-prompt.js";
 import type { Grant, TrustDevice, TrustPrompt } from "./content-trust.js";
 import { DrawingTrust } from "./drawing-trust.js";
-import { fingerprintSvg } from "./fingerprint.js";
 import { createIdentity, type Identity, signContent } from "./identity.js";
 import { identitySettings } from "./settings-api.js";
 import { fingerprint } from "./signatures.js";
@@ -70,40 +70,10 @@ export const browserSettings = identitySettings(
   update,
 );
 export async function browserAsk(prompt: TrustPrompt): Promise<number> {
-  const dialog = document.createElement("dialog");
-  dialog.className = "content-trust-dialog";
-  const title = document.createElement("h2"),
-    detail = document.createElement("p");
-  title.textContent = prompt.message;
-  detail.textContent = prompt.detail;
-  dialog.append(title, detail);
-  if (prompt.key) {
-    const fp = await fingerprint(prompt.key),
-      code = document.createElement("code"),
-      img = document.createElement("img");
-    img.src = "data:image/svg+xml," + encodeURIComponent(fingerprintSvg(fp));
-    img.alt = "Public key fingerprint";
-    code.textContent = fp;
-    dialog.append(img, code);
-  }
-  return new Promise((resolve) => {
-    const finish = (index: number) => {
-      dialog.close();
-      dialog.remove();
-      resolve(index);
-    };
-    prompt.buttons.forEach((label, index) => {
-      const button = document.createElement("button");
-      button.textContent = label;
-      button.onclick = () => finish(index);
-      dialog.append(button);
-    });
-    dialog.oncancel = (e) => {
-      e.preventDefault();
-      finish(Math.max(0, prompt.buttons.indexOf("Cancel save")));
-    };
-    document.body.append(dialog);
-    dialog.showModal();
+  return showContentPrompt({
+    ...prompt,
+    fingerprint: prompt.key ? await fingerprint(prompt.key) : undefined,
+    cancelId: Math.max(0, prompt.buttons.indexOf("Cancel save")),
   });
 }
 const device: TrustDevice = {

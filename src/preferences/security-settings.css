@@ -1,33 +1,44 @@
 .security-settings {
-  max-height: 60vh;
-  overflow: auto;
   overflow-wrap: anywhere;
 }
-.security-settings img,
-.content-trust-dialog img {
+.security-identity {
+  display: grid;
+  grid-template-columns: minmax(0, 144px) minmax(0, 1fr);
+  align-items: start;
+  gap: 8px 16px;
+}
+.security-identity img {
   display: block;
-  width: 144px;
-  max-width: 100%;
+  width: 100%;
   height: auto;
+  aspect-ratio: 1;
 }
-.security-settings code,
-.content-trust-dialog code {
-  display: block;
+.security-identity code,
+.security-fingerprint-actions {
+  grid-column: 1 / -1;
+}
+.security-identity code {
   user-select: all;
-  margin: 0.5rem 0;
 }
-.security-settings button,
-.content-trust-dialog button {
+.security-fingerprint-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.security-settings button {
   margin: 0.2rem;
 }
 .security-settings details {
   margin: 0.6rem 0;
 }
-.content-trust-dialog {
-  max-width: min(30rem, 85vw);
-  color: CanvasText;
-  background: Canvas;
+.security-settings > p:empty {
+  display: none;
 }
-.content-trust-dialog p {
-  white-space: pre-line;
+@container settings (max-width: 350px) {
+  .security-identity {
+    grid-template-columns: 1fr;
+  }
+  .security-identity img {
+    max-width: 108px;
+  }
 }

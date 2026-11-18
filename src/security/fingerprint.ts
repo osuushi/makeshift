@@ -23,7 +23,7 @@ const colors = [
 const background = "#f7f7f2";
 const columns = 4;
 const cell = 9;
-export const fingerprintArtSize = columns * cell;
+const fingerprintArtSize = columns * cell;
 
 function symbols(fingerprint: string) {
   const bytes = decode(fingerprint.slice(7));
@@ -52,21 +52,4 @@ export function fingerprintSvg(value: string) {
     return `<path fill="${color}" d="${path}"/>`;
   });
   return `<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges"><rect width="${size}" height="${size}" fill="${background}"/>${paths.join("")}</svg>`;
-}
-
-/** Electron consumes BGRA. Draw the same comparison artwork as the SVG. */
-export function fingerprintBitmap(value: string) {
-  const size = fingerprintArtSize;
-  const rgb = (color: string) => 0xff000000 | Number.parseInt(color.slice(1), 16);
-  const pixels = new Uint8Array(size * size * 4);
-  const view = new DataView(pixels.buffer);
-  const clear = rgb(background);
-  for (let i = 0; i < size * size; i++) view.setUint32(i * 4, clear, true);
-  for (const { x, y, shape, color } of symbols(value)) {
-    const fill = rgb(color);
-    for (const [j, row] of shape.entries())
-      for (let i = 0; i < row.length; i++)
-        if (row[i] === "1") view.setUint32(((y + j) * size + x + i) * 4, fill, true);
-  }
-  return pixels;
 }

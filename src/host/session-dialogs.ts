@@ -2,6 +2,7 @@ import { readdir, stat } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { app, type BrowserWindow, dialog } from "electron";
 import type { DialogRequest, DirectoryListing } from "../ipad/protocol.js";
+import { showTrustWindow } from "./trust-window.js";
 
 export async function showDocumentError(error: unknown): Promise<void> {
   console.error(error);
@@ -71,11 +72,23 @@ export const sessionDialogs = {
     options: Electron.MessageBoxOptions & { fingerprint?: string },
   ): Promise<Electron.MessageBoxReturnValue> {
     const remote = this.remotes.get(window);
+    if (!remote && options.fingerprint) {
+      const response = await showTrustWindow(window, {
+        message: options.message,
+        detail: options.detail,
+        fingerprint: options.fingerprint,
+        buttons: options.buttons ?? ["OK"],
+        cancelId: options.cancelId ?? 0,
+      });
+      return { response, checkboxChecked: false };
+    }
     if (!remote) return dialog.showMessageBox(window, options);
     const response = await remote({
       kind: "message",
       message: options.message,
-      detail: options.detail,
+      detail: options.fingerprint
+        ? `${options.detail ?? ""}\n\n${options.fingerprint}`
+        : options.detail,
       fingerprint: options.fingerprint,
       buttons: options.buttons ?? ["OK"],
       cancelId: options.cancelId,

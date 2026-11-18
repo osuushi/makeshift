@@ -2,9 +2,8 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { userInfo } from "node:os";
 import { join } from "node:path";
-import { app, type BrowserWindow, nativeImage, safeStorage } from "electron";
+import { app, type BrowserWindow, safeStorage } from "electron";
 import type { Author, Grant, TrustDevice, TrustPrompt } from "../security/content-trust.js";
-import { fingerprintArtSize, fingerprintBitmap } from "../security/fingerprint.js";
 import { createIdentity, type Identity, signContent } from "../security/identity.js";
 import { fingerprint, type Scope } from "../security/signatures.js";
 import { safeName } from "../security/text.js";
@@ -80,12 +79,6 @@ export function changeGrants(change: (items: Grant[]) => Grant[]) {
     ),
   );
 }
-function art(value: string) {
-  const size = fingerprintArtSize;
-  return nativeImage
-    .createFromBitmap(Buffer.from(fingerprintBitmap(value)), { width: size, height: size })
-    .resize({ width: 144, height: 144 });
-}
 export function signingDevice(window: () => BrowserWindow): TrustDevice {
   return {
     async identity() {
@@ -110,8 +103,8 @@ export function signingDevice(window: () => BrowserWindow): TrustDevice {
       const { response } = await sessionDialogs.showMessageBox(window(), {
         type: "warning",
         message: prompt.message,
-        detail: prompt.detail + (value ? "\n\n" + value : ""),
-        ...(value ? { icon: art(value), fingerprint: value } : {}),
+        detail: prompt.detail,
+        fingerprint: value,
         buttons: prompt.buttons,
         defaultId: 0,
         cancelId: Math.max(0, prompt.buttons.indexOf("Cancel save")),

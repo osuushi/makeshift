@@ -8,12 +8,17 @@ import {
   writePortableArchive,
 } from "../.build/host/model/portable-archive.js";
 import { createIdentity, signContent } from "../.build/host/security/identity.js";
-import { decoratorDigest, portableDigest, verified } from "../.build/host/security/signatures.js";
+import {
+  decoratorDigest,
+  fingerprint,
+  portableDigest,
+  verified,
+} from "../.build/host/security/signatures.js";
 import { launchElectron, openDocument, saveDocument } from "./native-documents.mjs";
 import { drag, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-// The document window, menu, workspace, and file codec are real. Native dialogs return the specified user decision.
+// Exercise the actual modal used for signed prompts and click its decisions.
 const directory = await mkdtemp(join(tmpdir(), "makeshift-trust-"));
 const app = await launchElectron({
   args: ["."],
@@ -47,24 +52,7 @@ try {
     incoming,
     writePortableArchive(documentArchive(doc), files, { workspace, decorators }),
   );
-  await app.evaluate(({ dialog }) => {
-    globalThis.securityMessages = [];
-    globalThis.securityIconSizes = [];
-    dialog.showMessageBox = async (_w, options) => {
-      globalThis.securityMessages.push(options.message);
-      if (options.icon) globalThis.securityIconSizes.push(options.icon.getSize());
-      if (
-        options.message === "Use the included agent workspace?" &&
-        globalThis.securityMessages.length === 1
-      )
-        return { response: 0 };
-      return {
-        response: options.buttons.includes("Trust this version")
-          ? options.buttons.indexOf("Trust this version")
-          : 0,
-      };
-    };
-  });
+  const expected = await fingerprint(bob.key);
   await openDocument(page, incoming);
   assert.equal(await archivedPreview.count(), 0);
   assert.equal(
@@ -79,7 +67,7 @@ try {
   const saved = readPortableArchive(await readFile(copy));
   assert.deepEqual(saved.seals, { workspace, decorators });
   assert.equal(saved.document.sketches.length, 1);
-  assert.deepEqual(await app.evaluate(() => globalThis.securityMessages), []);
+  assert.ok(app.windows().every((window) => !window.url().endsWith("/trust.html")));
   await app.evaluate(({ dialog }, filePath) => {
     dialog.showSaveDialog = async () => ({ canceled: false, filePath });
   }, clean);
@@ -104,7 +92,17 @@ try {
       }),
     process.platform === "win32" ? "cmd.exe" : "/bin/cat",
   );
+  const firstPrompt = nextTrustPrompt(app);
   await page.getByRole("button", { name: "Open agent terminal" }).click();
+  const canceled = await checkedPrompt(
+    await firstPrompt,
+    "Use the included agent workspace?",
+    expected,
+  );
+  await canceled.screenshot({ path: ".cache/sketch-review/signed-workspace-trust.png" });
+  await canceled.keyboard.press("Escape").catch((error) => {
+    if (!canceled.isClosed()) throw error;
+  });
   await page.getByText("The included agent workspace is disabled.", { exact: true }).waitFor();
   assert.equal(await archivedPreview.count(), 0);
   assert.equal(
@@ -116,18 +114,14 @@ try {
     await entities.evaluate((list) => list.clientHeight === list.parentElement.clientHeight),
     "the Entities list fills its pane while the agent terminal is open",
   );
-  assert.deepEqual(await app.evaluate(() => globalThis.securityIconSizes), [
-    { width: 144, height: 144 },
-  ]);
+  const retry = nextTrustPrompt(app);
   await page.getByRole("button", { name: "Start", exact: true }).click();
+  const approved = await checkedPrompt(await retry, "Use the included agent workspace?", expected);
+  await approved.getByRole("button", { name: "Trust this version", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
   await archivedPreview.waitFor();
   const state = await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" }));
   assert.equal(await readFile(join(state.workspace, "notes.txt"), "utf8"), "Fixture drawing notes");
-  assert.deepEqual(await app.evaluate(() => globalThis.securityMessages), [
-    "Use the included agent workspace?",
-    "Use the included agent workspace?",
-  ]);
   await page.getByRole("button", { name: "Stop", exact: true }).click();
   await page.waitForFunction(() => !document.querySelector("[data-start]").disabled);
   assert.equal(
@@ -135,10 +129,6 @@ try {
     undefined,
   );
   assert.deepEqual(readPortableArchive(await readFile(copy)).seals, { workspace, decorators });
-  assert.deepEqual(await app.evaluate(() => globalThis.securityMessages), [
-    "Use the included agent workspace?",
-    "Use the included agent workspace?",
-  ]);
   await verifyEndorsement(app, page, state.workspace, copy, workspace, decorators);
   await verifyUsedDecorators(app, page, bob, doc);
   console.log(
@@ -155,34 +145,61 @@ try {
   }
 }
 
+function nextTrustPrompt(app) {
+  return app.context().waitForEvent("page", {
+    timeout: 12000,
+    predicate: async (page) => {
+      await page.waitForURL(/\/trust\.html$/, { timeout: 3000 }).catch(() => {});
+      return page.url().endsWith("/trust.html");
+    },
+  });
+}
+
+async function checkedPrompt(page, title, expected) {
+  await page.waitForURL(/\/trust\.html$/);
+  const prompt = page.getByRole("dialog", { name: title });
+  const picture = prompt.getByRole("img", { name: "Public key fingerprint" });
+  await picture.waitFor();
+  await picture.evaluate((img) => img.decode());
+  const [image, text, actions] = await Promise.all([
+    picture.boundingBox(),
+    prompt.locator("code").boundingBox(),
+    prompt.locator(".trust-actions").boundingBox(),
+  ]);
+  const height = await page.evaluate(() => innerHeight);
+  assert.ok(image.width >= 120 && image.y + image.height <= height);
+  assert.ok(text.y + text.height <= height && actions.y + actions.height <= height);
+  if (expected) assert.equal(await prompt.locator("code").textContent(), expected);
+  return page;
+}
+
 // The unsigned path also covers headless Linux environments without a protected key store.
 async function verifyEndorsement(app, page, folder, path, oldSeal, decorators) {
   await writeFile(join(folder, "notes.txt"), "Reviewed fixture notes");
   await page.waitForFunction(async () => (await window.makeshiftDocument.status()).edited);
   await app.evaluate(({ dialog }) => {
-    dialog.showMessageBox = async (_w, options) => {
-      globalThis.lastPublication = options;
-      const label = options.buttons.includes("Sign with my key")
-        ? "Sign with my key"
-        : "Save unsigned";
-      return { response: options.buttons.indexOf(label) };
-    };
+    dialog.showMessageBox = async (_w, options) => ({
+      response: options.buttons.indexOf("Save unsigned"),
+    });
   });
-  const result = await page.evaluate(() => window.makeshiftDocument.command("save"));
-  assert.equal(result.error, undefined);
+  const publication = nextTrustPrompt(app);
+  const saving = page.evaluate(() => window.makeshiftDocument.command("save"));
+  const prompt = await Promise.race([publication, saving.then(() => null)]);
+  if (prompt) {
+    await checkedPrompt(prompt, /^Sign the workspace as /);
+    const detail = await prompt.locator(".trust-content p").textContent();
+    assert.match(detail, /previous version was signed by Bob/);
+    assert.match(detail, /personally vouch/);
+    await prompt.getByRole("button", { name: "Sign with my key", exact: true }).click();
+  }
+  assert.equal((await saving).error, undefined);
   await page.waitForFunction(async () => !(await window.makeshiftDocument.status()).edited);
   const saved = readPortableArchive(await readFile(path));
-  const { message, detail } = await app.evaluate(() => ({
-    message: globalThis.lastPublication.message,
-    detail: globalThis.lastPublication.detail,
-  }));
   assert.deepEqual(saved.seals.decorators, decorators);
-  if (message === "Signing key unavailable") {
+  if (!prompt) {
     assert.equal(saved.seals.workspace, undefined);
     console.log("PASS unsigned fallback with unavailable system key store");
   } else {
-    assert.match(detail, /previous version was signed by Bob/);
-    assert.match(detail, /personally vouch/);
     assert.notEqual(saved.seals.workspace.key, oldSeal.key);
     assert(await verified("workspace", await portableDigest(saved.files), saved.seals.workspace));
     console.log("PASS explicit endorsement and new verified workspace signer");
@@ -210,30 +227,33 @@ async function verifyUsedDecorators(app, page, bob, doc) {
   const seal = await signContent(bob, "decorators", await decoratorDigest(model), bob);
   const path = join(directory, "applied.makeshift");
   await writeFile(path, writePortableArchive(documentArchive(model), {}, { decorators: seal }));
-  await app.evaluate(({ dialog }) => {
-    globalThis.questions = [];
-    dialog.showMessageBox = async (_window, options) => {
-      globalThis.questions.push(options);
-      return {
-        response:
-          globalThis.questions.length === 1 ? 0 : options.buttons.indexOf("Trust this version"),
-      };
-    };
-  });
-  await openDocument(page, path);
-  const state = await page.evaluate(() => window.makeshiftModel({ kind: "read" }));
-  const questions = await app.evaluate(() =>
-    globalThis.questions.map((q) => [q.message, q.detail]),
+  const expected = await fingerprint(bob.key);
+  const firstPrompt = nextTrustPrompt(app);
+  const opening = openDocument(page, path);
+  void opening.catch(() => {});
+  const declined = await checkedPrompt(
+    await firstPrompt,
+    "Allow embedded custom decorators?",
+    expected,
   );
-  assert.equal(questions.length, 1);
-  assert.equal(questions[0][0], "Allow embedded custom decorators?");
-  assert.match(questions[0][1], /Signed by Bob/);
+  await declined.getByText(/Signed by Bob/).waitFor();
+  await declined.getByRole("button", { name: "Cancel", exact: true }).click();
+  await opening;
+  const state = await page.evaluate(() => window.makeshiftModel({ kind: "read" }));
   assert.equal(state.view.decoratorSources.length, 0);
-  const accepted = await page.evaluate(
+  const secondPrompt = nextTrustPrompt(app);
+  const enabling = page.evaluate(
     ({ id, version }) =>
       window.makeshiftModel({ kind: "decorator-enable", id, version, enabled: true }),
     definition,
   );
+  const approved = await checkedPrompt(
+    await secondPrompt,
+    "Allow embedded custom decorators?",
+    expected,
+  );
+  await approved.getByRole("button", { name: "Trust this version", exact: true }).click();
+  const accepted = await enabling;
   assert.equal(accepted.error, undefined);
   assert.equal(accepted.view.decoratorSources[0].source, definition.source);
   console.log("PASS applied decorator stays disabled on decline and enables after trust");

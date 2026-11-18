@@ -1,5 +1,6 @@
 import type { Author, Grant } from "../security/content-trust.js";
 import { validName } from "../security/text.js";
+import "../security/content-prompt.css";
 import "./security-settings.css";
 import { browserAsk, browserSettings } from "../security/browser-device.js";
 import { fingerprintSvg } from "../security/fingerprint.js";
@@ -36,6 +37,7 @@ class SecurityPanel {
   }
   private report = (e: unknown) => {
     this.status.textContent = String(e);
+    this.panel.dispatchEvent(new CustomEvent("security-size", { bubbles: true }));
   };
   private button(parent: HTMLElement, text: string, fn: () => Promise<void>) {
     const b = document.createElement("button");
@@ -75,22 +77,31 @@ class SecurityPanel {
   }
   private async authorControls(author: Author) {
     const fp = await fingerprint(author.key);
-    const name = this.input(this.body, "Public author name");
+    const identity = document.createElement("div");
+    const controls = document.createElement("div");
+    const fingerprintActions = document.createElement("div");
+    identity.className = "security-identity";
+    fingerprintActions.className = "security-fingerprint-actions";
+    const name = this.input(controls, "Public author name");
     name.value = author.name;
-    this.button(this.body, "Save name", async () => {
+    this.button(controls, "Save name", async () => {
       await this.host.rename(name.value);
       await this.show();
     });
     const publicText = "ssh-ed25519 " + base64(sshBlob(author.key)) + " " + author.name;
     const img = document.createElement("img");
     img.alt = "Your public key fingerprint";
+    img.width = img.height = 144;
     img.src = "data:image/svg+xml," + encodeURIComponent(fingerprintSvg(fp));
     const code = document.createElement("code");
     code.textContent = fp;
-    this.body.append(img, code);
-    this.button(this.body, "Copy fingerprint", () => navigator.clipboard.writeText(fp));
-    this.button(this.body, "Copy public key", () => navigator.clipboard.writeText(publicText));
-    this.button(this.body, "Download fingerprint", async () =>
+    identity.append(img, controls, code, fingerprintActions);
+    this.body.append(identity);
+    this.button(fingerprintActions, "Copy fingerprint", () => navigator.clipboard.writeText(fp));
+    this.button(fingerprintActions, "Copy public key", () =>
+      navigator.clipboard.writeText(publicText),
+    );
+    this.button(fingerprintActions, "Download fingerprint", async () =>
       download(fingerprintSvg(fp), "image/svg+xml", "makeshift-fingerprint.svg"),
     );
   }

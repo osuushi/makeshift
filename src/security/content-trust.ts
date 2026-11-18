@@ -8,6 +8,14 @@ export interface Grant extends Author {
   scope: Scope;
   digest?: string;
 }
+export interface ContentPrompt {
+  message: string;
+  detail?: string;
+  fingerprint?: string;
+  buttons: string[];
+  cancelId: number;
+}
+
 export interface TrustPrompt {
   message: string;
   detail: string;
