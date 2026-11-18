@@ -31,15 +31,9 @@ export async function constraintPanelRoute(page, name) {
   await page.mouse.wheel(60, 30);
   await inspect(page);
   const b = await panel.boundingBox();
-  const readouts = await page.locator(".selection-readouts").boundingBox();
-  const viewport = await page.locator("canvas").boundingBox();
+  const dock = await page.locator('.pane-column[data-side="right"]').boundingBox();
   assert.equal(b.x, a.x, "Panel stays anchored while geometry pans");
-  assert.ok(b.y >= readouts.y && b.y + b.height <= readouts.y + readouts.height);
-  assert.ok(
-    b.x + b.width > viewport.x + viewport.width - 50 &&
-      readouts.y + readouts.height > viewport.height - 100,
-    "Constraints live in the lower-right readouts area",
-  );
+  assert.ok(b.x >= dock.x && b.x + b.width <= dock.x + dock.width);
   await add.click();
   await inspect(page);
   const remove = existing.getByRole("button", {

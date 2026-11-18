@@ -5,17 +5,8 @@
   box-shadow: none;
 }
 
-@media (max-width: 700px) {
-  header:has(.standard-command-selector) {
-    left: 12px;
-    gap: 12px;
-  }
-}
-
-.exchange-menus {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  background: var(--canvas);
-  border-radius: 4px;
+.standard-command-menu {
+  max-width: calc(100vw - 8px);
+  max-height: calc(100dvh - 8px);
+  overflow-y: auto;
 }

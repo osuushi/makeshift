@@ -44,12 +44,23 @@ test("script thread inspection and edits use current geometry and accept as one 
     })) as DecoratorCatalog;
     assert.ok(catalog.builtins[0].fields.some((f) => f.key === "pitch"));
     assert.equal(catalog.instances[0].settings.pitch, 1);
-    await owner.scripts.step({
+    const edited = (await owner.scripts.step({
       kind: "editDecorator",
       input: {
         action: "settings",
         ids: [catalog.instances[0].id],
         patch: { pitch: 1.5, clearance: 0.15 },
+      },
+    })) as DecoratorCatalog;
+    const computed = edited.presets.find((p) => p.settings.pitch === 1.5);
+    assert.match(computed?.id ?? "", /^computed:[a-zA-Z0-9+/]{43}=$/);
+    await owner.scripts.step({
+      kind: "editDecorator",
+      input: {
+        action: "preset",
+        operation: "select",
+        ids: [catalog.instances[0].id],
+        presetId: computed?.id,
       },
     });
     assert.equal(owner.view.data, before);
@@ -85,6 +96,8 @@ test("script authors, continues and transforms bundled decorators with atomic so
       await readFile("examples/decorators/linked-pads.json", "utf8"),
     );
     const before = owner.view.data;
+    let approved = false;
+    owner.setDecoratorAuthorization(async () => approved);
     owner.beginScript("pads.ts");
     await owner.scripts.step({
       kind: "editDecoratorDefinition",
@@ -99,6 +112,14 @@ test("script authors, continues and transforms bundled decorators with atomic so
       },
     })) as DecoratorInspection;
     assert.match(disabled.reason ?? "", /Enable bundled code/);
+    await assert.rejects(
+      owner.scripts.step({
+        kind: "enableDecorator",
+        input: { id: definition.id, version: 1, enabled: true },
+      }),
+      /disabled/,
+    );
+    approved = true;
     await owner.scripts.step({
       kind: "enableDecorator",
       input: { id: definition.id, version: 1, enabled: true },

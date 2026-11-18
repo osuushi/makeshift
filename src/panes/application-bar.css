@@ -1,0 +1,276 @@
+.application-pane {
+  display: flex;
+  align-items: center;
+  flex: none;
+  min-height: 46px;
+  padding-inline: 8px;
+  border-bottom: 1px solid var(--pane-rule);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  max-width: 100%;
+  padding: 2px 3px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.brand strong {
+  overflow: hidden;
+  font-size: 16px;
+  letter-spacing: -0.5px;
+  text-overflow: ellipsis;
+}
+.brand img,
+.toolbar-app-menu img {
+  width: 26px;
+  height: 26px;
+}
+.brand::after {
+  content: "";
+  width: 5px;
+  height: 5px;
+  flex: none;
+  margin: 0 2px 3px;
+  border: solid var(--muted);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+.workspace-toolbar {
+  position: absolute;
+  container: command-strip / inline-size;
+  z-index: 15;
+  inset: 0 var(--pane-right, 0px) auto var(--pane-left, 0px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 6px;
+  min-height: 46px;
+  padding: 1px 8px;
+  background: var(--panel);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 34%, var(--panel));
+}
+.toolbar-context,
+.exchange-menus,
+.toolbar-preferences {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.toolbar-context {
+  gap: 8px;
+  padding-inline: 6px;
+}
+.workspace-toolbar .mode-label {
+  font-size: 12px;
+}
+.document-title {
+  max-width: 16ch;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  color: var(--muted);
+}
+.toolbar-preferences {
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.workspace-toolbar .control-selector {
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.workspace-toolbar
+  :is(
+    .control-selector > button,
+    .settings-trigger,
+    .toolbar-app-menu,
+    .history-controls button,
+    .touch-control-toggle button
+  ) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  box-shadow: none;
+  min-height: 32px;
+  padding: 5px 8px;
+  color: var(--text);
+  font:
+    500 12px / 1.2 system-ui,
+    sans-serif;
+}
+.workspace-toolbar
+  :is(
+    .control-selector > button,
+    .settings-trigger,
+    .toolbar-app-menu,
+    .history-controls button,
+    .touch-control-toggle button
+  ):is(:hover, [aria-expanded="true"]):not(:disabled) {
+  background: var(--surface);
+}
+.workspace-toolbar .history-controls {
+  padding-inline: 4px;
+  overflow: visible;
+  border: 0;
+  border-inline: 1px solid var(--surface);
+  border-radius: 0;
+}
+.workspace-toolbar .history-controls button {
+  min-width: 32px;
+}
+.workspace-toolbar .control-selector > button::after {
+  width: 4px;
+  height: 4px;
+}
+.workspace-toolbar .touch-control-toggle {
+  gap: 0;
+  margin-inline: 3px;
+}
+.workspace-toolbar .touch-control-toggle button {
+  position: relative;
+  min-height: 36px;
+  color: var(--muted);
+}
+.workspace-toolbar .touch-control-toggle button[aria-pressed="true"] {
+  color: var(--accent);
+}
+.touch-control-toggle button[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 8px 3px;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+}
+.settings-trigger svg {
+  width: 18px;
+  height: 18px;
+}
+.workspace-toolbar .toolbar-app-menu {
+  padding: 3px;
+}
+#app:has(.pane-column:not(.closed) > .application-pane) .toolbar-app-menu {
+  display: none;
+}
+@media (pointer: coarse) {
+  .workspace-toolbar
+    :is(
+      .history-controls button,
+      .settings-trigger,
+      .toolbar-app-menu,
+      .control-selector > button
+    ) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+.input-mode-trigger .compact-input-label,
+.input-mode-trigger svg {
+  display: none;
+  width: 18px;
+  height: 18px;
+}
+@container command-strip (max-width: 650px) {
+  .input-mode-trigger svg {
+    display: block;
+  }
+  .input-mode-trigger span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .workspace-toolbar .history-controls {
+    padding-inline: 0;
+  }
+  .workspace-toolbar .toolbar-context {
+    padding-inline: 2px;
+  }
+}
+@media (pointer: coarse) {
+  .workspace-toolbar .touch-control-toggle button {
+    min-height: 44px;
+  }
+  .closed .pane-tab::before {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    width: 44px;
+  }
+  .closed[data-side="right"] .pane-tab::before {
+    right: 0;
+  }
+  .closed[data-side="left"] .pane-tab::before {
+    left: 0;
+  }
+}
+
+.toolbar-active-tool {
+  display: none;
+  order: -1;
+  flex: 1 1 auto;
+  min-width: min(7ch, 100%);
+  align-items: center;
+  gap: 6px;
+  padding-inline: 4px;
+  font:
+    600 12px / 1.2 system-ui,
+    sans-serif;
+}
+.toolbar-active-tool svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+.toolbar-active-tool span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+#app:has(.pane-column[data-side="left"].closed) .toolbar-preferences {
+  flex-grow: 1;
+}
+#app:has(.pane-column[data-side="left"].closed) .toolbar-active-tool {
+  display: flex;
+}
+@container command-strip (max-width: 455px) {
+  .toolbar-preferences {
+    flex: 1 0 100%;
+  }
+  .toolbar-active-tool {
+    display: flex;
+    flex-basis: 0;
+  }
+  .input-mode-trigger svg {
+    display: none;
+  }
+  .input-mode-trigger .compact-input-label {
+    display: inline;
+    position: static;
+    width: auto;
+    height: auto;
+    clip-path: none;
+  }
+}
+@container command-strip (max-width: 335px) {
+  .toolbar-context:has(.mode-label:only-child),
+  .toolbar-active-tool svg {
+    display: none;
+  }
+  .workspace-toolbar .touch-control-toggle {
+    margin-inline: 0;
+  }
+  .workspace-toolbar button.input-mode-trigger,
+  .workspace-toolbar .touch-control-toggle button {
+    min-width: 44px;
+    padding-inline: 4px;
+  }
+}

@@ -1,3 +1,4 @@
+import { toolboxIcon } from "../tools/toolbox-icons.js";
 import "./control-menu.css";
 import { type ControlMode, controlMode, setControlMode } from "./control-preference.js";
 import { installTouchToggle, touchHint } from "./touch-toggle.js";
@@ -7,6 +8,12 @@ export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void
   root.className = "control-selector";
   const button = document.createElement("button");
   button.title = "Controls";
+  button.className = "input-mode-trigger";
+  const modeLabel = document.createElement("span");
+  const compactLabel = document.createElement("span");
+  compactLabel.className = "compact-input-label";
+  compactLabel.textContent = "Input";
+  button.append(toolboxIcon("select"), compactLabel, modeLabel);
   button.setAttribute("aria-expanded", "false");
   const panel = document.createElement("div");
   panel.className = "control-menu";
@@ -19,7 +26,7 @@ export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void
   legend.textContent = "Controls";
   group.append(legend);
   const updateHint = () => {
-    button.textContent = touchHint()
+    modeLabel.textContent = touchHint()
       ? "Touch / Pencil"
       : controlMode() === "mouse"
         ? "Mouse"
@@ -55,7 +62,10 @@ export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void
     if (!open) return;
     const bounds = button.getBoundingClientRect();
     panel.style.top = `${bounds.bottom + 8}px`;
-    panel.style.right = `${Math.max(8, window.innerWidth - bounds.right)}px`;
+    panel.style.setProperty(
+      "--input-menu-edge",
+      `${Math.min(window.innerWidth - 8, bounds.right)}px`,
+    );
   });
   panel.addEventListener("toggle", () => {
     const open = panel.matches(":popover-open");
@@ -65,7 +75,7 @@ export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void
   });
   root.append(button, panel);
   installTouchToggle(root, updateHint);
-  app.querySelector("header")?.append(root);
+  app.querySelector(".toolbar-preferences")?.prepend(root);
 }
 
 function installTabletAction(

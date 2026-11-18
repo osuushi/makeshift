@@ -13,10 +13,6 @@
   display: flex;
   gap: 2px;
 }
-.touch-control-toggle button[aria-pressed="true"] {
-  background: var(--selected);
-  color: var(--text);
-}
 .control-selector > button::after {
   content: "";
   width: 6px;
@@ -36,6 +32,10 @@
   background: var(--panel);
   color: var(--text);
   box-shadow: 0 8px 24px var(--shadow);
+}
+#control-menu {
+  left: 0;
+  transform: translateX(max(8px, calc(var(--input-menu-edge) - 100%)));
 }
 .control-menu fieldset {
   border: 0;

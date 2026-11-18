@@ -3,6 +3,7 @@ import { orient } from "./ui-blend-edit.mjs";
 import { blockedDuringDrawing } from "./ui-camera-drawing.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { navigationIdle } from "./ui-navigation-history.mjs";
+import { navigationPoint } from "./ui-navigation-inputs.mjs";
 import { findRaycastPoint } from "./ui-plane-targets.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -152,9 +153,12 @@ async function animatedEntry(page, name) {
   const quarterTurn =
     Math.abs(framed.projection.u.y - framed.projection.origin.y) >
     Math.abs(framed.projection.u.x - framed.projection.origin.x);
+  const viewport = await page.getByLabel("Modeling viewport", { exact: true }).boundingBox();
+  assert.ok(viewport);
+  const [width, height] = quarterTurn ? [8, 12] : [12, 8];
   close(
     framed.camera.height,
-    quarterTurn ? 18 : 12,
+    1.5 * Math.max(height, (width * viewport.height) / viewport.width),
     "Region fits its chosen screen axes with margin",
   );
   await assertVisibleAndCentered(page, framed, [24, 18], [36, 26]);
@@ -162,6 +166,7 @@ async function animatedEntry(page, name) {
 
   await chooseTool(page, "return to modeling", "modeling");
   const nextTarget = await findRaycastPoint(page, "XY");
+  const anchor = await navigationPoint(page);
   const moving = await page.evaluate((point) => {
     document
       .querySelector("canvas")
@@ -171,7 +176,7 @@ async function animatedEntry(page, name) {
     return window.makeshiftInspect().camera.moving;
   }, nextTarget);
   assert.equal(moving, true);
-  await page.mouse.move(1000, 600);
+  await page.mouse.move(anchor.x, anchor.y);
   await page.mouse.wheel(20, 10);
   const interrupted = await inspect(page);
   await page.waitForTimeout(350);
@@ -258,7 +263,6 @@ async function orbitChecks(page, state, document) {
     [50, -10],
     [-40, 30],
   ]) {
-    await page.mouse.move(1000, 600);
     const previous = { position: state.camera.position, up: state.camera.up };
     await orbitDrag(page, dx, -dy);
     await page.waitForFunction((previous) => {

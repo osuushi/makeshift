@@ -76,6 +76,9 @@ export class DocumentOwner {
       throw new Error("Finish the current edit first");
     this.scripts.begin(name);
   }
+  setDecoratorAuthorization(authorize: NonNullable<DecoratorSession["authorize"]>) {
+    this.decorators.authorize = authorize;
+  }
   get view(): ModelView {
     return documentView(this.session, this.solids, this.decorators, {
       planeCutAvailable: this.planeCutAvailable,

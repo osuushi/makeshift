@@ -26,7 +26,7 @@ export interface WindowHost {
   name: string;
   startupAnimation: () => boolean;
   remember(path?: string | null): Promise<void>;
-  write(path: string, action: () => Promise<void>): Promise<void>;
+  write(path: string, action: () => Promise<void>, copy?: boolean): Promise<void>;
 }
 
 /** Everything that can mutate or cancel a document belongs to this window. */

@@ -42,8 +42,20 @@ if(validated.reason) throw new Error(validated.reason);
   assert.equal(pad.settings.height, 2);
   if (query) {
     const overview = await query("inspect");
-    assert.deepEqual(overview.decorators, JSON.parse(JSON.stringify(accepted.decorators)));
-    assert.equal(overview.decoratorDefinitions[0].source, definition.source);
+    assert.deepEqual(
+      overview.decorators,
+      accepted.decorators.map(({ id, definition, version, faces }) => ({
+        id,
+        definition,
+        version,
+        faces,
+      })),
+    );
+    assert.deepEqual(overview.decoratorDefinitions[0], {
+      id: definition.id,
+      name: definition.name,
+      version: definition.version,
+    });
     assert.ok(overview.builtinDecorators[0].fields.some((f) => f.key === "pitch"));
     const face = await query(`inspect ${pad.faces[0].face}`);
     assert.equal(face.targets[0].geometry.decorators[0].id, pad.id);

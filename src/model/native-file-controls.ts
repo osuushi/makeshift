@@ -10,7 +10,7 @@ export function nativeFileControls(editor: SketchEditor, host: DocumentHost): ()
   const title = document.createElement("span");
   title.className = "document-title";
   title.setAttribute("aria-label", "Current document");
-  document.querySelector("header")?.append(title);
+  document.querySelector(".toolbar-context")?.append(title);
   const disposeExport = exportControls(editor, async () => (await host.status()).name);
   const status = (value: DocumentStatus) => {
     title.textContent = `${value.name}${value.edited ? " · Edited" : ""}`;
@@ -22,7 +22,9 @@ export function nativeFileControls(editor: SketchEditor, host: DocumentHost): ()
   };
   const run = (command: DocumentCommand) => runDocumentCommand(editor, host, command);
   const disposeShortcuts = fileShortcuts(editor, ["new", "open", "save", "save-as", "close"]);
-  const disposers = (["new", "open", "save", "save-as", "close"] as const).map((command) =>
+  const disposers = (
+    ["new", "open", "save", "save-as", "export-without-workspace", "close"] as const
+  ).map((command) =>
     toolCatalog(editor).register({
       id: command,
       finishEdit: command !== "new" && command !== "open",
@@ -32,9 +34,10 @@ export function nativeFileControls(editor: SketchEditor, host: DocumentHost): ()
         save: "Save document",
         "save-as": "Save document as…",
         close: "Close document",
+        "export-without-workspace": "Export without agent workspace…",
       }[command],
       category: "Document & Edit",
-      showInTools: false,
+      showInTools: command === "export-without-workspace",
       reason: () => (["new", "open", "close"].includes(command) ? null : idleReason(editor)),
       run: () => run(command),
     }),
@@ -42,7 +45,7 @@ export function nativeFileControls(editor: SketchEditor, host: DocumentHost): ()
   const disposeCommands = host.onCommand((command) => {
     const execute = async () => {
       if (
-        ["new", "open", "save", "save-as", "close"].includes(command) &&
+        ["new", "open", "save", "save-as", "export-without-workspace", "close"].includes(command) &&
         !(command === "close" && editor.store.scriptRunning)
       )
         await toolCatalog(editor).invoke(command);

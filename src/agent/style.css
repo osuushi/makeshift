@@ -175,10 +175,6 @@
 .agent-dock[data-side="bottom"].collapsed {
   height: 42px;
 }
-#app.agent-open .entity-viewer {
-  max-height: calc(100% - 150px);
-}
-
 .agent-dock.agent-file-drop::after {
   content: "Drop files to attach";
   position: absolute;

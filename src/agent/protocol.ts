@@ -23,6 +23,7 @@ export interface AgentStatus {
 }
 export type AgentRequest =
   | { kind: "settings" }
+  | { kind: "open-pane" }
   | { kind: "discover-codex"; preferences: AgentPreferences }
   | { kind: "install-codex" }
   | { kind: "cancel-codex-install" }

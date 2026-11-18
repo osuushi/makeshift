@@ -238,10 +238,10 @@ behind the existing model transport; browser/WebKit and Electron use the same pa
 
 ## Portable agent workspace
 
-Area 2 adds version-2 ZIP files when a document has portable content. `model.json`
+New saves with portable files or embedded decorator definitions use a version-3 envelope. Older readers reject that version before loading active content. Portable files use ZIP, while a drawing with only decorator definitions uses JSON. The reader also accepts version-2 ZIP and version-1 JSON. `model.json`
 contains the version-tagged accepted model (exact BReps, no display meshes),
 `workspace/` carries project files and `conversations/codex/` carries only
-`sessions/**/*.jsonl` and `archived_sessions/**/*.jsonl`. Empty/model-only documents
+`sessions/**/*.jsonl` and `archived_sessions/**/*.jsonl`. Drawings without embedded definitions or workspace files
 continue using version-1 JSON. Browser upload/download preserves portable bytes even
 without a terminal host; its codec runs in a disposable worker.
 
@@ -277,9 +277,12 @@ The Linux adapter reads session/group/start-time fields from
 These are OS interface observations; the launch gate, retained member and cleanup
 policy are Makeshift's implementation. No upstream implementation was copied.
 
-Open checks ZIP metadata/expanded limits/CRC and model structure, prepares files in
-an isolated directory, then uses the normal model validation/materialization path
-before adopting the prepared workspace. No archived file is executed during Open.
+Open checks ZIP structure, expanded limits, CRCs, model validity and component signatures.
+The desktop keeps imported workspace and conversation bytes in memory until the user opens
+Agent and authorizes them. The host also checks direct start, attachment and recovery routes.
+Choosing an empty workspace replaces the included workspace in the editing session. Saving
+that session writes the replacement. An unopened workspace can pass through Save As.
+
 Archives accept unique regular files, with portable paths, no links or special files,
 no absolute/traversal/Windows device paths and no case-folded or file/directory conflicts.
 Limits are 60,000 portable files and 2 GiB expanded model plus portable bytes. Directories
@@ -308,6 +311,42 @@ it unsaved. Save then embeds the recovered content. Recovery also handles area 1
 workspace folders and selects matching session metadata from Makeshift's former shared
 Codex home. It never imports personal Codex homes. Geometry autosave/crash recovery
 and automatic recovery selection remain outside this increment.
+
+## Sharing drawings and author trust
+
+Settings → Security owns the local Ed25519 identity, public display name, OpenSSH SHA-256
+fingerprint, downloadable visual fingerprint, and local trust decisions. The visual
+fingerprint uses a grid of colored shapes for quick comparison. Signed trust and
+publication prompts display the artwork and full SHA-256 fingerprint together.
+On desktop, a modal window owns this prompt even while the drawing opens. Desktop private
+key storage requires a protected system key store. The standalone browser wraps its
+identity with a non-extractable AES key in IndexedDB. Private-key transfer uses a
+passphrase-encrypted backup. The settings interface lets the user import a published
+public key and remove individual author or content approvals.
+
+The envelope carries independent signatures for the workspace and custom decorators.
+The workspace digest covers each sorted path and its SHA-256 byte digest, including all
+portable conversation and attachment entries. The decorator digest covers definitions,
+sources, custom instances, bindings, saved settings/state and presets. Signatures bind
+the format, content kind, digest, public name and key. Geometry and camera are outside
+these signatures. An author name is self-asserted. The full fingerprint can be compared
+with the author's independently published key.
+
+An unchanged component retains its original signature or unsigned status across a save.
+Changed imported content requires an explicit endorsement to publish under the local
+key. The dialog names the previous signer and explains that signing vouches for the
+whole component and can suppress warnings for recipients who trust the new signer.
+Save unsigned and Cancel save are available. Broken signatures keep the component
+disabled. A verified key can be trusted for one exact version or future versions of
+that content kind. Approval leaves the existing runtime restrictions in effect.
+
+Export without agent workspace writes a separate drawing, removing every portable file,
+conversation and workspace signature. Custom decorators remain and the export warns
+when the model uses them. Ordinary agent inspection projects geometry and summarizes
+bundled definitions. Model names are limited to 96 printable Unicode code points.
+Earlier names are migrated on file open. Model data, including a short label, can still
+carry misleading text. Signatures attest who endorsed the content and do not verify
+what it will do. A custom harness retains its configured permissions.
 
 ## Diagnostic fixtures
 

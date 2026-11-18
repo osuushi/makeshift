@@ -3,6 +3,7 @@ import { canonicalPlaneSettings } from "./canonical-plane-settings.js";
 import { decoratorSettings } from "./decorator-settings.js";
 import { experimentalSettings } from "./experimental-settings.js";
 import { radialSettings } from "./radial-settings.js";
+import { securitySettings } from "./security-settings.js";
 import { settingsTabs } from "./settings-tabs.js";
 import { sketchGridSettings } from "./sketch-grid-settings.js";
 import { themeSettings } from "./theme-settings.js";
@@ -63,6 +64,9 @@ export function settingsDialog(extra: [string, HTMLElement][] = []): HTMLDialogE
     ["Decorators", decoratorSettings()],
     ["Experimental", experimentalSettings()],
     ["Bug Reports", bugRecordingSettings()],
+    ...(!window.makeshiftRemote && (!window.makeshiftDocument || window.makeshiftSecurity)
+      ? [["Security", securitySettings()] as [string, HTMLElement]]
+      : []),
     ...extra,
   ]);
   form.querySelector(".settings-actions")?.before(tabs);

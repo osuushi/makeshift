@@ -23,7 +23,7 @@ export class DecoratorSelectionWidget {
     this.controls.setAttribute("role", "group");
     this.controls.setAttribute("aria-label", "Selected decorators");
     this.open = this.button(
-      "Show decorators in Inspector",
+      "Show Decorators pane",
       '<path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/>',
       () => {
         editor.modeling.targets = this.faces().map((face) => ({ kind: "face", ...face }));

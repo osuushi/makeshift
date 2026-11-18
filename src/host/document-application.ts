@@ -168,7 +168,7 @@ export class DocumentApplication {
         if (path) this.preferences.directory = dirname(path);
         return this.remember();
       },
-      write: (path, action) => this.write(document, path, action),
+      write: (path, action, copy) => this.write(document, path, action, copy),
     });
     this.documents.add(document);
     if (identity) this.identities.set(document, identity);
@@ -204,13 +204,16 @@ export class DocumentApplication {
     document: DocumentWindow,
     path: string,
     action: () => Promise<void>,
+    copy = false,
   ): Promise<void> {
     const identity = await canonical(path);
     await this.refreshIdentities();
     if (
       this.writes.has(identity) ||
       this.pending.has(identity) ||
-      [...this.identities].some(([other, value]) => other !== document && value === identity)
+      [...this.identities].some(
+        ([other, value]) => (copy || other !== document) && value === identity,
+      )
     )
       throw new Error(
         "This file is already open or being saved in another window. Choose another filename.",
@@ -218,7 +221,7 @@ export class DocumentApplication {
     this.writes.add(identity);
     try {
       await action();
-      this.identities.set(document, identity);
+      if (!copy) this.identities.set(document, identity);
     } finally {
       this.writes.delete(identity);
     }

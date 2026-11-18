@@ -6,6 +6,7 @@ import {
   navigationIdle,
   navigationTips,
 } from "./ui-navigation-history.mjs";
+import { navigationPoint } from "./ui-navigation-inputs.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function tiltedView(page) {
@@ -52,7 +53,8 @@ async function stableAfterCompletionDeadline(page, expected) {
 async function undoBeforeWheelIdle(page) {
   const before = await tiltedView(page);
   await page.getByLabel("Modeling viewport", { exact: true }).focus();
-  await page.mouse.move(1000, 600);
+  const point = await navigationPoint(page);
+  await page.mouse.move(point.x, point.y);
   await page.keyboard.down("Control");
   await page.mouse.wheel(0, -12);
   await page.keyboard.up("Control");

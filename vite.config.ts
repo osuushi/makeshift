@@ -50,6 +50,7 @@ export default defineConfig(({ mode }) => ({
           : {
               main: resolve("src/sketch/index.html"),
               settings: resolve("src/sketch/settings.html"),
+              trust: resolve("src/sketch/trust.html"),
             },
     },
   },

@@ -17,7 +17,14 @@ export interface IPadHost {
   onStatus(callback: (status: IPadStatus) => void): () => void;
 }
 export type DialogRequest =
-  | { kind: "message"; message: string; detail?: string; buttons: string[]; cancelId?: number }
+  | {
+      kind: "message";
+      message: string;
+      detail?: string;
+      fingerprint?: string;
+      buttons: string[];
+      cancelId?: number;
+    }
   | {
       kind: "open" | "save";
       title?: string;

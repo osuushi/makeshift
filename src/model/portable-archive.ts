@@ -1,4 +1,6 @@
 import { strFromU8, strToU8, unzipSync, zipSync } from "three/addons/libs/fflate.module.js";
+import { migrateNames } from "../security/legacy-names.js";
+import type { Seals } from "../security/signatures.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { type CameraState, validateCameraState } from "./camera-state.js";
 import { readFileArchive } from "./document-archive.js";
@@ -10,19 +12,38 @@ import {
 } from "./portable-files.js";
 import { zipChecksum } from "./zip-integrity.js";
 
+function envelopeSeals(value: unknown): { seals?: Seals } {
+  if (value === undefined) return {};
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new Error("Invalid content signature envelope.");
+  return { seals: value as Seals };
+}
 export interface PortableArchive {
+  seals?: Seals;
   document: SketchDocument;
   camera?: CameraState;
   files: PortableFiles;
 }
 
-export function writePortableArchive(model: string, files: PortableFiles): Uint8Array {
+export function writePortableArchive(
+  model: string,
+  files: PortableFiles,
+  seals: Seals = {},
+): Uint8Array {
   validatePortable(files);
   const portable = Object.keys(files).length > 0;
   let data: Uint8Array;
-  if (portable) {
-    const { document, camera } = JSON.parse(model);
-    data = strToU8(JSON.stringify({ format: "makeshift", version: 2, document, camera }));
+  const { document, camera } = JSON.parse(model);
+  if (portable || document.decoratorDefinitions?.length || Object.keys(seals).length) {
+    data = strToU8(
+      JSON.stringify({
+        format: "makeshift",
+        version: 3,
+        document,
+        camera,
+        ...(Object.keys(seals).length ? { seals } : {}),
+      }),
+    );
   } else data = strToU8(model);
   if (
     data.length + Object.values(files).reduce((sum, file) => sum + file.length, 0) >
@@ -42,7 +63,13 @@ export function readPortableArchive(data: Uint8Array): PortableArchive {
   if (data[0] !== 0x50 || data[1] !== 0x4b) {
     if (data.length > archiveLimits.bytes)
       throw new Error("Document exceeds the 2 GiB archive limit.");
-    return { ...readFileArchive(strFromU8(data)), files: {} };
+    const parsed = readFileArchive(strFromU8(data));
+    return {
+      ...parsed,
+      document: migrateNames(parsed.document),
+      ...envelopeSeals(parsed.seals),
+      files: {},
+    };
   }
   const checks = checkZip(data);
   const entries = unzipSync(data);
@@ -54,12 +81,21 @@ export function readPortableArchive(data: Uint8Array): PortableArchive {
   const model = entries["model.json"];
   if (!model) throw new Error("Missing model.json.");
   const parsed = JSON.parse(strFromU8(model));
-  if (!["makeshift", "freac"].includes(parsed?.format) || parsed.version !== 2 || !parsed.document)
+  if (
+    !["makeshift", "freac"].includes(parsed?.format) ||
+    ![2, 3].includes(parsed.version) ||
+    !parsed.document
+  )
     throw new Error("Unsupported Makeshift file format.");
   delete entries["model.json"];
   validatePortable(entries);
   const camera = validateCameraState(parsed.camera);
-  return { document: parsed.document, ...(camera ? { camera } : {}), files: entries };
+  return {
+    document: migrateNames(parsed.document),
+    ...envelopeSeals(parsed.seals),
+    ...(camera ? { camera } : {}),
+    files: entries,
+  };
 }
 
 /** Check central metadata before decompression, including symlinks and zip bombs. */

@@ -12,4 +12,5 @@ export interface PreviewLayout {
   width: number;
   height: number;
   collapsed: boolean;
+  covered?: boolean;
 }

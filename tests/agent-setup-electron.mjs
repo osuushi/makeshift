@@ -5,7 +5,6 @@ import { join } from "node:path";
 import { injectHost } from "./agent-setup-host-fixture.mjs";
 import { launchElectron } from "./native-documents.mjs";
 import { settled } from "./ui-helpers.mjs";
-import { chooseTool } from "./ui-tools.mjs";
 
 async function readChild(root, attempt) {
   const file = join(root, `child-${attempt}`);
@@ -45,9 +44,11 @@ async function setupRoute(page, app, root) {
     window.makeshiftAgent.request({ kind: "start", cols: 80, rows: 24 }),
   );
   assert.match(blocked.error, /Wait for or cancel Codex installation/);
-  const opened = app.waitForEvent("window");
-  await chooseTool(page, "new document", "new");
-  await settled(await opened);
+  const [opened] = await Promise.all([
+    app.waitForEvent("window"),
+    page.getByLabel("Modeling viewport", { exact: true }).press("Meta+n"),
+  ]);
+  await settled(opened);
   await page.waitForFunction(
     () =>
       !window
