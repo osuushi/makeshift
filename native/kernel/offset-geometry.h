@@ -1,4 +1,5 @@
 #pragma once
+#include <Bnd_Box.hxx>
 #include "kernel.h"
 #include "geometry-policy.h"
 
@@ -13,5 +14,6 @@ Operand prepare(const Operand& source, const char* context,
 void checkParallel(const TopoDS_Face& source, const TopoDS_Face& offset, double distance,
                    const char* context, bool preserveOrientation = false);
 void validSolid(const TopoDS_Shape& shape, const char* context);
+void validSolidNear(const TopoDS_Shape& shape, const char* context, const Bnd_Box& focus);
 void rebuildBoundaries(const TopoDS_Shape& shape, const TopoDS_Shape& source);
 }

@@ -53,7 +53,8 @@ std::optional<Result> planarFaceOffset(const Operand& body,
         std::vector<TopoDS_Shape> preservedVertices;
         for (TopExp_Explorer it(body.shape, TopAbs_VERTEX); it.More(); it.Next())
             if (!edit.movedVertices.Contains(it.Current())) preservedVertices.push_back(it.Current());
-        checkOffsetVolume(body.shape, result.shape, distance, preservedVertices);
+        result.exactVolume = checkOffsetVolume(body.shape, result.shape, distance, preservedVertices,
+                                               -1, &result.exactBounds);
         return result;
     } catch (const Standard_Failure&) {
         return std::nullopt;

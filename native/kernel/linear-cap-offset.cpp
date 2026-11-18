@@ -5,6 +5,7 @@
 #include "boundary-move.h"
 #include "boundary-validation.h"
 #include "scale-transform.h"
+#include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
@@ -24,19 +25,18 @@ bool continues(const TopoDS_Face& face, const gp_Vec& direction) {
     return axis && axis->IsParallel(direction, 1e-10);
 }
 // Follow the same infinite supports across periodic seams and previous trims.
-TopTools_IndexedMapOfShape neighborhood(const Operand& body, const TopoDS_Face& cap,
-                                      const gp_Vec& direction) {
-    TopTools_IndexedMapOfShape selected, edges;
-    selected.Add(cap); TopExp::MapShapes(cap, TopAbs_EDGE, edges);
-    bool changed = true;
-    while (changed) {
-        changed = false;
-        for (const auto& face : boundary_move::faces(body.shape)) {
-            if (selected.Contains(face) || !continues(face, direction)) continue;
-            bool adjacent = false;
-            for (TopExp_Explorer it(face, TopAbs_EDGE); it.More(); it.Next()) adjacent |= edges.Contains(it.Current());
-            if (!adjacent) continue;
-            selected.Add(face); TopExp::MapShapes(face, TopAbs_EDGE, edges); changed = true;
+TopTools_IndexedMapOfShape neighborhood(const TopTools_IndexedDataMapOfShapeListOfShape& adjacent,
+                                      const TopoDS_Face& cap, const gp_Vec& direction) {
+    TopTools_IndexedMapOfShape selected;
+    TopTools_MapOfShape visited;
+    selected.Add(cap);
+    visited.Add(cap);
+    for (int i = 1; i <= selected.Extent(); ++i) {
+        for (TopExp_Explorer edge(selected(i), TopAbs_EDGE); edge.More(); edge.Next()) {
+            for (const auto& neighbor : adjacent.FindFromKey(edge.Current())) {
+                if (visited.Add(neighbor) && continues(TopoDS::Face(neighbor), direction))
+                    selected.Add(neighbor);
+            }
         }
     }
     require(selected.Extent() > 1, "Cap has no continuing walls");
@@ -90,19 +90,20 @@ int capVolumeAxis(const TopTools_IndexedMapOfShape& faces, const gp_Vec& normal)
     return axis - 1;
 }
 Result extend(const Operand& body, const TopoDS_Face& cap, double distance) {
-    TopTools_IndexedMapOfShape capEdges; TopExp::MapShapes(cap, TopAbs_EDGE, capEdges);
+    TopTools_IndexedDataMapOfShapeListOfShape adjacent;
+    TopExp::MapShapesAndAncestors(body.shape, TopAbs_EDGE, TopAbs_FACE, adjacent);
     bool freeformRim = false;
-    for (const auto& face : boundary_move::faces(body.shape)) {
-        const auto type = BRepAdaptor_Surface(face).GetType();
-        if (type != GeomAbs_BSplineSurface && type != GeomAbs_SurfaceOfExtrusion) continue;
-        for (TopExp_Explorer it(face, TopAbs_EDGE); it.More(); it.Next())
-            freeformRim |= capEdges.Contains(it.Current());
+    for (TopExp_Explorer edge(cap, TopAbs_EDGE); edge.More() && !freeformRim; edge.Next()) {
+        for (const auto& neighbor : adjacent.FindFromKey(edge.Current())) {
+            const auto type = BRepAdaptor_Surface(TopoDS::Face(neighbor)).GetType();
+            freeformRim |= type == GeomAbs_BSplineSurface || type == GeomAbs_SurfaceOfExtrusion;
+        }
     }
     // Analytic caps retain the ordinary offset path and its support frames.
     require(freeformRim, "Cap already has analytic offset supports");
     const auto travel = offsetContinuation(body.shape, cap, distance);
     const gp_Vec direction{gp_Dir(travel)};
-    const auto selected = neighborhood(body, cap, direction);
+    const auto selected = neighborhood(adjacent, cap, direction);
     const auto plane = BRepAdaptor_Surface(cap).Plane();
     const gp_Vec normal(plane.Axis().Direction());
     const double base = fixedLevel(body, selected, normal);
@@ -155,7 +156,8 @@ Result extend(const Operand& body, const TopoDS_Face& cap, double distance) {
     }
     offset_geometry::tightenGeneratedBoundaries(result.shape, body.shape, false);
     offset_geometry::validSolid(result.shape, "Linear cap offset");
-    result.exactVolume = checkOffsetVolume(body.shape, result.shape, distance, {}, capVolumeAxis(selected, normal));
+    result.exactVolume = checkOffsetVolume(body.shape, result.shape, distance, {},
+                                           capVolumeAxis(selected, normal), &result.exactBounds);
     return result;
 }
 }

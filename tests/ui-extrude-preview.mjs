@@ -19,9 +19,9 @@ export async function extrusionPreviewRoute(page) {
   await page.route("**/sketch-api", async (route) => {
     const request = route.request().postDataJSON();
     if (request.kind === "supersede-preview") superseded.push(request);
-    if (request.kind !== "extrude") return route.continue();
+    if (request.kind !== "extrude" && request.kind !== "complete-preview") return route.continue();
     const gate = gates[requests.length];
-    requests.push({ ...request.extrusion, presentation: request.presentation });
+    requests.push({ kind: request.kind, ...request.extrusion, presentation: request.presentation });
     const response = await route.fetch(); // Real native geometry; delay only its delivery.
     gate?.reached.resolve();
     await gate?.release.promise;
@@ -68,8 +68,7 @@ export async function extrusionPreviewRoute(page) {
     await page.mouse.up();
     await reachedPreview(gates[3], "complete latest target after release");
     const completing = await page.evaluate(() => window.makeshiftInspect());
-    assert.equal(requests[3].presentation, undefined);
-    assert.equal(requests[3].distance, requests[2].distance);
+    assert.equal(requests[3].kind, "complete-preview", "Release reuses the displayed extrusion");
     assert.equal(completing.preview, null, "Visual targets are not acceptable document candidates");
     close(completing.visualPreview.bodies[0].bounds[5], requests[2].distance);
     assert.equal(
@@ -95,6 +94,11 @@ async function queuedExtrusion(page, gates, requests, superseded, x, y) {
   assert.equal(requests.length, 2, "Unchanged snapped distance must not recompute");
   await page.mouse.move(x, y - 150);
   await page.mouse.move(x, y - 200);
+  // Pointer delivery can precede the widget refresh in WebKit. Let the
+  // queued input reach the field without releasing the older native reply.
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
   const requested = Number(
     await page.getByRole("textbox", { name: "Extrusion distance", exact: true }).inputValue(),
   );

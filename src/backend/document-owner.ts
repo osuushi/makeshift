@@ -13,9 +13,7 @@ import { documentFailure } from "./document-failure.js";
 import { isPreviewRequest, type PreviewRequest, previewDocument } from "./document-preview.js";
 import { DocumentSession } from "./document-session.js";
 import { documentView } from "./document-view.js";
-import { extrudeVisual } from "./extrude-visual.js";
 import { GeometryQueries, isGeometryQuery } from "./geometry-queries.js";
-import { materialize } from "./kernel-result.js";
 import { NativeSolver } from "./native-solver.js";
 import { planeCutAvailable } from "./plane-cut.js";
 import { reopenPreview } from "./reopen-preview.js";
@@ -230,6 +228,7 @@ export class DocumentOwner {
     if (!["read", "accept"].includes(request.kind)) {
       if (
         this.session.deferredEdit &&
+        request.kind !== "extrude" &&
         request.kind !== "move-faces" &&
         request.kind !== "move-edges"
       )
@@ -258,24 +257,6 @@ export class DocumentOwner {
     if (direct) {
       this.session.clearPreview();
       this.session.store.accept(direct, operation);
-      return;
-    }
-    if (request.kind === "extrude" && request.presentation === "visual") {
-      this.session.begin(operation);
-      const result = await extrudeVisual(this.kernel, this.session.store.data, request.extrusion);
-      this.checkCancellation();
-      this.session.drawable(
-        { bodies: result.results, replaces: result.participants },
-        null,
-        operation,
-      );
-      this.solids.booleanMode = result.mode;
-      this.solids.booleanTargets = result.participants;
-      this.solids.booleanTools = materialize([], {
-        ...result,
-        participants: [],
-        results: result.tools,
-      }).map(({ brep: _brep, ...geometry }) => geometry);
       return;
     }
     if (isSolidRequest(request)) {

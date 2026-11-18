@@ -61,7 +61,7 @@ export class SurfaceEdits {
 
   async complete(document: SketchDocument, request: SurfaceEditRequest): Promise<SketchDocument> {
     const bodies = document.bodies ?? [];
-    const result = await this.kernel.calculate({ kind: "complete-preview", bodies });
+    const result = await this.kernel.calculate({ kind: "complete-preview", bodies: [] });
     return request.kind === "offset-faces"
       ? this.offset.complete(document, request.operation, result)
       : { ...document, bodies: continuingBodies(bodies, materialize(bodies, result)) };

@@ -5,7 +5,7 @@ import { emptySketch, type Sketch } from "../src/sketch/document.js";
 import { planes } from "../src/sketch/planes.js";
 import { profilesFor } from "../src/sketch/profiles.js";
 
-export async function prism(owner: DocumentOwner, points: number[][]): Promise<Body> {
+export async function prism(owner: DocumentOwner, points: number[][], depth = 10): Promise<Body> {
   const sketch: Sketch = {
     ...emptySketch(planes.XY),
     curves: points.map(([x, y], i) => ({
@@ -16,9 +16,9 @@ export async function prism(owner: DocumentOwner, points: number[][]): Promise<B
       construction: false,
     })),
   };
-  return lift(owner, sketch);
+  return lift(owner, sketch, depth);
 }
-export async function lift(owner: DocumentOwner, sketch: Sketch): Promise<Body> {
+export async function lift(owner: DocumentOwner, sketch: Sketch, depth = 10): Promise<Body> {
   assert.equal((await owner.call({ kind: "edit", sketch })).error, undefined);
   assert.equal(
     (
@@ -26,7 +26,7 @@ export async function lift(owner: DocumentOwner, sketch: Sketch): Promise<Body> 
         kind: "extrude",
         extrusion: {
           sources: [{ sketch: sketch.id, profile: profilesFor(sketch)[0].key }],
-          distance: 10,
+          distance: depth,
           mode: "new",
         },
       })

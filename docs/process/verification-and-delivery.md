@@ -15,6 +15,23 @@ writes reproducible parameters to `.cache/edge-finish-fuzz-results.json`.
 The compact fixed seed regression runs in the normal model tests; the larger
 sweep is an explicit investigation tool, not additional UI or CI matrix coverage.
 
+## Captured face performance
+
+Add `--split-depth 7` to time the identical edits on the full body and its end
+split 7 mm behind the selected face. The benchmark requires the cut to preserve
+that face and its rim. With `--reference`, every reply on each model is compared
+against the corresponding reference build.
+
+With the repository's Node version active, compare straight extrusion, inward
+cut, signed face offsets and rim fillets on a captured planar face. Each edit
+starts a fresh calculator and then varies the distance on the same body. The
+runner times the first reply and the complete editable result and compares every
+reply field when a reference build is supplied.
+
+```sh
+node tests/geometry-performance/run-face-edits.mjs /path/to/fixture.json --mm 1 --reference /path/to/previous/makeshift-kernel
+```
+
 ## Test placement and cost
 
 Founder decision, 2026-10-09: optimize test scope before buying CI capacity.

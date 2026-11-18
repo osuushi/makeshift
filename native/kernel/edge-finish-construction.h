@@ -3,6 +3,8 @@
 #include <TopoDS_Edge.hxx>
 #include <set>
 
+void validateFinishContinuity(const Operand&, const std::vector<TopoDS_Edge>&, const Result&);
+
 struct EdgeFinishSupports {
     Operand carrier;
     std::vector<TopoDS_Edge> edges;

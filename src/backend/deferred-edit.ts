@@ -5,13 +5,17 @@ import type { HistoryOperation } from "../sketch/operation-history.js";
 import { acceptedParameters } from "./accepted-parameters.js";
 import { continueBodyMetadata } from "./body-metadata.js";
 import type { DocumentSession } from "./document-session.js";
+import { extrudeVisual } from "./extrude-visual.js";
 import { continuingBodies, materialize } from "./kernel-result.js";
 import type { SolidCalculator } from "./solid-calculator.js";
 import type { SolidEdits } from "./solid-edits.js";
 import type { SurfaceEditRequest } from "./surface-edits.js";
 
 export type MovementRequest = Extract<ModelRequest, { kind: "move-faces" | "move-edges" }>;
-export type DeferredEditRequest = MovementRequest | SurfaceEditRequest;
+export type DeferredEditRequest =
+  | MovementRequest
+  | SurfaceEditRequest
+  | Extract<ModelRequest, { kind: "extrude" }>;
 
 async function prepareMovement(
   kernel: SolidCalculator,
@@ -42,10 +46,11 @@ async function completeEdit(
       request,
     );
   const bodies = document.bodies ?? [];
-  const result = await kernel.calculate({ kind: "complete-preview", bodies });
+  const result = await kernel.calculate({ kind: "complete-preview", bodies: [] });
+  const next = materialize(bodies, result);
   return continueBodyMetadata(
     document,
-    { ...document, bodies: continuingBodies(bodies, materialize(bodies, result)) },
+    { ...document, bodies: request.kind === "extrude" ? next : continuingBodies(bodies, next) },
     request,
   );
 }
@@ -61,6 +66,13 @@ export async function editPresentation(
   if (request.kind === "complete-preview") {
     const edit = session.beginCompletion();
     session.complete(await completeEdit(kernel, solids, session.store.data, edit));
+    return true;
+  }
+  if (request.kind === "extrude" && request.presentation === "visual") {
+    session.begin(operation);
+    const result = await extrudeVisual(kernel, session.store.data, request.extrusion);
+    solids.setBooleanOperands(result);
+    session.drawable({ bodies: result.results, replaces: result.participants }, request, operation);
     return true;
   }
   if (

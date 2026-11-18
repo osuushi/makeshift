@@ -15,7 +15,7 @@ import type { ModelRequest } from "../sketch/model-api.js";
 import type { HistoryOperation } from "../sketch/operation-history.js";
 import { continueBodyMetadata } from "./body-metadata.js";
 import { kernelInput, loftInput, revolveInput } from "./kernel-input.js";
-import { continuingBodies, materialize } from "./kernel-result.js";
+import { continuingBodies, type KernelResult, materialize } from "./kernel-result.js";
 import type { SolidCalculator } from "./solid-calculator.js";
 import { importStep } from "./step-import.js";
 import { SurfaceEdits } from "./surface-edits.js";
@@ -83,6 +83,15 @@ export class SolidEdits {
       meshFit: kind === "reconstruct-mesh" ? this.meshFit : undefined,
       erosionQuality: kind === "erode" ? this.erosionQuality : undefined,
     };
+  }
+  setBooleanOperands(result: Pick<KernelResult, "mode" | "participants" | "tools">): void {
+    this.booleanMode = result.mode;
+    this.booleanTargets = result.participants;
+    this.booleanTools = materialize([], {
+      mode: result.mode,
+      participants: [],
+      results: result.tools ?? [],
+    }).map(({ brep: _brep, ...geometry }) => geometry);
   }
   async selectFinishEdges(
     document: SketchDocument,
@@ -266,13 +275,7 @@ export class SolidEdits {
               ? revolveInput(document, request.revolution, bodies)
               : kernelInput(document, request.extrusion, bodies),
       );
-      this.booleanMode = result.mode;
-      this.booleanTargets = result.participants;
-      this.booleanTools = materialize([], {
-        ...result,
-        participants: [],
-        results: result.tools ?? [],
-      }).map(({ brep: _brep, ...geometry }) => geometry);
+      this.setBooleanOperands(result);
       const next = materialize(bodies, result);
       candidate = {
         ...document,

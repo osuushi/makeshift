@@ -1,6 +1,7 @@
 #include "calculation-failure.h"
 #include "kernel.h"
 #include "linear-cap-offset.h"
+#include "conical-cap-offset.h"
 #include "blends.h"
 #include "offset-contacts.h"
 #include "offset-collapse.h"
@@ -118,6 +119,12 @@ std::vector<Result> offsetFaces(const Tree& input, const std::vector<Operand>& b
         }
         try {
             const bool freeform = offset_geometry::freeform(body.shape);
+            if (freeform) {
+                if (auto cap = conicalCapOffset(body, requestedFaces, distance, true)) {
+                    results.push_back(std::move(*cap));
+                    continue;
+                }
+            }
             const auto original = body.shape;
             const auto originalEncoding = freeform ? offset_geometry::encoding(original) : "";
             body = offset_geometry::prepare(body, "Kernel produced invalid geometry: offset", &found->second);

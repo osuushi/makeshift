@@ -124,7 +124,7 @@ Result rebuildBore(const Operand& body, const TopoDS_Face& bore,
     const auto replacement = boundary_move::cylinderFace(
         TopoDS::Face(bore.Oriented(TopAbs_FORWARD)), edit, cylinder);
     if (replacement.IsNull()) throw std::runtime_error("Cannot rebuild the exact bore support");
-    auto result = boundary_move::reconstruct(edit, {{boreId, replacement}});
+    auto result = boundary_move::reconstruct(edit, {{boreId, replacement}}, offset_geometry::validSolid);
     TopTools_IndexedMapOfShape continuingFaces;
     TopExp::MapShapes(result.shape, TopAbs_FACE, continuingFaces);
     const auto continuedFace = [&](const std::string& id) {
@@ -140,12 +140,11 @@ Result rebuildBore(const Operand& body, const TopoDS_Face& bore,
     offset_geometry::checkParallel(bore, face, distance, context, true);
     for (const auto* plane : adjacentPlanes)
         checkUnselectedSupport(TopoDS::Face(plane->shape), continuedFace(plane->id));
-    offset_geometry::validSolid(result.shape, context);
 
     const BRepAdaptor_Surface source(bore);
     const double depth = source.LastVParameter() - source.FirstVParameter();
     const double change = std::numbers::pi * depth * distance * (oldRadius + radius);
-    const double before = volume(body.shape), after = volume(result.shape);
+    const double before = volume(body.shape), after = volume(result.shape, -1, &result.exactBounds);
     if (std::abs(after - before - change) > 1e-7 + before * 1e-9)
         throw std::runtime_error("Cylindrical offset changed material outside the bore");
     result.selectedFaces.push_back(face);

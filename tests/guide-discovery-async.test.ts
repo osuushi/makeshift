@@ -61,7 +61,14 @@ test("guide discovery yields, coalesces current inputs and discards cancelled wo
       expected,
       "Nearby guides stay visible during refresh",
     );
+    editor.modeling.hover = { kind: "edge", body: body.id, edge: face.edges[0] };
+    assert.deepEqual(
+      discovery.update(elsewhere, true),
+      expected,
+      "Hovering an edge keeps the displayed set until its replacement is ready",
+    );
     tick();
+    editor.modeling.hover = null;
     editor.modeling.targets = [];
     assert.deepEqual(
       discovery.update(elsewhere, true),

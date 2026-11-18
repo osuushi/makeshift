@@ -26,7 +26,7 @@ Failed acceptance retains complete work for recovery; cancellation and replaceme
 clear the entire temporary state. The same protocol runs in the native calculator and
 persistent WASM calculator worker; worker termination discards the cache.
 
-After drawing, the renderer yields across a paint opportunity before requesting
+For boundary movement, Offset and edge finishes, the renderer yields across a paint opportunity before requesting
 `complete-preview`. Completion reuses the exact shape and its existing mesh. Exact
 volume integration, BRep serialization, analytic editing metadata, guide/tag
 continuation and decorator continuation happen in this stage. Only its successful
@@ -95,8 +95,8 @@ remains. Deferring presentation does not authorize omitting geometric checks.
 | Face/edge Move | Boundary reconstruction, validity/self-interference, correspondence, meshing | Mesh first; volume and editing metadata after paint; newer targets cancel completion. |
 | Whole-body Move/Rotate | Renderer placement of existing geometry | Already draws without a kernel round trip. Exact transformation is required at acceptance. |
 | Cube and circular primitive creation | Temporary renderer geometry | Already uses local preview geometry; exact acceptance remains necessary. |
-| Straight sketch extrusion into a new body | Sweep and mesh; solid extraction still measures volume | Held dragging already omits full presentation metadata. Release requests a complete result. Extraction volume remains before the visual result. |
-| Drafted/twisted/Boolean extrusion, Revolve and Loft | Sweep/Boolean work, validation, result extraction and full presentation | Surface/volume annotations and serialization are candidates for staging. Overlap selection, cavity checks and other volume comparisons used by the operation must remain in its geometry stage. These paths are not yet mesh-first. |
+| Straight sketch or planar-face extrusion, including Booleans | Sweep, Boolean classification, exact extraction volume and mesh | An isolated outward circular cap draws from its accepted disk and rim as the pointer moves. Other held drags use a checked kernel result. Release completes the latest exact shape. |
+| Drafted, twisted or curved-face normal extrusion, Revolve and Loft | Sweep/Boolean work, validation, result extraction and full presentation | These operations complete their editing metadata before drawing. |
 | Offset and Fillet/Chamfer | Feasibility search using validated meshes; geometry-specific validity checks | Mesh and verified parameter first; full presentation and continuation after paint. New input stops later probes and interrupts deferred completion. |
 | Shell, solid Scale/Mirror, Boolean and plane cuts | Geometry checks followed by complete presentation | Presentation annotations can be deferred. Result counts, retained operands, cut feedback and topology changes need tool-specific early-view handling. These paths are not yet staged. |
 | Erode | Erosion/reconstruction, quality checks and complete presentation | New input already interrupts the calculator. Nonvisual presentation can be staged; quality/allowance checks used to judge geometry remain required. |

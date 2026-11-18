@@ -5,5 +5,6 @@
 // request replaces it; completion consumes it without rebuilding geometry.
 void clearDeferredPresentation();
 void deferPresentation(std::ostream&, std::vector<Result>, const std::string&,
-                       const std::vector<std::string>&);
+                       const std::vector<std::string>&, const std::vector<Result>& tools,
+                       const std::string& presentation);
 void completePresentation(std::ostream&);

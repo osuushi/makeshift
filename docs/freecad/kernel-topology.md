@@ -8,6 +8,23 @@ evidence, not a change to the pinned upstream findings below.
 
 Scope: `/Users/adacohen/projects/makeshift/.reference/FreeCAD`, revision `78e4038a564e4c8bfebb40119b41d67531232223`. Links are immutable GitHub links to that revision. No source/build/install changes were made.
 
+## Repeated local edits on freeform solids (2026-11-18)
+
+For local edit checks, the pinned OCCT iterator excludes a shape paired with
+its own descendants. On a single solid containing one shell, the remaining
+interferences are within or between boundary faces, edges and vertices.
+Makeshift can therefore reuse the negative checks inside an exactly preserved
+group and recheck the faces near the edit with all overlapping neighbors. A
+turned-body regression accepts a changed cap and rejects crossings introduced
+at either end. [BOPDS_IteratorSI::Intersect](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BOPDS/BOPDS_IteratorSI.cxx#L61-L134), [BOPAlgo_CheckerSI::Perform](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BOPAlgo/BOPAlgo_CheckerSI.cxx#L156-L204)
+
+OCCT's plane-based Gauss–Kronrod volume sums signed face integrals in
+exploration order using the solid's vertex datum. The mass integrand for an
+axis-aligned plane uses the datum on that axis. Makeshift reuses unchanged
+spline terms only with identical geometry, plane and projected datum. Native
+tests compare mass and integration error to the whole-solid call at world
+translations up to one million millimeters. [BRepGProp::VolumePropertiesGK](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepGProp/BRepGProp.cxx#L577-L718), [BRepGProp_UFunction::VolumeValue](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepGProp/BRepGProp_UFunction.cxx#L75-L97)
+
 ## Chamfer trim self-intersection (2026-11-08)
 
 Pinned OCCT [`BRepCheck_Wire::SelfIntersect`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepCheck/BRepCheck_Wire.cxx)

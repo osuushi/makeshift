@@ -62,7 +62,7 @@ lost pointer capture before completion discards the gesture. An in-flight call
 may finish, but a discarded gesture has no path to acceptance. This is ordinary
 gesture ownership, not a document-version or retry protocol.
 
-Straight sketch extrusion may display validated mesh-only results while dragging.
+Straight extrusion from a sketch or planar face may display validated mesh-only results while dragging.
 These are separate from complete document candidates: release or explicit guide
 confirmation completes the latest target, and acceptance waits for that result.
 The last visual result stays on screen during completion. An older acceptable

@@ -1,5 +1,5 @@
 #include "kernel.h"
-#include <BRepBndLib.hxx>
+#include "shape-measurements.h"
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
@@ -148,7 +148,7 @@ void edgeFinishTargets(std::ostream& out, const Tree& input, const std::vector<O
     if (mode != "fillet" && mode != "chamfer") throw std::runtime_error("Unknown edge finish");
     const auto edges = selectedEdges(input, bodies);
     Bnd_Box bounds;
-    for (const auto& body : bodies) BRepBndLib::AddOptimal(body.shape, bounds, false, false);
+    for (const auto& body : bodies) bounds.Add(exactShapeBounds(body.shape));
     double x0, y0, z0, x1, y1, z1;
     bounds.Get(x0, y0, z0, x1, y1, z1);
     const double limit = gp_Pnt(x0,y0,z0).Distance(gp_Pnt(x1,y1,z1))*1e6;

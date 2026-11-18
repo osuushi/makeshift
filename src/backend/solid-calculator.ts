@@ -9,25 +9,28 @@ import { NativeCalculator } from "./native-calculator.js";
 export class SolidCalculator extends NativeCalculator<KernelRequest, unknown> {
   static readonly executable = ".build/kernel/bin/makeshift-kernel";
   private superseded = false;
-  private deferred: unknown = null;
+  private deferred: {
+    reply: unknown;
+    input: KernelRequest;
+  } | null = null;
   private massCenters = new Map<string, Promise<Vector>>();
   constructor(executable = SolidCalculator.executable) {
     super(executable, "Solid kernel");
   }
   override async calculate<Input extends KernelRequest>(input: Input): Promise<KernelReply<Input>> {
     // Enforce the wire envelope here even when callers hold a full accepted Body.
+    const completed = input.kind === "complete-preview" ? this.deferred?.input : undefined;
     this.deferred = null;
-    const reply = await super.calculate(
-      { ...input, bodies: exactBodies(input.bodies) },
-      input.kind === "measure" ? 10_000 : undefined,
-    );
-    const result = readKernelReply(input, reply);
-    this.deferred = "presentation" in input && input.presentation === "deferred" ? result : null;
+    const request = { ...input, bodies: exactBodies(operandBodies(input)) };
+    const reply = await super.calculate(request, input.kind === "measure" ? 10_000 : undefined);
+    const result = readKernelReply<Input>(request, reply, completed);
+    if ("presentation" in input && input.presentation)
+      this.deferred = { reply: result, input: request };
     return result;
   }
   /** The single retained native shape matches this exact in-memory reply. */
   retains(result: unknown): boolean {
-    return result !== null && this.deferred === result;
+    return this.deferred !== null && this.deferred.reply === result;
   }
   /** Bounded derived-data cache: exact geometry, never body IDs, determines reuse. */
   async centerOfMass(body: ExactBody): Promise<Vector> {
@@ -70,4 +73,18 @@ export class SolidCalculator extends NativeCalculator<KernelRequest, unknown> {
     // Supersession prevents subsequent probes, rather than starving every frame.
     return this.calculate(input);
   }
+}
+
+// Completion consumes retained geometry. Surface edits read only selected owners.
+function operandBodies(input: KernelRequest): readonly ExactBody[] {
+  if (input.kind === "complete-preview") return [];
+  const selected =
+    input.kind === "offset-faces"
+      ? input.faces
+      : input.kind === "edge-finish" || input.kind === "edge-finish-selection"
+        ? input.edges
+        : null;
+  if (!selected) return input.bodies;
+  const ids = new Set(selected.map((item) => item.body));
+  return input.bodies.filter((body) => ids.has(body.id));
 }

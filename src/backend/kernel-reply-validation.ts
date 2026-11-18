@@ -15,6 +15,7 @@ import { validateVisualReply } from "./kernel-visual-validation.js";
 export function readKernelReply<Input extends KernelRequest>(
   input: Input,
   value: unknown,
+  completed?: KernelRequest,
 ): KernelReply<Input> {
   const reply = object(value);
   if ("presentation" in input && input.presentation) {
@@ -22,6 +23,9 @@ export function readKernelReply<Input extends KernelRequest>(
     return reply as KernelReply<Input>;
   }
   requireKernel(reply.presentation === undefined, "complete presentation required");
+  // Completion consumes a retained shape. Its kind, Boolean mode and allowed
+  // predecessor identities come from the exact operands that produced it.
+  const bodyRequest = input.kind === "complete-preview" && completed ? completed : input;
   switch (input.kind) {
     case "edge-finish-targets": {
       const sizes = array(reply.edgeFinishTargets);
@@ -76,8 +80,9 @@ export function readKernelReply<Input extends KernelRequest>(
       break;
     }
     default:
-      validateKernelBodies(reply, input);
+      validateKernelBodies(reply, bodyRequest);
   }
-  if (reply.tools !== undefined) validateKernelBodies({ ...reply, results: reply.tools }, input);
+  if (reply.tools !== undefined)
+    validateKernelBodies({ ...reply, results: reply.tools }, bodyRequest);
   return reply as KernelReply<Input>;
 }

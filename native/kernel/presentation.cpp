@@ -7,7 +7,8 @@
 #include "face-chains.h"
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
-#include <BRepBndLib.hxx>
+#include "shape-measurements.h"
+#include "presentation-origins.h"
 #include <BRepGProp.hxx>
 #include <BRep_Tool.hxx>
 #include <Bnd_Box.hxx>
@@ -19,18 +20,11 @@
 #include <TopoDS.hxx>
 #include <algorithm>
 #include <cmath>
-#include <set>
 
 namespace {
 void xyz(std::ostream& out, const gp_XYZ& p) { out << '[' << p.X() << ',' << p.Y() << ',' << p.Z() << ']'; }
 void numbers(std::ostream& out, const std::vector<double>& values) {
     out << '['; for (size_t i = 0; i < values.size(); ++i) { if (i) out << ','; out << values[i]; } out << ']';
-}
-void origins(std::ostream& out, const TopoDS_Shape& shape, const Result& result) {
-    std::set<std::string> ids;
-    for (const auto& source : result.predecessors) if (shape.IsSame(source.shape)) ids.insert(source.id);
-    out << '['; bool comma = false;
-    for (const auto& id : ids) { if (comma) out << ','; comma = true; out << quoted(id); } out << ']';
 }
 void analyticSurfaces(std::ostream& out, const TopoDS_Face& shape, const BRepAdaptor_Surface& surface) {
     out << ",\"cylinder\":";
@@ -58,8 +52,7 @@ void analyticSurfaces(std::ostream& out, const TopoDS_Face& shape, const BRepAda
     } else out << "null";
 }
 void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMapOfShape& edges, const std::vector<BlendFace>& blends, const std::vector<BlendFace>& chamfers, const TopTools_IndexedMapOfShape& faces, FaceChainContext& chains, OffsetThicknessContext& thickness) {
-    Bnd_Box bounds;
-    BRepBndLib::AddOptimal(shape, bounds, false, false);
+    const auto bounds = exactShapeBounds(shape);
     double xmin, ymin, zmin, xmax, ymax, zmax;
     bounds.Get(xmin, ymin, zmin, xmax, ymax, zmax);
     out << ",\"bounds\":";
@@ -177,7 +170,9 @@ void edge(std::ostream& out, const TopoDS_Edge& shape, const std::vector<gp_Pnt>
 std::vector<double> signature(const TopoDS_Shape& shape) {
     GProp_GProps props; int type;
     if (shape.ShapeType() == TopAbs_FACE) {
-        BRepGProp::SurfaceProperties(shape, props); type = BRepAdaptor_Surface(TopoDS::Face(shape)).GetType();
+        const auto face = TopoDS::Face(shape);
+        props = measuredSurface(face);
+        type = BRepAdaptor_Surface(face).GetType();
     } else { BRepGProp::LinearProperties(shape, props); type = BRepAdaptor_Curve(TopoDS::Edge(shape)).GetType(); }
     const auto center = props.CentreOfMass();
     return {double(type), double(shape.Orientation()), props.Mass(), center.X(), center.Y(), center.Z()};
@@ -190,25 +185,19 @@ void present(std::ostream& out, const Result& result, double deflection) {
 }
 void presentMeshed(std::ostream& out, const Result& result) {
     KernelTiming timing("presentation-metadata");
-    out << "{\"brep\":" << quoted(encode(result.shape)) << ",\"volume\":"
+    out << "{\"brep\":" << '"' << encode(result.shape) << '"' << ",\"volume\":"
         << (result.exactVolume ? *result.exactVolume : volume(result.shape));
     out << ",\"copy\":" << (result.copy ? "true" : "false") << ",\"predecessorBodies\":[";
     for (size_t i = 0; i < result.bodies.size(); ++i) { if (i) out << ','; out << quoted(result.bodies[i]); }
     timing.phase("serialize-brep");
     // Transform handles need surface extrema, not rational spline control-hull bounds.
-    auto bounds = result.exactBounds;
-    if (!bounds) {
-        Bnd_Box box; BRepBndLib::AddOptimal(result.shape, box, false, false);
-        std::array<double, 6> values;
-        box.Get(values[0], values[1], values[2], values[3], values[4], values[5]);
-        bounds = values;
-    }
-    const auto& [x, y, z, X, Y, Z] = *bounds;
+    const auto [x, y, z, X, Y, Z] = resultBounds(result);
     timing.phase("bounds");
     out << "],\"center\":"; xyz(out, gp_XYZ((x+X)/2, (y+Y)/2, (z+Z)/2));
     out << ",\"bounds\":"; numbers(out, {x, y, z, X, Y, Z});
     TopTools_IndexedMapOfShape edges; TopExp::MapShapes(result.shape, TopAbs_EDGE, edges);
     TopTools_IndexedMapOfShape faces; TopExp::MapShapes(result.shape, TopAbs_FACE, faces);
+    const PresentationOrigins origins(result);
     const auto edgeSamples = meshEdges(faces, edges);
     const auto blends = recognizeBlends(result.shape);
     const auto chamfers = recognizeChamfers(result.shape);
@@ -220,7 +209,7 @@ void presentMeshed(std::ostream& out, const Result& result) {
         TopTools_IndexedMapOfShape shapes; TopExp::MapShapes(result.shape, type, shapes);
         for (int i = 1; i <= shapes.Extent(); ++i) {
             if (i > 1) out << ',';
-            out << "{\"predecessors\":"; origins(out, shapes(i), result);
+            out << "{\"predecessors\":"; origins.write(out, shapes(i));
             out << ",\"signature\":"; numbers(out, signature(shapes(i)));
             if (type == TopAbs_FACE) {
                 const bool selected = std::any_of(result.selectedFaces.begin(), result.selectedFaces.end(),

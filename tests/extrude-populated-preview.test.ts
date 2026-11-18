@@ -8,6 +8,8 @@ import { SolidCalculator } from "../src/backend/solid-calculator.js";
 import type { Extrusion } from "../src/model/body.js";
 import type { SketchDocument } from "../src/sketch/document.js";
 
+import { box } from "./body-boolean-helpers.js";
+
 const fixture = JSON.parse(readFileSync("tests/fixtures/extrude-detailed-body.json", "utf8")) as {
   document: SketchDocument;
   extrusion: Extrusion;
@@ -34,6 +36,7 @@ test("captured detailed body: visual Boolean targets match exact results across 
       assert.equal(visual.mode, full.mode);
       assert.deepEqual(visual.participants, full.participants);
       assert.deepEqual(visual.tools, full.tools);
+      assert.deepEqual(await kernel.calculate({ kind: "complete-preview", bodies: [] }), full);
       assert.equal(visual.results.length, full.results.length);
       for (const [index, body] of visual.results.entries()) {
         const complete = full.results[index];
@@ -143,10 +146,71 @@ test("visual subtraction and explicit disjoint intersection can replace a body w
       assert.deepEqual(result.view.visualPreview?.replaces, [id]);
       assert.equal(result.view.booleanTools?.length, 1);
       assert.deepEqual(result.view.data, original);
-      const full = await owner.call({ kind: "extrude", extrusion });
+      const full = await owner.call({ kind: "complete-preview" });
       assert.equal(full.error, undefined);
       assert.deepEqual(full.view.candidate?.bodies, []);
     }
+  } finally {
+    owner.close();
+  }
+});
+
+test("planar face drag completes the latest cut with its original operands and Undo", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const source = await box(owner, 0, 0, 12, 10);
+    const distant = await box(owner, 60, 60, 66, 65);
+    const original = owner.view.data;
+    const face = source.faces.find((f) => f.plane && Math.abs(f.signature[5] - 10) < 1e-7);
+    assert.ok(face);
+    const extrusion: Extrusion = {
+      mode: "auto",
+      sources: [{ face: face.id }],
+      distance: -2,
+      targets: [source.id],
+    };
+    const input = kernelInput(original, extrusion, original.bodies ?? []);
+    assert.deepEqual(
+      input.bodies.map((b) => b.id),
+      [source.id],
+    );
+    const hiddenSource = kernelInput(
+      original,
+      { ...extrusion, targets: [distant.id], eligibleTargets: [] },
+      original.bodies ?? [],
+    );
+    assert.deepEqual(
+      hiddenSource.bodies.map((b) => b.id),
+      [source.id],
+    );
+    const draw = (distance: number) =>
+      owner.call({
+        kind: "extrude",
+        extrusion: { ...extrusion, distance },
+        presentation: "visual",
+      });
+    assert.equal((await draw(-1)).error, undefined);
+    const latest = await draw(-2);
+    assert.equal(latest.error, undefined);
+    assert.equal(latest.view.candidate, null);
+    assert.deepEqual(latest.view.visualPreview?.replaces, [source.id]);
+    assert.equal(latest.view.booleanTools?.length, 1);
+    const ready = await owner.call({ kind: "complete-preview" });
+    assert.equal(ready.error, undefined);
+    const bodies = ready.view.candidate?.bodies;
+    assert.ok(
+      Math.abs((bodies?.find((b) => b.id === source.id)?.volume ?? NaN) - 12 * 10 * 8) < 1e-7,
+    );
+    assert.equal(
+      bodies?.find((b) => b.id === distant.id),
+      original.bodies?.find((b) => b.id === distant.id),
+    );
+    assert.equal((await owner.call({ kind: "accept" })).error, undefined);
+    assert.deepEqual((await owner.call({ kind: "undo" })).view.data, original);
+    assert.equal((await draw(1)).error, undefined);
+    await owner.call({ kind: "cancel-preview" });
+    assert.match((await owner.call({ kind: "complete-preview" })).error ?? "", /No preview/);
+    assert.deepEqual(owner.view.data, original);
   } finally {
     owner.close();
   }

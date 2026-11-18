@@ -1,6 +1,9 @@
 #include "calculation-failure.h"
 #include "timing.h"
 #include "offset-geometry.h"
+#include "measurement-cache.h"
+#include "edit-intersections.h"
+#include "shape-measurements.h"
 #include <OSD_ThreadPool.hxx>
 #include "offset-repair.h"
 #include <BRepAdaptor_Surface.hxx>
@@ -9,8 +12,6 @@
 #include <BRep_Tool.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
-#include <BRepGProp.hxx>
-#include <GProp_GProps.hxx>
 #include <BOPAlgo_ArgumentAnalyzer.hxx>
 #include <Geom_OffsetSurface.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
@@ -24,12 +25,9 @@
 
 namespace offset_geometry {
 namespace {
+MeasurementCache<bool> preciseSources(2, 8 * 1024 * 1024);
 void require(bool condition, const std::string& message) {
     if (!condition) throw InvalidGeometryFailure(message);
-}
-double mass(const TopoDS_Shape& shape) {
-    GProp_GProps p; BRepGProp::VolumeProperties(shape, p);
-    return p.Mass();
 }
 std::vector<double> samples(const BRepAdaptor_Surface& surface, bool u) {
     const int count = u ? surface.NbUIntervals(GeomAbs_C2) : surface.NbVIntervals(GeomAbs_C2);
@@ -63,6 +61,7 @@ std::string encoding(const TopoDS_Shape& shape) {
 Operand prepare(const Operand& original, const char* context, std::vector<TopoDS_Face>* selected,
                 bool forceCopy) {
     if (!freeform(original.shape) && !forceCopy) return original;
+    KernelTiming timing("offset-source");
     // Recompute parameter correspondence, retaining the spatial supports/curves.
     // Never mutate the accepted operand or take orientation from local copy history.
     BRepBuilderAPI_Copy copy(original.shape, true, false);
@@ -81,9 +80,17 @@ Operand prepare(const Operand& original, const char* context, std::vector<TopoDS
     }
     // Preserve an already precise parameterization. Forcing SameParameter on
     // trimmed periodic Boolean edges can replace valid pcurves with invalid ones.
+    const auto checked = preciseSources.lookup(result.shape);
+    if (checked && checked->value) {
+        timing.phase("verified-copy");
+        return result;
+    }
     try {
         tightenGeneratedBoundaries(result.shape, original.shape, false);
         validSolid(result.shape, context);
+        // Only a source that passed without any repair can skip preparation on
+        // another drag target. The result of every edit still gets its own check.
+        if (checked && checked->key == measurementKey(result.shape)) checked->value = true;
         return result;
     } catch (const std::runtime_error&) { /* Repair only when verification requires it. */ }
     BRepLib::SameParameter(result.shape, geometry_policy::parameterCorrespondenceMm, true);
@@ -138,6 +145,9 @@ void checkParallel(const TopoDS_Face& source, const TopoDS_Face& offset, double 
     }
 }
 void validSolid(const TopoDS_Shape& shape, const char* context) {
+    validSolidNear(shape, context, Bnd_Box{});
+}
+void validSolidNear(const TopoDS_Shape& shape, const char* context, const Bnd_Box& focus) {
     KernelTiming timing("solid-validation");
     // Arc joins carry conservative vertex bounds above 1e-6 mm in OCCT.
     // Keep a separate 2e-6 mm topology budget; geometric distance stays at 1e-6.
@@ -148,7 +158,7 @@ void validSolid(const TopoDS_Shape& shape, const char* context) {
     BRepCheck_Analyzer validity(shape, true, parallel, true);
     require(validity.IsValid(), std::string(context) + " has invalid boundaries or surface geometry");
     timing.phase("boundary-validity");
-    const double v = mass(shape);
+    const double v = signedSolidMass(shape);
     require(std::isfinite(v) && v > geometry_policy::minimumSolidVolumeMm3,
             std::string(context) + " has collapsed or inverted material");
     BRepClass3d_SolidClassifier classifier(shape);
@@ -166,10 +176,12 @@ void validSolid(const TopoDS_Shape& shape, const char* context) {
         require(BRep_Tool::Tolerance(TopoDS::Vertex(it.Current())) <= offsetTopologyToleranceMm,
                 std::string(context) + " exceeds the vertex tolerance");
     timing.phase("mass-orientation-tolerances");
-    BOPAlgo_ArgumentAnalyzer check;
-    check.SetShape1(shape); check.SelfInterMode() = true;
-    check.SetRunParallel(parallel); check.Perform();
-    require(!check.HasErrors() && !check.HasFaulty(), std::string(context) + " contains self-intersections");
+    validateEditIntersections(shape, focus, IntersectionPolicy::offset, [&](const TopoDS_Shape& candidate) {
+        BOPAlgo_ArgumentAnalyzer check;
+        check.SetShape1(candidate); check.SelfInterMode() = true;
+        check.SetRunParallel(parallel); check.Perform();
+        require(!check.HasErrors() && !check.HasFaulty(), std::string(context) + " contains self-intersections");
+    });
     timing.phase("self-intersections");
 }
 }
