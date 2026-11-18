@@ -17,6 +17,11 @@ sweep is an explicit investigation tool, not additional UI or CI matrix coverage
 
 ## Captured face performance
 
+Add `--split-depth 7` to time the identical edits on the full body and its end
+split 7 mm behind the selected face. The benchmark requires the cut to preserve
+that face and its rim. With `--reference`, every reply on each model is compared
+against the corresponding reference build.
+
 With the repository's Node version active, compare straight extrusion, inward
 cut, signed face offsets and rim fillets on a captured planar face. Each edit
 starts a fresh calculator and then varies the distance on the same body. The

@@ -64,7 +64,7 @@ void matchEdges(Result& result, const Edit& edit, const TopTools_IndexedMapOfSha
     require(assigned.Extent() == after.Extent(), "Reconnection changed edge topology");
 }
 }
-Result reconstruct(const Edit& edit, const std::vector<SourceEntity>& replacements, SolidValidator* validateSolid) {
+Result reconstruct(const Edit& edit, const std::vector<SourceEntity>& replacements, const SolidValidator& validateSolid) {
     KernelTiming timing("boundary-reconnection");
     BRepBuilderAPI_Sewing sewing(boundaryDistanceMm);
     std::vector<SourceEntity> expected;

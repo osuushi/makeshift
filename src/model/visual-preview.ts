@@ -2,6 +2,8 @@ import type { Body, Extrusion } from "./body.js";
 
 /** A validated drawing only: no exact shape, editable topology, or persistent IDs. */
 export interface VisualBody {
+  /** Unchanged portion of the same shell, retained in a separate drawing batch. */
+  stationary?: VisualBody;
   /** Appearance references only; these do not make the drawing editable. */
   sourceBodies?: string[];
   sourceFaces?: string[][];

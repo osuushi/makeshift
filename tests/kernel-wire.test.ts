@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import { readKernelReply } from "../src/backend/kernel-reply-validation.js";
@@ -6,7 +7,7 @@ import type { KernelResult } from "../src/backend/kernel-result.js";
 import { SolidCalculator } from "../src/backend/solid-calculator.js";
 import type { Body, Face } from "../src/model/body.js";
 import { documentArchive } from "../src/model/document-archive.js";
-import { exactBodies } from "../src/model/exact-body.js";
+import { type ExactBody, exactBodies } from "../src/model/exact-body.js";
 import { planes } from "../src/sketch/planes.js";
 import { prism, square } from "./body-edge-fixtures.js";
 import { kernelWireFixture } from "./kernel-wire-fixture.js";
@@ -287,5 +288,30 @@ test("real query replies validate witnesses, topology references and required ou
     owner.close();
     kernel.close();
     await kernel.cancel();
+  }
+});
+test("reusing checked input geometry still verifies current topology signatures and identities", async () => {
+  const { document } = JSON.parse(
+    readFileSync("tests/fixtures/erosion-connected-cylinders.json", "utf8"),
+  ) as {
+    document: { bodies: ExactBody[] };
+  };
+  const [body] = document.bodies;
+  const kernel = new SolidCalculator();
+  try {
+    await kernel.calculate({ kind: "inspect", bodies: [body] });
+    const [first, ...rest] = body.faces;
+    const wrong = { ...first, signature: first.signature.map((x, i) => (i === 2 ? x + 1 : x)) };
+    await assert.rejects(
+      kernel.calculate({ kind: "inspect", bodies: [{ ...body, faces: [wrong, ...rest] }] }),
+      /identity does not match/,
+    );
+    const renamed = { ...body, faces: [{ ...first, id: "renamed-face" }, ...rest] };
+    const {
+      results: [result],
+    } = await kernel.calculate({ kind: "inspect", bodies: [renamed] });
+    assert.ok(result.faces.some((face) => face.predecessors.includes("renamed-face")));
+  } finally {
+    kernel.close();
   }
 });

@@ -37,12 +37,17 @@ Bnd_Box faceBounds(const TopoDS_Face& face) {
     if (cached) cached->value.bounds = box;
     return box;
 }
-struct BoundsJob {
+struct MeasurementJob {
     TopoDS_Face source;
     std::shared_ptr<FaceCache::Entry> entry;
-    std::optional<Bnd_Box> result;
+    Measurements result;
 };
-void finishBounds(std::vector<BoundsJob>& jobs, Bnd_Box& bounds) {
+GProp_GProps measureSurface(const TopoDS_Face& face) {
+    GProp_GProps properties;
+    BRepGProp::SurfaceProperties(face, properties);
+    return properties;
+}
+void finishMeasurements(std::vector<MeasurementJob>& jobs, Bnd_Box* bounds) {
     if (jobs.empty()) return;
     if (jobs.size() > 1) {
         OSD_ThreadPool::Launcher launcher(*OSD_ThreadPool::DefaultPool(), int(jobs.size()));
@@ -55,17 +60,52 @@ void finishBounds(std::vector<BoundsJob>& jobs, Bnd_Box& bounds) {
                 TopoDS_Shape local;
                 BinTools::Read(local, stream);
                 if (stream && !local.IsNull() && local.ShapeType() == TopAbs_FACE &&
-                    measurementKey(local) == job.entry->key)
-                    job.result = measureBounds(local);
+                    measurementKey(local) == job.entry->key) {
+                    if (bounds) job.result.bounds = measureBounds(local);
+                    else job.result.surface = measureSurface(TopoDS::Face(local));
+                }
             } catch (const Standard_Failure&) {}
         });
     }
     for (auto& job : jobs) {
-        if (!job.result) job.result = measureBounds(job.source);
-        job.entry->value.bounds = job.result;
-        bounds.Add(*job.result);
+        if (bounds) {
+            if (!job.result.bounds) job.result.bounds = measureBounds(job.source);
+            job.entry->value.bounds = job.result.bounds;
+            bounds->Add(*job.result.bounds);
+        } else {
+            if (!job.result.surface) job.result.surface = measureSurface(job.source);
+            job.entry->value.surface = job.result.surface;
+        }
     }
     jobs.clear();
+}
+
+void measureFaces(const TopoDS_Shape& shape, Bnd_Box* box) {
+    std::vector<MeasurementJob> pending;
+    size_t pendingBytes = 0;
+    const int workers = OSD_ThreadPool::DefaultPool()->NbThreads();
+    for (TopExp_Explorer it(shape, TopAbs_FACE); it.More(); it.Next()) {
+        const auto face = TopoDS::Face(it.Current());
+        const auto entry = splineMeasurements(face);
+        if (!entry) {
+            if (box) box->Add(measureBounds(face));
+        } else if (box && entry->value.bounds) box->Add(*entry->value.bounds);
+        else if (!box && entry->value.surface) continue;
+        else {
+            // Bound the additional live keys even on a cold, heavily trimmed model.
+            if (pendingBytes + entry->key.size() > 16 * 1024 * 1024) {
+                finishMeasurements(pending, box);
+                pendingBytes = 0;
+            }
+            pending.push_back({face, entry, {}});
+            pendingBytes += entry->key.size();
+            if (int(pending.size()) >= workers) {
+                finishMeasurements(pending, box);
+                pendingBytes = 0;
+            }
+        }
+    }
+    finishMeasurements(pending, box);
 }
 
 }
@@ -73,8 +113,7 @@ void finishBounds(std::vector<BoundsJob>& jobs, Bnd_Box& bounds) {
 GProp_GProps measuredSurface(const TopoDS_Face& face) {
     const auto cached = splineMeasurements(face);
     if (cached && cached->value.surface) return *cached->value.surface;
-    GProp_GProps properties;
-    BRepGProp::SurfaceProperties(face, properties);
+    const auto properties = measureSurface(face);
     if (cached) cached->value.surface = properties;
     return properties;
 }
@@ -85,30 +124,12 @@ Bnd_Box exactShapeBounds(const TopoDS_Shape& shape) {
     if (TopExp_Explorer(shape, TopAbs_EDGE, TopAbs_FACE).More() ||
         TopExp_Explorer(shape, TopAbs_VERTEX, TopAbs_EDGE).More()) return measureBounds(shape);
     Bnd_Box box;
-    std::vector<BoundsJob> pending;
-    size_t pendingBytes = 0;
-    const int workers = OSD_ThreadPool::DefaultPool()->NbThreads();
-    for (TopExp_Explorer it(shape, TopAbs_FACE); it.More(); it.Next()) {
-        const auto face = TopoDS::Face(it.Current());
-        const auto entry = splineMeasurements(face);
-        if (!entry) box.Add(measureBounds(face));
-        else if (entry->value.bounds) box.Add(*entry->value.bounds);
-        else {
-            // Bound the additional live keys even on a cold, heavily trimmed model.
-            if (pendingBytes + entry->key.size() > 16 * 1024 * 1024) {
-                finishBounds(pending, box);
-                pendingBytes = 0;
-            }
-            pending.push_back({face, entry, {}});
-            pendingBytes += entry->key.size();
-            if (int(pending.size()) >= workers) {
-                finishBounds(pending, box);
-                pendingBytes = 0;
-            }
-        }
-    }
-    finishBounds(pending, box);
+    measureFaces(shape, &box);
     return box;
+}
+
+void prepareSurfaceSignatures(const TopoDS_Shape& shape) {
+    if (OSD_ThreadPool::DefaultPool()->HasThreads()) measureFaces(shape, nullptr);
 }
 
 std::array<double, 6> resultBounds(const Result& result) {

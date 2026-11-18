@@ -14,14 +14,11 @@
 #include <OSD_Parallel.hxx>
 #include <OSD_ThreadPool.hxx>
 #include <algorithm>
-#include <BRep_Builder.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepGProp.hxx>
 #include <GProp_GProps.hxx>
 #include <Standard_Failure.hxx>
 #include <TopExp_Explorer.hxx>
-#include <TopExp.hxx>
-#include <TopTools_IndexedMapOfShape.hxx>
 #include <TopoDS.hxx>
 #include <cmath>
 #include <iomanip>
@@ -55,48 +52,6 @@ std::string encode(const TopoDS_Shape& shape) {
     std::ostringstream stream; BRepTools::Write(shape, stream, false, false, TopTools_FormatVersion_CURRENT);
     const auto bytes = stream.str(); std::string result; result.reserve(bytes.size() * 2);
     for (unsigned char c : bytes) { result += "0123456789abcdef"[c >> 4]; result += "0123456789abcdef"[c & 15]; }
-    return result;
-}
-TopoDS_Shape decode(const std::string& data) {
-    KernelTiming timing("decode");
-    if (data.empty() || data.size() % 2) throw std::runtime_error("Invalid exact-shape encoding");
-    auto digit = [](char c) { if (c >= '0' && c <= '9') return c - '0'; if (c >= 'a' && c <= 'f') return c - 'a' + 10; throw std::runtime_error("Invalid shape byte"); };
-    std::string bytes; bytes.reserve(data.size() / 2);
-    for (size_t i = 0; i < data.size(); i += 2) bytes += char(digit(data[i]) * 16 + digit(data[i + 1]));
-    std::istringstream stream(bytes); TopoDS_Shape shape; BRep_Builder builder;
-    BRepTools::Read(shape, stream, builder);
-    timing.phase("read");
-    if (shape.IsNull() || !BRepCheck_Analyzer(shape).IsValid())
-        throw CalculationFailure("invalid-request", "Invalid exact-shape geometry");
-    timing.phase("validation");
-    return shape;
-}
-std::vector<Operand> operands(const Tree& input) {
-    std::vector<Operand> result;
-    if (auto values = input.get_child_optional("bodies")) for (const auto& item : *values) {
-        const auto& value = item.second;
-        Operand body{value.get<std::string>("id"), decode(value.get<std::string>("brep")), {}};
-        for (const auto type : {TopAbs_FACE, TopAbs_EDGE}) {
-            TopTools_IndexedMapOfShape shapes; TopExp::MapShapes(body.shape, type, shapes);
-            const auto& keys = value.get_child(type == TopAbs_FACE ? "faces" : "edges");
-            if (keys.size() != size_t(shapes.Extent())) throw std::runtime_error("Mismatched serialized topology identity");
-            int index = 1;
-            for (const auto& item : keys) {
-                const auto shape = shapes(index++);
-                const auto actual = signature(shape); const auto& expected = item.second.get_child("signature");
-                if (actual.size() != expected.size()) throw std::runtime_error("Invalid topology signature");
-                size_t i = 0;
-                for (const auto& v : expected) {
-                    const double number = v.second.get_value<double>();
-                    if (!std::isfinite(number) || std::abs(number - actual[i]) > 1e-7 * std::max(1.0, std::abs(actual[i])))
-                        throw std::runtime_error("Serialized topology identity does not match geometry");
-                    ++i;
-                }
-                body.entities.push_back({item.second.get<std::string>("id"), shape});
-            }
-        }
-        result.push_back(std::move(body));
-    }
     return result;
 }
 namespace {

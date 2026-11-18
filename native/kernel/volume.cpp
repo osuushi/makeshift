@@ -6,6 +6,7 @@
 #include <ShapeUpgrade_ShapeDivideClosed.hxx>
 #include <Geom_BSplineSurface.hxx>
 #include "shape-measurements.h"
+#include "volume-flux.h"
 #include <BRepGProp.hxx>
 #include <Bnd_Box.hxx>
 #include <GProp_GProps.hxx>
@@ -113,6 +114,7 @@ double integrateVolume(const TopoDS_Shape& input, int referenceAxis,
     for (TopExp_Explorer e(shape, TopAbs_FACE); e.More(); e.Next())
         if (BRepAdaptor_Surface(TopoDS::Face(e.Current())).GetType() != GeomAbs_Plane) planar = false;
     double error;
+    std::optional<double> fluxMass;
     if (planar) error = BRepGProp::VolumeProperties(shape, props, 1e-10);
     else {
         const auto bounds = exactShapeBounds(input);
@@ -130,10 +132,15 @@ double integrateVolume(const TopoDS_Shape& input, int referenceAxis,
             std::rotate(axes.begin(), preferred, preferred + 1);
         }
         for (const int axis : axes) {
+            fluxMass.reset();
             gp_Pnt origin(lo[0],lo[1],lo[2]);
             origin.SetCoord(axis+1,lo[axis]-1);
             const gp_Dir normal(axis == 0,axis == 1,axis == 2);
-            error = BRepGProp::VolumePropertiesGK(shape,props,gp_Pln(origin,normal),1e-10,false,true);
+            const gp_Pln plane(origin, normal);
+            if (const auto flux = measuredVolumeFlux(shape, axis, plane)) {
+                error = flux->error;
+                fluxMass = flux->mass;
+            } else error = BRepGProp::VolumePropertiesGK(shape,props,plane,1e-10,false,true);
             if (std::isfinite(error) && error >= 0) break;
             // A failed face aborts GK before all properties are accumulated. Try a
             // different integral reference, never accept its partial mass or error.
@@ -142,7 +149,7 @@ double integrateVolume(const TopoDS_Shape& input, int referenceAxis,
         }
     }
     if (!std::isfinite(error) || error < 0) throw std::runtime_error("Solid volume integration failed");
-    const double value = std::abs(props.Mass());
+    const double value = std::abs(fluxMass.value_or(props.Mass()));
     timing.phase("integrate");
     if (!std::isfinite(value)) throw std::runtime_error("Non-finite solid volume");
     return value;

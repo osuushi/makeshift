@@ -10,3 +10,4 @@ Bnd_Box conservativeFaceBounds(const TopoDS_Face&);
 std::array<double, 6> resultBounds(const Result&);
 double signedSolidMass(const TopoDS_Shape&);
 GProp_GProps measuredSurface(const TopoDS_Face&);
+void prepareSurfaceSignatures(const TopoDS_Shape&);

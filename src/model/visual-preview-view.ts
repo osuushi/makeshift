@@ -30,19 +30,21 @@ export class VisualBodyDrawable {
     stableClipping(new THREE.LineBasicMaterial({ color: "#344657" })),
   );
   private source: VisualBody | null = null;
+  private stationary: VisualBodyDrawable | null = null;
   private highlight = new LineSegments2(
     new LineSegmentsGeometry(),
     stableClipping(
       new LineMaterial({ color: "#1676d2", linewidth: 4, depthTest: false, depthWrite: false }),
     ),
   );
-  constructor() {
+  constructor(private capIdentity = "") {
+    this.capIdentity ||= this.group.uuid;
     this.group.add(this.mesh, this.onSection, this.outline, this.highlight);
     this.highlight.renderOrder = 20;
     for (const mesh of [this.mesh, this.onSection]) {
       // Presentation identity only: caps need the complete closed shell, but
       // temporary meshes must not advertise editable body/face topology.
-      mesh.userData.sectionCapBody = this.group.uuid;
+      mesh.userData.sectionCapBody = this.capIdentity;
       mesh.material.vertexColors = true;
       mesh.material.color.set("white");
     }
@@ -53,6 +55,17 @@ export class VisualBodyDrawable {
   update(body: VisualBody, section: PlaneFrame | null = null, style = defaultStyle): void {
     const sectionKey = JSON.stringify([section, style]);
     if (this.source === body && this.sectionKey === sectionKey) return;
+    if (body.stationary) {
+      if (!this.stationary) {
+        this.stationary = new VisualBodyDrawable(this.capIdentity);
+        this.group.add(this.stationary.group);
+      }
+      this.stationary.update(body.stationary, section, style);
+    } else if (this.stationary) {
+      this.group.remove(this.stationary.group);
+      this.stationary.dispose();
+      this.stationary = null;
+    }
     this.group.userData.bodyMaskGeometry = body.faces;
     const onSection = body.planes.map((plane) => !!(section && plane && coplanar(section, plane)));
     const selectedBody = body.sourceBodies?.some((id) => style.selected.includes(id));
@@ -98,6 +111,7 @@ export class VisualBodyDrawable {
     this.sectionKey = sectionKey;
   }
   dispose(): void {
+    this.stationary?.dispose();
     for (const object of [this.mesh, this.onSection, this.outline, this.highlight]) {
       object.geometry.dispose();
       object.material.dispose();

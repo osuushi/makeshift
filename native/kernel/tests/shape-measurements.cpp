@@ -1,4 +1,5 @@
 #include "shape-measurements.h"
+#include "volume-flux.h"
 #include "measurement-cache.h"
 #include "kernel.h"
 #include <BRepAdaptor_Surface.hxx>
@@ -71,6 +72,22 @@ void checkBoundaryKeys() {
     builder.SameParameter(edge, false);
     check(relaxed != measurementKey(solid), "Changing edge parameter correspondence reused a source check");
 }
+void checkFluxPlacements() {
+    const auto original = BRepBuilderAPI_NurbsConvert(BRepPrimAPI_MakeBox(3,5,9).Shape()).Shape();
+    for (double shift : {0., 500., 1e6, 0.}) {
+        gp_Trsf placement;
+        placement.SetTranslation(gp_Vec(shift,-shift/3,shift/2));
+        const auto body = original.Moved(TopLoc_Location(placement));
+        for (int axis : {0,2,1,0}) {
+            gp_Pln plane(gp_Pnt(shift-2,-shift/3-3,shift/2-5),gp_Dir(axis==0,axis==1,axis==2));
+            GProp_GProps reference;
+            const double error = BRepGProp::VolumePropertiesGK(body,reference,plane,1e-10,false,true);
+            const auto cached = measuredVolumeFlux(body,axis,plane);
+            check(cached && cached->mass == reference.Mass() && cached->error == error,
+                  "Per-face GK differs from the whole solid at this placement");
+        }
+    }
+}
 }
 int main() {
     OSD_ThreadPool::DefaultPool(4);
@@ -95,6 +112,7 @@ int main() {
     // Initially all three spline entries miss together. Repeat in a different
     // order with trimmed, reversed and located versions of the same support.
     checkBounds(compound);
+    prepareSurfaceSignatures(compound);
     for (const auto& face : {moved, cap, TopoDS::Face(trim.Reversed()), trim}) {
         checkFace(face);
         const auto bounds = conservativeFaceBounds(face);
@@ -111,4 +129,5 @@ int main() {
     checkBounds(compound);
     checkSolids();
     checkBoundaryKeys();
+    checkFluxPlacements();
 }

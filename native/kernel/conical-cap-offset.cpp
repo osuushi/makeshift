@@ -133,7 +133,11 @@ Result extend(const Operand& body, const TopoDS_Face& cap, double distance, bool
         replacements.push_back(wall.replacement);
     }
     rebuildEdges(edit, rims);
-    auto result = boundary_move::reconstruct(edit, replacements, offset_geometry::validSolid);
+    auto focus = conservativeFaceBounds(cap);
+    focus.Enlarge(std::abs(distance));
+    auto result = boundary_move::reconstruct(edit, replacements, [&](const TopoDS_Shape& solid, const char* context) {
+        offset_geometry::validSolidNear(solid, context, focus);
+    });
     for (const auto& entity : body.entities) {
         if (entity.shape.ShapeType() != TopAbs_FACE) continue;
         const auto next = std::find_if(result.predecessors.begin(), result.predecessors.end(), [&](const auto& e) { return e.id == entity.id; });

@@ -2,6 +2,7 @@
 #include "timing.h"
 #include "offset-geometry.h"
 #include "measurement-cache.h"
+#include "edit-intersections.h"
 #include "shape-measurements.h"
 #include <OSD_ThreadPool.hxx>
 #include "offset-repair.h"
@@ -144,6 +145,9 @@ void checkParallel(const TopoDS_Face& source, const TopoDS_Face& offset, double 
     }
 }
 void validSolid(const TopoDS_Shape& shape, const char* context) {
+    validSolidNear(shape, context, Bnd_Box{});
+}
+void validSolidNear(const TopoDS_Shape& shape, const char* context, const Bnd_Box& focus) {
     KernelTiming timing("solid-validation");
     // Arc joins carry conservative vertex bounds above 1e-6 mm in OCCT.
     // Keep a separate 2e-6 mm topology budget; geometric distance stays at 1e-6.
@@ -172,10 +176,12 @@ void validSolid(const TopoDS_Shape& shape, const char* context) {
         require(BRep_Tool::Tolerance(TopoDS::Vertex(it.Current())) <= offsetTopologyToleranceMm,
                 std::string(context) + " exceeds the vertex tolerance");
     timing.phase("mass-orientation-tolerances");
-    BOPAlgo_ArgumentAnalyzer check;
-    check.SetShape1(shape); check.SelfInterMode() = true;
-    check.SetRunParallel(parallel); check.Perform();
-    require(!check.HasErrors() && !check.HasFaulty(), std::string(context) + " contains self-intersections");
+    validateEditIntersections(shape, focus, IntersectionPolicy::offset, [&](const TopoDS_Shape& candidate) {
+        BOPAlgo_ArgumentAnalyzer check;
+        check.SetShape1(candidate); check.SelfInterMode() = true;
+        check.SetRunParallel(parallel); check.Perform();
+        require(!check.HasErrors() && !check.HasFaulty(), std::string(context) + " contains self-intersections");
+    });
     timing.phase("self-intersections");
 }
 }
