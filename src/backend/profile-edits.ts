@@ -5,6 +5,7 @@ import type { ProfileEditView, ProfileSelection } from "../model/revolved-profil
 import type { Sketch, SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import type { HistoryOperation } from "../sketch/operation-history.js";
+import type { Profile } from "../sketch/profiles.js";
 import { continueBodyMetadata } from "./body-metadata.js";
 import { editDocument } from "./document-edits.js";
 import { type PreviewRequest, previewDocument } from "./document-preview.js";
@@ -12,8 +13,8 @@ import type { DocumentSession } from "./document-session.js";
 import { continuingBodies, materialize } from "./kernel-result.js";
 import type { NativeSolver } from "./native-solver.js";
 import { pasteGeometry } from "./paste-geometry.js";
-import { boundary } from "./profile-boundary.js";
-import { profileAxisAnchors, profileSketch, profileSpans } from "./profile-chain.js";
+import { profileAxisAnchors, profileSketch } from "./profile-chain.js";
+import { profileGeometry, profileGeometryKey, profileRegion } from "./profile-region.js";
 import type { SolidCalculator } from "./solid-calculator.js";
 
 interface ProfileDraft {
@@ -22,6 +23,7 @@ interface ProfileDraft {
   height: number;
   endGuides: boolean;
   sketch: Sketch;
+  region?: Profile;
   initial: string;
   origins: Map<string, string>;
   past: Sketch[];
@@ -52,13 +54,14 @@ export class ProfileEdits {
   get view(): ProfileEditView | undefined {
     const edit = this.current;
     if (!edit) return undefined;
-    const { preview } = edit;
+    const { sketch, region, draft, preview } = edit;
     return {
       body: edit.source.body,
       height: edit.height,
       endGuides: edit.endGuides,
-      sketch: edit.sketch,
-      draft: edit.draft,
+      sketch,
+      region,
+      draft,
       preview,
       canUndo: !!edit.past.length,
       canRedo: !!edit.future.length,
@@ -77,7 +80,9 @@ export class ProfileEdits {
       bodies: exactBodies([body]),
     });
     const { sketch, origins } = profileSketch(profile);
-    const initial = JSON.stringify(boundary(profileSpans(sketch.curves, profile), sketch.plane));
+    const region = profileRegion(sketch, profile);
+    if (!region) throw new Error("Could not recover a closed profile region");
+    const initial = profileGeometryKey(profileGeometry(region, sketch, origins));
     this.checkCancellation();
     this.current = {
       source,
@@ -85,6 +90,7 @@ export class ProfileEdits {
       height: profile.height,
       endGuides: profile.endGuides,
       sketch,
+      region,
       initial,
       origins,
       past: [],
@@ -259,20 +265,19 @@ export class ProfileEdits {
 
   private async update(sketch: Sketch, checkpoint = true): Promise<void> {
     const edit = this.requireEdit();
+    let region: Profile | undefined;
     let preview: Body | undefined, error: string | undefined;
     try {
-      const ordered = profileSpans(sketch.curves, edit);
-      const geometry = boundary(ordered, sketch.plane);
-      if (JSON.stringify(geometry) !== edit.initial) {
+      region = profileRegion(sketch, edit);
+      if (!region) throw new Error("Close a region to apply the profile");
+      const geometry = profileGeometry(region, sketch, edit.origins);
+      if (profileGeometryKey(geometry) !== edit.initial) {
         const bodies = [edit.body];
         const reply = await this.kernel.calculate({
           kind: "replace-revolved-profile",
           ...edit.source,
-          spans: geometry.map((span, index) => ({
-            ...span,
-            face: edit.origins.get(ordered[index].curve.id),
-          })),
-          bodies: exactBodies([edit.body]),
+          ...geometry,
+          bodies: exactBodies(bodies),
         });
         [preview] = continuingBodies(bodies, materialize(bodies, reply));
       }
@@ -284,6 +289,6 @@ export class ProfileEdits {
       edit.past.push(edit.sketch);
       edit.future.length = 0;
     }
-    Object.assign(edit, { sketch, preview, error, draft: undefined });
+    Object.assign(edit, { sketch, region, preview, error, draft: undefined });
   }
 }

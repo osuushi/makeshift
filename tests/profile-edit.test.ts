@@ -166,11 +166,9 @@ test("temporary profile recuts a stationary dimple, drops contact, and applies o
       sketchId: profile.id,
       ids: [profile.curves[2].id],
     });
-    assert.match(broken.profileEdit?.error ?? "", /continuous chain/);
-    assert.match(
-      (await owner.call({ kind: "apply-profile-edit" })).error ?? "",
-      /continuous chain/,
-    );
+    assert.equal(broken.profileEdit?.region, undefined);
+    assert.match(broken.profileEdit?.error ?? "", /close a region/i);
+    assert.match((await owner.call({ kind: "apply-profile-edit" })).error ?? "", /close a region/i);
     assert.equal(
       (await call(owner, { kind: "undo" })).profileEdit?.preview?.volume,
       preview.volume,

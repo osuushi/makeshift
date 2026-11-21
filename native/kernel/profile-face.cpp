@@ -2,6 +2,7 @@
 #include "sketch-curve.h"
 #include "geometry-policy.h"
 #include <BRepAdaptor_Curve.hxx>
+#include <ShapeBuild_ReShape.hxx>
 #include <ShapeFix_Wire.hxx>
 #include <ShapeExtend_WireData.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
@@ -38,15 +39,24 @@ TopoDS_Face sweepBoundaryFace(const TopoDS_Face& face) {
     }
     return face;
 }
-TopoDS_Wire wire(const Tree& spans) {
+TopoDS_Wire wire(const Tree& spans, std::vector<SourceEntity>* origins) {
     BRepBuilderAPI_MakeWire builder;
+    std::vector<SourceEntity> sources;
     for (const auto& item : spans) {
         BRepBuilderAPI_MakeEdge edge(sketchCurve(item.second));
         if (!edge.IsDone()) throw std::runtime_error("Cannot construct profile span");
         builder.Add(edge.Edge());
+        if (origins && builder.IsDone())
+            if (const auto id = item.second.get_optional<std::string>("face"))
+                sources.push_back({*id, builder.Edge()});
     }
     if (!builder.IsDone()) throw std::runtime_error("Profile boundary is not a valid wire");
     ShapeFix_Wire boundary;
+    Handle(ShapeBuild_ReShape) history;
+    if (origins) {
+        history = new ShapeBuild_ReShape;
+        boundary.SetContext(history);
+    }
     boundary.Load(builder.Wire());
     boundary.SetPrecision(geometry_policy::cubicBooleanToleranceMm);
     boundary.SetMaxTolerance(geometry_policy::cubicBooleanToleranceMm);
@@ -63,6 +73,13 @@ TopoDS_Wire wire(const Tree& spans) {
         if (cubicJunction)
             boundary.FixSmall(i, false, geometry_policy::cubicBooleanToleranceMm);
     }
+    if (origins) {
+        for (const auto& source : sources) {
+            const auto edge = history->Apply(source.shape);
+            if (!edge.IsNull() && edge.ShapeType() == TopAbs_EDGE)
+                origins->push_back({source.id, edge});
+        }
+    }
     return boundary.Wire();
 }
 
@@ -70,7 +87,8 @@ double area(const TopoDS_Shape& shape) {
     GProp_GProps props; BRepGProp::SurfaceProperties(shape, props, 1e-10);
     return props.Mass();
 }
-TopoDS_Face resolveTouchingHoles(const TopoDS_Wire& outer, const std::vector<TopoDS_Wire>& holes) {
+TopoDS_Face resolveTouchingHoles(const TopoDS_Wire& outer, const std::vector<TopoDS_Wire>& holes,
+                                std::vector<SourceEntity>* origins) {
     const auto outside = BRepBuilderAPI_MakeFace(outer, true).Face();
     validate(outside);
     double expected = area(outside);
@@ -98,14 +116,23 @@ TopoDS_Face resolveTouchingHoles(const TopoDS_Wire& outer, const std::vector<Top
     if (face.IsNull() || expected <= 1e-10 ||
         std::abs(area(face) - expected) > 1e-7 * std::max(1.0, expected))
         throw std::runtime_error("Profile holes overlap or cross the outer boundary");
+    if (origins) {
+        std::vector<SourceEntity> continued;
+        for (const auto& source : *origins) {
+            if (!cut.IsDeleted(source.shape)) continued.push_back(source);
+            for (const auto& edge : cut.Modified(source.shape))
+                if (edge.ShapeType() == TopAbs_EDGE) continued.push_back({source.id, edge});
+        }
+        *origins = std::move(continued);
+    }
     return face;
 }
-TopoDS_Face sketchProfileFace(const Tree& profile) {
-    const auto outer = wire(profile.get_child("outer"));
+TopoDS_Face sketchProfileFace(const Tree& profile, std::vector<SourceEntity>* origins) {
+    const auto outer = wire(profile.get_child("outer"), origins);
     std::vector<TopoDS_Wire> holes;
     BRepBuilderAPI_MakeFace builder(outer, true);
     for (const auto& hole : profile.get_child("holes")) {
-        holes.push_back(wire(hole.second));
+        holes.push_back(wire(hole.second, origins));
         builder.Add(TopoDS::Wire(holes.back().Reversed()));
     }
     if (!builder.IsDone()) throw std::runtime_error("Profile is not a planar face");
@@ -115,18 +142,19 @@ TopoDS_Face sketchProfileFace(const Tree& profile) {
     const auto result = check.Result(face);
     if (!holes.empty() && !result.IsNull())
         for (const auto status : result->Status())
-            if (status == BRepCheck_IntersectingWires) return resolveTouchingHoles(outer, holes);
+            if (status == BRepCheck_IntersectingWires) return resolveTouchingHoles(outer, holes, origins);
     validate(face);
     return face;
 }
 }
-TopoDS_Face profileFace(const Tree& profile, const std::vector<Operand>& bodies) {
+TopoDS_Face profileFace(const Tree& profile, const std::vector<Operand>& bodies,
+                        std::vector<SourceEntity>* boundaryOrigins) {
     TopoDS_Face face;
     if (auto key = profile.get_optional<std::string>("face")) {
         bool found = false;
         for (const auto& body : bodies) for (const auto& entity : body.entities)
             if (entity.id == *key && entity.shape.ShapeType() == TopAbs_FACE) { face = TopoDS::Face(entity.shape); found = true; }
         if (!found) throw std::runtime_error("Selected face no longer exists");
-    } else face = sketchProfileFace(profile);
+    } else face = sketchProfileFace(profile, boundaryOrigins);
     return sweepBoundaryFace(face);
 }

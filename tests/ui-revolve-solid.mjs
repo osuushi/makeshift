@@ -168,14 +168,41 @@ async function verifyProfileKeys(page, before) {
   const kept = await inspect(page);
   assert.equal(kept.activeSketch, entered.activeSketch);
   close(kept.document.bodies[0].volume, changed.document.bodies[0].volume);
+  const edited = await drawUntrimmedMeridian(page, kept);
+  await chooseTool(page, "select", "select");
   await page.keyboard.press("Enter");
   await page.getByRole("group", { name: "Edit Profile", exact: true }).waitFor({ state: "hidden" });
-  close((await inspect(page)).document.bodies[0].volume, changed.document.bodies[0].volume);
+  close((await inspect(page)).document.bodies[0].volume, edited.volume);
   await chooseTool(page, "undo", "undo");
   assert.ok(
     (await inspect(page)).document.bodies[0].brep === before.brep,
     "One Undo restores the shaft",
   );
+}
+
+async function drawUntrimmedMeridian(page, state) {
+  const sketch = state.document.sketches[0];
+  const { xMax, yMin, yMax } = bounds(sketch.curves);
+  const mid = (yMin + yMax) / 2;
+  await page.keyboard.press("l");
+  await drag(page, [xMax, mid], [xMax * 0.8, mid]);
+  const branched = await inspect(page);
+  const branch = branched.document.sketches[0].curves.at(-1);
+  assert.equal(branched.document.sketches[0].curves.length, sketch.curves.length + 1);
+  close(branch.a.x, xMax);
+  close(branched.document.bodies[0].volume, state.document.bodies[0].volume);
+  await drag(page, [xMax / 2, yMin - 1], [xMax / 2, yMax + 1], ["Shift"]);
+  const { document } = await inspect(page);
+  const curves = document.sketches[0].curves;
+  assert.equal(curves.length, sketch.curves.length + 2, "The original contour remains editable");
+  const { a, b } = curves.at(-1);
+  assert.ok(Math.min(a.y, b.y) < yMin && Math.max(a.y, b.y) > yMax);
+  const radius = (y) => a.x + (b.x - a.x) * ((y - a.y) / (b.y - a.y));
+  const first = radius(yMin),
+    last = radius(yMax);
+  const body = document.bodies[0];
+  close(body.volume, (Math.PI * (yMax - yMin) * (first ** 2 + first * last + last ** 2)) / 3);
+  return body;
 }
 
 async function partialFaceRoute(page, name) {

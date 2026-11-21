@@ -161,7 +161,8 @@ test("a flat cap is a regular profile curve that can be moved and filleted", asy
     close(diskCap.bounds[3], 2.5);
 
     const removed = await call(owner, { kind: "remove", sketchId: sketch.id, ids: [bottom.id] });
-    assert.match(removed.profileEdit?.error ?? "", /both ends on the axis/);
+    assert.equal(removed.profileEdit?.region, undefined);
+    assert.match(removed.profileEdit?.error ?? "", /close a region/i);
     await call(owner, { kind: "undo" });
     const applied = await call(owner, { kind: "apply-profile-edit" });
     const result = applied.data.bodies?.[0];

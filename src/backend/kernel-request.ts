@@ -45,7 +45,8 @@ type Request =
   | (ProfileSelection & { kind: "describe-revolved-profile"; bodies: readonly ExactBody[] })
   | (ProfileSelection & {
       kind: "replace-revolved-profile";
-      spans: (ReturnType<typeof boundary>[number] & { face?: string })[];
+      outer: ReturnType<typeof boundary>;
+      holes: ReturnType<typeof boundary>[];
       bodies: readonly ExactBody[];
     })
   | { kind: "center-of-mass"; bodies: readonly ExactBody[] }

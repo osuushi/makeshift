@@ -66,7 +66,8 @@ double checkOffsetVolume(const TopoDS_Shape&, const TopoDS_Shape&, double,
                        const std::vector<TopoDS_Shape>& preservedVertices = {}, int referenceAxis = -1,
                        std::optional<std::array<double, 6>>* exactBounds = nullptr);
 
-TopoDS_Face profileFace(const Tree&, const std::vector<Operand>&);
+TopoDS_Face profileFace(const Tree&, const std::vector<Operand>&,
+                        std::vector<SourceEntity>* boundaryOrigins = nullptr);
 TopoDS_Shape pathSweep(const Tree&, const std::vector<Operand>&);
 TopoDS_Shape revolve(const Tree&, const std::vector<Operand>&);
 

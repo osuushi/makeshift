@@ -1,6 +1,7 @@
 import { regionTolerance } from "../sketch/curve-spans.js";
 import type { Curve, Segment, Sketch } from "../sketch/document.js";
 import type { PlaneFrame } from "../sketch/planes.js";
+import type { Profile } from "../sketch/profiles.js";
 import type { Body } from "./body.js";
 
 export interface ProfileSelection {
@@ -21,6 +22,7 @@ export interface ProfileEditView {
   height: number;
   endGuides: boolean;
   sketch: Sketch;
+  region?: Profile;
   draft?: Sketch;
   preview?: Body;
   canUndo: boolean;

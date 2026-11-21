@@ -5,8 +5,6 @@
 #include <gp_Ax3.hxx>
 #include <gp_Sphere.hxx>
 
-class TopoDS_Wire;
-
 namespace revolved_profile {
 struct Meridian {
     std::string face;
@@ -43,13 +41,14 @@ Handle(Geom_TrimmedCurve) meridian(const TopoDS_Face&, const Band&);
 ThroughBore throughBore(const Operand&, const SourceEntity&);
 Band boreProfile(const Operand&, const ThroughBore&, const TopoDS_Shape& envelope);
 bool hasMaterial(const TopoDS_Shape&, double threshold);
-TopoDS_Shape trimDimples(const TopoDS_Shape&, const TopoDS_Wire&, const Band&, std::vector<SourceEntity>&);
+TopoDS_Shape trimDimples(const TopoDS_Shape&, const Band&, std::vector<SourceEntity>&);
 bool hasSplitCut(const std::vector<SourceEntity>&);
 TopoDS_Shape recutParallel(TopoDS_Shape, const std::vector<SourceEntity>&, std::vector<SourceEntity>&);
 void verifySameMaterial(const TopoDS_Shape&, const TopoDS_Shape&, const char* message);
 void verifySectionMaterial(const TopoDS_Shape&, const TopoDS_Shape&, bool exactSupports);
 void verifyBoreRecovery(const Band&);
 Band sectionProfile(const Operand&, const gp_Ax1&, std::vector<SourceEntity>);
+TopoDS_Face recoveredSectionFace(const Band&);
 void verifySectionRecovery(const Band&, bool exactSupports);
 Band inspect(const Tree&, const std::vector<Operand>&, bool verifyRecovery = false);
 }

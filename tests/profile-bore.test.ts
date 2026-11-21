@@ -222,3 +222,37 @@ test("a blind bore cannot be opened with the through-bore profile recipe", async
     owner.close();
   }
 });
+
+test("the bore end guides trim an extended stroke to the innermost closed region", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const original = await piercedStock(owner);
+    const [body] = original.bodies ?? [];
+    assert.ok(body);
+    const { id } = boreWall(body);
+    const opened = await call(owner, {
+      kind: "begin-profile-edit",
+      selection: { body: body.id, faces: [id] },
+    });
+    const profile = opened.profileEdit;
+    assert.ok(profile?.endGuides);
+    const extended = {
+      id: "overshoot",
+      kind: "segment" as const,
+      construction: false,
+      a: { x: 1.5, y: -2 },
+      b: { x: 1.5, y: profile.height + 2 },
+    };
+    const result = await call(owner, {
+      kind: "edit",
+      sketch: { ...profile.sketch, curves: [...profile.sketch.curves, extended] },
+    });
+    const changed = result.profileEdit?.preview;
+    assert.ok(changed, result.profileEdit?.error);
+    assert.ok(result.profileEdit?.region?.outer.some((span) => span.curve.id === extended.id));
+    assert.ok(Math.abs(boreWall(changed).cylinder.radius - 1.5) < 1e-7);
+    assert.ok(changed.volume > body.volume);
+  } finally {
+    owner.close();
+  }
+});

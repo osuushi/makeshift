@@ -1,4 +1,5 @@
 import { completeInteraction } from "../sketch/complete-interaction.js";
+import { curveBounds } from "../sketch/curve-geometry.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import { planarFraming } from "../sketch/profile-framing.js";
@@ -150,10 +151,8 @@ export class ProfileEditControls {
     if (!profile) return false;
     this.previous = previous;
     const { sketch, height } = profile;
-    const points = sketch.curves.flatMap((curve) =>
-      curve.kind === "circle" ? [] : [curve.a, curve.b],
-    );
-    const radius = Math.max(...points.map((point) => point.x));
+    const points = sketch.curves.flatMap(curveBounds);
+    const radius = Math.max(...points.map((point) => Math.abs(point.x)));
     const framing = planarFraming(e, sketch.plane, [...points, { x: -radius, y: height / 2 }]);
     e.world.crossSection = null;
     e.modeling.targets = [];

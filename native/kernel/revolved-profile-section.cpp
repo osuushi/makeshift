@@ -3,13 +3,22 @@
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepAlgoAPI_Section.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
+#include <BRepGProp.hxx>
+#include <BRepTools.hxx>
 #include <BRep_Tool.hxx>
+#include <GProp_GProps.hxx>
 #include <Precision.hxx>
+#include <ShapeAnalysis_FreeBounds.hxx>
 #include <TopExp.hxx>
+#include <TopExp_Explorer.hxx>
+#include <TopTools_HSequenceOfShape.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <TopoDS.hxx>
+#include <TopoDS_Wire.hxx>
 #include <gp_Cylinder.hxx>
+#include <gp_Lin.hxx>
 #include <gp_Pln.hxx>
 #include <algorithm>
 #include <stdexcept>
@@ -110,5 +119,51 @@ Band sectionProfile(const Operand& body, const gp_Ax1& axis, std::vector<SourceE
         band.meridians.push_back({source->id, {}, half});
     }
     return band;
+}
+
+TopoDS_Face recoveredSectionFace(const Band& band) {
+    const gp_Lin axis(band.axis());
+    const gp_Vec direction(band.axis().Direction());
+    Handle(TopTools_HSequenceOfShape) edges = new TopTools_HSequenceOfShape;
+    std::vector<gp_Pnt> axisEnds;
+    for (const auto& span : band.meridians) {
+        const auto& edge = span.sectionEdge;
+        for (const auto& vertex : {TopExp::FirstVertex(edge), TopExp::LastVertex(edge)}) {
+            const auto point = BRep_Tool::Pnt(vertex);
+            if (axis.Distance(point) <= tolerance) axisEnds.push_back(point);
+        }
+        edges->Append(edge);
+    }
+    constexpr auto message = "Could not recover a closed profile section";
+    if (axisEnds.size() % 2 != 0) throw std::runtime_error(message);
+    std::ranges::sort(axisEnds, {}, [&](const auto& point) {
+        return gp_Vec(axis.Location(), point).Dot(direction);
+    });
+    // Consecutive pairs mark intervals where the material meets the axis.
+    for (std::size_t i = 0; i < axisEnds.size(); i += 2)
+        if (axisEnds[i].Distance(axisEnds[i + 1]) > tolerance)
+            edges->Append(BRepBuilderAPI_MakeEdge(axisEnds[i], axisEnds[i + 1]).Edge());
+
+    int unused = edges->Length();
+    Handle(TopTools_HSequenceOfShape) wires = new TopTools_HSequenceOfShape;
+    ShapeAnalysis_FreeBounds::ConnectEdgesToWires(edges, tolerance, false, wires);
+    struct Loop { TopoDS_Face face; double area; };
+    std::vector<Loop> loops;
+    const gp_Pln plane(band.frame);
+    for (int i = 1; i <= wires->Length(); ++i) {
+        const auto wire = TopoDS::Wire(wires->Value(i));
+        if (!BRep_Tool::IsClosed(wire)) throw std::runtime_error(message);
+        for (TopExp_Explorer edge(wire, TopAbs_EDGE); edge.More(); edge.Next()) --unused;
+        const auto face = BRepBuilderAPI_MakeFace(plane, wire, true).Face();
+        GProp_GProps props;
+        BRepGProp::SurfaceProperties(face, props, 1e-10);
+        loops.push_back({face, props.Mass()});
+    }
+    if (unused != 0 || loops.empty()) throw std::runtime_error(message);
+    const auto outer = std::ranges::max_element(loops, {}, &Loop::area);
+    BRepBuilderAPI_MakeFace region(outer->face);
+    for (auto hole = loops.begin(); hole != loops.end(); ++hole)
+        if (hole != outer) region.Add(TopoDS::Wire(BRepTools::OuterWire(hole->face).Reversed()));
+    return region.Face();
 }
 }

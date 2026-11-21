@@ -1,11 +1,11 @@
 import { flatProfileCap, type RevolvedProfile } from "../model/revolved-profile.js";
-import { arcDomain } from "../sketch/arc-geometry.js";
-import { type CurveSpan, regionTolerance } from "../sketch/curve-spans.js";
+import { regionTolerance } from "../sketch/curve-spans.js";
 import {
   type Arc,
   type Bezier,
   type Constraint,
   type Curve,
+  type Endpoint,
   emptySketch,
   newId,
   type Segment,
@@ -23,15 +23,15 @@ function reverse(curve: Link): Link {
   return { ...curve, ...ends };
 }
 
-function chain(curves: readonly Curve[], { height, endGuides }: Limits): Link[] {
-  const disconnected = endGuides
-    ? "Join the profile into one continuous chain between the end guides"
-    : "Join the profile into one continuous chain with both ends on the axis";
+/** Normalize the recovered cap and bore endpoint order where there is one meridian. */
+function orderedMeridian(
+  curves: readonly Curve[],
+  { height, endGuides }: Limits,
+): Link[] | undefined {
   const remaining = curves.filter(
     (curve): curve is Link => !curve.construction && curve.kind !== "circle",
   );
-  if (!remaining.length || curves.some((curve) => !curve.construction && curve.kind === "circle"))
-    throw new Error(disconnected);
+  if (!remaining.length || remaining.length !== curves.length) return undefined;
   const onAxis = ({ x }: Link["a"]) => Math.abs(x) <= regionTolerance;
   const firstStation = endGuides
     ? 0
@@ -54,14 +54,13 @@ function chain(curves: readonly Curve[], { height, endGuides }: Limits): Link[] 
         connects(curve.b) && { index, reverse: true },
       ].filter((match) => match !== false),
     );
-    if (matches.length !== 1) throw new Error(disconnected);
+    if (matches.length !== 1) return undefined;
     const match = matches[0];
     const [curve] = remaining.splice(match.index, 1);
     ordered.push(match.reverse ? reverse(curve) : curve);
   }
   const end = ordered[ordered.length - 1].b;
-  if (endGuides ? Math.abs(end.y - height) > regionTolerance : !onAxis(end))
-    throw new Error(disconnected);
+  if (endGuides ? Math.abs(end.y - height) > regionTolerance : !onAxis(end)) return undefined;
   const anchor = (p: Link["a"], y: number) => (endGuides ? { ...p, y } : { ...p, x: 0 });
   return ordered.map((curve, index) => ({
     ...curve,
@@ -70,21 +69,33 @@ function chain(curves: readonly Curve[], { height, endGuides }: Limits): Link[] 
   }));
 }
 
-export function profileSpans(curves: readonly Curve[], limits: Limits): CurveSpan[] {
-  return chain(curves, limits).map((curve) => {
-    if (curve.kind !== "arc") return { curve, start: 0, end: 1 };
-    const { start, sweep } = arcDomain(curve);
-    return { curve, start, end: start + sweep };
+function endpoints(curves: readonly Curve[]) {
+  return curves.flatMap((curve) =>
+    curve.construction || curve.kind === "circle"
+      ? []
+      : (["a", "b"] as const).map((end) => ({
+          point: curve[end],
+          ref: { curve: curve.id, end } satisfies Endpoint,
+        })),
+  );
+}
+
+function coincidentEnds(curves: readonly Curve[]): Constraint[] {
+  const ends = endpoints(curves);
+  return ends.flatMap(({ point, ref }, i) => {
+    const neighbors = ends
+      .map((other, j) => ({ ...other, j }))
+      .filter((other) => i !== other.j && distance(point, other.point) <= regionTolerance);
+    const [other] = neighbors;
+    return neighbors.length === 1 && other.j > i && other.ref.curve !== ref.curve
+      ? [{ id: newId(), kind: "coincident", a: ref, b: other.ref }]
+      : [];
   });
 }
 
 /** Preserve an endpoint snapped to the axis while solving its sketch relationships. */
 export function profileAxisAnchors(sketch: Sketch) {
-  const ends = sketch.curves.flatMap((curve) =>
-    curve.construction || curve.kind === "circle"
-      ? []
-      : (["a", "b"] as const).map((end) => ({ point: curve[end], ref: { curve: curve.id, end } })),
-  );
+  const ends = endpoints(sketch.curves);
   return ends
     .filter(
       ({ point }, i) =>
@@ -103,13 +114,8 @@ export function profileSketch(profile: RevolvedProfile) {
       return { ...curve, id };
     }),
   );
-  const curves = chain(recovered, profile);
-  const constraints: Constraint[] = curves.slice(1).map((curve, index) => ({
-    id: newId(),
-    kind: "coincident",
-    a: { curve: curves[index].id, end: "b" },
-    b: { curve: curve.id, end: "a" },
-  }));
+  const curves = orderedMeridian(recovered, profile) ?? recovered;
+  const constraints = coincidentEnds(curves);
   for (const cap of curves.filter(flatProfileCap))
     constraints.push({ id: newId(), kind: "horizontal", a: cap.id });
   const sketch = { ...emptySketch(profile.frame), curves, constraints };

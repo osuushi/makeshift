@@ -8,6 +8,7 @@
 #include <BRepGProp.hxx>
 #include <BRepPrimAPI_MakeCylinder.hxx>
 #include <BRepPrimAPI_MakeSphere.hxx>
+#include <BRep_Builder.hxx>
 #include <GProp_GProps.hxx>
 #include <OSD_ThreadPool.hxx>
 #include <Precision.hxx>
@@ -15,8 +16,8 @@
 #include <TopExp_Explorer.hxx>
 #include <TopTools_IndexedDataMapOfShapeListOfShape.hxx>
 #include <TopoDS.hxx>
+#include <TopoDS_Compound.hxx>
 #include <gp_Cylinder.hxx>
-#include <gp_Lin.hxx>
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
@@ -25,15 +26,9 @@ namespace revolved_profile {
 namespace {
 constexpr double tolerance = Precision::Confusion();
 
-// The closest point on any swept ring to the sphere center lies on this
-// meridian after moving the center to its plane. The opposite side of every
-// ring is outside the sphere because these dimples cannot reach the axis.
-bool crosses(const TopoDS_Wire& section, const Band& band, const gp_Sphere& sphere) {
-    const auto center = sphere.Location();
-    const auto height = gp_Vec(band.frame.Location(), center).Dot(gp_Vec(band.axis().Direction()));
-    const auto radius = gp_Lin(band.axis()).Distance(center);
-    const auto vertex = BRepBuilderAPI_MakeVertex(band.at(radius, height)).Vertex();
-    BRepExtrema_DistShapeShape distance(section, vertex);
+bool crosses(const TopoDS_Shape& boundary, const gp_Sphere& sphere) {
+    const auto vertex = BRepBuilderAPI_MakeVertex(sphere.Location()).Vertex();
+    BRepExtrema_DistShapeShape distance(boundary, vertex);
     if (!distance.IsDone()) throw std::runtime_error("Could not classify a dimple against the profile");
     return distance.Value() < sphere.Radius() - tolerance;
 }
@@ -105,13 +100,20 @@ void continueCutWalls(const CylinderCut& cut, const TopoDS_Shape& result, std::v
 }
 }
 
-TopoDS_Shape trimDimples(const TopoDS_Shape& carrier, const TopoDS_Wire& section,
-                        const Band& band, std::vector<SourceEntity>& origins) {
+TopoDS_Shape trimDimples(const TopoDS_Shape& carrier, const Band& band, std::vector<SourceEntity>& origins) {
+    if (band.dimples.empty()) return carrier;
+    TopoDS_Compound boundary;
+    BRep_Builder builder;
+    builder.MakeCompound(boundary);
+    // Distance to the shells measures whether a cutter opens on the boundary.
+    // A solid would also report contact for a cutter buried in its interior.
+    for (TopExp_Explorer shell(carrier, TopAbs_SHELL); shell.More(); shell.Next())
+        builder.Add(boundary, shell.Current());
     TopTools_ListOfShape arguments, tools;
     std::vector<std::string> expectedDimples;
     arguments.Append(carrier);
     for (const auto& dimple : band.dimples) {
-        if (!crosses(section, band, dimple.sphere)) continue;
+        if (!crosses(boundary, dimple.sphere)) continue;
         const auto center = dimple.sphere.Location();
         const auto axis = band.axis();
         const auto projection = axis.Location().Translated(gp_Vec(axis.Direction()) *

@@ -2,12 +2,14 @@
 #include "geometry-policy.h"
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
+#include <BRepClass3d.hxx>
 #include <BRep_Tool.hxx>
 #include <GC_MakeSegment.hxx>
 #include <Precision.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
+#include <TopoDS_Shell.hxx>
 #include <gp_Cone.hxx>
 #include <gp_Cylinder.hxx>
 #include <gp_Lin.hxx>
@@ -62,6 +64,9 @@ std::optional<gp_Ax1> inwardAxis(const TopoDS_Face& face) {
     const BRepAdaptor_Surface surface(face);
     const auto axis = rotationAxis(surface);
     if (!axis) return std::nullopt;
+    // A complete torus has both inward- and outward-facing bands.
+    if (surface.GetType() == GeomAbs_Torus &&
+        surface.IsUClosed() && surface.IsVClosed()) return std::nullopt;
     gp_Pnt p;
     gp_Vec du, dv;
     surface.D1((surface.FirstUParameter() + surface.LastUParameter()) / 2,
@@ -98,19 +103,25 @@ Handle(Geom_TrimmedCurve) meridian(const TopoDS_Face& face, const Band& band) {
 }
 
 namespace {
-std::optional<double> diskRadius(const Patch& patch, const gp_Ax1& axis) {
+std::optional<std::array<double, 2>> capRadii(const Patch& patch, const gp_Ax1& axis) {
     if (patch.surface.GetType() != GeomAbs_Plane ||
         !patch.surface.Plane().Axis().IsParallel(axis, Precision::Angular())) return std::nullopt;
     TopTools_IndexedMapOfShape wires, edges;
     TopExp::MapShapes(patch.face, TopAbs_WIRE, wires);
     TopExp::MapShapes(patch.face, TopAbs_EDGE, edges);
-    if (wires.Extent() != 1 || edges.Extent() != 1) return std::nullopt;
-    const BRepAdaptor_Curve rim(TopoDS::Edge(edges(1)));
-    if (rim.GetType() != GeomAbs_Circle ||
-        gp_Lin(axis).Distance(rim.Circle().Location()) > lengthTolerance ||
-        rim.LastParameter() - rim.FirstParameter() <
-            2 * std::numbers::pi - geometry_policy::fullCircleAngleRad) return std::nullopt;
-    return rim.Circle().Radius();
+    if (wires.Extent() != edges.Extent() || edges.Extent() < 1 || edges.Extent() > 2)
+        return std::nullopt;
+    std::array<double, 2> radii{};
+    for (int i = 1; i <= edges.Extent(); ++i) {
+        const BRepAdaptor_Curve rim(TopoDS::Edge(edges(i)));
+        if (rim.GetType() != GeomAbs_Circle ||
+            gp_Lin(axis).Distance(rim.Circle().Location()) > lengthTolerance ||
+            rim.LastParameter() - rim.FirstParameter() <
+                2 * std::numbers::pi - geometry_policy::fullCircleAngleRad) return std::nullopt;
+        radii[i - 1] = rim.Circle().Radius();
+    }
+    if (radii[0] > radii[1]) std::swap(radii[0], radii[1]);
+    return radii;
 }
 
 void checkDimple(const gp_Sphere& sphere, const Band& band) {
@@ -148,6 +159,9 @@ gp_Ax1 exteriorAxis(const std::vector<Patch>& patches, const Selection& selected
         if (selected.contains(patch.id)) return stableAxis(*candidate);
         if (!fallback) fallback = stableAxis(*candidate);
     }
+    if (!fallback && patches.size() == 1 && patches.front().surface.GetType() == GeomAbs_Sphere &&
+        !inwardSphere(patches.front()))
+        fallback = stableAxis(patches.front().surface.Sphere().Position().Axis());
     if (!fallback) throw std::runtime_error("Select the turned exterior or a through-bore wall");
     return *fallback;
 }
@@ -173,9 +187,10 @@ Band inspectCarrier(const Operand& body, const Operand& carrier, const std::vect
     if (band.height <= lengthTolerance) throw std::runtime_error("The turned profile has no axial span");
     Selection boreWalls;
     for (const auto& patch : patches) {
-        if (const auto radius = diskRadius(patch, axis)) {
+        if (const auto radii = capRadii(patch, axis)) {
             const double y = gp_Vec(band.frame.Location(), patch.surface.Plane().Location()).Dot(gp_Vec(axis.Direction()));
-            band.meridians.push_back({patch.id, GC_MakeSegment(band.at(0, y), band.at(*radius, y)).Value()});
+            band.meridians.push_back({patch.id,
+                GC_MakeSegment(band.at((*radii)[0], y), band.at((*radii)[1], y)).Value()});
             selected.erase(patch.id);
         } else if (inwardSphere(patch)) {
             const auto sphere = patch.surface.Sphere();
@@ -250,16 +265,15 @@ gp_Pnt Band::at(double radius, double height) const {
 
 Band inspect(const Tree& input, const std::vector<Operand>& bodies, bool verifyRecovery) {
     const auto& body = selectedBody(input, bodies);
-    TopTools_IndexedMapOfShape shells;
-    TopExp::MapShapes(body.shape, TopAbs_SHELL, shells);
-    if (shells.Extent() != 1)
-        throw std::runtime_error("Edit Profile requires one exterior shell");
     Selection selected;
     for (const auto& entry : input.get_child("faces")) selected.insert(entry.second.get_value<std::string>());
+    TopTools_IndexedMapOfShape exterior;
+    if (!selected.empty())
+        TopExp::MapShapes(BRepClass3d::OuterShell(TopoDS::Solid(body.shape)), TopAbs_FACE, exterior);
     for (const auto& entity : body.entities) {
-        if (entity.shape.ShapeType() != TopAbs_FACE) continue;
+        if (!selected.contains(entity.id) || !exterior.Contains(entity.shape)) continue;
         const auto face = TopoDS::Face(entity.shape);
-        if (!selected.contains(entity.id) || !inwardAxis(face)) continue;
+        if (!inwardAxis(face)) continue;
         const auto bore = throughBore(body, entity);
         if (!std::ranges::all_of(selected, [&](const auto& id) {
                 return std::ranges::find(bore.walls, id, &SourceEntity::id) != bore.walls.end();

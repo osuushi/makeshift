@@ -71,3 +71,40 @@ test("a turned spline join with two patches of one lengthwise cut can be edited 
     owner.close();
   }
 });
+
+test("a replacement off-axis region with a hole reopens even after a split cut is recut", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const { data } = await call(owner, { kind: "open", document: fixture });
+    const body = data.bodies?.[0];
+    assert.ok(body);
+    const selection = { body: body.id, faces: [] };
+    const entered = await call(owner, { kind: "begin-profile-edit", selection });
+    const sketch = entered.profileEdit?.sketch;
+    assert.ok(sketch);
+    const moveEnd = (point: Point) => ({ ...point, x: Math.abs(point.x) <= 1e-7 ? 2 : point.x });
+    const curves: Sketch["curves"][number][] = sketch.curves.map((curve) => {
+      assert.ok(curve.kind !== "circle");
+      return { ...curve, a: moveEnd(curve.a), b: moveEnd(curve.b) };
+    });
+    const [bottom, top] = [curves[0], curves.at(-1)];
+    assert.ok(bottom.kind === "segment" && top?.kind === "segment");
+    curves.push(
+      { id: "bore", kind: "segment", a: top.b, b: bottom.a, construction: false },
+      { id: "cavity", kind: "circle", center: { x: 4, y: 9 }, radius: 0.5, construction: false },
+    );
+    const changed = await call(owner, { kind: "edit", sketch: { ...sketch, curves } });
+    const preview = changed.profileEdit?.preview;
+    assert.ok(preview, changed.profileEdit?.error);
+    assert.ok(
+      walls(body).every((wall) => walls(preview).some((descendant) => descendant.id === wall.id)),
+    );
+    await call(owner, { kind: "apply-profile-edit" });
+    const reopened = await call(owner, { kind: "begin-profile-edit", selection });
+    assert.equal(reopened.profileEdit?.region?.holes.length, 1);
+    await call(owner, { kind: "cancel-profile-edit" });
+    assert.equal((await call(owner, { kind: "undo" })).data, data);
+  } finally {
+    owner.close();
+  }
+});

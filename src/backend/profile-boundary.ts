@@ -4,21 +4,24 @@ import { type PlaneFrame, worldPoint } from "../sketch/planes.js";
 
 const turn = 2 * Math.PI;
 function joins(a: CurveSpan, b: CurveSpan): boolean {
-  if (a.curve.id !== b.curve.id || a.curve.kind === "segment") return false;
-  if (a.curve.kind === "bezier")
-    return (
-      Math.abs(a.end - b.start) < 1e-9 && Math.sign(a.end - a.start) === Math.sign(b.end - b.start)
-    );
+  if (a.curve.id !== b.curve.id || Math.sign(a.end - a.start) !== Math.sign(b.end - b.start))
+    return false;
   const gap = a.end - b.start;
   return (
-    Math.abs(gap - Math.round(gap / turn) * turn) < 1e-9 &&
-    Math.sign(a.end - a.start) === Math.sign(b.end - b.start)
+    Math.abs(
+      a.curve.kind === "segment" || a.curve.kind === "bezier"
+        ? gap
+        : gap - Math.round(gap / turn) * turn,
+    ) < 1e-9
   );
 }
 
-/** Region traversal cuts are not BRep vertices. Rejoin contiguous pieces of
- * the same circular curve, including across the loop's arbitrary start. */
-export function boundary(spans: readonly CurveSpan[], frame: PlaneFrame) {
+/** Rejoin contiguous spans of one curve so region traversal adds no BRep seams. */
+export function boundary(
+  spans: readonly CurveSpan[],
+  frame: PlaneFrame,
+  origins?: ReadonlyMap<string, string>,
+) {
   const merged: CurveSpan[] = [];
   for (const span of spans) {
     const last = merged.at(-1);
@@ -32,6 +35,8 @@ export function boundary(spans: readonly CurveSpan[], frame: PlaneFrame) {
     merged.pop();
   }
   return merged.map((span) => {
+    const face = origins?.get(span.curve.id);
+    const source = face ? { face } : {};
     if (span.curve.kind === "bezier") {
       const c = bezierSpan(span.curve, span.start, span.end);
       return {
@@ -40,6 +45,7 @@ export function boundary(spans: readonly CurveSpan[], frame: PlaneFrame) {
         c1: worldPoint(frame, c.c1),
         c2: worldPoint(frame, c.c2),
         b: worldPoint(frame, c.b),
+        ...source,
       };
     }
     const at = (t: number) => worldPoint(frame, curvePoint(span.curve, t));
@@ -56,10 +62,17 @@ export function boundary(spans: readonly CurveSpan[], frame: PlaneFrame) {
           sign * (u[0] * v[1] - u[1] * v[0]),
         ],
         axis: u,
+        ...source,
       };
     }
     return span.curve.kind === "segment"
-      ? { kind: "line", a: at(span.start), b: at(span.end) }
-      : { kind: "arc", a: at(span.start), mid: at((span.start + span.end) / 2), b: at(span.end) };
+      ? { kind: "line", a: at(span.start), b: at(span.end), ...source }
+      : {
+          kind: "arc",
+          a: at(span.start),
+          mid: at((span.start + span.end) / 2),
+          b: at(span.end),
+          ...source,
+        };
   });
 }
