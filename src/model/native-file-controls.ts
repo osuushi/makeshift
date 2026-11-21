@@ -1,7 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { toolMenuOpen } from "../tools/menu-focus.js";
-import { captureCamera, restoreCamera } from "./camera-state.js";
+import { restoreCamera } from "./camera-state.js";
 import type { DocumentCommand, DocumentHost, DocumentStatus } from "./document-host.js";
 import { exportControls } from "./export-controls.js";
 import { fileShortcuts } from "./file-shortcuts.js";
@@ -97,7 +97,7 @@ async function runDocumentCommand(
     return;
   }
   if (editor.store.scriptRunning && leaving) {
-    const result = await host.command(command, captureCamera(editor.world));
+    const result = await host.command(command, editor.benchViews.fileCamera());
     if (result.error) {
       editor.message = result.error;
       editor.refresh();
@@ -128,7 +128,7 @@ async function runDocumentCommand(
   editor.refresh();
   try {
     await editor.store.settled();
-    const result = await host.command(command, captureCamera(editor.world));
+    const result = await host.command(command, editor.benchViews.fileCamera());
     if (result.error) throw new Error(result.error);
     if (result.replaced) {
       await editor.store.documentReplaced();

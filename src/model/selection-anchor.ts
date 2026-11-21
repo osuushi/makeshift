@@ -29,6 +29,7 @@ export function selectionAnchor(editor: SketchEditor): Vector {
           points.push([face.vertices[i], face.vertices[i + 1], face.vertices[i + 2]]);
       continue;
     }
+    if (target.kind === "smart-object") continue;
     const sketch = editor.store.data.sketches.find((s) => s.id === target.sketch);
     if (!sketch) continue;
     if (target.kind === "sketch") points.push(sketchCenter(sketch));

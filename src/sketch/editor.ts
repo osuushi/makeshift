@@ -31,14 +31,14 @@ import type { World } from "./world.js";
 
 export type Tool = "select" | "rectangle" | "line" | "circle" | "bezier" | "pen" | "trim";
 export class SketchEditor {
-  private readonly benchViews = new BenchViews(this);
+  readonly benchViews = new BenchViews(this);
   readonly store = new ModelClient(
     () => this.refresh(),
     (message) => {
       this.message = message;
     },
     (operation, direction) => this.visibility.restoreHistory(this.store.data, operation, direction),
-    (previous, active, replacing) => this.benchViews.change(previous, active, replacing),
+    (previous, active, options) => this.benchViews.change(previous, active, options),
   );
   readonly selectionHistory = new SelectionHistory(this);
   visibility = new EntityVisibility();

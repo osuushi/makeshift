@@ -1,0 +1,70 @@
+.smart-object-actions:not([hidden]) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 0;
+}
+.smart-object-actions button {
+  padding: 5px 7px;
+  font-size: 12px;
+  border-radius: 5px;
+  box-shadow: none;
+}
+.smart-object-context {
+  flex-basis: 100%;
+  color: var(--accent);
+  font-weight: 600;
+  padding: 4px 0;
+}
+.smart-object-dialog {
+  max-width: min(450px, 94vw);
+  max-height: 90dvh;
+  margin: 64px 16px auto auto;
+  padding: 16px;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.smart-object-dialog::backdrop {
+  background: color-mix(in srgb, var(--canvas) 12%, transparent);
+}
+.smart-object-dialog h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+.smart-object-dialog :is(input, select) {
+  width: 100%;
+  min-height: 32px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font: inherit;
+}
+.smart-object-dialog :is(.affine-matrix, .transform-vector) {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.smart-object-dialog .affine-matrix {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.smart-object-dialog label {
+  display: grid;
+  gap: 3px;
+  font-size: 12px;
+}
+.smart-object-dialog footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 8px;
+  margin-top: 14px;
+}
+.smart-object-dialog [role="status"] {
+  color: var(--danger);
+  margin-bottom: 0;
+}

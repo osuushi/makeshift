@@ -14,6 +14,7 @@ export interface MovementSelection {
 export interface DeletionSelection {
   bodyIds: string[];
   sketchIds: string[];
+  smartObjectIds?: string[];
   curves: { sketch: string; ids: string[] }[];
   topology: CleanupSelection[];
   profiles: { sketch: string; profile: string }[];
@@ -151,9 +152,13 @@ function offsetSelection(
   return available({ targets: c.faces.map(({ body, face }) => ({ body, face })), faces });
 }
 function deletionSelection(c: SelectionContext): Resolution<DeletionSelection> {
+  const smartObjectIds = c.ordered.flatMap((target) =>
+    target.kind === "smart-object" ? [target.instance] : [],
+  );
   return available({
     bodyIds: c.complete.map((b) => b.id),
     sketchIds: c.ordered.flatMap((t) => (t.kind === "sketch" && !t.curves ? [t.sketch] : [])),
+    ...(smartObjectIds.length ? { smartObjectIds } : {}),
     curves: c.ordered.flatMap((t) =>
       t.kind === "sketch" && t.curves ? [{ sketch: t.sketch, ids: t.curves }] : [],
     ),

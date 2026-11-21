@@ -1,4 +1,5 @@
 import { defaultBench } from "../model/benches.js";
+import type { BenchFocus } from "../model/smart-object.js";
 import type { ModelView } from "./model-api.js";
 import { call } from "./model-transport.js";
 
@@ -41,6 +42,15 @@ export class ModelQueries {
   }
   get activeBench() {
     return this.view.activeBench ?? defaultBench.id;
+  }
+  get editingBench() {
+    return this.view.editingBench ?? this.activeBench;
+  }
+  get benchFocus(): BenchFocus {
+    return { active: this.activeBench, inline: this.view.inline ?? [] };
+  }
+  get linkedBenches() {
+    return this.view.linkedBenches;
   }
   get benchTabs() {
     return this.view.benchTabs ?? [defaultBench];
@@ -103,8 +113,8 @@ export class ModelQueries {
     if (!reply.sections) throw new Error("Cross sections unavailable");
     return reply.sections;
   }
-  async exportGeometry(bodyIds?: string[]) {
-    const reply = await call({ kind: "export-geometry", bodyIds });
+  async exportGeometry(bodyIds?: string[], smartObjectIds?: string[], exact?: boolean) {
+    const reply = await call({ kind: "export-geometry", bodyIds, smartObjectIds, exact });
     if (reply.error) throw new Error(reply.error);
     if (!reply.exportDocument) throw new Error("Export geometry unavailable");
     return reply.exportDocument;

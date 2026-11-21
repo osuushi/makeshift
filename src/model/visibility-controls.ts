@@ -92,9 +92,11 @@ function isolationButton(editor: SketchEditor): () => void {
 
 function selectedOwners(editor: SketchEditor, plane?: string): string[] {
   const ids = (editor.world.active ? [] : editor.modeling.targets).map((target) =>
-    target.kind === "body" || target.kind === "face" || target.kind === "edge"
-      ? target.body
-      : target.sketch,
+    target.kind === "smart-object"
+      ? target.instance
+      : target.kind === "body" || target.kind === "face" || target.kind === "edge"
+        ? target.body
+        : target.sketch,
   );
   if (editor.world.active && editor.selected.targets.length && editor.sketch)
     ids.push(editor.sketch.id);

@@ -29,7 +29,7 @@ export function drawingArchive(drawing: Drawing, camera?: CameraState): string {
     return documentArchive(first.document, camera);
   return JSON.stringify({
     format: "makeshift",
-    version: 4,
+    version: drawing.benches.some(({ document }) => document.smartObjects?.length) ? 5 : 4,
     activeBench: drawing.activeBench,
     camera: validateCameraState(camera),
     benches: drawing.benches.map((bench) => ({
@@ -62,7 +62,7 @@ export function readFileArchive(data: string, zipped = false): FileArchive {
   const archive = JSON.parse(data);
   if (
     !["makeshift", "freac"].includes(archive?.format) ||
-    !(zipped ? [2, 3, 4] : [1, 3, 4]).includes(archive.version)
+    !(zipped ? [2, 3, 4, 5] : [1, 3, 4, 5]).includes(archive.version)
   )
     throw new Error("Unsupported Makeshift file format");
   const camera = validateCameraState(archive.camera);
@@ -70,7 +70,7 @@ export function readFileArchive(data: string, zipped = false): FileArchive {
     ...(archive.seals !== undefined ? { seals: archive.seals } : {}),
     ...(camera ? { camera } : {}),
   };
-  if (archive.version === 4) {
+  if (archive.version === 4 || archive.version === 5) {
     const drawing: Drawing = { benches: archive.benches, activeBench: archive.activeBench };
     validateBenchLayout(drawing);
     const benches = drawing.benches.map(({ id, name, document }) => ({

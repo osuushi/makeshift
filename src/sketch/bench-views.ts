@@ -1,5 +1,7 @@
+import { affinePoint, affineVector, inverseAffine } from "../model/affine.js";
 import { type CameraState, captureCamera, restoreCamera } from "../model/camera-state.js";
 import { EntityVisibility } from "../model/entity-visibility.js";
+import { type BenchFocus, benchFocusKey } from "../model/smart-object.js";
 import type { SketchEditor } from "./editor.js";
 import type { World } from "./world.js";
 
@@ -16,19 +18,34 @@ export class BenchViews {
   private views = new Map<string, BenchView>();
   constructor(private editor: SketchEditor) {}
 
-  change(previous: string, active: string, replacing: boolean): void {
+  fileCamera(): CameraState {
+    const focus = this.editor.store.benchFocus;
+    const parent = focus.inline.length
+      ? this.views.get(benchFocusKey({ active: focus.active, inline: [] }))
+      : undefined;
+    return parent?.camera ?? captureCamera(this.editor.world);
+  }
+
+  change(
+    previous: BenchFocus,
+    active: BenchFocus,
+    { replacing, keepCamera }: { replacing: boolean; keepCamera: boolean },
+  ): void {
     const e = this.editor;
     const world = e.world;
+    const currentCamera = captureCamera(world);
     if (replacing) this.views.clear();
     else
-      this.views.set(previous, {
-        camera: captureCamera(world),
+      this.views.set(benchFocusKey(previous), {
+        camera: currentCamera,
         workspace: world.workspace,
         crossSection: world.crossSection,
         visibility: e.visibility,
         bodiesVisible: e.bodiesVisible,
       });
-    const next = this.views.get(active);
+    const entering =
+      active.active === previous.active && active.inline.length === previous.inline.length + 1;
+    const next = entering ? undefined : this.views.get(benchFocusKey(active));
     e.visibility = next?.visibility ?? new EntityVisibility();
     e.bodiesVisible = next?.bodiesVisible ?? true;
     e.modeling.referencePlane = null;
@@ -51,6 +68,26 @@ export class BenchViews {
     world.selectedPlane = null;
     world.workspace = next?.workspace ?? null;
     world.crossSection = next?.crossSection ?? null;
-    restoreCamera(world, next?.camera);
+    const inline = active.inline.at(-1);
+    const camera =
+      entering && inline
+        ? cameraInSource(currentCamera, inline.placement.transform)
+        : (next?.camera ?? (keepCamera ? currentCamera : undefined));
+    restoreCamera(world, camera);
   }
+}
+
+function cameraInSource(
+  camera: CameraState,
+  placement: import("../model/affine.js").Affine,
+): CameraState {
+  const inverse = inverseAffine(placement);
+  const up = affineVector(inverse, camera.up);
+  const length = Math.hypot(...up);
+  return {
+    position: affinePoint(inverse, camera.position),
+    target: affinePoint(inverse, camera.target),
+    up: [up[0] / length, up[1] / length, up[2] / length],
+    height: Math.min(10000, Math.max(0.5, camera.height * length)),
+  };
 }

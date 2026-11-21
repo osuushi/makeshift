@@ -7,8 +7,8 @@ import { RevolveControls } from "../model/revolve-controls.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { installSelectionRefinement } from "../tools/selection-refinement-input.js";
 import type { SketchEditor } from "./editor.js";
+import { installModelControlKeys } from "./model-control-keys.js";
 import { modelDoubleClick } from "./model-double-click.js";
-import { onModelKeydown } from "./model-keys.js";
 import { modelingSketch, pickModel, pickModels } from "./model-selection.js";
 import type { ModelingTarget } from "./model-selection-state.js";
 import { PlacementControls } from "./placement-controls.js";
@@ -51,7 +51,13 @@ export class ModelControls {
     modelDoubleClick(editor, overlay, this.abort.signal, (event, before) =>
       this.doubleClick(event, before),
     );
-    this.installKeys(options);
+    installModelControlKeys(
+      editor,
+      () => {
+        this.placement.enabled = false;
+      },
+      options,
+    );
   }
   private registerTools(): void {
     const editor = this.editor,
@@ -218,49 +224,10 @@ export class ModelControls {
       event.preventDefault();
       event.stopImmediatePropagation();
       editor.modeling.targets = [target];
-      void toolCatalog(editor).invoke("edit-sketch");
+      void toolCatalog(editor).invoke(
+        target.kind === "smart-object" ? "edit-smart-object" : "edit-sketch",
+      );
     }
-  }
-  private installKeys(options: { signal: AbortSignal }): void {
-    const editor = this.editor;
-    onModelKeydown((event) => {
-      if (
-        editor.world.active ||
-        toolCatalog(editor).switching ||
-        event.target instanceof HTMLInputElement ||
-        editor.interactions.current?.captured
-      )
-        return;
-      if (
-        event.key === "Enter" &&
-        !event.metaKey &&
-        !event.ctrlKey &&
-        !event.defaultPrevented &&
-        !editor.interactions.current &&
-        editor.modeling.targets.length === 1 &&
-        editor.modeling.targets[0]?.kind === "sketch" &&
-        (!(event.target instanceof HTMLButtonElement) ||
-          event.target.classList.contains("entity-label")) &&
-        !(event.target instanceof HTMLSelectElement) &&
-        !(event.target instanceof HTMLTextAreaElement)
-      ) {
-        event.preventDefault();
-        void toolCatalog(editor).invoke("edit-sketch");
-      }
-      if (event.key === "Escape") {
-        // An operation owns its own cancellation and keeps its selection. This
-        // listener otherwise runs before the shared Escape shortcut below.
-        if (editor.interactions.current) {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          editor.interactions.requestCancel();
-          return;
-        }
-        this.placement.enabled = false;
-        editor.modeling.targets = [];
-        editor.refresh();
-      }
-    }, options);
   }
   reopenRevolve(revolution: import("../model/body.js").Revolution): Promise<void> {
     return this.revolve.reopen(revolution);

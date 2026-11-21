@@ -1,6 +1,7 @@
 import { knurlDefinition } from "../decorators/builtins.js";
 import { type Drawing, validateBenchLayout } from "../model/benches.js";
 import type { Body } from "../model/body.js";
+import { validateSmartLinks } from "../model/smart-object.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { continueBodyMetadata } from "./body-metadata.js";
 import { validateDocument } from "./document-validation.js";
@@ -86,5 +87,7 @@ export async function openDrawing(drawing: Drawing, kernel: SolidCalculator): Pr
   for (const bench of drawing.benches) {
     benches.push({ ...bench, document: await openDocument(bench.document, kernel) });
   }
-  return { ...drawing, benches };
+  const opened = { ...drawing, benches };
+  validateSmartLinks(opened);
+  return opened;
 }

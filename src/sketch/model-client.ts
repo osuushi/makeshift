@@ -1,4 +1,5 @@
 import { hasFailureCode } from "../model/calculation-failure.js";
+import { type BenchFocus, benchFocusKey } from "../model/smart-object.js";
 import type { VisualPreview } from "../model/visual-preview.js";
 import { sketchGridPreferences } from "../preferences/sketch-grid.js";
 import { cancellableCalculation } from "./calculation-state.js";
@@ -52,7 +53,11 @@ export class ModelClient extends ModelQueries {
     private changed: () => void,
     private error: (message: string) => void,
     private navigated?: (operation: HistoryOperation, direction: "undo" | "redo") => void,
-    private changedBench?: (previous: string, active: string, replacing: boolean) => void,
+    private changedBench?: (
+      previous: BenchFocus,
+      active: BenchFocus,
+      options: { replacing: boolean; keepCamera: boolean },
+    ) => void,
   ) {
     super();
   }
@@ -215,9 +220,12 @@ export class ModelClient extends ModelQueries {
           : request.kind === "undo" || request.kind === "redo"
             ? request.kind
             : null;
-    const previous = this.activeBench;
-    const switched = reply.view.activeBench !== undefined && reply.view.activeBench !== previous;
-    this.view = switched ? reply.view : retainViewSketches(this.view, reply.view);
+    const previous = this.benchFocus;
+    const switched =
+      reply.view.activeBench !== undefined &&
+      benchFocusKey({ active: reply.view.activeBench, inline: reply.view.inline ?? [] }) !==
+        benchFocusKey(previous);
+    this.view = retainViewSketches(this.view, reply.view, switched);
     this.erosionAllowance = reply.erosionAllowance;
     if (reply.error) throw new Error(reply.error);
     const replaced = request.kind === "new" || request.kind === "open";
@@ -225,7 +233,10 @@ export class ModelClient extends ModelQueries {
     if (switched || replaced) {
       this.lastEdit = null;
       this.selectionHistory?.accepted(true);
-      this.changedBench?.(previous, this.activeBench, replaced || !this.initialized);
+      this.changedBench?.(previous, this.benchFocus, {
+        replacing: replaced || !this.initialized,
+        keepCamera: request.kind === "smart-object" && request.edit.action === "convert",
+      });
     }
     if (direction && reply.view.historyOperation)
       this.navigated?.(reply.view.historyOperation, direction);

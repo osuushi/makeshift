@@ -54,6 +54,33 @@ and naming tabs are drawing organization actions outside that history.
 The clipboard transfers supported sketch geometry and solids as editable copies
 with fresh IDs. Pasting is one step in the destination bench's history.
 
+### Smart objects
+
+**Insert bench…** adds a live placement of a source bench to the current bench.
+Each placement has its own ID and affine transform. Placements can nest and share
+sources. Acceptance, Undo, Redo, and Open all check that the links are acyclic.
+Select placements in the viewport or under **Smart objects** in Entities. Move,
+Rotate, Scale, Mirror, and **Transform…** operate on the selected placements.
+The numeric affine matrix also supports shear. Duplicate creates a second link and
+Delete removes the selected link with the rest of the selection.
+
+**Edit in place** opens the source in its own coordinates with surrounding
+geometry dimmed for context. Source edits and Undo update every linked placement.
+**Done editing in place** returns one level. **Open source bench** switches to the
+source tab. Context geometry is for visual reference while editing.
+
+**Make smart object** moves selected bodies, sketches, sketch curves or regions,
+planes, and links into a new bench and opens its tab at the current view. One
+placement takes their place in the parent. Undo restores the parent's geometry, and
+the source tab remains available with its own history. Select a whole body to
+include it in the conversion.
+
+Geometry edits on placements ask to **Make independent**. Confirming replaces
+each link with editable geometry at its placement in one Undo step. Stretched or
+sheared sketches keep compatible constraints and approximate transformed circular
+curves with tolerance-bounded cubics. The linked viewport and export show base
+geometry. Decorator previews remain available when editing the source.
+
 ## Entity panel organization
 
 The document optionally stores `entityPresentation`: stable entity IDs with names

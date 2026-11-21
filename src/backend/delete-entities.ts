@@ -11,6 +11,8 @@ export function deleteEntities(
 ): SketchDocument {
   const bodyIds = new Set(request.bodyIds);
   const sketchIds = new Set(request.sketchIds);
+  const smartObjectIds = new Set(request.smartObjectIds);
+  const trimmedCurves = new Map<string, ReadonlyMap<string, string[]>>();
   for (const target of request.profiles ?? [])
     if (!document.sketches.some((sketch) => sketch.id === target.sketch))
       throw new Error("Sketch no longer exists");
@@ -26,6 +28,14 @@ export function deleteEntities(
       : {}),
     ...(bodyIds.size
       ? { bodies: (document.bodies ?? []).filter((body) => !bodyIds.has(body.id)) }
+      : {}),
+    ...(smartObjectIds.size
+      ? {
+          smartObjects: document.smartObjects?.filter(({ id }) => !smartObjectIds.has(id)),
+          entityPresentation: document.entityPresentation?.filter(
+            ({ id }) => !smartObjectIds.has(id),
+          ),
+        }
       : {}),
     ...(document.decorators && bodyIds.size
       ? {
@@ -45,6 +55,10 @@ export function deleteEntities(
       .map((target) => target.profile);
     if (!keys.length) continue;
     const result = deleteProfiles(sketch, keys);
+    trimmedCurves.set(
+      sketch.id,
+      new Map(result.curveOrigins.map(({ source, curves }) => [source, curves])),
+    );
     next = continueSketchGuides(
       next,
       withSketch(next, result.sketch),
@@ -55,11 +69,13 @@ export function deleteEntities(
   for (const target of request.curves ?? []) {
     const sketch = next.sketches.find((s) => s.id === target.sketch);
     if (!sketch) continue;
+    const origins = trimmedCurves.get(sketch.id);
+    const ids = target.ids.flatMap((id) => origins?.get(id) ?? [id]);
     next = continueSketchGuides(
       next,
-      withSketch(next, removeCurves(sketch, new Set(target.ids))),
+      withSketch(next, removeCurves(sketch, new Set(ids))),
       sketch.id,
-      target.ids.map((source) => ({ source, curves: [] })),
+      ids.map((source) => ({ source, curves: [] })),
     );
   }
   return next;

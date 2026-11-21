@@ -147,7 +147,8 @@ export class BenchTabs {
         button.setAttribute("role", "tab");
         button.setAttribute("aria-controls", "world");
         button.onclick = () => {
-          if (id !== this.editor.store.activeBench) this.apply({ action: "switch", id });
+          if (id !== this.editor.store.activeBench || this.editor.store.benchFocus.inline.length)
+            this.apply({ action: "switch", id });
         };
         button.ondblclick = () => this.rename(id);
         this.buttons.set(id, button);

@@ -16,13 +16,15 @@ export interface SelectionContext {
   valid: boolean;
 }
 const key = (t: ModelingTarget) =>
-  t.kind === "body"
-    ? `body:${t.body}`
-    : t.kind === "face"
-      ? `face:${t.body}:${t.face}`
-      : t.kind === "edge"
-        ? `edge:${t.body}:${t.edge}`
-        : `${t.kind}:${t.sketch}:${t.kind === "profile" ? t.profile.key : (t.curves?.join(",") ?? "")}`;
+  t.kind === "smart-object"
+    ? `smart-object:${t.instance}`
+    : t.kind === "body"
+      ? `body:${t.body}`
+      : t.kind === "face"
+        ? `face:${t.body}:${t.face}`
+        : t.kind === "edge"
+          ? `edge:${t.body}:${t.edge}`
+          : `${t.kind}:${t.sketch}:${t.kind === "profile" ? t.profile.key : (t.curves?.join(",") ?? "")}`;
 
 /** Derived from accepted topology; never a second selection or geometry document. */
 export function selectionContext(
@@ -35,6 +37,10 @@ export function selectionContext(
   const edges: EdgeTarget[] = [];
   let valid = true;
   for (const target of ordered) {
+    if (target.kind === "smart-object") {
+      valid &&= document.smartObjects?.some(({ id }) => id === target.instance) ?? false;
+      continue;
+    }
     if (target.kind === "sketch" || target.kind === "profile") {
       valid &&= document.sketches.some((s) => s.id === target.sketch);
       continue;

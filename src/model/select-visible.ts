@@ -8,6 +8,11 @@ type Scope = "entities" | "bodies" | "sketches";
 export function visibleTargets(editor: SketchEditor, scope: Scope): ModelingTarget[] {
   const data = editor.store.data;
   return [
+    ...(scope === "entities"
+      ? (data.smartObjects ?? [])
+          .filter((object) => editor.visibility.visible(object.id))
+          .map((object): ModelingTarget => ({ kind: "smart-object", instance: object.id }))
+      : []),
     ...(scope !== "sketches" && editor.bodiesVisible
       ? (data.bodies ?? [])
           .filter((body) => editor.visibility.visible(body.id))

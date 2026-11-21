@@ -14,6 +14,7 @@ import type {
 } from "../model/body.js";
 import type { CleanupSelection } from "../model/cleanup.js";
 import type { Projection } from "../model/projection.js";
+import type { InlineLink, LinkedBench, SmartObjectEdit } from "../model/smart-object.js";
 import type { Sketch, SketchDocument } from "./document.js";
 import type { EditIntent } from "./edit-intent.js";
 
@@ -22,6 +23,7 @@ import type { PlaneFrame } from "./planes.js";
 
 export type ModelRequest =
   | { kind: "bench"; edit: BenchEdit }
+  | { kind: "smart-object"; edit: SmartObjectEdit }
   | { kind: "read-drawing" }
   | { kind: "restore-decorators" }
   | { kind: "guide-point"; edit: import("../guides/types.js").GuideEdit }
@@ -36,7 +38,7 @@ export type ModelRequest =
   | { kind: "tagged-group"; edit: import("../tags/model.js").TagEdit }
   | { kind: "export-step"; items: import("../model/step-export.js").StepItem[] }
   | { kind: "cancel-step-export" }
-  | { kind: "export-geometry"; bodyIds?: string[] }
+  | { kind: "export-geometry"; bodyIds?: string[]; smartObjectIds?: string[]; exact?: boolean }
   | {
       kind: "decorator-draft";
       edit: Extract<import("../decorators/types.js").DecoratorEdit, { action: "settings" }>;
@@ -103,6 +105,7 @@ export type ModelRequest =
       kind: "delete-entities";
       bodyIds: string[];
       sketchIds: string[];
+      smartObjectIds?: string[];
       topology?: CleanupSelection[];
       profiles?: { sketch: string; profile: string }[];
       curves?: { sketch: string; ids: string[] }[];
@@ -114,6 +117,9 @@ export type ModelRequest =
   | { kind: "remove" | "clear"; sketchId: string; ids?: string[] };
 export interface ModelView {
   activeBench?: string;
+  editingBench?: string;
+  inline?: readonly InlineLink[];
+  linkedBenches?: readonly { id: string; display: LinkedBench }[];
   benchTabs?: readonly BenchTab[];
   visualPreview?: import("../model/visual-preview.js").VisualPreview;
   canUndoView?: boolean;

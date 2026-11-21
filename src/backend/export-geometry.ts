@@ -8,6 +8,7 @@ export async function exportGeometry(
   document: SketchDocument,
   kernel: SolidCalculator,
   bodyIds?: readonly string[],
+  exact = false,
 ): Promise<SketchDocument> {
   const selected = bodyIds ? new Set(bodyIds) : null;
   const scoped = selected
@@ -20,6 +21,7 @@ export async function exportGeometry(
         }),
       }
     : document;
+  if (exact) return { ...scoped, decorators: [] };
   const instances = scoped.decorators ?? [];
   if (!instances.length) return scoped;
   const unresolved = instances.find((d) => d.problem);

@@ -49,7 +49,8 @@ export function selectionCandidates(selection: ToolSelection): SelectionCandidat
         add(target, () => ({ surfaces: [], lines: [[worldPoint(sketch.plane, hit.point)]] }));
     }
   } else {
-    const model = (target: ModelingTarget) => add(target, () => overlapGeometry(e, target));
+    const model = (target: Exclude<ModelingTarget, { kind: "smart-object" }>) =>
+      add(target, () => overlapGeometry(e, target));
     for (const body of e.bodiesVisible ? (e.store.data.bodies ?? []) : []) {
       if (!e.visibility.visible(body.id)) continue;
       model({ kind: "body", body: body.id });
