@@ -27,7 +27,7 @@ export class BenchTabs {
     this.add.append(sketchIcon("add"));
     this.add.onclick = () => this.apply({ action: "create" });
     this.strip.append(this.tabs, this.add);
-    toolbar.append(this.strip);
+    toolbar.insertBefore(this.strip, toolbar.querySelector(".toolbar-preferences"));
 
     const catalog = toolCatalog(editor);
     this.tools = [

@@ -6,10 +6,11 @@
   min-width: 0;
 }
 .bench-strip {
-  flex: 1 0 100%;
-  order: 10;
+  flex: 1 1 100px;
+  min-width: 90px;
   min-height: 32px;
-  border-top: 1px solid color-mix(in srgb, var(--border) 46%, var(--panel));
+  padding-inline-start: 4px;
+  border-inline-start: 1px solid color-mix(in srgb, var(--border) 46%, var(--panel));
 }
 .bench-tabs {
   overflow-x: auto;
