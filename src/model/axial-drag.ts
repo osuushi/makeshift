@@ -11,7 +11,20 @@ import { widgetField } from "../sketch/widget-numeric-field.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { projectedAxis } from "./extrude-axis.js";
 
-/** Shared signed-distance gesture for extrusion and face offset. */
+interface AxialDragState {
+  begin: () => boolean;
+  lease: () => InteractionLease | null;
+  axis: () => { center: Vector; normal: Vector } | null;
+  value: () => number;
+  queue: (value: number, symmetric?: boolean) => void;
+  symmetric?: () => boolean;
+  focus: () => void;
+  released?: () => void;
+  modifySelection?: boolean;
+  guide?: GuideToolInput;
+}
+
+/** Shared signed-distance gesture for solid-tool handles. */
 export class AxialDrag {
   private snap: GuideSurfaceSnap;
   private symmetric = false;
@@ -33,94 +46,89 @@ export class AxialDrag {
     this.snap.clear();
   }
   constructor(
-    editor: SketchEditor,
-    handle: HTMLButtonElement,
+    private editor: SketchEditor,
+    private handle: HTMLButtonElement,
     signal: AbortSignal,
-    state: {
-      begin: () => boolean;
-      lease: () => InteractionLease | null;
-      axis: () => { center: Vector; normal: Vector } | null;
-      value: () => number;
-      queue: (value: number, symmetric?: boolean) => void;
-      symmetric?: () => boolean;
-      focus: () => void;
-      released?: () => void;
-      modifySelection?: boolean;
-      guide?: GuideToolInput;
-    },
+    private state: AxialDragState,
   ) {
     const options = { signal };
     this.snap = new GuideSurfaceSnap(editor, document.body, (value) =>
       state.queue(value, this.symmetric),
     );
     signal.addEventListener("abort", () => this.snap.dispose(), { once: true });
-    handle.addEventListener(
-      "pointerdown",
-      (e) => {
-        if (e.button !== 0) return;
-        if (state.modifySelection && !state.lease() && (e.shiftKey || e.metaKey || e.ctrlKey)) {
-          const hits = pickModels(editor, { x: e.clientX, y: e.clientY });
-          editor.modeling.choose(hits[0] ?? null, e.shiftKey, e.metaKey || e.ctrlKey);
-          editor.modeling.alternatives = hits.slice(1);
-          editor.refresh();
-          return;
-        }
-        if (!state.begin()) return;
-        const axis = state.axis();
-        if (!axis) return;
-        if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();
-        const symmetric = state.symmetric?.() ?? false;
-        const value = state.value() / (symmetric ? 2 : 1);
-        const center = axis.center.map((v, i) => v + axis.normal[i] * value) as Vector;
-        this.snap.start(() =>
-          state.guide ? guideSurfacePlan(editor, state.guide(axis.center)) : null,
-        );
-        this.pointer = {
-          id: e.pointerId,
-          x: e.clientX,
-          y: e.clientY,
-          value,
-          symmetric,
-          direction: projectedAxis(editor, center, axis.normal),
-          moved: false,
-          threshold: pointerDragThreshold(e),
-        };
-        state.lease()?.capture(handle, e.pointerId);
-        e.preventDefault();
-        editor.refresh();
-      },
-      options,
-    );
-    const move = (e: PointerEvent) => {
-      const field = widgetField(handle);
-      if (field && numericFocus(field)) return;
-      const p = this.pointer;
-      if (!p || p.id !== e.pointerId) return;
-      if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > p.threshold) p.moved = true;
-      if (!p.moved) return;
-      let value =
-        p.value +
-        ((e.clientX - p.x) * p.direction.x + (e.clientY - p.y) * p.direction.y) / p.direction.scale;
-      if (editor.gridSnap) value = Math.round(value / editor.world.spacing) * editor.world.spacing;
-      const symmetric = !!state.symmetric && (p.symmetric || e.altKey);
-      this.symmetric = symmetric;
-      this.snap.move(e, value * (symmetric ? 2 : 1), symmetric ? 2 : 1);
-    };
-    window.addEventListener("pointermove", move, options);
-    replayPointerModifiers(signal, () => !!this.pointer, move);
+    handle.addEventListener("pointerdown", this.press, options);
+    window.addEventListener("pointermove", this.move, options);
+    replayPointerModifiers(signal, () => !!this.pointer, this.move);
+    window.addEventListener("pointerup", this.release, options);
     window.addEventListener(
-      "pointerup",
+      "pointercancel",
       (e) => {
-        if (this.pointer?.id !== e.pointerId) return;
-        move(e);
-        const moved = this.pointer.moved;
-        this.reset();
-        state.lease()?.releaseCapture();
-        if (!moved) state.focus();
-        else state.released?.();
-        editor.refresh();
+        if (this.pointer?.id === e.pointerId) editor.interactions.requestCancel();
       },
-      options,
+      { ...options, capture: true },
     );
   }
+
+  private press = (e: PointerEvent): void => {
+    if (e.button !== 0) return;
+    const { editor, handle, state } = this;
+    if (state.modifySelection && !state.lease() && (e.shiftKey || e.metaKey || e.ctrlKey)) {
+      const hits = pickModels(editor, { x: e.clientX, y: e.clientY });
+      editor.modeling.choose(hits[0] ?? null, e.shiftKey, e.metaKey || e.ctrlKey);
+      editor.modeling.alternatives = hits.slice(1);
+      editor.refresh();
+      return;
+    }
+    if (!state.begin()) return;
+    const axis = state.axis();
+    if (!axis) return;
+    if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();
+    const symmetric = state.symmetric?.() ?? false;
+    const value = state.value() / (symmetric ? 2 : 1);
+    const center = axis.center.map((v, i) => v + axis.normal[i] * value) as Vector;
+    this.snap.start(() =>
+      state.guide ? guideSurfacePlan(editor, state.guide(axis.center)) : null,
+    );
+    this.pointer = {
+      id: e.pointerId,
+      x: e.clientX,
+      y: e.clientY,
+      value,
+      symmetric,
+      direction: projectedAxis(editor, center, axis.normal),
+      moved: false,
+      threshold: pointerDragThreshold(e),
+    };
+    state.lease()?.capture(handle, e.pointerId, this.release);
+    e.preventDefault();
+    editor.refresh();
+  };
+
+  private move = (e: PointerEvent): void => {
+    const { editor, handle, state } = this;
+    const field = widgetField(handle);
+    if (field && numericFocus(field)) return;
+    const p = this.pointer;
+    if (!p || p.id !== e.pointerId) return;
+    if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > p.threshold) p.moved = true;
+    if (!p.moved) return;
+    let value =
+      p.value +
+      ((e.clientX - p.x) * p.direction.x + (e.clientY - p.y) * p.direction.y) / p.direction.scale;
+    if (editor.gridSnap) value = Math.round(value / editor.world.spacing) * editor.world.spacing;
+    const symmetric = !!state.symmetric && (p.symmetric || e.altKey);
+    this.symmetric = symmetric;
+    this.snap.move(e, value * (symmetric ? 2 : 1), symmetric ? 2 : 1);
+  };
+
+  private release = (e: PointerEvent): void => {
+    const pointer = this.pointer;
+    if (!pointer || pointer.id !== e.pointerId) return;
+    this.move(e);
+    this.reset();
+    this.state.lease()?.releaseCapture();
+    if (!pointer.moved) this.state.focus();
+    else this.state.released?.();
+    this.editor.refresh();
+  };
 }
