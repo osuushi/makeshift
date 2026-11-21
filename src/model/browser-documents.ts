@@ -4,14 +4,15 @@ import {
   browserTrust,
   newBrowserTrust,
 } from "../security/browser-device.js";
-import { usedDefinitions } from "../security/drawing-trust.js";
+import { usesCustomDecorators } from "../security/drawing-trust.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { BrowserArchive, downloadArchive } from "./browser-archive.js";
 import { confirmReplacement, pickSaveFile, writeBrowserFile } from "./browser-file-access.js";
 import { browserLibrary } from "./browser-library.js";
 import { chooseDrawing, drawingName } from "./browser-library-dialog.js";
 import { captureCamera, restoreCamera } from "./camera-state.js";
-import { documentArchive } from "./document-archive.js";
+import { archivedDrawing, drawingArchive } from "./document-archive.js";
+import { type DrawingContents, sameDrawingContents, VisitedBenches } from "./drawing-contents.js";
 import type { PortableFiles } from "./portable-files.js";
 
 /** Browser file identity and portable bytes remain outside geometry and Undo. */
@@ -20,13 +21,15 @@ export class BrowserDocuments {
   private filename = "Untitled.makeshift";
   private drawingId: string | undefined;
   private codec = new BrowserArchive();
-  private baseline: string;
+  private baseline: DrawingContents;
+  private benches = new VisitedBenches();
   private active = false;
   get name(): string {
     return this.filename;
   }
   constructor(private editor: SketchEditor) {
     this.baseline = this.contents();
+    editor.world.changed.add(this.observeBench);
     window.addEventListener("beforeunload", this.beforeUnload);
     if (editor.store.busy) editor.world.changed.add(this.initialBaseline);
   }
@@ -35,11 +38,19 @@ export class BrowserDocuments {
     this.baseline = this.contents();
     this.editor.world.changed.delete(this.initialBaseline);
   };
-  private contents(): string {
-    return documentArchive(this.editor.store.data);
+  private observeBench = (): void => {
+    const { activeBench, data } = this.editor.store;
+    this.benches.observe(activeBench, data);
+  };
+  private contents(): DrawingContents {
+    this.observeBench();
+    return this.benches.contents(this.editor.store.benchTabs);
+  }
+  private dirty(): boolean {
+    return !sameDrawingContents(this.contents(), this.baseline);
   }
   private beforeUnload = (event: BeforeUnloadEvent) => {
-    if (this.contents() !== this.baseline) {
+    if (this.dirty()) {
       event.preventDefault();
       event.returnValue = "";
     }
@@ -48,9 +59,7 @@ export class BrowserDocuments {
     return this.active || this.editor.blocked || !!this.editor.interactions.current;
   }
   private canReplace(): Promise<boolean> {
-    return this.contents() !== this.baseline
-      ? confirmReplacement(() => this.save())
-      : Promise.resolve(true);
+    return this.dirty() ? confirmReplacement(() => this.save()) : Promise.resolve(true);
   }
   async save(saveAs = false, download = false, clean = false): Promise<boolean> {
     if (this.blocked()) return false;
@@ -59,9 +68,10 @@ export class BrowserDocuments {
     editor.store.busy = true;
     editor.refresh();
     try {
+      const drawing = await editor.store.readDrawing();
       if (
         clean &&
-        usedDefinitions(editor.store.data).length &&
+        usesCustomDecorators(drawing) &&
         (await browserAsk({
           message: "This copy uses custom decorators",
           detail:
@@ -80,13 +90,12 @@ export class BrowserDocuments {
           : this.filename;
       if (!name) return false;
       const destination = download ? await pickSaveFile(name) : undefined;
-      const saved = this.contents();
       const files = clean ? {} : this.files;
-      const publication = await browserTrust.prepareSave(editor.store.data, files);
+      const publication = await browserTrust.prepareSave(drawing, files);
       const data = await this.codec.run(
         {
           kind: "write",
-          model: documentArchive(editor.store.data, captureCamera(editor.world)),
+          model: drawingArchive(drawing, captureCamera(editor.world)),
           files,
           seals: publication.seals,
         },
@@ -103,7 +112,7 @@ export class BrowserDocuments {
         await browserLibrary.save({ id, name, bytes: data, modified: Date.now() });
         this.drawingId = id;
         this.filename = name;
-        this.baseline = saved;
+        this.baseline = this.contents();
         await publication.saved();
         editor.notice = `Saved ${name} in this browser`;
       }
@@ -122,6 +131,7 @@ export class BrowserDocuments {
     if (this.blocked() || !(await this.canReplace()) || this.blocked()) return;
     const editor = this.editor;
     if (!(await editor.newDocument())) return;
+    this.benches.reset();
     this.files = {};
     await browserTrust.opened(editor.store.data, {});
     this.filename = "Untitled.makeshift";
@@ -156,21 +166,14 @@ export class BrowserDocuments {
         editor,
       );
       if (archive instanceof Uint8Array) throw new Error("Invalid archive result.");
+      const drawing = archivedDrawing(archive);
       const trust = newBrowserTrust();
-      await trust.opened(archive.document, archive.files, archive.seals);
-      if (!(await editor.store.request({ kind: "open", document: archive.document }))) return;
+      await trust.opened(drawing, archive.files, archive.seals);
+      if (!(await editor.store.request({ kind: "open", drawing }))) return;
       adoptBrowserTrust(trust);
-      for (const def of usedDefinitions(editor.store.data)) {
-        if (
-          !(await editor.store.request({
-            kind: "decorator-enable",
-            id: def.id,
-            version: def.version,
-            enabled: true,
-          }))
-        )
-          break;
-      }
+      if (usesCustomDecorators(drawing)) await editor.store.request({ kind: "restore-decorators" });
+      editor.store.busy = true;
+      this.benches.reset(await editor.store.readDrawing());
       this.files = archive.files;
       this.filename = file.name.replace(/\.freac$/i, ".makeshift");
       this.drawingId = drawingId;
@@ -191,6 +194,7 @@ export class BrowserDocuments {
   }
   dispose(): void {
     window.removeEventListener("beforeunload", this.beforeUnload);
+    this.editor.world.changed.delete(this.observeBench);
     this.editor.world.changed.delete(this.initialBaseline);
     this.codec.dispose();
   }

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { inspectionOverview, targetGeometry } from "../src/agent/inspection-geometry.js";
 import type { InspectionView } from "../src/agent/inspection-protocol.js";
+import { singleBench } from "../src/model/benches.js";
 import { documentArchive } from "../src/model/document-archive.js";
 import { readPortableArchive, writePortableArchive } from "../src/model/portable-archive.js";
 import type { Grant, TrustDevice, TrustPrompt } from "../src/security/content-trust.js";
@@ -77,6 +78,19 @@ test("geometry-only save and clean copy preserve the original component signatur
   assert.equal(f.prompts.length, 0);
   await f.trust.opened(doc, files, {});
   assert.deepEqual((await f.trust.prepareSave(changed, files)).seals, {});
+});
+test("decorator signatures cover inactive benches and survive adding plain benches", async () => {
+  const f = await fixture();
+  const empty = { units: "mm" as const, sketches: [] };
+  const other = { id: "second", name: "Bench 2", document: empty };
+  const current = { activeBench: other.id, benches: [...singleBench(doc).benches, other] };
+  assert.equal(await decoratorDigest(current), f.decorators);
+  assert.deepEqual((await f.trust.prepareSave(current, files)).seals, f.seals);
+  const all = { ...current, benches: [current.benches[0], { ...other, document: doc }] };
+  assert.notEqual(await decoratorDigest(all), f.decorators);
+  await f.trust.opened(all, files, f.seals);
+  assert.equal(await f.trust.allowDecorators(all), false);
+  assert.match(f.prompts.at(-1)?.message ?? "", /verification failed/);
 });
 test("changing a foreign workspace requires informed endorsement; changed paths and history invalidate exact trust", async () => {
   const f = await fixture();

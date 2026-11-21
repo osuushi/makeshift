@@ -1,8 +1,9 @@
+import type { Drawing } from "../model/benches.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import type { DecoratorSession } from "./decorator-session.js";
 import { editDocument } from "./document-edits.js";
-import { openDocument } from "./open-document.js";
+import { openDrawing } from "./open-document.js";
 import { pasteGeometry } from "./paste-geometry.js";
 import type { SolidCalculator } from "./solid-calculator.js";
 import type { SolidEdits } from "./solid-edits.js";
@@ -14,8 +15,8 @@ export class DocumentGeometry {
     private solids: SolidEdits,
     private decorators: DecoratorSession,
   ) {}
-  open(document: SketchDocument) {
-    return openDocument(document, this.kernel);
+  open(drawing: Drawing) {
+    return openDrawing(drawing, this.kernel);
   }
   paste(document: SketchDocument, request: Extract<ModelRequest, { kind: "paste-geometry" }>) {
     return pasteGeometry(document, request.text, this.kernel, request.target);

@@ -1,3 +1,4 @@
+import { type BenchEdit, singleBench } from "../model/benches.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import type { HistoryOperation } from "../sketch/operation-history.js";
 import type { DecoratorSession } from "./decorator-session.js";
@@ -19,6 +20,16 @@ export class DocumentCommands {
     private checkCancellation: () => void,
   ) {
     this.geometry = new DocumentGeometry(kernel, solids, decorators);
+  }
+  editBench(edit: BenchEdit): boolean {
+    const benches = this.session.benches;
+    const previous = benches.active;
+    benches.edit(edit);
+    if (benches.active === previous) return false;
+    this.decorators.switchBench(benches.active);
+    this.solids.resetPreviewFeedback();
+    this.cleanupAvailable = false;
+    return true;
   }
   async run(request: ModelRequest, operation: HistoryOperation): Promise<void> {
     switch (request.kind) {
@@ -49,12 +60,19 @@ export class DocumentCommands {
         break;
       }
       case "open": {
-        const document = await this.geometry.open(request.document);
+        const source = "drawing" in request ? request.drawing : singleBench(request.document);
+        const drawing = await this.geometry.open(source);
         this.checkCancellation();
-        this.session.replace(document);
-        this.decorators.clear();
+        this.session.replace(drawing);
+        this.decorators.clear(drawing.activeBench);
         break;
       }
+      case "restore-decorators":
+        await this.decorators.restoreSaved(
+          this.session.benches.snapshot(),
+          this.session.store.data,
+        );
+        break;
       case "edge-finish-selection":
         await this.solids.selectFinishEdges(this.session.store.data, request.operation);
         break;
