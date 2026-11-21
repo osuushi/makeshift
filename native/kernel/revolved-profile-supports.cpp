@@ -189,8 +189,9 @@ Band inspectCarrier(const Operand& body, const Operand& carrier, const std::vect
     for (const auto& patch : patches) {
         if (const auto radii = capRadii(patch, axis)) {
             const double y = gp_Vec(band.frame.Location(), patch.surface.Plane().Location()).Dot(gp_Vec(axis.Direction()));
-            band.meridians.push_back({patch.id,
-                GC_MakeSegment(band.at((*radii)[0], y), band.at((*radii)[1], y)).Value()});
+            const Handle(Geom_Curve) segment(
+                GC_MakeSegment(band.at((*radii)[0], y), band.at((*radii)[1], y)).Value());
+            band.meridians.push_back({patch.id, segment});
             selected.erase(patch.id);
         } else if (inwardSphere(patch)) {
             const auto sphere = patch.surface.Sphere();
