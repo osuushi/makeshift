@@ -1,9 +1,11 @@
 import { profileGuides } from "../model/profile-guides.js";
 import type { RevolvedProfile } from "../model/revolved-profile.js";
+import { arcDomain } from "../sketch/arc-geometry.js";
 import { bezierBounds, bezierSpan } from "../sketch/bezier-geometry.js";
 import { type CurveSpan, curvePoint, regionTolerance } from "../sketch/curve-spans.js";
 import { newId, type Segment, type Sketch } from "../sketch/document.js";
 import type { Point } from "../sketch/planes.js";
+import { distance } from "../sketch/point-math.js";
 import { type Profile, profilesFor } from "../sketch/profiles.js";
 import { boundary } from "./profile-boundary.js";
 
@@ -42,14 +44,33 @@ export function profileRegion(
   return regions[0]?.region;
 }
 
+// Keep exact cap and wall endpoints when a tangent intersection falls within
+// the same vertex tolerance. Region traversal retains its original cuts.
+function exactSpanEnds(span: CurveSpan): CurveSpan {
+  const { curve } = span;
+  if (curve.kind === "circle") return span;
+  const domain = curve.kind === "arc" ? arcDomain(curve) : { start: 0, sweep: 1 };
+  const first = domain.start,
+    last = first + domain.sweep;
+  const snap = (parameter: number) => {
+    const nearest = Math.abs(parameter - first) < Math.abs(parameter - last) ? first : last;
+    return distance(curvePoint(curve, parameter), curvePoint(curve, nearest)) <= regionTolerance
+      ? nearest
+      : parameter;
+  };
+  const start = snap(span.start),
+    end = snap(span.end);
+  return start === end ? span : { curve, start, end };
+}
+
 export function profileGeometry(
   region: Profile,
   sketch: Sketch,
   origins: ReadonlyMap<string, string>,
 ) {
   return {
-    outer: boundary(region.outer, sketch.plane, origins),
-    holes: region.holes.map((hole) => boundary(hole, sketch.plane, origins)),
+    outer: boundary(region.outer.map(exactSpanEnds), sketch.plane, origins),
+    holes: region.holes.map((hole) => boundary(hole.map(exactSpanEnds), sketch.plane, origins)),
   };
 }
 

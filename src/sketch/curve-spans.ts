@@ -62,13 +62,12 @@ export function splitCurveSpans(input: readonly Curve[]): CurveSpan[] {
   const cuts = curves.map((c) => {
     if (c.kind === "arc") {
       const { start, sweep } = arcDomain(c);
-      const end = start + sweep;
-      return [Math.min(start, end), Math.max(start, end)];
+      return [start, start + sweep];
     }
     return c.kind === "circle"
-      ? [0, turn, Math.PI]
+      ? [0, Math.PI, turn]
       : c.kind === "bezier"
-        ? [0, 1, 0.5, ...bezierSelfCrossing(c)]
+        ? [0, 0.5, 1, ...bezierSelfCrossing(c)]
         : [0, 1];
   });
   for (let i = 0; i < curves.length; i++) {
@@ -93,17 +92,8 @@ export function splitCurveSpans(input: readonly Curve[]): CurveSpan[] {
   }
   return curves.flatMap((curve, index) => {
     const epsilon = regionTolerance / curveLength(curve);
-    const [first, last, ...interior] = cuts[index];
-    // An intersection near an endpoint can be noisy at tangency. Keep the
-    // curve's exact endpoint when both cuts represent the same vertex.
-    const sorted = interior
-      .filter((value) => value - first > epsilon && last - value > epsilon)
-      .sort((a, b) => a - b);
-    const unique = [
-      first,
-      ...sorted.filter((value, i) => i === 0 || value - sorted[i - 1] > epsilon),
-      last,
-    ];
+    const sorted = cuts[index].sort((a, b) => a - b);
+    const unique = sorted.filter((value, i) => i === 0 || value - sorted[i - 1] > epsilon);
     return unique.slice(1).map((end, i) => ({ curve, start: unique[i], end }));
   });
 }
