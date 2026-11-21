@@ -4,20 +4,14 @@ import { test } from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import { arcCircle } from "../src/sketch/arc-geometry.js";
 import type { Sketch, SketchDocument } from "../src/sketch/document.js";
-import type { ModelRequest } from "../src/sketch/model-api.js";
 import { coplanar, type Point } from "../src/sketch/planes.js";
+import { profileCall as call } from "./profile-fixtures.js";
 
 const fixture = JSON.parse(
   readFileSync("tests/fixtures/profile-planar-cut.json", "utf8"),
 ) as SketchDocument;
 const cutFaces = ["f5", "f6", "f8", "f9"];
 const radius = 14.008925726121898;
-
-async function call(owner: DocumentOwner, request: ModelRequest) {
-  const reply = await owner.call(request);
-  assert.equal(reply.error, undefined);
-  return reply.view;
-}
 
 function resizeProfile(sketch: Sketch, radiusDelta: number, capRise = 0): Sketch {
   const shift = (point: Point) => ({

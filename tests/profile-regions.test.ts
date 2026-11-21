@@ -3,9 +3,9 @@ import { test } from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import type { Circle, Segment } from "../src/sketch/document.js";
 import { emptySketch } from "../src/sketch/document.js";
-import type { ModelRequest } from "../src/sketch/model-api.js";
 import { planes } from "../src/sketch/planes.js";
 import { lift } from "./body-edge-fixtures.js";
+import { profileCall as call } from "./profile-fixtures.js";
 
 const length = 12;
 const circle = (id: string, x: number, y: number, radius: number): Circle => ({
@@ -24,12 +24,6 @@ const line = (id: string, ax: number, ay: number, bx: number, by: number): Segme
 });
 const cylinder = (owner: DocumentOwner) =>
   lift(owner, { ...emptySketch(planes.XY), curves: [circle("disk", 0, 0, 5)] }, length);
-
-async function call(owner: DocumentOwner, request: ModelRequest) {
-  const reply = await owner.call(request);
-  assert.equal(reply.error, undefined);
-  return reply.view;
-}
 
 function close(actual: number, expected: number) {
   assert.ok(Math.abs(actual - expected) < 1e-6, `Expected ${expected}, got ${actual}`);

@@ -4,19 +4,13 @@ import { test } from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import type { Body } from "../src/model/body.js";
 import type { Sketch, SketchDocument } from "../src/sketch/document.js";
-import type { ModelRequest } from "../src/sketch/model-api.js";
 import type { Point } from "../src/sketch/planes.js";
+import { profileCall as call } from "./profile-fixtures.js";
 
 const fixture = JSON.parse(
   readFileSync("tests/fixtures/profile-split-cut.json", "utf8"),
 ) as SketchDocument;
 const walls = (body: Body) => body.faces.filter((face) => face.cylinder?.outward === -1);
-
-async function call(owner: DocumentOwner, request: ModelRequest) {
-  const reply = await owner.call(request);
-  assert.equal(reply.error, undefined);
-  return reply.view;
-}
 
 function moveRadially(sketch: Sketch, by: number): Sketch {
   const shift = ({ x, y }: Point) => ({ x: Math.abs(x) <= 1e-7 ? 0 : x + by, y });

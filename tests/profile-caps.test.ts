@@ -5,19 +5,13 @@ import type { Body } from "../src/model/body.js";
 import { type Arc, emptySketch, type Sketch } from "../src/sketch/document.js";
 import { createFillet } from "../src/sketch/fillet-edit.js";
 import { filletCorner } from "../src/sketch/fillet-geometry.js";
-import type { ModelRequest } from "../src/sketch/model-api.js";
 import { type Point, planes } from "../src/sketch/planes.js";
 import { profilesFor } from "../src/sketch/profiles.js";
 import { lift } from "./body-edge-fixtures.js";
+import { profileCall as call } from "./profile-fixtures.js";
 
 const close = (actual: number, expected: number) =>
   assert.ok(Math.abs(actual - expected) <= 1e-6, `${actual} should equal ${expected}`);
-
-async function call(owner: DocumentOwner, request: ModelRequest) {
-  const reply = await owner.call(request);
-  assert.equal(reply.error, undefined);
-  return reply.view;
-}
 
 const notchCenter = { x: 3, y: 9.5 };
 const notchRadius = Math.sqrt(46.25);

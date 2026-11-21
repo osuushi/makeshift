@@ -9,6 +9,12 @@ import { profileReferences } from "./profile-edit-references.js";
 import { flatProfileCap, type ProfileSelection } from "./revolved-profile.js";
 import "./profile-edit.css";
 
+interface ProfileViewport {
+  selection: SketchEditor["modeling"]["targets"];
+  camera: CameraState;
+  section: SketchEditor["world"]["crossSection"];
+}
+
 function confirmDiscard(): Promise<boolean> {
   const dialog = document.createElement("dialog");
   dialog.className = "profile-discard";
@@ -42,12 +48,10 @@ export class ProfileEditControls {
   private disposeTool: () => void;
   private disposeAlign: () => void;
   private disposeReferences: () => void;
-  private previous?: {
-    selection: SketchEditor["modeling"]["targets"];
-    camera: CameraState;
-    section: SketchEditor["world"]["crossSection"];
-  };
+  private previous?: ProfileViewport;
   private closing = false;
+  private previewDelay?: ReturnType<typeof setTimeout>;
+  private previewSlow = false;
 
   constructor(
     private editor: SketchEditor,
@@ -141,12 +145,26 @@ export class ProfileEditControls {
     const e = this.editor;
     const selection = this.selection();
     if (!selection) return false;
-    const previous = {
+    const previous = this.viewport();
+    if (!(await e.store.request({ kind: "begin-profile-edit", selection }))) return false;
+    return this.showProfile(previous);
+  }
+
+  reopen(): void {
+    if (!this.showProfile(this.viewport())) throw new Error("Could not restore Edit Profile");
+  }
+
+  private viewport(): ProfileViewport {
+    const e = this.editor;
+    return {
       selection: e.modeling.targets.slice(),
       camera: captureCamera(e.world),
       section: e.world.crossSection,
     };
-    if (!(await e.store.request({ kind: "begin-profile-edit", selection }))) return false;
+  }
+
+  private showProfile(previous: ProfileViewport): boolean {
+    const e = this.editor;
     const profile = e.store.profileEdit;
     if (!profile) return false;
     this.previous = previous;
@@ -198,11 +216,12 @@ export class ProfileEditControls {
       if (apply) {
         if (!(await completeInteraction(e)) || e.store.profileEdit?.error) return;
       } else await e.interactions.cancel();
-      const applied = apply ? e.store.profileEdit : undefined;
       const finished = await e.store.request({
         kind: apply ? "apply-profile-edit" : "cancel-profile-edit",
       });
       if (!finished) return;
+      const applied = apply ? e.store.appliedProfile : undefined;
+      const body = e.store.acceptedData.bodies?.find((body) => body.id === applied?.body);
       const previous = this.previous;
       this.previous = undefined;
       e.world.crossSection = previous?.section ?? null;
@@ -211,15 +230,14 @@ export class ProfileEditControls {
         if (previous) e.world.animateCamera(previous.camera);
       });
       const selection = previous?.selection ?? [];
-      const surviving = applied?.preview
+      const surviving = body
         ? selection.filter(
             (target) =>
-              target.kind === "face" &&
-              applied.preview?.faces.some((face) => face.id === target.face),
+              target.kind === "face" && body.faces.some((face) => face.id === target.face),
           )
         : selection;
       e.modeling.targets =
-        applied?.preview && !surviving.length ? [{ kind: "body", body: applied.body }] : surviving;
+        body && !surviving.length ? [{ kind: "body", body: body.id }] : surviving;
       if (applied?.removedDimples) e.notice = this.removed(applied.removedDimples);
       e.world.canvas.focus();
     } finally {
@@ -236,19 +254,42 @@ export class ProfileEditControls {
     const e = this.editor;
     const profile = e.store.profileEdit;
     this.group.hidden = !profile || !e.world.active;
+    this.updatePreviewProgress(!!profile?.pending && !this.group.hidden);
     if (this.group.hidden || !profile) return;
     const unavailable = this.closing || e.blocked || e.isDragging;
     this.apply.disabled = unavailable || !!profile.error;
     this.cancel.disabled = unavailable;
     this.align.disabled = unavailable || !!idleReason(e);
     const text =
-      profile.error || (profile.removedDimples ? this.removed(profile.removedDimples) : "");
+      profile.error ||
+      (profile.pending
+        ? this.previewSlow
+          ? "Updating solid…"
+          : ""
+        : profile.removedDimples
+          ? this.removed(profile.removedDimples)
+          : "");
     if (this.feedback.textContent !== text) this.feedback.textContent = text;
     this.feedback.hidden = !text;
     this.feedback.classList.toggle("profile-error", !!profile.error);
   };
 
+  private updatePreviewProgress(pending: boolean): void {
+    if (!pending) {
+      clearTimeout(this.previewDelay);
+      this.previewDelay = undefined;
+      this.previewSlow = false;
+    } else if (!this.previewDelay && !this.previewSlow) {
+      this.previewDelay = setTimeout(() => {
+        this.previewDelay = undefined;
+        this.previewSlow = true;
+        this.update();
+      }, 500);
+    }
+  }
+
   dispose(): void {
+    clearTimeout(this.previewDelay);
     this.keys.abort();
     this.editor.world.changed.delete(this.update);
     this.disposeTool();

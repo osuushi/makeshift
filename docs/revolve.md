@@ -125,12 +125,16 @@ axis. Visible bodies are sectioned in that plane, including the current preview.
 Other bodies can be used as projection references. Orbit to inspect the part, then choose **Look at
 Profile** or press Cmd/Ctrl-Enter to align the same sketch plane head-on.
 
-Use the ordinary sketch tools to edit the temporary profile. Sketch gestures
-and their Undo/Redo stay in the profile. Completed gestures refresh the solid
-preview. **Apply** accepts the body in one document Undo step. Cancel and Escape
-ask before discarding a changed profile. Enter applies the profile from the
-canvas. Active sketch tools and numeric fields own their usual shortcuts. Saved
-drawings contain the materialized body.
+Use the ordinary sketch tools to edit the temporary profile. Sketch gestures and
+their Undo/Redo stay in the profile. You can keep editing as the solid rebuilds.
+The viewport shows the latest validated solid while a newer profile is pending.
+**Apply** or Enter on the canvas waits for the current profile and accepts it in
+one document Undo step. Cancel and Escape ask before discarding a changed
+profile. Active sketch tools and numeric fields own their usual shortcuts.
+
+After Apply, Cmd/Ctrl-R reopens the applied sketch with its exact solid preview.
+Apply there replaces the same Undo step. Cancel there leaves the edit undone
+and available through Redo. Saved drawings contain the materialized body.
 
 Edit Profile fills and revolves the closed region nearest the axis. If several
 regions touch the axis, the fill favors the one with the smallest outer radius.

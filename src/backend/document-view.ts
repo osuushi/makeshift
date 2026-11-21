@@ -10,7 +10,8 @@ export function documentView(
   decorators: DecoratorSession,
   status: Pick<ModelView, "planeCutAvailable" | "cleanupAvailable" | "profileEdit">,
 ): ModelView {
-  const { store, candidate, pendingOperation, reopenedPreview } = session;
+  const { store, candidate, pendingOperation } = session;
+  const { profile: _profile, ...reopenedPreview } = session.reopenedPreview ?? {};
   return {
     data: store.data,
     profileEdit: status.profileEdit,
@@ -38,7 +39,7 @@ export function documentView(
     visualPreview: session.visualPreview,
     cutEdges:
       candidate && candidate !== store.data
-        ? (reopenedPreview?.cutEdges ?? cutEdgeHighlights.get(candidate))
+        ? (reopenedPreview.cutEdges ?? cutEdgeHighlights.get(candidate))
         : undefined,
     solveCount: session.solveCount,
     solveMs: session.solveMs,

@@ -24,7 +24,7 @@ export type ModelRequest =
       kind: "begin-profile-edit";
       selection: import("../model/revolved-profile.js").ProfileSelection;
     }
-  | { kind: "apply-profile-edit" | "cancel-profile-edit" }
+  | { kind: "apply-profile-edit" | "cancel-profile-edit" | "read-profile-preview" }
   | { kind: "guide-point"; edit: import("../guides/types.js").GuideEdit }
   | { kind: "sketch-grid"; grid: import("./grid-settings.js").SketchGrid; initialize?: boolean }
   | {
@@ -143,6 +143,7 @@ export interface ModelView {
   solveMs: number;
 }
 export type ModelReply = {
+  appliedProfile?: import("../model/revolved-profile.js").AppliedProfile;
   erosionAllowance?: number;
   step?: string;
   decoratorDraft?: readonly import("../decorators/types.js").DecoratorInstance[];

@@ -18,6 +18,7 @@ export class ModelClient extends ModelQueries {
   private initialized = false;
   private sentSelection: string | undefined;
   lastEdit: ModelRequest | null = null;
+  appliedProfile: ModelReply["appliedProfile"];
   erosionAllowance: number | undefined;
   scriptRunning = false;
   scriptState(running: boolean, view?: ModelView): void {
@@ -209,21 +210,22 @@ export class ModelClient extends ModelQueries {
       this.working = false;
       this.calculation = undefined;
       this.busy = this.cancelling;
-      this.changed();
+      this.refreshReadyView();
     }
   }
   private receive(request: ModelRequest, reply: ModelReply): boolean {
     const direction =
-      this.profileEdit || reply.view.profileEdit
-        ? null
-        : request.kind === "reopen"
-          ? "undo"
+      request.kind === "reopen"
+        ? "undo"
+        : this.profileEdit || reply.view.profileEdit
+          ? null
           : request.kind === "navigation-history"
             ? request.direction
             : request.kind === "undo" || request.kind === "redo"
               ? request.kind
               : null;
     this.view = retainViewSketches(this.view, reply.view);
+    this.appliedProfile = reply.appliedProfile;
     this.erosionAllowance = reply.erosionAllowance;
     if (reply.error) throw new Error(reply.error);
     if (direction || reply.documentChanged) this.sentSelection = undefined;
@@ -272,7 +274,7 @@ export class ModelClient extends ModelQueries {
     } finally {
       this.cancelling = false;
       this.busy = false;
-      this.changed();
+      this.refreshReadyView();
     }
   }
   async documentReplaced(): Promise<void> {
@@ -286,5 +288,13 @@ export class ModelClient extends ModelQueries {
   async settled(): Promise<void> {
     await this.waiting;
     await this.selectionSending;
+  }
+  private refreshReadyView(): void {
+    this.changed();
+    void this.observeProfilePreview(
+      () => !this.working && !this.cancelling,
+      this.changed,
+      this.error,
+    );
   }
 }

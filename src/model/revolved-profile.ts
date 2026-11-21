@@ -24,11 +24,17 @@ export interface ProfileEditView {
   sketch: Sketch;
   region?: Profile;
   draft?: Sketch;
+  pending: boolean;
   preview?: Body;
   canUndo: boolean;
   canRedo: boolean;
   removedDimples: number;
   error?: string;
+}
+
+export interface AppliedProfile {
+  body: string;
+  removedDimples: number;
 }
 
 export function flatProfileCap(curve: Curve): curve is Segment {

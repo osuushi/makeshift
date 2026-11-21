@@ -1,10 +1,9 @@
 import { CalculationFailure } from "../model/calculation-failure.js";
-import { operationCleanup } from "../model/cleanup.js";
+import type { AppliedProfile } from "../model/revolved-profile.js";
 import { cancellableCalculation } from "../sketch/calculation-state.js";
 import type { ModelReply, ModelRequest, ModelView } from "../sketch/model-api.js";
 import { describeOperation, type HistoryOperation } from "../sketch/operation-history.js";
 import { acceptedParameters } from "./accepted-parameters.js";
-import { cutEdgeHighlights } from "./cut-edge-highlights.js";
 import { DecoratorSession } from "./decorator-session.js";
 import { editPresentation } from "./deferred-edit.js";
 import { DocumentCommands } from "./document-commands.js";
@@ -17,7 +16,6 @@ import { GeometryQueries, isGeometryQuery } from "./geometry-queries.js";
 import { NativeSolver } from "./native-solver.js";
 import { planeCutAvailable } from "./plane-cut.js";
 import { ProfileEdits } from "./profile-edits.js";
-import { reopenPreview } from "./reopen-preview.js";
 import { ScriptEdits } from "./script-edits.js";
 import { SolidCalculator } from "./solid-calculator.js";
 import { isSolidRequest, SolidEdits } from "./solid-edits.js";
@@ -42,13 +40,18 @@ export class DocumentOwner {
     this.kernel = new SolidCalculator(kernelExecutable);
     this.queries = new GeometryQueries(kernelExecutable);
     this.solids = new SolidEdits(this.kernel);
-    this.profiles = new ProfileEdits(this.kernel, solver, () => this.checkCancellation());
+    this.profiles = new ProfileEdits(
+      this.kernel,
+      new SolidCalculator(kernelExecutable),
+      solver,
+      () => this.checkCancellation(),
+    );
     this.commands = new DocumentCommands(
       this.session,
       this.solids,
       this.kernel,
       this.decorators,
-      (cleanup) => this.accept(cleanup),
+      () => this.view,
       () => this.checkCancellation(),
     );
     this.scripts = new ScriptEdits(
@@ -104,12 +107,16 @@ export class DocumentOwner {
       this.solver,
     );
     this.session.preview(result);
-    if (request.kind === "edit") await this.accept();
+    if (request.kind === "edit") await this.commands.accept();
   }
   private checkCancellation(): void {
     if (this.cancelling) throw new CalculationFailure("cancelled", "Calculation cancelled");
   }
   async call(request: ModelRequest): Promise<ModelReply> {
+    if (request.kind === "read-profile-preview") {
+      await this.profiles.settle();
+      return { view: this.view };
+    }
     if (isGeometryQuery(request) && request.kind.startsWith("cancel-"))
       return this.queries.call(this.view, request);
     if (request.kind === "decorator-inspect" || request.kind === "decorator-draft")
@@ -173,39 +180,17 @@ export class DocumentOwner {
       this.cancelling = false;
     }
   }
-  private async accept(cleanup = false): Promise<void> {
-    if (!this.session.candidate) throw new Error("No valid edit to accept");
-    if (
-      cleanup &&
-      (!this.session.reopenedPreview || this.session.pendingOperation?.parameters.cleanup !== true)
-    ) {
-      this.session.refine(
-        await this.solids.removeTopology(
-          this.session.candidate,
-          operationCleanup(
-            this.session.store.data.bodies ?? [],
-            this.session.candidate.bodies ?? [],
-          ),
-        ),
-        false,
-      );
-    }
-    const feedback = this.view.cutEdges;
-    if (!this.session.reopenedPreview)
-      this.session.refine(
-        await this.decorators.continue(this.session.candidate, this.session.store.data),
-      );
-    if (feedback) cutEdgeHighlights.set(this.session.candidate, feedback);
-    this.checkCancellation();
-    this.session.accept(cleanup, reopenPreview(this.view));
-  }
-
   private async execute(request: ModelRequest): Promise<ModelReply> {
     const before = this.session.store.data;
     const profileDraft = this.profiles.active && request.kind !== "apply-profile-edit";
     const operation = this.session.operation(request);
     try {
-      if (request.kind === "check-plane-cut")
+      let appliedProfile: AppliedProfile | undefined;
+      if (request.kind === "apply-profile-edit")
+        appliedProfile = await this.profiles.apply(this.session, operation, (profile) =>
+          this.commands.accept(false, profile),
+        );
+      else if (request.kind === "check-plane-cut")
         this.planeCutAvailable = await planeCutAvailable(
           this.session.store.data,
           request.operation,
@@ -217,7 +202,11 @@ export class DocumentOwner {
       if (request.kind === "complete-preview" && this.kernel.wasSuperseded)
         throw new CalculationFailure("superseded", "Preview superseded");
       this.checkCancellation();
-      return { view: this.view, documentChanged: before !== this.session.store.data };
+      return {
+        view: this.view,
+        documentChanged: before !== this.session.store.data,
+        ...(appliedProfile ? { appliedProfile } : {}),
+      };
     } catch (error) {
       const { outcome, ...failure } = documentFailure(
         error,
@@ -234,7 +223,7 @@ export class DocumentOwner {
     }
   }
   private async dispatch(request: ModelRequest, operation: HistoryOperation): Promise<void> {
-    const profileEdit = this.profiles.handle(this.session, request, operation, () => this.accept());
+    const profileEdit = this.profiles.handle(this.session, request);
     if (profileEdit) return profileEdit;
     this.commands.cleanupAvailable = false;
     if (await editPresentation(this.session, this.kernel, this.solids, request, operation)) return;
@@ -282,7 +271,7 @@ export class DocumentOwner {
           offsetDistance: this.solids.offsetEdit.view.offsetDistance,
         }),
       );
-      if (request.kind === "transform-bodies") await this.accept();
+      if (request.kind === "transform-bodies") await this.commands.accept();
       return;
     }
     if (isPreviewRequest(request)) {
@@ -291,9 +280,11 @@ export class DocumentOwner {
       return;
     }
     await this.commands.run(request, operation);
+    if (request.kind === "reopen") this.profiles.reopen(this.session);
     if (request.kind === "new" || request.kind === "open") this.profiles.cancel();
   }
   close(): void {
+    this.profiles.cancel();
     this.queries.close();
     this.solver.close();
     this.kernel.close();

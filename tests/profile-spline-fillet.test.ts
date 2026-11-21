@@ -3,19 +3,13 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import type { Sketch, SketchDocument } from "../src/sketch/document.js";
-import type { ModelRequest } from "../src/sketch/model-api.js";
 import type { Point } from "../src/sketch/planes.js";
 import { prism } from "./body-edge-fixtures.js";
+import { profileCall as call } from "./profile-fixtures.js";
 
 const fixture = JSON.parse(
   readFileSync("tests/fixtures/profile-spline-fillet.json", "utf8"),
 ) as SketchDocument;
-
-async function call(owner: DocumentOwner, request: ModelRequest) {
-  const reply = await owner.call(request);
-  assert.equal(reply.error, undefined);
-  return reply.view;
-}
 
 function widen(sketch: Sketch, by: number): Sketch {
   const shift = (point: Point) => ({ ...point, x: Math.abs(point.x) <= 1e-7 ? 0 : point.x + by });

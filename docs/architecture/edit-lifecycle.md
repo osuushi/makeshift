@@ -62,6 +62,12 @@ lost pointer capture before completion discards the gesture. An in-flight call
 may finish, but a discarded gesture has no path to acceptance. This is ordinary
 gesture ownership, not a document-version or retry protocol.
 
+Edit Profile completes each sketch gesture in its temporary workspace. A
+dedicated calculator rebuilds the solid in the background from an immutable
+outline. A newer outline replaces the queued target and supersedes older
+results. The document owner accepts the current sketch's validated solid after
+Apply. The renderer keeps the latest validated solid visible during the rebuild.
+
 Straight extrusion from a sketch or planar face may display validated mesh-only results while dragging.
 These are separate from complete document candidates: release or explicit guide
 confirmation completes the latest target, and acceptance waits for that result.
@@ -220,7 +226,7 @@ backward for an older supported operation. New/Open has no operation to reopen.
 Cancel leaves the operation undone with its original result available by ordinary
 Redo. Acceptance makes the normal new branch; no feature tree or replay is added.
 
-Recorded Extrude, Revolve, Loft, Boolean, Shell, Erode, edge finish, face offset,
+Recorded Extrude, Revolve, Edit Profile, Loft, Boolean, Shell, Erode, edge finish, face offset,
 cleanup, Scale, Mirror, plane cut, Projection, ordinary body movement, face/edge
 movement and construction-plane edits have typed current-use reentry. Parameters
 are transient owner history, outside saved geometry. Older sketch placement and

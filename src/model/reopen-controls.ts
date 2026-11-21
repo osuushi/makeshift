@@ -18,6 +18,7 @@ export function reopenControls(
     aliases: ["edit last operation", "restore parameters"],
     reason: () =>
       idleReason(editor) ??
+      (editor.store.profileEdit ? "Apply or cancel Edit Profile first" : null) ??
       (editor.world.navigation.dragging ? "Release navigation first" : null) ??
       (editor.store.reopenOperation ? null : "The latest accepted edit cannot be reopened"),
     run: async () => {

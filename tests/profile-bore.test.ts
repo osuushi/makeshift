@@ -3,15 +3,9 @@ import { test } from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import type { Body } from "../src/model/body.js";
 import { emptySketch, type Sketch } from "../src/sketch/document.js";
-import type { ModelRequest } from "../src/sketch/model-api.js";
 import { planes } from "../src/sketch/planes.js";
 import { profilesFor } from "../src/sketch/profiles.js";
-
-async function call(owner: DocumentOwner, request: ModelRequest) {
-  const reply = await owner.call(request);
-  assert.equal(reply.error, undefined);
-  return reply.view;
-}
+import { profileCall as call } from "./profile-fixtures.js";
 
 async function piercedStock(owner: DocumentOwner, through = true) {
   const corners = [

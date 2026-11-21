@@ -3,15 +3,9 @@ import { test } from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import type { Body } from "../src/model/body.js";
 import type { Segment, Sketch } from "../src/sketch/document.js";
-import type { ModelRequest } from "../src/sketch/model-api.js";
 import { coplanar } from "../src/sketch/planes.js";
 import { finish, prism, square, vertical } from "./body-edge-fixtures.js";
-
-async function call(owner: DocumentOwner, request: ModelRequest) {
-  const reply = await owner.call(request);
-  assert.equal(reply.error, undefined);
-  return reply.view;
-}
+import { profileCall as call } from "./profile-fixtures.js";
 
 const close = (actual: number, expected: number) =>
   assert.ok(Math.abs(actual - expected) < 1e-6, `${actual} should equal ${expected}`);

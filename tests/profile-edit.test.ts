@@ -8,16 +8,10 @@ import {
   type Sketch,
   type SketchDocument,
 } from "../src/sketch/document.js";
-import type { ModelRequest } from "../src/sketch/model-api.js";
 import { type Point, planes } from "../src/sketch/planes.js";
 import { profilesFor } from "../src/sketch/profiles.js";
 import { prism } from "./body-edge-fixtures.js";
-
-async function call(owner: DocumentOwner, request: ModelRequest) {
-  const reply = await owner.call(request);
-  assert.equal(reply.error, undefined);
-  return reply.view;
-}
+import { profileCall as call } from "./profile-fixtures.js";
 
 async function revolve(owner: DocumentOwner, outline: Sketch, center: number, target?: string) {
   await call(owner, { kind: "edit", sketch: outline });

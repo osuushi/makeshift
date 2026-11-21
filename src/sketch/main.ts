@@ -130,7 +130,8 @@ const entities = new EntityViewer(editor, app, tags, guides);
 const booleans = new BooleanControls(editor, overlay, entities);
 const bodyMove = new BodyMoveControls(editor, overlay);
 const disposeReopen = reopenControls(editor, async ({ request }) => {
-  if (request.kind === "extrude") await modelControls.reopenExtrude(request.extrusion);
+  if (request.kind === "begin-profile-edit") profileEdits.reopen();
+  else if (request.kind === "extrude") await modelControls.reopenExtrude(request.extrusion);
   else if (request.kind === "boolean-bodies") await booleans.reopen(request.operation);
   else if (request.kind === "revolve") await modelControls.reopenRevolve(request.revolution);
   else if (request.kind === "loft") await modelControls.reopenLoft(request.operation);
