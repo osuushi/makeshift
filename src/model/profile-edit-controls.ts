@@ -1,0 +1,165 @@
+import { completeInteraction } from "../sketch/complete-interaction.js";
+import type { SketchEditor } from "../sketch/editor.js";
+import { planarFraming } from "../sketch/profile-framing.js";
+import { idleReason, toolCatalog } from "../tools/catalog.js";
+import { type CameraState, captureCamera } from "./camera-state.js";
+import { profileReferences } from "./profile-edit-references.js";
+import type { ProfileSelection } from "./revolved-profile.js";
+import "./profile-edit.css";
+
+export class ProfileEditControls {
+  private group = document.createElement("div");
+  private apply = document.createElement("button");
+  private cancel = document.createElement("button");
+  private feedback = document.createElement("span");
+  private disposeTool: () => void;
+  private disposeReferences: () => void;
+  private previous?: {
+    selection: SketchEditor["modeling"]["targets"];
+    camera: CameraState;
+    section: SketchEditor["world"]["crossSection"];
+  };
+  private closing = false;
+
+  constructor(
+    private editor: SketchEditor,
+    overlay: HTMLElement,
+  ) {
+    this.disposeTool = toolCatalog(editor).register({
+      id: "edit-profile",
+      category: "Solid",
+      label: "Edit Profile",
+      description: "Edit the contour of selected revolved faces",
+      aliases: ["revolve profile", "lathe profile", "edit revolution"],
+      reason: () =>
+        idleReason(editor) ??
+        (this.selection() ? null : "Select a turned body or its revolved side faces in Modeling"),
+      run: () => this.begin(),
+    });
+    this.group.className = "profile-edit-controls";
+    this.group.setAttribute("role", "group");
+    this.group.setAttribute("aria-label", "Edit Profile");
+    this.feedback.setAttribute("aria-live", "polite");
+    this.apply.type = this.cancel.type = "button";
+    this.apply.textContent = "Apply";
+    this.cancel.textContent = "Cancel";
+    this.apply.onclick = () => void this.finish(true);
+    this.cancel.onclick = editor.cancelProfileEdit = () => void this.finish(false);
+    this.group.append(this.feedback, this.apply, this.cancel);
+    this.disposeReferences = profileReferences(editor, overlay);
+    overlay.append(this.group);
+    editor.world.canExitWorkspace = () => !editor.store.profileEdit;
+    editor.world.fullSketchSection = () => !!editor.store.profileEdit;
+    editor.world.changed.add(this.update);
+    this.update();
+  }
+
+  private selection(): ProfileSelection | null {
+    const e = this.editor;
+    if (e.world.active || e.store.profileEdit) return null;
+    const [first, ...rest] = e.modeling.targets;
+    if (!first) return null;
+    if (first.kind === "body" && !rest.length) return { body: first.body, faces: [] };
+    if (first.kind !== "face") return null;
+    const faces = [first.face];
+    for (const target of rest) {
+      if (target.kind !== "face" || target.body !== first.body) return null;
+      faces.push(target.face);
+    }
+    return { body: first.body, faces };
+  }
+
+  private async begin(): Promise<boolean> {
+    const e = this.editor;
+    const selection = this.selection();
+    if (!selection) return false;
+    const previous = {
+      selection: e.modeling.targets.slice(),
+      camera: captureCamera(e.world),
+      section: e.world.crossSection,
+    };
+    if (!(await e.store.request({ kind: "begin-profile-edit", selection }))) return false;
+    const profile = e.store.profileEdit;
+    if (!profile) return false;
+    this.previous = previous;
+    const { sketch, height } = profile;
+    const points = sketch.curves.flatMap((curve) =>
+      curve.kind === "circle" ? [] : [curve.a, curve.b],
+    );
+    const radius = Math.max(...points.map((point) => point.x));
+    const framing = planarFraming(e, sketch.plane, [...points, { x: -radius, y: height / 2 }]);
+    e.world.crossSection = null;
+    e.modeling.targets = [];
+    e.modeling.alternatives = [];
+    e.modeling.hover = null;
+    e.tool = "select";
+    e.world.navigation.withoutRecording(() =>
+      e.world.enterWorkspace(
+        { key: "Edit Profile", frame: sketch.plane, sketchId: sketch.id },
+        framing,
+      ),
+    );
+    e.select(sketch.curves.map((curve) => curve.id));
+    e.world.canvas.focus();
+    e.refresh();
+    return true;
+  }
+
+  private async finish(apply: boolean): Promise<void> {
+    const e = this.editor;
+    const profile = e.store.profileEdit;
+    if (!profile || this.closing || e.blocked || e.isDragging) return;
+    this.closing = true;
+    try {
+      if (apply) {
+        if (!(await completeInteraction(e)) || e.store.profileEdit?.error) return;
+      } else await e.interactions.cancel();
+      const applied = apply ? e.store.profileEdit : undefined;
+      const finished = await e.store.request({
+        kind: apply ? "apply-profile-edit" : "cancel-profile-edit",
+      });
+      if (!finished) return;
+      const previous = this.previous;
+      this.previous = undefined;
+      e.world.crossSection = previous?.section ?? null;
+      e.world.navigation.withoutRecording(() => {
+        e.world.exit();
+        if (previous) e.world.animateCamera(previous.camera);
+      });
+      e.modeling.targets = applied?.preview
+        ? [{ kind: "body", body: applied.body }]
+        : (previous?.selection ?? []);
+      if (applied?.removedDimples) e.notice = this.removed(applied.removedDimples);
+      e.world.canvas.focus();
+    } finally {
+      this.closing = false;
+      e.refresh();
+    }
+  }
+
+  private removed(count: number): string {
+    return `${count} ${count === 1 ? "dimple" : "dimples"} removed`;
+  }
+
+  private update = (): void => {
+    const e = this.editor;
+    const profile = e.store.profileEdit;
+    this.group.hidden = !profile || !e.world.active;
+    if (this.group.hidden || !profile) return;
+    const unavailable = this.closing || e.blocked || e.isDragging;
+    this.apply.disabled = unavailable || !!profile.error;
+    this.cancel.disabled = unavailable;
+    const text =
+      profile.error || (profile.removedDimples ? this.removed(profile.removedDimples) : "");
+    if (this.feedback.textContent !== text) this.feedback.textContent = text;
+    this.feedback.hidden = !text;
+    this.feedback.classList.toggle("profile-error", !!profile.error);
+  };
+
+  dispose(): void {
+    this.editor.world.changed.delete(this.update);
+    this.disposeTool();
+    this.disposeReferences();
+    this.group.remove();
+  }
+}

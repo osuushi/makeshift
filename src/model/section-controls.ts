@@ -124,6 +124,7 @@ export class SectionControls {
     const e = this.editor;
     return (
       !!e.world.activeFrame &&
+      !e.store.profileEdit &&
       (!e.world.crossSection || coplanar(e.world.activeFrame, e.world.crossSection)) &&
       e.tool === "select" &&
       !e.blocked &&

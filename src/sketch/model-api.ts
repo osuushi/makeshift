@@ -20,6 +20,11 @@ import type { HistoryOperation, OperationHistoryEntry } from "./operation-histor
 import type { PlaneFrame } from "./planes.js";
 
 export type ModelRequest =
+  | {
+      kind: "begin-profile-edit";
+      selection: import("../model/revolved-profile.js").ProfileSelection;
+    }
+  | { kind: "apply-profile-edit" | "cancel-profile-edit" }
   | { kind: "guide-point"; edit: import("../guides/types.js").GuideEdit }
   | { kind: "sketch-grid"; grid: import("./grid-settings.js").SketchGrid; initialize?: boolean }
   | {
@@ -109,6 +114,7 @@ export type ModelRequest =
   | { kind: "preview" | "edit"; sketch: Sketch; intent?: EditIntent }
   | { kind: "remove" | "clear"; sketchId: string; ids?: string[] };
 export interface ModelView {
+  profileEdit?: import("../model/revolved-profile.js").ProfileEditView;
   visualPreview?: import("../model/visual-preview.js").VisualPreview;
   canUndoView?: boolean;
   canRedoView?: boolean;

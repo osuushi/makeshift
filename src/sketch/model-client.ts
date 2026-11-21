@@ -56,6 +56,7 @@ export class ModelClient extends ModelQueries {
     super();
   }
   get canUndo() {
+    if (this.profileEdit) return this.profileEdit.canUndo;
     return (
       this.selectionInFlight ||
       !!this.selectionHistory?.pending ||
@@ -64,6 +65,7 @@ export class ModelClient extends ModelQueries {
     );
   }
   get canRedo() {
+    if (this.profileEdit) return this.profileEdit.canRedo;
     return (
       !this.selectionInFlight &&
       !this.selectionHistory?.pending &&
@@ -72,7 +74,14 @@ export class ModelClient extends ModelQueries {
     );
   }
   syncSelection(): void {
-    if (this.selectionSending || this.working || this.busy || this.scriptRunning) return;
+    if (
+      this.selectionSending ||
+      this.working ||
+      this.busy ||
+      this.scriptRunning ||
+      this.profileEdit
+    )
+      return;
     this.selectionInFlight = !!this.selectionHistory?.pending;
     this.selectionSending = this.flushSelection()
       .catch((error: unknown) => this.error(error instanceof Error ? error.message : String(error)))
@@ -84,7 +93,7 @@ export class ModelClient extends ModelQueries {
       });
   }
   private async flushSelection(): Promise<void> {
-    if (!this.selectionHistory || !this.initialized) return;
+    if (!this.selectionHistory || !this.initialized || this.profileEdit) return;
     const changes = this.selectionHistory.take();
     const encoded = JSON.stringify(changes);
     if (!changes.steps.length && encoded === this.sentSelection) return;
@@ -205,13 +214,15 @@ export class ModelClient extends ModelQueries {
   }
   private receive(request: ModelRequest, reply: ModelReply): boolean {
     const direction =
-      request.kind === "reopen"
-        ? "undo"
-        : request.kind === "navigation-history"
-          ? request.direction
-          : request.kind === "undo" || request.kind === "redo"
-            ? request.kind
-            : null;
+      this.profileEdit || reply.view.profileEdit
+        ? null
+        : request.kind === "reopen"
+          ? "undo"
+          : request.kind === "navigation-history"
+            ? request.direction
+            : request.kind === "undo" || request.kind === "redo"
+              ? request.kind
+              : null;
     this.view = retainViewSketches(this.view, reply.view);
     this.erosionAllowance = reply.erosionAllowance;
     if (reply.error) throw new Error(reply.error);

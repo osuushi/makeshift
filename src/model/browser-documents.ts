@@ -36,7 +36,7 @@ export class BrowserDocuments {
     this.editor.world.changed.delete(this.initialBaseline);
   };
   private contents(): string {
-    return documentArchive(this.editor.store.data);
+    return documentArchive(this.editor.store.acceptedData);
   }
   private beforeUnload = (event: BeforeUnloadEvent) => {
     if (this.contents() !== this.baseline) {
@@ -82,11 +82,11 @@ export class BrowserDocuments {
       const destination = download ? await pickSaveFile(name) : undefined;
       const saved = this.contents();
       const files = clean ? {} : this.files;
-      const publication = await browserTrust.prepareSave(editor.store.data, files);
+      const publication = await browserTrust.prepareSave(editor.store.acceptedData, files);
       const data = await this.codec.run(
         {
           kind: "write",
-          model: documentArchive(editor.store.data, captureCamera(editor.world)),
+          model: documentArchive(editor.store.acceptedData, captureCamera(editor.world)),
           files,
           seals: publication.seals,
         },

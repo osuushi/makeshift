@@ -3,7 +3,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 /** Read presentation and accepted/temporary geometry without completing an edit. */
 export function fixtureSnapshot(editor: SketchEditor) {
   return {
-    document: editor.store.data,
+    document: editor.store.acceptedData,
     preview: editor.candidate,
     backendCandidate: editor.store.candidate,
     lastEdit: editor.store.lastEdit,

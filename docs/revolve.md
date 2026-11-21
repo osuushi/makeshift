@@ -115,3 +115,23 @@ acceptance about two; report a concrete obstacle before expanding that scope.
 The next gate is hands-on review of the turned-part/groove/partial-face/helix loop.
 The implementation has reached that gate; the acceptance route above describes
 the behavior to exercise. Automated checks do not establish founder acceptance.
+
+## Edit Profile
+
+In Modeling, select a turned body or its complete set of revolved side faces
+and choose **Edit Profile**. The tool recovers the meridian from the current
+BRep in a plane through its axis. The cap planes and axis appear as guides.
+Visible bodies are sectioned in that plane, including the current preview of
+the edited body. Other bodies can be used as projection references.
+
+Use the ordinary sketch tools to edit the open curve chain between the cap
+planes. Sketch gestures and their Undo/Redo operate within the temporary
+profile. Completed gestures refresh the solid preview. **Apply** accepts the
+body in one document Undo step. Cancel or Escape discards the profile, and
+the saved drawing contains the materialized body.
+
+The initial domain is a full turn on one axis between two circular planar caps,
+with optional isolated spherical dimples. The kernel revolves the edited chain
+and reconstructs the rims against the dimples’ original spherical supports.
+Dimples without a crossing, including point contacts, are omitted and counted
+in the preview. A broken profile, failed retrim or invalid solid blocks Apply.

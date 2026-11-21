@@ -37,5 +37,18 @@ function retain(previous: SketchDocument, next: SketchDocument): SketchDocument 
 
 export function retainViewSketches(previous: ModelView, next: ModelView): ModelView {
   const data = retain(previous.data, next.data);
-  return { ...next, data, candidate: next.candidate && retain(data, next.candidate) };
+  const prior = previous.profileEdit;
+  const current = next.profileEdit;
+  const profileEdit = current && {
+    ...current,
+    sketch:
+      prior?.sketch && content(prior.sketch) === content(current.sketch)
+        ? prior.sketch
+        : current.sketch,
+    preview:
+      prior?.preview && current.preview && content(prior.preview) === content(current.preview)
+        ? prior.preview
+        : current.preview,
+  };
+  return { ...next, data, profileEdit, candidate: next.candidate && retain(data, next.candidate) };
 }

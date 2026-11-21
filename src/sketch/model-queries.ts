@@ -1,8 +1,15 @@
+import { type SketchDocument, withSketch } from "./document.js";
 import type { ModelView } from "./model-api.js";
 import { call } from "./model-transport.js";
 
 /** Read-only view access and backend queries, outside the document edit slot. */
 export class ModelQueries {
+  private profileData?: { view: ModelView; document: SketchDocument };
+  private profileBodies?: {
+    accepted: SketchDocument["bodies"];
+    preview: NonNullable<ModelView["profileEdit"]>["preview"];
+    bodies: SketchDocument["bodies"];
+  };
   protected view: ModelView = {
     data: { units: "mm", sketches: [] },
     canUndo: false,
@@ -35,8 +42,37 @@ export class ModelQueries {
   get edgeSize() {
     return this.view.edgeSize;
   }
-  get data() {
+  get acceptedData() {
     return this.view.data;
+  }
+  get profileEdit() {
+    return this.view.profileEdit;
+  }
+  /** The sketch tools see the active plane while files still read acceptedData. */
+  get data(): SketchDocument {
+    const { data, profileEdit } = this.view;
+    if (!profileEdit) {
+      this.profileData = this.profileBodies = undefined;
+      return data;
+    }
+    if (this.profileData?.view === this.view) return this.profileData.document;
+    const preview = profileEdit.preview;
+    if (this.profileBodies?.accepted !== data.bodies || this.profileBodies?.preview !== preview) {
+      this.profileBodies = {
+        accepted: data.bodies,
+        preview,
+        bodies: preview
+          ? data.bodies?.map((body) => (body.id === preview.id ? preview : body))
+          : data.bodies,
+      };
+    }
+    const document = {
+      ...data,
+      sketches: [profileEdit.sketch],
+      bodies: this.profileBodies?.bodies ?? data.bodies,
+    };
+    this.profileData = { view: this.view, document };
+    return document;
   }
   get decoratorSources() {
     return this.view.decoratorSources ?? [];
@@ -45,10 +81,10 @@ export class ModelQueries {
     return this.view.reopenOperation;
   }
   get canUndoView(): boolean {
-    return !!this.view.canUndoView;
+    return !this.profileEdit && !!this.view.canUndoView;
   }
   get canRedoView(): boolean {
-    return !!this.view.canRedoView;
+    return !this.profileEdit && !!this.view.canRedoView;
   }
   get booleanTargets() {
     return this.view.booleanTargets ?? [];
@@ -66,6 +102,8 @@ export class ModelQueries {
     return this.view.visualPreview;
   }
   get candidate() {
+    if (this.profileEdit)
+      return this.profileEdit.draft ? withSketch(this.data, this.profileEdit.draft) : null;
     return this.view.candidate;
   }
   get statistics() {

@@ -47,7 +47,12 @@ export function installWorkspaceStatus(
     else text.removeAttribute("role");
     dismiss.hidden = !error;
     const mode = app.querySelector(".mode-label");
-    if (mode) mode.textContent = editor.world.active ? "Sketching" : "Modeling";
+    if (mode)
+      mode.textContent = editor.store.profileEdit
+        ? "Edit Profile"
+        : editor.world.active
+          ? "Sketching"
+          : "Modeling";
     text.textContent =
       editor.message ||
       (editor.store.slow
@@ -60,7 +65,7 @@ export function installWorkspaceStatus(
         : "") ||
       editor.notice ||
       (editor.world.active
-        ? `${editor.world.active} sketch · ${editor.world.spacing} mm grid · ${editor.tool === "trim" ? "Trim · click a span · Option-drag to brush" : (editor.snap?.label ?? (editor.moveMode ? transformHint(editor) : "Shift bypasses geometry snaps · Option / Alt draws/resizes about center"))}`
+        ? `${editor.store.profileEdit ? "Profile" : `${editor.world.active} sketch`} · ${editor.world.spacing} mm grid · ${editor.tool === "trim" ? "Trim · click a span · Option-drag to brush" : (editor.snap?.label ?? (editor.moveMode ? transformHint(editor) : "Shift bypasses geometry snaps · Option / Alt draws/resizes about center"))}`
         : editor.modeling.targets.length
           ? `${editor.modeling.targets.length} ${editor.modeling.targets.every((t) => t.kind === "body") ? "body" : editor.modeling.targets.every((t) => t.kind === "edge") ? "edge" : editor.modeling.targets.every((t) => t.kind === "face") ? "face" : editor.modeling.targets.every((t) => t.kind === "sketch") ? "sketch" : editor.modeling.targets.every((t) => t.kind === "profile") ? "region" : "item"} selected${editor.modeling.targets.every((t) => t.kind === "body" || t.kind === "sketch") ? " · M to move · ⌘T to transform" : ""}`
           : editor.world.selectedPlane

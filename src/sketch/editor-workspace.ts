@@ -18,6 +18,7 @@ export class WorkspaceEntry {
   constructor(private editor: SketchEditor) {}
 
   reason(): string | null {
+    if (this.editor.store.profileEdit) return "Apply or cancel Edit Profile first";
     if (this.editor.isDragging) return "Finish the current drag first";
     if (this.editor.blocked) return "Wait for the current calculation";
     return this.editor.interactions.current ? "Finish or cancel the current edit first" : null;
