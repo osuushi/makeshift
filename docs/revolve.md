@@ -127,19 +127,23 @@ Profile** or press Cmd/Ctrl-Enter to align the same sketch plane head-on.
 
 Use the ordinary sketch tools to edit the temporary profile. Sketch gestures
 and their Undo/Redo stay in the profile. Completed gestures refresh the solid
-preview. **Apply** accepts the body in one document Undo step. Cancel or Escape
-discards the profile, and saved drawings contain the materialized body.
+preview. **Apply** accepts the body in one document Undo step. Cancel and Escape
+ask before discarding a changed profile. Enter applies the profile from the
+canvas. Active sketch tools and numeric fields own their usual shortcuts. Saved
+drawings contain the materialized body.
 
 The exterior is a continuous chain with both ends on the axis. Its flat end
 caps are editable lines from the rim to the axis. Move them to change the
 body's length or fillet the corner where a cap meets the wall. The sketch snaps
 to the axis for new cap endpoints. Recovered caps have a horizontal constraint,
 and the side curves are selected on entry for ordinary radial edits. The kernel
-closes the chain along the axis and revolves
-it, then re-cuts separate spherical dimples, complete through-bores and
-lengthwise cylindrical cuts from the original supports. A lengthwise cut can
-open through the side as well as the caps. Recesses that miss or merely touch
-are omitted. The preview counts omitted dimples.
+closes the chain along the axis and revolves it, then re-cuts separate spherical
+dimples, complete through-bores and lengthwise cylindrical cuts from the
+original supports. A lengthwise cut can open through the side and the caps, or
+appear in several disconnected patches. For a split cut, the kernel recovers a
+meridian clear of the cutter and verifies that revolving and re-cutting it
+reproduces the original solid. Recesses that miss or merely touch are omitted.
+The preview counts omitted dimples.
 
 A through-bore profile follows a connected inward revolved wall with two
 separate closed openings. Its end guides sit just beyond the stock. The kernel

@@ -3,12 +3,14 @@
 #include "edge-finish-validation.h"
 #include "geometry-policy.h"
 #include "sketch-curve.h"
+#include "timing.h"
 #include <BRepBndLib.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepPrimAPI_MakeRevol.hxx>
+#include <BRep_Tool.hxx>
 #include <Bnd_Box.hxx>
 #include <Precision.hxx>
 #include <TopExp.hxx>
@@ -129,6 +131,38 @@ void revolved_profile::verifyBoreRecovery(const Band& band) {
     verifySameMaterial(band.body.shape, recovered, "The through-bore could not be recovered from its surrounding surfaces");
 }
 
+void revolved_profile::verifySectionRecovery(const Band& band, bool exactSupports) {
+    KernelTiming timing("profile-section-recovery");
+    const gp_Lin axis(band.axis());
+    TopTools_ListOfShape edges;
+    std::vector<gp_Pnt> axisEnds;
+    for (const auto& span : band.meridians) {
+        const auto& edge = span.sectionEdge;
+        const auto start = BRep_Tool::Pnt(TopExp::FirstVertex(edge));
+        const auto end = BRep_Tool::Pnt(TopExp::LastVertex(edge));
+        if (axis.Distance(start) <= tolerance) axisEnds.push_back(start);
+        if (axis.Distance(end) <= tolerance) axisEnds.push_back(end);
+        edges.Append(edge);
+    }
+    if (axisEnds.size() != 2 || axisEnds[0].Distance(axisEnds[1]) <= tolerance)
+        throw std::runtime_error("The recovered contour must meet the axis at two ends");
+    edges.Append(BRepBuilderAPI_MakeEdge(axisEnds[0], axisEnds[1]).Edge());
+    BRepBuilderAPI_MakeWire wire;
+    wire.Add(edges);
+    if (!wire.IsDone()) throw std::runtime_error("Could not recover one continuous contour");
+    TopTools_IndexedMapOfShape connected;
+    TopExp::MapShapes(wire.Wire(), TopAbs_EDGE, connected);
+    if (connected.Extent() != edges.Extent())
+        throw std::runtime_error("Could not recover one continuous contour");
+    std::vector<SourceEntity> unused;
+    const auto stock = turnSection({wire.Wire(), {}}, band.axis(), unused);
+    timing.phase("revolve");
+    const auto rebuilt = recutParallel(stock, band.parallelCuts, unused);
+    timing.phase("recut");
+    verifySectionMaterial(band.body.shape, rebuilt, exactSupports);
+    timing.phase("compare");
+}
+
 std::vector<Result> replaceRevolvedProfile(const Tree& input, const std::vector<Operand>& bodies,
                                            std::vector<std::string>& participants) {
     const auto band = revolved_profile::inspect(input, bodies);
@@ -183,7 +217,8 @@ void describeRevolvedProfile(std::ostream& out, const Tree& input, const std::ve
         if (i) out << ',';
         const auto& entry = band.meridians[i];
         out << "{\"face\":" << quoted(entry.face) << ",\"curves\":";
-        planarSketchCurves(out, BRepBuilderAPI_MakeEdge(entry.curve).Edge(), frame);
+        const auto edge = entry.sectionEdge.IsNull() ? BRepBuilderAPI_MakeEdge(entry.curve).Edge() : entry.sectionEdge;
+        planarSketchCurves(out, edge, frame);
         out << '}';
     }
     out << "]}}";

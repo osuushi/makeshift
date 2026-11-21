@@ -5,8 +5,10 @@
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
+#include <BRepGProp.hxx>
 #include <BRepPrimAPI_MakeCylinder.hxx>
 #include <BRepPrimAPI_MakeSphere.hxx>
+#include <GProp_GProps.hxx>
 #include <OSD_ThreadPool.hxx>
 #include <Precision.hxx>
 #include <TopExp.hxx>
@@ -56,6 +58,50 @@ TopoDS_Shape joinCutSeams(const TopoDS_Shape& shape, std::vector<SourceEntity>& 
     auto joined = cleanupEdges({"", shape, origins}, seams);
     origins = std::move(joined.predecessors);
     return joined.shape;
+}
+
+struct CylinderCut {
+    gp_Cylinder surface;
+    std::vector<SourceEntity> walls;
+};
+
+std::vector<CylinderCut> distinctCylinders(const std::vector<SourceEntity>& walls) {
+    std::vector<CylinderCut> cuts;
+    for (const auto& wall : walls) {
+        const auto cylinder = BRepAdaptor_Surface(TopoDS::Face(wall.shape)).Cylinder();
+        const auto matching = std::ranges::find_if(cuts, [&](const auto& cut) {
+            return coaxial(cut.surface.Axis(), cylinder.Axis()) &&
+                std::abs(cut.surface.Radius() - cylinder.Radius()) <= tolerance;
+        });
+        if (matching == cuts.end()) cuts.push_back({cylinder, {wall}});
+        else matching->walls.push_back(wall);
+    }
+    return cuts;
+}
+
+void continueCutWalls(const CylinderCut& cut, const TopoDS_Shape& result, std::vector<SourceEntity>& origins) {
+    if (cut.walls.size() == 1) return;
+    const auto& first = cut.walls.front().id;
+    const auto axis = cut.surface.Axis();
+    std::vector<std::array<double, 2>> oldStations;
+    for (const auto& wall : cut.walls) oldStations.push_back(axialStations(wall.shape, axis));
+    TopTools_IndexedMapOfShape faces;
+    TopExp::MapShapes(result, TopAbs_FACE, faces);
+    std::vector<SourceEntity> descendants;
+    for (const auto& origin : origins) {
+        if (origin.id != first) {
+            descendants.push_back(origin);
+            continue;
+        }
+        if (!faces.Contains(origin.shape)) continue;
+        const auto [start, end] = axialStations(origin.shape, axis);
+        for (std::size_t i = 0; i < cut.walls.size(); ++i) {
+            const auto [low, high] = oldStations[i];
+            if (std::min(end, high) - std::max(start, low) > tolerance)
+                descendants.push_back({cut.walls[i].id, origin.shape});
+        }
+    }
+    origins = std::move(descendants);
 }
 }
 
@@ -108,11 +154,16 @@ bool hasMaterial(const TopoDS_Shape& shape, double threshold) {
     return false;
 }
 
+bool hasSplitCut(const std::vector<SourceEntity>& walls) {
+    return distinctCylinders(walls).size() < walls.size();
+}
+
 TopoDS_Shape recutParallel(TopoDS_Shape stock, const std::vector<SourceEntity>& walls,
                           std::vector<SourceEntity>& origins) {
     if (walls.empty()) return stock;
-    for (const auto& wall : walls) {
-        const auto cylinder = BRepAdaptor_Surface(TopoDS::Face(wall.shape)).Cylinder();
+    const auto cuts = distinctCylinders(walls);
+    for (const auto& cut : cuts) {
+        const auto& cylinder = cut.surface;
         const auto axis = cylinder.Axis();
         const auto [low, high] = axialStations(stock, axis);
         const double margin = std::max(0.001, (high - low) * 1e-6);
@@ -121,17 +172,44 @@ TopoDS_Shape recutParallel(TopoDS_Shape stock, const std::vector<SourceEntity>& 
         BRepPrimAPI_MakeCylinder tool(frame, cylinder.Radius(), high - low + 2 * margin);
         const BooleanProbe overlap(stock, tool.Shape());
         if (!hasMaterial(overlap.shape(), geometry_policy::minimumSolidVolumeMm3)) continue;
-        origins.push_back({wall.id, tool.Face()});
+        origins.push_back({cut.walls.front().id, tool.Face()});
         stock = overlap.subtract(origins);
     }
-    return joinCutSeams(stock, origins);
+    stock = joinCutSeams(stock, origins);
+    for (const auto& cut : cuts) continueCutWalls(cut, stock, origins);
+    return stock;
 }
 
 void verifySameMaterial(const TopoDS_Shape& before, const TopoDS_Shape& rebuilt, const char* message) {
-    const double toleranceVolume = std::max(1e-8, 1e-9 * std::abs(volume(before)));
+    const double toleranceVolume = std::max(1e-8, 1e-9 * volume(before));
     std::vector<SourceEntity> unused;
     if (hasMaterial(booleanShape(rebuilt, before, "subtract", unused), toleranceVolume) ||
         hasMaterial(booleanShape(before, rebuilt, "subtract", unused), toleranceVolume))
+        throw std::runtime_error(message);
+}
+
+void verifySectionMaterial(const TopoDS_Shape& before, const TopoDS_Shape& rebuilt, bool exactSupports) {
+    constexpr auto message = "The recovered profile and lengthwise cuts do not reproduce the body";
+    const double sourceVolume = volume(before), rebuiltVolume = volume(rebuilt);
+    // Compare the shared volume, allowing for one boundary layer at topological
+    // precision on each solid. The section and recut each introduce that error.
+    // Subtracting near-coincident spline surfaces can create spurious slivers.
+    GProp_GProps sourceBoundary, rebuiltBoundary;
+    BRepGProp::SurfaceProperties(before, sourceBoundary);
+    BRepGProp::SurfaceProperties(rebuilt, rebuiltBoundary);
+    const double toleranceVolume = std::max(1e-9 * sourceVolume,
+        (sourceBoundary.Mass() + rebuiltBoundary.Mass()) * tolerance);
+    if (std::abs(sourceVolume - rebuiltVolume) > toleranceVolume)
+        throw std::runtime_error(message);
+    // With an intact meridian through every exact turned face, these surfaces
+    // and the known cut cylinders determine the stock and its interruptions.
+    // An approximate spline support needs the additional overlap check.
+    if (exactSupports) return;
+    std::vector<SourceEntity> unused;
+    const auto common = booleanShape(before, rebuilt, "intersect", unused);
+    const double commonVolume = volume(common);
+    if (std::abs(sourceVolume - commonVolume) > toleranceVolume ||
+        std::abs(rebuiltVolume - commonVolume) > toleranceVolume)
         throw std::runtime_error(message);
 }
 }

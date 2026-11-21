@@ -41,6 +41,27 @@
 .profile-edit-controls .profile-error {
   color: var(--danger);
 }
+.profile-discard {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 48px var(--shadow);
+}
+.profile-discard::backdrop {
+  background: var(--backdrop);
+}
+.profile-discard h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+}
+.profile-discard form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.profile-discard button {
+  min-height: 36px;
+}
 .profile-reference-guides {
   position: absolute;
   inset: 0;

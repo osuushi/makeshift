@@ -1,5 +1,6 @@
 import { completeInteraction } from "../sketch/complete-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import { onModelKeydown } from "../sketch/model-keys.js";
 import { planarFraming } from "../sketch/profile-framing.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { type CameraState, captureCamera } from "./camera-state.js";
@@ -7,7 +8,31 @@ import { profileReferences } from "./profile-edit-references.js";
 import { flatProfileCap, type ProfileSelection } from "./revolved-profile.js";
 import "./profile-edit.css";
 
+function confirmDiscard(): Promise<boolean> {
+  const dialog = document.createElement("dialog");
+  dialog.className = "profile-discard";
+  dialog.setAttribute("aria-label", "Discard profile changes?");
+  dialog.innerHTML = `<h2>Discard profile changes?</h2>
+    <form method="dialog">
+      <button value="keep" autofocus>Keep editing</button>
+      <button value="discard">Discard changes</button>
+    </form>`;
+  return new Promise((resolve) => {
+    dialog.addEventListener(
+      "close",
+      () => {
+        dialog.remove();
+        resolve(dialog.returnValue === "discard");
+      },
+      { once: true },
+    );
+    document.body.append(dialog);
+    dialog.showModal();
+  });
+}
+
 export class ProfileEditControls {
+  private readonly keys = new AbortController();
   private group = document.createElement("div");
   private apply = document.createElement("button");
   private cancel = document.createElement("button");
@@ -67,8 +92,34 @@ export class ProfileEditControls {
     editor.world.canExitWorkspace = () => !editor.store.profileEdit;
     editor.world.fullSketchSection = () => !!editor.store.profileEdit;
     editor.world.changed.add(this.update);
+    onModelKeydown(this.enter, { signal: this.keys.signal });
     this.update();
   }
+
+  private enter = (event: KeyboardEvent): void => {
+    const e = this.editor;
+    if (
+      event.key !== "Enter" ||
+      event.defaultPrevented ||
+      event.repeat ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.altKey ||
+      event.shiftKey ||
+      !e.store.profileEdit ||
+      e.interactions.current ||
+      e.isDragging ||
+      e.pointMenu ||
+      e.world.orbit.active ||
+      (event.target instanceof Element &&
+        event.target.closest(
+          "input, textarea, select, button, a, [contenteditable], [role=button]",
+        ))
+    )
+      return;
+    event.preventDefault();
+    void this.finish(true);
+  };
 
   private selection(): ProfileSelection | null {
     const e = this.editor;
@@ -137,6 +188,14 @@ export class ProfileEditControls {
     if (!profile || this.closing || e.blocked || e.isDragging) return;
     this.closing = true;
     try {
+      if (
+        !apply &&
+        (profile.canUndo || profile.canRedo || profile.draft) &&
+        !(await confirmDiscard())
+      ) {
+        e.world.canvas.focus();
+        return;
+      }
       if (apply) {
         if (!(await completeInteraction(e)) || e.store.profileEdit?.error) return;
       } else await e.interactions.cancel();
@@ -191,6 +250,7 @@ export class ProfileEditControls {
   };
 
   dispose(): void {
+    this.keys.abort();
     this.editor.world.changed.delete(this.update);
     this.disposeTool();
     this.disposeAlign();

@@ -196,6 +196,32 @@ Band inspectCarrier(const Operand& body, const Operand& carrier, const std::vect
     return band;
 }
 
+Band inspectHealed(const Operand& body, const std::vector<SourceEntity>& cuts,
+                   const Selection& selected, const gp_Ax1& axis, bool verifyRecovery) {
+    auto healed = healSelectedFaces(body, cuts);
+    Operand carrier{body.id, healed.shape, std::move(healed.predecessors)};
+    if (verifyRecovery) {
+        std::vector<SourceEntity> unused;
+        const auto recut = recutParallel(carrier.shape, cuts, unused);
+        verifySameMaterial(body.shape, recut, "The lengthwise cut could not be recovered from its surrounding surfaces");
+    }
+    auto band = inspectCarrier(body, carrier, surfacePatches(carrier), selected, axis);
+    band.parallelCuts = cuts;
+    return band;
+}
+
+bool exactSectionSupports(const Band& band, const std::vector<Patch>& patches) {
+    return std::ranges::all_of(patches, [&](const auto& patch) {
+        if (std::ranges::find(band.parallelCuts, patch.id, &SourceEntity::id) != band.parallelCuts.end())
+            return true;
+        const auto type = patch.surface.GetType();
+        const bool axialCap = type == GeomAbs_Plane &&
+            patch.surface.Plane().Axis().IsParallel(band.axis(), Precision::Angular());
+        return (axialCap || centeredSide(patch, band.axis())) &&
+            std::ranges::find(band.meridians, patch.id, &Meridian::face) != band.meridians.end();
+    });
+}
+
 Band inspectExterior(const Operand& body, const std::vector<Patch>& patches, Selection selected,
                      bool verifyRecovery) {
     const auto axis = exteriorAxis(patches, selected);
@@ -207,15 +233,12 @@ Band inspectExterior(const Operand& body, const std::vector<Patch>& patches, Sel
             cuts.push_back({patch.id, patch.face});
     }
     if (cuts.empty()) return inspectCarrier(body, body, patches, std::move(selected), axis);
-    auto healed = healSelectedFaces(body, cuts);
-    Operand carrier{body.id, healed.shape, std::move(healed.predecessors)};
-    if (verifyRecovery) {
-        std::vector<SourceEntity> unused;
-        const auto recut = recutParallel(carrier.shape, cuts, unused);
-        verifySameMaterial(body.shape, recut, "The lengthwise cut could not be recovered from its surrounding surfaces");
-    }
-    auto band = inspectCarrier(body, carrier, surfacePatches(carrier), std::move(selected), axis);
-    band.parallelCuts = std::move(cuts);
+    if (!hasSplitCut(cuts))
+        return inspectHealed(body, cuts, selected, axis, verifyRecovery);
+    auto band = sectionProfile(body, axis, std::move(cuts));
+    for (const auto& span : band.meridians) selected.erase(span.face);
+    if (!selected.empty()) throw std::runtime_error("Select faces on one turned exterior");
+    if (verifyRecovery) verifySectionRecovery(band, exactSectionSupports(band, patches));
     return band;
 }
 }

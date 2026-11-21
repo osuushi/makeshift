@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { orient, project } from "./ui-blend-edit.mjs";
-import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { at, close, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function pick(page, xyz) {
@@ -100,9 +100,10 @@ export async function revolveSolidRoute(page, name) {
   await chooseTool(page, "undo", "undo");
   close((await inspect(page)).document.bodies[0].volume, shaft.volume);
   await verifyProfileCancelHistory(page, shaft.id);
+  await verifyProfileKeys(page, shaft);
   await partialFaceRoute(page, name);
   console.log(
-    `${name}: revolved groove Booleans, profile Cancel history, body-edge axis, face input and continued planar sketch passed`,
+    `${name}: revolved groove Booleans, profile shortcuts and history, body-edge axis and face input passed`,
   );
 }
 
@@ -142,6 +143,39 @@ async function verifyProfileCancelHistory(page, body) {
   assert.equal((await inspect(page)).modelingSelection[0]?.body, body);
   // The controller restores selection after the owner closes the temporary sketch.
   assert.deepEqual(await history(), beforeProfile);
+}
+
+async function verifyProfileKeys(page, before) {
+  await chooseTool(page, "edit profile", "edit-profile");
+  const entered = await inspect(page);
+  await page.keyboard.press("m");
+  const marker = page.locator('[data-move-marker="x"] > svg');
+  await marker.waitFor({ state: "visible" });
+  const box = await marker.boundingBox();
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  const input = page.getByRole("textbox", { name: "Move X", exact: true });
+  await input.fill("1");
+  await input.press("Enter");
+  await modalCompleted(page);
+  const changed = await inspect(page);
+  assert.equal(changed.activeSketch, entered.activeSketch, "The field owns its own Enter");
+  assert.ok(changed.document.bodies[0].volume > before.volume);
+  await chooseTool(page, "select", "select");
+  await page.keyboard.press("Escape");
+  const confirmation = page.getByRole("dialog", { name: "Discard profile changes?", exact: true });
+  const keep = confirmation.getByRole("button", { name: "Keep editing", exact: true });
+  await keep.click();
+  const kept = await inspect(page);
+  assert.equal(kept.activeSketch, entered.activeSketch);
+  close(kept.document.bodies[0].volume, changed.document.bodies[0].volume);
+  await page.keyboard.press("Enter");
+  await page.getByRole("group", { name: "Edit Profile", exact: true }).waitFor({ state: "hidden" });
+  close((await inspect(page)).document.bodies[0].volume, changed.document.bodies[0].volume);
+  await chooseTool(page, "undo", "undo");
+  assert.ok(
+    (await inspect(page)).document.bodies[0].brep === before.brep,
+    "One Undo restores the shaft",
+  );
 }
 
 async function partialFaceRoute(page, name) {
