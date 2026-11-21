@@ -32,8 +32,10 @@ bool crosses(const TopoDS_Shape& boundary, const gp_Sphere& sphere) {
     if (!distance.IsDone()) throw std::runtime_error("Could not classify a dimple against the profile");
     return distance.Value() < sphere.Radius() - tolerance;
 }
+}
 
 TopoDS_Shape joinCutSeams(const TopoDS_Shape& shape, std::vector<SourceEntity>& origins) {
+    if (origins.empty()) return shape;
     TopTools_IndexedDataMapOfShapeListOfShape adjacent;
     TopExp::MapShapesAndAncestors(shape, TopAbs_EDGE, TopAbs_FACE, adjacent);
     TopTools_MapOfShape seams;
@@ -55,6 +57,7 @@ TopoDS_Shape joinCutSeams(const TopoDS_Shape& shape, std::vector<SourceEntity>& 
     return joined.shape;
 }
 
+namespace {
 struct CylinderCut {
     gp_Cylinder surface;
     std::vector<SourceEntity> walls;

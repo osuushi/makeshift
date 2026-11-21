@@ -155,10 +155,11 @@ notch. The kernel rebuilds a convex cutter from the notch's walls parallel to th
 axis and any visible depth plane. It verifies the combination against the
 original solid and re-cuts the edited cap against those stationary planes.
 
-A solid fillet stored as a closed spline can also contribute to the profile.
-The kernel sections the body through its axis and compares the reconstructed
-solid with the original. The recovered fillet uses ordinary cubic sketch
-curves within the projection tolerance.
+The section identifies each face and the ends of its span. Where a coaxial
+surface supplies an exact generating curve, the kernel uses that curve for the
+span. A solid fillet stored as a closed spline can supply its periodic seam,
+which becomes ordinary cubic sketch curves within the projection tolerance.
+The recovered sweep and stationary cuts must reproduce the original solid.
 
 A through-bore profile follows a connected inward revolved wall with two
 separate closed openings. Its end guides sit just beyond the stock. The kernel

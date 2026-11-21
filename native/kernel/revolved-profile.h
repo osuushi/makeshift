@@ -53,6 +53,7 @@ void trimToEndGuides(Band&);
 std::optional<Band> cornerProfile(const Operand&, const SourceEntity&);
 TopoDS_Shape replaceCorner(const Band&, const TopoDS_Shape& revolved, std::vector<SourceEntity>&);
 bool hasMaterial(const TopoDS_Shape&, double threshold);
+TopoDS_Shape joinCutSeams(const TopoDS_Shape&, std::vector<SourceEntity>&);
 TopoDS_Shape trimDimples(const TopoDS_Shape&, const Band&, std::vector<SourceEntity>&);
 bool hasSplitCut(const std::vector<SourceEntity>&);
 TopoDS_Shape recutParallel(TopoDS_Shape, const std::vector<SourceEntity>&, std::vector<SourceEntity>&);

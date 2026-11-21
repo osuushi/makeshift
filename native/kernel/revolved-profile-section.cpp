@@ -9,6 +9,7 @@
 #include <BRepGProp.hxx>
 #include <BRepTools.hxx>
 #include <BRep_Tool.hxx>
+#include <GeomAPI_ProjectPointOnCurve.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <GProp_GProps.hxx>
 #include <Precision.hxx>
@@ -23,6 +24,7 @@
 #include <gp_Lin.hxx>
 #include <gp_Pln.hxx>
 #include <algorithm>
+#include <cmath>
 #include <stdexcept>
 
 namespace revolved_profile {
@@ -138,6 +140,43 @@ TopoDS_Edge splineMeridian(const TopoDS_Edge& section, const TopoDS_Face& face, 
     }
     return section;
 }
+
+std::optional<double> supportParameter(const Handle(Geom_TrimmedCurve)& support, const gp_Pnt& point) {
+    if (point.Distance(support->StartPoint()) <= tolerance) return support->FirstParameter();
+    if (point.Distance(support->EndPoint()) <= tolerance) return support->LastParameter();
+    const GeomAPI_ProjectPointOnCurve projection(point, support);
+    if (projection.NbPoints() && projection.LowerDistance() <= tolerance)
+        return projection.LowerDistanceParameter();
+    return std::nullopt;
+}
+
+TopoDS_Edge trimSupportMeridian(const TopoDS_Edge& section, const BRepAdaptor_Curve& trace,
+                              const Handle(Geom_TrimmedCurve)& support) {
+    const auto [a, b] = endpoints(section);
+    const auto first = supportParameter(support, a), last = supportParameter(support, b);
+    if (!first || !last || std::abs(*first - *last) <= Precision::PConfusion()) return {};
+    const auto [low, high] = std::minmax(*first, *last);
+    // The section locates the span, including the branch of a periodic support.
+    const auto midpoint = trace.Value((trace.FirstParameter() + trace.LastParameter()) / 2);
+    const GeomAPI_ProjectPointOnCurve projection(midpoint, support, low, high);
+    if (!projection.NbPoints() || projection.LowerDistance() > BRep_Tool::Tolerance(section) + tolerance)
+        return {};
+    BRepBuilderAPI_MakeEdge edge(support, low, high);
+    return edge.IsDone() ? edge.Edge() : TopoDS_Edge{};
+}
+
+TopoDS_Edge supportMeridian(const TopoDS_Edge& section, const TopoDS_Face& face, const Band& band) {
+    const BRepAdaptor_Curve trace(section);
+    if (trace.GetType() != GeomAbs_BSplineCurve && trace.GetType() != GeomAbs_BezierCurve) return section;
+    const auto axis = rotationAxis(BRepAdaptor_Surface(face));
+    if (axis && coaxial(*axis, band.axis())) {
+        // The face already supplies the generating curve. A section of its
+        // trimmed surface can approximate even an exact circle.
+        auto exact = trimSupportMeridian(section, trace, meridian(face, band, false));
+        if (!exact.IsNull()) return exact;
+    }
+    return splineMeridian(section, face, band.frame);
+}
 }
 
 Band sectionProfile(const Operand& body, const gp_Ax1& axis, std::vector<SourceEntity> cuts,
@@ -164,7 +203,7 @@ Band sectionProfile(const Operand& body, const gp_Ax1& axis, std::vector<SourceE
             return entity.shape.IsSame(face);
         });
         if (source == body.entities.end()) throw std::runtime_error("A profile section lost its source face");
-        band.meridians.push_back({source->id, {}, splineMeridian(half, TopoDS::Face(face), frame)});
+        band.meridians.push_back({source->id, {}, supportMeridian(half, TopoDS::Face(face), band)});
     }
     return band;
 }

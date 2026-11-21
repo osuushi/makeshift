@@ -120,7 +120,8 @@ TopoDS_Shape recutStock(const TopoDS_Shape& stock, const Band& band, std::vector
     auto shape = revolved_profile::trimDimples(stock, band, origins);
     shape = recutBores(shape, band, origins);
     shape = revolved_profile::recutParallel(shape, band.parallelCuts, origins);
-    return revolved_profile::recutPlanar(shape, band.planarCuts, origins);
+    shape = revolved_profile::recutPlanar(shape, band.planarCuts, origins);
+    return revolved_profile::joinCutSeams(shape, origins);
 }
 
 void verifyCornerRecovery(const Band& band) {
