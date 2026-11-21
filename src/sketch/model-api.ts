@@ -14,7 +14,12 @@ import type {
 } from "../model/body.js";
 import type { CleanupSelection } from "../model/cleanup.js";
 import type { Projection } from "../model/projection.js";
-import type { InlineLink, LinkedBench, SmartObjectEdit } from "../model/smart-object.js";
+import type {
+  InlineLink,
+  LinkedBench,
+  SmartObjectEdit,
+  SmartObjectSource,
+} from "../model/smart-object.js";
 import type { Sketch, SketchDocument } from "./document.js";
 import type { EditIntent } from "./edit-intent.js";
 
@@ -24,6 +29,7 @@ import type { PlaneFrame } from "./planes.js";
 export type ModelRequest =
   | { kind: "bench"; edit: BenchEdit }
   | { kind: "smart-object"; edit: SmartObjectEdit }
+  | { kind: "smart-object-sources" }
   | { kind: "read-drawing" }
   | { kind: "restore-decorators" }
   | { kind: "guide-point"; edit: import("../guides/types.js").GuideEdit }
@@ -150,6 +156,7 @@ export interface ModelView {
 }
 export type ModelReply = {
   drawing?: Drawing;
+  smartObjectSources?: readonly SmartObjectSource[];
   erosionAllowance?: number;
   step?: string;
   decoratorDraft?: readonly import("../decorators/types.js").DecoratorInstance[];

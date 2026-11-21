@@ -13,7 +13,7 @@ import { editDocument, isDirectDocumentEdit } from "./document-edits.js";
 import { documentFailure } from "./document-failure.js";
 import { isPreviewRequest, type PreviewRequest, previewDocument } from "./document-preview.js";
 import { DocumentSession } from "./document-session.js";
-import { documentView } from "./document-view.js";
+import { documentView, drawingQuery, isDrawingQuery } from "./document-view.js";
 import { GeometryQueries, isGeometryQuery } from "./geometry-queries.js";
 import { NativeSolver } from "./native-solver.js";
 import { reopenPreview } from "./reopen-preview.js";
@@ -99,7 +99,7 @@ export class DocumentOwner {
     if (this.cancelling) throw new CalculationFailure("cancelled", "Calculation cancelled");
   }
   async call(request: ModelRequest): Promise<ModelReply> {
-    if (request.kind === "read-drawing") return { view: this.view, drawing: this.drawing };
+    if (isDrawingQuery(request)) return drawingQuery(this.view, this.session.benches, request);
     if (isGeometryQuery(request) && request.kind.startsWith("cancel-"))
       return this.queries.call(this.view, request);
     if (request.kind === "decorator-inspect" || request.kind === "decorator-draft")

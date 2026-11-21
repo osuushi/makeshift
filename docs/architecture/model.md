@@ -59,8 +59,10 @@ with fresh IDs. Pasting is one step in the destination bench's history.
 The right-hand **Smart objects** pane groups actions under **Create** and
 **Selected instance**. **Place smart object…** opens a movable chooser over the
 canvas. Pick a **Source bench** and choose **Place** to add a live instance to
-the current bench. The pane shows the source name and a completion action in a
-separate section during in-place editing.
+the bench being edited. Sources that already link to that bench, including
+through nested smart objects, are grayed out. Hover, focus or tap a disabled
+source to read why it would create a circular link. The pane shows the source
+name and a completion action in a separate section during in-place editing.
 Each placement has its own ID and affine transform. Placements can nest and share
 sources. Acceptance, Undo, Redo, and Open all check that the links are acyclic.
 Select placements in the viewport or under **Smart objects** in Entities. The

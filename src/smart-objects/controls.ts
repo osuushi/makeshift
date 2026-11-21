@@ -95,16 +95,17 @@ export class SmartObjectControls {
     const e = this.editor;
     const selection = () => selectedObjects(e);
     const one = () => (selection().length === 1 ? null : "Select one smart object");
-    const sources = () => e.store.benchTabs.filter(({ id }) => id !== e.store.editingBench);
     const convertReason = () =>
       conversionSelection(e) ? null : "Select sketches, whole solids, or smart objects";
     this.action(
       this.creation,
       "insert-bench",
       "Place smart object…",
-      () => (sources().length ? null : "Create another bench first"),
+      () => (e.store.benchTabs.length > 1 ? null : "Create another bench first"),
       async () => {
-        const source = await selectSource(sources(), e.world.canvas);
+        const sources = await e.store.smartObjectSources();
+        if (!sources.length) return false;
+        const source = await selectSource(sources, e.world.canvas);
         if (!source) return false;
         const before = new Set((e.store.data.smartObjects ?? []).map(({ id }) => id));
         if (!(await this.edit({ action: "insert", source }))) return false;

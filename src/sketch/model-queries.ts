@@ -55,6 +55,12 @@ export class ModelQueries {
   get benchTabs() {
     return this.view.benchTabs ?? [defaultBench];
   }
+  async smartObjectSources() {
+    const reply = await call({ kind: "smart-object-sources" });
+    if (reply.error || !reply.smartObjectSources)
+      throw new Error(reply.error ?? "Smart object sources unavailable");
+    return reply.smartObjectSources;
+  }
   async readDrawing() {
     const reply = await call({ kind: "read-drawing" });
     if (reply.error || !reply.drawing)

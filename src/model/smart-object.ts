@@ -1,12 +1,16 @@
 import type { SketchDocument } from "../sketch/document.js";
 import { type Affine, composeAffine, identityAffine, requireAffine } from "./affine.js";
-import type { Drawing } from "./benches.js";
+import type { BenchTab, Drawing } from "./benches.js";
 import type { DisplayDocument } from "./display-document.js";
 
 export interface SmartObject {
   readonly id: string;
   readonly source: string;
   readonly transform: Affine;
+}
+
+export interface SmartObjectSource extends BenchTab {
+  readonly wouldCycle: boolean;
 }
 
 export interface SmartObjectTransform {
@@ -53,6 +57,25 @@ export interface ResolvedPlacement {
   readonly path: readonly string[];
   readonly source: string;
   readonly transform: Affine;
+}
+
+export function smartObjectSources(drawing: Drawing, destination: string): SmartObjectSource[] {
+  const incoming = new Map<string, string[]>();
+  for (const { id, document } of drawing.benches) {
+    for (const { source } of document.smartObjects ?? []) {
+      const parents = incoming.get(source);
+      if (parents) parents.push(id);
+      else incoming.set(source, [id]);
+    }
+  }
+  // Walk incoming edges to find all benches that already reach the destination.
+  const blocked = new Set([destination]);
+  for (const id of blocked) {
+    for (const parent of incoming.get(id) ?? []) blocked.add(parent);
+  }
+  return drawing.benches
+    .filter(({ id }) => id !== destination)
+    .map(({ id, name }) => ({ id, name, wouldCycle: blocked.has(id) }));
 }
 
 /** An iterative walk lets many benches share the same source without revisiting their links. */
