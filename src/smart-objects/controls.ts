@@ -1,5 +1,5 @@
-import { composeAffine } from "../model/affine.js";
 import type { SmartObject, SmartObjectEdit } from "../model/smart-object.js";
+import { transformLayerState } from "../model/transform-layers.js";
 import { showContentPrompt } from "../security/content-prompt.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
@@ -10,18 +10,11 @@ import {
   type ToolDefinition,
   toolCatalog,
 } from "../tools/catalog.js";
-import { selectSource, type TransformMode, transformPlacement } from "./dialogs.js";
+import { selectSource } from "./dialogs.js";
 import { SmartObjectScene } from "./scene.js";
 import { conversionSelection, selectedObjects } from "./selection.js";
 import "./smart-objects.css";
 
-const transforms = new Map<string, TransformMode>([
-  ["move", "move"],
-  ["rotate", "rotate"],
-  ["scale", "scale"],
-  ["mirror", "mirror"],
-  ["transform", "move"],
-]);
 const geometryTools = new Set([
   "edit-sketch",
   "sketch-on-face",
@@ -101,7 +94,10 @@ export class SmartObjectControls {
         const before = new Set((e.store.data.smartObjects ?? []).map(({ id }) => id));
         if (!(await this.edit({ action: "insert", source }))) return false;
         const added = e.store.data.smartObjects?.find(({ id }) => !before.has(id));
-        if (added) this.choose([{ kind: "smart-object", instance: added.id }]);
+        if (added) {
+          transformLayerState(e).enter("move");
+          this.choose([{ kind: "smart-object", instance: added.id }]);
+        }
         return true;
       },
     );
@@ -109,12 +105,6 @@ export class SmartObjectControls {
       const plan = conversionSelection(e);
       return !!plan && this.edit({ action: "convert", selection: plan });
     });
-    this.action(
-      "transform-smart-object",
-      "Transform…",
-      () => (selection().length ? null : "Select a smart object"),
-      () => this.transform(selection(), "move"),
-    );
     this.action("edit-smart-object", "Edit in place", one, () =>
       this.edit({ action: "enter", id: selection()[0].id }),
     );
@@ -159,69 +149,15 @@ export class SmartObjectControls {
   }
 
   private override(id: string): LinkedToolAction | undefined {
-    const mode = transforms.get(id);
-    const duplicate = id === "duplicate";
-    const editsGeometry = geometryTools.has(id);
-    if (!mode && !duplicate && !editsGeometry) return undefined;
+    if (!geometryTools.has(id)) return undefined;
     if (this.editor.world.active || this.editor.interactions.current?.selectsLocally())
       return undefined;
     const objects = selectedObjects(this.editor);
-    if (!objects.length) return undefined;
-    if (editsGeometry) return { beforeEdit: true, run: () => this.detach(objects) };
-    const onlyObjects = objects.length === this.editor.modeling.targets.length;
-    const reason = onlyObjects ? undefined : "Select just the smart objects for this operation";
-    return { reason, run: () => this.transform(objects, mode ?? "move", duplicate) };
+    return objects.length ? { beforeEdit: true, run: () => this.detach(objects) } : undefined;
   }
 
   private edit(edit: SmartObjectEdit): Promise<boolean> {
     return this.editor.store.request({ kind: "smart-object", edit });
-  }
-
-  private async transform(
-    objects: readonly SmartObject[],
-    mode: TransformMode,
-    duplicate = false,
-  ): Promise<boolean> {
-    if (!objects.length || this.editor.modeling.targets.length !== objects.length) {
-      this.editor.message = "Select just the smart objects to transform";
-      return false;
-    }
-    const change = await transformPlacement(
-      objects,
-      mode,
-      (preview) => {
-        this.scene.transformPreview = preview
-          ? {
-              duplicate,
-              transforms: new Map(
-                objects.map((object) => [
-                  object.id,
-                  preview.absolute
-                    ? preview.transform
-                    : composeAffine(preview.transform, object.transform),
-                ]),
-              ),
-            }
-          : undefined;
-        this.editor.refresh();
-      },
-      duplicate,
-    );
-    if (!change) return false;
-    const before = new Set((this.editor.store.data.smartObjects ?? []).map(({ id }) => id));
-    const changed = await this.edit({
-      action: "transform",
-      ids: objects.map(({ id }) => id),
-      ...change,
-      duplicate,
-    });
-    if (changed && duplicate)
-      this.choose(
-        (this.editor.store.data.smartObjects ?? []).flatMap(({ id }) =>
-          before.has(id) ? [] : [{ kind: "smart-object", instance: id }],
-        ),
-      );
-    return changed;
   }
 
   private async detach(objects: readonly SmartObject[]): Promise<boolean> {
@@ -270,7 +206,7 @@ export class SmartObjectControls {
     const visible = new Set([
       ...(e.store.benchTabs.length > 1 && !e.world.active ? ["insert-bench"] : []),
       ...(reasons.get("convert-smart-object") === null ? ["convert-smart-object"] : []),
-      ...(selected ? ["transform-smart-object", "detach-smart-object"] : []),
+      ...(selected ? ["detach-smart-object"] : []),
       ...(selection.length === 1 ? ["edit-smart-object", "open-smart-source"] : []),
       ...(focus.inline.length ? ["exit-smart-object"] : []),
     ]);

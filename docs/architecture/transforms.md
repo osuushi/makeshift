@@ -205,6 +205,12 @@ only enabled layers expose their corresponding controls. The bounding box is
 visible only while Scale is enabled. The earlier Move widget and Option-copy
 contracts above continue to govern its movement controls.
 
+Smart objects use the same modeling handles, local entry, layer choices, and
+preview lifecycle as whole bodies. A placement shares its source geometry and
+stores the composed affine transform. Option-Move and Mirror with **Keep original**
+make additional linked placements. A selection of links and whole bodies accepts
+as one edit. The Scale box uses the transformed geometry's bounds.
+
 The toolbox groups Move, Rotate, Scale and Transform directly below Select, with
 Move as its initial choice. M invokes Move alone. Mirror remains in Other Tools.
 
@@ -218,7 +224,7 @@ modified Enter do not activate this alias. Movement/scaling, cancellation and Un
 continue through the existing controls and document owner.
 
 Selected points still move as points; bounding-box scaling
-currently requires whole curves, whole sketches, bodies, faces or edges.
+currently requires whole curves, whole sketches, smart objects, bodies, faces or edges.
 
 Sketch boxes follow local workspace X/Y; modeling boxes use world X/Y/Z.
 Whole-body bounds use kernel surface extrema, independent of display tessellation

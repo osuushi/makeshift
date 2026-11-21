@@ -1,8 +1,15 @@
-import { affinePoint, affineVector, inverseAffine } from "../model/affine.js";
+import {
+  type Affine,
+  affinePoint,
+  affineVector,
+  inverseAffine,
+  translationAffine,
+} from "../model/affine.js";
 import { type CameraState, captureCamera, restoreCamera } from "../model/camera-state.js";
 import { EntityVisibility } from "../model/entity-visibility.js";
 import { type BenchFocus, benchFocusKey } from "../model/smart-object.js";
 import type { SketchEditor } from "./editor.js";
+import type { Vector } from "./planes.js";
 import type { World } from "./world.js";
 
 interface BenchView {
@@ -29,7 +36,7 @@ export class BenchViews {
   change(
     previous: BenchFocus,
     active: BenchFocus,
-    { replacing, keepCamera }: { replacing: boolean; keepCamera: boolean },
+    { replacing, conversionOrigin }: { replacing: boolean; conversionOrigin?: Vector },
   ): void {
     const e = this.editor;
     const world = e.world;
@@ -69,18 +76,16 @@ export class BenchViews {
     world.workspace = next?.workspace ?? null;
     world.crossSection = next?.crossSection ?? null;
     const inline = active.inline.at(-1);
-    const camera =
+    const placement =
       entering && inline
-        ? cameraInSource(currentCamera, inline.placement.transform)
-        : (next?.camera ?? (keepCamera ? currentCamera : undefined));
+        ? inline.placement.transform
+        : conversionOrigin && translationAffine(conversionOrigin);
+    const camera = placement ? cameraInSource(currentCamera, placement) : next?.camera;
     restoreCamera(world, camera);
   }
 }
 
-function cameraInSource(
-  camera: CameraState,
-  placement: import("../model/affine.js").Affine,
-): CameraState {
+function cameraInSource(camera: CameraState, placement: Affine): CameraState {
   const inverse = inverseAffine(placement);
   const up = affineVector(inverse, camera.up);
   const length = Math.hypot(...up);

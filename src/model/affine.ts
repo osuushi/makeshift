@@ -1,3 +1,4 @@
+import type { Matrix4 } from "three";
 import type { PlaneFrame, Vector } from "../sketch/planes.js";
 
 /** Three row-major rows of a homogeneous transform, in millimeters. */
@@ -27,6 +28,29 @@ const cross = (a: Vector, b: Vector): Vector => [
 ];
 const scale = (v: Vector, factor: number): Vector => [v[0] * factor, v[1] * factor, v[2] * factor];
 const column = (m: Affine, i: number): Vector => [m[i], m[i + 4], m[i + 8]];
+
+export function matrixAffine({ elements: m }: Matrix4): Affine {
+  return [m[0], m[4], m[8], m[12], m[1], m[5], m[9], m[13], m[2], m[6], m[10], m[14]];
+}
+
+export function translationAffine([x, y, z]: Vector): Affine {
+  return [1, 0, 0, x, 0, 1, 0, y, 0, 0, 1, z];
+}
+
+export function scaleAffine([x, y, z]: Vector, pivot: Vector): Affine {
+  return [x, 0, 0, pivot[0] * (1 - x), 0, y, 0, pivot[1] * (1 - y), 0, 0, z, pivot[2] * (1 - z)];
+}
+
+export function reflectionAffine(origin: Vector, normal: Vector): Affine {
+  const length = Math.hypot(...normal);
+  if (!Number.isFinite(length) || length < 1e-12) throw new Error("Invalid mirror normal");
+  const n = scale(normal, 1 / length);
+  const offset = 2 * dot(origin, n);
+  return axes.flatMap((i) => [
+    ...axes.map((j) => Number(i === j) - 2 * n[i] * n[j]),
+    offset * n[i],
+  ]) as unknown as Affine;
+}
 
 export function affineVector(m: Affine, v: Vector): Vector {
   return rows.map((i) => m[i] * v[0] + m[i + 1] * v[1] + m[i + 2] * v[2]) as Vector;

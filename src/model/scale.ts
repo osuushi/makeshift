@@ -7,6 +7,7 @@ export type ScaleSource =
   | {
       kind: "solids";
       ids: string[];
+      smartObjectIds?: string[];
       faces: BodyFaceOffset["faces"];
       edges: BodyEdgeFinish["edges"];
     };

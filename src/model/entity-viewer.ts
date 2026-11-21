@@ -221,9 +221,10 @@ export class EntityViewer {
         merge.disabled = !!toolCatalog(this.editor).reason({ reason: () => null });
       }
       select.disabled = this.sourcePicker
-        ? target.kind === "smart-object" ||
-          this.editor.blocked ||
-          this.sourcePicker.available?.(target) === false
+        ? this.editor.blocked ||
+          (target.kind === "smart-object"
+            ? this.sourcePicker.available?.(target) !== true
+            : this.sourcePicker.available?.(target) === false)
         : !!toolCatalog(this.editor).reason({ reason: () => null });
       row.classList.toggle("entity-hidden", !visible);
     });

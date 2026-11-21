@@ -33,7 +33,7 @@
   margin: 0 0 12px;
   font-size: 16px;
 }
-.smart-object-dialog :is(input, select) {
+.smart-object-dialog select {
   width: 100%;
   min-height: 32px;
   padding: 4px 6px;
@@ -43,28 +43,10 @@
   border: 1px solid var(--border);
   font: inherit;
 }
-.smart-object-dialog :is(.affine-matrix, .transform-vector) {
-  display: grid;
-  gap: 8px;
-  margin-top: 12px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-.smart-object-dialog .affine-matrix {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-.smart-object-dialog label {
-  display: grid;
-  gap: 3px;
-  font-size: 12px;
-}
 .smart-object-dialog footer {
   display: flex;
   flex-wrap: wrap;
   justify-content: end;
   gap: 8px;
   margin-top: 14px;
-}
-.smart-object-dialog [role="status"] {
-  color: var(--danger);
-  margin-bottom: 0;
 }

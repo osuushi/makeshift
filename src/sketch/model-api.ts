@@ -157,6 +157,7 @@ export type ModelReply = {
   exportDocument?: SketchDocument;
   sections?: import("../model/sketch-section.js").SketchSection[];
   documentChanged?: boolean;
+  conversionOrigin?: import("./planes.js").Vector;
   view: ModelView;
   error?: string;
   history?: OperationHistoryEntry[];

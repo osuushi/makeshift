@@ -1,3 +1,4 @@
+import type { SketchDocument } from "../sketch/document.js";
 import { type Affine, composeAffine, identityAffine, requireAffine } from "./affine.js";
 import type { Drawing } from "./benches.js";
 import type { DisplayDocument } from "./display-document.js";
@@ -8,15 +9,16 @@ export interface SmartObject {
   readonly transform: Affine;
 }
 
+export interface SmartObjectTransform {
+  ids: readonly string[];
+  transform: Affine;
+  absolute?: boolean;
+  duplicate?: boolean;
+}
+
 export type SmartObjectEdit =
   | { action: "insert"; source: string }
-  | {
-      action: "transform";
-      ids: string[];
-      transform: Affine;
-      absolute?: boolean;
-      duplicate?: boolean;
-    }
+  | ({ action: "transform" } & SmartObjectTransform)
   | { action: "detach"; ids: string[] }
   | { action: "convert"; selection: SmartObjectSelection }
   | { action: "enter" | "source"; id: string }
@@ -116,4 +118,31 @@ export function validateSmartObject(object: SmartObject): void {
   if (!object || typeof object.source !== "string" || !object.source)
     throw new Error("Invalid smart object source bench");
   requireAffine(object.transform);
+}
+
+export function transformSmartObjects<D extends Pick<SketchDocument, "smartObjects">>(
+  document: D,
+  edit: SmartObjectTransform,
+  copyId: (id: string) => string,
+): D {
+  requireAffine(edit.transform);
+  if (!edit.ids.length) throw new Error("Select smart objects to transform");
+  const objects = document.smartObjects ?? [];
+  const byId = new Map(objects.map((object) => [object.id, object]));
+  const transformed = new Map<string, SmartObject>();
+  for (const id of new Set(edit.ids)) {
+    const object = byId.get(id);
+    if (!object) throw new Error("A selected smart object no longer exists");
+    const transform = edit.absolute
+      ? edit.transform
+      : composeAffine(edit.transform, object.transform);
+    requireAffine(transform);
+    transformed.set(id, { ...object, transform, id: edit.duplicate ? copyId(id) : id });
+  }
+  return {
+    ...document,
+    smartObjects: edit.duplicate
+      ? [...objects, ...transformed.values()]
+      : objects.map((object) => transformed.get(object.id) ?? object),
+  };
 }

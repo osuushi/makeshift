@@ -8,6 +8,7 @@ import type { ModelReply, ModelRequest, ModelView } from "./model-api.js";
 import { ModelQueries } from "./model-queries.js";
 import { call } from "./model-transport.js";
 import type { HistoryOperation, OperationHistoryEntry } from "./operation-history.js";
+import type { Vector } from "./planes.js";
 import { retainViewSketches } from "./retain-view-sketches.js";
 import type { SelectionHistory } from "./selection-history.js";
 
@@ -56,7 +57,7 @@ export class ModelClient extends ModelQueries {
     private changedBench?: (
       previous: BenchFocus,
       active: BenchFocus,
-      options: { replacing: boolean; keepCamera: boolean },
+      options: { replacing: boolean; conversionOrigin?: Vector },
     ) => void,
   ) {
     super();
@@ -235,7 +236,7 @@ export class ModelClient extends ModelQueries {
       this.selectionHistory?.accepted(true);
       this.changedBench?.(previous, this.benchFocus, {
         replacing: replaced || !this.initialized,
-        keepCamera: request.kind === "smart-object" && request.edit.action === "convert",
+        conversionOrigin: reply.conversionOrigin,
       });
     }
     if (direction && reply.view.historyOperation)

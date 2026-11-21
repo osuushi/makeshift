@@ -59,10 +59,10 @@ with fresh IDs. Pasting is one step in the destination bench's history.
 **Insert bench…** adds a live placement of a source bench to the current bench.
 Each placement has its own ID and affine transform. Placements can nest and share
 sources. Acceptance, Undo, Redo, and Open all check that the links are acyclic.
-Select placements in the viewport or under **Smart objects** in Entities. Move,
-Rotate, Scale, Mirror, and **Transform…** operate on the selected placements.
-The numeric affine matrix also supports shear. Duplicate creates a second link and
-Delete removes the selected link with the rest of the selection.
+Select placements in the viewport or under **Smart objects** in Entities. The
+ordinary Move, Rotate, Scale and Mirror controls apply to the selected placements,
+including a selection of links and whole solids. Option-Move or Duplicate creates
+a second link. Delete removes the selected link with the rest of the selection.
 
 **Edit in place** opens the source in its own coordinates with surrounding
 geometry dimmed for context. Source edits and Undo update every linked placement.
@@ -70,10 +70,12 @@ geometry dimmed for context. Source edits and Undo update every linked placement
 source tab. Context geometry is for visual reference while editing.
 
 **Make smart object** moves selected bodies, sketches, sketch curves or regions,
-planes, and links into a new bench and opens its tab at the current view. One
-placement takes their place in the parent. Undo restores the parent's geometry, and
-the source tab remains available with its own history. Select a whole body to
-include it in the conversion.
+planes, and links into a new bench and opens its tab. The new origin is the center
+of the selected geometry's bounds in the original bench axes. The source camera
+uses the new coordinates and keeps the selection framed. The linked placement
+keeps the original geometry's position in the parent bench. Undo restores the
+parent's geometry and keeps the source tab available. Select a whole body to include
+it in the conversion.
 
 Geometry edits on placements ask to **Make independent**. Confirming replaces
 each link with editable geometry at its placement in one Undo step. Stretched or

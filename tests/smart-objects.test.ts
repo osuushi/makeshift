@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
-import { type Affine, affinePoint, identityAffine } from "../src/model/affine.js";
+import { type Affine, affinePoint, composeAffine, identityAffine } from "../src/model/affine.js";
 import type { Body } from "../src/model/body.js";
 import { archivedDrawing, drawingArchive } from "../src/model/document-archive.js";
 import { readPortableArchive, writePortableArchive } from "../src/model/portable-archive.js";
@@ -37,8 +37,9 @@ async function stock(owner: DocumentOwner) {
   });
   const view = await apply(owner, { kind: "accept" });
   const body = view.data.bodies?.[0];
-  assert.ok(body);
-  return { sketch, body, id: owner.drawing.activeBench };
+  const acceptedSketch = view.data.sketches.find(({ id }) => id === sketch.id);
+  assert.ok(body && acceptedSketch);
+  return { sketch: acceptedSketch, body, id: owner.drawing.activeBench };
 }
 
 function checkDetachedBody(body: Body | undefined, source: Body): void {
@@ -131,7 +132,7 @@ test("linked placements share source edits and detach to fresh exact geometry at
   }
 });
 
-test("converting a mixed selection opens its source and Undo restores the parent selection's geometry", async () => {
+test("conversion centers the source and preserves the world placement of solids, sketches and nested links", async () => {
   const owner = new DocumentOwner();
   try {
     const parent = await stock(owner);
@@ -147,7 +148,11 @@ test("converting a mixed selection opens its source and Undo restores the parent
     assert.notEqual(inside.activeBench, parent.id);
     assert.equal(inside.data.bodies?.[0].id, parent.body.id);
     assert.equal(inside.data.sketches[0].id, parent.sketch.id);
-    assert.deepEqual(inside.data.smartObjects, [object]);
+    const local = inside.data;
+    const localBody = local.bodies?.[0];
+    const localObject = local.smartObjects?.[0];
+    assert.ok(localBody && localObject);
+    assert.equal(localObject.id, object.id);
     const source = inside.activeBench;
     await openBench(owner, parent.id);
     assert.equal(owner.view.data.bodies?.length, 0);
@@ -155,6 +160,18 @@ test("converting a mixed selection opens its source and Undo restores the parent
     const wrapper = owner.view.data.smartObjects?.[0];
     assert.ok(wrapper);
     assert.equal(wrapper.source, source);
+    const center = affinePoint(wrapper.transform, [0, 0, 0]);
+    for (const [i, value] of center.entries()) {
+      assert.ok(Math.abs(value - [4, 3, 2][i]) < 1e-6);
+      assert.ok(Math.abs(localBody.bounds[i] + localBody.bounds[i + 3]) < 1e-6);
+      assert.ok(Math.abs(localBody.bounds[i] + value - parent.body.bounds[i]) < 1e-6);
+    }
+    assert.deepEqual(local.sketches[0].curves, parent.sketch.curves);
+    assert.deepEqual(
+      affinePoint(wrapper.transform, local.sketches[0].plane.origin),
+      parent.sketch.plane.origin,
+    );
+    assert.deepEqual(composeAffine(wrapper.transform, localObject.transform), object.transform);
     await smart(owner, { action: "enter", id: wrapper.id });
     const nested = await smart(owner, { action: "enter", id: object.id });
     assert.equal(nested.activeBench, parent.id);

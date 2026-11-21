@@ -200,7 +200,10 @@ export class DocumentOwner {
     const before = store.data;
     const operation = this.session.operation(request);
     try {
-      await this.dispatch(request, operation);
+      const conversionOrigin =
+        request.kind === "smart-object"
+          ? await this.commands.editSmartObject(request.edit, operation)
+          : await this.dispatch(request, operation);
       if (this.session.candidate && !this.session.reopenedPreview)
         this.session.refine(await this.decorators.continue(this.session.candidate, before));
       if (request.kind === "complete-preview" && this.kernel.wasSuperseded)
@@ -208,7 +211,11 @@ export class DocumentOwner {
       this.checkCancellation();
       const documentChanged =
         before !== store.data || request.kind === "new" || request.kind === "open";
-      return { view: this.view, documentChanged };
+      return {
+        view: this.view,
+        documentChanged,
+        ...(conversionOrigin ? { conversionOrigin } : {}),
+      };
     } catch (error) {
       const { outcome, ...failure } = documentFailure(
         error,
@@ -225,11 +232,7 @@ export class DocumentOwner {
     }
   }
   private async dispatch(request: ModelRequest, operation: HistoryOperation): Promise<void> {
-    if (
-      request.kind === "bench" ||
-      request.kind === "smart-object" ||
-      request.kind === "check-plane-cut"
-    ) {
+    if (request.kind === "bench" || request.kind === "check-plane-cut") {
       await this.commands.run(request, operation);
       return;
     }

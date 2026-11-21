@@ -7,6 +7,7 @@ import { distance } from "../sketch/point-math.js";
 import { pointHits } from "../sketch/point-query.js";
 import { profilesFor } from "../sketch/profiles.js";
 import { pointTarget } from "../sketch/selection-target.js";
+import { linkedPreview } from "../smart-objects/linked-preview.js";
 import type { ToolSelection, ToolTarget } from "./tool-selection.js";
 
 export interface SelectionCandidate extends PreviewGeometry {
@@ -63,6 +64,10 @@ export function selectionCandidates(selection: ToolSelection): SelectionCandidat
       model({ kind: "sketch", sketch: sketch.id });
       for (const profile of profilesFor(sketch))
         model({ kind: "profile", sketch: sketch.id, profile });
+    }
+    for (const object of e.store.data.smartObjects ?? []) {
+      if (e.visibility.visible(object.id))
+        add({ kind: "smart-object", instance: object.id }, () => linkedPreview(e, [object.id]));
     }
   }
   return result;

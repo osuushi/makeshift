@@ -2,6 +2,8 @@ import { boundaryPoints } from "../sketch/curve-spans.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { type Vector, worldPoint } from "../sketch/planes.js";
 import { sketchCenter } from "../sketch/sketch-placement.js";
+import { linkedSelectionBounds } from "../smart-objects/selection-bounds.js";
+import { boundsPoints } from "./smart-object-bounds.js";
 
 export function selectionAnchor(editor: SketchEditor): Vector {
   const points: Vector[] = [];
@@ -29,7 +31,11 @@ export function selectionAnchor(editor: SketchEditor): Vector {
           points.push([face.vertices[i], face.vertices[i + 1], face.vertices[i + 2]]);
       continue;
     }
-    if (target.kind === "smart-object") continue;
+    if (target.kind === "smart-object") {
+      const bounds = linkedSelectionBounds(editor, [target.instance]);
+      if (!bounds.isEmpty()) points.push(...boundsPoints(bounds));
+      continue;
+    }
     const sketch = editor.store.data.sketches.find((s) => s.id === target.sketch);
     if (!sketch) continue;
     if (target.kind === "sketch") points.push(sketchCenter(sketch));

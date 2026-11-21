@@ -36,6 +36,7 @@ export class BodyGizmo {
   private boxEditor: SketchEditor | null = null;
   private unobserveBox: () => void = () => {};
   private repaint: () => void = () => {};
+  private targetLabel = "";
   private handles: { axis: string; rotate: boolean; button: HTMLButtonElement }[] = [];
   constructor(
     overlay: HTMLElement,
@@ -52,10 +53,6 @@ export class BodyGizmo {
         button.className = `body-axis-handle ${rotate ? "body-rotate-handle" : "body-translate-handle"}`;
         button.dataset.axis = axis;
         bindWidgetField(button, this.input);
-        button.setAttribute(
-          "aria-label",
-          `${rotate ? "Rotate" : "Move"} ${target} ${axis === "N" ? "normal" : axis}`,
-        );
         button.title = `${rotate ? "Rotate around" : "Move along"} ${axis === "N" ? "boundary normal" : axis} · ${rotate ? "5° · Shift: 0.5°" : "Shift: finer grid"} · drag or click to type`;
         button.addEventListener("pointerdown", (event) => start(event, axis, rotate));
         button.addEventListener("transform-numeric-tap", () =>
@@ -77,11 +74,21 @@ export class BodyGizmo {
       }
     this.pivot.className = "body-pivot move-anchor";
     this.pivot.title = "Drag anchor · Command for free placement";
-    this.pivot.setAttribute("aria-label", `Reposition ${target} pivot`);
     this.input.className = target === "body" ? "body-transform-value" : "face-transform-value";
     this.input.inputMode = "decimal";
     this.root.append(this.pivot, this.input);
+    this.label(target);
     overlay.append(this.root);
+  }
+  label(target: string): void {
+    if (this.targetLabel === target) return;
+    this.targetLabel = target;
+    for (const { button, axis, rotate } of this.handles)
+      button.setAttribute(
+        "aria-label",
+        `${rotate ? "Rotate" : "Move"} ${target} ${axis === "N" ? "normal" : axis}`,
+      );
+    this.pivot.setAttribute("aria-label", `Reposition ${target} pivot`);
   }
   update(
     editor: SketchEditor,

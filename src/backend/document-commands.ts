@@ -2,6 +2,7 @@ import { type BenchEdit, type Drawing, singleBench } from "../model/benches.js";
 import type { SmartObjectEdit } from "../model/smart-object.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import type { HistoryOperation } from "../sketch/operation-history.js";
+import type { Vector } from "../sketch/planes.js";
 import type { DecoratorSession } from "./decorator-session.js";
 import { DocumentGeometry } from "./document-geometry.js";
 import type { DocumentSession } from "./document-session.js";
@@ -31,11 +32,21 @@ export class DocumentCommands {
     benches.edit(edit);
     this.changedBench(previous);
   }
-  private async editSmartObject(edit: SmartObjectEdit, operation: HistoryOperation): Promise<void> {
+  async editSmartObject(
+    edit: SmartObjectEdit,
+    operation: HistoryOperation,
+  ): Promise<Vector | undefined> {
     const benches = this.session.benches;
     const previous = benches.editing;
-    await editSmartObjects(benches, this.kernel, edit, operation, this.checkCancellation);
+    const origin = await editSmartObjects(
+      benches,
+      this.kernel,
+      edit,
+      operation,
+      this.checkCancellation,
+    );
     this.changedBench(previous);
+    return origin;
   }
   private changedBench(previous: string): void {
     const editing = this.session.benches.editing;
@@ -58,9 +69,6 @@ export class DocumentCommands {
     switch (request.kind) {
       case "bench":
         this.editBench(request.edit);
-        break;
-      case "smart-object":
-        await this.editSmartObject(request.edit, operation);
         break;
       case "check-plane-cut":
         this.planeCutAvailable = await planeCutAvailable(

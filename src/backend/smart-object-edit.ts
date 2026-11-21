@@ -1,16 +1,22 @@
-import { composeAffine, identityAffine, requireAffine } from "../model/affine.js";
-import type { SmartObject, SmartObjectEdit } from "../model/smart-object.js";
+import { type Affine, identityAffine, translationAffine } from "../model/affine.js";
+import {
+  type SmartObject,
+  type SmartObjectEdit,
+  transformSmartObjects,
+} from "../model/smart-object.js";
 import { newId } from "../sketch/document.js";
 import type { HistoryOperation } from "../sketch/operation-history.js";
+import type { Vector } from "../sketch/planes.js";
 import { convertSmartSelection, selected } from "./convert-smart-selection.js";
 import type { DrawingBenches } from "./drawing-benches.js";
 import { materializeSmartObjects } from "./materialize-smart-objects.js";
+import { rebaseSmartSelection } from "./rebase-smart-selection.js";
 import type { SolidCalculator } from "./solid-calculator.js";
 
-const placement = (source: string): SmartObject => ({
+const placement = (source: string, transform: Affine = identityAffine): SmartObject => ({
   id: newId(),
   source,
-  transform: identityAffine,
+  transform,
 });
 
 /** All linked edits run in the owner's ordinary edit slot. */
@@ -20,7 +26,7 @@ export async function editSmartObjects(
   edit: SmartObjectEdit,
   operation: HistoryOperation,
   checkCancellation: () => void,
-): Promise<void> {
+): Promise<Vector | undefined> {
   const document = benches.store.data;
   const objects = document.smartObjects ?? [];
   const accept = (smartObjects: readonly SmartObject[]) =>
@@ -29,29 +35,25 @@ export async function editSmartObjects(
     case "insert":
       accept([...objects, placement(edit.source)]);
       return;
-    case "transform": {
-      requireAffine(edit.transform);
-      const affected = new Set(selected(objects, edit.ids));
-      const placed = (object: SmartObject) => ({
-        ...object,
-        transform: edit.absolute ? edit.transform : composeAffine(edit.transform, object.transform),
-        id: edit.duplicate ? newId() : object.id,
-      });
-      accept(
-        edit.duplicate
-          ? [...objects, ...[...affected].map(placed)]
-          : objects.map((object) => (affected.has(object) ? placed(object) : object)),
-      );
+    case "transform":
+      benches.store.accept(transformSmartObjects(document, edit, newId), operation);
       return;
-    }
     case "convert": {
       const { source, parent } = convertSmartSelection(document, edit.selection);
+      const rebased = await rebaseSmartSelection(source, (id) => benches.document(id), kernel);
+      checkCancellation();
       benches.convert(
-        source,
-        (id) => ({ ...parent, smartObjects: [...(parent.smartObjects ?? []), placement(id)] }),
+        rebased.document,
+        (id) => ({
+          ...parent,
+          smartObjects: [
+            ...(parent.smartObjects ?? []),
+            placement(id, translationAffine(rebased.origin)),
+          ],
+        }),
         operation,
       );
-      return;
+      return rebased.origin;
     }
     case "enter":
     case "source": {

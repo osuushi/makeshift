@@ -21,7 +21,6 @@ export class SmartObjectScene {
   private pickable: { id: string; group: THREE.Group }[] = [];
   private bounds = new THREE.Box3();
   private previousBounds: () => THREE.Box3;
-  transformPreview?: { transforms: ReadonlyMap<string, Affine>; duplicate: boolean };
 
   constructor(private editor: SketchEditor) {
     const world = editor.world;
@@ -38,26 +37,13 @@ export class SmartObjectScene {
 
   private items(lookup: (id: string) => LinkedBench | undefined): SceneItem[] {
     const store = this.editor.store;
-    const visible = (store.data.smartObjects ?? []).filter(({ id }) =>
+    const objects = (this.editor.display.smartObjects ?? []).filter(({ id }) =>
       this.editor.visibility.visible(id),
     );
-    const preview = this.transformPreview;
-    const objects = visible.map((object) => {
-      const transform = preview?.transforms.get(object.id);
-      return transform && !preview?.duplicate ? { ...object, transform } : object;
-    });
     const items: SceneItem[] = [...resolvePlacements(objects, lookup)].map((placement) => ({
       ...placement,
       key: JSON.stringify(placement.path),
     }));
-    if (preview?.duplicate) {
-      const copies = visible.flatMap((object) => {
-        const transform = preview.transforms.get(object.id);
-        return transform ? [{ ...object, transform }] : [];
-      });
-      for (const item of resolvePlacements(copies, lookup))
-        items.push({ ...item, key: JSON.stringify(["preview", ...item.path]) });
-    }
     let inverse = identityAffine;
     for (const { parent, placement } of [...store.benchFocus.inline].reverse()) {
       inverse = composeAffine(inverse, inverseAffine(placement.transform));
