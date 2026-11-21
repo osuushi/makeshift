@@ -1,3 +1,4 @@
+import { cameraIsHeadOn } from "../sketch/camera-motion.js";
 import { completeInteraction } from "../sketch/complete-interaction.js";
 import { curveBounds } from "../sketch/curve-geometry.js";
 import type { SketchEditor } from "../sketch/editor.js";
@@ -224,10 +225,13 @@ export class ProfileEditControls {
       const body = e.store.acceptedData.bodies?.find((body) => body.id === applied?.body);
       const previous = this.previous;
       this.previous = undefined;
-      e.world.crossSection = previous?.section ?? null;
-      e.world.navigation.withoutRecording(() => {
-        e.world.exit();
-        if (previous) e.world.animateCamera(previous.camera);
+      const { world } = e;
+      const restoreView = !apply || cameraIsHeadOn(world.camera, profile.sketch.plane);
+      world.navigation.withoutRecording(() => {
+        world.navigation.clear();
+        world.crossSection = previous?.section ?? null;
+        world.exit();
+        if (restoreView && previous) world.animateCamera(previous.camera);
       });
       const selection = previous?.selection ?? [];
       const surviving = body

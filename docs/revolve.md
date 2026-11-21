@@ -130,8 +130,10 @@ Use the ordinary sketch tools to edit the temporary profile. Sketch gestures and
 their Undo/Redo stay in the profile. You can keep editing as the solid rebuilds.
 The viewport shows the latest validated solid while a newer profile is pending.
 **Apply** or Enter on the canvas waits for the current profile and accepts it in
-one document Undo step. Cancel and Escape ask before discarding a changed
-profile. Active sketch tools and numeric fields own their usual shortcuts.
+one document Undo step. Applying from an oblique view keeps that camera pose.
+Applying from the head-on profile view restores the camera saved at entry.
+Cancel and Escape ask before discarding a changed profile. Active sketch tools
+and numeric fields own their usual shortcuts.
 
 After Apply, Cmd/Ctrl-R reopens the applied sketch with its exact solid preview.
 Apply there replaces the same Undo step. Cancel there leaves the edit undone

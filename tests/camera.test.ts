@@ -5,6 +5,7 @@ import { defaultCameraPosition, restoreCamera } from "../src/model/camera-state.
 import {
   alignCameraToPlane,
   applyCameraPose,
+  cameraIsHeadOn,
   panCamera,
   planeCameraPose,
   rollCamera,
@@ -107,10 +108,12 @@ test("plane entry retains the nearest quarter turn on either side of coordinate 
           camera.lookAt(target);
           const before = camera.quaternion.clone();
           const view = { camera, target, height: 80 };
+          assert.equal(cameraIsHeadOn(camera, frame), false);
           const pose = planeCameraPose(view, frame);
           assert.ok(pose.quaternion.angleTo(expected) < 1e-7);
           assert.ok(before.angleTo(pose.quaternion) < 0.15, "Entry takes the short turn");
           applyCameraPose(view, pose);
+          assert.equal(cameraIsHeadOn(camera, frame), true);
           assert.ok(camera.up.dot(new THREE.Vector3(...frame.u)) ** 2 > 0.999999);
           assert.deepEqual(frame, unchanged, "Camera roll never changes the plane frame");
         }
