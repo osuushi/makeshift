@@ -256,7 +256,7 @@ Band inspectExterior(const Operand& body, const std::vector<Patch>& patches, Sel
             (patch.surface.IsUClosed() || patch.surface.IsVClosed());
     });
     auto planar = sectionWithPlanarCuts(body, axis, cuts);
-    if (!planar && !closedSpline && !hasSplitCut(cuts)) {
+    if (!planar && !closedSpline && !hasDisconnectedCut(cuts)) {
         if (cuts.empty()) return inspectCarrier(body, body, patches, std::move(selected), axis);
         return inspectHealed(body, cuts, selected, axis, verifyRecovery);
     }

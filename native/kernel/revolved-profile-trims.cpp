@@ -1,6 +1,7 @@
 #include "revolved-profile.h"
 #include "boolean-probe.h"
 #include "geometry-policy.h"
+#include <BOPTools_AlgoTools.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
@@ -159,8 +160,18 @@ bool hasMaterial(const TopoDS_Shape& shape, double threshold) {
     return false;
 }
 
-bool hasSplitCut(const std::vector<SourceEntity>& walls) {
-    return distinctCylinders(walls).size() < walls.size();
+bool hasDisconnectedCut(const std::vector<SourceEntity>& walls) {
+    return std::ranges::any_of(distinctCylinders(walls), [](const CylinderCut& cut) {
+        if (cut.walls.size() < 2) return false;
+        // The cylinder seam can split one continuous cut into adjacent faces.
+        TopoDS_Compound patches;
+        BRep_Builder builder;
+        builder.MakeCompound(patches);
+        for (const auto& wall : cut.walls) builder.Add(patches, wall.shape);
+        TopTools_ListOfShape components;
+        BOPTools_AlgoTools::MakeConnexityBlocks(patches, TopAbs_EDGE, TopAbs_FACE, components);
+        return components.Extent() > 1;
+    });
 }
 
 TopoDS_Shape recutParallel(TopoDS_Shape stock, const std::vector<SourceEntity>& walls,

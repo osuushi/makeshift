@@ -55,7 +55,7 @@ TopoDS_Shape replaceCorner(const Band&, const TopoDS_Shape& revolved, std::vecto
 bool hasMaterial(const TopoDS_Shape&, double threshold);
 TopoDS_Shape joinCutSeams(const TopoDS_Shape&, std::vector<SourceEntity>&);
 TopoDS_Shape trimDimples(const TopoDS_Shape&, const Band&, std::vector<SourceEntity>&);
-bool hasSplitCut(const std::vector<SourceEntity>&);
+bool hasDisconnectedCut(const std::vector<SourceEntity>&);
 TopoDS_Shape recutParallel(TopoDS_Shape, const std::vector<SourceEntity>&, std::vector<SourceEntity>&);
 TopoDS_Shape recutPlanar(TopoDS_Shape, const std::vector<PlanarCut>&, std::vector<SourceEntity>&);
 void verifySameMaterial(const TopoDS_Shape&, const TopoDS_Shape&, const char* message);

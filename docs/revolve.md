@@ -150,9 +150,10 @@ constraint and the side curves are selected on entry for radial edits.
 After revolving the edited region, the kernel re-cuts separate spherical
 dimples, complete through-bores, lengthwise cylindrical cuts and supported planar
 notches from the original supports. A lengthwise cut can open through the side
-and the caps, or appear in several disconnected patches. For a split cut, the
-kernel recovers a meridian clear of the cutter and verifies that revolving and re-cutting it
-reproduces the original solid. Recesses that miss or merely touch are omitted.
+and the caps. Faces that meet across a cylinder's seam form one continuous cut.
+For disconnected patches on a cutter, the kernel recovers a meridian clear of
+the cutter. It verifies that recovering and re-cutting the stock reproduces the
+original solid. Recesses that miss or merely touch are omitted.
 The preview counts omitted dimples.
 
 An intact meridian supplies the complete cap for a turned part with a planar
