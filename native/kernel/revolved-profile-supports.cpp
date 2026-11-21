@@ -7,7 +7,6 @@
 #include <GC_MakeSegment.hxx>
 #include <Precision.hxx>
 #include <TopExp.hxx>
-#include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Shell.hxx>
 #include <gp_Cone.hxx>
@@ -186,20 +185,21 @@ Band inspectCarrier(const Operand& body, const Operand& carrier, const std::vect
     Band band{body, radialFrame(axis, low), high - low};
     if (band.height <= lengthTolerance) throw std::runtime_error("The turned profile has no axial span");
     Selection boreWalls;
+    TopTools_MapOfShape editable;
     for (const auto& patch : patches) {
         if (const auto radii = capRadii(patch, axis)) {
             const double y = gp_Vec(band.frame.Location(), patch.surface.Plane().Location()).Dot(gp_Vec(axis.Direction()));
             const Handle(Geom_Curve) segment(
                 GC_MakeSegment(band.at((*radii)[0], y), band.at((*radii)[1], y)).Value());
             band.meridians.push_back({patch.id, segment});
-            selected.erase(patch.id);
+            editable.Add(patch.face);
         } else if (inwardSphere(patch)) {
             const auto sphere = patch.surface.Sphere();
             checkDimple(sphere, band);
             band.dimples.push_back({patch.id, sphere});
         } else if (centeredSide(patch, axis)) {
             band.meridians.push_back({patch.id, meridian(patch.face, band)});
-            selected.erase(patch.id);
+            editable.Add(patch.face);
         } else if (!boreWalls.contains(patch.id)) {
             if (!inwardAxis(patch.face))
                 throw std::runtime_error("The turned exterior has an unsupported neighboring surface");
@@ -208,6 +208,9 @@ Band inspectCarrier(const Operand& body, const Operand& carrier, const std::vect
             band.bores.push_back(std::move(bore));
         }
     }
+    // Healing can merge several original faces into one editable surface.
+    for (const auto& source : carrier.entities)
+        if (editable.Contains(source.shape)) selected.erase(source.id);
     if (!selected.empty()) throw std::runtime_error("Select faces on one turned exterior");
     return band;
 }

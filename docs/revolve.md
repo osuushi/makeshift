@@ -118,8 +118,9 @@ the behavior to exercise. Automated checks do not establish founder acceptance.
 
 ## Edit Profile
 
-In Modeling, select a turned body, a face of its connected exterior, a
-through-bore wall or a cylindrical corner fillet and choose **Edit Profile**.
+In Modeling, select a turned body, a face of its exterior, a through-bore wall
+or a cylindrical corner fillet and choose **Edit Profile**. Exterior patches
+separated by lengthwise flutes can open the same profile.
 The tool recovers a section from the current BRep in a plane through the selected
 axis. Visible bodies are sectioned in that plane, including the current preview.
 Other bodies can be used as projection references. Orbit to inspect the part, then choose **Look at
