@@ -1,4 +1,5 @@
 import { hasFailureCode } from "../model/calculation-failure.js";
+import { type BenchFocus, benchFocusKey } from "../model/smart-object.js";
 import type { VisualPreview } from "../model/visual-preview.js";
 import { sketchGridPreferences } from "../preferences/sketch-grid.js";
 import { cancellableCalculation } from "./calculation-state.js";
@@ -7,6 +8,7 @@ import type { ModelReply, ModelRequest, ModelView } from "./model-api.js";
 import { ModelQueries } from "./model-queries.js";
 import { call } from "./model-transport.js";
 import type { HistoryOperation, OperationHistoryEntry } from "./operation-history.js";
+import type { Vector } from "./planes.js";
 import { retainViewSketches } from "./retain-view-sketches.js";
 import type { SelectionHistory } from "./selection-history.js";
 
@@ -53,6 +55,11 @@ export class ModelClient extends ModelQueries {
     private changed: () => void,
     private error: (message: string) => void,
     private navigated?: (operation: HistoryOperation, direction: "undo" | "redo") => void,
+    private changedBench?: (
+      previous: BenchFocus,
+      active: BenchFocus,
+      options: { replacing: boolean; conversionOrigin?: Vector },
+    ) => void,
   ) {
     super();
   }
@@ -135,6 +142,8 @@ export class ModelClient extends ModelQueries {
     if (
       ![
         "read",
+        "bench",
+        "restore-decorators",
         "sketch-grid",
         "accept",
         "discard",
@@ -224,11 +233,25 @@ export class ModelClient extends ModelQueries {
             : request.kind === "undo" || request.kind === "redo"
               ? request.kind
               : null;
-    this.view = retainViewSketches(this.view, reply.view);
+    const previous = this.benchFocus;
+    const switched =
+      reply.view.activeBench !== undefined &&
+      benchFocusKey({ active: reply.view.activeBench, inline: reply.view.inline ?? [] }) !==
+        benchFocusKey(previous);
+    this.view = retainViewSketches(this.view, reply.view, switched);
     this.appliedProfile = reply.appliedProfile;
     this.erosionAllowance = reply.erosionAllowance;
     if (reply.error) throw new Error(reply.error);
-    if (direction || reply.documentChanged) this.sentSelection = undefined;
+    const replaced = request.kind === "new" || request.kind === "open";
+    if (direction || reply.documentChanged || switched) this.sentSelection = undefined;
+    if (switched || replaced) {
+      this.lastEdit = null;
+      this.selectionHistory?.accepted(true);
+      this.changedBench?.(previous, this.benchFocus, {
+        replacing: replaced || !this.initialized,
+        conversionOrigin: reply.conversionOrigin,
+      });
+    }
     if (direction && reply.view.historyOperation)
       this.navigated?.(reply.view.historyOperation, direction);
     const selection = reply.view.historySelection;
@@ -240,14 +263,14 @@ export class ModelClient extends ModelQueries {
     )
       this.selectionHistory?.restore(selection);
     else if (
-      request.kind === "new" ||
-      request.kind === "open" ||
+      !switched &&
+      !replaced &&
       // The profile controller restores modeling selection after the owner closes its draft.
-      request.kind === "cancel-profile-edit" ||
-      request.kind === "apply-profile-edit" ||
-      (reply.documentChanged && request.kind !== "sketch-grid")
+      (request.kind === "cancel-profile-edit" ||
+        request.kind === "apply-profile-edit" ||
+        (reply.documentChanged && request.kind !== "sketch-grid"))
     )
-      this.selectionHistory?.accepted(request.kind === "new" || request.kind === "open");
+      this.selectionHistory?.accepted();
     this.initialized = true;
     this.error("");
     return true;

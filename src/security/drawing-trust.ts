@@ -4,15 +4,15 @@ import { ContentTrust } from "./content-trust.js";
 import { decoratorDigest, portableDigest, type Seals } from "./signatures.js";
 
 export class DrawingTrust extends ContentTrust {
-  async opened(doc: DisplayDocument, files: PortableFiles, seals: Seals = {}) {
+  async opened(doc: DisplayDocument | Drawing, files: PortableFiles, seals: Seals = {}) {
     await this.load("decorators", await decoratorDigest(doc), seals);
     await this.load("workspace", await portableDigest(files), seals);
   }
-  async allowDecorators(doc: DisplayDocument) {
+  async allowDecorators(doc: DisplayDocument | Drawing) {
     const digest = await decoratorDigest(doc);
     return !!digest && (await this.authorize("decorators", digest)) === "allow";
   }
-  async prepareSave(doc: DisplayDocument, files: PortableFiles) {
+  async prepareSave(doc: DisplayDocument | Drawing, files: PortableFiles) {
     const workspace = await portableDigest(files),
       decorators = await decoratorDigest(doc);
     const seals: Seals = {};
@@ -33,4 +33,10 @@ export function usedDefinitions(doc: DisplayDocument) {
   return (doc.decoratorDefinitions ?? []).filter((def) =>
     doc.decorators?.some((inst) => inst.definition === def.id && inst.version === def.version),
   );
+}
+
+import type { Drawing } from "../model/benches.js";
+
+export function usesCustomDecorators(drawing: Drawing): boolean {
+  return drawing.benches.some(({ document }) => usedDefinitions(document).length > 0);
 }

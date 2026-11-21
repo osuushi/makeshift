@@ -53,7 +53,7 @@ export const uiSuites = [
     seconds: 20,
     browsers: ["electron"],
     reason:
-      "GPU section caps must fill solid material, retain the captured circular-cut fill through mesh-only extrusion drags, and preserve real holes and accepted geometry; model tests cannot observe scene stencil integration errors.",
+      "GPU section caps must fill solid material and preserve real holes through a mesh-only extrusion drag. The preview must survive a buttonless release move. Model tests cannot observe stencil paint or Chromium's pointer-capture order.",
     unit: "section-pattern.test.ts",
   },
   {

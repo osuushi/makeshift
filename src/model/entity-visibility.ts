@@ -11,6 +11,7 @@ export class EntityVisibility {
   private isolated: Set<string> | null = null;
   /** Observe accepted and preview owners before drawing; existing hidden owners stay hidden. */
   observe(document: {
+    smartObjects?: readonly { id: string }[];
     sketches: readonly { id: string }[];
     bodies?: readonly { id: string }[];
     constructionPlanes?: readonly { id: string }[];
@@ -19,6 +20,7 @@ export class EntityVisibility {
       ...document.sketches,
       ...(document.bodies ?? []),
       ...(document.constructionPlanes ?? []),
+      ...(document.smartObjects ?? []),
     ]) {
       if (this.known.has(entity.id)) continue;
       this.known.add(entity.id);
@@ -102,6 +104,7 @@ export class EntityVisibility {
       ...document.sketches.map((sketch) => sketch.id),
       ...(document.bodies ?? []).map((body) => body.id),
       ...(document.constructionPlanes ?? []).map((plane) => plane.id),
+      ...(document.smartObjects ?? []).map((object) => object.id),
     ];
     return [...new Set([...ids, ...this.hidden])].filter((id) => !this.visible(id));
   }

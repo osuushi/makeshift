@@ -1,6 +1,7 @@
 import type { DisplayDocument } from "../model/display-document.js";
 import { EntityVisibility } from "../model/entity-visibility.js";
 import { ActiveInteraction, type InteractionLease } from "./active-interaction.js";
+import { BenchViews } from "./bench-views.js";
 import { completeInteraction } from "./complete-interaction.js";
 import {
   type Arc,
@@ -30,15 +31,17 @@ import type { World } from "./world.js";
 
 export type Tool = "select" | "rectangle" | "line" | "circle" | "bezier" | "pen" | "trim";
 export class SketchEditor {
+  readonly benchViews = new BenchViews(this);
   readonly store = new ModelClient(
     () => this.refresh(),
     (message) => {
       this.message = message;
     },
     (operation, direction) => this.visibility.restoreHistory(this.store.data, operation, direction),
+    (previous, active, options) => this.benchViews.change(previous, active, options),
   );
   readonly selectionHistory = new SelectionHistory(this);
-  readonly visibility = new EntityVisibility();
+  visibility = new EntityVisibility();
   bodiesVisible = true;
   readonly modeling = new ModelSelection();
   readonly selected = new SelectedTargets();

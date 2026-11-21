@@ -40,6 +40,11 @@ export function editEntityPresentation(
       (document.constructionPlanes ?? []).map((p) => p.id),
       "Plane",
     ),
+    entityRows(
+      document,
+      (document.smartObjects ?? []).map((object) => object.id),
+      "Smart object",
+    ),
   ];
   const group = groups.find((rows) => rows.some((row) => row.id === request.id));
   if (!group) throw new Error("Entity no longer exists");

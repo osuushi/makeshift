@@ -23,7 +23,7 @@ export function registerTransformTool(
     (!editor.world.active && modelingSketch(editor)) ||
     (editor.world.active && editor.selectionOwners.size)
       ? null
-      : "Select sketch, solid geometry or a plane";
+      : "Select geometry, smart objects or a plane";
   const disposers = (["transform", "move", "rotate", "scale"] as const).map((id) =>
     catalog.register({
       id,

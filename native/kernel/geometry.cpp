@@ -181,6 +181,7 @@ std::vector<Result> calculate(const Tree& input, const std::vector<Operand>& bod
     }
     if (input.get<std::string>("kind", "") == "transform" ||
         input.get<std::string>("kind", "") == "mirror" ||
+        input.get<std::string>("kind", "") == "affine" ||
         input.get<std::string>("kind", "") == "scale") {
         mode = "new"; return transformBodies(input, bodies, participants);
     }

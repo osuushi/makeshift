@@ -3,6 +3,7 @@ import { validateDecorators } from "../decorators/edits.js";
 import { validatePresets } from "../decorators/presets.js";
 import { validateGuides } from "../guides/model.js";
 import { validateBodyAppearances } from "../model/body-appearance.js";
+import { validateSmartObject } from "../model/smart-object.js";
 import { validId, validName } from "../security/text.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { validateSketchGrid } from "../sketch/grid-settings.js";
@@ -51,6 +52,12 @@ export function validateDocument(document: SketchDocument): void {
   for (const group of document.taggedGroups ?? []) identify(group.id);
   for (const point of document.guidePoints ?? []) identify(point.id);
   for (const instance of document.decorators ?? []) identify(instance.id);
+  if (document.smartObjects !== undefined && !Array.isArray(document.smartObjects))
+    throw new Error("Invalid smart objects");
+  for (const object of document.smartObjects ?? []) {
+    validateSmartObject(object);
+    identify(object.id);
+  }
   for (const body of document.bodies ?? []) {
     identify(body.id);
     for (const face of body.faces) identify(face.id);

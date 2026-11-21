@@ -46,10 +46,15 @@ export async function previewBoxMove(
     return true;
   }
   if (!source.faces.length && !source.edges.length) {
-    if (!document.bodies?.some((body) => source.ids.includes(body.id))) return false;
+    if (
+      !source.smartObjectIds?.length &&
+      !document.bodies?.some((body) => source.ids.includes(body.id))
+    )
+      return false;
     lease.show(
       placedDocument(document, {
         ids: source.ids,
+        smartObjectIds: source.smartObjectIds,
         pivot: origin,
         translation: delta,
         axis: [0, 0, 1],
@@ -119,6 +124,7 @@ export function boxMoveRequest(
       kind: "transform-bodies",
       transform: {
         ids: source.ids,
+        smartObjectIds: source.smartObjectIds,
         pivot: origin,
         axis: [0, 0, 1],
         angle: 0,

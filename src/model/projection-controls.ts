@@ -122,8 +122,10 @@ export class ProjectionControls {
     this.entities.sourcePicker = {
       choose: (target) => this.toggle(projectionSource(target)),
       hover: (target) => this.hoverSource(target ? projectionSource(target) : null),
-      selected: (target) =>
-        this.sources.some((s) => projectionKey(s) === projectionKey(projectionSource(target))),
+      selected: (target) => {
+        const key = projectionKeyOrEmpty(projectionSource(target));
+        return this.sources.some((item) => projectionKey(item) === key);
+      },
     };
     this.configurePicker();
     e.select([]);
@@ -154,9 +156,9 @@ export class ProjectionControls {
       (event) => !event.shiftKey,
     );
   }
-  private toggle(source: ProjectionSource): void {
+  private toggle(source: ProjectionSource | null): void {
     const e = this.editor;
-    if (!this.lease || e.blocked) return;
+    if (!source || !this.lease || e.blocked) return;
     this.lease.history?.checkpoint();
     const key = projectionKey(source);
     this.sources = this.sources.some((s) => projectionKey(s) === key)

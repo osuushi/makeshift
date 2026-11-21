@@ -1,4 +1,6 @@
+import { defaultBench } from "../model/benches.js";
 import type { ProfileEditView } from "../model/revolved-profile.js";
+import type { BenchFocus } from "../model/smart-object.js";
 import { type SketchDocument, withSketch } from "./document.js";
 import type { ModelView } from "./model-api.js";
 import { call } from "./model-transport.js";
@@ -112,6 +114,33 @@ export class ModelQueries {
     this.profileData = { view: this.view, document };
     return document;
   }
+  get activeBench() {
+    return this.view.activeBench ?? defaultBench.id;
+  }
+  get editingBench() {
+    return this.view.editingBench ?? this.activeBench;
+  }
+  get benchFocus(): BenchFocus {
+    return { active: this.activeBench, inline: this.view.inline ?? [] };
+  }
+  get linkedBenches() {
+    return this.view.linkedBenches;
+  }
+  get benchTabs() {
+    return this.view.benchTabs ?? [defaultBench];
+  }
+  async smartObjectSources() {
+    const reply = await call({ kind: "smart-object-sources" });
+    if (reply.error || !reply.smartObjectSources)
+      throw new Error(reply.error ?? "Smart object sources unavailable");
+    return reply.smartObjectSources;
+  }
+  async readDrawing() {
+    const reply = await call({ kind: "read-drawing" });
+    if (reply.error || !reply.drawing)
+      throw new Error(reply.error ?? "Drawing benches unavailable");
+    return reply.drawing;
+  }
   get decoratorSources() {
     return this.view.decoratorSources ?? [];
   }
@@ -166,8 +195,8 @@ export class ModelQueries {
     if (!reply.sections) throw new Error("Cross sections unavailable");
     return reply.sections;
   }
-  async exportGeometry(bodyIds?: string[]) {
-    const reply = await call({ kind: "export-geometry", bodyIds });
+  async exportGeometry(bodyIds?: string[], smartObjectIds?: string[], exact?: boolean) {
+    const reply = await call({ kind: "export-geometry", bodyIds, smartObjectIds, exact });
     if (reply.error) throw new Error(reply.error);
     if (!reply.exportDocument) throw new Error("Export geometry unavailable");
     return reply.exportDocument;

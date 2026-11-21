@@ -39,7 +39,7 @@ await withUiRuntimes(async (page, name) => {
   await orient(page, [1, -1, 1]);
   await page.screenshot({ path: `.cache/section-fill/${name}-hollow.png` });
   assert.deepEqual((await inspect(page)).document, original, "Section fill never edits solids");
-  await sectionExtrusion(page, sample);
+  await sectionExtrusion(page, sample, name);
   console.log(
     `${name}: patterned section material, open through-hole and captured extrusion drag passed`,
   );

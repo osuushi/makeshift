@@ -6,7 +6,13 @@ import "../tools/inspector.css";
 import "./editor-panes.css";
 import "./application-bar.css";
 
-const sections = ["Measurements", "Decorators", "Gear groups", "Constraints"] as const;
+const sections = [
+  "Smart objects",
+  "Measurements",
+  "Decorators",
+  "Gear groups",
+  "Constraints",
+] as const;
 type Section = (typeof sections)[number];
 
 /** Slots for long-lived editor controls. The controls retain selection and model ownership. */
@@ -30,12 +36,14 @@ export class EditorPanes extends WorkspacePanes {
     application.innerHTML = `<button type="button" class="brand" title="Makeshift menu"><img src="./makeshift.png" alt=""/><strong>Makeshift</strong></button>`;
     this.columns.left.root.prepend(application);
     for (const title of sections) {
+      const fitContent = title === "Smart objects";
       const pane = this.register({
         id: title,
         title,
         place: "right",
-        height: title === "Measurements" ? 84 : 208,
+        height: fitContent || title === "Measurements" ? 84 : 208,
         autoHide: title !== "Measurements",
+        fitContent,
       });
       this.sections.set(title, pane.body);
       const update = () =>

@@ -1,8 +1,28 @@
-import type { ModelView } from "../sketch/model-api.js";
+import { smartObjectSources } from "../model/smart-object.js";
+import type { ModelReply, ModelRequest, ModelView } from "../sketch/model-api.js";
 import { cutEdgeHighlights } from "./cut-edge-highlights.js";
 import type { DecoratorSession } from "./decorator-session.js";
 import type { DocumentSession } from "./document-session.js";
+import type { DrawingBenches } from "./drawing-benches.js";
+import { linkedView } from "./linked-view.js";
 import type { SolidEdits } from "./solid-edits.js";
+
+type DrawingQuery = Extract<ModelRequest, { kind: "read-drawing" | "smart-object-sources" }>;
+
+export function isDrawingQuery(request: ModelRequest): request is DrawingQuery {
+  return request.kind === "read-drawing" || request.kind === "smart-object-sources";
+}
+
+export function drawingQuery(
+  view: ModelView,
+  benches: DrawingBenches,
+  request: DrawingQuery,
+): ModelReply {
+  const drawing = benches.snapshot();
+  return request.kind === "read-drawing"
+    ? { view, drawing }
+    : { view, smartObjectSources: smartObjectSources(drawing, benches.editing) };
+}
 
 export function documentView(
   session: DocumentSession,
@@ -13,6 +33,9 @@ export function documentView(
   const { store, candidate, pendingOperation } = session;
   const { profile: _profile, ...reopenedPreview } = session.reopenedPreview ?? {};
   return {
+    ...linkedView(session.benches),
+    activeBench: session.benches.active,
+    benchTabs: session.benches.tabs,
     data: store.data,
     profileEdit: status.profileEdit,
     canUndoView: store.canNavigateView("undo"),

@@ -4,6 +4,7 @@ import { idleReason, toolCatalog } from "../tools/catalog.js";
 import type { ExportMesh } from "./export-mesh.js";
 import type { ExportFormat } from "./mesh-export.js";
 import { type NativeExportBridge, nativeExportClient } from "./native-export-client.js";
+import { resolvePlacements } from "./smart-object.js";
 import { type StepItem, stepItems } from "./step-export.js";
 import { stepExportChoice } from "./step-export-choice.js";
 
@@ -28,6 +29,16 @@ class ExportSession {
     return (editor.store.data.bodies ?? []).filter(
       (body) => editor.bodiesVisible && editor.visibility.visible(body.id),
     );
+  }
+  get visibleSmartSolids(): string[] {
+    const { store, visibility, bodiesVisible } = this.editor;
+    if (!bodiesVisible || !store.data.smartObjects?.length) return [];
+    const display = new Map(store.linkedBenches?.map(({ id, display }) => [id, display]));
+    const roots = store.data.smartObjects.filter(({ id }) => visibility.visible(id));
+    const solids = new Set<string>();
+    for (const item of resolvePlacements(roots, (id) => display.get(id)))
+      if (display.get(item.source)?.bodies?.length) solids.add(item.root);
+    return [...solids];
   }
   get busy() {
     return !!this.job;
@@ -57,7 +68,14 @@ class ExportSession {
   async run(extension: FileExportFormat) {
     const editor = this.editor;
     const bodyIds = this.visibleBodies.map((body) => body.id);
-    if (editor.blocked || editor.interactions.current || this.job || !bodyIds.length) return;
+    const linked = this.visibleSmartSolids;
+    if (
+      editor.blocked ||
+      editor.interactions.current ||
+      this.job ||
+      !(bodyIds.length || linked.length)
+    )
+      return;
     const current: ExportJob = { name: "Untitled" };
     this.job = current;
     editor.notice = "Preparing export…";
@@ -65,6 +83,7 @@ class ExportSession {
     try {
       current.name = (await this.documentName()).replace(/\.(makeshift|freac)$/i, "");
       if (this.job !== current || current.cancelled) return;
+      let exact = false;
       if (extension === "step") {
         const snapshot = editor.store.data;
         const decorated = snapshot.decorators?.some((instance) =>
@@ -79,14 +98,16 @@ class ExportSession {
         }
         if (this.job !== current || current.cancelled) return;
         if (!choice) return void this.finish(current);
-        if (choice === "exact") {
+        exact = choice === "exact";
+        if (exact && !linked.length) {
           const bodies = (snapshot.bodies ?? []).filter((body) => bodyIds.includes(body.id));
           return await this.writeStep(current, stepItems(bodies));
         }
       }
       const sources = editor.store.decoratorSources;
-      const snapshot = await editor.store.exportGeometry(bodyIds);
+      const snapshot = await editor.store.exportGeometry(bodyIds, linked, exact);
       if (this.job !== current || current.cancelled) return;
+      if (exact) return await this.writeStep(current, stepItems(snapshot.bodies ?? []));
       const native = snapshot.decorators?.length ? await nativeExportClient() : undefined;
       if (this.job !== current || current.cancelled) return;
       current.native = native;
@@ -199,7 +220,7 @@ export function exportControls(
         idleReason(editor) ??
         (session.busy
           ? "Exporting…"
-          : !session.visibleBodies.length
+          : !(session.visibleBodies.length || session.visibleSmartSolids.length)
             ? "Create or show a solid body first"
             : null),
       run: () => {

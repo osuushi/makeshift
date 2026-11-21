@@ -1,6 +1,8 @@
+import type { Drawing } from "../model/benches.js";
 import type { ModelReply, ModelRequest, ModelView } from "../sketch/model-api.js";
 import { validateFrame } from "../sketch/planes.js";
 import { exportGeometry } from "./export-geometry.js";
+import { exportSmartObjects } from "./export-smart-objects.js";
 import { measurementInput } from "./measurement-input.js";
 import { SolidCalculator } from "./solid-calculator.js";
 import { StepExporter } from "./step-exporter.js";
@@ -42,7 +44,10 @@ export class GeometryQueries {
   private snapCancellation = new AbortController();
   private pending = Promise.resolve();
   private closed = false;
-  constructor(executable?: string) {
+  constructor(
+    private captureDrawing: () => Drawing,
+    executable?: string,
+  ) {
     this.kernel = new SolidCalculator(executable);
     this.snaps = new SolidCalculator(executable);
     this.step = new StepExporter(executable ?? SolidCalculator.executable, "STEP exporter");
@@ -58,11 +63,15 @@ export class GeometryQueries {
       this.snapPending = result.then(() => {});
       return result;
     }
-    const result = this.pending.then(() => this.calculate(view, request));
+    const drawing =
+      request.kind === "export-geometry" && request.smartObjectIds?.length
+        ? this.captureDrawing()
+        : undefined;
+    const result = this.pending.then(() => this.calculate(view, request, drawing));
     this.pending = result.then(() => {});
     return result;
   }
-  private async calculate(view: ModelView, request: Query): Promise<ModelReply> {
+  private async calculate(view: ModelView, request: Query, drawing?: Drawing): Promise<ModelReply> {
     try {
       if (request.kind === "cancel-edge-finish-targets") {
         await this.cancelSnaps();
@@ -92,11 +101,19 @@ export class GeometryQueries {
       if (request.kind === "export-step") {
         return { view, step: await this.step.export(request.items) };
       }
-      if (request.kind === "export-geometry")
-        return {
-          view,
-          exportDocument: await exportGeometry(view.data, this.kernel, request.bodyIds),
-        };
+      if (request.kind === "export-geometry") {
+        const document = await exportGeometry(
+          view.data,
+          this.kernel,
+          request.bodyIds,
+          request.exact,
+        );
+        const linked = request.smartObjectIds?.length && drawing;
+        const exportDocument = linked
+          ? await exportSmartObjects(document, request.smartObjectIds ?? [], drawing, this.kernel)
+          : document;
+        return { view, exportDocument };
+      }
       if (request.kind === "measure") {
         const result = await this.kernel.calculate(measurementInput(view.data, request.targets));
         return { view, measurement: result.measurement };

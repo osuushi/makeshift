@@ -56,6 +56,12 @@ type Request =
     })
   | { kind: "inspect"; bodies: readonly ExactBody[]; deflection?: number }
   | {
+      kind: "affine";
+      matrix: import("../model/affine.js").Affine;
+      ids: string[];
+      bodies: readonly ExactBody[];
+    }
+  | {
       kind: "scale";
       ids: string[];
       pivot: import("../sketch/planes.js").Vector;

@@ -11,10 +11,16 @@ export type SurfaceEditRequest = Extract<ModelRequest, { kind: "offset-faces" | 
 
 /** Feasibility needs validated shapes and meshes, not their full editing metadata. */
 export class SurfaceEdits {
-  readonly offset = new FaceOffsetEdit();
+  offset = new FaceOffsetEdit();
   private edgeLimit = new EdgeSizeLimit<DeferredKernelReply>();
   edgeSize: number | undefined;
   constructor(private kernel: SolidCalculator) {}
+
+  reset(): void {
+    this.offset = new FaceOffsetEdit();
+    this.edgeLimit = new EdgeSizeLimit();
+    this.edgeSize = undefined;
+  }
 
   async prepare(
     document: SketchDocument,

@@ -11,6 +11,8 @@ import { type EnabledDefinition, JavaScriptDecorators } from "../decorators/java
 import { initializeDecoratorRuntime } from "../decorators/javascript-runtime.js";
 import { editWithPresets } from "../decorators/preset-edits.js";
 import { inspectThreads } from "../decorators/thread-inspection.js";
+import { type Drawing, defaultBench } from "../model/benches.js";
+import { usedDefinitions } from "../security/drawing-trust.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 
@@ -70,12 +72,34 @@ export class DecoratorSession {
     this.runtime = session.runtime;
   }
   private enabled: EnabledDefinition[] = [];
+  private bench = defaultBench.id;
+  private benchSources = new Map<string, EnabledDefinition[]>();
   private runtime?: ReturnType<typeof initializeDecoratorRuntime>;
   get sources(): readonly EnabledDefinition[] {
     return this.enabled;
   }
-  clear(): void {
+  clear(bench = defaultBench.id): void {
+    this.bench = bench;
+    this.benchSources.clear();
     this.enabled = [];
+  }
+  switchBench(bench: string): void {
+    this.benchSources.set(this.bench, this.enabled);
+    this.bench = bench;
+    this.enabled = this.benchSources.get(bench) ?? [];
+  }
+  async restoreSaved(drawing: Drawing, active: SketchDocument): Promise<void> {
+    const sources = new Map(
+      drawing.benches.map(({ id, document }) => [
+        id,
+        usedDefinitions(document).map(({ id, version, source }) => ({ id, version, source })),
+      ]),
+    );
+    if (![...sources.values()].some((value) => value.length)) return;
+    if (this.authorize && !(await this.authorize(active)))
+      throw new Error("Custom decorator code is disabled.");
+    this.benchSources = sources;
+    this.enabled = sources.get(this.bench) ?? [];
   }
   async enable(document: SketchDocument, id: string, version: number, enabled: boolean) {
     if (typeof enabled !== "boolean") throw new Error("Invalid decorator enablement");

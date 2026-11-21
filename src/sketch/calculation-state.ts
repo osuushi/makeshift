@@ -29,6 +29,7 @@ export function cancellableCalculation(kind: ModelRequest["kind"]): boolean {
     "check-cleanup",
     "delete-topology",
     "delete-entities",
+    "smart-object",
     "transform-bodies",
     "open",
   ].includes(kind);
@@ -40,6 +41,8 @@ export function calculationLabel(kind: ModelRequest["kind"] | undefined): string
       return "Deleting faces and edges";
     case "delete-entities":
       return "Deleting geometry";
+    case "smart-object":
+      return "Editing smart objects";
     case "shell":
       return "Calculating shell";
     case "import-step":

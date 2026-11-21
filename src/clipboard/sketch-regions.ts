@@ -5,12 +5,17 @@ import { profilesFor } from "../sketch/profiles.js";
 import { spanCurve } from "../sketch/trim-geometry.js";
 
 /** Copy bounded spans, not the unselected continuations of their source curves. */
-export function copyRegions(sketch: Sketch, keys: ReadonlySet<string>): Sketch {
+export function copyRegions(
+  sketch: Sketch,
+  keys: ReadonlySet<string>,
+  wholeCurves?: ReadonlySet<string>,
+): Sketch {
   const spans = profilesFor(sketch)
     .filter((profile) => keys.has(profile.key))
     .flatMap((profile) => [profile.outer, ...profile.holes].flat());
   const unique = new Map<string, CurveSpan>();
   for (const span of spans) {
+    if (wholeCurves?.has(span.curve.id)) continue;
     const low = Math.min(span.start, span.end),
       high = Math.max(span.start, span.end);
     unique.set(`${span.curve.id}:${low}:${high}`, span);

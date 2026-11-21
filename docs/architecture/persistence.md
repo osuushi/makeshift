@@ -236,9 +236,28 @@ export stops mesh/STEP work and suppresses late downloads; a pending shared
 geometry-refinement query may finish. The host APIs remain
 behind the existing model transport; browser/WebKit and Electron use the same path.
 
+## Drawing benches
+
+Drawings with multiple benches or a renamed first bench use version 4. The
+archive contains the ordered benches with stable IDs, names and exact geometry,
+plus the selected tab and its camera at Save. Opening validates and prepares every
+bench before publishing the drawing. Older drawings open as one bench named
+**Bench 1**. A drawing with the default bench alone retains the existing format.
+Switching tabs alone leaves the drawing clean.
+
+Drawings containing smart objects use version 5. Each placement stores a source
+bench ID and twelve row-major affine values. The source bench holds its own
+exact geometry. Open validates every placement, including referenced bench IDs
+and cycles, before publishing the drawing. Saving during an in-place edit
+records the parent tab and its camera and includes accepted edits to the source.
+Geometry export includes visible placed base solids, including nested placements.
+
 ## Portable agent workspace
 
-New saves with portable files or embedded decorator definitions use a version-3 envelope. Older readers reject that version before loading active content. Portable files use ZIP, while a drawing with only decorator definitions uses JSON. The reader also accepts version-2 ZIP and version-1 JSON. `model.json`
+Single default-bench saves with portable files or embedded decorator definitions use a
+version-3 envelope. Older readers reject that version before loading active content.
+Portable files use ZIP, while a drawing with only decorator definitions uses JSON.
+The reader also accepts version-2 ZIP and version-1 JSON. `model.json`
 contains the version-tagged accepted model (exact BReps, no display meshes),
 `workspace/` carries project files and `conversations/codex/` carries only
 `sessions/**/*.jsonl` and `archived_sessions/**/*.jsonl`. Drawings without embedded definitions or workspace files
@@ -342,7 +361,8 @@ that content kind. Approval leaves the existing runtime restrictions in effect.
 
 Export without agent workspace writes a separate drawing, removing every portable file,
 conversation and workspace signature. Custom decorators remain and the export warns
-when the model uses them. Ordinary agent inspection projects geometry and summarizes
+when any bench uses them. The decorator signature covers embedded content across
+every bench, including inactive ones. Ordinary agent inspection projects geometry and summarizes
 bundled definitions. Model names are limited to 96 printable Unicode code points.
 Earlier names are migrated on file open. Model data, including a short label, can still
 carry misleading text. Signatures attest who endorsed the content and do not verify

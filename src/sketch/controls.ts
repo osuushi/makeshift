@@ -5,6 +5,7 @@ import { fixtureControls } from "../model/fixture-controls.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { sketchTools } from "../tools/sketch-tools.js";
 import { StandardCommandMenu } from "../tools/standard-command-menu.js";
+import { BenchTabs } from "./bench-tabs.js";
 import { browserHistoryControls } from "./browser-history-controls.js";
 import type { SketchEditor } from "./editor.js";
 import { installGridSnapControl } from "./grid-snap-control.js";
@@ -19,6 +20,8 @@ export function installControls(
   app: HTMLElement,
 ): () => void {
   const disposeTools = sketchTools(editor);
+  const toolbar = app.querySelector<HTMLElement>(".workspace-toolbar");
+  const benches = toolbar && new BenchTabs(editor, toolbar);
   const disposeHistory = installHistoryControls(editor, app);
   const disposeGridSnap = installGridSnapControl(editor);
   const disposeClipboard = clipboardControls(editor);
@@ -46,6 +49,7 @@ export function installControls(
     disposeHistory();
     disposeGridSnap();
     disposeTools();
+    benches?.dispose();
     disposeClipboard();
     disposeFiles();
     disposeFixtures();

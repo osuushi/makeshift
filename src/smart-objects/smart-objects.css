@@ -1,0 +1,165 @@
+.smart-object-actions:not([hidden]) {
+  display: grid;
+  gap: 12px;
+  padding: 6px 12px 10px;
+}
+.smart-object-section {
+  min-width: 0;
+}
+.smart-object-section h3 {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.smart-object-section #smart-object-editing {
+  color: var(--accent);
+}
+.smart-object-buttons {
+  display: grid;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.smart-object-buttons button {
+  min-height: 32px;
+  padding: 5px 9px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 13px;
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+.smart-object-buttons button:not([hidden]) ~ button:not([hidden]) {
+  border-top: 1px solid var(--pane-rule);
+}
+.smart-object-buttons button:enabled:hover {
+  background: var(--selected);
+}
+.smart-object-buttons button:focus-visible {
+  outline-offset: -2px;
+}
+.smart-object-buttons button:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+@media (pointer: coarse) {
+  .smart-object-buttons button {
+    min-height: 40px;
+  }
+}
+.smart-object-dialog {
+  position: fixed;
+  inset: auto;
+  width: min(320px, calc(100vw - 48px));
+  max-height: calc(100dvh - 104px);
+  margin: 0;
+  padding: 16px 16px 16px 24px;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px var(--shadow);
+}
+.smart-object-dialog::backdrop {
+  background: color-mix(in srgb, var(--canvas) 12%, transparent);
+}
+.smart-object-dialog h2 {
+  margin: 0 0 14px;
+  font-size: 16px;
+}
+.smart-object-sources {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.smart-object-sources legend {
+  margin: 0 0 5px;
+  padding: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+.smart-object-source-list {
+  max-height: min(216px, 32dvh);
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.smart-object-source-list label {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  gap: 8px;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+.smart-object-source-list label:is(:hover, :focus) {
+  background: var(--surface);
+}
+.smart-object-source-list label:has(:checked) {
+  background: var(--selected);
+}
+.smart-object-source-list input {
+  flex: none;
+  margin: 0;
+}
+.smart-object-source-list span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.smart-object-source-list .smart-object-source-blocked {
+  color: var(--muted);
+  cursor: help;
+}
+.smart-object-source-blocked input {
+  pointer-events: none;
+}
+.smart-object-source-blocked:focus-visible {
+  outline-offset: -2px;
+}
+.smart-object-source-tooltip {
+  display: none;
+  margin: 6px 0 0;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 12px;
+}
+.smart-object-source-list:not(:has(input:enabled)) + .smart-object-source-tooltip,
+.smart-object-source-list:has(.smart-object-source-blocked:is(:hover, :focus))
+  + .smart-object-source-tooltip {
+  display: block;
+}
+@media (pointer: coarse) {
+  .smart-object-source-list label {
+    min-height: 40px;
+  }
+}
+.smart-object-dialog footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 8px;
+  margin-top: 14px;
+}
+.smart-object-dialog button[type="submit"]:enabled {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+.smart-object-dialog button[type="submit"]:enabled:hover {
+  background: color-mix(in srgb, var(--accent) 90%, var(--text));
+}
+.smart-object-dialog button[type="submit"]:disabled {
+  background: var(--surface);
+  color: var(--muted);
+  border-color: var(--border);
+  cursor: default;
+  box-shadow: none;
+}

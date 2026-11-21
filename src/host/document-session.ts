@@ -183,10 +183,10 @@ export class DocumentSession {
   async model(value: unknown) {
     const request = hostModelRequest(value);
     if (this.busy) return { view: this.owner.view, error: "Finish the file operation first" };
-    const previous = this.owner.view.data;
+    const previous =
+      request.kind === "sketch-grid" && request.initialize ? this.owner.drawing : undefined;
     const reply = await this.owner.call(request);
-    if (request.kind === "sketch-grid" && request.initialize && !reply.error)
-      this.files.adoptGridDefaults(previous);
+    if (previous && !reply.error) this.files.adoptGridDefaults(previous);
     this.update();
     return modelWireReply(request, reply);
   }

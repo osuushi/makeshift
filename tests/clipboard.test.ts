@@ -143,6 +143,58 @@ test("invalid clipboard input leaves accepted geometry and Undo intact", async (
   }
 });
 
+test("benches isolate accepted geometry, active previews and paste history", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const { sketch, bodies } = await bodySet(owner);
+    const first = owner.drawing.activeBench;
+    const source = owner.view.data;
+    const preview = {
+      ...sketch,
+      curves: [],
+      constraints: [],
+      groups: [],
+    };
+    assert.equal((await owner.call({ kind: "preview", sketch: preview })).error, undefined);
+    assert.match(
+      (await owner.call({ kind: "bench", edit: { action: "create" } })).error ?? "",
+      /Finish or cancel/,
+    );
+    assert.ok(owner.view.candidate);
+    await owner.call({ kind: "discard" });
+
+    assert.equal(
+      (await owner.call({ kind: "bench", edit: { action: "create" } })).error,
+      undefined,
+    );
+    const second = owner.drawing.activeBench;
+    assert.notEqual(second, first);
+    assert.equal(owner.view.data.sketches.length, 0);
+    assert.equal(owner.view.canUndo, false);
+    const text = writeClipboard({ sketches: [sketch], bodies: exactBodies(bodies) });
+    assert.equal((await owner.call({ kind: "paste-geometry", text })).error, undefined);
+    const pasted = owner.view.data;
+    assert.notEqual(pasted.sketches[0].id, sketch.id);
+    assert.equal(pasted.sketches[0].constraints.length, sketch.constraints.length);
+    assert.deepEqual(
+      pasted.bodies?.map((body) => body.volume),
+      bodies.map((body) => body.volume),
+    );
+    assert.ok(pasted.bodies?.every((copy) => bodies.every((body) => body.id !== copy.id)));
+    await owner.call({ kind: "undo" });
+    assert.equal(owner.view.data.bodies?.length ?? 0, 0);
+    await owner.call({ kind: "bench", edit: { action: "switch", id: first } });
+    assert.strictEqual(owner.view.data, source);
+    assert.equal(owner.view.canRedo, false);
+    await owner.call({ kind: "bench", edit: { action: "switch", id: second } });
+    assert.equal(owner.view.canRedo, true);
+    await owner.call({ kind: "redo" });
+    assert.strictEqual(owner.view.data, pasted);
+  } finally {
+    owner.close();
+  }
+});
+
 async function bodySet(source: DocumentOwner) {
   const sketch = rectangleSketch();
   assert.equal((await source.call({ kind: "edit", sketch })).error, undefined);

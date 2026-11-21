@@ -1,6 +1,8 @@
 import { continueScaledGuides } from "../guides/sketch-continuation.js";
-import { identityScale, type ScaleOperation, validateScale } from "../model/scale.js";
-import { type Curve, type SketchDocument, withSketch } from "../sketch/document.js";
+import { scaleAffine } from "../model/affine.js";
+import { identityScale, type ScaleOperation, scaleFactors, validateScale } from "../model/scale.js";
+import { transformSmartObjects } from "../model/smart-object.js";
+import { type Curve, newId, type SketchDocument, withSketch } from "../sketch/document.js";
 import { continueBodyMetadata } from "./body-metadata.js";
 import { continuingBodies, materialize } from "./kernel-result.js";
 import { scaleSketch } from "./scale-sketch.js";
@@ -19,12 +21,15 @@ export async function scaleDocument(
   const bodies = document.bodies ?? [];
   const componentIds = [...operation.faces, ...operation.edges].map((t) => t.body);
   const ids = [...operation.ids, ...componentIds];
+  const instanceIds = operation.smartObjectIds ?? [];
   if (
-    !ids.length ||
+    (!ids.length && !instanceIds.length) ||
     operation.ids.some((id) => componentIds.includes(id)) ||
     ids.some((id) => !bodies.some((b) => b.id === id))
   )
     throw new Error("Select existing disjoint bodies, faces or edges to scale");
+  if (instanceIds.length && componentIds.length)
+    throw new Error("Select whole bodies to scale them with smart objects");
   if (operation.faces.length && operation.edges.length)
     throw new Error("Scale faces or edges separately");
   if (new Set(operation.ids).size !== operation.ids.length)
@@ -45,7 +50,18 @@ export async function scaleDocument(
       keys.add(key);
     }
   }
+  const placed = instanceIds.length
+    ? transformSmartObjects(
+        document,
+        {
+          ids: instanceIds,
+          transform: scaleAffine(scaleFactors(operation), operation.pivot),
+        },
+        newId,
+      )
+    : document;
   if (identityScale(operation)) return document;
+  if (!ids.length) return placed;
   let next = bodies;
   const apply = (result: Parameters<typeof materialize>[1]) => {
     next = continuingBodies(next, materialize(next, result));
@@ -74,11 +90,7 @@ export async function scaleDocument(
       }),
     );
   }
-  return continueBodyMetadata(
-    document,
-    { ...document, bodies: next },
-    { kind: "scale", operation },
-  );
+  return continueBodyMetadata(document, { ...placed, bodies: next }, { kind: "scale", operation });
 }
 
 function scaledSketches(

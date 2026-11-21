@@ -1,5 +1,5 @@
+import type { Drawing } from "../model/benches.js";
 import { CalculationFailure } from "../model/calculation-failure.js";
-import type { AppliedProfile } from "../model/revolved-profile.js";
 import { cancellableCalculation } from "../sketch/calculation-state.js";
 import type { ModelReply, ModelRequest, ModelView } from "../sketch/model-api.js";
 import { describeOperation, type HistoryOperation } from "../sketch/operation-history.js";
@@ -11,10 +11,9 @@ import { editDocument, isDirectDocumentEdit } from "./document-edits.js";
 import { documentFailure } from "./document-failure.js";
 import { isPreviewRequest, type PreviewRequest, previewDocument } from "./document-preview.js";
 import { DocumentSession } from "./document-session.js";
-import { documentView } from "./document-view.js";
+import { documentView, drawingQuery, isDrawingQuery } from "./document-view.js";
 import { GeometryQueries, isGeometryQuery } from "./geometry-queries.js";
 import { NativeSolver } from "./native-solver.js";
-import { planeCutAvailable } from "./plane-cut.js";
 import { ProfileEdits } from "./profile-edits.js";
 import { ScriptEdits } from "./script-edits.js";
 import { SolidCalculator } from "./solid-calculator.js";
@@ -27,7 +26,6 @@ export class DocumentOwner {
   private solids: SolidEdits;
   private commands: DocumentCommands;
   private profiles: ProfileEdits;
-  private planeCutAvailable = false;
   private session = new DocumentSession();
   private active: { kind: ModelRequest["kind"]; promise: Promise<ModelReply> } | null = null;
   private cancelling = false;
@@ -38,7 +36,7 @@ export class DocumentOwner {
     kernelExecutable?: string,
   ) {
     this.kernel = new SolidCalculator(kernelExecutable);
-    this.queries = new GeometryQueries(kernelExecutable);
+    this.queries = new GeometryQueries(() => this.drawing, kernelExecutable);
     this.solids = new SolidEdits(this.kernel);
     this.profiles = new ProfileEdits(
       this.kernel,
@@ -88,12 +86,15 @@ export class DocumentOwner {
       throw new Error("Finish the current edit first");
     this.scripts.begin(name);
   }
-  setDecoratorAuthorization(authorize: NonNullable<DecoratorSession["authorize"]>) {
-    this.decorators.authorize = authorize;
+  setDecoratorAuthorization(authorize: (drawing: Drawing) => Promise<boolean>): void {
+    this.decorators.authorize = (document) => authorize(this.session.benches.snapshot(document));
+  }
+  get drawing(): Drawing {
+    return this.session.benches.snapshot();
   }
   get view(): ModelView {
     return documentView(this.session, this.solids, this.decorators, {
-      planeCutAvailable: this.planeCutAvailable,
+      planeCutAvailable: this.commands.planeCutAvailable,
       cleanupAvailable: this.commands.cleanupAvailable,
       profileEdit: this.profiles.view,
     });
@@ -117,6 +118,7 @@ export class DocumentOwner {
       await this.profiles.settle();
       return { view: this.view };
     }
+    if (isDrawingQuery(request)) return drawingQuery(this.view, this.session.benches, request);
     if (isGeometryQuery(request) && request.kind.startsWith("cancel-"))
       return this.queries.call(this.view, request);
     if (request.kind === "decorator-inspect" || request.kind === "decorator-draft")
@@ -153,6 +155,12 @@ export class DocumentOwner {
       if (!this.profiles.active) this.session.store.selections(request.changes);
       return { view: this.view };
     }
+    if (request.kind === "bench" || request.kind === "smart-object") {
+      if (this.profiles.active)
+        return { view: this.view, error: "Apply or cancel Edit Profile first" };
+      if (this.session.pendingOperation)
+        return { view: this.view, error: "Finish or cancel the current edit first" };
+    }
     this.kernel.begin();
     const promise = this.execute(request);
     this.active = { kind: request.kind, promise };
@@ -181,31 +189,32 @@ export class DocumentOwner {
     }
   }
   private async execute(request: ModelRequest): Promise<ModelReply> {
-    const before = this.session.store.data;
+    const store = this.session.store;
+    const before = store.data;
     const profileDraft = this.profiles.active && request.kind !== "apply-profile-edit";
     const operation = this.session.operation(request);
     try {
-      let appliedProfile: AppliedProfile | undefined;
+      let appliedProfile: ModelReply["appliedProfile"];
+      let conversionOrigin: ModelReply["conversionOrigin"];
       if (request.kind === "apply-profile-edit")
         appliedProfile = await this.profiles.apply(this.session, operation, (profile) =>
           this.commands.accept(false, profile),
         );
-      else if (request.kind === "check-plane-cut")
-        this.planeCutAvailable = await planeCutAvailable(
-          this.session.store.data,
-          request.operation,
-          this.kernel,
-        );
+      else if (request.kind === "smart-object")
+        conversionOrigin = await this.commands.editSmartObject(request.edit, operation);
       else await this.dispatch(request, operation);
       if (this.session.candidate && !this.session.reopenedPreview)
         this.session.refine(await this.decorators.continue(this.session.candidate, before));
       if (request.kind === "complete-preview" && this.kernel.wasSuperseded)
         throw new CalculationFailure("superseded", "Preview superseded");
       this.checkCancellation();
+      const documentChanged =
+        before !== store.data || request.kind === "new" || request.kind === "open";
       return {
         view: this.view,
-        documentChanged: before !== this.session.store.data,
+        documentChanged,
         ...(appliedProfile ? { appliedProfile } : {}),
+        ...(conversionOrigin ? { conversionOrigin } : {}),
       };
     } catch (error) {
       const { outcome, ...failure } = documentFailure(
@@ -223,6 +232,8 @@ export class DocumentOwner {
     }
   }
   private async dispatch(request: ModelRequest, operation: HistoryOperation): Promise<void> {
+    if (request.kind === "bench" || request.kind === "check-plane-cut")
+      return this.commands.run(request, operation);
     const profileEdit = this.profiles.handle(this.session, request);
     if (profileEdit) return profileEdit;
     this.commands.cleanupAvailable = false;

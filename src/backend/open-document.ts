@@ -1,5 +1,7 @@
 import { knurlDefinition } from "../decorators/builtins.js";
+import { type Drawing, validateBenchLayout } from "../model/benches.js";
 import type { Body } from "../model/body.js";
+import { validateSmartLinks } from "../model/smart-object.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { continueBodyMetadata } from "./body-metadata.js";
 import { validateDocument } from "./document-validation.js";
@@ -66,12 +68,26 @@ export async function openDocument(
       instance.faces.every((ref) => facesByBody.get(ref.body)?.has(ref.face)),
     );
   }
-  const result = await kernel.calculate({ kind: "inspect", bodies: migrated.bodies ?? [] });
-  const bodies = materialize([], result);
+  const exact = migrated.bodies ?? [];
+  const bodies = exact.length
+    ? materialize([], await kernel.calculate({ kind: "inspect", bodies: exact }))
+    : [];
   const document = continueBodyMetadata(inspectedMetadataSource(migrated, bodies), {
     ...migrated,
     bodies,
   });
   validateDocument(document);
   return document;
+}
+
+/** Prepare every bench before publishing the new drawing. */
+export async function openDrawing(drawing: Drawing, kernel: SolidCalculator): Promise<Drawing> {
+  validateBenchLayout(drawing);
+  const benches: Drawing["benches"][number][] = [];
+  for (const bench of drawing.benches) {
+    benches.push({ ...bench, document: await openDocument(bench.document, kernel) });
+  }
+  const opened = { ...drawing, benches };
+  validateSmartLinks(opened);
+  return opened;
 }

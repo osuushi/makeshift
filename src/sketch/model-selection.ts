@@ -35,6 +35,8 @@ export function pickModels(
     });
   }
   const probe = new BodyPickProbe(editor, screen);
+  for (const { id, depth } of editor.modeling.linkedHits?.(screen) ?? [])
+    hits.push({ target: { kind: "smart-object", instance: id }, depth, edge: false });
   const face = probe.faces()[0];
   if (face)
     hits.push({
@@ -46,8 +48,14 @@ export function pickModels(
   const edge = pickBodyEdge(editor, screen, probe);
   // Keep coincident geometry ahead of translucent planes despite the face sort bias.
   const targets = hits.filter((hit) => hit.depth <= maxDepth + 1e-4).map((hit) => hit.target);
-  if (edge && edge.depth <= maxDepth + 1e-4)
-    targets.unshift({ kind: "edge", body: edge.body, edge: edge.edge, point: edge.point });
+  if (edge && edge.depth <= maxDepth + 1e-4) {
+    const target = { kind: "edge", body: edge.body, edge: edge.edge, point: edge.point } as const;
+    const foreground = hits.find(
+      (hit) => hit.target.kind === "smart-object" && hit.depth + 1e-4 < edge.depth,
+    );
+    if (foreground) targets.splice(targets.indexOf(foreground.target) + 1, 0, target);
+    else targets.unshift(target);
+  }
   const selectedSketches = new Set(
     editor.modeling.targets.filter((target) => target.kind === "sketch").map((t) => t.sketch),
   );

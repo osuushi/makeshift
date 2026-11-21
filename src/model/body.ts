@@ -79,13 +79,14 @@ export interface Extrusion {
 
 export interface BodyTransform {
   ids: string[];
+  smartObjectIds?: string[];
   pivot: Vector;
   axis: Vector;
   angle: number;
   translation: Vector;
   duplicate: boolean;
 }
-export interface FaceMovement extends Omit<BodyTransform, "ids" | "duplicate"> {
+export interface FaceMovement extends Omit<BodyTransform, "ids" | "smartObjectIds" | "duplicate"> {
   /** Disjoint complete bodies move rigidly within the same atomic edit. */
   bodyIds?: string[];
   faces: { body: string; face: string }[];

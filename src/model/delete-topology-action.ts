@@ -23,7 +23,7 @@ export class DeleteTopologyAction {
             : "Select sketch geometry"
           : this.selected()
             ? null
-            : "Select bodies, sketches, faces or edges"),
+            : "Select geometry or smart objects"),
       run: () => (editor.world.active ? editor.remove() : this.remove()),
     });
     onModelKeydown(
@@ -54,11 +54,18 @@ export class DeleteTopologyAction {
     const editor = this.editor;
     const resolution = editor.modeling.resolve("delete");
     if (!resolution.available) return;
-    const { bodyIds, sketchIds, topology, profiles, curves } = resolution.inputs;
-    if (bodyIds.length || sketchIds.length || profiles.length || curves.length) {
+    const { bodyIds, sketchIds, smartObjectIds, topology, profiles, curves } = resolution.inputs;
+    if (
+      bodyIds.length ||
+      sketchIds.length ||
+      profiles.length ||
+      curves.length ||
+      smartObjectIds?.length
+    ) {
       const entities = {
         bodyIds,
         sketchIds,
+        ...(smartObjectIds?.length ? { smartObjectIds } : {}),
         ...(curves.length ? { curves } : {}),
         ...(profiles.length ? { profiles } : {}),
         ...(topology.length ? { topology } : {}),

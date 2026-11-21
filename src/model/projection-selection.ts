@@ -14,7 +14,8 @@ import { coverageTargets } from "./operation-selection.js";
 import { type ProjectionSource, projectionCurves } from "./projection.js";
 import { selectionContext } from "./selection-context.js";
 export const projectionKey = (s: ProjectionSource) => JSON.stringify(s);
-export function projectionSource(target: ModelingTarget): ProjectionSource {
+export function projectionSource(target: ModelingTarget): ProjectionSource | null {
+  if (target.kind === "smart-object") return null;
   if (target.kind === "profile")
     return { kind: "profile", sketch: target.sketch, profile: target.profile.key };
   if (target.kind === "edge") return { kind: "edge", body: target.body, edge: target.edge };
@@ -40,10 +41,12 @@ export function projectionSelection(e: SketchEditor): ProjectionSource[] {
       curve,
     }));
   const sources = coverageTargets(selectionContext(e.modeling.targets, e.store.data)).flatMap(
-    (target): ProjectionSource[] =>
-      target.kind === "sketch" && target.curves
-        ? target.curves.map((curve) => ({ kind: "curve", sketch: target.sketch, curve }))
-        : [projectionSource(target)],
+    (target): ProjectionSource[] => {
+      if (target.kind === "sketch" && target.curves)
+        return target.curves.map((curve) => ({ kind: "curve", sketch: target.sketch, curve }));
+      const source = projectionSource(target);
+      return source ? [source] : [];
+    },
   );
   return sources.filter(
     (s, i) => sources.findIndex((p) => projectionKey(p) === projectionKey(s)) === i,
@@ -69,6 +72,7 @@ export function pickProjectionSource(e: SketchEditor, screen: Point): Projection
   }
   if (best) return best.source;
   const target = pickModels(e, screen).find((target) => {
+    if (target.kind === "smart-object") return false;
     if (target.kind !== "profile" && target.kind !== "sketch") return true;
     const sketch = e.store.data.sketches.find((s) => s.id === target.sketch);
     return (

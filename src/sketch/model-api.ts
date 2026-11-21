@@ -1,3 +1,4 @@
+import type { BenchEdit, BenchTab, Drawing } from "../model/benches.js";
 import type {
   BodyBoolean,
   BodyEdgeFinish,
@@ -13,6 +14,12 @@ import type {
 } from "../model/body.js";
 import type { CleanupSelection } from "../model/cleanup.js";
 import type { Projection } from "../model/projection.js";
+import type {
+  InlineLink,
+  LinkedBench,
+  SmartObjectEdit,
+  SmartObjectSource,
+} from "../model/smart-object.js";
 import type { Sketch, SketchDocument } from "./document.js";
 import type { EditIntent } from "./edit-intent.js";
 
@@ -25,6 +32,11 @@ export type ModelRequest =
       selection: import("../model/revolved-profile.js").ProfileSelection;
     }
   | { kind: "apply-profile-edit" | "cancel-profile-edit" | "read-profile-preview" }
+  | { kind: "bench"; edit: BenchEdit }
+  | { kind: "smart-object"; edit: SmartObjectEdit }
+  | { kind: "smart-object-sources" }
+  | { kind: "read-drawing" }
+  | { kind: "restore-decorators" }
   | { kind: "guide-point"; edit: import("../guides/types.js").GuideEdit }
   | { kind: "sketch-grid"; grid: import("./grid-settings.js").SketchGrid; initialize?: boolean }
   | {
@@ -37,7 +49,7 @@ export type ModelRequest =
   | { kind: "tagged-group"; edit: import("../tags/model.js").TagEdit }
   | { kind: "export-step"; items: import("../model/step-export.js").StepItem[] }
   | { kind: "cancel-step-export" }
-  | { kind: "export-geometry"; bodyIds?: string[] }
+  | { kind: "export-geometry"; bodyIds?: string[]; smartObjectIds?: string[]; exact?: boolean }
   | {
       kind: "decorator-draft";
       edit: Extract<import("../decorators/types.js").DecoratorEdit, { action: "settings" }>;
@@ -77,7 +89,7 @@ export type ModelRequest =
   | { kind: "cleanup" | "delete-topology"; selection: CleanupSelection[] }
   | { kind: "accept"; cleanup?: boolean }
   | { kind: "project"; projection: Projection }
-  | { kind: "open"; document: SketchDocument }
+  | ({ kind: "open" } & ({ document: SketchDocument } | { drawing: Drawing }))
   | { kind: "transform-bodies"; transform: BodyTransform }
   | { kind: "complete-preview" }
   | { kind: "cancel-edge-finish-targets" }
@@ -104,6 +116,7 @@ export type ModelRequest =
       kind: "delete-entities";
       bodyIds: string[];
       sketchIds: string[];
+      smartObjectIds?: string[];
       topology?: CleanupSelection[];
       profiles?: { sketch: string; profile: string }[];
       curves?: { sketch: string; ids: string[] }[];
@@ -115,6 +128,11 @@ export type ModelRequest =
   | { kind: "remove" | "clear"; sketchId: string; ids?: string[] };
 export interface ModelView {
   profileEdit?: import("../model/revolved-profile.js").ProfileEditView;
+  activeBench?: string;
+  editingBench?: string;
+  inline?: readonly InlineLink[];
+  linkedBenches?: readonly { id: string; display: LinkedBench }[];
+  benchTabs?: readonly BenchTab[];
   visualPreview?: import("../model/visual-preview.js").VisualPreview;
   canUndoView?: boolean;
   canRedoView?: boolean;
@@ -144,6 +162,8 @@ export interface ModelView {
 }
 export type ModelReply = {
   appliedProfile?: import("../model/revolved-profile.js").AppliedProfile;
+  drawing?: Drawing;
+  smartObjectSources?: readonly SmartObjectSource[];
   erosionAllowance?: number;
   step?: string;
   decoratorDraft?: readonly import("../decorators/types.js").DecoratorInstance[];
@@ -151,6 +171,7 @@ export type ModelReply = {
   exportDocument?: SketchDocument;
   sections?: import("../model/sketch-section.js").SketchSection[];
   documentChanged?: boolean;
+  conversionOrigin?: import("./planes.js").Vector;
   view: ModelView;
   error?: string;
   history?: OperationHistoryEntry[];
