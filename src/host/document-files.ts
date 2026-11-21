@@ -3,11 +3,17 @@ import { basename, dirname, join } from "node:path";
 import { app, type BrowserWindow } from "electron";
 import type { DocumentOwner } from "../backend/document-owner.js";
 import { validateDocument } from "../backend/document-validation.js";
+import type { Drawing } from "../model/benches.js";
 import { type CameraState, validateCameraState } from "../model/camera-state.js";
-import { documentArchive } from "../model/document-archive.js";
+import { archivedDrawing, drawingArchive } from "../model/document-archive.js";
 import type { DocumentStatus } from "../model/document-host.js";
+import {
+  type DrawingContents,
+  DrawingContentsCache,
+  sameDrawingContents,
+} from "../model/drawing-contents.js";
 import { readPortableArchive, writePortableArchive } from "../model/portable-archive.js";
-import { DrawingTrust, usedDefinitions } from "../security/drawing-trust.js";
+import { DrawingTrust, usesCustomDecorators } from "../security/drawing-trust.js";
 import { portableDigest } from "../security/signatures.js";
 import type { AgentWorkspace } from "./agent-workspace.js";
 import { safeWrite } from "./safe-write.js";
@@ -20,10 +26,9 @@ export class DocumentFiles {
   get directory(): string {
     return this.path ? dirname(this.path) : this.defaultDirectory();
   }
-  private saved: string;
+  private saved: DrawingContents;
+  private contents = new DrawingContentsCache();
   camera: CameraState | undefined;
-  private cachedDocument: DocumentOwner["view"]["data"];
-  private cachedArchive: string;
   constructor(
     private owner: DocumentOwner,
     private workspace: AgentWorkspace,
@@ -41,24 +46,19 @@ export class DocumentFiles {
     };
     workspace.onRecovery = async (files) =>
       this.trust.load("workspace", await portableDigest(files), {});
-    this.cachedDocument = owner.view.data;
-    this.saved = this.cachedArchive = documentArchive(this.cachedDocument);
+    this.saved = this.contents.capture(owner.drawing);
   }
-  private get archive(): string {
-    if (this.cachedDocument !== this.owner.view.data) {
-      this.cachedDocument = this.owner.view.data;
-      this.cachedArchive = documentArchive(this.cachedDocument);
-    }
-    return this.cachedArchive;
-  }
-  adoptGridDefaults(previous: DocumentOwner["view"]["data"]): void {
-    if (this.saved === documentArchive(previous)) this.saved = this.archive;
+  adoptGridDefaults(previous: Drawing): void {
+    if (sameDrawingContents(this.saved, this.contents.capture(previous)))
+      this.saved = this.contents.capture(this.owner.drawing);
   }
   get status(): DocumentStatus {
     return {
       name: this.path ? basename(this.path) : this.untitledName,
       path: this.path,
-      edited: this.archive !== this.saved || this.workspace.dirty,
+      edited:
+        !sameDrawingContents(this.contents.capture(this.owner.drawing), this.saved) ||
+        this.workspace.dirty,
       camera: this.camera,
     };
   }
@@ -68,10 +68,11 @@ export class DocumentFiles {
   async prepare(path: string) {
     if ((await stat(path)).size > 72 * 1024 * 1024) throw new Error("Document is too large.");
     const archive = readPortableArchive(await readFile(path));
-    validateDocument(archive.document);
+    const drawing = archivedDrawing(archive);
+    for (const { document } of drawing.benches) validateDocument(document);
     const trust = new DrawingTrust(signingDevice(this.window));
-    await trust.opened(archive.document, archive.files, archive.seals);
-    return { path, ...archive, trust };
+    await trust.opened(drawing, archive.files, archive.seals);
+    return { path, ...archive, drawing, trust };
   }
   async open(
     path: string,
@@ -80,24 +81,17 @@ export class DocumentFiles {
     const archive = prepared ?? (await this.prepare(path));
     const reply = await this.owner.call({
       kind: "open",
-      document: archive.document,
+      drawing: archive.drawing,
     });
     if (reply.error) throw new Error(reply.error);
     this.trust = archive.trust;
     this.workspace.stage(archive.files);
-    for (const def of usedDefinitions(this.owner.view.data)) {
-      const result = await this.owner.call({
-        kind: "decorator-enable",
-        id: def.id,
-        version: def.version,
-        enabled: true,
-      });
-      if (result.error) break;
-    }
+    if (usesCustomDecorators(this.owner.drawing))
+      await this.owner.call({ kind: "restore-decorators" });
     this.path = path;
     app.addRecentDocument(path);
     this.camera = archive.camera;
-    this.saved = this.archive;
+    this.saved = this.contents.capture(this.owner.drawing);
     await this.remember();
   }
   async save(
@@ -108,7 +102,7 @@ export class DocumentFiles {
     copy = false,
   ): Promise<boolean> {
     let path = this.path;
-    if (copy && usedDefinitions(this.owner.view.data).length) {
+    if (copy && usesCustomDecorators(this.owner.drawing)) {
       const choice = await dialog.showMessageBox(window, {
         type: "warning",
         message: "This copy uses custom decorators",
@@ -136,13 +130,11 @@ export class DocumentFiles {
       path = result.filePath;
     }
     await beforeCapture?.();
-    const model = this.archive;
-    const archive = documentArchive(
-      this.owner.view.data,
-      validateCameraState(camera) ?? this.camera,
-    );
+    const drawing = this.owner.drawing;
+    const model = this.contents.capture(drawing);
+    const archive = drawingArchive(drawing, validateCameraState(camera) ?? this.camera);
     const files = copy ? {} : await this.workspace.snapshot();
-    const publication = await this.trust.prepareSave(this.owner.view.data, files);
+    const publication = await this.trust.prepareSave(drawing, files);
     const bytes = writePortableArchive(archive, files, publication.seals);
     await this.write(
       path,

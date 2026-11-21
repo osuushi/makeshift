@@ -1,3 +1,4 @@
+import { defaultBench } from "../model/benches.js";
 import type { ModelView } from "./model-api.js";
 import { call } from "./model-transport.js";
 
@@ -37,6 +38,18 @@ export class ModelQueries {
   }
   get data() {
     return this.view.data;
+  }
+  get activeBench() {
+    return this.view.activeBench ?? defaultBench.id;
+  }
+  get benchTabs() {
+    return this.view.benchTabs ?? [defaultBench];
+  }
+  async readDrawing() {
+    const reply = await call({ kind: "read-drawing" });
+    if (reply.error || !reply.drawing)
+      throw new Error(reply.error ?? "Drawing benches unavailable");
+    return reply.drawing;
   }
   get decoratorSources() {
     return this.view.decoratorSources ?? [];

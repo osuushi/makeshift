@@ -38,6 +38,22 @@ existing C++20 build; it does not make C++ the owner of application policy or se
 every future backend choice. Do not reopen the desktop-shell or frontend-framework
 choice. The short solver/curve integration decision is described below.
 
+## Drawing benches
+
+A drawing contains one or more named benches in tab order. Each bench has a
+stable ID and owns its sketches, bodies, reference planes and related metadata.
+All tabs use the same tools. The document owner exposes the active bench to
+modeling, inspection and export, and serializes edits across the drawing.
+
+Add opens a blank bench. Double-click a tab or press F2 to edit its name.
+Switching is available between edits and restores the bench's camera, sketch
+workspace and visibility for the open session. Selection clears on switch.
+Each bench retains its own geometry and selection Undo/Redo history. Creating
+and naming tabs are drawing organization actions outside that history.
+
+The clipboard transfers supported sketch geometry and solids as editable copies
+with fresh IDs. Pasting is one step in the destination bench's history.
+
 ## Entity panel organization
 
 The document optionally stores `entityPresentation`: stable entity IDs with names

@@ -64,6 +64,19 @@ try {
   assert.equal((await inspect(page)).document.sketches[0].curves.length, 2);
   await chooseTool(page, "redo", "redo");
   assert.equal((await inspect(page)).document.sketches[0].curves.length, 3);
+  // Check focus handoff from the inline name field to real keyboard paste in another bench.
+  await page.getByRole("button", { name: "New bench", exact: true }).click();
+  await page.getByRole("tab", { name: "Bench 2", exact: true }).press("F2");
+  const benchName = page.getByRole("textbox", { name: "Bench name" });
+  await benchName.fill("Detail");
+  await benchName.press("Enter");
+  await page.getByRole("tab", { name: "Detail", exact: true }).waitFor();
+  await page.keyboard.press(`${command}+v`);
+  await page.waitForFunction(
+    () => window.makeshiftInspect().document.sketches[0]?.curves.length === 1,
+  );
+  await page.getByRole("tab", { name: "Bench 1", exact: true }).click();
+  assert.equal((await inspect(page)).document.sketches[0].curves.length, 3);
   await page.reload();
   await inspect(page);
   await page.getByRole("button", { name: "Search tools", exact: true }).focus();
@@ -121,7 +134,7 @@ try {
   assert.deepEqual((await inspect(page)).document, pasted);
   assert.deepEqual(errors, []);
   console.log(
-    "Hidden Electron clipboard: curve subset, Move, reload, body sets, New, Undo/Redo and text-field ownership passed",
+    "Hidden Electron clipboard: curve subset, Move, bench tabs, reload, body sets, New, Undo/Redo and text-field ownership passed",
   );
 } finally {
   await app.close();

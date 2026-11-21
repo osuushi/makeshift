@@ -28,7 +28,9 @@ export function describeOperation(request: ModelRequest): HistoryOperation {
     };
   if (request.kind === "paste-geometry")
     return { kind: request.kind, parameters: { target: request.target } };
-  if (request.kind === "open")
+  if (request.kind === "open") {
+    if ("drawing" in request)
+      return { kind: "open", parameters: { activeBench: request.drawing?.activeBench } };
     return {
       kind: "open",
       parameters: {
@@ -40,6 +42,7 @@ export function describeOperation(request: ModelRequest): HistoryOperation {
         ),
       },
     };
+  }
   const { kind, ...parameters } = request;
   return structuredClone({ kind, parameters });
 }

@@ -1,0 +1,66 @@
+.bench-strip,
+.bench-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+.bench-strip {
+  flex: 1 1 100px;
+  min-width: 90px;
+  min-height: 32px;
+  padding-inline-start: 4px;
+  border-inline-start: 1px solid color-mix(in srgb, var(--border) 46%, var(--panel));
+}
+.bench-tabs {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.bench-strip :is(button, input) {
+  flex: none;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--muted);
+  font-size: 12px;
+}
+.bench-strip :is([role="tab"], input) {
+  max-width: min(24ch, 46vw);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.bench-strip :is(button:hover, input, [aria-selected="true"]) {
+  background: var(--surface);
+  color: var(--text);
+}
+.bench-strip [aria-selected="true"] {
+  box-shadow: inset 0 -2px var(--accent);
+}
+.bench-strip [aria-disabled="true"] {
+  cursor: default;
+}
+.bench-strip button:focus-visible {
+  outline-offset: -2px;
+}
+.bench-strip .bench-add {
+  display: inline-grid;
+  width: 32px;
+  padding: 0;
+  place-items: center;
+}
+.bench-add svg {
+  width: 16px;
+  height: 16px;
+}
+@media (pointer: coarse) {
+  .bench-strip :is(button, input) {
+    min-height: 44px;
+  }
+  .bench-strip .bench-add {
+    width: 44px;
+  }
+}

@@ -123,7 +123,10 @@ test("cancel Open after native inspection retains the old document, selection an
       await pause.pause();
       return result;
     });
-    const pending = owner.call({ kind: "open", document: { units: "mm", sketches: [] } });
+    const pending = owner.call({
+      kind: "open",
+      document: { units: "mm", sketches: [], bodies: [body] },
+    });
     await pause.entered;
     const cancelling = owner.call({ kind: "cancel-preview" });
     pause.release();

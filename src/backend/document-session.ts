@@ -1,9 +1,10 @@
+import type { Drawing } from "../model/benches.js";
 import type { VisualPreview } from "../model/visual-preview.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import { describeOperation, type HistoryOperation } from "../sketch/operation-history.js";
 import type { DeferredEditRequest } from "./deferred-edit.js";
-import { DocumentStore } from "./document-store.js";
+import { DrawingBenches } from "./drawing-benches.js";
 import type { ReopenPreview } from "./reopen-preview.js";
 
 type PreviewState =
@@ -25,7 +26,10 @@ type PreviewState =
 
 /** Only this session transitions temporary work; the store owns accepted data. */
 export class DocumentSession {
-  store = new DocumentStore();
+  benches = new DrawingBenches();
+  get store() {
+    return this.benches.store;
+  }
   solveCount = 0;
   solveMs = 0;
   private state: PreviewState = { kind: "idle" };
@@ -113,8 +117,8 @@ export class DocumentSession {
     );
     this.clearPreview();
   }
-  replace(document?: SketchDocument): void {
-    this.store = new DocumentStore(document);
+  replace(drawing?: Drawing): void {
+    this.benches = new DrawingBenches(drawing);
     this.clearPreview();
   }
   navigate(direction: "reopen" | "undo" | "redo"): void {

@@ -12,6 +12,8 @@ export function documentView(
 ): ModelView {
   const { store, candidate, pendingOperation, reopenedPreview } = session;
   return {
+    activeBench: session.benches.active,
+    benchTabs: session.benches.tabs,
     data: store.data,
     canUndoView: store.canNavigateView("undo"),
     canRedoView: store.canNavigateView("redo"),
