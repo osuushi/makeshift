@@ -12,7 +12,7 @@ import {
 import { distance } from "../sketch/point-math.js";
 
 type Link = Segment | Arc | Bezier;
-const disconnected = "Join the profile into one continuous chain between the end caps";
+const disconnected = "Join the profile into one continuous chain between the end guides";
 
 function reverse(curve: Link): Link {
   const ends = { a: curve.b, b: curve.a };

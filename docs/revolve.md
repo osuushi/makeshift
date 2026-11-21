@@ -118,20 +118,28 @@ the behavior to exercise. Automated checks do not establish founder acceptance.
 
 ## Edit Profile
 
-In Modeling, select a turned body or its complete set of revolved side faces
-and choose **Edit Profile**. The tool recovers the meridian from the current
-BRep in a plane through its axis. The cap planes and axis appear as guides.
-Visible bodies are sectioned in that plane, including the current preview of
-the edited body. Other bodies can be used as projection references.
+In Modeling, select a turned body, a face of its connected revolved side, or
+the wall of a through-bore and choose **Edit Profile**. The tool recovers the
+meridian from the current BRep in a plane through the selected axis. The axis
+and end guides frame the contour. Visible bodies are sectioned in that plane,
+including the current preview of the edited body. Other bodies can be used as
+projection references.
 
-Use the ordinary sketch tools to edit the open curve chain between the cap
-planes. Sketch gestures and their Undo/Redo operate within the temporary
+Use the ordinary sketch tools to edit the open curve chain between the end
+guides. Sketch gestures and their Undo/Redo operate within the temporary
 profile. Completed gestures refresh the solid preview. **Apply** accepts the
 body in one document Undo step. Cancel or Escape discards the profile, and
 the saved drawing contains the materialized body.
 
-The initial domain is a full turn on one axis between two circular planar caps,
-with optional isolated spherical dimples. The kernel revolves the edited chain
-and reconstructs the rims against the dimples’ original spherical supports.
-Dimples without a crossing, including point contacts, are omitted and counted
-in the preview. A broken profile, failed retrim or invalid solid blocks Apply.
+An exterior profile spans a full turn between two circular planar caps and
+can contain separate spherical dimples and complete through-bores. The kernel
+revolves the edited chain and re-cuts those recesses using their original
+supports. Dimples without a crossing, including point contacts, are omitted
+and counted in the preview.
+
+A through-bore profile follows a connected inward revolved wall with two
+separate closed openings. Its end guides sit just beyond the stock. The kernel
+recovers the stock by filling the bore and verifies that the recovered profile
+can reproduce the original solid. Applying an edited profile cuts the recovered
+stock and recomputes both openings on its existing surfaces. A broken profile,
+failed retrim or invalid solid blocks Apply.

@@ -98,10 +98,24 @@ export async function revolveSolidRoute(page, name) {
   close((await inspect(page)).document.bodies[0].volume, shaft.volume - overlapVolume);
   await chooseTool(page, "undo", "undo");
   close((await inspect(page)).document.bodies[0].volume, shaft.volume);
+  await verifyProfileCancelHistory(page, shaft.id);
   await partialFaceRoute(page, name);
   console.log(
-    `${name}: revolved groove Boolean modes/participants and selection acceptance; body-edge axis, face input and continued planar sketch passed`,
+    `${name}: revolved groove Booleans, profile Cancel history, body-edge axis, face input and continued planar sketch passed`,
   );
+}
+
+async function verifyProfileCancelHistory(page, body) {
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  const history = () => page.evaluate(() => window.makeshiftHistory());
+  const beforeProfile = await history();
+  await chooseTool(page, "edit profile", "edit-profile");
+  assert.equal((await inspect(page)).activePlane, "Edit Profile");
+  await page.keyboard.press("Escape");
+  await page.getByRole("group", { name: "Edit Profile", exact: true }).waitFor({ state: "hidden" });
+  assert.equal((await inspect(page)).modelingSelection[0]?.body, body);
+  // The controller restores selection after the owner closes the temporary sketch.
+  assert.deepEqual(await history(), beforeProfile);
 }
 
 async function partialFaceRoute(page, name) {

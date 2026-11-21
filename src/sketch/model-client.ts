@@ -240,6 +240,9 @@ export class ModelClient extends ModelQueries {
     else if (
       request.kind === "new" ||
       request.kind === "open" ||
+      // The profile controller restores modeling selection after the owner closes its draft.
+      request.kind === "cancel-profile-edit" ||
+      request.kind === "apply-profile-edit" ||
       (reply.documentChanged && request.kind !== "sketch-grid")
     )
       this.selectionHistory?.accepted(request.kind === "new" || request.kind === "open");

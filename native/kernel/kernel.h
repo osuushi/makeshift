@@ -84,6 +84,7 @@ TopoDS_Shape extrudeTwist(const TopoDS_Face&, const gp_Vec&, const Tree&);
 Result cleanupEdges(const Operand&, const TopTools_MapOfShape&,
                     const TopTools_MapOfShape& protectedEdges = TopTools_MapOfShape());
 std::vector<Result> deleteTopology(const Tree&, const std::vector<Operand>&, std::vector<std::string>&);
+Result healSelectedFaces(const Operand&, const std::vector<SourceEntity>&);
 
 std::vector<Result> shellBodies(const Tree&, const std::vector<Operand>&, std::vector<std::string>&);
 std::vector<Result> cutWithPlane(const Tree&, const std::vector<Operand>&, std::vector<std::string>&);

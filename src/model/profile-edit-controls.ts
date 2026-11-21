@@ -126,9 +126,16 @@ export class ProfileEditControls {
         e.world.exit();
         if (previous) e.world.animateCamera(previous.camera);
       });
-      e.modeling.targets = applied?.preview
-        ? [{ kind: "body", body: applied.body }]
-        : (previous?.selection ?? []);
+      const selection = previous?.selection ?? [];
+      const surviving = applied?.preview
+        ? selection.filter(
+            (target) =>
+              target.kind === "face" &&
+              applied.preview?.faces.some((face) => face.id === target.face),
+          )
+        : selection;
+      e.modeling.targets =
+        applied?.preview && !surviving.length ? [{ kind: "body", body: applied.body }] : surviving;
       if (applied?.removedDimples) e.notice = this.removed(applied.removedDimples);
       e.world.canvas.focus();
     } finally {

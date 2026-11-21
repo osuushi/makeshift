@@ -1,7 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Point } from "../sketch/planes.js";
 
-/** Read-only cap guides and the axis of the recovered section. */
+/** Read-only end guides and the axis of the recovered section. */
 export function profileReferences(editor: SketchEditor, overlay: HTMLElement): () => void {
   const ns = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(ns, "svg");
