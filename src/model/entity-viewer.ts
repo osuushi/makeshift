@@ -13,6 +13,7 @@ import { EntityChildren } from "./entity-children.js";
 import { entityRows } from "./entity-presentation.js";
 import { renameEntity } from "./entity-rename.js";
 import { EntityReorder } from "./entity-reorder.js";
+import { smartObjectRows } from "./smart-object-rows.js";
 import { visibilityIcon } from "./visibility-icon.js";
 
 export class EntityViewer {
@@ -129,7 +130,8 @@ export class EntityViewer {
       run: () => {
         if (
           !this.editor.store.data.bodies?.some((body) => body.id === id) &&
-          !this.editor.store.data.sketches.some((sketch) => sketch.id === id)
+          !this.editor.store.data.sketches.some((sketch) => sketch.id === id) &&
+          !this.editor.store.data.smartObjects?.some((object) => object.id === id)
         )
           return;
         const visible = this.editor.visibility.visible(id);
@@ -141,6 +143,7 @@ export class EntityViewer {
         if (visible && this.editor.world.workspace?.sketchId === id) this.editor.world.exit();
         this.editor.modeling.targets = this.editor.modeling.targets.filter(
           (t) =>
+            !(t.kind === "smart-object" && t.instance === id) &&
             t.sketch !== id &&
             !((t.kind === "body" || t.kind === "face" || t.kind === "edge") && t.body === id),
         );
@@ -188,9 +191,11 @@ export class EntityViewer {
         ? `${name} · ${role === "input" ? "Selected" : role === "target" ? "Target" : "Cutting tool"}`
         : name;
       const selected = this.editor.modeling.targets.some((t) =>
-        target.kind === "sketch"
-          ? t.sketch === id
-          : (t.kind === "body" || t.kind === "face" || t.kind === "edge") && t.body === id,
+        target.kind === "smart-object"
+          ? t.kind === "smart-object" && t.instance === id
+          : target.kind === "sketch"
+            ? t.sketch === id
+            : (t.kind === "body" || t.kind === "face" || t.kind === "edge") && t.body === id,
       );
       select.setAttribute(
         "aria-pressed",
@@ -216,7 +221,10 @@ export class EntityViewer {
         merge.disabled = !!toolCatalog(this.editor).reason({ reason: () => null });
       }
       select.disabled = this.sourcePicker
-        ? this.editor.blocked || this.sourcePicker.available?.(target) === false
+        ? this.editor.blocked ||
+          (target.kind === "smart-object"
+            ? this.sourcePicker.available?.(target) !== true
+            : this.sourcePicker.available?.(target) === false)
         : !!toolCatalog(this.editor).reason({ reason: () => null });
       row.classList.toggle("entity-hidden", !visible);
     });
@@ -234,6 +242,8 @@ export class EntityViewer {
     const key = JSON.stringify([
       data.sketches.map((s) => s.id),
       data.bodies?.map((b) => b.id),
+      data.smartObjects?.map(({ id, source }) => [id, source]),
+      data.smartObjects?.length ? editor.store.benchTabs : null,
       data.entityPresentation,
       data.taggedGroups,
       data.guidePoints,
@@ -266,7 +276,14 @@ export class EntityViewer {
           "Sketch",
         ).map((s) => this.row(s.id, s.name, { kind: "sketch", sketch: s.id })),
       ],
+      [
+        "Smart objects",
+        smartObjectRows(data, editor.store.benchTabs).map(({ id, name }) =>
+          this.row(id, name, { kind: "smart-object", instance: id }),
+        ),
+      ],
     ] as const) {
+      if (label === "Smart objects" && !rows.length) continue;
       const heading = document.createElement("h3");
       heading.textContent = `${label} (${rows.length})`;
       this.root.append(heading, ...rows);

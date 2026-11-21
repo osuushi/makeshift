@@ -10,7 +10,7 @@ import { BrowserArchive, downloadArchive } from "./browser-archive.js";
 import { confirmReplacement, pickSaveFile, writeBrowserFile } from "./browser-file-access.js";
 import { browserLibrary } from "./browser-library.js";
 import { chooseDrawing, drawingName } from "./browser-library-dialog.js";
-import { captureCamera, restoreCamera } from "./camera-state.js";
+import { restoreCamera } from "./camera-state.js";
 import { archivedDrawing, drawingArchive } from "./document-archive.js";
 import { type DrawingContents, sameDrawingContents, VisitedBenches } from "./drawing-contents.js";
 import type { PortableFiles } from "./portable-files.js";
@@ -39,8 +39,8 @@ export class BrowserDocuments {
     this.editor.world.changed.delete(this.initialBaseline);
   };
   private observeBench = (): void => {
-    const { activeBench, data } = this.editor.store;
-    this.benches.observe(activeBench, data);
+    const { editingBench, data } = this.editor.store;
+    this.benches.observe(editingBench, data);
   };
   private contents(): DrawingContents {
     this.observeBench();
@@ -95,7 +95,7 @@ export class BrowserDocuments {
       const data = await this.codec.run(
         {
           kind: "write",
-          model: drawingArchive(drawing, captureCamera(editor.world)),
+          model: drawingArchive(drawing, editor.benchViews.fileCamera()),
           files,
           seals: publication.seals,
         },
@@ -112,6 +112,7 @@ export class BrowserDocuments {
         await browserLibrary.save({ id, name, bytes: data, modified: Date.now() });
         this.drawingId = id;
         this.filename = name;
+        this.benches.reset(drawing);
         this.baseline = this.contents();
         await publication.saved();
         editor.notice = `Saved ${name} in this browser`;

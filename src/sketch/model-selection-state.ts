@@ -7,7 +7,7 @@ import {
 import { expandedSelection, selectionContext } from "../model/selection-context.js";
 import { defaultModelingTool, type ModelingTool } from "../model/tool-policy.js";
 import type { SketchDocument } from "./document.js";
-import type { Vector } from "./planes.js";
+import type { Point, Vector } from "./planes.js";
 import { type Profile, profilesFor } from "./profiles.js";
 
 export type { ModelingTool } from "../model/tool-policy.js";
@@ -15,22 +15,26 @@ export type ModelingTarget =
   | { kind: "body"; body: string; sketch?: never }
   | { kind: "edge"; body: string; edge: string; point?: Vector; sketch?: never }
   | { kind: "face"; body: string; face: string; sketch?: never }
+  | { kind: "smart-object"; instance: string; sketch?: never }
   | { kind: "sketch"; sketch: string; curves?: string[] }
   | { kind: "profile"; sketch: string; profile: Profile };
 export const modelingKey = (target: ModelingTarget): string =>
-  target.kind === "body"
-    ? target.body
-    : target.kind === "edge"
-      ? target.edge
-      : target.kind === "face"
-        ? target.face
-        : target.kind === "sketch"
-          ? target.curves
-            ? `${target.sketch}/curves/${target.curves.join(",")}`
-            : target.sketch
-          : target.profile.key;
+  target.kind === "smart-object"
+    ? target.instance
+    : target.kind === "body"
+      ? target.body
+      : target.kind === "edge"
+        ? target.edge
+        : target.kind === "face"
+          ? target.face
+          : target.kind === "sketch"
+            ? target.curves
+              ? `${target.sketch}/curves/${target.curves.join(",")}`
+              : target.sketch
+            : target.profile.key;
 export class ModelSelection {
   readonly selectionChosen = new Set<() => void>();
+  linkedHits?: (screen: Point) => readonly { id: string; depth: number }[];
   referencePlane: string | null = null;
   memberBody: string | null = null;
   allows(target: ModelingTarget): boolean {
@@ -87,6 +91,8 @@ export class ModelSelection {
     this.document = document;
     this.targets = this.targets.filter(
       (t) =>
+        (t.kind === "smart-object" &&
+          document.smartObjects?.some((object) => object.id === t.instance)) ||
         (t.kind === "sketch" &&
           document.sketches.some(
             (s) =>

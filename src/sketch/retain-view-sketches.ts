@@ -35,7 +35,23 @@ function retain(previous: SketchDocument, next: SketchDocument): SketchDocument 
   return { ...next, sketches: retained, ...(next.bodies ? { bodies: retainedBodies } : {}) };
 }
 
-export function retainViewSketches(previous: ModelView, next: ModelView): ModelView {
-  const data = retain(previous.data, next.data);
-  return { ...next, data, candidate: next.candidate && retain(data, next.candidate) };
+export function retainViewSketches(
+  previous: ModelView,
+  next: ModelView,
+  switched = false,
+): ModelView {
+  const data = switched ? next.data : retain(previous.data, next.data);
+  const linkedBenches = next.linkedBenches?.map((entry) => {
+    const source = previous.linkedBenches?.find(({ id }) => id === entry.id);
+    return source &&
+      (source.display === entry.display || content(source.display) === content(entry.display))
+      ? source
+      : entry;
+  });
+  return {
+    ...next,
+    data,
+    linkedBenches,
+    candidate: next.candidate && retain(data, next.candidate),
+  };
 }

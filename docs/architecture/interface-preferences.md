@@ -246,10 +246,11 @@ their source colors. These exceptions do not justify low-contrast interface text
 
 ## Workspace panes
 
-The Makeshift application menu is fixed at the top of the left dock. Entities, Tools and Status start beneath it. Orientation, Measurements, Decorators,
-Gear groups and Constraints start on the right. The title folds a pane and doubles as its
-drag handle. While dragging, the docks show their drop areas and the active dock
-marks the exact insertion gap. Drop onto a closed dock’s edge tab to reopen it,
+The Makeshift application menu is fixed at the top of the left dock. Entities,
+Tools and Status start beneath it. Orientation, Smart objects, Measurements,
+Decorators, Gear groups and Constraints start on the right. The title folds a pane
+and doubles as its drag handle. While dragging, the docks show their drop areas
+and the active dock marks the exact insertion gap. Drop onto a closed dock’s edge tab to reopen it,
 or over the canvas to float.
 Pane titles use the widget drag texture as a horizontal strip that fades toward the label.
 The Makeshift wordmark opens File / Edit. When the left dock is closed, a logo button in the toolbar opens the same menu.
@@ -260,8 +261,9 @@ the left tool dock available and reveal the right dock over the canvas. Phone la
 use edge tabs on both sides. The toolbar shows the active tool from the toolbox when the left dock is closed. In a narrow toolbar, the tool name starts the second row, with input controls and Settings on the right. Returning to a wider layout restores the pinned dock preferences. The agent terminal retains its own drawer.
 
 Built-in placement, dimensions, order and empty-content preferences persist locally
-outside geometry Undo. Measurements initially shows an empty selection prompt. Other
-selection readouts initially hide when empty. Hidden content retains its placement.
+outside geometry Undo. Measurements initially shows an empty selection prompt.
+Smart objects and the other contextual panes initially hide when empty. Hidden
+content retains its placement.
 
 Each interactive preview uses its workspace directory as its identity. Agent preview
 commands accept a directory to target a particular view and otherwise operate on the

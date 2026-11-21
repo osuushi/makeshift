@@ -6,6 +6,8 @@ export type HostModelRequest = ModelRequest & {
 };
 const kinds: Record<HostModelRequest["kind"], true> = {
   bench: true,
+  "smart-object": true,
+  "smart-object-sources": true,
   "read-drawing": true,
   "restore-decorators": true,
   "complete-preview": true,

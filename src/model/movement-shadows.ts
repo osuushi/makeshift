@@ -1,6 +1,7 @@
 import type * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
+import { linkedPreview } from "../smart-objects/linked-preview.js";
 import type { DisplayDocument } from "./display-document.js";
 import { type ShadowGeometry, shadowGeometry } from "./movement-shadow-geometry.js";
 import { MovementShadowView } from "./movement-shadow-view.js";
@@ -52,6 +53,13 @@ export class MovementShadows {
         this.source,
         this.editor.world.height / this.editor.world.canvas.clientHeight,
       );
+      if (this.source.kind === "solids" && this.source.smartObjectIds?.length) {
+        const placed = linkedPreview(this.editor, this.source.smartObjectIds, this.document);
+        this.current = {
+          triangles: [...this.current.triangles, ...placed.surfaces],
+          lines: [...this.current.lines, ...placed.lines],
+        };
+      }
     }
     this.view.draw(this.current, this.moving, this.anchor, this.normal);
   };

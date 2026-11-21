@@ -23,6 +23,7 @@ export function scaleSelection(editor: SketchEditor): ScaleSource | null {
     ? {
         kind: "solids",
         ids: result.inputs.bodies.map((b) => b.id),
+        ...(result.inputs.smartObjectIds ? { smartObjectIds: result.inputs.smartObjectIds } : {}),
         faces: result.inputs.faces,
         edges: result.inputs.edges,
       }

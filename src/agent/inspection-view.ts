@@ -27,13 +27,15 @@ export function inspectionView(editor: SketchEditor, render: boolean): Inspectio
     ? sketch
       ? editor.selected.targets.map((t) => ({ ...t, sketch: sketch.id }))
       : []
-    : editor.modeling.targets.map((t) =>
-        t.kind === "profile"
-          ? { kind: "profile", sketch: t.sketch, profile: t.profile.key }
-          : t.kind === "edge"
-            ? { kind: "edge", body: t.body, edge: t.edge }
-            : { ...t },
-      );
+    : editor.modeling.targets
+        .filter((t) => t.kind !== "smart-object")
+        .map((t) =>
+          t.kind === "profile"
+            ? { kind: "profile", sketch: t.sketch, profile: t.profile.key }
+            : t.kind === "edge"
+              ? { kind: "edge", body: t.body, edge: t.edge }
+              : { ...t },
+        );
   const result: InspectionView = {
     preferences: applicationPreferences(),
     mode: world.active ? "sketch" : "modeling",

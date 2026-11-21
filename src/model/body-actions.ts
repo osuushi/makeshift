@@ -1,8 +1,10 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
-import type { Body, BodyBoolean } from "./body.js";
+import type { BodyBoolean } from "./body.js";
 import { booleanStart } from "./boolean-start.js";
 import { modelingShortcutLabel } from "./modeling-shortcuts.js";
+import { wholePlacements } from "./operation-selection.js";
+import { placementTargets } from "./placement-selection.js";
 export class BodyActions {
   private disposers: (() => void)[] = [];
   constructor(
@@ -11,7 +13,7 @@ export class BodyActions {
     boolean: (mode: BodyBoolean["mode"]) => void,
     cleanup: () => void,
   ) {
-    const reason = (operation: "duplicate" | "boolean" | "cleanup") => {
+    const reason = (operation: "boolean" | "cleanup") => {
       if (editor.world.active) return "Select solid geometry in Modeling";
       const resolution =
         operation === "boolean" ? booleanStart(editor) : editor.modeling.resolve(operation);
@@ -24,12 +26,20 @@ export class BodyActions {
         finishEdit: true,
         label: "Duplicate bodies",
         category: "Transform",
-        aliases: ["copy bodies"],
-        reason: () => reason("duplicate"),
+        aliases: ["copy bodies", "duplicate smart objects"],
+        reason: () =>
+          idleReason(editor) ??
+          (editor.world.active || !wholePlacements(editor.modeling.targets, editor.store.data, true)
+            ? "Select bodies or smart objects to duplicate"
+            : null),
         run: () => {
-          const result = editor.modeling.resolve("duplicate");
-          if (!result.available) return;
-          editor.modeling.targets = result.inputs.map((body) => ({ kind: "body", body: body.id }));
+          const data = editor.store.data;
+          const selection = wholePlacements(editor.modeling.targets, data, true);
+          if (!selection) return;
+          editor.modeling.targets = placementTargets({
+            ids: selection.bodies.map(({ id }) => id),
+            smartObjectIds: selection.smartObjectIds,
+          });
           editor.refresh();
           enable(true);
         },
@@ -69,17 +79,4 @@ export class BodyActions {
   dispose(): void {
     for (const dispose of this.disposers) dispose();
   }
-}
-export function selectedBodies(
-  editor: SketchEditor,
-  operation: "move" | "duplicate" = "move",
-): Body[] {
-  if (operation === "duplicate") {
-    const result = editor.modeling.resolve("duplicate");
-    return result.available ? result.inputs : [];
-  }
-  const result = editor.modeling.resolve("move");
-  return result.available && !result.inputs.faces.length && !result.inputs.edges.length
-    ? result.inputs.bodies
-    : [];
 }

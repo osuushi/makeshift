@@ -26,6 +26,7 @@ export function modelHighlight(editor: SketchEditor): () => void {
       target.kind === "edge" ||
       target.kind === "face" ||
       target.kind === "body" ||
+      target.kind === "smart-object" ||
       !editor.visibility.visible(target.sketch)
     )
       return;

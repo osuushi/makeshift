@@ -29,8 +29,9 @@ export function writePortableArchive(
   const portable = Object.keys(files).length > 0;
   let data: Uint8Array;
   const { version, document, camera, benches, activeBench } = JSON.parse(model);
+  const benchArchive = version === 4 || version === 5;
   if (
-    version === 4 ||
+    benchArchive ||
     portable ||
     document.decoratorDefinitions?.length ||
     Object.keys(seals).length
@@ -38,7 +39,7 @@ export function writePortableArchive(
     data = strToU8(
       JSON.stringify({
         format: "makeshift",
-        ...(version === 4 ? { version, benches, activeBench } : { version: 3, document }),
+        ...(benchArchive ? { version, benches, activeBench } : { version: 3, document }),
         camera,
         ...(Object.keys(seals).length ? { seals } : {}),
       }),

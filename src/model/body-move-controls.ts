@@ -2,19 +2,23 @@ import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import type { BodyTransform } from "./body.js";
-import { selectedBodies } from "./body-actions.js";
 import { bodySnap, gizmoPointer, showBodySnap } from "./body-drag.js";
 import { BodyGizmo } from "./body-gizmo.js";
 import {
   type BodyMoveSession,
+  moveFieldLabel,
   restoreBodyMoveSession,
   trackBodyMoveHistory,
 } from "./body-move-history.js";
 import { BodyPivotDrag } from "./body-pivot-drag.js";
 import { axes, bodyCenter, placedDocument } from "./body-placement.js";
 import { GizmoInputs, type GizmoPointer } from "./gizmo-inputs.js";
+import { wholePlacements } from "./operation-selection.js";
+import { acceptPlacement, placementKey, placementLabel } from "./placement-selection.js";
 import { reopenBodyTransform } from "./reopen-body-transform.js";
+import { selectionAnchor } from "./selection-anchor.js";
 import { installTransformHandoff } from "./transform-handoff.js";
+import { transformLayerState } from "./transform-layers.js";
 
 export class BodyMoveControls {
   private gizmo: BodyGizmo;
@@ -92,16 +96,17 @@ export class BodyMoveControls {
     this.update();
   }
   enable(copy: boolean): void {
-    if (
-      this.editor.interactions.current ||
-      this.editor.blocked ||
-      !selectedBodies(this.editor, copy ? "duplicate" : "move").length
-    )
-      return;
+    if (this.editor.interactions.current || this.editor.blocked || !this.selected(copy)) return;
     this.editor.modeling.setTool("move");
     this.pivotMode = false;
-    if (copy) this.open(true);
+    if (copy) {
+      transformLayerState(this.editor).enter("move");
+      this.open(true);
+    }
     this.editor.refresh();
+  }
+  private selected(promote = false) {
+    return wholePlacements(this.editor.modeling.targets, this.editor.store.data, promote);
   }
   async reopen(edit: BodyTransform): Promise<void> {
     const parameters = reopenBodyTransform(edit);
@@ -119,8 +124,8 @@ export class BodyMoveControls {
     this.gizmo.input.select();
   }
   private open(duplicate: boolean, restored?: BodyTransform): BodyMoveSession | null {
-    const bodies = selectedBodies(this.editor, duplicate ? "duplicate" : "move");
-    if (!bodies.length) return null;
+    const selection = this.selected(duplicate);
+    if (!selection) return null;
     const lease = this.editor.interactions.acquire(
       "body-move",
       () => this.cancel(),
@@ -145,7 +150,8 @@ export class BodyMoveControls {
       rotate: false,
       pivotOnly: this.pivotMode,
       edit: {
-        ids: bodies.map((b) => b.id),
+        ids: selection.bodies.map((b) => b.id),
+        ...(selection.smartObjectIds.length ? { smartObjectIds: selection.smartObjectIds } : {}),
         pivot: [...this.pivot],
         axis: axes.X,
         translation: [0, 0, 0],
@@ -177,10 +183,7 @@ export class BodyMoveControls {
     s.rotate = rotate;
     s.edit.axis = axes[axis];
     this.pointer = gizmoPointer(this.editor, this.pivot, axis, event);
-    this.gizmo.input.setAttribute(
-      "aria-label",
-      `${s.pivotOnly ? "Pivot" : rotate ? "Body rotation" : "Body translation"} ${axis}`,
-    );
+    this.gizmo.input.setAttribute("aria-label", moveFieldLabel(s));
     if (event.pointerId !== -1) s.lease.capture(event.currentTarget as Element, event.pointerId);
     event.preventDefault();
     this.editor.refresh();
@@ -202,8 +205,14 @@ export class BodyMoveControls {
       s.edit.angle = s.rotate ? value : 0;
       const previewKey = JSON.stringify(s.edit);
       if (!s.pivotOnly && previewKey !== s.lastPreview) {
-        s.lease.show(placedDocument(this.editor.store.data, s.edit));
-        s.lastPreview = previewKey;
+        try {
+          s.lease.show(placedDocument(this.editor.store.data, s.edit));
+          s.lastPreview = previewKey;
+          if (!wasValid) this.editor.message = "";
+        } catch (error) {
+          s.valid = false;
+          this.editor.message = error instanceof Error ? error.message : String(error);
+        }
         changed = true;
       }
     }
@@ -219,14 +228,9 @@ export class BodyMoveControls {
       this.customPivot = true;
       this.pivot = s.edit.pivot.map((v, i) => v + s.edit.translation[i]) as Vector;
     } else if (s.value !== 0 || s.edit.duplicate) {
-      const before = new Set(this.editor.store.data.bodies?.map((b) => b.id));
-      const ok = await this.editor.store.request({ kind: "transform-bodies", transform: s.edit });
-      if (ok) {
-        const ids = s.edit.duplicate
-          ? (this.editor.store.data.bodies?.filter((b) => !before.has(b.id)).map((b) => b.id) ?? [])
-          : s.edit.ids;
-        this.editor.modeling.targets = ids.map((body) => ({ kind: "body", body }));
-        this.selection = ids.slice().sort().join(",");
+      const selection = await acceptPlacement(this.editor, s.edit);
+      if (selection !== undefined) {
+        this.selection = selection;
         this.pivot = s.edit.pivot.map((v, i) => v + s.edit.translation[i]) as Vector;
       }
     }
@@ -254,26 +258,31 @@ export class BodyMoveControls {
     return snap?.value ?? value;
   }
   private update = (): void => {
-    const bodies = selectedBodies(this.editor),
-      key = bodies
-        .map((b) => b.id)
-        .sort()
-        .join(",");
+    const selection = this.selected();
+    const ids = {
+      ids: selection?.bodies.map((b) => b.id) ?? [],
+      smartObjectIds: selection?.smartObjectIds,
+    };
+    const key = placementKey(ids);
     if (!this.session && key !== this.selection) {
       this.selection = key;
       this.pivotMode = false;
       this.customPivot = false;
     }
-    if (!this.session && !this.customPivot && bodies.length) this.pivot = bodyCenter(bodies);
+    if (!this.session && !this.customPivot && selection)
+      this.pivot = selection.smartObjectIds.length
+        ? selectionAnchor(this.editor)
+        : bodyCenter(selection.bodies);
     this.gizmo.root.hidden =
       !!this.editor.world.active ||
       this.editor.modeling.tool !== "move" ||
-      (!bodies.length && !this.session) ||
+      (!selection && !this.session) ||
       (!!this.editor.interactions.current &&
         !["body-move", "scale"].includes(this.editor.interactions.current.kind));
     this.gizmo.input.hidden = !this.session || !this.gizmo.input.hasAttribute("aria-label");
     this.gizmo.input.setAttribute("aria-invalid", String(this.session?.valid === false));
     const session = this.session;
+    this.gizmo.label(placementLabel(session?.edit ?? ids));
     const pivot =
       session && !session.rotate && session.valid
         ? (session.edit.pivot.map((v, i) => v + session.edit.translation[i]) as Vector)

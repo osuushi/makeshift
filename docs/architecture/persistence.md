@@ -245,6 +245,13 @@ bench before publishing the drawing. Older drawings open as one bench named
 **Bench 1**. A drawing with the default bench alone retains the existing format.
 Switching tabs alone leaves the drawing clean.
 
+Drawings containing smart objects use version 5. Each placement stores a source
+bench ID and twelve row-major affine values. The source bench holds its own
+exact geometry. Open validates every placement, including referenced bench IDs
+and cycles, before publishing the drawing. Saving during an in-place edit
+records the parent tab and its camera and includes accepted edits to the source.
+Geometry export includes visible placed base solids, including nested placements.
+
 ## Portable agent workspace
 
 Single default-bench saves with portable files or embedded decorator definitions use a

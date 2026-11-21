@@ -35,7 +35,7 @@ export async function transformFollowupRoute(page, name) {
   await chooseTool(page, "grid snap", "grid");
   await page.keyboard.press("r");
   await drag(page, [0, 0], [20, 10]);
-  await page.keyboard.press("m");
+  await chooseTool(page, "transform", "transform");
   const sphere = page.getByRole("button", { name: "Reposition sketch pivot", exact: true });
   const original = await center(sphere);
   const a = await at(page, 0, 0),
@@ -67,7 +67,7 @@ export async function transformFollowupRoute(page, name) {
   assert.equal(moved.camera.orbitActive, false);
   await chooseTool(page, "undo", "undo");
   const before = (await inspect(page)).document;
-  await page.keyboard.press("m");
+  await chooseTool(page, "transform", "transform");
   await page.locator(".transform-box-handle:not([hidden])").first().click();
   await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("1.5");
   await inspect(page);
@@ -78,8 +78,8 @@ export async function transformFollowupRoute(page, name) {
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before);
   await page.keyboard.press("c");
-  await drag(page, [40, 0], [50, 0]);
-  await page.keyboard.press("m");
+  await drag(page, [24, -8], [31, -8]);
+  await chooseTool(page, "transform", "transform");
   await page.locator(".transform-box-handle:not([hidden])").first().click();
   await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("1.5");
   await inspect(page);

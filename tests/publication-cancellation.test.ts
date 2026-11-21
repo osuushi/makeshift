@@ -178,3 +178,35 @@ test("explicit Accept completes while cancellation is rejected", async (context)
     owner.close();
   }
 });
+
+test("cancelling smart-object conversion after recentering leaves the original bench intact", async (context) => {
+  const owner = new DocumentOwner();
+  const pause = gate();
+  try {
+    const body = await prism(owner, square);
+    const before = owner.drawing;
+    const kernel = Reflect.get(owner, "kernel") as SolidCalculator;
+    const calculate = kernel.calculate.bind(kernel);
+    context.mock.method(kernel, "calculate", async (...args: Parameters<typeof calculate>) => {
+      const result = await calculate(...args);
+      await pause.pause();
+      return result;
+    });
+    const pending = owner.call({
+      kind: "smart-object",
+      edit: {
+        action: "convert",
+        selection: { bodies: [body.id], sketches: [], instances: [] },
+      },
+    });
+    await pause.entered;
+    const cancelling = owner.call({ kind: "cancel-preview" });
+    pause.release();
+    assert.match((await pending).error ?? "", /cancelled/);
+    assert.equal((await cancelling).error, undefined);
+    assert.deepEqual(owner.drawing, before);
+  } finally {
+    pause.release();
+    owner.close();
+  }
+});

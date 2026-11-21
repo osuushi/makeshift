@@ -32,6 +32,7 @@ import { StepImportControls } from "../model/step-import-controls.js";
 import { TopologyMoveControls } from "../model/topology-move-controls.js";
 import { EditorPanes } from "../panes/editor-panes.js";
 import { installSettings } from "../preferences/settings.js";
+import { SmartObjectControls } from "../smart-objects/controls.js";
 import { TagControls } from "../tags/controls.js";
 import { installPlaneBounds } from "./plane-bounds.js";
 import { planeEntryTools } from "./plane-entry-tools.js";
@@ -125,6 +126,7 @@ const bodyFinishes = new BodyEdgeFinishControls(editor, overlay);
 const edgeLoops = new EdgeLoopControls(editor, overlay);
 const tags = new TagControls(editor, app);
 const entities = new EntityViewer(editor, app, tags, guides);
+const smartObjects = new SmartObjectControls(editor, panes.content("Smart objects"));
 const booleans = new BooleanControls(editor, overlay, entities);
 const bodyMove = new BodyMoveControls(editor, overlay);
 const disposeReopen = reopenControls(editor, async ({ request }) => {
@@ -244,6 +246,7 @@ window.addEventListener("pagehide", (event) => {
   disposeSketchEntryTool();
   modelingTools.dispose();
   disposeControls();
+  smartObjects.dispose();
   disposeCalculation();
   disposeReopen();
   modelControls.dispose();

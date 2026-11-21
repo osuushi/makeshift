@@ -7,6 +7,7 @@ import { distance } from "../sketch/point-math.js";
 import { pointHits } from "../sketch/point-query.js";
 import { profilesFor } from "../sketch/profiles.js";
 import { pointTarget } from "../sketch/selection-target.js";
+import { linkedPreview } from "../smart-objects/linked-preview.js";
 import type { ToolSelection, ToolTarget } from "./tool-selection.js";
 
 export interface SelectionCandidate extends PreviewGeometry {
@@ -49,7 +50,8 @@ export function selectionCandidates(selection: ToolSelection): SelectionCandidat
         add(target, () => ({ surfaces: [], lines: [[worldPoint(sketch.plane, hit.point)]] }));
     }
   } else {
-    const model = (target: ModelingTarget) => add(target, () => overlapGeometry(e, target));
+    const model = (target: Exclude<ModelingTarget, { kind: "smart-object" }>) =>
+      add(target, () => overlapGeometry(e, target));
     for (const body of e.bodiesVisible ? (e.store.data.bodies ?? []) : []) {
       if (!e.visibility.visible(body.id)) continue;
       model({ kind: "body", body: body.id });
@@ -62,6 +64,10 @@ export function selectionCandidates(selection: ToolSelection): SelectionCandidat
       model({ kind: "sketch", sketch: sketch.id });
       for (const profile of profilesFor(sketch))
         model({ kind: "profile", sketch: sketch.id, profile });
+    }
+    for (const object of e.store.data.smartObjects ?? []) {
+      if (e.visibility.visible(object.id))
+        add({ kind: "smart-object", instance: object.id }, () => linkedPreview(e, [object.id]));
     }
   }
   return result;
