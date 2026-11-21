@@ -228,14 +228,19 @@ export class InteractionLease {
     this.candidate = null;
     this.visualPreview = preview;
   }
-  capture(element: Element, id: number): void {
+  capture(element: Element, id: number, onMouseRelease?: (event: PointerEvent) => void): void {
     this.history?.checkpoint();
-    this.captureTarget = { element, id };
+    const capture = { element, id };
+    this.captureTarget = capture;
     element.addEventListener(
       "lostpointercapture",
       (event) => {
-        if (this.captureTarget?.id === (event as PointerEvent).pointerId)
-          this.owner.requestCancel();
+        const pointer = event as PointerEvent;
+        if (this.captureTarget !== capture || pointer.pointerId !== id) return;
+        // Chromium can drop capture on a buttonless mouse move before delivering pointerup.
+        if (onMouseRelease && pointer.pointerType === "mouse" && pointer.buttons === 0)
+          onMouseRelease(pointer);
+        else this.owner.requestCancel();
       },
       { signal: this.abort.signal },
     );

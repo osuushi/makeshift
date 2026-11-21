@@ -3,11 +3,12 @@ import { resolve } from "node:path";
 import { openDocument } from "./native-documents.mjs";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
+import { previewActionReady } from "./ui-preview-readiness.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 // Founder capture: the mesh-only circular cut hid its accepted operand, and
 // GPU caps ignored the replacement. Model tests cannot observe missing paint.
-export async function sectionExtrusion(page, sample) {
+export async function sectionExtrusion(page, sample, runtime) {
   await openDocument(page, resolve("tests/fixtures/section-extrusion.makeshift"));
   await page.getByRole("button", { name: "Hide Sketch 1", exact: true }).click();
   await orient(page, [0, 0, 1]);
@@ -50,17 +51,19 @@ export async function sectionExtrusion(page, sample) {
     await page.waitForFunction(() => !!window.makeshiftInspect().visualPreview?.bodies.length);
     samePattern(await sample(page, material), before, "Mesh-only drag retains the section fill");
     const previous = JSON.stringify((await inspect(page)).visualPreview);
-    await page.mouse.move(x + 2 * (b.x - a.x), y + 2 * (b.y - a.y));
+    const end = { x: x + 2 * (b.x - a.x), y: y + 2 * (b.y - a.y) };
+    await page.mouse.move(end.x, end.y);
     await page.waitForFunction((previous) => {
       const visual = window.makeshiftInspect().visualPreview;
       return visual && JSON.stringify(visual) !== previous;
     }, previous);
     samePattern(await sample(page, material), before, "Drag updates retain the same pattern");
+    if (runtime !== "webkit") await moveWithoutButtons(page, end);
   } finally {
     await page.mouse.up();
     await page.keyboard.up("Shift");
   }
-  await page.waitForFunction(() => !!window.makeshiftInspect().preview);
+  await previewActionReady(page, "Accept extrusion");
   await page.mouse.move(1100, 80);
   assert.deepEqual(await sample(page, material), before, "Release retains the section fill");
   await page.keyboard.press("Escape");
@@ -68,6 +71,22 @@ export async function sectionExtrusion(page, sample) {
   await chooseTool(page, "clear selection", "selection-clear");
   await page.mouse.move(1100, 80);
   assert.deepEqual(await sample(page, material), unselected, "Cancel restores the section fill");
+}
+
+async function moveWithoutButtons(page, { x, y }) {
+  // The reported mouse move dropped Chromium's capture before pointerup.
+  const session = await page.context().newCDPSession(page);
+  try {
+    await session.send("Input.dispatchMouseEvent", {
+      type: "mouseMoved",
+      x: x + 1,
+      y,
+      buttons: 0,
+      modifiers: 8, // Shift remains held through release.
+    });
+  } finally {
+    await session.detach();
+  }
 }
 
 function samePattern(actual, expected, message) {
