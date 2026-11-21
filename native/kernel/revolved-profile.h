@@ -19,6 +19,9 @@ struct ThroughBore {
     gp_Ax1 axis;
     std::vector<SourceEntity> walls;
 };
+struct PlanarCut {
+    std::vector<SourceEntity> walls;
+};
 struct Band {
     const Operand& body;
     gp_Ax3 frame;
@@ -28,6 +31,7 @@ struct Band {
     std::vector<Dimple> dimples;
     std::vector<ThroughBore> bores;
     std::vector<SourceEntity> parallelCuts;
+    std::vector<PlanarCut> planarCuts;
     std::optional<Result> stock;
 
     gp_Ax1 axis() const { return {frame.Location(), frame.YDirection()}; }
@@ -44,10 +48,13 @@ bool hasMaterial(const TopoDS_Shape&, double threshold);
 TopoDS_Shape trimDimples(const TopoDS_Shape&, const Band&, std::vector<SourceEntity>&);
 bool hasSplitCut(const std::vector<SourceEntity>&);
 TopoDS_Shape recutParallel(TopoDS_Shape, const std::vector<SourceEntity>&, std::vector<SourceEntity>&);
+TopoDS_Shape recutPlanar(TopoDS_Shape, const std::vector<PlanarCut>&, std::vector<SourceEntity>&);
 void verifySameMaterial(const TopoDS_Shape&, const TopoDS_Shape&, const char* message);
 void verifySectionMaterial(const TopoDS_Shape&, const TopoDS_Shape&, bool exactSupports);
 void verifyBoreRecovery(const Band&);
-Band sectionProfile(const Operand&, const gp_Ax1&, std::vector<SourceEntity>);
+Band sectionProfile(const Operand&, const gp_Ax1&, std::vector<SourceEntity>,
+                    const std::optional<gp_Dir>& direction = std::nullopt);
+std::optional<Band> sectionWithPlanarCuts(const Operand&, const gp_Ax1&, const std::vector<SourceEntity>&);
 TopoDS_Face recoveredSectionFace(const Band&);
 void verifySectionRecovery(const Band&, bool exactSupports);
 Band inspect(const Tree&, const std::vector<Operand>&, bool verifyRecovery = false);

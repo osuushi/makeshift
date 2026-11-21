@@ -68,7 +68,7 @@ test("Edit Profile recovers the captured rolling fillet as an editable full turn
   }
 });
 
-test("turn recovery rejects a closed-spline body with an unrelated side cut", async () => {
+test("turn recovery rejects a closed-spline body with an unrelated addition", async () => {
   const owner = new DocumentOwner();
   try {
     const { data } = await call(owner, { kind: "open", document: fixture });
@@ -86,12 +86,12 @@ test("turn recovery rejects a closed-spline body with an unrelated side cut", as
     );
     await call(owner, {
       kind: "boolean-bodies",
-      operation: { mode: "subtract", ids: [body.id, tool.id], keepOriginals: false },
+      operation: { mode: "union", ids: [body.id, tool.id], keepOriginals: false },
     });
-    const { data: notched } = await call(owner, { kind: "accept" });
-    assert.equal(notched.bodies?.length, 1);
-    const result = notched.bodies[0];
-    assert.ok(result.volume < body.volume);
+    const { data: joined } = await call(owner, { kind: "accept" });
+    assert.equal(joined.bodies?.length, 1);
+    const result = joined.bodies[0];
+    assert.ok(result.volume > body.volume);
 
     const rejected = await owner.call({
       kind: "begin-profile-edit",
@@ -99,7 +99,7 @@ test("turn recovery rejects a closed-spline body with an unrelated side cut", as
     });
     assert.match(rejected.error ?? "", /does not reproduce the turned body/);
     assert.equal(rejected.view.profileEdit, undefined);
-    assert.equal(rejected.view.data, notched);
+    assert.equal(rejected.view.data, joined);
   } finally {
     owner.close();
   }

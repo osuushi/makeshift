@@ -98,6 +98,13 @@ TopoDS_Shape recutBores(TopoDS_Shape stock, const Band& band, std::vector<Source
     }
     return stock;
 }
+
+TopoDS_Shape recutStock(const TopoDS_Shape& stock, const Band& band, std::vector<SourceEntity>& origins) {
+    auto shape = revolved_profile::trimDimples(stock, band, origins);
+    shape = recutBores(shape, band, origins);
+    shape = revolved_profile::recutParallel(shape, band.parallelCuts, origins);
+    return revolved_profile::recutPlanar(shape, band.planarCuts, origins);
+}
 }
 
 void revolved_profile::verifyBoreRecovery(const Band& band) {
@@ -113,7 +120,7 @@ void revolved_profile::verifySectionRecovery(const Band& band, bool exactSupport
     std::vector<SourceEntity> unused;
     const auto stock = turnFace(recoveredSectionFace(band), band.axis(), {}, unused);
     timing.phase("revolve");
-    const auto rebuilt = recutParallel(stock, band.parallelCuts, unused);
+    const auto rebuilt = recutStock(stock, band, unused);
     timing.phase("recut");
     verifySectionMaterial(band.body.shape, rebuilt, exactSupports);
     timing.phase("compare");
@@ -135,9 +142,7 @@ std::vector<Result> replaceRevolvedProfile(const Tree& input, const std::vector<
         origins.insert(origins.end(), band.stock->predecessors.begin(), band.stock->predecessors.end());
         shape = booleanShape(band.stock->shape, revolved, "subtract", origins);
     } else {
-        shape = revolved_profile::trimDimples(revolved, band, origins);
-        shape = recutBores(shape, band, origins);
-        shape = revolved_profile::recutParallel(shape, band.parallelCuts, origins);
+        shape = recutStock(revolved, band, origins);
     }
     validate(shape);
     validateFinishManifold(shape);

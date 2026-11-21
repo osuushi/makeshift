@@ -5,9 +5,11 @@
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
+#include <BRepBuilderAPI_Transform.hxx>
 #include <BRepGProp.hxx>
 #include <BRepTools.hxx>
 #include <BRep_Tool.hxx>
+#include <Geom_BSplineCurve.hxx>
 #include <GProp_GProps.hxx>
 #include <Precision.hxx>
 #include <ShapeAnalysis_FreeBounds.hxx>
@@ -91,11 +93,57 @@ TopoDS_Shape sectionFace(BRepAlgoAPI_Section& section, const TopoDS_Edge& edge,
     }
     throw std::runtime_error("A profile section lost its source face");
 }
+
+std::array<gp_Pnt, 2> endpoints(const TopoDS_Edge& edge) {
+    return {BRep_Tool::Pnt(TopExp::FirstVertex(edge)), BRep_Tool::Pnt(TopExp::LastVertex(edge))};
 }
 
-Band sectionProfile(const Operand& body, const gp_Ax1& axis, std::vector<SourceEntity> cuts) {
+bool onMeridian(const TopoDS_Edge& edge, const gp_Ax3& frame) {
+    const BRepAdaptor_Curve curve(edge);
+    if (curve.GetType() != GeomAbs_BSplineCurve) return false;
+    const auto spline = curve.BSpline();
+    const gp_Vec radial(frame.XDirection()), normal(frame.Direction());
+    // A B-spline lies in the convex hull of its control points.
+    for (int i = 1; i <= spline->NbPoles(); ++i) {
+        const gp_Vec offset(frame.Location(), spline->Pole(i));
+        if (offset.Dot(radial) < -tolerance || std::abs(offset.Dot(normal)) > tolerance) return false;
+    }
+    return true;
+}
+
+TopoDS_Edge splineMeridian(const TopoDS_Edge& section, const TopoDS_Face& face, const gp_Ax3& frame) {
+    if (BRepAdaptor_Surface(face).GetType() != GeomAbs_BSplineSurface) return section;
+    const auto [a, b] = endpoints(section);
+    const gp_Ax1 axis(frame.Location(), frame.YDirection());
+    const gp_Vec axial(axis.Direction());
+    for (TopExp_Explorer edges(face, TopAbs_EDGE); edges.More(); edges.Next()) {
+        const auto seam = TopoDS::Edge(edges.Current());
+        if (section.IsSame(seam)) return section;
+        if (BRep_Tool::Degenerated(seam) || !BRep_Tool::IsClosed(seam, face)) continue;
+        for (const auto& endpoint : endpoints(seam)) {
+            const gp_Vec offset(frame.Location(), endpoint);
+            const auto radial = offset - axial * offset.Dot(axial);
+            if (radial.Magnitude() <= tolerance) continue;
+            gp_Trsf rotation;
+            rotation.SetRotation(axis, radial.AngleWithRef(gp_Vec(frame.XDirection()), axial));
+            const auto aligned = TopoDS::Edge(BRepBuilderAPI_Transform(seam, rotation, true).Shape());
+            const auto [start, end] = endpoints(aligned);
+            const bool matches = (start.Distance(a) <= tolerance && end.Distance(b) <= tolerance) ||
+                (start.Distance(b) <= tolerance && end.Distance(a) <= tolerance);
+            // A full band can supply its original seam curve at a clearer azimuth.
+            // The round-trip material check still certifies the reconstructed body.
+            if (matches && onMeridian(aligned, frame)) return aligned;
+            break;
+        }
+    }
+    return section;
+}
+}
+
+Band sectionProfile(const Operand& body, const gp_Ax1& axis, std::vector<SourceEntity> cuts,
+                    const std::optional<gp_Dir>& direction) {
     const auto [low, high] = axialStations(body.shape, axis);
-    const auto radial = clearRadial(axis, cuts);
+    const auto radial = direction ? *direction : clearRadial(axis, cuts);
     const auto frame = gp_Ax3(radialFrame(axis, low).Location(), radial.Crossed(axis.Direction()), radial);
     Band band{body, frame, high - low};
     band.parallelCuts = std::move(cuts);
@@ -116,7 +164,7 @@ Band sectionProfile(const Operand& body, const gp_Ax1& axis, std::vector<SourceE
             return entity.shape.IsSame(face);
         });
         if (source == body.entities.end()) throw std::runtime_error("A profile section lost its source face");
-        band.meridians.push_back({source->id, {}, half});
+        band.meridians.push_back({source->id, {}, splineMeridian(half, TopoDS::Face(face), frame)});
     }
     return band;
 }

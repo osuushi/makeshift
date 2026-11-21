@@ -143,12 +143,17 @@ the body's length or fillet the corner where a cap meets the wall. The sketch
 snaps to the axis for new cap endpoints. Recovered caps have a horizontal
 constraint and the side curves are selected on entry for radial edits.
 After revolving the edited region, the kernel re-cuts separate spherical
-dimples, complete through-bores and lengthwise cylindrical cuts from the
-original supports. A lengthwise cut can open through the side and the caps, or
-appear in several disconnected patches. For a split cut, the kernel recovers a
-meridian clear of the cutter and verifies that revolving and re-cutting it
+dimples, complete through-bores, lengthwise cylindrical cuts and supported planar
+notches from the original supports. A lengthwise cut can open through the side
+and the caps, or appear in several disconnected patches. For a split cut, the
+kernel recovers a meridian clear of the cutter and verifies that revolving and re-cutting it
 reproduces the original solid. Recesses that miss or merely touch are omitted.
 The preview counts omitted dimples.
+
+An intact meridian supplies the complete cap for a turned part with a planar
+notch. The kernel rebuilds a convex cutter from the notch's walls parallel to the
+axis and any visible depth plane. It verifies the combination against the
+original solid and re-cuts the edited cap against those stationary planes.
 
 A solid fillet stored as a closed spline can also contribute to the profile.
 The kernel sections the body through its axis and compares the reconstructed
