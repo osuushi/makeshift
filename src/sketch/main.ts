@@ -126,7 +126,7 @@ const bodyFinishes = new BodyEdgeFinishControls(editor, overlay);
 const edgeLoops = new EdgeLoopControls(editor, overlay);
 const tags = new TagControls(editor, app);
 const entities = new EntityViewer(editor, app, tags, guides);
-const smartObjects = new SmartObjectControls(editor, entities.operationRows);
+const smartObjects = new SmartObjectControls(editor, panes.content("Smart objects"));
 const booleans = new BooleanControls(editor, overlay, entities);
 const bodyMove = new BodyMoveControls(editor, overlay);
 const disposeReopen = reopenControls(editor, async ({ request }) => {

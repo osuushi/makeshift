@@ -210,13 +210,13 @@ export class SmartObjectControls {
       ...(selection.length === 1 ? ["edit-smart-object", "open-smart-source"] : []),
       ...(focus.inline.length ? ["exit-smart-object"] : []),
     ]);
-    this.root.hidden = !visible.size;
-    this.context.hidden = !focus.inline.length;
+    this.root.toggleAttribute("hidden", !visible.size);
+    this.context.toggleAttribute("hidden", !focus.inline.length);
     const name = e.store.benchTabs.find(({ id }) => id === e.store.editingBench)?.name;
     const label = focus.inline.length ? `Editing ${name ?? "source"} in place` : "";
     if (this.context.textContent !== label) this.context.textContent = label;
     for (const [id, { button }] of this.buttons) {
-      button.hidden = !visible.has(id);
+      button.toggleAttribute("hidden", !visible.has(id));
       button.disabled = reasons.get(id) !== null;
     }
   };
