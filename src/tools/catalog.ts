@@ -41,6 +41,11 @@ export type ToolAction = Pick<
 export interface ToolResult extends ToolDefinition {
   unavailable: string | null;
 }
+export interface LinkedToolAction {
+  reason?: string;
+  beforeEdit?: boolean;
+  run: () => Promise<boolean>;
+}
 const catalogs = new WeakMap<SketchEditor, ToolCatalog>();
 export function toolCatalog(editor: SketchEditor): ToolCatalog {
   let catalog = catalogs.get(editor);
@@ -56,6 +61,7 @@ export function idleReason(editor: SketchEditor): string | null {
     : null;
 }
 export class ToolCatalog {
+  linkedTool?: (id: string) => LinkedToolAction | undefined;
   private entries = new Map<string, ToolDefinition>();
   private running = false;
   private recentIds: string[] = [];
@@ -96,6 +102,8 @@ export class ToolCatalog {
     )
       return null;
     if (this.editor.blocked && !tool.allowBusy) return "Wait for the current calculation";
+    const linked = tool.id && this.linkedTool?.(tool.id);
+    if (linked) return linked.reason ?? null;
     if (current && !this.switches(tool)) return tool.selectionInTool ? null : tool.reason();
     return toolSelection(this.editor, tool) ? null : tool.reason();
   }
@@ -134,15 +142,36 @@ export class ToolCatalog {
         }
         this.editor.refresh();
         const unavailable = tool.reason();
-        if (unavailable && !toolSelection(this.editor, tool)) {
+        if (
+          unavailable &&
+          !toolSelection(this.editor, tool) &&
+          !(tool.id && this.linkedTool?.(tool.id))
+        ) {
           this.editor.message = unavailable;
           return false;
         }
       }
+      const linked = tool.id ? this.linkedTool?.(tool.id) : undefined;
+      if (linked) {
+        if (linked.reason) {
+          this.editor.message = linked.reason;
+          return false;
+        }
+        if (!(await linked.run())) return false;
+        if (!linked.beforeEdit) {
+          this.rememberChoice(tool);
+          return true;
+        }
+      }
       const selection = toolSelection(this.editor, tool);
+      const unavailable = selection || linked?.beforeEdit ? tool.reason() : null;
+      if (linked?.beforeEdit && !selection && unavailable) {
+        this.editor.message = unavailable;
+        return false;
+      }
       if (
         selection &&
-        (tool.reason() ||
+        (unavailable ||
           (["union", "subtract", "intersect", "loft"].includes(selection.id) && !selection.valid()))
       ) {
         const narrowed = selection.narrow();

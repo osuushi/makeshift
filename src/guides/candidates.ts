@@ -71,7 +71,7 @@ export function guideCandidates(
           loop.map((span) => span.curve.id),
         ),
       );
-    else {
+    else if (target.kind !== "smart-object") {
       const body = document.bodies?.find((b) => b.id === target.body);
       if (body) anchors.push(...bodyCandidates(body, target));
     }

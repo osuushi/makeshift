@@ -16,6 +16,7 @@ import type { HistoryOperation } from "../sketch/operation-history.js";
 import { continueBodyMetadata } from "./body-metadata.js";
 import { kernelInput, loftInput, revolveInput } from "./kernel-input.js";
 import { continuingBodies, type KernelResult, materialize } from "./kernel-result.js";
+import { rigidPlacement } from "./rigid-placement.js";
 import type { SolidCalculator } from "./solid-calculator.js";
 import { importStep } from "./step-import.js";
 import { SurfaceEdits } from "./surface-edits.js";
@@ -262,16 +263,7 @@ export class SolidEdits {
         ? await this.surfaces.complete(document, request)
         : document;
     } else if (request.kind === "transform-bodies") {
-      const result = await this.kernel.calculate({
-        ...request.transform,
-        kind: "transform",
-        bodies,
-      });
-      const transformed = materialize(bodies, result);
-      candidate = {
-        ...document,
-        bodies: request.transform.duplicate ? transformed : continuingBodies(bodies, transformed),
-      };
+      candidate = await rigidPlacement(document, request.transform, this.kernel);
     } else {
       const result = await this.kernel.calculate(
         request.kind === "boolean-bodies"

@@ -8,12 +8,14 @@ import { expandedSelection, type SelectionContext, selectionContext } from "./se
 
 export interface MovementSelection {
   bodies: Body[];
+  smartObjectIds?: string[];
   faces: BodyFaceOffset["faces"];
   edges: BodyEdgeFinish["edges"];
 }
 export interface DeletionSelection {
   bodyIds: string[];
   sketchIds: string[];
+  smartObjectIds?: string[];
   curves: { sketch: string; ids: string[] }[];
   topology: CleanupSelection[];
   profiles: { sketch: string; profile: string }[];
@@ -85,20 +87,42 @@ const resolvers: { [K in Operation]: Resolver<K> } = {
 };
 
 const solidOnly = (c: SelectionContext) => c.ordered.every((t) => "body" in t);
+const placementTargets = (c: SelectionContext) =>
+  c.ordered.every((target) => "body" in target || target.kind === "smart-object");
+const smartObjectIds = (c: SelectionContext) =>
+  c.ordered.flatMap((target) => (target.kind === "smart-object" ? [target.instance] : []));
 function uncoveredEdges(c: SelectionContext) {
   const whole = new Set(c.complete.map((b) => b.id));
   return c.edges.filter((t) => !whole.has(t.body));
 }
 function movementSelection(c: SelectionContext): Resolution<MovementSelection> {
-  if (!solidOnly(c)) return unavailable("Move requires bodies, faces or edges");
+  if (!placementTargets(c)) return unavailable("Select bodies, faces, edges or smart objects");
   const remainingEdges = uncoveredEdges(c);
+  const instances = smartObjectIds(c);
+  if (instances.length && (c.partialFaces.length || remainingEdges.length))
+    return unavailable("Select whole bodies to transform them with smart objects");
   if (c.partialFaces.length && remainingEdges.length)
     return unavailable("Moving partial faces and edges together is not supported");
   return available({
     bodies: c.complete,
+    ...(instances.length ? { smartObjectIds: instances } : {}),
     faces: c.partialFaces.map(({ body, face }) => ({ body, face })),
     edges: remainingEdges.map(({ body, edge }) => ({ body, edge })),
   });
+}
+
+/** Duplicate and Mirror may explicitly promote selected solid components to their owners. */
+export function wholePlacements(
+  targets: readonly ModelingTarget[],
+  document: SketchDocument,
+  promote = false,
+): { bodies: Body[]; smartObjectIds: string[] } | null {
+  const c = selectionContext(targets, document);
+  if (!c.ordered.length || !c.valid || !placementTargets(c)) return null;
+  if (promote) return { bodies: c.owners, smartObjectIds: smartObjectIds(c) };
+  const move = movementSelection(c);
+  if (!move.available || move.inputs.faces.length || move.inputs.edges.length) return null;
+  return { bodies: move.inputs.bodies, smartObjectIds: move.inputs.smartObjectIds ?? [] };
 }
 function wholeBodySelection(c: SelectionContext): Resolution<Body[]> {
   if (!solidOnly(c) || !c.owners.length) return unavailable("Select solid bodies, faces or edges");
@@ -151,9 +175,11 @@ function offsetSelection(
   return available({ targets: c.faces.map(({ body, face }) => ({ body, face })), faces });
 }
 function deletionSelection(c: SelectionContext): Resolution<DeletionSelection> {
+  const instances = smartObjectIds(c);
   return available({
     bodyIds: c.complete.map((b) => b.id),
     sketchIds: c.ordered.flatMap((t) => (t.kind === "sketch" && !t.curves ? [t.sketch] : [])),
+    ...(instances.length ? { smartObjectIds: instances } : {}),
     curves: c.ordered.flatMap((t) =>
       t.kind === "sketch" && t.curves ? [{ sketch: t.sketch, ids: t.curves }] : [],
     ),

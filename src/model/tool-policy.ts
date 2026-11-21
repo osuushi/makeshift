@@ -24,9 +24,9 @@ export function defaultModelingTool(
   let preferred: ModelingTool | null = null;
   if (c.ordered.length && c.ordered.every((t) => t.kind === "profile")) preferred = "extrude";
   else if (
-    c.complete.length &&
+    c.ordered.length &&
     !c.partialFaces.length &&
-    c.ordered.every((t) => "body" in t) &&
+    c.ordered.every((t) => "body" in t || t.kind === "smart-object") &&
     !c.edges.length
   )
     preferred = "move";

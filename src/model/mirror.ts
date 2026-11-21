@@ -9,7 +9,13 @@ export interface MirrorLine {
   direction: Point;
 }
 export type MirrorOperation =
-  | { kind: "bodies"; ids: string[]; plane: MirrorPlane; keepOriginal: boolean }
+  | {
+      kind: "bodies";
+      ids: string[];
+      smartObjectIds?: string[];
+      plane: MirrorPlane;
+      keepOriginal: boolean;
+    }
   | { kind: "sketch"; sketchId: string; ids: string[]; line: MirrorLine; keepOriginal: boolean };
 
 export function reflectPoint(point: Point, line: MirrorLine): Point {

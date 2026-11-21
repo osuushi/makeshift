@@ -31,6 +31,7 @@ const solids = ["body", "face", "edge"];
 const curves = ["segment", "circle", "arc", "bezier", "group"];
 const points = ["endpoint", "curve-center", "midpoint", "group-center", "group-handle"];
 const geometry = [...curves, ...points];
+const modelTransform = [...solids, "sketch", "profile", "smart-object"];
 /** Audited selection-dependent catalog entries. Workspace/history/busy guards remain separate. */
 export const selectionPolicies: Readonly<Record<string, SelectionPolicy>> = {
   extrude: { model: ["profile", "face"] },
@@ -44,16 +45,16 @@ export const selectionPolicies: Readonly<Record<string, SelectionPolicy>> = {
   union: { model: solids, pickBodies: true },
   subtract: { model: solids, pickBodies: true },
   intersect: { model: solids, pickBodies: true },
-  duplicate: { model: solids, pickBodies: true },
+  duplicate: { model: [...solids, "smart-object"], pickBodies: true },
   cleanup: { model: solids },
   split: { model: solids, pickBodies: true },
   "tag-geometry": { model: ["face", "edge"] },
   imprint: { model: ["face"] },
-  transform: { model: [...solids, "sketch", "profile"], sketch: geometry },
-  move: { model: [...solids, "sketch", "profile"], sketch: geometry },
-  rotate: { model: [...solids, "sketch", "profile"], sketch: geometry },
-  scale: { model: [...solids, "sketch", "profile"], sketch: geometry },
-  mirror: { model: [...solids, "sketch", "profile"], sketch: curves },
+  transform: { model: modelTransform, sketch: geometry },
+  move: { model: modelTransform, sketch: geometry },
+  rotate: { model: modelTransform, sketch: geometry },
+  scale: { model: modelTransform, sketch: geometry },
+  mirror: { model: [...modelTransform], sketch: curves },
   threads: { model: ["face"] },
   gear: { model: ["face"] },
   knurling: { model: ["face"] },

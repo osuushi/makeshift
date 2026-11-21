@@ -16,7 +16,6 @@ import { DocumentSession } from "./document-session.js";
 import { documentView } from "./document-view.js";
 import { GeometryQueries, isGeometryQuery } from "./geometry-queries.js";
 import { NativeSolver } from "./native-solver.js";
-import { planeCutAvailable } from "./plane-cut.js";
 import { reopenPreview } from "./reopen-preview.js";
 import { ScriptEdits } from "./script-edits.js";
 import { SolidCalculator } from "./solid-calculator.js";
@@ -28,7 +27,6 @@ export class DocumentOwner {
   private queries: GeometryQueries;
   private solids: SolidEdits;
   private commands: DocumentCommands;
-  private planeCutAvailable = false;
   private session = new DocumentSession();
   private active: { kind: ModelRequest["kind"]; promise: Promise<ModelReply> } | null = null;
   private cancelling = false;
@@ -39,7 +37,7 @@ export class DocumentOwner {
     kernelExecutable?: string,
   ) {
     this.kernel = new SolidCalculator(kernelExecutable);
-    this.queries = new GeometryQueries(kernelExecutable);
+    this.queries = new GeometryQueries(() => this.drawing, kernelExecutable);
     this.solids = new SolidEdits(this.kernel);
     this.commands = new DocumentCommands(
       this.session,
@@ -84,10 +82,7 @@ export class DocumentOwner {
     return this.session.benches.snapshot();
   }
   get view(): ModelView {
-    return documentView(this.session, this.solids, this.decorators, {
-      planeCutAvailable: this.planeCutAvailable,
-      cleanupAvailable: this.commands.cleanupAvailable,
-    });
+    return documentView(this.session, this.solids, this.decorators, this.commands);
   }
 
   private async preview(request: PreviewRequest): Promise<void> {
@@ -141,7 +136,10 @@ export class DocumentOwner {
       this.session.store.selections(request.changes);
       return { view: this.view };
     }
-    if (request.kind === "bench" && this.session.pendingOperation)
+    if (
+      (request.kind === "bench" || request.kind === "smart-object") &&
+      this.session.pendingOperation
+    )
       return { view: this.view, error: "Finish or cancel the current edit first" };
     this.kernel.begin();
     const promise = this.execute(request);
@@ -198,23 +196,26 @@ export class DocumentOwner {
   }
 
   private async execute(request: ModelRequest): Promise<ModelReply> {
-    const before = this.session.store.data;
+    const store = this.session.store;
+    const before = store.data;
     const operation = this.session.operation(request);
     try {
-      if (request.kind === "check-plane-cut")
-        this.planeCutAvailable = await planeCutAvailable(
-          this.session.store.data,
-          request.operation,
-          this.kernel,
-        );
-      else await this.dispatch(request, operation);
+      const conversionOrigin =
+        request.kind === "smart-object"
+          ? await this.commands.editSmartObject(request.edit, operation)
+          : await this.dispatch(request, operation);
       if (this.session.candidate && !this.session.reopenedPreview)
         this.session.refine(await this.decorators.continue(this.session.candidate, before));
       if (request.kind === "complete-preview" && this.kernel.wasSuperseded)
         throw new CalculationFailure("superseded", "Preview superseded");
       this.checkCancellation();
-      const documentChanged = request.kind !== "bench" && before !== this.session.store.data;
-      return { view: this.view, documentChanged };
+      const documentChanged =
+        before !== store.data || request.kind === "new" || request.kind === "open";
+      return {
+        view: this.view,
+        documentChanged,
+        ...(conversionOrigin ? { conversionOrigin } : {}),
+      };
     } catch (error) {
       const { outcome, ...failure } = documentFailure(
         error,
@@ -231,8 +232,8 @@ export class DocumentOwner {
     }
   }
   private async dispatch(request: ModelRequest, operation: HistoryOperation): Promise<void> {
-    if (request.kind === "bench") {
-      if (this.commands.editBench(request.edit)) this.planeCutAvailable = false;
+    if (request.kind === "bench" || request.kind === "check-plane-cut") {
+      await this.commands.run(request, operation);
       return;
     }
     this.commands.cleanupAvailable = false;

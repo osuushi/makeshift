@@ -2,7 +2,9 @@ import { curveBounds } from "../sketch/curve-geometry.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { type PlaneFrame, type Vector, worldPoint } from "../sketch/planes.js";
 import { worldCurveBounds } from "../sketch/world-curve-bounds.js";
+import { linkedSelectionBounds } from "../smart-objects/selection-bounds.js";
 import type { ScaleSource } from "./scale.js";
+import { boundsPoints } from "./smart-object-bounds.js";
 
 export interface TransformBox {
   min: Vector;
@@ -45,6 +47,10 @@ export function selectionBox(editor: SketchEditor, source: ScaleSource): Transfo
       }
     }
   } else {
+    if (source.smartObjectIds?.length) {
+      const bounds = linkedSelectionBounds(editor, source.smartObjectIds);
+      if (!bounds.isEmpty()) points.push(...boundsPoints(bounds));
+    }
     for (const body of document.bodies ?? []) {
       if (source.ids.includes(body.id)) {
         points.push(body.bounds.slice(0, 3) as Vector, body.bounds.slice(3, 6) as Vector);

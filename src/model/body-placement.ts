@@ -2,8 +2,10 @@ import * as THREE from "three";
 import { continueDecorators } from "../decorators/continuation.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { Vector } from "../sketch/planes.js";
+import { matrixAffine } from "./affine.js";
 import type { Body, BodyGeometry, BodyTransform } from "./body.js";
 import type { DisplayDocument } from "./display-document.js";
+import { transformSmartObjects } from "./smart-object.js";
 
 export const axes: Record<string, Vector> = { X: [1, 0, 0], Y: [0, 1, 0], Z: [0, 0, 1] };
 export function bodyCenter(bodies: readonly BodyGeometry[]): Vector {
@@ -20,7 +22,7 @@ export function placementMatrix(edit: BodyTransform): THREE.Matrix4 {
     .multiply(new THREE.Matrix4().makeTranslation(...edit.pivot))
     .multiply(
       new THREE.Matrix4().makeRotationAxis(
-        new THREE.Vector3(...edit.axis),
+        new THREE.Vector3(...edit.axis).normalize(),
         (edit.angle * Math.PI) / 180,
       ),
     )
@@ -123,11 +125,22 @@ export function placedDocument(document: SketchDocument, edit: BodyTransform): D
   const bodies = document.bodies ?? [];
   const selected = bodies.filter((body) => edit.ids.includes(body.id));
   const retained = edit.duplicate ? bodies : bodies.filter((body) => !edit.ids.includes(body.id));
-  const preview = continueDecorators(
+  let preview = continueDecorators(
     document,
     { ...document, bodies: [...retained, ...placedBodies(selected, edit)] },
     { kind: "transform-bodies", transform: edit },
   );
+  if (edit.smartObjectIds?.length) {
+    preview = transformSmartObjects(
+      preview,
+      {
+        ids: edit.smartObjectIds,
+        transform: matrixAffine(placementMatrix(edit)),
+        duplicate: edit.duplicate,
+      },
+      (id) => `copy-preview/${id}`,
+    );
+  }
   if (!edit.duplicate || !document.guidePoints?.length) return preview;
   return {
     ...preview,

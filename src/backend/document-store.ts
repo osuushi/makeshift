@@ -23,7 +23,10 @@ interface HistoryRecord {
 
 /** One attempted-operation history. Only entries with an active change navigate. */
 export class DocumentStore {
-  constructor(private accepted: SketchDocument = { units: "mm", sketches: [] }) {
+  constructor(
+    private accepted: SketchDocument = { units: "mm", sketches: [] },
+    private validateLinks?: (document: SketchDocument) => void,
+  ) {
     validateDocument(accepted);
   }
   /** View preferences persist in the document but do not consume geometry Undo. */
@@ -144,6 +147,7 @@ export class DocumentStore {
     const record = this.latestChange;
     if (!record?.change || !this.reopenOperation)
       throw new Error("The latest accepted edit cannot be reopened");
+    this.checkLinks(record.change.before);
     this.expireNavigation();
     for (const selection of this.records) {
       if (!selection.selectionDocument) continue;
@@ -178,6 +182,7 @@ export class DocumentStore {
   ): boolean {
     if (operation.kind !== "guide-point") candidate = pruneGuides(candidate);
     validateDocument(candidate);
+    this.checkLinks(candidate);
     if (JSON.stringify(candidate) === JSON.stringify(this.accepted)) {
       this.record(operation, "noop");
       return false;
@@ -200,9 +205,10 @@ export class DocumentStore {
     return true;
   }
   undo(): void {
+    const record = [...this.records].reverse().find((record) => record.entry.state === "applied");
+    if (record?.change) this.checkLinks(record.change.before);
     this.restoredNavigation = undefined;
     this.restoredOperation = undefined;
-    const record = [...this.records].reverse().find((record) => record.entry.state === "applied");
     if (!record?.navigation) this.expireNavigation();
     if (!record) return;
     this.restoredOperation = record.entry.operation;
@@ -212,8 +218,6 @@ export class DocumentStore {
     record.entry.state = "undone";
   }
   redo(): void {
-    this.restoredNavigation = undefined;
-    this.restoredOperation = undefined;
     // Selection navigation stays at its geometry state until its suffix is replayed.
     const record =
       this.records.find((record) => record.navigation && record.entry.state === "undone") ??
@@ -221,6 +225,9 @@ export class DocumentStore {
         (record) => record.entry.state === "undone" && record.selectionDocument === this.accepted,
       ) ??
       this.records.find((record) => record.entry.state === "undone");
+    if (record?.change) this.checkLinks(record.change.after);
+    this.restoredNavigation = undefined;
+    this.restoredOperation = undefined;
     if (!record?.navigation) this.expireNavigation();
     if (!record) return;
     this.restoredOperation = record.entry.operation;
@@ -238,6 +245,9 @@ export class DocumentStore {
     }
     if (record.selection) this.selection = record.selection.after;
     record.entry.state = "applied";
+  }
+  private checkLinks(document: SketchDocument): void {
+    if (document.smartObjects !== this.accepted.smartObjects) this.validateLinks?.(document);
   }
   private entry(
     operation: HistoryOperation,

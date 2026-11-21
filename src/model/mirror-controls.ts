@@ -9,11 +9,13 @@ import { MirrorHover } from "./mirror-hover.js";
 import { type MirrorReference, offsetReference, planeReference } from "./mirror-reference.js";
 import { MirrorReferenceView } from "./mirror-reference-view.js";
 import { MirrorWidget } from "./mirror-widget.js";
+import { wholePlacements } from "./operation-selection.js";
+import { type PlacementIds, placedTargets } from "./placement-selection.js";
 import "./mirror.css";
 
 type Source =
   | { kind: "sketch"; sketchId: string; ids: string[] }
-  | { kind: "bodies"; ids: string[] };
+  | ({ kind: "bodies" } & PlacementIds);
 export class MirrorControls {
   private disposeTool: () => void;
   private widget: MirrorWidget;
@@ -41,7 +43,7 @@ export class MirrorControls {
       aliases: ["reflect", "reflection"],
       reason: () =>
         idleReason(editor) ??
-        (this.selected() ? null : "Select compatible sketch geometry or solid geometry"),
+        (this.selected() ? null : "Select compatible sketch geometry, bodies or smart objects"),
       run: () => this.begin(),
     });
     this.widget = new MirrorWidget(overlay);
@@ -75,8 +77,14 @@ export class MirrorControls {
         ? { kind: "sketch", sketchId: e.sketch.id, ids }
         : null;
     }
-    const result = e.modeling.resolve("mirror");
-    return result.available ? { kind: "bodies", ids: result.inputs.map((b) => b.id) } : null;
+    const selection = wholePlacements(e.modeling.targets, e.store.data, true);
+    return selection
+      ? {
+          kind: "bodies",
+          ids: selection.bodies.map((body) => body.id),
+          ...(selection.smartObjectIds.length ? { smartObjectIds: selection.smartObjectIds } : {}),
+        }
+      : null;
   }
   async reopen(operation: MirrorOperation): Promise<void> {
     this.begin(operation);
@@ -92,7 +100,11 @@ export class MirrorControls {
       source = restored
         ? restored.kind === "sketch"
           ? { kind: "sketch" as const, sketchId: restored.sketchId, ids: [...restored.ids] }
-          : { kind: "bodies" as const, ids: [...restored.ids] }
+          : {
+              kind: "bodies" as const,
+              ids: [...restored.ids],
+              smartObjectIds: restored.smartObjectIds,
+            }
         : this.selected();
     if (!source || e.blocked || e.interactions.current) return;
     this.lease = e.interactions.acquire(
@@ -222,11 +234,7 @@ export class MirrorControls {
       e.tool = "select";
       e.creationArmed = false;
     } else {
-      const oldIds = new Set(before.bodies?.map((b) => b.id));
-      const ids = operation.keepOriginal
-        ? (e.store.data.bodies?.filter((b) => !oldIds.has(b.id)).map((b) => b.id) ?? [])
-        : source.ids;
-      e.modeling.targets = ids.map((body) => ({ kind: "body", body }));
+      e.modeling.targets = placedTargets(before, e.store.data, source, operation.keepOriginal);
     }
     this.end(lease);
     return true;

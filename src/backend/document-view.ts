@@ -2,6 +2,7 @@ import type { ModelView } from "../sketch/model-api.js";
 import { cutEdgeHighlights } from "./cut-edge-highlights.js";
 import type { DecoratorSession } from "./decorator-session.js";
 import type { DocumentSession } from "./document-session.js";
+import { linkedView } from "./linked-view.js";
 import type { SolidEdits } from "./solid-edits.js";
 
 export function documentView(
@@ -12,6 +13,7 @@ export function documentView(
 ): ModelView {
   const { store, candidate, pendingOperation, reopenedPreview } = session;
   return {
+    ...linkedView(session.benches),
     activeBench: session.benches.active,
     benchTabs: session.benches.tabs,
     data: store.data,
