@@ -1,8 +1,10 @@
 #include "kernel.h"
 #include "measurement-cache.h"
 #include "timing.h"
+#include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
+#include <BRep_Tool.hxx>
 #include <ShapeUpgrade_ShapeDivideClosed.hxx>
 #include <Geom_BSplineSurface.hxx>
 #include "shape-measurements.h"
@@ -86,6 +88,20 @@ std::array<int, 3> integrationAxes(const TopoDS_Shape& shape, const double* lo, 
     }
     return axes;
 }
+
+std::optional<gp_Dir> conicalTrimAxis(const TopoDS_Shape& shape) {
+    for (TopExp_Explorer it(shape, TopAbs_FACE); it.More(); it.Next()) {
+        const auto face = TopoDS::Face(it.Current());
+        const BRepAdaptor_Surface surface(face);
+        if (surface.GetType() != GeomAbs_Cone) continue;
+        for (TopExp_Explorer rim(face, TopAbs_EDGE); rim.More(); rim.Next()) {
+            const auto edge = TopoDS::Edge(rim.Current());
+            if (!BRep_Tool::Degenerated(edge) && BRepAdaptor_Curve(edge).GetType() == GeomAbs_Hyperbola)
+                return surface.Cone().Axis().Direction();
+        }
+    }
+    return std::nullopt;
+}
 struct Integrals {
     std::optional<double> signedMass, volume;
     std::optional<std::array<double, 6>> bounds;
@@ -131,7 +147,20 @@ double integrateVolume(const TopoDS_Shape& input, int referenceAxis,
             const auto preferred = std::find(axes.begin(), axes.end(), referenceAxis);
             std::rotate(axes.begin(), preferred, preferred + 1);
         }
+        error = -1;
+        if (referenceAxis < 0) {
+            if (const auto normal = conicalTrimAxis(shape)) {
+                // A cone trimmed by an axial plane can transition from a tangent
+                // generator to a hyperbola. Integrate along the cone axis to
+                // keep that trim from dominating the radial flux quadrature.
+                gp_Pnt point(normal->X() < 0 ? hi[0] : lo[0], normal->Y() < 0 ? hi[1] : lo[1],
+                             normal->Z() < 0 ? hi[2] : lo[2]);
+                const gp_Pln plane(point.Translated(-gp_Vec(*normal)), *normal);
+                error = BRepGProp::VolumePropertiesGK(shape, props, plane, 1e-10, false, true);
+            }
+        }
         for (const int axis : axes) {
+            if (std::isfinite(error) && error >= 0) break;
             fluxMass.reset();
             gp_Pnt origin(lo[0],lo[1],lo[2]);
             origin.SetCoord(axis+1,lo[axis]-1);

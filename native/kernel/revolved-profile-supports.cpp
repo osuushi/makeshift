@@ -31,6 +31,12 @@ struct Patch {
     BRepAdaptor_Surface surface;
 };
 
+bool inwardSphere(const Patch& patch) {
+    return patch.surface.GetType() == GeomAbs_Sphere &&
+        (patch.face.Orientation() == TopAbs_FORWARD) != patch.surface.Sphere().Direct();
+}
+}
+
 std::optional<gp_Ax1> rotationAxis(const BRepAdaptor_Surface& surface) {
     switch (surface.GetType()) {
     case GeomAbs_Cylinder: return surface.Cylinder().Axis();
@@ -41,18 +47,12 @@ std::optional<gp_Ax1> rotationAxis(const BRepAdaptor_Surface& surface) {
     }
 }
 
-bool inwardSphere(const Patch& patch) {
-    return patch.surface.GetType() == GeomAbs_Sphere &&
-        (patch.face.Orientation() == TopAbs_FORWARD) != patch.surface.Sphere().Direct();
-}
-
 gp_Ax1 stableAxis(gp_Ax1 axis) {
     const auto direction = axis.Direction();
     const std::array xyz{direction.X(), direction.Y(), direction.Z()};
     const auto dominant = std::ranges::max_element(xyz, {}, [](double x) { return std::abs(x); });
     if (*dominant < 0) axis.Reverse();
     return axis;
-}
 }
 
 bool coaxial(const gp_Ax1& left, const gp_Ax1& right) {
@@ -85,10 +85,10 @@ gp_Ax3 radialFrame(const gp_Ax1& axis, double station) {
     return {origin, normal, axis.Direction().Crossed(normal)};
 }
 
-Handle(Geom_TrimmedCurve) meridian(const TopoDS_Face& face, const Band& band) {
+Handle(Geom_TrimmedCurve) meridian(const TopoDS_Face& face, const Band& band, bool completeTurn) {
     const BRepAdaptor_Surface surface(face);
     const auto u = surface.FirstUParameter();
-    if (std::abs(surface.LastUParameter() - u - 2 * std::numbers::pi) > 1e-5)
+    if (completeTurn && std::abs(surface.LastUParameter() - u - 2 * std::numbers::pi) > 1e-5)
         throw std::runtime_error("Edit Profile requires a complete turn");
     const auto first = surface.FirstVParameter(), last = surface.LastVParameter();
     const auto axis = band.axis();
@@ -280,6 +280,8 @@ Band inspect(const Tree& input, const std::vector<Operand>& bodies, bool verifyR
         TopExp::MapShapes(BRepClass3d::OuterShell(TopoDS::Solid(body.shape)), TopAbs_FACE, exterior);
     for (const auto& entity : body.entities) {
         if (!selected.contains(entity.id) || !exterior.Contains(entity.shape)) continue;
+        if (selected.size() == 1)
+            if (auto corner = cornerProfile(body, entity)) return std::move(*corner);
         const auto face = TopoDS::Face(entity.shape);
         if (!inwardAxis(face)) continue;
         const auto bore = throughBore(body, entity);

@@ -190,8 +190,8 @@ void verifySameMaterial(const TopoDS_Shape& before, const TopoDS_Shape& rebuilt,
         throw std::runtime_error(message);
 }
 
-void verifySectionMaterial(const TopoDS_Shape& before, const TopoDS_Shape& rebuilt, bool exactSupports) {
-    constexpr auto message = "The recovered profile does not reproduce the turned body";
+void verifySectionMaterial(const TopoDS_Shape& before, const TopoDS_Shape& rebuilt,
+                           bool exactSupports, const char* message) {
     const double sourceVolume = volume(before), rebuiltVolume = volume(rebuilt);
     // Compare the shared volume, allowing for one boundary layer at topological
     // precision on each solid. The section and recut each introduce that error.

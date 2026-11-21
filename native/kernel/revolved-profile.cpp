@@ -12,13 +12,14 @@
 #include <Bnd_Box.hxx>
 #include <Precision.hxx>
 #include <algorithm>
+#include <numbers>
 #include <stdexcept>
 
 namespace {
 using revolved_profile::Band;
 constexpr double tolerance = Precision::Confusion();
 
-void checkBoreSpan(const TopoDS_Edge& edge, const Band& band) {
+void checkGuidedSpan(const TopoDS_Edge& edge, const Band& band) {
     gp_Trsf local;
     local.SetTransformation(band.frame);
     Bnd_Box bounds;
@@ -27,7 +28,7 @@ void checkBoreSpan(const TopoDS_Edge& edge, const Band& band) {
     bounds.Get(lowX, lowY, lowZ, highX, highY, highZ);
     if (lowX <= tolerance || lowY < -tolerance || highY > band.height + tolerance ||
         lowZ < -tolerance || highZ > tolerance)
-        throw std::runtime_error("Could not recover the bore profile between its end guides");
+        throw std::runtime_error("Could not recover the profile between its end guides");
 }
 
 struct Section {
@@ -35,12 +36,12 @@ struct Section {
     std::vector<SourceEntity> edges;
 };
 
-Section boreSection(const Band& band) {
+Section guidedSection(const Band& band) {
     BRepBuilderAPI_MakeWire wire;
     std::vector<SourceEntity> origins;
     const auto add = [&](const TopoDS_Edge& edge, const std::string& source = "") {
         wire.Add(edge);
-        if (!wire.IsDone()) throw std::runtime_error("Could not close the recovered bore profile");
+        if (!wire.IsDone()) throw std::runtime_error("Could not close the recovered profile");
         if (!source.empty()) origins.push_back({source, wire.Edge()});
     };
     gp_Pnt start, end;
@@ -52,10 +53,10 @@ Section boreSection(const Band& band) {
         const auto b = curve->Value(curve->LastParameter());
         if (i == 0) start = a;
         else if (a.Distance(end) > tolerance)
-            throw std::runtime_error("Could not connect the recovered bore walls");
+            throw std::runtime_error("Could not connect the recovered profile walls");
         end = b;
         const auto edge = BRepBuilderAPI_MakeEdge(curve).Edge();
-        checkBoreSpan(edge, band);
+        checkGuidedSpan(edge, band);
         add(edge, span.face);
     }
     if (spans.empty() || start.Distance(end) <= tolerance)
@@ -73,24 +74,34 @@ Section boreSection(const Band& band) {
 }
 
 TopoDS_Shape turnFace(const TopoDS_Face& profile, const gp_Ax1& axis,
-                      const std::vector<SourceEntity>& edges, std::vector<SourceEntity>& origins) {
+                      const std::vector<SourceEntity>& edges, std::vector<SourceEntity>& origins,
+                      bool oppositeSeam = false) {
     validate(profile);
     BRepPrimAPI_MakeRevol sweep(profile, axis, true);
     if (!sweep.IsDone()) throw std::runtime_error("Could not revolve the edited profile");
+    TopLoc_Location placement;
+    if (oppositeSeam) {
+        // Keep the periodic seam outside the corner so it does not split the editable wall.
+        gp_Trsf rotation;
+        rotation.SetRotation(axis, std::numbers::pi);
+        placement = TopLoc_Location(rotation);
+    }
     for (const auto& edge : edges)
         for (const auto& face : sweep.Generated(edge.shape))
-            if (face.ShapeType() == TopAbs_FACE) origins.push_back({edge.id, face});
-    return sweep.Shape();
+            if (face.ShapeType() == TopAbs_FACE) origins.push_back({edge.id, face.Moved(placement)});
+    return sweep.Shape().Moved(placement);
 }
-TopoDS_Shape turnSection(const Section& section, const gp_Ax1& axis, std::vector<SourceEntity>& origins) {
-    return turnFace(BRepBuilderAPI_MakeFace(section.wire, true).Face(), axis, section.edges, origins);
+TopoDS_Shape turnGuided(const Band& band, std::vector<SourceEntity>& origins) {
+    const auto section = guidedSection(band);
+    return turnFace(BRepBuilderAPI_MakeFace(section.wire, true).Face(), band.axis(),
+                    section.edges, origins, !band.cornerEnvelope.IsNull());
 }
 
 TopoDS_Shape recutBores(TopoDS_Shape stock, const Band& band, std::vector<SourceEntity>& origins) {
     for (const auto& bore : band.bores) {
         const auto cutterBand = revolved_profile::boreProfile(band.body, bore, stock);
         std::vector<SourceEntity> boreOrigins;
-        const auto cutter = turnSection(boreSection(cutterBand), cutterBand.axis(), boreOrigins);
+        const auto cutter = turnGuided(cutterBand, boreOrigins);
         const BooleanProbe overlap(stock, cutter);
         if (!revolved_profile::hasMaterial(overlap.shape(), geometry_policy::minimumSolidVolumeMm3)) continue;
         origins.insert(origins.end(), boreOrigins.begin(), boreOrigins.end());
@@ -105,11 +116,20 @@ TopoDS_Shape recutStock(const TopoDS_Shape& stock, const Band& band, std::vector
     shape = revolved_profile::recutParallel(shape, band.parallelCuts, origins);
     return revolved_profile::recutPlanar(shape, band.planarCuts, origins);
 }
+
+void verifyCornerRecovery(const Band& band) {
+    std::vector<SourceEntity> unused;
+    const auto revolved = turnGuided(band, unused);
+    const auto original = booleanShape(band.body.shape, band.cornerEnvelope, "intersect", unused);
+    const auto recovered = booleanShape(revolved, band.cornerEnvelope, "intersect", unused);
+    revolved_profile::verifySectionMaterial(original, recovered, false,
+        "The recovered profile does not reproduce the selected corner");
+}
 }
 
 void revolved_profile::verifyBoreRecovery(const Band& band) {
     std::vector<SourceEntity> unused;
-    const auto cutter = turnSection(boreSection(band), band.axis(), unused);
+    const auto cutter = turnGuided(band, unused);
     unused.clear();
     const auto recovered = booleanShape(band.stock->shape, cutter, "subtract", unused);
     verifySameMaterial(band.body.shape, recovered, "The through-bore could not be recovered from its surrounding surfaces");
@@ -136,11 +156,13 @@ std::vector<Result> replaceRevolvedProfile(const Tree& input, const std::vector<
             band.meridians.end())
             throw std::runtime_error("Unknown profile face");
     std::vector<SourceEntity> origins;
-    const auto revolved = turnFace(profile, band.axis(), edges, origins);
+    const auto revolved = turnFace(profile, band.axis(), edges, origins, !band.cornerEnvelope.IsNull());
     TopoDS_Shape shape;
     if (band.stock) {
         origins.insert(origins.end(), band.stock->predecessors.begin(), band.stock->predecessors.end());
         shape = booleanShape(band.stock->shape, revolved, "subtract", origins);
+    } else if (!band.cornerEnvelope.IsNull()) {
+        shape = revolved_profile::replaceCorner(band, revolved, origins);
     } else {
         shape = recutStock(revolved, band, origins);
     }
@@ -158,6 +180,7 @@ std::vector<Result> replaceRevolvedProfile(const Tree& input, const std::vector<
 void describeRevolvedProfile(std::ostream& out, const Tree& input, const std::vector<Operand>& bodies) {
     const auto band = revolved_profile::inspect(input, bodies, true);
     if (band.stock) revolved_profile::verifyBoreRecovery(band);
+    if (!band.cornerEnvelope.IsNull()) verifyCornerRecovery(band);
     Tree frame;
     out << "{\"profile\":{\"height\":" << band.height << ",\"endGuides\":"
         << (band.endGuides ? "true" : "false") << ",\"frame\":{";

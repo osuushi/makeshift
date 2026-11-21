@@ -89,10 +89,6 @@ double parameterAt(const Handle(Geom_Curve)& curve, const Band& band, double sta
         if (curve->IsPeriodic()) parameter = near + std::remainder(parameter - near, curve->Period());
         if (!best || std::abs(parameter - near) < std::abs(*best - near)) best = parameter;
     };
-    // A previously edited spline often ends exactly on the guide plane.
-    for (const double end : {curve->FirstParameter(), curve->LastParameter()})
-        if (!Precision::IsInfinite(end) && std::abs(along(band, curve->Value(end)) - station) <= tolerance)
-            consider(end);
     const Handle(Geom_Plane) plane = new Geom_Plane(band.at(0, station), band.axis().Direction());
     const GeomAPI_IntCS intersection(curve, plane);
     if (intersection.IsDone())
@@ -101,11 +97,17 @@ double parameterAt(const Handle(Geom_Curve)& curve, const Band& band, double sta
             intersection.Parameters(i, u, v, parameter);
             consider(parameter);
         }
-    if (!best) throw std::runtime_error("The bore profile must extend past both openings");
+    // A bounded spline can end on a guide within the edge's spatial precision.
+    if (!best)
+        for (const double end : {curve->FirstParameter(), curve->LastParameter()})
+            if (!Precision::IsInfinite(end) && std::abs(along(band, curve->Value(end)) - station) <= tolerance)
+                consider(end);
+    if (!best) throw std::runtime_error("The recovered profile must meet both end guides");
     return *best;
 }
+}
 
-void extendEnds(Band& band) {
+void trimToEndGuides(Band& band) {
     auto& sides = band.meridians;
     for (std::size_t i = 0; i < sides.size(); ++i) {
         if (i != 0 && i + 1 != sides.size()) continue;
@@ -115,10 +117,9 @@ void extendEnds(Band& band) {
             ? parameterAt(basis, band, 0, curve->FirstParameter()) : curve->FirstParameter();
         const auto last = i + 1 == sides.size()
             ? parameterAt(basis, band, band.height, curve->LastParameter()) : curve->LastParameter();
-        if (first >= last) throw std::runtime_error("The bore profile could not be extended through the stock");
+        if (first >= last) throw std::runtime_error("Could not trim the recovered profile to its end guides");
         curve = new Geom_TrimmedCurve(basis, first, last, true, false);
     }
-}
 }
 
 ThroughBore throughBore(const Operand& body, const SourceEntity& seed) {
@@ -141,7 +142,7 @@ Band boreProfile(const Operand& body, const ThroughBore& bore, const TopoDS_Shap
     std::ranges::sort(band.meridians, {}, [&](const auto& side) {
         return along(band, side.curve->Value(side.curve->FirstParameter()));
     });
-    extendEnds(band);
+    trimToEndGuides(band);
     return band;
 }
 }

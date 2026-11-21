@@ -118,11 +118,11 @@ the behavior to exercise. Automated checks do not establish founder acceptance.
 
 ## Edit Profile
 
-In Modeling, select a turned body, a face of its connected exterior, or a
-through-bore wall and choose **Edit Profile**. The tool recovers a section
-from the current BRep in a plane through the selected axis. Visible bodies are
-sectioned in that plane, including the current preview. Other bodies can be
-used as projection references. Orbit to inspect the part, then choose **Look at
+In Modeling, select a turned body, a face of its connected exterior, a
+through-bore wall or a cylindrical corner fillet and choose **Edit Profile**.
+The tool recovers a section from the current BRep in a plane through the selected
+axis. Visible bodies are sectioned in that plane, including the current preview.
+Other bodies can be used as projection references. Orbit to inspect the part, then choose **Look at
 Profile** or press Cmd/Ctrl-Enter to align the same sketch plane head-on.
 
 Use the ordinary sketch tools to edit the temporary profile. Sketch gestures
@@ -134,7 +134,7 @@ drawings contain the materialized body.
 
 Edit Profile fills and revolves the closed region nearest the axis. If several
 regions touch the axis, the fill favors the one with the smallest outer radius.
-The axis and the bore end guides can close a region. Curves can extend past
+The axis and end guides can close a region. Curves can extend past
 intersections or branch off the boundary and remain in the temporary sketch.
 Closed loops can also enclose holes in the region.
 
@@ -166,3 +166,10 @@ recovers the stock by filling the bore and verifies that the recovered profile
 can reproduce the original solid. Applying an edited profile cuts the recovered
 stock and recomputes both openings on its existing surfaces. An edit with no
 closed region, a failed retrim or an invalid solid blocks Apply.
+
+A convex corner fillet between two planar sides and two planar ends opens the
+local meridian with guides at its existing end planes. The axis and side planes
+bound the corner. The original sweep must reproduce the material inside that
+boundary. Apply clips the edited sweep to the same boundary and rejoins it with
+the rest of the solid. If the new profile falls short of a side plane, the
+angular join becomes a planar shoulder.
