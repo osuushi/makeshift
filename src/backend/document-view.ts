@@ -8,11 +8,12 @@ export function documentView(
   session: DocumentSession,
   solids: SolidEdits,
   decorators: DecoratorSession,
-  status: Pick<ModelView, "planeCutAvailable" | "cleanupAvailable">,
+  status: Pick<ModelView, "planeCutAvailable" | "cleanupAvailable" | "profileEdit">,
 ): ModelView {
   const { store, candidate, pendingOperation, reopenedPreview } = session;
   return {
     data: store.data,
+    profileEdit: status.profileEdit,
     canUndoView: store.canNavigateView("undo"),
     canRedoView: store.canNavigateView("redo"),
     ...solids.previewQuality(

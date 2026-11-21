@@ -8,7 +8,7 @@ import {
 } from "./kernel-query-validation.js";
 import type { KernelReply } from "./kernel-reply.js";
 import type { KernelRequest } from "./kernel-request.js";
-import { array, object, positive, requireKernel, text, vector } from "./kernel-values.js";
+import { array, frame, object, positive, requireKernel, text, vector } from "./kernel-values.js";
 import { validateVisualReply } from "./kernel-visual-validation.js";
 
 /** Validate the wire result before geometry, correspondence or measurements escape the adapter. */
@@ -54,6 +54,24 @@ export function readKernelReply<Input extends KernelRequest>(
     case "topology":
       validateKernelTopology(reply.topology, input);
       break;
+    case "describe-revolved-profile": {
+      const profile = object(reply.profile);
+      frame(profile.frame);
+      positive(profile.height);
+      requireKernel(typeof profile.endGuides === "boolean", "profile end guides");
+      const body = input.bodies.find((body) => body.id === input.body);
+      const spans = array(profile.spans);
+      requireKernel(!!body && spans.length > 0, "profile source");
+      for (const value of spans) {
+        const span = object(value);
+        requireKernel(
+          body.faces.some((face) => face.id === text(span.face)),
+          "profile face",
+        );
+        validateKernelCurves(span.curves);
+      }
+      break;
+    }
     case "sections":
       for (const value of array(reply.sections)) {
         const section = object(value);

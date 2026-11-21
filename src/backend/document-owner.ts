@@ -16,6 +16,7 @@ import { documentView } from "./document-view.js";
 import { GeometryQueries, isGeometryQuery } from "./geometry-queries.js";
 import { NativeSolver } from "./native-solver.js";
 import { planeCutAvailable } from "./plane-cut.js";
+import { ProfileEdits } from "./profile-edits.js";
 import { reopenPreview } from "./reopen-preview.js";
 import { ScriptEdits } from "./script-edits.js";
 import { SolidCalculator } from "./solid-calculator.js";
@@ -27,6 +28,7 @@ export class DocumentOwner {
   private queries: GeometryQueries;
   private solids: SolidEdits;
   private commands: DocumentCommands;
+  private profiles: ProfileEdits;
   private planeCutAvailable = false;
   private session = new DocumentSession();
   private active: { kind: ModelRequest["kind"]; promise: Promise<ModelReply> } | null = null;
@@ -40,6 +42,7 @@ export class DocumentOwner {
     this.kernel = new SolidCalculator(kernelExecutable);
     this.queries = new GeometryQueries(kernelExecutable);
     this.solids = new SolidEdits(this.kernel);
+    this.profiles = new ProfileEdits(this.kernel, solver, () => this.checkCancellation());
     this.commands = new DocumentCommands(
       this.session,
       this.solids,
@@ -72,7 +75,13 @@ export class DocumentOwner {
     return this.initialization;
   }
   beginScript(name: string): void {
-    if (this.active || this.cancelling || this.session.candidate || this.session.visualPreview)
+    if (
+      this.active ||
+      this.cancelling ||
+      this.session.candidate ||
+      this.session.visualPreview ||
+      this.profiles.active
+    )
       throw new Error("Finish the current edit first");
     this.scripts.begin(name);
   }
@@ -83,6 +92,7 @@ export class DocumentOwner {
     return documentView(this.session, this.solids, this.decorators, {
       planeCutAvailable: this.planeCutAvailable,
       cleanupAvailable: this.commands.cleanupAvailable,
+      profileEdit: this.profiles.view,
     });
   }
 
@@ -133,7 +143,7 @@ export class DocumentOwner {
       return { view: this.view, error };
     }
     if (request.kind === "selection") {
-      this.session.store.selections(request.changes);
+      if (!this.profiles.active) this.session.store.selections(request.changes);
       return { view: this.view };
     }
     this.kernel.begin();
@@ -157,7 +167,7 @@ export class DocumentOwner {
         this.active?.promise,
       ]);
       this.session.discard();
-      this.session.clearPreview();
+      this.profiles.discardSketchPreview();
       return { view: this.view };
     } finally {
       this.cancelling = false;
@@ -192,6 +202,7 @@ export class DocumentOwner {
 
   private async execute(request: ModelRequest): Promise<ModelReply> {
     const before = this.session.store.data;
+    const profileDraft = this.profiles.active && request.kind !== "apply-profile-edit";
     const operation = this.session.operation(request);
     try {
       if (request.kind === "check-plane-cut")
@@ -214,7 +225,7 @@ export class DocumentOwner {
         this.cancelling,
         this.kernel.wasSuperseded,
       );
-      this.session.store.record(operation, outcome, failure.error);
+      if (!profileDraft) this.session.store.record(operation, outcome, failure.error);
       if (request.kind !== "accept" && request.kind !== "check-cleanup") {
         await this.kernel.cancel();
         this.session.clearPreview();
@@ -223,6 +234,8 @@ export class DocumentOwner {
     }
   }
   private async dispatch(request: ModelRequest, operation: HistoryOperation): Promise<void> {
+    const profileEdit = this.profiles.handle(this.session, request, operation, () => this.accept());
+    if (profileEdit) return profileEdit;
     this.commands.cleanupAvailable = false;
     if (await editPresentation(this.session, this.kernel, this.solids, request, operation)) return;
     if (!["read", "accept"].includes(request.kind)) {
@@ -278,6 +291,7 @@ export class DocumentOwner {
       return;
     }
     await this.commands.run(request, operation);
+    if (request.kind === "new" || request.kind === "open") this.profiles.cancel();
   }
   close(): void {
     this.queries.close();

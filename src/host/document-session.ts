@@ -149,12 +149,13 @@ export class DocumentSession {
     else if (this.window && !this.window.isDestroyed()) this.window.webContents.send(method, value);
   }
   async prepareRemote(): Promise<void> {
-    if (this.busy || this.script.busy || this.owner.view.candidate)
+    if (this.busy || this.script.busy || this.owner.view.candidate || this.owner.view.profileEdit)
       throw new Error("Finish or cancel the current operation before connecting the iPad.");
   }
   async cancelRemote(): Promise<void> {
     await this.script.cancel();
     await this.owner.call({ kind: "cancel-preview" });
+    if (this.owner.view.profileEdit) await this.owner.call({ kind: "cancel-profile-edit" });
     await this.owner.call({ kind: "discard" });
   }
   async openPath(path: string): Promise<void> {

@@ -85,6 +85,7 @@ export class SketchEditor {
     () => this.world.navigation.unrecorded(),
   );
   readonly workspaceEntry = new WorkspaceEntry(this);
+  cancelProfileEdit?: () => void;
   get candidate(): DisplayDocument | null {
     return this.interactions.candidate;
   }
@@ -298,6 +299,10 @@ export class SketchEditor {
     this.creationArmed = false;
     if (this.interactions.requestCancel()) {
       this.refresh();
+      return;
+    }
+    if (this.store.profileEdit) {
+      this.cancelProfileEdit?.();
       return;
     }
     if (this.tool !== "select" || this.selectionOwners.size) {

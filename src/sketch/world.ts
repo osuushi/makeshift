@@ -58,6 +58,7 @@ export class World {
     return this.workspace?.frame ?? null;
   }
   crossSection: PlaneFrame | null = null;
+  fullSketchSection = () => false;
   selectionSection: () => PlaneFrame | null = () => null;
   partialSection: PlaneFrame | null = null;
   xraySource: () => {
@@ -69,6 +70,7 @@ export class World {
   spacing = 1;
   sketchGrid: () => import("./grid-settings.js").SketchGrid | undefined = () => undefined;
   canNavigate = () => true;
+  canExitWorkspace = () => true;
   transformBoxContains: ((x: number, y: number) => boolean) | null = null;
   canEnterSketch = () => true;
   planePicker: ((id: PlaneId) => void) | null = null;
@@ -263,6 +265,7 @@ export class World {
     return key && key in planes ? key[axis === "x" ? 0 : 1] : axis.toUpperCase();
   }
   exit({ selectSketch = false } = {}): void {
+    if (!this.canExitWorkspace()) return;
     if (this.workspace) this.navigation.beginWorkspace();
     this.cancelCameraMotion();
     if (this.workspace && selectSketch) this.selectWorkspaceSketch();

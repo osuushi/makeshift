@@ -3,6 +3,7 @@ import type { ModelRequest } from "./model-api.js";
 /** Calculation can be discarded before acceptance; an explicit Accept completes normally. */
 export function cancellableCalculation(kind: ModelRequest["kind"]): boolean {
   return [
+    "begin-profile-edit",
     "preview",
     "complete-preview",
     "mirror",
@@ -54,6 +55,10 @@ export function calculationLabel(kind: ModelRequest["kind"] | undefined): string
       return "Solving sketch";
     case "accept":
       return "Completing edit";
+    case "begin-profile-edit":
+      return "Recovering revolved profile";
+    case "apply-profile-edit":
+      return "Applying profile edit";
     default:
       return "Calculating geometry";
   }

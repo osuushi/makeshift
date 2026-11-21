@@ -43,6 +43,7 @@ import { bodyView } from "../model/body-view.js";
 import { visibilityControls } from "../model/visibility-controls.js";
 import "./style.css";
 import "./modeling.css";
+import { ProfileEditControls } from "../model/profile-edit-controls.js";
 import { ModelControls } from "./model-controls.js";
 import { modelHighlight } from "./model-highlight.js";
 import "./edit-overlay.css";
@@ -113,6 +114,7 @@ const guides = new GuideControls(
 );
 const disposeCalculation = calculationControls(editor, app);
 const modelControls = new ModelControls(editor, overlay);
+const profileEdits = new ProfileEditControls(editor, overlay);
 const shells = new ShellControls(editor, overlay);
 const erosion = new ErosionControls(editor, overlay);
 const dxfImport = new DxfImportControls(editor, overlay);
@@ -247,6 +249,7 @@ window.addEventListener("pagehide", (event) => {
   disposeCalculation();
   disposeReopen();
   modelControls.dispose();
+  profileEdits.dispose();
   bodyMove.dispose();
   bodyActions.dispose();
   cleanup.dispose();

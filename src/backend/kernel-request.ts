@@ -10,7 +10,9 @@ import type {
 } from "../model/body.js";
 import type { CleanupSelection } from "../model/cleanup.js";
 import type { ExactBody } from "../model/exact-body.js";
+import type { ProfileSelection } from "../model/revolved-profile.js";
 import type { kernelInput, loftInput, pathSweepInput, revolveInput } from "./kernel-input.js";
+import type { boundary } from "./profile-boundary.js";
 import type { projectionInput } from "./projection.js";
 
 type Request =
@@ -40,6 +42,12 @@ type Request =
       bodies: readonly ExactBody[];
     }
   | { kind: "topology"; body: string; bodies: readonly ExactBody[] }
+  | (ProfileSelection & { kind: "describe-revolved-profile"; bodies: readonly ExactBody[] })
+  | (ProfileSelection & {
+      kind: "replace-revolved-profile";
+      spans: (ReturnType<typeof boundary>[number] & { face?: string })[];
+      bodies: readonly ExactBody[];
+    })
   | { kind: "center-of-mass"; bodies: readonly ExactBody[] }
   | (import("../model/topology-edit.js").FaceReplacement & {
       kind: "replace-face";

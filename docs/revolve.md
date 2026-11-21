@@ -115,3 +115,39 @@ acceptance about two; report a concrete obstacle before expanding that scope.
 The next gate is hands-on review of the turned-part/groove/partial-face/helix loop.
 The implementation has reached that gate; the acceptance route above describes
 the behavior to exercise. Automated checks do not establish founder acceptance.
+
+## Edit Profile
+
+In Modeling, select a turned body, a face of its connected exterior, or a
+through-bore wall and choose **Edit Profile**. The tool recovers the meridian
+from the current BRep in a plane through the selected axis. Visible bodies are
+sectioned in that plane, including the current preview. Other bodies can be
+used as projection references. Orbit to inspect the part, then choose **Look at
+Profile** or press Cmd/Ctrl-Enter to align the same sketch plane head-on.
+
+Use the ordinary sketch tools to edit the temporary profile. Sketch gestures
+and their Undo/Redo stay in the profile. Completed gestures refresh the solid
+preview. **Apply** accepts the body in one document Undo step. Cancel and Escape
+ask before discarding a changed profile. Enter applies the profile from the
+canvas. Active sketch tools and numeric fields own their usual shortcuts. Saved
+drawings contain the materialized body.
+
+The exterior is a continuous chain with both ends on the axis. Its flat end
+caps are editable lines from the rim to the axis. Move them to change the
+body's length or fillet the corner where a cap meets the wall. The sketch snaps
+to the axis for new cap endpoints. Recovered caps have a horizontal constraint,
+and the side curves are selected on entry for ordinary radial edits. The kernel
+closes the chain along the axis and revolves it, then re-cuts separate spherical
+dimples, complete through-bores and lengthwise cylindrical cuts from the
+original supports. A lengthwise cut can open through the side and the caps, or
+appear in several disconnected patches. For a split cut, the kernel recovers a
+meridian clear of the cutter and verifies that revolving and re-cutting it
+reproduces the original solid. Recesses that miss or merely touch are omitted.
+The preview counts omitted dimples.
+
+A through-bore profile follows a connected inward revolved wall with two
+separate closed openings. Its end guides sit just beyond the stock. The kernel
+recovers the stock by filling the bore and verifies that the recovered profile
+can reproduce the original solid. Applying an edited profile cuts the recovered
+stock and recomputes both openings on its existing surfaces. A broken profile,
+failed retrim or invalid solid blocks Apply.

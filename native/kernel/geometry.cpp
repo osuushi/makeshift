@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "revolved-profile.h"
 #include "erosion.h"
 #include "boundary-move.h"
 #include "normal-extrude.h"
@@ -147,6 +148,9 @@ std::vector<Result> calculate(const Tree& input, const std::vector<Operand>& bod
     }
     if (input.get<std::string>("kind", "") == "replace-face") {
         mode = "new"; return replaceFace(input, bodies, participants);
+    }
+    if (input.get<std::string>("kind", "") == "replace-revolved-profile") {
+        mode = "new"; return replaceRevolvedProfile(input, bodies, participants);
     }
     if (input.get<std::string>("kind", "") == "plane-cut") {
         mode = "new"; return cutWithPlane(input, bodies, participants);

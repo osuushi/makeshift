@@ -76,6 +76,10 @@ export function snapped(
     return edge.point;
   }
   const alignment = alignedGrid(targets, point, grid, tolerance);
+  if (editor.store.profileEdit?.endGuides === false && Math.abs(point.x) <= tolerance) {
+    editor.snap = { x: 0, y: alignment.y, label: "Revolve axis" };
+    return { x: 0, y: alignment.y };
+  }
   if (alignment.label === "Alignment" || editor.gridSnap) editor.snap = alignment;
   return { x: alignment.x, y: alignment.y };
 }

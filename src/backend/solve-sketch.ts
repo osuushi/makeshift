@@ -2,7 +2,7 @@ import { bowRadius } from "../sketch/arc-geometry.js";
 import { moveBezierEnds } from "../sketch/bezier-geometry.js";
 import { numericConstraints, validateNumeric } from "../sketch/constraint-geometry.js";
 import { resolveCubicTangencies } from "../sketch/cubic-tangency.js";
-import type { Sketch } from "../sketch/document.js";
+import type { PointReference, Sketch } from "../sketch/document.js";
 import type { EditIntent } from "../sketch/edit-intent.js";
 import { validateSketch } from "../sketch/sketch-validation.js";
 import type { NativeSolver } from "./native-solver.js";
@@ -16,6 +16,7 @@ export async function solveSketch(
   solver: NativeSolver,
   exact: boolean,
   intent: EditIntent,
+  axisAnchors?: readonly PointReference[],
 ) {
   let count = 0,
     ms = 0;
@@ -25,7 +26,7 @@ export async function solveSketch(
   validateNumeric(target, !exact || intent.kind === "pair");
   let solved = target;
   if (target.curves.length && target.constraints.length) {
-    const input = solverInput(target, previous, intent);
+    const input = solverInput(target, previous, intent, axisAnchors);
     const started = performance.now();
     const result = input.constraints.length ? await solver.solve(input) : input;
     const { points, radii } = result;

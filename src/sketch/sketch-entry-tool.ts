@@ -32,7 +32,7 @@ export function sketchEntryTool(editor: SketchEditor): () => void {
       return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    void catalog.invoke("start-sketch");
+    void catalog.invoke(editor.store.profileEdit ? "look-at-profile" : "start-sketch");
   };
   for (const type of ["keydown", "keypress"] as const)
     onModelKeydown(shortcut, { capture: true, signal: abort.signal }, type);
