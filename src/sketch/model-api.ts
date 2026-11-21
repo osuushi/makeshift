@@ -1,3 +1,4 @@
+import type { BenchEdit, BenchTab, Drawing } from "../model/benches.js";
 import type {
   BodyBoolean,
   BodyEdgeFinish,
@@ -20,6 +21,9 @@ import type { HistoryOperation, OperationHistoryEntry } from "./operation-histor
 import type { PlaneFrame } from "./planes.js";
 
 export type ModelRequest =
+  | { kind: "bench"; edit: BenchEdit }
+  | { kind: "read-drawing" }
+  | { kind: "restore-decorators" }
   | { kind: "guide-point"; edit: import("../guides/types.js").GuideEdit }
   | { kind: "sketch-grid"; grid: import("./grid-settings.js").SketchGrid; initialize?: boolean }
   | {
@@ -72,7 +76,7 @@ export type ModelRequest =
   | { kind: "cleanup" | "delete-topology"; selection: CleanupSelection[] }
   | { kind: "accept"; cleanup?: boolean }
   | { kind: "project"; projection: Projection }
-  | { kind: "open"; document: SketchDocument }
+  | ({ kind: "open" } & ({ document: SketchDocument } | { drawing: Drawing }))
   | { kind: "transform-bodies"; transform: BodyTransform }
   | { kind: "complete-preview" }
   | { kind: "cancel-edge-finish-targets" }
@@ -109,6 +113,8 @@ export type ModelRequest =
   | { kind: "preview" | "edit"; sketch: Sketch; intent?: EditIntent }
   | { kind: "remove" | "clear"; sketchId: string; ids?: string[] };
 export interface ModelView {
+  activeBench?: string;
+  benchTabs?: readonly BenchTab[];
   visualPreview?: import("../model/visual-preview.js").VisualPreview;
   canUndoView?: boolean;
   canRedoView?: boolean;
@@ -137,6 +143,7 @@ export interface ModelView {
   solveMs: number;
 }
 export type ModelReply = {
+  drawing?: Drawing;
   erosionAllowance?: number;
   step?: string;
   decoratorDraft?: readonly import("../decorators/types.js").DecoratorInstance[];

@@ -8,6 +8,7 @@ export class BrowserArchive {
   private reject: ((error: Error) => void) | null = null;
   async run(work: ArchiveWork, editor: SketchEditor): Promise<PortableArchive | Uint8Array> {
     if (this.worker) throw new Error("Finish the file operation first.");
+    const busy = editor.store.busy;
     editor.store.busy = true;
     editor.message = work.kind === "read" ? "Opening document…" : "Saving document…";
     editor.refresh();
@@ -29,7 +30,7 @@ export class BrowserArchive {
       });
     } finally {
       this.terminate();
-      editor.store.busy = false;
+      editor.store.busy = busy;
       editor.message = "";
       editor.refresh();
     }

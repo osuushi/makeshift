@@ -11,6 +11,12 @@ export function onModelKeydown(
     (event) => {
       if (
         event.target instanceof Element &&
+        event.target.closest(".bench-strip") &&
+        ["Enter", " ", "Tab"].includes(event.key)
+      )
+        return;
+      if (
+        event.target instanceof Element &&
         event.target.closest(".radial-toggle") &&
         ["Enter", " "].includes(event.key)
       )

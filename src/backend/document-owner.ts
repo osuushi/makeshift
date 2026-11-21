@@ -1,3 +1,4 @@
+import type { Drawing } from "../model/benches.js";
 import { CalculationFailure } from "../model/calculation-failure.js";
 import { operationCleanup } from "../model/cleanup.js";
 import { cancellableCalculation } from "../sketch/calculation-state.js";
@@ -76,8 +77,11 @@ export class DocumentOwner {
       throw new Error("Finish the current edit first");
     this.scripts.begin(name);
   }
-  setDecoratorAuthorization(authorize: NonNullable<DecoratorSession["authorize"]>) {
-    this.decorators.authorize = authorize;
+  setDecoratorAuthorization(authorize: (drawing: Drawing) => Promise<boolean>): void {
+    this.decorators.authorize = (document) => authorize(this.session.benches.snapshot(document));
+  }
+  get drawing(): Drawing {
+    return this.session.benches.snapshot();
   }
   get view(): ModelView {
     return documentView(this.session, this.solids, this.decorators, {
@@ -100,6 +104,7 @@ export class DocumentOwner {
     if (this.cancelling) throw new CalculationFailure("cancelled", "Calculation cancelled");
   }
   async call(request: ModelRequest): Promise<ModelReply> {
+    if (request.kind === "read-drawing") return { view: this.view, drawing: this.drawing };
     if (isGeometryQuery(request) && request.kind.startsWith("cancel-"))
       return this.queries.call(this.view, request);
     if (request.kind === "decorator-inspect" || request.kind === "decorator-draft")
@@ -136,6 +141,8 @@ export class DocumentOwner {
       this.session.store.selections(request.changes);
       return { view: this.view };
     }
+    if (request.kind === "bench" && this.session.pendingOperation)
+      return { view: this.view, error: "Finish or cancel the current edit first" };
     this.kernel.begin();
     const promise = this.execute(request);
     this.active = { kind: request.kind, promise };
@@ -206,7 +213,8 @@ export class DocumentOwner {
       if (request.kind === "complete-preview" && this.kernel.wasSuperseded)
         throw new CalculationFailure("superseded", "Preview superseded");
       this.checkCancellation();
-      return { view: this.view, documentChanged: before !== this.session.store.data };
+      const documentChanged = request.kind !== "bench" && before !== this.session.store.data;
+      return { view: this.view, documentChanged };
     } catch (error) {
       const { outcome, ...failure } = documentFailure(
         error,
@@ -223,6 +231,10 @@ export class DocumentOwner {
     }
   }
   private async dispatch(request: ModelRequest, operation: HistoryOperation): Promise<void> {
+    if (request.kind === "bench") {
+      if (this.commands.editBench(request.edit)) this.planeCutAvailable = false;
+      return;
+    }
     this.commands.cleanupAvailable = false;
     if (await editPresentation(this.session, this.kernel, this.solids, request, operation)) return;
     if (!["read", "accept"].includes(request.kind)) {

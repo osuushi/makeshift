@@ -76,6 +76,13 @@ export class SolidEdits {
   constructor(private kernel: SolidCalculator) {
     this.surfaces = new SurfaceEdits(kernel);
   }
+  resetPreviewFeedback(): void {
+    this.edgeSelection = [];
+    this.booleanMode = undefined;
+    this.booleanTargets = [];
+    this.booleanTools = [];
+    this.surfaces.reset();
+  }
   previewQuality(kind: HistoryOperation["kind"] | undefined) {
     return {
       booleanTools:

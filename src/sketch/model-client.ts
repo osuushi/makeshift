@@ -52,6 +52,7 @@ export class ModelClient extends ModelQueries {
     private changed: () => void,
     private error: (message: string) => void,
     private navigated?: (operation: HistoryOperation, direction: "undo" | "redo") => void,
+    private changedBench?: (previous: string, active: string, replacing: boolean) => void,
   ) {
     super();
   }
@@ -125,6 +126,8 @@ export class ModelClient extends ModelQueries {
     if (
       ![
         "read",
+        "bench",
+        "restore-decorators",
         "sketch-grid",
         "accept",
         "discard",
@@ -212,10 +215,18 @@ export class ModelClient extends ModelQueries {
           : request.kind === "undo" || request.kind === "redo"
             ? request.kind
             : null;
-    this.view = retainViewSketches(this.view, reply.view);
+    const previous = this.activeBench;
+    const switched = reply.view.activeBench !== undefined && reply.view.activeBench !== previous;
+    this.view = switched ? reply.view : retainViewSketches(this.view, reply.view);
     this.erosionAllowance = reply.erosionAllowance;
     if (reply.error) throw new Error(reply.error);
-    if (direction || reply.documentChanged) this.sentSelection = undefined;
+    const replaced = request.kind === "new" || request.kind === "open";
+    if (direction || reply.documentChanged || switched) this.sentSelection = undefined;
+    if (switched || replaced) {
+      this.lastEdit = null;
+      this.selectionHistory?.accepted(true);
+      this.changedBench?.(previous, this.activeBench, replaced || !this.initialized);
+    }
     if (direction && reply.view.historyOperation)
       this.navigated?.(reply.view.historyOperation, direction);
     const selection = reply.view.historySelection;
@@ -226,12 +237,8 @@ export class ModelClient extends ModelQueries {
       (direction || (!this.initialized && (selection.sketch.length || selection.modeling.length)))
     )
       this.selectionHistory?.restore(selection);
-    else if (
-      request.kind === "new" ||
-      request.kind === "open" ||
-      (reply.documentChanged && request.kind !== "sketch-grid")
-    )
-      this.selectionHistory?.accepted(request.kind === "new" || request.kind === "open");
+    else if (!switched && !replaced && reply.documentChanged && request.kind !== "sketch-grid")
+      this.selectionHistory?.accepted();
     this.initialized = true;
     this.error("");
     return true;

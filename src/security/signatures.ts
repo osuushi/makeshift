@@ -1,5 +1,6 @@
 import { isBuiltinDecorator } from "../decorators/builtins.js";
 import { gearDefinition } from "../decorators/gear-settings.js";
+import { type Drawing, defaultBench } from "../model/benches.js";
 import type { DisplayDocument } from "../model/display-document.js";
 import type { PortableFiles } from "../model/portable-files.js";
 import { validName } from "./text.js";
@@ -44,8 +45,20 @@ export function decoratorContent(doc: DisplayDocument) {
     ),
   };
 }
-export async function decoratorDigest(doc: DisplayDocument): Promise<string | undefined> {
-  const value = decoratorContent(doc);
+function drawingDecoratorContent(drawing: Drawing) {
+  const benches = drawing.benches.flatMap(({ id, document }) => {
+    const content = decoratorContent(document);
+    return content ? [{ id, content }] : [];
+  });
+  if (!benches.length) return null;
+  // A legacy signature remains valid when a drawing only gains empty or plain benches.
+  return benches.length === 1 && benches[0].id === defaultBench.id
+    ? benches[0].content
+    : { benches };
+}
+
+export async function decoratorDigest(doc: DisplayDocument | Drawing): Promise<string | undefined> {
+  const value = "benches" in doc ? drawingDecoratorContent(doc) : decoratorContent(doc);
   if (!value) return undefined;
   // Sort object keys recursively. Arrays retain their meaningful order.
   return hash(
