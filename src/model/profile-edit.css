@@ -1,0 +1,81 @@
+.profile-edit-controls {
+  position: absolute;
+  bottom: 46px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: calc(100% - 24px);
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 12px;
+  pointer-events: auto;
+}
+.profile-edit-controls[hidden],
+.profile-reference-guides[hidden] {
+  display: none;
+}
+.profile-edit-controls button {
+  min-height: 30px;
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--text);
+}
+.profile-edit-controls button:first-of-type:not(:disabled) {
+  border-color: var(--accent);
+}
+.profile-edit-controls button:disabled {
+  opacity: 0.5;
+}
+.profile-edit-controls span {
+  margin-inline: 4px;
+}
+.profile-edit-controls .profile-error {
+  color: var(--danger);
+}
+.profile-discard {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 48px var(--shadow);
+}
+.profile-discard::backdrop {
+  background: var(--backdrop);
+}
+.profile-discard h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+}
+.profile-discard form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.profile-discard button {
+  min-height: 36px;
+}
+.profile-reference-guides {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1px;
+  stroke-dasharray: 4 4;
+  opacity: 0.62;
+  pointer-events: none;
+}
+@media (pointer: coarse) {
+  .profile-edit-controls button {
+    min-height: 40px;
+  }
+}

@@ -8,6 +8,7 @@ export type ReopenRequest =
       ModelRequest,
       {
         kind:
+          | "begin-profile-edit"
           | "extrude"
           | "boolean-bodies"
           | "revolve"
@@ -36,6 +37,17 @@ export function reopenOperation(operation: HistoryOperation): ReopenOperation | 
   // Ordinary controls cannot preserve an API-only combined cleanup operation.
   // Reject it before rollback rather than silently changing its completion intent.
   if (cleanup === true) return;
+  if (operation.kind === "apply-profile-edit") {
+    const selection = parameters.selection as
+      | import("../model/revolved-profile.js").ProfileSelection
+      | undefined;
+    if (selection)
+      return {
+        request: { kind: "begin-profile-edit", selection: structuredClone(selection) },
+        cleanup: false,
+      };
+    return;
+  }
   const payload = {
     extrude: "extrusion",
     "boolean-bodies": "operation",

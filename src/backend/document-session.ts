@@ -63,9 +63,13 @@ export class DocumentSession {
     this.state = { kind: "completing", operation, visual };
     return edit;
   }
-  complete(document: SketchDocument, operation = this.pendingOperation): void {
+  complete(
+    document: SketchDocument,
+    operation = this.pendingOperation,
+    reopened: ReopenPreview | null = null,
+  ): void {
     if (!operation) throw new Error("No pending edit to complete");
-    this.state = { kind: "complete", document, operation, reopened: null };
+    this.state = { kind: "complete", document, operation, reopened };
   }
   /** Decorator continuation and cleanup refine complete work without accepting it. */
   refine(document: SketchDocument, preserveReopened = true): void {

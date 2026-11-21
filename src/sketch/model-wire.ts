@@ -6,16 +6,17 @@ export type ModelWireReply = Omit<ModelReply, "view"> & {
   view: Omit<ModelView, "data"> & { data?: SketchDocument };
 };
 
-/** A held visual extrusion cannot edit accepted data. Do not copy it per target. */
+/** Derived preview replies can reuse the caller's accepted geometry. */
 export function modelWireReply(request: ModelWireRequest, reply: ModelReply): ModelWireReply {
   if (
     request.omitUnchangedData &&
-    request.kind === "extrude" &&
-    request.presentation === "visual" &&
-    reply.documentChanged === false &&
-    !reply.error &&
-    reply.view.visualPreview &&
-    !reply.view.candidate
+    (request.kind === "read-profile-preview" ||
+      (request.kind === "extrude" &&
+        request.presentation === "visual" &&
+        reply.documentChanged === false &&
+        !reply.error &&
+        reply.view.visualPreview &&
+        !reply.view.candidate))
   ) {
     const { data: _data, ...view } = reply.view;
     return { ...reply, view };

@@ -1,5 +1,11 @@
 import * as THREE from "three";
-import type { PlaneFrame, Point, Vector } from "./planes.js";
+import {
+  type PlaneFrame,
+  type Point,
+  parallelNormals,
+  planeNormal,
+  type Vector,
+} from "./planes.js";
 import type { World } from "./world.js";
 
 type View = Pick<World, "camera" | "target" | "height">;
@@ -10,6 +16,12 @@ export type CameraPose = {
   distance: number;
   height: number;
 };
+
+export function cameraIsHeadOn(camera: THREE.Camera, frame: PlaneFrame): boolean {
+  const direction = camera.getWorldDirection(new THREE.Vector3());
+  const normal = new THREE.Vector3(...planeNormal(frame)).normalize();
+  return parallelNormals(direction.toArray(), normal.toArray());
+}
 
 /**
  * Put the camera on a sketch plane while making the smallest possible turn
@@ -25,7 +37,7 @@ export function planeCameraPose(
   framing: CameraFraming = {},
   distance = 120,
 ): CameraPose {
-  const normal = new THREE.Vector3(...frame.u).cross(new THREE.Vector3(...frame.v)).normalize();
+  const normal = new THREE.Vector3(...planeNormal(frame)).normalize();
   view.camera.lookAt(view.target);
   view.camera.updateMatrixWorld();
   const previous = view.camera.quaternion.clone();

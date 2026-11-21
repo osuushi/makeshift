@@ -119,10 +119,13 @@ export class GeometryQueries {
         return { view, measurement: result.measurement };
       }
       validateFrame(request.frame);
+      const preview = view.profileEdit?.preview;
       const result = await this.kernel.calculate({
         kind: "sections",
         frame: request.frame,
-        bodies: (view.data.bodies ?? []).filter((b) => request.bodies.includes(b.id)),
+        bodies: (view.data.bodies ?? [])
+          .filter((b) => request.bodies.includes(b.id))
+          .map((body) => (preview?.id === body.id ? preview : body)),
       });
       return { view, sections: result.sections };
     } catch (error) {

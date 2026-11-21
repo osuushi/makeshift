@@ -1,4 +1,5 @@
 import type { ModelView } from "../sketch/model-api.js";
+import type { ReopenProfile } from "./profile-draft.js";
 
 /** Accepted preview measurements travel with the existing history snapshot. */
 export type ReopenPreview = Pick<
@@ -13,8 +14,8 @@ export type ReopenPreview = Pick<
   | "booleanTools"
   | "erosionQuality"
   | "cleanupAvailable"
->;
-export function reopenPreview(view: ModelView): ReopenPreview {
+> & { profile?: ReopenProfile };
+export function reopenPreview(view: ModelView, profile?: ReopenProfile): ReopenPreview {
   return structuredClone({
     cutEdges: view.cutEdges,
     edgeSize: view.edgeSize,
@@ -26,5 +27,6 @@ export function reopenPreview(view: ModelView): ReopenPreview {
     booleanTools: view.booleanTools,
     erosionQuality: view.erosionQuality,
     cleanupAvailable: view.cleanupAvailable,
+    ...(profile ? { profile } : {}),
   });
 }

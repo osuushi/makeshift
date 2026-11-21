@@ -27,6 +27,11 @@ import type { HistoryOperation, OperationHistoryEntry } from "./operation-histor
 import type { PlaneFrame } from "./planes.js";
 
 export type ModelRequest =
+  | {
+      kind: "begin-profile-edit";
+      selection: import("../model/revolved-profile.js").ProfileSelection;
+    }
+  | { kind: "apply-profile-edit" | "cancel-profile-edit" | "read-profile-preview" }
   | { kind: "bench"; edit: BenchEdit }
   | { kind: "smart-object"; edit: SmartObjectEdit }
   | { kind: "smart-object-sources" }
@@ -122,6 +127,7 @@ export type ModelRequest =
   | { kind: "preview" | "edit"; sketch: Sketch; intent?: EditIntent }
   | { kind: "remove" | "clear"; sketchId: string; ids?: string[] };
 export interface ModelView {
+  profileEdit?: import("../model/revolved-profile.js").ProfileEditView;
   activeBench?: string;
   editingBench?: string;
   inline?: readonly InlineLink[];
@@ -155,6 +161,7 @@ export interface ModelView {
   solveMs: number;
 }
 export type ModelReply = {
+  appliedProfile?: import("../model/revolved-profile.js").AppliedProfile;
   drawing?: Drawing;
   smartObjectSources?: readonly SmartObjectSource[];
   erosionAllowance?: number;

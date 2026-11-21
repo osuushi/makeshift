@@ -81,7 +81,12 @@ export class XrayComposite {
   }
 
   enabled(world: World): boolean {
-    return !!world.partialSection && !world.crossSection && !viewDisplay().xrayGlobal;
+    return (
+      !!world.partialSection &&
+      !world.crossSection &&
+      !world.fullSketchSection() &&
+      !viewDisplay().xrayGlobal
+    );
   }
 
   contains(world: World, point: Point): boolean {

@@ -66,6 +66,7 @@ export class EntityViewer {
       this.sourcePicker.choose(target);
       return;
     }
+    if (this.editor.store.profileEdit) return;
     await toolCatalog(this.editor).activate({
       reason: () => null,
       run: () => this.selectAccepted(target, event),
@@ -225,7 +226,9 @@ export class EntityViewer {
           (target.kind === "smart-object"
             ? this.sourcePicker.available?.(target) !== true
             : this.sourcePicker.available?.(target) === false)
-        : !!toolCatalog(this.editor).reason({ reason: () => null });
+        : !!(
+            this.editor.store.profileEdit || toolCatalog(this.editor).reason({ reason: () => null })
+          );
       row.classList.toggle("entity-hidden", !visible);
     });
     row.append(select, ...(merge ? [merge] : []));
@@ -238,7 +241,7 @@ export class EntityViewer {
   }
   private update = (): void => {
     const editor = this.editor,
-      data = editor.store.data;
+      data = editor.store.acceptedData;
     const key = JSON.stringify([
       data.sketches.map((s) => s.id),
       data.bodies?.map((b) => b.id),

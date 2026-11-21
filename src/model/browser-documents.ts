@@ -39,8 +39,8 @@ export class BrowserDocuments {
     this.editor.world.changed.delete(this.initialBaseline);
   };
   private observeBench = (): void => {
-    const { editingBench, data } = this.editor.store;
-    this.benches.observe(editingBench, data);
+    const { editingBench, acceptedData } = this.editor.store;
+    this.benches.observe(editingBench, acceptedData);
   };
   private contents(): DrawingContents {
     this.observeBench();

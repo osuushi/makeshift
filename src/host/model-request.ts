@@ -5,6 +5,10 @@ export type HostModelRequest = ModelRequest & {
   kind: Exclude<ModelRequest["kind"], "new" | "open">;
 };
 const kinds: Record<HostModelRequest["kind"], true> = {
+  "begin-profile-edit": true,
+  "apply-profile-edit": true,
+  "cancel-profile-edit": true,
+  "read-profile-preview": true,
   bench: true,
   "smart-object": true,
   "smart-object-sources": true,

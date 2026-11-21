@@ -24,7 +24,7 @@ export class SelectionHistory {
     navigation.readSelection = () => this.capture();
     navigation.discarded = () => this.expireNavigation();
     navigation.completed = (change: NavigationChange) => {
-      if (this.settling) return;
+      if (this.settling || this.editor.store.profileEdit) return;
       this.navigationExpired = false;
       this.steps.push(change);
       this.latest = structuredClone(change.navigation.after.selection);
@@ -40,7 +40,7 @@ export class SelectionHistory {
     this.editor.world.navigation.withoutRecording(() => this.editor.world.cancelCameraMotion());
   }
   expireNavigation(): void {
-    if (this.navigationExpired) return;
+    if (this.navigationExpired || this.editor.store.profileEdit) return;
     this.navigationExpired = true;
     this.steps.push({ expireNavigation: true });
     queueMicrotask(() => this.editor.store.syncSelection());
@@ -58,6 +58,7 @@ export class SelectionHistory {
   observe(): void {
     if (
       this.restoring ||
+      this.editor.store.profileEdit ||
       this.settling ||
       this.editor.store.busy ||
       this.editor.store.scriptRunning ||

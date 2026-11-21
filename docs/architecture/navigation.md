@@ -51,6 +51,10 @@ explicit sketch selection wins when several existing sketches share a plane.
 Entry alone creates no geometry. Drawing continues in that workspace rather than
 creating another sketch on the same visible plane.
 
+In Edit Profile, orbiting keeps the temporary sketch open. Cmd/Ctrl-Enter or
+**Look at Profile** realigns the camera to its plane and retains that sketch and
+selection.
+
 When an orientation-cube face has focus, Cmd/Ctrl-Enter enters its corresponding
 canonical sketch plane directly, including while its single-click alignment is
 pending. Plain Enter and Space retain cube alignment behavior.

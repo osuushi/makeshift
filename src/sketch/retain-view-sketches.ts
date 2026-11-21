@@ -41,6 +41,19 @@ export function retainViewSketches(
   switched = false,
 ): ModelView {
   const data = switched ? next.data : retain(previous.data, next.data);
+  const prior = switched ? undefined : previous.profileEdit;
+  const current = next.profileEdit;
+  const profileEdit = current && {
+    ...current,
+    sketch:
+      prior?.sketch && content(prior.sketch) === content(current.sketch)
+        ? prior.sketch
+        : current.sketch,
+    preview:
+      prior?.preview && current.preview && content(prior.preview) === content(current.preview)
+        ? prior.preview
+        : current.preview,
+  };
   const linkedBenches = next.linkedBenches?.map((entry) => {
     const source = previous.linkedBenches?.find(({ id }) => id === entry.id);
     return source &&
@@ -51,6 +64,7 @@ export function retainViewSketches(
   return {
     ...next,
     data,
+    profileEdit,
     linkedBenches,
     candidate: next.candidate && retain(data, next.candidate),
   };

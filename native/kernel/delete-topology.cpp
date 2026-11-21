@@ -31,7 +31,9 @@ std::vector<SourceEntity> selected(const Tree& selection, const Operand& body, T
     }
     return result;
 }
-Result healFaces(const Operand& body, const std::vector<SourceEntity>& faces) {
+}
+
+Result healSelectedFaces(const Operand& body, const std::vector<SourceEntity>& faces) {
     if (faces.empty()) return {body.shape, body.entities, {body.id}};
     KernelTiming timing("delete-heal");
     timing.phase("begin");
@@ -61,12 +63,14 @@ Result healFaces(const Operand& body, const std::vector<SourceEntity>& faces) {
     }
     return {heal.Shape(), origins, {body.id}};
 }
+
+namespace {
 Result erase(const Tree& selection, const Operand& body) {
     if (selection.get<bool>("whole", false)) throw std::runtime_error("Select faces or edges to delete");
     const auto faces = selected(selection, body, TopAbs_FACE), edges = selected(selection, body, TopAbs_EDGE);
     if (faces.empty() && edges.empty()) throw std::runtime_error("Select faces or edges to delete");
     Result result;
-    try { result = healFaces(body, faces); }
+    try { result = healSelectedFaces(body, faces); }
     catch (const Standard_Failure&) { result = delete_band::flattenBand(body, faces); }
     catch (const std::runtime_error&) { result = delete_band::flattenBand(body, faces); }
     TopTools_IndexedMapOfShape current;

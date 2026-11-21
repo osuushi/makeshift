@@ -115,3 +115,70 @@ acceptance about two; report a concrete obstacle before expanding that scope.
 The next gate is hands-on review of the turned-part/groove/partial-face/helix loop.
 The implementation has reached that gate; the acceptance route above describes
 the behavior to exercise. Automated checks do not establish founder acceptance.
+
+## Edit Profile
+
+In Modeling, select a turned body, a face of its exterior, a through-bore wall
+or a cylindrical corner fillet and choose **Edit Profile**. Exterior patches
+separated by lengthwise flutes can open the same profile.
+The tool recovers a section from the current BRep in a plane through the selected
+axis. Visible bodies are sectioned in that plane, including the current preview.
+Other bodies can be used as projection references. Orbit to inspect the part, then choose **Look at
+Profile** or press Cmd/Ctrl-Enter to align the same sketch plane head-on.
+
+Use the ordinary sketch tools to edit the temporary profile. Sketch gestures and
+their Undo/Redo stay in the profile. You can keep editing as the solid rebuilds.
+The viewport shows the latest validated solid while a newer profile is pending.
+**Apply** or Enter on the canvas waits for the current profile and accepts it in
+one document Undo step. Applying from an oblique view keeps that camera pose.
+Applying from the head-on profile view restores the camera saved at entry.
+Cancel and Escape ask before discarding a changed profile. Active sketch tools
+and numeric fields own their usual shortcuts.
+
+After Apply, Cmd/Ctrl-R reopens the applied sketch with its exact solid preview.
+Apply there replaces the same Undo step. Cancel there leaves the edit undone
+and available through Redo. Saved drawings contain the materialized body.
+
+Edit Profile fills and revolves the closed region nearest the axis. If several
+regions touch the axis, the fill favors the one with the smallest outer radius.
+The axis and end guides can close a region. Curves can extend past
+intersections or branch off the boundary and remain in the temporary sketch.
+Closed loops can also enclose holes in the region.
+
+Flat end caps are editable lines from the rim to the axis. Move them to change
+the body's length or fillet the corner where a cap meets the wall. The sketch
+snaps to the axis for new cap endpoints. Recovered caps have a horizontal
+constraint and the side curves are selected on entry for radial edits.
+After revolving the edited region, the kernel re-cuts separate spherical
+dimples, complete through-bores, lengthwise cylindrical cuts and supported planar
+notches from the original supports. A lengthwise cut can open through the side
+and the caps. Faces that meet across a cylinder's seam form one continuous cut.
+For disconnected patches on a cutter, the kernel recovers a meridian clear of
+the cutter. It verifies that recovering and re-cutting the stock reproduces the
+original solid. Recesses that miss or merely touch are omitted.
+The preview counts omitted dimples.
+
+An intact meridian supplies the complete cap for a turned part with a planar
+notch. The kernel rebuilds a convex cutter from the notch's walls parallel to the
+axis and any visible depth plane. It verifies the combination against the
+original solid and re-cuts the edited cap against those stationary planes.
+
+The section identifies each face and the ends of its span. Where a coaxial
+surface supplies an exact generating curve, the kernel uses that curve for the
+span. A solid fillet stored as a closed spline can supply its periodic seam,
+which becomes ordinary cubic sketch curves within the projection tolerance.
+The recovered sweep and stationary cuts must reproduce the original solid.
+
+A through-bore profile follows a connected inward revolved wall with two
+separate closed openings. Its end guides sit just beyond the stock. The kernel
+recovers the stock by filling the bore and verifies that the recovered profile
+can reproduce the original solid. Applying an edited profile cuts the recovered
+stock and recomputes both openings on its existing surfaces. An edit with no
+closed region, a failed retrim or an invalid solid blocks Apply.
+
+A convex corner fillet between two planar sides and two planar ends opens the
+local meridian with guides at its existing end planes. The axis and side planes
+bound the corner. The original sweep must reproduce the material inside that
+boundary. Apply clips the edited sweep to the same boundary and rejoins it with
+the rest of the solid. If the new profile falls short of a side plane, the
+angular join becomes a planar shoulder.

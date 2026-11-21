@@ -71,7 +71,7 @@ export function sketchTools(editor: SketchEditor): () => void {
       label: "Return to Modeling",
       category: "View",
       aliases: ["exit sketch", "3d"],
-      reason: () => (!editor.world.active ? "Already in Modeling" : idleReason(editor)),
+      reason: () => (!editor.world.active ? "Already in Modeling" : editor.workspaceEntry.reason()),
       run: async () => {
         await editor.numeric.commit();
         editor.world.exit();

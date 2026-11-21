@@ -9,6 +9,7 @@
 #include "timing.h"
 #include "geometry-policy.h"
 #include "small-finishes.h"
+#include "revolved-profile.h"
 #include <boost/property_tree/json_parser.hpp>
 #include <BRepTools.hxx>
 #include <OSD_Parallel.hxx>
@@ -135,6 +136,11 @@ void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
     if (input.get<std::string>("kind") == "topology") {
         std::ostringstream output; output << std::setprecision(17);
         inspectTopology(output, input, bodies);
+        reply << output.str(); return;
+    }
+    if (input.get<std::string>("kind") == "describe-revolved-profile") {
+        std::ostringstream output; output << std::setprecision(17);
+        describeRevolvedProfile(output, input, bodies);
         reply << output.str(); return;
     }
     if (input.get<std::string>("kind") == "measure") {

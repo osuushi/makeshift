@@ -5,7 +5,13 @@ import {
   numericConstraints,
   numericValue,
 } from "../sketch/constraint-geometry.js";
-import type { Constraint, EditingGroup, NumericConstraint, Sketch } from "../sketch/document.js";
+import type {
+  Constraint,
+  EditingGroup,
+  NumericConstraint,
+  PointReference,
+  Sketch,
+} from "../sketch/document.js";
 import type { EditIntent } from "../sketch/edit-intent.js";
 import type { Point } from "../sketch/planes.js";
 import { add, scale } from "../sketch/point-math.js";
@@ -66,9 +72,12 @@ export function solverInput(
   target: Sketch,
   previous?: Sketch,
   intent: EditIntent = { kind: "direct" },
+  axisAnchors: readonly PointReference[] = [],
 ): SolverInput {
   const { layout, input: permanent } = permanentInput(target, previous);
   const { points, index } = layout;
+  for (const point of axisAnchors)
+    permanent.constraints.push({ kind: "x", a: layout.pointIndex(point), value: 0 });
   seedTangency(target, previous, points, index);
   const externallyRelated = new Set(geometricRelations(target).flatMap(constraintCurves));
   const rectangles = target.groups.filter(

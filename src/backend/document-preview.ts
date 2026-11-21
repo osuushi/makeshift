@@ -1,6 +1,6 @@
 import { pruneGuides } from "../guides/model.js";
 import { continueSketchGuides } from "../guides/sketch-continuation.js";
-import { type SketchDocument, withSketch } from "../sketch/document.js";
+import { type PointReference, type SketchDocument, withSketch } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import { mirrorDocument } from "./mirror.js";
 import type { NativeSolver } from "./native-solver.js";
@@ -28,6 +28,7 @@ export async function previewDocument(
   request: PreviewRequest,
   kernel: SolidCalculator,
   solver: NativeSolver,
+  axisAnchors?: readonly PointReference[],
 ): Promise<{ document: SketchDocument; count: number; ms: number }> {
   let document: SketchDocument;
   switch (request.kind) {
@@ -54,6 +55,7 @@ export async function previewDocument(
         solver,
         request.kind === "edit",
         intent,
+        axisAnchors,
       );
       return {
         document: pruneGuides(

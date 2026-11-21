@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
+import * as THREE from "three";
 import { orient, project } from "./ui-blend-edit.mjs";
-import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { at, close, drag, inspect, modalCompleted, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function pick(page, xyz) {
@@ -98,10 +99,133 @@ export async function revolveSolidRoute(page, name) {
   close((await inspect(page)).document.bodies[0].volume, shaft.volume - overlapVolume);
   await chooseTool(page, "undo", "undo");
   close((await inspect(page)).document.bodies[0].volume, shaft.volume);
+  await verifyProfileCancelHistory(page, shaft.id);
+  await verifyProfileKeys(page, shaft);
   await partialFaceRoute(page, name);
   console.log(
-    `${name}: revolved groove Boolean modes/participants and selection acceptance; body-edge axis, face input and continued planar sketch passed`,
+    `${name}: revolved groove Booleans, profile shortcuts and history, body-edge axis and face input passed`,
   );
+}
+
+async function orbitProfile(page) {
+  const viewport = await page.getByLabel("Modeling viewport").boundingBox();
+  const x = viewport.x + viewport.width * 0.64,
+    y = viewport.y + viewport.height * 0.47;
+  await page.mouse.move(x, y);
+  await page.keyboard.down("Meta");
+  await page.mouse.down();
+  await page.mouse.move(x + 80, y + 70, { steps: 8 });
+  await page.mouse.up();
+  await page.keyboard.up("Meta");
+  return inspect(page);
+}
+
+function viewDirection({ position, target }) {
+  return new THREE.Vector3(...position).sub(new THREE.Vector3(...target)).normalize();
+}
+
+async function verifyProfileCancelHistory(page, body) {
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  const history = () => page.evaluate(() => window.makeshiftHistory());
+  const beforeProfile = await history();
+  await chooseTool(page, "edit profile", "edit-profile");
+  const entered = await inspect(page);
+  assert.equal(entered.activePlane, "Edit Profile");
+  const { u, v } = entered.document.sketches[0].plane;
+  const normal = new THREE.Vector3(...u).cross(new THREE.Vector3(...v));
+  const facing = ({ camera }) => Math.abs(viewDirection(camera).dot(normal));
+  assert.ok(facing(await orbitProfile(page)) < 0.99);
+  await page.keyboard.press("Meta+Enter");
+  const headOn = await inspect(page);
+  close(facing(headOn), 1);
+  assert.equal(headOn.activeSketch, entered.activeSketch);
+  assert.deepEqual(headOn.selectedCurves, entered.selectedCurves);
+  await page.keyboard.press("Escape");
+  await page.getByRole("group", { name: "Edit Profile", exact: true }).waitFor({ state: "hidden" });
+  assert.equal((await inspect(page)).modelingSelection[0]?.body, body);
+  // The controller restores selection after the owner closes the temporary sketch.
+  assert.deepEqual(await history(), beforeProfile);
+}
+
+async function verifyProfileKeys(page, before) {
+  await chooseTool(page, "edit profile", "edit-profile");
+  const entered = await inspect(page);
+  await page.keyboard.press("m");
+  const marker = page.locator('[data-move-marker="x"] > svg');
+  await marker.waitFor({ state: "visible" });
+  const box = await marker.boundingBox();
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  const input = page.getByRole("textbox", { name: "Move X", exact: true });
+  await input.fill("1");
+  await input.press("Enter");
+  await modalCompleted(page);
+  await page.waitForFunction(
+    (volume) => window.makeshiftInspect().document.bodies[0].volume > volume,
+    before.volume,
+  );
+  const changed = await inspect(page);
+  assert.equal(changed.activeSketch, entered.activeSketch, "The field owns its own Enter");
+  assert.ok(changed.document.bodies[0].volume > before.volume);
+  await chooseTool(page, "select", "select");
+  await page.keyboard.press("Escape");
+  const confirmation = page.getByRole("dialog", { name: "Discard profile changes?", exact: true });
+  const keep = confirmation.getByRole("button", { name: "Keep editing", exact: true });
+  await keep.click();
+  const kept = await inspect(page);
+  assert.equal(kept.activeSketch, entered.activeSketch);
+  close(kept.document.bodies[0].volume, changed.document.bodies[0].volume);
+  const edited = await drawUntrimmedMeridian(page, kept);
+  await chooseTool(page, "select", "select");
+  const { camera: orbited } = await orbitProfile(page);
+  await page.keyboard.press("Enter");
+  await page.getByRole("group", { name: "Edit Profile", exact: true }).waitFor({ state: "hidden" });
+  const applied = await inspect(page);
+  assert.equal(applied.activePlane, null);
+  close(applied.document.bodies[0].volume, edited.volume);
+  close(
+    viewDirection(applied.camera).distanceTo(viewDirection(orbited)),
+    0,
+    "Apply preserves camera angle",
+  );
+  for (const key of ["target", "up"])
+    applied.camera[key].forEach((n, i) => {
+      close(n, orbited[key][i], `Apply preserves camera ${key}`);
+    });
+  close(applied.camera.height, orbited.height, "Apply preserves camera zoom");
+  await chooseTool(page, "undo", "undo");
+  assert.ok(
+    (await inspect(page)).document.bodies[0].brep === before.brep,
+    "One Undo restores the shaft",
+  );
+}
+
+async function drawUntrimmedMeridian(page, state) {
+  const sketch = state.document.sketches[0];
+  const { xMax, yMin, yMax } = bounds(sketch.curves);
+  const mid = (yMin + yMax) / 2;
+  await page.keyboard.press("l");
+  await drag(page, [xMax, mid], [xMax * 0.8, mid]);
+  const branched = await inspect(page);
+  const branch = branched.document.sketches[0].curves.at(-1);
+  assert.equal(branched.document.sketches[0].curves.length, sketch.curves.length + 1);
+  close(branch.a.x, xMax);
+  close(branched.document.bodies[0].volume, state.document.bodies[0].volume);
+  await drag(page, [xMax / 2, yMin - 1], [xMax / 2, yMax + 1], ["Shift"]);
+  await page.waitForFunction(
+    (volume) => window.makeshiftInspect().document.bodies[0].volume < volume,
+    state.document.bodies[0].volume,
+  );
+  const { document } = await inspect(page);
+  const curves = document.sketches[0].curves;
+  assert.equal(curves.length, sketch.curves.length + 2, "The original contour remains editable");
+  const { a, b } = curves.at(-1);
+  assert.ok(Math.min(a.y, b.y) < yMin && Math.max(a.y, b.y) > yMax);
+  const radius = (y) => a.x + (b.x - a.x) * ((y - a.y) / (b.y - a.y));
+  const first = radius(yMin),
+    last = radius(yMax);
+  const body = document.bodies[0];
+  close(body.volume, (Math.PI * (yMax - yMin) * (first ** 2 + first * last + last ** 2)) / 3);
+  return body;
 }
 
 async function partialFaceRoute(page, name) {

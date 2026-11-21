@@ -20,6 +20,7 @@ export class ModelClient extends ModelQueries {
   private initialized = false;
   private sentSelection: string | undefined;
   lastEdit: ModelRequest | null = null;
+  appliedProfile: ModelReply["appliedProfile"];
   erosionAllowance: number | undefined;
   scriptRunning = false;
   scriptState(running: boolean, view?: ModelView): void {
@@ -63,6 +64,7 @@ export class ModelClient extends ModelQueries {
     super();
   }
   get canUndo() {
+    if (this.profileEdit) return this.profileEdit.canUndo;
     return (
       this.selectionInFlight ||
       !!this.selectionHistory?.pending ||
@@ -71,6 +73,7 @@ export class ModelClient extends ModelQueries {
     );
   }
   get canRedo() {
+    if (this.profileEdit) return this.profileEdit.canRedo;
     return (
       !this.selectionInFlight &&
       !this.selectionHistory?.pending &&
@@ -79,7 +82,14 @@ export class ModelClient extends ModelQueries {
     );
   }
   syncSelection(): void {
-    if (this.selectionSending || this.working || this.busy || this.scriptRunning) return;
+    if (
+      this.selectionSending ||
+      this.working ||
+      this.busy ||
+      this.scriptRunning ||
+      this.profileEdit
+    )
+      return;
     this.selectionInFlight = !!this.selectionHistory?.pending;
     this.selectionSending = this.flushSelection()
       .catch((error: unknown) => this.error(error instanceof Error ? error.message : String(error)))
@@ -91,7 +101,7 @@ export class ModelClient extends ModelQueries {
       });
   }
   private async flushSelection(): Promise<void> {
-    if (!this.selectionHistory || !this.initialized) return;
+    if (!this.selectionHistory || !this.initialized || this.profileEdit) return;
     const changes = this.selectionHistory.take();
     const encoded = JSON.stringify(changes);
     if (!changes.steps.length && encoded === this.sentSelection) return;
@@ -209,24 +219,27 @@ export class ModelClient extends ModelQueries {
       this.working = false;
       this.calculation = undefined;
       this.busy = this.cancelling;
-      this.changed();
+      this.refreshReadyView();
     }
   }
   private receive(request: ModelRequest, reply: ModelReply): boolean {
     const direction =
       request.kind === "reopen"
         ? "undo"
-        : request.kind === "navigation-history"
-          ? request.direction
-          : request.kind === "undo" || request.kind === "redo"
-            ? request.kind
-            : null;
+        : this.profileEdit || reply.view.profileEdit
+          ? null
+          : request.kind === "navigation-history"
+            ? request.direction
+            : request.kind === "undo" || request.kind === "redo"
+              ? request.kind
+              : null;
     const previous = this.benchFocus;
     const switched =
       reply.view.activeBench !== undefined &&
       benchFocusKey({ active: reply.view.activeBench, inline: reply.view.inline ?? [] }) !==
         benchFocusKey(previous);
     this.view = retainViewSketches(this.view, reply.view, switched);
+    this.appliedProfile = reply.appliedProfile;
     this.erosionAllowance = reply.erosionAllowance;
     if (reply.error) throw new Error(reply.error);
     const replaced = request.kind === "new" || request.kind === "open";
@@ -249,7 +262,14 @@ export class ModelClient extends ModelQueries {
       (direction || (!this.initialized && (selection.sketch.length || selection.modeling.length)))
     )
       this.selectionHistory?.restore(selection);
-    else if (!switched && !replaced && reply.documentChanged && request.kind !== "sketch-grid")
+    else if (
+      !switched &&
+      !replaced &&
+      // The profile controller restores modeling selection after the owner closes its draft.
+      (request.kind === "cancel-profile-edit" ||
+        request.kind === "apply-profile-edit" ||
+        (reply.documentChanged && request.kind !== "sketch-grid"))
+    )
       this.selectionHistory?.accepted();
     this.initialized = true;
     this.error("");
@@ -277,7 +297,7 @@ export class ModelClient extends ModelQueries {
     } finally {
       this.cancelling = false;
       this.busy = false;
-      this.changed();
+      this.refreshReadyView();
     }
   }
   async documentReplaced(): Promise<void> {
@@ -291,5 +311,13 @@ export class ModelClient extends ModelQueries {
   async settled(): Promise<void> {
     await this.waiting;
     await this.selectionSending;
+  }
+  private refreshReadyView(): void {
+    this.changed();
+    void this.observeProfilePreview(
+      () => !this.working && !this.cancelling,
+      this.changed,
+      this.error,
+    );
   }
 }
