@@ -150,6 +150,11 @@ meridian clear of the cutter and verifies that revolving and re-cutting it
 reproduces the original solid. Recesses that miss or merely touch are omitted.
 The preview counts omitted dimples.
 
+A solid fillet stored as a closed spline can also contribute to the profile.
+The kernel sections the body through its axis and compares the reconstructed
+solid with the original. The recovered fillet uses ordinary cubic sketch
+curves within the projection tolerance.
+
 A through-bore profile follows a connected inward revolved wall with two
 separate closed openings. Its end guides sit just beyond the stock. The kernel
 recovers the stock by filling the bore and verifies that the recovered profile

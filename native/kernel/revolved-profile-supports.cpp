@@ -247,9 +247,16 @@ Band inspectExterior(const Operand& body, const std::vector<Patch>& patches, Sel
         if (cut && cut->IsParallel(axis, Precision::Angular()) && !coaxial(*cut, axis))
             cuts.push_back({patch.id, patch.face});
     }
-    if (cuts.empty()) return inspectCarrier(body, body, patches, std::move(selected), axis);
-    if (!hasSplitCut(cuts))
+    const bool closedSpline = std::ranges::any_of(patches, [](const Patch& patch) {
+        return patch.surface.GetType() == GeomAbs_BSplineSurface &&
+            (patch.surface.IsUClosed() || patch.surface.IsVClosed());
+    });
+    if (!closedSpline && !hasSplitCut(cuts)) {
+        if (cuts.empty()) return inspectCarrier(body, body, patches, std::move(selected), axis);
         return inspectHealed(body, cuts, selected, axis, verifyRecovery);
+    }
+    // A rolling fillet can store a full turned band as a closed B-spline.
+    // Certify the whole section before offering its meridian for editing.
     auto band = sectionProfile(body, axis, std::move(cuts));
     for (const auto& span : band.meridians) selected.erase(span.face);
     if (!selected.empty()) throw std::runtime_error("Select faces on one turned exterior");
