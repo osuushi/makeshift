@@ -124,6 +124,8 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: ./.github/actions/ci-linux-runtime
+        env:
+          MAKESHIFT_SKIP_ELECTRON_INSTALL: "1"
       - name: Compile tests
         run: |
           node scripts/clean-tests.mjs
