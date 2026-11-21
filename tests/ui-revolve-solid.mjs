@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import * as THREE from "three";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -110,7 +111,32 @@ async function verifyProfileCancelHistory(page, body) {
   const history = () => page.evaluate(() => window.makeshiftHistory());
   const beforeProfile = await history();
   await chooseTool(page, "edit profile", "edit-profile");
-  assert.equal((await inspect(page)).activePlane, "Edit Profile");
+  const entered = await inspect(page);
+  assert.equal(entered.activePlane, "Edit Profile");
+  const viewport = await page.getByLabel("Modeling viewport").boundingBox();
+  const x = viewport.x + viewport.width * 0.64,
+    y = viewport.y + viewport.height * 0.47;
+  await page.mouse.move(x, y);
+  await page.keyboard.down("Meta");
+  await page.mouse.down();
+  await page.mouse.move(x + 80, y + 70, { steps: 8 });
+  await page.mouse.up();
+  await page.keyboard.up("Meta");
+  const { u, v } = entered.document.sketches[0].plane;
+  const normal = new THREE.Vector3(...u).cross(new THREE.Vector3(...v));
+  const facing = ({ camera }) =>
+    Math.abs(
+      new THREE.Vector3(...camera.position)
+        .sub(new THREE.Vector3(...camera.target))
+        .normalize()
+        .dot(normal),
+    );
+  assert.ok(facing(await inspect(page)) < 0.99);
+  await page.keyboard.press("Meta+Enter");
+  const headOn = await inspect(page);
+  close(facing(headOn), 1);
+  assert.equal(headOn.activeSketch, entered.activeSketch);
+  assert.deepEqual(headOn.selectedCurves, entered.selectedCurves);
   await page.keyboard.press("Escape");
   await page.getByRole("group", { name: "Edit Profile", exact: true }).waitFor({ state: "hidden" });
   assert.equal((await inspect(page)).modelingSelection[0]?.body, body);

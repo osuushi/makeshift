@@ -4,15 +4,17 @@ import { planarFraming } from "../sketch/profile-framing.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { type CameraState, captureCamera } from "./camera-state.js";
 import { profileReferences } from "./profile-edit-references.js";
-import type { ProfileSelection } from "./revolved-profile.js";
+import { flatProfileCap, type ProfileSelection } from "./revolved-profile.js";
 import "./profile-edit.css";
 
 export class ProfileEditControls {
   private group = document.createElement("div");
   private apply = document.createElement("button");
   private cancel = document.createElement("button");
+  private align = document.createElement("button");
   private feedback = document.createElement("span");
   private disposeTool: () => void;
+  private disposeAlign: () => void;
   private disposeReferences: () => void;
   private previous?: {
     selection: SketchEditor["modeling"]["targets"];
@@ -25,27 +27,41 @@ export class ProfileEditControls {
     private editor: SketchEditor,
     overlay: HTMLElement,
   ) {
-    this.disposeTool = toolCatalog(editor).register({
+    const tools = toolCatalog(editor);
+    this.disposeTool = tools.register({
       id: "edit-profile",
       category: "Solid",
       label: "Edit Profile",
-      description: "Edit the contour of selected revolved faces",
+      description: "Edit the contour of a turned body or through-bore",
       aliases: ["revolve profile", "lathe profile", "edit revolution"],
       reason: () =>
         idleReason(editor) ??
-        (this.selection() ? null : "Select a turned body or its revolved side faces in Modeling"),
+        (this.selection() ? null : "Select a turned body or one of its faces in Modeling"),
       run: () => this.begin(),
+    });
+    this.disposeAlign = tools.register({
+      id: "look-at-profile",
+      category: "View",
+      label: "Look at Profile",
+      description: "Align the camera with the active profile plane",
+      aliases: ["head on", "normal to profile"],
+      shortcut: "⌘Enter",
+      finishEdit: false,
+      reason: () => (editor.store.profileEdit ? idleReason(editor) : "Open Edit Profile first"),
+      run: () => this.lookAtProfile(),
     });
     this.group.className = "profile-edit-controls";
     this.group.setAttribute("role", "group");
     this.group.setAttribute("aria-label", "Edit Profile");
     this.feedback.setAttribute("aria-live", "polite");
-    this.apply.type = this.cancel.type = "button";
+    this.apply.type = this.cancel.type = this.align.type = "button";
     this.apply.textContent = "Apply";
     this.cancel.textContent = "Cancel";
+    this.align.textContent = "Look at Profile";
     this.apply.onclick = () => void this.finish(true);
     this.cancel.onclick = editor.cancelProfileEdit = () => void this.finish(false);
-    this.group.append(this.feedback, this.apply, this.cancel);
+    this.align.onclick = () => void tools.invoke("look-at-profile");
+    this.group.append(this.feedback, this.apply, this.cancel, this.align);
     this.disposeReferences = profileReferences(editor, overlay);
     overlay.append(this.group);
     editor.world.canExitWorkspace = () => !editor.store.profileEdit;
@@ -99,9 +115,19 @@ export class ProfileEditControls {
         framing,
       ),
     );
-    e.select(sketch.curves.map((curve) => curve.id));
+    const sides = sketch.curves.filter((curve) => !flatProfileCap(curve));
+    e.select(sides.map((curve) => curve.id));
     e.world.canvas.focus();
     e.refresh();
+    return true;
+  }
+
+  private lookAtProfile(): boolean {
+    const { world } = this.editor;
+    const { workspace } = world;
+    if (!workspace || world.orbit.active) return false;
+    world.navigation.withoutRecording(() => world.enterWorkspace(workspace));
+    world.canvas.focus();
     return true;
   }
 
@@ -156,6 +182,7 @@ export class ProfileEditControls {
     const unavailable = this.closing || e.blocked || e.isDragging;
     this.apply.disabled = unavailable || !!profile.error;
     this.cancel.disabled = unavailable;
+    this.align.disabled = unavailable || !!idleReason(e);
     const text =
       profile.error || (profile.removedDimples ? this.removed(profile.removedDimples) : "");
     if (this.feedback.textContent !== text) this.feedback.textContent = text;
@@ -166,6 +193,7 @@ export class ProfileEditControls {
   dispose(): void {
     this.editor.world.changed.delete(this.update);
     this.disposeTool();
+    this.disposeAlign();
     this.disposeReferences();
     this.group.remove();
   }

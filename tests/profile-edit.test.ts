@@ -84,7 +84,7 @@ async function makeTurnedBody(owner: DocumentOwner): Promise<string> {
 }
 
 function moveRadially(sketch: Sketch, distance: number): Sketch {
-  const shift = ({ x, y }: Point) => ({ x: x + distance, y });
+  const shift = ({ x, y }: Point) => ({ x: x === 0 ? 0 : x + distance, y });
   return {
     ...sketch,
     curves: sketch.curves.map((curve) => {
@@ -146,7 +146,7 @@ test("temporary profile recuts a stationary dimple, drops contact, and applies o
     assert.equal(opened.canUndo, false);
     assert.deepEqual(
       opened.profileEdit?.sketch.curves.map((curve) => curve.kind),
-      ["arc", "segment", "arc"],
+      ["segment", "arc", "segment", "arc", "segment"],
     );
     const profile = opened.profileEdit?.sketch;
     assert.ok(profile);
@@ -164,7 +164,7 @@ test("temporary profile recuts a stationary dimple, drops contact, and applies o
     const broken = await call(owner, {
       kind: "remove",
       sketchId: profile.id,
-      ids: [profile.curves[1].id],
+      ids: [profile.curves[2].id],
     });
     assert.match(broken.profileEdit?.error ?? "", /continuous chain/);
     assert.match(
@@ -214,7 +214,7 @@ test("an edited cubic meridian can be recovered when reopening the resulting bod
     const sketch = opened.profileEdit?.sketch;
     assert.ok(sketch);
     const curves = sketch.curves.map((curve): Curve => {
-      if (curve.kind !== "segment") return curve;
+      if (curve.kind !== "segment" || curve.a.x === 0 || curve.b.x === 0) return curve;
       return {
         ...curve,
         kind: "bezier",

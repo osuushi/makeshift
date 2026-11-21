@@ -120,7 +120,8 @@ export function installWorkspaceSync(editor: SketchEditor): void {
     !editor.interactions.current?.selectsLocally() &&
     !toolCatalog(editor).reason({ reason: () => null });
   world.sketchEntry = (id) => {
-    void toolCatalog(editor).invoke(`sketch-${id.toLowerCase()}`);
+    const command = editor.store.profileEdit ? "look-at-profile" : `sketch-${id.toLowerCase()}`;
+    void toolCatalog(editor).invoke(command);
   };
   let previous: string | null = null;
   editor.world.changed.add(() => {

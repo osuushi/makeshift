@@ -81,8 +81,8 @@ function radialMove(sketch: Sketch, amount: number, lastAmount = amount): Sketch
       assert.equal(curve.kind, "segment");
       return {
         ...curve,
-        a: { ...curve.a, x: curve.a.x + amount },
-        b: { ...curve.b, x: curve.b.x + lastAmount },
+        a: { ...curve.a, x: curve.a.x === 0 ? 0 : curve.a.x + amount },
+        b: { ...curve.b, x: curve.b.x === 0 ? 0 : curve.b.x + lastAmount },
       };
     }),
   };
@@ -157,7 +157,7 @@ test("selecting a face of the turned exterior recuts the original stationary thr
     });
     const profile = opened.profileEdit?.sketch;
     assert.ok(profile);
-    assert.equal(profile.curves.length, 2);
+    assert.equal(profile.curves.length, 4);
     const changed = await call(owner, { kind: "edit", sketch: radialMove(profile, 1) });
     const preview = changed.profileEdit?.preview;
     assert.ok(preview, changed.profileEdit?.error);

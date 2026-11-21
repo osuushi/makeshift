@@ -14,11 +14,14 @@ export function profileReferences(editor: SketchEditor, overlay: HTMLElement): (
     const profile = editor.store.profileEdit;
     svg.toggleAttribute("hidden", !profile || !editor.world.active);
     if (!profile || !editor.world.active) return;
-    const { sketch, height } = profile;
-    const radius = Math.max(
-      height / 4,
-      ...sketch.curves.flatMap((curve) => (curve.kind === "circle" ? [] : [curve.a.x, curve.b.x])),
+    const { height, endGuides } = profile;
+    const sketch = profile.draft ?? profile.sketch;
+    const ends = sketch.curves.flatMap((curve) =>
+      curve.kind === "circle" ? [] : [curve.a, curve.b],
     );
+    const low = Math.min(0, ...ends.map((point) => point.y));
+    const high = Math.max(height, ...ends.map((point) => point.y));
+    const radius = Math.max(height / 4, ...ends.map((point) => point.x));
     const { left, top } = overlay.getBoundingClientRect();
     const screen = (point: Point) => {
       const p = editor.world.projectLocal(sketch.plane, point);
@@ -28,8 +31,8 @@ export function profileReferences(editor: SketchEditor, overlay: HTMLElement): (
     guides.setAttribute(
       "d",
       [
-        line({ x: 0, y: -height / 12 }, { x: 0, y: (height * 13) / 12 }),
-        ...[0, height].map((y) => line({ x: 0, y }, { x: radius * 1.1, y })),
+        line({ x: 0, y: low - height / 12 }, { x: 0, y: high + height / 12 }),
+        ...(endGuides ? [0, height].map((y) => line({ x: 0, y }, { x: radius * 1.1, y })) : []),
       ].join(" "),
     );
   };

@@ -13,13 +13,14 @@ import { continuingBodies, materialize } from "./kernel-result.js";
 import type { NativeSolver } from "./native-solver.js";
 import { pasteGeometry } from "./paste-geometry.js";
 import { boundary } from "./profile-boundary.js";
-import { profileSketch, profileSpans } from "./profile-chain.js";
+import { profileAxisAnchors, profileSketch, profileSpans } from "./profile-chain.js";
 import type { SolidCalculator } from "./solid-calculator.js";
 
 interface ProfileDraft {
   source: ProfileSelection;
   body: Body;
   height: number;
+  endGuides: boolean;
   sketch: Sketch;
   initial: string;
   origins: Map<string, string>;
@@ -55,6 +56,7 @@ export class ProfileEdits {
     return {
       body: edit.source.body,
       height: edit.height,
+      endGuides: edit.endGuides,
       sketch: edit.sketch,
       draft: edit.draft,
       preview,
@@ -75,14 +77,13 @@ export class ProfileEdits {
       bodies: exactBodies([body]),
     });
     const { sketch, origins } = profileSketch(profile);
-    const initial = JSON.stringify(
-      boundary(profileSpans(sketch.curves, profile.height), sketch.plane),
-    );
+    const initial = JSON.stringify(boundary(profileSpans(sketch.curves, profile), sketch.plane));
     this.checkCancellation();
     this.current = {
       source,
       body,
       height: profile.height,
+      endGuides: profile.endGuides,
       sketch,
       initial,
       origins,
@@ -234,7 +235,11 @@ export class ProfileEdits {
     request: PreviewRequest,
   ): Promise<void> {
     edit.draft = undefined;
-    const result = await previewDocument(workspace, request, this.kernel, this.solver);
+    const anchors =
+      !edit.endGuides && (request.kind === "edit" || request.kind === "preview")
+        ? profileAxisAnchors(request.sketch)
+        : undefined;
+    const result = await previewDocument(workspace, request, this.kernel, this.solver, anchors);
     const sketch = this.sketchOnly(result.document, edit, workspace.bodies);
     this.checkCancellation();
     if (request.kind === "edit") await this.update(sketch);
@@ -256,7 +261,7 @@ export class ProfileEdits {
     const edit = this.requireEdit();
     let preview: Body | undefined, error: string | undefined;
     try {
-      const ordered = profileSpans(sketch.curves, edit.height);
+      const ordered = profileSpans(sketch.curves, edit);
       const geometry = boundary(ordered, sketch.plane);
       if (JSON.stringify(geometry) !== edit.initial) {
         const bodies = [edit.body];

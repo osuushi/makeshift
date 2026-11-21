@@ -17,6 +17,16 @@
 #include <stdexcept>
 
 namespace revolved_profile {
+std::array<double, 2> axialStations(const TopoDS_Shape& shape, const gp_Ax1& axis) {
+    gp_Trsf local;
+    local.SetTransformation(radialFrame(axis, 0));
+    Bnd_Box bounds;
+    BRepBndLib::AddOptimal(BRepBuilderAPI_Transform(shape, local, true).Shape(), bounds, false, false);
+    double lowX, lowY, lowZ, highX, highY, highZ;
+    bounds.Get(lowX, lowY, lowZ, highX, highY, highZ);
+    return {lowY, highY};
+}
+
 namespace {
 constexpr double tolerance = Precision::Confusion();
 
@@ -44,16 +54,6 @@ std::vector<SourceEntity> connectedWalls(const Operand& body, const SourceEntity
     return walls;
 }
 
-std::array<double, 2> stations(const TopoDS_Shape& shape, const gp_Ax3& frame) {
-    gp_Trsf local;
-    local.SetTransformation(frame);
-    Bnd_Box bounds;
-    BRepBndLib::AddOptimal(BRepBuilderAPI_Transform(shape, local, true).Shape(), bounds, false, false);
-    double lowX, lowY, lowZ, highX, highY, highZ;
-    bounds.Get(lowX, lowY, lowZ, highX, highY, highZ);
-    return {lowY, highY};
-}
-
 void checkOpenings(const std::vector<SourceEntity>& walls, const gp_Ax1& axis) {
     TopTools_IndexedMapOfShape edges;
     std::vector<int> uses;
@@ -73,9 +73,8 @@ void checkOpenings(const std::vector<SourceEntity>& walls, const gp_Ax1& axis) {
     ShapeAnalysis_FreeBounds::ConnectEdgesToWires(boundary, tolerance, true, rims);
     if (rims->Length() != 2 || !BRep_Tool::IsClosed(rims->Value(1)) || !BRep_Tool::IsClosed(rims->Value(2)))
         throw std::runtime_error("Edit Profile requires a through-bore with two closed openings");
-    const auto frame = radialFrame(axis, 0);
-    const auto a = stations(rims->Value(1), frame);
-    const auto b = stations(rims->Value(2), frame);
+    const auto a = axialStations(rims->Value(1), axis);
+    const auto b = axialStations(rims->Value(2), axis);
     if (std::max(a[0], b[0]) <= std::min(a[1], b[1]) + tolerance)
         throw std::runtime_error("The bore openings must lie at opposite ends of the profile");
 }
@@ -131,9 +130,9 @@ ThroughBore throughBore(const Operand& body, const SourceEntity& seed) {
 }
 
 Band boreProfile(const Operand& body, const ThroughBore& bore, const TopoDS_Shape& envelope) {
-    const auto bounds = stations(envelope, radialFrame(bore.axis, 0));
+    const auto bounds = axialStations(envelope, bore.axis);
     const double margin = std::max(0.001, (bounds[1] - bounds[0]) * 1e-6);
-    Band band{body, radialFrame(bore.axis, bounds[0] - margin), bounds[1] - bounds[0] + 2 * margin, {}};
+    Band band{body, radialFrame(bore.axis, bounds[0] - margin), bounds[1] - bounds[0] + 2 * margin, true};
     for (const auto& wall : bore.walls) {
         auto curve = meridian(TopoDS::Face(wall.shape), band);
         if (along(band, curve->StartPoint()) > along(band, curve->EndPoint())) curve->Reverse();

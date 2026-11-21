@@ -58,6 +58,7 @@ export function readKernelReply<Input extends KernelRequest>(
       const profile = object(reply.profile);
       frame(profile.frame);
       positive(profile.height);
+      requireKernel(typeof profile.endGuides === "boolean", "profile end guides");
       const body = input.bodies.find((body) => body.id === input.body);
       const spans = array(profile.spans);
       requireKernel(!!body && spans.length > 0, "profile source");
