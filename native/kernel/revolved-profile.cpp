@@ -3,6 +3,7 @@
 #include "edge-finish-validation.h"
 #include "geometry-policy.h"
 #include "timing.h"
+#include <BRepAdaptor_Curve.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
@@ -26,8 +27,13 @@ void checkGuidedSpan(const TopoDS_Edge& edge, const Band& band) {
     BRepBndLib::AddOptimal(BRepBuilderAPI_Transform(edge, local, true).Shape(), bounds, false, false);
     double lowX, lowY, lowZ, highX, highY, highZ;
     bounds.Get(lowX, lowY, lowZ, highX, highY, highZ);
-    if (lowX <= tolerance || lowY < -tolerance || highY > band.height + tolerance ||
-        lowZ < -tolerance || highZ > tolerance)
+    // Spline curve bounds include one spatial tolerance of padding before
+    // these checks against the end guides and the section plane.
+    const auto type = BRepAdaptor_Curve(edge).GetType();
+    const double paddedTolerance =
+        (type == GeomAbs_BezierCurve || type == GeomAbs_BSplineCurve) ? 2 * tolerance : tolerance;
+    if (lowX <= tolerance || lowY < -paddedTolerance || highY > band.height + paddedTolerance ||
+        lowZ < -paddedTolerance || highZ > paddedTolerance)
         throw std::runtime_error("Could not recover the profile between its end guides");
 }
 

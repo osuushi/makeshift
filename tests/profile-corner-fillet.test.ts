@@ -29,20 +29,24 @@ function setRadii(sketch: Sketch, side: Segment, low: number, high: number): Ske
   return { ...sketch, curves: [{ ...side, a: { ...side.a, x: low }, b: { ...side.b, x: high } }] };
 }
 
+async function cornerFixture(owner: DocumentOwner) {
+  const block = await prism(owner, square, 42);
+  await finish(owner, block, [vertical(block, 20, 20)], 4);
+  await call(owner, { kind: "accept" });
+  const { data } = await call(owner, {
+    kind: "open",
+    document: { ...owner.view.data, sketches: [] },
+  });
+  const body = data.bodies?.[0];
+  const wall = body?.faces.find((face) => face.cylinder);
+  assert.ok(body && wall);
+  return { data, body, wall, selection: { body: body.id, faces: [wall.id] } };
+}
+
 test("Edit Profile replaces a partial corner fillet while retaining the surrounding extrusion", async () => {
   const owner = new DocumentOwner();
   try {
-    const block = await prism(owner, square, 42);
-    await finish(owner, block, [vertical(block, 20, 20)], 4);
-    await call(owner, { kind: "accept" });
-    const { data } = await call(owner, {
-      kind: "open",
-      document: { ...owner.view.data, sketches: [] },
-    });
-    const body = data.bodies?.[0];
-    const wall = body?.faces.find((face) => face.cylinder);
-    assert.ok(body && wall);
-    const selection = { body: body.id, faces: [wall.id] };
+    const { data, body, wall, selection } = await cornerFixture(owner);
     const open = async () =>
       (await call(owner, { kind: "begin-profile-edit", selection })).profileEdit;
     const entered = await open();
@@ -88,6 +92,44 @@ test("Edit Profile replaces a partial corner fillet while retaining the surround
       assert.equal(undone.data, data);
       assert.equal(undone.canUndo, false);
     }
+  } finally {
+    owner.close();
+  }
+});
+
+test("the edited corner reopens a cubic profile between the original end guides", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const { data, body, selection } = await cornerFixture(owner);
+    const { profileEdit } = await call(owner, { kind: "begin-profile-edit", selection });
+    const sketch = profileEdit?.sketch;
+    const side = sketch?.curves[0];
+    assert.ok(sketch && side?.kind === "segment");
+    const edited = await call(owner, {
+      kind: "edit",
+      sketch: {
+        ...sketch,
+        curves: [
+          {
+            ...side,
+            kind: "bezier",
+            a: { ...side.a, x: 3.5 },
+            b: { ...side.b, x: 3.4 },
+            c1: { x: 3.4, y: 14 },
+            c2: { x: 3.7, y: 28 },
+          },
+        ],
+      },
+    });
+    const preview = edited.profileEdit?.preview;
+    assert.ok(preview, edited.profileEdit?.error);
+    assertStationaryPlanes(body, preview);
+    await call(owner, { kind: "apply-profile-edit" });
+    const reopened = await call(owner, { kind: "begin-profile-edit", selection });
+    assert.ok(reopened.profileEdit?.endGuides && reopened.profileEdit.region);
+    assert.ok(reopened.profileEdit.sketch.curves.some((curve) => curve.kind === "bezier"));
+    await call(owner, { kind: "cancel-profile-edit" });
+    assert.equal((await call(owner, { kind: "undo" })).data, data);
   } finally {
     owner.close();
   }
