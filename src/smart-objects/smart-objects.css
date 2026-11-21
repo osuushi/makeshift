@@ -1,37 +1,82 @@
 .smart-object-actions:not([hidden]) {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 4px 12px 8px;
+  display: grid;
+  gap: 12px;
+  padding: 6px 12px 10px;
 }
-.smart-object-actions button {
-  padding: 5px 7px;
+.smart-object-section {
+  min-width: 0;
+}
+.smart-object-section h3 {
+  margin: 0 0 4px;
+  color: var(--muted);
   font-size: 12px;
-  border-radius: 5px;
-  box-shadow: none;
+  font-weight: 650;
+  overflow-wrap: anywhere;
 }
-.smart-object-context {
-  flex-basis: 100%;
+.smart-object-section #smart-object-editing {
   color: var(--accent);
-  font-weight: 600;
-  padding: 4px 0;
+}
+.smart-object-buttons {
+  display: grid;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.smart-object-buttons button {
+  min-height: 32px;
+  padding: 5px 9px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 13px;
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+.smart-object-buttons button:not([hidden]) ~ button:not([hidden]) {
+  border-top: 1px solid var(--pane-rule);
+}
+.smart-object-buttons button:enabled:hover {
+  background: var(--selected);
+}
+.smart-object-buttons button:focus-visible {
+  outline-offset: -2px;
+}
+.smart-object-buttons button:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+@media (pointer: coarse) {
+  .smart-object-buttons button {
+    min-height: 40px;
+  }
 }
 .smart-object-dialog {
-  max-width: min(450px, 94vw);
-  max-height: 90dvh;
-  margin: 64px 16px auto auto;
-  padding: 16px;
+  position: fixed;
+  inset: auto;
+  width: min(320px, calc(100vw - 48px));
+  max-height: calc(100dvh - 104px);
+  margin: 0;
+  padding: 16px 16px 16px 24px;
   color: var(--text);
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 10px;
+  box-shadow: 0 12px 32px var(--shadow);
 }
 .smart-object-dialog::backdrop {
   background: color-mix(in srgb, var(--canvas) 12%, transparent);
 }
 .smart-object-dialog h2 {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   font-size: 16px;
+}
+.smart-object-dialog label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
 }
 .smart-object-dialog select {
   width: 100%;
@@ -49,4 +94,12 @@
   justify-content: end;
   gap: 8px;
   margin-top: 14px;
+}
+.smart-object-dialog button[type="submit"] {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+.smart-object-dialog button[type="submit"]:hover {
+  background: color-mix(in srgb, var(--accent) 90%, var(--text));
 }

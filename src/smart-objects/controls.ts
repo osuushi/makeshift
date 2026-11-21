@@ -37,9 +37,24 @@ const geometryTools = new Set([
   "plane-cut",
 ]);
 
+function actionSection(id: string, label: string) {
+  const root = document.createElement("section");
+  root.className = "smart-object-section";
+  const heading = document.createElement("h3");
+  heading.id = id;
+  heading.textContent = label;
+  root.setAttribute("aria-labelledby", id);
+  const actions = document.createElement("div");
+  actions.className = "smart-object-buttons";
+  root.append(heading, actions);
+  return { root, heading, actions };
+}
+
 export class SmartObjectControls {
   private root = document.createElement("div");
-  private context = document.createElement("span");
+  private editing = actionSection("smart-object-editing", "Editing in place");
+  private creation = actionSection("smart-object-create", "Create");
+  private instances = actionSection("smart-object-instances", "Selected instance");
   private buttons = new Map<string, { button: HTMLButtonElement; tool: ToolDefinition }>();
   private disposers: (() => void)[] = [];
   private scene: SmartObjectScene;
@@ -52,8 +67,7 @@ export class SmartObjectControls {
     const catalog = toolCatalog(editor);
     catalog.linkedTool = (id) => this.override(id);
     this.root.className = "smart-object-actions";
-    this.context.className = "smart-object-context";
-    this.root.append(this.context);
+    this.root.append(this.editing.root, this.creation.root, this.instances.root);
     slot.append(this.root);
     this.registerActions();
     editor.world.changed.add(this.update);
@@ -85,11 +99,12 @@ export class SmartObjectControls {
     const convertReason = () =>
       conversionSelection(e) ? null : "Select sketches, whole solids, or smart objects";
     this.action(
+      this.creation,
       "insert-bench",
-      "Insert bench…",
+      "Place smart object…",
       () => (sources().length ? null : "Create another bench first"),
       async () => {
-        const source = await selectSource(sources());
+        const source = await selectSource(sources(), e.world.canvas);
         if (!source) return false;
         const before = new Set((e.store.data.smartObjects ?? []).map(({ id }) => id));
         if (!(await this.edit({ action: "insert", source }))) return false;
@@ -101,23 +116,31 @@ export class SmartObjectControls {
         return true;
       },
     );
-    this.action("convert-smart-object", "Make smart object", convertReason, async () => {
-      const plan = conversionSelection(e);
-      return !!plan && this.edit({ action: "convert", selection: plan });
-    });
-    this.action("edit-smart-object", "Edit in place", one, () =>
+    this.action(
+      this.creation,
+      "convert-smart-object",
+      "Make smart object",
+      convertReason,
+      async () => {
+        const plan = conversionSelection(e);
+        return !!plan && this.edit({ action: "convert", selection: plan });
+      },
+    );
+    this.action(this.instances, "edit-smart-object", "Edit in place", one, () =>
       this.edit({ action: "enter", id: selection()[0].id }),
     );
-    this.action("open-smart-source", "Open source bench", one, () =>
+    this.action(this.instances, "open-smart-source", "Open source bench", one, () =>
       this.edit({ action: "source", id: selection()[0].id }),
     );
     this.action(
+      this.instances,
       "detach-smart-object",
       "Make independent…",
       () => (selection().length ? null : "Select a smart object"),
       () => this.detach(selection()),
     );
     this.action(
+      this.editing,
       "exit-smart-object",
       "Done editing in place",
       () => (e.store.benchFocus.inline.length ? null : "Edit a smart object in place first"),
@@ -126,6 +149,7 @@ export class SmartObjectControls {
   }
 
   private action(
+    section: ReturnType<typeof actionSection>,
     id: string,
     label: string,
     reason: () => string | null,
@@ -145,7 +169,7 @@ export class SmartObjectControls {
     button.textContent = label;
     button.onclick = () => void catalog.invoke(id);
     this.buttons.set(id, { button, tool });
-    this.root.append(button);
+    section.actions.append(button);
   }
 
   private override(id: string): LinkedToolAction | undefined {
@@ -211,14 +235,20 @@ export class SmartObjectControls {
       ...(focus.inline.length ? ["exit-smart-object"] : []),
     ]);
     this.root.toggleAttribute("hidden", !visible.size);
-    this.context.toggleAttribute("hidden", !focus.inline.length);
-    const name = e.store.benchTabs.find(({ id }) => id === e.store.editingBench)?.name;
-    const label = focus.inline.length ? `Editing ${name ?? "source"} in place` : "";
-    if (this.context.textContent !== label) this.context.textContent = label;
     for (const [id, { button }] of this.buttons) {
       button.toggleAttribute("hidden", !visible.has(id));
       button.disabled = reasons.get(id) !== null;
     }
+    for (const { root, actions } of [this.editing, this.creation, this.instances])
+      root.toggleAttribute("hidden", !actions.querySelector("button:not([hidden])"));
+    if (focus.inline.length) {
+      const name = e.store.benchTabs.find(({ id }) => id === e.store.editingBench)?.name;
+      const label = `Editing ${name ?? "source"} in place`;
+      if (this.editing.heading.textContent !== label) this.editing.heading.textContent = label;
+    }
+    const instances = selection.length > 1 ? "Selected instances" : "Selected instance";
+    if (this.instances.heading.textContent !== instances)
+      this.instances.heading.textContent = instances;
   };
 
   dispose(): void {

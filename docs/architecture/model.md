@@ -56,9 +56,11 @@ with fresh IDs. Pasting is one step in the destination bench's history.
 
 ### Smart objects
 
-**Insert bench…** in the right-hand **Smart objects** pane adds a live placement
-of a source bench to the current bench. The pane groups the available smart-object
-actions and shows the source name during in-place editing.
+The right-hand **Smart objects** pane groups actions under **Create** and
+**Selected instance**. **Place smart object…** opens a movable chooser over the
+canvas. Pick a **Source bench** and choose **Place** to add a live instance to
+the current bench. The pane shows the source name and a completion action in a
+separate section during in-place editing.
 Each placement has its own ID and affine transform. Placements can nest and share
 sources. Acceptance, Undo, Redo, and Open all check that the links are acyclic.
 Select placements in the viewport or under **Smart objects** in Entities. The
