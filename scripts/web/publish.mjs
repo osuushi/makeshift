@@ -22,16 +22,19 @@ try {
   // Secret entry and shell substitution can strip OpenSSH's required final newline.
   await writeFile(identity, `${key.trim()}\n`, { mode: 0o600 });
   execFileSync("ssh-keygen", ["-y", "-f", identity], { stdio: "ignore" });
-  // Get GitHub's public host keys over authenticated HTTPS, rather than trusting ssh-keyscan.
-  const response = await fetch("https://api.github.com/meta");
-  if (!response.ok) throw new Error("Could not verify GitHub SSH host keys");
-  const metadata = await response.json();
-  if (!Array.isArray(metadata.ssh_keys) || !metadata.ssh_keys.length)
-    throw new Error("Missing GitHub host keys");
-  await writeFile(hosts, metadata.ssh_keys.map((host) => `github.com ${host}\n`).join(""));
+  // GitHub's published Ed25519 host key. Update it here if GitHub rotates it.
+  // https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints
+  await writeFile(
+    hosts,
+    "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl\n",
+  );
   await publish({
     ...process.env,
-    GIT_SSH_COMMAND: `ssh -F /dev/null -i '${identity}' -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile='${hosts}'`,
+    GIT_SSH_COMMAND: [
+      `ssh -F /dev/null -i '${identity}'`,
+      "-o IdentitiesOnly=yes -o StrictHostKeyChecking=yes",
+      `-o GlobalKnownHostsFile=/dev/null -o UserKnownHostsFile='${hosts}'`,
+    ].join(" "),
     GIT_TERMINAL_PROMPT: "0",
   });
 } finally {

@@ -121,6 +121,9 @@ deployment repo. Pages branch deployment runs there. The source repo's macOS rel
 and update-feed site continue independently.
 
 The web publisher retains previous hashed assets so existing tabs keep working.
+It uses strict SSH verification with GitHub's Ed25519 host key pinned in
+`scripts/web/publish.mjs`. If GitHub rotates the key, update the pin using
+[GitHub's published host keys](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints).
 It never force-pushes. If deployment fails after release publication, the release
 artifacts remain available and the last deployed site is unaffected. Re-deploy the
 matching ZIP and metadata with `scripts/web/publish.mjs`; rebuilding is unnecessary.
