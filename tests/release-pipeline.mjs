@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import {
   chmod,
   mkdir,
@@ -186,6 +186,48 @@ test("ticket recovery does not sign or resubmit and invalid tickets never reach 
   tools = (await f.tools()).slice(before);
   assert.equal(tools.length, 1);
   assert.equal(tools[0].tool, "xcrun");
+});
+
+test("web Pages publication works without the GitHub metadata API", async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "makeshift-web-publish-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const remote = join(directory, "pages.git");
+  const web = join(directory, ".build/web");
+  const key = join(directory, "deploy-key");
+  const metadata = { tag: "web-20261122T000000Z", commit: sha };
+
+  await mkdir(web, { recursive: true });
+  await writeFile(join(web, "build.json"), JSON.stringify(metadata));
+  await writeFile(join(web, "index.html"), "<title>Makeshift</title>");
+  execFileSync("git", ["init", "--bare", "--initial-branch=gh-pages", remote]);
+  execFileSync("ssh-keygen", ["-q", "-t", "ed25519", "-N", "", "-f", key]);
+
+  const result = spawnSync(
+    process.execPath,
+    [
+      "--import",
+      "data:text/javascript,delete%20globalThis.fetch",
+      join(root, "scripts/web/publish.mjs"),
+    ],
+    {
+      cwd: directory,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        GITHUB_REPOSITORY: "fixture/makeshift",
+        WEB_PAGES_REPOSITORY: "fixture/pages",
+        WEB_PAGES_DEPLOY_KEY: await readFile(key, "utf8"),
+        GIT_CONFIG_COUNT: "1",
+        GIT_CONFIG_KEY_0: `url.${directory}/.insteadOf`,
+        GIT_CONFIG_VALUE_0: "git@github.com:fixture/",
+      },
+    },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  const published = (path) =>
+    execFileSync("git", ["--git-dir", remote, "show", `gh-pages:${path}`], { encoding: "utf8" });
+  assert.deepEqual(JSON.parse(published("build.json")), metadata);
+  assert.equal(published("index.html"), "<title>Makeshift</title>");
 });
 
 test("macOS recovery graph isolates saved artifacts and keeps demos exclusively in web release", async () => {
