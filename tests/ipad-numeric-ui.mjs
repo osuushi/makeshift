@@ -1,27 +1,15 @@
 import assert from "node:assert/strict";
 import { webkit } from "playwright";
-import { launchElectron } from "./native-documents.mjs";
+import { createServer } from "vite";
 import { drag, inspect, settled } from "./ui-helpers.mjs";
 import { installTestFrames } from "./ui-test-frames.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-const app = await launchElectron({
-  args: ["."],
-  env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1", MAKESHIFT_DEV_URL: "" },
-});
+const server = await createServer({ server: { port: 0, watch: null, hmr: false } });
 let browser;
 try {
-  const desktop = await app.firstWindow();
-  desktop.setDefaultTimeout(10000);
-
-  await desktop.waitForFunction(() => Boolean(window.makeshiftInspect), null, { timeout: 10000 });
-
-  await chooseTool(desktop, "Sketch on XY", "sketch-xy");
-  await desktop.keyboard.press("r");
-  await drag(desktop, [-15, -10], [15, 10]);
-  await desktop.getByRole("button", { name: "Trackpad", exact: true }).click();
-  await desktop.getByRole("button", { name: "Tablet", exact: true }).click();
-  const url = await desktop.locator(".ipad-addresses a").first().getAttribute("href");
+  await server.listen();
+  const url = server.resolvedUrls.local[0];
   browser = await webkit.launch({ headless: true });
   const page = await browser.newPage({
     viewport: { width: 1280, height: 850 },
@@ -69,6 +57,11 @@ try {
       );
   });
   await page.goto(url);
+  await settled(page);
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
+  await page.keyboard.press("r");
+  await drag(page, [-15, -10], [15, 10]);
+  await chooseTool(page, "return to modeling", "modeling");
   await page.waitForFunction(() => Boolean(window.makeshiftInspect), null, { timeout: 10000 });
 
   await chooseTool(page, "Sketch on XY", "sketch-xy");
@@ -77,13 +70,15 @@ try {
   await page.keyboard.press("m");
   // Desktop WebKit does not enforce iOS's native keyboard activation policy.
   // Assert focus happens synchronously in the application's input handler.
+  const rotate = page.getByRole("button", { name: "Rotate layer", exact: true });
+  if ((await rotate.getAttribute("aria-pressed")) === "false") await rotate.click();
   const original = (await inspect(page)).document;
-  for (const label of ["Move X", "Move Y", "Angle", "Move X"]) {
+  for (const label of ["Angle", "Move X", "Move Y", "Angle"]) {
     await page.keyboard.press("Tab");
     await selectedField(page, label);
   }
   await page.keyboard.press("Shift+Tab");
-  await selectedField(page, "Angle");
+  await selectedField(page, "Move Y");
   await page.keyboard.press("Escape");
   await page.keyboard.press("m");
   const arrow = page.locator('[data-move-marker="x"]');
@@ -109,7 +104,7 @@ try {
   );
 } finally {
   await browser?.close();
-  await app.close();
+  await server.close();
 }
 
 async function selectedField(page, label) {

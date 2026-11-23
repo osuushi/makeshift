@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { installPenClassification } from "./ipad-pen.mjs";
-import { at, drag, inspect } from "./ui-helpers.mjs";
+import { at, drag, inspect, settled } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -39,7 +39,7 @@ await withUiRuntimes(
   async (page, name) => {
     await installPenClassification(page);
     await page.reload();
-    await page.waitForFunction(() => Boolean(window.makeshiftInspect));
+    await settled(page);
     await chooseTool(page, "Sketch on XY", "sketch-xy");
     if ((await inspect(page)).gridSnap) await chooseTool(page, "grid snap", "grid");
     await page.keyboard.press("r");
@@ -119,6 +119,9 @@ async function deliberateDrags(page, body) {
     await page.mouse.down();
     await page.mouse.move(x + travel, y);
     await page.mouse.up();
+    // Body Move keeps the released translation as a preview until acceptance.
+    await inspect(page);
+    await page.keyboard.press("Enter");
     assert.notDeepEqual(
       (await inspect(page)).document,
       body,

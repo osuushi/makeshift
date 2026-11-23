@@ -1,0 +1,19 @@
+.web-agent .agent-header {
+  padding: 0;
+}
+.web-agent .agent-header button {
+  flex: 1;
+  align-self: stretch;
+  text-align: start;
+  padding: 10px;
+}
+.web-agent #agent-guide {
+  padding: 12px;
+  overflow: auto;
+}
+.web-agent ol {
+  padding-inline-start: 1.5em;
+}
+.web-agent li + li {
+  margin-top: 0.6em;
+}

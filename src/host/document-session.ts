@@ -2,7 +2,6 @@ import { app, type BrowserWindow } from "electron";
 import type { InspectionView } from "../agent/inspection-protocol.js";
 import type { DocumentOwner } from "../backend/document-owner.js";
 import { ScriptSession } from "../backend/script-session.js";
-import type { RemoteDocumentEditor } from "../ipad/protocol.js";
 import { type CameraState, validateCameraState } from "../model/camera-state.js";
 import type { DocumentCommand } from "../model/document-host.js";
 import { modelWireReply } from "../sketch/model-wire.js";
@@ -49,7 +48,6 @@ export class DocumentSession {
     this.closing = true;
     this.window?.close();
   }
-  remote?: RemoteDocumentEditor;
   private files: DocumentFiles;
   private script: ScriptSession;
   private window: BrowserWindow | null = null;
@@ -87,7 +85,6 @@ export class DocumentSession {
     agent.script = (request, channel) => this.script.request(request, channel);
     agent.cancelScript = () => this.script.cancel();
     this.ipc.handle("agent-script-cancel", async () => {
-      this.checkDesktop();
       await this.script.cancel();
     });
     agent.documentStatus = () => this.files.status;
@@ -119,16 +116,12 @@ export class DocumentSession {
     this.ipc.handle(
       "document-command",
       async (_event, command: DocumentCommand, camera?: CameraState) => {
-        this.checkDesktop();
         return this.command(command, camera);
       },
     );
     this.ipc.handle("document-command-finished", (_event, command: DocumentCommand) => {
       this.commandFinished(command);
     });
-  }
-  checkDesktop(): void {
-    if (this.remote?.active()) throw new Error("This document is controlled from the iPad.");
   }
   get status() {
     return { ...this.files.status, warning: this.warning };
@@ -139,24 +132,11 @@ export class DocumentSession {
     selection?: string,
     settings?: string,
   ): Promise<InspectionView> {
-    if (this.remote?.active())
-      return this.remote.inspect(render, acquireScript, selection, settings);
     if (!this.window) throw new Error("Drawing window closed");
     return readInspectionView(this.window, render, acquireScript, selection, settings);
   }
   private send(method: string, value: unknown): void {
-    if (this.remote?.active()) this.remote.emit(method, value);
-    else if (this.window && !this.window.isDestroyed()) this.window.webContents.send(method, value);
-  }
-  async prepareRemote(): Promise<void> {
-    if (this.busy || this.script.busy || this.owner.view.candidate || this.owner.view.profileEdit)
-      throw new Error("Finish or cancel the current operation before connecting the iPad.");
-  }
-  async cancelRemote(): Promise<void> {
-    await this.script.cancel();
-    await this.owner.call({ kind: "cancel-preview" });
-    if (this.owner.view.profileEdit) await this.owner.call({ kind: "cancel-profile-edit" });
-    await this.owner.call({ kind: "discard" });
+    if (this.window && !this.window.isDestroyed()) this.window.webContents.send(method, value);
   }
   async openPath(path: string): Promise<void> {
     this.busy = true;
@@ -173,7 +153,6 @@ export class DocumentSession {
     return (
       !this.busy &&
       !this.script.busy &&
-      !this.remote?.active() &&
       !this.owner.view.candidate &&
       !this.files.status.path &&
       !this.files.status.edited &&
@@ -227,20 +206,6 @@ export class DocumentSession {
     this.update();
   }
   dispatch(command: DocumentCommand): void {
-    if (this.remote?.active()) {
-      if (
-        !this.remote.connected() &&
-        (command === "close" || command === "quit" || command === "restart-update")
-      ) {
-        void this.remote.close().then(async () => {
-          const result = await this.command(command);
-          if (!this.closing && command !== "quit") this.window?.webContents.reload();
-          this.commandFinished(command);
-          if (result.error) console.error(result.error);
-        });
-      } else this.remote.emit("document-command", command);
-      return;
-    }
     if (!this.ready) {
       this.pendingCommand = command;
       return;

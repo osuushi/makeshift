@@ -27,7 +27,7 @@ Then the requested action resolves its prerequisites against accepted geometry a
 refreshed selection. Empty or unchanged previews exit without a geometry Undo step.
 This boundary covers tool and keyboard actions, canvas/entity selection and new
 selection gestures, visibility, appearance/rename, settings, tags/decorators,
-Delete/Clear, file/host commands, agent inspection/script entry and iPad handoff.
+Delete/Clear, file/host commands, and agent inspection/script entry.
 ToolCatalog serializes deliberate actions until completion and the requested action
 finish. Controllers expose a drain
 for their current/latest calculation; the backend alone cannot establish that a

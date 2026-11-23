@@ -5,6 +5,7 @@ import {
   newBrowserTrust,
 } from "../security/browser-device.js";
 import { usesCustomDecorators } from "../security/drawing-trust.js";
+import { portableDigest } from "../security/signatures.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { BrowserArchive, downloadArchive } from "./browser-archive.js";
 import { confirmReplacement, pickSaveFile, writeBrowserFile } from "./browser-file-access.js";
@@ -14,10 +15,43 @@ import { restoreCamera } from "./camera-state.js";
 import { archivedDrawing, drawingArchive } from "./document-archive.js";
 import { type DrawingContents, sameDrawingContents, VisitedBenches } from "./drawing-contents.js";
 import type { PortableFiles } from "./portable-files.js";
+import { sameWorkspaceFiles, type WorkspaceCommand, workspaceCommand } from "./workspace-files.js";
+
+const maxDrawingBytes = 72 * 1024 * 1024;
 
 /** Browser file identity and portable bytes remain outside geometry and Undo. */
 export class BrowserDocuments {
   private files: PortableFiles = {};
+  private savedFiles = this.files;
+  private workspaceReady = true;
+  async workspace(command: WorkspaceCommand): Promise<unknown> {
+    if (this.blocked() || document.querySelector("dialog[open]"))
+      throw new Error("Finish the current operation first.");
+    if (!this.workspaceReady) {
+      this.active = true;
+      try {
+        const digest = await portableDigest(this.files);
+        const choice = digest ? await browserTrust.authorize("workspace", digest) : "allow";
+        if (choice === "deny") throw new Error("Workspace access was declined.");
+        if (choice === "empty") {
+          // The existing prompt explicitly discards the included agent files and conversations.
+          await browserTrust.load("workspace", undefined, {});
+          this.files = {};
+        }
+        this.workspaceReady = true;
+      } finally {
+        this.active = false;
+      }
+    }
+    const { files, result } = workspaceCommand(this.files, command);
+    if (
+      files !== this.files &&
+      Object.values(files).reduce((sum, file) => sum + file.length, 0) > maxDrawingBytes
+    )
+      throw new Error("Workspace exceeds the browser drawing size limit (72 MiB).");
+    this.files = files;
+    return result;
+  }
   private filename = "Untitled.makeshift";
   private drawingId: string | undefined;
   private codec = new BrowserArchive();
@@ -47,7 +81,10 @@ export class BrowserDocuments {
     return this.benches.contents(this.editor.store.benchTabs);
   }
   private dirty(): boolean {
-    return !sameDrawingContents(this.contents(), this.baseline);
+    return (
+      !sameWorkspaceFiles(this.files, this.savedFiles) ||
+      !sameDrawingContents(this.contents(), this.baseline)
+    );
   }
   private beforeUnload = (event: BeforeUnloadEvent) => {
     if (this.dirty()) {
@@ -55,7 +92,7 @@ export class BrowserDocuments {
       event.returnValue = "";
     }
   };
-  private blocked(): boolean {
+  blocked(): boolean {
     return this.active || this.editor.blocked || !!this.editor.interactions.current;
   }
   private canReplace(): Promise<boolean> {
@@ -103,6 +140,8 @@ export class BrowserDocuments {
       );
       editor.store.busy = true;
       if (!(data instanceof Uint8Array)) throw new Error("Invalid archive result.");
+      if (data.length > maxDrawingBytes)
+        throw new Error("Document exceeds the browser drawing size limit (72 MiB).");
       if (download) {
         if (destination) await writeBrowserFile(destination, data);
         else downloadArchive(data, name);
@@ -112,6 +151,7 @@ export class BrowserDocuments {
         await browserLibrary.save({ id, name, bytes: data, modified: Date.now() });
         this.drawingId = id;
         this.filename = name;
+        this.savedFiles = files;
         this.benches.reset(drawing);
         this.baseline = this.contents();
         await publication.saved();
@@ -130,16 +170,22 @@ export class BrowserDocuments {
   }
   async newDocument(): Promise<void> {
     if (this.blocked() || !(await this.canReplace()) || this.blocked()) return;
-    const editor = this.editor;
-    if (!(await editor.newDocument())) return;
-    this.benches.reset();
-    this.files = {};
-    await browserTrust.opened(editor.store.data, {});
-    this.filename = "Untitled.makeshift";
-    this.drawingId = undefined;
-    this.baseline = this.contents();
-    this.editor.world.exit();
-    restoreCamera(this.editor.world, undefined);
+    this.active = true;
+    try {
+      const editor = this.editor;
+      if (!(await editor.newDocument())) return;
+      this.benches.reset();
+      this.savedFiles = this.files = {};
+      this.workspaceReady = true;
+      await browserTrust.opened(editor.store.data, {});
+      this.filename = "Untitled.makeshift";
+      this.drawingId = undefined;
+      this.baseline = this.contents();
+      this.editor.world.exit();
+      restoreCamera(this.editor.world, undefined);
+    } finally {
+      this.active = false;
+    }
   }
   async browse(importFile: () => void): Promise<void> {
     if (this.blocked()) return;
@@ -161,7 +207,7 @@ export class BrowserDocuments {
     editor.message = "Opening document…";
     editor.refresh();
     try {
-      if (file.size > 72 * 1024 * 1024) throw new Error("Document is too large.");
+      if (file.size > maxDrawingBytes) throw new Error("Document is too large.");
       const archive = await this.codec.run(
         { kind: "read", bytes: new Uint8Array(await file.arrayBuffer()) },
         editor,
@@ -175,7 +221,8 @@ export class BrowserDocuments {
       if (usesCustomDecorators(drawing)) await editor.store.request({ kind: "restore-decorators" });
       editor.store.busy = true;
       this.benches.reset(await editor.store.readDrawing());
-      this.files = archive.files;
+      this.savedFiles = this.files = archive.files;
+      this.workspaceReady = Object.keys(archive.files).length === 0;
       this.filename = file.name.replace(/\.freac$/i, ".makeshift");
       this.drawingId = drawingId;
       this.baseline = this.contents();

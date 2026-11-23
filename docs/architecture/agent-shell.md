@@ -211,11 +211,9 @@ permission to implement the entire sequence before review.
 | 4. Basic inspection | Select a face manually, ask what “this” is, inspect dimensions/IDs and obtain the current viewport image without changing the model. | 3 |
 | 5. Typed scripting | Type error leaves geometry untouched; a valid script creates geometry or edits selected geometry; cancel/failure, Undo/Redo and subsequent manual editing work. | 4; script transaction review |
 | 6. Richer visual inspection | Agent examines isolated bodies, labeled views and sections to answer a concrete geometry question. | 4; can precede some scripting expansion |
-| 7. iPad integration | Use the same desktop-hosted session over LAN; verify terminal keyboard/touch, resize and reconnect on physical iPad. | Stable host/frontend boundary from 1; full useful loop from 2–5 |
 
 Future per-tab/body scopes, specialist skills, other presets and detached windows
-remain outside these increments. Stage 7 adds the authenticated desktop transport;
-it does not require a general remote hosting platform.
+remain outside these increments.
 
 ## First design: terminal and harness launch
 
@@ -281,7 +279,7 @@ resize, paste, interrupt, collapse/reopen, selection, image inspection, script t
 error before mutation, valid edit, cancellation, Undo/Redo and manual re-edit.
 Save/Open/Save As preserve workspace bytes; file-only changes trigger unsaved-work
 handling. New/Open cannot redirect an old CLI. Test Chromium/WebKit and hidden
-Electron; physical iPad keyboard/IME/selection and reconnect are separate gates.
+Electron.
 Check Linux/Windows PTY builds and dependency licensing before claiming support.
 
 Scope estimate: area 1 starts with a bounded PTY/canvas compatibility increment,
@@ -593,7 +591,7 @@ settings, using its ordinary geometry Undo. Selection itself preserves geometry,
 camera and visibility.
 
 Validation and application run together in the active renderer, through the same
-bounded desktop/iPad view connection used for inspection. Held gestures and atomic
+bounded desktop view connection used for inspection. Held gestures and atomic
 acceptance reject the request. Modeling accepts face, edge, body and sketch IDs; sketch mode accepts
 curve/group IDs from its active sketch. Invalid or incompatible targets reject the
 entire request. Workspace changes remain explicit; point, profile and plane targets
@@ -655,8 +653,6 @@ over 20 MiB, a confirmation explains that the files will enlarge the saved drawi
 The combined 2 GiB workspace limit still applies. Attachments mark the drawing
 edited and travel with its portable save; attaching leaves geometry unchanged and
 never executes the file. They are workspace files, outside geometry Undo.
-The iPad transport retains its 32 MiB message cap, allowing files up to 23 MiB
-there after base64 encoding; larger attachments use the computer.
 
 Codex launches install the application's `mesh-recovery` skill into the
 document's machine-local Codex home. A 3MF path in an agent request can trigger

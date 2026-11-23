@@ -58,15 +58,14 @@ it first. There is no private in-memory clipboard or host pasteboard bridge.
 
 Electron uses one window and one complete session per document. Each session owns
 its DocumentOwner, Undo/Redo, accepted data and previews, file identity and saved
-baseline, agent workspace/process/script connection, export calculators and optional
-iPad handoff. Renderer selection, tools and camera live in that window's renderer.
+baseline, agent workspace/process/script connection and export calculators. Renderer selection, tools and camera live in that window's renderer.
 Application preferences, agent installation/settings, menus and updates are shared.
 IPC handlers register once and select their session from the actual main-frame
 WebContents sender; an active window is never used to route model or agent requests.
 
 New always creates an independent untitled window. Open reuses its originating
-window when it is clean and untitled, with no pending geometry, file operation,
-agent workspace/lifecycle or iPad pairing. It validates before replacing that blank
+window when it is clean and untitled, with no pending geometry, file operation or
+agent workspace/lifecycle. It validates before replacing that blank
 document, then reloads the editor to reset tools, selection and camera. Failed Open
 retains the blank window. Other Open requests (including further files in a multiple
 selection) create a window per file; opening an already open path or
@@ -83,7 +82,7 @@ the blank window or closes only its provisional new window and reports the error
 the default for its file panels; untitled panels use the application's last used
 folder, falling back to Documents.
 
-Desktop and paired-browser model transports accept geometry/history requests only.
+The desktop model transport accepts geometry/history requests only.
 New/Open use document commands, so geometry replacement cannot bypass file identity,
 unsaved-work choices or agent workspace binding. The standalone calculator owner
 retains New/Open for browser archive loading and internal session use.

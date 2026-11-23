@@ -1,11 +1,10 @@
 import assert from "node:assert/strict";
-import { chromium, webkit } from "playwright";
-import { launchElectron } from "./native-documents.mjs";
 import { project } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { assertPivot, makePivotBox, pressOnPlane } from "./ui-orbit-pivot.mjs";
 import { cubeSettled } from "./ui-orientation-cube-clicks.mjs";
 import { assertRollAnchor, assertSmoothRoll, recordRoll } from "./ui-roll-animation.mjs";
+import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function touchDriver(page, name) {
@@ -153,46 +152,23 @@ async function twoFingerSimilarity(page, touch) {
   );
 }
 
-const app = await launchElectron({
-  args: ["."],
-  env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1", MAKESHIFT_DEV_URL: "" },
-});
-try {
-  const desktop = await app.firstWindow();
-  await inspect(desktop);
-  assert.equal(
-    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()),
-    false,
-  );
-  await desktop.getByRole("button", { name: "Trackpad", exact: true }).click();
-  await desktop.getByRole("button", { name: "Tablet", exact: true }).click();
-  const url = await desktop.locator(".ipad-addresses a").first().getAttribute("href");
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
-    const browser = await engine.launch({ headless: true });
-    try {
-      const page = await browser.newPage({
-        viewport: { width: 1280, height: 850 },
-        hasTouch: true,
+await withUiRuntimes(
+  async (page, name) => {
+    if (name === "webkit")
+      await page.addInitScript(() => {
+        for (const type of ["pointerdown", "pointermove", "pointerup"])
+          window.addEventListener(
+            type,
+            (event) => {
+              if (!window.orbitTouch) return;
+              Object.defineProperty(event, "pointerType", { value: "touch" });
+              if (type === "pointermove" && !event.buttons) event.stopImmediatePropagation();
+            },
+            { capture: true },
+          );
       });
-      if (name === "webkit")
-        await page.addInitScript(() => {
-          for (const type of ["pointerdown", "pointermove", "pointerup"])
-            window.addEventListener(
-              type,
-              (event) => {
-                if (!window.orbitTouch) return;
-                Object.defineProperty(event, "pointerType", { value: "touch" });
-                if (type === "pointermove" && !event.buttons) event.stopImmediatePropagation();
-              },
-              { capture: true },
-            );
-        });
-      await page.goto(url);
-      await route(page, name);
-    } finally {
-      await browser.close();
-    }
-  }
-} finally {
-  await app.close();
-}
+    await page.reload();
+    await route(page, name);
+  },
+  { allowed: ["chromium", "webkit"], hasTouch: true },
+);

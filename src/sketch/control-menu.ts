@@ -3,7 +3,7 @@ import "./control-menu.css";
 import { type ControlMode, controlMode, setControlMode } from "./control-preference.js";
 import { installTouchToggle, touchHint } from "./touch-toggle.js";
 
-export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void>): void {
+export function installControlMenu(app: HTMLElement): void {
   const root = document.createElement("div");
   root.className = "control-selector";
   const button = document.createElement("button");
@@ -55,7 +55,6 @@ export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void
     group.append(label);
   }
   panel.append(group);
-  if (tablet) installTabletAction(panel, button, tablet);
   panel.addEventListener("beforetoggle", (event) => {
     const open = (event as ToggleEvent).newState === "open";
     button.setAttribute("aria-expanded", String(open));
@@ -76,24 +75,4 @@ export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void
   root.append(button, panel);
   installTouchToggle(root, updateHint);
   app.querySelector(".toolbar-preferences")?.prepend(root);
-}
-
-function installTabletAction(
-  panel: HTMLElement,
-  button: HTMLButtonElement,
-  tablet: () => Promise<void>,
-): void {
-  panel.append(document.createElement("hr"));
-  const action = document.createElement("button");
-  action.textContent = "Tablet";
-  action.onclick = async () => {
-    panel.hidePopover();
-    button.disabled = true;
-    try {
-      await tablet();
-    } finally {
-      button.disabled = false;
-    }
-  };
-  panel.append(action);
 }

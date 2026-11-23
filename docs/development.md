@@ -301,8 +301,8 @@ The backend owns the current in-memory document and Undo. Reloading the renderer
 preserves both; **New document** clears them. Failed and no-op attempts remain in
 the same history, with inputs and errors, but Undo/Redo skip them. Open starts fresh
 Undo history. Exact bodies and topology IDs are saved; display meshes are regenerated
-on Open. Desktop uses native file dialogs and unsaved-work prompts; paired iPad
-browses computer files, while the standalone web frontend uses upload/download.
+on Open. Desktop uses native file dialogs and unsaved-work prompts. The web app uses
+browser storage and file import/download.
 There is no geometry autosave.
 UI checks own and close their runtime. `npm run test:ui` runs the built Electron
 smoke. For a browser-specific issue, set `MAKESHIFT_TEST_BROWSER=chromium` or
@@ -409,8 +409,8 @@ TypeScript is a pinned runtime dependency so script checking needs no personal c
 
 ## iPad checks
 
-After `npm run build`, run `node tests/ipad-ui.mjs` for the real host with hidden
-Electron and isolated Chromium/WebKit. Physical iPad/Pencil behavior remains unverified.
+After `npm run build`, run `node tests/ipad-ui.mjs` for the browser touch route. Set
+`MAKESHIFT_TEST_BROWSER=webkit` to exercise WebKit. Physical iPad/Pencil behavior remains unverified.
 
 ## Shell and topology deletion checks
 

@@ -10,8 +10,6 @@ export async function observeAgentTerminal(page) {
         await initialize.call(this);
         window.testTerminal = this.terminal;
       };
-      // Exercise the remote dock's visual-viewport branch with the real browser viewport.
-      window.makeshiftRemote = true;
     },
     `/@fs${resolve("src/agent/terminal.ts")}`,
   );

@@ -28,7 +28,6 @@ import { sessionDialogs as dialog } from "./session-dialogs.js";
 export class AgentSession {
   private ipc = new DocumentIPC();
   private preview: AgentPreview | null = null;
-  canUseDesktop = () => true;
   private process = new AgentProcess(nativeExecutable("agent-scope"));
 
   readonly workspace = new AgentWorkspace(join(app.getPath("userData"), "agent", "workspaces"));
@@ -59,7 +58,6 @@ export class AgentSession {
       if (event.sender !== this.window?.webContents || event.senderFrame !== event.sender.mainFrame)
         throw new Error("Agent commands require the document window.");
       try {
-        if (!this.canUseDesktop()) throw new Error("This document is controlled from the iPad.");
         return await this.request(request);
       } catch (error) {
         return { ...this.status, error: error instanceof Error ? error.message : String(error) };
@@ -216,8 +214,7 @@ export class AgentSession {
         (command, entity, directory) => this.inspect(command, entity, directory),
         (request, channel) => this.script(request, channel),
         (input, output) => {
-          if (!this.preview || !this.canUseDesktop())
-            throw new Error("Preview requires the desktop document.");
+          if (!this.preview) throw new Error("Preview requires the desktop document.");
           return this.preview.request(input, output);
         },
         this.workspace.fresh,

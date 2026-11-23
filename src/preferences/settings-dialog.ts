@@ -64,7 +64,7 @@ export function settingsDialog(extra: [string, HTMLElement][] = []): HTMLDialogE
     ["Decorators", decoratorSettings()],
     ["Experimental", experimentalSettings()],
     ["Bug Reports", bugRecordingSettings()],
-    ...(!window.makeshiftRemote && (!window.makeshiftDocument || window.makeshiftSecurity)
+    ...(!window.makeshiftDocument || window.makeshiftSecurity
       ? [["Security", securitySettings()] as [string, HTMLElement]]
       : []),
     ...extra,

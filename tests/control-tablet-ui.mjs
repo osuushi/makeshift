@@ -11,16 +11,15 @@ try {
   await settled(page);
   await page.getByRole("button", { name: "Trackpad", exact: true }).click();
   await page.getByRole("radio", { name: "Mouse", exact: true }).check();
-  await page.getByRole("button", { name: "Tablet", exact: true }).click();
-  await page.getByRole("heading", { name: "Makeshift on iPad" }).waitFor();
-  assert.ok(await page.locator(".ipad-addresses a").count());
-  await page.getByRole("button", { name: "Return to computer", exact: true }).click();
+  assert.equal(await page.getByRole("button", { name: "Tablet", exact: true }).count(), 0);
+  assert.equal(await page.evaluate(() => typeof window.makeshiftIPad), "undefined");
+  await page.reload();
   await settled(page);
   await page.getByRole("button", { name: "Mouse", exact: true }).click();
   assert.ok(await page.getByRole("radio", { name: "Mouse", exact: true }).isChecked());
   assert.equal(await page.getByRole("radio", { name: "Tablet", exact: true }).count(), 0);
   await page.screenshot({ path: "/tmp/makeshift-control-electron.png" });
-  console.log("Hidden Electron: Tablet handoff/return preserves Mouse preference");
+  console.log("Hidden Electron: Mouse preference persists without a pairing control");
 } finally {
   await app.close();
 }

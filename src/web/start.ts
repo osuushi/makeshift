@@ -3,8 +3,10 @@ import type {} from "../model/fixture-host.js";
 import { browserTrust } from "../security/browser-device.js";
 import { modelWireReply } from "../sketch/model-wire.js";
 
+export const webOwner = new DocumentOwner();
+
 export function installWebModel(): void {
-  const owner = new DocumentOwner();
+  const owner = webOwner;
   owner.setDecoratorAuthorization((doc) => browserTrust.allowDecorators(doc));
   window.makeshiftModel = async (request) => {
     await owner.initialize();

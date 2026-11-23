@@ -3,15 +3,21 @@
 Founder direction, 2026-10-03: iPad-first access and a link people can try without
 installing Makeshift. The web build runs locally in the browser, without a paired
 computer. It shares the sketch/solid editor and existing touch/Pencil gestures.
-The agent pane, terminal and LAN handoff controls are excluded from this build.
-SSH or other agent connectivity is not part of web mode.
+The Agent tab explains how to open the drawing in a harness browser that supports WebMCP.
+The page registers `makeshift_run` for inspection, on-demand API types and JavaScript modeling
+through the existing document owner's script transaction. Each run uses an isolated QuickJS
+worker with JSON modeling calls and commits as one Undo step. Cancellation or failure
+discards the candidate. No provider credentials or Makeshift server are required.
+`makeshift_workspace` lists, reads, writes, appends, copies, moves and removes files
+relative to the drawing's `workspace/`. Directories are implied by file paths.
+UTF-8 and base64 payloads support text and binary data. File edits participate in
+unsaved-document checks and archive saves, outside geometry Undo.
 
 Touch-capable browsers default to the iPad/Pencil interaction: Pencil edits,
 one finger rotates, and two fingers pan/pinch/twist. The visible Camera/Pointer
 toggle switches fingers between navigation and ordinary geometry editing, making
 the editor usable without a stylus. The choice persists locally, outside document
-Undo. Mouse/trackpad settings remain available for attached desktop input devices;
-the unavailable Tablet handoff action is omitted.
+Undo. Mouse/trackpad settings remain available for attached desktop input devices.
 
 ## Ownership and calculation
 
@@ -64,8 +70,10 @@ cleanup of that static asset history must be a deliberate maintenance action.
 
 The File / Edit menu and ordinary keyboard shortcuts expose New, Open, Save and
 Save As. Opening validates the existing `.makeshift`/legacy `.freac` archive through
-the same document owner, including exact BReps. Portable workspace/conversation
-bytes are retained without exposing or executing an agent. Unsaved New/Open offers
+the same document owner, including exact BReps. Opening preserves portable files
+and conversations. First access to imported agent content uses the drawing's workspace
+trust decision. Choosing an empty workspace discards the included agent files and
+conversations. WebMCP file operations can only address paths under `workspace/`. Unsaved New/Open offers
 Save, Cancel and Don't Save. A failed or cancelled save does not replace file identity
 or the saved-content baseline. Browser close/navigation gets a beforeunload prompt
 where the browser supports it.

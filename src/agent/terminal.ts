@@ -49,8 +49,6 @@ export class AgentTerminal {
     this.terminal = terminal;
     terminal.attachCustomKeyEventHandler((event) => {
       if (event.key.toLowerCase() === "v" && (event.metaKey || (event.ctrlKey && event.shiftKey))) {
-        // Safari owns the iPad clipboard; let its normal paste event reach the terminal.
-        if (window.makeshiftRemote) return false;
         void this.paste().catch(this.report);
         return true;
       }
