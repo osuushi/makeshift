@@ -1,11 +1,8 @@
 import assert from "node:assert/strict";
-import { chromium, webkit } from "playwright";
 import * as THREE from "three";
-import { launchElectron } from "./native-documents.mjs";
-import { drag } from "./ui-helpers.mjs";
+import { drag, settled } from "./ui-helpers.mjs";
 import { navigationIdle, navigationRoundTrip } from "./ui-navigation-history.mjs";
-import { runtimeNames } from "./ui-runtime.mjs";
-import { installTestFrames } from "./ui-test-frames.mjs";
+import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function touchDriver(page, name) {
@@ -134,59 +131,30 @@ async function touchRoute(page, name) {
     await touch.dispose();
   }
 }
-const app = await launchElectron({
-  args: ["."],
-  env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1", MAKESHIFT_DEV_URL: "" },
-});
-try {
-  const desktop = await app.firstWindow();
-  await desktop.setViewportSize({ width: 1280, height: 850 });
-  await desktop.waitForFunction(() => Boolean(window.makeshiftInspect));
-  assert.equal(
-    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()),
-    false,
-  );
-  await navigationIdle(desktop);
-  await chooseTool(desktop, "Sketch on XY", "sketch-xy");
-  await desktop.keyboard.press("r");
-  await drag(desktop, [-15, -10], [15, 10]);
-  await desktop.getByRole("button", { name: "Trackpad", exact: true }).click();
-  await desktop.getByRole("button", { name: "Tablet", exact: true }).click();
-  const url = await desktop.locator(".ipad-addresses a").first().getAttribute("href");
-  for (const name of runtimeNames(["chromium", "webkit"])) {
-    const engine = { chromium, webkit }[name];
-    const browser = await engine.launch({ headless: true });
-    try {
-      const page = await browser.newPage({
-        viewport: { width: 1280, height: 850 },
-        hasTouch: true,
+await withUiRuntimes(
+  async (page, name) => {
+    if (name === "webkit")
+      await page.addInitScript(() => {
+        for (const type of ["pointerdown", "pointermove", "pointerup", "click", "dblclick"])
+          window.addEventListener(
+            type,
+            (event) => {
+              if (!window.navigationTouch) return;
+              Object.defineProperty(event, "pointerType", { value: "touch" });
+              if (type === "pointermove" && !event.buttons) event.stopImmediatePropagation();
+            },
+            { capture: true },
+          );
       });
-      if (name === "webkit")
-        await page.addInitScript(() => {
-          for (const type of ["pointerdown", "pointermove", "pointerup", "click", "dblclick"])
-            window.addEventListener(
-              type,
-              (event) => {
-                if (!window.navigationTouch) return;
-                Object.defineProperty(event, "pointerType", { value: "touch" });
-                if (type === "pointermove" && !event.buttons) event.stopImmediatePropagation();
-              },
-              { capture: true },
-            );
-        });
-      await installTestFrames(page);
-      await page.goto(url);
-      await page.waitForFunction(() => Boolean(window.makeshiftInspect));
-      await navigationIdle(page);
-      await touchRoute(page, name);
-    } finally {
-      await browser.close();
-    }
-    await desktop.getByText("Waiting for iPad · Scan to connect or reconnect").waitFor();
-  }
-} catch (error) {
-  console.error("Tablet navigation route failed:", error);
-  throw error;
-} finally {
-  await app.close();
-}
+    if (name === "webkit") await page.reload();
+    await settled(page);
+    await navigationIdle(page);
+    await chooseTool(page, "Sketch on XY", "sketch-xy");
+    await page.keyboard.press("r");
+    await drag(page, [-15, -10], [15, 10]);
+    await chooseTool(page, "return to modeling", "modeling");
+    await navigationIdle(page);
+    await touchRoute(page, name);
+  },
+  { allowed: ["chromium", "webkit"], hasTouch: true },
+);

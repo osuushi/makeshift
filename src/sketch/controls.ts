@@ -1,5 +1,6 @@
 import { bugControls } from "../bugs/controls.js";
 import { clipboardControls } from "../clipboard/controls.js";
+import type { BrowserDocuments } from "../model/browser-documents.js";
 import { fileControls } from "../model/file-controls.js";
 import { fixtureControls } from "../model/fixture-controls.js";
 import { toolCatalog } from "../tools/catalog.js";
@@ -18,6 +19,7 @@ export function installControls(
   editor: SketchEditor,
   numeric: NumericEdit,
   app: HTMLElement,
+  documents?: BrowserDocuments,
 ): () => void {
   const disposeTools = sketchTools(editor);
   const toolbar = app.querySelector<HTMLElement>(".workspace-toolbar");
@@ -25,7 +27,7 @@ export function installControls(
   const disposeHistory = installHistoryControls(editor, app);
   const disposeGridSnap = installGridSnapControl(editor);
   const disposeClipboard = clipboardControls(editor);
-  const disposeFiles = fileControls(editor, app);
+  const disposeFiles = fileControls(editor, app, documents);
   const disposeFixtures =
     import.meta.env.DEV || window.makeshiftFixture ? fixtureControls(editor, app) : () => {};
   const disposeBugs = bugControls(editor, app);

@@ -302,7 +302,6 @@ export class DocumentApplication {
   checkDesktop(sender: Electron.WebContents): void {
     const document = [...this.documents].find((entry) => entry.window.webContents === sender);
     if (!document) throw new Error("Requires a document window");
-    document.documents.checkDesktop();
   }
   error = showDocumentError;
 }

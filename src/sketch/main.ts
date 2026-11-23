@@ -7,6 +7,7 @@ import { BodyActions } from "../model/body-actions.js";
 import { BodyEdgeFinishControls } from "../model/body-edge-finish-controls.js";
 import { BodyMoveControls } from "../model/body-move-controls.js";
 import { BooleanControls } from "../model/boolean-controls.js";
+import { BrowserDocuments } from "../model/browser-documents.js";
 import { CleanupControls } from "../model/cleanup-controls.js";
 import { ConstructionPlaneControls } from "../model/construction-plane-controls.js";
 import { CrossSectionControls } from "../model/cross-section-controls.js";
@@ -175,7 +176,8 @@ const offsets = new OffsetControls(editor, overlay);
 const dimensions = new Dimensions(editor, overlay),
   gestures = new PointerGestures(editor);
 numeric.connect(dimensions, gestures);
-const disposeControls = installControls(editor, numeric, app);
+const documents = window.makeshiftDocument ? undefined : new BrowserDocuments(editor);
+const disposeControls = installControls(editor, numeric, app, documents);
 const modelingTools = new ModelingTools(
   editor,
   () => modelControls.activateRevolve(),
@@ -229,8 +231,8 @@ const disposePlaneEntry = planeEntryTools(editor);
 const disposeSettings = installSettings(editor, app);
 const disposePaneControls = panes.mountControls(editor, entities.element, status);
 const disposeHost =
-  import.meta.env.MODE === "web"
-    ? (await import("../web/chrome.js")).installWebChrome(editor, app)
+  import.meta.env.MODE === "web" && documents
+    ? (await import("../web/chrome.js")).installWebChrome(editor, app, documents)
     : (await import("./host-controls.js")).installHostControls(editor, app, panes);
 installViewInspection(editor, sections);
 world.draw();

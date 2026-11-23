@@ -28,9 +28,9 @@ export async function tabletSolidRoute(page, name) {
   await value.fill("5");
   await settled(page);
   assert.ok((await inspect(page)).preview?.bodies.length);
-  await page.reload();
+  await value.press("Escape");
   await settled(page);
-  assert.equal((await inspect(page)).preview, null, "Reconnect discards unfinished geometry");
+  assert.equal((await inspect(page)).preview, null, "Escape discards unfinished geometry");
   assert.equal((await inspect(page)).document.bodies?.length ?? 0, 0);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await settled(page);
@@ -60,8 +60,6 @@ export async function tabletSolidRoute(page, name) {
   const file = await download;
   assert.equal(await file.failure(), null);
   assert.match(file.suggestedFilename(), /\.3mf$/);
-  console.log(
-    "native extrusion, numeric tilde cancel, disconnect rollback, history and export passed",
-  );
+  console.log("extrusion, numeric tilde and Escape cancellation, history and export passed");
   return state.document;
 }

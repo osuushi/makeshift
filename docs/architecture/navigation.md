@@ -281,8 +281,7 @@ with its incremental roll. Pinch retains its 200 ms idle leveling delay; later z
 restart it, so continued pinch cannot strand an interrupted snap. WebKit's explicit
 pinch lifetime holds leveling until its end event. Pointer-down, Escape, blur and
 disposal cancel pending leveling; the callback also checks editing/orbit guards.
-The narrow host/preload subscription ignores desktop input during tablet handoff,
-and the renderer rejects input outside the viewport or during editing/orbit.
+The renderer rejects input outside the viewport or during editing/orbit.
 The native event is macOS-only; Windows/Linux retain Option-roll.
 
 Tablet one-finger orbit uses the same press-based pivot through pointer events.

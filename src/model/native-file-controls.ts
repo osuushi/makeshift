@@ -114,10 +114,8 @@ async function runDocumentCommand(
   }
   if (command === "new" || command === "open") {
     const result = await host.command(command);
-    if (result.error || window.makeshiftRemote) {
-      editor.message =
-        result.error ??
-        "New and Open use separate computer windows. This iPad stays paired with the current document.";
+    if (result.error) {
+      editor.message = result.error;
       editor.refresh();
     }
     return;

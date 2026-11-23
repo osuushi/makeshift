@@ -3,7 +3,6 @@ import type { InspectionView } from "./agent/inspection-protocol.js";
 import type { AgentRequest } from "./agent/protocol.js";
 import type { BugReport } from "./bugs/protocol.js";
 import type { HostModelRequest } from "./host/model-request.js";
-import type { IPadStatus } from "./ipad/protocol.js";
 import type { ModelView } from "./sketch/model-api.js";
 
 contextBridge.exposeInMainWorld("makeshiftStartup", {
@@ -23,17 +22,6 @@ contextBridge.exposeInMainWorld("makeshiftFixture", (snapshot: unknown) =>
 contextBridge.exposeInMainWorld("makeshiftFixtureFile", {
   drag: () => ipcRenderer.send("drag-fixture"),
   reveal: () => ipcRenderer.send("reveal-fixture"),
-});
-
-contextBridge.exposeInMainWorld("makeshiftIPad", {
-  status: () => ipcRenderer.invoke("ipad-status"),
-  start: () => ipcRenderer.invoke("ipad-start"),
-  stop: () => ipcRenderer.invoke("ipad-stop"),
-  onStatus: (callback: (status: IPadStatus) => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, status: IPadStatus) => callback(status);
-    ipcRenderer.on("ipad-status", listener);
-    return () => ipcRenderer.removeListener("ipad-status", listener);
-  },
 });
 
 contextBridge.exposeInMainWorld("makeshiftScript", {

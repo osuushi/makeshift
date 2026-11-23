@@ -11,7 +11,7 @@ declare global {
   }
 }
 
-/** Desktop and paired browsers save through the host; local web development uses Vite. */
+/** Desktop saves through the host; local web development uses Vite. */
 export async function saveFixture(snapshot: unknown): Promise<CapturedFixture> {
   if (window.makeshiftFixture) return window.makeshiftFixture(snapshot);
   const response = await fetch("/__makeshift_fixture", {

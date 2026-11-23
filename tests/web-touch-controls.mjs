@@ -94,7 +94,6 @@ await withUiRuntimes(
 );
 
 async function checkTouchChrome(page) {
-  assert.equal(await page.evaluate(() => Boolean(window.makeshiftRemote)), false);
   const controls = page.getByTitle("Controls", { exact: true });
   assert.equal(await controls.innerText(), "Touch / Pencil");
   assert.equal(

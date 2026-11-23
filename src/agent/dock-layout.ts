@@ -9,7 +9,7 @@ export function dockLayout(panel: HTMLElement, app: HTMLElement) {
   splitter.setAttribute("role", "separator");
   splitter.setAttribute("aria-label", "Resize agent pane");
   panel.append(splitter);
-  const viewport = window.makeshiftRemote ? window.visualViewport : null;
+  const viewport = window.visualViewport;
   const apply = () => {
     const { width, height } = fitVisibleViewport(panel, viewport);
     const available = side === "right" ? width : height;

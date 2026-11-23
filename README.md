@@ -131,19 +131,15 @@ choose whether to include their final shapes as AP242 meshes or omit decorators
 and export the underlying exact solids. The dialog warns that mesh bodies are
 not smooth editable CAD solids and some receiving apps may not support them.
 
-## iPad interface
+## Web and iPad
 
-The experimental iPad interface connects to Makeshift running on your computer.
-Finish the current tool, click **iPad**, and scan the QR code from an iPad on the
-same network. Keep the desktop app running. **Return to computer** switches
-editing back to the desktop; only one device controls the drawing at a time.
+Open [Makeshift on the web](https://web.makeshift.horse/) to draw locally in your browser.
+On iPad, use Pencil to edit, one finger to rotate, and two fingers to pan and zoom.
 
-Pencil is used for drawing and editing, one finger for rotation, and two fingers
-for pan and pinch zoom. Save/Open accesses files on the computer, and the agent
-runs there too. Physical iPad/Pencil interaction still needs device testing.
-
-**Use only on a trusted private network.** The connection uses unencrypted HTTP.
-Someone intercepting it could access the drawing, computer files, and agent.
+The **Agent** tab explains how to open the drawing in a WebMCP-enabled harness browser.
+Ask the harness to use `makeshift_run` to inspect or edit the drawing and
+`makeshift_workspace` to work with files in its portable workspace. Save the drawing
+to keep those files. The desktop app offers an embedded agent terminal.
 
 ## Report a problem
 
@@ -166,5 +162,4 @@ and [development process](docs/development-process.md).
 ## Standalone web target
 
 See [web build and release](docs/web-build.md) for the local WASM build, static preview,
-Chromium/WebKit checks and independent GitHub Pages deployment. Web mode omits the
-agent pane and uses browser `.makeshift` opening/saving.
+Chromium/WebKit checks and independent GitHub Pages deployment. Web mode uses browser `.makeshift` opening/saving and exposes the current drawing to WebMCP-capable harness browsers.

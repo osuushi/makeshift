@@ -1,14 +1,13 @@
 import assert from "node:assert/strict";
+import { project } from "./ui-blend-edit.mjs";
 import { at, inspect, settled } from "./ui-helpers.mjs";
-import { findRaycastPoint } from "./ui-plane-targets.mjs";
 
 export async function tabletRegressions(page, pen) {
   const before = await inspect(page);
   assert.ok(Math.abs(before.camera.position[0] - before.camera.target[0]) > 1);
-  const tap = await findRaycastPoint(page, "XY");
+  const tap = await project(page, [-4, -10, 0]);
   await pen.down(tap);
   await pen.up(tap);
-  assert.ok(await page.evaluate(() => window.makeshiftInspect().camera.moving));
   await pen.down(tap);
   await pen.up(tap);
   let state = await inspect(page);
@@ -35,7 +34,16 @@ async function livePreview(page, pen, original) {
     end = await at(page, 20, 25);
   // Delay delivery of real host solves so pointer updates overtake each response.
   await page.evaluate(() => {
-    window.testModel = window.makeshiftModel;
+    window.testModel =
+      window.makeshiftModel ??
+      (async (command) =>
+        (
+          await fetch("/sketch-api", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(command),
+          })
+        ).json());
     window.makeshiftModel = async (command) => {
       const result = await window.testModel(command);
       if (command.kind === "preview") await new Promise((resolve) => setTimeout(resolve, 100));

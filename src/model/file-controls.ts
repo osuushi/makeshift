@@ -1,15 +1,19 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { iosToolSearch } from "../tools/search-shortcut.js";
-import { BrowserDocuments } from "./browser-documents.js";
+import type { BrowserDocuments } from "./browser-documents.js";
 import { exportControls } from "./export-controls.js";
 import { fileShortcuts } from "./file-shortcuts.js";
 import { nativeFileControls } from "./native-file-controls.js";
 
 /** Data-only archive: opening never evaluates stored expressions or scripts. */
-export function fileControls(editor: SketchEditor, container: HTMLElement): () => void {
+export function fileControls(
+  editor: SketchEditor,
+  container: HTMLElement,
+  documents?: BrowserDocuments,
+): () => void {
   if (window.makeshiftDocument) return nativeFileControls(editor, window.makeshiftDocument);
-  const documents = new BrowserDocuments(editor);
+  if (!documents) throw new Error("Missing browser document.");
   const input = document.createElement("input");
   input.type = "file";
   input.accept = ".makeshift,.freac,application/json";

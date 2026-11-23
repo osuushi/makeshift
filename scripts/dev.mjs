@@ -1,15 +1,9 @@
 import "./generate-script-types.mjs";
 import "./build-native.mjs";
 import { spawn } from "node:child_process";
-import { build, createServer } from "vite";
+import { createServer } from "vite";
 import { prepareDevBundle } from "./dev-bundle.mjs";
 
-// The optional iPad listener serves only built assets, never Vite's development endpoints.
-const previousNodeEnv = process.env.NODE_ENV;
-await build();
-// Vite's build sets NODE_ENV; do not leak production mode into the desktop dev server.
-if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
-else process.env.NODE_ENV = previousNodeEnv;
 const port = process.env.MAKESHIFT_DEV_PORT;
 const server = await createServer(port === undefined ? {} : { server: { port: Number(port) } });
 await server.listen();

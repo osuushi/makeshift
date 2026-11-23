@@ -1,5 +1,3 @@
-import type {} from "../ipad/protocol.js";
-
 export type TouchMode = "camera" | "pointer";
 
 const key = "makeshift.touch-control";
@@ -11,7 +9,7 @@ try {
 }
 
 export function hasTouchControls(): boolean {
-  return Boolean(window.makeshiftRemote) || navigator.maxTouchPoints > 0;
+  return navigator.maxTouchPoints > 0;
 }
 
 export function touchMode(): TouchMode {

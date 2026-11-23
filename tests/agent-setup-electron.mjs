@@ -117,7 +117,7 @@ async function setupRoute(page, app, root) {
     "Only the new window's empty startup preparations may calculate",
   );
 }
-async function hostGuards(app, page) {
+async function hostGuards(app) {
   const rejected = await app.evaluate(async ({ BrowserWindow, app }) => {
     const preload = `${app.getAppPath()}/.build/host/preload.cjs`;
     const extra = new BrowserWindow({
@@ -134,23 +134,6 @@ async function hostGuards(app, page) {
     }
   });
   assert.match(rejected, /IPC requires a document window/);
-  await app.evaluate(() => {
-    const s = globalThis.agentSetupFixture.session;
-    globalThis.agentSetupFixture.desktop = s.canUseDesktop;
-    s.canUseDesktop = () => false;
-  });
-  try {
-    const blocked = await page.evaluate(() =>
-      window.makeshiftAgent.request({ kind: "install-codex" }),
-    );
-    assert.match(blocked.error, /controlled from the iPad/);
-    assert.equal(await app.evaluate(() => globalThis.agentSetupFixture.attempts), 3);
-  } finally {
-    await app.evaluate(() => {
-      const state = globalThis.agentSetupFixture;
-      state.session.canUseDesktop = state.desktop;
-    });
-  }
 }
 
 assert.equal(process.platform, "darwin", "Host process-tree fixture currently runs on macOS only");
@@ -187,7 +170,7 @@ try {
   await page.waitForFunction(() => Boolean(window.makeshiftInspect));
   const before = await page.evaluate(() => window.makeshiftInspect().document);
   await setupRoute(page, app, root);
-  await hostGuards(app, page);
+  await hostGuards(app);
   assert.deepEqual(await page.evaluate(() => window.makeshiftInspect().document), before);
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   // Simulate the installed fixture CLI being absent before testing quit during a new install.

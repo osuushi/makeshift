@@ -11,6 +11,7 @@ import { chooseTool } from "./ui-tools.mjs";
 import { calculatorRecovery } from "./web-calculator-recovery.mjs";
 import { browserFileFailures } from "./web-files.mjs";
 import { webMeshTools } from "./web-mesh-tools.mjs";
+import { webSiteTools } from "./web-site-tools.mjs";
 import { webTablet } from "./web-tablet.mjs";
 
 const root = resolve(".build/web");
@@ -119,6 +120,7 @@ try {
           .catch(() => {});
         throw error;
       }
+      if (name === "chromium") await webSiteTools(browser, page.url());
       await webMeshTools(page, name);
       await webTablet(page, name);
       await calculatorRecovery(browser, page.url());

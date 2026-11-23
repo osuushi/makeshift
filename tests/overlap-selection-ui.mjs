@@ -164,9 +164,6 @@ await withUiRuntimes(
           hasTouch: true,
         });
       try {
-        await touch.addInitScript(() => {
-          window.makeshiftRemote = true;
-        });
         await touch.goto(page.url());
         await loadFixture(touch);
         await overlapTouch(touch, name);

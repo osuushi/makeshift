@@ -129,7 +129,7 @@ the current renderer; typed view scripts expose `makeshift.settings(patch?)`.
 Unknown fields and malformed/range-invalid values reject before any setting changes.
 The managed [settings skill](../../agent-skills/settings/SKILL.md) is installed in
 the document agent's Codex home and describes troubleshooting plane clutter and
-accidental selection. Paired iPad requests configure the active browser's settings.
+accidental selection.
 
 Decorator previews use the same Settings dialog. Detailed is the default; Color only
 marks current attached faces and does not schedule preview workers. Thread, gear,
@@ -143,8 +143,7 @@ full geometry pipeline regardless of the display preference.
 
 ## Presentation and coordinates
 
-The same preference and settings surface run in Electron, standalone web and the
-paired iPad editor. Vite's small PostCSS pass scales authored pixel dimensions in
+The same preference and settings surface run in Electron and standalone web, including iPad Safari. Vite's small PostCSS pass scales authored pixel dimensions in
 `src` CSS through `--ui-scale`. It parses CSS value tokens, preserving text, URLs,
 viewport media queries and zero dimensions. A declaration immediately preceded by
 `/* ui-scale: viewbox */` stays in fixed SVG viewBox units; its viewport already
