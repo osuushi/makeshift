@@ -9,6 +9,19 @@ export interface WorkspaceCommand {
   encoding?: "utf8" | "base64";
 }
 
+export function sameWorkspaceFiles(current: PortableFiles, saved: PortableFiles): boolean {
+  if (current === saved) return true;
+  const entries = Object.entries(current);
+  if (entries.length !== Object.keys(saved).length) return false;
+  return entries.every(([path, file]) => {
+    const previous = saved[path];
+    return (
+      file === previous ||
+      (file.length === previous?.length && file.every((byte, index) => byte === previous[index]))
+    );
+  });
+}
+
 function workspacePath(path: unknown, root = false): string {
   if (root && (path === undefined || path === "." || path === "")) return "workspace";
   if (typeof path !== "string") throw new Error("Supply a workspace-relative path.");

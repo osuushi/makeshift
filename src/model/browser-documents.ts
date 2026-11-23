@@ -15,7 +15,7 @@ import { restoreCamera } from "./camera-state.js";
 import { archivedDrawing, drawingArchive } from "./document-archive.js";
 import { type DrawingContents, sameDrawingContents, VisitedBenches } from "./drawing-contents.js";
 import type { PortableFiles } from "./portable-files.js";
-import { type WorkspaceCommand, workspaceCommand } from "./workspace-files.js";
+import { sameWorkspaceFiles, type WorkspaceCommand, workspaceCommand } from "./workspace-files.js";
 
 const maxDrawingBytes = 72 * 1024 * 1024;
 
@@ -81,7 +81,10 @@ export class BrowserDocuments {
     return this.benches.contents(this.editor.store.benchTabs);
   }
   private dirty(): boolean {
-    return this.files !== this.savedFiles || !sameDrawingContents(this.contents(), this.baseline);
+    return (
+      !sameWorkspaceFiles(this.files, this.savedFiles) ||
+      !sameDrawingContents(this.contents(), this.baseline)
+    );
   }
   private beforeUnload = (event: BeforeUnloadEvent) => {
     if (this.dirty()) {

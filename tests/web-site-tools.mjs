@@ -30,6 +30,11 @@ export async function webSiteTools(browser, url) {
     await tab.click();
     await page.getByText("Makeshift’s tools are registered in this tab.").waitFor();
     await tab.click();
+    await fs("write", { path: "scratch", data: "temporary" });
+    await fs("rm", { path: "scratch" });
+    await chooseTool(page, "new document", "new");
+    assert.equal(await page.getByRole("dialog", { name: "Unsaved changes" }).count(), 0);
+    await settled(page);
     const source = `const s=await makeshift.createSketch({plane:"XY",curves:[{kind:"circle",center:{x:0,y:0},radius:3}]}); return (await makeshift.extrude({sources:s.profiles,mode:"new",distance:10})).bodies[0].volume;`;
     const path = "models/pin.js";
     assert.deepEqual(await fs("write", { path, data: source }), { ok: true });
