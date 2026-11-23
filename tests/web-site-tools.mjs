@@ -72,24 +72,28 @@ export async function webSiteTools(browser, url) {
     const running = cad("run", { source: "while(true){}" });
     await page.getByRole("button", { name: "Cancel script" }).click();
     assert.match((await running).error, /cancel/i);
-    await chooseTool(page, "save document", "save");
-    await Promise.all([
-      nameDrawing(page, "Workspace test"),
-      page.getByRole("button", { name: "Save unsigned", exact: true }).click(),
-    ]);
-    await settled(page);
-    await chooseTool(page, "new document", "new");
-    assert.deepEqual(await fs("ls"), []);
-    await chooseTool(page, "open document", "open");
-    await page.getByRole("button", { name: /Workspace test/ }).click();
-    await settled(page);
-    const declined = fs("cat", { path });
-    await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click();
-    assert.match((await declined).error, /declined/);
-    const reading = fs("cat", { path });
-    await page.getByRole("button", { name: "Trust this version", exact: true }).click();
-    assert.equal(await reading, source);
+    await reopenWorkspace(page, fs, path, source);
   } finally {
     await page.close();
   }
+}
+
+async function reopenWorkspace(page, fs, path, source) {
+  await chooseTool(page, "save document", "save");
+  await Promise.all([
+    nameDrawing(page, "Workspace test"),
+    page.getByRole("button", { name: "Save unsigned", exact: true }).click(),
+  ]);
+  await settled(page);
+  await chooseTool(page, "new document", "new");
+  assert.deepEqual(await fs("ls"), []);
+  await chooseTool(page, "open document", "open");
+  await page.getByRole("button", { name: /Workspace test/ }).click();
+  await settled(page);
+  const declined = fs("cat", { path });
+  await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click();
+  assert.match((await declined).error, /declined/);
+  const reading = fs("cat", { path });
+  await page.getByRole("button", { name: "Trust this version", exact: true }).click();
+  assert.equal(await reading, source);
 }

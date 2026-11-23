@@ -28,6 +28,31 @@ interface DrawingCommand {
   id?: string;
 }
 
+const drawingDefinition = {
+  name: "makeshift_run",
+  description:
+    "Inspect this open CAD drawing, get the makeshift scripting API types, or run JavaScript against its geometry. Await each makeshift method. Return a JSON value. A successful edit is one Undo step.",
+  inputSchema: {
+    type: "object",
+    additionalProperties: false,
+    required: ["action"],
+    properties: {
+      action: { type: "string", enum: ["inspect", "types", "run"] },
+      source: {
+        type: "string",
+        description:
+          "Async function body for run. Example: return await makeshift.createSketch({plane:'XY',curves:[{kind:'circle',center:{x:0,y:0},radius:10}]})",
+      },
+      path: {
+        type: "string",
+        description: "Alternatively run a UTF-8 JavaScript file in the drawing workspace.",
+      },
+      id: { type: "string", description: "Inspect one geometry ID in detail." },
+    },
+  },
+  annotations: { readOnlyHint: false, untrustedContentHint: true },
+};
+
 export function installSiteTools(
   editor: SketchEditor,
   documents: BrowserDocuments,
@@ -51,28 +76,7 @@ export function installSiteTools(
   }
 
   const drawing: SiteTool<DrawingCommand> = {
-    name: "makeshift_run",
-    description:
-      "Inspect this open CAD drawing, get the makeshift scripting API types, or run JavaScript against its geometry. Await each makeshift method. Return a JSON value. A successful edit is one Undo step.",
-    inputSchema: {
-      type: "object",
-      additionalProperties: false,
-      required: ["action"],
-      properties: {
-        action: { type: "string", enum: ["inspect", "types", "run"] },
-        source: {
-          type: "string",
-          description:
-            "Async function body for run. Example: return await makeshift.createSketch({plane:'XY',curves:[{kind:'circle',center:{x:0,y:0},radius:10}]})",
-        },
-        path: {
-          type: "string",
-          description: "Alternatively run a UTF-8 JavaScript file in the drawing workspace.",
-        },
-        id: { type: "string", description: "Inspect one geometry ID in detail." },
-      },
-    },
-    annotations: { readOnlyHint: false, untrustedContentHint: true },
+    ...drawingDefinition,
     async execute(input, client) {
       try {
         if (input.action === "types")
